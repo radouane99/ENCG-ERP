@@ -153,6 +153,8 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     Route::get('/admin/timetable/ai-scheduler/conflicts', [AiTimetableSchedulerController::class, 'scanConflicts']);
     Route::post('/timetable/ai-scheduler/resolve', [AiTimetableSchedulerController::class, 'resolveConflict']);
     Route::post('/admin/timetable/ai-scheduler/resolve', [AiTimetableSchedulerController::class, 'resolveConflict']);
+    Route::post('/timetable/ai-scheduler/resolve-all', [AiTimetableSchedulerController::class, 'resolveAllConflicts']);
+    Route::post('/admin/timetable/ai-scheduler/resolve-all', [AiTimetableSchedulerController::class, 'resolveAllConflicts']);
     Route::post('/timetable/ai-scheduler/apply', [AiTimetableSchedulerController::class, 'apply']);
     Route::post('/admin/timetable/ai-scheduler/apply', [AiTimetableSchedulerController::class, 'apply']);
 

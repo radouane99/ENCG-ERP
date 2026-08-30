@@ -77,6 +77,17 @@ class AiTimetableSchedulerController extends Controller
     }
 
     /**
+     * Résoudre automatiquement TOUS les conflits détectés dans la base.
+     */
+    public function resolveAllConflicts(Request $request): JsonResponse
+    {
+        $academicYearId = (int) ($request->input('academic_year_id', 1));
+        $res = $this->scheduler->autoResolveAllConflicts($academicYearId);
+
+        return response()->json($res);
+    }
+
+    /**
      * Appliquer et enregistrer l'emploi du temps généré dans la base de données.
      */
     public function apply(Request $request): JsonResponse

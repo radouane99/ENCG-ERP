@@ -222,45 +222,81 @@ class AiTimetableSchedulerService
     public function scanConflicts(int $academicYearId): array
     {
         $schedules = DB::table('schedules')
-            ->where('academic_year_id', $academicYearId)
-            ->where('is_active', true)
+            ->leftJoin('rooms', 'schedules.room_id', '=', 'rooms.id')
+            ->leftJoin('users', 'schedules.professor_id', '=', 'users.id')
+            ->leftJoin('modules', 'schedules.module_id', '=', 'modules.id')
+            ->leftJoin('groups', 'schedules.group_id', '=', 'groups.id')
+            ->where('schedules.academic_year_id', $academicYearId)
+            ->where('schedules.is_active', true)
+            ->select([
+                'schedules.*',
+                'rooms.name as room_name',
+                'rooms.code as room_code',
+                DB::raw("COALESCE(NULLIF(TRIM(CONCAT(users.first_name, ' ', users.last_name)), ''), users.name, 'Enseignant non assigné') as professor_name"),
+                'modules.name as module_name',
+                'groups.name as group_name',
+            ])
             ->get();
 
         $conflicts = [];
         $seenRooms = [];
         $seenProfs = [];
-        $seenGroups = [];
 
         foreach ($schedules as $s) {
-            $key = "{$s->day_of_week}_{$s->start_time}_{$s->end_time}";
+            $startTime = substr((string) $s->start_time, 0, 5);
+            $endTime = substr((string) $s->end_time, 0, 5);
+            $dayName = self::DAYS[$s->day_of_week] ?? "Jour {$s->day_of_week}";
+            $key = "{$s->day_of_week}_{$startTime}_{$endTime}";
 
-            // Check Room clash
+            // Check Room collision
             if ($s->room_id) {
                 if (isset($seenRooms[$key][$s->room_id])) {
+                    $other = $seenRooms[$key][$s->room_id];
                     $conflicts[] = [
                         'type' => 'ROOM_COLLISION',
+                        'type_label' => 'Collision de Salle',
                         'schedule_id' => $s->id,
-                        'conflicting_schedule_id' => $seenRooms[$key][$s->room_id],
-                        'description' => "Double réservation détectée pour la salle #{$s->room_id} le jour {$s->day_of_week} à {$s->start_time}.",
+                        'conflicting_schedule_id' => $other->id,
+                        'day_of_week' => $s->day_of_week,
+                        'day_name' => $dayName,
+                        'start_time' => $startTime,
+                        'end_time' => $endTime,
+                        'room_name' => $s->room_name ?: "Salle #{$s->room_id}",
+                        'professor_name' => $s->professor_name,
+                        'module_name' => $s->module_name ?: "Module #{$s->module_id}",
+                        'group_name' => $s->group_name ?: "Groupe #{$s->group_id}",
+                        'reason' => "Double réservation pour la salle '{$s->room_name}' (occupée simultanément par {$s->group_name} et {$other->group_name}).",
+                        'description' => "La salle '{$s->room_name}' est réservée en même temps pour '{$s->module_name}' et '{$other->module_name}'.",
                         'severity' => 'CRITICAL',
                     ];
                 } else {
-                    $seenRooms[$key][$s->room_id] = $s->id;
+                    $seenRooms[$key][$s->room_id] = $s;
                 }
             }
 
-            // Check Professor clash
+            // Check Professor overlap
             if ($s->professor_id) {
                 if (isset($seenProfs[$key][$s->professor_id])) {
+                    $otherProf = $seenProfs[$key][$s->professor_id];
                     $conflicts[] = [
                         'type' => 'PROFESSOR_OVERLAP',
+                        'type_label' => 'Chevauchement Enseignant',
                         'schedule_id' => $s->id,
-                        'conflicting_schedule_id' => $seenProfs[$key][$s->professor_id],
-                        'description' => "L'enseignant #{$s->professor_id} est programmé sur 2 cours simultanés le jour {$s->day_of_week} à {$s->start_time}.",
+                        'conflicting_schedule_id' => $otherProf->id,
+                        'day_of_week' => $s->day_of_week,
+                        'day_name' => $dayName,
+                        'start_time' => $startTime,
+                        'end_time' => $endTime,
+                        'room_name' => $s->room_name ?: "Salle #{$s->room_id}",
+                        'professor_name' => $s->professor_name,
+                        'module_name' => $s->module_name ?: "Module #{$s->module_id}",
+                        'group_name' => $s->group_name ?: "Groupe #{$s->group_id}",
+                        'reason' => "L'enseignant {$s->professor_name} est planifié sur deux cours simultanés.",
+                        'description' => "Double cours simultané pour {$s->professor_name} entre '{$s->module_name}' et '{$otherProf->module_name}'.",
                         'severity' => 'HIGH',
                     ];
                 } else {
-                    $seenProfs[$key][$s->professor_id] = $s->id;
+                    $seenProfs[$key][$s->professor_id] = $s;
                 }
             }
         }
@@ -275,7 +311,7 @@ class AiTimetableSchedulerService
     }
 
     /**
-     * Résout automatiquement un conflit en trouvant une salle et un créneau alternatif.
+     * Résout automatiquement un conflit en trouvant une salle libre alternative.
      */
     public function autoResolveConflict(int $scheduleId): array
     {
@@ -312,15 +348,80 @@ class AiTimetableSchedulerService
 
             return [
                 'success' => true,
-                'message' => "Conflit résolu avec succès ! La séance a été réassignée à la salle '{$freeRoom->name}'.",
+                'message' => "Conflit résolu ! La séance a été réassignée à la salle '{$freeRoom->name}'.",
                 'new_room_id' => $freeRoom->id,
                 'new_room_name' => $freeRoom->name,
             ];
         }
 
+        // Si aucune salle libre au même créneau, déplacer vers un créneau libre
+        foreach ([1, 2, 3, 4, 5] as $day) {
+            foreach (self::TIME_SLOTS as $slot) {
+                foreach ($rooms as $r) {
+                    $slotOccupied = DB::table('schedules')
+                        ->where('academic_year_id', $schedule->academic_year_id)
+                        ->where('day_of_week', $day)
+                        ->where('room_id', $r->id)
+                        ->where('id', '!=', $scheduleId)
+                        ->where(function ($q) use ($slot) {
+                            $q->where('start_time', '<', $slot['end'])->where('end_time', '>', $slot['start']);
+                        })
+                        ->exists();
+
+                    if (! $slotOccupied) {
+                        $schedule->update([
+                            'day_of_week' => $day,
+                            'start_time' => $slot['start'],
+                            'end_time' => $slot['end'],
+                            'room_id' => $r->id,
+                        ]);
+
+                        return [
+                            'success' => true,
+                            'message' => "Conflit résolu ! La séance a été déplacée au ".self::DAYS[$day]." ({$slot['start']}-{$slot['end']}) dans la salle '{$r->name}'.",
+                            'new_room_id' => $r->id,
+                            'new_room_name' => $r->name,
+                        ];
+                    }
+                }
+            }
+        }
+
         return [
             'success' => false,
-            'message' => 'Aucune salle libre trouvée sur ce créneau. Un changement de jour/créneau est nécessaire.',
+            'message' => 'Aucune salle libre trouvée pour ce créneau.',
+        ];
+    }
+
+    /**
+     * Résout automatiquement TOUS les conflits d'un coup.
+     */
+    public function autoResolveAllConflicts(int $academicYearId): array
+    {
+        $scan = $this->scanConflicts($academicYearId);
+        $conflicts = $scan['conflicts'] ?? [];
+
+        if (empty($conflicts)) {
+            return [
+                'success' => true,
+                'resolved_count' => 0,
+                'message' => 'Aucun conflit à résoudre. La grille est 100% saine !',
+            ];
+        }
+
+        $resolved = 0;
+        foreach ($conflicts as $conf) {
+            $res = $this->autoResolveConflict($conf['schedule_id']);
+            if ($res['success'] ?? false) {
+                $resolved++;
+            }
+        }
+
+        return [
+            'success' => true,
+            'resolved_count' => $resolved,
+            'total_conflicts' => count($conflicts),
+            'message' => "L'optimiseur IA a résolu avec succès {$resolved} conflits sur " . count($conflicts) . ' !',
         ];
     }
 
