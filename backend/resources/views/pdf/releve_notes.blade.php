@@ -7,10 +7,10 @@
     /* Document Title Banner */
     .doc-title-container {
         text-align: center;
-        margin: 0 0 7px 0;
+        margin: 0 0 8px 0;
     }
     .doc-title {
-        font-size: 12.5pt;
+        font-size: 13pt;
         font-weight: 900;
         color: #002e5b;
         letter-spacing: 1.5px;
@@ -20,7 +20,7 @@
         padding-bottom: 2px;
     }
     .doc-subtitle {
-        font-size: 7.5pt;
+        font-size: 7.8pt;
         font-weight: 800;
         color: #475569;
         text-transform: uppercase;
@@ -33,9 +33,9 @@
         width: 100%;
         border: 1.2px solid #002e5b;
         border-radius: 5px;
-        padding: 4.5px 8px;
+        padding: 5.5px 10px;
         background-color: #f8fafc;
-        margin-bottom: 7px;
+        margin-bottom: 8px;
         box-sizing: border-box;
     }
     .student-card table { 
@@ -43,7 +43,7 @@
         border-collapse: collapse; 
     }
     .student-card td { 
-        padding: 2px 4px; 
+        padding: 2.5px 5px; 
         vertical-align: middle; 
     }
     .student-card .label { 
@@ -51,20 +51,20 @@
         font-weight: 800; 
         width: 17%; 
         text-transform: uppercase; 
-        font-size: 6.8pt; 
+        font-size: 7pt; 
     }
     .student-card .val { 
         font-weight: 900; 
         color: #002e5b; 
-        font-size: 8pt; 
+        font-size: 8.5pt; 
     }
 
     /* Unified Grade Tables */
     .grades-table {
         width: 100%;
         border-collapse: collapse;
-        margin-bottom: 6px;
-        font-size: 7.2pt;
+        margin-bottom: 8px;
+        font-size: 7.8pt;
         border: 1.2px solid #002e5b;
         box-sizing: border-box;
     }
@@ -73,15 +73,15 @@
     .sem-main-header td {
         background-color: #002e5b !important;
         color: #ffffff !important;
-        padding: 3.5px 8px;
-        font-size: 7.8pt;
+        padding: 4px 8px;
+        font-size: 8.2pt;
         font-weight: 900;
         text-transform: uppercase;
         border-bottom: 1.2px solid #002e5b;
     }
     .sem-title-text {
         text-align: left;
-        letter-spacing: 0.5px;
+        letter-spacing: 0.6px;
     }
     .sem-avg-text {
         text-align: right;
@@ -90,21 +90,21 @@
     }
 
     .grades-sub-header th {
-        padding: 3px 6px;
+        padding: 3.5px 6px;
         background-color: #1e293b;
         color: #ffffff;
         font-weight: 900;
-        font-size: 6.8pt;
+        font-size: 7pt;
         text-align: center;
         text-transform: uppercase;
         border-right: 0.5px solid #334155;
         border-bottom: 0.5px solid #cbd5e1;
     }
     .grades-table td {
-        padding: 2.8px 6px;
+        padding: 3.5px 6px;
         border-bottom: 0.5px solid #cbd5e1;
         border-right: 0.5px solid #cbd5e1;
-        font-size: 7.2pt;
+        font-size: 7.8pt;
     }
     .grades-table tr:nth-child(even) td { 
         background-color: #f8fafc; 
@@ -114,8 +114,8 @@
         background-color: #e2e8f0 !important;
         font-weight: 900;
         color: #002e5b;
-        font-size: 7.5pt;
-        padding: 3px 6px;
+        font-size: 8pt;
+        padding: 3.5px 6px;
         border-top: 1.2px solid #002e5b;
     }
 
@@ -123,28 +123,28 @@
     .badge-v { 
         background-color: #15803d; 
         color: #ffffff; 
-        padding: 1px 5px; 
+        padding: 1.2px 6px; 
         border-radius: 3px; 
         font-weight: 900; 
-        font-size: 6.2pt; 
+        font-size: 6.5pt; 
         display: inline-block; 
     }
     .badge-vcomp { 
         background-color: #4338ca; 
         color: #ffffff; 
-        padding: 1px 5px; 
+        padding: 1.2px 6px; 
         border-radius: 3px; 
         font-weight: 900; 
-        font-size: 6.2pt; 
+        font-size: 6.5pt; 
         display: inline-block; 
     }
     .badge-nv { 
         background-color: #be123c; 
         color: #ffffff; 
-        padding: 1px 5px; 
+        padding: 1.2px 6px; 
         border-radius: 3px; 
         font-weight: 900; 
-        font-size: 6.2pt; 
+        font-size: 6.5pt; 
         display: inline-block; 
     }
 
@@ -152,24 +152,24 @@
     .result-box {
         border: 1.5px solid #002e5b;
         border-radius: 5px;
-        padding: 4.5px 8px;
+        padding: 5.5px 10px;
         text-align: center;
-        margin-bottom: 6px;
+        margin-bottom: 8px;
         background-color: #f8fafc;
         box-sizing: border-box;
     }
     .result-main {
-        font-size: 8.8pt;
+        font-size: 9.5pt;
         font-weight: 900;
         color: #002e5b;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        letter-spacing: 0.6px;
     }
     .result-sub {
-        font-size: 7.8pt;
+        font-size: 8.2pt;
         color: #1e293b;
         font-weight: 900;
-        margin-top: 1.5px;
+        margin-top: 2px;
     }
 </style>
 @endsection
@@ -236,7 +236,7 @@
     <tr>
         <td style="font-family: monospace; font-weight: 900; color: #002e5b;">{{ $module['code'] ?? 'MOD1' }}</td>
         <td style="font-weight: 800; color: #1e293b;">{{ $module['name'] ?? 'Module' }}</td>
-        <td style="text-align: center; font-size: 6.8pt; color: #475569; font-weight: bold;">{{ $module['session'] ?? 'Session Normale' }}</td>
+        <td style="text-align: center; font-size: 7.2pt; color: #475569; font-weight: bold;">{{ $module['session'] ?? 'Session Normale' }}</td>
         <td style="text-align: center; font-family: monospace; font-weight: 900; color: {{ ($module['is_validated'] ?? false) ? '#15803d' : '#b91c1c' }};">
             {{ number_format($module['score'] ?? 0, 2) }}
         </td>
@@ -257,7 +257,7 @@
     @endforelse
     <tr class="sem-footer-tr">
         <td colspan="3" style="text-align: right;">RÉSULTAT SEMESTRE 1 :</td>
-        <td style="text-align: center; font-family: monospace; font-size: 7.8pt;">{{ number_format($oddAvg ?? 0, 2) }} / 20</td>
+        <td style="text-align: center; font-family: monospace; font-size: 8.2pt;">{{ number_format($oddAvg ?? 0, 2) }} / 20</td>
         <td style="text-align: center;">
             <span class="{{ ($oddAvg ?? 0) >= 10 ? 'badge-v' : 'badge-vcomp' }}">{{ ($oddAvg ?? 0) >= 10 ? 'VALIDÉ' : 'V. COMP' }}</span>
         </td>
@@ -285,7 +285,7 @@
     <tr>
         <td style="font-family: monospace; font-weight: 900; color: #002e5b;">{{ $module['code'] ?? 'MOD2' }}</td>
         <td style="font-weight: 800; color: #1e293b;">{{ $module['name'] ?? 'Module' }}</td>
-        <td style="text-align: center; font-size: 6.8pt; color: #475569; font-weight: bold;">{{ $module['session'] ?? 'Session Normale' }}</td>
+        <td style="text-align: center; font-size: 7.2pt; color: #475569; font-weight: bold;">{{ $module['session'] ?? 'Session Normale' }}</td>
         <td style="text-align: center; font-family: monospace; font-weight: 900; color: {{ ($module['is_validated'] ?? false) ? '#15803d' : '#b91c1c' }};">
             {{ number_format($module['score'] ?? 0, 2) }}
         </td>
@@ -306,7 +306,7 @@
     @endforelse
     <tr class="sem-footer-tr">
         <td colspan="3" style="text-align: right;">RÉSULTAT SEMESTRE 2 :</td>
-        <td style="text-align: center; font-family: monospace; font-size: 7.8pt;">{{ number_format($evenAvg ?? 0, 2) }} / 20</td>
+        <td style="text-align: center; font-family: monospace; font-size: 8.2pt;">{{ number_format($evenAvg ?? 0, 2) }} / 20</td>
         <td style="text-align: center;">
             <span class="{{ ($evenAvg ?? 0) >= 10 ? 'badge-v' : 'badge-vcomp' }}">{{ ($evenAvg ?? 0) >= 10 ? 'VALIDÉ' : 'V. COMP' }}</span>
         </td>
@@ -329,13 +329,13 @@
 @endsection
 
 @section('signature_right')
-    <div style="font-size: 7.5pt; color: #334155; text-align: right;">Fait à Fès, le {{ $date ?? date('d/m/Y') }}</div>
-    <div style="font-size: 6.8pt; font-weight: bold; color: #475569; margin-top: 1px; text-align: right;">Pour le Directeur et par délégation</div>
-    <div style="font-size: 8pt; font-weight: 900; color: #002e5b; text-transform: uppercase; margin-top: 1px; text-align: right;">
+    <div style="font-size: 7.8pt; color: #334155; text-align: right;">Fait à Fès, le {{ $date ?? date('d/m/Y') }}</div>
+    <div style="font-size: 7pt; font-weight: bold; color: #475569; margin-top: 1.5px; text-align: right;">Pour le Directeur et par délégation</div>
+    <div style="font-size: 8.2pt; font-weight: 900; color: #002e5b; text-transform: uppercase; margin-top: 1px; text-align: right;">
         LE DIRECTEUR ADJOINT AUX AFFAIRES PÉDAGOGIQUES
     </div>
-    <div style="margin-top: 2px; text-align: right;">
-        <svg width="100" height="24" viewBox="0 0 120 35" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <div style="margin-top: 3px; text-align: right;">
+        <svg width="105" height="25" viewBox="0 0 120 35" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M10,20 Q15,8 20,16 T30,12 T40,20 T50,12 T60,20 T70,8 T80,20 T90,12 T100,16 T110,20" stroke="#002e5b" stroke-width="2" fill="none" stroke-linecap="round"/>
         </svg>
     </div>

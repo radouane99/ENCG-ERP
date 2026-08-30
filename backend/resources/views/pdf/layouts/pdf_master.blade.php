@@ -7,7 +7,7 @@
     <style>
         @page {
             size: A4 portrait;
-            margin: 7mm 10mm 7mm 10mm;
+            margin: 7mm 9mm 7mm 9mm;
         }
         * { box-sizing: border-box; }
         body {
@@ -16,18 +16,18 @@
             padding: 0;
             color: #1e293b;
             background-color: #ffffff;
-            font-size: 8.5pt;
-            line-height: 1.3;
+            font-size: 8.8pt;
+            line-height: 1.35;
         }
         
         /* Full Page Double Border Frame covering 100% of A4 */
         .page-border-frame {
             position: fixed;
             top: -4.5mm;
-            left: -6mm;
-            right: -6mm;
+            left: -5.5mm;
+            right: -5.5mm;
             bottom: -4.5mm;
-            border: 3px double #002e5b;
+            border: 3.5px double #002e5b;
             pointer-events: none;
             z-index: -100;
         }
@@ -35,7 +35,7 @@
         /* Standardized Header */
         .official-logos-header {
             width: 100%;
-            border-bottom: 1.5px solid #002e5b;
+            border-bottom: 1.8px solid #002e5b;
             padding-bottom: 5px;
             margin-bottom: 8px;
         }
@@ -43,7 +43,7 @@
         /* Watermark Background */
         .watermark-bg {
             position: fixed;
-            top: 40%;
+            top: 42%;
             left: 5%;
             width: 90%;
             text-align: center;
@@ -60,7 +60,7 @@
         /* Standardized Footer */
         .footer-container {
             margin-top: 10px;
-            border-top: 1px dashed #cbd5e1;
+            border-top: 1.2px dashed #cbd5e1;
             padding-top: 6px;
         }
         .footer-table {
@@ -68,7 +68,7 @@
             border-collapse: collapse;
         }
         .footer-table td {
-            vertical-align: top;
+            vertical-align: middle;
         }
         .footer-left {
             width: 48%;
@@ -79,12 +79,12 @@
         .footer-right {
             width: 52%;
             text-align: right;
-            vertical-align: top;
+            vertical-align: middle;
         }
 
         .qr-box {
-            width: 58px;
-            height: 58px;
+            width: 60px;
+            height: 60px;
             float: left;
             margin-right: 10px;
         }
@@ -95,7 +95,7 @@
 
         .encg-bottom-bar {
             margin-top: 6px;
-            padding-top: 4px;
+            padding-top: 3px;
             border-top: 0.5px solid #e2e8f0;
             text-align: center;
             font-size: 6.8pt;
@@ -131,7 +131,7 @@
                             <img src="{{ $qrBase64 }}" alt="QR Code Sécurité">
                         @endif
                     </div>
-                    <div style="padding-top: 2px;">
+                    <div>
                         <strong style="color: #002e5b; font-size: 8pt; text-transform: uppercase;">Document Officiel Vérifié</strong><br>
                         <span style="font-size: 7pt; color: #64748b;">
                             Généré par le Système ERP ENCG Fès.<br>
@@ -149,10 +149,10 @@
                         <div style="font-size: 7pt; font-weight: bold; color: #64748b; margin-top: 2px;">
                             Pour le Directeur et par délégation
                         </div>
-                        <div style="font-size: 8.5pt; font-weight: 900; color: #002e5b; text-transform: uppercase; margin-top: 2px;">
+                        <div style="font-size: 8.5pt; font-weight: 900; color: #002e5b; text-transform: uppercase; margin-top: 1px;">
                             {{ $signatoryTitle ?? 'LE SECRÉTAIRE GÉNÉRAL' }}
                         </div>
-                        <div style="margin-top: 4px;">
+                        <div style="margin-top: 3px;">
                             <svg width="100" height="26" viewBox="0 0 120 32" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M8,22 C16,10 24,4 30,4 C35,4 32,22 36,24 C40,26 45,14 50,10 C55,4 60,18 65,16 C70,14 82,6 90,14 C98,10 102,4 112,8" stroke="#059669" stroke-width="2" stroke-linecap="round"/>
                             </svg>
