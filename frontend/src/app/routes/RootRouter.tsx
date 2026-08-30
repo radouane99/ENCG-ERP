@@ -397,8 +397,9 @@ export default function RootRouter() {
           <Route element={<ProtectedRoute roles={TEACHING_ROLES} />}>
             <Route path="/timetable" element={<TimetablePage />} />
             <Route path="/academic/timetable" element={<TimetableAdminView />} />
-            <Route path="/admin/schedules/engine" element={<AdminTimetableEnginePage />} />
-            <Route path="/admin/timetable/engine" element={<AdminTimetableEnginePage />} />
+            <Route path="/admin/ai-timetable-scheduler" element={<AdminAiTimetableSchedulerPage />} />
+            <Route path="/admin/schedules/engine" element={<AdminAiTimetableSchedulerPage />} />
+            <Route path="/admin/timetable/engine" element={<AdminAiTimetableSchedulerPage />} />
             <Route path="/admin/timetable/calendar" element={<InteractiveCalendarPage isAdmin={true} />} />
             <Route path="/professor/schedules" element={<InteractiveCalendarPage isAdmin={false} />} />
             <Route path="/admin/academic-calendar" element={<AdminAcademicCalendarPage />} />
