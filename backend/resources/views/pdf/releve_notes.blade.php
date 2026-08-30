@@ -2,101 +2,85 @@
 
 @section('title', 'Relevé de Notes Officiel — ENCG Fès')
 
-@section('fill_page', '1')
-
 @section('styles')
 <style>
-    @page {
-        size: A4 portrait;
-        margin: 3mm 7mm 2mm 7mm;
-    }
-
-    /*
-     * Fill-page shell pushes QR/signatures to the bottom border.
-     * Content spacing scales to occupy the sheet without a 2nd page.
-     */
-    .footer-container {
-        position: static;
-        margin-top: 0;
-        padding-top: 0;
-    }
-
     /* Document Title Banner */
     .doc-title-container {
         text-align: center;
-        margin: 0 0 8px 0;
+        margin: 0 0 6px 0;
         page-break-inside: avoid;
     }
     .doc-title {
-        font-size: 12.5pt;
+        font-size: 12pt;
         font-weight: 900;
         color: #002e5b;
-        letter-spacing: 1.2px;
+        letter-spacing: 1.5px;
         text-transform: uppercase;
-        border-bottom: 1.5px solid #002e5b;
+        border-bottom: 1.8px solid #002e5b;
         display: inline-block;
-        padding-bottom: 3px;
+        padding-bottom: 2px;
     }
     .doc-subtitle {
         font-size: 7.2pt;
         font-weight: 800;
         color: #475569;
         text-transform: uppercase;
-        margin-top: 4px;
-        letter-spacing: 0.6px;
+        margin-top: 2px;
+        letter-spacing: 0.8px;
     }
 
     /* Student Information Card */
     .student-card {
         width: 100%;
-        border: 1px solid #002e5b;
+        border: 1.2px solid #002e5b;
         border-radius: 4px;
-        padding: 7px 10px;
+        padding: 4.5px 8px;
         background-color: #f8fafc;
-        margin-bottom: 10px;
+        margin-bottom: 6px;
         box-sizing: border-box;
         page-break-inside: avoid;
     }
-    .student-card table {
-        width: 100%;
-        border-collapse: collapse;
+    .student-card table { 
+        width: 100%; 
+        border-collapse: collapse; 
     }
-    .student-card td {
-        padding: 3.5px 5px;
-        vertical-align: middle;
+    .student-card td { 
+        padding: 1.5px 3px; 
+        vertical-align: middle; 
     }
-    .student-card .label {
-        color: #475569;
-        font-weight: 800;
-        width: 16%;
-        text-transform: uppercase;
-        font-size: 6.8pt;
+    .student-card .label { 
+        color: #475569; 
+        font-weight: 800; 
+        width: 17%; 
+        text-transform: uppercase; 
+        font-size: 6.8pt; 
     }
-    .student-card .val {
-        font-weight: 900;
-        color: #002e5b;
-        font-size: 8pt;
+    .student-card .val { 
+        font-weight: 900; 
+        color: #002e5b; 
+        font-size: 8pt; 
     }
 
     /* Unified Grade Tables */
     .grades-table {
         width: 100%;
         border-collapse: collapse;
-        margin-bottom: 10px;
+        margin-bottom: 5px;
         font-size: 7.4pt;
-        border: 1px solid #002e5b;
+        border: 1.2px solid #002e5b;
         box-sizing: border-box;
+        page-break-inside: avoid;
     }
-
+    
     /* Semester Top Banner as 1st Row */
     .sem-main-header td {
         background-color: #002e5b !important;
         color: #ffffff !important;
-        padding: 5px 8px;
+        padding: 3px 8px;
         font-size: 7.8pt;
         font-weight: 900;
         text-transform: uppercase;
-        border-bottom: 1px solid #002e5b;
+        border-bottom: 1.2px solid #002e5b;
     }
     .sem-title-text {
         text-align: left;
@@ -109,7 +93,7 @@
     }
 
     .grades-sub-header th {
-        padding: 4.5px 6px;
+        padding: 2.8px 5px;
         background-color: #1e293b;
         color: #ffffff;
         font-weight: 900;
@@ -120,76 +104,76 @@
         border-bottom: 0.5px solid #cbd5e1;
     }
     .grades-table td {
-        padding: 4.5px 6px;
+        padding: 2.8px 5px;
         border-bottom: 0.5px solid #cbd5e1;
         border-right: 0.5px solid #cbd5e1;
         font-size: 7.4pt;
     }
-    .grades-table tr:nth-child(even) td {
-        background-color: #f8fafc;
+    .grades-table tr:nth-child(even) td { 
+        background-color: #f8fafc; 
     }
 
     .sem-footer-tr td {
         background-color: #e2e8f0 !important;
         font-weight: 900;
         color: #002e5b;
-        font-size: 7.4pt;
-        padding: 4.5px 6px;
-        border-top: 1px solid #002e5b;
+        font-size: 7.5pt;
+        padding: 2.5px 5px;
+        border-top: 1.2px solid #002e5b;
     }
 
     /* Status Badges */
-    .badge-v {
-        background-color: #15803d;
-        color: #ffffff;
-        padding: 2px 6px;
-        border-radius: 2px;
-        font-weight: 900;
-        font-size: 6.8pt;
-        display: inline-block;
+    .badge-v { 
+        background-color: #15803d; 
+        color: #ffffff; 
+        padding: 1px 5px; 
+        border-radius: 2px; 
+        font-weight: 900; 
+        font-size: 6.2pt; 
+        display: inline-block; 
     }
-    .badge-vcomp {
-        background-color: #4338ca;
-        color: #ffffff;
-        padding: 2px 6px;
-        border-radius: 2px;
-        font-weight: 900;
-        font-size: 6.8pt;
-        display: inline-block;
+    .badge-vcomp { 
+        background-color: #4338ca; 
+        color: #ffffff; 
+        padding: 1px 5px; 
+        border-radius: 2px; 
+        font-weight: 900; 
+        font-size: 6.2pt; 
+        display: inline-block; 
     }
-    .badge-nv {
-        background-color: #be123c;
-        color: #ffffff;
-        padding: 2px 6px;
-        border-radius: 2px;
-        font-weight: 900;
-        font-size: 6.8pt;
-        display: inline-block;
+    .badge-nv { 
+        background-color: #be123c; 
+        color: #ffffff; 
+        padding: 1px 5px; 
+        border-radius: 2px; 
+        font-weight: 900; 
+        font-size: 6.2pt; 
+        display: inline-block; 
     }
 
     /* Annual Consolidation Box */
     .result-box {
-        border: 1.5px solid #002e5b;
+        border: 1.2px solid #002e5b;
         border-radius: 4px;
-        padding: 10px 12px;
+        padding: 4.5px 8px;
         text-align: center;
-        margin-bottom: 0;
+        margin-bottom: 4px;
         background-color: #f8fafc;
         box-sizing: border-box;
         page-break-inside: avoid;
     }
     .result-main {
-        font-size: 9pt;
+        font-size: 8.8pt;
         font-weight: 900;
         color: #002e5b;
         text-transform: uppercase;
-        letter-spacing: 0.4px;
+        letter-spacing: 0.5px;
     }
     .result-sub {
-        font-size: 7.8pt;
+        font-size: 7.6pt;
         color: #1e293b;
         font-weight: 900;
-        margin-top: 4px;
+        margin-top: 1.5px;
     }
 </style>
 @endsection
@@ -235,21 +219,20 @@
     </table>
 </div>
 
-{{-- ── SEMESTRE IMPAIR TABLE ── --}}
+{{-- ── SEMESTRE 1 TABLE ── --}}
 <table class="grades-table" width="100%" cellpadding="0" cellspacing="0">
     <tr class="sem-main-header">
-        <td colspan="4" class="sem-title-text">
-            SEMESTRE {{ preg_replace('/^S/i', '', (string) ($oddSemesterLabel ?? '1')) }}
+        <td colspan="3" class="sem-title-text">
+            SEMESTRE 1
         </td>
         <td colspan="2" class="sem-avg-text">
-            MOYENNE {{ $oddSemesterLabel ?? 'S1' }} : {{ number_format($oddAvg ?? 0, 2) }} / 20
+            MOYENNE S1 : {{ number_format($oddAvg ?? 0, 2) }} / 20
         </td>
     </tr>
     <tr class="grades-sub-header">
-        <th style="text-align: left; width: 14%;">CODE</th>
-        <th style="text-align: left; width: 38%;">INTITULÉ DU MODULE</th>
+        <th style="text-align: left; width: 17%;">CODE MODULE</th>
+        <th style="text-align: left; width: 45%;">INTITULÉ DU MODULE</th>
         <th style="width: 14%;">SESSION</th>
-        <th style="width: 10%;">ANNÉE</th>
         <th style="width: 12%;">NOTE / 20</th>
         <th style="width: 12%;">RÉSULTAT</th>
     </tr>
@@ -257,8 +240,7 @@
     <tr>
         <td style="font-family: monospace; font-weight: 900; color: #002e5b;">{{ $module['code'] ?? 'MOD1' }}</td>
         <td style="font-weight: 800; color: #1e293b;">{{ $module['name'] ?? 'Module' }}</td>
-        <td style="text-align: center; font-size: 7pt; color: #475569; font-weight: bold;">{{ $module['session'] ?? 'Session Normale' }}</td>
-        <td style="text-align: center; font-family: monospace; font-weight: 900; color: #002e5b;">{{ $module['academic_year'] ?? '—' }}</td>
+        <td style="text-align: center; font-size: 6.8pt; color: #475569; font-weight: bold;">{{ $module['session'] ?? 'Session Normale' }}</td>
         <td style="text-align: center; font-family: monospace; font-weight: 900; color: {{ ($module['is_validated'] ?? false) ? '#15803d' : '#b91c1c' }};">
             {{ number_format($module['score'] ?? 0, 2) }}
         </td>
@@ -274,33 +256,32 @@
     </tr>
     @empty
     <tr>
-        <td colspan="6" style="text-align: center; color: #94a3b8; font-style: italic; padding: 8px;">Aucun module enregistré pour ce semestre.</td>
+        <td colspan="5" style="text-align: center; color: #94a3b8; font-style: italic; padding: 4px;">Aucun module enregistré pour le Semestre 1.</td>
     </tr>
     @endforelse
     <tr class="sem-footer-tr">
-        <td colspan="4" style="text-align: right;">RÉSULTAT {{ $oddSemesterLabel ?? 'S1' }} :</td>
-        <td style="text-align: center; font-family: monospace; font-size: 8.5pt;">{{ number_format($oddAvg ?? 0, 2) }} / 20</td>
+        <td colspan="3" style="text-align: right;">RÉSULTAT SEMESTRE 1 :</td>
+        <td style="text-align: center; font-family: monospace; font-size: 7.8pt;">{{ number_format($oddAvg ?? 0, 2) }} / 20</td>
         <td style="text-align: center;">
             <span class="{{ ($oddAvg ?? 0) >= 10 ? 'badge-v' : 'badge-vcomp' }}">{{ ($oddAvg ?? 0) >= 10 ? 'VALIDÉ' : 'V. COMP' }}</span>
         </td>
     </tr>
 </table>
 
-{{-- ── SEMESTRE PAIR TABLE ── --}}
+{{-- ── SEMESTRE 2 TABLE ── --}}
 <table class="grades-table" width="100%" cellpadding="0" cellspacing="0">
     <tr class="sem-main-header">
-        <td colspan="4" class="sem-title-text">
-            SEMESTRE {{ preg_replace('/^S/i', '', (string) ($evenSemesterLabel ?? '2')) }}
+        <td colspan="3" class="sem-title-text">
+            SEMESTRE 2
         </td>
         <td colspan="2" class="sem-avg-text">
-            MOYENNE {{ $evenSemesterLabel ?? 'S2' }} : {{ number_format($evenAvg ?? 0, 2) }} / 20
+            MOYENNE S2 : {{ number_format($evenAvg ?? 0, 2) }} / 20
         </td>
     </tr>
     <tr class="grades-sub-header">
-        <th style="text-align: left; width: 14%;">CODE</th>
-        <th style="text-align: left; width: 38%;">INTITULÉ DU MODULE</th>
+        <th style="text-align: left; width: 17%;">CODE MODULE</th>
+        <th style="text-align: left; width: 45%;">INTITULÉ DU MODULE</th>
         <th style="width: 14%;">SESSION</th>
-        <th style="width: 10%;">ANNÉE</th>
         <th style="width: 12%;">NOTE / 20</th>
         <th style="width: 12%;">RÉSULTAT</th>
     </tr>
@@ -308,8 +289,7 @@
     <tr>
         <td style="font-family: monospace; font-weight: 900; color: #002e5b;">{{ $module['code'] ?? 'MOD2' }}</td>
         <td style="font-weight: 800; color: #1e293b;">{{ $module['name'] ?? 'Module' }}</td>
-        <td style="text-align: center; font-size: 7pt; color: #475569; font-weight: bold;">{{ $module['session'] ?? 'Session Normale' }}</td>
-        <td style="text-align: center; font-family: monospace; font-weight: 900; color: #002e5b;">{{ $module['academic_year'] ?? '—' }}</td>
+        <td style="text-align: center; font-size: 6.8pt; color: #475569; font-weight: bold;">{{ $module['session'] ?? 'Session Normale' }}</td>
         <td style="text-align: center; font-family: monospace; font-weight: 900; color: {{ ($module['is_validated'] ?? false) ? '#15803d' : '#b91c1c' }};">
             {{ number_format($module['score'] ?? 0, 2) }}
         </td>
@@ -325,12 +305,12 @@
     </tr>
     @empty
     <tr>
-        <td colspan="6" style="text-align: center; color: #94a3b8; font-style: italic; padding: 8px;">Aucun module enregistré pour ce semestre.</td>
+        <td colspan="5" style="text-align: center; color: #94a3b8; font-style: italic; padding: 4px;">Aucun module enregistré pour le Semestre 2.</td>
     </tr>
     @endforelse
     <tr class="sem-footer-tr">
-        <td colspan="4" style="text-align: right;">RÉSULTAT {{ $evenSemesterLabel ?? 'S2' }} :</td>
-        <td style="text-align: center; font-family: monospace; font-size: 8.5pt;">{{ number_format($evenAvg ?? 0, 2) }} / 20</td>
+        <td colspan="3" style="text-align: right;">RÉSULTAT SEMESTRE 2 :</td>
+        <td style="text-align: center; font-family: monospace; font-size: 7.8pt;">{{ number_format($evenAvg ?? 0, 2) }} / 20</td>
         <td style="text-align: center;">
             <span class="{{ ($evenAvg ?? 0) >= 10 ? 'badge-v' : 'badge-vcomp' }}">{{ ($evenAvg ?? 0) >= 10 ? 'VALIDÉ' : 'V. COMP' }}</span>
         </td>
@@ -354,12 +334,12 @@
 
 @section('signature_right')
     <div style="font-size: 7.5pt; color: #334155; text-align: right;">Fait à Fès, le {{ $date ?? date('d/m/Y') }}</div>
-    <div style="font-size: 6.5pt; font-weight: bold; color: #475569; margin-top: 3px; text-align: right;">Pour le Directeur et par délégation</div>
-    <div style="font-size: 8pt; font-weight: 900; color: #002e5b; text-transform: uppercase; margin-top: 3px; text-align: right;">
+    <div style="font-size: 6.5pt; font-weight: bold; color: #475569; margin-top: 1px; text-align: right;">Pour le Directeur et par délégation</div>
+    <div style="font-size: 7.8pt; font-weight: 900; color: #002e5b; text-transform: uppercase; margin-top: 1px; text-align: right;">
         LE DIRECTEUR ADJOINT AUX AFFAIRES PÉDAGOGIQUES
     </div>
-    <div style="margin-top: 6px; text-align: right;">
-        <svg width="95" height="24" viewBox="0 0 120 35" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <div style="margin-top: 2px; text-align: right;">
+        <svg width="95" height="22" viewBox="0 0 120 35" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M10,20 Q15,8 20,16 T30,12 T40,20 T50,12 T60,20 T70,8 T80,20 T90,12 T100,16 T110,20" stroke="#002e5b" stroke-width="2" fill="none" stroke-linecap="round"/>
         </svg>
     </div>
