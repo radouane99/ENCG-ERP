@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
-import { ArrowLeft, User, FileText, Mail, Phone, MapPin, GraduationCap, Calendar, Clock, Edit2, IdCard } from 'lucide-react'
+import { useParams, useNavigate } from 'react-router-dom'
+import { ArrowLeft, FileText, Mail, Phone, MapPin, GraduationCap, Calendar, Clock, Edit2 } from 'lucide-react'
 import api from '@shared/lib/api'
 import { toast } from 'sonner'
-import { cn } from '@shared/lib/utils'
 import StudentCardCreator from '../components/StudentCardCreator'
 
 export default function StudentDetailPage() {
@@ -17,7 +16,7 @@ export default function StudentDetailPage() {
       try {
         const res = await api.get(`/students/${id}`)
         setStudent(res.data.data)
-      } catch (err) {
+      } catch {
         toast.error('Étudiant introuvable.')
         navigate('/students')
       } finally {

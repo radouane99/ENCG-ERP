@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react'
 import {
   Calendar, ChevronLeft, ChevronRight, Download, Sparkles, Loader2,
-  BookOpen, Flag, GraduationCap, RefreshCw, Plus
+  RefreshCw,
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import api from '@shared/lib/api'
@@ -37,11 +37,10 @@ export default function AdminAcademicCalendarPage() {
   const year = currentDate.getFullYear()
   const month = currentDate.getMonth()
 
-  const firstDay = new Date(year, month, 1)
-  const lastDay = new Date(year, month + 1, 0)
-  const startWeekDay = (firstDay.getDay() + 6) % 7 // Monday = 0
-
   const calendarDays = useMemo(() => {
+    const firstDay = new Date(year, month, 1)
+    const lastDay = new Date(year, month + 1, 0)
+    const startWeekDay = (firstDay.getDay() + 6) % 7 // Monday = 0
     const days: (Date | null)[] = []
     for (let i = 0; i < startWeekDay; i++) days.push(null)
     for (let d = 1; d <= lastDay.getDate(); d++) days.push(new Date(year, month, d))
