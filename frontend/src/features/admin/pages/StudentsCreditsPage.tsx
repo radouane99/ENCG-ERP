@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { ShieldCheck, Search, Shield, AlertTriangle, Users, BookOpen, User, CheckCircle2, Loader2, Printer, Zap, Award, Sparkles, FileText } from 'lucide-react'
 import { studentsApi } from '@shared/api/students'
 import { toast } from 'sonner'
-import { openAuthenticatedUrl } from '@shared/lib/documentAccess'
+import { openAuthenticatedUrl, openCustomAttestationPdf, openStudentAttestationPdf } from '@shared/lib/documentAccess'
 
 export default function StudentsCreditsPage() {
   const [students, setStudents] = useState<any[]>([])
@@ -35,7 +35,7 @@ export default function StudentsCreditsPage() {
     setTimeout(() => {
       toast.dismiss()
       toast.success(`📜 Décision de Dérogation A4 générée pour ${fullName}`)
-      openAuthenticatedUrl(`/api/v1/enrollments/attestation-pdf?name=${encodeURIComponent(fullName)}&cne=${encodeURIComponent(student.cne || '')}&cin=${encodeURIComponent(student.cin || '')}&filiere=Dérogation Accordée (Plafond 36 ECTS)&group=Scolarité Réinscription Exceptionnelle`)
+      openStudentAttestationPdf(student.id, 'scolarite')
     }, 600)
   }
 

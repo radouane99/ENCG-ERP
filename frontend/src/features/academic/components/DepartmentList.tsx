@@ -71,6 +71,7 @@ export default function DepartmentList() {
       ]);
 
       const rawDepts = deptRes.data.data || [];
+      const rawProfs = profRes.data.data || [];
 
       // Enrich with real professor names and stats
       const enrichedDepts = rawDepts.map((d: any) => {
@@ -78,16 +79,25 @@ export default function DepartmentList() {
           ? d.head_name
           : '';
 
+        const matchedProfs = rawProfs.filter((p: any) => p.department_id === d.id || p.department?.id === d.id);
+        const profCount = d.professors_count !== undefined
+          ? d.professors_count
+          : (d.professors?.length ?? (matchedProfs.length || 0));
+
+        const filiereCount = d.filieres_count !== undefined
+          ? d.filieres_count
+          : (d.filieres?.length ?? 0);
+
         return {
           ...d,
           head_name: realHeadName,
-          professors_count: d.professors_count || 0,
-          filieres_count: d.filieres_count || 0
+          professors_count: profCount,
+          filieres_count: filiereCount
         };
       });
 
       setDepartments(enrichedDepts);
-      setProfessors(profRes.data.data || []);
+      setProfessors(rawProfs);
     } catch (error) {
       console.error("Erreur de chargement des départements", error);
       toast.error("Impossible de charger la liste des départements.");

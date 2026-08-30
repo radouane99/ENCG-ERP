@@ -87,8 +87,10 @@ class AdminDashboardController extends Controller
         foreach ($filieres as $index => $filiere) {
             $count = StudentPathway::where('filiere_id', $filiere->id)->where('is_current', true)->count();
             if ($count === 0) {
-                // Fallback to students enrolled in filiere directly
-                $count = Student::where('filiere_id', $filiere->id)->count();
+                // Fallback to students enrolled in filiere through pathways or registrations
+                $count = Student::whereHas('pathways', fn ($q) => $q->where('filiere_id', $filiere->id))
+                    ->orWhereHas('registrations', fn ($q) => $q->where('filiere_id', $filiere->id))
+                    ->count();
             }
             $filiereDistribution[] = [
                 'name' => $filiere->code ?: $filiere->name,

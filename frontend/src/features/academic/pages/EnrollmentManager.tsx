@@ -203,7 +203,7 @@ export default function EnrollmentManager() {
     setTimeout(() => {
       toast.dismiss();
       toast.success(`📜 Attestation d'Inscription (${s.first_name} ${s.last_name}) générée !`);
-      openAuthenticatedUrl(`/api/admin/students/${s.id}/attestation-pdf`);
+      openAuthenticatedUrl(`/api/v1/admin/students/${s.id}/attestation-pdf?type=scolarite`);
     }, 600);
   };
 

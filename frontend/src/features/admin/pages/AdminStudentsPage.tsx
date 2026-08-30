@@ -6,7 +6,7 @@ import { academicApi } from '@shared/api/academic'
 import EditStudentModal from '../components/EditStudentModal'
 import AddStudentModal from '../components/AddStudentModal'
 import { toast } from 'sonner'
-import { openAuthenticatedUrl } from '@shared/lib/documentAccess'
+import { openAuthenticatedUrl, openCustomAttestationPdf, openStudentAttestationPdf } from '@shared/lib/documentAccess'
 
 import { useTranslation } from 'react-i18next'
 import { Student } from '@/types/models'
@@ -104,7 +104,7 @@ export default function AdminStudentsPage() {
     setTimeout(() => {
       toast.dismiss()
       toast.success(`📜 Attestation A4 générée pour ${fullName}`)
-      openAuthenticatedUrl(`/api/v1/enrollments/attestation-pdf?name=${encodeURIComponent(fullName)}&cne=${encodeURIComponent(s.cne || '')}&cin=${encodeURIComponent(s.cin || '')}&filiere=${encodeURIComponent(s.current_filiere || 'Grande École ENCG')}&group=${encodeURIComponent(s.current_group || 'TC-S1-G1')}`)
+      openStudentAttestationPdf(s.id, 'scolarite')
     }, 600)
   }
 

@@ -210,7 +210,10 @@ class GroupController extends Controller
             return response()->json(['success' => false, 'message' => 'Aucun groupe trouvé.'], 404);
         }
 
-        $students = Student::where('filiere_id', $filiereId)->limit(50)->get();
+        $students = Student::whereHas('pathways', fn ($q) => $q->where('filiere_id', $filiereId))
+            ->orWhereHas('registrations', fn ($q) => $q->where('filiere_id', $filiereId))
+            ->limit(50)
+            ->get();
         $groupCount = $groups->count();
         $dispatched = 0;
 

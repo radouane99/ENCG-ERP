@@ -14,9 +14,13 @@ class DepartmentController extends Controller
      */
     public function index(): JsonResponse
     {
+        $departments = Department::withCount(['filieres', 'professors'])
+            ->with(['filieres:id,department_id,name,code', 'professors.user:id,name,first_name,last_name,email'])
+            ->get();
+
         return response()->json([
             'success' => true,
-            'data' => Department::all(),
+            'data' => $departments,
         ]);
     }
 
@@ -40,7 +44,7 @@ class DepartmentController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Département créé avec succès.',
-            'data' => $department,
+            'data' => $department->loadCount(['filieres', 'professors']),
         ], 201);
     }
 
@@ -49,9 +53,13 @@ class DepartmentController extends Controller
      */
     public function show(int $id): JsonResponse
     {
+        $department = Department::withCount(['filieres', 'professors'])
+            ->with(['filieres', 'professors.user'])
+            ->findOrFail($id);
+
         return response()->json([
             'success' => true,
-            'data' => Department::findOrFail($id),
+            'data' => $department,
         ]);
     }
 

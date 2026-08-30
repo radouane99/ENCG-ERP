@@ -3,7 +3,7 @@ import { Target, Users, LayoutGrid, CheckCircle2, AlertCircle, Download, FileTex
 import { cn } from '@shared/lib/utils';
 import { useTranslation } from 'react-i18next';
 import api from '@shared/lib/api';
-import { openAuthenticatedUrl } from '@shared/lib/documentAccess';
+import { openCustomAttestationPdf } from '@shared/lib/documentAccess';
 import { toast } from 'sonner';
 import PageHeader from '@shared/components/layout/PageHeader';
 
@@ -90,7 +90,13 @@ export default function AdminTafem() {
       setter(false);
       toast.dismiss();
       toast.success(`📜 PV de Délibération [${label}] généré avec succès !`);
-      openAuthenticatedUrl(`/api/v1/enrollments/attestation-pdf?name=${encodeURIComponent('DELIBERATION TAFEM ' + label)}&cne=PV-TAFEM-2026&cin=JURY-ENCG&filiere=Concours TAFEM 2026-2027&group=President du Jury Prof. EL AMRANI`);
+      void openCustomAttestationPdf({
+        name: `DELIBERATION TAFEM ${label}`,
+        cne: 'PV-TAFEM-2026',
+        cin: 'JURY-ENCG',
+        filiere: 'Concours TAFEM 2026-2027',
+        group: 'President du Jury Prof. EL AMRANI',
+      })
     }, 800);
   };
 

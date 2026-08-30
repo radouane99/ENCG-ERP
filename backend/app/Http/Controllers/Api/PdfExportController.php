@@ -340,34 +340,155 @@ class PdfExportController extends Controller
         return $pdf->download("Diplome_Etat_ENCG_{$student->cne}.pdf");
     }
 
-    public function downloadAttestationInscriptionPdf(Request $request, int $studentId)
+    public function downloadAttestationInscriptionPdf(Request $request, Student $student)
     {
-        $student = Student::with(['user', 'latestPathway.filiere'])->findOrFail($studentId);
+        $student->loadMissing(['user', 'latestPathway.filiere']);
 
-        $photoPath = null;
-        $photoDoc = StudentDocument::where('student_id', $studentId)->where('type', 'photo')->first();
-        if ($photoDoc?->file_path) {
-            $fullPath = storage_path('app/public/'.str_replace('/storage/', '', $photoDoc->file_path));
-            if (file_exists($fullPath)) {
-                $photoPath = $fullPath;
-            }
+        return $this->respondAttestationInscriptionPdf($request, $student);
+    }
+
+    /**
+     * Legacy GET — only student_id allowed (no PII in query string).
+     */
+    public function exportAttestationInscriptionPdf(Request $request)
+    {
+        if ($request->filled('student_id')) {
+            $student = Student::findOrFail($request->input('student_id'));
+
+            return $this->downloadAttestationInscriptionPdf($request, $student);
         }
 
-        $pdf = $this->getPdfInstance('pdf.attestation_inscription', [
-            'studentName' => strtoupper($student->last_name.' '.$student->first_name),
+        if ($request->hasAny(['name', 'cin', 'cne', 'filiere', 'group'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Les données personnelles ne doivent pas transiter dans l\'URL. Utilisez student_id (GET) ou POST /api/v1/enrollments/attestation-pdf.',
+            ], 422);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Le paramètre student_id est requis.',
+        ], 422);
+    }
+
+    /**
+     * Custom / preview attestation — payload in request body (not URL).
+     */
+    public function exportAttestationInscriptionPdfFromBody(Request $request)
+    {
+        $validated = $request->validate([
+            'student_id' => ['nullable', 'uuid', 'exists:students,id'],
+            'name' => ['required_without:student_id', 'string', 'max:255'],
+            'cne' => ['required_without:student_id', 'string', 'max:64'],
+            'cin' => ['nullable', 'string', 'max:32'],
+            'filiere' => ['nullable', 'string', 'max:255'],
+            'group' => ['nullable', 'string', 'max:128'],
+            'type' => ['nullable', 'string', 'max:32'],
+        ]);
+
+        if (! empty($validated['student_id'])) {
+            $student = Student::findOrFail($validated['student_id']);
+
+            return $this->downloadAttestationInscriptionPdf($request, $student);
+        }
+
+        return $this->respondAttestationInscriptionPdfFromPayload($request, $validated);
+    }
+
+    private function respondAttestationInscriptionPdf(Request $request, Student $student)
+    {
+        $type = strtolower($request->input('type', $request->query('type', 'scolarite')));
+
+        if ($type === 'inscription' || $type === 'recepisse') {
+            $pdf = $this->getPdfInstance('pdf.attestation_inscription', [
+                'studentName' => strtoupper($student->last_name.' '.$student->first_name),
+                'cne' => $student->cne ?? 'N/A',
+                'cin' => $student->user->cin ?? $student->cin ?? 'N/A',
+                'birthDate' => $student->birth_date ?? 'N/A',
+                'birthCity' => $student->birth_city ?? 'N/A',
+                'filiereName' => $student->latestPathway->filiere->name ?? 'Tronc Commun',
+                'semester' => 'Semestre 1',
+                'cycle' => 'Deux années préparatoires',
+                'academicYear' => '2026-2027',
+                'verifyUrl' => url("/verify-attestation?cne={$student->cne}&hash=".md5($student->cne.'ENCG')),
+            ])->setPaper('a4', 'portrait');
+
+            return $this->streamOrDownloadPdf($request, $pdf, "Attestation_Inscription_{$student->cne}.pdf");
+        }
+
+        $pdf = $this->getPdfInstance('pdf.attestation_scolarite', [
+            'student' => $student,
+            'studentName' => strtoupper(($student->last_name ?? '').' '.($student->first_name ?? '')),
             'cne' => $student->cne ?? 'N/A',
-            'cin' => $student->user->cin ?? 'N/A',
-            'birthDate' => $student->birth_date ?? 'N/A',
-            'birthCity' => $student->birth_city ?? 'N/A',
-            'filiereName' => $student->latestPathway->filiere->name ?? 'Tronc Commun',
-            'semester' => 'Semestre 1',
-            'cycle' => 'Deux années préparatoires',
+            'cin' => $student->user->cin ?? $student->cin ?? 'N/A',
+            'birthDate' => $student->birth_date ? \Carbon\Carbon::parse($student->birth_date)->format('d/m/Y') : '25/07/2008',
+            'birthCity' => strtoupper($student->birth_place ?? $student->birth_city ?? 'OUJDA'),
+            'nationality' => $student->nationality ?? 'Marocaine',
+            'student_number' => $student->student_number ?? $student->id ?? 'N/A',
+            'filiereName' => $student->latestPathway->filiere->name ?? 'DEUX ANNÉES PRÉPARATOIRES (TRONC COMMUN)',
+            'year' => '2026-2027',
             'academicYear' => '2026-2027',
-            'photoPath' => $photoPath,
+            'date' => now()->format('d/m/Y'),
             'verifyUrl' => url("/verify-attestation?cne={$student->cne}&hash=".md5($student->cne.'ENCG')),
         ])->setPaper('a4', 'portrait');
 
-        return $pdf->download("Attestation_Inscription_{$student->cne}.pdf");
+        return $this->streamOrDownloadPdf($request, $pdf, "Attestation_Scolarite_{$student->cne}.pdf");
+    }
+
+    private function respondAttestationInscriptionPdfFromPayload(Request $request, array $payload)
+    {
+        $name = $payload['name'];
+        $cne = $payload['cne'];
+        $cin = $payload['cin'] ?? 'N/A';
+        $filiere = $payload['filiere'] ?? 'DEUX ANNÉES PRÉPARATOIRES (TRONC COMMUN)';
+        $group = $payload['group'] ?? 'TC-S1-G1';
+        $type = strtolower($payload['type'] ?? 'scolarite');
+
+        if ($type === 'inscription' || $type === 'recepisse') {
+            $pdf = $this->getPdfInstance('pdf.attestation_inscription', [
+                'studentName' => $name,
+                'cne' => $cne,
+                'cin' => $cin,
+                'filiereName' => $filiere,
+                'groupName' => $group,
+                'verifyUrl' => url('/verify/document/ATTESTATION-'.md5($cne)),
+            ])->setPaper('a4', 'portrait');
+
+            return $this->streamOrDownloadPdf($request, $pdf, 'Attestation_Inscription_'.Str::slug($name).'.pdf');
+        }
+
+        $student = Student::with(['user', 'latestPathway.filiere'])
+            ->where('cne', $cne)
+            ->orWhere('student_number', $cne)
+            ->first();
+
+        $pdf = $this->getPdfInstance('pdf.attestation_scolarite', [
+            'student' => $student,
+            'studentName' => strtoupper($name),
+            'cne' => $cne,
+            'cin' => $cin,
+            'birthDate' => $student?->birth_date ? \Carbon\Carbon::parse($student->birth_date)->format('d/m/Y') : '25/07/2008',
+            'birthCity' => strtoupper($student?->birth_place ?? $student?->birth_city ?? 'OUJDA'),
+            'nationality' => $student?->nationality ?? 'Marocaine',
+            'student_number' => $student?->student_number ?? $student?->id ?? $cne,
+            'filiereName' => $student?->latestPathway?->filiere?->name ?? $filiere,
+            'groupName' => $group,
+            'year' => '2026-2027',
+            'academicYear' => '2026-2027',
+            'date' => now()->format('d/m/Y'),
+            'verifyUrl' => url('/verify/document/ATT_SCOL-'.md5($cne)),
+        ])->setPaper('a4', 'portrait');
+
+        return $this->streamOrDownloadPdf($request, $pdf, 'Attestation_Scolarite_'.Str::slug($name).'.pdf');
+    }
+
+    private function streamOrDownloadPdf(Request $request, $pdf, string $filename)
+    {
+        if ($request->boolean('download')) {
+            return $pdf->download($filename);
+        }
+
+        return $pdf->stream($filename, ['Attachment' => false]);
     }
 
     // ─── PV MODULE ──────────────────────────────────────────────
@@ -966,27 +1087,7 @@ class PdfExportController extends Controller
         return $pdf->stream("Liste_Emargement_Groupe_{$safeCode}.pdf");
     }
 
-    public function exportAttestationInscriptionPdf(Request $request)
-    {
-        $name = $request->query('name', 'Sara Alami');
-        $cne = $request->query('cne', 'N13809281');
-        $cin = $request->query('cin', 'CD729102');
-        $filiere = $request->query('filiere', 'Gestion Financière et Comptable (GFC)');
-        $group = $request->query('group', 'TC-S1-G1');
-
-        $pdf = $this->getPdfInstance('pdf.attestation_inscription', [
-            'studentName' => $name,
-            'cne' => $cne,
-            'cin' => $cin,
-            'filiereName' => $filiere,
-            'groupName' => $group,
-            'verifyUrl' => url('/verify/document/ATTESTATION-'.md5($cne)),
-        ]);
-
-        $safeName = Str::slug($name);
-
-        return $pdf->stream("Attestation_Inscription_{$safeName}.pdf");
-    }
+    // exportAttestationInscriptionPdf — see secured implementation above (student_id only)
 
     public function exportEtiquettesTableTafemPdf(Request $request)
     {
@@ -1687,7 +1788,9 @@ class PdfExportController extends Controller
         $studentCin = $user?->cin ?: $student?->cin ?: $application?->cin ?: 'ZG195334';
         $filiereName = $student?->pathways->first()?->filiere?->name ?? $application?->reference_number ?? 'Deux Années Préparatoires (TC)';
 
-        $attestationUrl = '/api/v1/enrollments/attestation-pdf?cne='.urlencode($studentCne).'&name='.urlencode($studentName).'&cin='.urlencode($studentCin).'&filiere='.urlencode($filiereName);
+        $attestationUrl = $student?->id
+            ? '/api/v1/admin/students/'.$student->id.'/attestation-pdf?type=scolarite'
+            : '#';
         $engagementUrl = '/api/admin/students/engagement-pdf?student_id='.($student?->id ?? 1).'&cne='.urlencode($studentCne);
         $ficheMedicaleUrl = '/api/admin/students/fiche-medicale-pdf?student_id='.($student?->id ?? 1).'&cne='.urlencode($studentCne);
 

@@ -646,7 +646,7 @@ class AdminDocumentRequestController extends Controller
                 ['code' => $docTypeCode],
                 [
                     'name' => str_contains($docTypeCode, 'REUSSITE') ? 'Attestation de Réussite' : (str_contains($docTypeCode, 'SCOL') ? 'Attestation de Scolarité' : 'Relevé de Notes'),
-                    'view_name' => str_contains($docTypeCode, 'REUSSITE') ? 'documents.attestation_reussite' : (str_contains($docTypeCode, 'SCOL') ? 'documents.attestation_inscription' : 'documents.releve_notes'),
+                    'view_name' => str_contains($docTypeCode, 'REUSSITE') ? 'documents.attestation_reussite' : (str_contains($docTypeCode, 'SCOL') ? 'documents.attestation_scolarite' : 'documents.releve_notes'),
                     'is_active' => true,
                 ]
             );

@@ -7,7 +7,7 @@
     <style>
         @page {
             size: A4 portrait;
-            margin: 6mm 10mm 35mm 10mm;
+            margin: 8mm 11mm 8mm 11mm;
         }
         * { 
             box-sizing: border-box; 
@@ -18,11 +18,11 @@
             padding: 0;
             color: #1e293b;
             background-color: #ffffff;
-            font-size: 8.2pt;
-            line-height: 1.3;
+            font-size: 8.5pt;
+            line-height: 1.35;
         }
         
-        /* Full Page Double Border Frame */
+        /* Full Page Double Border Frame covering 100% of A4 */
         .page-border-frame {
             position: fixed;
             top: -4mm;
@@ -39,7 +39,7 @@
             width: 100%;
             border-bottom: 1.5px solid #002e5b;
             padding-bottom: 4px;
-            margin-bottom: 6px;
+            margin-bottom: 8px;
         }
 
         /* Watermark Background */
@@ -59,15 +59,12 @@
             letter-spacing: 3px;
         }
 
-        /* Fixed Bottom Footer pinned to bottom border */
+        /* In-flow Footer Section cleanly bounded within page frame */
         .footer-container {
-            position: fixed;
-            bottom: -32mm;
-            left: 0;
-            right: 0;
-            height: 29mm;
-            border-top: 1.2px solid #002e5b;
-            padding-top: 4px;
+            margin-top: 14px;
+            border-top: 1.2px dashed #cbd5e1;
+            padding-top: 6px;
+            page-break-inside: avoid;
         }
         .footer-table {
             width: 100%;
@@ -77,20 +74,20 @@
             vertical-align: middle;
         }
         .footer-left {
-            width: 48%;
-            font-size: 6.8pt;
+            width: 50%;
+            font-size: 7pt;
             color: #475569;
-            line-height: 1.25;
+            line-height: 1.3;
         }
         .footer-right {
-            width: 52%;
+            width: 50%;
             text-align: right;
             vertical-align: middle;
         }
 
         .qr-box {
-            width: 48px;
-            height: 48px;
+            width: 50px;
+            height: 50px;
             float: left;
             margin-right: 8px;
         }
@@ -100,11 +97,11 @@
         }
 
         .encg-bottom-bar {
-            margin-top: 3px;
-            padding-top: 2px;
+            margin-top: 4px;
+            padding-top: 3px;
             border-top: 0.5px solid #e2e8f0;
             text-align: center;
-            font-size: 6.2pt;
+            font-size: 6.5pt;
             color: #64748b;
         }
     </style>
@@ -127,7 +124,7 @@
         @yield('content')
     </div>
 
-    <!-- Standardized Fixed Footer Section -->
+    <!-- Standardized In-flow Footer Section -->
     <div class="footer-container">
         <table class="footer-table">
             <tr>
@@ -155,7 +152,7 @@
                         <div style="font-size: 6.5pt; font-weight: bold; color: #64748b; margin-top: 1px;">
                             Pour le Directeur et par délégation
                         </div>
-                        <div style="font-size: 8pt; font-weight: 900; color: #002e5b; text-transform: uppercase; margin-top: 1px;">
+                        <div style="font-size: 8.2pt; font-weight: 900; color: #002e5b; text-transform: uppercase; margin-top: 1px;">
                             {{ $signatoryTitle ?? 'LE SECRÉTAIRE GÉNÉRAL' }}
                         </div>
                         <div style="margin-top: 2px;">

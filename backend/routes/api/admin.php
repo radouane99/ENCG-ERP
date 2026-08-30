@@ -794,10 +794,17 @@ Route::middleware(['auth:sanctum', $staffRoles])->group(function () {
     Route::get('/v1/groups/emargement-pdf', [PdfExportController::class, 'exportEmargementGroupePdf']);
     Route::get('/v1/admin/groups/emargement-pdf', [PdfExportController::class, 'exportEmargementGroupePdf']);
 
+    Route::get('/v1/admin/students/{student}/attestation-pdf', [PdfExportController::class, 'downloadAttestationInscriptionPdf']);
+    Route::get('/admin/students/{student}/attestation-pdf', [PdfExportController::class, 'downloadAttestationInscriptionPdf']);
+
     Route::get('/enrollments/attestation-pdf', [PdfExportController::class, 'exportAttestationInscriptionPdf']);
+    Route::post('/enrollments/attestation-pdf', [PdfExportController::class, 'exportAttestationInscriptionPdfFromBody']);
     Route::get('/admin/enrollments/attestation-pdf', [PdfExportController::class, 'exportAttestationInscriptionPdf']);
+    Route::post('/admin/enrollments/attestation-pdf', [PdfExportController::class, 'exportAttestationInscriptionPdfFromBody']);
     Route::get('/v1/enrollments/attestation-pdf', [PdfExportController::class, 'exportAttestationInscriptionPdf']);
+    Route::post('/v1/enrollments/attestation-pdf', [PdfExportController::class, 'exportAttestationInscriptionPdfFromBody']);
     Route::get('/v1/admin/enrollments/attestation-pdf', [PdfExportController::class, 'exportAttestationInscriptionPdf']);
+    Route::post('/v1/admin/enrollments/attestation-pdf', [PdfExportController::class, 'exportAttestationInscriptionPdfFromBody']);
 
     // ── Reçu de Dépôt Complémentaire (document apporté après inscription initiale)
     Route::get('/enrollments/recu-depot-comp', [PdfExportController::class, 'downloadRecepisseDepotPdf']);

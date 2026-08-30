@@ -1,36 +1,158 @@
 @extends('pdf.layouts.pdf_master')
 
-@section('title', 'Attestation de Réussite')
+@section('title', 'Attestation de Réussite — ENCG Fès')
+
+@section('encg_compact', '1')
+
+@section('styles')
+<style>
+    @page {
+        size: A4 portrait;
+        margin: 4mm 7mm 22mm 7mm;
+    }
+
+    .doc-title-container {
+        text-align: center;
+        margin: 0 0 10px 0;
+    }
+    .doc-title {
+        font-size: 13pt;
+        font-weight: 900;
+        color: #002e5b;
+        letter-spacing: 1.2px;
+        text-transform: uppercase;
+        border-bottom: 1.5px solid #002e5b;
+        display: inline-block;
+        padding-bottom: 3px;
+    }
+    .doc-subtitle {
+        font-size: 7pt;
+        font-weight: 700;
+        color: #475569;
+        text-transform: uppercase;
+        margin-top: 3px;
+    }
+
+    .attestation-body {
+        font-size: 9pt;
+        line-height: 1.55;
+        text-align: justify;
+        color: #1e293b;
+    }
+    .attestation-body p { margin: 0 0 8px 0; }
+
+    .info-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 8px 0 10px 0;
+        border: 0.5px solid #002e5b;
+        table-layout: fixed;
+    }
+    .info-table td {
+        border: 0.5px solid #94a3b8;
+        padding: 4px 6px;
+        vertical-align: middle;
+    }
+    .info-table .label {
+        width: 32%;
+        background: #f1f5f9;
+        color: #64748b;
+        font-weight: 700;
+        font-size: 6.8pt;
+        text-transform: uppercase;
+    }
+    .info-table .val {
+        color: #0f172a;
+        font-weight: 800;
+        font-size: 8pt;
+    }
+    .info-table .val-name {
+        font-size: 9pt;
+        color: #002e5b;
+        text-transform: uppercase;
+        font-weight: 900;
+    }
+    .info-table .val-mono {
+        font-family: DejaVu Sans Mono, monospace;
+        font-weight: 800;
+        color: #002e5b;
+    }
+    .result-banner {
+        width: 100%;
+        background: #002e5b;
+        color: #ffffff;
+        padding: 6px 10px;
+        margin: 8px 0;
+        text-align: center;
+        box-sizing: border-box;
+    }
+    .result-banner .main {
+        font-size: 8pt;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+    .result-banner .sub {
+        font-size: 7.2pt;
+        font-weight: 700;
+        margin-top: 3px;
+        color: #fef08a;
+    }
+</style>
+@endsection
 
 @section('content')
-<div style="text-align: center; font-size: 22px; font-weight: bold; color: #002e5b; letter-spacing: 2px; margin: 25px 0 35px 0; text-transform: uppercase; border-bottom: 2px solid #002e5b; padding-bottom: 12px;">
-    ATTESTATION DE RÉUSSITE
+<div class="doc-title-container">
+    <div class="doc-title">ATTESTATION DE RÉUSSITE</div>
+    <div class="doc-subtitle">ANNÉE UNIVERSITAIRE {{ $year ?? '2026-2027' }}</div>
 </div>
 
-<div style="font-size: 14px; line-height: 2.2; text-align: justify; margin-bottom: 20px; font-family: 'Helvetica', sans-serif;">
-    Le Directeur de l'École Nationale de Commerce et de Gestion de Fès (Université Sidi Mohamed Ben Abdellah) atteste que l'étudiant(e) :<br><br>
-    
-    <div style="text-align: center; margin: 20px 0; background-color: #f8fafc; padding: 18px; border-radius: 8px; border: 1.5px solid #002e5b;">
-        <strong style="font-size: 20px; color: #002e5b;">{{ strtoupper($student->last_name ?? '') }} {{ ucfirst($student->first_name ?? '') }}</strong><br>
-        <span style="font-size: 13px; color: #475569; display: inline-block; margin-top: 6px;">
-            <strong>N° Apogée :</strong> {{ $student->student_number ?? 'N/A' }} &nbsp;&nbsp;|&nbsp;&nbsp; 
-            <strong>CNE / Massar :</strong> {{ $student->cne ?? $student->student_number ?? 'N/A' }} &nbsp;&nbsp;|&nbsp;&nbsp; 
-            <strong>CIN :</strong> {{ $student->cin ?? 'N/A' }}
-        </span>
+<div class="attestation-body">
+    <p>
+        Le Directeur de l'École Nationale de Commerce et de Gestion de Fès
+        (Université Sidi Mohamed Ben Abdellah) atteste que l'étudiant(e) :
+    </p>
+
+    <table class="info-table" width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+            <td class="label">Nom et Prénom</td>
+            <td class="val val-name">
+                {{ strtoupper($student->last_name ?? '') }} {{ ucfirst($student->first_name ?? '') }}
+            </td>
+        </tr>
+        <tr>
+            <td class="label">N° Apogée</td>
+            <td class="val val-mono">{{ $student->student_number ?? '—' }}</td>
+        </tr>
+        <tr>
+            <td class="label">CNE / Massar</td>
+            <td class="val val-mono">{{ $student->cne ?? '—' }}</td>
+        </tr>
+        <tr>
+            <td class="label">CIN / CNIE</td>
+            <td class="val val-mono">{{ $student->cin ?? '—' }}</td>
+        </tr>
+        <tr>
+            <td class="label">Filière</td>
+            <td class="val" style="color: #002e5b;">
+                {{ $student->latestPathway?->filiere?->name ?? '—' }}
+            </td>
+        </tr>
+    </table>
+
+    <div class="result-banner">
+        <div class="main">Déclaré(e) définitivement admis(e) aux épreuves du diplôme ENCG</div>
+        <div class="sub">
+            Année {{ $year ?? '2026-2027' }}
+            @if(!empty($mention))
+                · Mention : {{ strtoupper($mention) }}
+            @endif
+        </div>
     </div>
-    
-    a été déclaré(e) définitivement <strong>ADMIS(E)</strong> aux épreuves du Diplôme de l'École Nationale de Commerce et de Gestion de Fès, en filière :<br><br>
-    
-    <div style="text-align: center; font-size: 18px; font-weight: bold; color: #0f2863; margin: 15px 0; text-transform: uppercase;">
-        {{ $student->latestPathway?->filiere?->name ?? 'Management & Commerce International' }}
-    </div>
-    
-    au titre de l'année universitaire <strong>{{ $year }}</strong>
-    @if(!empty($mention))
-    avec la mention <strong>{{ $mention }}</strong>
-    @endif
-    .<br><br>
-    
-    La présente attestation est délivrée à l'intéressé(e) pour servir et valoir ce que de droit en attendant l'établissement du diplôme définitif.
+
+    <p>
+        La présente attestation est délivrée à l'intéressé(e) pour servir et valoir ce que de droit,
+        en attendant l'établissement du diplôme définitif.
+    </p>
 </div>
 @endsection

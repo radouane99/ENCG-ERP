@@ -30,6 +30,7 @@ class DatabaseSeeder extends Seeder
                 EncgFesSeeder::class,
                 AcademicCalendarSeeder::class,
                 MobilityPartnerSeeder::class,
+                DepartmentStructureFixSeeder::class,
             ]);
 
             $rbacSeeder = new RbacSeeder;

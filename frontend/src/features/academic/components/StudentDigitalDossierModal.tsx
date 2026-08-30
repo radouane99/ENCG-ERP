@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import api from '@shared/lib/api';
-import { protectedDocumentUrl, openAuthenticatedUrl } from '@shared/lib/documentAccess';
+import { protectedDocumentUrl, openAuthenticatedUrl, studentAttestationPdfUrl } from '@shared/lib/documentAccess';
 import { toast } from 'sonner';
 
 export interface StudentDossierData {
@@ -1441,8 +1441,14 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
                             color: 'bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/30 dark:hover:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/60',
                             url: () => {
                               const isNaissanceDepose = (physicalDocs as any).naissance ?? (physicalDocs as any).fiche;
-                              const physParams = `&phys_bac=${physicalDocs.bac ? 1 : 0}&phys_releve=${physicalDocs.releve ? 1 : 0}&phys_cnie=${physicalDocs.cnie ? 1 : 0}&phys_photo=${physicalDocs.photo ? 1 : 0}&phys_naissance=${isNaissanceDepose ? 1 : 0}&phys_fiche=${isNaissanceDepose ? 1 : 0}`;
-                              return `/api/v1/enrollments/attestation-pdf?name=${encodeURIComponent(`${student.first_name || ''} ${student.last_name || ''}`.trim())}&cne=${encodeURIComponent(student.cne || '')}&cin=${encodeURIComponent(student.cin || (student as any).cnie || '')}&filiere=${encodeURIComponent(student.filiere_name || 'ENCG Fès')}${physParams}`;
+                              return studentAttestationPdfUrl(student.id, 'inscription', {
+                                phys_bac: physicalDocs.bac ? 1 : 0,
+                                phys_releve: physicalDocs.releve ? 1 : 0,
+                                phys_cnie: physicalDocs.cnie ? 1 : 0,
+                                phys_photo: physicalDocs.photo ? 1 : 0,
+                                phys_naissance: isNaissanceDepose ? 1 : 0,
+                                phys_fiche: isNaissanceDepose ? 1 : 0,
+                              });
                             }
                           },
                           {
@@ -2492,7 +2498,7 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
                 title: '📜 Attestation d\'Inscription',
                 desc: 'Attestation de scolarité & récépissé de dépôt',
                 color: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/60',
-                url: `/api/v1/enrollments/attestation-pdf?name=${encodeURIComponent(`${student.first_name || ''} ${student.last_name || ''}`.trim())}&cne=${encodeURIComponent(student.cne || '')}&cin=${encodeURIComponent(student.cin || '')}&filiere=${encodeURIComponent(student.filiere_name || 'ENCG Fès')}`
+                url: studentAttestationPdfUrl(student.id, 'scolarite'),
               },
               {
                 title: '📝 Fiche d\'Engagement (تعهد)',

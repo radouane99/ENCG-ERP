@@ -4,7 +4,7 @@ import { PlaneTakeoff, Settings2, Users, Download, Medal, CheckCircle2, FileText
 
 import { cn } from '@shared/lib/utils';
 import api from '@shared/lib/api';
-import { openAuthenticatedUrl } from '@shared/lib/documentAccess';
+import { openCustomAttestationPdf } from '@shared/lib/documentAccess';
 import { toast } from 'sonner';
 
 interface StudentMobility {
@@ -135,7 +135,13 @@ export default function AdminMobility() {
     setTimeout(() => {
       toast.dismiss();
       toast.success(`📜 Attestation de Mobilité A4 (${st.name}) générée !`);
-      openAuthenticatedUrl(`/api/v1/enrollments/attestation-pdf?name=${encodeURIComponent(st.name)}&cne=${encodeURIComponent(st.cne)}&cin=VISA-EXCHANGE&filiere=Programme Mobilité ${st.assigned || 'Internationale'}&group=Bourse ECTS 2026`);
+      void openCustomAttestationPdf({
+        name: st.name,
+        cne: st.cne,
+        cin: 'VISA-EXCHANGE',
+        filiere: `Programme Mobilité ${st.assigned || 'Internationale'}`,
+        group: 'Bourse ECTS 2026',
+      })
     }, 600);
   };
 
