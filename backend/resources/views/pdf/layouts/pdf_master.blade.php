@@ -139,7 +139,7 @@
     </style>
     @yield('styles')
 </head>
-<body@if(trim($__env->yieldContent('fill_page'))) class="releve-doc"@endif>
+<body class="{{ View::hasSection('fill_page') ? 'releve-doc' : '' }}">
 
     <!-- Full Page Double Border -->
     <div class="page-border-frame"></div>
