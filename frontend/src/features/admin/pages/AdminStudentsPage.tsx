@@ -10,6 +10,7 @@ import { openAuthenticatedUrl } from '@shared/lib/documentAccess'
 
 import { useTranslation } from 'react-i18next'
 import { Student } from '@/types/models'
+import CustomSelect from '@shared/components/ui/CustomSelect'
 
 export default function AdminStudentsPage() {
   const { t, i18n } = useTranslation(['students', 'common'])
@@ -288,53 +289,65 @@ export default function AdminStudentsPage() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
           <div>
             <label className="block text-[10px] font-black uppercase text-slate-400 mb-1.5">Filière</label>
-            <select 
+            <CustomSelect
               value={selectedFiliere}
-              onChange={(e) => {
-                setSelectedFiliere(e.target.value)
+              onChange={(val) => {
+                setSelectedFiliere(val)
                 setPage(1)
               }}
-              className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Toutes les filières ENCG</option>
-              {filieres.map(f => (
-                <option key={f.id} value={f.code}>{f.name} ({f.code})</option>
-              ))}
-            </select>
+              placeholder="Toutes les filières ENCG"
+              options={[
+                { value: '', label: 'Toutes les filières ENCG', badge: 'TOUTES' },
+                ...filieres.map(f => ({
+                  value: f.code,
+                  label: f.name ? f.name.replace('Gestion Financi |¿re', 'Gestion Financière').replace('Financire', 'Financière') : f.code,
+                  badge: f.code
+                }))
+              ]}
+              className="w-full"
+            />
           </div>
 
           <div>
             <label className="block text-[10px] font-black uppercase text-slate-400 mb-1.5">Semestre</label>
-            <select 
+            <CustomSelect
               value={selectedSemester}
-              onChange={(e) => {
-                setSelectedSemester(e.target.value)
+              onChange={(val) => {
+                setSelectedSemester(val)
                 setPage(1)
               }}
-              className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Tous les semestres (S1-S10)</option>
-              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(s => (
-                <option key={s} value={s}>Semestre S{s}</option>
-              ))}
-            </select>
+              placeholder="Tous les semestres (S1-S10)"
+              options={[
+                { value: '', label: 'Tous les semestres (S1-S10)', badge: 'TOUS' },
+                ...[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(s => ({
+                  value: String(s),
+                  label: `Semestre S${s}`,
+                  badge: `S${s}`
+                }))
+              ]}
+              className="w-full"
+            />
           </div>
 
           <div>
             <label className="block text-[10px] font-black uppercase text-slate-400 mb-1.5">Groupe d'Étude</label>
-            <select 
+            <CustomSelect
               value={selectedGroup}
-              onChange={(e) => {
-                setSelectedGroup(e.target.value)
+              onChange={(val) => {
+                setSelectedGroup(val)
                 setPage(1)
               }}
-              className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Tous les groupes</option>
-              {groups.map(g => (
-                <option key={g.id} value={g.id}>{g.name}</option>
-              ))}
-            </select>
+              placeholder="Tous les groupes"
+              options={[
+                { value: '', label: 'Tous les groupes', badge: 'TOUS' },
+                ...groups.map(g => ({
+                  value: String(g.id),
+                  label: g.name,
+                  badge: 'GROUPE'
+                }))
+              ]}
+              className="w-full"
+            />
           </div>
         </div>
 

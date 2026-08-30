@@ -1,103 +1,157 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import { Book } from 'lucide-react'
-import { cn } from '@shared/lib/utils'
+import { Book, Sparkles, Filter, Calendar, Users, GraduationCap } from 'lucide-react'
+import CustomSelect from '@/shared/components/ui/CustomSelect'
 
 export default function AdminTextbooksPage() {
+  const [teacher, setTeacher] = useState('all')
+  const [group, setGroup] = useState('all')
+  const [nature, setNature] = useState('all')
+
   const textbooks = [
     { 
       id: 1, 
       date: '31/05/2026', 
       time: '10:00 - 12:00',
-      teacher: 'Radouane el asri', 
-      department: 'Génie Informatique',
-      module: 'Introduction - Génie Informatique', 
-      group: 'Génie Informatique - Groupe 1', 
+      teacher: 'Dr. Radouane El Asri', 
+      department: 'Management & Systèmes d\'Information',
+      module: 'Management des Systèmes d\'Information (MSI)', 
+      group: 'Tronc Commun S2 - Groupe 1', 
       nature: 'TD', 
-      objective: 'Les exercices' 
+      objective: 'Résolution des cas pratiques et modélisation des processus métiers.' 
+    },
+    { 
+      id: 2, 
+      date: '30/05/2026', 
+      time: '08:30 - 10:30',
+      teacher: 'Pr. Salma Benjelloun', 
+      department: 'Finance & Comptabilité',
+      module: 'Audit Financier & Contrôle de Gestion', 
+      group: 'Master CCA S8 - Groupe 2', 
+      nature: 'COURS', 
+      objective: 'Analyse des risques d\'audit et mise en place de la cartographie.' 
     },
   ]
 
   return (
-    <div className="space-y-8 animate-in p-6 max-w-[1400px] mx-auto pb-20">
-      {/* Header */}
-      <div className="flex justify-center mb-8">
-        <h1 className="text-2xl font-bold text-[#0f2863] italic">
-          Suivi Global des Cahiers de Textes
-        </h1>
+    <div className="space-y-8 animate-in fade-in p-4 md:p-8 max-w-[1500px] mx-auto pb-24 font-sans">
+      {/* Hero Banner */}
+      <div className="relative overflow-hidden bg-gradient-to-r from-slate-950 via-[#001A4B] to-blue-950 p-8 md:p-10 rounded-[2.5rem] shadow-2xl text-white border border-blue-900/40">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="relative z-10 flex items-center gap-6">
+          <div className="w-16 h-16 md:w-20 md:h-20 rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center shadow-2xl shrink-0">
+            <Book className="w-8 h-8 md:w-10 md:h-10 text-amber-300" />
+          </div>
+          <div>
+            <div className="inline-flex items-center gap-2 bg-blue-500/20 text-blue-200 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-2 border border-blue-400/30">
+              <Sparkles className="w-4 h-4 text-amber-300" /> Supervision Pédagogique — ENCG Fès
+            </div>
+            <h1 className="text-2xl md:text-4xl font-black text-white tracking-tight leading-tight">
+              Cahiers de Textes Universitaires
+            </h1>
+            <p className="text-blue-100/90 text-xs md:text-sm font-medium mt-1 max-w-2xl">
+              Consultez et suivez l'état d'avancement des enseignements, les objectifs pédagogiques et les séances saisies par le corps professoral.
+            </p>
+          </div>
+        </div>
       </div>
 
-      {/* Banner */}
-      <div className="bg-[#0f2863] p-8 text-white rounded-[1.5rem] shadow-lg relative overflow-hidden max-w-5xl mx-auto">
-        <h2 className="text-2xl font-bold italic mb-2 relative z-10">Supervision Pédagogique</h2>
-        <p className="text-white/80 text-sm font-medium relative z-10">
-          Consultez et filtrez tous les cahiers de textes saisis par l'ensemble des professeurs de l'ENCG Fès.
-        </p>
-      </div>
+      {/* Filters Bar with CustomSelect */}
+      <div className="bg-card border border-border p-6 rounded-3xl shadow-sm space-y-4">
+        <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-muted-foreground pb-2 border-b border-border">
+          <Filter className="w-4 h-4 text-primary" />
+          <span>Filtres de Supervision</span>
+        </div>
 
-      {/* Filters */}
-      <div className="max-w-5xl mx-auto flex flex-col md:flex-row gap-4 items-end bg-white border border-slate-100 p-6 rounded-3xl shadow-sm">
-        <div className="flex-1 w-full space-y-2">
-          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider pl-2">Enseignant</label>
-          <select className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-5 py-3.5 text-sm font-bold text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none appearance-none bg-no-repeat bg-right" style={{ backgroundImage: 'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007CB2%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")', backgroundSize: '0.65em auto', backgroundPosition: 'right 1rem center' }}>
-            <option>Tous les professeurs</option>
-          </select>
-        </div>
-        <div className="flex-1 w-full space-y-2">
-          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider pl-2">Groupe / Classe</label>
-          <select className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-5 py-3.5 text-sm font-bold text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none appearance-none bg-no-repeat bg-right" style={{ backgroundImage: 'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007CB2%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")', backgroundSize: '0.65em auto', backgroundPosition: 'right 1rem center' }}>
-            <option>Tous les groupes</option>
-          </select>
-        </div>
-        <div className="flex-1 w-full space-y-2">
-          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider pl-2">Nature de Séance</label>
-          <select className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-5 py-3.5 text-sm font-bold text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none appearance-none bg-no-repeat bg-right" style={{ backgroundImage: 'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007CB2%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")', backgroundSize: '0.65em auto', backgroundPosition: 'right 1rem center' }}>
-            <option>Toutes les natures</option>
-          </select>
-        </div>
-        <div className="w-full md:w-auto">
-          <button className="w-full md:w-32 py-3.5 bg-[#0f2863] text-white font-bold rounded-2xl hover:bg-[#1a387e] transition-colors text-xs uppercase tracking-wider shadow-md">
-            Filtrer
-          </button>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground block mb-1.5">Enseignant</label>
+            <CustomSelect
+              value={teacher}
+              onChange={setTeacher}
+              placeholder="Tous les professeurs"
+              options={[
+                { value: 'all', label: 'Tous les professeurs', badge: 'TOUS' },
+                { value: '1', label: 'Dr. Radouane El Asri', badge: 'PROF' },
+                { value: '2', label: 'Pr. Salma Benjelloun', badge: 'PROF' },
+                { value: '3', label: 'Dr. Karim Tazi', badge: 'PROF' },
+              ]}
+              className="w-full"
+            />
+          </div>
+
+          <div>
+            <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground block mb-1.5">Groupe / Section</label>
+            <CustomSelect
+              value={group}
+              onChange={setGroup}
+              placeholder="Tous les groupes"
+              options={[
+                { value: 'all', label: 'Tous les groupes', badge: 'TOUS' },
+                { value: 'tc1', label: 'Tronc Commun S2 - Groupe 1', badge: 'S2' },
+                { value: 'mcca', label: 'Master CCA S8 - Groupe 2', badge: 'S8' },
+                { value: 'mcm', label: 'Management Commercial S6 - Groupe 1', badge: 'S6' },
+              ]}
+              className="w-full"
+            />
+          </div>
+
+          <div>
+            <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground block mb-1.5">Nature de Séance</label>
+            <CustomSelect
+              value={nature}
+              onChange={setNature}
+              placeholder="Toutes les natures"
+              options={[
+                { value: 'all', label: 'Toutes les natures', badge: 'TOUS' },
+                { value: 'cours', label: 'Cours Magistral (Amphi)', badge: 'COURS' },
+                { value: 'td', label: 'Travaux Dirigés (TD)', badge: 'TD' },
+                { value: 'tp', label: 'Travaux Pratiques (TP Labo)', badge: 'TP' },
+                { value: 'rattrapage', label: 'Séance de Rattrapage', badge: 'EXTRA' },
+              ]}
+              className="w-full"
+            />
+          </div>
         </div>
       </div>
 
       {/* Table Card */}
-      <div className="max-w-5xl mx-auto bg-white border border-slate-100 rounded-[2rem] shadow-sm overflow-hidden p-6 md:p-8">
-        <h3 className="text-lg font-bold text-[#0f2863] italic mb-6">Saisies de Séances Générales</h3>
+      <div className="bg-card border border-border rounded-[2.5rem] shadow-xl overflow-hidden p-6 md:p-8">
+        <h3 className="text-lg font-black text-foreground mb-6 flex items-center gap-2">
+          <span>Historique des Séances Enregistrées</span>
+        </h3>
         
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left border-collapse">
-            <thead className="text-[9px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
+            <thead className="text-[10px] font-black text-muted-foreground uppercase tracking-wider border-b border-border">
               <tr>
-                <th className="px-4 py-4">DATE & CRÉNEAU</th>
-                <th className="px-4 py-4">ENSEIGNANT</th>
-                <th className="px-4 py-4">MODULE / GROUPE</th>
-                <th className="px-4 py-4">NATURE</th>
-                <th className="px-4 py-4">OBJECTIF PÉDAGOGIQUE</th>
+                <th className="px-5 py-4">Date & Créneau</th>
+                <th className="px-5 py-4">Enseignant & Département</th>
+                <th className="px-5 py-4">Module & Groupe</th>
+                <th className="px-5 py-4">Nature</th>
+                <th className="px-5 py-4">Objectif Pédagogique</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-50">
+            <tbody className="divide-y divide-border">
               {textbooks.map((row) => (
-                <tr key={row.id} className="hover:bg-slate-50/50 transition-colors">
-                  <td className="px-4 py-5">
-                    <div className="font-bold text-slate-800 text-sm mb-0.5">{row.date}</div>
-                    <div className="text-[10px] text-slate-400">{row.time}</div>
+                <tr key={row.id} className="hover:bg-muted/40 transition-colors">
+                  <td className="px-5 py-5">
+                    <div className="font-black text-foreground text-sm">{row.date}</div>
+                    <div className="text-[11px] text-muted-foreground font-mono">{row.time}</div>
                   </td>
-                  <td className="px-4 py-5">
-                    <div className="font-bold text-slate-800 text-sm mb-0.5">{row.teacher}</div>
-                    <div className="text-[10px] text-slate-400">{row.department}</div>
+                  <td className="px-5 py-5">
+                    <div className="font-bold text-foreground text-sm">{row.teacher}</div>
+                    <div className="text-[11px] text-muted-foreground">{row.department}</div>
                   </td>
-                  <td className="px-4 py-5">
-                    <div className="font-bold text-[#0f2863] text-sm mb-0.5">{row.module}</div>
-                    <div className="text-[10px] text-blue-500 font-bold">{row.group}</div>
+                  <td className="px-5 py-5">
+                    <div className="font-bold text-primary text-sm">{row.module}</div>
+                    <div className="text-[11px] text-indigo-600 dark:text-indigo-400 font-bold">{row.group}</div>
                   </td>
-                  <td className="px-4 py-5">
-                    <span className="font-bold text-amber-500 text-sm">
+                  <td className="px-5 py-5">
+                    <span className="px-2.5 py-1 bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 rounded-xl text-[10px] font-black uppercase">
                       {row.nature}
                     </span>
                   </td>
-                  <td className="px-4 py-5 text-slate-600 font-medium">
+                  <td className="px-5 py-5 text-muted-foreground font-medium text-xs max-w-md">
                     {row.objective}
                   </td>
                 </tr>

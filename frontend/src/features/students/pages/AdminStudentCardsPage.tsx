@@ -8,6 +8,7 @@ import {
 import api from '@/shared/lib/api';
 import { Button } from '@/shared/components/ui/Button';
 import { toast } from 'sonner';
+import CustomSelect from '@/shared/components/ui/CustomSelect';
 import Barcode from '../components/Barcode';
 import QRCode from 'react-qr-code';
 
@@ -316,49 +317,56 @@ export default function AdminStudentCardsPage() {
         </div>
 
         {/* Filiere Filter */}
-        <div className="w-full md:w-[160px]">
-          <select 
+        <div className="w-full md:w-[220px]">
+          <CustomSelect
             value={filiereId}
-            onChange={(e) => { setFiliereId(e.target.value); setPage(1); }}
-            className="w-full px-3 py-2 text-sm bg-muted/30 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
-          >
-            <option value="all">Toutes Filières</option>
-            {filieres?.map((f: any) => (
-              <option key={f.id} value={f.id}>{f.name}</option>
-            ))}
-          </select>
+            onChange={(val) => { setFiliereId(val); setPage(1); }}
+            placeholder="Toutes Filières"
+            options={[
+              { value: 'all', label: 'Toutes Filières', badge: 'TOUTES' },
+              ...(filieres || []).map((f: any) => ({
+                value: String(f.id),
+                label: f.name,
+                badge: f.code || 'FILIÈRE'
+              }))
+            ]}
+          />
         </div>
 
         {/* Group Filter */}
-        <div className="w-full md:w-[160px]">
-          <select 
+        <div className="w-full md:w-[200px]">
+          <CustomSelect
             value={groupId}
-            onChange={(e) => { setGroupId(e.target.value); setPage(1); }}
-            className="w-full px-3 py-2 text-sm bg-muted/30 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
-          >
-            <option value="all">Tous Groupes</option>
-            {groups?.map((g: any) => (
-              <option key={g.id} value={g.id}>{g.name}</option>
-            ))}
-          </select>
+            onChange={(val) => { setGroupId(val); setPage(1); }}
+            placeholder="Tous Groupes"
+            options={[
+              { value: 'all', label: 'Tous Groupes', badge: 'TOUS' },
+              ...(groups || []).map((g: any) => ({
+                value: String(g.id),
+                label: g.name,
+                badge: 'GROUPE'
+              }))
+            ]}
+          />
         </div>
 
         {/* Status Filter */}
-        <div className="w-full md:w-[160px]">
-          <select 
+        <div className="w-full md:w-[200px]">
+          <CustomSelect
             value={status}
-            onChange={(e) => { setStatus(e.target.value); setPage(1); }}
-            className="w-full px-3 py-2 text-sm bg-muted/30 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
-          >
-            <option value="all">Tous Statuts</option>
-            <option value="not_generated">Non Générée</option>
-            <option value="active">Active</option>
-            <option value="suspended">Suspendue</option>
-            <option value="lost">Perdue</option>
-            <option value="stolen">Volée</option>
-            <option value="revoked">Révoquée</option>
-            <option value="expired">Expirée</option>
-          </select>
+            onChange={(val) => { setStatus(val); setPage(1); }}
+            placeholder="Tous Statuts"
+            options={[
+              { value: 'all', label: 'Tous Statuts', badge: 'TOUS' },
+              { value: 'not_generated', label: 'Non Générée', badge: 'NEW' },
+              { value: 'active', label: 'Active', badge: 'ACTIF' },
+              { value: 'suspended', label: 'Suspendue', badge: 'SUSPEND' },
+              { value: 'lost', label: 'Perdue', badge: 'PERDU' },
+              { value: 'stolen', label: 'Volée', badge: 'VOL' },
+              { value: 'revoked', label: 'Révoquée', badge: 'RÉVOQ' },
+              { value: 'expired', label: 'Expirée', badge: 'EXPIRÉ' },
+            ]}
+          />
         </div>
       </div>
 

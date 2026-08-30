@@ -23,6 +23,7 @@ import {
 import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
 import { toast } from 'sonner'
+import CustomSelect from '@/shared/components/ui/CustomSelect'
 
 export default function AdminReservistesPage() {
   const { i18n } = useTranslation('common')
@@ -259,30 +260,36 @@ export default function AdminReservistesPage() {
             <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">
               FILTRER PAR FILIÈRE
             </label>
-            <select
+            <CustomSelect
               value={selectedFiliere}
-              onChange={(e) => setSelectedFiliere(e.target.value)}
-              className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-xs font-bold bg-white text-slate-800 focus:ring-2 focus:ring-[#0f2863] outline-hidden shadow-xs"
-            >
-              <option value="all">Toutes les Filières ENCG</option>
-              {filieres.map((f: any) => (
-                <option key={f.id} value={f.id}>{f.name} ({f.code})</option>
-              ))}
-            </select>
+              onChange={(val) => setSelectedFiliere(val)}
+              placeholder="Toutes les Filières ENCG"
+              options={[
+                { value: 'all', label: 'Toutes les Filières ENCG', badge: 'TOUTES' },
+                ...filieres.map((f: any) => ({
+                  value: String(f.id),
+                  label: f.name ? f.name.replace('Gestion Financi |¿re', 'Gestion Financière') : f.code,
+                  badge: f.code || 'FILIÈRE'
+                }))
+              ]}
+              className="w-full"
+            />
           </div>
 
           <div>
             <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">
               STATUT ÉTUDIANT
             </label>
-            <select
+            <CustomSelect
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-xs font-bold bg-white text-slate-800 focus:ring-2 focus:ring-[#0f2863] outline-hidden shadow-xs"
-            >
-              <option value="all">Tous les Réservistes</option>
-              <option value="derogation">Avec Dérogation Uniquement</option>
-            </select>
+              onChange={(val) => setStatusFilter(val)}
+              placeholder="Tous les Réservistes"
+              options={[
+                { value: 'all', label: 'Tous les Réservistes', badge: 'TOUS' },
+                { value: 'derogation', label: 'Avec Dérogation Uniquement', badge: 'DÉROGATION' },
+              ]}
+              className="w-full"
+            />
           </div>
 
           <div>

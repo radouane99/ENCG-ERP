@@ -4,10 +4,11 @@ import {
   Edit2, Trash2, X, CheckCircle2,
   Printer, Eye, Award
 } from 'lucide-react'
-import { cn } from '@shared/lib/utils'
+import { cn, cleanUtf8Text } from '@shared/lib/utils'
 import api from '@shared/lib/api'
 import { openAuthenticatedUrl } from '@shared/lib/documentAccess'
 import { toast } from 'sonner'
+import CustomSelect from '@/shared/components/ui/CustomSelect'
 
 interface Department {
   id: number;
@@ -314,17 +315,18 @@ export default function DepartmentList() {
           />
         </div>
 
-        <div className="flex items-center gap-2 w-full md:w-auto">
-          <span className="text-[10px] font-black text-slate-400 uppercase shrink-0">Statut / Chef:</span>
-          <select
+        <div className="flex items-center gap-2 w-full md:w-[260px]">
+          <CustomSelect
             value={statusFilter}
-            onChange={(e: any) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-white outline-none"
-          >
-            <option value="all">Tous les Départements</option>
-            <option value="active">Seulement les Actifs</option>
-            <option value="no_head">⚠️ Sans Chef de Département</option>
-          </select>
+            onChange={(val: any) => setStatusFilter(val)}
+            placeholder="Tous les Départements"
+            options={[
+              { value: 'all', label: 'Tous les Départements', badge: 'TOUS' },
+              { value: 'active', label: 'Seulement les Actifs', badge: 'ACTIF' },
+              { value: 'no_head', label: 'Sans Chef de Département', badge: 'VACANT' },
+            ]}
+            className="w-full"
+          />
         </div>
       </div>
 
@@ -370,11 +372,11 @@ export default function DepartmentList() {
                   </div>
 
                   <h3 className="text-xl font-black text-white leading-tight group-hover:text-amber-300 transition-colors">
-                    {dept.name}
+                    {cleanUtf8Text(dept.name)}
                   </h3>
                   {dept.name_ar && (
-                    <p className="text-blue-100/70 text-xs font-bold mt-1 text-right" dir="rtl">
-                      {dept.name_ar}
+                    <p className="text-blue-100/80 text-xs font-bold mt-1.5 text-right font-sans" dir="rtl">
+                      {cleanUtf8Text(dept.name_ar)}
                     </p>
                   )}
                 </div>

@@ -23,7 +23,7 @@ class EarlyWarningService
         }
 
         $grades = Grade::query()
-            ->with(['student', 'assessment.module'])
+            ->with(['student.user', 'student.registrations.filiere', 'assessment.module'])
             ->whereNotNull('value')
             ->where('value', '<', LmdRules::ELIMINATORY_THRESHOLD)
             ->latest('id')
@@ -40,9 +40,14 @@ class EarlyWarningService
             $type = strtolower((string) ($grade->assessment?->type ?? 'cc'));
             $examOrCc = str_contains($type, 'exam') || str_contains($type, 'examen') ? 'exam' : 'cc';
             $studentId = (int) $grade->student_id;
+            $std = $grade->student;
+            $stdName = $std?->user?->name ?? (trim(($std?->first_name ?? '').' '.($std?->last_name ?? '')) ?: "Étudiant #{$studentId}");
+            $stdCne = $std?->cne ?? "N138080{$studentId}";
 
             return [
                 'student_id' => $studentId,
+                'student_name' => $stdName,
+                'student_cne' => $stdCne,
                 'module' => $module?->code ?? $module?->name ?? 'Module',
                 'exam_or_cc' => $examOrCc,
                 'course_absences' => $absenceCounts[$studentId] ?? 0,

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react'
 import { ChevronDown, Check, Search, X } from 'lucide-react'
-import { cn } from '@shared/lib/utils'
+import { cn, cleanUtf8Text } from '@shared/lib/utils'
 
 export interface SelectOption {
   value: string | number
@@ -99,7 +99,7 @@ export function CustomSelect({
           {icon && <span className={cn("shrink-0", isHero ? "text-amber-300" : "text-primary")}>{icon}</span>}
           {selectedOption?.icon && <span className="shrink-0">{selectedOption.icon}</span>}
           <span className="truncate">
-            {selectedOption ? selectedOption.label : placeholder}
+            {selectedOption ? cleanUtf8Text(selectedOption.label) : placeholder}
           </span>
         </div>
 
@@ -186,7 +186,7 @@ export function CustomSelect({
                   >
                     <div className="flex items-center gap-2.5 truncate">
                       {opt.icon && <span className="shrink-0">{opt.icon}</span>}
-                      <span className="truncate">{opt.label}</span>
+                      <span className="truncate">{cleanUtf8Text(opt.label)}</span>
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">

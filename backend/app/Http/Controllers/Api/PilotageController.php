@@ -48,63 +48,66 @@ class PilotageController extends Controller
         $warningThreshold = (int) $request->query('warning_threshold', 80);
         $disciplineThreshold = (int) $request->query('discipline_threshold', 120);
 
-        // 1. Pending Justifications
+        // 1. Pending Justifications (100% Real SQL)
         $pendingJustificationsCount = AbsenceJustification::where('status', 'pending')->count();
 
-        $pendingJustifications = AbsenceJustification::with(['student.user', 'attendance.attendanceSession.module'])
+        $pendingJustifications = AbsenceJustification::with(['student.user', 'student.registrations.filiere', 'attendance.attendanceSession.module'])
             ->where('status', 'pending')
-            ->take(5)
+            ->latest('id')
+            ->take(20)
             ->get()
             ->map(function ($j) {
                 $std = $j->student;
-                $stdName = $std?->user?->name ?? (trim(($std?->first_name ?? '').' '.($std?->last_name ?? '')) ?: 'Étudiant ENCG');
-                $modName = $j->attendance?->attendanceSession?->module?->name ?? 'Module d\'Examen';
+                $stdName = $std?->user?->name ?? (trim(($std?->first_name ?? '').' '.($std?->last_name ?? '')) ?: "Étudiant #{$j->student_id}");
+                $modName = $j->attendance?->attendanceSession?->module?->name ?? 'Module d\'Enseignement';
 
                 return [
                     'id' => (string) $j->id,
                     'student' => $stdName,
                     'filiere' => $std?->registrations?->first()?->filiere?->code ?? 'ENCG',
                     'module' => $modName,
-                    'motif' => $j->reason ?? 'Certificat Médical',
+                    'motif' => $j->reason ?? 'Justificatif d\'absence',
                     'date' => $j->created_at?->format('d/m/Y') ?? now()->format('d/m/Y'),
                     'status' => 'En attente',
                 ];
             });
 
-        // Fallback for pending justifications if table empty
-        if ($pendingJustifications->isEmpty()) {
-            $pendingJustifications = collect([
-                ['id' => '101', 'student' => 'Sarah El Amrani', 'filiere' => 'MCM S3', 'module' => 'Marketing Digital (Exam)', 'motif' => 'Certificat Médical CHU', 'date' => now()->subDay()->format('d/m/Y'), 'status' => 'En attente'],
-                ['id' => '102', 'student' => 'Karim Tazi', 'filiere' => 'TC S1', 'module' => 'Comptabilité Générale', 'motif' => 'Attestation de Transport', 'date' => now()->subDays(2)->format('d/m/Y'), 'status' => 'En attente'],
-                ['id' => '103', 'student' => 'Zineb Chraibi', 'filiere' => 'GFC S5', 'module' => 'Finance d\'Entreprise', 'motif' => 'Convocation Permis', 'date' => now()->subDays(3)->format('d/m/Y'), 'status' => 'En attente'],
-            ]);
-        }
+        // 2. Exam Incidents & Fraud (100% Real SQL)
+        $examAbsencesCount = ExamIncident::where('type', 'absence_injustifiee')->count();
+        $fraudCasesCount = ExamIncident::where('type', 'fraude')->count();
 
-        // 2. Exam Incidents & Fraud (100% SQL Dynamic)
-        $examAbsencesCount = ExamIncident::where('incident_type', 'absence')->count()
-            ?: Attendance::where('status', 'absent')->count();
-        $fraudCasesCount = ExamIncident::where('incident_type', 'fraud')->count();
-
-        // 3. Retakes & Convocations
+        // 3. Retakes & Convocations (100% Real SQL)
         $retakesCount = ResitEligibility::count()
-            ?: Grade::where('value', '<', 10)->count();
-        $convocationsCount = Convocation::where('is_downloaded', false)->count()
-            ?: (StudentRegistration::count() ?: Student::count());
+            ?: Grade::whereNotNull('value')->where('value', '<', 10)->count();
+        $convocationsCount = Convocation::where('is_downloaded', false)->count();
 
-        // 4. Absence Hours & Discipline Cases
-        $studentsAtRiskCount = Student::whereHas('attendances', fn ($q) => $q->where('status', 'absent'))->count() ?: 3;
-
+        // 4. Absence Hours & Discipline Calculations (100% Real SQL)
         $totalUnjustifiedAbsences = Attendance::where('status', 'absent')->where('is_justified', false)->count();
-        $totalUnjustifiedHours = $totalUnjustifiedAbsences > 0 ? ($totalUnjustifiedAbsences * 2) : 51.5;
+        $totalUnjustifiedHours = $totalUnjustifiedAbsences * 2;
 
-        $disciplineStudents = Student::with(['user', 'registrations.filiere'])->take(3)->get();
-        $disciplineCasesCount = $disciplineStudents->count();
+        $studentsWithAbsences = Student::with(['user', 'registrations.filiere'])
+            ->withCount([
+                'attendances as unjustified_absences_count' => function ($q) {
+                    $q->where('status', 'absent')->where('is_justified', false);
+                }
+            ])
+            ->get();
 
-        $disciplineCases = $disciplineStudents->map(function ($std, $idx) use ($disciplineThreshold) {
+        $studentsAtRisk = $studentsWithAbsences->filter(function ($std) use ($warningThreshold) {
+            $hours = $std->unjustified_absences_count * 2;
+            return $hours >= $warningThreshold;
+        });
+
+        $disciplineStudents = $studentsWithAbsences->filter(function ($std) use ($disciplineThreshold) {
+            $hours = $std->unjustified_absences_count * 2;
+            return $hours >= $disciplineThreshold;
+        });
+
+        $disciplineCases = $disciplineStudents->map(function ($std) use ($disciplineThreshold) {
             $name = $std->user?->name ?? (trim(($std->first_name ?? '').' '.($std->last_name ?? '')) ?: "Étudiant #{$std->id}");
             $cne = $std->cne ?? ('N13'.(4098200 + $std->id));
-            $filiere = $std->registrations->first()?->filiere?->code ?? 'GFC S5';
-            $hours = (120 + ($idx * 4)).'h';
+            $filiere = $std->registrations->first()?->filiere?->code ?? 'ENCG';
+            $hours = ($std->unjustified_absences_count * 2).'h';
 
             return [
                 'id' => (string) $std->id,
@@ -116,16 +119,16 @@ class PilotageController extends Controller
                 'date' => $std->created_at ? $std->created_at->format('d/m/Y') : now()->format('d/m/Y'),
                 'status' => 'À convoquer',
             ];
-        });
+        })->values();
 
         return response()->json([
             'success' => true,
             'data' => [
                 'stats' => [
-                    'students_at_risk' => $studentsAtRiskCount,
-                    'discipline_cases_count' => $disciplineCasesCount,
+                    'students_at_risk' => $studentsAtRisk->count(),
+                    'discipline_cases_count' => $disciplineStudents->count(),
                     'unjustified_hours' => $totalUnjustifiedHours,
-                    'pending_justifications' => $pendingJustificationsCount > 0 ? $pendingJustificationsCount : 10,
+                    'pending_justifications' => $pendingJustificationsCount,
                     'exam_absences' => $examAbsencesCount,
                     'fraud_cases' => $fraudCasesCount,
                     'retakes_granted' => $retakesCount,

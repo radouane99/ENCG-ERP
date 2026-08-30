@@ -81,6 +81,7 @@ const CandidaturesPage = lazy(() => import('@features/admissions/components/Cand
 const ApplicationsPage = lazy(() => import('@features/admissions/pages/ApplicationsPage'))
 
 const AcademicYearsPage = lazy(() => import('@features/academic/pages/AcademicYearsPage'))
+const AcademicArchitecturePage = lazy(() => import('@features/academic/pages/AcademicArchitecturePage'))
 const GroupsPage = lazy(() => import('@features/academic/pages/GroupsPage'))
 const FilieresPage = lazy(() => import('@features/academic/components/FiliereList'))
 const DepartmentsPage = lazy(() => import('@features/academic/components/DepartmentList'))
@@ -376,10 +377,10 @@ export default function RootRouter() {
             <Route path="/admin/substitutions" element={<DepartmentSubstitutionsPage />} />
             <Route path="/admin/roles-permissions" element={<AdminRolesPermissionsPage />} />
             <Route path="/admin/parapheur" element={<AdminParapheurPage />} />
-            <Route path="/parapheur" element={<AdminParapheurPage />} />
-            <Route path="/academic/groups" element={<GroupsPage />} />
-            <Route path="/academic/filieres" element={<FilieresPage />} />
-            <Route path="/academic/departments" element={<DepartmentsPage />} />
+            <Route path="/academic/architecture" element={<AcademicArchitecturePage />} />
+            <Route path="/academic/groups" element={<AcademicArchitecturePage />} />
+            <Route path="/academic/filieres" element={<AcademicArchitecturePage />} />
+            <Route path="/academic/departments" element={<AcademicArchitecturePage />} />
             <Route path="/academic/modules" element={<ModulesListPage />} />
             <Route path="/academic/deliberations" element={<DeliberationManager />} />
             <Route path="/professors" element={<ProfessorsListPage />} />
