@@ -448,7 +448,7 @@ class DeliberationService
         }
 
         $academicYear = AcademicYear::find($academicYearId) ?? AcademicYear::where('is_current', true)->first();
-        $academicYearName = $academicYear?->name ?? '2026/2027';
+        $academicYearName = $academicYear?->displayLabel() ?? '2026/2027';
 
         $filiereModules = Module::where('filiere_id', $filiereId)
             ->whereIn('semester_number', [$oddSemNumber, $evenSemNumber])
@@ -503,7 +503,7 @@ class DeliberationService
                     $moyNormale = $finalNote;
                     $modDecision = 'V';
                     $isHistorical = true;
-                    $validationYear = $histVal->validatedAtSession?->academicYear?->name
+                    $validationYear = $histVal->validatedAtSession?->academicYear?->displayLabel()
                         ?? $validationYear;
                 } else {
                     $studentGrades = Grade::where('student_id', $student->id)

@@ -176,7 +176,7 @@ class DocumentRequestService
         }
 
         $academicYear = AcademicYear::where('is_current', true)->first();
-        $year = $academicYear?->label ?? (now()->year.'-'.(now()->year + 1));
+        $year = $academicYear?->displayLabel() ?? (now()->year.'-'.(now()->year + 1));
 
         $trackingCode = Str::upper($type->code.'-'.Str::random(12));
         $verifyUrl = route('document.verify', ['documentId' => $trackingCode]);
@@ -332,10 +332,10 @@ class DocumentRequestService
             $annualDecision = 'V';
             $oddSemesterLabel = 'S1';
             $evenSemesterLabel = 'S2';
-            $defaultYearLabel = AcademicYear::toShortLabel(
-                AcademicYear::where('is_current', true)->value('name')
-                    ?? ($data['year'] ?? '2026-2027')
-            );
+            $defaultYearLabel = AcademicYear::currentShortLabel();
+            if ($defaultYearLabel === '—') {
+                $defaultYearLabel = AcademicYear::toShortLabel($data['year'] ?? '2026-2027');
+            }
 
             try {
                 $currentYearId = AcademicYear::where('is_current', true)->value('id') ?? 1;

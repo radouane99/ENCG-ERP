@@ -2,40 +2,47 @@
 
 @section('title', 'Relevé de Notes Officiel — ENCG Fès')
 
+@section('fill_page', '1')
+
 @section('styles')
 <style>
+    @page {
+        size: A4 portrait;
+        margin: 3mm 7mm 2mm 7mm;
+    }
+
     /*
-     * Signatures stay in normal flow (no mid-page hole).
-     * Spacing tuned to fill A4 for a typical year (≈7+7 modules) without spilling to page 2.
+     * Fill-page shell pushes QR/signatures to the bottom border.
+     * Content spacing scales to occupy the sheet without a 2nd page.
      */
     .footer-container {
         position: static;
-        margin-top: 8px;
-        padding-top: 5px;
+        margin-top: 0;
+        padding-top: 0;
     }
 
     /* Document Title Banner */
     .doc-title-container {
         text-align: center;
-        margin: 0 0 6px 0;
+        margin: 0 0 8px 0;
         page-break-inside: avoid;
     }
     .doc-title {
-        font-size: 12pt;
+        font-size: 12.5pt;
         font-weight: 900;
         color: #002e5b;
         letter-spacing: 1.2px;
         text-transform: uppercase;
         border-bottom: 1.5px solid #002e5b;
         display: inline-block;
-        padding-bottom: 2px;
+        padding-bottom: 3px;
     }
     .doc-subtitle {
-        font-size: 7pt;
+        font-size: 7.2pt;
         font-weight: 800;
         color: #475569;
         text-transform: uppercase;
-        margin-top: 3px;
+        margin-top: 4px;
         letter-spacing: 0.6px;
     }
 
@@ -44,9 +51,9 @@
         width: 100%;
         border: 1px solid #002e5b;
         border-radius: 4px;
-        padding: 5px 8px;
+        padding: 7px 10px;
         background-color: #f8fafc;
-        margin-bottom: 7px;
+        margin-bottom: 10px;
         box-sizing: border-box;
         page-break-inside: avoid;
     }
@@ -55,7 +62,7 @@
         border-collapse: collapse;
     }
     .student-card td {
-        padding: 2.5px 4px;
+        padding: 3.5px 5px;
         vertical-align: middle;
     }
     .student-card .label {
@@ -63,20 +70,20 @@
         font-weight: 800;
         width: 16%;
         text-transform: uppercase;
-        font-size: 6.5pt;
+        font-size: 6.8pt;
     }
     .student-card .val {
         font-weight: 900;
         color: #002e5b;
-        font-size: 7.8pt;
+        font-size: 8pt;
     }
 
     /* Unified Grade Tables */
     .grades-table {
         width: 100%;
         border-collapse: collapse;
-        margin-bottom: 7px;
-        font-size: 7.2pt;
+        margin-bottom: 10px;
+        font-size: 7.4pt;
         border: 1px solid #002e5b;
         box-sizing: border-box;
     }
@@ -85,8 +92,8 @@
     .sem-main-header td {
         background-color: #002e5b !important;
         color: #ffffff !important;
-        padding: 4px 7px;
-        font-size: 7.5pt;
+        padding: 5px 8px;
+        font-size: 7.8pt;
         font-weight: 900;
         text-transform: uppercase;
         border-bottom: 1px solid #002e5b;
@@ -102,21 +109,21 @@
     }
 
     .grades-sub-header th {
-        padding: 3.5px 5px;
+        padding: 4.5px 6px;
         background-color: #1e293b;
         color: #ffffff;
         font-weight: 900;
-        font-size: 6.5pt;
+        font-size: 6.8pt;
         text-align: center;
         text-transform: uppercase;
         border-right: 0.5px solid #334155;
         border-bottom: 0.5px solid #cbd5e1;
     }
     .grades-table td {
-        padding: 3.5px 5px;
+        padding: 4.5px 6px;
         border-bottom: 0.5px solid #cbd5e1;
         border-right: 0.5px solid #cbd5e1;
-        font-size: 7.2pt;
+        font-size: 7.4pt;
     }
     .grades-table tr:nth-child(even) td {
         background-color: #f8fafc;
@@ -126,8 +133,8 @@
         background-color: #e2e8f0 !important;
         font-weight: 900;
         color: #002e5b;
-        font-size: 7.2pt;
-        padding: 3.5px 5px;
+        font-size: 7.4pt;
+        padding: 4.5px 6px;
         border-top: 1px solid #002e5b;
     }
 
@@ -135,28 +142,28 @@
     .badge-v {
         background-color: #15803d;
         color: #ffffff;
-        padding: 1.5px 5px;
+        padding: 2px 6px;
         border-radius: 2px;
         font-weight: 900;
-        font-size: 6.5pt;
+        font-size: 6.8pt;
         display: inline-block;
     }
     .badge-vcomp {
         background-color: #4338ca;
         color: #ffffff;
-        padding: 1.5px 5px;
+        padding: 2px 6px;
         border-radius: 2px;
         font-weight: 900;
-        font-size: 6.5pt;
+        font-size: 6.8pt;
         display: inline-block;
     }
     .badge-nv {
         background-color: #be123c;
         color: #ffffff;
-        padding: 1.5px 5px;
+        padding: 2px 6px;
         border-radius: 2px;
         font-weight: 900;
-        font-size: 6.5pt;
+        font-size: 6.8pt;
         display: inline-block;
     }
 
@@ -164,25 +171,25 @@
     .result-box {
         border: 1.5px solid #002e5b;
         border-radius: 4px;
-        padding: 7px 10px;
+        padding: 10px 12px;
         text-align: center;
-        margin-bottom: 2px;
+        margin-bottom: 0;
         background-color: #f8fafc;
         box-sizing: border-box;
         page-break-inside: avoid;
     }
     .result-main {
-        font-size: 8.5pt;
+        font-size: 9pt;
         font-weight: 900;
         color: #002e5b;
         text-transform: uppercase;
         letter-spacing: 0.4px;
     }
     .result-sub {
-        font-size: 7.5pt;
+        font-size: 7.8pt;
         color: #1e293b;
         font-weight: 900;
-        margin-top: 3px;
+        margin-top: 4px;
     }
 </style>
 @endsection

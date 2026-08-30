@@ -34,6 +34,22 @@ class AcademicYear extends Model
     }
 
     /**
+     * Libellé affichable (colonne `label`, sinon start_year-end_year).
+     */
+    public function displayLabel(): string
+    {
+        if (! empty($this->label)) {
+            return (string) $this->label;
+        }
+
+        if ($this->start_year && $this->end_year) {
+            return "{$this->start_year}-{$this->end_year}";
+        }
+
+        return now()->year.'-'.(now()->year + 1);
+    }
+
+    /**
      * Format officiel court pour tableaux PDF (2024-2025 → 24-25).
      */
     public static function toShortLabel(?string $name): string
@@ -50,5 +66,12 @@ class AcademicYear extends Model
         }
 
         return $name;
+    }
+
+    public static function currentShortLabel(): string
+    {
+        $year = static::query()->where('is_current', true)->first();
+
+        return static::toShortLabel($year?->displayLabel());
     }
 }

@@ -324,11 +324,19 @@ class AdminDocumentRequestController extends Controller
 
         $this->authorize('view', $documentRequest);
 
-        $generatedDocument = $this->documentRequestService->getGeneratedDocument($documentRequest);
+        // Always regenerate so layout fixes (column ANNÉE, UTF-8) are applied.
+        try {
+            $generatedDocument = $this->documentRequestService->generateDocumentPdf($documentRequest);
+        } catch (\Throwable $e) {
+            Log::error('Document download regeneration failed', [
+                'document_request_id' => $documentRequest->id,
+                'error' => $e->getMessage(),
+            ]);
 
-        if (! $generatedDocument || ! Storage::disk('private')->exists($generatedDocument->file_path)) {
-            $documentRequest = $this->documentRequestService->processRequest($documentRequest, 'ready');
-            $generatedDocument = $this->documentRequestService->getGeneratedDocument($documentRequest);
+            return response()->json([
+                'success' => false,
+                'message' => 'Impossible de générer le document : '.$e->getMessage(),
+            ], 500);
         }
 
         if ($generatedDocument && Storage::disk('private')->exists($generatedDocument->file_path)) {
@@ -364,9 +372,18 @@ class AdminDocumentRequestController extends Controller
         }
 
         try {
+            // Always rebuild so template/layout fixes (ANNÉE, UTF-8) are visible immediately.
             $generatedDocument = $this->documentRequestService->generateDocumentPdf($documentRequest);
         } catch (\Throwable $e) {
-            $generatedDocument = $this->documentRequestService->getGeneratedDocument($documentRequest);
+            Log::error('Relevé/document preview generation failed', [
+                'document_request_id' => $documentRequest->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Impossible de régénérer le document : '.$e->getMessage(),
+            ], 500);
         }
 
         if ($generatedDocument && Storage::disk('private')->exists($generatedDocument->file_path)) {

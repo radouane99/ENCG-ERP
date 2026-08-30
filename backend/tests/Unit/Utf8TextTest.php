@@ -20,3 +20,14 @@ it('formats academic year labels to short YY-YY', function () {
         ->and(App\Models\AcademicYear::toShortLabel('2026-27'))->toBe('26-27')
         ->and(App\Models\AcademicYear::toShortLabel(null))->toBe('—');
 });
+
+it('builds displayLabel from label column not name', function () {
+    $year = new App\Models\AcademicYear([
+        'label' => '2025-2026',
+        'start_year' => 2025,
+        'end_year' => 2026,
+    ]);
+
+    expect($year->displayLabel())->toBe('2025-2026')
+        ->and(App\Models\AcademicYear::toShortLabel($year->displayLabel()))->toBe('25-26');
+});
