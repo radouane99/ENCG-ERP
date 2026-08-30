@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\Admin\AdminDocumentTypeController;
 use App\Http\Controllers\Api\Admin\AdminExamConvocationController;
 use App\Http\Controllers\Api\Admin\AdminInternshipController;
 use App\Http\Controllers\Api\Admin\AdminMinistryReportController;
+use App\Http\Controllers\Api\Admin\AuditForensicController;
 use App\Http\Controllers\Api\Admin\StudentChatbotController;
 use App\Http\Controllers\Api\AdminAiController;
 use App\Http\Controllers\Api\AdminAnalyticsController;
@@ -1072,10 +1073,16 @@ Route::middleware(['auth:sanctum', $staffRoles])->group(function () {
     Route::get('/admin/tafem/scan-envelope/{token}', [AdmissionController::class, 'scanEnvelopeQrCode']);
     Route::get('/admin/tafem/enrollment-stats', [AdmissionController::class, 'getEnrollmentStats']);
     Route::get('/admin/tafem/security-daily-list', [AdmissionController::class, 'getSecurityDailyList']);
-    Route::post('/admin/tafem/promote-waiting-list', [AdmissionController::class, 'promoteWaitingListCandidates']);
-
-    Route::get('/admin/activity-logs', [AdminDashboardController::class, 'getActivityLogs']);
-    Route::get('/activity-logs', [AdminDashboardController::class, 'getActivityLogs']);
+    // ── Forensic Audit Trail & CNDP Law 09-08 Compliance ──
+    Route::get('/admin/audit-logs', [AuditForensicController::class, 'index']);
+    Route::get('/admin/audit-logs/stats', [AuditForensicController::class, 'stats']);
+    Route::get('/admin/audit-logs/verify-chain', [AuditForensicController::class, 'verifyChain']);
+    Route::get('/admin/audit-logs/export-csv', [AuditForensicController::class, 'exportCsv']);
+    Route::get('/admin/audit-logs/export-pdf', [AuditForensicController::class, 'exportPdf']);
+    Route::get('/admin/audit-logs/{id}', [AuditForensicController::class, 'show'])->whereNumber('id');
+    Route::get('/admin/audit-logs/entity/{type}/{id}', [AuditForensicController::class, 'entityHistory']);
+    Route::get('/admin/activity-logs', [AuditForensicController::class, 'index']);
+    Route::get('/activity-logs', [AuditForensicController::class, 'index']);
     Route::post('/students/{student}/biometric-match', [StudentController::class, 'runBiometricMatch']);
 
     Route::get('/v1/enrollments/scolarite-print-hub', [PdfExportController::class, 'scolaritePrintHub']);

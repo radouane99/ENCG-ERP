@@ -2250,3 +2250,29 @@ flowchart TD
 - **Espace Enseignant :** `ProfessorDocumentsPage.tsx` (`frontend/src/features/professor-portal/pages/`)
   - Route : `/professor/documents`.
   - Formulaire de demande complet + Timeline visuelle à 3 étapes (*1. Dépôt ➔ 2. Visa Département ➔ 3. Signature Direction*) + Téléchargement en 1 clic du PDF certifié.
+
+---
+
+### 21.4 🛡️ Système Unifié d'Audit Forensics & Traçabilité 360° (Conformité CNDP Loi 09-08 & Chaîne SHA-256)
+
+#### A. Rôle Métier & Contexte Réglementaire
+Garantit la traçabilité intégrale, non-répudiable et granulaire de toutes les mutations de données (notes, délibérations, parapheur, admissions, permissions, emplois du temps) en stricte conformité avec la **Loi n° 09-08 (CNDP Maroc)** et les standards **ISO 27001 / OWASP**.
+
+#### B. Architecture Technique & Chaînage Cryptographique Merkle
+- **Trait Eloquent Automatique :** `Auditable.php` (`backend/app/Traits/`)
+  - Intercepte `created`, `updated`, `deleted` sur tous les modèles sensibles (`Grade`, `StudentRegistration`, `ProfessorDocumentRequest`, `Schedule`, `DeliberationDecision`, `User`).
+  - Capture automatique des diffs précis : `old_values` (état avant mutation) et `new_values` (état après mutation) en excluant les champs sensibles (mots de passe, tokens 2FA).
+- **Chaîne Cryptographique Inviolable (Tamper-Evident SHA-256) :**
+  - Formule : `hash('sha256', user_id | action | ip | payload | old_values | new_values | timestamp | previous_hash)`.
+  - Algorithme de vérification `verifyChainIntegrity()` détectant toute manipulation directe en base de données.
+- **Middleware HTTP Global :** `AuditTrailMiddleware.php`
+  - Capture le temps d'exécution précis en millisecondes (`execution_time_ms`), les routes mutantes et exports sensibles.
+- **Service & Contrôleur :** `AuditForensicService.php` & `AuditForensicController.php`
+  - `GET /api/admin/audit-logs` (Filtres multi-critères et pagination)
+  - `GET /api/admin/audit-logs/stats` (Compteurs 24h, événements critiques, opérateurs)
+  - `GET /api/admin/audit-logs/verify-chain` (Vérification mathématique de la chaîne de hachage)
+  - `GET /api/admin/audit-logs/export-csv` (Export conforme CNDP)
+  - `GET /api/admin/audit-logs/export-pdf` (Rapport officiel PDF certifié avec en-tête ENCG Fès et référence `D-W-2025/ENCG-FES-0908`)
+- **Interface Client React :** `AdminActivityLogsPage.tsx` (`frontend/src/features/admin/pages/`)
+  - Route : `/admin/activity-logs`.
+  - Tableau de bord avec 4 compteurs clés, filtres par catégorie d'action et sévérité, modal d'audit de chaîne SHA-256 en direct, et tiroir inspecteur de diffs coloré (Rouge/Vert).

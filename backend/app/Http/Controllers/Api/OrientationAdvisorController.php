@@ -53,7 +53,7 @@ class OrientationAdvisorController extends Controller
 
         // Récupérer la liste des modules actuels pour pré-remplir le simulateur LMD
         $currentSemester = $student->current_semester ?? 2;
-        $semesterModules = Module::where('semester', $currentSemester)->get()->map(fn ($m) => [
+        $semesterModules = Module::where('semester_number', $currentSemester)->get()->map(fn ($m) => [
             'id' => $m->id,
             'code' => $m->code,
             'name' => $m->name,

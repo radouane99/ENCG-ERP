@@ -17,8 +17,10 @@ class AuditTrailMiddleware
     protected array $excludedPaths = [
         'api/v1/admin/activity-logs',
         'api/activity-logs',
+        'api/admin/audit-logs',
         'api/v1/notifications',
         'api/notifications',
+        'api/server-time',
         'up',
         'sanctum/csrf-cookie',
     ];
@@ -28,14 +30,19 @@ class AuditTrailMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
+        $startTime = microtime(true);
+
         $response = $next($request);
 
-        // Only log mutating actions (POST, PUT, PATCH, DELETE) and sensitive exports
+        $executionTimeMs = (int) round((microtime(true) - $startTime) * 1000);
+
+        // Only log mutating actions (POST, PUT, PATCH, DELETE) and sensitive exports/downloads
         $method = $request->method();
         $isMutating = in_array($method, ['POST', 'PUT', 'PATCH', 'DELETE']);
         $isSensitiveGet = $method === 'GET' && (
             str_contains($request->path(), 'export') ||
             str_contains($request->path(), 'pv-pdf') ||
+            str_contains($request->path(), 'preview-pdf') ||
             str_contains($request->path(), 'download')
         );
 
@@ -61,34 +68,54 @@ class AuditTrailMiddleware
                 'current_password',
                 '_token',
                 'secret',
+                'two_factor_secret',
             ]);
 
-            // Determine Action Type & Severity
+            // Determine Action Type, Event & Severity
             $path = $request->path();
             $actionType = 'DATA_MUTATION';
             $severity = 'info';
             $actionName = "{$method} /{$path}";
+            $event = $isSensitiveGet ? 'export' : strtolower($method);
 
             if (str_contains($path, 'login') || str_contains($path, 'auth')) {
                 $actionType = 'AUTHENTICATION';
                 $actionName = 'Authentification Utilisateur';
                 $severity = 'success';
+                $event = 'login';
             } elseif (str_contains($path, 'grade') || str_contains($path, 'note')) {
                 $actionType = 'GRADE_MUTATION';
                 $actionName = 'Modification / Saisie de Notes';
                 $severity = 'warning';
             } elseif (str_contains($path, 'deliberat') || str_contains($path, 'apogee')) {
                 $actionType = 'APOGEE_OVERRIDE';
-                $actionName = 'Délibération / Export APOGEE';
+                $actionName = 'Délibération / Décision Jury APOGEE';
                 $severity = 'warning';
+            } elseif (str_contains($path, 'parapheur')) {
+                $actionType = 'PARAPHEUR_VISA';
+                $actionName = str_contains($path, 'sign') ? 'Signature Ordre de Mission' : 'Traitement Parapheur Électronique';
+                $severity = 'success';
+                $event = 'visa';
+            } elseif (str_contains($path, 'timetable') || str_contains($path, 'schedule')) {
+                $actionType = 'TIMETABLE_CHANGE';
+                $actionName = 'Planification Emploi du Temps / Salles';
+                $severity = 'info';
             } elseif (str_contains($path, 'document') || str_contains($path, 'request') || str_contains($path, 'attestation')) {
                 $actionType = 'DOCUMENT_REQUEST';
-                $actionName = 'Guichet Documentaire';
+                $actionName = 'Guichet Documentaire & Attestations';
                 $severity = 'info';
-            } elseif (str_contains($path, 'finance') || str_contains($path, 'payment')) {
+            } elseif (str_contains($path, 'finance') || str_contains($path, 'payment') || str_contains($path, 'vacation')) {
                 $actionType = 'FINANCE_TRANSACTION';
-                $actionName = 'Transaction Financière Régie';
+                $actionName = 'Transaction Financière Régie / Vacations';
                 $severity = 'success';
+            } elseif (str_contains($path, 'discipline') || str_contains($path, 'incident')) {
+                $actionType = 'DISCIPLINARY_ACTION';
+                $actionName = 'Conseil de Discipline / Incident';
+                $severity = 'danger';
+            } elseif (str_contains($path, 'admission') || str_contains($path, 'tafem')) {
+                $actionType = 'TAFEM_ADMISSION';
+                $actionName = 'Concours TAFEM & Admissions';
+                $severity = 'info';
             } elseif (str_contains($path, 'user') || str_contains($path, 'role') || str_contains($path, 'permission')) {
                 $actionType = 'SECURITY_AUDIT';
                 $actionName = 'Gestion des Utilisateurs & Rôles';
@@ -99,7 +126,7 @@ class AuditTrailMiddleware
             $userEmail = $user?->email;
             $userRole = $user?->role ?? ($user?->roles?->first()?->name ?? 'Invité');
 
-            $description = "Exécution de {$actionName} par {$userName} ({$userRole}) depuis l'adresse IP {$request->ip()} [Statut HTTP {$response->getStatusCode()}]";
+            $description = "Exécution de {$actionName} par {$userName} ({$userRole}) depuis l'adresse IP {$request->ip()} [Statut {$response->getStatusCode()}, {$executionTimeMs}ms]";
 
             if (class_exists(AuditLog::class)) {
                 AuditLog::record([
@@ -109,6 +136,7 @@ class AuditTrailMiddleware
                     'user_role' => $userRole,
                     'action' => $actionName,
                     'action_type' => $actionType,
+                    'event' => $event,
                     'description' => $description,
                     'method' => $method,
                     'url' => $request->fullUrl(),
@@ -116,7 +144,8 @@ class AuditTrailMiddleware
                     'user_agent' => substr($request->userAgent() ?? '', 0, 500),
                     'payload' => ! empty($payload) ? $payload : null,
                     'response_status' => $response->getStatusCode(),
-                    'severity' => $response->getStatusCode() >= 400 ? 'error' : $severity,
+                    'execution_time_ms' => $executionTimeMs,
+                    'severity' => $response->getStatusCode() >= 400 ? 'danger' : $severity,
                 ]);
             }
         } catch (\Throwable $e) {

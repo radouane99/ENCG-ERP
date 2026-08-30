@@ -40,16 +40,22 @@ class AiTimetableSchedulerService
         $preferMorningLectures = $options['prefer_morning_lectures'] ?? true;
 
         // 1. Récupérer les groupes ciblés
-        $groupsQuery = Group::query();
+        $groupsQuery = Group::query()->with('filiere');
         if ($filiereId) {
             $groupsQuery->where('filiere_id', $filiereId);
         }
-        $groups = $groupsQuery->with('filiere')->get();
+        if ($semesterNumber >= 1 && $semesterNumber <= 10) {
+            $groupsQuery->where('semester_number', $semesterNumber);
+        }
+        $groups = $groupsQuery->get();
 
-        // 2. Récupérer les modules & cours du semestre
-        $modules = Module::where('semester', $semesterNumber)
-            ->with(['courses', 'filiere'])
-            ->get();
+        // 2. Récupérer les modules du semestre
+        $modulesQuery = Module::query()->with('filiere');
+        if ($filiereId) {
+            $modulesQuery->where('filiere_id', $filiereId);
+        }
+        $modulesQuery->where('semester_number', $semesterNumber);
+        $modules = $modulesQuery->get();
 
         // 3. Récupérer les salles disponibles et opérationnelles
         $rooms = Room::where(function ($q) {
@@ -110,9 +116,7 @@ class AiTimetableSchedulerService
             }
 
             foreach ($groupModules as $module) {
-                $courses = $module->courses->isNotEmpty() ? $module->courses : collect([
-                    (object) ['id' => $module->id, 'name' => $module->name, 'type' => 'cours'],
-                ]);
+                $courses = $this->getModuleSessions($module);
 
                 foreach ($courses as $course) {
                     // Trouver un professeur assigné ou disponible
@@ -318,6 +322,27 @@ class AiTimetableSchedulerService
             'success' => false,
             'message' => 'Aucune salle libre trouvée sur ce créneau. Un changement de jour/créneau est nécessaire.',
         ];
+    }
+
+    protected function getModuleSessions(Module $module): \Illuminate\Support\Collection
+    {
+        $sessions = collect();
+
+        if (($module->hours_cm ?? 0) > 0) {
+            $sessions->push((object) ['id' => $module->id, 'name' => "{$module->name} (CM)", 'type' => 'cours']);
+        }
+        if (($module->hours_td ?? 0) > 0) {
+            $sessions->push((object) ['id' => $module->id, 'name' => "{$module->name} (TD)", 'type' => 'td']);
+        }
+        if (($module->hours_tp ?? 0) > 0) {
+            $sessions->push((object) ['id' => $module->id, 'name' => "{$module->name} (TP)", 'type' => 'tp']);
+        }
+
+        if ($sessions->isEmpty()) {
+            $sessions->push((object) ['id' => $module->id, 'name' => $module->name, 'type' => 'cours']);
+        }
+
+        return $sessions;
     }
 
     protected function timeToSlotIndex(string $time): ?int
