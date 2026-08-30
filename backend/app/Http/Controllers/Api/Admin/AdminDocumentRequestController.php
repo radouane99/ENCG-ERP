@@ -363,15 +363,10 @@ class AdminDocumentRequestController extends Controller
             return response()->json(['success' => false, 'message' => 'Aperçu indisponible.'], 404);
         }
 
-        $generatedDocument = $this->documentRequestService->getGeneratedDocument($documentRequest);
-
-        if (! $generatedDocument || ! Storage::disk('private')->exists($generatedDocument->file_path)) {
-            try {
-                $documentRequest = $this->documentRequestService->processRequest($documentRequest, 'ready');
-                $generatedDocument = $this->documentRequestService->getGeneratedDocument($documentRequest);
-            } catch (\Throwable $e) {
-                return response()->json(['success' => false, 'message' => 'Aperçu indisponible.'], 404);
-            }
+        try {
+            $generatedDocument = $this->documentRequestService->generateDocumentPdf($documentRequest);
+        } catch (\Throwable $e) {
+            $generatedDocument = $this->documentRequestService->getGeneratedDocument($documentRequest);
         }
 
         if ($generatedDocument && Storage::disk('private')->exists($generatedDocument->file_path)) {

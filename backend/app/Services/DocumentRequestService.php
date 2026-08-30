@@ -482,7 +482,11 @@ class DocumentRequestService
             return 'pdf.attestation_reussite';
         }
 
-        if (str_contains($code, 'insc') || str_contains($name, 'inscr') || str_contains($view, 'inscription') || str_contains($code, 'scol')) {
+        if (str_contains($code, 'scol') || str_contains($name, 'scolarit') || str_contains($view, 'scolarite')) {
+            return 'pdf.attestation_scolarite';
+        }
+
+        if (str_contains($code, 'insc') || str_contains($name, 'inscr') || str_contains($view, 'inscription')) {
             return 'pdf.attestation_inscription';
         }
 
@@ -503,7 +507,7 @@ class DocumentRequestService
         }
 
         $viewMap = [
-            'documents.attestation_scolarite' => 'pdf.attestation_inscription',
+            'documents.attestation_scolarite' => 'pdf.attestation_scolarite',
             'documents.attestation_inscription' => 'pdf.attestation_inscription',
             'documents.convention_stage' => 'pdf.convention_stage',
             'documents.releve_notes' => 'pdf.releve_notes',
@@ -513,6 +517,6 @@ class DocumentRequestService
         ];
 
         return $viewMap[$type->view_name]
-            ?? (str_starts_with($type->view_name, 'documents.') ? str_replace('documents.', 'pdf.', $type->view_name) : 'pdf.attestation');
+            ?? (str_starts_with($type->view_name, 'documents.') ? str_replace('documents.', 'pdf.', $type->view_name) : 'pdf.attestation_scolarite');
     }
 }
