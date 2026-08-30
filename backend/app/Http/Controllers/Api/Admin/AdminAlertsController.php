@@ -8,7 +8,7 @@ use App\Models\CourseEvaluation;
 use App\Models\DocumentRequest;
 use App\Models\EvaluationCampaign;
 use App\Models\Exam;
-use App\Models\FinalProject;
+use App\Models\Internship;
 use App\Models\Student;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
@@ -24,11 +24,7 @@ class AdminAlertsController extends Controller
         $id = 1;
 
         // ── 1. Étudiants à risque (> 10 absences) ──────────────────────
-        $studentsAtRisk = Student::whereHas('attendances', function ($q) {
-            $q->selectRaw('student_id')
-                ->groupBy('student_id')
-                ->havingRaw('COUNT(*) > ?', [10]);
-        })->count();
+        $studentsAtRisk = Student::has('attendances', '>', 10)->count();
 
         if ($studentsAtRisk > 0) {
             $alerts[] = [
@@ -77,7 +73,7 @@ class AdminAlertsController extends Controller
         }
 
         // ── 4. Examens sans convocations (7 prochains jours) ──────────
-        $examsWithoutConv = Exam::whereBetween('date', [
+        $examsWithoutConv = Exam::whereBetween('exam_date', [
             now()->toDateString(),
             now()->addDays(7)->toDateString(),
         ])
@@ -97,7 +93,7 @@ class AdminAlertsController extends Controller
         }
 
         // ── 5. Professeurs sans disponibilités ────────────────────────
-        $profWithoutAvail = User::where('role', 'professor')
+        $profWithoutAvail = User::whereHas('professor')
             ->whereDoesntHave('professorAvailabilities')
             ->count();
 
@@ -130,7 +126,7 @@ class AdminAlertsController extends Controller
         }
 
         // ── 7. PFE sans encadreur ─────────────────────────────────────
-        $pfeWithoutSupervisor = FinalProject::whereNull('supervisor_id')
+        $pfeWithoutSupervisor = Internship::whereNull('supervisor_id')
             ->where('status', '!=', 'rejected')
             ->count();
 

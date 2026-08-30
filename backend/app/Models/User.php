@@ -85,7 +85,7 @@ class User extends Authenticatable implements HasMedia
     // ✅ AJOUTÉ : Relation pour les disponibilités des professeurs
     public function professorAvailabilities(): HasMany
     {
-        return $this->hasMany(ProfessorAvailability::class);
+        return $this->hasMany(ProfessorAvailability::class, 'professor_id');
     }
 
     /**
