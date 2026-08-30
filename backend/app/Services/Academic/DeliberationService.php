@@ -490,7 +490,8 @@ class DeliberationService
 
             foreach ($filiereModules as $mod) {
                 // Check if student has a historical validation for this module from previous years
-                $histVal = ModuleValidation::where('student_id', $student->id)
+                $histVal = ModuleValidation::with('validatedAtSession.academicYear')
+                    ->where('student_id', $student->id)
                     ->where('module_id', $mod->id)
                     ->first();
 
@@ -502,7 +503,8 @@ class DeliberationService
                     $moyNormale = $finalNote;
                     $modDecision = 'V';
                     $isHistorical = true;
-                    $validationYear = '2025/2026';
+                    $validationYear = $histVal->validatedAtSession?->academicYear?->name
+                        ?? $validationYear;
                 } else {
                     $studentGrades = Grade::where('student_id', $student->id)
                         ->whereIn('assessment_id', $mod->assessments->pluck('id'))

@@ -13,14 +13,18 @@ class PdfEngineService
      */
     public function generateFromHtml(string $html, string $directory, string $filename, string $disk = 'private'): string
     {
-        $convertedHtml = mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8');
+        // DomPDF + DejaVu Sans handles UTF-8 natively. Do NOT convert to HTML-ENTITIES
+        // (that double-encodes accents → March├⌐ / Strat├⌐gique in the PDF).
+        if (! str_contains($html, 'charset')) {
+            $html = '<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>'.$html;
+        }
 
-        $pdf = Pdf::loadHTML($convertedHtml)
+        $pdf = Pdf::loadHTML($html)
             ->setPaper('a4', 'portrait')
             ->setOptions([
                 'isHtml5ParserEnabled' => true,
                 'isRemoteEnabled' => true,
-                'defaultFont' => 'dejavu sans',
+                'defaultFont' => 'DejaVu Sans',
                 'isFontSubsettingEnabled' => true,
             ]);
 
@@ -33,15 +37,12 @@ class PdfEngineService
      */
     public function generateFromView(string $view, array $data, string $directory, string $filename, string $disk = 'private'): string
     {
-        $html = view($view, $data)->render();
-        $convertedHtml = mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8');
-
-        $pdf = Pdf::loadHTML($convertedHtml)
+        $pdf = Pdf::loadView($view, $data)
             ->setPaper('a4', 'portrait')
             ->setOptions([
                 'isHtml5ParserEnabled' => true,
                 'isRemoteEnabled' => true,
-                'defaultFont' => 'dejavu sans',
+                'defaultFont' => 'DejaVu Sans',
                 'isFontSubsettingEnabled' => true,
             ]);
 

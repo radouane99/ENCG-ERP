@@ -32,4 +32,23 @@ class AcademicYear extends Model
     {
         return $this->hasMany(Semester::class);
     }
+
+    /**
+     * Format officiel court pour tableaux PDF (2024-2025 → 24-25).
+     */
+    public static function toShortLabel(?string $name): string
+    {
+        if ($name === null || trim($name) === '') {
+            return '—';
+        }
+
+        if (preg_match('/(\d{4})\s*[\/\-–—]\s*(\d{2,4})/u', $name, $m)) {
+            $start = substr($m[1], -2);
+            $end = strlen($m[2]) === 4 ? substr($m[2], -2) : str_pad($m[2], 2, '0', STR_PAD_LEFT);
+
+            return "{$start}-{$end}";
+        }
+
+        return $name;
+    }
 }

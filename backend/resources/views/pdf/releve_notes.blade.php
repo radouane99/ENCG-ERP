@@ -228,20 +228,21 @@
     </table>
 </div>
 
-{{-- ── SEMESTRE 1 TABLE ── --}}
+{{-- ── SEMESTRE IMPAIR TABLE ── --}}
 <table class="grades-table" width="100%" cellpadding="0" cellspacing="0">
     <tr class="sem-main-header">
-        <td colspan="3" class="sem-title-text">
-            SEMESTRE 1
+        <td colspan="4" class="sem-title-text">
+            SEMESTRE {{ preg_replace('/^S/i', '', (string) ($oddSemesterLabel ?? '1')) }}
         </td>
         <td colspan="2" class="sem-avg-text">
-            MOYENNE S1 : {{ number_format($oddAvg ?? 0, 2) }} / 20
+            MOYENNE {{ $oddSemesterLabel ?? 'S1' }} : {{ number_format($oddAvg ?? 0, 2) }} / 20
         </td>
     </tr>
     <tr class="grades-sub-header">
-        <th style="text-align: left; width: 17%;">CODE MODULE</th>
-        <th style="text-align: left; width: 45%;">INTITULÉ DU MODULE</th>
+        <th style="text-align: left; width: 14%;">CODE</th>
+        <th style="text-align: left; width: 38%;">INTITULÉ DU MODULE</th>
         <th style="width: 14%;">SESSION</th>
+        <th style="width: 10%;">ANNÉE</th>
         <th style="width: 12%;">NOTE / 20</th>
         <th style="width: 12%;">RÉSULTAT</th>
     </tr>
@@ -249,7 +250,8 @@
     <tr>
         <td style="font-family: monospace; font-weight: 900; color: #002e5b;">{{ $module['code'] ?? 'MOD1' }}</td>
         <td style="font-weight: 800; color: #1e293b;">{{ $module['name'] ?? 'Module' }}</td>
-        <td style="text-align: center; font-size: 7.5pt; color: #475569; font-weight: bold;">{{ $module['session'] ?? 'Session Normale' }}</td>
+        <td style="text-align: center; font-size: 7pt; color: #475569; font-weight: bold;">{{ $module['session'] ?? 'Session Normale' }}</td>
+        <td style="text-align: center; font-family: monospace; font-weight: 900; color: #002e5b;">{{ $module['academic_year'] ?? '—' }}</td>
         <td style="text-align: center; font-family: monospace; font-weight: 900; color: {{ ($module['is_validated'] ?? false) ? '#15803d' : '#b91c1c' }};">
             {{ number_format($module['score'] ?? 0, 2) }}
         </td>
@@ -265,11 +267,11 @@
     </tr>
     @empty
     <tr>
-        <td colspan="5" style="text-align: center; color: #94a3b8; font-style: italic; padding: 8px;">Aucun module enregistré pour le Semestre 1.</td>
+        <td colspan="6" style="text-align: center; color: #94a3b8; font-style: italic; padding: 8px;">Aucun module enregistré pour ce semestre.</td>
     </tr>
     @endforelse
     <tr class="sem-footer-tr">
-        <td colspan="3" style="text-align: right;">RÉSULTAT SEMESTRE 1 :</td>
+        <td colspan="4" style="text-align: right;">RÉSULTAT {{ $oddSemesterLabel ?? 'S1' }} :</td>
         <td style="text-align: center; font-family: monospace; font-size: 8.5pt;">{{ number_format($oddAvg ?? 0, 2) }} / 20</td>
         <td style="text-align: center;">
             <span class="{{ ($oddAvg ?? 0) >= 10 ? 'badge-v' : 'badge-vcomp' }}">{{ ($oddAvg ?? 0) >= 10 ? 'VALIDÉ' : 'V. COMP' }}</span>
@@ -277,20 +279,21 @@
     </tr>
 </table>
 
-{{-- ── SEMESTRE 2 TABLE ── --}}
+{{-- ── SEMESTRE PAIR TABLE ── --}}
 <table class="grades-table" width="100%" cellpadding="0" cellspacing="0">
     <tr class="sem-main-header">
-        <td colspan="3" class="sem-title-text">
-            SEMESTRE 2
+        <td colspan="4" class="sem-title-text">
+            SEMESTRE {{ preg_replace('/^S/i', '', (string) ($evenSemesterLabel ?? '2')) }}
         </td>
         <td colspan="2" class="sem-avg-text">
-            MOYENNE S2 : {{ number_format($evenAvg ?? 0, 2) }} / 20
+            MOYENNE {{ $evenSemesterLabel ?? 'S2' }} : {{ number_format($evenAvg ?? 0, 2) }} / 20
         </td>
     </tr>
     <tr class="grades-sub-header">
-        <th style="text-align: left; width: 17%;">CODE MODULE</th>
-        <th style="text-align: left; width: 45%;">INTITULÉ DU MODULE</th>
+        <th style="text-align: left; width: 14%;">CODE</th>
+        <th style="text-align: left; width: 38%;">INTITULÉ DU MODULE</th>
         <th style="width: 14%;">SESSION</th>
+        <th style="width: 10%;">ANNÉE</th>
         <th style="width: 12%;">NOTE / 20</th>
         <th style="width: 12%;">RÉSULTAT</th>
     </tr>
@@ -298,7 +301,8 @@
     <tr>
         <td style="font-family: monospace; font-weight: 900; color: #002e5b;">{{ $module['code'] ?? 'MOD2' }}</td>
         <td style="font-weight: 800; color: #1e293b;">{{ $module['name'] ?? 'Module' }}</td>
-        <td style="text-align: center; font-size: 7.5pt; color: #475569; font-weight: bold;">{{ $module['session'] ?? 'Session Normale' }}</td>
+        <td style="text-align: center; font-size: 7pt; color: #475569; font-weight: bold;">{{ $module['session'] ?? 'Session Normale' }}</td>
+        <td style="text-align: center; font-family: monospace; font-weight: 900; color: #002e5b;">{{ $module['academic_year'] ?? '—' }}</td>
         <td style="text-align: center; font-family: monospace; font-weight: 900; color: {{ ($module['is_validated'] ?? false) ? '#15803d' : '#b91c1c' }};">
             {{ number_format($module['score'] ?? 0, 2) }}
         </td>
@@ -314,11 +318,11 @@
     </tr>
     @empty
     <tr>
-        <td colspan="5" style="text-align: center; color: #94a3b8; font-style: italic; padding: 8px;">Aucun module enregistré pour le Semestre 2.</td>
+        <td colspan="6" style="text-align: center; color: #94a3b8; font-style: italic; padding: 8px;">Aucun module enregistré pour ce semestre.</td>
     </tr>
     @endforelse
     <tr class="sem-footer-tr">
-        <td colspan="3" style="text-align: right;">RÉSULTAT SEMESTRE 2 :</td>
+        <td colspan="4" style="text-align: right;">RÉSULTAT {{ $evenSemesterLabel ?? 'S2' }} :</td>
         <td style="text-align: center; font-family: monospace; font-size: 8.5pt;">{{ number_format($evenAvg ?? 0, 2) }} / 20</td>
         <td style="text-align: center;">
             <span class="{{ ($evenAvg ?? 0) >= 10 ? 'badge-v' : 'badge-vcomp' }}">{{ ($evenAvg ?? 0) >= 10 ? 'VALIDÉ' : 'V. COMP' }}</span>
