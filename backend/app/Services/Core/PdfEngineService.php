@@ -13,7 +13,14 @@ class PdfEngineService
      */
     public function generateFromHtml(string $html, string $directory, string $filename, string $disk = 'private'): string
     {
-        $pdf = Pdf::loadHTML($html);
+        $pdf = Pdf::loadHTML($html)
+            ->setPaper('a4', 'portrait')
+            ->setOptions([
+                'isHtml5ParserEnabled' => true,
+                'isRemoteEnabled' => true,
+                'defaultFont' => 'dejavu sans',
+                'isFontSubsettingEnabled' => true,
+            ]);
 
         return $this->savePdf($pdf, $directory, $filename, $disk);
     }
@@ -24,7 +31,14 @@ class PdfEngineService
      */
     public function generateFromView(string $view, array $data, string $directory, string $filename, string $disk = 'private'): string
     {
-        $pdf = Pdf::loadView($view, $data);
+        $pdf = Pdf::loadView($view, $data)
+            ->setPaper('a4', 'portrait')
+            ->setOptions([
+                'isHtml5ParserEnabled' => true,
+                'isRemoteEnabled' => true,
+                'defaultFont' => 'dejavu sans',
+                'isFontSubsettingEnabled' => true,
+            ]);
 
         return $this->savePdf($pdf, $directory, $filename, $disk);
     }
