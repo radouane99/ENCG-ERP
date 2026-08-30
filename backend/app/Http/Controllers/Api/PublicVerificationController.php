@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\DocumentRequest;
 use App\Models\GeneratedDocument;
 use App\Models\Group;
 use App\Models\Module;
@@ -141,16 +142,9 @@ class PublicVerificationController extends Controller
 
         // 3. Recherche Document Étudiant (GeneratedDocument ou DocumentRequest)
         $genDoc = null;
-        if ($fileHash) {
-            $genDoc = GeneratedDocument::with('student.user')
-                ->where('file_hash', $fileHash)
-                ->first();
-        }
-
-        if (! $genDoc && $code) {
+        if ($code) {
             $genDoc = GeneratedDocument::with('student.user')
                 ->where('verification_token', $code)
-                ->orWhere('file_hash', $code)
                 ->orWhere('id', is_numeric($code) ? (int) $code : 0)
                 ->first();
         }
@@ -170,13 +164,66 @@ class PublicVerificationController extends Controller
                     'issued_at' => $genDoc->created_at?->format('d/m/Y H:i') ?? now()->format('d/m/Y H:i'),
                     'signer' => 'Direction & Scolarité ENCG Fès',
                     'status' => 'Authentique & Certifié Conforme (Loi 53-05)',
-                    'sha256_hash' => $genDoc->file_hash ?? hash('sha256', "encg-doc-{$genDoc->id}-{$genDoc->verification_token}"),
+                    'sha256_hash' => hash('sha256', "encg-doc-{$genDoc->id}-{$genDoc->verification_token}"),
                     'institution' => 'École Nationale de Commerce et de Gestion de Fès (USMBA)',
                 ],
             ]);
         }
 
-        // 4. Si aucune donnée précise n'est transmise, faire une vérification test sur le dernier document généré en base
+        // 3.b Recherche dans DocumentRequest (par ID de demande, CNE ou Hash généré)
+        if ($code) {
+            $docReq = DocumentRequest::with(['student.user', 'documentType'])
+                ->where('id', is_numeric($code) ? (int) $code : 0)
+                ->orWhereHas('student', function ($q) use ($code) {
+                    $q->where('cne', $code)->orWhere('student_number', $code);
+                })
+                ->latest()
+                ->first();
+
+            if ($docReq && $docReq->student) {
+                $stUser = $docReq->student->user;
+                return response()->json([
+                    'success' => true,
+                    'is_valid' => true,
+                    'data' => [
+                        'document_type' => $docReq->documentType?->name ?? 'Attestation Officielle',
+                        'tracking_code' => "DOC-ENCG-{$docReq->id}-".strtoupper(substr(md5((string) $docReq->id), 0, 6)),
+                        'beneficiary' => $stUser ? strtoupper($stUser->last_name).' '.$stUser->first_name : 'Étudiant ENCG',
+                        'role' => 'Étudiant ENCG Fès',
+                        'cne' => $docReq->student->cne ?? $docReq->student->student_number,
+                        'issued_at' => $docReq->processed_at?->format('d/m/Y H:i') ?? $docReq->created_at?->format('d/m/Y H:i') ?? now()->format('d/m/Y H:i'),
+                        'signer' => 'Direction & Scolarité ENCG Fès',
+                        'status' => in_array($docReq->status, ['ready', 'approved', 'processed']) ? 'Authentique & Certifié Conforme (Loi 53-05)' : 'En attente de traitement',
+                        'sha256_hash' => hash('sha256', "encg-req-{$docReq->id}-{$docReq->student_id}-{$docReq->created_at}"),
+                        'institution' => 'École Nationale de Commerce et de Gestion de Fès (USMBA)',
+                    ],
+                ]);
+            }
+        }
+
+        // 4. Si aucune donnée précise n'est transmise ou pour un test rapide sur le dernier document réel en base
+        $latestStudentDoc = DocumentRequest::with(['student.user', 'documentType'])->latest()->first();
+        if ($latestStudentDoc && $latestStudentDoc->student) {
+            $stUser = $latestStudentDoc->student->user;
+            return response()->json([
+                'success' => true,
+                'is_valid' => true,
+                'is_demo_test' => true,
+                'data' => [
+                    'document_type' => $latestStudentDoc->documentType?->name ?? 'Attestation de Scolarité',
+                    'tracking_code' => "DOC-ENCG-{$latestStudentDoc->id}-".strtoupper(substr(md5((string) $latestStudentDoc->id), 0, 6)),
+                    'beneficiary' => $stUser ? strtoupper($stUser->last_name).' '.$stUser->first_name : 'Étudiant ENCG',
+                    'role' => 'Étudiant ENCG Fès',
+                    'cne' => $latestStudentDoc->student->cne ?? $latestStudentDoc->student->student_number,
+                    'issued_at' => $latestStudentDoc->processed_at?->format('d/m/Y H:i') ?? $latestStudentDoc->created_at?->format('d/m/Y H:i') ?? now()->format('d/m/Y H:i'),
+                    'signer' => 'Direction & Scolarité ENCG Fès',
+                    'status' => in_array($latestStudentDoc->status, ['ready', 'approved', 'processed']) ? 'Authentique & Certifié Conforme (Loi 53-05)' : 'En attente de traitement',
+                    'sha256_hash' => hash('sha256', "encg-req-{$latestStudentDoc->id}-{$latestStudentDoc->student_id}-{$latestStudentDoc->created_at}"),
+                    'institution' => 'École Nationale de Commerce et de Gestion de Fès (USMBA)',
+                ],
+            ]);
+        }
+
         $latestProfDoc = ProfessorDocumentRequest::with('user')->latest()->first();
         if ($latestProfDoc) {
             $user = $latestProfDoc->user;

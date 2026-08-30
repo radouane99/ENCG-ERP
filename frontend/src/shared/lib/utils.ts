@@ -60,6 +60,9 @@ export function slugify(str: string): string {
 export function cleanUtf8Text(str: string): string {
   if (!str) return ''
   return str
+    .replace(/Scolarit[\s\S]{1,6}/gi, 'Scolarité')
+    .replace(/Relev[\s\S]{1,6}de/gi, 'Relevé de')
+    .replace(/R[\s\S]{1,6}ussite/gi, 'Réussite')
     .replace(/Financi[\s\S]{1,6}re/gi, 'Financière')
     .replace(/├ëconomie|Ã‰conomie|├ë|Ã‰/g, 'É')
     .replace(/Appliqu├⌐e|Appliqu├¿e|AppliquÃ©e|AppliquÃ¨e/g, 'Appliquée')
@@ -68,7 +71,7 @@ export function cleanUtf8Text(str: string): string {
     .replace(/┘é╪º┘å┘ê┘å ╪º┘ä╪ú╪╣┘à╪º┘ä|قـانون الأعـمال/gi, 'شعبة قانون الأعمال')
     .replace(/╪º┘ä┘ä╪║╪º╪¬ ┘ê╪º┘ä╪¬┘ê╪º╪╡┘ä|اللـغات والتـواصل/gi, 'شعبة اللغات والتواصل')
     .replace(/╪Ñ╪╣┘ä╪º┘à┘è╪º╪¬ ╪º┘ä╪¬╪│┘è┘è╪▒|إعلاميات التسيير/gi, 'شعبة الإعلاميات وأنظمة المعلومات')
-    .replace(/Ã©|├®|├⌐/g, 'é')
+    .replace(/├─|Ã©|├®|├⌐/g, 'é')
     .replace(/Ã¨|├¿/g, 'è')
     .replace(/Ãª|├ª/g, 'ê')
     .replace(/Ã |├ /g, 'à')
