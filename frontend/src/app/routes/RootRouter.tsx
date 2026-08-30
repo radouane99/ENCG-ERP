@@ -521,7 +521,7 @@ export default function RootRouter() {
             <Route path="/admin/club-finance" element={<AdminClubFinancePage />} />
             <Route path="/admin/tafem" element={<AdminTafem />} />
             <Route path="/admin/mobility" element={<AdminMobility />} />
-            <Route path="/admin/jury-pfe" element={<AdminJuryPFE />} />
+            <Route path="/admin/jury-pfe" element={<AdminPFEWorkflowPage />} />
             <Route path="/admin/predictive-analytics" element={<AdminPredictiveAnalytics />} />
             <Route path="/admin/workflow-builder" element={<AdminWorkflowBuilder />} />
             <Route path="/admin/exam-locking" element={<ExamLockingPage />} />
@@ -568,7 +568,7 @@ export default function RootRouter() {
             <Route path="/admin/smart-campus" element={<AdminSmartCampus />} />
             <Route path="/admin/tafem" element={<AdminTafem />} />
             <Route path="/admin/mobility" element={<AdminMobility />} />
-            <Route path="/admin/jury-pfe" element={<AdminJuryPFE />} />
+            <Route path="/admin/jury-pfe" element={<AdminPFEWorkflowPage />} />
             <Route path="/admin/alumni" element={<AlumniNetwork />} />
             <Route path="/admin/pilotage" element={<PilotagePage />} />
             <Route path="/admin/exams" element={<AdminExamsPage />} />

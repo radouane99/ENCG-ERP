@@ -111,10 +111,8 @@ const navigation: (NavItem | NavGroup)[] = [
     groupTitle: 'CAMPUS, STAGES & PFE',
     groupTitleAr: 'الحرم الجامعي ومشاريع التخرج',
     items: [
-      { label: 'Workflow Stages & PFE', labelAr: 'مسار التداريب ومشاريع التخرج', href: '/admin/pfe-workflow', icon: Kanban, badge: 'PFE', roles: ['super-admin', 'institution-admin', 'director', 'professor'] },
-      { label: 'Jurys de Soutenance PFE', labelAr: 'لجان مناقشة التخرج', href: '/admin/jury-pfe', icon: Award, roles: ['super-admin', 'institution-admin', 'director', 'professor'] },
-      { label: 'Salles & Amphithéâtres', labelAr: 'القاعات والمدرجات', href: '/infrastructure/classrooms', icon: DoorOpen, roles: ['super-admin', 'institution-admin', 'director'] },
-      { label: 'Réservations de Salles', labelAr: 'حجز القاعات والمدرجات', href: '/admin/reservations', icon: Ticket, roles: ['super-admin', 'institution-admin', 'director'] },
+      { label: 'Hub Stages, PFE & Soutenances', labelAr: 'مسار التداريب ومناقشات التخرج', href: '/admin/pfe-workflow', icon: Kanban, badge: 'PFE', roles: ['super-admin', 'institution-admin', 'director', 'professor'] },
+      { label: 'Campus, Salles & Réservations', labelAr: 'القاعات والمدرجات والحجوزات', href: '/infrastructure/classrooms', icon: DoorOpen, roles: ['super-admin', 'institution-admin', 'director', 'scolarite'] },
       { label: 'Clubs & Vie Étudiante', labelAr: 'الأندية والأنشطة الطلابية', href: '/admin/clubs', icon: HeartHandshake, roles: ['super-admin', 'institution-admin', 'director'] },
       { label: 'Mobilité Internationale', labelAr: 'برامج التبادل والحركية', href: '/admin/mobility', icon: PlaneTakeoff, roles: ['super-admin', 'institution-admin', 'director'] },
     ]
