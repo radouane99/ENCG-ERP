@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import api from '@shared/lib/api';
-import { cn } from '@shared/lib/utils';
+import { cn, cleanUtf8Text } from '@shared/lib/utils';
 
 export default function PilotagePage() {
   const [warningThreshold, setWarningThreshold] = useState(80);
@@ -361,7 +361,7 @@ export default function PilotagePage() {
                       <td className="px-5 py-4">
                         <div className="font-black text-foreground text-sm flex items-center gap-2">
                           <User className="w-4 h-4 text-primary" />
-                          <span>{row.student_name || `Étudiant #${row.student_id}`}</span>
+                          <span>{cleanUtf8Text(row.student_name || `Étudiant #${row.student_id}`)}</span>
                         </div>
                         <div className="text-[11px] text-muted-foreground font-mono">
                           CNE : {row.student_cne || `N138080${row.student_id}`}
@@ -369,7 +369,7 @@ export default function PilotagePage() {
                       </td>
 
                       <td className="px-5 py-4">
-                        <span className="font-bold text-foreground">{row.module}</span>
+                        <span className="font-bold text-foreground">{cleanUtf8Text(row.module)}</span>
                       </td>
 
                       <td className="px-5 py-4">
@@ -501,12 +501,12 @@ export default function PilotagePage() {
               <tbody className="divide-y divide-border">
                 {justifications.map((j: any) => (
                   <tr key={j.id} className="hover:bg-muted/40 transition-colors">
-                    <td className="px-5 py-4 font-black text-foreground text-sm">{j.student}</td>
+                    <td className="px-5 py-4 font-black text-foreground text-sm">{cleanUtf8Text(j.student)}</td>
                     <td className="px-5 py-4">
-                      <div className="font-bold text-foreground text-xs">{j.module}</div>
+                      <div className="font-bold text-foreground text-xs">{cleanUtf8Text(j.module)}</div>
                       <div className="text-[11px] text-primary font-mono">{j.filiere}</div>
                     </td>
-                    <td className="px-5 py-4 text-xs font-medium text-muted-foreground">{j.motif}</td>
+                    <td className="px-5 py-4 text-xs font-medium text-muted-foreground capitalize">{cleanUtf8Text(j.motif)}</td>
                     <td className="px-5 py-4 text-xs font-mono text-muted-foreground">{j.date}</td>
                     <td className="px-5 py-4 text-right">
                       <div className="inline-flex items-center gap-2">

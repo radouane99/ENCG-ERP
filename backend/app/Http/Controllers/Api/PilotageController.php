@@ -79,7 +79,7 @@ class PilotageController extends Controller
         // 3. Retakes & Convocations (100% Real SQL)
         $retakesCount = ResitEligibility::count()
             ?: Grade::whereNotNull('value')->where('value', '<', 10)->count();
-        $convocationsCount = Convocation::where('is_downloaded', false)->count();
+        $convocationsCount = Convocation::whereIn('status', ['draft', 'sent'])->count();
 
         // 4. Absence Hours & Discipline Calculations (100% Real SQL)
         $totalUnjustifiedAbsences = Attendance::where('status', 'absent')->where('is_justified', false)->count();
