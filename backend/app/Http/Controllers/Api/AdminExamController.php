@@ -19,7 +19,7 @@ class AdminExamController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Exam::with(['module', 'group', 'room', 'surveillances.professor'])
+        $query = Exam::with(['module', 'group', 'room', 'surveillances.professor.user'])
             ->withCount(['seatings', 'incidents'])
             ->latest();
 
@@ -44,7 +44,11 @@ class AdminExamController extends Controller
             $surveillantsText = $exam->surveillances->map(function ($s) {
                 $prof = $s->professor;
 
-                return $prof ? ($prof->name ?? $prof->first_name.' '.$prof->last_name) : 'Inconnu';
+                if (! $prof) {
+                    return 'Inconnu';
+                }
+
+                return $prof->user?->name ?? ($prof->name ?? ($prof->first_name.' '.$prof->last_name));
             })->join(', ') ?: 'Aucun';
 
             return [

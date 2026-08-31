@@ -8,6 +8,7 @@ use App\Mail\ProfessorAssignmentNotificationMail;
 use App\Models\AcademicYear;
 use App\Models\Application;
 use App\Models\ClassroomReservation;
+use App\Models\Department;
 use App\Models\Exam;
 use App\Models\ExamIncident;
 use App\Models\ExamSeating;
@@ -791,23 +792,81 @@ class PdfExportController extends Controller
         return $pdf->download("PV_Semestriel_S{$semesterNum}_ENCG.pdf");
     }
 
+    public function downloadDepartmentArreteNominationPdf(Request $request, Department $department)
+    {
+        return $this->respondArreteNominationPdf($request, $department);
+    }
+
+    /**
+     * Legacy GET — only department_id allowed (no PII in query string).
+     */
     public function exportArreteNominationPdf(Request $request)
     {
-        $deptCode = $request->query('code', 'SG');
-        $deptName = $request->query('dept', 'Sciences de Gestion');
-        $headName = $request->query('head', 'Abdelhak El Amrani');
+        if ($request->filled('department_id')) {
+            $department = Department::findOrFail($request->input('department_id'));
 
-        $pdf = $this->getPdfInstance('pdf.arrete_nomination', [
+            return $this->respondArreteNominationPdf($request, $department);
+        }
+
+        if ($request->hasAny(['code', 'dept', 'head', 'head_name', 'department_name'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Les données personnelles ne doivent pas transiter dans l\'URL. Utilisez /api/v1/admin/departments/{department_id}/arrete-nomination-pdf.',
+            ], 422);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Le paramètre department_id est requis.',
+        ], 422);
+    }
+
+    private function respondArreteNominationPdf(Request $request, Department $department)
+    {
+        $pdf = $this->buildArreteNominationPdf($department);
+        $safeCode = Str::slug($department->code ?? 'DEPT');
+
+        return $this->streamOrDownloadPdf($request, $pdf, "Arrete_De_Nomination_Chef_Departement_{$safeCode}.pdf");
+    }
+
+    private function buildArreteNominationPdf(Department $department): \Barryvdh\DomPDF\PDF
+    {
+        $currentYear = AcademicYear::where('is_current', true)->first()
+            ?? AcademicYear::orderByDesc('start_year')->first();
+
+        $academicYearLabel = $currentYear?->displayLabel() ?? $currentYear?->label ?? '2026/2027';
+        $deptCode = $department->code ?? 'SG';
+        $deptName = $department->name ?? 'Sciences de Gestion';
+        $headName = trim($department->head_name ?? '');
+
+        if ($headName === '' || in_array($headName, ['Non défini', 'Professeur Nommé'], true)) {
+            $resolved = $this->resolveProfessorFromDepartmentHead($department);
+            if ($resolved?->user) {
+                $user = $resolved->user;
+                $headName = trim(($user->first_name ?? '').' '.($user->last_name ?? ''));
+                if ($headName === '') {
+                    $headName = $user->name ?? 'Chef de Département';
+                }
+            } else {
+                $headName = 'Chef de Département';
+            }
+        }
+
+        $decisionNumber = (100 + ($department->id % 900)).'/'.date('Y');
+        $trackingCode = 'ARRETE-'.strtoupper(substr(md5($deptCode.$department->id), 0, 10));
+
+        return $this->getPdfInstance('pdf.arrete_nomination', [
             'departmentCode' => $deptCode,
             'departmentName' => $deptName,
             'headName' => $headName,
-            'academicYear' => '2026/2027',
-            'verifyUrl' => url('/verify/document/ARRETE-'.md5($deptCode)),
-        ]);
-
-        $safeCode = Str::slug($deptCode);
-
-        return $pdf->stream("Arrete_De_Nomination_Chef_Departement_{$safeCode}.pdf");
+            'decisionNumber' => $decisionNumber,
+            'trackingCode' => $trackingCode,
+            'academicYear' => $academicYearLabel,
+            'effectiveDate' => '01 Septembre '.($currentYear?->start_year ?? date('Y')),
+            'date' => now()->format('d/m/Y'),
+            'verifyUrl' => url("/verify/document/{$trackingCode}"),
+            'signatoryTitle' => 'LE SECRÉTAIRE GÉNÉRAL',
+        ])->setPaper('a4', 'portrait');
     }
 
     public function exportMaquetteFilierePdf(Request $request)
@@ -1389,75 +1448,147 @@ class PdfExportController extends Controller
     }
 
     /**
-     * 📜 ORDRE DE SERVICE D'ENSEIGNEMENT OFFICIEL (A4 PDF) — 100% DYNAMIQUE BASE DE DONNÉES
+     * 📜 ORDRE DE SERVICE — route model binding (UUID), no PII in URL.
+     */
+    public function downloadProfessorOrdreDeServicePdf(Request $request, Professor $professor)
+    {
+        $professor->loadMissing(['user', 'department']);
+
+        return $this->respondOrdreDeServicePdf($request, $professor);
+    }
+
+    /**
+     * Ordre de Service for the authenticated professor (self-service).
+     */
+    public function downloadMyOrdreDeServicePdf(Request $request)
+    {
+        $professor = Professor::with(['user', 'department'])
+            ->where('user_id', $request->user()->id)
+            ->firstOrFail();
+
+        return $this->respondOrdreDeServicePdf($request, $professor);
+    }
+
+    /**
+     * Legacy GET — only professor_id or scope=default (no PII in query string).
+     */
+    public function exportProfessorOrdreDeServicePdf(Request $request)
+    {
+        if ($request->filled('professor_id')) {
+            $professor = $this->resolveProfessorByPublicId($request->input('professor_id'));
+
+            return $this->respondOrdreDeServicePdf($request, $professor);
+        }
+
+        if ($request->hasAny(['prof', 'prof_name', 'prof_email', 'email', 'prof_id'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Les données personnelles ne doivent pas transiter dans l\'URL. Utilisez /api/v1/admin/professors/{professor_id}/ordre-de-service-pdf ou POST /api/v1/admin/professor-assignments/ordre-de-service-pdf.',
+            ], 422);
+        }
+
+        if ($request->query('scope') === 'default') {
+            $professor = Professor::with(['user', 'department'])->first();
+            if (! $professor) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Aucun enseignant trouvé.',
+                ], 404);
+            }
+
+            return $this->respondOrdreDeServicePdf($request, $professor);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Le paramètre professor_id est requis.',
+        ], 422);
+    }
+
+    /**
+     * Custom / department-head ordre de service — payload in request body (not URL).
+     */
+    public function exportProfessorOrdreDeServicePdfFromBody(Request $request)
+    {
+        $validated = $request->validate([
+            'professor_id' => ['nullable', 'uuid', 'exists:professors,uuid'],
+            'department_id' => ['nullable', 'integer', 'exists:departments,id'],
+        ]);
+
+        if (! empty($validated['professor_id'])) {
+            $professor = $this->resolveProfessorByPublicId($validated['professor_id']);
+
+            return $this->respondOrdreDeServicePdf($request, $professor);
+        }
+
+        if (! empty($validated['department_id'])) {
+            $department = Department::findOrFail($validated['department_id']);
+            $professor = $this->resolveProfessorFromDepartmentHead($department);
+            if (! $professor) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Chef de département introuvable pour ce pôle académique.',
+                ], 404);
+            }
+
+            return $this->respondOrdreDeServicePdf($request, $professor);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'professor_id ou department_id requis.',
+        ], 422);
+    }
+
+    /**
+     * 📜 ORDRE DE SERVICE D'ENSEIGNEMENT OFFICIEL (A4 PDF) — by professor UUID in path.
      */
     public function exportOrdreDeServicePdf(Request $request, ?string $id = null)
     {
-        $profId = $request->query('prof_id');
-        $queryProf = trim($request->query('prof', '') ?: $request->query('prof_name', ''));
-        $email = trim($request->query('email', '') ?: $request->query('prof_email', ''));
+        if ($id) {
+            $professor = $this->resolveProfessorByPublicId($id);
 
+            return $this->respondOrdreDeServicePdf($request, $professor);
+        }
+
+        return $this->exportProfessorOrdreDeServicePdf($request);
+    }
+
+    private function respondOrdreDeServicePdf(Request $request, Professor $professor)
+    {
+        $built = $this->buildOrdreDeServicePdf($professor);
+
+        return $this->streamOrDownloadPdf($request, $built['pdf'], "Ordre_De_Service_{$built['trackingCode']}.pdf");
+    }
+
+    /**
+     * @return array{pdf: \Barryvdh\DomPDF\PDF, trackingCode: string}
+     */
+    private function buildOrdreDeServicePdf(Professor $professor): array
+    {
         $currentYear = AcademicYear::where('is_current', true)->first()
             ?? AcademicYear::orderByDesc('start_year')->first();
 
-        // 1. Locate Professor Record from Database
-        $professor = null;
-        if ($profId) {
-            $professor = Professor::with(['user', 'department'])->find((int) $profId)
-                ?? Professor::with(['user', 'department'])->where('uuid', $profId)->first();
+        $query = ModuleProfessor::with(['module.filiere', 'group', 'academicYear'])
+            ->where('professor_id', $professor->id);
+
+        if ($currentYear) {
+            $query->where('academic_year_id', $currentYear->id);
         }
 
-        if (! $professor && $email) {
-            $user = User::where('email', $email)->first();
-            if ($user) {
-                $professor = Professor::with(['user', 'department'])->where('user_id', $user->id)->first();
-            }
-        }
+        $assignedModules = $query->get();
 
-        if (! $professor && $queryProf) {
-            $professor = Professor::with(['user', 'department'])
-                ->whereHas('user', function ($q) use ($queryProf) {
-                    $q->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$queryProf}%"])
-                        ->orWhere('name', 'LIKE', "%{$queryProf}%")
-                        ->orWhere('last_name', 'LIKE', "%{$queryProf}%")
-                        ->orWhere('first_name', 'LIKE', "%{$queryProf}%");
-                })->first();
-        }
-
-        if (! $professor && is_numeric($id)) {
-            $assignment = ModuleProfessor::with(['professor.user', 'professor.department'])->find((int) $id);
-            $professor = $assignment?->professor;
-        }
-
-        if (! $professor) {
-            $professor = Professor::with(['user', 'department'])->first();
-        }
-
-        // 2. Retrieve ALL Real Database Assignments for this Professor
-        $assignedModules = collect();
-        if ($professor) {
-            $query = ModuleProfessor::with(['module.filiere', 'group', 'academicYear'])
-                ->where('professor_id', $professor->id);
-
-            if ($currentYear) {
-                $query->where('academic_year_id', $currentYear->id);
-            }
-
-            $assignedModules = $query->get();
-        }
-
-        // 3. Compile Real Data from Eloquent Models
-        $profUser = $professor?->user;
+        $profUser = $professor->user;
         $profName = $profUser
             ? trim(($profUser->first_name ?? '').' '.($profUser->last_name ?? ''))
             : ($profUser->name ?? 'Enseignant Permanent');
 
         if (empty($profName)) {
-            $profName = $profUser->name ?? $queryProf ?: 'Professeur Permanent';
+            $profName = $profUser->name ?? 'Professeur Permanent';
         }
 
-        $profEmail = $profUser->email ?? $email ?? 'N/A';
-        $deptName = $professor?->department?->name ?? 'Département Académique ENCG';
+        $profEmail = $profUser->email ?? 'N/A';
+        $deptName = $professor->department?->name ?? 'Département Académique ENCG';
         $academicYearLabel = $assignedModules->first()?->academicYear?->label ?? $currentYear?->label ?? '2026/2027';
 
         $modulesList = [];
@@ -1474,7 +1605,7 @@ class PdfExportController extends Controller
         $totalHours = array_reduce($modulesList, fn ($sum, $m) => $sum + $m['hours'], 0);
         $weeklyHours = $totalModulesCount * 4;
 
-        $trackingCode = 'ODS-'.date('Y').'-'.str_pad($professor?->id ?? '1', 4, '0', STR_PAD_LEFT);
+        $trackingCode = 'ODS-'.date('Y').'-'.strtoupper(substr(str_replace('-', '', (string) $professor->id), 0, 8));
         $verifyUrl = url("/verify/document/{$trackingCode}");
 
         try {
@@ -1504,19 +1635,37 @@ class PdfExportController extends Controller
             'totalHours' => $totalHours,
             'weeklyHours' => $weeklyHours,
             'dateIssued' => now()->format('d/m/Y'),
+            'date' => now()->format('d/m/Y'),
         ];
 
         $pdf = Pdf::setOption([
             'isRemoteEnabled' => true,
             'chroot' => public_path(),
-        ])->loadView('pdf.ordre_de_service', $data);
+        ])->loadView('pdf.ordre_de_service', $data)->setPaper('a4', 'portrait');
 
-        return $pdf->stream("Ordre_De_Service_{$trackingCode}.pdf", ['Attachment' => false]);
+        return ['pdf' => $pdf, 'trackingCode' => $trackingCode];
     }
 
-    public function exportProfessorOrdreDeServicePdf(Request $request, $id = null)
+    private function resolveProfessorByPublicId(string|int $publicId): Professor
     {
-        return $this->exportOrdreDeServicePdf($request, is_string($id) ? $id : null);
+        return Professor::findByPublicId($publicId, ['user', 'department'])
+            ?? throw (new \Illuminate\Database\Eloquent\ModelNotFoundException)->setModel(Professor::class, [(string) $publicId]);
+    }
+
+    private function resolveProfessorFromDepartmentHead(Department $department): ?Professor
+    {
+        $headName = trim($department->head_name ?? '');
+        if ($headName === '' || in_array($headName, ['Non défini', 'Professeur Nommé'], true)) {
+            return null;
+        }
+
+        return Professor::with(['user', 'department'])
+            ->whereHas('user', function ($q) use ($headName) {
+                $q->whereRaw("CONCAT(COALESCE(first_name,''), ' ', COALESCE(last_name,'')) LIKE ?", ["%{$headName}%"])
+                    ->orWhere('name', 'LIKE', "%{$headName}%")
+                    ->orWhere('last_name', 'LIKE', "%{$headName}%")
+                    ->orWhere('first_name', 'LIKE', "%{$headName}%");
+            })->first();
     }
 
     /**
@@ -1534,7 +1683,11 @@ class PdfExportController extends Controller
         // Locate Professor in DB
         $professor = null;
         if ($profId) {
-            $professor = Professor::with(['user', 'department'])->find((int) $profId);
+            try {
+                $professor = $this->resolveProfessorByPublicId($profId);
+            } catch (\Illuminate\Database\Eloquent\ModelNotFoundException) {
+                $professor = null;
+            }
         }
 
         if (! $professor && $targetEmail) {
@@ -1597,11 +1750,7 @@ class PdfExportController extends Controller
         // Generate PDF attachment dynamically from DB
         $pdfContent = null;
         try {
-            $pdfRequest = new Request([
-                'prof_id' => $professor->id,
-                'email' => $destEmail,
-            ]);
-            $pdfContent = $this->exportOrdreDeServicePdf($pdfRequest, (string) $professor->id)->output();
+            $pdfContent = $this->buildOrdreDeServicePdf($professor)['pdf']->output();
         } catch (\Exception $e) {
             // PDF output fallback
         }

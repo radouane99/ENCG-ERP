@@ -39,7 +39,7 @@ import { toast } from 'sonner';
 import RoleQuickActions from '@shared/components/layout/RoleQuickActions';
 import PageHeader from '@shared/components/layout/PageHeader';
 import { cn } from '@shared/lib/utils';
-import { openAuthenticatedUrl } from '@shared/lib/documentAccess';
+import { openMyOrdreDeServicePdf } from '@shared/lib/documentAccess';
 
 export default function ProfessorDashboard() {
   const { i18n } = useTranslation(['professors', 'common']);
@@ -419,7 +419,7 @@ export default function ProfessorDashboard() {
 
               <div className="flex flex-wrap items-center gap-3 shrink-0">
                 <button
-                  onClick={() => openAuthenticatedUrl(`/api/v1/admin/professor-assignments/ordre-de-service-pdf?prof=${encodeURIComponent(user?.name || '')}`)}
+                  onClick={() => openMyOrdreDeServicePdf()}
                   className="px-4 py-2.5 bg-amber-400 hover:bg-amber-300 text-[#001A4B] font-black rounded-xl text-xs uppercase tracking-wider shadow-md transition-all flex items-center gap-2 cursor-pointer"
                 >
                   <Download className="w-4 h-4" /> Ordre de Service (PDF A4)

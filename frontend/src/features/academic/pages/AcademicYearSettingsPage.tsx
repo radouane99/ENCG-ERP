@@ -5,10 +5,10 @@ import {
   ChevronRight, ArrowUpRight, GraduationCap, ShieldCheck, Check, Clock, Edit3, AlertCircle,
   Copy, Mail, Printer, Zap, BarChart2, Eye, EyeOff, CheckSquare
 } from 'lucide-react'
-import { cn } from '@shared/lib/utils'
+import { cn, cleanUtf8Text } from '@shared/lib/utils'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@shared/lib/api'
-import { openAuthenticatedUrl } from '@shared/lib/documentAccess'
+import { openAuthenticatedUrl, openProfessorOrdreDeServicePdf } from '@shared/lib/documentAccess'
 import { academicApi } from '@shared/api/academic'
 import { toast } from 'sonner'
 import { Spinner } from '@shared/components/ui/Spinner'
@@ -364,13 +364,30 @@ export default function AcademicYearSettingsPage() {
     : 0
   const selectedProfVolumeHours = selectedProfAssignedCount * 4
 
+  // Resolve professor UUID from assignment row (never use assignment.id)
+  const resolveAssignmentProfessorId = (assignment: any): string | null => {
+    const direct = assignment?.professor_id || assignment?.prof_id || assignment?.professor?.id
+    if (direct) return String(direct)
+    const profName = (assignment?.prof || '').trim().toLowerCase()
+    if (!profName) return null
+    const matched = allProfessors.find((p: any) => {
+      const full = `${p.first_name || ''} ${p.last_name || ''}`.trim().toLowerCase()
+      const alt = (p.user?.first_name && p.user?.last_name)
+        ? `${p.user.first_name} ${p.user.last_name}`.trim().toLowerCase()
+        : ''
+      return full === profName || alt === profName || (p.email && profName.includes(String(p.last_name || '').toLowerCase()))
+    })
+    return matched?.id ? String(matched.id) : null
+  }
+
   // Group Assignments by Professor for High-Performance UI
   const groupedAssignmentsMap = assignments.reduce((acc: any, curr: any) => {
-    const profName = curr.prof || `Professeur #${curr.prof_id || curr.id}`
+    const profName = curr.prof || `Professeur #${curr.prof_id || 'N/A'}`
+    const profId = resolveAssignmentProfessorId(curr)
     if (!acc[profName]) {
       acc[profName] = {
         profName,
-        profId: curr.prof_id || curr.id,
+        profId,
         departmentId: curr.department_id,
         assignmentsList: []
       }
@@ -554,7 +571,7 @@ export default function AcademicYearSettingsPage() {
     const toastId = toast.loading('📦 Compilation du lot ZIP (Ordres de Service PDF + Bilan Excel RH)...')
     await new Promise(r => setTimeout(r, 1500))
     toast.success('📦 Lot ZIP exporté avec succès (Ordres_De_Service_Complet_2026_2027.zip) !', { id: toastId })
-    openAuthenticatedUrl('/api/v1/admin/professor-assignments/ordre-de-service-pdf?prof=Tous')
+    openAuthenticatedUrl('/api/v1/admin/professor-assignments/ordre-de-service-pdf?scope=default')
   }
 
   // Relancer Enseignants Non-Notifiés
@@ -589,10 +606,12 @@ export default function AcademicYearSettingsPage() {
 
   // Stream Native DomPDF Ordre de Service A4 (100% Dynamic DB Query)
   const handlePrintOrdreDeService = (profGroup: any) => {
-    const profName = profGroup?.profName || ''
     const profId = profGroup?.profId || ''
-    const pdfUrl = `/api/v1/admin/professor-assignments/ordre-de-service-pdf?prof_id=${profId}&prof=${encodeURIComponent(profName)}`
-    openAuthenticatedUrl(pdfUrl)
+    if (!profId) {
+      toast.error('Identifiant enseignant introuvable.')
+      return
+    }
+    openProfessorOrdreDeServicePdf(profId)
   }
 
   const handleDownloadTemplate = () => {
@@ -1344,7 +1363,7 @@ export default function AcademicYearSettingsPage() {
                 </div>
                 <div>
                   <h3 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-wider">
-                    {selectedProfForModal.profName}
+                    {cleanUtf8Text(selectedProfForModal.profName)}
                   </h3>
                   <p className="text-xs text-slate-500 font-bold">
                     Détail des charges & modules affectés pour 2026/2027
@@ -1378,11 +1397,15 @@ export default function AcademicYearSettingsPage() {
                   <div key={i} className="flex items-center justify-between p-3.5 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700">
                     <div className="flex items-center gap-3">
                       <span className="px-2.5 py-1 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 font-mono font-black text-[10px] rounded-md border border-indigo-200">
-                        {item.module?.split(' ')[0] || 'MOD'}
+                        {cleanUtf8Text(item.module?.split(' ')[0] || 'MOD')}
                       </span>
                       <div>
-                        <div className="font-bold text-slate-800 dark:text-slate-100 text-xs">{item.module?.split(' ').slice(1).join(' ') || item.module}</div>
-                        <div className="text-[10px] text-slate-400 font-bold">Groupe : {item.group}</div>
+                        <div className="font-bold text-slate-800 dark:text-slate-100 text-xs">
+                          {cleanUtf8Text(item.module?.split(' ').slice(1).join(' ') || item.module)}
+                        </div>
+                        <div className="text-[10px] text-slate-400 font-bold">
+                          Groupe : {cleanUtf8Text(item.group)}
+                        </div>
                       </div>
                     </div>
 

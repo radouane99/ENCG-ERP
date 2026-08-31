@@ -757,14 +757,24 @@ Route::middleware(['auth:sanctum', $staffRoles])->group(function () {
     Route::get('/v1/admin/document-requests/{id}/preview', [AdminDocumentRequestController::class, 'preview']);
     Route::get('/v1/admin/document-requests/{id}/download', [AdminDocumentRequestController::class, 'download']);
     Route::get('/professor-assignments/ordre-de-service-pdf', [PdfExportController::class, 'exportProfessorOrdreDeServicePdf']);
+    Route::post('/professor-assignments/ordre-de-service-pdf', [PdfExportController::class, 'exportProfessorOrdreDeServicePdfFromBody']);
     Route::get('/admin/professor-assignments/ordre-de-service-pdf', [PdfExportController::class, 'exportProfessorOrdreDeServicePdf']);
+    Route::post('/admin/professor-assignments/ordre-de-service-pdf', [PdfExportController::class, 'exportProfessorOrdreDeServicePdfFromBody']);
     Route::get('/v1/professor-assignments/ordre-de-service-pdf', [PdfExportController::class, 'exportProfessorOrdreDeServicePdf']);
+    Route::post('/v1/professor-assignments/ordre-de-service-pdf', [PdfExportController::class, 'exportProfessorOrdreDeServicePdfFromBody']);
     Route::get('/v1/admin/professor-assignments/ordre-de-service-pdf', [PdfExportController::class, 'exportProfessorOrdreDeServicePdf']);
+    Route::post('/v1/admin/professor-assignments/ordre-de-service-pdf', [PdfExportController::class, 'exportProfessorOrdreDeServicePdfFromBody']);
+    Route::get('/v1/admin/professors/{professor}/ordre-de-service-pdf', [PdfExportController::class, 'downloadProfessorOrdreDeServicePdf']);
+    Route::get('/admin/professors/{professor}/ordre-de-service-pdf', [PdfExportController::class, 'downloadProfessorOrdreDeServicePdf']);
+    Route::get('/v1/me/ordre-de-service-pdf', [PdfExportController::class, 'downloadMyOrdreDeServicePdf']);
+    Route::get('/me/ordre-de-service-pdf', [PdfExportController::class, 'downloadMyOrdreDeServicePdf']);
 
     Route::get('/departments/arrete-nomination-pdf', [PdfExportController::class, 'exportArreteNominationPdf']);
     Route::get('/admin/departments/arrete-nomination-pdf', [PdfExportController::class, 'exportArreteNominationPdf']);
     Route::get('/v1/departments/arrete-nomination-pdf', [PdfExportController::class, 'exportArreteNominationPdf']);
     Route::get('/v1/admin/departments/arrete-nomination-pdf', [PdfExportController::class, 'exportArreteNominationPdf']);
+    Route::get('/v1/admin/departments/{department}/arrete-nomination-pdf', [PdfExportController::class, 'downloadDepartmentArreteNominationPdf']);
+    Route::get('/admin/departments/{department}/arrete-nomination-pdf', [PdfExportController::class, 'downloadDepartmentArreteNominationPdf']);
 
     Route::get('/filieres/maquette-pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);
     Route::get('/admin/filieres/maquette-pdf', [PdfExportController::class, 'exportMaquetteFilierePdf']);

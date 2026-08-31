@@ -401,7 +401,7 @@ class ExamConvocationService
             ->orderBy('seat_number')
             ->get();
 
-        $surveillances = ExamSurveillance::with(['professor', 'room'])
+        $surveillances = ExamSurveillance::with(['professor.user', 'room'])
             ->where('exam_id', $examId)
             ->get();
 
@@ -470,7 +470,7 @@ class ExamConvocationService
             'is_present' => $s->is_present,
         ]);
 
-        $surveillantsList = ExamSurveillance::with(['professor', 'exam.module', 'room'])
+        $surveillantsList = ExamSurveillance::with(['professor.user', 'exam.module', 'room'])
             ->whereIn('exam_id', $examIds)
             ->orderBy('exam_id')
             ->get()

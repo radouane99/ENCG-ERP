@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 
 class Professor extends Model
 {
@@ -24,38 +25,54 @@ class Professor extends Model
         ];
     }
 
+    protected function name(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                if ($this->relationLoaded('user') && $this->user) {
+                    return $this->user->name ?? trim(($this->user->first_name ?? '').' '.($this->user->last_name ?? ''));
+                }
+                $first = $this->attributes['first_name'] ?? '';
+                $last = $this->attributes['last_name'] ?? '';
+                $combined = trim($first.' '.$last);
+
+                return $combined !== '' ? $combined : ($this->attributes['name'] ?? null);
+            },
+        );
+    }
+
     protected function firstName(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->user?->first_name,
+            get: fn () => $this->relationLoaded('user') ? $this->user?->first_name : ($this->attributes['first_name'] ?? null),
         );
     }
 
     protected function lastName(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->user?->last_name,
+            get: fn () => $this->relationLoaded('user') ? $this->user?->last_name : ($this->attributes['last_name'] ?? null),
         );
     }
 
     protected function email(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->user?->email,
+            get: fn () => $this->relationLoaded('user') ? $this->user?->email : ($this->attributes['email'] ?? null),
         );
     }
 
     protected function phone(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->user?->phone,
+            get: fn () => $this->relationLoaded('user') ? $this->user?->phone : ($this->attributes['phone'] ?? null),
         );
     }
 
     protected function cin(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->user?->cin,
+            get: fn () => $this->relationLoaded('user') ? $this->user?->cin : ($this->attributes['cin'] ?? null),
         );
     }
 
@@ -84,8 +101,44 @@ class Professor extends Model
         return ['uuid'];
     }
 
-    public function getRouteKeyName()
+    public function getRouteKeyName(): string
     {
         return 'uuid';
+    }
+
+    /**
+     * Resolve by public UUID (preferred) or legacy numeric primary key.
+     * PostgreSQL rejects non-UUID strings on uuid columns — never compare both at once.
+     */
+    public static function findByPublicId(string|int $publicId, array $with = []): ?self
+    {
+        $query = static::query();
+        if ($with !== []) {
+            $query->with($with);
+        }
+
+        $value = (string) $publicId;
+
+        if (Str::isUuid($value)) {
+            return $query->where('uuid', $value)->first();
+        }
+
+        if (ctype_digit($value)) {
+            return $query->where('id', (int) $value)->first();
+        }
+
+        return null;
+    }
+
+    /**
+     * Accept UUID (preferred) or legacy numeric id in route parameters.
+     */
+    public function resolveRouteBinding($value, $field = null): ?Model
+    {
+        if ($field !== null) {
+            return parent::resolveRouteBinding($value, $field);
+        }
+
+        return static::findByPublicId($value);
     }
 }

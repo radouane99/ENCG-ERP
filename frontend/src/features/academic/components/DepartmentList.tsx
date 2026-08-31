@@ -6,7 +6,7 @@ import {
 } from 'lucide-react'
 import { cn, cleanUtf8Text } from '@shared/lib/utils'
 import api from '@shared/lib/api'
-import { openAuthenticatedUrl } from '@shared/lib/documentAccess'
+import { openDepartmentOrdreDeServicePdf, openDepartmentArreteNominationPdf } from '@shared/lib/documentAccess'
 import { toast } from 'sonner'
 import CustomSelect from '@/shared/components/ui/CustomSelect'
 
@@ -52,12 +52,9 @@ export default function DepartmentList() {
 
   // Export Arrêté Nomination PDF
   const handleExportArreteNominationPdf = (dept: Department) => {
-    const headName = dept.head_name && dept.head_name !== 'Non défini' ? dept.head_name : 'Non défini';
     const toastId = toast.loading(`Génération de l'Arrêté Officiel de Nomination du Chef de Département ${dept.code}...`);
-    setTimeout(() => {
-      toast.success(`📜 Arrêté de Nomination A4 du Chef de Département généré avec succès !`, { id: toastId });
-      openAuthenticatedUrl(`/api/v1/departments/arrete-nomination-pdf?code=${encodeURIComponent(dept.code)}&dept=${encodeURIComponent(dept.name)}&head=${encodeURIComponent(headName)}`);
-    }, 600);
+    openDepartmentArreteNominationPdf(dept.id);
+    toast.success(`📜 Arrêté de Nomination A4 du Chef de Département généré avec succès !`, { id: toastId });
   }
 
 
@@ -206,10 +203,13 @@ export default function DepartmentList() {
   // RECOM 2: Export Fiche Bilan A4 PDF
   const _handleExportDepartmentPdf = (dept: Department) => {
     const toastId = toast.loading(`Génération de la Fiche Bilan Officielle du Département ${dept.code}...`);
-    setTimeout(() => {
-      toast.success(`📄 Fiche Bilan A4 du Département ${dept.name} générée avec succès !`, { id: toastId });
-      openAuthenticatedUrl(`/api/v1/admin/professor-assignments/ordre-de-service-pdf?prof=${encodeURIComponent(dept.head_name || 'Chef de Département')}`);
-    }, 800);
+    openDepartmentOrdreDeServicePdf(dept.id)
+      .then(() => {
+        toast.success(`📄 Fiche Bilan A4 du Département ${dept.name} générée avec succès !`, { id: toastId });
+      })
+      .catch(() => {
+        toast.error(`Impossible de générer le PDF pour ${dept.name}.`, { id: toastId });
+      });
   }
 
   // Filter logic
