@@ -6,7 +6,8 @@ import {
   Calendar, Clock, CheckCircle2, AlertTriangle, ShieldCheck,
   RefreshCw, Play, Save, MapPin, User,
   Building2, Sliders, Cpu, Hand, Grid, Leaf,
-  Wand2, BookOpen, GraduationCap, Sparkles, Trash2, RotateCcw, X, AlertCircle
+  Wand2, BookOpen, GraduationCap, Sparkles, Trash2, RotateCcw, X, AlertCircle,
+  Users, Monitor
 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { CustomSelect, SelectOption } from '@/shared/components/ui/CustomSelect';
@@ -896,42 +897,90 @@ export default function AdminAiTimetableSchedulerPage() {
 
               {/* Sessions Cards Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredSessions.map((session: any, idx: number) => (
-                  <div
-                    key={idx}
-                    className="p-5 rounded-2xl border border-border bg-card hover:border-indigo-400/80 transition-all space-y-3 shadow-sm"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200">
-                        {session.day_name}
-                      </span>
-                      <span className="text-xs font-black text-foreground font-mono flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5 text-indigo-600" />
-                        {session.start_time} - {session.end_time}
-                      </span>
-                    </div>
+                {filteredSessions.map((session: any, idx: number) => {
+                  const isLab = session.room_type === 'lab' || String(session.room_name).toLowerCase().includes('info');
+                  const isAmphi = session.room_type === 'amphitheater' || session.room_type === 'amphi' || String(session.room_name).toLowerCase().includes('amphi');
+                  const isIT = String(session.session_nature || '').includes('Informatique') || isLab;
+                  const isLanguage = String(session.session_nature || '').includes('Langues') || String(session.module_name || '').toLowerCase().includes('langue') || String(session.module_name || '').toLowerCase().includes('soft skills');
 
-                    <div>
-                      <h4 className="font-black text-sm text-foreground">
-                        {session.module_name}
-                      </h4>
-                      <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400">
-                        {session.group_name} • {session.filiere_code}
-                      </span>
-                    </div>
+                  return (
+                    <div
+                      key={idx}
+                      className={cn(
+                        "p-5 rounded-2xl border transition-all space-y-3.5 shadow-sm bg-card hover:shadow-md",
+                        isIT ? "border-purple-500/30 hover:border-purple-500" : isLanguage ? "border-emerald-500/30 hover:border-emerald-500" : "border-border hover:border-indigo-400"
+                      )}
+                    >
+                      {/* Card Header: Day, Time & Nature Badge */}
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200">
+                            {session.day_name}
+                          </span>
+                          {session.session_badge && (
+                            <span className={cn(
+                              "px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wide border",
+                              isIT
+                                ? "bg-purple-50 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 border-purple-200"
+                                : isLanguage
+                                ? "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-200"
+                                : "bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border-blue-200"
+                            )}>
+                              {session.session_badge}
+                            </span>
+                          )}
+                        </div>
 
-                    <div className="pt-2.5 border-t border-border flex items-center justify-between text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <User className="w-3.5 h-3.5 text-muted-foreground" />
-                        {session.professor_name}
-                      </span>
-                      <span className="font-bold text-foreground flex items-center gap-1">
-                        <MapPin className="w-3.5 h-3.5 text-indigo-500" />
-                        {session.room_name}
-                      </span>
+                        <span className="text-xs font-black text-foreground font-mono flex items-center gap-1 shrink-0">
+                          <Clock className="w-3.5 h-3.5 text-indigo-600" />
+                          {session.start_time} - {session.end_time}
+                        </span>
+                      </div>
+
+                      {/* Module Title & Group Info */}
+                      <div>
+                        <h4 className="font-black text-sm text-foreground line-clamp-1">
+                          {session.module_name}
+                        </h4>
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                          <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400">
+                            {session.group_name} • {session.filiere_code}
+                          </span>
+                          <span className="text-[10px] font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded-md flex items-center gap-1">
+                            <Users className="w-3 h-3 text-muted-foreground" />
+                            {session.students_count ? `${session.students_count} Étudiants` : '35 Étudiants'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Footer: Professor & Room with Type Badge */}
+                      <div className="pt-2.5 border-t border-border flex items-center justify-between text-xs gap-2">
+                        <span className="flex items-center gap-1 text-muted-foreground truncate" title={session.professor_name}>
+                          <User className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                          <span className="truncate">{session.professor_name}</span>
+                        </span>
+                        
+                        <span className={cn(
+                          "font-bold px-2 py-0.8 rounded-lg flex items-center gap-1.5 shrink-0 text-[11px] border",
+                          isLab
+                            ? "bg-purple-50 text-purple-800 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300"
+                            : isAmphi
+                            ? "bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300"
+                            : "bg-blue-50 text-blue-800 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300"
+                        )}>
+                          {isLab ? (
+                            <Monitor className="w-3.5 h-3.5 text-purple-600" />
+                          ) : isAmphi ? (
+                            <Building2 className="w-3.5 h-3.5 text-amber-600" />
+                          ) : (
+                            <MapPin className="w-3.5 h-3.5 text-blue-600" />
+                          )}
+                          <span>{session.room_name}</span>
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}

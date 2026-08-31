@@ -88,27 +88,20 @@ class AiTimetableSchedulerService
         }
         $modules = $modulesQuery->get();
 
-        // 4. Récupérer les salles disponibles et opérationnelles
+        // 4. S'assurer de la présence des salles de cours et labos nécessaires sur le campus
+        $this->ensureCampusRooms();
+
+        // 5. Récupérer les salles disponibles et opérationnelles
         $rooms = Room::where('is_available', true)->get();
 
         if ($rooms->isEmpty()) {
             $rooms = Room::all();
         }
 
-        if ($rooms->isEmpty()) {
-            $rooms = collect([
-                (object) ['id' => 1, 'name' => 'Amphi A (Directeur)', 'capacity' => 150, 'type' => 'amphi'],
-                (object) ['id' => 2, 'name' => 'Amphi B', 'capacity' => 120, 'type' => 'amphi'],
-                (object) ['id' => 3, 'name' => 'Salle 101 (Commerce)', 'capacity' => 45, 'type' => 'classroom'],
-                (object) ['id' => 4, 'name' => 'Salle 102 (Finance)', 'capacity' => 45, 'type' => 'classroom'],
-                (object) ['id' => 5, 'name' => 'Lab Informatique 1', 'capacity' => 35, 'type' => 'lab'],
-            ]);
-        }
-
-        // 5. Récupérer les professeurs
+        // 6. Récupérer les professeurs
         $professors = Professor::with('user')->get();
 
-        // 6. Moteur de planification sous contraintes (Constraint Satisfaction Solver)
+        // 7. Moteur de planification sous contraintes (Constraint Satisfaction Solver)
         $scheduledItems = [];
         $conflictsDetected = [];
         $occupiedSlots = [
@@ -116,6 +109,9 @@ class AiTimetableSchedulerService
             'professors' => [], // [profId][day][slot] = bool
             'groups' => [],     // [groupId][day][slot] = bool
         ];
+
+        $groupDailySessions = [];
+        $profDailySessions = [];
 
         // Charger les indisponibilités existantes de la BDD pour éviter tout clash
         $existingSchedules = DB::table('schedules')
@@ -132,9 +128,11 @@ class AiTimetableSchedulerService
                 }
                 if ($s->professor_id) {
                     $occupiedSlots['professors'][$s->professor_id][$day][$slotIndex] = true;
+                    $profDailySessions[$s->professor_id][$day] = ($profDailySessions[$s->professor_id][$day] ?? 0) + 1;
                 }
                 if ($s->group_id) {
                     $occupiedSlots['groups'][$s->group_id][$day][$slotIndex] = true;
+                    $groupDailySessions[$s->group_id][$day] = ($groupDailySessions[$s->group_id][$day] ?? 0) + 1;
                 }
             }
         }
@@ -161,6 +159,15 @@ class AiTimetableSchedulerService
             foreach ($groupModules as $module) {
                 $courses = $this->getModuleSessions($module);
 
+                // Déterminer la nature pédagogique du module
+                $nameLower = mb_strtolower($module->name);
+                $isIT = str_contains($nameLower, 'informatique') || str_contains($nameLower, 'système') || str_contains($nameLower, 'logiciel') || str_contains($nameLower, 'data') || str_contains($nameLower, 'bureautique');
+                $isLanguageOrSoftSkills = str_contains($nameLower, 'langue') || str_contains($nameLower, 'anglais') || str_contains($nameLower, 'français') || str_contains($nameLower, 'soft skills') || str_contains($nameLower, 'communication');
+
+                $natureLabel = $isIT ? 'TP Informatique' : ($isLanguageOrSoftSkills ? 'Langues & Soft Skills' : 'Cours Magistral / TD');
+                $natureBadge = $isIT ? 'TP Labo' : ($isLanguageOrSoftSkills ? 'TD Groupe' : 'CM / TD');
+                $studentsCount = (int) ($group->capacity ?? 35);
+
                 foreach ($courses as $course) {
                     // Chercher l'enseignant réellement affecté dans module_professor
                     $assignedProfId = DB::table('module_professor')
@@ -180,70 +187,123 @@ class AiTimetableSchedulerService
                         ? trim(($assignedProf->user->first_name ?? '').' '.($assignedProf->user->last_name ?? '')) 
                         : ($assignedProf?->user?->name ?? 'Enseignant Chercheur');
 
-                    // Chercher le meilleur créneau libre sans aucun conflit
+                    // Salles classées par pertinence pédagogique pour ce cours
+                    $rankedRooms = $this->rankRoomsForModule($rooms, $module, $course, $group);
+
+                    // Chercher le meilleur créneau libre sans aucun conflit avec équilibrage hebdomadaire (Lundi à Vendredi)
                     $allocated = false;
 
-                    for ($day = 1; $day <= 6; $day++) {
+                    // Classer les jours par ordre de charge croissante pour ce groupe afin d'étaler équitablement sur Lundi, Mardi, Mercredi, Jeudi, Vendredi
+                    $availableDays = [1, 2, 3, 4, 5];
+                    if (! $avoidSaturdayAfternoon) {
+                        $availableDays[] = 6;
+                    }
+
+                    // Trier les jours : privilégier les jours les moins chargés pour ce groupe
+                    usort($availableDays, function ($d1, $d2) use ($group, $groupDailySessions) {
+                        $c1 = $groupDailySessions[$group->id][$d1] ?? 0;
+                        $c2 = $groupDailySessions[$group->id][$d2] ?? 0;
+                        if ($c1 === $c2) {
+                            return $d1 <=> $d2;
+                        }
+
+                        return $c1 <=> $c2;
+                    });
+
+                    // 1ère passe : Max 2 cours par jour par groupe (Équilibre pédagogique idéal)
+                    // 2ème passe : Jusqu'à 3 ou 4 cours si nécessaire
+                    foreach ([2, 3, 4] as $maxDailyLimit) {
                         if ($allocated) {
                             break;
                         }
 
-                        // Éviter samedi après-midi si option activée
-                        $slotsRange = ($day === 6 && $avoidSaturdayAfternoon) ? [1, 2] : ($preferMorningLectures ? [1, 2, 3, 4] : [3, 4, 1, 2]);
+                        foreach ($availableDays as $day) {
+                            if ($allocated) {
+                                break;
+                            }
 
-                        foreach ($slotsRange as $slotNum) {
-                            $slotInfo = self::TIME_SLOTS[$slotNum - 1];
-
-                            // Vérifier si le groupe est libre
-                            if (! empty($occupiedSlots['groups'][$group->id][$day][$slotNum])) {
+                            // Si le groupe a déjà atteint la limite du jour pour cette passe, passer au jour suivant
+                            if (($groupDailySessions[$group->id][$day] ?? 0) >= $maxDailyLimit) {
                                 continue;
                             }
 
-                            // Vérifier si le professeur est libre
-                            if (! empty($occupiedSlots['professors'][$profId][$day][$slotNum])) {
-                                continue;
-                            }
+                            // Plages horaires selon contraintes
+                            $slotsRange = ($day === 6 && $avoidSaturdayAfternoon) ? [1, 2] : ($preferMorningLectures ? [1, 2, 3, 4] : [3, 4, 1, 2]);
 
-                            // Trouver une salle libre de taille suffisante
-                            $suitableRoom = null;
-                            foreach ($rooms as $room) {
-                                if (empty($occupiedSlots['rooms'][$room->id][$day][$slotNum])) {
-                                    $suitableRoom = $room;
+                            foreach ($slotsRange as $slotNum) {
+                                $slotInfo = self::TIME_SLOTS[$slotNum - 1];
+
+                                // Vérifier si le groupe est libre
+                                if (! empty($occupiedSlots['groups'][$group->id][$day][$slotNum])) {
+                                    continue;
+                                }
+
+                                // Vérifier si le professeur est libre
+                                if (! empty($occupiedSlots['professors'][$profId][$day][$slotNum])) {
+                                    continue;
+                                }
+
+                                // Trouver la salle la plus adaptée disponible
+                                $suitableRoom = null;
+                                foreach ($rankedRooms as $room) {
+                                    if (empty($occupiedSlots['rooms'][$room->id][$day][$slotNum])) {
+                                        $suitableRoom = $room;
+                                        break;
+                                    }
+                                }
+
+                                if ($suitableRoom) {
+                                    // Réserver le créneau (Zéro conflit garanti)
+                                    $occupiedSlots['rooms'][$suitableRoom->id][$day][$slotNum] = true;
+                                    $occupiedSlots['professors'][$profId][$day][$slotNum] = true;
+                                    $occupiedSlots['groups'][$group->id][$day][$slotNum] = true;
+
+                                    $groupDailySessions[$group->id][$day] = ($groupDailySessions[$group->id][$day] ?? 0) + 1;
+                                    $profDailySessions[$profId][$day] = ($profDailySessions[$profId][$day] ?? 0) + 1;
+
+                                    $rType = strtolower($suitableRoom->type ?? 'classroom');
+                                    $roomTypeLabel = ($rType === 'lab') ? 'Labo Informatique (PC)' : (($rType === 'amphitheater' || $rType === 'amphi') ? 'Amphithéâtre' : 'Salle de TD');
+
+                                    $scheduledItems[] = [
+                                        'temp_id' => 'GEN_'.$sessionCounter++,
+                                        'day_of_week' => $day,
+                                        'day_name' => self::DAYS[$day],
+                                        'slot_number' => $slotNum,
+                                        'start_time' => $slotInfo['start'],
+                                        'end_time' => $slotInfo['end'],
+                                        'slot_label' => $slotInfo['label'],
+                                        'module_id' => $module->id,
+                                        'module_name' => $module->name,
+                                        'course_id' => $course->id ?? $module->id,
+                                        'course_name' => $course->name ?? $module->name,
+                                        'group_id' => $group->id,
+                                        'group_name' => $group->name,
+                                        'filiere_code' => $group->filiere?->code ?? $module->filiere?->code ?? 'TC',
+                                        'professor_id' => $profId,
+                                        'professor_name' => $profName,
+                                        'room_id' => $suitableRoom->id,
+                                        'room_name' => $suitableRoom->name,
+                                        'room_type' => $suitableRoom->type,
+                                        'room_type_label' => $roomTypeLabel,
+                                        'students_count' => $studentsCount,
+                                        'session_nature' => $natureLabel,
+                                        'session_badge' => $natureBadge,
+                                        'is_group_format' => $isLanguageOrSoftSkills || $isIT,
+                                        'status' => 'OPTIMIZED_ZERO_CONFLICT',
+                                    ];
+
+                                    $totalCoursesScheduled++;
+                                    $allocated = true;
                                     break;
                                 }
                             }
+                        }
+                    }
 
-                            if ($suitableRoom) {
-                                // Réserver le créneau (Zéro conflit garanti)
-                                $occupiedSlots['rooms'][$suitableRoom->id][$day][$slotNum] = true;
-                                $occupiedSlots['professors'][$profId][$day][$slotNum] = true;
-                                $occupiedSlots['groups'][$group->id][$day][$slotNum] = true;
-
-                                $scheduledItems[] = [
-                                    'temp_id' => 'GEN_'.$sessionCounter++,
-                                    'day_of_week' => $day,
-                                    'day_name' => self::DAYS[$day],
-                                    'slot_number' => $slotNum,
-                                    'start_time' => $slotInfo['start'],
-                                    'end_time' => $slotInfo['end'],
-                                    'slot_label' => $slotInfo['label'],
-                                    'module_id' => $module->id,
-                                    'module_name' => $module->name,
-                                    'course_id' => $course->id ?? $module->id,
-                                    'course_name' => $course->name ?? $module->name,
-                                    'group_id' => $group->id,
-                                    'group_name' => $group->name,
-                                    'filiere_code' => $group->filiere?->code ?? 'TC',
-                                    'professor_id' => $profId,
-                                    'professor_name' => $profName,
-                                    'room_id' => $suitableRoom->id,
-                                    'room_name' => $suitableRoom->name,
-                                    'status' => 'OPTIMIZED_ZERO_CONFLICT',
-                                ];
-
-                                $totalCoursesScheduled++;
-                                $allocated = true;
-                                break;
+                                    $totalCoursesScheduled++;
+                                    $allocated = true;
+                                    break;
+                                }
                             }
                         }
                     }
@@ -565,6 +625,107 @@ class AiTimetableSchedulerService
                         'capacity' => 35,
                     ]);
                 }
+            }
+        }
+    }
+
+    /**
+     * Classe les salles par pertinence pédagogique stricte pour le module donné.
+     * CONTRAINTE ABSOLUE : Les modules non-informatiques (Comptabilité, Finance, Math, etc.) sont TOTALEMENT INTERDITS de salle informatique !
+     */
+    protected function rankRoomsForModule(Collection $rooms, Module $module, object $course, Group $group): Collection
+    {
+        $nameLower = mb_strtolower($module->name);
+        $codeLower = mb_strtolower($module->code ?? '');
+
+        $isIT = str_contains($nameLower, 'informatique') 
+            || str_contains($nameLower, 'système') 
+            || str_contains($nameLower, 'logiciel') 
+            || str_contains($nameLower, 'data') 
+            || str_contains($nameLower, 'bureautique')
+            || str_contains($nameLower, 'programmation')
+            || str_contains($codeLower, 'info')
+            || ($course->type ?? '') === 'tp';
+
+        $isLanguageOrSoftSkills = str_contains($nameLower, 'langue') 
+            || str_contains($nameLower, 'anglais') 
+            || str_contains($nameLower, 'français') 
+            || str_contains($nameLower, 'espagnol') 
+            || str_contains($nameLower, 'soft skills') 
+            || str_contains($nameLower, 'communication');
+
+        if ($isIT) {
+            // Pour l'informatique : Priorité absolue aux Labos Informatique (PC)
+            $itRooms = $rooms->filter(function ($r) {
+                $rType = strtolower($r->type ?? 'classroom');
+                return $rType === 'lab' || str_contains(strtolower($r->name), 'info');
+            });
+
+            if ($itRooms->isNotEmpty()) {
+                return $itRooms->values();
+            }
+
+            // En cas d'extrême saturation des labos info, utiliser une salle de cours
+            return $rooms->filter(fn ($r) => strtolower($r->type ?? '') === 'classroom')->values();
+        }
+
+        // CONTRAINTE DURE STRICTE : Tout module non-informatique (Comptabilité, Finance, Économie, Math, Droit, Langues, etc.)
+        // est STRICTEMENT INTERDIT dans les salles / labos informatiques !
+        $nonLabRooms = $rooms->filter(function ($r) {
+            $rType = strtolower($r->type ?? 'classroom');
+            $isLab = ($rType === 'lab' || str_contains(strtolower($r->name), 'info'));
+            return ! $isLab;
+        });
+
+        if ($isLanguageOrSoftSkills) {
+            // Langues et Soft Skills en petits groupes : Salles de TD en priorité
+            return $nonLabRooms->sortBy(function ($r) {
+                $rType = strtolower($r->type ?? 'classroom');
+                return ($rType === 'classroom' || str_contains(strtolower($r->name), 'salle')) ? 1 : 2;
+            })->values();
+        }
+
+        // Cours Magistraux et Gestion (Comptabilité, Management, Finance, Math, Éco, etc.)
+        // Salles de TD ou Amphis
+        return $nonLabRooms->sortBy(function ($r) {
+            $rType = strtolower($r->type ?? 'classroom');
+            return ($rType === 'classroom') ? 1 : 2;
+        })->values();
+    }
+
+    /**
+     * S'assure que le campus dispose d'un parc suffisant de salles de TD, amphis et labos.
+     */
+    protected function ensureCampusRooms(): void
+    {
+        $neededRooms = [
+            ['name' => 'Amphithéâtre A', 'code' => 'AMPH-A', 'type' => 'amphitheater', 'capacity' => 320],
+            ['name' => 'Amphithéâtre B', 'code' => 'AMPH-B', 'type' => 'amphitheater', 'capacity' => 250],
+            ['name' => 'Salle 101', 'code' => 'S-101', 'type' => 'classroom', 'capacity' => 45],
+            ['name' => 'Salle 102', 'code' => 'S-102', 'type' => 'classroom', 'capacity' => 45],
+            ['name' => 'Salle 103', 'code' => 'S-103', 'type' => 'classroom', 'capacity' => 45],
+            ['name' => 'Salle 104', 'code' => 'S-104', 'type' => 'classroom', 'capacity' => 45],
+            ['name' => 'Salle 105', 'code' => 'S-105', 'type' => 'classroom', 'capacity' => 45],
+            ['name' => 'Salle 106', 'code' => 'S-106', 'type' => 'classroom', 'capacity' => 45],
+            ['name' => 'Salle 107', 'code' => 'S-107', 'type' => 'classroom', 'capacity' => 45],
+            ['name' => 'Salle 108', 'code' => 'S-108', 'type' => 'classroom', 'capacity' => 45],
+            ['name' => 'Salle Informatique I', 'code' => 'INFO-1', 'type' => 'lab', 'capacity' => 35],
+            ['name' => 'Salle Informatique II', 'code' => 'INFO-2', 'type' => 'lab', 'capacity' => 35],
+        ];
+
+        foreach ($neededRooms as $r) {
+            $exists = Room::where('code', $r['code'])->orWhere('name', $r['name'])->exists();
+            if (! $exists) {
+                Room::create([
+                    'institution_id' => 1,
+                    'name' => $r['name'],
+                    'code' => $r['code'],
+                    'type' => $r['type'],
+                    'capacity' => $r['capacity'],
+                    'has_projector' => true,
+                    'has_ac' => true,
+                    'is_available' => true,
+                ]);
             }
         }
     }
