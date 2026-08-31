@@ -6,7 +6,7 @@ export interface SelectOption {
   value: string | number
   label: string
   icon?: React.ReactNode
-  badge?: string
+  badge?: string | null
   color?: string
 }
 
@@ -15,7 +15,8 @@ export interface CustomSelectProps {
   onChange: (value: any) => void
   options: SelectOption[]
   placeholder?: string
-  icon?: React.ReactNode
+  label?: string
+  icon?: any
   variant?: 'hero' | 'default' | 'subtle'
   className?: string
   disabled?: boolean
@@ -27,6 +28,7 @@ export function CustomSelect({
   onChange,
   options,
   placeholder = 'Sélectionner...',
+  label,
   icon,
   variant = 'default',
   className,

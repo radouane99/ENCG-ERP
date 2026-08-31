@@ -344,7 +344,7 @@ export default function ProfessorsListPage() {
                 options={departments.map((d: Department) => ({
                   value: d.id,
                   label: d.name,
-                  badge: d.code
+                  badge: d.code || undefined
                 }))}
               />
             </div>
@@ -712,7 +712,7 @@ export default function ProfessorsListPage() {
               options={departments.map((dept: Department) => ({
                 value: dept.id,
                 label: dept.name,
-                badge: dept.code
+                badge: dept.code || undefined
               }))}
             />
           </div>

@@ -5,8 +5,8 @@ import { ConvocationStatusBadge } from '../components/ConvocationStatusBadge';
 import { Button } from '@shared/components/ui/Button';
 
 export default function AdminConvocationsPage() {
-  const [examId, setExamId] = useState(1); // Default to exam 1 for MVP
-  const [roomId, setRoomId] = useState(1); // Default to room 1 for MVP
+  const [examId] = useState(1); // Default to exam 1 for MVP
+  const [roomId] = useState(1); // Default to room 1 for MVP
   
   const { data: convocations, isLoading } = useAdminConvocations(examId);
   const { mutate: generate, isPending: isGenerating } = useGenerateConvocations();

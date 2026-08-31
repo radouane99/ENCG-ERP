@@ -10,7 +10,6 @@ use App\Models\Room;
 use App\Models\RoomBooking;
 use App\Models\User;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 class CleanCorruptedTextSeeder extends Seeder

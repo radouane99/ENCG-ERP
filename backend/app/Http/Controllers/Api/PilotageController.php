@@ -12,7 +12,6 @@ use App\Models\ExamIncident;
 use App\Models\Grade;
 use App\Models\ResitEligibility;
 use App\Models\Student;
-use App\Models\StudentRegistration;
 use App\Models\VacationContract;
 use App\Models\VacationSession;
 use App\Services\Academic\EarlyWarningService;
@@ -89,17 +88,19 @@ class PilotageController extends Controller
             ->withCount([
                 'attendances as unjustified_absences_count' => function ($q) {
                     $q->where('status', 'absent')->where('is_justified', false);
-                }
+                },
             ])
             ->get();
 
         $studentsAtRisk = $studentsWithAbsences->filter(function ($std) use ($warningThreshold) {
             $hours = $std->unjustified_absences_count * 2;
+
             return $hours >= $warningThreshold;
         });
 
         $disciplineStudents = $studentsWithAbsences->filter(function ($std) use ($disciplineThreshold) {
             $hours = $std->unjustified_absences_count * 2;
+
             return $hours >= $disciplineThreshold;
         });
 

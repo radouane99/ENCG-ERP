@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Models\AcademicYear;
 use App\Support\Utf8Text;
 
 it('repairs CP437 mojibake for Fès and École', function () {
@@ -15,19 +16,19 @@ it('repairs CP437 mojibake for Fès and École', function () {
 });
 
 it('formats academic year labels to short YY-YY', function () {
-    expect(App\Models\AcademicYear::toShortLabel('2024-2025'))->toBe('24-25')
-        ->and(App\Models\AcademicYear::toShortLabel('2023/2024'))->toBe('23-24')
-        ->and(App\Models\AcademicYear::toShortLabel('2026-27'))->toBe('26-27')
-        ->and(App\Models\AcademicYear::toShortLabel(null))->toBe('—');
+    expect(AcademicYear::toShortLabel('2024-2025'))->toBe('24-25')
+        ->and(AcademicYear::toShortLabel('2023/2024'))->toBe('23-24')
+        ->and(AcademicYear::toShortLabel('2026-27'))->toBe('26-27')
+        ->and(AcademicYear::toShortLabel(null))->toBe('—');
 });
 
 it('builds displayLabel from label column not name', function () {
-    $year = new App\Models\AcademicYear([
+    $year = new AcademicYear([
         'label' => '2025-2026',
         'start_year' => 2025,
         'end_year' => 2026,
     ]);
 
     expect($year->displayLabel())->toBe('2025-2026')
-        ->and(App\Models\AcademicYear::toShortLabel($year->displayLabel()))->toBe('25-26');
+        ->and(AcademicYear::toShortLabel($year->displayLabel()))->toBe('25-26');
 });

@@ -7,6 +7,7 @@ use App\Models\Module;
 use App\Models\Professor;
 use App\Models\Room;
 use App\Models\Schedule;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class AiTimetableSchedulerService
@@ -378,7 +379,7 @@ class AiTimetableSchedulerService
 
                         return [
                             'success' => true,
-                            'message' => "Conflit résolu ! La séance a été déplacée au ".self::DAYS[$day]." ({$slot['start']}-{$slot['end']}) dans la salle '{$r->name}'.",
+                            'message' => 'Conflit résolu ! La séance a été déplacée au '.self::DAYS[$day]." ({$slot['start']}-{$slot['end']}) dans la salle '{$r->name}'.",
                             'new_room_id' => $r->id,
                             'new_room_name' => $r->name,
                         ];
@@ -421,11 +422,11 @@ class AiTimetableSchedulerService
             'success' => true,
             'resolved_count' => $resolved,
             'total_conflicts' => count($conflicts),
-            'message' => "L'optimiseur IA a résolu avec succès {$resolved} conflits sur " . count($conflicts) . ' !',
+            'message' => "L'optimiseur IA a résolu avec succès {$resolved} conflits sur ".count($conflicts).' !',
         ];
     }
 
-    protected function getModuleSessions(Module $module): \Illuminate\Support\Collection
+    protected function getModuleSessions(Module $module): Collection
     {
         $sessions = collect();
 

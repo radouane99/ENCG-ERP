@@ -24,7 +24,6 @@ use App\Models\Professor;
 use App\Models\ResitEligibility;
 use App\Models\Room;
 use App\Models\Student;
-use App\Models\StudentDocument;
 use App\Models\StudentRegistration;
 use App\Models\User;
 use App\Services\Academic\DeliberationService;
@@ -32,6 +31,7 @@ use App\Services\Academic\GradeService;
 use App\Services\Documents\OfficialPdfFactory;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -422,7 +422,7 @@ class PdfExportController extends Controller
             'studentName' => strtoupper(($student->last_name ?? '').' '.($student->first_name ?? '')),
             'cne' => $student->cne ?? 'N/A',
             'cin' => $student->user->cin ?? $student->cin ?? 'N/A',
-            'birthDate' => $student->birth_date ? \Carbon\Carbon::parse($student->birth_date)->format('d/m/Y') : '25/07/2008',
+            'birthDate' => $student->birth_date ? Carbon::parse($student->birth_date)->format('d/m/Y') : '25/07/2008',
             'birthCity' => strtoupper($student->birth_place ?? $student->birth_city ?? 'OUJDA'),
             'nationality' => $student->nationality ?? 'Marocaine',
             'student_number' => $student->student_number ?? $student->id ?? 'N/A',
@@ -468,7 +468,7 @@ class PdfExportController extends Controller
             'studentName' => strtoupper($name),
             'cne' => $cne,
             'cin' => $cin,
-            'birthDate' => $student?->birth_date ? \Carbon\Carbon::parse($student->birth_date)->format('d/m/Y') : '25/07/2008',
+            'birthDate' => $student?->birth_date ? Carbon::parse($student->birth_date)->format('d/m/Y') : '25/07/2008',
             'birthCity' => strtoupper($student?->birth_place ?? $student?->birth_city ?? 'OUJDA'),
             'nationality' => $student?->nationality ?? 'Marocaine',
             'student_number' => $student?->student_number ?? $student?->id ?? $cne,
@@ -1649,7 +1649,7 @@ class PdfExportController extends Controller
     private function resolveProfessorByPublicId(string|int $publicId): Professor
     {
         return Professor::findByPublicId($publicId, ['user', 'department'])
-            ?? throw (new \Illuminate\Database\Eloquent\ModelNotFoundException)->setModel(Professor::class, [(string) $publicId]);
+            ?? throw (new ModelNotFoundException)->setModel(Professor::class, [(string) $publicId]);
     }
 
     private function resolveProfessorFromDepartmentHead(Department $department): ?Professor
@@ -1685,7 +1685,7 @@ class PdfExportController extends Controller
         if ($profId) {
             try {
                 $professor = $this->resolveProfessorByPublicId($profId);
-            } catch (\Illuminate\Database\Eloquent\ModelNotFoundException) {
+            } catch (ModelNotFoundException) {
                 $professor = null;
             }
         }

@@ -2,9 +2,8 @@ import React, { useState } from 'react';
 import { useProfessorInternships, useEvaluateInternship } from '../../api/useInternshipsProfessor';
 import LoadingScreen from '@shared/components/ui/LoadingScreen';
 import { InternshipStatusBadge } from '../components/InternshipStatusBadge';
-import { Sparkles, Trophy, Building2, User, CheckCircle2, Clock, FileText, Download, Award, Printer, Check, X, ShieldCheck, Calendar, MapPin, Eye, MessageSquare, Send, Layers, Search, ShieldAlert } from 'lucide-react';
+import { Sparkles, Trophy, User, FileText, Award, Printer, Check, X, Calendar, MapPin, Eye, MessageSquare, Send, Search } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
-import api from '@shared/lib/api';
 import { toast } from 'sonner';
 
 export default function ProfessorSupervisionPage() {

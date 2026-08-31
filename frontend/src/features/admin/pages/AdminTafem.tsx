@@ -3,7 +3,7 @@ import { Target, Users, LayoutGrid, CheckCircle2, AlertCircle, Download, FileTex
 import { cn } from '@shared/lib/utils';
 import { useTranslation } from 'react-i18next';
 import api from '@shared/lib/api';
-import { openCustomAttestationPdf } from '@shared/lib/documentAccess';
+import { openCustomAttestationPdf, openAuthenticatedUrl } from '@shared/lib/documentAccess';
 import { toast } from 'sonner';
 import PageHeader from '@shared/components/layout/PageHeader';
 

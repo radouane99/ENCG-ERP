@@ -130,7 +130,7 @@ class PublicVerificationController extends Controller
                         'cin' => $user?->cin ?? 'N/A',
                         'issued_at' => $pDoc->signed_at ? $pDoc->signed_at->format('d/m/Y H:i') : $pDoc->created_at->format('d/m/Y H:i'),
                         'signer' => $pDoc->signed_by ?? 'Secrétaire Général ENCG Fès',
-                    'preview_url' => url("/api/professor-portal/documents/{$pDoc->id}/pdf"),
+                        'preview_url' => url("/api/professor-portal/documents/{$pDoc->id}/pdf"),
                         'purpose' => $pDoc->purpose,
                         'destination' => $pDoc->destination,
                         'status' => $pDoc->status === 'ready' || $pDoc->status === 'approved' ? 'Authentique & Certifié Conforme (Loi 53-05)' : 'En cours de validation',
