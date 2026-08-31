@@ -83,22 +83,31 @@ class ProfessorAssignmentController extends Controller
             return response()->json(['success' => false, 'message' => 'Aucune année universitaire en cours.'], 400);
         }
 
-        $profId = Professor::where('uuid', $validated['professor_id'])->value('id') ?? $validated['professor_id'];
-        $modId = Module::where('uuid', $validated['module_id'])->value('id') ?? $validated['module_id'];
-        $grpId = Group::where('uuid', $validated['group_id'])->value('id') ?? $validated['group_id'];
+        $resolveId = function ($modelClass, $idOrUuid) {
+            if (empty($idOrUuid)) return null;
+            if (is_numeric($idOrUuid)) {
+                return (int) $idOrUuid;
+            }
+            if (is_string($idOrUuid) && Str::isUuid($idOrUuid)) {
+                return $modelClass::where('uuid', $idOrUuid)->value('id');
+            }
+            return $modelClass::where('id', $idOrUuid)->value('id');
+        };
+
+        $profId = $resolveId(Professor::class, $validated['professor_id']);
+        $modId = $resolveId(Module::class, $validated['module_id']);
+        $grpId = $resolveId(Group::class, $validated['group_id']);
 
         if (! $profId || ! $modId || ! $grpId) {
             return response()->json(['success' => false, 'message' => 'Entités invalides.'], 400);
         }
 
-        $exists = ModuleProfessor::where('academic_year_id', $currentYear->id)
-            ->where('module_id', $modId)
-            ->where('group_id', $grpId)
+        $exists = ModuleProfessor::where('module_id', $modId)
             ->where('professor_id', $profId)
             ->exists();
 
         if ($exists) {
-            return response()->json(['success' => false, 'message' => 'Cette affectation existe déjà.'], 400);
+            return response()->json(['success' => false, 'message' => 'Cet enseignant est déjà affecté à ce module.'], 400);
         }
 
         $assignment = ModuleProfessor::create([
@@ -169,7 +178,9 @@ class ProfessorAssignmentController extends Controller
             'professor_id' => 'required',
         ]);
 
-        $profId = Professor::where('uuid', $validated['professor_id'])->value('id') ?? $validated['professor_id'];
+        $profId = is_numeric($validated['professor_id'])
+            ? (int) $validated['professor_id']
+            : (Str::isUuid($validated['professor_id']) ? Professor::where('uuid', $validated['professor_id'])->value('id') : null);
 
         $currentYear = AcademicYear::where('is_current', true)->first() ?? AcademicYear::latest('start_year')->first();
 
@@ -243,6 +254,9 @@ class ProfessorAssignmentController extends Controller
                 ];
             }
 
+            // Suivi des professeurs déjà assignés par module (pour respecter la contrainte UNIQUE module_id, professor_id)
+            $assignedProfessorsByModule = [];
+
             // Dictionnaire des correspondances spécialités & mots-clés
             $domainKeywords = [
                 'finance' => ['finance', 'comptabilit', 'contrôle de gestion', 'audit', 'fiscalit', 'trésorerie', 'gfc', 'comptable'],
@@ -271,7 +285,7 @@ class ProfessorAssignmentController extends Controller
                     }
                 }
 
-                // 2. Test par domaine sémantique
+                // 2. Test par domaine sémantique & département
                 foreach ($domainKeywords as $domain => $keywords) {
                     $domainMatched = false;
                     foreach ($keywords as $kw) {
@@ -282,21 +296,19 @@ class ProfessorAssignmentController extends Controller
                     }
 
                     if ($domainMatched) {
-                        // Si la spécialité du prof correspond au domaine
                         foreach ($keywords as $kw) {
                             if (Str::contains($spec, $kw)) {
                                 $score += 40;
                                 break;
                             }
                         }
-                        // Correspondance de département
-                        if ($domain === 'finance' && $profData['dept_code'] === 'SG') $score += 25;
-                        if ($domain === 'marketing' && in_array($profData['dept_code'], ['SG', 'EA'])) $score += 25;
-                        if ($domain === 'management' && $profData['dept_code'] === 'SG') $score += 25;
-                        if ($domain === 'economie' && $profData['dept_code'] === 'EA') $score += 25;
-                        if ($domain === 'informatique' && $profData['dept_code'] === 'IG') $score += 35;
-                        if ($domain === 'droit' && $profData['dept_code'] === 'DA') $score += 35;
-                        if ($domain === 'langues' && $profData['dept_code'] === 'LC') $score += 35;
+                        if ($domain === 'finance' && $profData['dept_code'] === 'SG') $score += 30;
+                        if ($domain === 'marketing' && in_array($profData['dept_code'], ['SG', 'EA'])) $score += 30;
+                        if ($domain === 'management' && $profData['dept_code'] === 'SG') $score += 30;
+                        if ($domain === 'economie' && $profData['dept_code'] === 'EA') $score += 30;
+                        if ($domain === 'informatique' && $profData['dept_code'] === 'IG') $score += 40;
+                        if ($domain === 'droit' && $profData['dept_code'] === 'DA') $score += 40;
+                        if ($domain === 'langues' && $profData['dept_code'] === 'LC') $score += 40;
                     }
                 }
 
@@ -326,44 +338,75 @@ class ProfessorAssignmentController extends Controller
                 }
             }
 
-            // Algorithme d'équilibrage parfait (Equal Load Balancing & Specialty Pairing)
-            foreach ($chargeSlots as $slot) {
+            $totalSlots = count($chargeSlots);
+            $totalProfs = count($professors);
+            // Plafond strict par enseignant : pour 56 cours / 18 profs = max 4 cours (16h), idéal 3 cours (12h)
+            $maxPerProf = (int) ceil($totalSlots / max(1, $totalProfs));
+            $targetPerProf = (int) floor($totalSlots / max(1, $totalProfs));
+
+            // PASSE 1 : Affectation par Spécialité et Département avec limite stricte (maxPerProf)
+            foreach ($chargeSlots as $slotIndex => $slot) {
                 $mod = $slot['module'];
                 $grp = $slot['group'];
                 $modName = $mod->name;
                 $modCode = $mod->code ?? '';
                 $modFiliere = $mod->filiere?->name ?? '';
 
-                // Évaluer tous les professeurs pour cette charge
+                if (! isset($assignedProfessorsByModule[$mod->id])) {
+                    $assignedProfessorsByModule[$mod->id] = [];
+                }
+
+                // Filtrer les candidats qui n'ont pas encore atteint le plafond strict et ne sont pas déjà sur ce module
                 $candidates = [];
                 foreach ($profLoads as $profId => $pData) {
+                    if (in_array($profId, $assignedProfessorsByModule[$mod->id])) {
+                        continue;
+                    }
+                    if ($pData['assigned_count'] >= $maxPerProf) {
+                        continue;
+                    }
+
                     $affinity = $getAffinityScore($pData, $modName, $modCode, $modFiliere);
-                    
-                    // Pénalité de charge pour assurer un équilibre strict entre tous les 18 professeurs
-                    // Plus un prof a d'heures, moins il est prioritaire
-                    $workloadPenalty = $pData['assigned_count'] * 35;
-                    $finalScore = $affinity - $workloadPenalty;
+                    // Donner une priorité maximale au prof qui a le MOINS de cours actuels
+                    $fairnessScore = ($affinity * 2) - ($pData['assigned_count'] * 80);
 
                     $candidates[] = [
                         'prof_id' => $profId,
-                        'final_score' => $finalScore,
-                        'assigned_count' => $pData['assigned_count'],
                         'affinity' => $affinity,
+                        'assigned_count' => $pData['assigned_count'],
+                        'fairness_score' => $fairnessScore,
                     ];
                 }
 
-                // Trier par score décroissant, puis par charge croissante
+                // Fallback si tous les profs disponibles ont atteint maxPerProf
+                if (empty($candidates)) {
+                    foreach ($profLoads as $profId => $pData) {
+                        if (! in_array($profId, $assignedProfessorsByModule[$mod->id])) {
+                            $candidates[] = [
+                                'prof_id' => $profId,
+                                'affinity' => 0,
+                                'assigned_count' => $pData['assigned_count'],
+                                'fairness_score' => -$pData['assigned_count'],
+                            ];
+                        }
+                    }
+                }
+
+                if (empty($candidates)) {
+                    continue;
+                }
+
+                // Trier : priorité au score équitable, puis au prof le moins chargé
                 usort($candidates, function ($a, $b) {
-                    if ($a['final_score'] === $b['final_score']) {
+                    if ($a['fairness_score'] === $b['fairness_score']) {
                         return $a['assigned_count'] <=> $b['assigned_count'];
                     }
-                    return $b['final_score'] <=> $a['final_score'];
+                    return $b['fairness_score'] <=> $a['fairness_score'];
                 });
 
                 $chosen = $candidates[0];
                 $chosenProfId = $chosen['prof_id'];
 
-                // Créer l'affectation
                 ModuleProfessor::create([
                     'academic_year_id' => $currentYear->id,
                     'module_id' => $mod->id,
@@ -374,39 +417,60 @@ class ProfessorAssignmentController extends Controller
                     'assigned_hours' => $slot['hours'],
                 ]);
 
-                // Mettre à jour la charge du professeur choisi
+                $assignedProfessorsByModule[$mod->id][] = $chosenProfId;
                 $profLoads[$chosenProfId]['assigned_count'] += 1;
                 $profLoads[$chosenProfId]['total_hours'] += $slot['hours'];
             }
 
-            // Deuxième passe de garantie : s'assurer qu'absolument aucun enseignant n'a 0 charge
-            // Si un prof a 0 charge, on lui réalloue équitablement une charge d'un prof plus chargé
-            $unassignedProfIds = array_keys(array_filter($profLoads, fn($p) => $p['assigned_count'] === 0));
-            if (! empty($unassignedProfIds)) {
-                foreach ($unassignedProfIds as $emptyProfId) {
-                    // Trouver le prof le plus chargé ayant au moins 3 charges
-                    $heavyProfId = null;
-                    $maxLoad = 0;
-                    foreach ($profLoads as $pId => $pData) {
-                        if ($pData['assigned_count'] > $maxLoad) {
-                            $maxLoad = $pData['assigned_count'];
-                            $heavyProfId = $pId;
-                        }
-                    }
+            // PASSE 2 : ÉQUILIBRAGE PARFAIT MIN-MAX (Rebalancing Loop)
+            // S'assurer que TOUS les 18 enseignants ont exactement 3 ou 4 cours (écart max <= 1)
+            for ($iter = 0; $iter < 30; $iter++) {
+                // Trouver le prof avec la charge la plus basse et le prof avec la charge la plus haute
+                $minLoad = min(array_column($profLoads, 'assigned_count'));
+                $maxLoad = max(array_column($profLoads, 'assigned_count'));
 
-                    if ($heavyProfId && $maxLoad >= 2) {
-                        $transferAssignment = ModuleProfessor::where('academic_year_id', $currentYear->id)
-                            ->where('professor_id', $heavyProfId)
-                            ->first();
+                if (($maxLoad - $minLoad) <= 1) {
+                    // Équilibre parfait atteint ! (tous à 3 ou 4 cours)
+                    break;
+                }
 
-                        if ($transferAssignment) {
-                            $transferAssignment->update(['professor_id' => $emptyProfId]);
-                            $profLoads[$heavyProfId]['assigned_count'] -= 1;
-                            $profLoads[$heavyProfId]['total_hours'] -= 36;
-                            $profLoads[$emptyProfId]['assigned_count'] += 1;
-                            $profLoads[$emptyProfId]['total_hours'] += 36;
-                        }
+                $underloadedProfId = null;
+                $overloadedProfId = null;
+
+                foreach ($profLoads as $pId => $pData) {
+                    if ($pData['assigned_count'] === $minLoad && ! $underloadedProfId) {
+                        $underloadedProfId = $pId;
                     }
+                    if ($pData['assigned_count'] === $maxLoad && ! $overloadedProfId) {
+                        $overloadedProfId = $pId;
+                    }
+                }
+
+                if (! $underloadedProfId || ! $overloadedProfId) {
+                    break;
+                }
+
+                // Trouver un module transférable du prof surchargé vers le prof sous-chargé
+                $transferable = ModuleProfessor::where('academic_year_id', $currentYear->id)
+                    ->where('professor_id', $overloadedProfId)
+                    ->get()
+                    ->first(function ($item) use ($underloadedProfId, $assignedProfessorsByModule) {
+                        return ! in_array($underloadedProfId, $assignedProfessorsByModule[$item->module_id] ?? []);
+                    });
+
+                if ($transferable) {
+                    $modId = $transferable->module_id;
+                    $transferable->update(['professor_id' => $underloadedProfId]);
+
+                    $assignedProfessorsByModule[$modId] = array_values(array_diff($assignedProfessorsByModule[$modId] ?? [], [$overloadedProfId]));
+                    $assignedProfessorsByModule[$modId][] = $underloadedProfId;
+
+                    $profLoads[$overloadedProfId]['assigned_count'] -= 1;
+                    $profLoads[$overloadedProfId]['total_hours'] -= 36;
+                    $profLoads[$underloadedProfId]['assigned_count'] += 1;
+                    $profLoads[$underloadedProfId]['total_hours'] += 36;
+                } else {
+                    break;
                 }
             }
         });

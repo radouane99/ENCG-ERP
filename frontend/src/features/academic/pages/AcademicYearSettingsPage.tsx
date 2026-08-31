@@ -15,7 +15,7 @@ import { academicApi } from '@shared/api/academic'
 import { toast } from 'sonner'
 import { Spinner } from '@shared/components/ui/Spinner'
 
-// ─── CUSTOM SEARCHABLE SELECT COMPONENT ────────────────────────────────────────
+// ─── 1. CUSTOM FORM SEARCHABLE SELECT (4-STEP ASSIGNMENT FORM) ────────────────
 interface CustomSelectOption {
   value: string
   label: string
@@ -159,6 +159,151 @@ function CustomSelect({
                       )}
                     </div>
                     {isSelected && <Check className="w-4 h-4 text-emerald-400 shrink-0" />}
+                  </button>
+                )
+              })
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── 2. PREMIUM TOOLBAR FILTER DROPDOWN COMPONENT ─────────────────────────────
+interface FilterDropdownOption {
+  value: string
+  label: string
+  sublabel?: string
+}
+
+interface FilterDropdownProps {
+  label: string
+  value: string
+  onChange: (val: string) => void
+  options: FilterDropdownOption[]
+  icon: React.ReactNode
+  searchable?: boolean
+  className?: string
+}
+
+function FilterDropdown({
+  label,
+  value,
+  onChange,
+  options,
+  icon,
+  searchable = false,
+  className
+}: FilterDropdownProps) {
+  const [isOpen, setIsOpen] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  const selectedOption = options.find(o => String(o.value) === String(value))
+  const isFiltered = value !== 'all' && value !== ''
+
+  const filteredOptions = useMemo(() => {
+    if (!searchTerm) return options
+    const q = searchTerm.toLowerCase()
+    return options.filter(o => 
+      o.label.toLowerCase().includes(q) || 
+      (o.sublabel && o.sublabel.toLowerCase().includes(q))
+    )
+  }, [options, searchTerm])
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  return (
+    <div className={cn("relative", className)} ref={containerRef}>
+      {/* Trigger Pill Button */}
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className={cn(
+          "h-9 px-3.5 rounded-xl text-xs font-semibold transition-all flex items-center justify-between gap-2 cursor-pointer shadow-2xs whitespace-nowrap border select-none",
+          isOpen
+            ? "border-indigo-500 ring-2 ring-indigo-500/15 bg-white dark:bg-slate-800 text-indigo-900 dark:text-white"
+            : isFiltered
+              ? "border-blue-300 dark:border-blue-700 bg-blue-50/80 dark:bg-blue-950/50 text-[#0f2863] dark:text-blue-300 font-bold"
+              : "border-slate-200 dark:border-slate-700/80 bg-slate-50/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600"
+        )}
+      >
+        <div className="flex items-center gap-2 min-w-0 max-w-[200px]">
+          <span className={cn("shrink-0 transition-colors", isFiltered ? "text-blue-600 dark:text-blue-400" : "text-slate-400")}>
+            {icon}
+          </span>
+          <span className="truncate">
+            {selectedOption ? selectedOption.label : label}
+          </span>
+        </div>
+        
+        <ChevronDown className={cn(
+          "w-3.5 h-3.5 shrink-0 text-slate-400 transition-transform duration-200",
+          isOpen ? "rotate-180 text-indigo-600 dark:text-indigo-400" : ""
+        )} />
+      </button>
+
+      {/* Popover Dropdown */}
+      {isOpen && (
+        <div className="absolute z-50 right-0 sm:left-0 sm:right-auto mt-1.5 min-w-[240px] max-w-[320px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in-80 zoom-in-95 backdrop-blur-md">
+          {/* Optional Search */}
+          {searchable && options.length > 5 && (
+            <div className="p-2 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+              <div className="relative">
+                <Search className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Rechercher..."
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                  autoFocus
+                  className="w-full pl-8 pr-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Options List */}
+          <div className="max-h-60 overflow-y-auto p-1.5 space-y-0.5 custom-scrollbar">
+            {filteredOptions.length === 0 ? (
+              <div className="py-4 text-center text-xs text-slate-400">Aucun résultat</div>
+            ) : (
+              filteredOptions.map(opt => {
+                const isSelected = String(opt.value) === String(value)
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => {
+                      onChange(String(opt.value))
+                      setIsOpen(false)
+                      setSearchTerm('')
+                    }}
+                    className={cn(
+                      "w-full px-3 py-2 text-left rounded-xl text-xs font-medium transition-all flex items-center justify-between cursor-pointer group",
+                      isSelected
+                        ? "bg-[#0f2863] text-white font-bold shadow-xs"
+                        : "text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-300"
+                    )}
+                  >
+                    <div className="min-w-0 pr-2">
+                      <div className="truncate font-semibold">{opt.label}</div>
+                      {opt.sublabel && (
+                        <div className={cn("text-[10px] truncate", isSelected ? "text-blue-200" : "text-slate-400 group-hover:text-indigo-500")}>
+                          {opt.sublabel}
+                        </div>
+                      )}
+                    </div>
+                    {isSelected && <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />}
                   </button>
                 )
               })
@@ -359,7 +504,7 @@ export default function AcademicYearSettingsPage() {
       queryClient.invalidateQueries({ queryKey: ['professor-assignments'] })
       setShowAiMatchingModal(false)
     } catch (e: any) {
-      toast.success('✨ Affectations IA validées et synchronisées dans le système !', { id: toastId })
+      toast.error(e.response?.data?.message || 'Erreur lors de l\'enregistrement des affectations.', { id: toastId })
       queryClient.invalidateQueries({ queryKey: ['professor-assignments'] })
       setShowAiMatchingModal(false)
     }
@@ -464,6 +609,16 @@ export default function AcademicYearSettingsPage() {
       return matchesSearch && matchesDept && matchesModule && matchesWorkload
     })
   }, [groupedAssignmentsMap, assignmentSearch, selectedDeptFilter, selectedModuleFilter, workloadFilter])
+
+  // Filters state check
+  const hasActiveFilters = selectedDeptFilter !== 'all' || selectedModuleFilter !== 'all' || workloadFilter !== 'all' || assignmentSearch !== ''
+
+  const handleResetFilters = () => {
+    setSelectedDeptFilter('all')
+    setSelectedModuleFilter('all')
+    setWorkloadFilter('all')
+    setAssignmentSearch('')
+  }
 
   // Mutations
   const autoDistributeMutation = useMutation({
@@ -1103,69 +1258,94 @@ export default function AcademicYearSettingsPage() {
             </div>
           </div>
 
-          {/* ─── SEARCH & FILTER TOOLBAR ─────────────────────────────────── */}
-          <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col md:flex-row items-center justify-between gap-3">
+          {/* ─── 🔍 SEARCH & CUSTOM FILTER TOOLBAR ────────────────────────── */}
+          <div className="bg-white dark:bg-slate-900 p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col md:flex-row items-center justify-between gap-3">
             {/* Search Input */}
             <div className="relative flex-1 w-full">
-              <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
+              <Search className="w-4 h-4 absolute left-3.5 top-2.5 text-slate-400" />
               <input
                 type="text"
                 placeholder="Rechercher par enseignant, module ou groupe..."
                 value={assignmentSearch}
                 onChange={(e) => setAssignmentSearch(e.target.value)}
-                className="w-full pl-10 pr-8 py-2 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-800 dark:text-white outline-none focus:border-indigo-500 transition-all"
+                className="w-full pl-10 pr-8 py-2 bg-slate-50/90 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-xl text-xs font-medium text-slate-800 dark:text-white outline-none focus:border-indigo-500 transition-all placeholder:text-slate-400"
               />
               {assignmentSearch && (
                 <button
                   onClick={() => setAssignmentSearch('')}
-                  className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  className="absolute right-3 top-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
               )}
             </div>
 
-            {/* Filter Dropdowns */}
+            {/* Custom Filter Popover Dropdowns */}
             <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
-              {/* Department Filter */}
-              <select
+              {/* 1. Department Filter */}
+              <FilterDropdown
+                label="Tous Départements"
                 value={selectedDeptFilter}
-                onChange={(e) => setSelectedDeptFilter(e.target.value)}
-                className="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 outline-none cursor-pointer"
-              >
-                <option value="all">Tous Départements</option>
-                {departments.map((d: any) => (
-                  <option key={d.id} value={d.id}>{d.name}</option>
-                ))}
-              </select>
+                onChange={(val) => setSelectedDeptFilter(val)}
+                icon={<Building2 className="w-3.5 h-3.5" />}
+                searchable={true}
+                options={[
+                  { value: 'all', label: 'Tous Départements' },
+                  ...departments.map((d: any) => ({
+                    value: String(d.id),
+                    label: d.name,
+                    sublabel: d.code ? `Code: ${d.code}` : undefined
+                  }))
+                ]}
+              />
 
-              {/* Module Filter */}
-              <select
+              {/* 2. Module Filter */}
+              <FilterDropdown
+                label="Tous Modules"
                 value={selectedModuleFilter}
-                onChange={(e) => setSelectedModuleFilter(e.target.value)}
-                className="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 outline-none cursor-pointer"
-              >
-                <option value="all">Tous Modules</option>
-                {modules.map((m: any) => (
-                  <option key={m.id} value={m.code}>{m.code} - {m.name}</option>
-                ))}
-              </select>
+                onChange={(val) => setSelectedModuleFilter(val)}
+                icon={<BookOpen className="w-3.5 h-3.5" />}
+                searchable={true}
+                options={[
+                  { value: 'all', label: 'Tous Modules' },
+                  ...modules.map((m: any) => ({
+                    value: m.code || String(m.id),
+                    label: `${m.code ? m.code + ' - ' : ''}${m.name}`,
+                    sublabel: m.semester ? `Semestre ${m.semester}` : undefined
+                  }))
+                ]}
+              />
 
-              {/* Workload Status Filter */}
-              <select
+              {/* 3. Workload Status Filter */}
+              <FilterDropdown
+                label="Toutes charges"
                 value={workloadFilter}
-                onChange={(e: any) => setWorkloadFilter(e.target.value)}
-                className="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 outline-none cursor-pointer"
-              >
-                <option value="all">Toutes charges</option>
-                <option value="unassigned">Non affecté (0h)</option>
-                <option value="available">Disponible (&lt;14h)</option>
-                <option value="full">Complet (14h-18h)</option>
-                <option value="overloaded">Surcharge (&gt;18h)</option>
-              </select>
+                onChange={(val: any) => setWorkloadFilter(val)}
+                icon={<BarChart2 className="w-3.5 h-3.5" />}
+                options={[
+                  { value: 'all', label: 'Toutes charges' },
+                  { value: 'unassigned', label: 'Non affecté (0h)', sublabel: 'Enseignants disponibles' },
+                  { value: 'available', label: 'Disponible (<14h)', sublabel: 'Capacité restante' },
+                  { value: 'full', label: 'Complet (14h - 18h)', sublabel: 'Volume statutaire atteint' },
+                  { value: 'overloaded', label: 'Surcharge (>18h)', sublabel: 'Au-delà du statutaire' }
+                ]}
+              />
 
-              <div className="text-xs text-slate-400 font-bold px-1">
-                {groupedProfessors.length} résultats
+              {/* Clear filters button if active */}
+              {hasActiveFilters && (
+                <button
+                  onClick={handleResetFilters}
+                  className="h-9 px-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 rounded-xl text-xs font-semibold transition-all flex items-center gap-1 cursor-pointer"
+                  title="Réinitialiser tous les filtres"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Effacer</span>
+                </button>
+              )}
+
+              {/* Results Count Badge */}
+              <div className="text-xs text-slate-500 dark:text-slate-400 font-bold px-2 py-1 bg-slate-100/80 dark:bg-slate-800/60 rounded-lg">
+                {groupedProfessors.length} {groupedProfessors.length > 1 ? 'profs' : 'prof'}
               </div>
             </div>
           </div>
@@ -1182,6 +1362,15 @@ export default function AcademicYearSettingsPage() {
                 <Users className="w-12 h-12 mx-auto text-slate-300 dark:text-slate-700" />
                 <h4 className="text-sm font-bold text-slate-700 dark:text-slate-200">Aucun enseignant correspondant</h4>
                 <p className="text-xs text-slate-400">Ajustez vos filtres ou effectuez une recherche différente.</p>
+                {hasActiveFilters && (
+                  <button
+                    onClick={handleResetFilters}
+                    className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 rounded-xl text-xs font-bold hover:bg-blue-100 cursor-pointer"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    <span>Réinitialiser les filtres</span>
+                  </button>
+                )}
               </div>
             ) : (
               <div className="overflow-x-auto">
