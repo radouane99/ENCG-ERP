@@ -1,9 +1,10 @@
 import React, { useMemo, useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { ArrowLeft, GripVertical, Loader2, Plus, Trash2, X } from 'lucide-react'
+import { ArrowLeft, GripVertical, Loader2, Plus, Trash2, X, Building2, Calendar, Users, BookOpen, MapPin, Clock } from 'lucide-react'
 import api from '@/shared/lib/api'
 import { toast } from 'sonner'
 import { cn } from '@/shared/lib/utils'
+import { CustomSelect, SelectOption } from '@/shared/components/ui/CustomSelect'
 
 type Slot = { slot_index: number; start: string; end: string; label: string }
 type Block = {
@@ -83,9 +84,18 @@ export default function ManualTimetableBoard({
     slot: '08:30:00|10:30:00',
   })
 
+  const [selectedFiliere, setSelectedFiliere] = useState<string>('all')
+  const [selectedSemester, setSelectedSemester] = useState<string>('all')
+  const [selectedGroup, setSelectedGroup] = useState<string>('all')
+
   const { data: board, refetch, isLoading } = useQuery({
-    queryKey: ['edt-manual-board', versionId],
-    queryFn: () => api.get(`/admin/smart-scheduling/versions/${versionId}/board`).then((res) => res.data.data),
+    queryKey: ['edt-manual-board', versionId, selectedFiliere, selectedSemester],
+    queryFn: () => {
+      const params: Record<string, any> = {}
+      if (selectedFiliere !== 'all') params.filiere_id = Number(selectedFiliere)
+      if (selectedSemester !== 'all') params.semester_number = Number(selectedSemester)
+      return api.get(`/admin/smart-scheduling/versions/${versionId}/board`, { params }).then((res) => res.data.data)
+    },
   })
 
   const applyBoard = (payload: any) => {
@@ -138,11 +148,43 @@ export default function ManualTimetableBoard({
     { slot_index: 4, start: '16:30:00', end: '18:15:00', label: '16:30 - 18:15' },
   ]
 
-  const blocks: Block[] = board?.blocks || []
+  const rawBlocks: Block[] = board?.blocks || []
+  const blocks = useMemo(() => {
+    if (selectedGroup === 'all') return rawBlocks
+    return rawBlocks.filter((b) => (b.group_label || '').toLowerCase().includes(selectedGroup.toLowerCase()))
+  }, [rawBlocks, selectedGroup])
+
   const unplaced = blocks.filter((b) => b.unplaced || b.day_of_week < 1)
   const placed = blocks.filter((b) => !b.unplaced && b.day_of_week >= 1)
-  const catalog = board?.catalog || { groups: [], modules: [], rooms: [], professors: [] }
+  const catalog = board?.catalog || { filieres: [], semesters: [], groups: [], modules: [], rooms: [], professors: [] }
   const editable = board?.editable !== false
+
+  const filiereOptions: SelectOption[] = useMemo(() => [
+    { value: 'all', label: 'Toutes les filières', badge: 'Global', icon: <Building2 className="w-3.5 h-3.5 text-indigo-500" /> },
+    ...(catalog.filieres || []).map((f: any) => ({
+      value: f.id,
+      label: `${f.code ? f.code + ' — ' : ''}${f.name}`,
+      badge: f.code || 'FIL',
+      icon: <Building2 className="w-3.5 h-3.5 text-indigo-500" />,
+    })),
+  ], [catalog.filieres])
+
+  const semesterOptions: SelectOption[] = useMemo(() => [
+    { value: 'all', label: 'Tous les semestres', badge: 'S1-S10', icon: <Calendar className="w-3.5 h-3.5 text-amber-500" /> },
+    ...[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => ({
+      value: num,
+      label: `Semestre S${num}`,
+      badge: `S${num}`,
+      icon: <Calendar className="w-3.5 h-3.5 text-amber-500" />,
+    })),
+  ], [])
+
+  const groupOptions: SelectOption[] = useMemo(() => [
+    { value: 'all', label: 'Tous les groupes', badge: 'Tous', icon: <Users className="w-3.5 h-3.5 text-emerald-500" /> },
+    { value: 'G1', label: 'Groupe 1 (G1)', badge: 'G1', icon: <Users className="w-3.5 h-3.5 text-emerald-500" /> },
+    { value: 'G2', label: 'Groupe 2 (G2)', badge: 'G2', icon: <Users className="w-3.5 h-3.5 text-emerald-500" /> },
+    { value: 'G3', label: 'Groupe 3 (G3)', badge: 'G3', icon: <Users className="w-3.5 h-3.5 text-emerald-500" /> },
+  ], [])
 
   const cellBlocks = useMemo(() => {
     const map: Record<string, Block[]> = {}
@@ -354,6 +396,47 @@ export default function ManualTimetableBoard({
         )}
       </div>
 
+      {/* 🔍 Filters Bar: Filière, Semestre, Groupe */}
+      <div className="p-3.5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 shadow-xs">
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* Filiere Selector */}
+          <CustomSelect
+            value={selectedFiliere}
+            onChange={(val) => setSelectedFiliere(val)}
+            options={filiereOptions}
+            icon={<Building2 className="w-3.5 h-3.5" />}
+            placeholder="Filière..."
+            className="min-w-[240px]"
+          />
+
+          {/* Semester Selector */}
+          <CustomSelect
+            value={selectedSemester}
+            onChange={(val) => setSelectedSemester(val)}
+            options={semesterOptions}
+            icon={<Calendar className="w-3.5 h-3.5" />}
+            placeholder="Semestre..."
+            className="min-w-[180px]"
+          />
+
+          {/* Group Selector */}
+          <CustomSelect
+            value={selectedGroup}
+            onChange={(val) => setSelectedGroup(val)}
+            options={groupOptions}
+            icon={<Users className="w-3.5 h-3.5" />}
+            placeholder="Groupe..."
+            className="min-w-[170px]"
+          />
+        </div>
+
+        <div className="text-xs font-bold text-slate-500">
+          <span className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-extrabold text-[11px] border border-slate-200 dark:border-slate-700">
+            ⚡ {blocks.length} séance{blocks.length > 1 ? 's' : ''} sur la grille
+          </span>
+        </div>
+      </div>
+
       {/* 📡 Live Action Radar Banner when moving a card */}
       {activeSubject && (
         <div className="p-3.5 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 flex items-center justify-between text-xs animate-in fade-in">
@@ -562,54 +645,141 @@ export default function ManualTimetableBoard({
       </div>
 
       {showAdd && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-          <form onSubmit={submitAdd} className="bg-white rounded-3xl w-full max-w-lg p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-black text-lg">Nouvelle séance</h3>
-              <button type="button" onClick={() => setShowAdd(false)}><X className="w-5 h-5" /></button>
+        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <form onSubmit={submitAdd} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-lg p-6 space-y-4 shadow-2xl animate-in zoom-in-95">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <h3 className="font-black text-base text-slate-900 dark:text-white">Créer une nouvelle séance manuelle</h3>
+              <button type="button" onClick={() => setShowAdd(false)} className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:text-slate-800 cursor-pointer"><X className="w-4 h-4" /></button>
             </div>
-            <select required value={form.module_id} onChange={(e) => setForm({ ...form, module_id: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border text-sm font-semibold">
-              <option value="">Module</option>
-              {catalog.modules.map((m: any) => <option key={m.id} value={m.id}>{m.code} — {m.name}</option>)}
-            </select>
-            <select required value={form.professor_id} onChange={(e) => setForm({ ...form, professor_id: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border text-sm font-semibold">
-              <option value="">Enseignant</option>
-              {catalog.professors.map((p: any) => <option key={p.id} value={p.id}>{p.name}</option>)}
-            </select>
-            <p className="text-[11px] text-slate-500">CM (2 groupes) = amphi. TD = petite salle. Une salle déjà prise (cours ou réservation) sur 08h30–10h30 n’apparaît plus sur ce créneau.</p>
-            <select required value={form.room_id} onChange={(e) => setForm({ ...form, room_id: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border text-sm font-semibold">
-              <option value="">Salle adaptée à l’effectif</option>
-              {catalog.rooms.map((r: any) => (
-                <option key={r.id} value={r.id}>
-                  {r.name} · {r.capacity ? `${r.capacity} places` : ''} {r.type === 'amphitheater' || String(r.name || '').toLowerCase().includes('amphi') ? '· Amphi' : '· TD'}
-                </option>
-              ))}
-            </select>
-            <div className="grid grid-cols-2 gap-3">
-              <select value={form.session_type} onChange={(e) => setForm({ ...form, session_type: e.target.value })} className="px-3 py-2.5 rounded-xl border text-sm font-semibold">
-                <option value="cm">CM (tous les groupes)</option>
-                <option value="td">TD (un groupe)</option>
-                <option value="tp">TP</option>
-              </select>
-              <select value={form.group_id} onChange={(e) => setForm({ ...form, group_id: e.target.value })} className="px-3 py-2.5 rounded-xl border text-sm font-semibold">
-                <option value="">{form.session_type === 'cm' ? 'Tous les groupes' : 'Groupe'}</option>
-                {catalog.groups.map((g: any) => <option key={g.id} value={g.id}>{g.name}</option>)}
-              </select>
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Module :</label>
+                <CustomSelect
+                  value={form.module_id}
+                  onChange={(val) => setForm({ ...form, module_id: String(val) })}
+                  options={(catalog.modules || []).map((m: any) => ({
+                    value: String(m.id),
+                    label: m.name,
+                    badge: m.code || 'MOD',
+                    icon: <BookOpen className="w-3.5 h-3.5 text-blue-500" />
+                  }))}
+                  placeholder="Sélectionnez un module..."
+                  className="w-full"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Enseignant Chercheur :</label>
+                <CustomSelect
+                  value={form.professor_id}
+                  onChange={(val) => setForm({ ...form, professor_id: String(val) })}
+                  options={(catalog.professors || []).map((p: any) => ({
+                    value: String(p.id),
+                    label: p.name,
+                    badge: 'Prof',
+                    icon: <Users className="w-3.5 h-3.5 text-indigo-500" />
+                  }))}
+                  placeholder="Sélectionnez un enseignant..."
+                  className="w-full"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Salle d'enseignement :</label>
+                <CustomSelect
+                  value={form.room_id}
+                  onChange={(val) => setForm({ ...form, room_id: String(val) })}
+                  options={(catalog.rooms || []).map((r: any) => ({
+                    value: String(r.id),
+                    label: `${r.name} (${r.capacity ? r.capacity + ' pl.' : ''})`,
+                    badge: r.type === 'amphitheater' || String(r.name).toLowerCase().includes('amphi') ? 'Amphi' : 'TD',
+                    icon: <MapPin className="w-3.5 h-3.5 text-emerald-500" />
+                  }))}
+                  placeholder="Sélectionnez une salle..."
+                  className="w-full"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Type de séance :</label>
+                  <CustomSelect
+                    value={form.session_type}
+                    onChange={(val) => setForm({ ...form, session_type: String(val) })}
+                    options={[
+                      { value: 'cm', label: 'Cours Magistral (CM)', badge: 'Promo' },
+                      { value: 'td', label: 'Travaux Dirigés (TD)', badge: 'Groupe' },
+                      { value: 'tp', label: 'Travaux Pratiques (TP)', badge: 'Labo' },
+                    ]}
+                    className="w-full"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Groupe ciblé :</label>
+                  <CustomSelect
+                    value={form.group_id}
+                    onChange={(val) => setForm({ ...form, group_id: String(val) })}
+                    options={[
+                      { value: '', label: form.session_type === 'cm' ? 'Tous les groupes (CM)' : 'Choisir un groupe...', badge: form.session_type === 'cm' ? 'Tous' : 'Requis' },
+                      ...(catalog.groups || []).map((g: any) => ({
+                        value: String(g.id),
+                        label: g.name,
+                        badge: 'G'
+                      }))
+                    ]}
+                    className="w-full"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Jour :</label>
+                  <CustomSelect
+                    value={form.day_of_week}
+                    onChange={(val) => setForm({ ...form, day_of_week: String(val) })}
+                    options={[
+                      { value: '0', label: 'À placer (Brouillon)', badge: 'En attente' },
+                      ...DAYS.map(d => ({ value: String(d.id), label: d.label, badge: `J${d.id}` }))
+                    ]}
+                    className="w-full"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Créneau horaire :</label>
+                  <CustomSelect
+                    value={form.slot}
+                    onChange={(val) => setForm({ ...form, slot: String(val) })}
+                    options={slots.map(s => ({
+                      value: `${s.start}|${s.end}`,
+                      label: `${hhmm(s.start)} – ${hhmm(s.end)}`,
+                      badge: `C${s.slot_index}`
+                    }))}
+                    className="w-full"
+                  />
+                </div>
+              </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <select value={form.day_of_week} onChange={(e) => setForm({ ...form, day_of_week: e.target.value })} className="px-3 py-2.5 rounded-xl border text-sm font-semibold">
-                <option value="0">Pas encore placée</option>
-                {DAYS.map((d) => <option key={d.id} value={d.id}>{d.label}</option>)}
-              </select>
-              <select value={form.slot} onChange={(e) => setForm({ ...form, slot: e.target.value })} className="px-3 py-2.5 rounded-xl border text-sm font-semibold">
-                {slots.map((s) => (
-                  <option key={s.slot_index} value={`${s.start}|${s.end}`}>{hhmm(s.start)}–{hhmm(s.end)}</option>
-                ))}
-              </select>
+
+            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setShowAdd(false)}
+                className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-600 dark:text-slate-400 cursor-pointer"
+              >
+                Annuler
+              </button>
+              <button
+                type="submit"
+                disabled={addMutation.isPending}
+                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-700 hover:from-indigo-700 hover:to-blue-800 text-white text-xs font-black uppercase tracking-wider shadow-md cursor-pointer disabled:opacity-50"
+              >
+                {addMutation.isPending ? 'Enregistrement…' : 'Enregistrer la séance'}
+              </button>
             </div>
-            <button disabled={addMutation.isPending} className="w-full py-3 rounded-xl bg-[#001A4B] text-white text-sm font-black uppercase">
-              {addMutation.isPending ? 'Enregistrement…' : 'Enregistrer'}
-            </button>
           </form>
         </div>
       )}

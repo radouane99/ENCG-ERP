@@ -1,28 +1,65 @@
 import React from 'react'
 import { cn } from '@/shared/lib/utils'
+import { FileText } from 'lucide-react'
 
 const DAYS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi']
 
 function SectionTable({ section }: { section: any }) {
   const rows = section?.rows || []
+  const filiereId = section?.filiere_id || 0
+  const semesterNum = section?.semester_number || ''
+  const exportUrl = filiereId 
+    ? `/api/timetable/export/filiere/${filiereId}/pdf${semesterNum ? `?semester_number=${semesterNum}` : ''}`
+    : `/api/timetable/export/all/0/pdf${semesterNum ? `?semester_number=${semesterNum}` : ''}`
+
   return (
-    <div className="space-y-3">
-      <div className="text-center">
-        <h3 className="text-lg font-black tracking-wide">{section.title}</h3>
-        <p className="text-xs text-slate-500">{section.filiere_code} {section.filiere_name} · {section.semester_label} · {section.academic_year}</p>
+    <div className="space-y-3 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-5 md:p-6 shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="px-2.5 py-0.5 rounded-md bg-[#0f2863] text-white text-[10px] font-black uppercase tracking-wider">
+              {section.filiere_code || 'FILIÈRE'}
+            </span>
+            <h3 className="text-base font-black tracking-tight text-slate-900 dark:text-white">{section.title}</h3>
+          </div>
+          <p className="text-xs text-slate-500 mt-0.5">{section.filiere_name} · {section.semester_label} · Année {section.academic_year}</p>
+        </div>
+
+        <a
+          href={exportUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300 dark:bg-slate-800 dark:hover:bg-emerald-950/60 dark:hover:text-emerald-300 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 transition-all cursor-pointer shadow-xs"
+        >
+          <FileText className="w-3.5 h-3.5 text-emerald-600" />
+          <span>Télécharger {section.filiere_code || ''} (PDF 1 Page)</span>
+        </a>
       </div>
-      <div className="overflow-x-auto border border-slate-300 rounded-xl bg-white">
-        <table className="w-full min-w-[980px] border-collapse text-[11px]">
+
+      <div className="overflow-x-auto border border-slate-300 dark:border-slate-700 rounded-2xl bg-white dark:bg-slate-900 shadow-xs">
+        <table className="w-full min-w-[980px] border-collapse text-[11px] table-fixed">
+          <colgroup>
+            <col style={{ width: '7.5%' }} />
+            <col style={{ width: '14%' }} />
+            <col style={{ width: '16%' }} />
+            <col style={{ width: '14.5%' }} />
+            <col style={{ width: '8%' }} />
+            <col style={{ width: '8%' }} />
+            <col style={{ width: '8%' }} />
+            <col style={{ width: '8%' }} />
+            <col style={{ width: '8%' }} />
+            <col style={{ width: '8%' }} />
+          </colgroup>
           <thead>
-            <tr className="bg-slate-100">
-              <th className="border border-slate-300 p-2 font-black">Semestre</th>
-              <th className="border border-slate-300 p-2 font-black">Modules</th>
-              <th className="border border-slate-300 p-2 font-black">Éléments</th>
-              <th className="border border-slate-300 p-2 font-black">Intervenants</th>
+            <tr className="bg-slate-100 dark:bg-slate-800/80">
+              <th className="border border-slate-300 dark:border-slate-700 p-2 font-black">Semestre</th>
+              <th className="border border-slate-300 dark:border-slate-700 p-2 font-black">Modules</th>
+              <th className="border border-slate-300 dark:border-slate-700 p-2 font-black">Éléments</th>
+              <th className="border border-slate-300 dark:border-slate-700 p-2 font-black">Intervenants</th>
               {DAYS.map((d) => (
-                <th key={d} className="border border-slate-300 p-2 font-black">{d}</th>
+                <th key={d} className="border border-slate-300 dark:border-slate-700 p-2 font-black text-center">{d}</th>
               ))}
-              <th className="border border-slate-300 p-2 font-black">Salles</th>
+              <th className="border border-slate-300 dark:border-slate-700 p-2 font-black text-center">Salles</th>
             </tr>
           </thead>
           <tbody>
@@ -33,25 +70,25 @@ function SectionTable({ section }: { section: any }) {
             ) : rows.map((row: any, index: number) => (
               <tr key={`${section.filiere_code}-${section.semester_number}-${row.module_label}-${row.professor_id}-${index}`}>
                 {index === 0 && (
-                  <td rowSpan={rows.length} className="border border-slate-300 p-2 text-center font-black align-middle bg-slate-50">
+                  <td rowSpan={rows.length} className="border border-slate-300 dark:border-slate-700 p-2 text-center font-black align-middle bg-slate-50 dark:bg-slate-800/50">
                     {section.semester_label}
                   </td>
                 )}
                 {row.show_module && (
-                  <td rowSpan={row.module_rowspan} className="border border-slate-300 p-2 text-center font-black align-middle">
+                  <td rowSpan={row.module_rowspan} className="border border-slate-300 dark:border-slate-700 p-2 text-center font-black align-middle">
                     {row.module_label}
                   </td>
                 )}
-                <td className="border border-slate-300 p-2">{row.element_name}</td>
-                <td className="border border-slate-300 p-2 font-bold" style={{ color: row.color }}>{row.professor_name}</td>
+                <td className="border border-slate-300 dark:border-slate-700 p-2">{row.element_name}</td>
+                <td className="border border-slate-300 dark:border-slate-700 p-2 font-bold" style={{ color: row.color }}>{row.professor_name}</td>
                 {[1, 2, 3, 4, 5].map((day) => (
-                  <td key={day} className={cn('border border-slate-300 p-1.5 align-top')} style={{ color: row.color }}>
+                  <td key={day} className={cn('border border-slate-300 dark:border-slate-700 p-1.5 align-middle text-center font-bold')} style={{ color: row.color }}>
                     {(row.days?.[day] || []).map((slot: string) => (
-                      <div key={slot}>{slot}</div>
+                      <div key={slot} className="text-[10px] whitespace-nowrap">{slot}</div>
                     ))}
                   </td>
                 ))}
-                <td className="border border-slate-300 p-2 text-center font-bold">{row.room_label}</td>
+                <td className="border border-slate-300 dark:border-slate-700 p-2 text-center font-bold">{row.room_label}</td>
               </tr>
             ))}
           </tbody>

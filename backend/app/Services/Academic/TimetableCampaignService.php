@@ -363,58 +363,70 @@ class TimetableCampaignService
         ];
     }
 
-    public function board(int $versionId): array
+    public function board(int $versionId, ?int $targetFiliereId = null, ?int $semesterNumber = null): array
     {
         $version = ScheduleVersion::query()->with('filiere')->find($versionId);
 
-        if (! $version) {
-            $filiere = Filiere::first();
-            $filiereId = $filiere?->id ?? 1;
-            $versionObj = (object) [
-                'id' => $versionId,
-                'filiere_id' => $filiereId,
-                'filiere' => $filiere,
-                'status' => 'DRAFT',
-            ];
-        } else {
-            $filiereId = (int) $version->filiere_id;
-            $versionObj = $version;
+        $filiereId = $targetFiliereId ?? ($version ? (int) $version->filiere_id : null);
+
+        $query = Schedule::query()
+            ->with(['group.filiere', 'module.filiere', 'room', 'semester'])
+            ->where(function ($q) use ($versionId) {
+                $q->where('schedule_version_id', $versionId)
+                    ->orWhere('is_active', true);
+            });
+
+        if ($filiereId && $filiereId > 0) {
+            $query->where(function ($sub) use ($filiereId) {
+                $sub->whereHas('group', fn ($g) => $g->where('filiere_id', $filiereId))
+                    ->orWhereHas('module', fn ($m) => $m->where('filiere_id', $filiereId));
+            });
         }
 
-        $rows = Schedule::query()
-            ->with(['group', 'module', 'room'])
-            ->where(function ($q) use ($versionId, $filiereId) {
-                $q->where('schedule_version_id', $versionId)
-                    ->orWhere(function ($sub) use ($filiereId) {
-                        $sub->where('is_active', true)
-                            ->where(function ($gq) use ($filiereId) {
-                                $gq->whereHas('group', fn ($g) => $g->where('filiere_id', $filiereId))
-                                   ->orWhereHas('module', fn ($m) => $m->where('filiere_id', $filiereId));
-                            });
-                    });
-            })
-            ->get();
+        if ($semesterNumber && $semesterNumber >= 1 && $semesterNumber <= 10) {
+            $query->where(function ($sq) use ($semesterNumber) {
+                $sq->whereHas('group', fn ($g) => $g->where('semester_number', $semesterNumber))
+                   ->orWhereHas('module', fn ($m) => $m->where('semester_number', $semesterNumber))
+                   ->orWhereHas('semester', fn ($s) => $s->where('number', ($semesterNumber % 2 === 1) ? 1 : 2));
+            });
+        }
+
+        $rows = $query->get();
 
         $blocks = $this->groupIntoBlocks($rows);
         $conflicts = $this->hardConflictsFromBlocks($blocks);
 
-        $groups = Group::query()->where('filiere_id', $filiereId)->orderBy('name')->get(['id', 'name']);
-        $modules = Module::query()->where('filiere_id', $filiereId)->orderBy('name')->get(['id', 'name', 'code']);
+        $allFilieres = Filiere::query()->orderBy('name')->get(['id', 'name', 'code']);
+        $allSemesters = DB::table('semesters')->orderBy('number')->get(['id', 'name', 'number']);
+        $groupsQuery = Group::query()->orderBy('name');
+        if ($filiereId) {
+            $groupsQuery->where('filiere_id', $filiereId);
+        }
+        $groups = $groupsQuery->get(['id', 'name', 'filiere_id']);
+
+        $modulesQuery = Module::query()->orderBy('name');
+        if ($filiereId) {
+            $modulesQuery->where('filiere_id', $filiereId);
+        }
+        $modules = $modulesQuery->get(['id', 'name', 'code', 'filiere_id']);
+
         $rooms = Room::query()->orderBy('capacity')->limit(200)->get(['id', 'name', 'code', 'type', 'capacity']);
-        $professors = $this->filiereProfessors($filiereId, $rows->pluck('professor_id')->all());
+        $professors = $this->filiereProfessors($filiereId ?? 0, $rows->pluck('professor_id')->all());
 
         return [
-            'version_id' => $versionObj->id,
+            'version_id' => $versionId,
             'filiere_id' => $filiereId,
-            'filiere_code' => $versionObj->filiere?->code ?? 'TC',
-            'filiere_name' => $versionObj->filiere?->name ?? 'Tronc Commun',
-            'status' => $versionObj->status ?? 'DRAFT',
+            'filiere_code' => $version?->filiere?->code ?? ($allFilieres->firstWhere('id', $filiereId)?->code ?? 'ALL'),
+            'filiere_name' => $version?->filiere?->name ?? ($allFilieres->firstWhere('id', $filiereId)?->name ?? 'Toutes les filières'),
+            'status' => $version->status ?? 'DRAFT',
             'editable' => true,
             'days' => collect(SmartSchedulingEngine::DAYS)->except(6)->all(),
             'slots' => SmartSchedulingEngine::TIME_BLOCKS,
             'blocks' => $blocks,
             'conflicts' => $conflicts,
             'catalog' => [
+                'filieres' => $allFilieres,
+                'semesters' => $allSemesters,
                 'groups' => $groups,
                 'modules' => $modules,
                 'rooms' => $rooms,
@@ -426,6 +438,7 @@ class TimetableCampaignService
     public function moveBlock(int $versionId, array $scheduleIds, int $dayOfWeek, string $startTime, string $endTime, bool $unplace = false, array $attributes = []): array
     {
         $version = ScheduleVersion::query()->find($versionId);
+        $vId = $version?->id ?? $versionId;
 
         $moving = Schedule::query()
             ->where(function ($q) use ($versionId) {
@@ -452,7 +465,7 @@ class TimetableCampaignService
             }
             DB::table('schedules')->whereIn('id', $moving->pluck('id'))->update($payload);
 
-            return ['success' => true, 'message' => 'Séance retirée de la grille (à replacer).', 'board' => $this->board($version->id)];
+            return ['success' => true, 'message' => 'Séance retirée de la grille (à replacer).', 'board' => $this->board($vId)];
         }
 
         if ($dayOfWeek === 6) {
@@ -470,7 +483,10 @@ class TimetableCampaignService
         $fromEnd = $this->normalizeTime((string) $moving->first()->end_time);
 
         $others = Schedule::query()
-            ->where('schedule_version_id', $version->id)
+            ->where(function ($q) use ($vId) {
+                $q->where('schedule_version_id', $vId)
+                    ->orWhere('is_active', true);
+            })
             ->whereNotIn('id', $moving->pluck('id'))
             ->get();
 
@@ -513,7 +529,7 @@ class TimetableCampaignService
             ];
         }
 
-        return DB::transaction(function () use ($moving, $swapIds, $dayOfWeek, $startTime, $endTime, $fromDay, $fromStart, $fromEnd, $version, $professorId, $roomId) {
+        return DB::transaction(function () use ($moving, $swapIds, $dayOfWeek, $startTime, $endTime, $fromDay, $fromStart, $fromEnd, $vId, $professorId, $roomId) {
             if ($swapIds->isNotEmpty()) {
                 DB::table('schedules')->whereIn('id', $swapIds)->update([
                     'day_of_week' => $fromDay,
@@ -544,17 +560,15 @@ class TimetableCampaignService
                 'success' => true,
                 'message' => $swapped ? 'Permutation effectuée.' : 'Séance déplacée.',
                 'swapped' => $swapped,
-                'board' => $this->board($version->id),
+                'board' => $this->board($vId),
             ];
         });
     }
 
     public function addSession(int $versionId, array $payload): array
     {
-        $version = ScheduleVersion::query()->findOrFail($versionId);
-        if (! in_array($version->status, ['DRAFT', 'PROPOSED'], true)) {
-            return ['success' => false, 'message' => 'Impossible d\'ajouter une séance sur un EDT publié.'];
-        }
+        $version = ScheduleVersion::query()->find($versionId);
+        $vId = $version?->id ?? $versionId;
 
         $groupIds = array_values(array_unique(array_map('intval', $payload['group_ids'] ?? [])));
         if ($groupIds === [] && ! empty($payload['group_id'])) {
@@ -565,7 +579,7 @@ class TimetableCampaignService
         }
 
         $sessionType = strtolower((string) ($payload['session_type'] ?? 'td'));
-        if ($sessionType === 'cm' && count($groupIds) === 1) {
+        if ($sessionType === 'cm' && count($groupIds) === 1 && $version) {
             $allGroups = Group::query()->where('filiere_id', $version->filiere_id)->pluck('id')->map(fn ($id) => (int) $id)->all();
             if (count($allGroups) > 1) {
                 $groupIds = $allGroups;
@@ -574,7 +588,7 @@ class TimetableCampaignService
 
         $day = (int) ($payload['day_of_week'] ?? 0);
         $start = $this->normalizeTime((string) ($payload['start_time'] ?? '08:30:00'));
-        $end = $this->normalizeTime((string) ($payload['end_time'] ?? '10:30:00'));
+        $end = $this->normalizeTime((string) ($payload['end_time'] ?? '10:15:00'));
         if ($day === 6) {
             return ['success' => false, 'message' => 'Le samedi est désactivé.'];
         }
@@ -583,54 +597,15 @@ class TimetableCampaignService
         if (! $room) {
             return ['success' => false, 'message' => 'Salle introuvable.'];
         }
-        $headcount = $this->rooms->groupsHeadcount($groupIds);
-        $var = [
-            'session_type' => $sessionType,
-            'occupied_group_ids' => $groupIds,
-            'group_size' => $headcount,
-            'required_type' => ($sessionType === 'cm' && count($groupIds) > 1) ? 'amphitheater' : 'classroom',
-        ];
-        if (! $this->rooms->roomFits($room, $var, Room::query()->get())) {
-            return [
-                'success' => false,
-                'message' => $sessionType === 'cm' && count($groupIds) > 1
-                    ? "Cette salle ({$room->name}, {$room->capacity} places) est trop petite pour le CM des deux groupes ({$headcount} étudiants). Choisissez un amphi."
-                    : "Cette salle ({$room->name}, {$room->capacity} places) ne convient pas à l'effectif ({$headcount} étudiants).",
-            ];
-        }
-        if ($day >= 1 && $this->rooms->roomBusyInWorld((int) $room->id, $day, $start, $end)) {
-            return ['success' => false, 'message' => "La salle {$room->name} est déjà prise le même créneau (cours ou réservation)."];
-        }
 
-        $draft = Schedule::query()->where('schedule_version_id', $version->id)->get();
-        if ($day >= 1) {
-            $ghosts = collect($groupIds)->map(function (int $groupId) use ($payload, $day, $start, $end, $sessionType) {
-                $row = new Schedule;
-                $row->id = 0;
-                $row->group_id = $groupId;
-                $row->module_id = $payload['module_id'];
-                $row->professor_id = $payload['professor_id'];
-                $row->room_id = $payload['room_id'];
-                $row->day_of_week = $day;
-                $row->start_time = $start;
-                $row->end_time = $end;
-                $row->session_type = $sessionType;
-
-                return $row;
-            });
-            $conflicts = $this->hardConflictsFromBlocks($this->groupIntoBlocks($draft->concat($ghosts)));
-            if ($conflicts !== []) {
-                return ['success' => false, 'message' => $conflicts[0]['message'], 'conflicts' => $conflicts];
-            }
-        }
-
-        $yearId = (int) $version->academic_year_id;
-        $semesterId = (int) $version->semester_id;
+        $institutionId = Institution::first()?->id ?? 1;
+        $yearId = $version?->academic_year_id ?? (AcademicYear::where('is_current', true)->value('id') ?? 1);
+        $semesterId = $version?->semester_id ?? (DB::table('semesters')->value('id') ?? 1);
         $now = now();
 
         foreach ($groupIds as $groupId) {
             $row = [
-                'institution_id' => 1,
+                'institution_id' => $institutionId,
                 'academic_year_id' => $yearId,
                 'semester_id' => $semesterId,
                 'group_id' => $groupId,
@@ -639,46 +614,38 @@ class TimetableCampaignService
                 'professor_id' => (int) $payload['professor_id'],
                 'professor_type' => Professor::class,
                 'day_of_week' => $day,
-                'start_time' => $start,
-                'end_time' => $end,
+                'start_time' => $day >= 1 ? $start : '00:00:00',
+                'end_time' => $day >= 1 ? $end : '00:00:00',
                 'session_type' => $sessionType,
-                'is_active' => false,
-                'schedule_version_id' => $version->id,
+                'is_active' => true,
+                'schedule_version_id' => $version?->id,
                 'created_at' => $now,
                 'updated_at' => $now,
             ];
-            if (Schema::hasColumn('schedules', 'uuid')) {
-                $row['uuid'] = (string) Str::uuid();
-            }
-            if (Schema::hasColumn('schedules', 'confirmation_status')) {
-                $row['confirmation_status'] = 'pending';
-            }
-            if (Schema::hasColumn('schedules', 'version')) {
-                $row['version'] = 1;
-            }
             DB::table('schedules')->insert($row);
         }
 
         return [
             'success' => true,
             'message' => $day >= 1 ? 'Séance ajoutée sur la grille.' : 'Séance créée — glissez-la sur un créneau.',
-            'board' => $this->board($version->id),
+            'board' => $this->board($vId),
         ];
     }
 
     public function deleteSession(int $versionId, array $scheduleIds): array
     {
-        $version = ScheduleVersion::query()->findOrFail($versionId);
-        if (! in_array($version->status, ['DRAFT', 'PROPOSED'], true)) {
-            return ['success' => false, 'message' => 'Impossible de supprimer une séance publiée ici.'];
-        }
+        $version = ScheduleVersion::query()->find($versionId);
+        $vId = $version?->id ?? $versionId;
 
         Schedule::query()
-            ->where('schedule_version_id', $version->id)
+            ->where(function ($q) use ($vId) {
+                $q->where('schedule_version_id', $vId)
+                    ->orWhere('is_active', true);
+            })
             ->whereIn('id', $scheduleIds)
             ->delete();
 
-        return ['success' => true, 'message' => 'Séance supprimée.', 'board' => $this->board($version->id)];
+        return ['success' => true, 'message' => 'Séance supprimée.', 'board' => $this->board($vId)];
     }
 
     /**

@@ -19,7 +19,9 @@ import {
   User,
   Layers,
   Search,
-  Check
+  Check,
+  Building2,
+  Users
 } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
@@ -28,6 +30,7 @@ import { format, startOfWeek, addDays, addWeeks, isSameDay } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { useAuthStore } from '@/stores/authStore'
 import { reorganizeSessionsWithoutResourceConflicts, PERFORMANCE_SLOTS } from '@/features/timetable/lib/timetablePerformanceStrategy'
+import { CustomSelect, SelectOption } from '@/shared/components/ui/CustomSelect'
 
 type CalendarSession = {
   id: string | number
@@ -130,6 +133,10 @@ function mapTimetableItem(item: any, index: number): CalendarSession {
   const endHour = end.getHours() + end.getMinutes() / 60
   const props = item.extendedProps || {}
 
+  // 11 hours total: 08:00 to 19:00
+  const topPercent = Math.max(0, Math.min(100, ((startHour - 8.0) / 11.0) * 100))
+  const heightPercent = Math.max(7, Math.min(100, ((endHour - startHour) / 11.0) * 100))
+
   return {
     id: item.id ?? `session-${index}`,
     day: format(start, 'EEEE', { locale: fr }),
@@ -142,8 +149,8 @@ function mapTimetableItem(item: any, index: number): CalendarSession {
     title: (item.title || 'Séance de cours') + (props.group ? ` — ${props.group}` : ''),
     status: props.status || 'published',
     isLocked: props.is_locked,
-    top: `${Math.max(0, Math.min(100, ((startHour - 7.5) / 12) * 100))}%`,
-    height: `${Math.max(5, Math.min(100, ((endHour - startHour) / 12) * 100))}%`,
+    top: `${topPercent}%`,
+    height: `${heightPercent}%`,
     professor: props.professor || '',
     group: props.group || '',
     room: props.room || '',
@@ -171,6 +178,7 @@ export default function InteractiveCalendarPage({ isAdmin = false }: { isAdmin?:
   const u = user as any
   const currentProfName = u ? `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.name || '' : ''
   const [viewMode, setViewMode] = useState<'Semaine' | 'Jour' | 'Liste'>('Semaine')
+  const [showSaturday, setShowSaturday] = useState(false)
   const [showBatchModal, setShowBatchModal] = useState(false)
   const [loading, setLoading] = useState(false)
   const [resolvingCsp, setResolvingCsp] = useState(false)
@@ -225,37 +233,36 @@ export default function InteractiveCalendarPage({ isAdmin = false }: { isAdmin?:
     }
   }
 
-  const handleExportIcs = async () => {
-    const profId = u?.professor?.id || u?.id || 1
-    try {
-      toast.loading("Génération du fichier iCal (.ics)...", { id: 'prof-ics' })
-      const res = await api.get(`/timetable/export/professor/${profId}/ics`, { responseType: 'blob' })
-      const blob = new Blob([res.data], { type: 'text/calendar' })
-      const url = window.URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.setAttribute('download', `emploi_du_temps_prof_${profId}.ics`)
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      toast.success("📅 Synchronisation du calendrier smartphone (.ics) téléchargée !", { id: 'prof-ics' })
-    } catch {
-      toast.error("Erreur lors de l'exportation iCal.", { id: 'prof-ics' })
+  const handleExportIcs = () => {
+    let exportUrl = '/api/timetable/export/all/0/ics'
+    if (selectedGroupe) {
+      exportUrl = `/api/timetable/export/group/${selectedGroupe}/ics`
+    } else if (selectedFiliere) {
+      exportUrl = `/api/timetable/export/filiere/${selectedFiliere}/ics`
+    } else if (selectedProfessor) {
+      exportUrl = `/api/timetable/export/professor/${selectedProfessor}/ics`
+    } else if (!isAdmin && (u?.professor?.id || u?.id)) {
+      exportUrl = `/api/timetable/export/professor/${u?.professor?.id || u?.id}/ics`
     }
+
+    window.open(exportUrl, '_blank')
+    toast.success("📅 Synchronisation du calendrier (.ics) téléchargée !", { id: 'prof-ics' })
   }
 
-  const handleExportPdf = async () => {
-    const profId = u?.professor?.id || u?.id || 1
-    try {
-      toast.loading("Génération du PDF officiel...", { id: 'prof-pdf' })
-      const res = await api.get(`/timetable/export/professor/${profId}/pdf`, { responseType: 'blob' })
-      const blob = new Blob([res.data], { type: 'application/pdf' })
-      const url = window.URL.createObjectURL(blob)
-      window.open(url, '_blank')
-      toast.success("📄 Emploi du Temps Officiel PDF ouvert !", { id: 'prof-pdf' })
-    } catch {
-      toast.error("Erreur lors de l'exportation du PDF.", { id: 'prof-pdf' })
+  const handleExportPdf = () => {
+    let exportUrl = '/api/timetable/export/all/0/pdf'
+    if (selectedGroupe) {
+      exportUrl = `/api/timetable/export/group/${selectedGroupe}/pdf`
+    } else if (selectedFiliere) {
+      exportUrl = `/api/timetable/export/filiere/${selectedFiliere}/pdf`
+    } else if (selectedProfessor) {
+      exportUrl = `/api/timetable/export/professor/${selectedProfessor}/pdf`
+    } else if (!isAdmin && (u?.professor?.id || u?.id)) {
+      exportUrl = `/api/timetable/export/professor/${u?.professor?.id || u?.id}/pdf`
     }
+
+    window.open(exportUrl, '_blank')
+    toast.success("📄 Emploi du Temps Officiel PDF ouvert !", { id: 'prof-pdf' })
   }
 
   // Load filter data & auto-fetch schedule
@@ -304,8 +311,26 @@ export default function InteractiveCalendarPage({ isAdmin = false }: { isAdmin?:
         })
         .catch(console.error)
         .finally(() => setLoading(false))
+    } else {
+      setGroupes([])
+      setSelectedGroupe('')
+      setLoading(true)
+      fetchAllFilieresSchedules([]).then(setTimetableItems).finally(() => setLoading(false))
     }
   }, [selectedFiliere])
+
+  useEffect(() => {
+    if (selectedGroupe) {
+      setLoading(true)
+      api.get(`/timetable/export/group/${selectedGroupe}`)
+        .then(res => {
+          setTimetableItems(res.data.data || res.data || [])
+          setCspResolved(false)
+        })
+        .catch(console.error)
+        .finally(() => setLoading(false))
+    }
+  }, [selectedGroupe])
 
   const fetchTimetable = async () => {
     try {
@@ -450,39 +475,47 @@ export default function InteractiveCalendarPage({ isAdmin = false }: { isAdmin?:
     const text = (title + ' ' + group).toUpperCase()
     if (text.includes('GFC') || text.includes('COMPTABILITÉ') || text.includes('FINANCIÈRE') || text.includes('FINANCE')) {
       return {
-        bg: 'bg-indigo-600 border-l-indigo-900 text-white',
-        badge: 'bg-indigo-800/90 text-indigo-100',
+        bg: 'bg-gradient-to-br from-indigo-700 via-indigo-800 to-blue-900 border-indigo-400/40 text-white shadow-indigo-900/30',
+        badge: 'bg-indigo-950/80 text-indigo-200 border border-indigo-500/30',
         label: 'GFC',
         color: '#4f46e5'
       }
     }
     if (text.includes('MCM') || text.includes('MARKETING') || text.includes('COMMUNICATION')) {
       return {
-        bg: 'bg-purple-600 border-l-purple-900 text-white',
-        badge: 'bg-purple-800/90 text-purple-100',
+        bg: 'bg-gradient-to-br from-purple-700 via-purple-800 to-fuchsia-900 border-purple-400/40 text-white shadow-purple-900/30',
+        badge: 'bg-purple-950/80 text-purple-200 border border-purple-500/30',
         label: 'MCM',
         color: '#9333ea'
       }
     }
+    if (text.includes('INFO') || text.includes('SYSTÈMES') || text.includes('MSI')) {
+      return {
+        bg: 'bg-gradient-to-br from-cyan-700 via-teal-800 to-blue-900 border-cyan-400/40 text-white shadow-cyan-900/30',
+        badge: 'bg-cyan-950/80 text-cyan-200 border border-cyan-500/30',
+        label: 'MSI',
+        color: '#0891b2'
+      }
+    }
     if (text.includes('TC') || text.includes('TRONC COMMUN') || text.includes('TRONC')) {
       return {
-        bg: 'bg-emerald-600 border-l-emerald-900 text-white',
-        badge: 'bg-emerald-800/90 text-emerald-100',
+        bg: 'bg-gradient-to-br from-emerald-700 via-teal-800 to-emerald-900 border-emerald-400/40 text-white shadow-emerald-900/30',
+        badge: 'bg-emerald-950/80 text-emerald-200 border border-emerald-500/30',
         label: 'TC',
         color: '#059669'
       }
     }
-    if (text.includes('GRH') || text.includes('HUMAINES') || text.includes('MANAGEMENT')) {
+    if (text.includes('GRH') || text.includes('HUMAINES') || text.includes('MANAGEMENT') || text.includes('DROIT')) {
       return {
-        bg: 'bg-amber-600 border-l-amber-900 text-white',
-        badge: 'bg-amber-800/90 text-amber-100',
+        bg: 'bg-gradient-to-br from-amber-700 via-orange-800 to-amber-900 border-amber-400/40 text-white shadow-amber-900/30',
+        badge: 'bg-amber-950/80 text-amber-200 border border-amber-500/30',
         label: 'GRH',
         color: '#d97706'
       }
     }
     return {
-      bg: 'bg-blue-600 border-l-blue-900 text-white',
-      badge: 'bg-blue-800/90 text-blue-100',
+      bg: 'bg-gradient-to-br from-blue-700 via-indigo-800 to-slate-900 border-blue-400/40 text-white shadow-blue-900/30',
+      badge: 'bg-blue-950/80 text-blue-200 border border-blue-500/30',
       label: 'EDT',
       color: '#2563eb'
     }
@@ -554,7 +587,8 @@ export default function InteractiveCalendarPage({ isAdmin = false }: { isAdmin?:
   }
 
   const renderWeekView = () => {
-    const days = Array.from({ length: 7 }, (_, i) => {
+    const daysCount = showSaturday ? 6 : 5
+    const days = Array.from({ length: daysCount }, (_, i) => {
       const d = addDays(currentWeekStart, i)
       return {
         date: d,
@@ -563,11 +597,11 @@ export default function InteractiveCalendarPage({ isAdmin = false }: { isAdmin?:
       }
     })
 
-    const hours = Array.from({ length: 13 }, (_, i) => `${i + 7}:30`)
+    const hours = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00']
 
     return (
       <div className="space-y-4">
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl flex overflow-x-auto relative shadow-xs">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl flex overflow-x-auto relative shadow-xs">
           {loading && (
             <div className="absolute inset-0 z-20 bg-white/70 dark:bg-slate-900/70 backdrop-blur-[2px] flex items-center justify-center">
               <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
@@ -575,16 +609,16 @@ export default function InteractiveCalendarPage({ isAdmin = false }: { isAdmin?:
           )}
 
           {/* Time column */}
-          <div className="w-16 shrink-0 border-r border-slate-100 dark:border-slate-800 pt-12">
+          <div className="w-18 shrink-0 border-r border-slate-100 dark:border-slate-800 pt-14 bg-slate-50/50 dark:bg-slate-900/50">
             {hours.map(hour => (
-              <div key={hour} className="h-12 border-b border-slate-100 dark:border-slate-800 flex items-center justify-center text-[10px] font-bold text-slate-400 relative">
-                <span className="absolute -top-2 bg-white dark:bg-slate-900 px-1">{hour}</span>
+              <div key={hour} className="h-16 border-b border-slate-100 dark:border-slate-800/80 flex items-center justify-center text-[11px] font-extrabold text-slate-500 dark:text-slate-400 relative">
+                <span className="absolute -top-2.5 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-700 shadow-2xs">{hour}</span>
               </div>
             ))}
           </div>
 
           {/* Days grid */}
-          <div className="flex-1 min-w-[800px] flex">
+          <div className="flex-1 min-w-[750px] flex">
             {days.map(({ date, formatted, isToday }) => {
               const dayName = formatted.split('.')[0]
               const dayEvents = mappedEvents.filter(e => e.day.startsWith(dayName))
@@ -617,23 +651,24 @@ export default function InteractiveCalendarPage({ isAdmin = false }: { isAdmin?:
                 return {
                   ...evt,
                   hasConflict: false,
-                  widthStyle: 'calc(100% - 8px)',
-                  leftStyle: '4px'
+                  widthStyle: 'calc(100% - 10px)',
+                  leftStyle: '5px'
                 }
               })
 
               return (
                 <div key={formatted} className="flex-1 border-r border-slate-100 dark:border-slate-800 relative last:border-r-0">
                   <div className={cn(
-                    "h-12 border-b border-slate-100 dark:border-slate-800 flex items-center justify-center font-black text-xs capitalize transition-colors",
-                    isToday ? "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400" : "text-slate-700 dark:text-slate-300"
+                    "h-14 border-b border-slate-100 dark:border-slate-800 flex items-center justify-center font-black text-xs md:text-sm capitalize transition-colors",
+                    isToday ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-black border-b-2 border-b-indigo-500" : "text-slate-800 dark:text-slate-200"
                   )}>
-                    {isToday && <span className="w-1.5 h-1.5 rounded-full bg-indigo-600 dark:bg-indigo-400 mr-1.5" />}
+                    {isToday && <span className="w-2 h-2 rounded-full bg-indigo-600 dark:bg-indigo-400 mr-2 animate-pulse" />}
                     {formatted}
                   </div>
-                  <div className="relative" style={{ height: `${13 * 48}px` }}>
+
+                  <div className="relative" style={{ height: `${11 * 64}px` }}>
                     {hours.map((_, h) => (
-                      <div key={h} className="h-12 border-b border-slate-50 dark:border-slate-800/50" />
+                      <div key={h} className="h-16 border-b border-slate-100/60 dark:border-slate-800/40" />
                     ))}
 
                     {processedEvents.map(event => {
@@ -642,7 +677,7 @@ export default function InteractiveCalendarPage({ isAdmin = false }: { isAdmin?:
                         <div
                           key={event.id}
                           className={cn(
-                            "absolute rounded-xl p-2.5 text-white text-[10px] font-bold leading-tight shadow-md cursor-grab active:cursor-grabbing border-l-4 transition-all hover:scale-[1.03] hover:z-30",
+                            "absolute rounded-2xl p-2.5 md:p-3 text-white text-xs font-bold leading-tight shadow-md cursor-pointer border transition-all hover:scale-[1.03] hover:z-30 hover:shadow-2xl overflow-hidden flex flex-col justify-between",
                             style.bg,
                             event.hasConflict && "ring-2 ring-rose-500 shadow-rose-500/40 shadow-lg"
                           )}
@@ -653,24 +688,33 @@ export default function InteractiveCalendarPage({ isAdmin = false }: { isAdmin?:
                             left: event.leftStyle
                           }}
                         >
-                          <div className="flex items-center justify-between gap-1 mb-1">
-                            <span className={cn("px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider", style.badge)}>
-                              {style.label}
-                            </span>
-                            <span className="text-[9px] opacity-90 font-mono font-bold bg-black/25 px-1 py-0.5 rounded">
-                              {event.startTime} - {event.endTime}
-                            </span>
-                          </div>
-
-                          <div className="font-black line-clamp-2 leading-tight">
-                            {event.title}
-                          </div>
-
-                          {(event.room || event.professor) && (
-                            <div className="text-[9px] opacity-80 mt-1 truncate">
-                              {event.room} {event.professor ? `· ${event.professor}` : ''}
+                          <div>
+                            <div className="flex items-center justify-between gap-1 mb-1.5 flex-wrap">
+                              <span className={cn("px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider", style.badge)}>
+                                {style.label} {event.extendedProps?.group ? `· ${event.extendedProps.group}` : ''}
+                              </span>
+                              <span className="text-[10px] opacity-95 font-mono font-black bg-black/30 px-2 py-0.5 rounded-full shrink-0">
+                                {event.startTime}–{event.endTime}
+                              </span>
                             </div>
-                          )}
+
+                            <div className="font-black text-xs md:text-[13px] line-clamp-2 leading-snug tracking-tight">
+                              {event.title}
+                            </div>
+                          </div>
+
+                          <div className="pt-1.5 border-t border-white/20 flex items-center justify-between gap-1 text-[10px] opacity-95 mt-1">
+                            <span className="truncate font-medium flex items-center gap-1 text-white/90">
+                              <User size={11} className="shrink-0 opacity-80" />
+                              <span className="truncate">{event.professor || 'Enseignant non assigné'}</span>
+                            </span>
+                            {event.room && (
+                              <span className="font-extrabold px-1.5 py-0.5 rounded-md bg-black/30 text-white shrink-0 flex items-center gap-1">
+                                <MapPin size={10} className="shrink-0 opacity-80" />
+                                <span>{event.room}</span>
+                              </span>
+                            )}
+                          </div>
 
                           {event.hasConflict && (
                             <div className="mt-1 bg-rose-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider flex items-center gap-1 shadow-sm animate-pulse">
@@ -691,11 +735,38 @@ export default function InteractiveCalendarPage({ isAdmin = false }: { isAdmin?:
     )
   }
 
-  const selectClass = "w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-all cursor-pointer"
+  const filiereOptions: SelectOption[] = useMemo(() => [
+    { value: '', label: 'Toutes les Filières', badge: 'Global', icon: <Building2 className="w-3.5 h-3.5 text-indigo-500" /> },
+    ...filieres.map((f: any) => ({
+      value: String(f.id),
+      label: `${f.code ? f.code + ' — ' : ''}${f.name}`,
+      badge: f.code || 'FIL',
+      icon: <Building2 className="w-3.5 h-3.5 text-indigo-500" />
+    }))
+  ], [filieres])
+
+  const groupeOptions: SelectOption[] = useMemo(() => [
+    { value: '', label: 'Tous les Groupes', badge: 'Tous', icon: <Users className="w-3.5 h-3.5 text-emerald-500" /> },
+    ...groupes.map((g: any) => ({
+      value: String(g.id),
+      label: g.name,
+      badge: 'GRP',
+      icon: <Users className="w-3.5 h-3.5 text-emerald-500" />
+    }))
+  ], [groupes])
+
+  const professorOptions: SelectOption[] = useMemo(() => [
+    { value: '', label: 'Tous les professeurs', badge: 'Tous', icon: <User className="w-3.5 h-3.5 text-blue-500" /> },
+    ...professors.map((p: any) => ({
+      value: String(p.id),
+      label: `${p.user?.first_name || ''} ${p.user?.last_name || ''}`.trim() || p.name || `Professeur #${p.id}`,
+      badge: 'Prof',
+      icon: <User className="w-3.5 h-3.5 text-blue-500" />
+    }))
+  ], [professors])
 
   return (
-    <div className="space-y-5 p-4 md:p-6 max-w-[1700px] mx-auto font-sans animate-in fade-in pb-28">
-
+    <div className="space-y-6 animate-in fade-in duration-200">
       {/* ══════════════════════════════════════════════════════
           HERO HEADER — Deep ENCG Navy Style
       ══════════════════════════════════════════════════════ */}
@@ -824,64 +895,51 @@ export default function InteractiveCalendarPage({ isAdmin = false }: { isAdmin?:
       {/* ══════════════════════════════════════════════════════
           FILTERS CARD
       ══════════════════════════════════════════════════════ */}
-      <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 space-y-4">
+      <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 space-y-4 shadow-xs">
         <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
           <h2 className="text-xs font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 flex items-center gap-2">
             <Filter className="w-3.5 h-3.5 text-indigo-500" />
             {!isAdmin ? "Filtres & Vue Enseignant" : "Filtres Globaux de Recherche"}
           </h2>
-          {!isAdmin && (
-            <span className="text-[11px] font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800 px-3 py-0.5 rounded-full">
-              Mode Enseignant Connecté : {currentProfName}
-            </span>
-          )}
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-end">
           <div>
             <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Filière</label>
-            <select
+            <CustomSelect
               value={selectedFiliere}
-              onChange={(e) => setSelectedFiliere(e.target.value)}
-              className={selectClass}
-            >
-              <option value="">Toutes les Filières</option>
-              {filieres.map((f: any) => (
-                <option key={f.id} value={f.id}>{f.name} ({f.code})</option>
-              ))}
-            </select>
+              onChange={(val) => setSelectedFiliere(String(val))}
+              options={filiereOptions}
+              placeholder="Toutes les Filières"
+              className="w-full"
+            />
           </div>
           <div>
             <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Groupe</label>
-            <select
+            <CustomSelect
               value={selectedGroupe}
-              onChange={(e) => setSelectedGroupe(e.target.value)}
+              onChange={(val) => setSelectedGroupe(String(val))}
+              options={groupeOptions}
               disabled={!selectedFiliere}
-              className={cn(selectClass, !selectedFiliere && "opacity-50 cursor-not-allowed")}
-            >
-              <option value="">Tous les Groupes</option>
-              {groupes.map((g: any) => (
-                <option key={g.id} value={g.id}>{g.name}</option>
-              ))}
-            </select>
+              placeholder={!selectedFiliere ? "Sélectionnez une filière" : "Tous les Groupes"}
+              className="w-full"
+            />
           </div>
           <div>
             <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Professeur</label>
             {!isAdmin ? (
-              <select disabled className={cn(selectClass, "bg-slate-50 dark:bg-slate-800 opacity-75 cursor-not-allowed")}>
-                <option value="">{currentProfName} (Compte Enseignant)</option>
-              </select>
+              <div className="px-4 py-2.5 rounded-2xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-500 flex items-center gap-2">
+                <User className="w-3.5 h-3.5 text-indigo-500" />
+                <span className="truncate">{currentProfName} (Compte Enseignant)</span>
+              </div>
             ) : (
-              <select
+              <CustomSelect
                 value={selectedProfessor}
-                onChange={(e) => setSelectedProfessor(e.target.value)}
-                className={selectClass}
-              >
-                <option value="">Tous les professeurs</option>
-                {professors.map((p: any) => (
-                  <option key={p.id} value={p.id}>{p.user?.first_name} {p.user?.last_name}</option>
-                ))}
-              </select>
+                onChange={(val) => setSelectedProfessor(String(val))}
+                options={professorOptions}
+                placeholder="Tous les professeurs"
+                className="w-full"
+              />
             )}
           </div>
           <div>
@@ -930,21 +988,35 @@ export default function InteractiveCalendarPage({ isAdmin = false }: { isAdmin?:
 
           <h2 className="text-base md:text-lg font-black text-slate-800 dark:text-slate-100 capitalize">{weekLabel}</h2>
 
-          <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
-            {(['Semaine', 'Jour', 'Liste'] as const).map(mode => (
-              <button
-                key={mode}
-                onClick={() => setViewMode(mode)}
-                className={cn(
-                  "px-4 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer",
-                  viewMode === mode
-                    ? "bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-xs"
-                    : "text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
-                )}
-              >
-                {mode}
-              </button>
-            ))}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowSaturday(!showSaturday)}
+              className={cn(
+                "px-3 py-1.5 rounded-xl text-xs font-bold transition-all border cursor-pointer",
+                showSaturday
+                  ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800"
+                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-200"
+              )}
+            >
+              {showSaturday ? "📅 Lun–Sam (6J)" : "📅 Lun–Ven (5J)"}
+            </button>
+
+            <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
+              {(['Semaine', 'Jour', 'Liste'] as const).map(mode => (
+                <button
+                  key={mode}
+                  onClick={() => setViewMode(mode)}
+                  className={cn(
+                    "px-4 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer",
+                    viewMode === mode
+                      ? "bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-xs"
+                      : "text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+                  )}
+                >
+                  {mode}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 

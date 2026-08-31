@@ -181,7 +181,11 @@ class TimetableExportController extends Controller
         };
 
         if ($semesterNumber >= 1 && $semesterNumber <= 10) {
-            $query->whereHas('group', fn ($q) => $q->where('semester_number', $semesterNumber));
+            $query->where(function ($sq) use ($semesterNumber) {
+                $sq->whereHas('group', fn ($q) => $q->where('semester_number', $semesterNumber))
+                   ->orWhereHas('module', fn ($q) => $q->where('semester_number', $semesterNumber))
+                   ->orWhereHas('semester', fn ($q) => $q->where('number', ($semesterNumber % 2 === 1) ? 1 : 2));
+            });
         }
 
         return $query->orderBy('day_of_week')->orderBy('start_time')->get();

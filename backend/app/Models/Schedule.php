@@ -44,6 +44,16 @@ class Schedule extends Model
         return $this->hasMany(ScheduleChange::class);
     }
 
+    public function semester(): BelongsTo
+    {
+        return $this->belongsTo(Semester::class);
+    }
+
+    public function academicYear(): BelongsTo
+    {
+        return $this->belongsTo(AcademicYear::class);
+    }
+
     public function version(): BelongsTo
     {
         return $this->belongsTo(ScheduleVersion::class, 'schedule_version_id');

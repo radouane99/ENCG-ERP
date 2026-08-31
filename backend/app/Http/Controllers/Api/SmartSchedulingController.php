@@ -183,11 +183,14 @@ class SmartSchedulingController extends Controller
         return response()->json(['success' => $result['success'] ?? false, 'data' => $result], ($result['success'] ?? false) ? 200 : 422);
     }
 
-    public function board(int $versionId): JsonResponse
+    public function board(Request $request, int $versionId): JsonResponse
     {
+        $filiereId = $request->integer('filiere_id') ?: null;
+        $semesterNumber = $request->integer('semester_number') ?: null;
+
         return response()->json([
             'success' => true,
-            'data' => $this->campaigns->board($versionId),
+            'data' => $this->campaigns->board($versionId, $filiereId, $semesterNumber),
         ]);
     }
 

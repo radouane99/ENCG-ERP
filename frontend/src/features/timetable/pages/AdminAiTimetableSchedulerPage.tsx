@@ -7,7 +7,7 @@ import {
   RefreshCw, Play, Save, MapPin, User,
   Building2, Sliders, Cpu, Hand, Grid, Leaf,
   Wand2, BookOpen, GraduationCap, Sparkles, Trash2, RotateCcw, X, AlertCircle,
-  Users, Monitor
+  Users, Monitor, FileText
 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { CustomSelect, SelectOption } from '@/shared/components/ui/CustomSelect';
@@ -74,6 +74,22 @@ export default function AdminAiTimetableSchedulerPage() {
       const res = await api.get('/admin/timetable/ai-scheduler/conflicts');
       return res.data?.data || res.data || {};
     },
+  });
+
+  // Query Official Timetable Matrix directly from active database schedules
+  const { data: matrixData, refetch: refetchMatrix, isFetching: isMatrixFetching } = useQuery({
+    queryKey: ['official-timetable-matrix', selectedSemester, selectedFiliere],
+    queryFn: async () => {
+      const type = selectedFiliere !== 'all' ? 'filiere' : 'all';
+      const id = selectedFiliere !== 'all' ? Number(selectedFiliere) : 0;
+      const params: Record<string, any> = {};
+      if (typeof selectedSemester === 'number') {
+        params.semester_number = selectedSemester;
+      }
+      const res = await api.get(`/timetable/export/${type}/${id}/matrix`, { params });
+      return res.data?.data || res.data;
+    },
+    enabled: activeTab === 'matrix',
   });
 
   // 2. Generate Schedule Mutation
@@ -1089,7 +1105,7 @@ export default function AdminAiTimetableSchedulerPage() {
       {/* ═════════════════════════════════════════════════════════════════════════ */}
       {activeTab === 'matrix' && (
         <div className="space-y-6 animate-in fade-in">
-          <div className="p-4 bg-emerald-500/10 border border-emerald-300 dark:border-emerald-800 rounded-2xl flex items-center justify-between">
+          <div className="p-4 bg-emerald-500/10 border border-emerald-300 dark:border-emerald-800 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <Grid className="w-6 h-6 text-emerald-600 shrink-0" />
               <div>
@@ -1101,9 +1117,42 @@ export default function AdminAiTimetableSchedulerPage() {
                 </p>
               </div>
             </div>
+
+            <div className="flex items-center gap-2 flex-wrap justify-end">
+              <button
+                type="button"
+                onClick={() => refetchMatrix()}
+                className="px-3.5 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+              >
+                <RefreshCw className={cn("w-3.5 h-3.5 text-blue-600", isMatrixFetching && "animate-spin")} />
+                <span>Actualiser</span>
+              </button>
+
+              {selectedFiliere !== 'all' && (
+                <a
+                  href={`/api/timetable/export/filiere/${selectedFiliere}/pdf${typeof selectedSemester === 'number' ? `?semester_number=${selectedSemester}` : ''}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-3.5 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-xs"
+                >
+                  <FileText className="w-3.5 h-3.5" />
+                  <span>Télécharger Filière Active (PDF)</span>
+                </a>
+              )}
+
+              <a
+                href={`/api/timetable/export/all/0/pdf${typeof selectedSemester === 'number' ? `?semester_number=${selectedSemester}` : ''}`}
+                target="_blank"
+                rel="noreferrer"
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm"
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>📄 Télécharger Toutes les Filières (PDF Global)</span>
+              </a>
+            </div>
           </div>
 
-          <OfficialTimetableMatrix matrix={generatedData?.official_matrix || generatedData?.matrix || generatedData} />
+          <OfficialTimetableMatrix matrix={matrixData || generatedData?.official_matrix || generatedData?.matrix || generatedData} />
         </div>
       )}
 
