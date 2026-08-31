@@ -12,14 +12,14 @@
         </div>
         
         <div style="padding: 25px;">
-            <p>Bonjour Professeur <strong>{{ $professorName }}</strong>,</p>
+            <p>Bonjour Professeur <strong>{{ $professorName ?? $name ?? 'Cher Enseignant' }}</strong>,</p>
             
-            <p>L'Administration Académique de l'ENCG Fès prépare la planification intelligente des surveillances d'examens pour la <strong>{{ $sessionName }}</strong> ({{ $sessionType }}).</p>
+            <p>L'Administration Académique de l'ENCG Fès prépare la planification intelligente des surveillances d'examens pour la <strong>{{ $sessionName ?? $session ?? 'Session Académique' }}</strong> ({{ $sessionType ?? 'Session Ordinaire' }}).</p>
             
             <p>Afin d'optimiser l'affectation équitable par Intelligence Artificielle et de respecter au mieux vos contraintes horaires, nous vous invitons à saisir vos créneaux de disponibilité sur le Portail Enseignant :</p>
             
             <div style="text-align: center; margin: 30px 0;">
-                <a href="{{ $surveyUrl }}" style="background-color: #002e5b; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-block;">
+                <a href="{{ $surveyUrl ?? $link ?? url('/') }}" style="background-color: #002e5b; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-block;">
                     📅 Accéder à ma Fiche de Disponibilités
                 </a>
             </div>

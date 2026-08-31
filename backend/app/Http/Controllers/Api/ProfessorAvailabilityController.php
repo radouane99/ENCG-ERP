@@ -87,10 +87,15 @@ class ProfessorAvailabilityController extends Controller
         $academicYearName = $academicYear?->label ?? '2026/2027';
 
         foreach ($professors as $prof) {
+            $profName = trim(($prof->first_name ?? '').' '.($prof->last_name ?? '')) ?: ($prof->name ?? 'Enseignant');
             Mail::to($prof->email)->send(new ProfessorAvailabilitySurveyMail([
-                'name' => $prof->name,
+                'professorName' => $profName,
+                'name' => $profName,
+                'sessionName' => 'Session d\'Examens '.$academicYearName,
                 'session' => 'Session d\'Examens '.$academicYearName,
-                'link' => config('app.frontend_url', 'http://localhost:5173').'/professor/availability-survey',
+                'sessionType' => 'Normale / Rattrapage',
+                'surveyUrl' => config('app.frontend_url', url('/')).'/professor/availability-survey',
+                'link' => config('app.frontend_url', url('/')).'/professor/availability-survey',
                 'deadline' => now()->addDays(7)->format('d/m/Y'),
             ]));
 

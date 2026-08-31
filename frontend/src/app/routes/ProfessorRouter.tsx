@@ -28,7 +28,7 @@ const ProfessorResearchPage = lazy(() => import('@features/professor-portal/page
 const ProfessorWorkloadPage = lazy(() => import('@features/professor-portal/pages/ProfessorWorkloadPage'))
 const ProfessorDocumentsPage = lazy(() => import('@features/professor-portal/pages/ProfessorDocumentsPage'))
 
-const ProfessorInteractiveCalendar = lazy(() => import('@features/admin/pages/InteractiveCalendarPage'))
+const ProfessorTimetablePage = lazy(() => import('@features/timetable/pages/AdminAiTimetableSchedulerPage'))
 
 import { useReverbNotifications } from '@features/professors/hooks/useReverbNotifications'
 
@@ -37,8 +37,8 @@ export default function ProfessorRouter() {
 
   return (
     <Routes>
-      <Route path="schedule" element={<ProfessorInteractiveCalendar />} />
-      <Route path="schedules" element={<ProfessorInteractiveCalendar />} />
+      <Route path="schedule" element={<ProfessorTimetablePage />} />
+      <Route path="schedules" element={<ProfessorTimetablePage />} />
       <Route path="dashboard" element={<ProfessorDashboard />} />
       <Route path="check-in/scanner" element={<ProfessorScanner />} />
       <Route path="scanner" element={<ProfessorScanner />} />

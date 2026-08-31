@@ -192,14 +192,20 @@ class ExamPlanningEngine
             ExamSurveillance::whereIn('exam_id', $existingExamIds)->delete();
             Exam::whereIn('id', $existingExamIds)->delete();
 
-            $professors = User::whereHas('roles', fn ($q) => $q->whereIn('name', ['professor', 'department-head']))->get();
-            $vacataires = User::whereHas('roles', fn ($q) => $q->whereIn('name', ['vacataire', 'doctorant']))->get();
-
+            $professors = Professor::with('user')->get();
+            if ($professors->isEmpty()) {
+                $professors = User::whereHas('roles', fn ($q) => $q->whereIn('name', ['professor', 'department-head']))->get();
+            }
             if ($professors->isEmpty()) {
                 $professors = User::limit(5)->get();
             }
+
+            $vacataires = Professor::with('user')->where('type', 'vacataire')->get();
             if ($vacataires->isEmpty()) {
-                $vacataires = User::limit(5)->get();
+                $vacataires = User::whereHas('roles', fn ($q) => $q->whereIn('name', ['vacataire', 'doctorant']))->get();
+            }
+            if ($vacataires->isEmpty()) {
+                $vacataires = $professors;
             }
 
             $examsCreated = 0;

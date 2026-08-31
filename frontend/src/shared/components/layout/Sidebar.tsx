@@ -96,8 +96,7 @@ const navigation: (NavItem | NavGroup)[] = [
       { label: 'Corps Enseignant & Vacataires', labelAr: 'هيئة التدريس والأساتذة', href: '/professors', icon: UserCheck, roles: ['super-admin', 'institution-admin', 'hr-officer'] },
       { label: 'Parapheur Électronique', labelAr: 'المحفظة الإلكترونية وأوامر المهمة', href: '/admin/parapheur', icon: Stamp, badge: 'RH', roles: ['super-admin', 'institution-admin', 'director', 'department-head', 'hr-officer'] },
       { label: 'Affectations Pédagogiques', labelAr: 'التوزيع البيداغوجي للمواد', href: '/admin/professor-assignments', icon: Sparkles, roles: ['super-admin', 'institution-admin', 'department-head', 'director'] },
-      { label: 'Générateur Intelligent (IA & CSP)', labelAr: 'المولد الذكي واستوديو الجداول', href: '/admin/ai-timetable-scheduler', icon: Cpu, badge: 'AI', roles: ['super-admin', 'institution-admin', 'director', 'department-head'] },
-      { label: 'Emplois du Temps (EDT)', labelAr: 'استعمالات الزمن', href: '/admin/timetable/calendar', icon: Calendar, roles: ['super-admin', 'institution-admin', 'director', 'professor', 'vacataire', 'department-head', 'filiere-head', 'scolarite'] },
+      { label: 'Emplois du Temps & Planification IA', labelAr: 'استعمالات الزمن والتخطيط الذكي', href: '/admin/ai-timetable-scheduler', icon: Calendar, badge: 'IA', roles: ['super-admin', 'institution-admin', 'director', 'professor', 'vacataire', 'department-head', 'filiere-head', 'scolarite'] },
       { label: 'Disponibilités & Conflits', labelAr: 'أوقات التوفر وطلبات التعديل', href: '/admin/professor-availability', icon: Clock3, roles: ['super-admin', 'institution-admin', 'director', 'hr-officer'] },
       { label: 'Cahiers de Textes', labelAr: 'دفاتر النصوص الجامعية', href: '/admin/textbooks', icon: Book, roles: ['super-admin', 'institution-admin', 'director', 'department-head'] },
     ]

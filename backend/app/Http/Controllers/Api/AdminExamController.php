@@ -42,14 +42,33 @@ class AdminExamController extends Controller
             $incidentsCount = $exam->incidents_count;
 
             $surveillantsText = $exam->surveillances->map(function ($s) {
-                $prof = $s->professor;
-
-                if (! $prof) {
-                    return 'Inconnu';
+                if ($s->professor) {
+                    $prof = $s->professor;
+                    $user = $prof->user;
+                    $name = $user ? trim(($user->first_name ?? '').' '.($user->last_name ?? '')) ?: $user->name : null;
+                    if ($name) return $name;
+                    $profName = trim(($prof->first_name ?? '').' '.($prof->last_name ?? '')) ?: ($prof->name ?? null);
+                    if ($profName) return $profName;
                 }
 
-                return $prof->user?->name ?? ($prof->name ?? ($prof->first_name.' '.$prof->last_name));
-            })->join(', ') ?: 'Aucun';
+                if ($s->professor_id) {
+                    $user = \App\Models\User::find($s->professor_id);
+                    if ($user) {
+                        $name = trim(($user->first_name ?? '').' '.($user->last_name ?? '')) ?: $user->name;
+                        if ($name) return $name;
+                    }
+
+                    $prof = \App\Models\Professor::with('user')->find($s->professor_id);
+                    if ($prof) {
+                        $name = $prof->user ? trim(($prof->user->first_name ?? '').' '.($prof->user->last_name ?? '')) ?: $prof->user->name : null;
+                        if ($name) return $name;
+                        $profName = trim(($prof->first_name ?? '').' '.($prof->last_name ?? '')) ?: ($prof->name ?? null);
+                        if ($profName) return $profName;
+                    }
+                }
+
+                return null;
+            })->filter(fn ($n) => ! empty($n) && strtolower($n) !== 'inconnu')->join(', ') ?: 'À affecter';
 
             return [
                 'id' => $exam->id,
