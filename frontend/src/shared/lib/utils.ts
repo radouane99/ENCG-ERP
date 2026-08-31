@@ -60,6 +60,10 @@ export function slugify(str: string): string {
 export function cleanUtf8Text(str: string): string {
   if (!str) return ''
   return str
+    .replace(/Amphith[├┬|─\-\só\u0080-\u00FF]*tre/gi, 'Amphithéâtre')
+    .replace(/Amphith[^\w\s]*tre/gi, 'Amphithéâtre')
+    .replace(/B[├┬|─\-\s\u0080-\u00FF]*timent/gi, 'Bâtiment')
+    .replace(/S[├┬|─\-\s\u0080-\u00FF]*minaire/gi, 'Séminaire')
     .replace(/Math[^\w\s]*matiques\s*pour\s*la\s*Gestion/gi, 'Mathématiques pour la Gestion')
     .replace(/Math[├┬|─\-\s]*matiques/gi, 'Mathématiques')
     .replace(/^[\|\s]*[éeEÉ]conomie\s*G[^\w\s]*n[^\w\s]*rale\s*(I+)/gi, 'Économie Générale $1')

@@ -6,9 +6,12 @@ use App\Models\Department;
 use App\Models\Filiere;
 use App\Models\Module;
 use App\Models\Professor;
+use App\Models\Room;
+use App\Models\RoomBooking;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class CleanCorruptedTextSeeder extends Seeder
 {
@@ -55,6 +58,14 @@ class CleanCorruptedTextSeeder extends Seeder
 
             // Clean specific corrupted patterns
             $wordMap = [
+                'Amphith├─├ótre' => 'Amphithéâtre',
+                'Amphith|─|ótre' => 'Amphithéâtre',
+                'Amphith├®├ótre' => 'Amphithéâtre',
+                'Amphith├⌐├ótre' => 'Amphithéâtre',
+                'Amphith├─tre' => 'Amphithéâtre',
+                'Amphith├⌐tre' => 'Amphithéâtre',
+                'AmphithÃ©Ã¢tre' => 'Amphithéâtre',
+                'Amphithé├ótre' => 'Amphithéâtre',
                 'Math├⌐matiques' => 'Mathématiques',
                 'Math├──matiques' => 'Mathématiques',
                 'Math┬ématiques' => 'Mathématiques',
@@ -96,7 +107,11 @@ class CleanCorruptedTextSeeder extends Seeder
                 $res = str_replace($search, $replace, $res);
             }
 
-            // Clean leading pipe and weird ASCII glitches
+            // Regex cleanups
+            $res = preg_replace('/Amphith[^\w\s]*tre/u', 'Amphithéâtre', $res);
+            $res = preg_replace('/Amphith[\|\-─├┬ó\s]+tre/u', 'Amphithéâtre', $res);
+            $res = preg_replace('/B[^\w\s]*timent/u', 'Bâtiment', $res);
+            $res = preg_replace('/S[^\w\s]*minaire/u', 'Séminaire', $res);
             $res = preg_replace('/^[\|\s]*[éeEÉ]conomie\s*G[^\w\s]*n[^\w\s]*rale\s*(I+)/u', 'Économie Générale $1', $res);
             $res = preg_replace('/Math[^\w\s]*matiques\s*pour\s*la\s*Gestion/u', 'Mathématiques pour la Gestion', $res);
             $res = preg_replace('/Économie\s*G[^\w\s]*n[^\w\s]*rale/u', 'Économie Générale', $res);
@@ -109,7 +124,35 @@ class CleanCorruptedTextSeeder extends Seeder
             return trim($res);
         };
 
-        // 1. Clean all Modules
+        // 1. Clean all Rooms
+        if (Schema::hasTable('rooms')) {
+            $rooms = Room::all();
+            foreach ($rooms as $r) {
+                $cleanedName = $fixText($r->name);
+                if ($cleanedName !== $r->name) {
+                    $r->update([
+                        'name' => $cleanedName,
+                    ]);
+                }
+            }
+        }
+
+        // 2. Clean all Room Bookings
+        if (Schema::hasTable('room_bookings')) {
+            $bookings = RoomBooking::all();
+            foreach ($bookings as $b) {
+                $cleanedName = $fixText($b->room_name ?? null);
+                $cleanedPurpose = $fixText($b->purpose ?? null);
+                if ($cleanedName !== ($b->room_name ?? null) || $cleanedPurpose !== ($b->purpose ?? null)) {
+                    $b->update([
+                        'room_name' => $cleanedName,
+                        'purpose' => $cleanedPurpose,
+                    ]);
+                }
+            }
+        }
+
+        // 3. Clean all Modules
         $modules = Module::all();
         foreach ($modules as $m) {
             $cleaned = $fixText($m->name);
@@ -118,7 +161,7 @@ class CleanCorruptedTextSeeder extends Seeder
             }
         }
 
-        // 2. Clean all Filieres
+        // 4. Clean all Filieres
         $filieres = Filiere::all();
         foreach ($filieres as $f) {
             $cleaned = $fixText($f->name);
@@ -127,7 +170,7 @@ class CleanCorruptedTextSeeder extends Seeder
             }
         }
 
-        // 3. Clean all Departments
+        // 5. Clean all Departments
         $departments = Department::all();
         foreach ($departments as $d) {
             $cleanedName = $fixText($d->name);
@@ -137,7 +180,7 @@ class CleanCorruptedTextSeeder extends Seeder
             }
         }
 
-        // 4. Clean all Professors
+        // 6. Clean all Professors
         $profs = Professor::all();
         foreach ($profs as $p) {
             $cleanedSpec = $fixText($p->specialty);
@@ -146,7 +189,7 @@ class CleanCorruptedTextSeeder extends Seeder
             }
         }
 
-        // 5. Clean Users
+        // 7. Clean Users
         $users = User::all();
         foreach ($users as $u) {
             $cleanedName = $fixText($u->name);

@@ -3,9 +3,10 @@ import { useQuery, useMutation } from '@tanstack/react-query'
 import {
   Search, Plus, Edit2, Trash2, X, Monitor, Thermometer, Building, CheckCircle,
   Upload, Sparkles, Printer, CalendarCheck, DoorOpen, Loader2,
-  Ticket, AlertTriangle
+  Ticket, AlertTriangle, Clock, Calendar, Users, Layers
 } from 'lucide-react'
-import { cn } from '@shared/lib/utils'
+import { cn, cleanUtf8Text } from '@shared/lib/utils'
+import { CustomSelect, SelectOption } from '@shared/components/ui/CustomSelect'
 import api from '@shared/lib/api'
 import { toast } from 'sonner'
 import MassImportView from '@shared/components/ui/MassImportView'
@@ -53,11 +54,39 @@ const SLOTS = [
   { start: '16:45', end: '18:45', label: '16h45 – 18h45' },
 ]
 
+const SLOT_OPTIONS: SelectOption[] = SLOTS.map((s, i) => ({
+  value: i,
+  label: s.label,
+  badge: `CRÉNEAU ${i + 1}`,
+  icon: <Clock className="w-3.5 h-3.5 text-amber-500" />
+}))
+
+const AVAIL_KIND_OPTIONS: SelectOption[] = [
+  { value: 'all', label: 'Toutes (adaptées à l’effectif)', badge: 'TOUT', icon: <Building className="w-3.5 h-3.5 text-teal-500" /> },
+  { value: 'td', label: 'Salles TD (Travaux Dirigés)', badge: 'TD', icon: <DoorOpen className="w-3.5 h-3.5 text-blue-500" /> },
+  { value: 'amphi', label: 'Amphithéâtres (Grands Amphis)', badge: 'AMPHI', icon: <Sparkles className="w-3.5 h-3.5 text-purple-500" /> },
+]
+
 const MOTIFS = [
   { id: 'extra', label: 'Séance extra' },
   { id: 'rattrapage', label: 'Rattrapage' },
   { id: 'soutenance', label: 'Soutenance / jury' },
   { id: 'autre', label: 'Autre' },
+]
+
+const MOTIF_OPTIONS: SelectOption[] = [
+  { value: 'extra', label: 'Séance extra / Complémentaire', badge: 'EXTRA', icon: <Sparkles className="w-3.5 h-3.5 text-emerald-500" /> },
+  { value: 'rattrapage', label: 'Rattrapage de cours', badge: 'RATTRAPAGE', icon: <CalendarCheck className="w-3.5 h-3.5 text-amber-500" /> },
+  { value: 'soutenance', label: 'Soutenance / Jury PFE', badge: 'JURY', icon: <Ticket className="w-3.5 h-3.5 text-indigo-500" /> },
+  { value: 'autre', label: 'Autre motif ponctuel', badge: 'AUTRE', icon: <Building className="w-3.5 h-3.5 text-slate-500" /> },
+]
+
+const ROOM_TYPE_OPTIONS: SelectOption[] = [
+  { value: 'classroom', label: 'Salle TD (Travaux Dirigés)', badge: 'TD', icon: <DoorOpen className="w-3.5 h-3.5 text-blue-500" /> },
+  { value: 'amphitheatre', label: 'Amphithéâtre de cours', badge: 'AMPHI', icon: <Sparkles className="w-3.5 h-3.5 text-purple-500" /> },
+  { value: 'lab', label: 'Laboratoire Informatique & TP', badge: 'LABO', icon: <Monitor className="w-3.5 h-3.5 text-emerald-500" /> },
+  { value: 'seminar', label: 'Salle de Séminaire / Master', badge: 'SÉMINAIRE', icon: <Building className="w-3.5 h-3.5 text-amber-500" /> },
+  { value: 'admin', label: 'Bureau Administratif', badge: 'ADMIN', icon: <Building className="w-3.5 h-3.5 text-slate-500" /> },
 ]
 
 const EMPTY = {
@@ -463,7 +492,7 @@ export default function ClassroomsPage() {
                     </div>
 
                     <div>
-                      <h3 className="text-base font-black text-foreground">{r.name}</h3>
+                      <h3 className="text-base font-black text-foreground">{cleanUtf8Text(r.name)}</h3>
                       <p className="text-xs text-muted-foreground font-mono">CODE: {r.code || 'ENCG-SALLE'}</p>
                     </div>
 
@@ -526,78 +555,88 @@ export default function ClassroomsPage() {
           {/* Search Controls */}
           <div className="bg-card border border-border rounded-3xl p-6 shadow-sm space-y-5">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <label className="space-y-1.5">
-                <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Date de la séance</span>
+              <div className="space-y-1.5">
+                <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5 text-teal-500" />
+                  Date de la séance
+                </span>
                 <input
                   type="date"
                   value={date}
                   onChange={e => setDate(e.target.value)}
-                  className="w-full rounded-xl border border-input bg-background px-3 py-2.5 text-xs font-bold text-foreground"
+                  className="w-full rounded-2xl border border-input bg-background px-4 py-2.5 text-xs font-bold text-foreground shadow-2xs hover:bg-muted/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all cursor-pointer"
                 />
-              </label>
+              </div>
 
-              <label className="space-y-1.5">
-                <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Créneau ENCG</span>
-                <select
+              <div className="space-y-1.5">
+                <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5 text-amber-500" />
+                  Créneau ENCG
+                </span>
+                <CustomSelect
                   value={slot}
-                  onChange={e => setSlot(Number(e.target.value))}
-                  className="w-full rounded-xl border border-input bg-background px-3 py-2.5 text-xs font-bold text-foreground"
-                >
-                  {SLOTS.map((s, i) => (
-                    <option key={s.start} value={i}>{s.label}</option>
-                  ))}
-                </select>
-              </label>
+                  onChange={v => setSlot(Number(v))}
+                  options={SLOT_OPTIONS}
+                  className="w-full"
+                />
+              </div>
 
-              <label className="space-y-1.5">
-                <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Effectif Étudiant</span>
+              <div className="space-y-1.5">
+                <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                  <Users className="w-3.5 h-3.5 text-indigo-500" />
+                  Effectif Étudiant
+                </span>
                 <input
                   type="number"
                   min={1}
                   value={headcount}
                   onChange={e => setHeadcount(e.target.value)}
-                  className="w-full rounded-xl border border-input bg-background px-3 py-2.5 text-xs font-bold text-foreground"
+                  placeholder="ex: 35"
+                  className="w-full rounded-2xl border border-input bg-background px-4 py-2.5 text-xs font-bold text-foreground shadow-2xs hover:bg-muted/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all"
                 />
-              </label>
+              </div>
 
-              <label className="space-y-1.5">
-                <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Type de salle</span>
-                <select
+              <div className="space-y-1.5">
+                <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                  <Building className="w-3.5 h-3.5 text-teal-500" />
+                  Type de salle
+                </span>
+                <CustomSelect
                   value={availKind}
-                  onChange={e => setAvailKind(e.target.value as any)}
-                  className="w-full rounded-xl border border-input bg-background px-3 py-2.5 text-xs font-bold text-foreground"
-                >
-                  <option value="all">Toutes (adaptées à l’effectif)</option>
-                  <option value="td">Salles TD</option>
-                  <option value="amphi">Amphithéâtres</option>
-                </select>
-              </label>
+                  onChange={v => setAvailKind(v)}
+                  options={AVAIL_KIND_OPTIONS}
+                  className="w-full"
+                />
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-border">
-              <label className="space-y-1.5">
-                <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Motif de réservation</span>
-                <select
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-border">
+              <div className="space-y-1.5">
+                <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
+                  Motif de réservation
+                </span>
+                <CustomSelect
                   value={motif}
-                  onChange={e => setMotif(e.target.value)}
-                  className="w-full rounded-xl border border-input bg-background px-3 py-2.5 text-xs font-bold text-foreground"
-                >
-                  {MOTIFS.map(m => (
-                    <option key={m.id} value={m.id}>{m.label}</option>
-                  ))}
-                </select>
-              </label>
+                  onChange={v => setMotif(v)}
+                  options={MOTIF_OPTIONS}
+                  className="w-full"
+                />
+              </div>
 
-              <label className="space-y-1.5">
-                <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Remarque / Intitulé du cours</span>
+              <div className="space-y-1.5">
+                <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                  <Edit2 className="w-3.5 h-3.5 text-slate-500" />
+                  Remarque / Intitulé du cours
+                </span>
                 <input
                   type="text"
                   value={note}
                   onChange={e => setNote(e.target.value)}
                   placeholder="ex: Rattrapage Comptabilité S2 - Pr. Alami"
-                  className="w-full rounded-xl border border-input bg-background px-3 py-2.5 text-xs font-bold text-foreground"
+                  className="w-full rounded-2xl border border-input bg-background px-4 py-2.5 text-xs font-bold text-foreground shadow-2xs hover:bg-muted/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all"
                 />
-              </label>
+              </div>
             </div>
           </div>
 
@@ -752,17 +791,13 @@ export default function ClassroomsPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-muted-foreground mb-1">Type</label>
-                  <select
+                  <label className="block text-xs font-bold text-muted-foreground mb-1">Type de Salle</label>
+                  <CustomSelect
                     value={form.type}
-                    onChange={e => setForm({ ...form, type: e.target.value })}
-                    className="w-full px-3 py-2.5 bg-background border border-input rounded-xl text-xs font-bold text-foreground focus:outline-none"
-                  >
-                    <option value="classroom">Salle TD</option>
-                    <option value="amphitheatre">Amphithéâtre</option>
-                    <option value="lab">Laboratoire TP</option>
-                    <option value="seminar">Séminaire</option>
-                  </select>
+                    onChange={v => setForm({ ...form, type: v })}
+                    options={ROOM_TYPE_OPTIONS}
+                    className="w-full"
+                  />
                 </div>
 
                 <div>
