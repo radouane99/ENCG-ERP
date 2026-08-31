@@ -324,6 +324,10 @@ export default function AcademicYearSettingsPage() {
   const [selectedModuleFilter, setSelectedModuleFilter] = useState('all')
   const [workloadFilter, setWorkloadFilter] = useState<'all' | 'unassigned' | 'available' | 'full' | 'overloaded'>('all')
 
+  // 🎓 Période Semestrielle Active (Automne S1/S3/S5/S7/S9 vs Printemps S2/S4/S6/S8/S10 vs Annuel)
+  const [selectedSemesterPeriod, setSelectedSemesterPeriod] = useState<'all' | 'odd' | 'even' | string>('all')
+  const [distributeSemesterPeriod, setDistributeSemesterPeriod] = useState<'all' | 'odd' | 'even' | string>('odd')
+
   // Selected professor for viewing detailed assignments modal
   const [selectedProfForModal, setSelectedProfForModal] = useState<any>(null)
   const [showResetDistributeModal, setShowResetDistributeModal] = useState(false)
@@ -376,8 +380,8 @@ export default function AcademicYearSettingsPage() {
   })
 
   const { data: assignmentsData, isLoading: assignmentsLoading } = useQuery({
-    queryKey: ['professor-assignments'],
-    queryFn: () => api.get('/professor-assignments').then(r => r.data)
+    queryKey: ['professor-assignments', selectedSemesterPeriod],
+    queryFn: () => api.get(`/professor-assignments?semester_period=${selectedSemesterPeriod}`).then(r => r.data)
   })
 
   const { data: examSessionsData } = useQuery({
@@ -611,18 +615,23 @@ export default function AcademicYearSettingsPage() {
   }, [groupedAssignmentsMap, assignmentSearch, selectedDeptFilter, selectedModuleFilter, workloadFilter])
 
   // Filters state check
-  const hasActiveFilters = selectedDeptFilter !== 'all' || selectedModuleFilter !== 'all' || workloadFilter !== 'all' || assignmentSearch !== ''
+  const hasActiveFilters = selectedDeptFilter !== 'all' || selectedModuleFilter !== 'all' || workloadFilter !== 'all' || assignmentSearch !== '' || selectedSemesterPeriod !== 'all'
 
   const handleResetFilters = () => {
     setSelectedDeptFilter('all')
     setSelectedModuleFilter('all')
     setWorkloadFilter('all')
     setAssignmentSearch('')
+    setSelectedSemesterPeriod('all')
   }
 
   // Mutations
   const autoDistributeMutation = useMutation({
-    mutationFn: (reset: boolean) => api.post('/professor-assignments/auto-distribute', { reset }),
+    mutationFn: (variables: { reset: boolean; semester_period?: string }) => 
+      api.post('/professor-assignments/auto-distribute', { 
+        reset: variables.reset,
+        semester_period: variables.semester_period || distributeSemesterPeriod 
+      }),
     onSuccess: (res: any) => {
       toast.success(res.data?.message || '🎉 Répartition automatique optimisée avec succès !')
       queryClient.invalidateQueries({ queryKey: ['professor-assignments'] })
@@ -633,11 +642,14 @@ export default function AcademicYearSettingsPage() {
     }
   })
 
-  // 🗑️ Remise à Zéro Totale de Toutes les Affectations
+  // 🗑️ Remise à Zéro Totale de Toutes les Affectations (avec support du semestre)
   const unassignAllMutation = useMutation({
-    mutationFn: () => api.post('/professor-assignments/unassign-all'),
+    mutationFn: (variables?: { semester_period?: string }) => 
+      api.post('/professor-assignments/unassign-all', { 
+        semester_period: variables?.semester_period || selectedSemesterPeriod 
+      }),
     onSuccess: (res: any) => {
-      toast.success(res.data?.message || '🗑️ Toutes les affectations ont été remises à zéro avec succès !')
+      toast.success(res.data?.message || '🗑️ Affectations remises à zéro avec succès !')
       queryClient.invalidateQueries({ queryKey: ['professor-assignments'] })
       setShowUnassignAllModal(false)
     },
@@ -1212,11 +1224,28 @@ export default function AcademicYearSettingsPage() {
                 icon={<BookOpen className="w-4 h-4" />}
                 options={[
                   { value: '', label: 'Sélectionner le module' },
-                  ...modules.map((m: any) => ({
-                    value: String(m.id),
-                    label: `${m.code ? m.code + ' - ' : ''}${m.name}`,
-                    sublabel: m.semester ? `Semestre ${m.semester}` : 'Module académique'
-                  }))
+                  ...modules
+                    .filter((m: any) => {
+                      if (selectedSemesterPeriod === 'odd' || selectedSemesterPeriod === 'autumn' || selectedSemesterPeriod === 's1') {
+                        return [1, 3, 5, 7, 9].includes(m.semester_number || m.semester)
+                      }
+                      if (selectedSemesterPeriod === 'even' || selectedSemesterPeriod === 'spring' || selectedSemesterPeriod === 's2') {
+                        return [2, 4, 6, 8, 10].includes(m.semester_number || m.semester)
+                      }
+                      if (['1','2','3','4','5','6','7','8','9','10'].includes(String(selectedSemesterPeriod))) {
+                        return String(m.semester_number || m.semester) === String(selectedSemesterPeriod)
+                      }
+                      return true
+                    })
+                    .map((m: any) => {
+                      const semNum = m.semester_number || m.semester
+                      const semTag = semNum ? `[S${semNum}] ` : ''
+                      return {
+                        value: String(m.id),
+                        label: `${semTag}${m.code ? m.code + ' - ' : ''}${m.name}`,
+                        sublabel: semNum ? `Semestre S${semNum} • Filière ${m.filiere?.name || 'ENCG'}` : 'Module académique'
+                      }
+                    })
                 ]}
               />
 
@@ -1254,6 +1283,83 @@ export default function AcademicYearSettingsPage() {
               >
                 <Plus className="w-4 h-4 text-emerald-400 font-bold" />
                 <span>{createAssignmentMutation.isPending ? 'Enregistrement...' : 'Valider l\'Affectation'}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* ─── 🎓 SEMESTER PERIOD SWITCHER (AUTOMNE / PRINTEMPS / ANNUEL) ─────── */}
+          <div className="bg-gradient-to-r from-blue-50/70 via-indigo-50/40 to-slate-50 dark:from-slate-800/80 dark:to-slate-900/90 p-3 sm:p-3.5 rounded-2xl border border-blue-100 dark:border-slate-800 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 shadow-xs">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-[#0f2863] text-white flex items-center justify-center font-black text-xs">
+                S
+              </div>
+              <div>
+                <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                  <span>Période Semestrielle :</span>
+                  <span className="text-blue-600 dark:text-blue-400 font-extrabold">
+                    {selectedSemesterPeriod === 'odd' ? '🍂 Semestre 1 / Automne (S1, S3, S5, S7, S9)' :
+                     selectedSemesterPeriod === 'even' ? '🌸 Semestre 2 / Printemps (S2, S4, S6, S8, S10)' :
+                     selectedSemesterPeriod === 'all' ? '🎓 Année Complète (Tous les semestres)' :
+                     `Semestre S${selectedSemesterPeriod}`}
+                  </span>
+                </div>
+                <div className="text-[10px] text-slate-500">
+                  Filtrage strict des affectations et des modules selon la période académique
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Segmented Period Buttons */}
+            <div className="flex flex-wrap items-center gap-1.5 w-full lg:w-auto">
+              <button
+                type="button"
+                onClick={() => setSelectedSemesterPeriod('odd')}
+                className={cn(
+                  "px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs",
+                  selectedSemesterPeriod === 'odd'
+                    ? "bg-[#0f2863] text-white shadow-blue-900/20"
+                    : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100"
+                )}
+              >
+                <span>🍂 Automne / S1</span>
+                <span className={cn(
+                  "px-1.5 py-0.2 rounded-full text-[9px] font-black",
+                  selectedSemesterPeriod === 'odd' ? "bg-white/20 text-white" : "bg-blue-100 text-[#0f2863]"
+                )}>
+                  S1, S3, S5, S7
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setSelectedSemesterPeriod('even')}
+                className={cn(
+                  "px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs",
+                  selectedSemesterPeriod === 'even'
+                    ? "bg-[#0f2863] text-white shadow-blue-900/20"
+                    : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100"
+                )}
+              >
+                <span>🌸 Printemps / S2</span>
+                <span className={cn(
+                  "px-1.5 py-0.2 rounded-full text-[9px] font-black",
+                  selectedSemesterPeriod === 'even' ? "bg-white/20 text-white" : "bg-purple-100 text-purple-800"
+                )}>
+                  S2, S4, S6, S8
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setSelectedSemesterPeriod('all')}
+                className={cn(
+                  "px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs",
+                  selectedSemesterPeriod === 'all'
+                    ? "bg-[#0f2863] text-white shadow-blue-900/20"
+                    : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100"
+                )}
+              >
+                <span>🎓 Année Complète</span>
               </button>
             </div>
           </div>
@@ -1457,16 +1563,27 @@ export default function AcademicYearSettingsPage() {
                           <td className="py-3 px-4">
                             {count > 0 ? (
                               <div className="flex flex-wrap items-center gap-1.5 max-w-md">
-                                {profGroup.assignmentsList.slice(0, 2).map((a: any, i: number) => (
-                                  <span key={i} className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-md text-[11px] font-medium border border-slate-200/80 dark:border-slate-700">
-                                    <span className="font-bold text-[#0f2863] dark:text-blue-400 font-mono text-[10px]">
-                                      {cleanUtf8Text(a.module?.split(' ')[0] || 'MOD')}
+                                {profGroup.assignmentsList.slice(0, 2).map((a: any, i: number) => {
+                                  const semNum = a.semester_number || (a.module && a.module.match(/-S(\d+)-/i)?.[1])
+                                  return (
+                                    <span key={i} className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-md text-[11px] font-medium border border-slate-200/80 dark:border-slate-700">
+                                      {semNum && (
+                                        <span className={cn(
+                                          "px-1 py-0.2 rounded text-[9px] font-black font-mono",
+                                          Number(semNum) % 2 === 1 ? "bg-blue-100 text-[#0f2863] dark:bg-blue-950 dark:text-blue-300" : "bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300"
+                                        )}>
+                                          S{semNum}
+                                        </span>
+                                      )}
+                                      <span className="font-bold text-[#0f2863] dark:text-blue-400 font-mono text-[10px]">
+                                        {cleanUtf8Text(a.module?.split(' ')[0] || 'MOD')}
+                                      </span>
+                                      <span className="text-[10px] text-slate-400 font-normal">
+                                        ({cleanUtf8Text(a.group)})
+                                      </span>
                                     </span>
-                                    <span className="text-[10px] text-slate-400 font-normal">
-                                      ({cleanUtf8Text(a.group)})
-                                    </span>
-                                  </span>
-                                ))}
+                                  )
+                                })}
 
                                 {count > 2 && (
                                   <button
@@ -2102,23 +2219,81 @@ export default function AcademicYearSettingsPage() {
                   Répartition Automatique & Équilibrage
                 </h3>
                 <p className="text-xs text-slate-500 font-medium">
-                  Attribution optimale par spécialité, département et statutaire (18h max)
+                  Attribution optimale par spécialité, département et période semestrielle
                 </p>
               </div>
             </div>
 
-            <div className="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 space-y-2.5">
+            {/* 🎓 Période Semestrielle Selector Cards */}
+            <div className="space-y-2">
+              <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                1. Choisissez la période semestrielle à affecter :
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setDistributeSemesterPeriod('odd')}
+                  className={cn(
+                    "p-3 rounded-xl border text-left transition-all cursor-pointer",
+                    distributeSemesterPeriod === 'odd'
+                      ? "border-blue-600 bg-blue-50/80 dark:bg-blue-950/50 text-[#0f2863] dark:text-blue-300 ring-2 ring-blue-500/20"
+                      : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 text-slate-700 dark:text-slate-300"
+                  )}
+                >
+                  <div className="text-xs font-black flex items-center gap-1">
+                    <span>🍂 Automne / S1</span>
+                  </div>
+                  <div className="text-[10px] font-semibold text-slate-500 mt-1">
+                    S1, S3, S5, S7, S9
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setDistributeSemesterPeriod('even')}
+                  className={cn(
+                    "p-3 rounded-xl border text-left transition-all cursor-pointer",
+                    distributeSemesterPeriod === 'even'
+                      ? "border-purple-600 bg-purple-50/80 dark:bg-purple-950/50 text-purple-900 dark:text-purple-300 ring-2 ring-purple-500/20"
+                      : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 text-slate-700 dark:text-slate-300"
+                  )}
+                >
+                  <div className="text-xs font-black flex items-center gap-1">
+                    <span>🌸 Printemps / S2</span>
+                  </div>
+                  <div className="text-[10px] font-semibold text-slate-500 mt-1">
+                    S2, S4, S6, S8, S10
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setDistributeSemesterPeriod('all')}
+                  className={cn(
+                    "p-3 rounded-xl border text-left transition-all cursor-pointer",
+                    distributeSemesterPeriod === 'all'
+                      ? "border-indigo-600 bg-indigo-50/80 dark:bg-indigo-950/50 text-indigo-900 dark:text-indigo-300 ring-2 ring-indigo-500/20"
+                      : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 text-slate-700 dark:text-slate-300"
+                  )}
+                >
+                  <div className="text-xs font-black flex items-center gap-1">
+                    <span>🎓 Année Globale</span>
+                  </div>
+                  <div className="text-[10px] font-semibold text-slate-500 mt-1">
+                    Tous les semestres
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            <div className="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 space-y-2">
               <p className="font-bold text-slate-800 dark:text-slate-200">
-                Comment souhaitez-vous exécuter l'opération ?
+                2. Mode d'exécution de la répartition :
               </p>
               <ul className="space-y-1.5 text-slate-500 dark:text-slate-400 text-[11px]">
                 <li className="flex items-start gap-1.5">
                   <span className="text-indigo-600 font-bold shrink-0">•</span>
-                  <span><strong className="text-slate-700 dark:text-slate-300">1. Mise à zéro & Répartition 100% Équilibrée (Recommandé) :</strong> Réinitialise tout à zéro puis affecte équitablement tous les modules sur les 18 enseignants selon leur département et spécialité.</span>
-                </li>
-                <li className="flex items-start gap-1.5">
-                  <span className="text-blue-600 font-bold shrink-0">•</span>
-                  <span><strong className="text-slate-700 dark:text-slate-300">2. Compléter uniquement :</strong> Conserve les affectations existantes et affecte seulement les modules non pourvus.</span>
+                  <span><strong className="text-slate-700 dark:text-slate-300">Mise à zéro & Répartition Équilibrée :</strong> Réinitialise les charges du semestre choisi puis répartit équitablement tous les modules sur les 18 enseignants sans surcharge (&le; 16h/4 cours).</span>
                 </li>
               </ul>
             </div>
@@ -2127,24 +2302,16 @@ export default function AcademicYearSettingsPage() {
               <button
                 onClick={() => {
                   setShowResetDistributeModal(false)
-                  autoDistributeMutation.mutate(true)
+                  autoDistributeMutation.mutate({ reset: true, semester_period: distributeSemesterPeriod })
                 }}
                 disabled={autoDistributeMutation.isPending}
                 className="w-full py-3 px-4 bg-gradient-to-r from-indigo-600 via-blue-700 to-[#0f2863] hover:from-indigo-700 hover:to-blue-800 text-white font-bold rounded-xl text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer flex items-center justify-center gap-2"
               >
                 <Sparkles className="w-4 h-4 text-amber-300" />
-                <span>{autoDistributeMutation.isPending ? 'Calcul en cours...' : '1. Mise à Zéro + Répartition Équilibrée (Recommandé)'}</span>
-              </button>
-
-              <button
-                onClick={() => {
-                  setShowResetDistributeModal(false)
-                  autoDistributeMutation.mutate(false)
-                }}
-                disabled={autoDistributeMutation.isPending}
-                className="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold rounded-xl text-xs transition-colors cursor-pointer"
-              >
-                2. Compléter uniquement (Sans écraser l'existant)
+                <span>
+                  {autoDistributeMutation.isPending ? 'Calcul en cours...' : 
+                   `Mise à Zéro + Répartition Équilibrée (${distributeSemesterPeriod === 'odd' ? 'Automne S1/S3/S5/S7' : distributeSemesterPeriod === 'even' ? 'Printemps S2/S4/S6/S8' : 'Année Complète'})`}
+                </span>
               </button>
 
               <button
@@ -2182,19 +2349,18 @@ export default function AcademicYearSettingsPage() {
                 Attention : Cette action est irréversible.
               </p>
               <p className="text-[11px] text-slate-600 dark:text-slate-400">
-                Toutes les affectations actuelles ({assignments.length} cours attribués) seront supprimées de la base de données.
-                Tous les {allProfessors.length} enseignants redeviendront <strong>disponibles (0 charge)</strong>, vous permettant de refaire une répartition propre et équilibrée.
+                Vous vous apprêtez à réinitialiser les affectations pour : <strong className="text-rose-700 dark:text-rose-300">{selectedSemesterPeriod === 'odd' ? '🍂 Semestre 1 / Automne (S1, S3, S5, S7, S9)' : selectedSemesterPeriod === 'even' ? '🌸 Semestre 2 / Printemps (S2, S4, S6, S8, S10)' : '🎓 Toute l\'Année Universitaire'}</strong> ({assignments.length} cours concernés).
               </p>
             </div>
 
             <div className="flex flex-col gap-2 pt-1">
               <button
-                onClick={() => unassignAllMutation.mutate()}
+                onClick={() => unassignAllMutation.mutate({ semester_period: selectedSemesterPeriod })}
                 disabled={unassignAllMutation.isPending}
                 className="w-full py-3 px-4 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer flex items-center justify-center gap-2"
               >
                 <Trash2 className="w-4 h-4" />
-                <span>{unassignAllMutation.isPending ? 'Suppression en cours...' : 'Oui, Réinitialiser Tout à Zéro'}</span>
+                <span>{unassignAllMutation.isPending ? 'Suppression en cours...' : `Oui, Réinitialiser (${selectedSemesterPeriod === 'odd' ? 'Automne S1/S3/S5/S7' : selectedSemesterPeriod === 'even' ? 'Printemps S2/S4/S6/S8' : 'Toute l\'Année'})`}</span>
               </button>
 
               <button

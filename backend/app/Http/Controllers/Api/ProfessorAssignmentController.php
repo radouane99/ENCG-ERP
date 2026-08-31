@@ -27,12 +27,25 @@ class ProfessorAssignmentController extends Controller
             return response()->json(['success' => true, 'data' => []]);
         }
 
-        $assignments = ModuleProfessor::with(['professor.user', 'professor.department', 'module', 'group'])
+        $query = ModuleProfessor::with(['professor.user', 'professor.department', 'module', 'group'])
             ->where(function ($q) use ($currentYear) {
                 $q->where('academic_year_id', $currentYear->id)
                     ->orWhereNull('academic_year_id');
-            })
-            ->get()
+            });
+
+        // Filtrage optionnel par période semestrielle
+        if ($request->filled('semester_period') && $request->semester_period !== 'all') {
+            $period = $request->semester_period;
+            if ($period === 'odd' || $period === 'autumn' || $period === 's1') {
+                $query->whereHas('module', fn($q) => $q->whereIn('semester_number', [1, 3, 5, 7, 9]));
+            } elseif ($period === 'even' || $period === 'spring' || $period === 's2') {
+                $query->whereHas('module', fn($q) => $q->whereIn('semester_number', [2, 4, 6, 8, 10]));
+            } elseif (is_numeric($period)) {
+                $query->whereHas('module', fn($q) => $q->where('semester_number', (int) $period));
+            }
+        }
+
+        $assignments = $query->get()
             ->map(fn ($item) => [
                 'id' => $item->id,
                 'professor_id' => $item->professor?->uuid ?? $item->professor_id,
@@ -43,6 +56,9 @@ class ProfessorAssignmentController extends Controller
                 'module' => ($item->module->code ?? '').' '.($item->module->name ?? ''),
                 'module_name' => $item->module->name ?? '',
                 'module_code' => $item->module->code ?? '',
+                'semester_number' => $item->module->semester_number ?? null,
+                'semester_label' => $item->module->semester_number ? ('S'.$item->module->semester_number) : null,
+                'semester_period' => ($item->module && $item->module->semester_number % 2 === 1) ? 'odd' : 'even',
                 'group_id' => $item->group_id,
                 'group' => $item->group->name ?? 'Tous les groupes',
                 'department_id' => $item->professor?->department_id,
@@ -145,11 +161,12 @@ class ProfessorAssignmentController extends Controller
     }
 
     /**
-     * Désaffecter tous les professeurs (réinitialisation complète).
+     * Désaffecter tous les professeurs (réinitialisation complète ou par semestre).
      */
     public function unassignAll(Request $request): JsonResponse
     {
         $currentYear = AcademicYear::where('is_current', true)->first() ?? AcademicYear::latest('start_year')->first();
+        $semesterPeriod = $request->input('semester_period', 'all');
 
         $query = ModuleProfessor::query();
         if ($currentYear) {
@@ -159,12 +176,27 @@ class ProfessorAssignmentController extends Controller
             });
         }
 
+        if ($semesterPeriod === 'odd' || $semesterPeriod === 'autumn' || $semesterPeriod === 's1') {
+            $query->whereHas('module', fn($q) => $q->whereIn('semester_number', [1, 3, 5, 7, 9]));
+        } elseif ($semesterPeriod === 'even' || $semesterPeriod === 'spring' || $semesterPeriod === 's2') {
+            $query->whereHas('module', fn($q) => $q->whereIn('semester_number', [2, 4, 6, 8, 10]));
+        } elseif (is_numeric($semesterPeriod)) {
+            $query->whereHas('module', fn($q) => $q->where('semester_number', (int) $semesterPeriod));
+        }
+
         $count = $query->count();
         $query->delete();
 
+        $periodLabel = match($semesterPeriod) {
+            'odd', 'autumn', 's1' => "du Semestre 1 / Automne (S1, S3, S5, S7, S9)",
+            'even', 'spring', 's2' => "du Semestre 2 / Printemps (S2, S4, S6, S8, S10)",
+            'all' => "de l'année universitaire",
+            default => is_numeric($semesterPeriod) ? "du Semestre S{$semesterPeriod}" : "de la session"
+        };
+
         return response()->json([
             'success' => true,
-            'message' => "Toutes les affectations ({$count}) ont été réinitialisées avec succès. Le corps professoral est désormais disponible.",
+            'message' => "Toutes les affectations {$periodLabel} ({$count}) ont été réinitialisées avec succès. Le corps professoral est disponible.",
             'deleted_count' => $count,
         ]);
     }
@@ -204,7 +236,7 @@ class ProfessorAssignmentController extends Controller
 
     /**
      * Relance / Distribution équitable des affectations à zéro pour TOUS les 18 professeurs.
-     * Algorithme d'équilibrage par spécialité, département et volume horaire statutaire.
+     * Algorithme d'équilibrage par spécialité, département, période semestrielle et volume horaire statutaire.
      */
     public function autoDistribute(Request $request): JsonResponse
     {
@@ -213,6 +245,8 @@ class ProfessorAssignmentController extends Controller
         if (! $currentYear) {
             return response()->json(['success' => false, 'message' => 'Aucune année universitaire active trouvée.'], 400);
         }
+
+        $semesterPeriod = $request->input('semester_period', 'all');
 
         // 1. Récupérer l'intégralité des 18 enseignants avec leurs départements et spécialités
         $professors = Professor::with(['user', 'department'])
@@ -227,18 +261,29 @@ class ProfessorAssignmentController extends Controller
             return response()->json(['success' => false, 'message' => 'Aucun enseignant trouvé dans le corps professoral.'], 400);
         }
 
-        // 2. Récupérer tous les modules et groupes
-        $modules = Module::with(['filiere.department'])->get();
+        // 2. Récupérer les modules filtrés selon la période semestrielle choisie (Automne S1/S3/S5/S7/S9 vs Printemps S2/S4/S6/S8/S10 vs Annuel)
+        $modulesQuery = Module::with(['filiere.department']);
+        if ($semesterPeriod === 'odd' || $semesterPeriod === 'autumn' || $semesterPeriod === 's1') {
+            $modulesQuery->whereIn('semester_number', [1, 3, 5, 7, 9]);
+        } elseif ($semesterPeriod === 'even' || $semesterPeriod === 'spring' || $semesterPeriod === 's2') {
+            $modulesQuery->whereIn('semester_number', [2, 4, 6, 8, 10]);
+        } elseif (is_numeric($semesterPeriod)) {
+            $modulesQuery->where('semester_number', (int) $semesterPeriod);
+        }
+
+        $modules = $modulesQuery->get();
         $groups = Group::all();
 
         if ($modules->isEmpty()) {
-            return response()->json(['success' => false, 'message' => 'Aucun module académique disponible.'], 400);
+            return response()->json(['success' => false, 'message' => 'Aucun module disponible pour la période semestrielle sélectionnée.'], 400);
         }
 
-        // 3. Réinitialisation complète des affectations de l'année en cours
-        DB::transaction(function () use ($currentYear, $professors, $modules, $groups) {
+        $targetModuleIds = $modules->pluck('id')->toArray();
+
+        // 3. Réinitialisation ciblée des affectations des modules concernés
+        DB::transaction(function () use ($currentYear, $professors, $modules, $groups, $targetModuleIds) {
             ModuleProfessor::where('academic_year_id', $currentYear->id)
-                ->orWhereNull('academic_year_id')
+                ->whereIn('module_id', $targetModuleIds)
                 ->delete();
 
             // Structure de suivi des charges par enseignant
