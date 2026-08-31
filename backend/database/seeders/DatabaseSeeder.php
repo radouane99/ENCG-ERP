@@ -32,6 +32,9 @@ class DatabaseSeeder extends Seeder
                 MobilityPartnerSeeder::class,
                 DepartmentStructureFixSeeder::class,
                 CleanCorruptedTextSeeder::class,
+                EnsureDemoUsersSeeder::class,
+                EnrollmentSeeder::class,
+                TransactionalSeeder::class,
             ]);
 
             $rbacSeeder = new RbacSeeder;

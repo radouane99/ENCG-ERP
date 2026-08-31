@@ -440,6 +440,9 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
 
     Route::apiResource('departments', DepartmentController::class);
     Route::apiResource('users', UserController::class);
+    Route::post('professor-assignments/auto-distribute', [ProfessorAssignmentController::class, 'autoDistribute']);
+    Route::post('professor-assignments/unassign-all', [ProfessorAssignmentController::class, 'unassignAll']);
+    Route::post('professor-assignments/unassign-professor', [ProfessorAssignmentController::class, 'unassignProfessor']);
     Route::apiResource('professor-assignments', ProfessorAssignmentController::class)->except(['show', 'update']);
 
     // Exam Locking (Admin)

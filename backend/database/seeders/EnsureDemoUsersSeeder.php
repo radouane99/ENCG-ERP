@@ -128,16 +128,30 @@ class EnsureDemoUsersSeeder extends Seeder
             );
             $user->syncRoles(['student']);
 
-            Student::updateOrCreate(
-                ['user_id' => $user->id],
-                [
+            $existingStudent = Student::where('cne', $data['cne'])
+                ->orWhere('student_number', $data['num'])
+                ->orWhere('user_id', $user->id)
+                ->first();
+
+            if ($existingStudent) {
+                $existingStudent->update([
+                    'user_id' => $user->id,
                     'institution_id' => $institution?->id,
                     'cne' => $data['cne'],
                     'student_number' => $data['num'],
                     'gender' => 'male',
                     'status' => 'active',
-                ]
-            );
+                ]);
+            } else {
+                Student::create([
+                    'user_id' => $user->id,
+                    'institution_id' => $institution?->id,
+                    'cne' => $data['cne'],
+                    'student_number' => $data['num'],
+                    'gender' => 'male',
+                    'status' => 'active',
+                ]);
+            }
         }
     }
 }
