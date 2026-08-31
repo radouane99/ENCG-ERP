@@ -157,6 +157,8 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     Route::post('/admin/timetable/ai-scheduler/resolve-all', [AiTimetableSchedulerController::class, 'resolveAllConflicts']);
     Route::post('/timetable/ai-scheduler/apply', [AiTimetableSchedulerController::class, 'apply']);
     Route::post('/admin/timetable/ai-scheduler/apply', [AiTimetableSchedulerController::class, 'apply']);
+    Route::post('/timetable/ai-scheduler/clear', [AiTimetableSchedulerController::class, 'clear']);
+    Route::post('/admin/timetable/ai-scheduler/clear', [AiTimetableSchedulerController::class, 'clear']);
 
     // 🧭 Student Orientation & Master Specialization Analytics
     Route::get('/orientation/analytics', [OrientationAdvisorController::class, 'getAdminAnalytics']);

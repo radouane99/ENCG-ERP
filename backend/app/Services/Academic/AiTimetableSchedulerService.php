@@ -2,6 +2,8 @@
 
 namespace App\Services\Academic;
 
+use App\Models\AcademicYear;
+use App\Models\Filiere;
 use App\Models\Group;
 use App\Models\Module;
 use App\Models\Professor;
@@ -32,36 +34,66 @@ class AiTimetableSchedulerService
     ];
 
     /**
-     * Génère un emploi du temps automatisé anti-conflits pour une promotion ou filière.
+     * Génère un emploi du temps automatisé anti-conflits pour une promotion, période ou filière.
      */
-    public function generateSchedule(int $academicYearId, int $semesterNumber, array $options = []): array
+    public function generateSchedule(mixed $academicYearId, mixed $semesterSelection, array $options = []): array
     {
         $filiereId = $options['filiere_id'] ?? null;
         $avoidSaturdayAfternoon = $options['avoid_saturday_afternoon'] ?? true;
         $preferMorningLectures = $options['prefer_morning_lectures'] ?? true;
 
-        // 1. Récupérer les groupes ciblés
+        // Résoudre l'année académique active valide
+        $academicYear = (! empty($academicYearId) ? AcademicYear::find($academicYearId) : null)
+            ?? AcademicYear::where('is_current', true)->first()
+            ?? AcademicYear::first();
+        $academicYearId = $academicYear ? $academicYear->id : null;
+
+        // Déterminer les semestres cibles (Automne S1/S3/S5/S7/S9 vs Printemps S2/S4/S6/S8/S10 vs Individuel S1..S10)
+        $targetSemesters = [];
+        if ($semesterSelection === 'odd' || $semesterSelection === 'autumn' || $semesterSelection === 's1') {
+            $targetSemesters = [1, 3, 5, 7, 9];
+        } elseif ($semesterSelection === 'even' || $semesterSelection === 'spring' || $semesterSelection === 's2') {
+            $targetSemesters = [2, 4, 6, 8, 10];
+        } elseif ($semesterSelection === 'all') {
+            $targetSemesters = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+        } elseif (is_numeric($semesterSelection)) {
+            $targetSemesters = [(int) $semesterSelection];
+        } else {
+            $targetSemesters = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+        }
+
+        // 1. S'assurer que les groupes d'étudiants (G1, G2) existent pour toutes les filières concernées
+        $this->ensureGroupsForSemesters($academicYearId, $targetSemesters, $filiereId);
+
+        // 2. Récupérer les groupes ciblés
         $groupsQuery = Group::query()->with('filiere');
         if ($filiereId) {
             $groupsQuery->where('filiere_id', $filiereId);
         }
-        if ($semesterNumber >= 1 && $semesterNumber <= 10) {
-            $groupsQuery->where('semester_number', $semesterNumber);
+        if (! empty($targetSemesters)) {
+            $groupsQuery->where(function ($q) use ($targetSemesters) {
+                $q->whereIn('semester_number', $targetSemesters)
+                    ->orWhereNull('semester_number');
+            });
         }
         $groups = $groupsQuery->get();
 
-        // 2. Récupérer les modules du semestre
+        // 3. Récupérer les modules ciblés
         $modulesQuery = Module::query()->with('filiere');
         if ($filiereId) {
             $modulesQuery->where('filiere_id', $filiereId);
         }
-        $modulesQuery->where('semester_number', $semesterNumber);
+        if (! empty($targetSemesters)) {
+            $modulesQuery->whereIn('semester_number', $targetSemesters);
+        }
         $modules = $modulesQuery->get();
 
-        // 3. Récupérer les salles disponibles et opérationnelles
-        $rooms = Room::where(function ($q) {
-            $q->whereNull('status')->orWhere('status', 'available');
-        })->get();
+        // 4. Récupérer les salles disponibles et opérationnelles
+        $rooms = Room::where('is_available', true)->get();
+
+        if ($rooms->isEmpty()) {
+            $rooms = Room::all();
+        }
 
         if ($rooms->isEmpty()) {
             $rooms = collect([
@@ -73,10 +105,10 @@ class AiTimetableSchedulerService
             ]);
         }
 
-        // 4. Récupérer les professeurs
+        // 5. Récupérer les professeurs
         $professors = Professor::with('user')->get();
 
-        // 5. Moteur de planification sous contraintes (Constraint Satisfaction Solver)
+        // 6. Moteur de planification sous contraintes (Constraint Satisfaction Solver)
         $scheduledItems = [];
         $conflictsDetected = [];
         $occupiedSlots = [
@@ -108,22 +140,45 @@ class AiTimetableSchedulerService
         }
 
         $sessionCounter = 1;
+        $profCycleIndex = 0;
         $totalCoursesScheduled = 0;
 
         foreach ($groups as $group) {
-            $groupModules = $modules->filter(fn ($m) => ! $m->filiere_id || $m->filiere_id == $group->filiere_id);
+            $groupSem = (int) ($group->semester_number ?? 0);
+            $groupFiliereId = $group->filiere_id;
+
+            $groupModules = $modules->filter(function ($m) use ($groupFiliereId, $groupSem) {
+                $filiereMatch = ! $m->filiere_id || $m->filiere_id == $groupFiliereId;
+                $semesterMatch = ! $groupSem || $m->semester_number == $groupSem;
+
+                return $filiereMatch && $semesterMatch;
+            });
+
             if ($groupModules->isEmpty()) {
-                $groupModules = $modules->take(4);
+                $groupModules = $modules->filter(fn ($m) => ! $m->filiere_id || $m->filiere_id == $groupFiliereId);
             }
 
             foreach ($groupModules as $module) {
                 $courses = $this->getModuleSessions($module);
 
                 foreach ($courses as $course) {
-                    // Trouver un professeur assigné ou disponible
-                    $assignedProf = $professors->random() ?? null;
+                    // Chercher l'enseignant réellement affecté dans module_professor
+                    $assignedProfId = DB::table('module_professor')
+                        ->where('module_id', $module->id)
+                        ->where(function ($q) use ($group) {
+                            $q->where('group_id', $group->id)->orWhereNull('group_id');
+                        })
+                        ->value('professor_id');
+
+                    $assignedProf = $assignedProfId ? $professors->firstWhere('id', $assignedProfId) : null;
+                    if (! $assignedProf && $professors->isNotEmpty()) {
+                        $assignedProf = $professors->get(($profCycleIndex++) % $professors->count());
+                    }
+
                     $profId = $assignedProf ? $assignedProf->id : 1;
-                    $profName = $assignedProf && $assignedProf->user ? $assignedProf->user->name : 'Professeur Titulaire';
+                    $profName = $assignedProf && $assignedProf->user 
+                        ? trim(($assignedProf->user->first_name ?? '').' '.($assignedProf->user->last_name ?? '')) 
+                        : ($assignedProf?->user?->name ?? 'Enseignant Chercheur');
 
                     // Chercher le meilleur créneau libre sans aucun conflit
                     $allocated = false;
@@ -206,7 +261,8 @@ class AiTimetableSchedulerService
 
         return [
             'academic_year_id' => $academicYearId,
-            'semester_number' => $semesterNumber,
+            'semester_number' => is_numeric($semesterSelection) ? (int) $semesterSelection : null,
+            'semester_selection' => $semesterSelection,
             'total_scheduled_sessions' => count($scheduledItems),
             'optimization_score' => count($conflictsDetected) === 0 ? 100 : max(60, 100 - (count($conflictsDetected) * 10)),
             'conflicts_count' => count($conflictsDetected),
@@ -461,5 +517,55 @@ class AiTimetableSchedulerService
         }
 
         return 4;
+    }
+
+    /**
+     * S'assure que chaque filière ayant des modules sur les semestres ciblés possède ses groupes d'étudiants (G1, G2).
+     */
+    protected function ensureGroupsForSemesters(?int $academicYearId, array $targetSemesters, ?int $filiereId = null): void
+    {
+        if (! $academicYearId) {
+            $academicYearId = AcademicYear::where('is_current', true)->value('id') ?? AcademicYear::first()?->id ?? null;
+        }
+
+        $filieresQuery = Filiere::query();
+        if ($filiereId) {
+            $filieresQuery->where('id', $filiereId);
+        }
+        $filieres = $filieresQuery->get();
+
+        foreach ($filieres as $filiere) {
+            $fCode = $filiere->code ?? 'FIL';
+
+            // Trouver les numéros de semestres pour cette filière
+            $semestersWithModules = Module::where('filiere_id', $filiere->id)
+                ->whereIn('semester_number', $targetSemesters)
+                ->pluck('semester_number')
+                ->unique();
+
+            foreach ($semestersWithModules as $semNum) {
+                $existingCount = Group::where('filiere_id', $filiere->id)
+                    ->where('semester_number', $semNum)
+                    ->count();
+
+                if ($existingCount === 0) {
+                    Group::create([
+                        'filiere_id' => $filiere->id,
+                        'academic_year_id' => $academicYearId,
+                        'name' => "{$fCode}-S{$semNum}-G1",
+                        'semester_number' => $semNum,
+                        'capacity' => 35,
+                    ]);
+
+                    Group::create([
+                        'filiere_id' => $filiere->id,
+                        'academic_year_id' => $academicYearId,
+                        'name' => "{$fCode}-S{$semNum}-G2",
+                        'semester_number' => $semNum,
+                        'capacity' => 35,
+                    ]);
+                }
+            }
+        }
     }
 }

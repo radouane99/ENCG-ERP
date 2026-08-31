@@ -6,7 +6,7 @@ import {
   Calendar, Clock, CheckCircle2, AlertTriangle, ShieldCheck,
   RefreshCw, Play, Save, MapPin, User,
   Building2, Sliders, Cpu, Hand, Grid, Leaf,
-  Wand2, BookOpen, GraduationCap, Sparkles
+  Wand2, BookOpen, GraduationCap, Sparkles, Trash2, RotateCcw, X, AlertCircle
 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { CustomSelect, SelectOption } from '@/shared/components/ui/CustomSelect';
@@ -44,7 +44,7 @@ export default function AdminAiTimetableSchedulerPage() {
   const [activeTab, setActiveTab] = useState<'generator' | 'manual_board' | 'matrix'>('generator');
 
   // Generator & CSP Parameters
-  const [selectedSemester, setSelectedSemester] = useState<number>(2);
+  const [selectedSemester, setSelectedSemester] = useState<string | number>('odd');
   const [selectedFiliere, setSelectedFiliere] = useState<string>('all');
   const [avoidSaturday, setAvoidSaturday] = useState<boolean>(true);
   const [preferMorning, setPreferMorning] = useState<boolean>(true);
@@ -56,6 +56,7 @@ export default function AdminAiTimetableSchedulerPage() {
   // Filter state for preview grid
   const [dayFilter, setDayFilter] = useState<number | 'all'>('all');
   const [groupFilter, setGroupFilter] = useState<string>('all');
+  const [filiereFilter, setFiliereFilter] = useState<string>('all');
 
   // 1. Conflict Scanner Query
   const { data: conflictData, refetch: refetchConflicts, isFetching: isScanning } = useQuery({
@@ -69,9 +70,7 @@ export default function AdminAiTimetableSchedulerPage() {
   // 2. Generate Schedule Mutation
   const generateMutation = useMutation({
     mutationFn: async () => {
-      const res = await api.post('/admin/timetable/ai-scheduler/generate', {
-        academic_year_id: 1,
-        semester_number: selectedSemester,
+      const payload: Record<string, any> = {
         filiere_id: selectedFiliere !== 'all' ? Number(selectedFiliere) : null,
         avoid_saturday_afternoon: avoidSaturday,
         prefer_morning_lectures: preferMorning,
@@ -79,7 +78,15 @@ export default function AdminAiTimetableSchedulerPage() {
         prof_avail_weight: profAvailWeight,
         building_weight: buildingWeight,
         strategy: selectedStrategy,
-      });
+      };
+
+      if (['odd', 'even', 'all', 'autumn', 'spring'].includes(String(selectedSemester))) {
+        payload.semester_period = String(selectedSemester);
+      } else {
+        payload.semester_number = Number(selectedSemester);
+      }
+
+      const res = await api.post('/admin/timetable/ai-scheduler/generate', payload);
       return res.data?.data || res.data;
     },
     onSuccess: (data) => {
@@ -94,7 +101,6 @@ export default function AdminAiTimetableSchedulerPage() {
   const applyMutation = useMutation({
     mutationFn: async (items: any[]) => {
       const res = await api.post('/admin/timetable/ai-scheduler/apply', {
-        academic_year_id: 1,
         scheduled_items: items,
         overwrite_existing: true,
       });
@@ -128,7 +134,7 @@ export default function AdminAiTimetableSchedulerPage() {
   // 5. Auto-resolve ALL conflicts mutation
   const resolveAllMutation = useMutation({
     mutationFn: async () => {
-      const res = await api.post('/admin/timetable/ai-scheduler/resolve-all', { academic_year_id: 1 });
+      const res = await api.post('/admin/timetable/ai-scheduler/resolve-all', {});
       return res.data;
     },
     onSuccess: (data) => {
@@ -144,29 +150,64 @@ export default function AdminAiTimetableSchedulerPage() {
     }
   });
 
+  // 6. Clear / Reset Schedules Mutation
+  const [showClearModal, setShowClearModal] = useState<boolean>(false);
+  const [clearMode, setClearMode] = useState<'period' | 'single' | 'all'>('period');
+  const [clearPeriod, setClearPeriod] = useState<'odd' | 'even'>('odd');
+  const [clearSemesterNumber, setClearSemesterNumber] = useState<number>(typeof selectedSemester === 'number' ? selectedSemester : 1);
+
+  const clearMutation = useMutation({
+    mutationFn: async () => {
+      const payload: Record<string, any> = {};
+      if (clearMode === 'period') {
+        payload.semester_period = clearPeriod;
+      } else if (clearMode === 'single') {
+        payload.semester_number = clearSemesterNumber;
+      }
+      const res = await api.post('/admin/timetable/ai-scheduler/clear', payload);
+      return res.data;
+    },
+    onSuccess: (data) => {
+      toast.success(data?.message || "Emploi du temps réinitialisé avec succès !");
+      generateMutation.reset();
+      refetchConflicts();
+      setShowClearModal(false);
+    },
+    onError: () => {
+      toast.error("Erreur lors de la réinitialisation de l'emploi du temps.");
+    }
+  });
+
   const generatedData = generateMutation.data;
   const scheduledSessions: any[] = generatedData?.scheduled_items || generatedData?.scheduled_sessions || [];
 
   const filteredSessions = scheduledSessions.filter((s: any) => {
     if (dayFilter !== 'all' && s.day_of_week !== dayFilter) return false;
     if (groupFilter !== 'all' && s.group_name !== groupFilter) return false;
+    if (filiereFilter !== 'all' && s.filiere_code !== filiereFilter) return false;
     return true;
   });
 
   const uniqueGroups = Array.from(new Set(scheduledSessions.map((s: any) => s.group_name)));
+  const uniqueFilieres = Array.from(new Set(scheduledSessions.map((s: any) => s.filiere_code).filter(Boolean)));
   const conflictsList: ConflictItem[] = conflictData?.conflicts || [];
   const conflictsCount = conflictData?.conflicts_count ?? conflictsList.length;
 
   // Dropdown Options Definitions
   const semesterOptions: SelectOption[] = [
-    { value: 1, label: 'Semestre 1 (S1 - Tronc Commun)', badge: 'TC1', icon: <BookOpen className="w-4 h-4 text-indigo-500" /> },
-    { value: 2, label: 'Semestre 2 (S2 - Tronc Commun)', badge: 'TC1', icon: <BookOpen className="w-4 h-4 text-indigo-500" /> },
-    { value: 3, label: 'Semestre 3 (S3 - Tronc Commun)', badge: 'TC2', icon: <BookOpen className="w-4 h-4 text-blue-500" /> },
-    { value: 4, label: 'Semestre 4 (S4 - Tronc Commun)', badge: 'TC2', icon: <BookOpen className="w-4 h-4 text-blue-500" /> },
-    { value: 5, label: 'Semestre 5 (S5 - Filières & Options)', badge: 'Licence', icon: <GraduationCap className="w-4 h-4 text-purple-500" /> },
-    { value: 6, label: 'Semestre 6 (S6 - Filières & Options)', badge: 'Licence', icon: <GraduationCap className="w-4 h-4 text-purple-500" /> },
-    { value: 7, label: 'Semestre 7 (S7 - Master & Spécialités)', badge: 'Master', icon: <Sparkles className="w-4 h-4 text-amber-500" /> },
-    { value: 8, label: 'Semestre 8 (S8 - Master & Spécialités)', badge: 'Master', icon: <Sparkles className="w-4 h-4 text-amber-500" /> },
+    { value: 'odd', label: '🍂 Semestre 1 / Automne (S1, S3, S5, S7, S9)', badge: 'Impairs', icon: <Sparkles className="w-4 h-4 text-amber-500" /> },
+    { value: 'even', label: '🌸 Semestre 2 / Printemps (S2, S4, S6, S8, S10)', badge: 'Pairs', icon: <Sparkles className="w-4 h-4 text-purple-500" /> },
+    { value: 'all', label: '🎓 Année Complète (Tous les semestres S1 à S10)', badge: 'Global', icon: <GraduationCap className="w-4 h-4 text-indigo-500" /> },
+    { value: 1, label: 'Semestre 1 (S1 - Tronc Commun S1)', badge: 'TC1', icon: <BookOpen className="w-4 h-4 text-indigo-500" /> },
+    { value: 2, label: 'Semestre 2 (S2 - Tronc Commun S2)', badge: 'TC1', icon: <BookOpen className="w-4 h-4 text-indigo-500" /> },
+    { value: 3, label: 'Semestre 3 (S3 - Tronc Commun S3)', badge: 'TC2', icon: <BookOpen className="w-4 h-4 text-blue-500" /> },
+    { value: 4, label: 'Semestre 4 (S4 - Tronc Commun S4)', badge: 'TC2', icon: <BookOpen className="w-4 h-4 text-blue-500" /> },
+    { value: 5, label: 'Semestre 5 (S5 - Filières GFC & MCM)', badge: 'Licence', icon: <GraduationCap className="w-4 h-4 text-purple-500" /> },
+    { value: 6, label: 'Semestre 6 (S6 - Filières GFC & MCM)', badge: 'Licence', icon: <GraduationCap className="w-4 h-4 text-purple-500" /> },
+    { value: 7, label: 'Semestre 7 (S7 - Spécialités Master)', badge: 'Master 1', icon: <Sparkles className="w-4 h-4 text-amber-500" /> },
+    { value: 8, label: 'Semestre 8 (S8 - Spécialités Master)', badge: 'Master 1', icon: <Sparkles className="w-4 h-4 text-amber-500" /> },
+    { value: 9, label: 'Semestre 9 (S9 - Spécialités Master 2)', badge: 'Master 2', icon: <Sparkles className="w-4 h-4 text-emerald-500" /> },
+    { value: 10, label: 'Semestre 10 (S10 - PFE & Stage)', badge: 'PFE', icon: <Sparkles className="w-4 h-4 text-teal-500" /> },
   ];
 
   const filiereOptions: SelectOption[] = [
@@ -203,72 +244,82 @@ export default function AdminAiTimetableSchedulerPage() {
   }, [uniqueGroups]);
 
   return (
-    <div className="space-y-8 pb-24 animate-in fade-in max-w-[1700px] mx-auto p-4 md:p-8 font-sans">
+    <div className="space-y-6 pb-24 animate-in fade-in max-w-[1700px] mx-auto p-4 md:p-8 font-sans">
       
-      {/* ── Hero Powerhouse Banner ────────────────────────────────────────────── */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-950 via-[#001A4B] to-indigo-950 p-8 md:p-10 text-white shadow-2xl border border-indigo-900/50">
-        <div className="absolute -top-24 -end-24 w-96 h-96 rounded-full bg-indigo-500/15 blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-20 -start-20 w-80 h-80 rounded-full bg-purple-500/15 blur-3xl pointer-events-none" />
+      {/* ── 🌟 Hero Executive Banner (ENCG Deep Navy Branding) ─────────────────────── */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#061330] via-[#0f2863] to-[#1e3a8a] p-6 md:p-8 text-white shadow-xl border border-blue-900/40">
+        <div className="absolute -top-24 -end-24 w-96 h-96 rounded-full bg-blue-500/10 blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-20 -start-20 w-80 h-80 rounded-full bg-indigo-500/15 blur-3xl pointer-events-none" />
 
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-          <div className="space-y-3 max-w-3xl">
+          <div className="space-y-2.5 max-w-3xl">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-200 text-xs font-black uppercase tracking-wider backdrop-blur-md">
-                <Cpu className="w-3.5 h-3.5 text-indigo-400" /> Solveur d'Emplois du Temps IA (CSP Engine)
+              <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/20 border border-blue-400/30 text-blue-200 text-[11px] font-black uppercase tracking-wider backdrop-blur-md">
+                <Cpu className="w-3.5 h-3.5 text-blue-400" /> Solveur CSP & Optimisation IA
               </span>
-              <span className="flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-xs font-extrabold uppercase tracking-wider">
+              <span className="flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-[11px] font-extrabold uppercase tracking-wider">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> Zéro Conflit Garanti
+              </span>
+              <span className="px-2.5 py-0.5 rounded-full bg-white/10 text-slate-300 text-[10px] font-bold">
+                🏛️ ENCG Fès • LMD
               </span>
             </div>
 
-            <h1 className="text-2xl md:text-4xl font-black tracking-tight text-white">
-              Générateur Intelligent & Studio des Emplois du Temps
+            <h1 className="text-xl md:text-3xl font-black tracking-tight text-white flex items-center gap-2.5">
+              <span>Générateur Intelligent des Emplois du Temps</span>
+              <Sparkles className="w-6 h-6 text-amber-300 animate-pulse hidden sm:inline" />
             </h1>
 
-            <p className="text-slate-300 text-xs md:text-sm leading-relaxed font-medium">
-              Planification globale sous contraintes : scanner temps réel des collisions de salles et de professeurs, résolution automatique par IA, et ajustement visuel en Drag & Drop.
+            <p className="text-blue-100/80 text-xs md:text-sm leading-relaxed font-medium">
+              Planification globale automatisée sous contraintes : distribution des créneaux, vérification temps réel des collisions de salles et des professeurs, avec ajustement visuel manuel.
             </p>
           </div>
 
-          <div className="shrink-0 flex flex-wrap items-center gap-3">
+          <div className="shrink-0 flex flex-wrap items-center gap-2.5">
             <button
               type="button"
-              onClick={() => {
-                setActiveTab('generator');
-                generateMutation.mutate();
-              }}
-              disabled={generateMutation.isPending}
-              className="flex items-center gap-2.5 bg-gradient-to-r from-amber-500 via-amber-600 to-yellow-500 hover:opacity-95 text-slate-950 px-7 py-3.5 rounded-2xl text-xs font-black uppercase tracking-wider transition-all shadow-xl active:scale-95 cursor-pointer border border-amber-400/40"
+              onClick={() => refetchConflicts()}
+              disabled={isScanning}
+              className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2.5 rounded-xl text-xs font-bold transition-all border border-white/15 cursor-pointer"
             >
-              {generateMutation.isPending ? <RefreshCw className="w-4 h-4 animate-spin text-slate-950" /> : <Play className="w-4 h-4 fill-slate-950 text-slate-950" />}
-              <span>Lancer la Génération IA ⚡</span>
+              <RefreshCw className={cn("w-3.5 h-3.5", isScanning && "animate-spin")} />
+              <span>Re-scanner</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowClearModal(true)}
+              className="flex items-center gap-1.5 bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 border border-rose-400/30 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer"
+            >
+              <Trash2 className="w-3.5 h-3.5 text-rose-300" />
+              <span>Remise à Zéro</span>
             </button>
           </div>
         </div>
       </div>
 
-      {/* ── Mode Switcher Tabs ────────────────────────────────────────────────── */}
-      <div className="flex items-center gap-3 bg-card p-2 rounded-2xl border border-border shadow-sm overflow-x-auto">
+      {/* ── 🧭 Segmented Navigation Tabs ────────────────────────────────────────── */}
+      <div className="flex items-center gap-2 bg-white dark:bg-slate-900 p-1.5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs overflow-x-auto">
         <button
           onClick={() => setActiveTab('generator')}
           className={cn(
-            "flex items-center gap-2.5 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap",
+            "flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap",
             activeTab === 'generator'
-              ? "bg-[#0f2863] text-white shadow-md"
-              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              ? "bg-[#0f2863] text-white shadow-sm"
+              : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900"
           )}
         >
-          <Cpu className="w-4 h-4 text-purple-400" />
-          <span>1. Génération & Scanner Anti-Conflits</span>
+          <Cpu className="w-4 h-4 text-blue-400" />
+          <span>1. Générateur & Scanner Anti-Conflits</span>
         </button>
 
         <button
           onClick={() => setActiveTab('manual_board')}
           className={cn(
-            "flex items-center gap-2.5 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap",
+            "flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap",
             activeTab === 'manual_board'
-              ? "bg-[#0f2863] text-white shadow-md"
-              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              ? "bg-[#0f2863] text-white shadow-sm"
+              : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900"
           )}
         >
           <Hand className="w-4 h-4 text-amber-400" />
@@ -278,10 +329,10 @@ export default function AdminAiTimetableSchedulerPage() {
         <button
           onClick={() => setActiveTab('matrix')}
           className={cn(
-            "flex items-center gap-2.5 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap",
+            "flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap",
             activeTab === 'matrix'
-              ? "bg-[#0f2863] text-white shadow-md"
-              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              ? "bg-[#0f2863] text-white shadow-sm"
+              : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900"
           )}
         >
           <Grid className="w-4 h-4 text-emerald-400" />
@@ -293,91 +344,169 @@ export default function AdminAiTimetableSchedulerPage() {
       {/* ── TAB 1: GENERATEUR & SCANNER ANTI-CONFLITS ───────────────────────────── */}
       {/* ═════════════════════════════════════════════════════════════════════════ */}
       {activeTab === 'generator' && (
-        <div className="space-y-8 animate-in fade-in">
+        <div className="space-y-6 animate-in fade-in">
           
-          {/* KPI Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            <div className="bg-card border border-border rounded-3xl p-6 shadow-sm flex items-center gap-4">
-              <div className="p-3.5 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">
-                <Calendar className="w-6 h-6" />
-              </div>
-              <div>
-                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Séances Programmées</p>
-                <p className="text-2xl font-black text-foreground">
-                  {scheduledSessions.length > 0 ? scheduledSessions.length : (conflictData?.total_scanned || 42)} Séances
+          {/* 📊 High-End KPI Metric Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-xs flex items-center justify-between">
+              <div className="space-y-1">
+                <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider">Séances Programmées</p>
+                <p className="text-2xl font-black text-slate-900 dark:text-white">
+                  {scheduledSessions.length > 0 ? scheduledSessions.length : (conflictData?.total_scanned ?? 0)}
+                  <span className="text-xs font-bold text-slate-400 ml-1.5">séances</span>
                 </p>
+                <p className="text-[10px] text-blue-600 dark:text-blue-400 font-bold">
+                  {selectedSemester === 'odd' ? '🍂 Automne S1/S3/S5/S7' : selectedSemester === 'even' ? '🌸 Printemps S2/S4/S6/S8' : '🎓 Période active'}
+                </p>
+              </div>
+              <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 border border-blue-100 dark:border-blue-900/40">
+                <Calendar className="w-6 h-6" />
               </div>
             </div>
 
-            <div className="bg-card border border-border rounded-3xl p-6 shadow-sm flex items-center gap-4">
-              <div className="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400">
-                <ShieldCheck className="w-6 h-6" />
-              </div>
-              <div>
-                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Score d'Optimisation</p>
+            <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-xs flex items-center justify-between">
+              <div className="space-y-1">
+                <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider">Score d'Optimisation</p>
                 <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
                   {generatedData?.optimization_score ?? (conflictsCount === 0 ? 100 : Math.max(65, 100 - conflictsCount * 2))}%
                 </p>
+                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
+                  <CheckCircle2 className="w-3 h-3" /> Distribution optimale
+                </p>
+              </div>
+              <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-100 dark:border-emerald-900/40">
+                <ShieldCheck className="w-6 h-6" />
               </div>
             </div>
 
-            <div className="bg-card border border-border rounded-3xl p-6 shadow-sm flex items-center gap-4">
-              <div className="p-3.5 rounded-2xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-xs flex items-center justify-between">
+              <div className="space-y-1">
+                <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider">Salles & Amphis</p>
+                <p className="text-2xl font-black text-indigo-600 dark:text-indigo-400">
+                  {generatedData?.rooms_utilized_count ?? 18}
+                  <span className="text-xs font-bold text-slate-400 ml-1.5">salles</span>
+                </p>
+                <p className="text-[10px] text-slate-500 font-semibold">Amphis, TD & Salles info</p>
+              </div>
+              <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 border border-indigo-100 dark:border-indigo-900/40">
                 <Building2 className="w-6 h-6" />
               </div>
-              <div>
-                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Salles & Amphis</p>
-                <p className="text-2xl font-black text-purple-600 dark:text-purple-400">
-                  {generatedData?.rooms_utilized_count ?? 18} Salles Actives
-                </p>
-              </div>
             </div>
 
-            <div className="bg-card border border-border rounded-3xl p-6 shadow-sm flex items-center gap-4">
-              <div className={`p-3.5 rounded-2xl ${conflictsCount === 0 ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600' : 'bg-rose-50 dark:bg-rose-950/60 text-rose-600'}`}>
-                {conflictsCount === 0 ? <CheckCircle2 className="w-6 h-6" /> : <AlertTriangle className="w-6 h-6" />}
-              </div>
-              <div>
-                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">État des Conflits</p>
-                <p className={`text-2xl font-black ${conflictsCount === 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                  {conflictsCount} {conflictsCount === 1 ? 'Conflit' : 'Conflits'}
+            <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-xs flex items-center justify-between">
+              <div className="space-y-1">
+                <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider">Conflits d'Horaires</p>
+                <p className={cn("text-2xl font-black", conflictsCount === 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600")}>
+                  {conflictsCount}
+                  <span className="text-xs font-bold text-slate-400 ml-1.5">{conflictsCount <= 1 ? 'conflit' : 'conflits'}</span>
                 </p>
+                <p className={cn("text-[10px] font-bold", conflictsCount === 0 ? "text-emerald-600" : "text-rose-600")}>
+                  {conflictsCount === 0 ? '✓ Aucun chevauchement' : '⚠️ Anomalies à résoudre'}
+                </p>
+              </div>
+              <div className={cn(
+                "w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border",
+                conflictsCount === 0 
+                  ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 border-emerald-100 dark:border-emerald-900/40" 
+                  : "bg-rose-50 dark:bg-rose-950/60 text-rose-600 border-rose-100 dark:border-rose-900/40"
+              )}>
+                {conflictsCount === 0 ? <CheckCircle2 className="w-6 h-6" /> : <AlertTriangle className="w-6 h-6 animate-pulse" />}
               </div>
             </div>
           </div>
 
           {/* Generator Controls & Live Conflict Scanner */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             
             {/* Left Column: Paramètres du Solveur IA (5 Cols) with CustomSelect */}
-            <div className="lg:col-span-5 bg-card border border-border rounded-3xl p-6 md:p-8 shadow-sm space-y-6">
-              <div className="flex items-center justify-between pb-4 border-b border-border">
-                <h3 className="text-base font-black text-foreground flex items-center gap-2">
-                  <Sliders className="w-5 h-5 text-indigo-600" />
-                  <span>Paramètres du Solveur CSP</span>
-                </h3>
-                <span className="px-2.5 py-1 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 rounded-lg text-[10px] font-black uppercase">
+            <div className="lg:col-span-5 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-xs space-y-5">
+              <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-[#0f2863] text-white flex items-center justify-center font-black">
+                    <Sliders className="w-4 h-4 text-blue-300" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black text-slate-900 dark:text-white">
+                      Paramètres du Solveur CSP
+                    </h3>
+                    <p className="text-[10px] text-slate-400">Règles académiques et heuristiques</p>
+                  </div>
+                </div>
+                <span className="px-2 py-0.5 bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 rounded-lg text-[9px] font-black uppercase">
                   LMD Maroc
                 </span>
               </div>
 
               <div className="space-y-4">
-                <div>
-                  <label className="block text-[10px] font-black text-muted-foreground uppercase tracking-wider mb-2">
-                    Semestre Universitaire
-                  </label>
+                {/* 1. Semestre & Période */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                      1. Période & Semestre Cible :
+                    </label>
+                    <span className="text-[10px] font-extrabold text-blue-600 dark:text-blue-400">
+                      {selectedSemester === 'odd' ? '🍂 Automne S1/S3/S5/S7' :
+                       selectedSemester === 'even' ? '🌸 Printemps S2/S4/S6/S8' :
+                       selectedSemester === 'all' ? '🎓 Année Complète' :
+                       `Semestre S${selectedSemester}`}
+                    </span>
+                  </div>
+
+                  {/* Quick Period Selector Chips */}
+                  <div className="grid grid-cols-3 gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedSemester('odd')}
+                      className={cn(
+                        "py-2 px-2 rounded-xl text-xs font-bold border transition-all cursor-pointer text-center",
+                        selectedSemester === 'odd'
+                          ? "bg-[#0f2863] text-white border-[#0f2863] shadow-xs"
+                          : "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100"
+                      )}
+                    >
+                      🍂 Automne
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setSelectedSemester('even')}
+                      className={cn(
+                        "py-2 px-2 rounded-xl text-xs font-bold border transition-all cursor-pointer text-center",
+                        selectedSemester === 'even'
+                          ? "bg-[#0f2863] text-white border-[#0f2863] shadow-xs"
+                          : "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100"
+                      )}
+                    >
+                      🌸 Printemps
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setSelectedSemester('all')}
+                      className={cn(
+                        "py-2 px-2 rounded-xl text-xs font-bold border transition-all cursor-pointer text-center",
+                        selectedSemester === 'all'
+                          ? "bg-[#0f2863] text-white border-[#0f2863] shadow-xs"
+                          : "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100"
+                      )}
+                    >
+                      🎓 Annuel
+                    </button>
+                  </div>
+
                   <CustomSelect
                     value={selectedSemester}
-                    onChange={(val) => setSelectedSemester(Number(val))}
+                    onChange={(val) => setSelectedSemester(val)}
                     options={semesterOptions}
-                    placeholder="Sélectionner le semestre..."
+                    placeholder="Sélectionner le semestre ou la période..."
                     className="w-full"
                   />
                 </div>
 
+                {/* 2. Filière Cible */}
                 <div>
-                  <label className="block text-[10px] font-black text-muted-foreground uppercase tracking-wider mb-2">
-                    Filière Cible
+                  <label className="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+                    2. Filière Académique :
                   </label>
                   <CustomSelect
                     value={selectedFiliere}
@@ -388,9 +517,10 @@ export default function AdminAiTimetableSchedulerPage() {
                   />
                 </div>
 
+                {/* 3. Stratégie Heuristique */}
                 <div>
-                  <label className="block text-[10px] font-black text-muted-foreground uppercase tracking-wider mb-2">
-                    Stratégie Heuristique
+                  <label className="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+                    3. Stratégie Heuristique (Solveur) :
                   </label>
                   <CustomSelect
                     value={selectedStrategy}
@@ -401,12 +531,16 @@ export default function AdminAiTimetableSchedulerPage() {
                   />
                 </div>
 
-                {/* CSP Weight Sliders with Luxury Track styling */}
-                <div className="p-5 bg-muted/40 rounded-2xl space-y-4 border border-border">
+                {/* CSP Weight Sliders */}
+                <div className="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl space-y-3.5 border border-slate-200/80 dark:border-slate-700">
+                  <div className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                    4. Poids d'Optimisation des Ressources :
+                  </div>
+
                   <div>
-                    <div className="flex items-center justify-between text-xs font-bold text-foreground mb-1.5">
+                    <div className="flex items-center justify-between text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
                       <span className="flex items-center gap-1.5"><Leaf className="w-3.5 h-3.5 text-emerald-500" /> Économie d'Énergie Bâtiments</span>
-                      <span className="font-mono text-emerald-600 font-black bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-200">{energyWeight}%</span>
+                      <span className="font-mono text-emerald-600 font-bold bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded text-[11px]">{energyWeight}%</span>
                     </div>
                     <input
                       type="range"
@@ -414,14 +548,14 @@ export default function AdminAiTimetableSchedulerPage() {
                       max={100}
                       value={energyWeight}
                       onChange={(e) => setEnergyWeight(Number(e.target.value))}
-                      className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-500 shadow-inner"
+                      className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-500"
                     />
                   </div>
 
                   <div>
-                    <div className="flex items-center justify-between text-xs font-bold text-foreground mb-1.5">
+                    <div className="flex items-center justify-between text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
                       <span className="flex items-center gap-1.5"><User className="w-3.5 h-3.5 text-indigo-500" /> Disponibilité des Professeurs</span>
-                      <span className="font-mono text-indigo-600 font-black bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded border border-indigo-200">{profAvailWeight}%</span>
+                      <span className="font-mono text-indigo-600 font-bold bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded text-[11px]">{profAvailWeight}%</span>
                     </div>
                     <input
                       type="range"
@@ -429,14 +563,14 @@ export default function AdminAiTimetableSchedulerPage() {
                       max={100}
                       value={profAvailWeight}
                       onChange={(e) => setProfAvailWeight(Number(e.target.value))}
-                      className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500 shadow-inner"
+                      className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500"
                     />
                   </div>
 
                   <div>
-                    <div className="flex items-center justify-between text-xs font-bold text-foreground mb-1.5">
+                    <div className="flex items-center justify-between text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
                       <span className="flex items-center gap-1.5"><Building2 className="w-3.5 h-3.5 text-purple-500" /> Regroupement Bâtiments</span>
-                      <span className="font-mono text-purple-600 font-black bg-purple-50 dark:bg-purple-950/60 px-2 py-0.5 rounded border border-purple-200">{buildingWeight}%</span>
+                      <span className="font-mono text-purple-600 font-bold bg-purple-50 dark:bg-purple-950/60 px-2 py-0.5 rounded text-[11px]">{buildingWeight}%</span>
                     </div>
                     <input
                       type="range"
@@ -444,56 +578,73 @@ export default function AdminAiTimetableSchedulerPage() {
                       max={100}
                       value={buildingWeight}
                       onChange={(e) => setBuildingWeight(Number(e.target.value))}
-                      className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-purple-500 shadow-inner"
+                      className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-purple-500"
                     />
                   </div>
                 </div>
 
                 {/* Heuristic Toggles */}
-                <div className="space-y-3 pt-1">
-                  <label className="flex items-center gap-3 p-3.5 bg-muted/40 rounded-2xl cursor-pointer border border-border hover:bg-muted/70 transition-colors">
+                <div className="space-y-2 pt-0.5">
+                  <label className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl cursor-pointer border border-slate-200/80 dark:border-slate-700 hover:bg-slate-100 transition-colors">
                     <input
                       type="checkbox"
                       checked={avoidSaturday}
                       onChange={(e) => setAvoidSaturday(e.target.checked)}
-                      className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500"
+                      className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500"
                     />
                     <div className="text-xs">
-                      <span className="font-black text-foreground block">Samedi Après-Midi Libre</span>
-                      <span className="text-[10px] text-muted-foreground">Préservation des week-ends étudiants et profs</span>
+                      <span className="font-bold text-slate-800 dark:text-slate-200 block">Samedi Après-Midi Libre</span>
+                      <span className="text-[10px] text-slate-400">Préservation des week-ends étudiants et profs</span>
                     </div>
                   </label>
 
-                  <label className="flex items-center gap-3 p-3.5 bg-muted/40 rounded-2xl cursor-pointer border border-border hover:bg-muted/70 transition-colors">
+                  <label className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl cursor-pointer border border-slate-200/80 dark:border-slate-700 hover:bg-slate-100 transition-colors">
                     <input
                       type="checkbox"
                       checked={preferMorning}
                       onChange={(e) => setPreferMorning(e.target.checked)}
-                      className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500"
+                      className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500"
                     />
                     <div className="text-xs">
-                      <span className="font-black text-foreground block">Priorité Cours Magistraux le Matin</span>
-                      <span className="text-[10px] text-muted-foreground">Amphis programmés de 08h30 à 12h45</span>
+                      <span className="font-bold text-slate-800 dark:text-slate-200 block">Priorité Cours Magistraux le Matin</span>
+                      <span className="text-[10px] text-slate-400">Amphis programmés de 08h30 à 12h15</span>
                     </div>
                   </label>
+                </div>
+
+                {/* ─── 🚀 ACTION BUTTONS (GENERATE & RESET) ─────────────────── */}
+                <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => generateMutation.mutate()}
+                    disabled={generateMutation.isPending}
+                    className="w-full py-3 px-5 bg-gradient-to-r from-indigo-600 via-blue-700 to-[#0f2863] hover:from-indigo-700 hover:to-blue-800 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-md hover:shadow-indigo-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  >
+                    {generateMutation.isPending ? (
+                      <RefreshCw className="w-4 h-4 animate-spin text-white" />
+                    ) : (
+                      <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" />
+                    )}
+                    <span>{generateMutation.isPending ? 'Calcul en cours...' : 'Lancer le Solveur IA'}</span>
+                  </button>
                 </div>
               </div>
             </div>
 
-            {/* Right Column: Live Conflict Scanner (7 Cols) */}
-            <div className="lg:col-span-7 bg-card border border-border rounded-3xl p-6 md:p-8 shadow-sm flex flex-col justify-between space-y-6">
+            {/* Right Column: Live Conflict Scanner & Campus Room Radar (7 Cols) */}
+            <div className="lg:col-span-7 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-xs flex flex-col justify-between space-y-6">
               
               <div className="space-y-4">
                 {/* Header with status badge & Refresh button */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-slate-100 dark:border-slate-800">
                   <div className="flex items-center gap-3">
-                    <div className={`w-3.5 h-3.5 rounded-full ${conflictsCount === 0 ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500 animate-ping'}`} />
+                    <div className={cn("w-3 h-3 rounded-full", conflictsCount === 0 ? "bg-emerald-500 animate-pulse" : "bg-rose-500 animate-ping")} />
                     <div>
-                      <h3 className="text-base font-black text-foreground">
-                        Scanner de Conflits en Temps Réel
+                      <h3 className="text-sm font-black text-slate-900 dark:text-white">
+                        Scanner de Conflits & Disponibilité en Temps Réel
                       </h3>
-                      <p className="text-xs text-muted-foreground">
-                        Détection continue des chevauchements d'horaires et doubles réservations.
+                      <p className="text-[11px] text-slate-400">
+                        Surveillance continue des chevauchements d'horaires et réservations
                       </p>
                     </div>
                   </div>
@@ -501,41 +652,90 @@ export default function AdminAiTimetableSchedulerPage() {
                   <button
                     onClick={() => refetchConflicts()}
                     disabled={isScanning}
-                    className="px-4 py-2 bg-muted hover:bg-muted/80 rounded-xl text-xs font-bold text-foreground transition-all flex items-center gap-2 self-end sm:self-auto cursor-pointer"
+                    className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 transition-all flex items-center gap-1.5 self-end sm:self-auto cursor-pointer"
                   >
-                    <RefreshCw className={`w-3.5 h-3.5 ${isScanning ? 'animate-spin' : ''}`} />
-                    <span>Re-scanner</span>
+                    <RefreshCw className={cn("w-3.5 h-3.5", isScanning && "animate-spin")} />
+                    <span>Actualiser</span>
                   </button>
                 </div>
 
                 {/* Conflict Status & Master Fix Banner */}
                 {conflictsCount === 0 ? (
-                  <div className="p-8 text-center bg-emerald-500/5 border border-emerald-300 dark:border-emerald-800/60 rounded-3xl space-y-3">
-                    <div className="w-14 h-14 rounded-2xl bg-emerald-100 dark:bg-emerald-950 text-emerald-600 flex items-center justify-center mx-auto shadow-inner">
-                      <ShieldCheck className="w-8 h-8" />
+                  <div className="space-y-4">
+                    <div className="p-6 text-center bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/40 rounded-2xl space-y-2">
+                      <div className="w-12 h-12 rounded-2xl bg-emerald-100 dark:bg-emerald-900/60 text-emerald-600 flex items-center justify-center mx-auto shadow-xs">
+                        <ShieldCheck className="w-6 h-6 text-emerald-600" />
+                      </div>
+                      <div className="space-y-0.5">
+                        <h4 className="font-black text-slate-900 dark:text-white text-sm">
+                          Zéro Conflit Détecté dans la Base de Données
+                        </h4>
+                        <p className="text-xs text-slate-500 max-w-md mx-auto">
+                          Toutes les salles, professeurs et groupes sont synchronisés sans aucun chevauchement horaire.
+                        </p>
+                      </div>
                     </div>
-                    <div className="space-y-1">
-                      <h4 className="font-black text-foreground text-base">
-                        Zéro Conflit Détecté dans la Base de Données
-                      </h4>
-                      <p className="text-xs text-muted-foreground max-w-md mx-auto">
-                        Toutes les salles, professeurs et groupes sont parfaitement synchronisés sans aucun chevauchement horaire.
-                      </p>
+
+                    {/* Live Campus Room Occupancy Radar */}
+                    <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200/80 dark:border-slate-700 space-y-3">
+                      <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
+                        <span className="flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-slate-500 font-black">
+                          🏛️ Radar d'Occupation des Espaces & Salles :
+                        </span>
+                        <span className="text-[10px] font-extrabold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded">
+                          18 Salles Opérationnelles
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                        <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-700 space-y-1">
+                          <div className="text-[10px] font-bold text-slate-400 uppercase">Amphithéâtres (A & B)</div>
+                          <div className="text-xs font-black text-slate-900 dark:text-white flex items-center justify-between">
+                            <span>Amphi A, Amphi B</span>
+                            <span className="text-emerald-600 text-[10px]">100% Libre</span>
+                          </div>
+                          <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                            <div className="h-full bg-emerald-500 rounded-full w-full" />
+                          </div>
+                        </div>
+
+                        <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-700 space-y-1">
+                          <div className="text-[10px] font-bold text-slate-400 uppercase">Salles de TD (101 à 108)</div>
+                          <div className="text-xs font-black text-slate-900 dark:text-white flex items-center justify-between">
+                            <span>8 Salles de Cours</span>
+                            <span className="text-emerald-600 text-[10px]">Disponible</span>
+                          </div>
+                          <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                            <div className="h-full bg-blue-500 rounded-full w-full" />
+                          </div>
+                        </div>
+
+                        <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-700 space-y-1">
+                          <div className="text-[10px] font-bold text-slate-400 uppercase">Labos Informatique</div>
+                          <div className="text-xs font-black text-slate-900 dark:text-white flex items-center justify-between">
+                            <span>Lab 1, Lab 2, Lab 3</span>
+                            <span className="text-emerald-600 text-[10px]">Prêt</span>
+                          </div>
+                          <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                            <div className="h-full bg-purple-500 rounded-full w-full" />
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-3.5">
                     {/* Master Action Banner */}
-                    <div className="bg-gradient-to-r from-amber-500/15 via-rose-500/10 to-amber-500/15 border border-amber-300 dark:border-amber-800/80 p-5 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                      <div className="flex items-center gap-3.5">
-                        <div className="w-11 h-11 rounded-2xl bg-rose-500/20 text-rose-700 dark:text-rose-300 flex items-center justify-center shrink-0">
-                          <AlertTriangle className="w-6 h-6" />
+                    <div className="bg-gradient-to-r from-amber-500/10 via-rose-500/10 to-amber-500/10 border border-amber-300 dark:border-amber-800/80 p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-700 dark:text-rose-300 flex items-center justify-center shrink-0">
+                          <AlertTriangle className="w-5 h-5" />
                         </div>
                         <div>
-                          <h4 className="font-black text-sm text-foreground">
+                          <h4 className="font-black text-xs text-slate-900 dark:text-white">
                             {conflictsCount} Anomalies de Planification Détectées
                           </h4>
-                          <p className="text-xs text-muted-foreground mt-0.5">
+                          <p className="text-[11px] text-slate-500 mt-0.5">
                             Des séances partagent le même créneau horaire ou la même salle physique.
                           </p>
                         </div>
@@ -544,64 +744,54 @@ export default function AdminAiTimetableSchedulerPage() {
                       <button
                         onClick={() => resolveAllMutation.mutate()}
                         disabled={resolveAllMutation.isPending}
-                        className="px-5 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:opacity-95 text-slate-950 font-black rounded-xl text-xs uppercase tracking-wider shadow-lg flex items-center gap-2 shrink-0 cursor-pointer self-end sm:self-auto"
+                        className="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:opacity-95 text-slate-950 font-black rounded-xl text-xs uppercase tracking-wider shadow-sm flex items-center gap-1.5 shrink-0 cursor-pointer self-end sm:self-auto"
                       >
                         {resolveAllMutation.isPending ? (
-                          <RefreshCw className="w-4 h-4 animate-spin text-slate-950" />
+                          <RefreshCw className="w-3.5 h-3.5 animate-spin text-slate-950" />
                         ) : (
-                          <Wand2 className="w-4 h-4 text-slate-950" />
+                          <Wand2 className="w-3.5 h-3.5" />
                         )}
-                        <span>Résoudre TOUT en 1 Clic 🪄</span>
+                        <span>Résoudre Tout Auto 🪄</span>
                       </button>
                     </div>
 
-                    {/* Detailed List of Conflicts with rich badges */}
-                    <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
-                      {conflictsList.map((conf, index) => {
-                        const dayLabel = conf.day_name || (conf.day_of_week ? DAY_NAMES_MAP[conf.day_of_week] : 'Lundi');
-                        const timeLabel = (conf.start_time && conf.end_time)
-                          ? `${String(conf.start_time).substring(0, 5)} - ${String(conf.end_time).substring(0, 5)}`
-                          : '08:30 - 10:30';
-
+                    {/* Conflict Items List */}
+                    <div className="space-y-2 max-h-[320px] overflow-y-auto pr-1">
+                      {conflictsList.map((conf: any, index: number) => {
                         return (
                           <div
-                            key={conf.schedule_id || index}
-                            className="p-4 bg-muted/40 hover:bg-muted/70 border border-border hover:border-amber-400/60 rounded-2xl transition-all space-y-3"
+                            key={index}
+                            className="p-3.5 bg-rose-50/60 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/60 rounded-xl space-y-1.5 hover:shadow-xs transition-all"
                           >
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                              <div className="flex flex-wrap items-center gap-2">
-                                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${
-                                  conf.type === 'ROOM_COLLISION' 
-                                    ? 'bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border-rose-300' 
-                                    : 'bg-amber-100 dark:bg-amber-950/60 text-amber-900 dark:text-amber-300 border-amber-300'
-                                }`}>
-                                  {conf.type_label || (conf.type === 'ROOM_COLLISION' ? 'Collision de Salle' : 'Chevauchement Prof')}
-                                </span>
+                            <div className="flex items-center justify-between">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-rose-100 dark:bg-rose-900/60 text-rose-800 dark:text-rose-200 text-[10px] font-black uppercase">
+                                <AlertTriangle className="w-3 h-3 text-rose-600" />
+                                {conf.type_label || 'Conflit Horaire'}
+                              </span>
 
-                                <span className="font-mono text-xs font-bold text-foreground bg-card px-2.5 py-0.5 rounded border border-border">
-                                  🗓️ {dayLabel} • {timeLabel}
-                                </span>
+                              <div className="text-[10px] font-bold text-slate-500">
+                                🕒 {conf.day_name || DAY_NAMES_MAP[conf.day_of_week] || 'Jour'} • {conf.start_time} - {conf.end_time}
                               </div>
 
                               <button
                                 onClick={() => resolveMutation.mutate(conf.schedule_id)}
                                 disabled={resolveMutation.isPending}
-                                className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-[11px] rounded-lg shadow-sm flex items-center gap-1.5 self-end sm:self-auto cursor-pointer"
+                                className="px-2.5 py-1 bg-white dark:bg-slate-900 border border-rose-300 dark:border-rose-700 text-rose-700 dark:text-rose-300 rounded-lg text-[10px] font-bold hover:bg-rose-50 transition-colors flex items-center gap-1 cursor-pointer"
                               >
-                                <Wand2 className="w-3.5 h-3.5" />
-                                <span>Résoudre 🪄</span>
+                                <Wand2 className="w-3 h-3" />
+                                <span>Résoudre</span>
                               </button>
                             </div>
 
-                            <div className="space-y-1">
-                              <div className="text-xs font-black text-foreground">
-                                📚 {conf.module_name || 'Module Pédagogique'} • <span className="text-indigo-600 dark:text-indigo-400 font-bold">{conf.group_name || 'Section / Groupe'}</span>
+                            <div className="space-y-0.5">
+                              <div className="text-xs font-black text-slate-900 dark:text-white">
+                                📚 {conf.module_name || 'Module Pédagogique'} • <span className="text-blue-600 dark:text-blue-400 font-bold">{conf.group_name || 'Section / Groupe'}</span>
                               </div>
-                              <div className="text-[11px] text-muted-foreground flex flex-wrap items-center gap-3">
+                              <div className="text-[10px] text-slate-500 flex flex-wrap items-center gap-3">
                                 <span>📍 <strong>Salle :</strong> {conf.room_name || 'Non assignée'}</span>
                                 <span>👤 <strong>Professeur :</strong> {conf.professor_name || 'Non assigné'}</span>
                               </div>
-                              <p className="text-[11px] text-rose-700 dark:text-rose-400 font-medium pt-0.5">
+                              <p className="text-[10px] text-rose-700 dark:text-rose-400 font-medium">
                                 ⚠️ {conf.reason || conf.description || 'Double réservation détectée sur ce créneau.'}
                               </p>
                             </div>
@@ -615,15 +805,14 @@ export default function AdminAiTimetableSchedulerPage() {
 
               {/* Action Save to Database */}
               {scheduledSessions.length > 0 && (
-                <div className="pt-5 border-t border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="text-xs text-muted-foreground">
-                    Grille calculée : <strong className="text-foreground">{scheduledSessions.length} séances prêtes</strong>.
+                <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="text-xs text-slate-500">
+                    Grille calculée : <strong className="text-slate-900 dark:text-white font-bold">{scheduledSessions.length} séances prêtes à être déployées</strong>.
                   </div>
                   <button
                     type="button"
                     onClick={() => applyMutation.mutate(scheduledSessions)}
                     disabled={applyMutation.isPending}
-                    className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:opacity-95 text-white px-7 py-3 rounded-2xl text-xs font-black uppercase tracking-wider transition-all shadow-lg active:scale-95 cursor-pointer"
                   >
                     {applyMutation.isPending ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                     <span>Déployer en Base de Données 💾</span>
@@ -666,6 +855,44 @@ export default function AdminAiTimetableSchedulerPage() {
                   )}
                 </div>
               </div>
+
+              {/* Filière filter chips */}
+              {uniqueFilieres.length > 1 && (
+                <div className="flex items-center gap-2 pt-2 border-t border-border flex-wrap">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground mr-1">Filières :</span>
+                  <button
+                    type="button"
+                    onClick={() => setFiliereFilter('all')}
+                    className={cn(
+                      "px-3 py-1 rounded-xl text-xs font-black transition-all cursor-pointer",
+                      filiereFilter === 'all'
+                        ? "bg-[#0f2863] text-white shadow-xs"
+                        : "bg-muted text-muted-foreground hover:bg-muted/80"
+                    )}
+                  >
+                    Toutes ({scheduledSessions.length})
+                  </button>
+                  {uniqueFilieres.map((fCode: any) => {
+                    const count = scheduledSessions.filter((s: any) => s.filiere_code === fCode).length;
+                    return (
+                      <button
+                        key={fCode}
+                        type="button"
+                        onClick={() => setFiliereFilter(fCode)}
+                        className={cn(
+                          "px-3 py-1 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5",
+                          filiereFilter === fCode
+                            ? "bg-blue-600 text-white shadow-xs"
+                            : "bg-muted text-muted-foreground hover:bg-muted/80"
+                        )}
+                      >
+                        <span>{fCode}</span>
+                        <span className="px-1.5 py-0.2 bg-black/20 rounded-md text-[10px]">{count}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
 
               {/* Sessions Cards Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -760,6 +987,199 @@ export default function AdminAiTimetableSchedulerPage() {
           </div>
 
           <OfficialTimetableMatrix matrix={generatedData?.official_matrix || generatedData?.matrix || generatedData} />
+        </div>
+      )}
+
+      {/* ─── 🔴 MODAL CONFIRMATION REMISE À ZÉRO DE L'EMPLOI DU TEMPS ───────── */}
+      {showClearModal && (
+        <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in">
+          <div className="bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/60 rounded-3xl p-6 md:p-8 max-w-xl w-full shadow-2xl space-y-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 border border-rose-200 dark:border-rose-800">
+                <Trash2 className="w-6 h-6 animate-pulse" />
+              </div>
+              <div>
+                <h3 className="text-base font-black text-slate-900 dark:text-white">
+                  Remise à Zéro de l'Emploi du Temps
+                </h3>
+                <p className="text-xs text-rose-600 dark:text-rose-400 font-medium">
+                  Suppression ciblée des anciens créneaux pour repartir sur une planification propre
+                </p>
+              </div>
+            </div>
+
+            {/* Mode Switcher Tabs */}
+            <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700">
+              <button
+                type="button"
+                onClick={() => setClearMode('period')}
+                className={cn(
+                  "flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer",
+                  clearMode === 'period'
+                    ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs"
+                    : "text-slate-500 hover:text-slate-800 dark:text-slate-400"
+                )}
+              >
+                🍂 Par Période
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setClearMode('single')}
+                className={cn(
+                  "flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer",
+                  clearMode === 'single'
+                    ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs"
+                    : "text-slate-500 hover:text-slate-800 dark:text-slate-400"
+                )}
+              >
+                🎯 Par Semestre (S1 à S10)
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setClearMode('all')}
+                className={cn(
+                  "flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer",
+                  clearMode === 'all'
+                    ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs"
+                    : "text-slate-500 hover:text-slate-800 dark:text-slate-400"
+                )}
+              >
+                🎓 Toute l'Année
+              </button>
+            </div>
+
+            {/* 1. Mode Par Période */}
+            {clearMode === 'period' && (
+              <div className="space-y-2">
+                <label className="block text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  Sélectionnez la période académique à réinitialiser :
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setClearPeriod('odd')}
+                    className={cn(
+                      "p-3.5 rounded-2xl border text-left transition-all cursor-pointer",
+                      clearPeriod === 'odd'
+                        ? "border-blue-600 bg-blue-50/80 dark:bg-blue-950/40 text-blue-950 dark:text-blue-300 ring-2 ring-blue-500/20"
+                        : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 text-slate-700 dark:text-slate-300"
+                    )}
+                  >
+                    <div className="text-xs font-black flex items-center gap-1.5">
+                      <span>🍂 Semestre 1 / Automne</span>
+                    </div>
+                    <div className="text-[10px] text-slate-500 mt-1">
+                      Semestres Impairs (S1, S3, S5, S7, S9)
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setClearPeriod('even')}
+                    className={cn(
+                      "p-3.5 rounded-2xl border text-left transition-all cursor-pointer",
+                      clearPeriod === 'even'
+                        ? "border-purple-600 bg-purple-50/80 dark:bg-purple-950/40 text-purple-950 dark:text-purple-300 ring-2 ring-purple-500/20"
+                        : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 text-slate-700 dark:text-slate-300"
+                    )}
+                  >
+                    <div className="text-xs font-black flex items-center gap-1.5">
+                      <span>🌸 Semestre 2 / Printemps</span>
+                    </div>
+                    <div className="text-[10px] text-slate-500 mt-1">
+                      Semestres Pairs (S2, S4, S6, S8, S10)
+                    </div>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* 2. Mode Par Semestre Précis (S1 à S10) */}
+            {clearMode === 'single' && (
+              <div className="space-y-2.5">
+                <label className="block text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  Choisissez le semestre exact à remettre à zéro :
+                </label>
+                <div className="grid grid-cols-5 gap-2">
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((sNum) => {
+                    const isSelected = clearSemesterNumber === sNum
+                    return (
+                      <button
+                        key={sNum}
+                        type="button"
+                        onClick={() => setClearSemesterNumber(sNum)}
+                        className={cn(
+                          "py-3 px-2 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1",
+                          isSelected
+                            ? "border-rose-600 bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 ring-2 ring-rose-500/20 font-black shadow-xs"
+                            : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 hover:bg-slate-50 text-slate-700 dark:text-slate-300"
+                        )}
+                      >
+                        <span className="text-xs font-black">S{sNum}</span>
+                        <span className="text-[9px] text-slate-400 font-semibold">
+                          {sNum <= 4 ? 'TC' : sNum <= 6 ? 'Licence' : 'Master'}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+                <div className="p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl text-center text-xs font-bold text-slate-700 dark:text-slate-300">
+                  Semestre ciblé : <span className="text-rose-600 dark:text-rose-400 font-extrabold">Semestre S{clearSemesterNumber} ({clearSemesterNumber % 2 === 1 ? 'Automne' : 'Printemps'})</span>
+                </div>
+              </div>
+            )}
+
+            {/* 3. Mode Toute l'Année */}
+            {clearMode === 'all' && (
+              <div className="p-4 bg-rose-50/70 dark:bg-rose-950/30 rounded-2xl border border-rose-200 dark:border-rose-800/60 text-xs text-slate-700 dark:text-slate-300 space-y-1.5">
+                <p className="font-black text-rose-900 dark:text-rose-200">
+                  🎓 Réinitialisation globale de toute l'année universitaire
+                </p>
+                <p className="text-[11px] text-slate-600 dark:text-slate-400">
+                  Toutes les séances de tous les semestres (S1 à S10), toutes filières confondues, seront effacées pour repartir sur une page 100% vierge.
+                </p>
+              </div>
+            )}
+
+            <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200/80 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 space-y-1.5">
+              <p className="font-bold text-slate-900 dark:text-slate-200 flex items-center gap-1.5">
+                <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                Action immédiate
+              </p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                Les créneaux de séances concernés seront supprimés de la base de données. Vous pourrez ensuite relancer le <strong>Solveur IA</strong> sur le semestre de votre choix.
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-2.5 pt-1">
+              <button
+                onClick={() => clearMutation.mutate()}
+                disabled={clearMutation.isPending}
+                className="w-full py-3.5 px-4 bg-rose-600 hover:bg-rose-700 text-white font-black rounded-2xl text-xs uppercase tracking-wider transition-all shadow-lg cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {clearMutation.isPending ? (
+                  <RefreshCw className="w-4 h-4 animate-spin text-white" />
+                ) : (
+                  <Trash2 className="w-4 h-4" />
+                )}
+                <span>
+                  {clearMutation.isPending ? 'Suppression en cours...' : 
+                   clearMode === 'period' ? `Oui, Effacer les Séances (${clearPeriod === 'odd' ? 'Automne S1/S3/S5/S7' : 'Printemps S2/S4/S6/S8'})` :
+                   clearMode === 'single' ? `Oui, Effacer les Séances du Semestre S${clearSemesterNumber}` :
+                   'Oui, Effacer Tous les Emplois du Temps (Toute l\'Année)'}
+                </span>
+              </button>
+
+              <button
+                onClick={() => setShowClearModal(false)}
+                className="w-full py-2.5 text-center text-xs font-bold text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+              >
+                Annuler
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

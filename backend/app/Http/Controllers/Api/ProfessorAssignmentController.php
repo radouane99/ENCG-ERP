@@ -261,6 +261,44 @@ class ProfessorAssignmentController extends Controller
             return response()->json(['success' => false, 'message' => 'Aucun enseignant trouvé dans le corps professoral.'], 400);
         }
 
+        // Auto-provision des modules S6 (GFC-S6 et MCM-S6) pour que le Semestre de Printemps contienne l'intégralité du cycle (21 modules = 42 charges comme l'Automne)
+        if ($semesterPeriod === 'even' || $semesterPeriod === 'spring' || $semesterPeriod === 'all') {
+            $hasS6 = Module::where('semester_number', 6)->exists();
+            if (! $hasS6) {
+                $inst = \App\Models\Institution::first();
+                $gfc = \App\Models\Filiere::where('code', 'GFC')->first();
+                $mcm = \App\Models\Filiere::where('code', 'MCM')->first();
+                if ($inst && $gfc) {
+                    $gfcS6 = [
+                        ['name' => 'Audit & Contrôle de Gestion', 'code' => 'GFC-S6-M01', 'semester_number' => 6, 'coefficient' => 3],
+                        ['name' => 'Marchés des Capitaux & Instruments Financiers', 'code' => 'GFC-S6-M02', 'semester_number' => 6, 'coefficient' => 3],
+                        ['name' => 'Comptabilité IFRS & Normes Internationales', 'code' => 'GFC-S6-M03', 'semester_number' => 6, 'coefficient' => 3],
+                        ['name' => 'Droit Fiscal & Contentieux des Affaires', 'code' => 'GFC-S6-M04', 'semester_number' => 6, 'coefficient' => 2],
+                        ['name' => 'Systèmes d\'Information Comptables (ERP Finance)', 'code' => 'GFC-S6-M05', 'semester_number' => 6, 'coefficient' => 2],
+                        ['name' => 'Économétrie Appliquée à la Finance', 'code' => 'GFC-S6-M06', 'semester_number' => 6, 'coefficient' => 2],
+                        ['name' => 'Anglais Financier & Communication', 'code' => 'GFC-S6-M07', 'semester_number' => 6, 'coefficient' => 1],
+                    ];
+                    foreach ($gfcS6 as $m) {
+                        Module::firstOrCreate(['code' => $m['code']], array_merge($m, ['institution_id' => $inst->id, 'filiere_id' => $gfc->id, 'is_active' => true]));
+                    }
+                }
+                if ($inst && $mcm) {
+                    $mcmS6 = [
+                        ['name' => 'Marketing Digital & E-Commerce', 'code' => 'MCM-S6-M01', 'semester_number' => 6, 'coefficient' => 3],
+                        ['name' => 'Gestion de la Relation Client (CRM)', 'code' => 'MCM-S6-M02', 'semester_number' => 6, 'coefficient' => 3],
+                        ['name' => 'Négociation & Stratégie Commerciale', 'code' => 'MCM-S6-M03', 'semester_number' => 6, 'coefficient' => 3],
+                        ['name' => 'Droit de la Consommation & Concurrence', 'code' => 'MCM-S6-M04', 'semester_number' => 6, 'coefficient' => 2],
+                        ['name' => 'Data Analytics & BI Marketing', 'code' => 'MCM-S6-M05', 'semester_number' => 6, 'coefficient' => 2],
+                        ['name' => 'Économie Internationale & Commerce', 'code' => 'MCM-S6-M06', 'semester_number' => 6, 'coefficient' => 2],
+                        ['name' => 'Communication & Négociation Anglais', 'code' => 'MCM-S6-M07', 'semester_number' => 6, 'coefficient' => 1],
+                    ];
+                    foreach ($mcmS6 as $m) {
+                        Module::firstOrCreate(['code' => $m['code']], array_merge($m, ['institution_id' => $inst->id, 'filiere_id' => $mcm->id, 'is_active' => true]));
+                    }
+                }
+            }
+        }
+
         // 2. Récupérer les modules filtrés selon la période semestrielle choisie (Automne S1/S3/S5/S7/S9 vs Printemps S2/S4/S6/S8/S10 vs Annuel)
         $modulesQuery = Module::with(['filiere.department']);
         if ($semesterPeriod === 'odd' || $semesterPeriod === 'autumn' || $semesterPeriod === 's1') {
