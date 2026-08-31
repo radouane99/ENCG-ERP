@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\AcademicYear;
+use App\Models\Institution;
 use App\Models\Schedule;
 use App\Services\Academic\AiTimetableSchedulerService;
 use Illuminate\Http\JsonResponse;
@@ -31,6 +32,7 @@ class AiTimetableSchedulerController extends Controller
             'filiere_id' => 'nullable|integer',
             'avoid_saturday_afternoon' => 'nullable|boolean',
             'prefer_morning_lectures' => 'nullable|boolean',
+            'dedicated_rooms' => 'nullable|array',
         ]);
 
         $academicYearId = (! empty($validated['academic_year_id']) ? $validated['academic_year_id'] : null)
@@ -44,6 +46,7 @@ class AiTimetableSchedulerController extends Controller
             'filiere_id' => $validated['filiere_id'] ?? null,
             'avoid_saturday_afternoon' => $validated['avoid_saturday_afternoon'] ?? true,
             'prefer_morning_lectures' => $validated['prefer_morning_lectures'] ?? true,
+            'dedicated_rooms' => $validated['dedicated_rooms'] ?? [],
         ];
 
         $result = $this->scheduler->generateSchedule($academicYearId, $semesterSelection, $options);
@@ -117,6 +120,11 @@ class AiTimetableSchedulerController extends Controller
             ?? AcademicYear::first()?->id
             ?? 1;
 
+        $institutionId = Institution::first()?->id ?? 1;
+        $fallbackSemesterId = DB::table('semesters')->where('academic_year_id', $academicYearId)->value('id')
+            ?? DB::table('semesters')->value('id')
+            ?? 1;
+
         $items = $validated['scheduled_items'];
         $overwrite = $validated['overwrite_existing'] ?? false;
 
@@ -132,16 +140,45 @@ class AiTimetableSchedulerController extends Controller
 
             $insertedCount = 0;
             foreach ($items as $item) {
+                // Déterminer le type de séance (cm, td, tp)
+                $badge = $item['session_badge'] ?? '';
+                $sessionType = ($badge === 'TP Labo' || str_contains($item['session_nature'] ?? '', 'Informatique')) 
+                    ? 'tp' 
+                    : (($badge === 'TD Groupe' || str_contains($item['session_nature'] ?? '', 'Langues')) ? 'td' : 'cm');
+
+                // Déterminer le semester_id adapté
+                $groupSemesterNum = null;
+                if (! empty($item['group_id'])) {
+                    $groupSemesterNum = DB::table('groups')->where('id', $item['group_id'])->value('semester_number');
+                }
+                
+                $semesterId = $fallbackSemesterId;
+                if ($groupSemesterNum) {
+                    $periodNum = ($groupSemesterNum % 2 === 1) ? 1 : 2;
+                    $semesterId = DB::table('semesters')
+                        ->where(function ($q) use ($academicYearId) {
+                            $q->where('academic_year_id', $academicYearId)->orWhereNull('academic_year_id');
+                        })
+                        ->where('number', $periodNum)
+                        ->value('id')
+                        ?? DB::table('semesters')->where('number', $periodNum)->value('id')
+                        ?? $fallbackSemesterId;
+                }
+
                 Schedule::create([
+                    'institution_id' => $institutionId,
                     'academic_year_id' => $academicYearId,
+                    'semester_id' => $semesterId,
                     'module_id' => $item['module_id'] ?? null,
                     'professor_id' => $item['professor_id'] ?? null,
+                    'professor_type' => 'App\\Models\\Professor',
                     'group_id' => $item['group_id'] ?? null,
                     'room_id' => $item['room_id'] ?? null,
                     'day_of_week' => $item['day_of_week'] ?? 1,
                     'start_time' => $item['start_time'] ?? '08:30',
                     'end_time' => $item['end_time'] ?? '10:15',
-                    'session_type' => 'cours',
+                    'session_type' => $sessionType,
+                    'recurrence' => 'weekly',
                     'is_active' => true,
                 ]);
                 $insertedCount++;

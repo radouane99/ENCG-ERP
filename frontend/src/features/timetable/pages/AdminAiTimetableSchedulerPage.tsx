@@ -53,6 +53,14 @@ export default function AdminAiTimetableSchedulerPage() {
   const [profAvailWeight, setProfAvailWeight] = useState<number>(90);
   const [buildingWeight, setBuildingWeight] = useState<number>(75);
   const [selectedStrategy, setSelectedStrategy] = useState<string>('mrv_degree_lcv');
+  
+  // Dedicated Rooms per Filière / Department (e.g. GFC, MCM, TC)
+  const [dedicatedRooms, setDedicatedRooms] = useState<Record<string, string[]>>({
+    'TC': ['Salle 105', 'Salle 106'],
+    'GFC': ['Salle 101', 'Salle 102'],
+    'MCM': ['Salle 103', 'Salle 104'],
+  });
+  const [showDedicatedRoomsModal, setShowDedicatedRoomsModal] = useState<boolean>(false);
 
   // Filter state for preview grid
   const [dayFilter, setDayFilter] = useState<number | 'all'>('all');
@@ -79,6 +87,7 @@ export default function AdminAiTimetableSchedulerPage() {
         prof_avail_weight: profAvailWeight,
         building_weight: buildingWeight,
         strategy: selectedStrategy,
+        dedicated_rooms: dedicatedRooms,
       };
 
       if (['odd', 'even', 'all', 'autumn', 'spring'].includes(String(selectedSemester))) {
@@ -613,6 +622,43 @@ export default function AdminAiTimetableSchedulerPage() {
                   </label>
                 </div>
 
+                {/* 5. Affectation des Salles Dédiées par Département / Filière */}
+                <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                      5. Salles Dédiées par Filière :
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setShowDedicatedRoomsModal(true)}
+                      className="text-[10px] font-black text-blue-600 dark:text-blue-400 hover:underline cursor-pointer flex items-center gap-1"
+                    >
+                      <Sliders className="w-3 h-3" /> Configurer
+                    </button>
+                  </div>
+
+                  <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200/80 dark:border-slate-700 space-y-1.5">
+                    {Object.entries(dedicatedRooms).map(([filCode, rNames]) => (
+                      <div key={filCode} className="flex items-center justify-between text-xs">
+                        <span className="font-black text-slate-800 dark:text-slate-200 px-2 py-0.5 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-[10px]">
+                          {filCode}
+                        </span>
+                        <div className="flex items-center gap-1 flex-wrap justify-end">
+                          {rNames.length > 0 ? (
+                            rNames.map(rName => (
+                              <span key={rName} className="px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 font-extrabold text-[10px] border border-blue-200/60 dark:border-blue-900/40">
+                                🏛️ {rName}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="text-[10px] text-slate-400 italic">Salles libres</span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
                 {/* ─── 🚀 ACTION BUTTONS (GENERATE & RESET) ─────────────────── */}
                 <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-2.5">
                   <button
@@ -806,17 +852,18 @@ export default function AdminAiTimetableSchedulerPage() {
 
               {/* Action Save to Database */}
               {scheduledSessions.length > 0 && (
-                <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="text-xs text-slate-500">
-                    Grille calculée : <strong className="text-slate-900 dark:text-white font-bold">{scheduledSessions.length} séances prêtes à être déployées</strong>.
+                <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-emerald-500/5 dark:bg-emerald-950/20 p-4 rounded-2xl border border-emerald-200/60 dark:border-emerald-900/40">
+                  <div className="text-xs text-slate-700 dark:text-slate-300">
+                    Grille calculée : <strong className="text-emerald-700 dark:text-emerald-400 font-black">{scheduledSessions.length} séances prêtes à être déployées</strong> en base de données.
                   </div>
                   <button
                     type="button"
                     onClick={() => applyMutation.mutate(scheduledSessions)}
                     disabled={applyMutation.isPending}
+                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-800 text-white font-black text-xs uppercase tracking-wider shadow-md hover:shadow-emerald-500/25 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
                   >
-                    {applyMutation.isPending ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                    <span>Déployer en Base de Données 💾</span>
+                    {applyMutation.isPending ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4 text-emerald-200" />}
+                    <span>{applyMutation.isPending ? 'Déploiement en cours...' : 'Déployer en Base de Données 💾'}</span>
                   </button>
                 </div>
               )}
@@ -826,7 +873,7 @@ export default function AdminAiTimetableSchedulerPage() {
           {/* Schedule Preview Grid (When AI has generated a proposal) */}
           {scheduledSessions.length > 0 && (
             <div className="bg-card border border-border rounded-3xl p-6 md:p-8 shadow-sm space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-border">
                 <div>
                   <h3 className="text-lg font-black text-foreground">
                     Aperçu de la Grille Optimisée par l'IA
@@ -842,7 +889,7 @@ export default function AdminAiTimetableSchedulerPage() {
                     onChange={(val) => setDayFilter(val === 'all' ? 'all' : Number(val))}
                     options={dayFilterOptions}
                     placeholder="Filtrer par jour..."
-                    className="w-48"
+                    className="w-44"
                   />
 
                   {uniqueGroups.length > 0 && (
@@ -851,9 +898,19 @@ export default function AdminAiTimetableSchedulerPage() {
                       onChange={(val) => setGroupFilter(String(val))}
                       options={groupFilterOptions}
                       placeholder="Filtrer par groupe..."
-                      className="w-56"
+                      className="w-48"
                     />
                   )}
+
+                  <button
+                    type="button"
+                    onClick={() => applyMutation.mutate(scheduledSessions)}
+                    disabled={applyMutation.isPending}
+                    className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-wider shadow-sm transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  >
+                    {applyMutation.isPending ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                    <span>Déployer ({scheduledSessions.length})</span>
+                  </button>
                 </div>
               </div>
 
@@ -993,7 +1050,7 @@ export default function AdminAiTimetableSchedulerPage() {
       {/* ═════════════════════════════════════════════════════════════════════════ */}
       {activeTab === 'manual_board' && (
         <div className="space-y-6 animate-in fade-in">
-          <div className="p-4 bg-amber-500/10 border border-amber-300 dark:border-amber-800 rounded-2xl flex items-center justify-between">
+          <div className="p-4 bg-amber-500/10 border border-amber-300 dark:border-amber-800 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <Hand className="w-6 h-6 text-amber-600 shrink-0" />
               <div>
@@ -1001,15 +1058,26 @@ export default function AdminAiTimetableSchedulerPage() {
                   Studio d'Ajustement Manuel par Glisser-Déposer (Drag & Drop)
                 </h4>
                 <p className="text-[11px] text-amber-800/80 dark:text-amber-400/80">
-                  Glissez et déposez les séances directement dans les créneaux horaires pour personnaliser la grille manuellement.
+                  Glissez et déposez les séances directement dans les créneaux horaires pour personnaliser la grille en temps réel.
                 </p>
               </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => refetchConflicts()}
+                className="px-3.5 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+              >
+                <RefreshCw className="w-3.5 h-3.5 text-blue-600" />
+                <span>Actualiser la Grille</span>
+              </button>
             </div>
           </div>
 
           <ManualTimetableBoard
             versionId={1}
-            filiereLabel={`Semestre ${selectedSemester} - Tronc Commun`}
+            filiereLabel={`Semestre ${selectedSemester === 'odd' ? 'Automne (S1/S3/S5/S7)' : selectedSemester === 'even' ? 'Printemps (S2/S4/S6/S8)' : selectedSemester}`}
             onBack={() => setActiveTab('generator')}
             onChanged={() => refetchConflicts()}
           />
@@ -1226,6 +1294,127 @@ export default function AdminAiTimetableSchedulerPage() {
                 className="w-full py-2.5 text-center text-xs font-bold text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
               >
                 Annuler
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 🏛️ Modal: Affectation des Salles Dédiées par Filière / Département ── */}
+      {showDedicatedRoomsModal && (
+        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl max-w-2xl w-full p-6 md:p-8 space-y-6 animate-in zoom-in-95">
+            
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-black border border-indigo-100 dark:border-indigo-900/40">
+                  <Building2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-slate-900 dark:text-white">
+                    Affectation des Salles par Filière & Département
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    Spécifiez les salles réservées en priorité pour chaque chef de filière / département.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowDedicatedRoomsModal(false)}
+                className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center justify-center hover:bg-slate-200 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Quick Auto-preset button */}
+            <div className="flex items-center justify-between bg-blue-500/10 dark:bg-blue-950/30 p-3.5 rounded-2xl border border-blue-200 dark:border-blue-800">
+              <div className="text-xs text-blue-900 dark:text-blue-200">
+                <strong className="font-bold">Astuce académique :</strong> Attribuer des salles fixes évite les déplacements d'étudiants entre bâtiments.
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setDedicatedRooms({
+                    'GFC': ['Salle 101', 'Salle 102'],
+                    'MCM': ['Salle 103', 'Salle 104'],
+                    'TC': ['Salle 105', 'Salle 106'],
+                  });
+                  toast.success("Répartition standard des départements appliquée !");
+                }}
+                className="px-3 py-1.5 rounded-xl bg-[#0f2863] text-white text-[11px] font-black whitespace-nowrap cursor-pointer hover:bg-blue-900 transition-all"
+              >
+                ⚡ Répartition Équilibrée
+              </button>
+            </div>
+
+            {/* Filières mapping list */}
+            <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-1">
+              {[
+                { code: 'TC', label: 'Tronc Commun (S1 / S2 / S3 / S4)' },
+                { code: 'GFC', label: 'Gestion Financière et Comptable (GFC)' },
+                { code: 'MCM', label: 'Management Commercial & Marketing (MCM)' },
+              ].map((fil) => {
+                const assigned = dedicatedRooms[fil.code] || [];
+                const availableRoomsList = [
+                  'Salle 101', 'Salle 102', 'Salle 103', 'Salle 104',
+                  'Salle 105', 'Salle 106', 'Salle 107', 'Salle 108',
+                  'Amphithéâtre A', 'Amphithéâtre B'
+                ];
+
+                return (
+                  <div key={fil.code} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700 space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="font-black text-xs text-slate-900 dark:text-white">{fil.label}</span>
+                        <span className="text-[10px] font-bold text-muted-foreground ml-2">
+                          ({assigned.length} salle{assigned.length > 1 ? 's' : ''} dédiée{assigned.length > 1 ? 's' : ''})
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-1.5">
+                      {availableRoomsList.map((rName) => {
+                        const isSelected = assigned.includes(rName);
+                        return (
+                          <button
+                            key={rName}
+                            type="button"
+                            onClick={() => {
+                              setDedicatedRooms(prev => {
+                                const current = prev[fil.code] || [];
+                                const updated = isSelected 
+                                  ? current.filter(r => r !== rName)
+                                  : [...current, rName];
+                                return { ...prev, [fil.code]: updated };
+                              });
+                            }}
+                            className={cn(
+                              "px-2.5 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1 border",
+                              isSelected
+                                ? "bg-indigo-600 text-white border-indigo-700 shadow-xs"
+                                : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100"
+                            )}
+                          >
+                            <span>{isSelected ? '✓' : '+'}</span>
+                            <span>{rName}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowDedicatedRoomsModal(false)}
+                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-700 text-white font-black text-xs uppercase tracking-wider shadow-md hover:shadow-indigo-500/20 transition-all cursor-pointer"
+              >
+                Enregistrer & Appliquer au Solveur
               </button>
             </div>
           </div>

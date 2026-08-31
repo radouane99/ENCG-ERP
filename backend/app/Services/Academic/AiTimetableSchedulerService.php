@@ -3,8 +3,10 @@
 namespace App\Services\Academic;
 
 use App\Models\AcademicYear;
+use App\Models\Campus;
 use App\Models\Filiere;
 use App\Models\Group;
+use App\Models\Institution;
 use App\Models\Module;
 use App\Models\Professor;
 use App\Models\Room;
@@ -187,8 +189,8 @@ class AiTimetableSchedulerService
                         ? trim(($assignedProf->user->first_name ?? '').' '.($assignedProf->user->last_name ?? '')) 
                         : ($assignedProf?->user?->name ?? 'Enseignant Chercheur');
 
-                    // Salles classées par pertinence pédagogique pour ce cours
-                    $rankedRooms = $this->rankRoomsForModule($rooms, $module, $course, $group);
+                    // Salles classées par pertinence pédagogique et affectation de salles dédiées par filière
+                    $rankedRooms = $this->rankRoomsForModule($rooms, $module, $course, $group, $options['dedicated_rooms'] ?? []);
 
                     // Chercher le meilleur créneau libre sans aucun conflit avec équilibrage hebdomadaire (Lundi à Vendredi)
                     $allocated = false;
@@ -300,14 +302,6 @@ class AiTimetableSchedulerService
                         }
                     }
 
-                                    $totalCoursesScheduled++;
-                                    $allocated = true;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-
                     if (! $allocated) {
                         $conflictsDetected[] = [
                             'module' => $module->name,
@@ -340,10 +334,14 @@ class AiTimetableSchedulerService
     {
         $schedules = DB::table('schedules')
             ->leftJoin('rooms', 'schedules.room_id', '=', 'rooms.id')
-            ->leftJoin('users', 'schedules.professor_id', '=', 'users.id')
+            ->leftJoin('professors', 'schedules.professor_id', '=', 'professors.id')
+            ->leftJoin('users', 'professors.user_id', '=', 'users.id')
             ->leftJoin('modules', 'schedules.module_id', '=', 'modules.id')
             ->leftJoin('groups', 'schedules.group_id', '=', 'groups.id')
-            ->where('schedules.academic_year_id', $academicYearId)
+            ->where(function ($q) use ($academicYearId) {
+                $q->where('schedules.academic_year_id', $academicYearId)
+                    ->orWhereNull('schedules.academic_year_id');
+            })
             ->where('schedules.is_active', true)
             ->select([
                 'schedules.*',
@@ -630,10 +628,16 @@ class AiTimetableSchedulerService
     }
 
     /**
-     * Classe les salles par pertinence pédagogique stricte pour le module donné.
+     * Classe les salles par pertinence pédagogique stricte et affectation dédiée par filière.
      * CONTRAINTE ABSOLUE : Les modules non-informatiques (Comptabilité, Finance, Math, etc.) sont TOTALEMENT INTERDITS de salle informatique !
      */
-    protected function rankRoomsForModule(Collection $rooms, Module $module, object $course, Group $group): Collection
+    protected function rankRoomsForModule(
+        Collection $rooms, 
+        Module $module, 
+        object $course, 
+        Group $group, 
+        array $dedicatedRooms = []
+    ): Collection
     {
         $nameLower = mb_strtolower($module->name);
         $codeLower = mb_strtolower($module->code ?? '');
@@ -669,27 +673,56 @@ class AiTimetableSchedulerService
             return $rooms->filter(fn ($r) => strtolower($r->type ?? '') === 'classroom')->values();
         }
 
-        // CONTRAINTE DURE STRICTE : Tout module non-informatique (Comptabilité, Finance, Économie, Math, Droit, Langues, etc.)
-        // est STRICTEMENT INTERDIT dans les salles / labos informatiques !
+        // CONTRAINTE DURE STRICTE : Tout module non-informatique est STRICTEMENT INTERDIT dans les salles / labos informatiques !
         $nonLabRooms = $rooms->filter(function ($r) {
             $rType = strtolower($r->type ?? 'classroom');
             $isLab = ($rType === 'lab' || str_contains(strtolower($r->name), 'info'));
             return ! $isLab;
         });
 
-        if ($isLanguageOrSoftSkills) {
-            // Langues et Soft Skills en petits groupes : Salles de TD en priorité
-            return $nonLabRooms->sortBy(function ($r) {
-                $rType = strtolower($r->type ?? 'classroom');
-                return ($rType === 'classroom' || str_contains(strtolower($r->name), 'salle')) ? 1 : 2;
-            })->values();
-        }
+        // Salles dédiées configurées pour cette filière
+        $filiereId = (int) ($group->filiere_id ?? $module->filiere_id ?? 0);
+        $filiereCode = strtolower((string) ($group->filiere_code ?? ''));
 
-        // Cours Magistraux et Gestion (Comptabilité, Management, Finance, Math, Éco, etc.)
-        // Salles de TD ou Amphis
-        return $nonLabRooms->sortBy(function ($r) {
+        $dedicatedForThisFiliere = array_map('intval', (array) (
+            $dedicatedRooms[$filiereId] 
+            ?? $dedicatedRooms[(string) $filiereId] 
+            ?? $dedicatedRooms[$filiereCode] 
+            ?? []
+        ));
+
+        // Salles réservées pour d'autres filières (à éviter si possible)
+        $dedicatedForOtherFilieres = [];
+        foreach ($dedicatedRooms as $fKey => $rIds) {
+            $isSame = ((string) $fKey === (string) $filiereId) || (strtolower((string) $fKey) === $filiereCode);
+            if (! $isSame) {
+                foreach ((array) $rIds as $rid) {
+                    $dedicatedForOtherFilieres[] = (int) $rid;
+                }
+            }
+        }
+        $dedicatedForOtherFilieres = array_unique($dedicatedForOtherFilieres);
+
+        return $nonLabRooms->sortBy(function ($r) use ($isLanguageOrSoftSkills, $dedicatedForThisFiliere, $dedicatedForOtherFilieres) {
+            $rId = (int) $r->id;
             $rType = strtolower($r->type ?? 'classroom');
-            return ($rType === 'classroom') ? 1 : 2;
+
+            // 1. Salle explicitement attribuée à cette filière / département -> Top Priorité (Score 5)
+            if (in_array($rId, $dedicatedForThisFiliere, true)) {
+                return 5;
+            }
+
+            // 2. Salle réservée pour une autre filière -> Priorité faible (Score 80)
+            if (in_array($rId, $dedicatedForOtherFilieres, true)) {
+                return 80;
+            }
+
+            // 3. Salles standard selon la matière
+            if ($isLanguageOrSoftSkills) {
+                return ($rType === 'classroom' || str_contains(strtolower($r->name), 'salle')) ? 20 : 30;
+            }
+
+            return ($rType === 'classroom') ? 20 : 30;
         })->values();
     }
 
@@ -698,6 +731,9 @@ class AiTimetableSchedulerService
      */
     protected function ensureCampusRooms(): void
     {
+        $institutionId = Institution::first()?->id ?? null;
+        $campusId = Campus::first()?->id ?? null;
+
         $neededRooms = [
             ['name' => 'Amphithéâtre A', 'code' => 'AMPH-A', 'type' => 'amphitheater', 'capacity' => 320],
             ['name' => 'Amphithéâtre B', 'code' => 'AMPH-B', 'type' => 'amphitheater', 'capacity' => 250],
@@ -715,9 +751,10 @@ class AiTimetableSchedulerService
 
         foreach ($neededRooms as $r) {
             $exists = Room::where('code', $r['code'])->orWhere('name', $r['name'])->exists();
-            if (! $exists) {
+            if (! $exists && $institutionId) {
                 Room::create([
-                    'institution_id' => 1,
+                    'institution_id' => $institutionId,
+                    'campus_id' => $campusId,
                     'name' => $r['name'],
                     'code' => $r['code'],
                     'type' => $r['type'],
