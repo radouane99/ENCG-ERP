@@ -46,8 +46,13 @@
         <div class="container">
             <div class="header">
                 <div class="logo-container" style="border-bottom: 1.5px solid #000; padding-bottom: 5px;">
-                    <img src="{{ public_path('logo-encg.png') }}" alt="Logo ENCG" class="logo" onerror="this.style.display='none'">
-                    <!-- If you have a specific right-side logo or text, you can place it here -->
+                    @if(file_exists(public_path('logo-encg.png')))
+                        <img src="{{ public_path('logo-encg.png') }}" alt="Logo ENCG" class="logo" style="max-height: 45px;">
+                    @elseif(file_exists(public_path('images/logo.png')))
+                        <img src="{{ public_path('images/logo.png') }}" alt="Logo ENCG" class="logo" style="max-height: 45px;">
+                    @else
+                        <div style="font-weight: bold; font-size: 13px; color: #000; text-transform: uppercase;">ÉCOLE NATIONALE DE COMMERCE ET DE GESTION — FÈS</div>
+                    @endif
                 </div>
             </div>
 
@@ -133,14 +138,16 @@
                 <div style="display: table-cell; width: 50%; vertical-align: top;">
                     <!-- Left side empty or internal usage -->
                     <div style="font-size: 8px; color: #666; margin-top: 50px;">
-                        Document généré électroniquement.<br>Réf: {{ strtoupper(substr(md5($data['id'] . $data['created_at']), 0, 10)) }}
+                        Document généré électroniquement.<br>Réf: {{ strtoupper(substr(md5(($data['id'] ?? 'ENCG') . ($data['created_at'] ?? now()->toDateTimeString())), 0, 10)) }}
                     </div>
                 </div>
                 <div style="display: table-cell; width: 50%; text-align: right; vertical-align: top;">
                     <div class="signature-title">Chargée de la Scolarité et des Affaires Estudiantines</div>
                     <div style="text-align: right; margin-top: 15px;">
-                        @if(!empty($data['qr_token']))
-                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=90x90&data={{ urlencode($data['qr_token']) }}" alt="QR Code" style="border: 2px solid #000; padding: 2px; float: right; margin-left: 20px;">
+                        @if(!empty($data['qrCodeBase64']))
+                            <img src="{{ $data['qrCodeBase64'] }}" alt="QR Code" style="border: 1.5px solid #000; padding: 2px; float: right; margin-left: 20px; width: 85px; height: 85px;">
+                        @elseif(!empty($data['qr_token']))
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=90x90&data={{ urlencode($data['qr_token']) }}" alt="QR Code" style="border: 1.5px solid #000; padding: 2px; float: right; margin-left: 20px;" onerror="this.style.display='none'">
                         @endif
                         <div style="float: right; margin-right: 20px; font-style: italic; font-size: 10px; color: #666; padding-top: 40px;">
                             Signature Cachetée

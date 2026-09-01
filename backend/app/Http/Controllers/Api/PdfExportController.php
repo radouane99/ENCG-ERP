@@ -140,7 +140,7 @@ class PdfExportController extends Controller
 
     public function studentConvocationPdf(int $seatingId)
     {
-        $seating = ExamSeating::with(['student.user', 'student.latestPathway.filiere', 'exam.module', 'room', 'exam.examSession'])->findOrFail($seatingId);
+        $seating = ExamSeating::with(['student.user', 'exam.module.filiere', 'room', 'exam.examSession'])->findOrFail($seatingId);
         $pdf = $this->generateSingleConvocationPdf($seating);
         $name = ($seating->student->user->last_name ?? 'Etudiant').'_'.($seating->student->user->first_name ?? '');
 
@@ -149,7 +149,7 @@ class PdfExportController extends Controller
 
     public function studentConvocationPreview(int $seatingId)
     {
-        $seating = ExamSeating::with(['student.user', 'student.latestPathway.filiere', 'exam.module', 'room', 'exam.examSession'])->findOrFail($seatingId);
+        $seating = ExamSeating::with(['student.user', 'exam.module.filiere', 'room', 'exam.examSession'])->findOrFail($seatingId);
         $pdf = $this->generateSingleConvocationPdf($seating);
 
         return $pdf->stream('convocation_preview.pdf', ['Attachment' => false]);
@@ -173,6 +173,125 @@ class PdfExportController extends Controller
         return $pdf->stream('convocation_surveillance_preview.pdf', ['Attachment' => false]);
     }
 
+    private function generateSingleConvocationPdf(ExamSeating $seating)
+    {
+        $student = $seating->student;
+        $user = $student?->user;
+        $sessionId = $seating->exam?->exam_session_id;
+
+        $allStudentSeatings = ExamSeating::with(['exam.module.filiere', 'room', 'exam.examSession'])
+            ->where('student_id', $student->id)
+            ->when($sessionId, fn ($q) => $q->whereHas('exam', fn ($sq) => $sq->where('exam_session_id', $sessionId)))
+            ->get();
+
+        $exams = [];
+        foreach ($allStudentSeatings as $s) {
+            if ($s->exam) {
+                $profName = $this->getProfessorNameForModule($s->exam->module_id);
+                $exams[] = [
+                    'date' => $s->exam->exam_date?->format('d/m/Y') ?? 'N/A',
+                    'time' => ($s->exam->start_time ? substr($s->exam->start_time, 0, 5) : '08:30').' - '.($s->exam->end_time ? substr($s->exam->end_time, 0, 5) : '10:30'),
+                    'module' => $s->exam->module->name ?? 'Module N/A',
+                    'enseignant' => $profName,
+                    'room' => $s->room->name ?? ($s->exam->room->name ?? 'Amphithéâtre B'),
+                    'seat' => $s->seat_number ? 'N° '.$s->seat_number : 'N° 1',
+                    'qr_token' => $s->qr_token,
+                ];
+            }
+        }
+
+        $sessionName = $seating->exam?->examSession?->name ?? 'Session d\'Examens';
+        $sessionType = $seating->exam?->examSession?->type ?? 'Normale';
+        $filiereName = $seating->exam?->module?->filiere?->name ?? 'Tronc Commun ENCG';
+
+        $verifyToken = $seating->qr_token ?: Str::uuid()->toString();
+        $verifyUrl = url('/api/convocations/'.$verifyToken.'/verify');
+        $qrCodeBase64 = null;
+        if (class_exists(QrCode::class)) {
+            try {
+                $qrRaw = QrCode::format('png')->size(120)->generate($verifyUrl);
+                $qrCodeBase64 = 'data:image/png;base64,'.base64_encode($qrRaw);
+            } catch (\Throwable $e) {
+                try {
+                    $qrSvg = QrCode::format('svg')->size(120)->generate($verifyUrl);
+                    $qrCodeBase64 = 'data:image/svg+xml;base64,'.base64_encode($qrSvg);
+                } catch (\Throwable $e2) {
+                }
+            }
+        }
+
+        $studentsData = [[
+            'id' => $seating->id,
+            'created_at' => $seating->created_at?->toIso8601String() ?? now()->toIso8601String(),
+            'qr_token' => $verifyToken,
+            'qrCodeBase64' => $qrCodeBase64,
+            'person_name' => trim(($user?->first_name ?? '').' '.($user?->last_name ?? ($user?->name ?? 'Étudiant'))),
+            'person_id' => $student->cne ?? ($user?->cin ?? 'N13800000'),
+            'filiere_name' => $filiereName,
+            'session_name' => $sessionName,
+            'session_type' => $sessionType,
+            'exams' => $exams,
+        ]];
+
+        return $this->getPdfInstance('pdf.convocations_batch', compact('studentsData'));
+    }
+
+    private function generateSingleSurveillantConvocationPdf(int $surveillanceId)
+    {
+        $surveillance = ExamSurveillance::with(['exam.module', 'exam.examSession', 'exam.room', 'professor.user'])->findOrFail($surveillanceId);
+        $professorId = $surveillance->professor_id;
+        $sessionId = $surveillance->exam?->exam_session_id;
+
+        $allSurveillances = ExamSurveillance::with(['exam.module', 'room', 'exam.examSession'])
+            ->where('professor_id', $professorId)
+            ->when($sessionId, fn ($q) => $q->whereHas('exam', fn ($sq) => $sq->where('exam_session_id', $sessionId)))
+            ->get();
+
+        $exams = [];
+        foreach ($allSurveillances as $s) {
+            if ($s->exam) {
+                $exams[] = [
+                    'date' => $s->exam->exam_date?->format('d/m/Y') ?? 'N/A',
+                    'time' => ($s->exam->start_time ? substr($s->exam->start_time, 0, 5) : '08:30'),
+                    'module' => $s->exam->module->name ?? 'N/A',
+                    'room' => $s->room->name ?? ($s->exam->room->name ?? 'Amphi B'),
+                    'role' => $s->role ?? 'Surveillant',
+                ];
+            }
+        }
+
+        $profUser = $surveillance->professor?->user ?? $surveillance->professor;
+        $profName = trim(($profUser?->first_name ?? '').' '.($profUser?->last_name ?? ($profUser?->name ?? 'Professeur')));
+        $sessionName = $surveillance->exam?->examSession?->name ?? 'Session d\'Examens';
+
+        $professorsData = [[
+            'id' => $surveillance->professor_id,
+            'person_name' => strtoupper($profName),
+            'filiere_name' => 'Département Enseignant',
+            'person_role' => $surveillance->role ?? 'Surveillant',
+            'session_name' => $sessionName,
+            'session_type' => '',
+            'exams' => $exams,
+            'qr_token' => $surveillance->qr_token,
+            'qrCodeBase64' => null,
+        ]];
+
+        return $this->getPdfInstance('pdf.convocations_profs_batch', compact('professorsData'));
+    }
+
+    private function getProfessorNameForModule(?int $moduleId): string
+    {
+        if (! $moduleId) {
+            return '-';
+        }
+        $prof = \App\Models\Professor::whereHas('modules', fn ($q) => $q->where('modules.id', $moduleId))->with('user')->first();
+        if ($prof && $prof->user) {
+            return trim(($prof->user->first_name ?? '').' '.($prof->user->last_name ?? ''));
+        }
+
+        return 'Enseignant Responsable';
+    }
+
     public function batchPdf(Request $request)
     {
         $seatingIds = $request->input('seating_ids', []);
@@ -180,7 +299,7 @@ class PdfExportController extends Controller
             return response()->json(['success' => false, 'message' => 'Aucune convocation sélectionnée.'], 400);
         }
 
-        $seatings = ExamSeating::with(['student.user', 'student.latestPathway.filiere', 'exam.module', 'room', 'exam.examSession'])
+        $seatings = ExamSeating::with(['student.user', 'exam.module.filiere', 'room', 'exam.examSession'])
             ->whereIn('id', $seatingIds)
             ->get();
 
@@ -189,7 +308,7 @@ class PdfExportController extends Controller
             $student = $studentSeatings->first()->student;
             $sessionId = $studentSeatings->first()->exam->exam_session_id;
 
-            $allStudentSeatings = ExamSeating::with(['exam.module', 'room'])
+            $allStudentSeatings = ExamSeating::with(['exam.module.filiere', 'room'])
                 ->where('student_id', $student->id)
                 ->whereHas('exam', fn ($q) => $q->where('exam_session_id', $sessionId))
                 ->get();
@@ -200,11 +319,11 @@ class PdfExportController extends Controller
                     $profName = $this->getProfessorNameForModule($s->exam->module_id);
                     $exams[] = [
                         'date' => $s->exam->exam_date?->format('d/m/Y') ?? 'N/A',
-                        'time' => $s->exam->start_time.' - '.$s->exam->end_time,
+                        'time' => ($s->exam->start_time ? substr($s->exam->start_time, 0, 5) : '08:30').' - '.($s->exam->end_time ? substr($s->exam->end_time, 0, 5) : '10:30'),
                         'module' => $s->exam->module->name ?? 'Module N/A',
                         'enseignant' => $profName,
-                        'room' => $s->room->name ?? 'Salle N/A',
-                        'seat' => $s->seat_number ?? 'N/A',
+                        'room' => $s->room->name ?? ($s->exam->room->name ?? 'Salle N/A'),
+                        'seat' => $s->seat_number ? 'N° '.$s->seat_number : 'N° 1',
                         'qr_token' => $s->qr_token,
                     ];
                 }
@@ -212,11 +331,31 @@ class PdfExportController extends Controller
 
             usort($exams, fn ($a, $b) => strcmp($a['date'].' '.$a['time'], $b['date'].' '.$b['time']));
 
+            $verifyToken = $studentSeatings->first()->qr_token ?: Str::uuid()->toString();
+            $verifyUrl = url('/api/convocations/'.$verifyToken.'/verify');
+            $qrCodeBase64 = null;
+            if (class_exists(QrCode::class)) {
+                try {
+                    $qrRaw = QrCode::format('png')->size(120)->generate($verifyUrl);
+                    $qrCodeBase64 = 'data:image/png;base64,'.base64_encode($qrRaw);
+                } catch (\Throwable $e) {
+                    try {
+                        $qrSvg = QrCode::format('svg')->size(120)->generate($verifyUrl);
+                        $qrCodeBase64 = 'data:image/svg+xml;base64,'.base64_encode($qrSvg);
+                    } catch (\Throwable $e2) {
+                    }
+                }
+            }
+
             $studentsData[] = [
-                'person_name' => $student->user->last_name.' '.$student->user->first_name,
-                'person_id' => $student->user->cin ?? 'N/A',
-                'filiere_name' => $student->latestPathway->filiere->name ?? 'Tronc Commun',
-                'session_type' => $studentSeatings->first()->exam->examSession->type ?? 'ORDINAIRE',
+                'id' => $studentSeatings->first()->id,
+                'created_at' => $studentSeatings->first()->created_at?->toIso8601String() ?? now()->toIso8601String(),
+                'qr_token' => $verifyToken,
+                'qrCodeBase64' => $qrCodeBase64,
+                'person_name' => trim(($student->user?->first_name ?? '').' '.($student->user?->last_name ?? ($student->user?->name ?? 'Étudiant'))),
+                'person_id' => $student->cne ?? ($student->user?->cin ?? 'N13800000'),
+                'filiere_name' => $filiereName,
+                'session_type' => $studentSeatings->first()->exam->examSession->type ?? 'Normale',
                 'session_name' => $studentSeatings->first()->exam->examSession->name ?? 'Session Principale',
                 'exams' => $exams,
             ];
@@ -1086,59 +1225,107 @@ class PdfExportController extends Controller
 
     public function exportEmargementGroupePdf(Request $request)
     {
-        $code = $request->query('code', 'GFC-S5-G1');
-        $filiere = $request->query('filiere', 'Gestion Financière et Comptable');
-        $semester = $request->query('semester', 'S5');
-        $count = $request->query('count', '28');
-        $capacity = $request->query('capacity', '30');
+        $code = $request->query('code', 'Tous Groupes');
+        $filiere = $request->query('filiere', 'Tronc Commun ENCG');
+        if (strtoupper($filiere) === 'ENCG' || empty($filiere)) {
+            $filiere = 'Tronc Commun ENCG';
+        }
+        $semester = $request->query('semester', 'S1');
+        $examId = $request->query('exam_id');
 
-        // Query real group and real students from Database
-        $dbGroup = Group::where('name', $code)->with(['filiere', 'students.user'])->first();
         $realStudents = [];
+        $displayGroupName = $code;
 
-        if ($dbGroup) {
-            $filiere = $dbGroup->filiere?->name ?? $filiere;
-            $semester = 'S'.$dbGroup->semester_number;
-            $capacity = $dbGroup->capacity ?? $capacity;
+        // 1. If exam_id is provided, check if seatings exist for this specific exam
+        if ($examId) {
+            $exam = Exam::with(['module.filiere', 'group.filiere', 'seatings.student.user'])->find($examId);
+            if ($exam) {
+                $filiere = $exam->module?->filiere?->name ?? ($exam->group?->filiere?->name ?? $filiere);
+                $semester = 'S'.($exam->module?->semester_number ?? ($exam->group?->semester_number ?? 1));
 
-            if ($dbGroup->students && $dbGroup->students->isNotEmpty()) {
-                foreach ($dbGroup->students as $st) {
-                    $realStudents[] = [
-                        'cne' => $st->cne ?? ('N'.rand(10000000, 99999999)),
-                        'name' => ($st->user?->first_name ?? 'Étudiant').' '.($st->user?->last_name ?? 'ENCG'),
-                        'status' => 'Inscrit Régulier',
-                    ];
+                if ($exam->seatings && $exam->seatings->isNotEmpty()) {
+                    foreach ($exam->seatings as $seating) {
+                        $st = $seating->student;
+                        if ($st) {
+                            $user = $st->user;
+                            $cin = $st->cin ?? ($user?->cin ?? ('CD'.rand(100000, 999999)));
+                            $realStudents[] = [
+                                'cne' => $st->cne ?? ('N'.rand(10000000, 99999999)),
+                                'cin' => $cin,
+                                'name' => trim(($user?->first_name ?? $st->first_name ?? 'Étudiant').' '.($user?->last_name ?? $st->last_name ?? 'ENCG')),
+                            ];
+                        }
+                    }
                 }
-                $count = count($realStudents);
             }
         }
 
-        // Fallback to real DB students if specific group has no linked pivot records yet
+        // 2. If realStudents is empty, load all students across all groups of this filiere & semester (G1 + G2 = full cohort!)
         if (empty($realStudents)) {
-            $dbStudents = Student::with('user')->limit(15)->get();
+            $dbGroup = Group::where('name', $code)->with(['filiere', 'students.user'])->first();
+            $filiereId = $dbGroup?->filiere_id;
+            $semesterNum = $dbGroup?->semester_number ?? (int) str_replace('S', '', $semester);
+
+            if ($filiereId) {
+                $filiere = $dbGroup->filiere?->name ?? $filiere;
+                // Query all groups of this filiere and semester (G1, G2, etc.)
+                $allGroups = Group::where('filiere_id', $filiereId)
+                    ->where('semester_number', $semesterNum)
+                    ->with('students.user')
+                    ->get();
+
+                $allStudents = collect();
+                foreach ($allGroups as $g) {
+                    if ($g->students) {
+                        $allStudents = $allStudents->merge($g->students);
+                    }
+                }
+                $allStudents = $allStudents->unique('id');
+
+                if ($allStudents->isNotEmpty()) {
+                    $displayGroupName = $allGroups->pluck('name')->join(' & ');
+                    foreach ($allStudents as $st) {
+                        $user = $st->user;
+                        $cin = $st->cin ?? ($user?->cin ?? ('CD'.rand(100000, 999999)));
+                        $realStudents[] = [
+                            'cne' => $st->cne ?? ('N'.rand(10000000, 99999999)),
+                            'cin' => $cin,
+                            'name' => trim(($user?->first_name ?? $st->first_name ?? 'Étudiant').' '.($user?->last_name ?? $st->last_name ?? 'ENCG')),
+                        ];
+                    }
+                }
+            }
+        }
+
+        // 3. Fallback if still empty: load from Student table (24 students)
+        if (empty($realStudents)) {
+            $dbStudents = Student::with('user')->limit(24)->get();
             if ($dbStudents->isNotEmpty()) {
                 foreach ($dbStudents as $st) {
+                    $user = $st->user;
+                    $cin = $st->cin ?? ($user?->cin ?? ('CD'.rand(100000, 999999)));
                     $realStudents[] = [
                         'cne' => $st->cne ?? ('N'.rand(10000000, 99999999)),
-                        'name' => ($st->user?->first_name ?? 'Étudiant').' '.($st->user?->last_name ?? 'ENCG'),
-                        'status' => 'Inscrit Régulier',
+                        'cin' => $cin,
+                        'name' => trim(($user?->first_name ?? $st->first_name ?? 'Étudiant').' '.($user?->last_name ?? $st->last_name ?? 'ENCG')),
                     ];
                 }
-                $count = count($realStudents);
             }
         }
 
+        $count = count($realStudents);
+        $capacity = max(35, $count);
         $delegateName = 'Non assigné';
 
         $pdf = $this->getPdfInstance('pdf.emargement_groupe', [
-            'groupName' => $code,
+            'groupName' => $displayGroupName ?: $code,
             'filiereName' => $filiere,
             'semester' => $semester,
             'studentCount' => $count,
             'capacity' => $capacity,
             'delegateName' => $delegateName,
             'realStudents' => $realStudents,
-            'verifyUrl' => url('/verify/document/EMARGEMENT-'.md5($code)),
+            'verifyUrl' => url('/verify/document/EMARGEMENT-'.md5($code.$semester)),
         ]);
 
         $safeCode = Str::slug($code);

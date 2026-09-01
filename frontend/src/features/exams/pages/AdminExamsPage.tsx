@@ -585,6 +585,7 @@ export default function AdminExamsPage() {
                 title={typeof exam.module === 'object' ? (exam.module?.name || 'Examen Module') : (exam.module || 'Examen Module')}
                 group={typeof exam.group === 'object' ? (exam.group?.name || 'Tous Groupes') : (exam.group || 'Tous Groupes')}
                 filiereCode={exam.module?.filiere?.code || 'ENCG'}
+                filiereName={exam.module?.filiere?.name || 'Tronc Commun ENCG'}
                 semester={exam.module?.semester_number || 1}
                 time={`${exam.start_time?.substring(0, 5) || '08:30'} – ${endTimeStr}`}
                 duration={`${exam.duration_minutes || 120} min`}
@@ -752,7 +753,7 @@ export default function AdminExamsPage() {
   )
 }
 
-function ExamCard({ id, title, group, filiereCode, semester, time, duration, room, surveillants, day, month, dayName, type, generated, sent, pending, onNotify }: any) {
+function ExamCard({ id, title, group, filiereCode, filiereName, semester, time, duration, room, surveillants, day, month, dayName, type, generated, sent, pending, onNotify }: any) {
   const [isGenerating, setIsGenerating] = useState(false)
 
   const generateMutation = useMutation({
@@ -797,7 +798,8 @@ function ExamCard({ id, title, group, filiereCode, semester, time, duration, roo
     setTimeout(() => {
       toast.dismiss();
       toast.success(`📜 Feuille d'Émargement A4 générée pour ${title} !`);
-      openAuthenticatedUrl(`/api/v1/groups/emargement-pdf?code=${encodeURIComponent(group)}&filiere=${encodeURIComponent(filiereCode)}&semester=S${semester}&count=45&capacity=45`);
+      const filiereParam = encodeURIComponent(filiereName || 'Tronc Commun ENCG');
+      openAuthenticatedUrl(`/api/v1/groups/emargement-pdf?exam_id=${id}&code=${encodeURIComponent(group)}&filiere=${filiereParam}&semester=S${semester}`);
     }, 600);
   }
 

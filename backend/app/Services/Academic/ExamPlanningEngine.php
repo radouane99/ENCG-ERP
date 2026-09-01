@@ -8,7 +8,9 @@ use App\Models\ExamSession;
 use App\Models\ExamSurveillance;
 use App\Models\Group;
 use App\Models\Module;
+use App\Models\Professor;
 use App\Models\Room;
+use App\Models\Student;
 use App\Models\StudentRegistration;
 use App\Models\User;
 use Carbon\Carbon;
@@ -156,7 +158,10 @@ class ExamPlanningEngine
         $isAutomne = $session->semester->number === 1;
 
         if (! empty($customModuleIds)) {
-            $modules = Module::whereIn('id', $customModuleIds)->get();
+            $modules = Module::whereIn('id', $customModuleIds)
+                ->get()
+                ->sortBy(fn ($m) => array_search($m->id, $customModuleIds))
+                ->values();
         } else {
             $modules = Module::where('filiere_id', $filiereId)
                 ->when($semesterNumber, fn ($q) => $q->where('semester_number', $semesterNumber), fn ($q) => $q->whereRaw($isAutomne ? 'semester_number % 2 != 0' : 'semester_number % 2 = 0'))
@@ -192,21 +197,15 @@ class ExamPlanningEngine
             ExamSurveillance::whereIn('exam_id', $existingExamIds)->delete();
             Exam::whereIn('id', $existingExamIds)->delete();
 
-            $professors = Professor::with('user')->get();
+            $professors = User::whereHas('roles', fn ($q) => $q->whereIn('name', ['professor', 'department-head', 'enseignant']))->get();
             if ($professors->isEmpty()) {
-                $professors = User::whereHas('roles', fn ($q) => $q->whereIn('name', ['professor', 'department-head']))->get();
+                $profUserIds = Professor::whereNotNull('user_id')->pluck('user_id');
+                $professors = User::whereIn('id', $profUserIds)->get();
             }
             if ($professors->isEmpty()) {
                 $professors = User::limit(5)->get();
             }
-
-            $vacataires = Professor::with('user')->where('type', 'vacataire')->get();
-            if ($vacataires->isEmpty()) {
-                $vacataires = User::whereHas('roles', fn ($q) => $q->whereIn('name', ['vacataire', 'doctorant']))->get();
-            }
-            if ($vacataires->isEmpty()) {
-                $vacataires = $professors;
-            }
+            $vacataires = $professors;
 
             $examsCreated = 0;
             $busyProfessors = [];
@@ -217,12 +216,12 @@ class ExamPlanningEngine
                 $semNum = $module->semester_number ?? 1;
 
                 $startTime = match (true) {
-                    $modulesPerDay >= 2 && $daySlotMode === 'pm' && $moduleIndexInDay === 0 => '14:00:00',
-                    $modulesPerDay >= 2 && $daySlotMode === 'pm' => '16:15:00',
-                    $modulesPerDay >= 2 && $daySlotMode === 'split' && $moduleIndexInDay === 0 => '09:00:00',
-                    $modulesPerDay >= 2 && $daySlotMode === 'split' => '14:00:00',
+                    $modulesPerDay >= 2 && $daySlotMode === 'pm' && $moduleIndexInDay === 0 => '14:30:00',
+                    $modulesPerDay >= 2 && $daySlotMode === 'pm' => '16:30:00',
+                    $modulesPerDay >= 2 && $daySlotMode === 'split' && $moduleIndexInDay === 0 => '08:30:00',
+                    $modulesPerDay >= 2 && $daySlotMode === 'split' => '14:30:00',
                     $modulesPerDay >= 2 && $moduleIndexInDay === 0 => '08:30:00',
-                    $modulesPerDay >= 2 => '10:45:00',
+                    $modulesPerDay >= 2 => '10:30:00',
                     default => ($semNum % 2 !== 0) ? '09:00:00' : '14:00:00',
                 };
 
@@ -271,27 +270,29 @@ class ExamPlanningEngine
                         ExamSeating::insert($seatings);
                     }
 
-                    $availablePresidents = $professors->whereNotIn('id', $busyProfessors[$slotKey]);
-                    $president = $availablePresidents->isNotEmpty() ? $availablePresidents->random() : $professors->random();
-                    $busyProfessors[$slotKey][] = $president->id;
+                    if ($professors->isNotEmpty()) {
+                        $availablePresidents = $professors->whereNotIn('id', $busyProfessors[$slotKey]);
+                        $president = $availablePresidents->isNotEmpty() ? $availablePresidents->random() : $professors->random();
+                        $busyProfessors[$slotKey][] = $president->id;
 
-                    ExamSurveillance::create([
-                        'exam_id' => $exam->id,
-                        'room_id' => $assignedRoom->id,
-                        'professor_id' => $president->id,
-                        'role' => 'president_salle',
-                    ]);
-
-                    // Surveillants supplémentaires
-                    $availableVacataires = $vacataires->whereNotIn('id', $busyProfessors[$slotKey]);
-                    foreach ($availableVacataires->take(min(2, $availableVacataires->count())) as $vacataire) {
                         ExamSurveillance::create([
                             'exam_id' => $exam->id,
                             'room_id' => $assignedRoom->id,
-                            'professor_id' => $vacataire->id,
-                            'role' => 'surveillant',
+                            'professor_id' => $president->id,
+                            'role' => 'president_salle',
                         ]);
-                        $busyProfessors[$slotKey][] = $vacataire->id;
+
+                        // Surveillants supplémentaires
+                        $availableVacataires = $vacataires->whereNotIn('id', $busyProfessors[$slotKey]);
+                        foreach ($availableVacataires->take(min(2, $availableVacataires->count())) as $vacataire) {
+                            ExamSurveillance::create([
+                                'exam_id' => $exam->id,
+                                'room_id' => $assignedRoom->id,
+                                'professor_id' => $vacataire->id,
+                                'role' => 'surveillant',
+                            ]);
+                            $busyProfessors[$slotKey][] = $vacataire->id;
+                        }
                     }
                 }
 

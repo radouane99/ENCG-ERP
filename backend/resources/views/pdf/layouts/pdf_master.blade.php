@@ -165,11 +165,28 @@
             </tr>
         </table>
 
-        <!-- Legal & Contact Footer Line -->
+        <!-- Legal & Contact Footer Line with Page Numbering -->
         <div class="encg-bottom-bar">
-            École Nationale de Commerce et de Gestion de Fès — Route d'Imouzzer, B.P. 1255, Fès - Maroc | Tél: +212 5 35 64 49 20 | https://encg-fes.ac.ma
+            <table width="100%" style="border-collapse: collapse; font-size: 6.5pt; color: #64748b;">
+                <tr>
+                    <td style="text-align: left; width: 78%;">
+                        École Nationale de Commerce et de Gestion de Fès — Route d'Imouzzer, B.P. 1255, Fès - Maroc | Tél: +212 5 35 64 49 20 | https://encg-fes.ac.ma
+                    </td>
+                    <td style="text-align: right; width: 22%; font-weight: bold; color: #002e5b;">
+                        ENCG FÈS SI
+                    </td>
+                </tr>
+            </table>
         </div>
     </div>
+
+    <!-- Dompdf Dynamic Native Page Counter (Page 1/2, Page 2/2) -->
+    <script type="text/php">
+        if (isset($pdf)) {
+            $font = $fontMetrics->get_font("DejaVu Sans, Helvetica, Arial", "bold");
+            $pdf->page_text(520, 824, "Page {PAGE_NUM} / {PAGE_COUNT}", $font, 7.5, array(0.06, 0.16, 0.39));
+        }
+    </script>
 
 </body>
 </html>
