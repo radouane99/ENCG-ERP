@@ -325,19 +325,31 @@ class ExamConvocationService
         $sentCount = 0;
 
         foreach ($surveillances as $professorId => $profSurveillances) {
-            $professor = User::find($professorId);
+            $professorRecord = Professor::resolveWithDepartmentByPublicId($professorId);
+            $professor = $professorRecord?->user ?? User::find($professorId);
             if (! $professor?->email) {
                 continue;
             }
 
-            $profExams = $profSurveillances->map(fn ($s) => [
-                'moduleName' => $s->exam->module->name ?? 'N/A',
-                'examDate' => $s->exam->exam_date?->format('Y-m-d') ?? 'N/A',
-                'examTime' => $s->exam->start_time ?? 'N/A',
-                'roomName' => $s->room->name ?? 'N/A',
-                'role' => $s->role ?? 'Surveillant',
-                'qrToken' => $s->qr_token,
-            ])->values()->toArray();
+            foreach ($profSurveillances as $s) {
+                if (empty($s->qr_token)) {
+                    $s->update(['qr_token' => Str::uuid()->toString()]);
+                }
+            }
+
+            $primaryToken = $profSurveillances->first()->fresh()?->qr_token ?? Str::uuid()->toString();
+
+            $profExams = $profSurveillances->map(function ($s) {
+                $token = $s->fresh()?->qr_token;
+                return [
+                    'moduleName' => $s->exam->module->name ?? 'N/A',
+                    'examDate' => $s->exam->exam_date?->format('Y-m-d') ?? 'N/A',
+                    'examTime' => $s->exam->start_time ?? 'N/A',
+                    'roomName' => $s->room->name ?? 'N/A',
+                    'role' => $s->role ?? 'Surveillant',
+                    'qrToken' => $token,
+                ];
+            })->values()->toArray();
 
             $profPdfExams = $profSurveillances->map(fn ($s) => [
                 'date' => $s->exam->exam_date?->format('d/m/Y') ?? 'N/A',
@@ -349,21 +361,30 @@ class ExamConvocationService
 
             $professorData = [[
                 'id' => $professor->id,
-                'person_name' => strtoupper($professor->name),
-                'filiere_name' => 'Département Enseignant',
+                'person_name' => strtoupper($professor->name ?? $professorRecord?->name ?? ''),
+                'person_id' => $professor->cin ?? $professorRecord?->cin ?? 'ENCG-ENS',
+                'department_name' => $professorRecord?->department?->name,
+                'department_label' => $professorRecord?->departmentDisplayLabel() ?? 'Corps Professoral — ENCG Fès',
+                'filiere_name' => $professorRecord?->departmentDisplayLabel() ?? 'Corps Professoral — ENCG Fès',
                 'person_role' => $profExams[0]['role'] ?? 'Surveillant',
                 'session_name' => $session->name,
                 'session_type' => '',
                 'exams' => $profPdfExams,
-                'qr_token' => $profExams[0]['qrToken'] ?? null,
+                'qr_token' => $primaryToken,
                 'qrCodeBase64' => null,
             ]];
+
+            $baseUrl = config('app.url') ? rtrim(config('app.url'), '/') : 'http://localhost';
+            if (str_contains($baseUrl, 'encg_nginx') || str_contains($baseUrl, 'localhost')) {
+                $baseUrl = 'http://localhost';
+            }
+            $confirmUrl = $baseUrl . '/api/verify/surveillance/' . $primaryToken . '/confirm';
 
             $emailData = [
                 'professorName' => $professor->name,
                 'sessionName' => $session->name,
                 'exams' => $profExams,
-                'confirmUrl' => url('/api/verify/surveillance/'.($profExams[0]['qrToken'] ?? '').'/confirm'),
+                'confirmUrl' => $confirmUrl,
             ];
 
             try {

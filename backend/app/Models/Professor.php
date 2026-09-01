@@ -141,4 +141,23 @@ class Professor extends Model
 
         return static::findByPublicId($value);
     }
+
+    public static function resolveWithDepartmentByPublicId(string|int|null $publicId): ?self
+    {
+        if ($publicId === null || $publicId === '') {
+            return null;
+        }
+
+        return static::findByPublicId($publicId, ['department'])
+            ?? static::query()->with('department')->where('user_id', (string) $publicId)->first();
+    }
+
+    public function departmentDisplayLabel(): string
+    {
+        $departmentName = trim((string) ($this->department?->name ?? ''));
+
+        return $departmentName !== ''
+            ? "{$departmentName} — ENCG Fès"
+            : 'Corps Professoral — ENCG Fès';
+    }
 }

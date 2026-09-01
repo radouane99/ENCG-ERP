@@ -28,7 +28,7 @@ class ReservisteRetakeNotificationMail extends Mailable
      */
     public function build()
     {
-        return $this->from(config('mail.from.address', 'noreply@encg-fes.ac.ma'), config('mail.from.name', 'ENCG Portail'))
+        return $this->from(config('mail.from.address', 'no-reply@benadadarentcar.com'), config('mail.from.name', 'ENCG Portail'))
             ->subject('▶ Convocation & Notification pour Examen des Dettes — ENCG')
             ->view('emails.reserviste_retake');
     }

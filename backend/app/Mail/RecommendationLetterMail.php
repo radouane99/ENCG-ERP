@@ -32,7 +32,7 @@ class RecommendationLetterMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            from: new Address(config('mail.from.address', 'noreply@encg-fes.ac.ma'), config('mail.from.name', 'ENCG Portail')),
+            from: new Address(config('mail.from.address', 'no-reply@benadadarentcar.com'), config('mail.from.name', 'ENCG Portail')),
             subject: "📜 Lettre de Recommandation Officielle ENCG Fès — M./Mme {$this->studentName}"
         );
     }

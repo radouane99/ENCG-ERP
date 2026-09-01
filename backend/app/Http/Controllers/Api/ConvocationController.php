@@ -324,18 +324,54 @@ class ConvocationController extends Controller
         ]);
     }
 
-    public function confirmReception(string $token): JsonResponse
+    public function confirmReception(Request $request, string $token)
     {
-        $updated = ExamSurveillance::where('qr_token', $token)
-            ->update(['confirmed_at' => now()]);
+        $surveillances = ExamSurveillance::with(['exam.module', 'professor.user', 'room'])
+            ->where('qr_token', $token)
+            ->get();
 
-        if (! $updated) {
-            return response()->json(['success' => false, 'message' => 'Jeton invalide.'], 404);
+        if ($surveillances->isEmpty()) {
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Jeton invalide ou introuvable.'], 404);
+            }
+            return response('<h3>Lien de confirmation invalide ou expiré.</h3>', 404);
         }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Présence confirmée avec succès.',
+        $first = $surveillances->first();
+        $profId = $first->professor_id;
+        $sessionId = $first->exam?->exam_session_id;
+
+        $allSurveillances = collect();
+        if ($profId && $sessionId) {
+            ExamSurveillance::where('professor_id', $profId)
+                ->whereHas('exam', fn ($q) => $q->where('exam_session_id', $sessionId))
+                ->update(['confirmed_at' => now()]);
+
+            $allSurveillances = ExamSurveillance::with(['exam.module', 'exam.examSession', 'professor.user', 'room'])
+                ->where('professor_id', $profId)
+                ->whereHas('exam', fn ($q) => $q->where('exam_session_id', $sessionId))
+                ->orderBy('exam_id')
+                ->get();
+        } else {
+            ExamSurveillance::where('qr_token', $token)->update(['confirmed_at' => now()]);
+            $allSurveillances = $surveillances;
+        }
+
+        if ($allSurveillances->isEmpty()) {
+            $allSurveillances = $surveillances;
+        }
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Présence confirmée avec succès.',
+                'confirmed_at' => now()->toDateTimeString(),
+            ]);
+        }
+
+        return view('emails.surveillance_confirmed', [
+            'surveillance' => $first,
+            'allSurveillances' => $allSurveillances,
         ]);
     }
 

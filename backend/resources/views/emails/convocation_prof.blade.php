@@ -91,9 +91,18 @@
                                         {{ $exam['roomName'] }}
                                     </td>
                                     <td style="padding:11px 12px;font-size:13px;border-top:1px solid #f3f4f6;text-align:center;">
-                                        <span style="background:#dbeafe;color:#1d4ed8;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:700;">
-                                            {{ ucfirst($exam['role']) }}
-                                        </span>
+                                        @php
+                                            $isPrincipal = stripos((string)($exam['role'] ?? ''), 'Principal') !== false;
+                                        @endphp
+                                        @if($isPrincipal)
+                                            <span style="background:#0f2863;color:#ffffff;padding:4px 10px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:0.4px;text-transform:uppercase;display:inline-block;">
+                                                Surveillant Principal
+                                            </span>
+                                        @else
+                                            <span style="background:#f1f5f9;color:#475569;border:1px solid #cbd5e1;padding:4px 10px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:0.4px;text-transform:uppercase;display:inline-block;">
+                                                Surveillant Adjoint
+                                            </span>
+                                        @endif
                                     </td>
                                 </tr>
                                 @endforeach

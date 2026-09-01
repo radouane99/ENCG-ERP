@@ -3,275 +3,376 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <meta charset="UTF-8">
-    <title>Convocation de Surveillance — ENCG Fès</title>
+    <title>Ordre de Mission & Convocation de Surveillance — ENCG Fès</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         @page {
             size: A4 portrait;
-            margin: 7mm 9mm 7mm 9mm;
+            margin: 8mm 10mm 8mm 10mm;
         }
 
         body {
             font-family: 'DejaVu Sans', Arial, Helvetica, sans-serif;
-            font-size: 8pt;
-            color: #1a1a2e;
+            font-size: 8.5pt;
+            color: #1e293b;
             background: #fff;
-            line-height: 1.35;
+            line-height: 1.4;
         }
 
         .page-break { page-break-after: always; }
 
         .page-frame {
-            border: 1.5px double #1a3a5c;
-            padding: 4mm 5mm 3mm 5mm;
+            border: 2px solid #0f2863;
+            outline: 1px solid #94a3b8;
+            outline-offset: -4px;
+            padding: 7mm 7mm 6mm 7mm;
+            min-height: 275mm;
+            position: relative;
         }
 
         .page-shell {
             width: 100%;
             border-collapse: collapse;
-            table-layout: fixed;
         }
         .page-shell td { vertical-align: top; }
 
-        /* ── TITLE ── */
+        /* ── BANNER TITLE ── */
         .title-banner {
-            background: #1a3a5c;
-            color: #fff;
+            background: #0f2863;
+            color: #ffffff;
             text-align: center;
-            padding: 5px 8px;
-            margin-bottom: 5px;
+            padding: 8px 12px;
+            margin: 6px 0 8px 0;
+            border-radius: 3px;
         }
         .title-main {
-            font-size: 11pt;
+            font-size: 11.5pt;
             font-weight: bold;
-            letter-spacing: 1px;
+            letter-spacing: 1.2px;
             text-transform: uppercase;
         }
         .title-sub {
-            font-size: 7.5pt;
-            margin-top: 2px;
-            color: #cde;
+            font-size: 8pt;
+            margin-top: 3px;
+            color: #cbd5e1;
+            font-weight: 500;
         }
         .session-badge {
             display: inline-block;
-            margin-top: 2px;
-            background: rgba(255,255,255,0.15);
-            border: 1px solid rgba(255,255,255,0.35);
-            font-size: 6.5pt;
-            font-weight: bold;
-            padding: 1px 8px;
-            letter-spacing: 0.6px;
-            text-transform: uppercase;
-        }
-
-        /* ── PROFESSOR INFO ── */
-        .info-card {
-            border: 1px solid #94a3b8;
-            margin-bottom: 5px;
-            width: 100%;
-        }
-        .info-card-title {
-            background: #e8f0f8;
+            margin-top: 4px;
+            background: #b45309;
+            color: #ffffff;
             font-size: 7pt;
             font-weight: bold;
-            color: #1a3a5c;
+            padding: 2px 10px;
+            letter-spacing: 0.8px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            padding: 2px 7px;
-            border-bottom: 1px solid #94a3b8;
+            border-radius: 2px;
         }
-        .info-inner-table { width: 100%; }
-        .info-inner-table td {
+
+        /* ── PROFESSOR INFO CARD ── */
+        .info-card {
+            border: 1.5px solid #cbd5e1;
+            background: #ffffff;
+            margin-bottom: 8px;
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .info-card-header {
+            background: #f1f5f9;
+            border-bottom: 1.5px solid #cbd5e1;
+            padding: 4px 10px;
+            font-size: 7.5pt;
+            font-weight: bold;
+            color: #0f2863;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+        }
+        .info-card-body {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .info-card-body td {
             vertical-align: top;
             width: 50%;
-            padding: 4px 7px;
+            padding: 6px 10px;
         }
-        .info-inner-table td:first-child { border-right: 1px solid #cbd5e1; }
+        .info-card-body td:first-child {
+            border-right: 1px solid #e2e8f0;
+        }
+        .info-row {
+            margin-bottom: 5px;
+        }
         .info-label {
-            font-size: 6pt;
+            font-size: 6.5pt;
             color: #64748b;
             text-transform: uppercase;
-            letter-spacing: 0.3px;
+            font-weight: bold;
+            letter-spacing: 0.4px;
             display: block;
             margin-bottom: 1px;
         }
-        .info-value {
+        .info-val {
+            font-size: 8.5pt;
+            font-weight: bold;
+            color: #0f172a;
+        }
+        .info-val.highlight {
+            font-size: 10.5pt;
+            color: #0f2863;
+            text-transform: uppercase;
+        }
+
+        /* ── MISSION MANDATE ── */
+        .mission-mandate {
+            background: #f8fafc;
+            border-left: 3px solid #0f2863;
+            border-right: 1px solid #e2e8f0;
+            border-top: 1px solid #e2e8f0;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 6px 10px;
+            font-size: 7.5pt;
+            color: #1e293b;
+            line-height: 1.45;
+            margin-bottom: 8px;
+            text-align: justify;
+        }
+
+        /* ── SECTION HEADINGS ── */
+        .section-heading {
             font-size: 8pt;
             font-weight: bold;
-            color: #1a1a2e;
-            margin-bottom: 3px;
-            display: block;
-        }
-        .info-value.big { font-size: 9.5pt; color: #1a3a5c; text-transform: uppercase; }
-
-        .instruction {
-            background: #f0f6ff;
-            border-left: 2.5px solid #1a3a5c;
-            padding: 3px 7px;
-            font-size: 7pt;
-            color: #1a3a5c;
-            font-style: italic;
-            margin-bottom: 5px;
-        }
-
-        .section-label {
-            font-size: 7pt;
-            font-weight: bold;
-            color: #1a3a5c;
+            color: #0f2863;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 2px;
-            padding-left: 4px;
-            border-left: 2px solid #1a3a5c;
+            letter-spacing: 0.6px;
+            margin: 6px 0 3px 0;
+            padding-left: 6px;
+            border-left: 3px solid #b45309;
         }
 
-        /* ── SURVEILLANCE TABLE ── */
+        /* ── TIMETABLE ── */
         table.exam-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 5px;
-            font-size: 7pt;
+            margin-bottom: 8px;
+            font-size: 8pt;
             table-layout: fixed;
         }
-        .exam-table thead tr { background: #1a3a5c; color: #fff; }
+        .exam-table thead tr {
+            background: #0f2863;
+            color: #ffffff;
+        }
         .exam-table th {
-            padding: 3px 3px;
+            padding: 5px 6px;
             text-align: center;
-            font-size: 6.5pt;
+            font-size: 7.5pt;
             font-weight: bold;
             text-transform: uppercase;
-            border: 1px solid #1a3a5c;
+            border: 1px solid #0f2863;
+            letter-spacing: 0.4px;
         }
         .exam-table td {
-            padding: 2.5px 3px;
+            padding: 6px 6px;
             border: 1px solid #cbd5e1;
             text-align: center;
             vertical-align: middle;
-            word-wrap: break-word;
         }
-        .exam-table tbody tr:nth-child(even) { background: #f5f9ff; }
-        .exam-table td.date-cell { font-weight: bold; color: #1a3a5c; }
-        .exam-table th.col-horaire,
-        .exam-table td.time-cell {
-            width: 9%;
-            max-width: 9%;
-            background: #e8f0f8;
+        .exam-table tbody tr:nth-child(even) {
+            background: #f8fafc;
+        }
+        .exam-table td.date-cell {
             font-weight: bold;
-            color: #2d6a9f;
-            font-size: 6pt;
-            padding: 2px 1px;
-            line-height: 1.15;
+            color: #0f2863;
+            font-size: 8pt;
         }
-        .exam-table th.col-module,
+        .exam-table td.time-cell {
+            background: #eff6ff;
+            font-weight: bold;
+            color: #1d4ed8;
+            font-size: 8pt;
+        }
         .exam-table td.module-cell {
-            width: 40%;
-            max-width: 40%;
             text-align: left;
             font-weight: bold;
-            color: #1a3a5c;
-            font-size: 7pt;
-            padding: 2px 5px;
+            color: #0f172a;
+            font-size: 8.5pt;
+            padding-left: 8px;
+        }
+        .exam-table td.room-cell {
+            font-weight: bold;
+            color: #0f2863;
+            font-size: 8.5pt;
+        }
+        .exam-table th.col-role {
+            width: 21%;
+            font-size: 6.8pt;
+            padding: 4px 2px;
             line-height: 1.2;
         }
-        .role-pill {
-            background: #0f2863;
-            color: #fff;
-            padding: 1px 5px;
-            font-size: 6.5pt;
-            font-weight: bold;
-            border-radius: 2px;
-            white-space: nowrap;
+        .exam-table td.role-cell {
+            padding: 3px 2px;
+            text-align: center;
+            vertical-align: middle;
         }
-        .role-pill.principal {
-            background: #b45309;
-        }
-
-        /* ── CHARTE SURVEILLANCE ── */
-        .rules-title {
-            font-size: 7pt;
-            font-weight: bold;
-            color: #1a3a5c;
-            text-transform: uppercase;
-            letter-spacing: 0.4px;
-            margin-bottom: 2px;
-            padding-left: 4px;
-            border-left: 2px solid #1a3a5c;
-        }
-        .rules-box {
-            font-size: 6.3pt;
-            line-height: 1.45;
-            color: #334155;
-            text-align: justify;
-            background: #f8fafc;
-            border: 1px solid #cbd5e1;
-            padding: 4px 6px;
-            margin-bottom: 0;
-        }
-
-        /* ── FOOTER ── */
-        .footer-block {
-            border-top: 1.5px solid #1a3a5c;
-            padding-top: 4px;
-            margin-top: 6px;
-        }
-        .footer-inner {
+        .role-stack {
             width: 100%;
+            margin: 0 auto;
             border-collapse: collapse;
         }
-        .footer-inner td { vertical-align: middle; }
-        .footer-left { width: 58%; padding-right: 6px; }
-        .footer-right { width: 42%; text-align: right; }
+        .role-stack td {
+            border: none;
+            padding: 0;
+            text-align: center;
+            vertical-align: middle;
+        }
+        .role-kind {
+            font-size: 5.4pt;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.25px;
+            line-height: 1.1;
+            padding-bottom: 1px;
+        }
+        .role-title {
+            display: inline-block;
+            font-size: 6.2pt;
+            font-weight: bold;
+            padding: 1px 4px;
+            border-radius: 2px;
+            text-transform: uppercase;
+            letter-spacing: 0.2px;
+            line-height: 1.2;
+        }
+        .role-title.principal {
+            background: #0f2863;
+            color: #ffffff;
+        }
+        .role-title.secondaire {
+            background: #f8fafc;
+            color: #334155;
+            border: 1px solid #94a3b8;
+        }
 
-        .ref-block {
-            font-size: 6pt;
+        /* ── CHARTE DE SURVEILLANCE BOX ── */
+        .charte-box {
+            border: 1px solid #cbd5e1;
+            background: #f8fafc;
+            padding: 6px 10px 6px 10px;
+            margin-bottom: 8px;
+            border-radius: 2px;
+        }
+        .charte-item {
+            font-size: 7pt;
+            color: #334155;
+            line-height: 1.45;
+            margin-bottom: 3px;
+            text-align: justify;
+        }
+        .charte-item:last-child {
+            margin-bottom: 0;
+        }
+        .charte-num {
+            font-weight: bold;
+            color: #0f2863;
+        }
+
+        /* ── SIGNATURE & FOOTER BLOCK ── */
+        .footer-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 6px;
+            border-top: 1.5px solid #0f2863;
+            padding-top: 6px;
+        }
+        .footer-table td {
+            vertical-align: top;
+        }
+        .footer-left {
+            width: 58%;
+            padding-right: 12px;
+        }
+        .footer-right {
+            width: 42%;
+            text-align: center;
+        }
+
+        .meta-text {
+            font-size: 6.5pt;
             color: #64748b;
             line-height: 1.5;
         }
-        .ref-code {
-            font-family: DejaVu Sans Mono, monospace;
+        .meta-bold {
             font-weight: bold;
-            color: #475569;
-            letter-spacing: 0.3px;
+            color: #334155;
         }
-        .valid-stamp {
+        .auth-stamp {
             display: inline-block;
             border: 1px solid #16a34a;
-            color: #16a34a;
+            color: #15803d;
+            background: #f0fdf4;
             font-size: 6.5pt;
             font-weight: bold;
-            padding: 1px 6px;
+            padding: 2px 8px;
             text-transform: uppercase;
-            margin-top: 3px;
+            margin-top: 4px;
+            letter-spacing: 0.5px;
+            border-radius: 2px;
         }
 
-        .sig-label {
-            font-size: 7pt;
+        .sign-title {
+            font-size: 8pt;
             font-weight: bold;
-            color: #1a3a5c;
+            color: #0f2863;
         }
-        .sig-sub {
-            font-size: 6pt;
+        .sign-subtitle {
+            font-size: 6.5pt;
             color: #64748b;
             font-style: italic;
-            margin-bottom: 3px;
+            margin-bottom: 6px;
         }
-        .sig-line {
+        .sign-placeholder {
+            height: 38px;
+            margin: 4px auto;
             border-bottom: 1px dashed #94a3b8;
-            height: 16px;
-            margin: 0 0 3px 20px;
+            width: 80%;
         }
-        .sig-caption { font-size: 6pt; color: #94a3b8; }
-        .qr-wrap { text-align: right; margin-top: 2px; }
-        .qr-wrap img { border: 1px solid #1a3a5c; padding: 2px; width: 52px; height: 52px; }
-
-        .tagline {
-            font-size: 5.5pt;
+        .sign-mention {
+            font-size: 6pt;
             color: #94a3b8;
-            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .qr-section {
             margin-top: 4px;
-            border-top: 0.5px solid #e2e8f0;
-            padding-top: 2px;
+            text-align: left;
+        }
+        .qr-section img {
+            border: 1px solid #0f2863;
+            padding: 2px;
+            background: #fff;
+            width: 50px;
+            height: 50px;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .qr-caption {
+            display: inline-block;
+            vertical-align: middle;
+            font-size: 6pt;
+            color: #64748b;
+            margin-left: 6px;
+            line-height: 1.35;
+        }
+
+        .bottom-bar {
+            border-top: 0.5px solid #cbd5e1;
+            margin-top: 8px;
+            padding-top: 3px;
+            text-align: center;
+            font-size: 6pt;
+            color: #64748b;
         }
     </style>
 </head>
@@ -279,7 +380,7 @@
 @foreach($professorsData as $index => $data)
 @php
     $academicYear = $data['academic_year'] ?? '2025 — 2026';
-    $role = $data['person_role'] ?? 'Enseignant / Surveillant';
+    $generatedAt = $data['generated_at'] ?? now()->format('d/m/Y à H:i');
 @endphp
 
 <div class="page-frame">
@@ -287,140 +388,169 @@
 <tr>
 <td>
 
-{{-- HEADER INSTITUTIONNEL --}}
-@include('pdf.encg-header')
+    {{-- HEADER OFFICIEL --}}
+    @include('pdf.encg-header')
 
-{{-- TITLE BANNER --}}
-<div class="title-banner">
-    <div class="title-main">Convocation de Surveillance des Examens</div>
-    <div class="title-sub">{{ $data['session_name'] ?? 'Session d\'Examens' }}</div>
-    <span class="session-badge">Session : {{ strtoupper($data['session_type'] ?? 'Normale') }}</span>
-</div>
+    {{-- BANNER TITLE --}}
+    <div class="title-banner">
+        <div class="title-main">Ordre de Mission & Convocation de Surveillance</div>
+        <div class="title-sub">{{ $data['session_name'] ?? 'Session d\'Examens Universitaires' }}</div>
+        <span class="session-badge">Session : {{ strtoupper($data['session_type'] ?? 'Normale') }}</span>
+    </div>
 
-{{-- PROFESSOR INFO CARD --}}
-<div class="info-card">
-    <div class="info-card-title">Informations de l'Enseignant</div>
-    <table class="info-inner-table" cellpadding="0" cellspacing="0">
+    {{-- PROFESSOR DETAILS CARD --}}
+    <table class="info-card" cellpadding="0" cellspacing="0">
+        <tr>
+            <td class="info-card-header">
+                Identification de l'Enseignant-Chercheur / Surveillant
+            </td>
+        </tr>
         <tr>
             <td>
-                <span class="info-label">Professeur / Surveillant</span>
-                <span class="info-value big">{{ strtoupper($data['person_name'] ?? '') }}</span>
-                <span class="info-label">Matricule / CIN</span>
-                <span class="info-value">{{ strtoupper($data['person_id'] ?? 'N/A') }}</span>
-            </td>
-            <td>
-                <span class="info-label">Département / Corps</span>
-                <span class="info-value">{{ $data['filiere_name'] ?? 'Corps Enseignant ENCG Fès' }}</span>
-                <span class="info-label">Année Universitaire</span>
-                <span class="info-value">{{ $academicYear }}</span>
+                <table class="info-card-body" cellpadding="0" cellspacing="0">
+                    <tr>
+                        <td>
+                            <div class="info-row">
+                                <span class="info-label">Nom et Prénom de l'Enseignant</span>
+                                <span class="info-val highlight">Pr. {{ strtoupper($data['person_name'] ?? '') }}</span>
+                            </div>
+                            <div class="info-row" style="margin-bottom:0;">
+                                <span class="info-label">Identifiant National / CIN</span>
+                                <span class="info-val">{{ strtoupper($data['person_id'] ?? 'ENCG-ENS') }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="info-row">
+                                <span class="info-label">Département & Établissement</span>
+                                <span class="info-val">{{ $data['department_label'] ?? ($data['filiere_name'] ?? 'Corps Professoral — ENCG Fès') }}</span>
+                            </div>
+                            <div class="info-row" style="margin-bottom:0;">
+                                <span class="info-label">Année Universitaire</span>
+                                <span class="info-val">{{ $academicYear }}</span>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
             </td>
         </tr>
     </table>
-</div>
 
-{{-- INSTRUCTION --}}
-<div class="instruction">
-    Dans le cadre de l'organisation des examens universitaires, vous êtes prié(e) d'assurer la surveillance des épreuves selon le planning officiel ci-dessous :
-</div>
+    {{-- MISSION MANDATE --}}
+    <div class="mission-mandate">
+        Conformément aux dispositions régissant l'organisation des examens et le contrôle des connaissances à l'École Nationale de Commerce et de Gestion de Fès, vous êtes officiellement chargé(e) d'assurer la surveillance et le bon déroulement des épreuves d'examens selon le planning ci-après :
+    </div>
 
-{{-- PLANNING TABLE --}}
-<div class="section-label">Planning des Séances de Surveillance</div>
-<table class="exam-table" cellpadding="0" cellspacing="0">
-    <colgroup>
-        <col style="width:12%">
-        <col style="width:9%">
-        <col style="width:40%">
-        <col style="width:20%">
-        <col style="width:19%">
-    </colgroup>
-    <thead>
+    {{-- PLANNING DES SÉANCES --}}
+    <div class="section-heading">Planning Officiel des Séances de Surveillance</div>
+    <table class="exam-table" cellpadding="0" cellspacing="0">
+        <colgroup>
+            <col style="width:15%">
+            <col style="width:14%">
+            <col style="width:32%">
+            <col style="width:18%">
+            <col style="width:21%">
+        </colgroup>
+        <thead>
+            <tr>
+                <th style="width:15%">Date</th>
+                <th style="width:14%">Horaire</th>
+                <th style="width:32%">Matière / Épreuve</th>
+                <th style="width:18%">Lieu / Salle</th>
+                <th class="col-role" style="width:21%">Rôle / Mission</th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse($data['exams'] as $exam)
+                @php
+                    $roleStr = (string) ($exam['role'] ?? 'Surveillant');
+                    $isPrincipal = stripos($roleStr, 'Principal') !== false;
+                @endphp
+                <tr>
+                    <td class="date-cell">{{ $exam['date'] ?? 'N/A' }}</td>
+                    <td class="time-cell">{{ $exam['time'] ?? '14:30 – 16:30' }}</td>
+                    <td class="module-cell">{{ $exam['module'] ?? 'N/A' }}</td>
+                    <td class="room-cell">{{ $exam['room'] ?? 'Amphithéâtre B' }}</td>
+                    <td class="role-cell">
+                        <table class="role-stack" cellpadding="0" cellspacing="0">
+                            <tr>
+                                <td class="role-kind">Surveillant</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    @if($isPrincipal)
+                                        <span class="role-title principal">Principal</span>
+                                    @else
+                                        <span class="role-title secondaire">Adjoint</span>
+                                    @endif
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="5" style="padding: 10px; color: #64748b; font-style: italic;">
+                        Aucune séance de surveillance n'est programmée pour cette session.
+                    </td>
+                </tr>
+            @endforelse
+        </tbody>
+    </table>
+
+    {{-- CHARTE OFFICIELLE DE SURVEILLANCE --}}
+    <div class="section-heading">Consignes et Charte de Surveillance des Examens</div>
+    <div class="charte-box">
+        <div class="charte-item">
+            <span class="charte-num">1. Ponctualité & Installation :</span> La présence en salle est impérative <strong>15 minutes avant</strong> le début de l'épreuve pour vérifier l'état des lieux, faire asseoir les candidats selon le plan d'affichage et distribuer les sujets.
+        </div>
+        <div class="charte-item">
+            <span class="charte-num">2. Contrôle de Présence & Émargement :</span> Le contrôle rigoureux de la Carte d'Étudiant ou de la CIN est obligatoire. Chaque étudiant doit émarger individuellement sur la feuille d'émargement officielle de la salle.
+        </div>
+        <div class="charte-item">
+            <span class="charte-num">3. Appareils Électroniques :</span> L'usage des smartphones, montres connectées et écouteurs est strictement prohibé. Ils doivent être éteints et déposés à l'estrade dès l'entrée en salle.
+        </div>
+        <div class="charte-item">
+            <span class="charte-num">4. Gestion des Fraudes :</span> En cas de tentative ou de flagrant délit de fraude, le surveillant principal dresse immédiatement un Procès-Verbal (PV) signé par les surveillants avec saisie des éléments matériels.
+        </div>
+        <div class="charte-item">
+            <span class="charte-num">5. Clôture & Remise des Copies :</span> À la fin de l'épreuve, les copies sont comptées, classées et remises sous pli fermé au Bureau des Examens contre décharge dûment signée.
+        </div>
+    </div>
+
+    {{-- FOOTER / SIGNATURES --}}
+    <table class="footer-table" cellpadding="0" cellspacing="0">
         <tr>
-            <th style="width:12%">Date</th>
-            <th class="col-horaire" style="width:9%">Horaire</th>
-            <th class="col-module" style="width:40%">Matière / Épreuve</th>
-            <th style="width:20%">Salle / Amphi</th>
-            <th style="width:19%">Mission / Rôle</th>
+            <td class="footer-left">
+                <div class="meta-text">
+                    <div>Fait à Fès, le <span class="meta-bold">{{ now()->format('d/m/Y') }}</span></div>
+                    <div>Réf. Sécurité : <span class="meta-bold">{{ substr(md5(($data['qr_token'] ?? $data['id'] ?? 'ENCG').$academicYear), 0, 16) }}</span></div>
+                </div>
+                <div class="auth-stamp">Document Officiel — ENCG Fès</div>
+
+                @if(!empty($data['qrCodeBase64']))
+                    <div class="qr-section">
+                        <img src="{{ $data['qrCodeBase64'] }}" alt="QR Code">
+                        <div class="qr-caption">
+                            <strong>Vérification Numérique</strong><br>
+                            Scannez pour valider la convocation<br>
+                            sur le portail d'authentification ENCG
+                        </div>
+                    </div>
+                @endif
+            </td>
+            <td class="footer-right">
+                <div class="sign-title">Pour le Directeur de l'ENCG Fès</div>
+                <div class="sign-subtitle">Le Directeur Adjoint chargé des Affaires Pédagogiques</div>
+                <div class="sign-placeholder"></div>
+                <div class="sign-mention">Cachet Officiel et Signature</div>
+            </td>
         </tr>
-    </thead>
-    <tbody>
-        @forelse($data['exams'] as $exam)
-            @php
-                $timeParts = preg_split('/\s*-\s*/', (string) ($exam['time'] ?? ''), 2);
-                $timeStart = trim($timeParts[0] ?? '');
-                $timeEnd = trim($timeParts[1] ?? '');
-                $examRole = $exam['role'] ?? 'Surveillant';
-                $isPrincipal = stripos($examRole, 'principal') !== false;
-            @endphp
-            <tr>
-                <td class="date-cell">{{ $exam['date'] }}</td>
-                <td class="time-cell">
-                    @if($timeStart && $timeEnd)
-                        {{ $timeStart }}<br>-<br>{{ $timeEnd }}
-                    @else
-                        {{ $exam['time'] }}
-                    @endif
-                </td>
-                <td class="module-cell">{{ $exam['module'] }}</td>
-                <td style="font-weight:bold; color:#1e3a8a;">{{ $exam['room'] }}</td>
-                <td>
-                    <span class="role-pill {{ $isPrincipal ? 'principal' : '' }}">
-                        {{ ucfirst($examRole) }}
-                    </span>
-                </td>
-            </tr>
-        @empty
-            <tr>
-                <td colspan="5" style="padding:8px; color:#64748b;">Aucune séance de surveillance assignée.</td>
-            </tr>
-        @endforelse
-    </tbody>
-</table>
+    </table>
 
-{{-- DIRECTIVES DE SURVEILLANCE --}}
-<div class="rules-title">Charte &amp; Directives de Surveillance — ENCG Fès</div>
-<div class="rules-box">
-    — <strong>Ponctualité :</strong> La présence en salle est impérative <strong>15 minutes avant</strong> le début de l'épreuve pour la vérification des listes et l'installation des étudiants.<br>
-    — <strong>Contrôle d'identité :</strong> La vérification de la Carte d'Étudiant ou CIN et l'émargement individuel de la feuille de présence sont obligatoires.<br>
-    — <strong>Dispositifs électroniques :</strong> L'usage des smartphones, montres connectées et écouteurs est strictement interdit aux étudiants en salle d'examen.<br>
-    — <strong>Fraude :</strong> En cas de flagrant délit, un Procès-Verbal (PV) de fraude doit être dressé immédiatement, signé par les surveillants et remis à la Direction dans les 24h.<br>
-    — <strong>Remise des copies :</strong> Le comptage précis des copies et leur remise contre décharge au bureau de scolarité s'effectue immédiatement à l'issue de l'épreuve.
-</div>
-
-</td>
-</tr>
-<tr>
-<td class="footer-block">
-
-<table class="footer-inner" cellpadding="0" cellspacing="0">
-    <tr>
-        <td class="footer-left">
-            <div class="ref-block">
-                Édité le : {{ $data['generated_at'] ?? now()->format('d/m/Y H:i:s') }}<br>
-                Réf. : <span class="ref-code">{{ strtoupper(substr(md5(($data['id'] ?? 'PROF').($data['person_name'] ?? '').($data['created_at'] ?? '')), 0, 14)) }}</span>
-            </div>
-            <div class="valid-stamp">Document Officiel</div>
-        </td>
-        <td class="footer-right">
-            <div class="sig-label">Le Directeur Adjoint</div>
-            <div class="sig-sub">Chargé des Affaires Pédagogiques</div>
-            <div class="sig-line"></div>
-            <div class="sig-caption">Cachet &amp; Signature</div>
-            @if(!empty($data['qrCodeBase64']))
-                <div class="qr-wrap">
-                    <img src="{{ $data['qrCodeBase64'] }}" alt="QR Code">
-                </div>
-            @elseif(!empty($data['qr_token']))
-                <div class="qr-wrap">
-                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=52x52&amp;data={{ urlencode($data['qr_token']) }}" alt="QR">
-                </div>
-            @endif
-        </td>
-    </tr>
-</table>
-
-<div class="tagline">
-    ENCG Fès — Route d'Imouzzer, B.P. 1255, Fès - Maroc | Tél: +212 5 35 64 49 20 | https://encg-fes.ac.ma
-</div>
+    {{-- BOTTOM LEGAL BAR --}}
+    <div class="bottom-bar">
+        École Nationale de Commerce et de Gestion de Fès — Route d'Imouzzer, B.P. 1255, Fès — Tél : +212 5 35 64 49 20 | https://encg-fes.ac.ma
+    </div>
 
 </td>
 </tr>
@@ -428,9 +558,9 @@
 </div>
 
 @if(!$loop->last)
-<div class="page-break"></div>
+    <div class="page-break"></div>
 @endif
-
 @endforeach
+
 </body>
 </html>

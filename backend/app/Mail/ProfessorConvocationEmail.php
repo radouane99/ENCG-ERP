@@ -4,6 +4,7 @@ namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Address;
 use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
@@ -26,6 +27,10 @@ class ProfessorConvocationEmail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
+            from: new Address(
+                'no-reply@benadadarentcar.com',
+                config('mail.from.name', 'ENCG Portail')
+            ),
             subject: 'Votre Planning de Surveillance - ENCG Fès',
         );
     }

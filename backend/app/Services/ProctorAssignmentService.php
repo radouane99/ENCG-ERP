@@ -93,7 +93,7 @@ class ProctorAssignmentService
                 }
 
                 $sortedProfs = $availableProfessors->sortBy(fn ($p) => $workloadMap[$p->id] ?? 0);
-                $proctorsNeeded = 2;
+                $proctorsNeeded = 3; // 1 Surveillant Principal + 2 Surveillants Secondaires
                 $assignedForExam = 0;
 
                 foreach ($sortedProfs as $prof) {
@@ -106,11 +106,17 @@ class ProctorAssignmentService
                         ->exists();
 
                     if (! $timeConflict) {
+                        $role = match ($assignedForExam) {
+                            0 => 'Surveillant Principal',
+                            1 => 'Surveillant Secondaire (Salle)',
+                            default => 'Surveillant Secondaire (Appui)',
+                        };
+
                         ExamSurveillance::create([
                             'exam_id' => $exam->id,
                             'room_id' => $exam->room_id,
                             'professor_id' => $prof->id,
-                            'role' => $assignedForExam === 0 ? 'principal' : 'assistant',
+                            'role' => $role,
                             'has_attended' => false,
                         ]);
 

@@ -233,10 +233,13 @@ class PdfExportController extends Controller
         $exams = [];
         foreach ($allStudentSeatings as $s) {
             if ($s->exam) {
-                $profName = $this->getProfessorNameForModule($s->exam->module_id);
+                $startTime = $s->exam->start_time ? substr($s->exam->start_time, 0, 5) : '14:30';
+                $endTime = $s->exam->end_time ? substr($s->exam->end_time, 0, 5) : date('H:i', strtotime($startTime . ' +2 hours'));
+                $timeRange = "{$startTime} – {$endTime}";
+
                 $exams[] = [
                     'date' => $s->exam->exam_date?->format('d/m/Y') ?? 'N/A',
-                    'time' => $s->exam->formattedTimeRange(),
+                    'time' => $timeRange,
                     'module' => $s->exam->module->name ?? 'Module N/A',
                     'enseignant' => $profName,
                     'room' => $s->room->name ?? ($s->exam->room->name ?? 'Amphithéâtre B'),
@@ -303,20 +306,27 @@ class PdfExportController extends Controller
         $exams = [];
         foreach ($allSurveillances as $s) {
             if ($s->exam) {
+                $startTime = $s->exam->start_time ? substr($s->exam->start_time, 0, 5) : '14:30';
+                $endTime = $s->exam->end_time ? substr($s->exam->end_time, 0, 5) : date('H:i', strtotime($startTime . ' +2 hours'));
+                $timeRange = "{$startTime} – {$endTime}";
+
                 $exams[] = [
                     'date' => $s->exam->exam_date?->format('d/m/Y') ?? 'N/A',
-                    'time' => ($s->exam->start_time ? substr($s->exam->start_time, 0, 5) : '08:30'),
+                    'time' => $timeRange,
                     'module' => $s->exam->module->name ?? 'N/A',
-                    'room' => $s->room->name ?? ($s->exam->room->name ?? 'Amphi B'),
-                    'role' => $s->role ?? 'Surveillant',
+                    'room' => $s->room->name ?? ($s->exam->room->name ?? 'Amphithéâtre B'),
+                    'role' => $s->role ?? 'Surveillant Principal',
                 ];
             }
         }
 
-        $profUser = User::find($professorId) ?? ($surveillance->professor?->user ?? $surveillance->professor);
-        $profName = trim(($profUser?->first_name ?? '').' '.($profUser?->last_name ?? ($profUser?->name ?? 'Professeur')));
-        if (empty($profName)) {
-            $profName = $profUser?->name ?? 'Professeur ENCG';
+        usort($exams, fn ($a, $b) => strcmp($a['date'].' '.$a['time'], $b['date'].' '.$b['time']));
+
+        $professorRecord = Professor::resolveWithDepartmentByPublicId($professorId);
+        $profUser = $professorRecord?->user ?? User::find($professorId) ?? ($surveillance->professor ?? null);
+        $profName = trim(($profUser?->first_name ?? $professorRecord?->first_name ?? '').' '.($profUser?->last_name ?? $professorRecord?->last_name ?? ($profUser?->name ?? $professorRecord?->name ?? '')));
+        if ($profName === '') {
+            $profName = $profUser?->name ?? $professorRecord?->name ?? 'Professeur ENCG';
         }
         $sessionName = $surveillance->exam?->examSession?->name ?? 'Session d\'Examens';
         $sessionType = $surveillance->exam?->examSession?->type ?? 'Normale';
@@ -341,8 +351,10 @@ class PdfExportController extends Controller
             'id' => $surveillance->professor_id,
             'created_at' => $surveillance->created_at?->toIso8601String() ?? now()->toIso8601String(),
             'person_name' => strtoupper($profName),
-            'person_id' => $profUser?->cin ?? ($surveillance->professor?->cin ?? 'ENCG-ENS'),
-            'filiere_name' => 'Corps Professoral ENCG Fès',
+            'person_id' => $profUser?->cin ?? $professorRecord?->cin ?? 'ENCG-ENS',
+            'department_name' => $professorRecord?->department?->name,
+            'department_label' => $professorRecord?->departmentDisplayLabel() ?? 'Corps Professoral — ENCG Fès',
+            'filiere_name' => $professorRecord?->departmentDisplayLabel() ?? 'Corps Professoral — ENCG Fès',
             'person_role' => $surveillance->role ?? 'Surveillant',
             'session_name' => $sessionName,
             'session_type' => $sessionType,
@@ -420,9 +432,13 @@ class PdfExportController extends Controller
             foreach ($allStudentSeatings as $s) {
                 if ($s->exam) {
                     $profName = $this->getProfessorNameForModule($s->exam->module_id);
+                    $startTime = $s->exam->start_time ? substr($s->exam->start_time, 0, 5) : '14:30';
+                    $endTime = $s->exam->end_time ? substr($s->exam->end_time, 0, 5) : date('H:i', strtotime($startTime . ' +2 hours'));
+                    $timeRange = "{$startTime} – {$endTime}";
+
                     $exams[] = [
                         'date' => $s->exam->exam_date?->format('d/m/Y') ?? 'N/A',
-                        'time' => $s->exam->formattedTimeRange(),
+                        'time' => $timeRange,
                         'module' => $s->exam->module->name ?? 'Module N/A',
                         'enseignant' => $profName,
                         'room' => $s->room->name ?? ($s->exam->room->name ?? 'Salle N/A'),
@@ -500,22 +516,31 @@ class PdfExportController extends Controller
             ->whereIn('professor_id', $profIds)
             ->get();
 
-        $professors = User::whereIn('id', $profIds)->get();
         $professorsData = [];
 
-        foreach ($professors as $prof) {
-            $profSurvs = $allSurveillances->where('professor_id', $prof->id);
+        foreach ($profIds as $profId) {
+            $professorRecord = Professor::resolveWithDepartmentByPublicId($profId);
+            $prof = $professorRecord?->user ?? User::find($profId);
+            if (! $prof) {
+                continue;
+            }
+
+            $profSurvs = $allSurveillances->where('professor_id', $profId);
             $exams = [];
 
             foreach ($profSurvs as $s) {
                 $exam = $session->exams->firstWhere('id', $s->exam_id);
                 if ($exam) {
+                    $startTime = $exam->start_time ? substr($exam->start_time, 0, 5) : '14:30';
+                    $endTime = $exam->end_time ? substr($exam->end_time, 0, 5) : date('H:i', strtotime($startTime . ' +2 hours'));
+                    $timeRange = "{$startTime} – {$endTime}";
+
                     $exams[] = [
                         'date' => $exam->exam_date?->format('d/m/Y') ?? 'N/A',
-                        'time' => $exam->formattedTimeRange(),
+                        'time' => $timeRange,
                         'module' => $exam->module->name ?? 'N/A',
-                        'room' => $exam->room->name ?? 'N/A',
-                        'role' => $s->role ?? 'Surveillant',
+                        'room' => $exam->room->name ?? ($s->room->name ?? 'Amphithéâtre B'),
+                        'role' => $s->role ?? 'Surveillant Principal',
                     ];
                 }
             }
@@ -539,11 +564,13 @@ class PdfExportController extends Controller
             }
 
             $professorsData[] = [
-                'id' => $prof->id,
-                'person_name' => mb_strtoupper($prof->last_name).' '.$prof->first_name,
-                'person_id' => $prof->cin ?? 'ENCG-ENS',
+                'id' => $profId,
+                'person_name' => mb_strtoupper(trim(($prof->last_name ?? $professorRecord?->last_name ?? '').' '.($prof->first_name ?? $professorRecord?->first_name ?? ''))),
+                'person_id' => $prof->cin ?? $professorRecord?->cin ?? 'ENCG-ENS',
                 'person_role' => 'Professeur / Surveillant',
-                'filiere_name' => 'Corps Professoral ENCG Fès',
+                'department_name' => $professorRecord?->department?->name,
+                'department_label' => $professorRecord?->departmentDisplayLabel() ?? 'Corps Professoral — ENCG Fès',
+                'filiere_name' => $professorRecord?->departmentDisplayLabel() ?? 'Corps Professoral — ENCG Fès',
                 'session_type' => $session->type ?? 'Normale',
                 'session_name' => $session->name ?? 'Session Principale',
                 'academic_year' => '2025 — 2026',
