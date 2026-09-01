@@ -26,11 +26,6 @@ class OfficialPdfFactory
             $data['qrBase64'] = 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data='.urlencode($data['verifyUrl']);
         }
 
-        return Pdf::setOption([
-            'isRemoteEnabled' => true,
-            'chroot' => public_path(),
-            'isHtml5ParserEnabled' => true,
-            'defaultFont' => 'DejaVu Sans',
-        ])->loadView($view, $data);
+        return Pdf::loadView($view, $data)->setPaper('a4', 'portrait');
     }
 }

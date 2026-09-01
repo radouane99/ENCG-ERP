@@ -918,132 +918,154 @@ export default function AdminConvocationsPage() {
                     {viewMode === 'table' ? (
                       <div className="overflow-x-auto">
                         <table className="w-full text-sm">
-                          <thead className="text-[10px] font-black text-slate-400 uppercase tracking-wider bg-slate-50 dark:bg-slate-800/60 border-b border-slate-100 dark:border-slate-800">
-                            <tr>
-                              <th className="px-5 py-4 text-left w-10">
+                          <thead>
+                            <tr className="bg-gradient-to-r from-slate-50 to-slate-100/80 dark:from-slate-800/60 dark:to-slate-800/40 border-b border-slate-200 dark:border-slate-700">
+                              <th className="px-5 py-3.5 text-left w-10">
                                 <input
                                   type="checkbox"
                                   checked={filteredStudents.length > 0 && filteredStudents.every((s: any) => isStudentSelected(s))}
                                   onChange={handleSelectAllStudents}
-                                  className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                                  className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                                 />
                               </th>
-                              <th className="px-5 py-4 text-left">Étudiant & Identifiants</th>
-                              <th className="px-5 py-4 text-left">Filière / Affectation Amphi</th>
-                              <th className="px-5 py-4 text-center">Modules Assignés</th>
-                              <th className="px-5 py-4 text-center">QR Token Sécurisé</th>
-                              <th className="px-5 py-4 text-center">Statut Resend</th>
-                              <th className="px-5 py-4 text-right">Actions</th>
+                              <th className="px-5 py-3.5 text-left text-[10px] font-black text-slate-500 uppercase tracking-wider">Étudiant & Identifiants</th>
+                              <th className="px-5 py-3.5 text-left text-[10px] font-black text-slate-500 uppercase tracking-wider">Filière / Affectation Amphi</th>
+                              <th className="px-5 py-3.5 text-center text-[10px] font-black text-slate-500 uppercase tracking-wider">Modules Assignés</th>
+                              <th className="px-5 py-3.5 text-center text-[10px] font-black text-slate-500 uppercase tracking-wider">QR Token Sécurisé</th>
+                              <th className="px-5 py-3.5 text-center text-[10px] font-black text-slate-500 uppercase tracking-wider">Statut Resend</th>
+                              <th className="px-5 py-3.5 text-right text-[10px] font-black text-slate-500 uppercase tracking-wider">Actions</th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                            {filteredStudents.map((s: any) => {
+                          <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
+                            {filteredStudents.map((s: any, idx: number) => {
                               const isSelected = isStudentSelected(s)
+                              const initials = (s.student_name || 'E').charAt(0).toUpperCase()
+                              const avatarColors = [
+                                'from-blue-600 to-blue-800', 'from-indigo-500 to-indigo-700',
+                                'from-violet-500 to-violet-700', 'from-sky-600 to-sky-800',
+                                'from-teal-500 to-teal-700', 'from-cyan-600 to-cyan-800',
+                              ]
+                              const avatarColor = avatarColors[idx % avatarColors.length]
                               return (
                                 <tr
                                   key={s.student_id || s.cne}
                                   className={cn(
-                                    'hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors',
-                                    isSelected ? 'bg-blue-50/40 dark:bg-blue-950/30' : ''
+                                    'group transition-all duration-150',
+                                    isSelected
+                                      ? 'bg-blue-50/60 dark:bg-blue-950/25 border-l-2 border-l-blue-500'
+                                      : 'hover:bg-slate-50/80 dark:hover:bg-slate-800/30 border-l-2 border-l-transparent'
                                   )}
                                 >
-                                  <td className="px-5 py-4">
+                                  <td className="px-5 py-3.5">
                                     <input
                                       type="checkbox"
                                       checked={isSelected}
                                       onChange={() => handleSelectStudent(s)}
-                                      className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                                      className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                                     />
                                   </td>
-                                  <td className="px-5 py-4">
+                                  <td className="px-5 py-3.5">
                                     <div className="flex items-center gap-3">
-                                      <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#0f2863] to-blue-700 text-white flex items-center justify-center text-xs font-black shadow-sm shrink-0">
-                                        {(s.student_name || 'E').charAt(0).toUpperCase()}
+                                      <div className={cn('w-9 h-9 rounded-xl bg-gradient-to-br text-white flex items-center justify-center text-xs font-black shadow-sm shrink-0 ring-2 ring-white dark:ring-slate-800', avatarColor)}>
+                                        {initials}
                                       </div>
                                       <div>
-                                        <p className="font-bold text-slate-900 dark:text-slate-100">{s.student_name}</p>
-                                        <div className="flex items-center gap-2 mt-0.5 font-mono text-[11px]">
-                                          <span className="font-bold text-slate-600 dark:text-slate-400">CNE: {s.cne || '—'}</span>
+                                        <p className="font-bold text-[13px] text-slate-900 dark:text-slate-100 leading-tight">{s.student_name}</p>
+                                        <div className="flex items-center gap-1.5 mt-0.5">
+                                          <span className="font-mono text-[10px] font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">
+                                            {s.cne || '—'}
+                                          </span>
                                           {s.cin && (
-                                            <span className="text-[#0f2863] dark:text-blue-400 font-bold bg-blue-50 dark:bg-blue-950 px-1.5 py-0.2 rounded border border-blue-200 dark:border-blue-900">
-                                              CIN: {s.cin}
+                                            <span className="font-mono text-[10px] font-bold text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950 px-1.5 py-0.5 rounded border border-blue-200 dark:border-blue-900">
+                                              {s.cin}
                                             </span>
                                           )}
                                         </div>
                                       </div>
                                     </div>
                                   </td>
-                                  <td className="px-5 py-4">
+                                  <td className="px-5 py-3.5">
                                     <div className="space-y-1">
-                                      <span className="px-2.5 py-0.5 bg-blue-50 dark:bg-blue-950/60 text-[#0f2863] dark:text-blue-300 rounded-md text-[10px] font-black border border-blue-200 dark:border-blue-800">
-                                        {s.filiere}
-                                      </span>
-                                      {s.group_name && <span className="ml-1 text-[10px] text-slate-400 font-bold">· {s.group_name}</span>}
-                                      <div className="flex items-center gap-1 text-[11px] font-bold text-slate-600 dark:text-slate-300">
-                                        <MapPin className="w-3.5 h-3.5 text-indigo-500" />
-                                        <span>Amphithéâtre B · Table N° {((s.student_id || 1) % 45) + 1}</span>
+                                      <div>
+                                        <span className="px-2 py-0.5 bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 rounded text-[10px] font-black border border-blue-100 dark:border-blue-900 inline-block">
+                                          {s.filiere}
+                                        </span>
+                                        {s.group_name && (
+                                          <span className="ml-1.5 text-[10px] text-slate-400 font-bold bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">
+                                            {s.group_name}
+                                          </span>
+                                        )}
+                                      </div>
+                                      <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                                        <MapPin className="w-3 h-3 text-indigo-400 shrink-0" />
+                                        <span>Amphi B · Table N° {((s.student_id || 1) % 45) + 1}</span>
                                       </div>
                                     </div>
                                   </td>
-                                  <td className="px-5 py-4 text-center">
+                                  <td className="px-5 py-3.5 text-center">
                                     <button
                                       onClick={() => setSelectedStudentDetail(s)}
-                                      className="px-3 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-black transition-all inline-flex items-center gap-1.5 cursor-pointer"
+                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-[#0f2863] hover:text-white dark:bg-slate-800 dark:hover:bg-blue-900 text-slate-700 dark:text-slate-200 rounded-lg text-[11px] font-bold transition-all cursor-pointer group/btn"
                                     >
                                       <span>{s.exams.length} modules</span>
-                                      <ChevronRight className="w-3 h-3 text-slate-400" />
+                                      <ChevronRight className="w-3 h-3 opacity-60 group-hover/btn:opacity-100 group-hover/btn:translate-x-0.5 transition-transform" />
                                     </button>
                                   </td>
-                                  <td className="px-5 py-4 text-center">
+                                  <td className="px-5 py-3.5 text-center">
                                     {s.has_qr ? (
-                                      <span className="px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200 rounded-full text-[10px] font-black inline-flex items-center gap-1">
-                                        <BadgeCheck className="w-3.5 h-3.5" /> Certifié
+                                      <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 rounded-full text-[10px] font-black">
+                                        <BadgeCheck className="w-3 h-3" />
+                                        Certifié
                                       </span>
                                     ) : (
-                                      <span className="px-2.5 py-1 bg-amber-50 text-amber-600 rounded-full text-[10px] font-bold">
+                                      <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800 rounded-full text-[10px] font-bold">
+                                        <AlertTriangle className="w-3 h-3" />
                                         À générer
                                       </span>
                                     )}
                                   </td>
-                                  <td className="px-5 py-4 text-center">
+                                  <td className="px-5 py-3.5 text-center">
                                     {s.all_sent ? (
-                                      <span className="px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200 rounded-full text-[10px] font-black">
+                                      <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 rounded-full text-[10px] font-black">
+                                        <CheckCircle className="w-3 h-3" />
                                         Envoyée
                                       </span>
                                     ) : s.any_sent ? (
-                                      <span className="px-2.5 py-1 bg-amber-50 text-amber-600 rounded-full text-[10px] font-bold">
+                                      <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800 rounded-full text-[10px] font-bold">
+                                        <Clock className="w-3 h-3" />
                                         Partielle
                                       </span>
                                     ) : (
-                                      <span className="px-2.5 py-1 bg-slate-100 text-slate-400 rounded-full text-[10px] font-bold">
+                                      <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 rounded-full text-[10px] font-bold">
+                                        <Inbox className="w-3 h-3" />
                                         En attente
                                       </span>
                                     )}
                                   </td>
-                                  <td className="px-5 py-4 text-right">
-                                    <div className="flex items-center justify-end gap-1.5">
+                                  <td className="px-5 py-3.5 text-right">
+                                    <div className="flex items-center justify-end gap-1 opacity-70 group-hover:opacity-100 transition-opacity">
                                       <button
                                         onClick={() => setSelectedStudentDetail(s)}
-                                        className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+                                        className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-[11px] font-bold transition-all cursor-pointer"
                                         title="Voir les détails"
                                       >
-                                        <Eye className="w-3.5 h-3.5 text-slate-500" />
-                                        <span>Détails</span>
+                                        <Eye className="w-3.5 h-3.5" />
+                                        Détails
                                       </button>
                                       <button
                                         onClick={() => handleDownloadStudentPdf(s.all_seating_ids[0])}
-                                        className="p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors cursor-pointer"
-                                        title="Télécharger la convocation PDF"
+                                        className="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 rounded-lg transition-all cursor-pointer"
+                                        title="Télécharger PDF"
                                       >
-                                        <Download className="w-4 h-4" />
+                                        <Download className="w-3.5 h-3.5" />
                                       </button>
                                       <button
                                         onClick={() => batchEmailMutation.mutate(s.all_seating_ids)}
                                         disabled={batchEmailMutation.isPending}
-                                        className="p-2 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-colors cursor-pointer"
-                                        title="Envoyer l'email"
+                                        className="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950 rounded-lg transition-all cursor-pointer disabled:opacity-40"
+                                        title="Envoyer email"
                                       >
-                                        <Mail className="w-4 h-4" />
+                                        <Mail className="w-3.5 h-3.5" />
                                       </button>
                                     </div>
                                   </td>
@@ -1341,81 +1363,111 @@ export default function AdminConvocationsPage() {
 
         {/* 📋 MODAL: STUDENT DETAILED EXAM SCHEDULE */}
         {selectedStudentDetail && (
-          <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-            <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800">
-              <div className="p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 flex items-start justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#0f2863] to-blue-700 text-white flex items-center justify-center text-lg font-black shadow-md">
-                    {(selectedStudentDetail.student_name || 'E').charAt(0).toUpperCase()}
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
-                      {selectedStudentDetail.student_name}
-                    </h3>
-                    <div className="flex items-center gap-2 mt-1 text-xs text-slate-500 font-medium">
-                      <span className="font-mono bg-slate-200 dark:bg-slate-700 px-2 py-0.5 rounded font-bold text-slate-800 dark:text-slate-200">
-                        CNE: {selectedStudentDetail.cne || '—'}
-                      </span>
-                      {selectedStudentDetail.cin && (
-                        <span className="font-mono bg-blue-50 dark:bg-blue-950 text-[#0f2863] dark:text-blue-300 px-2 py-0.5 rounded font-bold border border-blue-200 dark:border-blue-800">
-                          CIN: {selectedStudentDetail.cin}
+          <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden border border-slate-200/80 dark:border-slate-700/60">
+              {/* Modal Header */}
+              <div className="relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-r from-[#0f2863] to-blue-700" />
+                <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full blur-3xl pointer-events-none" />
+                <div className="relative z-10 p-6 flex items-start justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-2xl bg-white/15 backdrop-blur border border-white/20 text-white flex items-center justify-center text-2xl font-black shadow-xl">
+                      {(selectedStudentDetail.student_name || 'E').charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="px-2 py-0.5 bg-amber-400/20 text-amber-300 border border-amber-400/30 rounded-full text-[9px] font-black uppercase tracking-wider">
+                          Étudiant ENCG
                         </span>
-                      )}
-                      <span>•</span>
-                      <span className="font-black text-[#0f2863] dark:text-blue-400">{selectedStudentDetail.filiere}</span>
+                      </div>
+                      <h3 className="text-xl font-black text-white">
+                        {selectedStudentDetail.student_name}
+                      </h3>
+                      <div className="flex items-center gap-2 mt-1.5">
+                        <span className="font-mono text-[11px] font-bold text-blue-200 bg-white/10 px-2 py-0.5 rounded">
+                          CNE: {selectedStudentDetail.cne || '—'}
+                        </span>
+                        {selectedStudentDetail.cin && (
+                          <span className="font-mono text-[11px] font-bold text-white/80 bg-white/10 px-2 py-0.5 rounded">
+                            CIN: {selectedStudentDetail.cin}
+                          </span>
+                        )}
+                        <span className="text-[11px] font-black text-amber-300 bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20">
+                          {selectedStudentDetail.filiere}
+                        </span>
+                      </div>
                     </div>
                   </div>
+                  <button
+                    onClick={() => setSelectedStudentDetail(null)}
+                    className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 text-white/70 hover:text-white flex items-center justify-center transition-all cursor-pointer shrink-0"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
                 </div>
-                <button
-                  onClick={() => setSelectedStudentDetail(null)}
-                  className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-800 dark:hover:text-white flex items-center justify-center transition-colors cursor-pointer"
-                >
-                  <X className="w-4 h-4" />
-                </button>
               </div>
 
-              <div className="p-6 overflow-y-auto space-y-4 flex-1">
-                <div className="border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden">
+              {/* Exam Table */}
+              <div className="p-5 overflow-y-auto space-y-3 flex-1">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-1 h-5 bg-[#0f2863] rounded-full" />
+                  <p className="text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                    Programme des {selectedStudentDetail.exams.length} Épreuves
+                  </p>
+                </div>
+                <div className="border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden shadow-sm">
                   <table className="w-full text-xs">
-                    <thead className="bg-slate-50 dark:bg-slate-800/60 text-[10px] uppercase font-black text-slate-400 border-b border-slate-200 dark:border-slate-800">
-                      <tr>
-                        <th className="px-4 py-3 text-left">#</th>
-                        <th className="px-4 py-3 text-left">Module / Épreuve</th>
-                        <th className="px-4 py-3 text-left">Date & Heure</th>
-                        <th className="px-4 py-3 text-left">Salle</th>
-                        <th className="px-4 py-3 text-center">Table N°</th>
-                        <th className="px-4 py-3 text-center">Statut</th>
+                    <thead>
+                      <tr className="bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-800/80 dark:to-slate-800/60 border-b border-slate-200 dark:border-slate-700">
+                        <th className="px-4 py-3 text-left text-[10px] font-black text-slate-400 uppercase tracking-wider">#</th>
+                        <th className="px-4 py-3 text-left text-[10px] font-black text-slate-400 uppercase tracking-wider">Module / Épreuve</th>
+                        <th className="px-4 py-3 text-left text-[10px] font-black text-slate-400 uppercase tracking-wider">Date & Heure</th>
+                        <th className="px-4 py-3 text-left text-[10px] font-black text-slate-400 uppercase tracking-wider">Salle</th>
+                        <th className="px-4 py-3 text-center text-[10px] font-black text-slate-400 uppercase tracking-wider">Table</th>
+                        <th className="px-4 py-3 text-center text-[10px] font-black text-slate-400 uppercase tracking-wider">Statut</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                       {selectedStudentDetail.exams.map((ex: any, idx: number) => (
-                        <tr key={ex.id || idx} className="hover:bg-slate-50/50">
-                          <td className="px-4 py-3 font-bold text-slate-400">{idx + 1}</td>
-                          <td className="px-4 py-3 font-bold text-slate-800 dark:text-slate-200">{ex.exam_name}</td>
-                          <td className="px-4 py-3 text-slate-600 dark:text-slate-400">
-                            <div className="flex items-center gap-1.5 font-medium">
-                              <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                              <span>{ex.exam_date ? new Date(ex.exam_date).toLocaleDateString('fr-FR') : '—'}</span>
-                              {ex.start_time && <span className="font-bold text-slate-800 dark:text-slate-200 ml-1">{ex.start_time.substring(0, 5)}</span>}
+                        <tr key={ex.id || idx} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/30 transition-colors">
+                          <td className="px-4 py-3">
+                            <span className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 font-black flex items-center justify-center text-[10px]">{idx + 1}</span>
+                          </td>
+                          <td className="px-4 py-3 font-bold text-[12px] text-slate-800 dark:text-slate-200 max-w-[200px]">
+                            {ex.exam_name}
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-1.5">
+                              <Calendar className="w-3 h-3 text-slate-400 shrink-0" />
+                              <span className="font-medium text-slate-600 dark:text-slate-400">
+                                {ex.exam_date ? new Date(ex.exam_date).toLocaleDateString('fr-FR') : '—'}
+                              </span>
+                              {ex.start_time && (
+                                <span className="font-bold text-[#0f2863] dark:text-blue-400 bg-blue-50 dark:bg-blue-950 px-1.5 rounded text-[10px]">
+                                  {ex.start_time.substring(0, 5)}
+                                </span>
+                              )}
                             </div>
                           </td>
-                          <td className="px-4 py-3 text-slate-600 dark:text-slate-400">
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded font-medium">
-                              <MapPin className="w-3 h-3 text-slate-400" />
-                              {ex.room_name || 'Amphithéâtre B'}
+                          <td className="px-4 py-3">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-md font-medium">
+                              <MapPin className="w-2.5 h-2.5 text-indigo-400" />
+                              {ex.room_name || 'Amphi B'}
                             </span>
                           </td>
-                          <td className="px-4 py-3 text-center font-mono font-black text-[#0f2863] dark:text-blue-400">
-                            {ex.seat_number ? `N° ${ex.seat_number}` : '—'}
+                          <td className="px-4 py-3 text-center">
+                            <span className="font-mono font-black text-[11px] text-[#0f2863] dark:text-blue-400 bg-blue-50 dark:bg-blue-950 px-2 py-0.5 rounded-md border border-blue-100 dark:border-blue-900">
+                              {ex.seat_number ? `N° ${ex.seat_number}` : '—'}
+                            </span>
                           </td>
                           <td className="px-4 py-3 text-center">
                             {ex.sent_at ? (
-                              <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-black">
-                                Envoyé
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 rounded-full text-[10px] font-black">
+                                <CheckCircle className="w-3 h-3" /> Envoyé
                               </span>
                             ) : (
-                              <span className="px-2 py-0.5 bg-slate-100 text-slate-400 rounded-full text-[10px] font-bold">
-                                En attente
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-400 rounded-full text-[10px] font-bold">
+                                <Clock className="w-3 h-3" /> En attente
                               </span>
                             )}
                           </td>
@@ -1426,23 +1478,34 @@ export default function AdminConvocationsPage() {
                 </div>
               </div>
 
-              <div className="p-4 px-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 flex items-center justify-between">
+              {/* Footer */}
+              <div className="p-4 px-5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 flex items-center justify-between gap-3">
                 <button
                   type="button"
                   onClick={() => {
                     const seatingId = selectedStudentDetail.all_seating_ids?.[0]
                     if (seatingId) handlePreviewStudentPdf(seatingId)
                   }}
-                  className="px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-blue-400 hover:text-blue-600 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm"
                 >
-                  <Eye className="w-3.5 h-3.5 text-slate-500" /> Aperçu Convocation
+                  <Eye className="w-3.5 h-3.5" /> Aperçu PDF
                 </button>
-                <button
-                  onClick={() => setSelectedStudentDetail(null)}
-                  className="px-5 py-2.5 bg-[#0f2863] text-white rounded-xl text-xs font-black uppercase tracking-wider hover:bg-[#153a8a] transition-colors cursor-pointer"
-                >
-                  Fermer
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      handleDownloadStudentPdf(selectedStudentDetail.all_seating_ids?.[0])
+                    }}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-300 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                  >
+                    <Download className="w-3.5 h-3.5" /> Télécharger
+                  </button>
+                  <button
+                    onClick={() => setSelectedStudentDetail(null)}
+                    className="inline-flex items-center gap-2 px-5 py-2 bg-[#0f2863] hover:bg-[#153a8a] text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer shadow-md"
+                  >
+                    Fermer
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -1525,25 +1588,49 @@ export default function AdminConvocationsPage() {
 
         {/* 📄 MODAL: PDF FULLSCREEN PREVIEW */}
         {previewUrl && (
-          <div className="fixed inset-0 z-[60] bg-black/75 backdrop-blur-sm p-4 sm:p-6 flex flex-col animate-in fade-in duration-200">
-            <div className="flex-1 min-h-0 rounded-3xl border border-slate-700 overflow-hidden bg-slate-900 shadow-2xl flex flex-col max-w-5xl mx-auto w-full">
-              <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-800 bg-slate-900/90 shrink-0">
-                <div className="flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-amber-400" />
-                  <p className="text-xs font-black uppercase tracking-wider text-slate-200">Aperçu de la Convocation Officielle</p>
+          <div className="fixed inset-0 z-[60] bg-slate-950/80 backdrop-blur-md p-4 sm:p-8 flex flex-col animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex-1 min-h-0 rounded-3xl border border-slate-700/80 overflow-hidden bg-slate-900 shadow-[0_32px_80px_rgba(0,0,0,0.6)] flex flex-col max-w-5xl mx-auto w-full">
+              {/* Preview Toolbar */}
+              <div className="flex items-center justify-between px-5 py-3 border-b border-slate-800 bg-gradient-to-r from-slate-900 to-slate-800 shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center">
+                    <FileText className="w-4 h-4 text-amber-400" />
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-black uppercase tracking-widest text-slate-200">Convocation Officielle ENCG Fès</p>
+                    <p className="text-[10px] text-slate-500 font-medium">Document certifié — Format A4 officiel</p>
+                  </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    window.URL.revokeObjectURL(previewUrl)
-                    setPreviewUrl(null)
-                  }}
-                  className="text-xs font-bold text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
-                >
-                  Fermer
-                </button>
+                <div className="flex items-center gap-2">
+                  <a
+                    href={previewUrl}
+                    download="convocation_encg.pdf"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    Télécharger
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      window.URL.revokeObjectURL(previewUrl)
+                      setPreviewUrl(null)
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-xs font-bold transition-all cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                    Fermer
+                  </button>
+                </div>
               </div>
-              <iframe title="Aperçu convocation" src={previewUrl} className="w-full flex-1 min-h-[70vh] bg-slate-100" />
+              {/* PDF iframe */}
+              <div className="flex-1 min-h-0 relative bg-slate-700">
+                <iframe
+                  title="Aperçu convocation"
+                  src={previewUrl}
+                  className="absolute inset-0 w-full h-full border-0"
+                />
+              </div>
             </div>
           </div>
         )}
