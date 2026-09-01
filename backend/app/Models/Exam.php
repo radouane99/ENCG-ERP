@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\Academic\ExamSlotCatalog;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,6 +13,19 @@ class Exam extends Model
     use HasFactory;
 
     protected $guarded = ['id'];
+
+    protected static function booted(): void
+    {
+        static::saving(function (Exam $exam) {
+            if (blank($exam->start_time)) {
+                return;
+            }
+
+            $normalized = ExamSlotCatalog::normalizeForStorage((string) $exam->start_time);
+            $exam->start_time = $normalized['start_time'];
+            $exam->duration_minutes = $normalized['duration_minutes'];
+        });
+    }
 
     protected function casts(): array
     {
@@ -79,5 +93,18 @@ class Exam extends Model
         $fingerprint = $this->locked_at ?? $this->created_at ?? $this->getKey();
 
         return 'SHA256:ENCG-FES-'.$this->getKey().'-'.strtoupper(substr(md5($this->getKey().(string) $fingerprint), 0, 16));
+    }
+
+    /**
+     * Horaire d'épreuve selon les créneaux officiels ENCG (2h + pause 15 min entre créneaux).
+     */
+    public function formattedTimeRange(): string
+    {
+        return ExamSlotCatalog::formattedRange((string) ($this->start_time ?? ''));
+    }
+
+    public function resolvedDurationMinutes(): int
+    {
+        return ExamSlotCatalog::durationMinutes((string) ($this->start_time ?? ''));
     }
 }

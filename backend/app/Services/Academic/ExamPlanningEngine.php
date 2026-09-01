@@ -13,6 +13,7 @@ use App\Models\Room;
 use App\Models\Student;
 use App\Models\StudentRegistration;
 use App\Models\User;
+use App\Services\Academic\ExamSlotCatalog;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -227,13 +228,15 @@ class ExamPlanningEngine
 
                 $startTime = match (true) {
                     $modulesPerDay >= 2 && $daySlotMode === 'pm' && $moduleIndexInDay === 0 => '14:30:00',
-                    $modulesPerDay >= 2 && $daySlotMode === 'pm' => '16:30:00',
+                    $modulesPerDay >= 2 && $daySlotMode === 'pm' => ExamSlotCatalog::afternoonSecondStart().':00',
                     $modulesPerDay >= 2 && $daySlotMode === 'split' && $moduleIndexInDay === 0 => '08:30:00',
                     $modulesPerDay >= 2 && $daySlotMode === 'split' => '14:30:00',
                     $modulesPerDay >= 2 && $moduleIndexInDay === 0 => '08:30:00',
-                    $modulesPerDay >= 2 => '10:30:00',
-                    default => ($semNum % 2 !== 0) ? '09:00:00' : '14:00:00',
+                    $modulesPerDay >= 2 => ExamSlotCatalog::morningSecondStart().':00',
+                    default => ($semNum % 2 !== 0) ? '08:30:00' : '14:30:00',
                 };
+
+                $slot = ExamSlotCatalog::resolve($startTime);
 
                 $timeSlot = $moduleIndexInDay === 0 ? 'matin' : 'apres_midi';
                 $dateStr = $currentDate->format('Y-m-d');
@@ -264,7 +267,7 @@ class ExamPlanningEngine
                         'room_id' => $assignedRoom->id,
                         'exam_date' => $dateStr,
                         'start_time' => $startTime,
-                        'duration_minutes' => 120,
+                        'duration_minutes' => $slot['duration'],
                         'type' => 'final',
                     ]);
                     $examsCreated++;

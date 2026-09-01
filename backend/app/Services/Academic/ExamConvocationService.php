@@ -265,7 +265,7 @@ class ExamConvocationService
 
             $pdfExamsData = $studentSeatings->map(fn ($s) => [
                 'date' => $s->exam->exam_date?->format('d/m/Y') ?? 'N/A',
-                'time' => $s->exam->start_time ? substr($s->exam->start_time, 0, 5) : '--:--',
+                'time' => $s->exam?->formattedTimeRange() ?? '--:--',
                 'module' => $s->exam->module->name ?? 'N/A',
                 'enseignant' => 'Prof. ENCG',
                 'room' => $s->room->name ?? 'N/A',
@@ -340,7 +340,7 @@ class ExamConvocationService
 
             $profPdfExams = $profSurveillances->map(fn ($s) => [
                 'date' => $s->exam->exam_date?->format('d/m/Y') ?? 'N/A',
-                'time' => $s->exam->start_time ? substr($s->exam->start_time, 0, 5) : 'N/A',
+                'time' => $s->exam?->formattedTimeRange() ?? 'N/A',
                 'module' => $s->exam->module->name ?? 'N/A',
                 'room' => $s->room->name ?? 'N/A',
                 'role' => $s->role ?? 'Surveillant',

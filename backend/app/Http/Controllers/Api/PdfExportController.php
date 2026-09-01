@@ -215,7 +215,7 @@ class PdfExportController extends Controller
                 $profName = $this->getProfessorNameForModule($s->exam->module_id);
                 $exams[] = [
                     'date' => $s->exam->exam_date?->format('d/m/Y') ?? 'N/A',
-                    'time' => ($s->exam->start_time ? substr($s->exam->start_time, 0, 5) : '08:30').' - '.($s->exam->end_time ? substr($s->exam->end_time, 0, 5) : '10:30'),
+                    'time' => $s->exam->formattedTimeRange(),
                     'module' => $s->exam->module->name ?? 'Module N/A',
                     'enseignant' => $profName,
                     'room' => $s->room->name ?? ($s->exam->room->name ?? 'Amphithéâtre B'),
@@ -377,7 +377,7 @@ class PdfExportController extends Controller
                     $profName = $this->getProfessorNameForModule($s->exam->module_id);
                     $exams[] = [
                         'date' => $s->exam->exam_date?->format('d/m/Y') ?? 'N/A',
-                        'time' => ($s->exam->start_time ? substr($s->exam->start_time, 0, 5) : '08:30').' - '.($s->exam->end_time ? substr($s->exam->end_time, 0, 5) : '10:30'),
+                        'time' => $s->exam->formattedTimeRange(),
                         'module' => $s->exam->module->name ?? 'Module N/A',
                         'enseignant' => $profName,
                         'room' => $s->room->name ?? ($s->exam->room->name ?? 'Salle N/A'),
@@ -467,7 +467,7 @@ class PdfExportController extends Controller
                 if ($exam) {
                     $exams[] = [
                         'date' => $exam->exam_date?->format('d/m/Y') ?? 'N/A',
-                        'time' => $exam->start_time ? substr($exam->start_time, 0, 5).' - '.date('H:i', strtotime($exam->start_time) + ($exam->duration_minutes * 60)) : 'N/A',
+                        'time' => $exam->formattedTimeRange(),
                         'module' => $exam->module->name ?? 'N/A',
                         'room' => $exam->room->name ?? 'N/A',
                         'role' => $s->role ?? 'Surveillant',

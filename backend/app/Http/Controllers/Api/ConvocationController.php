@@ -162,7 +162,7 @@ class ConvocationController extends Controller
                 'module' => $exam->module->name ?? 'N/A',
                 'type' => $exam->type ?? 'CC1',
                 'date' => $exam->exam_date?->isoFormat('MMM DD') ?? 'N/A',
-                'time' => $exam->start_time.' - '.Carbon::parse($exam->start_time)->addMinutes($exam->duration_minutes)->format('H:i'),
+                'time' => $exam->formattedTimeRange(),
                 'duration' => $exam->duration_minutes.' min',
                 'room' => $seating->room->name ?? 'N/A',
                 'ref' => $seating->qr_token,

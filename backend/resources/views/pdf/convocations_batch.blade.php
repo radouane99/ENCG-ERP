@@ -177,21 +177,31 @@
         }
         .exam-table tbody tr:nth-child(even) { background: #f5f9ff; }
         .exam-table td.date-cell { font-weight: bold; color: #1a3a5c; }
+        .exam-table th.col-horaire,
+        .exam-table td.time-cell {
+            width: 7%;
+            max-width: 7%;
+        }
+        .exam-table th.col-module,
+        .exam-table td.module-cell {
+            width: 42%;
+            max-width: 42%;
+        }
         .exam-table td.time-cell {
             background: #e8f0f8;
             font-weight: bold;
             color: #2d6a9f;
-            font-size: 6pt;
-            padding: 2px 2px;
-            white-space: nowrap;
+            font-size: 5.8pt;
+            padding: 2px 1px;
+            line-height: 1.15;
         }
         .exam-table td.module-cell {
             text-align: left;
             font-weight: bold;
             color: #1a3a5c;
-            font-size: 6.8pt;
-            padding: 2px 4px;
-            line-height: 1.25;
+            font-size: 7pt;
+            padding: 2px 5px;
+            line-height: 1.2;
         }
         .seat-pill {
             background: #1a3a5c;
@@ -363,28 +373,39 @@
 <div class="section-label">Programme des Épreuves</div>
 <table class="exam-table" cellpadding="0" cellspacing="0">
     <colgroup>
-        <col style="width:11%">
-        <col style="width:6%">
-        <col style="width:40%">
-        <col style="width:20%">
+        <col style="width:10%">
+        <col style="width:7%">
+        <col style="width:42%">
+        <col style="width:18%">
         <col style="width:14%">
         <col style="width:9%">
     </colgroup>
     <thead>
         <tr>
-            <th>Date</th>
-            <th>Horaire</th>
-            <th>Module / Épreuve</th>
-            <th>Enseignant</th>
-            <th>Salle</th>
-            <th>Place</th>
+            <th style="width:10%">Date</th>
+            <th class="col-horaire" style="width:7%">Horaire</th>
+            <th class="col-module" style="width:42%">Module / Épreuve</th>
+            <th style="width:18%">Enseignant</th>
+            <th style="width:14%">Salle</th>
+            <th style="width:9%">Place</th>
         </tr>
     </thead>
     <tbody>
         @forelse($data['exams'] as $exam)
+            @php
+                $timeParts = preg_split('/\s*-\s*/', (string) ($exam['time'] ?? ''), 2);
+                $timeStart = trim($timeParts[0] ?? '');
+                $timeEnd = trim($timeParts[1] ?? '');
+            @endphp
             <tr>
                 <td class="date-cell">{{ $exam['date'] }}</td>
-                <td class="time-cell">{{ $exam['time'] }}</td>
+                <td class="time-cell">
+                    @if($timeStart && $timeEnd)
+                        {{ $timeStart }}<br>-<br>{{ $timeEnd }}
+                    @else
+                        {{ $exam['time'] }}
+                    @endif
+                </td>
                 <td class="module-cell">{{ $exam['module'] }}</td>
                 <td>{{ $exam['enseignant'] ?? '-' }}</td>
                 <td>{{ $exam['room'] }}</td>
