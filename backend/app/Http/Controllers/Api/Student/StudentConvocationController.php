@@ -7,6 +7,7 @@ use App\Models\Convocation;
 use App\Models\ExamIncident;
 use App\Models\ExamSeating;
 use App\Models\Student;
+use App\Services\Academic\ExamConvocationService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -38,7 +39,7 @@ class StudentConvocationController extends Controller
                 'time' => $exam->start_time ? substr($exam->start_time, 0, 5) : '09:00',
                 'duration' => ($exam->duration_minutes ?? 120).' min',
                 'room' => $s->room->name ?? 'N/A',
-                'seat' => 'Table N° '.($s->seat_number ?? 1),
+                'seat' => 'Table N° '.ExamConvocationService::seatNumberFor($s),
                 'status' => 'Publiée',
                 'qrToken' => $s->qr_token ?? ('CONV-'.$s->id),
             ];
@@ -82,6 +83,13 @@ class StudentConvocationController extends Controller
         $firstName = str_replace(' ', '_', strtolower($student->user->first_name ?? ''));
         $lastName = str_replace(' ', '_', strtolower($student->user->last_name ?? ''));
 
+        $seatingForSeat = ExamSeating::where('exam_id', $convocation->exam_id)
+            ->where('student_id', $convocation->student_id)
+            ->first();
+        $seatLabel = $seatingForSeat
+            ? ExamConvocationService::seatNumberFor($seatingForSeat)
+            : (int) ($convocation->seat_number ?? 1);
+
         $pdf = Pdf::loadView('pdf.convocation', [
             'convocation' => $convocation,
             'exams' => [[
@@ -89,7 +97,7 @@ class StudentConvocationController extends Controller
                 'time' => $convocation->exam->start_time ? substr($convocation->exam->start_time, 0, 5) : '09:00',
                 'module' => $convocation->exam->module->name ?? 'N/A',
                 'room' => $convocation->room->name ?? '-',
-                'seat' => 'Table N° '.($convocation->seat_number ?? 1),
+                'seat' => 'Table N° '.$seatLabel,
                 'enseignant' => '-',
             ]],
             'session_name' => 'Session de Fin de Semestre',

@@ -67,6 +67,16 @@ class ExamPlanningEngine
             $students = $studentsA;
         }
 
+        // Anti-triche : ordre différent par épreuve pour varier les numéros de place
+        $studentList = $students->values()->all();
+        usort($studentList, function ($a, $b) use ($examId) {
+            $ha = crc32($examId.'|'.(string) $a->id);
+            $hb = crc32($examId.'|'.(string) $b->id);
+
+            return $ha <=> $hb;
+        });
+        $students = collect($studentList);
+
         $rooms = Room::whereIn('id', $roomIds)->get();
         if ($rooms->isEmpty()) {
             throw new Exception('Aucune salle sélectionnée.');

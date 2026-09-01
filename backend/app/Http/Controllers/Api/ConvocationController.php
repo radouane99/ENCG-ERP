@@ -299,7 +299,7 @@ class ConvocationController extends Controller
                 'exam_date' => $seating->exam->exam_date?->format('d/m/Y') ?? 'N/A',
                 'exam_time' => $seating->exam->start_time ? substr($seating->exam->start_time, 0, 5) : '09:00',
                 'room_name' => $seating->room->name ?? 'N/A',
-                'seat_number' => $seating->seat_number ? ('N° '.$seating->seat_number) : '—',
+                'seat_number' => $seating->seat_number ? ('N° '.ExamConvocationService::seatNumberFor($seating)) : '—',
                 'status' => $seating->status ?? 'sent',
             ],
         ]);

@@ -46,67 +46,18 @@ class ExamConvocationService
     public function generateConvocations(int $examId): array
     {
         $exam = Exam::with(['group.students', 'module', 'seatings'])->findOrFail($examId);
-        $totalGenerated = 0;
-
-        $existingSeatings = ExamSeating::where('exam_id', $examId)->get();
         $defaultRoomId = $exam->room_id ?? Room::first()?->id;
 
-        // If no seatings exist yet, populate them from the student registrations / group students
-        if ($existingSeatings->isEmpty()) {
-            $filiereId = $exam->module?->filiere_id ?? $exam->group?->filiere_id;
-            $semesterNum = $exam->module?->semester_number ?? $exam->group?->semester_number;
+        $existingSeatings = ExamSeating::where('exam_id', $examId)->get();
 
-            $students = collect();
-            if ($filiereId) {
-                $groups = \App\Models\Group::where('filiere_id', $filiereId)
-                    ->when($semesterNum, fn ($q) => $q->where('semester_number', $semesterNum))
-                    ->with('students')
-                    ->get();
-                foreach ($groups as $g) {
-                    if ($g->students) {
-                        $students = $students->merge($g->students);
-                    }
-                }
-            }
-            if ($students->isEmpty() && $exam->group && $exam->group->students) {
-                $students = $exam->group->students;
-            }
-            if ($students->isEmpty()) {
-                $students = Student::limit(24)->get();
-            }
-
-            $students = $students->unique('id');
-
-            foreach ($students->values() as $index => $st) {
-                ExamSeating::create([
-                    'exam_id' => $examId,
-                    'student_id' => $st->id,
-                    'room_id' => $defaultRoomId,
-                    'seat_number' => $index + 1,
-                    'qr_token' => Str::uuid()->toString(),
-                ]);
-                $totalGenerated++;
-            }
+        if ($existingSeatings->isNotEmpty()) {
+            $students = Student::whereIn('id', $existingSeatings->pluck('student_id'))->get();
         } else {
-            foreach ($existingSeatings as $index => $seating) {
-                $updates = [];
-                if (empty($seating->qr_token)) {
-                    $updates['qr_token'] = Str::uuid()->toString();
-                }
-                if (empty($seating->room_id) && $defaultRoomId) {
-                    $updates['room_id'] = $defaultRoomId;
-                }
-                if (empty($seating->seat_number)) {
-                    $updates['seat_number'] = $index + 1;
-                }
-                if (! empty($updates)) {
-                    $seating->update($updates);
-                    $totalGenerated++;
-                }
-            }
+            $students = $this->resolveStudentsForExam($exam);
         }
 
-        // Generate QR tokens for surveillances
+        $this->assignAntiCheatSeatsForExam($examId, $students, $defaultRoomId);
+
         ExamSurveillance::where('exam_id', $examId)
             ->whereNull('qr_token')
             ->get()
@@ -116,9 +67,103 @@ class ExamConvocationService
 
         return [
             'success' => true,
-            'message' => "{$finalCount} Convocations générées avec succès (QR Codes assignés).",
+            'message' => "{$finalCount} Convocations générées avec succès (places anti-triche assignées).",
             'generated_count' => $finalCount,
         ];
+    }
+
+    /**
+     * Liste des étudiants convoqués pour une épreuve.
+     */
+    private function resolveStudentsForExam(Exam $exam): \Illuminate\Support\Collection
+    {
+        $filiereId = $exam->module?->filiere_id ?? $exam->group?->filiere_id;
+        $semesterNum = $exam->module?->semester_number ?? $exam->group?->semester_number;
+
+        $students = collect();
+        if ($filiereId) {
+            $groups = \App\Models\Group::where('filiere_id', $filiereId)
+                ->when($semesterNum, fn ($q) => $q->where('semester_number', $semesterNum))
+                ->with('students')
+                ->get();
+            foreach ($groups as $g) {
+                if ($g->students) {
+                    $students = $students->merge($g->students);
+                }
+            }
+        }
+        if ($students->isEmpty() && $exam->group && $exam->group->students) {
+            $students = $exam->group->students;
+        }
+        if ($students->isEmpty()) {
+            $students = Student::limit(24)->get();
+        }
+
+        return $students->unique('id')->values();
+    }
+
+    /**
+     * Mélange déterministe par épreuve : un même étudiant n'a jamais la même place N à chaque examen.
+     */
+    private function orderStudentsForExam(int $examId, \Illuminate\Support\Collection $students): \Illuminate\Support\Collection
+    {
+        return $students->unique('id')->sortBy(function ($student) use ($examId) {
+            $studentKey = (string) ($student->id ?? $student);
+
+            return sprintf('%08x', crc32($examId.'|'.$studentKey));
+        })->values();
+    }
+
+    /**
+     * Crée ou met à jour les places — numérotation 1..N selon l'ordre mélangé par épreuve.
+     */
+    private function assignAntiCheatSeatsForExam(int $examId, \Illuminate\Support\Collection $students, ?int $defaultRoomId): void
+    {
+        $ordered = $this->orderStudentsForExam($examId, $students);
+
+        foreach ($ordered as $index => $student) {
+            $seating = ExamSeating::firstOrNew([
+                'exam_id' => $examId,
+                'student_id' => $student->id,
+            ]);
+
+            if (empty($seating->room_id) && $defaultRoomId) {
+                $seating->room_id = $defaultRoomId;
+            }
+            if (empty($seating->qr_token)) {
+                $seating->qr_token = Str::uuid()->toString();
+            }
+
+            $seating->seat_number = $index + 1;
+            $seating->save();
+        }
+    }
+
+    /**
+     * Carte exam_id → student_id → numéro de place (ordre anti-triche).
+     */
+    public static function buildSeatMapForExam(int $examId): array
+    {
+        $studentIds = ExamSeating::where('exam_id', $examId)->pluck('student_id');
+
+        $ordered = $studentIds->sortBy(function ($studentId) use ($examId) {
+            return sprintf('%08x', crc32($examId.'|'.$studentId));
+        })->values();
+
+        $map = [];
+        foreach ($ordered as $index => $studentId) {
+            $map[(string) $studentId] = $index + 1;
+        }
+
+        return $map;
+    }
+
+    public static function seatNumberFor(ExamSeating $seating): int
+    {
+        $map = self::buildSeatMapForExam((int) $seating->exam_id);
+        $key = (string) $seating->student_id;
+
+        return $map[$key] ?? (int) ($seating->seat_number ?: 1);
     }
 
     /**
@@ -224,7 +269,7 @@ class ExamConvocationService
                 'module' => $s->exam->module->name ?? 'N/A',
                 'enseignant' => 'Prof. ENCG',
                 'room' => $s->room->name ?? 'N/A',
-                'seat' => $s->seat_number ? ('N° '.$s->seat_number) : '-',
+                'seat' => 'N° '.self::seatNumberFor($s),
             ])->values()->toArray();
 
             $pdfData = [
@@ -570,7 +615,7 @@ class ExamConvocationService
                 'exam_date' => $s->exam?->exam_date?->format('Y-m-d'),
                 'start_time' => $s->exam?->start_time ? substr($s->exam->start_time, 0, 5) : '09:00',
                 'room_name' => $s->room?->name ?? ($s->exam?->room?->name ?? 'Amphithéâtre B'),
-                'seat_number' => $s->seat_number ?: 1,
+                'seat_number' => ExamConvocationService::seatNumberFor($s),
                 'qr_token' => $s->qr_token,
                 'sent_at' => $s->sent_at,
                 'is_present' => (bool) $s->is_present,

@@ -27,6 +27,7 @@ use App\Models\Student;
 use App\Models\StudentRegistration;
 use App\Models\User;
 use App\Services\Academic\DeliberationService;
+use App\Services\Academic\ExamConvocationService;
 use App\Services\Academic\GradeService;
 use App\Services\Documents\OfficialPdfFactory;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -218,7 +219,7 @@ class PdfExportController extends Controller
                     'module' => $s->exam->module->name ?? 'Module N/A',
                     'enseignant' => $profName,
                     'room' => $s->room->name ?? ($s->exam->room->name ?? 'Amphithéâtre B'),
-                    'seat' => $s->seat_number ? 'N° '.$s->seat_number : 'N° 1',
+                    'seat' => $this->formatConvocationSeat($s),
                     'qr_token' => $s->qr_token,
                 ];
             }
@@ -310,6 +311,11 @@ class PdfExportController extends Controller
         return $this->getPdfInstance('pdf.convocations_profs_batch', compact('professorsData'));
     }
 
+    private function formatConvocationSeat(ExamSeating $seating): string
+    {
+        return 'N° '.ExamConvocationService::seatNumberFor($seating);
+    }
+
     private function getProfessorNameForModule(?int $moduleId): string
     {
         if (! $moduleId) {
@@ -375,7 +381,7 @@ class PdfExportController extends Controller
                         'module' => $s->exam->module->name ?? 'Module N/A',
                         'enseignant' => $profName,
                         'room' => $s->room->name ?? ($s->exam->room->name ?? 'Salle N/A'),
-                        'seat' => $s->seat_number ? 'N° '.$s->seat_number : 'N° 1',
+                        'seat' => $this->formatConvocationSeat($s),
                         'qr_token' => $s->qr_token,
                     ];
                 }
