@@ -364,8 +364,8 @@
 <table class="exam-table" cellpadding="0" cellspacing="0">
     <colgroup>
         <col style="width:11%">
-        <col style="width:9%">
-        <col style="width:37%">
+        <col style="width:6%">
+        <col style="width:40%">
         <col style="width:20%">
         <col style="width:14%">
         <col style="width:9%">
