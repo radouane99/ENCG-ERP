@@ -176,18 +176,22 @@
             word-wrap: break-word;
         }
         .exam-table tbody tr:nth-child(even) { background: #f5f9ff; }
-        .exam-table td.module-cell {
-            text-align: left;
-            font-weight: bold;
-            color: #1a3a5c;
-            font-size: 6.8pt;
-        }
         .exam-table td.date-cell { font-weight: bold; color: #1a3a5c; }
         .exam-table td.time-cell {
             background: #e8f0f8;
             font-weight: bold;
             color: #2d6a9f;
-            font-size: 6.5pt;
+            font-size: 6pt;
+            padding: 2px 2px;
+            white-space: nowrap;
+        }
+        .exam-table td.module-cell {
+            text-align: left;
+            font-weight: bold;
+            color: #1a3a5c;
+            font-size: 6.8pt;
+            padding: 2px 4px;
+            line-height: 1.25;
         }
         .seat-pill {
             background: #1a3a5c;
@@ -360,9 +364,9 @@
 <table class="exam-table" cellpadding="0" cellspacing="0">
     <colgroup>
         <col style="width:11%">
-        <col style="width:13%">
-        <col style="width:31%">
-        <col style="width:22%">
+        <col style="width:9%">
+        <col style="width:37%">
+        <col style="width:20%">
         <col style="width:14%">
         <col style="width:9%">
     </colgroup>
