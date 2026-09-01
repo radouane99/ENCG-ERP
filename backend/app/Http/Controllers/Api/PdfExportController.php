@@ -229,6 +229,9 @@ class PdfExportController extends Controller
         $sessionName = $seating->exam?->examSession?->name ?? 'Session d\'Examens';
         $sessionType = $seating->exam?->examSession?->type ?? 'Normale';
         $filiereName = $seating->exam?->module?->filiere?->name ?? 'Tronc Commun ENCG';
+        $currentYear = AcademicYear::where('is_current', true)->first()
+            ?? AcademicYear::orderByDesc('start_year')->first();
+        $academicYearLabel = str_replace('/', ' — ', $currentYear?->displayLabel() ?? $currentYear?->label ?? '2025/2026');
 
         $verifyToken = $seating->qr_token ?: Str::uuid()->toString();
         $verifyUrl = url('/api/convocations/'.$verifyToken.'/verify');
@@ -256,6 +259,8 @@ class PdfExportController extends Controller
             'filiere_name' => $filiereName,
             'session_name' => $sessionName,
             'session_type' => $sessionType,
+            'academic_year' => $academicYearLabel,
+            'generated_at' => now()->format('d/m/Y H:i:s'),
             'exams' => $exams,
         ]];
 
@@ -346,6 +351,10 @@ class PdfExportController extends Controller
             ->whereIn('id', $seatingIds)
             ->get();
 
+        $currentYear = AcademicYear::where('is_current', true)->first()
+            ?? AcademicYear::orderByDesc('start_year')->first();
+        $academicYearLabel = str_replace('/', ' — ', $currentYear?->displayLabel() ?? $currentYear?->label ?? '2025/2026');
+
         $studentsData = [];
         foreach ($seatings->groupBy('student_id') as $studentId => $studentSeatings) {
             $student = $studentSeatings->first()->student;
@@ -410,6 +419,8 @@ class PdfExportController extends Controller
                 'filiere_name' => $filiereName,
                 'session_type' => $studentSeatings->first()->exam?->examSession?->type ?? 'Normale',
                 'session_name' => $studentSeatings->first()->exam?->examSession?->name ?? 'Session Principale',
+                'academic_year' => $academicYearLabel,
+                'generated_at' => now()->format('d/m/Y H:i:s'),
                 'exams' => $exams,
             ];
         }

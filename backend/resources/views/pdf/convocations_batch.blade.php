@@ -1,497 +1,452 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <meta charset="UTF-8">
     <title>Convocation aux Examens — ENCG Fès</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
+        @page {
+            size: A4 portrait;
+            margin: 7mm 9mm 7mm 9mm;
+        }
+
         body {
-            font-family: 'DejaVu Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            font-size: 10px;
+            font-family: 'DejaVu Sans', Arial, Helvetica, sans-serif;
+            font-size: 8pt;
             color: #1a1a2e;
             background: #fff;
+            line-height: 1.35;
         }
 
         .page-break { page-break-after: always; }
 
-        /* ── PAGE CONTAINER ── */
-        .container {
-            width: 100%;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 18px 24px;
-            position: relative;
-            min-height: 1100px;
+        .page-frame {
+            border: 1.5px double #1a3a5c;
+            padding: 4mm 5mm 3mm 5mm;
         }
 
-        /* ── HEADER ── */
-        .header {
-            display: table;
+        .page-shell {
             width: 100%;
-            border-bottom: 3px solid #1a3a5c;
-            padding-bottom: 10px;
-            margin-bottom: 12px;
+            border-collapse: collapse;
+            table-layout: fixed;
         }
-        .header-left {
-            display: table-cell;
-            vertical-align: middle;
-            width: 60%;
+        .page-shell td { vertical-align: top; }
+
+        /* ── HEADER ── */
+        .header-table {
+            width: 100%;
+            border-bottom: 2px solid #1a3a5c;
+            padding-bottom: 4px;
+            margin-bottom: 5px;
         }
-        .header-right {
-            display: table-cell;
-            vertical-align: middle;
-            text-align: right;
-            width: 40%;
-        }
-        .logo { max-height: 52px; max-width: 200px; }
+        .header-table td { vertical-align: middle; }
+        .logo-img { max-height: 34px; max-width: 140px; }
         .logo-fallback {
-            font-size: 10px;
+            font-size: 9pt;
             font-weight: bold;
             color: #1a3a5c;
             text-transform: uppercase;
             line-height: 1.3;
         }
-        .logo-fallback .logo-main { font-size: 14px; }
-        .logo-fallback .logo-sub { font-size: 8px; color: #4a6b8a; }
-
+        .logo-fallback small { font-size: 6pt; color: #4a6b8a; font-weight: normal; }
         .ministry-text {
-            font-size: 7.5px;
+            font-size: 6.5pt;
             color: #4a6b8a;
+            line-height: 1.45;
             text-align: right;
-            line-height: 1.5;
         }
-        .ministry-text strong { color: #1a3a5c; font-size: 8px; }
+        .ministry-text strong { color: #1a3a5c; font-size: 7pt; }
 
-        /* ── TITLE BANNER ── */
+        /* ── TITLE ── */
         .title-banner {
-            background: linear-gradient(135deg, #1a3a5c 0%, #2d6a9f 100%);
+            background: #1a3a5c;
             color: #fff;
             text-align: center;
-            padding: 10px 20px;
-            margin-bottom: 14px;
-            border-radius: 3px;
+            padding: 5px 8px;
+            margin-bottom: 5px;
         }
-        .title-banner .title-main {
-            font-size: 16px;
+        .title-main {
+            font-size: 11.5pt;
             font-weight: bold;
-            letter-spacing: 1.5px;
+            letter-spacing: 1px;
             text-transform: uppercase;
         }
-        .title-banner .title-sub {
-            font-size: 11px;
-            margin-top: 3px;
-            opacity: 0.9;
-            font-style: italic;
+        .title-sub {
+            font-size: 7.5pt;
+            margin-top: 2px;
+            color: #cde;
         }
-        .title-banner .session-badge {
+        .session-badge {
             display: inline-block;
-            background: rgba(255,255,255,0.2);
-            border: 1px solid rgba(255,255,255,0.4);
-            padding: 2px 12px;
-            border-radius: 12px;
-            font-size: 9px;
-            margin-top: 5px;
+            margin-top: 2px;
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.35);
+            font-size: 6.5pt;
+            font-weight: bold;
+            padding: 1px 8px;
+            letter-spacing: 0.6px;
             text-transform: uppercase;
-            letter-spacing: 0.8px;
         }
 
-        /* ── STUDENT INFO CARD ── */
+        /* ── STUDENT INFO ── */
         .info-card {
-            border: 1.5px solid #c8d8e8;
-            border-radius: 4px;
-            margin-bottom: 12px;
-            overflow: hidden;
+            border: 1px solid #94a3b8;
+            margin-bottom: 5px;
+            width: 100%;
         }
-        .info-card-header {
+        .info-card-title {
             background: #e8f0f8;
-            padding: 5px 12px;
-            font-size: 9px;
+            font-size: 7pt;
             font-weight: bold;
             color: #1a3a5c;
             text-transform: uppercase;
-            letter-spacing: 0.8px;
-            border-bottom: 1px solid #c8d8e8;
-        }
-        .info-card-body {
-            padding: 8px 12px;
-            display: table;
-            width: 100%;
-        }
-        .info-col {
-            display: table-cell;
-            width: 50%;
-            vertical-align: top;
-        }
-        .info-col:first-child {
-            border-right: 1px solid #e0eaf3;
-            padding-right: 12px;
-        }
-        .info-col:last-child {
-            padding-left: 12px;
-        }
-        .info-row-item {
-            margin-bottom: 5px;
-        }
-        .info-row-label {
-            font-size: 8.5px;
-            color: #6b8aaa;
-            text-transform: uppercase;
             letter-spacing: 0.5px;
+            padding: 2px 7px;
+            border-bottom: 1px solid #94a3b8;
+        }
+        .info-inner-table { width: 100%; }
+        .info-inner-table td {
+            vertical-align: top;
+            width: 50%;
+            padding: 4px 7px;
+        }
+        .info-inner-table td:first-child { border-right: 1px solid #cbd5e1; }
+        .info-label {
+            font-size: 6pt;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
             display: block;
             margin-bottom: 1px;
         }
-        .info-row-value {
-            font-size: 11px;
+        .info-value {
+            font-size: 8pt;
             font-weight: bold;
             color: #1a1a2e;
+            margin-bottom: 3px;
+            display: block;
         }
-        .info-row-value.highlight {
-            color: #1a3a5c;
-            font-size: 12px;
-        }
+        .info-value.big { font-size: 9.5pt; color: #1a3a5c; text-transform: uppercase; }
 
-        /* ── INSTRUCTION ── */
-        .instruction-box {
-            background: #f0f7ff;
-            border-left: 3px solid #2d6a9f;
-            padding: 7px 12px;
-            margin-bottom: 10px;
-            font-size: 10px;
+        .instruction {
+            background: #f0f6ff;
+            border-left: 2.5px solid #1a3a5c;
+            padding: 3px 7px;
+            font-size: 7pt;
             color: #1a3a5c;
             font-style: italic;
+            margin-bottom: 5px;
         }
 
-        /* ── EXAMS TABLE ── */
-        .section-title {
-            font-size: 9.5px;
+        .section-label {
+            font-size: 7pt;
             font-weight: bold;
             color: #1a3a5c;
             text-transform: uppercase;
-            letter-spacing: 0.8px;
-            margin-bottom: 5px;
-            padding-left: 8px;
-            border-left: 3px solid #2d6a9f;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+            padding-left: 4px;
+            border-left: 2px solid #1a3a5c;
         }
 
-        table.exams-table {
+        /* ── EXAM TABLE ── */
+        table.exam-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 12px;
-            font-size: 9.5px;
+            margin-bottom: 5px;
+            font-size: 7pt;
+            table-layout: fixed;
         }
-        .exams-table thead tr {
-            background: #1a3a5c;
-            color: #fff;
-        }
-        .exams-table th {
-            padding: 6px 6px;
+        .exam-table thead tr { background: #1a3a5c; color: #fff; }
+        .exam-table th {
+            padding: 3px 3px;
             text-align: center;
-            font-size: 9px;
+            font-size: 6.5pt;
             font-weight: bold;
             text-transform: uppercase;
-            letter-spacing: 0.4px;
             border: 1px solid #1a3a5c;
         }
-        .exams-table td {
-            padding: 5px 6px;
-            border: 1px solid #c8d8e8;
+        .exam-table td {
+            padding: 2.5px 3px;
+            border: 1px solid #cbd5e1;
             text-align: center;
             vertical-align: middle;
+            word-wrap: break-word;
         }
-        .exams-table td.col-matiere {
+        .exam-table tbody tr:nth-child(even) { background: #f5f9ff; }
+        .exam-table td.module-cell {
             text-align: left;
             font-weight: bold;
             color: #1a3a5c;
+            font-size: 6.8pt;
         }
-        .exams-table tbody tr:nth-child(even) {
-            background: #f5f9ff;
-        }
-        .exams-table tbody tr:nth-child(odd) {
-            background: #fff;
-        }
-        .exams-table td.date-cell {
-            font-weight: bold;
-            color: #1a3a5c;
-            white-space: nowrap;
-        }
-        .exams-table td.time-cell {
+        .exam-table td.date-cell { font-weight: bold; color: #1a3a5c; }
+        .exam-table td.time-cell {
             background: #e8f0f8;
             font-weight: bold;
             color: #2d6a9f;
-            white-space: nowrap;
+            font-size: 6.5pt;
         }
-        .exams-table td.room-cell {
-            font-weight: bold;
-            color: #1a3a5c;
-        }
-        .seat-badge {
-            display: inline-block;
+        .seat-pill {
             background: #1a3a5c;
             color: #fff;
-            padding: 1px 7px;
-            border-radius: 10px;
-            font-size: 9px;
+            padding: 1px 4px;
+            font-size: 6.5pt;
             font-weight: bold;
+            white-space: nowrap;
         }
 
         /* ── RULES ── */
-        .rules-section { margin-bottom: 12px; }
         .rules-title {
-            font-size: 9.5px;
+            font-size: 7pt;
             font-weight: bold;
-            color: #1a3a5c;
+            color: #b91c1c;
             text-transform: uppercase;
-            letter-spacing: 0.8px;
-            margin-bottom: 5px;
-            padding-left: 8px;
-            border-left: 3px solid #c0392b;
+            letter-spacing: 0.4px;
+            margin-bottom: 2px;
+            padding-left: 4px;
+            border-left: 2px solid #b91c1c;
         }
-        .rules-text {
-            font-size: 7.8px;
-            line-height: 1.5;
+        .rules-box {
+            font-size: 6.5pt;
+            line-height: 1.45;
+            color: #334155;
             text-align: justify;
-            color: #333;
-            background: #fffbf0;
-            border: 1px solid #f0e0c0;
-            padding: 7px 10px;
-            border-radius: 3px;
+            background: #fffbeb;
+            border: 1px solid #fcd34d;
+            padding: 4px 6px;
+            margin-bottom: 0;
         }
 
-        /* ── FOOTER AREA ── */
-        .footer-area {
-            display: table;
+        /* ── FOOTER (in-flow, directly after content) ── */
+        .footer-block {
+            border-top: 1.5px solid #1a3a5c;
+            padding-top: 4px;
+            margin-top: 6px;
+        }
+        .footer-inner {
             width: 100%;
-            margin-top: 10px;
-            border-top: 2px solid #1a3a5c;
-            padding-top: 10px;
+            border-collapse: collapse;
         }
-        .footer-left {
-            display: table-cell;
-            width: 50%;
-            vertical-align: bottom;
+        .footer-inner td { vertical-align: middle; }
+        .footer-left { width: 58%; padding-right: 6px; }
+        .footer-right { width: 42%; text-align: right; }
+
+        .ref-block {
+            font-size: 6pt;
+            color: #64748b;
+            line-height: 1.5;
         }
-        .footer-right {
-            display: table-cell;
-            width: 50%;
-            vertical-align: top;
-            text-align: right;
-        }
-        .ref-text {
-            font-size: 7.5px;
-            color: #8899aa;
-            line-height: 1.6;
-        }
-        .ref-text .ref-code {
+        .ref-code {
+            font-family: DejaVu Sans Mono, monospace;
             font-weight: bold;
-            color: #4a6b8a;
-            letter-spacing: 0.5px;
+            color: #475569;
+            letter-spacing: 0.3px;
         }
-        .signature-block { text-align: right; }
-        .signature-label {
-            font-size: 9px;
+        .valid-stamp {
+            display: inline-block;
+            border: 1px solid #16a34a;
+            color: #16a34a;
+            font-size: 6.5pt;
             font-weight: bold;
-            color: #1a3a5c;
-            margin-bottom: 3px;
-        }
-        .signature-sublabel {
-            font-size: 8px;
-            color: #6b8aaa;
-            font-style: italic;
-            margin-bottom: 8px;
-        }
-        .signature-space {
-            height: 35px;
-            border-bottom: 1px dashed #aaa;
-            margin-bottom: 4px;
-            margin-left: 30px;
-        }
-        .qr-area {
-            display: table;
-            margin-top: 5px;
-            margin-left: auto;
-        }
-        .qr-area img {
-            border: 2px solid #1a3a5c;
-            padding: 3px;
-            background: #fff;
-        }
-        .qr-label {
-            font-size: 7px;
-            color: #6b8aaa;
-            text-align: center;
+            padding: 1px 6px;
+            text-transform: uppercase;
             margin-top: 3px;
         }
 
-        /* ── WATERMARK ── */
-        .watermark-valid {
-            display: inline-block;
-            border: 1.5px solid #27ae60;
-            color: #27ae60;
-            font-size: 8px;
+        .sig-label {
+            font-size: 7pt;
             font-weight: bold;
-            padding: 2px 8px;
-            border-radius: 3px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            color: #1a3a5c;
         }
+        .sig-sub {
+            font-size: 6pt;
+            color: #64748b;
+            font-style: italic;
+            margin-bottom: 3px;
+        }
+        .sig-line {
+            border-bottom: 1px dashed #94a3b8;
+            height: 16px;
+            margin: 0 0 3px 20px;
+        }
+        .sig-caption { font-size: 6pt; color: #94a3b8; }
+        .qr-wrap { text-align: right; margin-top: 2px; }
+        .qr-wrap img { border: 1px solid #1a3a5c; padding: 2px; width: 52px; height: 52px; }
 
-        /* ── PAGE NUMBER ── */
-        .page-num {
-            font-size: 7.5px;
-            color: #aab;
+        .tagline {
+            font-size: 5.5pt;
+            color: #94a3b8;
             text-align: center;
-            margin-top: 8px;
+            margin-top: 4px;
+            border-top: 0.5px solid #e2e8f0;
+            padding-top: 2px;
         }
     </style>
 </head>
 <body>
-    @foreach($studentsData as $index => $data)
-        <div class="container">
+@foreach($studentsData as $index => $data)
+@php
+    $academicYear = $data['academic_year'] ?? '2025 — 2026';
+    $examCount = count($data['exams'] ?? []);
+@endphp
 
-            {{-- ═══ HEADER ═══ --}}
-            <div class="header">
-                <div class="header-left">
-                    @if(file_exists(public_path('logo-encg.png')))
-                        <img src="{{ public_path('logo-encg.png') }}" alt="Logo ENCG" class="logo">
-                    @elseif(file_exists(public_path('images/logo.png')))
-                        <img src="{{ public_path('images/logo.png') }}" alt="Logo ENCG" class="logo">
-                    @else
-                        <div class="logo-fallback">
-                            <div class="logo-main">ENCG Fès</div>
-                            <div class="logo-sub">École Nationale de Commerce et de Gestion</div>
-                        </div>
-                    @endif
+<div class="page-frame">
+<table class="page-shell" cellpadding="0" cellspacing="0">
+<tr>
+<td>
+
+{{-- HEADER --}}
+<table class="header-table" cellpadding="0" cellspacing="0">
+    <tr>
+        <td style="width:55%;">
+            @if(file_exists(public_path('logo-encg.png')))
+                <img src="{{ public_path('logo-encg.png') }}" alt="ENCG Fès" class="logo-img">
+            @elseif(file_exists(public_path('images/logo.png')))
+                <img src="{{ public_path('images/logo.png') }}" alt="ENCG Fès" class="logo-img">
+            @else
+                <div class="logo-fallback">
+                    ENCG Fès<br>
+                    <small>École Nationale de Commerce et de Gestion — Fès</small>
                 </div>
-                <div class="header-right">
-                    <div class="ministry-text">
-                        <strong>Royaume du Maroc</strong><br>
-                        Ministère de l'Enseignement Supérieur<br>
-                        Université Sidi Mohamed Ben Abdellah<br>
-                        <strong>ENCG — Fès</strong>
-                    </div>
+            @endif
+        </td>
+        <td style="width:45%; text-align:right;">
+            <div class="ministry-text">
+                <strong>Royaume du Maroc</strong><br>
+                Ministère de l'Enseignement Supérieur<br>
+                Université Sidi Mohamed Ben Abdellah<br>
+                <strong>ENCG — Fès</strong>
+            </div>
+        </td>
+    </tr>
+</table>
+
+{{-- TITLE --}}
+<div class="title-banner">
+    <div class="title-main">Convocation aux Examens</div>
+    <div class="title-sub">{{ $data['session_name'] ?? 'Session d\'Examens' }}</div>
+    <span class="session-badge">Session : {{ strtoupper($data['session_type'] ?? 'Normale') }}</span>
+</div>
+
+{{-- STUDENT INFO --}}
+<div class="info-card">
+    <div class="info-card-title">Informations de l'Étudiant</div>
+    <table class="info-inner-table" cellpadding="0" cellspacing="0">
+        <tr>
+            <td>
+                <span class="info-label">Nom &amp; Prénom</span>
+                <span class="info-value big">{{ strtoupper($data['person_name'] ?? '') }}</span>
+                <span class="info-label">Code Massar / CNE</span>
+                <span class="info-value">{{ strtoupper($data['person_id'] ?? '') }}</span>
+            </td>
+            <td>
+                <span class="info-label">Filière</span>
+                <span class="info-value">{{ $data['filiere_name'] ?? 'Tronc Commun ENCG' }}</span>
+                <span class="info-label">Année Universitaire</span>
+                <span class="info-value">{{ $academicYear }}</span>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<div class="instruction">
+    Vous êtes prié(e) de vous présenter aux dates, heures et salles indiquées ci-dessous pour les épreuves de votre session d'examens.
+</div>
+
+<div class="section-label">Programme des Épreuves</div>
+<table class="exam-table" cellpadding="0" cellspacing="0">
+    <colgroup>
+        <col style="width:11%">
+        <col style="width:13%">
+        <col style="width:31%">
+        <col style="width:22%">
+        <col style="width:14%">
+        <col style="width:9%">
+    </colgroup>
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Horaire</th>
+            <th>Module / Épreuve</th>
+            <th>Enseignant</th>
+            <th>Salle</th>
+            <th>Place</th>
+        </tr>
+    </thead>
+    <tbody>
+        @forelse($data['exams'] as $exam)
+            <tr>
+                <td class="date-cell">{{ $exam['date'] }}</td>
+                <td class="time-cell">{{ $exam['time'] }}</td>
+                <td class="module-cell">{{ $exam['module'] }}</td>
+                <td>{{ $exam['enseignant'] ?? '-' }}</td>
+                <td>{{ $exam['room'] }}</td>
+                <td><span class="seat-pill">{{ $exam['seat'] }}</span></td>
+            </tr>
+        @empty
+            <tr>
+                <td colspan="6" style="padding:8px; color:#64748b;">Aucune épreuve programmée.</td>
+            </tr>
+        @endforelse
+    </tbody>
+</table>
+
+<div class="rules-title">Règlement des Examens — À lire attentivement</div>
+<div class="rules-box">
+    L'usage des téléphones portables, tablettes et appareils électroniques est <strong>strictement interdit</strong> en salle d'examen. Même lorsque l'usage des calculatrices est autorisé, les portables ne peuvent être utilisés à cet effet. L'usage des PC portables est interdit sauf autorisation explicite de l'enseignant.<br>
+    — Chaque étudiant doit se munir de tous ses articles de bureau (stylos, crayons, gomme, règle…). L'échange entre étudiants est interdit.<br>
+    — Tout retard de plus de <strong>20 minutes</strong> après la distribution des sujets est interdit. Aucun étudiant ne peut quitter la salle avant 30 minutes après le début.<br>
+    — Toute fraude constatée donne lieu à un <strong>zéro</strong> et à un rapport transmis à la Direction dans un délai de 48h. Toute copie non remise à l'heure est affectée d'un zéro.
+</div>
+
+</td>
+</tr>
+<tr>
+<td class="footer-block">
+
+<table class="footer-inner" cellpadding="0" cellspacing="0">
+    <tr>
+        <td class="footer-left">
+            <div class="ref-block">
+                Édité le : {{ $data['generated_at'] ?? now()->format('d/m/Y H:i:s') }}<br>
+                Réf. : <span class="ref-code">{{ strtoupper(substr(md5(($data['id'] ?? 'ENCG').($data['created_at'] ?? '')), 0, 14)) }}</span>
+            </div>
+            <div class="valid-stamp">Document Officiel</div>
+        </td>
+        <td class="footer-right">
+            <div class="sig-label">La Chargée de Scolarité</div>
+            <div class="sig-sub">et des Affaires Estudiantines</div>
+            <div class="sig-line"></div>
+            <div class="sig-caption">Cachet &amp; Signature</div>
+            @if(!empty($data['qrCodeBase64']))
+                <div class="qr-wrap">
+                    <img src="{{ $data['qrCodeBase64'] }}" alt="QR Code">
                 </div>
-            </div>
-
-            {{-- ═══ TITLE BANNER ═══ --}}
-            <div class="title-banner">
-                <div class="title-main">Convocation aux Examens</div>
-                <div class="title-sub">{{ $data['session_name'] ?? 'Session d\'Examens' }}</div>
-                <div class="session-badge">{{ strtoupper($data['session_type'] ?? 'Normale') }}</div>
-            </div>
-
-            {{-- ═══ STUDENT INFO CARD ═══ --}}
-            <div class="info-card">
-                <div class="info-card-header">&#128100; Informations de l'Étudiant</div>
-                <div class="info-card-body">
-                    <div class="info-col">
-                        <div class="info-row-item">
-                            <span class="info-row-label">Nom & Prénom</span>
-                            <span class="info-row-value highlight">{{ strtoupper($data['person_name'] ?? '') }}</span>
-                        </div>
-                        <div class="info-row-item">
-                            <span class="info-row-label">Matricule / CNE</span>
-                            <span class="info-row-value">{{ strtoupper($data['person_id'] ?? '') }}</span>
-                        </div>
-                    </div>
-                    <div class="info-col">
-                        <div class="info-row-item">
-                            <span class="info-row-label">Filière</span>
-                            <span class="info-row-value">{{ $data['filiere_name'] ?? 'Tronc Commun ENCG' }}</span>
-                        </div>
-                        <div class="info-row-item">
-                            <span class="info-row-label">Année Universitaire</span>
-                            <span class="info-row-value">2025 — 2026</span>
-                        </div>
-                    </div>
+            @elseif(!empty($data['qr_token']))
+                <div class="qr-wrap">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=52x52&amp;data={{ urlencode($data['qr_token']) }}" alt="QR">
                 </div>
-            </div>
+            @endif
+        </td>
+    </tr>
+</table>
 
-            {{-- ═══ INSTRUCTION ═══ --}}
-            <div class="instruction-box">
-                Vous êtes prié(e) de vous présenter aux dates, heures et salles indiquées ci-dessous pour passer les épreuves de votre session d'examens.
-            </div>
+<div class="tagline">
+    ENCG Fès — Route d'Imouzzer, B.P. 1255, Fès - Maroc | Tél: +212 5 35 64 49 20 | https://encg-fes.ac.ma
+</div>
 
-            {{-- ═══ EXAM TABLE ═══ --}}
-            <div class="section-title">&#128203; Programme des Épreuves</div>
-            <table class="exams-table">
-                <thead>
-                    <tr>
-                        <th style="width:13%">Date</th>
-                        <th style="width:14%">Horaire</th>
-                        <th style="width:30%">Module / Épreuve</th>
-                        <th style="width:20%">Enseignant</th>
-                        <th style="width:13%">Salle / Amphi</th>
-                        <th style="width:10%">Place N°</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($data['exams'] as $exam)
-                        <tr>
-                            <td class="date-cell">{{ $exam['date'] }}</td>
-                            <td class="time-cell">{{ $exam['time'] }}</td>
-                            <td class="col-matiere">{{ $exam['module'] }}</td>
-                            <td>{{ $exam['enseignant'] ?? '-' }}</td>
-                            <td class="room-cell">{{ $exam['room'] }}</td>
-                            <td><span class="seat-badge">{{ $exam['seat'] }}</span></td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
+</td>
+</tr>
+</table>
+</div>
 
-            {{-- ═══ RÈGLEMENT ═══ --}}
-            <div class="rules-section">
-                <div class="rules-title">&#9888; Règlement des Examens — À lire attentivement</div>
-                <div class="rules-text">
-                    L'usage des téléphones portables, tablettes ou autres appareils électroniques est <strong>strictement interdit</strong> en salle d'examen. Même lorsque l'usage des calculatrices est autorisé, les portables ne peuvent être utilisés à cet effet.<br>
-                    — L'usage des PC portables est interdit sauf autorisation explicite de l'enseignant responsable de l'épreuve.<br>
-                    — Chaque étudiant est tenu de se munir de tous les articles de bureau nécessaires (stylos, crayons, gomme, règle, etc.). L'échange de tels articles entre étudiants est interdit.<br>
-                    — Tout étudiant en retard de plus de <strong>20 minutes</strong> après la distribution des sujets ne peut être admis dans la salle. Tout retard de plus de 30 minutes est définitivement prohibé.<br>
-                    — Aucun étudiant ne pourra quitter la salle avant 30 minutes après la distribution des sujets. Il est strictement interdit de quitter temporairement la salle pendant l'épreuve.<br>
-                    — Toute fraude constatée donne lieu à un zéro et à un rapport de discipline transmis à la Direction dans un délai de 48h. Toute copie non rendue à l'heure est affectée d'un zéro.
-                </div>
-            </div>
+@if(!$loop->last)
+<div class="page-break"></div>
+@endif
 
-            {{-- ═══ FOOTER ═══ --}}
-            <div class="footer-area">
-                <div class="footer-left">
-                    <div class="ref-text">
-                        Généré électroniquement le {{ now()->format('d/m/Y à H:i') }}<br>
-                        Réf. document : <span class="ref-code">{{ strtoupper(substr(md5(($data['id'] ?? 'ENCG').($data['created_at'] ?? '')), 0, 12)) }}</span><br>
-                        <span class="watermark-valid">&#10003; Document Officiel</span>
-                    </div>
-                </div>
-                <div class="footer-right">
-                    <div class="signature-block">
-                        <div class="signature-label">La Chargée de Scolarité</div>
-                        <div class="signature-sublabel">et des Affaires Estudiantines</div>
-                        <div class="signature-space"></div>
-                        <div class="ref-text">Cachet &amp; Signature</div>
-                        @if(!empty($data['qrCodeBase64']))
-                            <div class="qr-area">
-                                <img src="{{ $data['qrCodeBase64'] }}" alt="QR Code" width="72" height="72">
-                                <div class="qr-label">Scan pour vérifier</div>
-                            </div>
-                        @elseif(!empty($data['qr_token']))
-                            <div class="qr-area">
-                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=72x72&data={{ urlencode($data['qr_token']) }}"
-                                     alt="QR" width="72" height="72" onerror="this.style.display='none'">
-                                <div class="qr-label">Scan pour vérifier</div>
-                            </div>
-                        @endif
-                    </div>
-                </div>
-            </div>
-
-            <div class="page-num">
-                ENCG Fès — Université Sidi Mohamed Ben Abdellah — {{ $data['session_name'] ?? 'Session d\'Examens' }} — {{ $data['session_type'] ?? '' }}
-            </div>
-
-        </div>
-
-        @if(!$loop->last)
-            <div class="page-break"></div>
-        @endif
-    @endforeach
+@endforeach
 </body>
 </html>

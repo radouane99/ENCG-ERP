@@ -238,7 +238,7 @@ export default function AdminConvocationsPage() {
   const handlePreviewStudentPdf = async (seatingId: number) => {
     try {
       const blob = await examsApi.previewConvocationPdf(seatingId)
-      const url = window.URL.createObjectURL(blob)
+      const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }))
       setPreviewUrl((prev) => {
         if (prev) window.URL.revokeObjectURL(prev)
         return url
@@ -248,16 +248,18 @@ export default function AdminConvocationsPage() {
     }
   }
 
-  const handleDownloadStudentPdf = async (seatingId: number) => {
+  const handleDownloadStudentPdf = async (seatingId: number, studentName?: string) => {
     try {
       const blob = await examsApi.downloadConvocationPdf(seatingId)
-      const url = window.URL.createObjectURL(blob)
+      const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }))
       const a = document.createElement('a')
       a.href = url
-      a.download = `convocation_${seatingId}.pdf`
+      const safeName = (studentName || 'etudiant').replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_\-à-ÿ]/gi, '')
+      a.download = `Convocation_${safeName}.pdf`
       document.body.appendChild(a)
       a.click()
       a.remove()
+      window.URL.revokeObjectURL(url)
     } catch (error) {
       notify('Erreur lors du téléchargement.', 'error')
     }
@@ -1053,7 +1055,7 @@ export default function AdminConvocationsPage() {
                                         Détails
                                       </button>
                                       <button
-                                        onClick={() => handleDownloadStudentPdf(s.all_seating_ids[0])}
+                                        onClick={() => handleDownloadStudentPdf(s.all_seating_ids[0], s.student_name)}
                                         className="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 rounded-lg transition-all cursor-pointer"
                                         title="Télécharger PDF"
                                       >
@@ -1493,7 +1495,7 @@ export default function AdminConvocationsPage() {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => {
-                      handleDownloadStudentPdf(selectedStudentDetail.all_seating_ids?.[0])
+                      handleDownloadStudentPdf(selectedStudentDetail.all_seating_ids?.[0], selectedStudentDetail.student_name)
                     }}
                     className="inline-flex items-center gap-2 px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-300 rounded-xl text-xs font-bold transition-all cursor-pointer"
                   >
