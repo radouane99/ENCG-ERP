@@ -138,18 +138,37 @@ class PdfExportController extends Controller
 
     // ─── CONVOCATIONS ÉTUDIANTS ──────────────────────────────────
 
-    public function studentConvocationPdf(int $seatingId)
+    public function studentConvocationPdf(int $id)
     {
-        $seating = ExamSeating::with(['student.user', 'exam.module.filiere', 'room', 'exam.examSession'])->findOrFail($seatingId);
+        $seating = ExamSeating::with(['student.user', 'exam.module.filiere', 'room', 'exam.examSession'])->find($id);
+        if (! $seating) {
+            $seating = ExamSeating::with(['student.user', 'exam.module.filiere', 'room', 'exam.examSession'])
+                ->where('student_id', $id)
+                ->first();
+        }
+        if (! $seating) {
+            abort(404, 'Convocation introuvable.');
+        }
+
         $pdf = $this->generateSingleConvocationPdf($seating);
-        $name = ($seating->student->user->last_name ?? 'Etudiant').'_'.($seating->student->user->first_name ?? '');
+        $user = $seating->student?->user;
+        $name = trim(($user?->last_name ?? 'Etudiant').'_'.($user?->first_name ?? ''));
 
         return $pdf->download("Convocation_{$name}.pdf");
     }
 
-    public function studentConvocationPreview(int $seatingId)
+    public function studentConvocationPreview(int $id)
     {
-        $seating = ExamSeating::with(['student.user', 'exam.module.filiere', 'room', 'exam.examSession'])->findOrFail($seatingId);
+        $seating = ExamSeating::with(['student.user', 'exam.module.filiere', 'room', 'exam.examSession'])->find($id);
+        if (! $seating) {
+            $seating = ExamSeating::with(['student.user', 'exam.module.filiere', 'room', 'exam.examSession'])
+                ->where('student_id', $id)
+                ->first();
+        }
+        if (! $seating) {
+            abort(404, 'Convocation introuvable.');
+        }
+
         $pdf = $this->generateSingleConvocationPdf($seating);
 
         return $pdf->stream('convocation_preview.pdf', ['Attachment' => false]);
@@ -175,14 +194,19 @@ class PdfExportController extends Controller
 
     private function generateSingleConvocationPdf(ExamSeating $seating)
     {
-        $student = $seating->student;
-        $user = $student?->user;
+        $student = $seating->student ?? Student::with('user')->find($seating->student_id);
+        $user = $student?->user ?? ($student?->user_id ? User::find($student->user_id) : null);
+        $studentId = $seating->student_id ?? ($student?->id ?? 1);
         $sessionId = $seating->exam?->exam_session_id;
 
         $allStudentSeatings = ExamSeating::with(['exam.module.filiere', 'room', 'exam.examSession'])
-            ->where('student_id', $student->id)
+            ->where('student_id', $studentId)
             ->when($sessionId, fn ($q) => $q->whereHas('exam', fn ($sq) => $sq->where('exam_session_id', $sessionId)))
             ->get();
+
+        if ($allStudentSeatings->isEmpty()) {
+            $allStudentSeatings = collect([$seating]);
+        }
 
         $exams = [];
         foreach ($allStudentSeatings as $s) {
@@ -199,6 +223,8 @@ class PdfExportController extends Controller
                 ];
             }
         }
+
+        usort($exams, fn ($a, $b) => strcmp($a['date'].' '.$a['time'], $b['date'].' '.$b['time']));
 
         $sessionName = $seating->exam?->examSession?->name ?? 'Session d\'Examens';
         $sessionType = $seating->exam?->examSession?->type ?? 'Normale';
@@ -225,8 +251,8 @@ class PdfExportController extends Controller
             'created_at' => $seating->created_at?->toIso8601String() ?? now()->toIso8601String(),
             'qr_token' => $verifyToken,
             'qrCodeBase64' => $qrCodeBase64,
-            'person_name' => trim(($user?->first_name ?? '').' '.($user?->last_name ?? ($user?->name ?? 'Étudiant'))),
-            'person_id' => $student->cne ?? ($user?->cin ?? 'N13800000'),
+            'person_name' => trim(($user?->first_name ?? '').' '.($user?->last_name ?? ($user?->name ?? ($student?->user?->name ?? 'Étudiant')))),
+            'person_id' => $student?->cne ?? ($user?->cin ?? 'N13800000'),
             'filiere_name' => $filiereName,
             'session_name' => $sessionName,
             'session_type' => $sessionType,
