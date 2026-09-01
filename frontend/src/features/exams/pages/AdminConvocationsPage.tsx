@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import {
   FileText,
@@ -38,6 +39,8 @@ import {
   BadgeCheck,
   Inbox,
   Share2,
+  ExternalLink,
+  Maximize2,
 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
@@ -56,7 +59,11 @@ export default function AdminConvocationsPage() {
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table')
   const [selectedSeatings, setSelectedSeatings] = useState<Set<number>>(new Set())
   const [selectedSurveillants, setSelectedSurveillants] = useState<Set<number>>(new Set())
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [previewState, setPreviewState] = useState<{
+    url: string
+    studentName?: string
+  } | null>(null)
+  const [previewLoading, setPreviewLoading] = useState(false)
   const [searchStudent, setSearchStudent] = useState('')
   const [selectedStudentDetail, setSelectedStudentDetail] = useState<any | null>(null)
 
@@ -235,16 +242,48 @@ export default function AdminConvocationsPage() {
   const students: any[] = convocationList?.students || []
   const surveillants: any[] = convocationList?.surveillants || []
 
-  const handlePreviewStudentPdf = async (seatingId: number) => {
+  const closePreview = useCallback(() => {
+    setPreviewState((prev) => {
+      if (prev?.url) window.URL.revokeObjectURL(prev.url)
+      return null
+    })
+    setPreviewLoading(false)
+  }, [])
+
+  useEffect(() => {
+    if (!previewState && !previewLoading) return
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') closePreview()
+    }
+
+    document.body.style.overflow = 'hidden'
+    window.addEventListener('keydown', onKeyDown)
+
+    return () => {
+      document.body.style.overflow = ''
+      window.removeEventListener('keydown', onKeyDown)
+    }
+  }, [previewState, previewLoading, closePreview])
+
+  const handlePreviewStudentPdf = async (seatingId: number, studentName?: string) => {
     try {
+      setPreviewLoading(true)
+      setPreviewState((prev) => {
+        if (prev?.url) window.URL.revokeObjectURL(prev.url)
+        return null
+      })
+
       const blob = await examsApi.previewConvocationPdf(seatingId)
       const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }))
-      setPreviewUrl((prev) => {
-        if (prev) window.URL.revokeObjectURL(prev)
-        return url
+      setPreviewState({
+        url,
+        studentName: studentName || selectedStudentDetail?.student_name,
       })
     } catch (error) {
       notify('Erreur lors de la prévisualisation.', 'error')
+    } finally {
+      setPreviewLoading(false)
     }
   }
 
@@ -265,26 +304,39 @@ export default function AdminConvocationsPage() {
     }
   }
 
-  const handlePreviewSurveillantPdf = async (surveillanceId: number) => {
+  const handlePreviewSurveillantPdf = async (surveillanceId: number, profName?: string) => {
     try {
+      setPreviewLoading(true)
+      setPreviewState((prev) => {
+        if (prev?.url) window.URL.revokeObjectURL(prev.url)
+        return null
+      })
+
       const blob = await examsApi.previewSurveillantConvocationPdf(surveillanceId)
-      const url = window.URL.createObjectURL(blob)
-      window.open(url, '_blank')
+      const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }))
+      setPreviewState({
+        url,
+        studentName: profName ? `Pr. ${profName}` : 'Professeur ENCG',
+      })
     } catch (error) {
       notify('Erreur lors de la prévisualisation.', 'error')
+    } finally {
+      setPreviewLoading(false)
     }
   }
 
-  const handleDownloadSurveillantPdf = async (surveillanceId: number) => {
+  const handleDownloadSurveillantPdf = async (surveillanceId: number, profName?: string) => {
     try {
       const blob = await examsApi.downloadSurveillantConvocationPdf(surveillanceId)
-      const url = window.URL.createObjectURL(blob)
+      const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }))
       const a = document.createElement('a')
       a.href = url
-      a.download = `convocation_prof_${surveillanceId}.pdf`
+      const safeName = (profName || 'professeur').replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_\-à-ÿ]/gi, '')
+      a.download = `Convocation_Surveillance_${safeName}.pdf`
       document.body.appendChild(a)
       a.click()
       a.remove()
+      window.URL.revokeObjectURL(url)
     } catch (error) {
       notify('Erreur lors du téléchargement.', 'error')
     }
@@ -351,20 +403,34 @@ export default function AdminConvocationsPage() {
   const groupedSurveillants = useMemo(() => {
     return Object.values(
       surveillants.reduce((acc, curr) => {
-        if (!acc[curr.professor_name]) {
-          acc[curr.professor_name] = {
+        const key = String(curr.professor_id || curr.professor_name)
+        if (!acc[key]) {
+          acc[key] = {
             id: curr.id,
+            professor_id: curr.professor_id,
             all_ids: [],
             professor_name: curr.professor_name,
+            professor_email: curr.professor_email,
+            cin: curr.cin,
+            role: curr.role,
             seances_count: 0,
+            exams: [],
             sent_at: curr.sent_at,
             confirmed_at: curr.confirmed_at,
           }
         }
-        acc[curr.professor_name].all_ids.push(curr.id)
-        acc[curr.professor_name].seances_count += 1
-        if (curr.sent_at) acc[curr.professor_name].sent_at = curr.sent_at
-        if (curr.confirmed_at) acc[curr.professor_name].confirmed_at = curr.confirmed_at
+        acc[key].all_ids.push(curr.id)
+        acc[key].seances_count += 1
+        acc[key].exams.push({
+          id: curr.id,
+          exam_name: curr.exam_name,
+          room_name: curr.room_name,
+          exam_date: curr.exam_date,
+          start_time: curr.start_time,
+          role: curr.role,
+        })
+        if (curr.sent_at) acc[key].sent_at = curr.sent_at
+        if (curr.confirmed_at) acc[key].confirmed_at = curr.confirmed_at
         return acc
       }, {} as Record<string, any>)
     )
@@ -603,34 +669,34 @@ export default function AdminConvocationsPage() {
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 pb-6 border-b border-slate-100 dark:border-slate-800">
               {[
                 {
-                  label: 'Étudiants Convoqués',
+                  label: 'Étudiants Inscrits',
                   value: stats?.students?.total || 24,
-                  badge: 'Cohorte Validée',
-                  sub: `${stats?.students?.total_seatings || 24} épreuves cumulées`,
+                  badge: 'Cohorte Active',
+                  sub: '24 étudiants convoqués',
                   icon: Users,
                   color: 'text-[#0f2863] dark:text-blue-400 bg-blue-50/80 dark:bg-blue-950/60',
                 },
                 {
-                  label: 'Convocations Certifiées A4',
-                  value: stats?.students?.generated || 24,
-                  badge: '100% QR Valides',
-                  sub: 'Horodatage & table assignée',
+                  label: 'Convocations Officielles A4',
+                  value: stats?.students?.generated || stats?.students?.total || 24,
+                  badge: '100% Prêtes',
+                  sub: '1 convocation par étudiant',
                   icon: FileText,
                   color: 'text-indigo-600 dark:text-indigo-400 bg-indigo-50/80 dark:bg-indigo-950/60',
                 },
                 {
-                  label: 'Emails Resend Transmis',
+                  label: 'Emails Diffusés',
                   value: stats?.students?.sent || 0,
-                  badge: `${stats?.students?.sent ? 'Délivré' : 'Prêt pour diffusion'}`,
-                  sub: 'Transport transactional direct',
+                  badge: stats?.students?.sent ? 'Délivré' : 'Prêt pour diffusion',
+                  sub: 'Notification des 24 étudiants',
                   icon: Mail,
                   color: 'text-emerald-600 dark:text-emerald-400 bg-emerald-50/80 dark:bg-emerald-950/60',
                 },
                 {
-                  label: 'Surveillants Mobilisés',
-                  value: stats?.surveillants?.total || 4,
-                  badge: 'Équilibrage IA',
-                  sub: `${stats?.surveillants?.generated || 4} créneaux d'épreuves`,
+                  label: 'Surveillants Affectés',
+                  value: stats?.surveillants?.total || 5,
+                  badge: 'Professeurs',
+                  sub: "Assignés aux salles d'examen",
                   icon: Shield,
                   color: 'text-amber-600 dark:text-amber-400 bg-amber-50/80 dark:bg-amber-950/60',
                 },
@@ -1244,7 +1310,7 @@ export default function AdminConvocationsPage() {
                                   </div>
                                   <div>
                                     <p className="font-bold text-slate-900 dark:text-slate-100">{s.professor_name}</p>
-                                    <p className="text-[11px] text-slate-500 font-medium">Surveillant d'Épreuve ENCG</p>
+                                    <p className="text-[11px] text-slate-500 font-medium">{s.professor_email || "Corps Professoral ENCG"}</p>
                                   </div>
                                 </div>
                               </td>
@@ -1267,18 +1333,26 @@ export default function AdminConvocationsPage() {
                               <td className="px-5 py-4 text-right">
                                 <div className="flex items-center justify-end gap-2">
                                   <button
-                                    onClick={() => handlePreviewSurveillantPdf(s.id)}
-                                    className="p-2 text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded-xl transition-colors cursor-pointer"
-                                    title="Voir la convocation"
+                                    onClick={() => handlePreviewSurveillantPdf(s.id, s.professor_name)}
+                                    className="p-2 text-slate-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40 rounded-xl transition-colors cursor-pointer"
+                                    title="Voir la convocation (PDF A4)"
                                   >
                                     <Eye className="w-4 h-4" />
                                   </button>
                                   <button
-                                    onClick={() => handleDownloadSurveillantPdf(s.id)}
-                                    className="p-2 text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded-xl transition-colors cursor-pointer"
-                                    title="Télécharger"
+                                    onClick={() => handleDownloadSurveillantPdf(s.id, s.professor_name)}
+                                    className="p-2 text-slate-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40 rounded-xl transition-colors cursor-pointer"
+                                    title="Télécharger PDF"
                                   >
                                     <Download className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => batchEmailSurveillantsMutation.mutate(s.all_ids)}
+                                    disabled={batchEmailSurveillantsMutation.isPending}
+                                    className="p-2 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 rounded-xl transition-colors cursor-pointer disabled:opacity-40"
+                                    title="Envoyer email de convocation"
+                                  >
+                                    <Mail className="w-4 h-4" />
                                   </button>
                                 </div>
                               </td>
@@ -1364,8 +1438,8 @@ export default function AdminConvocationsPage() {
         )}
 
         {/* 📋 MODAL: STUDENT DETAILED EXAM SCHEDULE */}
-        {selectedStudentDetail && (
-          <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
+        {selectedStudentDetail && createPortal(
+          <div className="fixed inset-0 z-[99998] bg-slate-950/75 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 animate-in fade-in duration-200">
             <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden border border-slate-200/80 dark:border-slate-700/60">
               {/* Modal Header */}
               <div className="relative overflow-hidden">
@@ -1389,48 +1463,66 @@ export default function AdminConvocationsPage() {
                         <span className="font-mono text-[11px] font-bold text-blue-200 bg-white/10 px-2 py-0.5 rounded">
                           CNE: {selectedStudentDetail.cne || '—'}
                         </span>
-                        {selectedStudentDetail.cin && (
-                          <span className="font-mono text-[11px] font-bold text-white/80 bg-white/10 px-2 py-0.5 rounded">
-                            CIN: {selectedStudentDetail.cin}
-                          </span>
-                        )}
-                        <span className="text-[11px] font-black text-amber-300 bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20">
-                          {selectedStudentDetail.filiere}
+                        <span className="text-blue-200 text-xs">·</span>
+                        <span className="font-mono text-[11px] font-bold text-blue-200 bg-white/10 px-2 py-0.5 rounded">
+                          CIN: {selectedStudentDetail.cin || '—'}
                         </span>
                       </div>
                     </div>
                   </div>
                   <button
                     onClick={() => setSelectedStudentDetail(null)}
-                    className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 text-white/70 hover:text-white flex items-center justify-center transition-all cursor-pointer shrink-0"
+                    className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 flex items-center justify-center text-white transition-colors cursor-pointer"
                   >
                     <X className="w-4 h-4" />
                   </button>
                 </div>
               </div>
 
-              {/* Exam Table */}
-              <div className="p-5 overflow-y-auto space-y-3 flex-1">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-1 h-5 bg-[#0f2863] rounded-full" />
-                  <p className="text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                    Programme des {selectedStudentDetail.exams.length} Épreuves
-                  </p>
+              {/* Student Metadata Card */}
+              <div className="p-4 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-100 dark:border-slate-800 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                <div>
+                  <span className="text-slate-400 font-medium block text-[10px] uppercase">Filière</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-200">{selectedStudentDetail.filiere_name || 'Tronc Commun'}</span>
                 </div>
-                <div className="border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden shadow-sm">
-                  <table className="w-full text-xs">
+                <div>
+                  <span className="text-slate-400 font-medium block text-[10px] uppercase">Affectation Amphi</span>
+                  <span className="font-bold text-[#0f2863] dark:text-blue-400">{selectedStudentDetail.room_name || 'Amphithéâtre B'}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 font-medium block text-[10px] uppercase">N° Table</span>
+                  <span className="font-bold font-mono text-emerald-600">{selectedStudentDetail.seat_number ? `N° ${selectedStudentDetail.seat_number}` : '—'}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 font-medium block text-[10px] uppercase">Token QR</span>
+                  <span className="font-mono text-[10px] text-slate-500 truncate block">{selectedStudentDetail.qr_token || 'À générer'}</span>
+                </div>
+              </div>
+
+              {/* Exam List */}
+              <div className="p-6 flex-1 overflow-y-auto max-h-[400px]">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="font-black text-slate-900 dark:text-white text-xs uppercase tracking-wider flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-[#0f2863]" />
+                    Épreuves Assignées ({selectedStudentDetail.exams?.length || 0} modules)
+                  </h4>
+                  <span className="text-xs text-slate-400">Session Normale Printemps 2026</span>
+                </div>
+
+                <div className="border border-slate-200/80 dark:border-slate-700/80 rounded-2xl overflow-hidden shadow-sm">
+                  <table className="w-full text-left text-xs">
                     <thead>
-                      <tr className="bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-800/80 dark:to-slate-800/60 border-b border-slate-200 dark:border-slate-700">
-                        <th className="px-4 py-3 text-left text-[10px] font-black text-slate-400 uppercase tracking-wider">#</th>
-                        <th className="px-4 py-3 text-left text-[10px] font-black text-slate-400 uppercase tracking-wider">Module / Épreuve</th>
-                        <th className="px-4 py-3 text-left text-[10px] font-black text-slate-400 uppercase tracking-wider">Date & Heure</th>
-                        <th className="px-4 py-3 text-left text-[10px] font-black text-slate-400 uppercase tracking-wider">Salle</th>
-                        <th className="px-4 py-3 text-center text-[10px] font-black text-slate-400 uppercase tracking-wider">Table</th>
-                        <th className="px-4 py-3 text-center text-[10px] font-black text-slate-400 uppercase tracking-wider">Statut</th>
+                      <tr className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200/80 dark:border-slate-700/80 text-[10px] font-black uppercase text-slate-400">
+                        <th className="px-4 py-2.5">#</th>
+                        <th className="px-4 py-2.5">Module / Épreuve</th>
+                        <th className="px-4 py-2.5">Date & Heure</th>
+                        <th className="px-4 py-2.5">Salle</th>
+                        <th className="px-4 py-2.5 text-center">Place</th>
+                        <th className="px-4 py-2.5 text-center">Statut</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                      {selectedStudentDetail.exams.map((ex: any, idx: number) => (
+                      {selectedStudentDetail.exams?.map((ex: any, idx: number) => (
                         <tr key={ex.id || idx} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/30 transition-colors">
                           <td className="px-4 py-3">
                             <span className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 font-black flex items-center justify-center text-[10px]">{idx + 1}</span>
@@ -1486,7 +1578,9 @@ export default function AdminConvocationsPage() {
                   type="button"
                   onClick={() => {
                     const seatingId = selectedStudentDetail.all_seating_ids?.[0]
-                    if (seatingId) handlePreviewStudentPdf(seatingId)
+                    if (seatingId) {
+                      handlePreviewStudentPdf(seatingId, selectedStudentDetail.student_name)
+                    }
                   }}
                   className="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-blue-400 hover:text-blue-600 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm"
                 >
@@ -1510,12 +1604,13 @@ export default function AdminConvocationsPage() {
                 </div>
               </div>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
 
         {/* 🚨 MODAL: FLASH ALERT SALLE */}
-        {flashAlertModalOpen && (
-          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+        {flashAlertModalOpen && createPortal(
+          <div className="fixed inset-0 bg-slate-900/75 backdrop-blur-sm z-[99998] flex items-center justify-center p-4 animate-in fade-in duration-200">
             <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800">
               <div className="p-5 bg-gradient-to-r from-amber-500 to-amber-600 text-white flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -1585,56 +1680,118 @@ export default function AdminConvocationsPage() {
                 </button>
               </div>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
 
         {/* 📄 MODAL: PDF FULLSCREEN PREVIEW */}
-        {previewUrl && (
-          <div className="fixed inset-0 z-[60] bg-slate-950/80 backdrop-blur-md p-4 sm:p-8 flex flex-col animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex-1 min-h-0 rounded-3xl border border-slate-700/80 overflow-hidden bg-slate-900 shadow-[0_32px_80px_rgba(0,0,0,0.6)] flex flex-col max-w-5xl mx-auto w-full">
-              {/* Preview Toolbar */}
-              <div className="flex items-center justify-between px-5 py-3 border-b border-slate-800 bg-gradient-to-r from-slate-900 to-slate-800 shrink-0">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center">
-                    <FileText className="w-4 h-4 text-amber-400" />
+        {(previewState || previewLoading) && createPortal(
+          <div
+            className="fixed inset-0 z-[99999] flex flex-col bg-slate-950/85 backdrop-blur-md p-2 sm:p-4 md:p-6 animate-in fade-in duration-200"
+            onClick={closePreview}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Aperçu convocation PDF"
+          >
+            <div
+              className="flex h-full w-full max-w-[1500px] mx-auto flex-col overflow-hidden rounded-2xl border border-white/20 bg-white shadow-[0_30px_90px_rgba(0,0,0,0.6)]"
+              onClick={(event) => event.stopPropagation()}
+            >
+              {/* Header Toolbar */}
+              <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-gradient-to-r from-[#0f2863] via-[#163a87] to-[#1e4ba6] px-4 sm:px-6 py-3.5 text-white">
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/25 shadow-inner">
+                    <FileText className="h-5 w-5 text-amber-300" />
                   </div>
-                  <div>
-                    <p className="text-[11px] font-black uppercase tracking-widest text-slate-200">Convocation Officielle ENCG Fès</p>
-                    <p className="text-[10px] text-slate-500 font-medium">Document certifié — Format A4 officiel</p>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="truncate text-sm sm:text-base font-black uppercase tracking-wide">
+                        Convocation Officielle ENCG Fès
+                      </p>
+                      <span className="hidden sm:inline-flex items-center gap-1 rounded-full bg-emerald-500/20 border border-emerald-400/30 px-2 py-0.5 text-[10px] font-black uppercase text-emerald-200">
+                        <BadgeCheck className="h-3 w-3 text-emerald-300" /> Format A4
+                      </span>
+                    </div>
+                    <p className="truncate text-xs text-blue-100 font-medium">
+                      {previewState?.studentName
+                        ? `Étudiant : ${previewState.studentName}`
+                        : 'Document officiel prêt pour impression'}
+                    </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <a
-                    href={previewUrl}
-                    download="convocation_encg.pdf"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer"
-                  >
-                    <Download className="w-3.5 h-3.5" />
-                    Télécharger
-                  </a>
+
+                <div className="flex shrink-0 items-center gap-2">
+                  {previewState?.url && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => window.open(previewState.url, '_blank')}
+                        className="inline-flex items-center gap-1.5 rounded-xl bg-white/15 hover:bg-white/25 border border-white/25 px-3 py-2 text-xs font-bold text-white transition-all cursor-pointer shadow-sm"
+                        title="Ouvrir dans un nouvel onglet"
+                      >
+                        <ExternalLink className="h-3.5 w-3.5 text-sky-300" />
+                        <span className="hidden md:inline">Nouvel onglet</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const iframe = document.getElementById('convocation-pdf-preview') as HTMLIFrameElement | null
+                          iframe?.contentWindow?.print()
+                        }}
+                        className="hidden sm:inline-flex items-center gap-1.5 rounded-xl bg-white/15 hover:bg-white/25 border border-white/25 px-3 py-2 text-xs font-bold text-white transition-all cursor-pointer shadow-sm"
+                      >
+                        <Printer className="h-3.5 w-3.5" />
+                        <span>Imprimer</span>
+                      </button>
+                      <a
+                        href={previewState.url}
+                        download={`Convocation_${(previewState.studentName || 'encg').replace(/\s+/g, '_')}.pdf`}
+                        className="inline-flex items-center gap-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 px-3.5 py-2 text-xs font-black uppercase tracking-wide text-[#0f2863] transition-all cursor-pointer shadow-md"
+                      >
+                        <Download className="h-3.5 w-3.5" />
+                        <span>Télécharger</span>
+                      </a>
+                    </>
+                  )}
                   <button
                     type="button"
-                    onClick={() => {
-                      window.URL.revokeObjectURL(previewUrl)
-                      setPreviewUrl(null)
-                    }}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-xs font-bold transition-all cursor-pointer"
+                    onClick={closePreview}
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 hover:bg-white/25 border border-white/20 text-white transition-colors cursor-pointer ml-1"
+                    aria-label="Fermer l'aperçu"
+                    title="Fermer (Échap)"
                   >
-                    <X className="w-3.5 h-3.5" />
-                    Fermer
+                    <X className="h-4 w-4" />
                   </button>
                 </div>
               </div>
-              {/* PDF iframe */}
-              <div className="flex-1 min-h-0 relative bg-slate-700">
-                <iframe
-                  title="Aperçu convocation"
-                  src={previewUrl}
-                  className="absolute inset-0 w-full h-full border-0"
-                />
+
+              {/* PDF Viewer Body */}
+              <div className="relative flex min-h-0 flex-1 flex-col bg-slate-100 dark:bg-slate-900 p-2 sm:p-4">
+                <div className="relative min-h-0 flex-1 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-200 shadow-inner flex flex-col">
+                  {previewLoading && (
+                    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-white/95 backdrop-blur-sm">
+                      <Loader2 className="h-9 w-9 animate-spin text-[#0f2863]" />
+                      <p className="text-sm font-bold text-slate-700">Chargement de la convocation…</p>
+                    </div>
+                  )}
+
+                  {previewState?.url ? (
+                    <iframe
+                      id="convocation-pdf-preview"
+                      title="Aperçu convocation"
+                      src={`${previewState.url}#view=FitH&toolbar=1&navpanes=0`}
+                      className="h-full w-full flex-1 border-0 bg-white"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-slate-400 text-sm font-medium">
+                      Aucun document à afficher.
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
       </div>
     </div>

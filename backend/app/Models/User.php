@@ -82,6 +82,11 @@ class User extends Authenticatable implements HasMedia
         return $this->hasOne(Professor::class);
     }
 
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'id');
+    }
+
     // ✅ AJOUTÉ : Relation pour les disponibilités des professeurs
     public function professorAvailabilities(): HasMany
     {

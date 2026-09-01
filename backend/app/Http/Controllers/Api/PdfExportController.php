@@ -52,7 +52,28 @@ class PdfExportController extends Controller
      */
     private function getPdfInstance(string $view, array $data = []): \Barryvdh\DomPDF\PDF
     {
+        $data['logoBase64'] ??= $this->resolveLogoBase64();
+
         return Pdf::loadView($view, $data)->setPaper('a4', 'portrait');
+    }
+
+    private function resolveLogoBase64(): string
+    {
+        foreach (['logo-encg.png', 'images/encg_logo.png', 'images/logo-encg.png', 'images/logo.png'] as $candidate) {
+            $path = public_path($candidate);
+            if (file_exists($path)) {
+                $mime = str_ends_with($candidate, '.png') ? 'image/png' : 'image/jpeg';
+
+                return "data:{$mime};base64,".base64_encode((string) file_get_contents($path));
+            }
+        }
+
+        return '';
+    }
+
+    private function getLogoBase64(): string
+    {
+        return $this->resolveLogoBase64();
     }
 
     // ─── RÉCÉPISSÉ TAFEM ────────────────────────────────────────
@@ -292,20 +313,44 @@ class PdfExportController extends Controller
             }
         }
 
-        $profUser = $surveillance->professor?->user ?? $surveillance->professor;
+        $profUser = User::find($professorId) ?? ($surveillance->professor?->user ?? $surveillance->professor);
         $profName = trim(($profUser?->first_name ?? '').' '.($profUser?->last_name ?? ($profUser?->name ?? 'Professeur')));
+        if (empty($profName)) {
+            $profName = $profUser?->name ?? 'Professeur ENCG';
+        }
         $sessionName = $surveillance->exam?->examSession?->name ?? 'Session d\'Examens';
+        $sessionType = $surveillance->exam?->examSession?->type ?? 'Normale';
+
+        $verifyToken = $surveillance->qr_token ?: Str::uuid()->toString();
+        $verifyUrl = url('/api/convocations/'.$verifyToken.'/verify');
+        $qrCodeBase64 = null;
+        if (class_exists(QrCode::class)) {
+            try {
+                $qrRaw = QrCode::format('png')->size(120)->generate($verifyUrl);
+                $qrCodeBase64 = 'data:image/png;base64,'.base64_encode($qrRaw);
+            } catch (\Throwable $e) {
+                try {
+                    $qrSvg = QrCode::format('svg')->size(120)->generate($verifyUrl);
+                    $qrCodeBase64 = 'data:image/svg+xml;base64,'.base64_encode($qrSvg);
+                } catch (\Throwable $e2) {
+                }
+            }
+        }
 
         $professorsData = [[
             'id' => $surveillance->professor_id,
+            'created_at' => $surveillance->created_at?->toIso8601String() ?? now()->toIso8601String(),
             'person_name' => strtoupper($profName),
-            'filiere_name' => 'Département Enseignant',
+            'person_id' => $profUser?->cin ?? ($surveillance->professor?->cin ?? 'ENCG-ENS'),
+            'filiere_name' => 'Corps Professoral ENCG Fès',
             'person_role' => $surveillance->role ?? 'Surveillant',
             'session_name' => $sessionName,
-            'session_type' => '',
+            'session_type' => $sessionType,
+            'academic_year' => '2025 — 2026',
+            'generated_at' => now()->format('d/m/Y H:i:s'),
             'exams' => $exams,
-            'qr_token' => $surveillance->qr_token,
-            'qrCodeBase64' => null,
+            'qr_token' => $verifyToken,
+            'qrCodeBase64' => $qrCodeBase64,
         ]];
 
         return $this->getPdfInstance('pdf.convocations_profs_batch', compact('professorsData'));
@@ -478,17 +523,33 @@ class PdfExportController extends Controller
             usort($exams, fn ($a, $b) => strcmp($a['date'].' '.$a['time'], $b['date'].' '.$b['time']));
 
             $token = $profSurvs->first()->qr_token ?? Str::random(16);
-            $verifyUrl = url("/api/v1/admin/convocations/verify/{$token}");
-            $qrCodeBase64 = base64_encode(QrCode::format('svg')->size(100)->generate($verifyUrl));
+            $verifyUrl = url("/api/convocations/{$token}/verify");
+            $qrCodeBase64 = null;
+            if (class_exists(QrCode::class)) {
+                try {
+                    $qrRaw = QrCode::format('png')->size(120)->generate($verifyUrl);
+                    $qrCodeBase64 = 'data:image/png;base64,'.base64_encode($qrRaw);
+                } catch (\Throwable $e) {
+                    try {
+                        $qrSvg = QrCode::format('svg')->size(120)->generate($verifyUrl);
+                        $qrCodeBase64 = 'data:image/svg+xml;base64,'.base64_encode($qrSvg);
+                    } catch (\Throwable $e2) {
+                    }
+                }
+            }
 
             $professorsData[] = [
+                'id' => $prof->id,
                 'person_name' => mb_strtoupper($prof->last_name).' '.$prof->first_name,
-                'person_id' => $prof->cin ?? 'N/A',
-                'person_role' => 'Professeur',
-                'filiere_name' => 'Corps Professoral ENCG',
-                'session_type' => $session->type ?? 'ORDINAIRE',
+                'person_id' => $prof->cin ?? 'ENCG-ENS',
+                'person_role' => 'Professeur / Surveillant',
+                'filiere_name' => 'Corps Professoral ENCG Fès',
+                'session_type' => $session->type ?? 'Normale',
                 'session_name' => $session->name ?? 'Session Principale',
+                'academic_year' => '2025 — 2026',
+                'generated_at' => now()->format('d/m/Y H:i:s'),
                 'exams' => $exams,
+                'qr_token' => $token,
                 'qrCodeBase64' => $qrCodeBase64,
             ];
         }

@@ -34,30 +34,7 @@
         }
         .page-shell td { vertical-align: top; }
 
-        /* ── HEADER ── */
-        .header-table {
-            width: 100%;
-            border-bottom: 2px solid #1a3a5c;
-            padding-bottom: 4px;
-            margin-bottom: 5px;
-        }
-        .header-table td { vertical-align: middle; }
-        .logo-img { max-height: 34px; max-width: 140px; }
-        .logo-fallback {
-            font-size: 9pt;
-            font-weight: bold;
-            color: #1a3a5c;
-            text-transform: uppercase;
-            line-height: 1.3;
-        }
-        .logo-fallback small { font-size: 6pt; color: #4a6b8a; font-weight: normal; }
-        .ministry-text {
-            font-size: 6.5pt;
-            color: #4a6b8a;
-            line-height: 1.45;
-            text-align: right;
-        }
-        .ministry-text strong { color: #1a3a5c; font-size: 7pt; }
+        /* ── HEADER (shared partial pdf.encg-header) ── */
 
         /* ── TITLE ── */
         .title-banner {
@@ -313,30 +290,7 @@
 <td>
 
 {{-- HEADER --}}
-<table class="header-table" cellpadding="0" cellspacing="0">
-    <tr>
-        <td style="width:55%;">
-            @if(file_exists(public_path('logo-encg.png')))
-                <img src="{{ public_path('logo-encg.png') }}" alt="ENCG Fès" class="logo-img">
-            @elseif(file_exists(public_path('images/logo.png')))
-                <img src="{{ public_path('images/logo.png') }}" alt="ENCG Fès" class="logo-img">
-            @else
-                <div class="logo-fallback">
-                    ENCG Fès<br>
-                    <small>École Nationale de Commerce et de Gestion — Fès</small>
-                </div>
-            @endif
-        </td>
-        <td style="width:45%; text-align:right;">
-            <div class="ministry-text">
-                <strong>Royaume du Maroc</strong><br>
-                Ministère de l'Enseignement Supérieur<br>
-                Université Sidi Mohamed Ben Abdellah<br>
-                <strong>ENCG — Fès</strong>
-            </div>
-        </td>
-    </tr>
-</table>
+@include('pdf.encg-header')
 
 {{-- TITLE --}}
 <div class="title-banner">

@@ -8,6 +8,7 @@ use App\Models\Exam;
 use App\Models\ExamSeating;
 use App\Models\ExamSession;
 use App\Models\ExamSurveillance;
+use App\Models\Professor;
 use App\Models\Room;
 use App\Models\Student;
 use App\Models\User;
@@ -564,13 +565,12 @@ class ExamConvocationService
             'data' => [
                 'students' => [
                     'total' => $totalStudents,
-                    'total_seatings' => $totalSeatings ?: $totalStudents,
-                    'generated' => $generated ?: $totalSeatings,
+                    'generated' => $generated ?: $totalStudents,
                     'sent' => $sent,
                 ],
                 'surveillants' => [
                     'total' => $totalSurveillants,
-                    'generated' => ExamSurveillance::whereIn('exam_id', $examIds)->count() ?: $totalSurveillants,
+                    'generated' => $totalSurveillants,
                     'confirmed' => $confirmed,
                 ],
             ],
@@ -622,22 +622,23 @@ class ExamConvocationService
             ];
         })->values()->toArray();
 
-        $surveillants = ExamSurveillance::with(['professor.user', 'exam.module', 'room'])
+        $surveillants = ExamSurveillance::with(['professor', 'exam.module', 'room'])
             ->whereIn('exam_id', $examIds)
             ->orderBy('exam_id')
             ->get()
             ->map(function ($s) {
-                $prof = $s->professor;
-                $user = $prof?->user;
+                $user = $s->professor ?? User::find($s->professor_id);
                 $name = trim(($user?->first_name ?? '').' '.($user?->last_name ?? ''));
                 if (empty($name)) {
-                    $name = $user?->name ?? ($prof?->name ?? 'Professeur ENCG');
+                    $name = $user?->name ?? 'Professeur ENCG';
                 }
 
                 return [
                     'id' => $s->id,
                     'professor_id' => $s->professor_id,
                     'professor_name' => $name,
+                    'professor_email' => $user?->email ?? '',
+                    'cin' => $user?->cin ?? 'ENCG-ENS',
                     'exam_name' => $s->exam?->module?->name ?? 'Surveillance Épreuve',
                     'room_name' => $s->room?->name ?? ($s->exam?->room?->name ?? 'Amphithéâtre B'),
                     'exam_date' => $s->exam?->exam_date?->format('Y-m-d'),

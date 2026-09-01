@@ -64,20 +64,27 @@ class ProctorAssignmentService
         }
 
         return DB::transaction(function () use ($session) {
-            $availableProfessors = User::with('roles')
-                ->whereHas('roles', fn ($q) => $q->where('name', 'professor'))
+            $availableProfessors = User::whereHas('roles', fn ($q) => $q->where('name', 'professor'))
                 ->where('is_active', true)
                 ->get();
+
+            if ($availableProfessors->isEmpty()) {
+                $availableProfessors = User::whereHas('roles', fn ($q) => $q->where('name', 'professor'))->get();
+            }
 
             if ($availableProfessors->isEmpty()) {
                 return ['success' => false, 'message' => 'Aucun professeur actif trouvé.'];
             }
 
+            // Remove previous session surveillances to prevent accumulation
+            $sessionExamIds = $session->exams->pluck('id');
+            ExamSurveillance::whereIn('exam_id', $sessionExamIds)->delete();
+
             $workloadMap = [];
             $assignedCount = 0;
 
             foreach ($availableProfessors as $prof) {
-                $workloadMap[$prof->id] = ExamSurveillance::where('professor_id', $prof->id)->count();
+                $workloadMap[$prof->id] = 0;
             }
 
             foreach ($session->exams as $exam) {
