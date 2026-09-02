@@ -30,6 +30,8 @@ const ProfessorDocumentsPage = lazy(() => import('@features/professor-portal/pag
 
 const ProfessorTimetablePage = lazy(() => import('@features/timetable/pages/AdminAiTimetableSchedulerPage'))
 
+const AdminExamSurveillanceHubPage = lazy(() => import('@features/exams/pages/AdminExamSurveillanceHubPage'))
+
 import { useReverbNotifications } from '@features/professors/hooks/useReverbNotifications'
 
 export default function ProfessorRouter() {
@@ -44,6 +46,7 @@ export default function ProfessorRouter() {
       <Route path="scanner" element={<ProfessorScanner />} />
       <Route path="proctor-convocations" element={<ProfessorProctoring />} />
       <Route path="proctoring" element={<ProfessorProctoring />} />
+      <Route path="exams/:id/surveillance" element={<AdminExamSurveillanceHubPage />} />
       <Route path="availability" element={<ProfessorAvailability />} />
       <Route path="textbook" element={<TextbooksPage />} />
       <Route path="voice-textbook" element={<ProfessorVoiceTextbook />} />

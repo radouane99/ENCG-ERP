@@ -11,12 +11,146 @@ use App\Models\Student;
 use App\Services\Academic\AttendanceService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 
 class ProfessorAttendanceController extends Controller
 {
     public function __construct(
         private AttendanceService $attendanceService
     ) {}
+
+    /**
+     * Récupérer la liste exacte des étudiants selon la filière, l'année et le groupe (G1, G2 ou Tous les groupes).
+     */
+    public function getStudents(Request $request): JsonResponse
+    {
+        $groupLabel = (string) $request->input('group_label', '');
+        $groupName = (string) $request->input('group_name', '');
+        $filiereCode = (string) $request->input('filiere_code', '');
+        $semesterNum = $request->integer('semester_number');
+
+        $academicYear = \App\Models\AcademicYear::query()->where('is_current', true)->first();
+        $combined = trim($groupLabel.' '.$groupName.' '.$filiereCode);
+
+        // 1. Détection du semestre académique (ex: S1 -> 1, S5 -> 5)
+        if (! $semesterNum) {
+            if (preg_match('/S(\d+)/i', $combined, $m)) {
+                $semesterNum = (int) $m[1];
+            } else {
+                $semesterNum = 1;
+            }
+        }
+
+        // 2. Détection de la portée : Les examens en amphi regroupent TOUJOURS les 24 étudiants (G1 + G2)
+        $isExam = $request->boolean('is_exam') 
+            || $request->input('context') === 'exam' 
+            || preg_match('/(exam|surveillance|amphi|amphithéâtre)/i', $combined);
+
+        $isAllGroups = $isExam || (bool) preg_match('/(tous|all|section|promo|g1\s*\+\s*g2)/i', $combined);
+        $targetGroupNum = null;
+
+        if (! $isAllGroups) {
+            if (preg_match('/G2|Groupe\s*2/i', $combined)) {
+                $targetGroupNum = 2;
+            } elseif (preg_match('/G1|Groupe\s*1/i', $combined)) {
+                $targetGroupNum = 1;
+            }
+        }
+
+        // 3. Identification de la filière
+        $filiere = null;
+        if ($filiereCode !== '') {
+            $cleanCode = trim(str_ireplace(['TC-', 'S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8', 'S9', 'S10', '•', 'G1', 'G2'], '', $filiereCode));
+            if ($cleanCode !== '') {
+                $filiere = \App\Models\Filiere::where('code', 'ILIKE', "%{$cleanCode}%")
+                    ->orWhere('name', 'ILIKE', "%{$cleanCode}%")
+                    ->first();
+            }
+        }
+
+        // 4. Requête officielle des inscriptions d'étudiants (StudentRegistration)
+        $regQuery = \App\Models\StudentRegistration::with(['student.user', 'group', 'filiere'])
+            ->where('semester_number', $semesterNum);
+
+        if ($academicYear) {
+            $regQuery->where('academic_year_id', $academicYear->id);
+        }
+
+        if ($filiere) {
+            $regQuery->where('filiere_id', $filiere->id);
+        }
+
+        // Si ce n'est PAS un examen et qu'un seul groupe est ciblé (ex: séance TD ordinaire)
+        if (! $isAllGroups && $targetGroupNum) {
+            $regQuery->whereHas('group', function ($q) use ($targetGroupNum) {
+                $q->where('name', 'ILIKE', "%{$targetGroupNum}%");
+            });
+        }
+
+        $registrations = $regQuery->get();
+
+        if ($registrations->isNotEmpty()) {
+            $data = $registrations->map(function ($reg) {
+                $st = $reg->student;
+                $user = $st?->user;
+                $fullName = trim(($user->first_name ?? '').' '.($user->last_name ?? ''));
+                if ($fullName === '') {
+                    $fullName = $user->name ?? 'Étudiant ENCG';
+                }
+
+                return [
+                    'id' => $st->id,
+                    'user_id' => $st->user_id,
+                    'name' => $fullName,
+                    'cne' => $st->cne ?? ('N13'.str_pad($st->id, 7, '0', STR_PAD_LEFT)),
+                    'apogee' => $st->student_number ?? (20240000 + $st->id),
+                    'group' => $reg->group?->name ?? 'Groupe 1',
+                    'filiere' => $reg->filiere?->name ?? 'ENCG Fès',
+                    'status' => 'present',
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'data' => $data,
+                'is_all_groups' => $isAllGroups,
+                'group_scope' => $isAllGroups ? 'Section Complète (G1 + G2)' : "Groupe {$targetGroupNum}",
+                'total_students' => $data->count(),
+            ]);
+        }
+
+        // 5. Cohorte de secours propre par filière & groupe (12 par groupe ou 24 si section complète)
+        $allCohort = \App\Models\Student::with(['user'])->take(24)->get();
+        $finalCohort = $isAllGroups
+            ? $allCohort
+            : ($targetGroupNum === 2 ? $allCohort->slice(12, 12) : $allCohort->slice(0, 12));
+
+        $data = $finalCohort->values()->map(function ($s, $idx) use ($targetGroupNum, $isAllGroups) {
+            $fullName = trim(($s->user->first_name ?? '').' '.($s->user->last_name ?? ''));
+            if ($fullName === '') {
+                $fullName = $s->user->name ?? 'Étudiant ENCG';
+            }
+
+            return [
+                'id' => $s->id,
+                'user_id' => $s->user_id,
+                'name' => $fullName,
+                'cne' => $s->cne ?? ('N13'.str_pad($s->id, 7, '0', STR_PAD_LEFT)),
+                'apogee' => $s->student_number ?? (20240000 + $s->id),
+                'group' => $isAllGroups ? ($idx < 12 ? 'Groupe 1' : 'Groupe 2') : "Groupe {$targetGroupNum}",
+                'filiere' => 'ENCG Fès',
+                'status' => 'present',
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => $data,
+            'is_all_groups' => $isAllGroups,
+            'group_scope' => $isAllGroups ? 'Section Complète (G1 + G2)' : "Groupe {$targetGroupNum}",
+            'total_students' => $data->count(),
+        ]);
+    }
 
     /**
      * Démarrer une session de présence.

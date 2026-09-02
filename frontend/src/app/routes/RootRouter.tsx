@@ -234,6 +234,7 @@ const AlumniNetwork = lazy(() => import('@features/admin/pages/AlumniNetwork'))
 const PilotagePage = lazy(() => import('@features/admin/pages/PilotagePage'))
 const DocumentPreviewPage = lazy(() => import('@features/documents/pages/DocumentPreviewPage'))
 const AdminAiTimetableSchedulerPage = lazy(() => import('@features/timetable/pages/AdminAiTimetableSchedulerPage'))
+const ProfessorSchedulePage = lazy(() => import('@features/professor-portal/pages/ProfessorSchedulePage'))
 const AdminAnalyticsDashboard = lazy(() => import('@features/analytics/ui/AdminAnalyticsDashboard'))
 const AdminGuichetPage = lazy(() => import('@features/admin/pages/AdminGuichetPage'))
 const DepartmentSubstitutionsPage = lazy(() => import('@features/admin/pages/DepartmentSubstitutionsPage'))
@@ -401,7 +402,7 @@ export default function RootRouter() {
             <Route path="/admin/schedules/engine" element={<AdminAiTimetableSchedulerPage />} />
             <Route path="/admin/timetable/engine" element={<AdminAiTimetableSchedulerPage />} />
             <Route path="/admin/timetable/calendar" element={<AdminAiTimetableSchedulerPage />} />
-            <Route path="/professor/schedules" element={<AdminAiTimetableSchedulerPage />} />
+            <Route path="/professor/schedules" element={<ProfessorSchedulePage />} />
             <Route path="/admin/academic-calendar" element={<AdminAcademicCalendarPage />} />
             <Route path="/academic/exam-planning/:examId/live" element={<ExamLivePresence />} />
             <Route path="/academic/exam-planning/:examId/affichage" element={<ExamDisplayList />} />

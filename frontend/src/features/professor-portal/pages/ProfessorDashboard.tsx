@@ -26,41 +26,150 @@ import {
   TrendingUp,
   Stamp,
   CheckCircle2,
-  AlertTriangle
+  AlertTriangle,
+  GraduationCap,
+  FileText,
+  Shield,
+  Layers,
+  ChevronRight,
+  Activity,
+  BarChart3,
+  CalendarCheck,
+  RefreshCcw,
+  FileSpreadsheet
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '@stores/authStore';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '@shared/lib/api';
 import { ProfAiCopilotModal } from '../components/ProfAiCopilotModal';
 import { QRScannerModal } from '../components/QRScannerModal';
 import { toast } from 'sonner';
-import RoleQuickActions from '@shared/components/layout/RoleQuickActions';
-import PageHeader from '@shared/components/layout/PageHeader';
 import { cn } from '@shared/lib/utils';
 import { openMyOrdreDeServicePdf } from '@shared/lib/documentAccess';
+
+interface NextClassItem {
+  session_id?: number;
+  title: string;
+  code?: string;
+  time: string;
+  day_name?: string;
+  full_time?: string;
+  location?: string;
+  room?: string;
+  group?: string;
+}
+
+interface ModuleItem {
+  id: number;
+  name: string;
+  code: string;
+  filiere?: string;
+  group_name?: string;
+  progress: number;
+  hours_done: number;
+  hours_total: number;
+}
+
+interface PfeItem {
+  id: number;
+  student_name: string;
+  title: string;
+  company: string;
+  status: string;
+}
+
+interface SurveillanceItem {
+  id: number;
+  module_name: string;
+  date: string;
+  time: string;
+  room: string;
+  role: string;
+  session_name: string;
+  is_confirmed: boolean;
+  confirmed_at?: string;
+}
+
+interface ProfessorStatsResponse {
+  total_students: number;
+  total_modules: number;
+  total_groups: number;
+  pending_grades: number;
+  statutory_hours_done: number;
+  statutory_hours_total: number;
+  pfe_supervised_count: number;
+  next_classes: NextClassItem[];
+  modules_list: ModuleItem[];
+  pfe_list: PfeItem[];
+  surveillances: SurveillanceItem[];
+  has_contract: boolean;
+  professor_id: number;
+  department_name: string;
+  rank: string;
+}
 
 export default function ProfessorDashboard() {
   const { i18n } = useTranslation(['professors', 'common']);
   const { user } = useAuthStore();
-  const currentDate = new Date().toLocaleDateString(i18n.language === 'ar' ? 'ar-MA' : i18n.language === 'en' ? 'en-US' : 'fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).toUpperCase();
+  const queryClient = useQueryClient();
 
-  const [activeAiModule, setActiveAiModule] = React.useState<number | null>(null);
-  const [activeScannerSession, setActiveScannerSession] = React.useState<number | null>(null);
-  
+  const currentDate = new Date().toLocaleDateString(
+    i18n.language === 'ar' ? 'ar-MA' : i18n.language === 'en' ? 'en-US' : 'fr-FR',
+    { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }
+  ).toUpperCase();
+
+  const [activeAiModule, setActiveAiModule] = useState<number | null>(null);
+  const [activeScannerSession, setActiveScannerSession] = useState<number | null>(null);
+
   // Persist signature acknowledgement
-  const [hasAcknowledged, setHasAcknowledged] = React.useState<boolean>(() => {
+  const [hasAcknowledged, setHasAcknowledged] = useState<boolean>(() => {
     return localStorage.getItem('encg_prof_os_signed') === 'true';
   });
-  const [showSignModal, setShowSignModal] = React.useState<boolean>(false);
+  const [showSignModal, setShowSignModal] = useState<boolean>(false);
 
   // Canvas drawing state
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [hasDrawn, setHasDrawn] = useState(false);
 
-  // Initialize canvas context
+  // Fetch real statistics from database backend
+  const { data: statsData, isLoading, refetch, isFetching } = useQuery<ProfessorStatsResponse>({
+    queryKey: ['professor-stats'],
+    queryFn: async () => {
+      const res = await api.get('/dashboard/professor/stats');
+      return res.data.data;
+    },
+    staleTime: 60000,
+  });
+
+  const stats: ProfessorStatsResponse = {
+    total_students: statsData?.total_students ?? 24,
+    total_modules: statsData?.total_modules ?? 4,
+    total_groups: statsData?.total_groups ?? 2,
+    pending_grades: statsData?.pending_grades ?? 0,
+    statutory_hours_done: statsData?.statutory_hours_done ?? 168,
+    statutory_hours_total: statsData?.statutory_hours_total ?? 240,
+    pfe_supervised_count: statsData?.pfe_supervised_count ?? 3,
+    next_classes: Array.isArray(statsData?.next_classes) ? statsData.next_classes : [],
+    modules_list: Array.isArray(statsData?.modules_list) ? statsData.modules_list : [],
+    pfe_list: Array.isArray(statsData?.pfe_list) ? statsData.pfe_list : [],
+    surveillances: Array.isArray(statsData?.surveillances) ? statsData.surveillances : [],
+    has_contract: statsData?.has_contract ?? false,
+    professor_id: statsData?.professor_id ?? (user?.id ? Number(user.id) : 1),
+    department_name: statsData?.department_name || (user as any)?.department?.name || 'Sciences de Gestion & Finance',
+    rank: statsData?.rank || (user as any)?.rank || 'Professeur de l’Enseignement Supérieur (PES)',
+  };
+
+  const profName = user?.name || 'Professeur ENCG';
+  const profDepartment = stats.department_name;
+  const profRank = stats.rank;
+  const profInitials = user?.name
+    ? user.name.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase()
+    : 'PR';
+
+  // Canvas context handler
   const getCanvasContext = () => {
     const canvas = canvasRef.current;
     if (!canvas) return null;
@@ -83,12 +192,12 @@ export default function ProfessorDashboard() {
       const touch = e.touches[0] || e.changedTouches[0];
       return {
         x: touch.clientX - rect.left,
-        y: touch.clientY - rect.top
+        y: touch.clientY - rect.top,
       };
     } else {
       return {
         x: e.clientX - rect.left,
-        y: e.clientY - rect.top
+        y: e.clientY - rect.top,
       };
     }
   };
@@ -136,17 +245,13 @@ export default function ProfessorDashboard() {
     if (!ctx) return;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    // Draw stylish cursive signature
     ctx.font = 'italic 34px "Brush Script MT", "Segoe Script", "Dancing Script", cursive, sans-serif';
     ctx.fillStyle = '#001A4B';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    
-    const profName = user?.name || 'Professeur';
+
     ctx.fillText(profName, canvas.width / 2, canvas.height / 2);
 
-    // Decorative flourish
     ctx.beginPath();
     ctx.lineWidth = 2;
     ctx.strokeStyle = '#001A4B';
@@ -163,22 +268,22 @@ export default function ProfessorDashboard() {
   };
 
   const handleSyncCalendar = () => {
-    const classes = Array.isArray(stats.next_classes) ? stats.next_classes : [];
+    const classes = stats.next_classes;
     if (classes.length === 0) {
       toast.error('Aucun cours à exporter.');
       return;
     }
-    const events = classes.map((c: any) => {
-      const start = c.start || c.dtstart || '';
-      const end = c.end || c.dtend || '';
-      return `BEGIN:VEVENT\nSUMMARY:${c.title || c.module || 'Cours'}\nDESCRIPTION:${c.description || ''}\nLOCATION:${c.location || c.room || ''}\nDTSTART:${start}\nDTEND:${end}\nEND:VEVENT`;
-    }).join('\n');
+    const events = classes
+      .map((c) => {
+        return `BEGIN:VEVENT\nSUMMARY:${c.title || 'Séance de cours'}\nLOCATION:${c.location || c.room || 'ENCG Fès'}\nDESCRIPTION:${c.group || ''}\nEND:VEVENT`;
+      })
+      .join('\n');
     const icsData = `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//ENCG Fes ERP//Emploi du temps//FR\nCALSCALE:GREGORIAN\nMETHOD:PUBLISH\n${events}\nEND:VCALENDAR`;
 
     const blob = new Blob([icsData], { type: 'text/calendar;charset=utf-8' });
     const link = document.createElement('a');
     link.href = window.URL.createObjectURL(blob);
-    link.setAttribute('download', 'Affectations_ENCG_Fes_2026_2027.ics');
+    link.setAttribute('download', 'Emploi_du_temps_ENCG_Fes.ics');
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -193,71 +298,60 @@ export default function ProfessorDashboard() {
     localStorage.setItem('encg_prof_os_signed', 'true');
     setShowSignModal(false);
     toast.success('✍️ Émargement certifié et signé électroniquement avec succès !', {
-      description: 'Certificat horodaté SHA-256 transmis au Secrétariat Général & Chef de Département.'
+      description: 'Certificat horodaté SHA-256 transmis au Secrétariat Général & Chef de Département.',
     });
   };
 
-  const { data: statsData, isLoading } = useQuery({
-    queryKey: ['professor-stats'],
-    queryFn: async () => {
-      const res = await api.get('/dashboard/professor/stats');
-      return res.data.data;
-    }
-  });
-
-  const emptyStats = {
-    total_students: 240,
-    total_modules: 4,
-    pending_grades: 1,
-    statutory_hours_done: 168,
-    statutory_hours_total: 240,
-    pfe_supervised_count: 5,
-    next_classes: [
-      { time: '08:30 - 10:30', title: 'Comptabilité Approfondie & Normes IFRS', group: 'S4 - Groupe B', location: 'Salle 12', session_id: 101 },
-      { time: '10:45 - 12:45', title: 'Audit Financier & Contrôle Interne', group: 'S8 - Master ACG', location: 'Amphi Ibn Battouta', session_id: 102 },
-      { time: '14:30 - 16:30', title: 'Finance de Marché & Dérivés', group: 'S6 - GFC 1', location: 'Salle 05', session_id: 103 },
-    ],
-    modules_list: [
-      { id: 1, code: 'M401', name: 'Comptabilité Approfondie & Normes IFRS', filiere: 'S4 Gestion • Groupe B', hours_done: 36, hours_total: 48, progress: 75 },
-      { id: 2, code: 'M802', name: 'Audit Financier & Contrôle Interne', filiere: 'S8 Master ACG', hours_done: 42, hours_total: 48, progress: 88 },
-      { id: 3, code: 'M603', name: 'Finance de Marché & Gestion de Portefeuille', filiere: 'S6 GFC', hours_done: 28, hours_total: 48, progress: 58 },
-      { id: 4, code: 'M604', name: 'Diagnostic Financier & Analyse de la Valeur', filiere: 'S6 Commerce', hours_done: 48, hours_total: 48, progress: 100 },
-    ],
-    pfe_list: [
-      { id: 1, student_name: 'Amine Bennani', title: 'Impact des normes IFRS 16 sur la structure financière des entreprises cotées à Casablanca', company: 'PwC Maroc', status: 'ready_for_defense' },
-      { id: 2, student_name: 'Sara El Fassi', title: 'Mise en place d’un système de contrôle de gestion dans le secteur bancaire', company: 'Attijariwafa bank', status: 'in_progress' },
-      { id: 3, student_name: 'Youssef Mansouri', title: 'Audit des risques opérationnels dans les PME exportatrices', company: 'Deloitte Fès', status: 'submitted' },
-    ],
-    has_contract: false,
-    professor_id: null
-  };
-
-  const statsPayload = statsData && !Array.isArray(statsData) ? statsData : {};
-  const stats = {
-    ...emptyStats,
-    ...statsPayload,
-    next_classes: Array.isArray(statsPayload.next_classes) && statsPayload.next_classes.length > 0 ? statsPayload.next_classes : emptyStats.next_classes,
-    modules_list: Array.isArray(statsPayload.modules_list) && statsPayload.modules_list.length > 0 ? statsPayload.modules_list : emptyStats.modules_list,
-    pfe_list: Array.isArray(statsPayload.pfe_list) && statsPayload.pfe_list.length > 0 ? statsPayload.pfe_list : emptyStats.pfe_list,
-  };
-
-  const profName = user?.name || 'Professeur ENCG';
-  const profDepartment = (user as any)?.department?.name || 'Département Gestion, Finance & Comptabilité';
-  const profRank = (user as any)?.rank || 'Professeur de l’Enseignement Supérieur (PES)';
-  const profInitials = user?.name ? user.name.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase() : 'PR';
+  const statutoryPercent = Math.min(100, Math.round((stats.statutory_hours_done / (stats.statutory_hours_total || 240)) * 100));
 
   return (
-    <div className="space-y-8 font-sans animate-in fade-in duration-500 text-slate-900 dark:text-slate-100">
+    <div className="space-y-8 font-sans animate-in fade-in duration-500 text-slate-900 dark:text-slate-100 pb-12">
       
-      {/* ── Executive Professor Hero Banner ── */}
-      <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-[#001A4B] via-[#082663] to-[#0d1d3d] text-white p-6 sm:p-8 shadow-2xl border border-white/10">
+      {/* ── Executive Top Cockpit Header (Admin Style) ── */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800/80 pb-5">
+        <div>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-black tracking-tight text-[#001A4B] dark:text-white">
+              Cockpit Enseignant-Chercheur
+            </h1>
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              Système Opérationnel
+            </span>
+          </div>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
+            École Nationale de Commerce et de Gestion de Fès · Année Universitaire 2026-2027 · {currentDate}
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => refetch()}
+            disabled={isFetching}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 shadow-xs hover:bg-slate-50 transition-all cursor-pointer"
+          >
+            <RefreshCcw className={cn("w-3.5 h-3.5 text-blue-600", isFetching && "animate-spin")} />
+            Actualiser
+          </button>
+
+          <Link
+            to="/professor/schedules"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#001A4B] hover:bg-[#082663] text-white text-xs font-black uppercase tracking-wider shadow-md transition-all"
+          >
+            <Calendar className="w-3.5 h-3.5 text-amber-300" /> Mon Emploi du Temps
+          </Link>
+        </div>
+      </div>
+
+      {/* ── Executive Professor Hero Identity Card ── */}
+      <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-[#001A4B] via-[#092868] to-[#041233] text-white p-6 sm:p-8 shadow-2xl border border-white/10">
         <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
         <div className="absolute bottom-0 left-1/3 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
         <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
           <div className="flex items-center gap-5">
             {/* Avatar Initials Badge */}
-            <div className="relative">
+            <div className="relative shrink-0">
               <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-gradient-to-tr from-amber-400 via-amber-500 to-amber-300 p-0.5 shadow-xl flex items-center justify-center">
                 <div className="w-full h-full bg-[#001A4B] rounded-[22px] flex items-center justify-center font-black text-2xl sm:text-3xl text-amber-300 tracking-wider">
                   {profInitials}
@@ -268,19 +362,19 @@ export default function ProfessorDashboard() {
 
             <div className="space-y-1.5">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-white/10 backdrop-blur-md text-amber-300 border border-white/10">
+                <span className="px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-white/10 backdrop-blur-md text-amber-300 border border-white/10">
                   Corps Enseignant-Chercheur
                 </span>
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                   {stats.has_contract ? 'Enseignant Vacataire' : 'Professeur Permanent'}
                 </span>
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-blue-500/20 text-blue-300 border border-blue-500/30">
-                  2026/2027
+                  ENCG Fès
                 </span>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+              <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
                 {profName}
-              </h1>
+              </h2>
               <p className="text-xs sm:text-sm text-blue-200 font-medium flex items-center gap-2">
                 <Building2 className="w-4 h-4 text-blue-300" />
                 {profDepartment} • <span className="text-amber-300 font-bold">{profRank}</span>
@@ -313,82 +407,150 @@ export default function ProfessorDashboard() {
         </div>
       </div>
 
-      <PageHeader
-        title={`Tableau de Bord Enseignant`}
-        subtitle={`${currentDate} · Espace Pédagogique & Évaluations`}
-      />
+      {/* ── Quick Role Actions Navigation (Admin Executive Tiles) ── */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+        <Link
+          to="/professor/absences"
+          className="flex items-center gap-3 p-3.5 rounded-2xl bg-gradient-to-r from-blue-900/10 via-blue-900/5 to-transparent hover:from-blue-900/20 border border-blue-900/15 dark:border-blue-700/30 shadow-2xs hover:shadow-md transition-all group"
+        >
+          <div className="w-10 h-10 rounded-xl bg-[#001A4B] text-white flex items-center justify-center shrink-0 shadow-sm group-hover:scale-105 transition-transform">
+            <UserX className="w-5 h-5 text-amber-300" />
+          </div>
+          <div>
+            <div className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider">Émarger / Appel</div>
+            <div className="text-[10px] font-bold text-slate-400">Scanner Présence QR</div>
+          </div>
+        </Link>
 
-      {/* ── Quick Role Actions Navigation ── */}
-      <RoleQuickActions
-        actions={[
-          { to: '/professor/absences', label: 'Émarger', icon: UserX, testId: 'cta-prof-attendance' },
-          { to: '/admin/grades', label: 'CC / Exam', icon: Zap },
-          { to: '/professor/schedules', label: 'EDT', icon: Calendar },
-          { to: '/professor/proctoring', label: 'Surveillance', icon: Eye },
-        ]}
-      />
+        <Link
+          to="/admin/grades"
+          className="flex items-center gap-3 p-3.5 rounded-2xl bg-gradient-to-r from-emerald-900/10 via-emerald-900/5 to-transparent hover:from-emerald-900/20 border border-emerald-900/15 dark:border-emerald-700/30 shadow-2xs hover:shadow-md transition-all group"
+        >
+          <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-sm group-hover:scale-105 transition-transform">
+            <Zap className="w-5 h-5 text-emerald-100" />
+          </div>
+          <div>
+            <div className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider">Saisie Notes CC</div>
+            <div className="text-[10px] font-bold text-slate-400">Contrôles & Examens</div>
+          </div>
+        </Link>
+
+        <Link
+          to="/professor/schedules"
+          className="flex items-center gap-3 p-3.5 rounded-2xl bg-gradient-to-r from-amber-900/10 via-amber-900/5 to-transparent hover:from-amber-900/20 border border-amber-900/15 dark:border-amber-700/30 shadow-2xs hover:shadow-md transition-all group"
+        >
+          <div className="w-10 h-10 rounded-xl bg-amber-500 text-[#001A4B] flex items-center justify-center shrink-0 shadow-sm group-hover:scale-105 transition-transform">
+            <Calendar className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider">Emploi du Temps</div>
+            <div className="text-[10px] font-bold text-slate-400">Planning & Séances</div>
+          </div>
+        </Link>
+
+        <Link
+          to="/professor/proctoring"
+          className="flex items-center gap-3 p-3.5 rounded-2xl bg-gradient-to-r from-purple-900/10 via-purple-900/5 to-transparent hover:from-purple-900/20 border border-purple-900/15 dark:border-purple-700/30 shadow-2xs hover:shadow-md transition-all group"
+        >
+          <div className="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center shrink-0 shadow-sm group-hover:scale-105 transition-transform">
+            <Eye className="w-5 h-5 text-purple-100" />
+          </div>
+          <div>
+            <div className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider">Surveillance</div>
+            <div className="text-[10px] font-bold text-slate-400">Convocations Officielles</div>
+          </div>
+        </Link>
+      </div>
 
       {isLoading ? (
-        <div className="flex justify-center items-center py-20 text-slate-400 font-bold animate-pulse">
-          Chargement des indicateurs pédagogiques...
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-pulse">
+          {[1, 2, 3, 4].map((n) => (
+            <div key={n} className="h-36 bg-slate-100 dark:bg-slate-800/60 rounded-3xl border border-slate-200 dark:border-slate-800" />
+          ))}
         </div>
       ) : (
         <>
-          {/* ── KPIs Grid ── */}
+          {/* ── Dynamic KPIs Grid (Admin Executive Quality) ── */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            
             {/* Modules */}
             <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 relative overflow-hidden group hover:shadow-md transition-all">
               <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                <BookOpen className="w-16 h-16" />
+                <BookOpen className="w-20 h-20 text-[#001A4B] dark:text-white" />
               </div>
-              <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 block mb-2">Modules Attribués</span>
-              <div className="text-3xl font-black text-[#001A4B] dark:text-white">{stats.total_modules}</div>
-              <div className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mt-2 flex items-center gap-1">
-                <CheckCircle2 className="w-3 h-3" /> AFFECTATIONS VALIDÉES
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-black uppercase tracking-wider text-slate-400">Modules Attribués</span>
+                <span className="p-2 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">
+                  <BookOpen className="w-4 h-4" />
+                </span>
+              </div>
+              <div className="text-3xl font-black text-[#001A4B] dark:text-white mt-3">{stats.total_modules}</div>
+              <div className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mt-2.5 flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5" /> {stats.total_groups > 0 ? `${stats.total_groups} Groupes Validés` : 'Affectations Actives'}
               </div>
             </div>
 
             {/* Total Students */}
             <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 relative overflow-hidden group hover:shadow-md transition-all">
               <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                <Users className="w-16 h-16" />
+                <Users className="w-20 h-20 text-indigo-600" />
               </div>
-              <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 block mb-2">Total Étudiants</span>
-              <div className="text-3xl font-black text-[#001A4B] dark:text-white">{stats.total_students}</div>
-              <div className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mt-2 flex items-center gap-1">
-                <Users className="w-3 h-3" /> GROUPES CONFIRMÉS
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-black uppercase tracking-wider text-slate-400">Total Étudiants</span>
+                <span className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">
+                  <Users className="w-4 h-4" />
+                </span>
+              </div>
+              <div className="text-3xl font-black text-[#001A4B] dark:text-white mt-3">{stats.total_students}</div>
+              <div className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mt-2.5 flex items-center gap-1.5">
+                <TrendingUp className="w-3.5 h-3.5" /> Promotion Active ENCG
               </div>
             </div>
 
             {/* Notes en attente */}
             <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 relative overflow-hidden group hover:shadow-md transition-all">
               <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                <AlertTriangle className="w-16 h-16 text-rose-500" />
+                <AlertTriangle className="w-20 h-20 text-rose-500" />
               </div>
-              <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 block mb-2">Notes Apogée en Attente</span>
-              <div className="text-3xl font-black text-rose-600">{stats.pending_grades}</div>
-              <Link to="/admin/grades" className="text-[10px] font-black text-rose-600 hover:underline mt-2 inline-flex items-center gap-1 uppercase tracking-widest">
-                Saisie des Notes →
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-black uppercase tracking-wider text-slate-400">Notes Apogée en Attente</span>
+                <span className="p-2 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600">
+                  <AlertTriangle className="w-4 h-4" />
+                </span>
+              </div>
+              <div className={cn("text-3xl font-black mt-3", stats.pending_grades > 0 ? "text-rose-600" : "text-emerald-600")}>
+                {stats.pending_grades}
+              </div>
+              <Link to="/admin/grades" className="text-[10px] font-black text-rose-600 dark:text-rose-400 hover:underline mt-2.5 inline-flex items-center gap-1 uppercase tracking-widest">
+                Saisie des Notes Apogée →
               </Link>
             </div>
 
             {/* Charge Statutaire */}
             <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 relative overflow-hidden group hover:shadow-md transition-all">
               <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                <Clock className="w-16 h-16 text-amber-500" />
+                <Clock className="w-20 h-20 text-amber-500" />
               </div>
-              <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 block mb-2">Charge Statutaire</span>
-              <div className="text-3xl font-black text-amber-600 dark:text-amber-400">
-                {stats.statutory_hours_done || 168}h / {stats.statutory_hours_total || 240}h
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-black uppercase tracking-wider text-slate-400">Charge Statutaire RH</span>
+                <span className="p-2 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600">
+                  <Clock className="w-4 h-4" />
+                </span>
               </div>
-              <Link to="/professor/workload" className="text-[10px] font-black text-amber-700 dark:text-amber-400 hover:underline mt-2 inline-flex items-center gap-1 uppercase tracking-widest">
-                Détail Vacations RH →
-              </Link>
+              <div className="text-3xl font-black text-amber-600 dark:text-amber-400 mt-3">
+                {stats.statutory_hours_done}h / {stats.statutory_hours_total}h
+              </div>
+              <div className="mt-2.5 flex items-center justify-between text-[10px] font-black text-slate-400 uppercase tracking-wider">
+                <span>Avancement {statutoryPercent}%</span>
+                <Link to="/professor/workload" className="text-amber-700 dark:text-amber-400 hover:underline">
+                  Détail Vacations →
+                </Link>
+              </div>
             </div>
           </div>
 
           {/* ── Official Teaching Assignment & Digital Signature Banner ── */}
-          <div className="bg-gradient-to-r from-[#001A4B] via-[#082a6d] to-[#001A4B] rounded-3xl p-6 sm:p-8 text-white shadow-xl border border-blue-900/40 relative overflow-hidden">
+          <div className="bg-gradient-to-r from-[#001A4B] via-[#082a6d] to-[#001A4B] rounded-3xl p-6 sm:p-7 text-white shadow-xl border border-blue-900/40 relative overflow-hidden">
             <div className="absolute -top-12 -right-12 w-64 h-64 bg-blue-400/10 rounded-full blur-3xl pointer-events-none"></div>
 
             <div className="relative z-10 flex flex-col xl:flex-row xl:items-center justify-between gap-6">
@@ -398,9 +560,9 @@ export default function ProfessorDashboard() {
                 </div>
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="text-base font-black uppercase tracking-wider">
+                    <h3 className="text-base font-black uppercase tracking-wider">
                       Ordre de Service & Affectations Pédagogiques (2026/2027)
-                    </h2>
+                    </h3>
                     {hasAcknowledged ? (
                       <span className="px-2.5 py-0.5 bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1">
                         <CheckCircle className="w-3 h-3" /> Signé & Certifié SHA-256
@@ -452,20 +614,64 @@ export default function ProfessorDashboard() {
             </div>
           </div>
 
-          {/* ── 2 Main Grid Columns ── */}
+          {/* ── Live Exam Surveillance Notification Banner ── */}
+          {stats.surveillances && stats.surveillances.length > 0 && (
+            <div className="bg-gradient-to-r from-slate-900 via-[#0f2863] to-slate-900 rounded-3xl p-6 text-white shadow-xl border border-blue-500/20 relative overflow-hidden">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex items-start gap-3.5">
+                  <div className="w-12 h-12 bg-amber-400/20 text-amber-300 rounded-2xl flex items-center justify-center font-black shrink-0 border border-amber-400/30">
+                    <Shield className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="px-2.5 py-0.5 bg-amber-400 text-[#001A4B] rounded-full text-[10px] font-black uppercase tracking-wider">
+                        Planning de Surveillance d'Examens
+                      </span>
+                      <span className="text-xs text-blue-200 font-bold">
+                        {stats.surveillances.length} séance(s) assignée(s)
+                      </span>
+                    </div>
+                    <h3 className="text-base font-black text-white mt-1">
+                      {stats.surveillances[0]?.session_name || "Session d'Examens Universitaires"}
+                    </h3>
+                    <p className="text-xs text-blue-100/80 mt-0.5">
+                      Prochaine épreuve : <strong className="text-white">{stats.surveillances[0]?.module_name}</strong> le <strong>{stats.surveillances[0]?.date}</strong> ({stats.surveillances[0]?.time}) en <strong>{stats.surveillances[0]?.room}</strong> — Rôle : <span className="text-amber-300 font-bold">{stats.surveillances[0]?.role}</span>
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 shrink-0">
+                  {stats.surveillances.some(s => s.is_confirmed) ? (
+                    <span className="px-4 py-2 bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-1.5">
+                      <CheckCircle className="w-4 h-4" /> Présence Confirmée
+                    </span>
+                  ) : (
+                    <Link
+                      to="/professor/proctoring"
+                      className="px-4 py-2 bg-amber-400 hover:bg-amber-300 text-[#001A4B] rounded-xl text-xs font-black uppercase tracking-wider shadow-md transition-all flex items-center gap-1.5"
+                    >
+                      <Eye className="w-4 h-4" /> Voir mes Convocations
+                    </Link>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── 2 Main Grid Columns (Observatory Layout) ── */}
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
             
             {/* Left 2 Columns */}
             <div className="xl:col-span-2 space-y-8">
               
-              {/* Today's Classes */}
+              {/* Scheduled Classes */}
               <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-7 shadow-sm border border-slate-200 dark:border-slate-800 space-y-5">
                 <div className="flex items-center justify-between">
                   <div>
                     <h2 className="text-base font-black text-[#001A4B] dark:text-white flex items-center gap-2">
-                      <Calendar className="w-5 h-5 text-blue-600" /> Séances Programmées Aujourd'hui
+                      <Calendar className="w-5 h-5 text-blue-600" /> Séances Programmées & Emploi du Temps
                     </h2>
-                    <p className="text-xs text-slate-400 mt-0.5">Faites l'appel ou lancez le scanner de présence en classe</p>
+                    <p className="text-xs text-slate-400 mt-0.5">Faites l'appel ou lancez le scanner de présence en direct</p>
                   </div>
                   <Link to="/professor/schedules" className="px-3.5 py-1.5 bg-blue-50 dark:bg-blue-950/50 hover:bg-blue-100 text-blue-700 dark:text-blue-300 rounded-xl text-xs font-black uppercase tracking-wider transition-colors">
                     Emploi du Temps Complet →
@@ -473,24 +679,39 @@ export default function ProfessorDashboard() {
                 </div>
 
                 {stats.next_classes.length === 0 ? (
-                  <div className="text-sm text-slate-400 italic py-6 text-center">Aucun cours programmé aujourd'hui.</div>
+                  <div className="py-10 px-4 text-center rounded-2xl bg-slate-50 dark:bg-slate-800/30 border border-dashed border-slate-200 dark:border-slate-800">
+                    <Calendar className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
+                    <p className="text-xs font-bold text-slate-500 dark:text-slate-400">Aucune séance planifiée dans l'immédiat.</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">Votre planning d'enseignement est synchronisé avec les emplois du temps officiels.</p>
+                  </div>
                 ) : (
                   <div className="space-y-3">
-                    {stats.next_classes.map((cls: any, i: number) => (
+                    {stats.next_classes.map((cls, i) => (
                       <div key={i} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 hover:border-blue-300 transition-all">
                         <div className="flex items-start gap-3.5">
-                          <div className="flex flex-col items-center justify-center w-14 h-14 bg-white dark:bg-slate-900 rounded-xl shadow-2xs text-center border border-slate-200 dark:border-slate-700 shrink-0">
-                            <span className="text-xs font-black text-blue-900 dark:text-blue-300">{cls.time.split(' - ')[0]}</span>
-                            <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">DÉBUT</span>
+                          <div className="flex flex-col items-center justify-center w-16 h-14 bg-white dark:bg-slate-900 rounded-xl shadow-2xs text-center border border-slate-200 dark:border-slate-700 shrink-0">
+                            <span className="text-[11px] font-black text-blue-900 dark:text-blue-300 leading-tight">
+                              {cls.day_name ? cls.day_name.slice(0, 3).toUpperCase() : 'HORAIRE'}
+                            </span>
+                            <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mt-0.5">
+                              {cls.time ? cls.time.split(' - ')[0] : '08:30'}
+                            </span>
                           </div>
                           <div>
                             <h3 className="font-bold text-sm text-slate-900 dark:text-white">{cls.title}</h3>
                             <div className="flex flex-wrap items-center gap-2.5 mt-1 text-xs text-slate-500">
-                              <span className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-0.5 rounded-lg font-black text-[11px] border border-emerald-200 dark:border-emerald-800">
-                                <Users className="w-3 h-3" /> {cls.group}
-                              </span>
-                              <span className="inline-flex items-center gap-1 text-slate-700 dark:text-slate-300 bg-slate-200/60 dark:bg-slate-700/60 px-2.5 py-0.5 rounded-lg font-bold text-[11px]">
-                                <MapPin className="w-3 h-3 text-rose-500" /> {cls.location}
+                              {cls.group && (
+                                <span className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-0.5 rounded-lg font-black text-[11px] border border-emerald-200 dark:border-emerald-800">
+                                  <Users className="w-3 h-3" /> {cls.group}
+                                </span>
+                              )}
+                              {(cls.location || cls.room) && (
+                                <span className="inline-flex items-center gap-1 text-slate-700 dark:text-slate-300 bg-slate-200/60 dark:bg-slate-700/60 px-2.5 py-0.5 rounded-lg font-bold text-[11px]">
+                                  <MapPin className="w-3 h-3 text-rose-500" /> {cls.location || cls.room}
+                                </span>
+                              )}
+                              <span className="text-[11px] text-slate-400 font-medium">
+                                ⏱️ {cls.time}
                               </span>
                             </div>
                           </div>
@@ -522,34 +743,40 @@ export default function ProfessorDashboard() {
                   <span className="text-xs font-bold text-slate-400">Semestre Courant</span>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {stats.modules_list.map((mod: any) => (
-                    <div key={mod.id} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 space-y-3 hover:border-indigo-300 transition-all">
-                      <div className="flex justify-between items-start">
-                        <div className="space-y-0.5">
-                          <span className="font-mono text-[10px] font-black text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950 px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-800">
-                            {mod.code}
+                {stats.modules_list.length === 0 ? (
+                  <div className="py-8 text-center text-slate-400 text-xs">
+                    Aucun module affecté pour le semestre en cours.
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {stats.modules_list.map((mod) => (
+                      <div key={mod.id} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 space-y-3 hover:border-indigo-300 transition-all">
+                        <div className="flex justify-between items-start">
+                          <div className="space-y-0.5">
+                            <span className="font-mono text-[10px] font-black text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950 px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-800">
+                              {mod.code}
+                            </span>
+                            <h3 className="font-black text-xs text-slate-800 dark:text-slate-100 pt-1">{mod.name}</h3>
+                            <p className="text-[11px] text-slate-500 font-medium">{mod.group_name || mod.filiere || 'Tronc Commun'}</p>
+                          </div>
+                          <span className="text-xs font-black text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950 px-2 py-0.5 rounded-lg">
+                            {mod.progress}%
                           </span>
-                          <h3 className="font-black text-xs text-slate-800 dark:text-slate-100 pt-1">{mod.name}</h3>
-                          <p className="text-[11px] text-slate-500 font-medium">{mod.filiere}</p>
                         </div>
-                        <span className="text-xs font-black text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950 px-2 py-0.5 rounded-lg">
-                          {mod.progress}%
-                        </span>
-                      </div>
 
-                      <div className="space-y-1">
-                        <div className="flex justify-between text-[10px] font-bold text-slate-400">
-                          <span>Volume horaire</span>
-                          <span>{mod.hours_done}h / {mod.hours_total}h</span>
-                        </div>
-                        <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5 overflow-hidden">
-                          <div className="bg-indigo-600 h-1.5 rounded-full transition-all duration-500" style={{ width: `${mod.progress}%` }}></div>
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-[10px] font-bold text-slate-400">
+                            <span>Volume horaire</span>
+                            <span>{mod.hours_done}h / {mod.hours_total}h</span>
+                          </div>
+                          <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5 overflow-hidden">
+                            <div className="bg-indigo-600 h-1.5 rounded-full transition-all duration-500" style={{ width: `${mod.progress}%` }}></div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
             </div>
@@ -569,27 +796,37 @@ export default function ProfessorDashboard() {
                   </Link>
                 </div>
 
-                <div className="space-y-3">
-                  {stats.pfe_list.map((pfe: any) => (
-                    <div key={pfe.id} className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-xs text-slate-900 dark:text-white">{pfe.student_name}</span>
-                        <span className={cn(
-                          "text-[9px] font-black uppercase px-2 py-0.5 rounded-full border",
-                          pfe.status === 'ready_for_defense' ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-amber-50 text-amber-700 border-amber-200"
-                        )}>
-                          {pfe.status === 'ready_for_defense' ? 'Prêt Soutenance' : 'En Rédaction'}
+                {stats.pfe_list.length === 0 ? (
+                  <div className="py-8 text-center px-4 rounded-2xl bg-slate-50 dark:bg-slate-800/30 border border-dashed border-slate-200 dark:border-slate-800">
+                    <GraduationCap className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-1.5" />
+                    <p className="text-xs font-bold text-slate-500 dark:text-slate-400">Aucun encadrement PFE actif</p>
+                    <p className="text-[10px] text-slate-400 mt-0.5">Les soutenances et stages attribués s'afficheront ici.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {stats.pfe_list.map((pfe) => (
+                      <div key={pfe.id} className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-xs text-slate-900 dark:text-white">{pfe.student_name}</span>
+                          <span className={cn(
+                            "text-[9px] font-black uppercase px-2 py-0.5 rounded-full border",
+                            pfe.status === 'ready_for_defense' || pfe.status === 'soutenu'
+                              ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800" 
+                              : "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800"
+                          )}>
+                            {pfe.status === 'ready_for_defense' ? 'Prêt Soutenance' : pfe.status === 'soutenu' ? 'Soutenu' : 'En Rédaction'}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-600 dark:text-slate-300 line-clamp-2 leading-tight font-medium">
+                          {pfe.title}
+                        </p>
+                        <span className="text-[10px] font-mono text-slate-400 block pt-0.5">
+                          🏢 {pfe.company}
                         </span>
                       </div>
-                      <p className="text-[11px] text-slate-600 dark:text-slate-300 line-clamp-2 leading-tight font-medium">
-                        {pfe.title}
-                      </p>
-                      <span className="text-[10px] font-mono text-slate-400 block pt-0.5">
-                        🏢 {pfe.company}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
 
                 <Link
                   to="/professor/pfe-evaluation"

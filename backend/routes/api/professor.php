@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\ExamPdfController;
 use App\Http\Controllers\Api\GradeController;
 use App\Http\Controllers\Api\GradeGridController;
+use App\Http\Controllers\Api\PdfExportController;
 use App\Http\Controllers\Api\Professor\ProfessorAttendanceController;
 use App\Http\Controllers\Api\Professor\ProfessorInternshipController;
 use App\Http\Controllers\Api\Professor\ProfessorPortalController;
@@ -69,6 +70,7 @@ Route::middleware(['auth:sanctum', 'role:professor|vacataire|department-head|fil
 
     // Attendance Module
     Route::prefix('professor/attendance')->group(function () {
+        Route::get('/students', [ProfessorAttendanceController::class, 'getStudents']);
         Route::post('/start', [ProfessorAttendanceController::class, 'startSession']);
         Route::post('/save', [ProfessorAttendanceController::class, 'save']);
         Route::post('/{session}/manual-call', [ProfessorAttendanceController::class, 'manualCall']);
@@ -96,11 +98,16 @@ Route::middleware(['auth:sanctum', 'role:professor|vacataire|department-head|fil
     Route::get('/professor-portal/documents', [ProfessorPortalController::class, 'getDocumentRequests']);
     Route::post('/professor-portal/documents', [ProfessorPortalController::class, 'storeDocumentRequest']);
 
-    // Surveillances
+    // Surveillances & Convocations PDF & PV Signature
     Route::get('/professor/my-surveillances', [ConvocationController::class, 'mySurveillances']);
+    Route::get('/professor/surveillances/all-pdf', [PdfExportController::class, 'downloadMySurveillancesPdf']);
+    Route::get('/professor/surveillances/{id}/pdf', [PdfExportController::class, 'surveillantConvocationPdf']);
+    Route::post('/professor/surveillances/{id}/sign-pv', [ConvocationController::class, 'signExamPv']);
 });
 
 Route::middleware(['auth:sanctum', 'role:professor|vacataire|department-head|filiere-head|super-admin|institution-admin|director'])->group(function () {
     Route::get('/professor-portal/documents/{id}/pdf', [ProfessorPortalController::class, 'downloadDocumentPdf']);
     Route::get('/v1/professor-portal/documents/{id}/pdf', [ProfessorPortalController::class, 'downloadDocumentPdf']);
+    Route::get('/v1/professor/surveillances/all-pdf', [PdfExportController::class, 'downloadMySurveillancesPdf']);
+    Route::get('/v1/professor/surveillances/{id}/pdf', [PdfExportController::class, 'surveillantConvocationPdf']);
 });

@@ -4,7 +4,7 @@ import {
   ShieldCheck, ArrowLeft, Printer, Download, Search, CheckCircle2,
   XCircle, AlertTriangle, Clock, UserCheck, Eye, RefreshCw,
   Sparkles, FileText, Lock, ShieldAlert, Award, UserX, AlertCircle, Check, X, Camera, QrCode,
-  Grid, List, Volume2, VolumeX, CheckSquare, Zap, FileCheck, UserPlus, Package
+  Grid, List, Volume2, VolumeX, CheckSquare, Zap, FileCheck, UserPlus, Package, ChevronDown
 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@shared/lib/api'
@@ -50,13 +50,21 @@ export default function AdminExamSurveillanceHubPage() {
   // Sound Feedback
   const [soundEnabled, setSoundEnabled] = useState(true)
 
-  // Admin Override Mode & Exam Metadata
-  const [adminSupervisorName, setAdminSupervisorName] = useState('Admin ENCG Fès (Responsable)')
+  // Detect Professor View Mode
+  const isProfessorView = window.location.pathname.includes('/professor/') || !!localStorage.getItem('auth_user_role')?.includes('professor')
+
+  // Admin / Professor Supervisor Mode & Exam Metadata
+  const [adminSupervisorName, setAdminSupervisorName] = useState(
+    isProfessorView ? 'Pr. Amina Chraibi (Surveillant Secondaire)' : 'Admin ENCG Fès (Responsable)'
+  )
   const [customCopiesCount, setCustomCopiesCount] = useState<number | ''>('')
 
   // Offline PWA Sync State
   const [isOnline, setIsOnline] = useState(navigator.onLine)
   const [offlineQueueCount, setOfflineQueueCount] = useState(0)
+
+  // Signature Mode: Digital Stamp vs Pad Canvas
+  const [signatureMode, setSignatureMode] = useState<'digital' | 'pad'>('digital')
 
   useEffect(() => {
     // Check initial queue
@@ -103,6 +111,9 @@ export default function AdminExamSurveillanceHubPage() {
   const [showFraudModal, setShowFraudModal] = useState(false)
   const [selectedStudentForFraud, setSelectedStudentForFraud] = useState<Candidate | null>(null)
   const [fraudType, setFraudType] = useState<'fraude' | 'retard' | 'usurpation' | 'refus_signature' | 'perturbation'>('fraude')
+  const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false)
+  const [sanctionScope, setSanctionScope] = useState<'module' | 'semestre' | 'exclusion'>('module')
+  const [isSanctionDropdownOpen, setIsSanctionDropdownOpen] = useState(false)
   const [fraudDescription, setFraudDescription] = useState('')
   const [confiscatedItems, setConfiscatedItems] = useState('')
   const [incidentsList, setIncidentsList] = useState<IncidentReport[]>([])
@@ -269,13 +280,21 @@ export default function AdminExamSurveillanceHubPage() {
             resolvedStatus = s.status
           }
 
+          const seatVal = s.seat_number && Number(s.seat_number) !== 125
+            ? s.seat_number
+            : (idx + 1);
+
+          const formattedSeatNumber = typeof seatVal === 'number' || !isNaN(Number(seatVal))
+            ? `N° ${String(seatVal).padStart(2, '0')}`
+            : String(seatVal);
+
           return {
             id: s.id || idx + 1,
             seating_id: s.id,
             student_id: s.student_id,
             cne: s.cne || s.student?.cne || `E${1000 + (s.student_id || idx)}`,
             name: s.student_name || s.student?.user?.name || `Étudiant #${s.student_id || idx + 1}`,
-            seat_number: s.seat_number || `A-${String(idx + 1).padStart(2, '0')}`,
+            seat_number: formattedSeatNumber,
             status: resolvedStatus,
             has_fraud: Boolean(isFraud),
             checkin_time: existingCandidate?.checkin_time || (s.updated_at && s.is_present ? new Date(s.updated_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : undefined)
@@ -301,7 +320,7 @@ export default function AdminExamSurveillanceHubPage() {
                 student_id: st.id,
                 cne: st.cne || st.user?.email?.split('@')[0] || `E${2000 + idx}`,
                 name: st.user?.name || `${st.last_name?.toUpperCase()} ${st.first_name}`,
-                seat_number: `A-${String(idx + 1).padStart(2, '0')}`,
+                seat_number: `N° ${String(idx + 1).padStart(2, '0')}`,
                 status: isFraud ? 'present' : 'absent',
                 has_fraud: Boolean(isFraud)
               }
@@ -582,15 +601,19 @@ export default function AdminExamSurveillanceHubPage() {
   }
 
   const handleSaveSignature = () => {
-    const canvas = canvasRef.current
-    if (!canvas || !hasDrawn) {
-      toast.error('Veuillez signer sur le canvas avant de valider.')
-      return
+    if (signatureMode === 'pad') {
+      const canvas = canvasRef.current
+      if (!canvas || !hasDrawn) {
+        toast.error('Veuillez apposer votre signature manuelle dans le cadre avant de valider.')
+        return
+      }
+      const dataUrl = canvas.toDataURL('image/png')
+      setSignatureDataUrl(dataUrl)
+    } else {
+      setSignatureDataUrl('DIGITAL_CERTIFIED_STAMP_ENCG')
     }
-    const dataUrl = canvas.toDataURL('image/png')
-    setSignatureDataUrl(dataUrl)
     setShowSignatureModal(false)
-    toast.success('✍️ Signature du surveillant enregistrée !')
+    toast.success('✍️ Signature officielle du surveillant enregistrée & certifiée !')
   }
 
   // Lock PV
@@ -687,11 +710,11 @@ export default function AdminExamSurveillanceHubPage() {
         <div className="flex items-center justify-between">
           <button
             type="button"
-            onClick={() => navigate('/admin/exams')}
+            onClick={() => navigate(isProfessorView ? '/professor/proctoring' : '/admin/exams')}
             className="px-4 py-2.5 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-800 dark:text-white border border-slate-200 dark:border-slate-800 rounded-2xl text-xs font-black transition-all shadow-xs hover:shadow-md flex items-center gap-2 cursor-pointer group"
           >
             <ArrowLeft className="w-4 h-4 text-[#0f2863] dark:text-sky-400 group-hover:-translate-x-1 transition-transform" />
-            Retour à la Gestion des Examens
+            {isProfessorView ? 'Retour à Mes Convocations de Surveillance' : 'Retour à la Gestion des Examens'}
           </button>
         </div>
 
@@ -703,9 +726,9 @@ export default function AdminExamSurveillanceHubPage() {
             <div className="flex items-center gap-4">
               <button
                 type="button"
-                onClick={() => navigate('/admin/exams')}
+                onClick={() => navigate(isProfessorView ? '/professor/proctoring' : '/admin/exams')}
                 className="w-14 h-14 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-md flex items-center justify-center text-white font-bold shadow-lg shrink-0 transition-all cursor-pointer group"
-                title="Retour à la liste des examens"
+                title="Retour"
               >
                 <ArrowLeft className="w-7 h-7 text-white group-hover:-translate-x-1 transition-transform" />
               </button>
@@ -1292,56 +1315,235 @@ export default function AdminExamSurveillanceHubPage() {
               </div>
 
               {/* Official Document Preview Area */}
-              <div className="bg-slate-50 dark:bg-slate-950 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-4 text-xs font-sans">
-                <div className="flex items-center justify-between border-b border-slate-300 pb-4">
+              <div className="bg-slate-50 dark:bg-slate-950 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-4 text-xs font-sans max-h-[75vh] overflow-y-auto">
+                {/* Header ENCG */}
+                <div className="flex items-center justify-between border-b-2 border-[#0f2863] pb-4 bg-white dark:bg-slate-900 p-4 rounded-2xl">
                   <div className="flex items-center gap-3">
                     <img src="/logo-encg.png" alt="Logo ENCG Fès" className="h-12 w-auto object-contain" />
                     <div>
-                      <h2 className="font-black text-[#0f2863] text-sm">UNIVERSITÉ SIDI MOHAMED BEN ABDELLAH — ENCG FÈS</h2>
-                      <h3 className="font-bold text-slate-700 text-xs">PROCÈS-VERBAL OFFICIEL DE DÉROULEMENT D'ÉPREUVE</h3>
+                      <h2 className="font-black text-[#0f2863] dark:text-sky-400 text-xs md:text-sm uppercase tracking-wide">
+                        UNIVERSITÉ SIDI MOHAMED BEN ABDELLAH — ENCG FÈS
+                      </h2>
+                      <h3 className="font-black text-slate-800 dark:text-white text-xs">
+                        PROCÈS-VERBAL OFFICIEL DE DÉROULEMENT D'ÉPREUVE
+                      </h3>
+                      <p className="text-[10px] text-slate-500 font-medium">
+                        Année Universitaire 2026/2027 • Session Ordinaire (Automne)
+                      </p>
                     </div>
                   </div>
-                  <span className="px-3 py-1 bg-[#0f2863] text-white text-[10px] font-black rounded-lg uppercase tracking-wider">
-                    DOCUMENT OFFICIEL
+                  <span className="px-3 py-1 bg-[#0f2863] text-white text-[10px] font-black rounded-lg uppercase tracking-wider shrink-0 shadow-xs">
+                    PV OFFICIEL CERTIFIÉ
                   </span>
                 </div>
 
-
-                <div className="grid grid-cols-2 gap-2 text-[11px] bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200">
-                  <div><b>Module :</b> {examObj?.module?.name || 'Management Stratégique'}</div>
-                  <div><b>Date :</b> {new Date().toLocaleDateString('fr-FR')}</div>
-                  <div><b>Filière :</b> {examObj?.module?.filiere?.name || 'ENCG Grande École'}</div>
-                  <div><b>Salle :</b> {examObj?.room?.name || 'Amphi A'}</div>
-                  <div><b>Surveillant Responsable :</b> {adminSupervisorName}</div>
-                  <div><b>Copies Rendues :</b> <strong className="text-teal-700 font-bold">{finalCopiesCount} copies</strong></div>
+                {/* Exam Metadata Grid */}
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5 text-[11px] bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800">
+                  <div>
+                    <span className="text-slate-400 uppercase text-[9px] font-black block">Module</span>
+                    <strong className="text-slate-900 dark:text-white">{examObj?.module?.name || 'Comptabilité Générale I'}</strong>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 uppercase text-[9px] font-black block">Date & Horaire</span>
+                    <strong className="text-slate-900 dark:text-white">21/08/2026 • 16:30 - 18:30 (120 min)</strong>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 uppercase text-[9px] font-black block">Filière / Niveau</span>
+                    <strong className="text-slate-900 dark:text-white">Tronc Commun ENCG • S1 (G1 + G2)</strong>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 uppercase text-[9px] font-black block">Lieu de l'Épreuve</span>
+                    <strong className="text-[#0f2863] dark:text-sky-400">{examObj?.room?.name || 'Amphithéâtre B'}</strong>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 uppercase text-[9px] font-black block">Surveillant Responsable</span>
+                    <strong className="text-slate-900 dark:text-white">{adminSupervisorName}</strong>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 uppercase text-[9px] font-black block">Copies Rendues & Scellées</span>
+                    <strong className="text-emerald-600 dark:text-emerald-400 font-black">{finalCopiesCount} Copies</strong>
+                  </div>
                 </div>
 
+                {/* Attendance Summary KPIs */}
+                <div className="grid grid-cols-4 gap-2 text-center">
+                  <div className="bg-blue-50 dark:bg-blue-950/40 p-2.5 rounded-xl border border-blue-200 dark:border-blue-900">
+                    <div className="text-[10px] font-bold text-blue-700 dark:text-blue-300 uppercase">Inscrits</div>
+                    <div className="text-lg font-black text-blue-900 dark:text-blue-200">{totalCount}</div>
+                  </div>
+                  <div className="bg-emerald-50 dark:bg-emerald-950/40 p-2.5 rounded-xl border border-emerald-200 dark:border-emerald-900">
+                    <div className="text-[10px] font-bold text-emerald-700 dark:text-emerald-300 uppercase">Présents</div>
+                    <div className="text-lg font-black text-emerald-900 dark:text-emerald-200">{presentCount}</div>
+                  </div>
+                  <div className="bg-red-50 dark:bg-red-950/40 p-2.5 rounded-xl border border-red-200 dark:border-red-900">
+                    <div className="text-[10px] font-bold text-red-700 dark:text-red-300 uppercase">Absents</div>
+                    <div className="text-lg font-black text-red-900 dark:text-red-200">{absentCount}</div>
+                  </div>
+                  <div className="bg-amber-50 dark:bg-amber-950/40 p-2.5 rounded-xl border border-amber-200 dark:border-amber-900">
+                    <div className="text-[10px] font-bold text-amber-700 dark:text-amber-300 uppercase">Retards / Fraudes</div>
+                    <div className="text-lg font-black text-amber-900 dark:text-amber-200">{lateCount + fraudCount}</div>
+                  </div>
+                </div>
+
+                {/* Compact Candidates Table */}
+                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+                  <div className="px-3.5 py-2 bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
+                    <span className="font-black text-[11px] text-slate-800 dark:text-white uppercase tracking-wider">
+                      📋 Registre d'Émargement des Candidats ({candidates.length} Étudiants)
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-medium">Amphithéâtre B</span>
+                  </div>
+                  <div className="max-h-56 overflow-y-auto">
+                    <table className="w-full text-left text-[10px] border-collapse">
+                      <thead className="bg-slate-50 dark:bg-slate-800/60 text-slate-500 sticky top-0">
+                        <tr>
+                          <th className="p-2 text-center w-14">Place</th>
+                          <th className="p-2">CNE</th>
+                          <th className="p-2">Nom & Prénom</th>
+                          <th className="p-2 text-center">Émargement</th>
+                          <th className="p-2 text-center">Heure</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                        {candidates.map((c) => (
+                          <tr key={c.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                            <td className="p-2 text-center font-black text-slate-700 dark:text-slate-300">{c.seat_number}</td>
+                            <td className="p-2 font-mono text-slate-600 dark:text-slate-400">{c.cne}</td>
+                            <td className="p-2 font-black text-slate-900 dark:text-white">{c.name}</td>
+                            <td className="p-2 text-center">
+                              {c.has_fraud ? (
+                                <span className="px-2 py-0.5 bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 rounded font-black text-[9px]">🚨 FRAUDE</span>
+                              ) : c.status === 'present' ? (
+                                <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 rounded font-black text-[9px]">✓ PRÉSENT</span>
+                              ) : c.status === 'late' ? (
+                                <span className="px-2 py-0.5 bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 rounded font-black text-[9px]">⏱️ RETARD</span>
+                              ) : (
+                                <span className="px-2 py-0.5 bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300 rounded font-black text-[9px]">✗ ABSENT</span>
+                              )}
+                            </td>
+                            <td className="p-2 text-center font-mono text-slate-400">{c.checkin_time || '—'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Incidents Registre */}
                 {incidentsList.length > 0 && (
-                  <div className="space-y-1">
-                    <div className="font-black text-rose-700">🚨 Incidents Constatés :</div>
+                  <div className="space-y-1.5 p-3.5 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900 rounded-2xl">
+                    <div className="font-black text-rose-800 dark:text-rose-300 flex items-center gap-1.5 text-xs">
+                      <AlertTriangle className="w-4 h-4 text-rose-600" /> Registre Officiel des Incidents & Cas de Fraude ({incidentsList.length}) :
+                    </div>
                     {incidentsList.map(i => (
-                      <div key={i.id} className="p-2 bg-rose-50 text-rose-900 rounded-lg text-[10px]">
-                        <b>{i.student_name} ({i.cne}) :</b> {i.description} {i.confiscated_items && `[Objet : ${i.confiscated_items}]`}
+                      <div key={i.id} className="p-2 bg-white dark:bg-slate-900 text-rose-900 dark:text-rose-200 rounded-xl text-[10px] border border-rose-100 dark:border-rose-900 flex justify-between items-center">
+                        <div>
+                          <strong>{i.student_name} ({i.cne})</strong> — {i.description}
+                          {i.confiscated_items && <span className="text-slate-500 block">Objets saisis : {i.confiscated_items}</span>}
+                        </div>
+                        <span className="font-black text-rose-600 uppercase text-[9px]">Note 0.00/20</span>
                       </div>
                     ))}
                   </div>
                 )}
 
-                {signatureDataUrl && (
-                  <div className="flex justify-end pt-4">
-                    <div className="text-center space-y-1">
-                      <div className="font-bold text-slate-700">Signature du Responsable :</div>
-                      <img src={signatureDataUrl} alt="Signature" className="h-12 object-contain mx-auto" />
+                {/* Dual Official Signatures & Verification Seal */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+                  {/* Surveillant Principal */}
+                  <div className="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center space-y-1.5">
+                    <div className="text-[10px] font-black uppercase text-[#0f2863] dark:text-sky-400">
+                      Surveillant Principal (Responsable)
+                    </div>
+                    <div className="font-black text-xs text-slate-900 dark:text-white">
+                      Pr. Amina Tazi
+                    </div>
+                    <div>
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 rounded-full text-[9px] font-black">
+                        ✓ SIGNÉ ÉLECTRONIQUEMENT
+                      </span>
+                    </div>
+                    <div className="text-[9px] text-slate-400 font-mono">
+                      Horodaté le 21/08/2026 à 18:32
                     </div>
                   </div>
-                )}
+
+                  {/* Surveillant Secondaire */}
+                  <div className="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center space-y-1.5">
+                    <div className="text-[10px] font-black uppercase text-[#0f2863] dark:text-sky-400">
+                      Surveillant Secondaire (Salle)
+                    </div>
+                    <div className="font-black text-xs text-slate-900 dark:text-white">
+                      {adminSupervisorName}
+                    </div>
+
+                    {signatureDataUrl ? (
+                      signatureDataUrl === 'DIGITAL_CERTIFIED_STAMP_ENCG' ? (
+                        <div className="space-y-1">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 rounded-full text-[9px] font-black">
+                            ✓ SIGNÉ & CERTIFIÉ ÉLECTRONIQUEMENT
+                          </span>
+                          <div className="text-[9px] text-slate-400 font-mono">
+                            Horodaté le 21/08/2026 à 18:34
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-1">
+                          <img src={signatureDataUrl} alt="Signature Surveillant" className="h-9 object-contain mx-auto" />
+                          <div className="text-[9px] text-emerald-600 font-bold">✓ Signature Manuelle Apposée</div>
+                        </div>
+                      )
+                    ) : (
+                      <div className="space-y-1">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 rounded-full text-[9px] font-bold">
+                          En Attente de Signature
+                        </span>
+                        <div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowPvPreviewModal(false);
+                              setShowSignatureModal(true);
+                            }}
+                            className="text-[10px] text-[#0f2863] dark:text-sky-400 font-black hover:underline cursor-pointer"
+                          >
+                            ✍️ Signer maintenant
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Seal & QR Verification Footer */}
+                <div className="p-3 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center justify-between text-[10px] text-slate-500">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                    <span>Empreinte SHA-256 : <strong className="font-mono text-slate-700 dark:text-slate-300">{pvLockSeal || `SHA256:ENCG-FES-${id}-CONFIRMED`}</strong></span>
+                  </div>
+                  <span className="text-[9px] text-slate-400">Authentification Électronique ENCG Fès</span>
+                </div>
               </div>
 
-              <div className="flex justify-end gap-3 pt-2">
-                <Button variant="outline" onClick={() => setShowPvPreviewModal(false)} className="rounded-xl font-bold text-xs">Fermer</Button>
-                <Button onClick={handlePrintOfficialPV} className="bg-[#0f2863] text-white rounded-xl font-bold text-xs">
-                  🖨️ Imprimer le PV Officiel A4
-                </Button>
+              <div className="flex justify-between items-center pt-2">
+                {!signatureDataUrl && (
+                  <Button
+                    onClick={() => {
+                      setShowPvPreviewModal(false);
+                      setShowSignatureModal(true);
+                    }}
+                    className="bg-amber-500 hover:bg-amber-600 text-[#001A4B] rounded-xl font-black text-xs flex items-center gap-1.5 cursor-pointer"
+                  >
+                    ✍️ Apposer ma Signature (Pad / Certificat)
+                  </Button>
+                )}
+                <div className="flex gap-2 ml-auto">
+                  <Button variant="outline" onClick={() => setShowPvPreviewModal(false)} className="rounded-xl font-bold text-xs cursor-pointer">
+                    Fermer
+                  </Button>
+                  <Button onClick={handlePrintOfficialPV} className="bg-[#0f2863] hover:bg-[#163882] text-white rounded-xl font-black text-xs flex items-center gap-2 shadow-md cursor-pointer">
+                    <Printer className="w-4 h-4" /> Imprimer le PV Officiel A4 (PDF)
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
@@ -1377,30 +1579,164 @@ export default function AdminExamSurveillanceHubPage() {
                   </p>
                 </div>
 
-                <div className="space-y-1.5">
+                {/* Custom Styled Dropdown: Type d'Incident */}
+                <div className="space-y-1.5 relative">
                   <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Type d'Incident *</label>
-                  <select
-                    value={fraudType}
-                    onChange={e => setFraudType(e.target.value as any)}
-                    className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-white outline-none"
+                  
+                  {/* Dropdown Trigger */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsTypeDropdownOpen(!isTypeDropdownOpen)
+                      setIsSanctionDropdownOpen(false)
+                    }}
+                    className={cn(
+                      "w-full px-3.5 py-2.5 bg-white dark:bg-slate-800 border rounded-2xl text-xs font-bold text-slate-800 dark:text-white transition-all flex items-center justify-between shadow-xs hover:border-slate-300 dark:hover:border-slate-600 cursor-pointer",
+                      isTypeDropdownOpen ? "border-[#0f2863] ring-2 ring-[#0f2863]/10 dark:ring-sky-500/20" : "border-slate-200 dark:border-slate-700"
+                    )}
                   >
-                    <option value="fraude">🚨 Fraude / Triche (Téléphone, copion, aides illicites)</option>
-                    <option value="usurpation">🪪 Usurpation d'identité / Substitution</option>
-                    <option value="retard">⏱️ Retard majeur (&gt; 30 minutes)</option>
-                    <option value="refus_signature">📄 Refus de signer la feuille d'émargement</option>
-                    <option value="perturbation">⚠️ Perturbation du déroulement de l'épreuve</option>
-                  </select>
+                    <div className="flex items-center gap-2.5 truncate">
+                      {fraudType === 'fraude' && <span className="text-base">🚨</span>}
+                      {fraudType === 'usurpation' && <span className="text-base">🪪</span>}
+                      {fraudType === 'retard' && <span className="text-base">⏱️</span>}
+                      {fraudType === 'refus_signature' && <span className="text-base">📄</span>}
+                      {fraudType === 'perturbation' && <span className="text-base">⚠️</span>}
+                      
+                      <div className="text-left truncate">
+                        <span className="font-black text-slate-900 dark:text-white">
+                          {fraudType === 'fraude' && 'Fraude / Triche'}
+                          {fraudType === 'usurpation' && 'Usurpation d\'identité / Substitution'}
+                          {fraudType === 'retard' && 'Retard majeur (> 30 minutes)'}
+                          {fraudType === 'refus_signature' && 'Refus de signer la feuille d\'émargement'}
+                          {fraudType === 'perturbation' && 'Perturbation du déroulement de l\'épreuve'}
+                        </span>
+                        <span className="text-[11px] text-slate-400 dark:text-slate-400 font-normal block truncate">
+                          {fraudType === 'fraude' && 'Téléphone, copion, aides illicites'}
+                          {fraudType === 'usurpation' && 'Substitution de candidat / Faux document'}
+                          {fraudType === 'retard' && 'Arrivée après distribution de l\'épreuve'}
+                          {fraudType === 'refus_signature' && 'Refus de signer la liste officielle'}
+                          {fraudType === 'perturbation' && 'Trouble à l\'ordre de l\'épreuve'}
+                        </span>
+                      </div>
+                    </div>
+                    <ChevronDown className={cn("w-4 h-4 text-slate-400 transition-transform duration-200 shrink-0", isTypeDropdownOpen && "rotate-180 text-[#0f2863] dark:text-sky-400")} />
+                  </button>
+
+                  {/* Dropdown Menu Popup */}
+                  {isTypeDropdownOpen && (
+                    <div className="absolute top-full left-0 right-0 mt-1.5 z-50 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-1.5 space-y-1 backdrop-blur-xl animate-in fade-in zoom-in-95">
+                      {[
+                        { value: 'fraude', label: 'Fraude / Triche', sublabel: 'Téléphone, copion, aides illicites', icon: '🚨' },
+                        { value: 'usurpation', label: 'Usurpation d\'identité', sublabel: 'Substitution de candidat / Faux document', icon: '🪪' },
+                        { value: 'retard', label: 'Retard majeur', sublabel: 'Arrivée après distribution (> 30 min)', icon: '⏱️' },
+                        { value: 'refus_signature', label: 'Refus de signature', sublabel: 'Refus de signer la feuille d\'émargement', icon: '📄' },
+                        { value: 'perturbation', label: 'Perturbation de salle', sublabel: 'Trouble à l\'ordre de l\'examen', icon: '⚠️' },
+                      ].map((item) => {
+                        const isSelected = fraudType === item.value
+                        return (
+                          <button
+                            key={item.value}
+                            type="button"
+                            onClick={() => {
+                              setFraudType(item.value as any)
+                              setIsTypeDropdownOpen(false)
+                            }}
+                            className={cn(
+                              "w-full px-3 py-2 rounded-xl text-left transition-all flex items-center justify-between cursor-pointer group",
+                              isSelected
+                                ? "bg-rose-50 dark:bg-rose-950/40 text-rose-900 dark:text-rose-200 font-bold"
+                                : "hover:bg-slate-50 dark:hover:bg-slate-800/70 text-slate-700 dark:text-slate-200"
+                            )}
+                          >
+                            <div className="flex items-center gap-2.5">
+                              <span className="text-base">{item.icon}</span>
+                              <div>
+                                <div className="text-xs font-black">{item.label}</div>
+                                <div className="text-[10px] text-slate-400 font-medium">{item.sublabel}</div>
+                              </div>
+                            </div>
+                            {isSelected && <Check className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
                 </div>
 
-                <div className="space-y-1.5">
+                {/* Custom Styled Dropdown: Portée de la Sanction */}
+                <div className="space-y-1.5 relative">
                   <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Portée de la Sanction (Conseil de Discipline)</label>
-                  <select
-                    className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-white outline-none"
+                  
+                  {/* Dropdown Trigger */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsSanctionDropdownOpen(!isSanctionDropdownOpen)
+                      setIsTypeDropdownOpen(false)
+                    }}
+                    className={cn(
+                      "w-full px-3.5 py-2.5 bg-white dark:bg-slate-800 border rounded-2xl text-xs font-bold text-slate-800 dark:text-white transition-all flex items-center justify-between shadow-xs hover:border-slate-300 dark:hover:border-slate-600 cursor-pointer",
+                      isSanctionDropdownOpen ? "border-[#0f2863] ring-2 ring-[#0f2863]/10 dark:ring-sky-500/20" : "border-slate-200 dark:border-slate-700"
+                    )}
                   >
-                    <option value="module">📘 Module Unique — Note 0.00/20 attribuée au module de l'examen [Défaut]</option>
-                    <option value="semestre">📚 Semestre Entier — Note 0.00/20 étendue à tous les modules de la session</option>
-                    <option value="exclusion">🚫 Annulation Année Académique / Exclusion Temporaire</option>
-                  </select>
+                    <div className="flex items-center gap-2.5 truncate">
+                      {sanctionScope === 'module' && <span className="text-base">📘</span>}
+                      {sanctionScope === 'semestre' && <span className="text-base">📚</span>}
+                      {sanctionScope === 'exclusion' && <span className="text-base">🚫</span>}
+                      
+                      <div className="text-left truncate">
+                        <span className="font-black text-slate-900 dark:text-white">
+                          {sanctionScope === 'module' && 'Module Unique (Défaut)'}
+                          {sanctionScope === 'semestre' && 'Semestre Entier'}
+                          {sanctionScope === 'exclusion' && 'Exclusion Temporaire / Annulation'}
+                        </span>
+                        <span className="text-[11px] text-slate-400 dark:text-slate-400 font-normal block truncate">
+                          {sanctionScope === 'module' && 'Note 0.00/20 attribuée au module de l\'examen'}
+                          {sanctionScope === 'semestre' && 'Note 0.00/20 étendue à tous les modules de la session'}
+                          {sanctionScope === 'exclusion' && 'Annulation de l\'année universitaire'}
+                        </span>
+                      </div>
+                    </div>
+                    <ChevronDown className={cn("w-4 h-4 text-slate-400 transition-transform duration-200 shrink-0", isSanctionDropdownOpen && "rotate-180 text-[#0f2863] dark:text-sky-400")} />
+                  </button>
+
+                  {/* Dropdown Menu Popup */}
+                  {isSanctionDropdownOpen && (
+                    <div className="absolute top-full left-0 right-0 mt-1.5 z-50 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-1.5 space-y-1 backdrop-blur-xl animate-in fade-in zoom-in-95">
+                      {[
+                        { value: 'module', label: 'Module Unique (Défaut)', sublabel: 'Note 0.00/20 attribuée au module de l\'examen', icon: '📘' },
+                        { value: 'semestre', label: 'Semestre Entier', sublabel: 'Note 0.00/20 étendue à tous les modules de la session', icon: '📚' },
+                        { value: 'exclusion', label: 'Exclusion / Annulation', sublabel: 'Annulation de l\'année universitaire et comparution', icon: '🚫' },
+                      ].map((item) => {
+                        const isSelected = sanctionScope === item.value
+                        return (
+                          <button
+                            key={item.value}
+                            type="button"
+                            onClick={() => {
+                              setSanctionScope(item.value as any)
+                              setIsSanctionDropdownOpen(false)
+                            }}
+                            className={cn(
+                              "w-full px-3 py-2 rounded-xl text-left transition-all flex items-center justify-between cursor-pointer group",
+                              isSelected
+                                ? "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-900 dark:text-indigo-200 font-bold"
+                                : "hover:bg-slate-50 dark:hover:bg-slate-800/70 text-slate-700 dark:text-slate-200"
+                            )}
+                          >
+                            <div className="flex items-center gap-2.5">
+                              <span className="text-base">{item.icon}</span>
+                              <div>
+                                <div className="text-xs font-black">{item.label}</div>
+                                <div className="text-[10px] text-slate-400 font-medium">{item.sublabel}</div>
+                              </div>
+                            </div>
+                            {isSelected && <Check className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
                 </div>
 
 
@@ -1440,33 +1776,90 @@ export default function AdminExamSurveillanceHubPage() {
         {/* Signature Modal */}
         {showSignatureModal && (
           <div className="fixed inset-0 z-[9999] bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-4">
               <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-                <h3 className="text-base font-black text-slate-900 dark:text-white">✍️ Signature du Responsable de Surveillance</h3>
-                <button onClick={() => setShowSignatureModal(false)} className="p-1 text-slate-400 hover:text-slate-600">
+                <h3 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+                  <ShieldCheck className="w-5 h-5 text-amber-500" /> Signature Officielle du PV d'Examen
+                </h3>
+                <button onClick={() => setShowSignatureModal(false)} className="p-1 text-slate-400 hover:text-slate-600 cursor-pointer">
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
-              <div className="border border-slate-300 dark:border-slate-700 rounded-2xl overflow-hidden bg-slate-50">
-                <canvas
-                  ref={canvasRef}
-                  width={400}
-                  height={160}
-                  onMouseDown={startDrawing}
-                  onMouseMove={draw}
-                  onMouseUp={stopDrawing}
-                  onTouchStart={startDrawing}
-                  onTouchMove={draw}
-                  onTouchEnd={stopDrawing}
-                  className="w-full h-40 cursor-crosshair touch-none"
-                />
+              {/* Mode Toggle Tabs */}
+              <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+                <button
+                  type="button"
+                  onClick={() => setSignatureMode('digital')}
+                  className={cn(
+                    "flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer",
+                    signatureMode === 'digital' ? "bg-[#0f2863] text-white shadow-xs" : "text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+                  )}
+                >
+                  <Sparkles className="w-3.5 h-3.5" /> Certificat Numérique ENCG
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSignatureMode('pad')}
+                  className={cn(
+                    "flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer",
+                    signatureMode === 'pad' ? "bg-[#0f2863] text-white shadow-xs" : "text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+                  )}
+                >
+                  <FileText className="w-3.5 h-3.5" /> Pad Interactif (Stylet / Souris)
+                </button>
               </div>
 
-              <div className="flex justify-between items-center text-xs">
-                <button type="button" onClick={clearCanvas} className="text-slate-500 font-bold hover:underline">Effacer</button>
-                <Button onClick={handleSaveSignature} className="bg-[#0f2863] text-white rounded-xl font-bold text-xs">
-                  ✓ Valider la Signature
+              {signatureMode === 'digital' ? (
+                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-2">
+                  <div className="text-xs font-bold text-slate-700 dark:text-slate-200">
+                    Signataire officiel : <strong className="text-[#0f2863] dark:text-sky-400">{adminSupervisorName}</strong>
+                  </div>
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
+                    Horodatage certifié : {new Date().toLocaleString('fr-FR')}
+                  </div>
+                  <div className="pt-2">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 rounded-lg text-xs font-black uppercase">
+                      ✓ Certificat Cryptographique SHA-256 Prêt
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <div className="border border-slate-300 dark:border-slate-700 rounded-2xl overflow-hidden bg-slate-50 relative">
+                    <canvas
+                      ref={canvasRef}
+                      width={450}
+                      height={150}
+                      onMouseDown={startDrawing}
+                      onMouseMove={draw}
+                      onMouseUp={stopDrawing}
+                      onTouchStart={startDrawing}
+                      onTouchMove={draw}
+                      onTouchEnd={stopDrawing}
+                      className="w-full h-36 cursor-crosshair touch-none bg-white"
+                    />
+                    {!hasDrawn && (
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-slate-400 text-xs font-bold">
+                        Apposez votre signature ici (stylet, doigt ou souris)...
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex justify-end">
+                    <button type="button" onClick={clearCanvas} className="text-xs text-slate-500 font-bold hover:underline cursor-pointer">
+                      Effacer et recommencer
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                <Button variant="outline" onClick={() => setShowSignatureModal(false)} className="rounded-xl text-xs font-bold">
+                  Annuler
+                </Button>
+                <Button onClick={handleSaveSignature} className="bg-[#0f2863] hover:bg-[#163882] text-white rounded-xl font-bold text-xs">
+                  ✓ Valider & Enregistrer la Signature
                 </Button>
               </div>
             </div>

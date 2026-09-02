@@ -80,8 +80,8 @@ const navigation: (NavItem | NavGroup)[] = [
     items: [
       { label: 'Planification des Examens', labelAr: 'برمجة الامتحانات', href: '/admin/exams', icon: CalendarCheck, roles: ['super-admin', 'institution-admin', 'director', 'scolarite'] },
       { label: 'Gestion des Convocations', labelAr: 'إدارة الاستدعاءات', href: '/admin/convocations', icon: MailCheck, roles: ['super-admin', 'institution-admin', 'director', 'scolarite'] },
-      { label: 'Scanner QR des Présences', labelAr: 'ماسح الحضور بالباركود', href: '/admin/exams/scan', icon: ScanLine, badge: 'QR', roles: ['super-admin', 'institution-admin', 'director', 'professor'] },
-      { label: 'Saisie des Notes & Rattrapages', labelAr: 'إدخال النقاط والتدارك', href: '/admin/grades', icon: FileEdit, roles: ['super-admin', 'institution-admin', 'director', 'professor', 'vacataire', 'department-head', 'filiere-head', 'scolarite'] },
+      { label: 'Scanner QR des Présences', labelAr: 'ماسح الحضور بالباركود', href: '/admin/exams/scan', icon: ScanLine, badge: 'QR', roles: ['super-admin', 'institution-admin', 'director', 'scolarite'] },
+      { label: 'Saisie des Notes & Rattrapages', labelAr: 'إدخال النقاط والتدارك', href: '/admin/grades', icon: FileEdit, roles: ['super-admin', 'institution-admin', 'director', 'department-head', 'filiere-head', 'scolarite'] },
       { label: 'Délibérations & PVs Apogée', labelAr: 'المداولات ومحاضر أبوجي', href: '/admin/grades/pv', icon: Calculator, badge: 'LMD', roles: ['super-admin', 'institution-admin', 'director', 'department-head', 'filiere-head', 'scolarite'] },
       { label: 'Archives PVs & Émargements', labelAr: 'أرشيف المحاضر والتوقيعات', href: '/admin/exams/pv-archive', icon: Archive, badge: 'PV', roles: ['super-admin', 'institution-admin', 'director', 'scolarite'] },
       { label: 'Verrouillage des Épreuves', labelAr: 'قفل الاختبارات والنتائج', href: '/admin/exam-locking', icon: Lock, roles: ['super-admin', 'institution-admin', 'director'] },
@@ -96,7 +96,7 @@ const navigation: (NavItem | NavGroup)[] = [
       { label: 'Corps Enseignant & Vacataires', labelAr: 'هيئة التدريس والأساتذة', href: '/professors', icon: UserCheck, roles: ['super-admin', 'institution-admin', 'hr-officer'] },
       { label: 'Parapheur Électronique', labelAr: 'المحفظة الإلكترونية وأوامر المهمة', href: '/admin/parapheur', icon: Stamp, badge: 'RH', roles: ['super-admin', 'institution-admin', 'director', 'department-head', 'hr-officer'] },
       { label: 'Affectations Pédagogiques', labelAr: 'التوزيع البيداغوجي للمواد', href: '/admin/professor-assignments', icon: Sparkles, roles: ['super-admin', 'institution-admin', 'department-head', 'director'] },
-      { label: 'Emplois du Temps & Planification IA', labelAr: 'استعمالات الزمن والتخطيط الذكي', href: '/admin/ai-timetable-scheduler', icon: Calendar, badge: 'IA', roles: ['super-admin', 'institution-admin', 'director', 'professor', 'vacataire', 'department-head', 'filiere-head', 'scolarite'] },
+      { label: 'Emplois du Temps & Planification IA', labelAr: 'استعمالات الزمن والتخطيط الذكي', href: '/admin/ai-timetable-scheduler', icon: Calendar, badge: 'IA', roles: ['super-admin', 'institution-admin', 'director', 'department-head', 'filiere-head', 'scolarite'] },
       { label: 'Disponibilités & Conflits', labelAr: 'أوقات التوفر وطلبات التعديل', href: '/admin/professor-availability', icon: Clock3, roles: ['super-admin', 'institution-admin', 'director', 'hr-officer'] },
       { label: 'Cahiers de Textes', labelAr: 'دفاتر النصوص الجامعية', href: '/admin/textbooks', icon: Book, roles: ['super-admin', 'institution-admin', 'director', 'department-head'] },
     ]
@@ -107,7 +107,7 @@ const navigation: (NavItem | NavGroup)[] = [
     groupTitle: 'CAMPUS, STAGES & PFE',
     groupTitleAr: 'الحرم الجامعي ومشاريع التخرج',
     items: [
-      { label: 'Hub Stages, PFE & Soutenances', labelAr: 'مسار التداريب ومناقشات التخرج', href: '/admin/pfe-workflow', icon: Kanban, badge: 'PFE', roles: ['super-admin', 'institution-admin', 'director', 'professor'] },
+      { label: 'Hub Stages, PFE & Soutenances', labelAr: 'مسار التداريب ومناقشات التخرج', href: '/admin/pfe-workflow', icon: Kanban, badge: 'PFE', roles: ['super-admin', 'institution-admin', 'director'] },
       { label: 'Campus, Salles & Réservations', labelAr: 'القاعات والمدرجات والحجوزات', href: '/infrastructure/classrooms', icon: DoorOpen, roles: ['super-admin', 'institution-admin', 'director', 'scolarite'] },
       { label: 'Clubs & Vie Étudiante', labelAr: 'الأندية والأنشطة الطلابية', href: '/admin/clubs', icon: HeartHandshake, roles: ['super-admin', 'institution-admin', 'director'] },
       { label: 'Mobilité Internationale', labelAr: 'برامج التبادل والحركية', href: '/admin/mobility', icon: PlaneTakeoff, roles: ['super-admin', 'institution-admin', 'director'] },

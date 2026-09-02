@@ -173,6 +173,16 @@ class Student extends Model
         return $this->hasMany(StudentDocument::class, 'student_id');
     }
 
+    public function filiere(): BelongsTo
+    {
+        return $this->belongsTo(Filiere::class);
+    }
+
+    public function group(): BelongsTo
+    {
+        return $this->belongsTo(Group::class);
+    }
+
     public function uniqueIds(): array
     {
         return ['uuid'];

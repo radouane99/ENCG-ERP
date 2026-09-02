@@ -542,8 +542,16 @@ class ExamConvocationService
 
         $seatings = ExamSeating::with(['student.user', 'room'])
             ->where('exam_id', $examId)
-            ->orderBy('seat_number')
-            ->get();
+            ->get()
+            ->map(function ($s) {
+                $seatNumber = self::seatNumberFor($s);
+                $s->seat_number = $seatNumber;
+                $s->cne = $s->student?->cne ?? ('N13'.str_pad($s->student_id ?? 1, 7, '0', STR_PAD_LEFT));
+                $s->student_name = $s->student?->user?->name ?? 'Étudiant ENCG';
+                return $s;
+            })
+            ->sortBy('seat_number')
+            ->values();
 
         $surveillances = ExamSurveillance::with(['professor.user', 'room'])
             ->where('exam_id', $examId)

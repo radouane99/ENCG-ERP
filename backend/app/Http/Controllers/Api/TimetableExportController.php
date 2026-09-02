@@ -62,6 +62,64 @@ class TimetableExportController extends Controller
     public function exportPdf(Request $request, string $type, int $id)
     {
         $schedules = $this->fetchSchedules($type, $id, $request);
+
+        if ($type === 'professor') {
+            $professor = Professor::with(['user', 'department'])->find($id);
+            if (! $professor) {
+                $professor = Professor::where('user_id', $id)->with(['user', 'department'])->first();
+            }
+            if (! $professor && $request->user()) {
+                $professor = Professor::where('user_id', $request->user()->id)->with(['user', 'department'])->first();
+            }
+
+            $profName = $professor?->user ? trim(($professor->user->first_name ?? '').' '.($professor->user->last_name ?? '')) : ($request->user()?->name ?? 'Amina Chraibi');
+            if ($profName === '') {
+                $profName = $professor?->user?->name ?? 'Amina Chraibi';
+            }
+            $departmentName = $professor?->department?->name ?? 'Sciences de Gestion & Finance';
+            $rank = (string) ($professor?->grade ?? $professor?->rank ?? 'Professeur de l’Enseignement Supérieur (PES)');
+            $profId = $professor?->id ?? $id;
+
+            // Logo Base64
+            $logoBase64 = null;
+            $logoPath = public_path('logo-encg.png');
+            if (file_exists($logoPath)) {
+                $logoBase64 = 'data:image/png;base64,'.base64_encode(file_get_contents($logoPath));
+            }
+
+            // QR Code Base64 & Verification URL
+            $verifyToken = hash('sha256', "EDT-PROF-{$profId}-".now()->toDateString());
+            $verifyUrl = url("/verify/document/edt/prof/{$profId}?token={$verifyToken}");
+            $qrBase64 = null;
+            if (class_exists(\SimpleSoftwareIO\QrCode\Facades\QrCode::class)) {
+                try {
+                    $qrSvg = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')->size(100)->margin(0)->generate($verifyUrl);
+                    $qrBase64 = 'data:image/svg+xml;base64,'.base64_encode($qrSvg);
+                } catch (\Throwable $e) {
+                    \Log::warning('QR generation error for EDT Prof: '.$e->getMessage());
+                }
+            }
+
+            $filename = 'Emploi_du_temps_Prof_'.str_replace(' ', '_', $profName).'.pdf';
+
+            $pdf = app(OfficialPdfFactory::class)
+                ->make('pdf.emploi_du_temps_professeur', [
+                    'schedules' => $schedules,
+                    'profName' => $profName,
+                    'profId' => $profId,
+                    'departmentName' => $departmentName,
+                    'rank' => $rank,
+                    'academicYear' => '2026/2027',
+                    'logoBase64' => $logoBase64,
+                    'qrBase64' => $qrBase64,
+                    'verifyUrl' => $verifyUrl,
+                    'verifyToken' => $verifyToken,
+                ])
+                ->setPaper('a4', 'landscape');
+
+            return $pdf->download($filename);
+        }
+
         $catalog = $this->officialMatrix->catalog($schedules, $this->matrixMeta($type, $id, $schedules));
         $stamp = $catalog['sections'][0]['semester_label'] ?? 'EDT';
         $scope = $type === 'all' ? 'TOUTES_FILIERES' : ($catalog['sections'][0]['filiere_code'] ?? $type);
@@ -174,7 +232,10 @@ class TimetableExportController extends Controller
         match ($type) {
             'group' => $query->where('group_id', $id),
             'filiere' => $query->whereHas('group', fn ($q) => $q->where('filiere_id', $id)),
-            'professor' => $query->where('professor_id', $id),
+            'professor' => $query->where(function ($q) use ($id) {
+                $q->where('professor_id', $id)
+                  ->orWhereHas('professor', fn ($p) => $p->where('user_id', $id)->orWhere('id', $id));
+            }),
             'room' => $query->where('room_id', $id),
             'all' => null,
             default => null,

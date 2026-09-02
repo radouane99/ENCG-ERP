@@ -517,32 +517,40 @@
         </div>
     </div>
 
-    {{-- FOOTER / SIGNATURES --}}
-    <table class="footer-table" cellpadding="0" cellspacing="0">
+    {{-- FOOTER / SIGNATURES & VERIFICATION ELECTRONIQUE --}}
+    <table class="footer-table" cellpadding="0" cellspacing="0" style="width: 100%; border-top: 1.5px solid #0f2863; padding-top: 6px; margin-top: 6px;">
         <tr>
-            <td class="footer-left">
-                <div class="meta-text">
-                    <div>Fait à Fès, le <span class="meta-bold">{{ now()->format('d/m/Y') }}</span></div>
-                    <div>Réf. Sécurité : <span class="meta-bold">{{ substr(md5(($data['qr_token'] ?? $data['id'] ?? 'ENCG').$academicYear), 0, 16) }}</span></div>
-                </div>
-                <div class="auth-stamp">Document Officiel — ENCG Fès</div>
-
-                @if(!empty($data['qrCodeBase64']))
-                    <div class="qr-section">
-                        <img src="{{ $data['qrCodeBase64'] }}" alt="QR Code">
-                        <div class="qr-caption">
-                            <strong>Vérification Numérique</strong><br>
-                            Scannez pour valider la convocation<br>
-                            sur le portail d'authentification ENCG
-                        </div>
-                    </div>
-                @endif
+            <td style="width: 58%; vertical-align: top;">
+                <table cellpadding="0" cellspacing="0" style="width: 100%;">
+                    <tr>
+                        <td style="width: 72px; vertical-align: middle;">
+                            @if(!empty($data['qrCodeBase64']))
+                                <img src="{{ $data['qrCodeBase64'] }}" alt="QR Code" style="width: 65px; height: 65px; border: 1.5px solid #0f2863; padding: 2px; background: #ffffff; border-radius: 3px;">
+                            @endif
+                        </td>
+                        <td style="padding-left: 8px; vertical-align: middle;">
+                            <div style="font-size: 7pt; color: #0f2863; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">
+                                Vérification Électronique Officielle
+                            </div>
+                            <div style="font-size: 6pt; color: #64748b; margin-top: 2px; line-height: 1.35;">
+                                Fait à Fès, le <strong style="color: #1e293b;">{{ now()->format('d/m/Y') }}</strong><br>
+                                Réf. Sécurité : <span style="font-family: monospace; font-weight: bold; color: #0f2863;">{{ substr(md5(($data['qr_token'] ?? $data['id'] ?? 'ENCG').$academicYear), 0, 16) }}</span><br>
+                                Scannez le QR Code pour valider l'authenticité sur le portail ENCG.
+                            </div>
+                            <div style="margin-top: 4px;">
+                                <span style="border: 1px solid #16a34a; color: #15803d; background: #f0fdf4; font-size: 5.8pt; font-weight: bold; padding: 1.5px 6px; text-transform: uppercase; border-radius: 2px;">
+                                    ✓ Document Certifié Conforme — ENCG Fès
+                                </span>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
             </td>
-            <td class="footer-right">
-                <div class="sign-title">Pour le Directeur de l'ENCG Fès</div>
-                <div class="sign-subtitle">Le Directeur Adjoint chargé des Affaires Pédagogiques</div>
-                <div class="sign-placeholder"></div>
-                <div class="sign-mention">Cachet Officiel et Signature</div>
+            <td style="width: 42%; vertical-align: top; text-align: center;">
+                <div style="font-size: 7.8pt; font-weight: bold; color: #0f2863;">Pour le Directeur de l'ENCG Fès</div>
+                <div style="font-size: 6.2pt; color: #64748b; font-style: italic; margin-top: 1px;">Le Directeur Adjoint chargé des Affaires Pédagogiques</div>
+                <div style="height: 38px; margin: 4px auto; border-bottom: 1px dashed #94a3b8; width: 75%;"></div>
+                <div style="font-size: 5.8pt; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;">Cachet Officiel et Signature Numérique</div>
             </td>
         </tr>
     </table>
