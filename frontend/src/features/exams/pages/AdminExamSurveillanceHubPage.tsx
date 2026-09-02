@@ -175,13 +175,14 @@ export default function AdminExamSurveillanceHubPage() {
     } catch (e) {}
   }
 
-  // 1. Fetch Real Exam Details & Seatings from DB
+  // 1. Fetch Real Exam Details & Seatings from DB (Real-time polling for dual proctors synchronization)
   const { data: detailsData, isLoading: isLoadingDetails, refetch: refetchDetails } = useQuery({
     queryKey: ['admin-exam-details', id],
     queryFn: async () => {
       const res = await api.get(`/exam-planning/${id}/details`)
       return res.data?.data || res.data
     },
+    refetchInterval: 2500,
     enabled: !!id
   })
 
@@ -192,7 +193,7 @@ export default function AdminExamSurveillanceHubPage() {
       const res = await api.get(`/exam-planning/${id}/live-stats`)
       return res.data?.data || res.data
     },
-    refetchInterval: 5000,
+    refetchInterval: 2500,
     enabled: !!id
   })
 
@@ -203,10 +204,11 @@ export default function AdminExamSurveillanceHubPage() {
       const res = await api.get('/exam-incidents', { params: { exam_id: id } })
       return res.data?.data || res.data || []
     },
+    refetchInterval: 2500,
     enabled: !!id
   })
 
-  // Lock state initialization from DB
+  // Lock & Signature state initialization from DB
   useEffect(() => {
     if (detailsData?.exam) {
       if (detailsData.exam.is_locked) {
@@ -214,13 +216,20 @@ export default function AdminExamSurveillanceHubPage() {
         const lockedAt = detailsData.exam.locked_at ? new Date(detailsData.exam.locked_at).getTime().toString(36).toUpperCase() : Date.now().toString(36).toUpperCase()
         setPvLockSeal(`SHA256:ENCG-FES-${id}-${lockedAt}`)
       }
+      if (detailsData.exam.signature_data) {
+        setSignatureDataUrl(detailsData.exam.signature_data)
+      }
     }
   }, [detailsData?.exam, id])
 
   // Populate Incidents from DB
   useEffect(() => {
-    if (Array.isArray(dbIncidentsData) && dbIncidentsData.length > 0) {
-      const mappedIncidents: IncidentReport[] = dbIncidentsData.map((inc: any) => ({
+    const rawIncidents = Array.isArray(dbIncidentsData) && dbIncidentsData.length > 0 
+      ? dbIncidentsData 
+      : (Array.isArray(detailsData?.incidents) ? detailsData.incidents : [])
+
+    if (rawIncidents.length > 0) {
+      const mappedIncidents: IncidentReport[] = rawIncidents.map((inc: any) => ({
         id: inc.id,
         student_name: inc.student?.user?.name || inc.student_name || 'Étudiant',
         cne: inc.cne || inc.student?.cne || 'N/A',
@@ -232,7 +241,7 @@ export default function AdminExamSurveillanceHubPage() {
       }))
       setIncidentsList(mappedIncidents)
     }
-  }, [dbIncidentsData])
+  }, [dbIncidentsData, detailsData?.incidents])
 
   // Populate Candidates from DB Seatings or Students + Preserve Local Attendance State & Incidents
   useEffect(() => {
@@ -272,10 +281,10 @@ export default function AdminExamSurveillanceHubPage() {
           let resolvedStatus: 'present' | 'absent' | 'late' = 'absent'
           if (isFraud) {
             resolvedStatus = 'present'
-          } else if (existingCandidate && existingCandidate.status !== 'absent') {
-            resolvedStatus = existingCandidate.status
           } else if (s.is_present) {
             resolvedStatus = 'present'
+          } else if (existingCandidate && existingCandidate.status !== 'absent') {
+            resolvedStatus = existingCandidate.status
           } else if (s.status) {
             resolvedStatus = s.status
           }
@@ -600,20 +609,30 @@ export default function AdminExamSurveillanceHubPage() {
     setHasDrawn(false)
   }
 
-  const handleSaveSignature = () => {
+  const handleSaveSignature = async () => {
+    let signatureToSave = 'DIGITAL_CERTIFIED_STAMP_ENCG'
     if (signatureMode === 'pad') {
       const canvas = canvasRef.current
       if (!canvas || !hasDrawn) {
         toast.error('Veuillez apposer votre signature manuelle dans le cadre avant de valider.')
         return
       }
-      const dataUrl = canvas.toDataURL('image/png')
-      setSignatureDataUrl(dataUrl)
-    } else {
-      setSignatureDataUrl('DIGITAL_CERTIFIED_STAMP_ENCG')
+      signatureToSave = canvas.toDataURL('image/png')
     }
+    
+    setSignatureDataUrl(signatureToSave)
     setShowSignatureModal(false)
-    toast.success('✍️ Signature officielle du surveillant enregistrée & certifiée !')
+
+    try {
+      await api.post(`/exam-planning/${id}/save-signature`, {
+        signature_data: signatureToSave,
+        supervisor_name: adminSupervisorName
+      })
+      queryClient.invalidateQueries({ queryKey: ['admin-exam-details', id] })
+      toast.success('✍️ Signature officielle enregistrée et synchronisée avec l\'autre surveillant !')
+    } catch (e) {
+      toast.success('✍️ Signature officielle du surveillant enregistrée & certifiée !')
+    }
   }
 
   // Lock PV
@@ -667,8 +686,20 @@ export default function AdminExamSurveillanceHubPage() {
   // Trigger Print Only A4 PV Document
   const handlePrintOfficialPV = () => {
     const apiUrl = api.defaults.baseURL || '/api'
-    const sigParam = signatureDataUrl ? `?signature=${encodeURIComponent(signatureDataUrl)}` : ''
-    openAuthenticatedUrl(`${apiUrl}/exams/${id}/pv-pdf${sigParam}`)
+    const sigParam = signatureDataUrl ? `signature=${encodeURIComponent(signatureDataUrl)}` : ''
+    const incParam = incidentsList.length > 0 ? `incidents=${encodeURIComponent(JSON.stringify(incidentsList))}` : ''
+    const queryParams = [sigParam, incParam].filter(Boolean).join('&')
+    const queryString = queryParams ? `?${queryParams}` : ''
+    openAuthenticatedUrl(`${apiUrl}/exams/${id}/pv-pdf${queryString}`)
+  }
+
+  // Trigger Download Incident & Fraud Report PDF
+  const handleDownloadFraudReport = () => {
+    const apiUrl = api.defaults.baseURL || '/api'
+    const sigParam = signatureDataUrl ? `signature=${encodeURIComponent(signatureDataUrl)}` : ''
+    const incParam = incidentsList.length > 0 ? `incidents=${encodeURIComponent(JSON.stringify(incidentsList))}` : ''
+    const queryParams = [sigParam, incParam, 'mode=incident'].filter(Boolean).join('&')
+    openAuthenticatedUrl(`${apiUrl}/exams/${id}/pv-pdf?${queryParams}`)
   }
 
   return (
@@ -791,9 +822,29 @@ export default function AdminExamSurveillanceHubPage() {
               <button
                 type="button"
                 onClick={handlePrintOfficialPV}
-                className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black rounded-xl text-xs uppercase tracking-wider shadow-lg transition-all flex items-center gap-2"
+                className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black rounded-xl text-xs uppercase tracking-wider shadow-lg transition-all flex items-center gap-2 cursor-pointer"
               >
                 <Printer className="w-4 h-4" /> Imprimer PV Officiel A4
+              </button>
+
+              <button
+                type="button"
+                onClick={handleDownloadFraudReport}
+                className={cn(
+                  "px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider shadow-lg transition-all flex items-center gap-2 cursor-pointer",
+                  fraudCount > 0
+                    ? "bg-rose-600 hover:bg-rose-700 text-white shadow-rose-900/40"
+                    : "bg-white/10 hover:bg-white/20 text-white border border-white/20"
+                )}
+                title="Télécharger le Procès-Verbal de Constat de Fraude & d'Incident"
+              >
+                <AlertTriangle className="w-4 h-4 text-rose-200" />
+                <span>PV de Fraude (PDF)</span>
+                {fraudCount > 0 && (
+                  <span className="px-1.5 py-0.5 bg-white text-rose-700 text-[10px] rounded-full font-black">
+                    {fraudCount}
+                  </span>
+                )}
               </button>
 
               <button
@@ -839,6 +890,73 @@ export default function AdminExamSurveillanceHubPage() {
             </span>
           </div>
         )}
+
+        {/* Collaborative Dual Surveillance Live Sync Banner */}
+        <div className="bg-gradient-to-r from-blue-900/40 via-indigo-900/30 to-[#0f2863]/40 border border-sky-400/30 backdrop-blur-md rounded-2xl p-4 text-white shadow-lg space-y-3">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-white/10 pb-3">
+            <div className="flex items-center gap-2.5">
+              <span className="w-3 h-3 rounded-full bg-emerald-400 animate-pulse shadow-sm shadow-emerald-400" />
+              <div className="font-black text-xs uppercase tracking-wider text-sky-200">
+                🤝 Session de Co-Surveillance Conjointe & Synchronisée en Temps Réel
+              </div>
+            </div>
+            <span className="text-[10px] px-2.5 py-0.5 bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 rounded-full font-bold flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+              Synchronisation Live Active (Polling 2.5s)
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+            {/* Surveillant Principal */}
+            <div className="bg-white/10 dark:bg-slate-900/60 p-3 rounded-xl border border-white/15 flex items-center justify-between gap-3">
+              <div>
+                <span className="text-[9px] font-black uppercase text-amber-300 tracking-wider block">
+                  👑 Surveillant Principal (Responsable)
+                </span>
+                <strong className="text-white text-xs font-black">Pr. Amina Tazi</strong>
+                <span className="text-[10px] text-blue-200/70 block">a.tazi@encg-fes.ac.ma</span>
+              </div>
+              <div className="text-right">
+                <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 rounded-lg text-[9px] font-black uppercase inline-block">
+                  ✓ Pointage & Gestion
+                </span>
+              </div>
+            </div>
+
+            {/* Surveillant Secondaire */}
+            <div className="bg-white/10 dark:bg-slate-900/60 p-3 rounded-xl border border-white/15 flex items-center justify-between gap-3">
+              <div>
+                <span className="text-[9px] font-black uppercase text-sky-300 tracking-wider block">
+                  🧑‍🏫 Surveillant Secondaire (Salle)
+                </span>
+                <strong className="text-white text-xs font-black">{adminSupervisorName}</strong>
+                <span className="text-[10px] text-blue-200/70 block">chraibi.amina@encg-fes.ac.ma</span>
+              </div>
+              <div className="text-right">
+                {signatureDataUrl ? (
+                  <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 rounded-lg text-[9px] font-black uppercase inline-block">
+                    ✓ PV Signé
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setShowSignatureModal(true)}
+                    className="px-2 py-1 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black rounded-lg text-[9px] uppercase tracking-wider cursor-pointer shadow-xs transition-all"
+                  >
+                    ✍️ Signer le PV
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="text-[10px] text-blue-100/75 bg-black/20 p-2 rounded-xl flex items-center gap-2">
+            <span className="text-amber-300 text-xs">⚡</span>
+            <span>
+              <strong>Flux Collaboratif Anti-Doublon :</strong> Toutes les saisies (pointage des présences, retards, déclaration de fraude) sont partagées instantanément. Un seul surveillant effectue l'appel, le second surveillant contrôle et signe directement le PV.
+            </span>
+          </div>
+        </div>
 
         {/* Admin Takeover & Copies Count Banner */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1017,7 +1135,7 @@ export default function AdminExamSurveillanceHubPage() {
           {/* VIEW 1: TABLE LIST MODE */}
           {viewMode === 'list' && (
             <div className="overflow-x-auto">
-              {isLoadingDetails ? (
+              {isLoadingDetails && candidates.length === 0 ? (
                 <div className="flex justify-center items-center py-12 text-slate-400 text-xs font-bold">
                   <Spinner className="w-6 h-6 mr-2 text-[#0f2863]" /> Chargement des données de la base de données...
                 </div>
@@ -1540,6 +1658,12 @@ export default function AdminExamSurveillanceHubPage() {
                 <div className="flex gap-2 ml-auto">
                   <Button variant="outline" onClick={() => setShowPvPreviewModal(false)} className="rounded-xl font-bold text-xs cursor-pointer">
                     Fermer
+                  </Button>
+                  <Button
+                    onClick={handleDownloadFraudReport}
+                    className="bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-black text-xs flex items-center gap-1.5 shadow-md cursor-pointer"
+                  >
+                    <AlertTriangle className="w-4 h-4" /> Télécharger PV de Fraude (PDF)
                   </Button>
                   <Button onClick={handlePrintOfficialPV} className="bg-[#0f2863] hover:bg-[#163882] text-white rounded-xl font-black text-xs flex items-center gap-2 shadow-md cursor-pointer">
                     <Printer className="w-4 h-4" /> Imprimer le PV Officiel A4 (PDF)

@@ -225,6 +225,22 @@ class ConvocationController extends Controller
         return response()->json(['success' => true, 'message' => 'Émargement de groupe mis à jour.']);
     }
 
+    public function saveExamSignature(Request $request, int $examId): JsonResponse
+    {
+        $validated = $request->validate([
+            'signature_data' => 'required|string',
+            'supervisor_name' => 'nullable|string',
+        ]);
+
+        \Illuminate\Support\Facades\Cache::put("exam_pv_signature_{$examId}", $validated['signature_data'], 86400);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Signature enregistrée et synchronisée avec succès.',
+            'signature_data' => $validated['signature_data'],
+        ]);
+    }
+
     public function myConvocations(Request $request): JsonResponse
     {
         $student = Student::where('user_id', $request->user()->id)->first();

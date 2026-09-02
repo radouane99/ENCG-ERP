@@ -5,6 +5,7 @@ namespace App\Services\Academic;
 use App\Mail\ConvocationEmail;
 use App\Mail\ProfessorConvocationEmail;
 use App\Models\Exam;
+use App\Models\ExamIncident;
 use App\Models\ExamSeating;
 use App\Models\ExamSession;
 use App\Models\ExamSurveillance;
@@ -543,10 +544,10 @@ class ExamConvocationService
         $seatings = ExamSeating::with(['student.user', 'room'])
             ->where('exam_id', $examId)
             ->get()
-            ->map(function ($s) {
-                $seatNumber = self::seatNumberFor($s);
-                $s->seat_number = $seatNumber;
-                $s->cne = $s->student?->cne ?? ('N13'.str_pad($s->student_id ?? 1, 7, '0', STR_PAD_LEFT));
+            ->map(function ($s, $idx) {
+                $seatNumber = $s->seat_number ?: ($idx + 1);
+                $s->seat_number = is_numeric($seatNumber) ? (int)$seatNumber : $seatNumber;
+                $s->cne = $s->student?->cne ?? ('N13'.str_pad($s->student_id ?? ($idx + 1), 7, '0', STR_PAD_LEFT));
                 $s->student_name = $s->student?->user?->name ?? 'Étudiant ENCG';
                 return $s;
             })
@@ -557,9 +558,18 @@ class ExamConvocationService
             ->where('exam_id', $examId)
             ->get();
 
+        $incidents = ExamIncident::with(['student.user', 'reporter'])
+            ->where('exam_id', $examId)
+            ->get();
+
+        $cachedSignature = \Illuminate\Support\Facades\Cache::get("exam_pv_signature_{$examId}");
+        if ($cachedSignature && $exam) {
+            $exam->signature_data = $cachedSignature;
+        }
+
         return [
             'success' => true,
-            'data' => compact('exam', 'seatings', 'surveillances'),
+            'data' => compact('exam', 'seatings', 'surveillances', 'incidents'),
         ];
     }
 

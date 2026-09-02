@@ -95,7 +95,6 @@ class ExamIncidentController extends Controller
             'student_id' => $validated['student_id'],
             'reported_by' => $request->user()?->id,
             'type' => $validated['type'],
-            'incident_type' => $validated['type'],
             'description' => $validated['description'] ?? null,
             'confiscated_items' => $validated['confiscated_items'] ?? null,
             'status' => 'pending',
