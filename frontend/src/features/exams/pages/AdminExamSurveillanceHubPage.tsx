@@ -667,7 +667,8 @@ export default function AdminExamSurveillanceHubPage() {
   // Trigger Print Only A4 PV Document
   const handlePrintOfficialPV = () => {
     const apiUrl = api.defaults.baseURL || '/api'
-    openAuthenticatedUrl(`${apiUrl}/exams/${id}/pv-pdf`)
+    const sigParam = signatureDataUrl ? `?signature=${encodeURIComponent(signatureDataUrl)}` : ''
+    openAuthenticatedUrl(`${apiUrl}/exams/${id}/pv-pdf${sigParam}`)
   }
 
   return (

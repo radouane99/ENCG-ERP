@@ -153,6 +153,15 @@
             font-weight: bold;
             font-size: 8.5px;
         }
+        .badge-fraud {
+            color: #ffffff;
+            background-color: #dc2626;
+            padding: 1.5px 6px;
+            border-radius: 2px;
+            font-weight: 900;
+            font-size: 8px;
+            letter-spacing: 0.5px;
+        }
 
         /* Incidents Box */
         .incidents-box {
