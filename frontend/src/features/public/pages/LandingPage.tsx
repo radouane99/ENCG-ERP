@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { useAuthStore } from '@stores/authStore';
-import { useTheme } from '@shared/components/layout/ThemeProvider';
+import { useTheme } from '@shared/components/layout/useTheme';
 import MvpRoadmapSection from '@features/public/components/MvpRoadmapSection';
 import RoleJourneySection from '@features/public/components/RoleJourneySection';
 import BenefitsSection from '@features/public/components/BenefitsSection';

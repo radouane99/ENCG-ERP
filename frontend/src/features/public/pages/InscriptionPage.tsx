@@ -6,7 +6,7 @@ import {
   ChevronLeft, ChevronRight, ArrowRight, Rocket, Phone, Shield, Sun, Moon, Globe, FileText, Search, ChevronDown, Check, Scissors, X, Keyboard, Delete, Image as ImageIcon, Eye, Sparkles, AlertCircle
 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
-import { useTheme } from '@shared/components/layout/ThemeProvider';
+import { useTheme } from '@shared/components/layout/useTheme';
 import api from '@shared/lib/api';
 import { useAuthStore } from '@stores/authStore';
 import { CndpPrivacyModal } from '@shared/components/ui/CndpPrivacyModal';

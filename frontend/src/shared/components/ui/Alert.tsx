@@ -4,7 +4,7 @@
  * Uses role="alert" and aria-live for screen reader announcements.
  */
 import React from 'react'
-import { cva, type VariantProps } from 'class-variance-authority'
+import { type VariantProps } from 'class-variance-authority'
 import { cn } from '@shared/lib/utils'
 import {
   Info,
@@ -13,39 +13,7 @@ import {
   XCircle,
   X,
 } from 'lucide-react'
-
-const alertVariants = cva(
-  [
-    'relative flex gap-3 w-full rounded-xl border p-4',
-    'text-sm leading-relaxed',
-    'transition-all duration-200',
-  ],
-  {
-    variants: {
-      variant: {
-        info: [
-          'bg-blue-50 border-blue-200 text-blue-900',
-          'dark:bg-blue-950/50 dark:border-blue-800 dark:text-blue-100',
-        ],
-        success: [
-          'bg-emerald-50 border-emerald-200 text-emerald-900',
-          'dark:bg-emerald-950/50 dark:border-emerald-800 dark:text-emerald-100',
-        ],
-        warning: [
-          'bg-amber-50 border-amber-200 text-amber-900',
-          'dark:bg-amber-950/50 dark:border-amber-800 dark:text-amber-100',
-        ],
-        destructive: [
-          'bg-red-50 border-red-200 text-red-900',
-          'dark:bg-red-950/50 dark:border-red-800 dark:text-red-100',
-        ],
-      },
-    },
-    defaultVariants: {
-      variant: 'info',
-    },
-  }
-)
+import { alertVariants } from './alertVariants'
 
 const iconMap = {
   info:        Info,
@@ -72,7 +40,7 @@ export interface AlertProps
   icon?: React.ReactNode
 }
 
-const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
+export const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
   ({ className, variant = 'info', title, children, onDismiss, icon, ...props }, ref) => {
     const IconComponent = iconMap[variant ?? 'info']
 
@@ -84,12 +52,10 @@ const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
         className={cn(alertVariants({ variant, className }))}
         {...props}
       >
-        {/* Icon — RTL-safe: shrink-0, no margin */}
         <span className={cn('mt-0.5 shrink-0', iconColorMap[variant ?? 'info'])} aria-hidden="true">
           {icon ?? <IconComponent className="h-5 w-5" />}
         </span>
 
-        {/* Content */}
         <div className="flex-1 min-w-0">
           {title && (
             <p className="font-semibold mb-0.5">{title}</p>
@@ -99,7 +65,6 @@ const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
           )}
         </div>
 
-        {/* Dismiss button — RTL-safe: ms-auto */}
         {onDismiss && (
           <button
             onClick={onDismiss}
@@ -119,5 +84,3 @@ const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
   }
 )
 Alert.displayName = 'Alert'
-
-export { Alert, alertVariants }

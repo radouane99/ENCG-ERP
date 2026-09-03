@@ -18,8 +18,9 @@ export type { ModalProps }          from './Modal'
 export { Badge, badgeVariants }     from './Badge'
 export type { BadgeProps }          from './Badge'
 
-export { Alert, alertVariants }     from './Alert'
-export type { AlertProps }          from './Alert'
+export { Alert } from './Alert'
+export { alertVariants } from './alertVariants'
+export type { AlertProps } from './Alert'
 
 export { Spinner, Skeleton }        from './Spinner'
 export type { SpinnerProps, SkeletonProps } from './Spinner'

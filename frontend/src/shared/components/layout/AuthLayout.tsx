@@ -1,6 +1,6 @@
 import { Outlet, Link } from 'react-router-dom'
-import { Sparkles, Globe, Sun, Moon, ArrowRight, ShieldCheck, Award, ChevronDown, Check } from 'lucide-react'
-import { useTheme } from '@shared/components/layout/ThemeProvider'
+import { Sparkles, Sun, Moon, ArrowRight, ShieldCheck, Award, ChevronDown, Check } from 'lucide-react'
+import { useTheme } from '@shared/components/layout/useTheme'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@shared/lib/utils'
 import { useState, useEffect } from 'react'

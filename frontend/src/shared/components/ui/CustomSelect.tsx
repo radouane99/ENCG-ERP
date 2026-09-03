@@ -28,7 +28,7 @@ export function CustomSelect({
   onChange,
   options,
   placeholder = 'Sélectionner...',
-  label,
+  label: _label,
   icon,
   variant = 'default',
   className,

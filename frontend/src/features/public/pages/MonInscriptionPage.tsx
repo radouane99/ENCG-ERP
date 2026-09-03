@@ -8,7 +8,7 @@ import { cn } from '@shared/lib/utils';
 import api from '@shared/lib/api';
 import AiScolarBotWidget from '@shared/components/AiScolarBotWidget';
 import { useAuthStore } from '@stores/authStore';
-import { useTheme } from '@shared/components/layout/ThemeProvider';
+import { useTheme } from '@shared/components/layout/useTheme';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 type Lang = 'fr' | 'ar';
