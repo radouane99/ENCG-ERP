@@ -19,7 +19,7 @@ interface HeaderProps {
 }
 
 export default function Header({ onOpenCommand, onOpenSidebar }: HeaderProps) {
-  const { t, i18n } = useTranslation(['common', 'pages'])
+  const { t } = useTranslation(['common', 'pages'])
   const { user, logout } = useAuthStore()
   const navigate = useNavigate()
   const location = useLocation()

@@ -56,7 +56,6 @@ export default function AdminGradesEditPage() {
   const selectedAssessment = assessmentsData?.find((a: any) => a.id === selectedAssessmentId)
   const assessmentType = (selectedAssessment?.type || '').trim().toLowerCase()
   const isExamAssessment = assessmentType.includes('exam') || assessmentType.includes('rattrapage') || assessmentType === 'ef' || assessmentType === 'eo'
-  const isContinuousAssessment = !isExamAssessment
 
   // Important : Le verrouillage du PV d'examen ne bloque QUE la saisie de l'examen final !
   // Les contrôles continus (CC1, CC2, TP...) restent toujours ouverts et modifiables par l'enseignant.

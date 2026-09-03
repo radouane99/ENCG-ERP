@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@stores/authStore'
-import { Camera, Save, User as UserIcon, Lock, Mail, Phone, Loader2, Upload, ShieldCheck } from 'lucide-react'
+import { Camera, Loader2, ShieldCheck } from 'lucide-react'
 import api from '@shared/lib/api'
 import { cn } from '@shared/lib/utils'
 import { QRCodeSVG } from 'qrcode.react'
