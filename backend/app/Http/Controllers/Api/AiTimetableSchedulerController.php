@@ -142,8 +142,8 @@ class AiTimetableSchedulerController extends Controller
             foreach ($items as $item) {
                 // Déterminer le type de séance (cm, td, tp)
                 $badge = $item['session_badge'] ?? '';
-                $sessionType = ($badge === 'TP Labo' || str_contains($item['session_nature'] ?? '', 'Informatique')) 
-                    ? 'tp' 
+                $sessionType = ($badge === 'TP Labo' || str_contains($item['session_nature'] ?? '', 'Informatique'))
+                    ? 'tp'
                     : (($badge === 'TD Groupe' || str_contains($item['session_nature'] ?? '', 'Langues')) ? 'td' : 'cm');
 
                 // Déterminer le semester_id adapté
@@ -151,7 +151,7 @@ class AiTimetableSchedulerController extends Controller
                 if (! empty($item['group_id'])) {
                     $groupSemesterNum = DB::table('groups')->where('id', $item['group_id'])->value('semester_number');
                 }
-                
+
                 $semesterId = $fallbackSemesterId;
                 if ($groupSemesterNum) {
                     $periodNum = ($groupSemesterNum % 2 === 1) ? 1 : 2;

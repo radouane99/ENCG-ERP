@@ -7,8 +7,12 @@ use App\Models\Exam;
 use App\Models\ExamIncident;
 use App\Models\ExamSeating;
 use App\Models\ExamSurveillance;
-use App\Models\Grade;
 use App\Services\Documents\OfficialPdfFactory;
+use BaconQrCode\Renderer\Image\SvgImageBackEnd;
+use BaconQrCode\Renderer\ImageRenderer;
+use BaconQrCode\Renderer\RendererStyle\RendererStyle;
+use BaconQrCode\Writer;
+use Illuminate\Support\Facades\Cache;
 
 class ExamPdfController extends Controller
 {
@@ -29,7 +33,8 @@ class ExamPdfController extends Controller
                 if (is_array($decoded)) {
                     $incidentsFromQuery = $decoded;
                 }
-            } catch (\Throwable $e) {}
+            } catch (\Throwable $e) {
+            }
         }
 
         // Cleanup duplicate rows in database for this exam if any exist
@@ -43,7 +48,8 @@ class ExamPdfController extends Controller
                     $seenStudents[] = $row->student_id;
                 }
             }
-        } catch (\Throwable $e) {}
+        } catch (\Throwable $e) {
+        }
 
         $incidentsDb = ExamIncident::with(['student.user'])
             ->where('exam_id', $examId)
@@ -55,7 +61,7 @@ class ExamPdfController extends Controller
             $rawType = strtoupper(trim(str_replace(['🚨', '⚠️', '?', '[?]', '[✓]'], '', $inc->type ?? 'FRAUDE')));
             $cleanType = (empty($rawType) || str_contains($rawType, 'FRAUD')) ? 'FRAUDE' : $rawType;
 
-            $incidents->push((object)[
+            $incidents->push((object) [
                 'id' => $inc->id,
                 'student_id' => $inc->student_id,
                 'student_name' => $inc->student?->user?->name ?? ($inc->student_name ?? '—'),
@@ -71,7 +77,7 @@ class ExamPdfController extends Controller
                 $rawType = strtoupper(trim(str_replace(['🚨', '⚠️', '?', '[?]', '[✓]'], '', $incQ['type'] ?? 'FRAUDE')));
                 $cleanType = (empty($rawType) || str_contains($rawType, 'FRAUD')) ? 'FRAUDE' : $rawType;
 
-                $incidents->push((object)[
+                $incidents->push((object) [
                     'id' => $incQ['id'] ?? null,
                     'student_id' => $incQ['student_id'] ?? null,
                     'student_name' => $incQ['student_name'] ?? '—',
@@ -84,8 +90,9 @@ class ExamPdfController extends Controller
         }
 
         // 🛡️ CRITICAL DEDUPLICATION: Strictly ONE incident per student
-        $incidents = $incidents->unique(function($item) {
+        $incidents = $incidents->unique(function ($item) {
             $cne = strtoupper(preg_replace('/[^a-zA-Z0-9]/', '', $item->cne ?? ''));
+
             return $cne ?: strtolower(trim($item->student_name ?? ''));
         })->values();
 
@@ -93,13 +100,15 @@ class ExamPdfController extends Controller
         $fraudStudentIds = [];
         $fraudNames = [];
         foreach ($incidents as $inc) {
-            if (!empty($inc->student_id)) $fraudStudentIds[] = (int) $inc->student_id;
-            if (!empty($inc->cne) && $inc->cne !== '—') {
+            if (! empty($inc->student_id)) {
+                $fraudStudentIds[] = (int) $inc->student_id;
+            }
+            if (! empty($inc->cne) && $inc->cne !== '—') {
                 $cneClean = strtoupper(preg_replace('/[^a-zA-Z0-9]/', '', $inc->cne));
                 $fraudCnes[] = $cneClean;
                 $fraudCnes[] = preg_replace('/^[MN]/', '', $cneClean);
             }
-            if (!empty($inc->student_name) && $inc->student_name !== '—') {
+            if (! empty($inc->student_name) && $inc->student_name !== '—') {
                 $fraudNames[] = strtolower(trim($inc->student_name));
             }
         }
@@ -118,19 +127,20 @@ class ExamPdfController extends Controller
                 $item->seat_number = $i + 1;
                 try {
                     ExamSeating::where('id', $item->id)->update(['seat_number' => $i + 1]);
-                } catch (\Throwable $e) {}
+                } catch (\Throwable $e) {
+                }
             }
         }
 
         $seatings = $rawSeatings
-            ->map(function ($s, $idx) use ($fraudStudentIds, $fraudCnes, $fraudNames, $incidents, $isCorrupted) {
+            ->map(function ($s, $idx) use ($fraudStudentIds, $fraudCnes, $fraudNames, $isCorrupted) {
                 $seatVal = ($isCorrupted || empty($s->seat_number) || $s->seat_number == 125)
                     ? ($idx + 1)
-                    : (is_numeric($s->seat_number) ? (int)$s->seat_number : ($idx + 1));
+                    : (is_numeric($s->seat_number) ? (int) $s->seat_number : ($idx + 1));
 
-                $s->seat_number = 'N° ' . str_pad($seatVal, 2, '0', STR_PAD_LEFT);
+                $s->seat_number = 'N° '.str_pad($seatVal, 2, '0', STR_PAD_LEFT);
                 $s->seat_num_val = $seatVal;
-                $s->cne = $s->student?->cne ?? ('N13' . str_pad($s->student_id ?? ($idx + 1), 7, '0', STR_PAD_LEFT));
+                $s->cne = $s->student?->cne ?? ('N13'.str_pad($s->student_id ?? ($idx + 1), 7, '0', STR_PAD_LEFT));
                 $s->student_name = $s->student?->user?->name ?? 'Étudiant';
 
                 $cneClean = strtoupper(preg_replace('/[^a-zA-Z0-9]/', '', $s->cne));
@@ -146,6 +156,7 @@ class ExamPdfController extends Controller
                 if ($isFraud) {
                     $s->is_present = true;
                 }
+
                 return $s;
             })
             ->sortBy('seat_num_val')
@@ -155,21 +166,22 @@ class ExamPdfController extends Controller
             ->where('exam_id', $examId)
             ->get();
 
-        $principalSurv = $surveillances->first(function($s) {
+        $principalSurv = $surveillances->first(function ($s) {
             $r = strtolower($s->role ?? '');
+
             return str_contains($r, 'principal') || str_contains($r, 'president');
         }) ?? $surveillances->first();
 
-        $secondarySurv = $surveillances->first(function($s) use ($principalSurv) {
+        $secondarySurv = $surveillances->first(function ($s) use ($principalSurv) {
             return $s->id !== $principalSurv?->id;
         });
 
-        $principalName = $principalSurv?->professor?->user?->name 
-            ?? $principalSurv?->professor?->name 
+        $principalName = $principalSurv?->professor?->user?->name
+            ?? $principalSurv?->professor?->name
             ?? 'Surveillant Principal';
 
-        $secondaryName = $secondarySurv?->professor?->user?->name 
-            ?? $secondarySurv?->professor?->name 
+        $secondaryName = $secondarySurv?->professor?->user?->name
+            ?? $secondarySurv?->professor?->name
             ?? 'Surveillant Secondaire';
 
         $seal = $exam->documentSeal();
@@ -187,26 +199,26 @@ class ExamPdfController extends Controller
         // ✍️ SEPARATE SIGNATURES FOR EACH PROFESSOR
         $principalSig = request()->query('principal_signature')
             ?? request()->input('principal_signature')
-            ?? \Illuminate\Support\Facades\Cache::get("exam_pv_principal_signature_{$examId}");
+            ?? Cache::get("exam_pv_principal_signature_{$examId}");
 
         $secondarySig = request()->query('secondary_signature')
             ?? request()->input('secondary_signature')
-            ?? \Illuminate\Support\Facades\Cache::get("exam_pv_secondary_signature_{$examId}");
+            ?? Cache::get("exam_pv_secondary_signature_{$examId}");
 
         // If secondary signature was accidentally mirrored or stored in principal slot, resolve it:
         if ($principalSig && $secondarySig && $principalSig === $secondarySig) {
             $principalSig = null;
-            \Illuminate\Support\Facades\Cache::forget("exam_pv_principal_signature_{$examId}");
-        } elseif (!$secondarySig && $principalSig) {
+            Cache::forget("exam_pv_principal_signature_{$examId}");
+        } elseif (! $secondarySig && $principalSig) {
             // Check if what was stored in principal was actually Chraibi's drawn signature
-            $legacySig = \Illuminate\Support\Facades\Cache::get("exam_pv_signature_{$examId}");
+            $legacySig = Cache::get("exam_pv_signature_{$examId}");
             $secondarySig = $principalSig;
             $principalSig = null;
-            \Illuminate\Support\Facades\Cache::put("exam_pv_secondary_signature_{$examId}", $secondarySig, 86400 * 7);
-            \Illuminate\Support\Facades\Cache::forget("exam_pv_principal_signature_{$examId}");
+            Cache::put("exam_pv_secondary_signature_{$examId}", $secondarySig, 86400 * 7);
+            Cache::forget("exam_pv_principal_signature_{$examId}");
         }
 
-        \Illuminate\Support\Facades\Cache::forget("exam_pv_signature_{$examId}");
+        Cache::forget("exam_pv_signature_{$examId}");
 
         $principalSignatureImg = null;
         if ($principalSig && str_starts_with($principalSig, 'data:image')) {
@@ -218,20 +230,21 @@ class ExamPdfController extends Controller
             $secondarySignatureImg = $secondarySig;
         }
 
-        $hasPrincipalSignature = !empty($principalSig);
-        $hasSecondarySignature = !empty($secondarySig);
+        $hasPrincipalSignature = ! empty($principalSig);
+        $hasSecondarySignature = ! empty($secondarySig);
 
-        $qrUrl = url("/verification/pv-examen/{$examId}?token=" . md5("ENCG-PV-{$examId}-{$seal}"));
+        $qrUrl = url("/verification/pv-examen/{$examId}?token=".md5("ENCG-PV-{$examId}-{$seal}"));
         $qrBase64 = null;
         try {
-            $renderer = new \BaconQrCode\Renderer\ImageRenderer(
-                new \BaconQrCode\Renderer\RendererStyle\RendererStyle(120, 1),
-                new \BaconQrCode\Renderer\Image\SvgImageBackEnd()
+            $renderer = new ImageRenderer(
+                new RendererStyle(120, 1),
+                new SvgImageBackEnd
             );
-            $writer = new \BaconQrCode\Writer($renderer);
+            $writer = new Writer($renderer);
             $svg = $writer->writeString($qrUrl);
-            $qrBase64 = 'data:image/svg+xml;base64,' . base64_encode($svg);
-        } catch (\Throwable $e) {}
+            $qrBase64 = 'data:image/svg+xml;base64,'.base64_encode($svg);
+        } catch (\Throwable $e) {
+        }
 
         $pdf = $this->pdfFactory->make('pdf.pv_examen', [
             'exam_id' => $examId,

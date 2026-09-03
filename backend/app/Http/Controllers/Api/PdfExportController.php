@@ -76,6 +76,23 @@ class PdfExportController extends Controller
         return $this->resolveLogoBase64();
     }
 
+    private function generateQrBase64(string $data): string
+    {
+        try {
+            $raw = QrCode::format('png')->size(140)->margin(1)->generate($data);
+
+            return 'data:image/png;base64,'.base64_encode($raw);
+        } catch (\Throwable $e) {
+            try {
+                $raw = QrCode::format('svg')->size(140)->margin(1)->generate($data);
+
+                return 'data:image/svg+xml;base64,'.base64_encode($raw);
+            } catch (\Throwable $e2) {
+                return '';
+            }
+        }
+    }
+
     // ─── RÉCÉPISSÉ TAFEM ────────────────────────────────────────
 
     public function exportRecepisseTafemPdf(Request $request)
@@ -652,9 +669,9 @@ class PdfExportController extends Controller
 
     // ─── ATTESTATIONS & DOCUMENTS OFFICIELS ───────────────────────────────
 
-    public function attestationReussite(int $studentId, string $year)
+    public function attestationReussite(string|int $studentId, string $year)
     {
-        $student = Student::with(['user', 'latestPathway.filiere'])->findOrFail($studentId);
+        $student = Student::with(['user', 'latestPathway.filiere'])->findOrFail((string) $studentId);
 
         $verifyUrl = url('/verify-document/'.($student->cne ?? $student->student_number ?? '000'));
         $qrBase64 = $this->generateQrBase64($verifyUrl);
@@ -673,9 +690,9 @@ class PdfExportController extends Controller
         return $pdf->download("Attestation_Reussite_{$student->cne}_{$safeYear}.pdf");
     }
 
-    public function downloadDiplomeOfficielPdf(Request $request, int $studentId)
+    public function downloadDiplomeOfficielPdf(Request $request, string|int $studentId)
     {
-        $student = Student::with(['user', 'latestPathway.filiere'])->findOrFail($studentId);
+        $student = Student::with(['user', 'latestPathway.filiere'])->findOrFail((string) $studentId);
 
         $verifyUrl = url('/verify-document/'.($student->cne ?? $student->student_number ?? '000'));
         $qrBase64 = $this->generateQrBase64($verifyUrl);

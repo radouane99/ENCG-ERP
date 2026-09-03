@@ -1,5 +1,5 @@
 import React from 'react';
-import { Award, Share2, Briefcase, GraduationCap, Star, Zap, CheckCircle2, TrendingUp, Cpu, Users, Download, ShieldCheck } from 'lucide-react';
+import { Share2, Briefcase, GraduationCap, Star, Zap, CheckCircle2, TrendingUp, Cpu, Users, Download, ShieldCheck } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { useAuthStore } from '@/stores/authStore';
 import { toast } from 'sonner';

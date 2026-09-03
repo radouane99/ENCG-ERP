@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  CheckCircle2, Sparkles, AlertCircle, ArrowRight, ArrowLeft,
-  ShieldCheck, FileText, Download, User, MapPin, Phone,
+  CheckCircle2, Sparkles, ArrowRight,
+  ShieldCheck, Download, User,
   Building2, GraduationCap, Clock, Check, AlertTriangle
 } from 'lucide-react';
 import api from '@shared/lib/api';

@@ -3,9 +3,7 @@
 use App\Models\Filiere;
 use App\Models\Institution;
 use App\Models\Module;
-use App\Models\Group;
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Support\Str;
 
 return new class extends Migration
 {

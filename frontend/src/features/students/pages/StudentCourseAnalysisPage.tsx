@@ -1,9 +1,8 @@
 import React, { useState } from 'react'
 import {
-  BookOpen, Sparkles, Loader2, FileText, CheckCircle2, Share2, Lightbulb, Network
+  BookOpen, Sparkles, Loader2, FileText, CheckCircle2, Lightbulb, Network
 } from 'lucide-react'
 import api from '@shared/lib/api'
-import { cn } from '@shared/lib/utils'
 import { toast } from 'sonner'
 
 export default function StudentCourseAnalysisPage() {

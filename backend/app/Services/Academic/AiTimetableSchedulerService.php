@@ -185,8 +185,8 @@ class AiTimetableSchedulerService
                     }
 
                     $profId = $assignedProf ? $assignedProf->id : 1;
-                    $profName = $assignedProf && $assignedProf->user 
-                        ? trim(($assignedProf->user->first_name ?? '').' '.($assignedProf->user->last_name ?? '')) 
+                    $profName = $assignedProf && $assignedProf->user
+                        ? trim(($assignedProf->user->first_name ?? '').' '.($assignedProf->user->last_name ?? ''))
                         : ($assignedProf?->user?->name ?? 'Enseignant Chercheur');
 
                     // Salles classées par pertinence pédagogique et affectation de salles dédiées par filière
@@ -632,36 +632,36 @@ class AiTimetableSchedulerService
      * CONTRAINTE ABSOLUE : Les modules non-informatiques (Comptabilité, Finance, Math, etc.) sont TOTALEMENT INTERDITS de salle informatique !
      */
     protected function rankRoomsForModule(
-        Collection $rooms, 
-        Module $module, 
-        object $course, 
-        Group $group, 
+        Collection $rooms,
+        Module $module,
+        object $course,
+        Group $group,
         array $dedicatedRooms = []
-    ): Collection
-    {
+    ): Collection {
         $nameLower = mb_strtolower($module->name);
         $codeLower = mb_strtolower($module->code ?? '');
 
-        $isIT = str_contains($nameLower, 'informatique') 
-            || str_contains($nameLower, 'système') 
-            || str_contains($nameLower, 'logiciel') 
-            || str_contains($nameLower, 'data') 
+        $isIT = str_contains($nameLower, 'informatique')
+            || str_contains($nameLower, 'système')
+            || str_contains($nameLower, 'logiciel')
+            || str_contains($nameLower, 'data')
             || str_contains($nameLower, 'bureautique')
             || str_contains($nameLower, 'programmation')
             || str_contains($codeLower, 'info')
             || ($course->type ?? '') === 'tp';
 
-        $isLanguageOrSoftSkills = str_contains($nameLower, 'langue') 
-            || str_contains($nameLower, 'anglais') 
-            || str_contains($nameLower, 'français') 
-            || str_contains($nameLower, 'espagnol') 
-            || str_contains($nameLower, 'soft skills') 
+        $isLanguageOrSoftSkills = str_contains($nameLower, 'langue')
+            || str_contains($nameLower, 'anglais')
+            || str_contains($nameLower, 'français')
+            || str_contains($nameLower, 'espagnol')
+            || str_contains($nameLower, 'soft skills')
             || str_contains($nameLower, 'communication');
 
         if ($isIT) {
             // Pour l'informatique : Priorité absolue aux Labos Informatique (PC)
             $itRooms = $rooms->filter(function ($r) {
                 $rType = strtolower($r->type ?? 'classroom');
+
                 return $rType === 'lab' || str_contains(strtolower($r->name), 'info');
             });
 
@@ -677,6 +677,7 @@ class AiTimetableSchedulerService
         $nonLabRooms = $rooms->filter(function ($r) {
             $rType = strtolower($r->type ?? 'classroom');
             $isLab = ($rType === 'lab' || str_contains(strtolower($r->name), 'info'));
+
             return ! $isLab;
         });
 
@@ -685,9 +686,9 @@ class AiTimetableSchedulerService
         $filiereCode = strtolower((string) ($group->filiere_code ?? ''));
 
         $dedicatedForThisFiliere = array_map('intval', (array) (
-            $dedicatedRooms[$filiereId] 
-            ?? $dedicatedRooms[(string) $filiereId] 
-            ?? $dedicatedRooms[$filiereCode] 
+            $dedicatedRooms[$filiereId]
+            ?? $dedicatedRooms[(string) $filiereId]
+            ?? $dedicatedRooms[$filiereCode]
             ?? []
         ));
 

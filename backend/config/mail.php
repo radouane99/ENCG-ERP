@@ -111,8 +111,8 @@ return [
     */
 
     'from' => [
-        'address' => env('MAIL_FROM_ADDRESS') && env('MAIL_FROM_ADDRESS') !== 'noreply@encg-fes.ac.ma' 
-            ? env('MAIL_FROM_ADDRESS') 
+        'address' => env('MAIL_FROM_ADDRESS') && env('MAIL_FROM_ADDRESS') !== 'noreply@encg-fes.ac.ma'
+            ? env('MAIL_FROM_ADDRESS')
             : 'no-reply@benadadarentcar.com',
         'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'ENCG Portail')),
     ],

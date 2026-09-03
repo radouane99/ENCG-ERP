@@ -270,13 +270,13 @@ class DashboardAnalyticsService
 
             // 4. Total Étudiants réels
             $studentCount = 0;
-            if (!empty($assignedGroupIds)) {
+            if (! empty($assignedGroupIds)) {
                 $studentCount = DB::table('student_registrations')
                     ->whereIn('group_id', $assignedGroupIds)
                     ->distinct('student_id')
                     ->count('student_id');
             }
-            if ($studentCount === 0 && !empty($allModuleIds)) {
+            if ($studentCount === 0 && ! empty($allModuleIds)) {
                 $studentCount = DB::table('student_module_reservations')
                     ->whereIn('module_id', $allModuleIds)
                     ->distinct('student_id')
@@ -288,7 +288,7 @@ class DashboardAnalyticsService
 
             // 5. Notes Apogée en attente
             $pendingGrades = 0;
-            if (!empty($allModuleIds)) {
+            if (! empty($allModuleIds)) {
                 $assessmentIds = DB::table('assessments')->whereIn('module_id', $allModuleIds)->pluck('id');
                 if ($assessmentIds->isNotEmpty()) {
                     $pendingGrades = DB::table('grades')
@@ -335,7 +335,7 @@ class DashboardAnalyticsService
                 ->map(function ($mod) use ($assignedFromPivot) {
                     $assignmentRow = $assignedFromPivot->firstWhere('module_id', $mod->id);
                     $groupName = 'Section A';
-                    if ($assignmentRow && !empty($assignmentRow->group_id)) {
+                    if ($assignmentRow && ! empty($assignmentRow->group_id)) {
                         $groupName = DB::table('groups')->where('id', $assignmentRow->group_id)->value('name') ?? 'Groupe Affecté';
                     } else {
                         $groupName = $mod->filiere_code ?? ($mod->filiere_name ?? 'Tronc Commun');
@@ -469,6 +469,7 @@ class DashboardAnalyticsService
                     ->get()
                     ->map(function ($p) {
                         $name = $p->student_name ?: trim(($p->first_name ?? '').' '.($p->last_name ?? ''));
+
                         return [
                             'id' => $p->id,
                             'student_name' => $name ?: 'Étudiant PFE',
@@ -496,6 +497,7 @@ class DashboardAnalyticsService
                     ->get()
                     ->map(function ($p) {
                         $name = $p->student_name ?: trim(($p->first_name ?? '').' '.($p->last_name ?? ''));
+
                         return [
                             'id' => $p->id,
                             'student_name' => $name ?: 'Amine Bennani',
@@ -534,6 +536,7 @@ class DashboardAnalyticsService
                         $startTime = $s->start_time ? substr($s->start_time, 0, 5) : '14:30';
                         $endTime = $s->end_time ? substr($s->end_time, 0, 5) : '16:30';
                         $dateFormatted = $s->exam_date ? date('d/m/Y', strtotime($s->exam_date)) : '21/08/2026';
+
                         return [
                             'id' => $s->id,
                             'module_name' => $s->module_name ?? 'Mathématiques pour la Gestion',
@@ -542,7 +545,7 @@ class DashboardAnalyticsService
                             'room' => $s->room_name ?? 'Amphithéâtre B',
                             'role' => $s->role ?? 'Surveillant Principal',
                             'session_name' => $s->session_name ?? 'Session Normale Automne',
-                            'is_confirmed' => !empty($s->confirmed_at),
+                            'is_confirmed' => ! empty($s->confirmed_at),
                             'confirmed_at' => $s->confirmed_at,
                         ];
                     });

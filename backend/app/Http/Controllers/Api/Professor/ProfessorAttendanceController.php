@@ -5,13 +5,15 @@ namespace App\Http\Controllers\Api\Professor;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Academic\ManualCallRequest;
 use App\Http\Requests\Academic\StartAttendanceSessionRequest;
+use App\Models\AcademicYear;
 use App\Models\Attendance;
 use App\Models\AttendanceSession;
+use App\Models\Filiere;
 use App\Models\Student;
+use App\Models\StudentRegistration;
 use App\Services\Academic\AttendanceService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Schema;
 
 class ProfessorAttendanceController extends Controller
 {
@@ -29,7 +31,7 @@ class ProfessorAttendanceController extends Controller
         $filiereCode = (string) $request->input('filiere_code', '');
         $semesterNum = $request->integer('semester_number');
 
-        $academicYear = \App\Models\AcademicYear::query()->where('is_current', true)->first();
+        $academicYear = AcademicYear::query()->where('is_current', true)->first();
         $combined = trim($groupLabel.' '.$groupName.' '.$filiereCode);
 
         // 1. Détection du semestre académique (ex: S1 -> 1, S5 -> 5)
@@ -42,8 +44,8 @@ class ProfessorAttendanceController extends Controller
         }
 
         // 2. Détection de la portée : Les examens en amphi regroupent TOUJOURS les 24 étudiants (G1 + G2)
-        $isExam = $request->boolean('is_exam') 
-            || $request->input('context') === 'exam' 
+        $isExam = $request->boolean('is_exam')
+            || $request->input('context') === 'exam'
             || preg_match('/(exam|surveillance|amphi|amphithéâtre)/i', $combined);
 
         $isAllGroups = $isExam || (bool) preg_match('/(tous|all|section|promo|g1\s*\+\s*g2)/i', $combined);
@@ -62,14 +64,14 @@ class ProfessorAttendanceController extends Controller
         if ($filiereCode !== '') {
             $cleanCode = trim(str_ireplace(['TC-', 'S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8', 'S9', 'S10', '•', 'G1', 'G2'], '', $filiereCode));
             if ($cleanCode !== '') {
-                $filiere = \App\Models\Filiere::where('code', 'ILIKE', "%{$cleanCode}%")
+                $filiere = Filiere::where('code', 'ILIKE', "%{$cleanCode}%")
                     ->orWhere('name', 'ILIKE', "%{$cleanCode}%")
                     ->first();
             }
         }
 
         // 4. Requête officielle des inscriptions d'étudiants (StudentRegistration)
-        $regQuery = \App\Models\StudentRegistration::with(['student.user', 'group', 'filiere'])
+        $regQuery = StudentRegistration::with(['student.user', 'group', 'filiere'])
             ->where('semester_number', $semesterNum);
 
         if ($academicYear) {

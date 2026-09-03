@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { Lock, Loader2, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import api from '@shared/lib/api';
 import { isPasswordPolicyValid, PASSWORD_POLICY_HINT } from '@shared/lib/htmlSafe';
 
 export default function ResetPasswordPage() {
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
-  
+  const [searchParams] = useSearchParams(); 
   const email = searchParams.get('email') || '';
   const token = searchParams.get('token') || '';
 

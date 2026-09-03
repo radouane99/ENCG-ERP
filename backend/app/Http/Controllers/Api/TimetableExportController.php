@@ -12,6 +12,7 @@ use App\Services\Documents\OfficialPdfFactory;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class TimetableExportController extends Controller
 {
@@ -91,9 +92,9 @@ class TimetableExportController extends Controller
             $verifyToken = hash('sha256', "EDT-PROF-{$profId}-".now()->toDateString());
             $verifyUrl = url("/verify/document/edt/prof/{$profId}?token={$verifyToken}");
             $qrBase64 = null;
-            if (class_exists(\SimpleSoftwareIO\QrCode\Facades\QrCode::class)) {
+            if (class_exists(QrCode::class)) {
                 try {
-                    $qrSvg = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')->size(100)->margin(0)->generate($verifyUrl);
+                    $qrSvg = QrCode::format('svg')->size(100)->margin(0)->generate($verifyUrl);
                     $qrBase64 = 'data:image/svg+xml;base64,'.base64_encode($qrSvg);
                 } catch (\Throwable $e) {
                     \Log::warning('QR generation error for EDT Prof: '.$e->getMessage());
@@ -234,7 +235,7 @@ class TimetableExportController extends Controller
             'filiere' => $query->whereHas('group', fn ($q) => $q->where('filiere_id', $id)),
             'professor' => $query->where(function ($q) use ($id) {
                 $q->where('professor_id', $id)
-                  ->orWhereHas('professor', fn ($p) => $p->where('user_id', $id)->orWhere('id', $id));
+                    ->orWhereHas('professor', fn ($p) => $p->where('user_id', $id)->orWhere('id', $id));
             }),
             'room' => $query->where('room_id', $id),
             'all' => null,
@@ -244,8 +245,8 @@ class TimetableExportController extends Controller
         if ($semesterNumber >= 1 && $semesterNumber <= 10) {
             $query->where(function ($sq) use ($semesterNumber) {
                 $sq->whereHas('group', fn ($q) => $q->where('semester_number', $semesterNumber))
-                   ->orWhereHas('module', fn ($q) => $q->where('semester_number', $semesterNumber))
-                   ->orWhereHas('semester', fn ($q) => $q->where('number', ($semesterNumber % 2 === 1) ? 1 : 2));
+                    ->orWhereHas('module', fn ($q) => $q->where('semester_number', $semesterNumber))
+                    ->orWhereHas('semester', fn ($q) => $q->where('number', ($semesterNumber % 2 === 1) ? 1 : 2));
             });
         }
 

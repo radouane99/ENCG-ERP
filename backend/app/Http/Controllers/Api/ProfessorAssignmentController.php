@@ -4,8 +4,9 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\AcademicYear;
-use App\Models\Department;
+use App\Models\Filiere;
 use App\Models\Group;
+use App\Models\Institution;
 use App\Models\Module;
 use App\Models\ModuleProfessor;
 use App\Models\Professor;
@@ -37,11 +38,11 @@ class ProfessorAssignmentController extends Controller
         if ($request->filled('semester_period') && $request->semester_period !== 'all') {
             $period = $request->semester_period;
             if ($period === 'odd' || $period === 'autumn' || $period === 's1') {
-                $query->whereHas('module', fn($q) => $q->whereIn('semester_number', [1, 3, 5, 7, 9]));
+                $query->whereHas('module', fn ($q) => $q->whereIn('semester_number', [1, 3, 5, 7, 9]));
             } elseif ($period === 'even' || $period === 'spring' || $period === 's2') {
-                $query->whereHas('module', fn($q) => $q->whereIn('semester_number', [2, 4, 6, 8, 10]));
+                $query->whereHas('module', fn ($q) => $q->whereIn('semester_number', [2, 4, 6, 8, 10]));
             } elseif (is_numeric($period)) {
-                $query->whereHas('module', fn($q) => $q->where('semester_number', (int) $period));
+                $query->whereHas('module', fn ($q) => $q->where('semester_number', (int) $period));
             }
         }
 
@@ -100,13 +101,16 @@ class ProfessorAssignmentController extends Controller
         }
 
         $resolveId = function ($modelClass, $idOrUuid) {
-            if (empty($idOrUuid)) return null;
+            if (empty($idOrUuid)) {
+                return null;
+            }
             if (is_numeric($idOrUuid)) {
                 return (int) $idOrUuid;
             }
             if (is_string($idOrUuid) && Str::isUuid($idOrUuid)) {
                 return $modelClass::where('uuid', $idOrUuid)->value('id');
             }
+
             return $modelClass::where('id', $idOrUuid)->value('id');
         };
 
@@ -177,21 +181,21 @@ class ProfessorAssignmentController extends Controller
         }
 
         if ($semesterPeriod === 'odd' || $semesterPeriod === 'autumn' || $semesterPeriod === 's1') {
-            $query->whereHas('module', fn($q) => $q->whereIn('semester_number', [1, 3, 5, 7, 9]));
+            $query->whereHas('module', fn ($q) => $q->whereIn('semester_number', [1, 3, 5, 7, 9]));
         } elseif ($semesterPeriod === 'even' || $semesterPeriod === 'spring' || $semesterPeriod === 's2') {
-            $query->whereHas('module', fn($q) => $q->whereIn('semester_number', [2, 4, 6, 8, 10]));
+            $query->whereHas('module', fn ($q) => $q->whereIn('semester_number', [2, 4, 6, 8, 10]));
         } elseif (is_numeric($semesterPeriod)) {
-            $query->whereHas('module', fn($q) => $q->where('semester_number', (int) $semesterPeriod));
+            $query->whereHas('module', fn ($q) => $q->where('semester_number', (int) $semesterPeriod));
         }
 
         $count = $query->count();
         $query->delete();
 
-        $periodLabel = match($semesterPeriod) {
-            'odd', 'autumn', 's1' => "du Semestre 1 / Automne (S1, S3, S5, S7, S9)",
-            'even', 'spring', 's2' => "du Semestre 2 / Printemps (S2, S4, S6, S8, S10)",
+        $periodLabel = match ($semesterPeriod) {
+            'odd', 'autumn', 's1' => 'du Semestre 1 / Automne (S1, S3, S5, S7, S9)',
+            'even', 'spring', 's2' => 'du Semestre 2 / Printemps (S2, S4, S6, S8, S10)',
             'all' => "de l'année universitaire",
-            default => is_numeric($semesterPeriod) ? "du Semestre S{$semesterPeriod}" : "de la session"
+            default => is_numeric($semesterPeriod) ? "du Semestre S{$semesterPeriod}" : 'de la session'
         };
 
         return response()->json([
@@ -265,9 +269,9 @@ class ProfessorAssignmentController extends Controller
         if ($semesterPeriod === 'even' || $semesterPeriod === 'spring' || $semesterPeriod === 'all') {
             $hasS6 = Module::where('semester_number', 6)->exists();
             if (! $hasS6) {
-                $inst = \App\Models\Institution::first();
-                $gfc = \App\Models\Filiere::where('code', 'GFC')->first();
-                $mcm = \App\Models\Filiere::where('code', 'MCM')->first();
+                $inst = Institution::first();
+                $gfc = Filiere::where('code', 'GFC')->first();
+                $mcm = Filiere::where('code', 'MCM')->first();
                 if ($inst && $gfc) {
                     $gfcS6 = [
                         ['name' => 'Audit & Contrôle de Gestion', 'code' => 'GFC-S6-M01', 'semester_number' => 6, 'coefficient' => 3],
@@ -385,13 +389,27 @@ class ProfessorAssignmentController extends Controller
                                 break;
                             }
                         }
-                        if ($domain === 'finance' && $profData['dept_code'] === 'SG') $score += 30;
-                        if ($domain === 'marketing' && in_array($profData['dept_code'], ['SG', 'EA'])) $score += 30;
-                        if ($domain === 'management' && $profData['dept_code'] === 'SG') $score += 30;
-                        if ($domain === 'economie' && $profData['dept_code'] === 'EA') $score += 30;
-                        if ($domain === 'informatique' && $profData['dept_code'] === 'IG') $score += 40;
-                        if ($domain === 'droit' && $profData['dept_code'] === 'DA') $score += 40;
-                        if ($domain === 'langues' && $profData['dept_code'] === 'LC') $score += 40;
+                        if ($domain === 'finance' && $profData['dept_code'] === 'SG') {
+                            $score += 30;
+                        }
+                        if ($domain === 'marketing' && in_array($profData['dept_code'], ['SG', 'EA'])) {
+                            $score += 30;
+                        }
+                        if ($domain === 'management' && $profData['dept_code'] === 'SG') {
+                            $score += 30;
+                        }
+                        if ($domain === 'economie' && $profData['dept_code'] === 'EA') {
+                            $score += 30;
+                        }
+                        if ($domain === 'informatique' && $profData['dept_code'] === 'IG') {
+                            $score += 40;
+                        }
+                        if ($domain === 'droit' && $profData['dept_code'] === 'DA') {
+                            $score += 40;
+                        }
+                        if ($domain === 'langues' && $profData['dept_code'] === 'LC') {
+                            $score += 40;
+                        }
                     }
                 }
 
@@ -484,6 +502,7 @@ class ProfessorAssignmentController extends Controller
                     if ($a['fairness_score'] === $b['fairness_score']) {
                         return $a['assigned_count'] <=> $b['assigned_count'];
                     }
+
                     return $b['fairness_score'] <=> $a['fairness_score'];
                 });
 

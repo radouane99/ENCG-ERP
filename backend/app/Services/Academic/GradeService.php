@@ -110,9 +110,9 @@ class GradeService
         $type = strtolower(trim((string) $assessment->type));
 
         // CC, CC1, CC2, TP, Projet sont des contrôles continus, PAS des examens terminaux !
-        if (in_array($type, ['cc', 'cc1', 'cc2', 'cc3', 'tp', 'tp1', 'tp2', 'projet', 'expose', 'devoir']) 
-            || str_starts_with($type, 'cc') 
-            || str_starts_with($type, 'tp') 
+        if (in_array($type, ['cc', 'cc1', 'cc2', 'cc3', 'tp', 'tp1', 'tp2', 'projet', 'expose', 'devoir'])
+            || str_starts_with($type, 'cc')
+            || str_starts_with($type, 'tp')
             || str_contains($type, 'continu')) {
             return false;
         }
