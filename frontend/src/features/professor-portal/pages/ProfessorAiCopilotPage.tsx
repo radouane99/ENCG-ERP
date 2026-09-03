@@ -1,19 +1,14 @@
 import React, { useState } from 'react'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { 
-  Sparkles, BrainCircuit, BookOpen, FileText, CheckCircle2, 
-  Layers, Download, Printer, RefreshCw, Zap, ShieldCheck, HelpCircle, ArrowRight
+  Sparkles, BrainCircuit, BookOpen, FileText, CheckCircle2, Printer
 } from 'lucide-react'
-import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
 import { Spinner } from '@shared/components/ui/Spinner'
 
 export default function ProfessorAiCopilotPage() {
-  const { t, i18n } = useTranslation(['professors', 'common'])
-  const isRtl = i18n.language === 'ar'
-
   const [activeTab, setActiveTab] = useState<'textbook' | 'exam'>('textbook')
 
   // Textbook outline state
