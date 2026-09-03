@@ -16,7 +16,8 @@ export type { InputProps }          from './Input'
 export { Modal }                    from './Modal'
 export type { ModalProps }          from './Modal'
 
-export { Badge, badgeVariants }     from './Badge'
+export { Badge }                    from './Badge'
+export { badgeVariants }             from './badgeVariants'
 export type { BadgeProps }          from './Badge'
 
 export { Alert } from './Alert'
