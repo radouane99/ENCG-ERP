@@ -221,12 +221,12 @@ return [
      */
     'notifications' => [
         'notifications' => [
-            BackupHasFailedNotification::class => ['mail'],
-            UnhealthyBackupWasFoundNotification::class => ['mail'],
-            CleanupHasFailedNotification::class => ['mail'],
-            BackupWasSuccessfulNotification::class => ['mail'],
-            HealthyBackupWasFoundNotification::class => ['mail'],
-            CleanupWasSuccessfulNotification::class => ['mail'],
+            BackupHasFailedNotification::class => env('BACKUP_NOTIFICATION_EMAIL') ? ['mail'] : [],
+            UnhealthyBackupWasFoundNotification::class => env('BACKUP_NOTIFICATION_EMAIL') ? ['mail'] : [],
+            CleanupHasFailedNotification::class => env('BACKUP_NOTIFICATION_EMAIL') ? ['mail'] : [],
+            BackupWasSuccessfulNotification::class => env('BACKUP_NOTIFICATION_EMAIL') ? ['mail'] : [],
+            HealthyBackupWasFoundNotification::class => env('BACKUP_NOTIFICATION_EMAIL') ? ['mail'] : [],
+            CleanupWasSuccessfulNotification::class => env('BACKUP_NOTIFICATION_EMAIL') ? ['mail'] : [],
         ],
 
         /*
@@ -236,11 +236,11 @@ return [
         'notifiable' => Notifiable::class,
 
         'mail' => [
-            'to' => 'your@example.com',
+            'to' => env('BACKUP_NOTIFICATION_EMAIL', 'admin@encg-fes.ac.ma'),
 
             'from' => [
-                'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
-                'name' => env('MAIL_FROM_NAME', 'Example'),
+                'address' => env('MAIL_FROM_ADDRESS', 'noreply@encg-fes.ac.ma'),
+                'name' => env('MAIL_FROM_NAME', 'ENCG Portail'),
             ],
         ],
 

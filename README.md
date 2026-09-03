@@ -770,6 +770,13 @@ graph LR
 * **Bannière d'Émargement Bi-Certifiée** : Deux cartes distinctes affichant pour chaque surveillant son statut en direct (`✓ Signé & Scellé` ou `⏳ En attente de signature`), son sceau cryptographique et l'empreinte SHA-256 globale du PV.
 * **Politique Zero-Mock Intégrale** : Élimination absolue des données statiques/synthétiques de secours au profit de requêtes directes sur PostgreSQL (cohortes d'étudiants, présences, plannings, feuilles de porte et convocations).
 
+### 💾 Sauvegardes Quotidiennes Automatiques (PCA / PRA & RPO < 24h)
+
+* **Déclenchement Automatique Nocturne (02:00)** : Sauvegarde intégrale de PostgreSQL planifiée via la tâche système **`ENCG_ERP_Daily_Backup`** et le scheduler Laravel (`php artisan db:backup-daily`).
+* **Miroir de Référence Permanent** : Chaque sauvegarde horodatée dans `backups/encg_erp_YYYYMMDD_HHMMSS.sql` met instantanément à jour le fichier racine `backup_encg_erp_latest.sql`.
+* **Restauration d'Urgence en 1 Clic** : Script `restore_database.ps1` restaurant le dump complet, réappliquant les contraintes et index (`scripts/fix_pks.sql`), appliquant les migrations et purgeant le cache en moins de 60 secondes.
+* **Rétention Glissante 30 Jours & Audit** : Purge automatique des archives de plus d'un mois et journalisation non répudiable de chaque opération dans les `audit_logs`.
+
 ---
 
 ## 12. 🧪 Pyramide de Tests, Principes ISTQB & Couverture Complète (100% Green)

@@ -2381,3 +2381,34 @@ Assainissement complet du code frontend conformément aux règles de build stric
   - Résolution de la notice React Fast Refresh (*"Fast refresh only works when a file only exports components"*).
   - Extraction de `badgeVariants` dans un fichier dédié `badgeVariants.ts`, calqué sur l'architecture éprouvée de `buttonVariants.ts` et `alertVariants.ts`.
   - Re-exportation propre via `@shared/components/ui/index.ts`.
+
+---
+
+### 21.8 💾 Système de Sauvegarde Quotidienne Automatique (Automated Daily Backups & RPO < 24h)
+
+#### A. Rôle Métier & Objectifs Stratégiques (PCA / PRA)
+Afin de prémunir l'établissement contre toute perte accidentelle de données (délibérations, notes d'examens, inscriptions, dossiers de candidature) et de respecter les exigences du Plan de Continuité d'Activité (PCA/PRA) :
+1. **RPO (Recovery Point Objective) < 24 Heures** : Création quotidienne ininterrompue d'une archive complète SQL PostgreSQL contenant l'ensemble des 134 tables.
+2. **RTO (Recovery Time Objective) < 60 Secondes** : Restauration en un clic via `restore_database.ps1` restaurant le schéma, réappliquant les index/PKs et synchronisant les migrations récentes.
+3. **Politique de Rétention Glissante (30 Jours)** : Conservation automatique des archives quotidiennes des 30 derniers jours et purge sélective des fichiers obsolètes pour optimiser l'espace disque.
+
+#### B. Composants & Architecture Multi-Niveaux
+
+1. **Script PowerShell d'Automatisation Système (`scripts/backup_database.ps1`) :**
+   - Détecte dynamiquement le conteneur actif (`encg_postgres` en local / `encg_prod_postgres` en production).
+   - Exécute `pg_dump -U encg encg_erp` directement dans un dump horodaté `backups/encg_erp_YYYYMMDD_HHMMSS.sql`.
+   - Synchronise immédiatement une copie miroir vers `backup_encg_erp_latest.sql` et `backup_encg_erp.sql` à la racine du projet.
+   - Intègre un vérificateur d'intégrité (seuil minimal 10 Ko) et la rotation automatique des sauvegardes (> 30 jours).
+
+2. **Commande Artisan Native Laravel (`BackupDatabaseDailyCommand.php` / `php artisan db:backup-daily`) :**
+   - Exécute un dump complet via `pg_dump` avec les identifiants configurés dans `config/database.php`.
+   - Sauvegarde dans `storage/app/backups/encg_erp_YYYYMMDD_HHMMSS.sql` et met à jour `storage/app/backups/backup_encg_erp_latest.sql`.
+   - Émet un enregistrement d'audit officiel dans `audit_logs` (catégorie `SYSTEM`, action `AUTOMATED_DAILY_BACKUP`, sévérité `INFO`, statut `SUCCESS`).
+
+3. **Planification Automatique Quotidienne (Double Sécurisation) :**
+   - **Niveau Laravel Scheduler (`routes/console.php`)** : `Schedule::command('db:backup-daily')->dailyAt('02:00');` exécuté chaque nuit à 02:00.
+   - **Niveau Système Hôte Windows (`scripts/setup_daily_backup_schedule.ps1`)** : Enregistrement d'une tâche planifiée Windows native nommée **`ENCG_ERP_Daily_Backup`**, déclenchée automatiquement tous les jours à 02:00 sans interruption.
+
+4. **Dépendance Docker Pérène (`docker/php/Dockerfile`) :**
+   - Ajout du paquet `postgresql-client` dans les dépendances système pour garantir la présence native de `/usr/bin/pg_dump` dans l'image PHP-FPM.
+   - Résolution de la configuration des notifications Spatie Backup (`config/backup.php`) pour interdire les adresses orphelines `example.com` incompatibles avec le driver Resend.

@@ -10,8 +10,9 @@ Artisan::command('inspire', function () {
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schedule;
 
-// Automated Daily Backups (Pilier 3)
-Schedule::command('backup:clean')->dailyAt('02:00');
+// Automated Daily Backups (Pilier 3 - ENCG ERP Native & Spatie)
+Schedule::command('db:backup-daily')->dailyAt('02:00')->description('Sauvegarde quotidienne native PostgreSQL avec rétention 30 jours');
+Schedule::command('backup:clean')->dailyAt('02:30');
 Schedule::command('backup:run --only-db')->dailyAt('03:00');
 
 // Automated Weekly PostgreSQL Optimization & Statistics Update (Pilier 2)

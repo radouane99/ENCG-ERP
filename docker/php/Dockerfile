@@ -17,6 +17,7 @@ RUN apk add --no-cache \
     oniguruma-dev \
     libxml2-dev \
     postgresql-dev \
+    postgresql-client \
     linux-headers \
     $PHPIZE_DEPS \
     # ── OCR & PDF tools (FREE, local) ────────────────────────
