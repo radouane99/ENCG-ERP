@@ -466,10 +466,10 @@
                     $isPrincipal = stripos($roleStr, 'Principal') !== false;
                 @endphp
                 <tr>
-                    <td class="date-cell">{{ $exam['date'] ?? 'N/A' }}</td>
-                    <td class="time-cell">{{ $exam['time'] ?? '14:30 – 16:30' }}</td>
-                    <td class="module-cell">{{ $exam['module'] ?? 'N/A' }}</td>
-                    <td class="room-cell">{{ $exam['room'] ?? 'Amphithéâtre B' }}</td>
+                    <td class="date-cell">{{ $exam['date'] ?? '—' }}</td>
+                    <td class="time-cell">{{ $exam['time'] ?? '—' }}</td>
+                    <td class="module-cell">{{ $exam['module'] ?? '—' }}</td>
+                    <td class="room-cell">{{ $exam['room'] ?? '—' }}</td>
                     <td class="role-cell">
                         <table class="role-stack" cellpadding="0" cellspacing="0">
                             <tr>

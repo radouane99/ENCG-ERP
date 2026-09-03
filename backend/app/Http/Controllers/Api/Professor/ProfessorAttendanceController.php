@@ -95,17 +95,17 @@ class ProfessorAttendanceController extends Controller
                 $user = $st?->user;
                 $fullName = trim(($user->first_name ?? '').' '.($user->last_name ?? ''));
                 if ($fullName === '') {
-                    $fullName = $user->name ?? 'Étudiant ENCG';
+                    $fullName = $user->name ?? '—';
                 }
 
                 return [
                     'id' => $st->id,
                     'user_id' => $st->user_id,
                     'name' => $fullName,
-                    'cne' => $st->cne ?? ('N13'.str_pad($st->id, 7, '0', STR_PAD_LEFT)),
-                    'apogee' => $st->student_number ?? (20240000 + $st->id),
-                    'group' => $reg->group?->name ?? 'Groupe 1',
-                    'filiere' => $reg->filiere?->name ?? 'ENCG Fès',
+                    'cne' => $st->cne ?? '—',
+                    'apogee' => $st->student_number ?? '—',
+                    'group' => $reg->group?->name ?? '—',
+                    'filiere' => $reg->filiere?->name ?? '—',
                     'status' => 'present',
                 ];
             });
@@ -119,36 +119,12 @@ class ProfessorAttendanceController extends Controller
             ]);
         }
 
-        // 5. Cohorte de secours propre par filière & groupe (12 par groupe ou 24 si section complète)
-        $allCohort = \App\Models\Student::with(['user'])->take(24)->get();
-        $finalCohort = $isAllGroups
-            ? $allCohort
-            : ($targetGroupNum === 2 ? $allCohort->slice(12, 12) : $allCohort->slice(0, 12));
-
-        $data = $finalCohort->values()->map(function ($s, $idx) use ($targetGroupNum, $isAllGroups) {
-            $fullName = trim(($s->user->first_name ?? '').' '.($s->user->last_name ?? ''));
-            if ($fullName === '') {
-                $fullName = $s->user->name ?? 'Étudiant ENCG';
-            }
-
-            return [
-                'id' => $s->id,
-                'user_id' => $s->user_id,
-                'name' => $fullName,
-                'cne' => $s->cne ?? ('N13'.str_pad($s->id, 7, '0', STR_PAD_LEFT)),
-                'apogee' => $s->student_number ?? (20240000 + $s->id),
-                'group' => $isAllGroups ? ($idx < 12 ? 'Groupe 1' : 'Groupe 2') : "Groupe {$targetGroupNum}",
-                'filiere' => 'ENCG Fès',
-                'status' => 'present',
-            ];
-        });
-
         return response()->json([
             'success' => true,
-            'data' => $data,
+            'data' => [],
             'is_all_groups' => $isAllGroups,
             'group_scope' => $isAllGroups ? 'Section Complète (G1 + G2)' : "Groupe {$targetGroupNum}",
-            'total_students' => $data->count(),
+            'total_students' => 0,
         ]);
     }
 

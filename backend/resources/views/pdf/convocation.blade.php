@@ -103,7 +103,7 @@
                         <td>{{ $exam['date'] }}</td>
                         <td>{{ str_replace(' - ', ' - ', $exam['time']) }}</td>
                         <td class="col-matiere" style="font-weight: bold;">{{ $exam['module'] }}</td>
-                        <td>{{ !empty($exam['enseignant']) && $exam['enseignant'] !== '-' ? $exam['enseignant'] : 'Prof. ENCG' }}</td>
+                        <td>{{ !empty($exam['enseignant']) && $exam['enseignant'] !== '-' ? $exam['enseignant'] : '—' }}</td>
                         <td>{{ $exam['room'] }}</td>
                         <td style="font-weight: bold;">{{ !empty($exam['seat']) && $exam['seat'] !== '-' && $exam['seat'] !== 'N/A' ? (str_contains(strtolower((string)$exam['seat']), 'n°') ? $exam['seat'] : 'N° ' . $exam['seat']) : '-' }}</td>
                     </tr>

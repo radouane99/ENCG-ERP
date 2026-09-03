@@ -140,11 +140,11 @@
             <tr>
                 <td style="padding-top: 8px;">
                     <div class="label">Filière / Spécialité</div>
-                    <div class="val">{{ $exam->module->filiere->name ?? 'Tronc Commun' }}</div>
+                    <div class="val">{{ $exam->module->filiere->name ?? '—' }}</div>
                 </td>
                 <td style="padding-top: 8px;">
                     <div class="label">Date & Horaire</div>
-                    <div class="val">{{ $exam->exam_date }} ({{ $exam->start_time ?? '09:00' }})</div>
+                    <div class="val">{{ $exam->exam_date ?? '—' }} ({{ $exam->start_time ? substr($exam->start_time, 0, 5) : '—' }})</div>
                 </td>
             </tr>
         </table>
@@ -153,7 +153,7 @@
     <table class="stats-table">
         <tr>
             <td style="width: 33%; bg-color: #f1f5f9;">
-                <div class="label">Inscrits Convroqués</div>
+                <div class="label">Inscrits Convoqués</div>
                 <div class="stat-num">{{ $totalCount }}</div>
             </td>
             <td style="width: 33%; bg-color: #ecfdf5;">
@@ -161,7 +161,7 @@
                 <div class="stat-num" style="color: #047857;">{{ $presentCount }}</div>
             </td>
             <td style="width: 33%; bg-color: #fef2f2;">
-                <div class="label" style="color: #b91c1c;">Absents Signelés</div>
+                <div class="label" style="color: #b91c1c;">Absents Signalés</div>
                 <div class="stat-num" style="color: #b91c1c;">{{ $absentCount }}</div>
             </td>
         </tr>
@@ -186,7 +186,7 @@
                 <td style="width: 40%; vertical-align: top; padding-left: 10px;">
                     <div class="sig-title">Président / Surveillant Responsable</div>
                     <div style="font-weight: bold; font-size: 12px; margin-bottom: 4px; color: #1e293b;">
-                        {{ $signedBy->name ?? 'Surveillant de Salle' }}
+                        {{ $signedBy->name ?? '—' }}
                     </div>
                     <div class="label" style="margin-bottom: 2px;">Horodatage de Validation :</div>
                     <div style="font-size: 10px; font-family: monospace; color: #64748b;">

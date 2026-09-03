@@ -97,9 +97,6 @@ class ExamConvocationService
         if ($students->isEmpty() && $exam->group && $exam->group->students) {
             $students = $exam->group->students;
         }
-        if ($students->isEmpty()) {
-            $students = Student::limit(24)->get();
-        }
 
         return $students->unique('id')->values();
     }
@@ -227,6 +224,7 @@ class ExamConvocationService
             'student.user',
             'exam.module.filiere',
             'exam.examSession',
+            'exam.surveillances.professor.user',
             'room',
         ])
             ->whereIn('student_id', $studentIds)
@@ -243,17 +241,23 @@ class ExamConvocationService
                 continue;
             }
 
-            $examsData = $studentSeatings->map(fn ($s) => [
-                'moduleName' => $s->exam->module->name ?? 'N/A',
-                'examDate' => $s->exam->exam_date?->format('d/m/Y') ?? 'N/A',
-                'examTime' => $s->exam->start_time ? substr($s->exam->start_time, 0, 5) : 'N/A',
-                'roomName' => $s->room->name ?? 'N/A',
-                'seatNumber' => $s->seat_number ? ('N° '.$s->seat_number) : '-',
-                'professorName' => 'Prof. ENCG',
-                'qrToken' => $s->qr_token,
-            ])->values()->toArray();
+            $examsData = $studentSeatings->map(function ($s) {
+                $profName = $s->exam->surveillances->first()?->professor?->user?->name
+                    ?? $s->exam->surveillances->first()?->professor?->name
+                    ?? '—';
 
-            $qrToken = $first->qr_token ?? ('ENCG-'.($first->student->cne ?? 'STUDENT'));
+                return [
+                    'moduleName' => $s->exam->module->name ?? 'N/A',
+                    'examDate' => $s->exam->exam_date?->format('d/m/Y') ?? 'N/A',
+                    'examTime' => $s->exam->start_time ? substr($s->exam->start_time, 0, 5) : 'N/A',
+                    'roomName' => $s->room->name ?? 'N/A',
+                    'seatNumber' => $s->seat_number ? ('N° '.$s->seat_number) : '-',
+                    'professorName' => $profName,
+                    'qrToken' => $s->qr_token,
+                ];
+            })->values()->toArray();
+
+            $qrToken = $first->qr_token ?? Str::uuid()->toString();
             $qrCodeBase64 = $this->generateQrBase64($qrToken);
 
             $semNum = (int) ($first->exam->module->semester_number ?? 1);
@@ -265,14 +269,20 @@ class ExamConvocationService
                 default => '5ème Année',
             };
 
-            $pdfExamsData = $studentSeatings->map(fn ($s) => [
-                'date' => $s->exam->exam_date?->format('d/m/Y') ?? 'N/A',
-                'time' => $s->exam?->formattedTimeRange() ?? '--:--',
-                'module' => $s->exam->module->name ?? 'N/A',
-                'enseignant' => 'Prof. ENCG',
-                'room' => $s->room->name ?? 'N/A',
-                'seat' => 'N° '.self::seatNumberFor($s),
-            ])->values()->toArray();
+            $pdfExamsData = $studentSeatings->map(function ($s) {
+                $profName = $s->exam->surveillances->first()?->professor?->user?->name
+                    ?? $s->exam->surveillances->first()?->professor?->name
+                    ?? '—';
+
+                return [
+                    'date' => $s->exam->exam_date?->format('d/m/Y') ?? 'N/A',
+                    'time' => $s->exam?->formattedTimeRange() ?? '--:--',
+                    'module' => $s->exam->module->name ?? 'N/A',
+                    'enseignant' => $profName,
+                    'room' => $s->room->name ?? 'N/A',
+                    'seat' => 'N° '.self::seatNumberFor($s),
+                ];
+            })->values()->toArray();
 
             $pdfData = [
                 'session_name' => $first->exam->examSession->name ?? 'Session d\'Examens',
@@ -363,7 +373,7 @@ class ExamConvocationService
             $professorData = [[
                 'id' => $professor->id,
                 'person_name' => strtoupper($professor->name ?? $professorRecord?->name ?? ''),
-                'person_id' => $professor->cin ?? $professorRecord?->cin ?? 'ENCG-ENS',
+                'person_id' => $professor->cin ?? $professorRecord?->cin ?? '—',
                 'department_name' => $professorRecord?->department?->name,
                 'department_label' => $professorRecord?->departmentDisplayLabel() ?? 'Corps Professoral — ENCG Fès',
                 'filiere_name' => $professorRecord?->departmentDisplayLabel() ?? 'Corps Professoral — ENCG Fès',
@@ -541,14 +551,31 @@ class ExamConvocationService
     {
         $exam = Exam::with(['module.filiere', 'group', 'room'])->find($examId);
 
-        $seatings = ExamSeating::with(['student.user', 'room'])
+        $rawSeatings = ExamSeating::with(['student.user', 'room'])
             ->where('exam_id', $examId)
-            ->get()
-            ->map(function ($s, $idx) {
-                $seatNumber = $s->seat_number ?: ($idx + 1);
-                $s->seat_number = is_numeric($seatNumber) ? (int)$seatNumber : $seatNumber;
-                $s->cne = $s->student?->cne ?? ('N13'.str_pad($s->student_id ?? ($idx + 1), 7, '0', STR_PAD_LEFT));
-                $s->student_name = $s->student?->user?->name ?? 'Étudiant ENCG';
+            ->orderBy('id', 'asc')
+            ->get();
+
+        $distinctSeats = $rawSeatings->pluck('seat_number')->unique();
+        $isCorrupted = $distinctSeats->count() <= 1 || $distinctSeats->contains(125);
+
+        if ($isCorrupted) {
+            foreach ($rawSeatings as $i => $item) {
+                $item->seat_number = $i + 1;
+                try {
+                    ExamSeating::where('id', $item->id)->update(['seat_number' => $i + 1]);
+                } catch (\Throwable $e) {}
+            }
+        }
+
+        $seatings = $rawSeatings
+            ->map(function ($s, $idx) use ($isCorrupted) {
+                $seatNumber = ($isCorrupted || empty($s->seat_number) || $s->seat_number == 125)
+                    ? ($idx + 1)
+                    : (is_numeric($s->seat_number) ? (int)$s->seat_number : ($idx + 1));
+                $s->seat_number = $seatNumber;
+                $s->cne = $s->student?->cne ?? '—';
+                $s->student_name = $s->student?->user?->name ?? '—';
                 return $s;
             })
             ->sortBy('seat_number')
@@ -560,11 +587,24 @@ class ExamConvocationService
 
         $incidents = ExamIncident::with(['student.user', 'reporter'])
             ->where('exam_id', $examId)
-            ->get();
+            ->latest()
+            ->get()
+            ->unique('student_id')
+            ->values();
 
-        $cachedSignature = \Illuminate\Support\Facades\Cache::get("exam_pv_signature_{$examId}");
-        if ($cachedSignature && $exam) {
-            $exam->signature_data = $cachedSignature;
+        $principalSignature = \Illuminate\Support\Facades\Cache::get("exam_pv_principal_signature_{$examId}");
+        $secondarySignature = \Illuminate\Support\Facades\Cache::get("exam_pv_secondary_signature_{$examId}");
+
+        // If secondary was mistakenly placed into principal slot
+        if ($principalSignature && $secondarySignature && $principalSignature === $secondarySignature) {
+            $principalSignature = null;
+            \Illuminate\Support\Facades\Cache::forget("exam_pv_principal_signature_{$examId}");
+        }
+
+        if ($exam) {
+            $exam->principal_signature = $principalSignature;
+            $exam->secondary_signature = $secondarySignature;
+            $exam->signature_data = $secondarySignature ?: $principalSignature;
         }
 
         return [
@@ -589,14 +629,8 @@ class ExamConvocationService
         $sent = ExamSeating::whereIn('exam_id', $examIds)->whereNotNull('sent_at')->pluck('student_id')->unique()->count();
         $totalStudents = ExamSeating::whereIn('exam_id', $examIds)->pluck('student_id')->unique()->count();
 
-        if ($totalStudents === 0) {
-            $totalStudents = Student::count() ?: 24;
-        }
-
         $totalSurveillants = ExamSurveillance::whereIn('exam_id', $examIds)->pluck('professor_id')->unique()->count();
-        if ($totalSurveillants === 0) {
-            $totalSurveillants = \App\Models\Professor::count() ?: 4;
-        }
+        $surveillantsGenerated = ExamSurveillance::whereIn('exam_id', $examIds)->whereNotNull('qr_token')->pluck('professor_id')->unique()->count();
         $confirmed = ExamSurveillance::whereIn('exam_id', $examIds)->whereNotNull('confirmed_at')->count();
 
         return [
@@ -604,12 +638,12 @@ class ExamConvocationService
             'data' => [
                 'students' => [
                     'total' => $totalStudents,
-                    'generated' => $generated ?: $totalStudents,
+                    'generated' => $generated,
                     'sent' => $sent,
                 ],
                 'surveillants' => [
                     'total' => $totalSurveillants,
-                    'generated' => $totalSurveillants,
+                    'generated' => $surveillantsGenerated,
                     'confirmed' => $confirmed,
                 ],
             ],
@@ -639,21 +673,21 @@ class ExamConvocationService
             $user = $s->student?->user;
             $name = trim(($user?->first_name ?? '').' '.($user?->last_name ?? ''));
             if (empty($name)) {
-                $name = $user?->name ?? 'Étudiant ENCG';
+                $name = $user?->name ?? '—';
             }
 
             return [
                 'id' => $s->id,
                 'student_id' => $s->student_id,
                 'student_name' => $name,
-                'cne' => $s->student?->cne ?? 'N13800000',
-                'cin' => $s->student?->cin ?? ($user?->cin ?? 'CD123456'),
-                'filiere' => $s->exam?->module?->filiere?->name ?? ($s->exam?->module?->filiere?->code ?? 'Tronc Commun ENCG'),
-                'group_name' => $s->exam?->group?->name ?? 'TC-S2-G1',
-                'exam_name' => $s->exam?->module?->name ?? 'Épreuve Académique',
+                'cne' => $s->student?->cne ?? '—',
+                'cin' => $s->student?->cin ?? ($user?->cin ?? '—'),
+                'filiere' => $s->exam?->module?->filiere?->name ?? ($s->exam?->module?->filiere?->code ?? '—'),
+                'group_name' => $s->exam?->group?->name ?? '—',
+                'exam_name' => $s->exam?->module?->name ?? '—',
                 'exam_date' => $s->exam?->exam_date?->format('Y-m-d'),
-                'start_time' => $s->exam?->start_time ? substr($s->exam->start_time, 0, 5) : '09:00',
-                'room_name' => $s->room?->name ?? ($s->exam?->room?->name ?? 'Amphithéâtre B'),
+                'start_time' => $s->exam?->start_time ? substr($s->exam->start_time, 0, 5) : '—',
+                'room_name' => $s->room?->name ?? ($s->exam?->room?->name ?? '—'),
                 'seat_number' => ExamConvocationService::seatNumberFor($s),
                 'qr_token' => $s->qr_token,
                 'sent_at' => $s->sent_at,
@@ -661,15 +695,15 @@ class ExamConvocationService
             ];
         })->values()->toArray();
 
-        $surveillants = ExamSurveillance::with(['professor', 'exam.module', 'room'])
+        $surveillants = ExamSurveillance::with(['professor.user', 'exam.module', 'room'])
             ->whereIn('exam_id', $examIds)
             ->orderBy('exam_id')
             ->get()
             ->map(function ($s) {
-                $user = $s->professor ?? User::find($s->professor_id);
+                $user = $s->professor?->user ?? ($s->professor instanceof User ? $s->professor : User::find($s->professor_id));
                 $name = trim(($user?->first_name ?? '').' '.($user?->last_name ?? ''));
                 if (empty($name)) {
-                    $name = $user?->name ?? 'Professeur ENCG';
+                    $name = $user?->name ?? ($s->professor?->name ?? '—');
                 }
 
                 return [
@@ -677,12 +711,12 @@ class ExamConvocationService
                     'professor_id' => $s->professor_id,
                     'professor_name' => $name,
                     'professor_email' => $user?->email ?? '',
-                    'cin' => $user?->cin ?? 'ENCG-ENS',
-                    'exam_name' => $s->exam?->module?->name ?? 'Surveillance Épreuve',
-                    'room_name' => $s->room?->name ?? ($s->exam?->room?->name ?? 'Amphithéâtre B'),
+                    'cin' => $user?->cin ?? '—',
+                    'exam_name' => $s->exam?->module?->name ?? '—',
+                    'room_name' => $s->room?->name ?? ($s->exam?->room?->name ?? '—'),
                     'exam_date' => $s->exam?->exam_date?->format('Y-m-d'),
-                    'start_time' => $s->exam?->start_time ? substr($s->exam->start_time, 0, 5) : '09:00',
-                    'role' => $s->role ?? 'Surveillant Principal',
+                    'start_time' => $s->exam?->start_time ? substr($s->exam->start_time, 0, 5) : '—',
+                    'role' => $s->role ?? 'Surveillant',
                     'has_attended' => (bool) $s->has_attended,
                     'sent_at' => $s->sent_at,
                     'qr_token' => $s->qr_token,

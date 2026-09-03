@@ -374,8 +374,8 @@ export default function AdminConvocationsPage() {
             student_name: curr.student_name,
             cne: curr.cne,
             cin: curr.cin || curr.student_cin,
-            filiere: curr.filiere || 'Tronc Commun ENCG',
-            group_name: curr.group_name || 'TC-S2-G1',
+            filiere: curr.filiere || '—',
+            group_name: curr.group_name || '—',
             all_seating_ids: [],
             exams: [],
             sent_at: curr.sent_at,
@@ -1066,7 +1066,7 @@ export default function AdminConvocationsPage() {
                                       </div>
                                       <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
                                         <MapPin className="w-3 h-3 text-indigo-400 shrink-0" />
-                                        <span>Amphi B · Table N° {((s.student_id || 1) % 45) + 1}</span>
+                                        <span>{s.exams?.[0]?.room_name ? `${s.exams[0].room_name} · Place ${s.exams[0].seat_number ? `N° ${s.exams[0].seat_number}` : '—'}` : (s.room_name || '—')}</span>
                                       </div>
                                     </div>
                                   </td>
@@ -1173,12 +1173,12 @@ export default function AdminConvocationsPage() {
                                 <span className="flex items-center gap-1 font-medium">
                                   <MapPin className="w-3.5 h-3.5 text-indigo-500" /> Salle assignée :
                                 </span>
-                                <span className="font-bold text-slate-900 dark:text-white">Amphi B</span>
+                                <span className="font-bold text-slate-900 dark:text-white">{s.exams?.[0]?.room_name || s.room_name || '—'}</span>
                               </div>
                               <div className="flex items-center justify-between text-slate-600 dark:text-slate-400">
                                 <span>Table attribuée :</span>
                                 <span className="font-mono font-black text-[#0f2863] dark:text-blue-400">
-                                  N° {((s.student_id || 1) % 45) + 1}
+                                  {s.exams?.[0]?.seat_number ? `N° ${s.exams[0].seat_number}` : '—'}
                                 </span>
                               </div>
                             </div>
@@ -1410,13 +1410,13 @@ export default function AdminConvocationsPage() {
                               <p className="font-black text-slate-900 dark:text-white text-sm">{exam.module?.name || 'Module'}</p>
                               <div className="flex items-center gap-3 mt-1 flex-wrap">
                                 <span className="text-xs text-slate-500 flex items-center gap-1 font-medium">
-                                  <Users className="w-3.5 h-3.5 text-slate-400" /> {exam.group?.name || 'Cohorte ENCG'}
+                                  <Users className="w-3.5 h-3.5 text-slate-400" /> {exam.group?.name || '—'}
                                 </span>
                                 <span className="text-xs text-slate-500 flex items-center gap-1 font-medium">
                                   <Clock className="w-3.5 h-3.5 text-slate-400" /> {exam.start_time?.substring(0, 5) || '--:--'} ({exam.duration_minutes || 120} min)
                                 </span>
                                 <span className="text-xs text-slate-500 flex items-center gap-1 font-medium">
-                                  <MapPin className="w-3.5 h-3.5 text-slate-400" /> {exam.room?.name || 'Amphithéâtre B'}
+                                  <MapPin className="w-3.5 h-3.5 text-slate-400" /> {exam.room?.name || '—'}
                                 </span>
                               </div>
                             </div>
@@ -1494,11 +1494,11 @@ export default function AdminConvocationsPage() {
               <div className="p-4 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-100 dark:border-slate-800 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
                 <div>
                   <span className="text-slate-400 font-medium block text-[10px] uppercase">Filière</span>
-                  <span className="font-bold text-slate-800 dark:text-slate-200">{selectedStudentDetail.filiere_name || 'Tronc Commun'}</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-200">{selectedStudentDetail.filiere_name || selectedStudentDetail.filiere || '—'}</span>
                 </div>
                 <div>
                   <span className="text-slate-400 font-medium block text-[10px] uppercase">Affectation Amphi</span>
-                  <span className="font-bold text-[#0f2863] dark:text-blue-400">{selectedStudentDetail.room_name || 'Amphithéâtre B'}</span>
+                  <span className="font-bold text-[#0f2863] dark:text-blue-400">{selectedStudentDetail.room_name || selectedStudentDetail.exams?.[0]?.room_name || '—'}</span>
                 </div>
                 <div>
                   <span className="text-slate-400 font-medium block text-[10px] uppercase">N° Table</span>
@@ -1517,7 +1517,7 @@ export default function AdminConvocationsPage() {
                     <Calendar className="w-4 h-4 text-[#0f2863]" />
                     Épreuves Assignées ({selectedStudentDetail.exams?.length || 0} modules)
                   </h4>
-                  <span className="text-xs text-slate-400">Session Normale Printemps 2026</span>
+                  <span className="text-xs text-slate-400">Session d'Examens</span>
                 </div>
 
                 <div className="border border-slate-200/80 dark:border-slate-700/80 rounded-2xl overflow-hidden shadow-sm">
@@ -1557,7 +1557,7 @@ export default function AdminConvocationsPage() {
                           <td className="px-4 py-3">
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-md font-medium">
                               <MapPin className="w-2.5 h-2.5 text-indigo-400" />
-                              {ex.room_name || 'Amphi B'}
+                              {ex.room_name || '—'}
                             </span>
                           </td>
                           <td className="px-4 py-3 text-center">

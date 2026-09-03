@@ -1468,11 +1468,11 @@ class PdfExportController extends Controller
                         $st = $seating->student;
                         if ($st) {
                             $user = $st->user;
-                            $cin = $st->cin ?? ($user?->cin ?? ('CD'.rand(100000, 999999)));
+                            $cin = $st->cin ?? ($user?->cin ?? '—');
                             $realStudents[] = [
-                                'cne' => $st->cne ?? ('N'.rand(10000000, 99999999)),
+                                'cne' => $st->cne ?? '—',
                                 'cin' => $cin,
-                                'name' => trim(($user?->first_name ?? $st->first_name ?? 'Étudiant').' '.($user?->last_name ?? $st->last_name ?? 'ENCG')),
+                                'name' => trim(($user?->first_name ?? $st->first_name ?? '').' '.($user?->last_name ?? $st->last_name ?? '')) ?: ($user?->name ?? '—'),
                             ];
                         }
                     }
@@ -1506,33 +1506,18 @@ class PdfExportController extends Controller
                     $displayGroupName = $allGroups->pluck('name')->join(' & ');
                     foreach ($allStudents as $st) {
                         $user = $st->user;
-                        $cin = $st->cin ?? ($user?->cin ?? ('CD'.rand(100000, 999999)));
+                        $cin = $st->cin ?? ($user?->cin ?? '—');
                         $realStudents[] = [
-                            'cne' => $st->cne ?? ('N'.rand(10000000, 99999999)),
+                            'cne' => $st->cne ?? '—',
                             'cin' => $cin,
-                            'name' => trim(($user?->first_name ?? $st->first_name ?? 'Étudiant').' '.($user?->last_name ?? $st->last_name ?? 'ENCG')),
+                            'name' => trim(($user?->first_name ?? $st->first_name ?? '').' '.($user?->last_name ?? $st->last_name ?? '')) ?: ($user?->name ?? '—'),
                         ];
                     }
                 }
             }
         }
 
-        // 3. Fallback if still empty: load from Student table (24 students)
-        if (empty($realStudents)) {
-            $dbStudents = Student::with('user')->limit(24)->get();
-            if ($dbStudents->isNotEmpty()) {
-                foreach ($dbStudents as $st) {
-                    $user = $st->user;
-                    $cin = $st->cin ?? ($user?->cin ?? ('CD'.rand(100000, 999999)));
-                    $realStudents[] = [
-                        'cne' => $st->cne ?? ('N'.rand(10000000, 99999999)),
-                        'cin' => $cin,
-                        'name' => trim(($user?->first_name ?? $st->first_name ?? 'Étudiant').' '.($user?->last_name ?? $st->last_name ?? 'ENCG')),
-                    ];
-                }
-            }
-        }
-
+        // If no students enrolled in group, realStudents remains empty
         $count = count($realStudents);
         $capacity = max(35, $count);
         $delegateName = 'Non assigné';

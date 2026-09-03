@@ -37,10 +37,10 @@ Route::get('/verify/card/{token}', [StudentCardController::class, 'verify']);
 Route::get('/verify/surveillance/{token}/confirm', [ConvocationController::class, 'confirmReception']);
 Route::get('/professor/surveillances/all-pdf', [PdfExportController::class, 'downloadMySurveillancesPdf']);
 Route::get('/professor/surveillances/{id}/pdf', [PdfExportController::class, 'surveillantConvocationPdf']);
-Route::get('/exams/{examId}/pv-pdf', [ExamPdfController::class, 'pvExamen']);
+Route::match(['get', 'post'], '/exams/{examId}/pv-pdf', [ExamPdfController::class, 'pvExamen']);
 
 Route::middleware(['auth:sanctum'])->group(function () {
-    Route::get('/exams/{examId}/pv-pdf', [ExamPdfController::class, 'pvExamen']);
+    Route::match(['get', 'post'], '/exams/{examId}/pv-pdf', [ExamPdfController::class, 'pvExamen']);
     Route::get('/user', function (Request $request) {
         return $request->user();
     });

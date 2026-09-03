@@ -176,8 +176,8 @@ class OrientationAdvisorService
 
         return [
             'student_id' => $student->id,
-            'student_name' => $student->user?->name ?? 'Étudiant ENCG',
-            'cne' => $student->cne ?? 'N/A',
+            'student_name' => $student->user?->name ?? '—',
+            'cne' => $student->cne ?? '—',
             'current_semester' => $student->current_semester ?? 2,
             'radar_skills' => $radarData,
             'top_recommendation' => $topMatch,

@@ -45,13 +45,13 @@
                 </td>
                 <td style="padding: 7px; border: 1px solid #cbd5e1; font-weight: bold; color: #002e5b;">
                     {{ $exam['module'] }} <br>
-                    <span style="font-size: 8.5px; color: #64748b; font-weight: normal;">Filière: {{ $exam['filiere'] ?? 'Tronc Commun' }}</span>
+                    <span style="font-size: 8.5px; color: #64748b; font-weight: normal;">Filière: {{ $exam['filiere'] ?? '—' }}</span>
                 </td>
                 <td style="padding: 7px; border: 1px solid #cbd5e1;">
-                    {{ $exam['professor'] ?? 'Prof. Titulaire' }}
+                    {{ $exam['professor'] ?? '—' }}
                 </td>
                 <td style="padding: 7px; border: 1px solid #cbd5e1; text-align: center; font-weight: bold;">
-                    {{ $exam['rooms'] ?? 'Amphi Ibn Khaldoun' }}
+                    {{ $exam['rooms'] ?? '—' }}
                 </td>
             </tr>
         @empty

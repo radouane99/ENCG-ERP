@@ -301,9 +301,9 @@ class ExamPlanningController extends Controller
 
         $examsList = $examsQuery->orderBy('exam_date')->get()->map(fn ($e) => [
             'date' => $e->exam_date?->format('d/m/Y') ?? 'À fixer',
-            'time' => $e->start_time ? substr($e->start_time, 0, 5).' ('.($e->duration_minutes ?? 120).'m)' : '09:00',
-            'module' => $e->module->name ?? 'N/A',
-            'filiere' => $e->module->filiere->name ?? 'Tronc Commun',
+            'time' => $e->start_time ? substr($e->start_time, 0, 5).' ('.($e->duration_minutes ?? 120).'m)' : '—',
+            'module' => $e->module->name ?? '—',
+            'filiere' => $e->module->filiere->name ?? '—',
             'rooms' => $e->room->name ?? 'À affecter',
         ])->toArray();
 

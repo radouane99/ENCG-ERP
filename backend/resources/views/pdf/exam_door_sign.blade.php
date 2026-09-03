@@ -137,11 +137,11 @@
             <tr>
                 <td style="padding-top: 8px;">
                     <div class="banner-label">Date & Horaire</div>
-                    <div class="banner-val">{{ $exam->exam_date ?? $exam->date ?? date('d/m/Y') }} ({{ $exam->start_time ?? '09:00' }} - {{ $exam->end_time ?? '11:00' }})</div>
+                    <div class="banner-val">{{ $exam->exam_date ?? $exam->date ?? date('d/m/Y') }} ({{ $exam->start_time ? substr($exam->start_time, 0, 5) : '—' }} - {{ $exam->end_time ? substr($exam->end_time, 0, 5) : '—' }})</div>
                 </td>
                 <td style="padding-top: 8px;" colspan="2">
                     <div class="banner-label">Groupe / Filière</div>
-                    <div class="banner-val">{{ $exam->group->name ?? 'Tous les groupes' }}</div>
+                    <div class="banner-val">{{ $exam->group->name ?? ($exam->module?->filiere?->name ?? '—') }}</div>
                 </td>
             </tr>
         </table>
@@ -159,17 +159,17 @@
             @forelse($seatings as $seating)
                 <tr>
                     <td style="text-align: center;">
-                        <span class="seat-badge">Siège {{ sprintf('%02d', $seating->seat_number ?? 1) }}</span>
+                        <span class="seat-badge">Siège {{ !empty($seating->seat_number) ? sprintf('%02d', $seating->seat_number) : '—' }}</span>
                     </td>
                     <td style="font-weight: bold; color: #1e293b;">
                         @if(!empty($seating->last_name) || !empty($seating->first_name))
                             {{ strtoupper($seating->last_name ?? '') }} {{ ucfirst($seating->first_name ?? '') }}
                         @else
-                            {{ $seating->full_name ?? $seating->student_name ?? 'Étudiant' }}
+                            {{ $seating->full_name ?? $seating->student_name ?? '—' }}
                         @endif
                     </td>
                     <td style="font-family: monospace; color: #475569;">
-                        {{ $seating->cne ?? $seating->cin ?? 'N/A' }}
+                        {{ $seating->cne ?? $seating->cin ?? '—' }}
                     </td>
                 </tr>
             @empty

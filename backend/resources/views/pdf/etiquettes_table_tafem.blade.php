@@ -20,19 +20,19 @@
                     <td width="50%" style="border: 2px dashed #0f2863; background-color: #f8fafc; border-radius: 8px; padding: 10px; vertical-align: top;">
                         <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #cbd5e1; padding-bottom: 4px; margin-bottom: 6px;">
                             <strong style="font-size: 11px; color: #0f2863;">ENCG FÈS — TAFEM 2026</strong>
-                            <span style="font-size: 11px; font-weight: bold; color: #e6007e;">TABLE N° {{ $label['table_number'] ?? rand(1, 450) }}</span>
+                            <span style="font-size: 11px; font-weight: bold; color: #e6007e;">TABLE N° {{ $label['table_number'] ?? ($label['seat_number'] ?? '—') }}</span>
                         </div>
                         
                         <div style="font-size: 12px; font-weight: bold; color: #1e293b; margin-bottom: 3px;">
-                            {{ strtoupper($label['name'] ?? 'SARA ALAMI') }}
+                            {{ strtoupper($label['name'] ?? '—') }}
                         </div>
                         
                         <div style="font-size: 10px; font-family: monospace; color: #475569;">
-                            CNE: {{ $label['cne'] ?? 'N13809281' }} | CIN: {{ $label['cin'] ?? 'CD729102' }}
+                            CNE: {{ $label['cne'] ?? '—' }} | CIN: {{ $label['cin'] ?? '—' }}
                         </div>
 
                         <div style="font-size: 10px; font-weight: bold; color: #059669; margin-top: 4px;">
-                            {{ $label['amphi'] ?? 'Amphi Al Khwarizmi' }}
+                            {{ $label['amphi'] ?? ($label['room'] ?? '—') }}
                         </div>
 
                         <div style="font-size: 8px; color: #94a3b8; text-align: right; margin-top: 6px;">

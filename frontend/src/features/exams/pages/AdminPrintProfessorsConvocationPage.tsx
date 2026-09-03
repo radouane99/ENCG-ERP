@@ -1,14 +1,31 @@
-import { Link } from 'react-router-dom'
-import { Printer, ArrowLeft } from 'lucide-react'
+import { Link, useSearchParams } from 'react-router-dom'
+import { Printer, ArrowLeft, Loader2 } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import api from '@shared/lib/api'
 
 export default function AdminPrintProfessorsConvocationPage() {
-  const surveillances = [
-    { date: '01/07/2026', time: '09:00 - 10:30', module: 'Introduction - Génie Informatique', groupe: 'Génie Informatique - Groupe 1', salle: 'Amphi Al Khwarizmi', role: 'Principal' },
-    { date: '01/07/2026', time: '11:00 - 12:30', module: 'Avancé - Génie Informatique', groupe: 'Génie Informatique - Groupe 2', salle: 'Amphi Al Khwarizmi', role: 'Principal' },
-    { date: '01/07/2026', time: '14:30 - 16:00', module: 'Introduction - Économie & Gestion', groupe: 'Économie & Gestion - Groupe 1', salle: 'Salle TD 01', role: 'Principal' },
-    { date: '01/07/2026', time: '16:30 - 18:00', module: 'Avancé - Économie & Gestion', groupe: 'Économie & Gestion - Groupe 2', salle: 'Salle TD 01', role: 'Principal' },
-    { date: '02/07/2026', time: '09:00 - 10:30', module: 'Avancé - Marketing & Commerce', groupe: 'Marketing & Commerce - Groupe 2', salle: 'Salle TD 02', role: 'Principal' },
-  ]
+  const [searchParams] = useSearchParams()
+  const sessionId = searchParams.get('session_id') || searchParams.get('sessionId') || '1'
+  const targetProfId = searchParams.get('professor_id')
+
+  const { data: convData, isLoading } = useQuery({
+    queryKey: ['admin-print-professors-convocations', sessionId],
+    queryFn: async () => {
+      const res = await api.get(`/convocations/session/${sessionId}/list`)
+      return res.data?.data || res.data || {}
+    }
+  })
+
+  const allSurveillants = convData?.surveillants || []
+  
+  const filteredSurveillances = targetProfId
+    ? allSurveillants.filter((s: any) => String(s.professor_id) === String(targetProfId))
+    : allSurveillants
+
+  const profName = filteredSurveillances[0]?.professor_name || 'Corps Professoral ENCG'
+  const profEmail = filteredSurveillances[0]?.professor_email || ''
+  const profCin = filteredSurveillances[0]?.cin || '—'
+  const refCode = filteredSurveillances[0]?.qr_token || 'SURV-ENCG'
 
   return (
     <div className="min-h-screen bg-slate-100 p-8 pb-20 flex flex-col items-center font-sans">
@@ -18,7 +35,7 @@ export default function AdminPrintProfessorsConvocationPage() {
         </Link>
         <button 
           onClick={() => window.print()}
-          className="h-10 px-6 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-sm font-bold flex items-center gap-2 transition-colors shadow-sm"
+          className="h-10 px-6 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-sm font-bold flex items-center gap-2 transition-colors shadow-sm cursor-pointer"
         >
           <Printer className="w-4 h-4" /> Imprimer / PDF
         </button>
@@ -44,7 +61,7 @@ export default function AdminPrintProfessorsConvocationPage() {
         {/* Title */}
         <div className="text-center mb-8">
           <h2 className="text-2xl font-black text-[#0f2863] uppercase tracking-widest mb-2">CONVOCATION DE SURVEILLANCE D'EXAMENS</h2>
-          <p className="text-sm font-bold text-slate-700">Année Académique : 2025/2026 — Session : Normale Automne</p>
+          <p className="text-sm font-bold text-slate-700">Année Académique : {new Date().getFullYear()}/{new Date().getFullYear() + 1} — Session d'Examens</p>
         </div>
 
         {/* Prof Info */}
@@ -52,15 +69,15 @@ export default function AdminPrintProfessorsConvocationPage() {
           <div className="space-y-4">
             <div>
               <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">NOM & PRÉNOM</p>
-              <p className="text-lg font-black text-[#0f2863] uppercase">PROF. HICHAM ALAOUI</p>
+              <p className="text-lg font-black text-[#0f2863] uppercase">{profName}</p>
             </div>
             <div>
-              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">ADRESSE EMAIL</p>
-              <p className="text-[8px] font-bold text-slate-500">Vérification Officielle Surveillance ENCG Fès</p>
+              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">CIN & CONTACT</p>
+              <p className="text-[11px] font-semibold text-slate-600">{profCin} {profEmail ? `• ${profEmail}` : ''}</p>
             </div>
           </div>
-          <div>
-            <p className="text-[9px] text-slate-400">Pour le Directeur</p>
+          <div className="text-right">
+            <p className="text-[9px] text-slate-400 uppercase font-bold">Direction des Études</p>
             <p className="text-lg font-black text-blue-500">★ ENCG ★</p>
           </div>
         </div>
@@ -71,30 +88,38 @@ export default function AdminPrintProfessorsConvocationPage() {
 
         {/* Table */}
         <div className="mb-12">
-          <table className="w-full text-[11px] border-collapse">
-            <thead>
-              <tr className="bg-[#0f2863] text-white">
-                <th className="py-3 px-3 font-bold text-center border border-[#0f2863]">DATE</th>
-                <th className="py-3 px-3 font-bold text-center border border-[#0f2863]">HORAIRE</th>
-                <th className="py-3 px-3 font-bold text-left border border-[#0f2863]">MODULE / MATIÈRE</th>
-                <th className="py-3 px-3 font-bold text-left border border-[#0f2863]">GROUPE</th>
-                <th className="py-3 px-3 font-bold text-center border border-[#0f2863]">SALLE</th>
-                <th className="py-3 px-3 font-bold text-center border border-[#0f2863]">RÔLE</th>
-              </tr>
-            </thead>
-            <tbody>
-              {surveillances.map((sv, idx) => (
-                <tr key={idx} className="border border-[#0f2863]/20">
-                  <td className="py-4 px-3 text-center border border-[#0f2863]/20">{sv.date}</td>
-                  <td className="py-4 px-3 text-center font-bold border border-[#0f2863]/20">{sv.time}</td>
-                  <td className="py-4 px-3 font-bold text-[#0f2863] border border-[#0f2863]/20">{sv.module}</td>
-                  <td className="py-4 px-3 text-slate-600 border border-[#0f2863]/20">{sv.groupe}</td>
-                  <td className="py-4 px-3 text-center font-bold text-rose-700 border border-[#0f2863]/20">{sv.salle}</td>
-                  <td className="py-4 px-3 text-center font-black text-[#0f2863] border border-[#0f2863]/20">{sv.role}</td>
+          {isLoading ? (
+            <div className="p-8 text-center text-slate-400 flex items-center justify-center gap-2">
+              <Loader2 className="w-4 h-4 animate-spin" /> Chargement des épreuves assignées...
+            </div>
+          ) : filteredSurveillances.length === 0 ? (
+            <div className="p-8 text-center text-slate-500 border border-dashed rounded-xl">
+              Aucune épreuve de surveillance enregistrée pour cette session.
+            </div>
+          ) : (
+            <table className="w-full text-[11px] border-collapse">
+              <thead>
+                <tr className="bg-[#0f2863] text-white">
+                  <th className="py-3 px-3 font-bold text-center border border-[#0f2863]">DATE</th>
+                  <th className="py-3 px-3 font-bold text-center border border-[#0f2863]">HORAIRE</th>
+                  <th className="py-3 px-3 font-bold text-left border border-[#0f2863]">MODULE / MATIÈRE</th>
+                  <th className="py-3 px-3 font-bold text-center border border-[#0f2863]">SALLE</th>
+                  <th className="py-3 px-3 font-bold text-center border border-[#0f2863]">RÔLE</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filteredSurveillances.map((sv: any, idx: number) => (
+                  <tr key={idx} className="border border-[#0f2863]/20">
+                    <td className="py-4 px-3 text-center border border-[#0f2863]/20 font-bold">{sv.exam_date || '—'}</td>
+                    <td className="py-4 px-3 text-center font-bold border border-[#0f2863]/20">{sv.start_time || '—'}</td>
+                    <td className="py-4 px-3 font-bold text-[#0f2863] border border-[#0f2863]/20">{sv.exam_name || '—'}</td>
+                    <td className="py-4 px-3 text-center font-bold text-rose-700 border border-[#0f2863]/20">{sv.room_name || '—'}</td>
+                    <td className="py-4 px-3 text-center font-black text-[#0f2863] border border-[#0f2863]/20">{sv.role || 'Surveillant'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
 
         {/* Instructions */}
@@ -113,13 +138,12 @@ export default function AdminPrintProfessorsConvocationPage() {
         {/* Footer */}
         <div className="flex justify-between items-end mt-auto pt-8">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 bg-slate-800 rounded">
-               {/* QR Code */}
-               <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=ENCG-SURV-2026-000001`} alt="QR" className="w-full h-full object-cover" />
+            <div className="w-16 h-16 bg-slate-800 rounded flex items-center justify-center text-white text-[10px] font-bold">
+              QR
             </div>
             <div>
               <p className="text-[8px] font-bold text-slate-500">Vérification Officielle Surveillance ENCG Fès</p>
-              <p className="text-[7px] text-slate-400">Réf : SURV-2026-000001</p>
+              <p className="text-[7px] text-slate-400">Réf : {refCode}</p>
             </div>
           </div>
           

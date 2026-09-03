@@ -374,7 +374,7 @@ export default function AdminExamPvArchivePage() {
 
                         {/* Room */}
                         <td className="p-3.5 text-center font-bold text-slate-700 dark:text-slate-300">
-                          {exam.room?.name || 'Amphi R'}
+                          {exam.room?.name || '—'}
                         </td>
 
                         {/* Lock Status */}
@@ -488,10 +488,10 @@ export default function AdminExamPvArchivePage() {
 
               <div className="space-y-3 text-xs">
                 <div className="grid grid-cols-2 gap-3 bg-slate-50 dark:bg-slate-800 p-4 rounded-2xl border border-slate-200/60 dark:border-slate-700">
-                  <div><b>Date d'Épreuve :</b> {inspectedExam.exam_date || 'N/A'}</div>
-                  <div><b>Horaire :</b> {inspectedExam.start_time || '08:30'}</div>
-                  <div><b>Salle / Amphi :</b> {inspectedExam.room?.name || 'Amphi A'}</div>
-                  <div><b>Groupe Cible :</b> {inspectedExam.group?.name || 'Tous Groupes'}</div>
+                  <div><b>Date d'Épreuve :</b> {inspectedExam.exam_date || '—'}</div>
+                  <div><b>Horaire :</b> {inspectedExam.start_time ? inspectedExam.start_time.substring(0, 5) : '—'}</div>
+                  <div><b>Salle / Amphi :</b> {inspectedExam.room?.name || '—'}</div>
+                  <div><b>Groupe Cible :</b> {inspectedExam.group?.name || '—'}</div>
                   <div><b>Émargés / Présents :</b> <strong>{inspectedExam.presents_count ?? 0} / {inspectedExam.generated_count ?? 0} Étudiants</strong></div>
                   <div><b>Copies Enveloppe :</b> <strong>{inspectedExam.presents_count ?? inspectedExam.generated_count ?? 0} Copies Scellées</strong></div>
                 </div>
@@ -569,14 +569,14 @@ export default function AdminExamPvArchivePage() {
             {filteredExams.map((exam: any, idx: number) => (
               <tr key={exam.id} style={{ backgroundColor: idx % 2 === 0 ? '#f8fafc' : 'white' }}>
                 <td style={{ padding: '6px 8px', border: '1px solid #cbd5e1', fontWeight: 'bold' }}>{idx + 1}</td>
-                <td style={{ padding: '6px 8px', border: '1px solid #cbd5e1' }}>{exam.exam_date || '03/06/2026'}</td>
-                <td style={{ padding: '6px 8px', border: '1px solid #cbd5e1', fontWeight: 'bold' }}>{exam.module?.name || 'Examen'}</td>
-                <td style={{ padding: '6px 8px', border: '1px solid #cbd5e1' }}>{exam.module?.filiere?.code || 'ENCG'} (S{exam.module?.semester_number || 1})</td>
-                <td style={{ padding: '6px 8px', border: '1px solid #cbd5e1' }}>{exam.room?.name || 'Amphi A'}</td>
+                <td style={{ padding: '6px 8px', border: '1px solid #cbd5e1' }}>{exam.exam_date || '—'}</td>
+                <td style={{ padding: '6px 8px', border: '1px solid #cbd5e1', fontWeight: 'bold' }}>{exam.module?.name || '—'}</td>
+                <td style={{ padding: '6px 8px', border: '1px solid #cbd5e1' }}>{exam.module?.filiere?.code || '—'} {exam.module?.semester_number ? `(S${exam.module.semester_number})` : ''}</td>
+                <td style={{ padding: '6px 8px', border: '1px solid #cbd5e1' }}>{exam.room?.name || '—'}</td>
                 <td style={{ padding: '6px 8px', border: '1px solid #cbd5e1', fontWeight: 'bold', color: exam.is_locked ? '#059669' : '#d97706' }}>
                   {exam.is_locked ? 'SCELLÉ (SHA-256)' : 'EN COURS'}
                 </td>
-                <td style={{ padding: '6px 8px', border: '1px solid #cbd5e1' }}>{exam.generated_count || 45}</td>
+                <td style={{ padding: '6px 8px', border: '1px solid #cbd5e1' }}>{exam.generated_count ?? 0}</td>
                 <td style={{ padding: '6px 8px', border: '1px solid #cbd5e1', color: exam.incidents_count ? '#dc2626' : '#64748b' }}>
                   {exam.incidents_count ? `${exam.incidents_count} cas` : 'Néant'}
                 </td>

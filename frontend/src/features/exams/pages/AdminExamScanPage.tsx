@@ -55,19 +55,23 @@ export default function AdminExamScanPage() {
   });
 
   // Current Amphi Context Filter
-  const [currentAmphiFilter, setCurrentAmphiFilter] = useState('Amphi Al Khwarizmi');
+  const [currentAmphiFilter, setCurrentAmphiFilter] = useState('');
 
-  const amphiList = (dbRooms && dbRooms.length > 0) ? dbRooms.map((r: any, idx: number) => ({
-    name: r.name,
-    gate: idx === 0 ? 'Porte A' : idx === 1 ? 'Porte B' : `Étage ${idx}`,
-    cap: r.capacity || 200,
-    count: Math.min(r.capacity || 200, Math.floor((r.capacity || 200) * (0.65 + ((idx % 3) * 0.12)))),
-    icon: idx === 0 ? '🏛️' : idx === 1 ? '🏫' : '🚪'
-  })) : [
-    { name: 'Amphi Al Khwarizmi', gate: 'Porte A', cap: 250, count: 142, icon: '🏛️' },
-    { name: 'Amphi Ibn Sina', gate: 'Porte B', cap: 200, count: 188, icon: '🏫' },
-    { name: 'Salle R12', gate: '2ème Étage', cap: 45, count: 32, icon: '🚪' }
-  ];
+  const amphiList = useMemo(() => {
+    return (dbRooms && dbRooms.length > 0) ? dbRooms.map((r: any, idx: number) => ({
+      name: r.name,
+      gate: idx === 0 ? 'Porte A' : idx === 1 ? 'Porte B' : `Étage ${idx}`,
+      cap: r.capacity || 100,
+      count: 0,
+      icon: idx === 0 ? '🏛️' : idx === 1 ? '🏫' : '🚪'
+    })) : [];
+  }, [dbRooms]);
+
+  useEffect(() => {
+    if (amphiList.length > 0 && !currentAmphiFilter) {
+      setCurrentAmphiFilter(amphiList[0].name);
+    }
+  }, [amphiList, currentAmphiFilter]);
 
   // Text-to-Speech Voice Welcome Synthesizer
   const speakWelcomeMessage = (name: string, seat: string, row: string) => {
@@ -86,8 +90,12 @@ export default function AdminExamScanPage() {
     toast.loading("📡 Analyse du signal Wi-Fi et de la passerelle IP de l'amphi...");
     setTimeout(() => {
       toast.dismiss();
-      setCurrentAmphiFilter('Amphi Al Khwarizmi');
-      toast.success("📡 Balise réseau détectée : Amphi Al Khwarizmi (Porte A - IP: 192.168.10.42) pré-sélectionné !");
+      if (amphiList.length > 0) {
+        setCurrentAmphiFilter(amphiList[0].name);
+        toast.success(`📡 Salle/Amphi détecté(e) : ${amphiList[0].name}`);
+      } else {
+        toast.info("Aucune salle configurée.");
+      }
     }, 800);
   };
 
@@ -217,12 +225,14 @@ export default function AdminExamScanPage() {
       // 1. Query real DB for student or seating by CNE / QR Token
       let realStudentName = '';
       let realCne = cleanToken;
-      let realCin = 'CD' + Math.floor(100000 + Math.random() * 900000);
-      let realFiliere = 'Management & Finance (ENCG Fès)';
-      let realRoom = 'Amphi Al Khwarizmi';
-      let realSeatNum = (Math.abs(cleanToken.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)) % 45) + 1;
-      let realRowLetter = `Rangée ${String.fromCharCode(65 + (realSeatNum % 5))}`;
+      let realCin = '—';
+      let realFiliere = '—';
+      let realRoom = currentAmphiFilter || '—';
+      let realSeatNum = '—';
+      let realRowLetter = '';
       let attendanceStatus = 'present';
+      let realModuleName = '—';
+      let realStartTime = '—';
 
       try {
         const dbRes = await api.get('/admin/students', { params: { search: cleanToken } });
@@ -230,8 +240,8 @@ export default function AdminExamScanPage() {
         if (found) {
           realStudentName = `${found.first_name || found.user?.first_name || ''} ${found.last_name || found.user?.last_name || ''}`.trim();
           realCne = found.cne || cleanToken;
-          realCin = found.cin || realCin;
-          realFiliere = found.filiere?.name || realFiliere;
+          realCin = found.cin || found.user?.cin || '—';
+          realFiliere = found.filiere?.name || '—';
         }
       } catch (e) {}
 
@@ -239,22 +249,29 @@ export default function AdminExamScanPage() {
         // Fallback API convocation call
         try {
           const res = await api.post('/convocations/verify-qr', { token: cleanToken });
-          const data = res.data || res;
+          const data = res.data?.data || res.data || res;
           if (data?.student_name) {
             realStudentName = data.student_name;
             realCne = data.cne || realCne;
             realCin = data.cin || realCin;
             realFiliere = data.filiere_name || realFiliere;
             realRoom = data.room_name || realRoom;
+            realModuleName = data.module_name || realModuleName;
+            realStartTime = data.start_time || realStartTime;
+            if (data.seat_number) {
+              realSeatNum = String(data.seat_number);
+            }
           }
         } catch (e) {}
       }
 
       if (!realStudentName) {
-        realStudentName = 'Étudiant ENCG';
+        setErrorMsg('❌ QR Code invalide : étudiant introuvable dans la base de données.');
+        setLoading(false);
+        return;
       }
 
-      const isWrongRoom = currentAmphiFilter && realRoom && !realRoom.toLowerCase().includes(currentAmphiFilter.toLowerCase().split(' ')[0]);
+      const isWrongRoom = currentAmphiFilter && realRoom && realRoom !== '—' && !realRoom.toLowerCase().includes(currentAmphiFilter.toLowerCase().split(' ')[0]);
 
       const updatedStudent = {
         qr_token: cleanToken,
@@ -262,12 +279,12 @@ export default function AdminExamScanPage() {
         cne: realCne,
         cin: realCin,
         filiere: realFiliere,
-        module_name: 'Mathématiques pour la Gestion',
+        module_name: realModuleName,
         room_name: realRoom,
-        seat_number: `Table N° ${realSeatNum}`,
+        seat_number: realSeatNum !== '—' ? `Table N° ${realSeatNum}` : '—',
         row_letter: realRowLetter,
         exam_date: new Date().toISOString().substring(0, 10),
-        start_time: '08:30',
+        start_time: realStartTime,
         status: attendanceStatus,
         is_wrong_room: isWrongRoom
       };

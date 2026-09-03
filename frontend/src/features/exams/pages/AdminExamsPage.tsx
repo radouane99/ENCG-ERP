@@ -582,14 +582,14 @@ export default function AdminExamsPage() {
             return (
               <ExamCard key={exam.id}
                 id={exam.id}
-                title={typeof exam.module === 'object' ? (exam.module?.name || 'Examen Module') : (exam.module || 'Examen Module')}
-                group={typeof exam.group === 'object' ? (exam.group?.name || 'Tous Groupes') : (exam.group || 'Tous Groupes')}
-                filiereCode={exam.module?.filiere?.code || 'ENCG'}
-                filiereName={exam.module?.filiere?.name || 'Tronc Commun ENCG'}
+                title={typeof exam.module === 'object' ? (exam.module?.name || '—') : (exam.module || '—')}
+                group={typeof exam.group === 'object' ? (exam.group?.name || '—') : (exam.group || '—')}
+                filiereCode={exam.module?.filiere?.code || '—'}
+                filiereName={exam.module?.filiere?.name || '—'}
                 semester={exam.module?.semester_number || 1}
                 time={`${exam.start_time?.substring(0, 5) || '08:30'} – ${endTimeStr}`}
                 duration={`${exam.duration_minutes || 120} min`}
-                room={typeof exam.room === 'object' ? (exam.room?.name || 'Amphithéâtre B') : (exam.room || 'Amphithéâtre B')}
+                room={typeof exam.room === 'object' ? (exam.room?.name || '—') : (exam.room || '—')}
                 surveillants={proctorsText}
                 day={day}
                 month={monthNames[dateObj.getMonth()]}

@@ -236,24 +236,31 @@
         <table class="meta-box">
             <tr>
                 <td class="meta-label">Filière / Niveau :</td>
-                <td class="meta-val">{{ $exam->module->filiere->name ?? 'Tronc Commun ENCG' }} (S{{ $exam->module->semester_number ?? 1 }})</td>
+                <td class="meta-val">{{ $exam->module->filiere->name ?? '—' }} (S{{ $exam->module->semester_number ?? $exam->module->semester ?? 1 }})</td>
                 <td class="meta-label">Salle / Amphi :</td>
-                <td class="meta-val">{{ $exam->room->name ?? 'Amphithéâtre B' }}</td>
+                <td class="meta-val">{{ $exam->room->name ?? '—' }}</td>
             </tr>
             <tr>
                 <td class="meta-label">Module & Code :</td>
-                <td class="meta-val">{{ $exam->module->name ?? 'Comptabilité Générale I' }} ({{ $exam->module->code ?? 'TC-S1-M02' }})</td>
+                <td class="meta-val">{{ $exam->module->name ?? '—' }} ({{ $exam->module->code ?? '—' }})</td>
                 <td class="meta-label">Groupe Cible :</td>
-                <td class="meta-val">{{ $exam->group->name ?? 'Tous Groupes' }}</td>
+                <td class="meta-val">{{ $exam->group->name ?? '—' }}</td>
             </tr>
             <tr>
                 <td class="meta-label">Date & Horaire :</td>
                 <td class="meta-val">
-                    {{ $exam->exam_date ? \Carbon\Carbon::parse($exam->exam_date)->format('d/m/Y') : '21/08/2026' }} 
-                    • {{ substr($exam->start_time ?? '16:30', 0, 5) }} ({{ $exam->duration_minutes ?? 120 }} min)
+                    {{ $exam->exam_date ? \Carbon\Carbon::parse($exam->exam_date)->format('d/m/Y') : '—' }} 
+                    @if($exam->start_time)
+                        • {{ substr($exam->start_time, 0, 5) }} ({{ $exam->duration_minutes ?? 120 }} min)
+                    @endif
                 </td>
                 <td class="meta-label">Surveillants :</td>
-                <td class="meta-val">Pr. Amina Tazi (Principal) • Pr. Amina Chraibi (Secondaire)</td>
+                <td class="meta-val">
+                    {{ $principalName ?? 'Surveillant Principal' }} (Principal)
+                    @if(!empty($secondaryName) && $secondaryName !== ($principalName ?? ''))
+                        • {{ $secondaryName }} (Secondaire)
+                    @endif
+                </td>
             </tr>
             <tr>
                 <td class="meta-label">Statut du PV :</td>
@@ -294,13 +301,13 @@
                 @forelse($seatings as $idx => $seating)
                 <tr>
                     <td class="text-center" style="font-weight: bold; color: #001A4B;">
-                        {{ $seating->seat_number ?: ('N° ' . str_pad($idx + 1, 2, '0', STR_PAD_LEFT)) }}
+                        {{ ($seating->seat_number && !str_contains($seating->seat_number, '125')) ? $seating->seat_number : ('N° ' . str_pad($idx + 1, 2, '0', STR_PAD_LEFT)) }}
                     </td>
                     <td class="text-center font-mono font-bold" style="color: #475569;">
-                        {{ $seating->cne ?: ($seating->student?->cne ?? 'N/A') }}
+                        {{ $seating->cne ?: ($seating->student?->cne ?? '—') }}
                     </td>
                     <td class="text-left" style="font-weight: bold; color: #0f172a; padding-left: 6px;">
-                        {{ $seating->student_name ?: ($seating->student?->user?->name ?? 'Étudiant ENCG') }}
+                        {{ $seating->student_name ?: ($seating->student?->user?->name ?? '—') }}
                     </td>
 
                     @if($mode === 'emargement')
@@ -342,10 +349,10 @@
                         </tr>
                         @foreach($incidents as $inc)
                         <tr>
-                            <td style="padding: 2px 4px; border: 1px solid #fca5a5; font-weight: bold;">{{ $inc->cne ?? ($inc->student?->cne ?? 'N/A') }}</td>
-                            <td style="padding: 2px 4px; border: 1px solid #fca5a5; font-weight: bold;">{{ $inc->student_name ?? ($inc->student?->user?->name ?? 'N/A') }}</td>
+                            <td style="padding: 2px 4px; border: 1px solid #fca5a5; font-weight: bold;">{{ $inc->cne ?? ($inc->student?->cne ?? '—') }}</td>
+                            <td style="padding: 2px 4px; border: 1px solid #fca5a5; font-weight: bold;">{{ $inc->student_name ?? ($inc->student?->user?->name ?? '—') }}</td>
                             <td style="padding: 2px 4px; border: 1px solid #fca5a5; color: #b91c1c; font-weight: bold;">{{ strtoupper($inc->type ?? 'FRAUDE') }}</td>
-                            <td style="padding: 2px 4px; border: 1px solid #fca5a5;">{{ $inc->confiscated_items ?: ($inc->description ?: 'N/A') }}</td>
+                            <td style="padding: 2px 4px; border: 1px solid #fca5a5;">{{ $inc->confiscated_items ?: ($inc->description ?: '—') }}</td>
                         </tr>
                         @endforeach
                     </table>
@@ -384,11 +391,21 @@
                         Surveillant Principal
                     </div>
                     <div style="font-size: 7px; color: #1e293b; font-weight: bold; margin-top: 1px;">
-                        Pr. Amina Tazi
+                        {{ $principalName ?? 'Surveillant Principal' }}
                     </div>
-                    <div style="margin-top: 2px; border: 1px solid #16a34a; background: #f0fdf4; color: #15803d; font-size: 5.5px; font-weight: bold; padding: 1px 4px; border-radius: 2px; display: inline-block;">
-                        [✓] SIGNÉ ÉLECTRONIQUEMENT
-                    </div>
+                    @if(!empty($principalSignatureImg))
+                        <div style="margin-top: 1px;">
+                            <img src="{{ $principalSignatureImg }}" style="max-height: 18px; max-width: 85px; margin: 0 auto; display: block;">
+                        </div>
+                    @elseif(!empty($hasPrincipalSignature))
+                        <div style="margin-top: 2px; border: 1px solid #16a34a; background: #f0fdf4; color: #15803d; font-size: 5.5px; font-weight: bold; padding: 1px 4px; border-radius: 2px; display: inline-block;">
+                            SIGNÉ ÉLECTRONIQUEMENT
+                        </div>
+                    @else
+                        <div style="margin-top: 2px; border: 1px dashed #94a3b8; color: #64748b; font-size: 5.5px; font-weight: bold; padding: 1px 4px; border-radius: 2px; display: inline-block;">
+                            EN ATTENTE DE SIGNATURE
+                        </div>
+                    @endif
                 </td>
                 <td style="width: 2%;"></td>
                 <td style="width: 32%; text-align: center; border: 1px solid #001A4B; background-color: #f8fafc; padding: 4px; border-radius: 2px;">
@@ -396,15 +413,19 @@
                         Surveillant Secondaire
                     </div>
                     <div style="font-size: 7px; color: #1e293b; font-weight: bold; margin-top: 1px;">
-                        Pr. Amina Chraibi
+                        {{ $secondaryName ?? 'Surveillant Secondaire' }}
                     </div>
                     @if(!empty($secondarySignatureImg))
                         <div style="margin-top: 1px;">
                             <img src="{{ $secondarySignatureImg }}" style="max-height: 18px; max-width: 85px; margin: 0 auto; display: block;">
                         </div>
-                    @else
+                    @elseif(!empty($hasSecondarySignature))
                         <div style="margin-top: 2px; border: 1px solid #16a34a; background: #f0fdf4; color: #15803d; font-size: 5.5px; font-weight: bold; padding: 1px 4px; border-radius: 2px; display: inline-block;">
-                            [✓] SIGNÉ ÉLECTRONIQUEMENT
+                            SIGNÉ ÉLECTRONIQUEMENT
+                        </div>
+                    @else
+                        <div style="margin-top: 2px; border: 1px dashed #94a3b8; color: #64748b; font-size: 5.5px; font-weight: bold; padding: 1px 4px; border-radius: 2px; display: inline-block;">
+                            EN ATTENTE DE SIGNATURE
                         </div>
                     @endif
                 </td>
@@ -454,33 +475,38 @@
                     <table style="width: 100%; font-size: 8px; border-collapse: collapse; margin-bottom: 6px;">
                         <tr>
                             <td style="width: 25%; font-weight: bold; color: #475569; padding: 2px 0;">Étudiant Impliqué :</td>
-                            <td style="width: 35%; font-weight: 900; color: #0f172a;">{{ $incident->student_name ?? 'Hajar El Fassi' }}</td>
+                            <td style="width: 35%; font-weight: 900; color: #0f172a;">{{ $incident->student_name ?? '—' }}</td>
                             <td style="width: 18%; font-weight: bold; color: #475569; padding: 2px 0;">CNE / Apogée :</td>
-                            <td style="width: 22%; font-weight: 900; color: #0f172a; font-family: monospace;">{{ $incident->cne ?? 'N130000007' }}</td>
+                            <td style="width: 22%; font-weight: 900; color: #0f172a; font-family: monospace;">{{ $incident->cne ?? '—' }}</td>
                         </tr>
                         <tr>
                             <td style="font-weight: bold; color: #475569; padding: 2px 0;">Filière & Niveau :</td>
-                            <td style="font-weight: bold; color: #0f172a;">{{ $exam->module->filiere->name ?? 'Tronc Commun ENCG' }} (S1)</td>
+                            <td style="font-weight: bold; color: #0f172a;">{{ $exam->module->filiere->name ?? '—' }} (S{{ $exam->module->semester_number ?? $exam->module->semester ?? 1 }})</td>
                             <td style="font-weight: bold; color: #475569; padding: 2px 0;">Lieu / Salle :</td>
-                            <td style="font-weight: bold; color: #0f172a;">{{ $exam->room->name ?? 'Amphithéâtre B' }}</td>
+                            <td style="font-weight: bold; color: #0f172a;">{{ $exam->room->name ?? '—' }}</td>
                         </tr>
                         <tr>
                             <td style="font-weight: bold; color: #475569; padding: 2px 0;">Module & Épreuve :</td>
-                            <td style="font-weight: bold; color: #0f172a;">{{ $exam->module->name ?? 'Comptabilité Générale I' }}</td>
+                            <td style="font-weight: bold; color: #0f172a;">{{ $exam->module->name ?? '—' }}</td>
                             <td style="font-weight: bold; color: #475569; padding: 2px 0;">Date & Heure :</td>
-                            <td style="font-weight: bold; color: #0f172a;">21/08/2026 à 17:15</td>
+                            <td style="font-weight: bold; color: #0f172a;">
+                                {{ $exam->exam_date ? \Carbon\Carbon::parse($exam->exam_date)->format('d/m/Y') : '—' }} 
+                                @if($exam->start_time)
+                                    à {{ substr($exam->start_time, 0, 5) }}
+                                @endif
+                            </td>
                         </tr>
                     </table>
 
                     <div style="margin-top: 4px; padding: 6px; background-color: #ffffff; border: 1px solid #fecaca; border-radius: 2px;">
                         <div style="font-weight: 900; color: #991b1b; font-size: 7.5px; text-transform: uppercase;">NATURE DE L'INFRACTION & DES FAITS CONSTATÉS :</div>
                         <div style="font-size: 7.5px; color: #334155; margin-top: 2px; line-height: 1.3;">
-                            {{ $incident->description ?: 'L\'étudiant a été surpris en flagrant délit d\'utilisation non autorisée d\'un téléphone portable pendant l\'épreuve.' }}
+                            {{ $incident->description ?: 'Non spécifié' }}
                         </div>
 
                         <div style="font-weight: 900; color: #991b1b; font-size: 7.5px; margin-top: 4px; text-transform: uppercase;">PIÈCES / OBJETS CONFISQUÉS :</div>
                         <div style="font-size: 7.5px; font-weight: bold; color: #0f172a; margin-top: 1px;">
-                            Objet(s) saisi(s) : {{ $incident->confiscated_items ?: 'iPhone 13 Noir, conservé sous scellé au secrétariat des examens.' }}
+                            Objet(s) saisi(s) : {{ $incident->confiscated_items ?: 'Aucun' }}
                         </div>
                     </div>
 
@@ -498,11 +524,21 @@
                             Surveillant Principal (Rapporteur)
                         </div>
                         <div style="font-size: 7.5px; font-weight: bold; color: #1e293b; margin-top: 2px;">
-                            Pr. Amina Tazi
+                            {{ $principalName ?? 'Surveillant Principal' }}
                         </div>
-                        <div style="margin-top: 3px; border: 1px solid #16a34a; background: #f0fdf4; color: #15803d; font-size: 5.5px; font-weight: bold; padding: 2px 6px; border-radius: 2px; display: inline-block;">
-                            [✓] PV D'INCIDENT SIGNÉ ÉLECTRONIQUEMENT
-                        </div>
+                        @if(!empty($principalSignatureImg))
+                            <div style="margin-top: 2px;">
+                                <img src="{{ $principalSignatureImg }}" style="max-height: 20px; max-width: 85px; margin: 0 auto; display: block;">
+                            </div>
+                        @elseif(!empty($hasPrincipalSignature))
+                            <div style="margin-top: 3px; border: 1px solid #16a34a; background: #f0fdf4; color: #15803d; font-size: 5.5px; font-weight: bold; padding: 2px 6px; border-radius: 2px; display: inline-block;">
+                                PV D'INCIDENT SIGNÉ ÉLECTRONIQUEMENT
+                            </div>
+                        @else
+                            <div style="margin-top: 3px; border: 1px dashed #94a3b8; color: #64748b; font-size: 5.5px; font-weight: bold; padding: 2px 6px; border-radius: 2px; display: inline-block;">
+                                EN ATTENTE DE SIGNATURE
+                            </div>
+                        @endif
                     </td>
                     <td style="width: 4%;"></td>
                     <td style="width: 48%; text-align: center; border: 1px solid #991b1b; background-color: #fffaf0; padding: 6px; border-radius: 2px;">
@@ -510,15 +546,19 @@
                             Surveillant Secondaire (Témoin)
                         </div>
                         <div style="font-size: 7.5px; font-weight: bold; color: #1e293b; margin-top: 2px;">
-                            Pr. Amina Chraibi
+                            {{ $secondaryName ?? 'Surveillant Secondaire' }}
                         </div>
                         @if(!empty($secondarySignatureImg))
                             <div style="margin-top: 2px;">
                                 <img src="{{ $secondarySignatureImg }}" style="max-height: 20px; max-width: 85px; margin: 0 auto; display: block;">
                             </div>
-                        @else
+                        @elseif(!empty($hasSecondarySignature))
                             <div style="margin-top: 3px; border: 1px solid #16a34a; background: #f0fdf4; color: #15803d; font-size: 5.5px; font-weight: bold; padding: 2px 6px; border-radius: 2px; display: inline-block;">
-                                [✓] PV D'INCIDENT SIGNÉ ÉLECTRONIQUEMENT
+                                PV D'INCIDENT SIGNÉ ÉLECTRONIQUEMENT
+                            </div>
+                        @else
+                            <div style="margin-top: 3px; border: 1px dashed #94a3b8; color: #64748b; font-size: 5.5px; font-weight: bold; padding: 2px 6px; border-radius: 2px; display: inline-block;">
+                                EN ATTENTE DE SIGNATURE
                             </div>
                         @endif
                     </td>

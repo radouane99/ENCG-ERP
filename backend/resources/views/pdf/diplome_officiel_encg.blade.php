@@ -244,13 +244,13 @@
             </p>
 
             <div class="recipient-name">
-                {{ strtoupper($student->last_name ?? 'EL ALAOUI') }} {{ ucfirst(strtolower($student->first_name ?? 'Aniss')) }}
+                {{ strtoupper($student->last_name ?? ($student->user?->last_name ?? '')) }} {{ ucfirst(strtolower($student->first_name ?? ($student->user?->first_name ?? ''))) }}
             </div>
 
             <p style="font-size: 9.5pt; color: #334155;">
-                Né(e) le <strong>{{ $student->birth_date ?? '15/04/2002' }}</strong> à <strong>{{ strtoupper($student->birth_city ?? 'FÈS') }}</strong> &nbsp;|&nbsp; 
-                Titulaire de la CNIE N° : <strong>{{ $student->cin ?? $student->user?->cin ?? 'CD728190' }}</strong> &nbsp;|&nbsp; 
-                Code Massar / CNE : <strong>{{ $student->cne ?? $student->student_number ?? 'N138092144' }}</strong>
+                Né(e) le <strong>{{ !empty($student->birth_date) ? \Carbon\Carbon::parse($student->birth_date)->format('d/m/Y') : '—' }}</strong> à <strong>{{ strtoupper($student->birth_city ?? '—') }}</strong> &nbsp;|&nbsp; 
+                Titulaire de la CNIE N° : <strong>{{ $student->cin ?? $student->user?->cin ?? '—' }}</strong> &nbsp;|&nbsp; 
+                Code Massar / CNE : <strong>{{ $student->cne ?? $student->student_number ?? '—' }}</strong>
             </p>
 
             <p style="font-size: 11pt; margin-top: 6px;">

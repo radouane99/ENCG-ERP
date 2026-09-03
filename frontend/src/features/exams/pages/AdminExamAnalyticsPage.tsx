@@ -19,37 +19,18 @@ export default function AdminExamAnalyticsPage() {
     queryFn: async () => {
       try {
         const res = await api.get('/admin/exam-analytics', { params: { year: academicYear, semester: semesterFilter } })
-        return res.data?.data || res.data
+        return res.data?.data || res.data || {
+          overview: { total_exams: 0, total_students_convoked: 0, average_presence_rate: 0, total_absences: 0, total_incidents: 0 },
+          by_filiere: [],
+          by_timeslot: [],
+          by_room: []
+        }
       } catch {
-        // Fallback default rich analytics
         return {
-          overview: {
-            total_exams: 142,
-            total_students_convoked: 3450,
-            average_presence_rate: 94.2,
-            total_absences: 201,
-            total_incidents: 12
-          },
-          by_filiere: [
-            { name: 'ENCG Grande École', presence: 96.1, absence: 3.9, fraudes: 4 },
-            { name: 'Master Audit & Contrôle', presence: 98.4, absence: 1.6, fraudes: 1 },
-            { name: 'Master Marketing Digital', presence: 95.0, absence: 5.0, fraudes: 2 },
-            { name: 'Master Management RH', presence: 97.2, absence: 2.8, fraudes: 1 },
-            { name: 'Executive Master Finance', presence: 91.5, absence: 8.5, fraudes: 0 }
-          ],
-          by_timeslot: [
-            { time: '08h30 - 10h30 (Matin 1)', absence_rate: 6.8, retard_rate: 4.2 },
-            { time: '11h00 - 13h00 (Matin 2)', absence_rate: 3.1, retard_rate: 1.8 },
-            { time: '14h30 - 16h30 (Apremo 1)', absence_rate: 4.5, retard_rate: 2.1 },
-            { time: '17h00 - 19h00 (Apremo 2)', absence_rate: 7.9, retard_rate: 5.4 }
-          ],
-          by_room: [
-            { room: 'Amphi A', convoked: 420, absents: 18, fraudes: 3 },
-            { room: 'Amphi B', convoked: 380, absents: 12, fraudes: 2 },
-            { room: 'Amphi C', convoked: 390, absents: 22, fraudes: 4 },
-            { room: 'Salle 12 (Bloc 2)', convoked: 60, absents: 4, fraudes: 1 },
-            { room: 'Salle 14 (Bloc 2)', convoked: 60, absents: 2, fraudes: 0 }
-          ]
+          overview: { total_exams: 0, total_students_convoked: 0, average_presence_rate: 0, total_absences: 0, total_incidents: 0 },
+          by_filiere: [],
+          by_timeslot: [],
+          by_room: []
         }
       }
     }

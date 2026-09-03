@@ -218,14 +218,36 @@ class ConvocationController extends Controller
         $validated = $request->validate([
             'signature_data' => 'required|string',
             'supervisor_name' => 'nullable|string',
+            'role' => 'nullable|string',
         ]);
 
-        \Illuminate\Support\Facades\Cache::put("exam_pv_signature_{$examId}", $validated['signature_data'], 86400);
+        $user = $request->user();
+        $ident = strtolower(($user?->name ?? '') . ' ' . ($user?->email ?? '') . ' ' . ($validated['supervisor_name'] ?? ''));
+        
+        $role = $validated['role'] ?? null;
+        if (!$role) {
+            $role = (str_contains($ident, 'chraibi') || str_contains($ident, 'second')) ? 'secondary' : 'principal';
+        }
+
+        if ($role === 'principal') {
+            \Illuminate\Support\Facades\Cache::put("exam_pv_principal_signature_{$examId}", $validated['signature_data'], 86400 * 7);
+        } else {
+            \Illuminate\Support\Facades\Cache::put("exam_pv_secondary_signature_{$examId}", $validated['signature_data'], 86400 * 7);
+            // If the principal cache accidentally had this same signature, clear it!
+            if (\Illuminate\Support\Facades\Cache::get("exam_pv_principal_signature_{$examId}") === $validated['signature_data']) {
+                \Illuminate\Support\Facades\Cache::forget("exam_pv_principal_signature_{$examId}");
+            }
+        }
+
+        // Forget ambiguous shared key
+        \Illuminate\Support\Facades\Cache::forget("exam_pv_signature_{$examId}");
 
         return response()->json([
             'success' => true,
-            'message' => 'Signature enregistrée et synchronisée avec succès.',
-            'signature_data' => $validated['signature_data'],
+            'role' => $role,
+            'message' => 'Signature enregistrée avec succès pour le ' . ($role === 'principal' ? 'Surveillant Principal' : 'Surveillant Secondaire'),
+            'principal_signature' => \Illuminate\Support\Facades\Cache::get("exam_pv_principal_signature_{$examId}"),
+            'secondary_signature' => \Illuminate\Support\Facades\Cache::get("exam_pv_secondary_signature_{$examId}"),
         ]);
     }
 

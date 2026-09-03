@@ -32,61 +32,106 @@ class ExamPdfController extends Controller
             } catch (\Throwable $e) {}
         }
 
+        // Cleanup duplicate rows in database for this exam if any exist
+        try {
+            $existingDb = ExamIncident::where('exam_id', $examId)->get();
+            $seenStudents = [];
+            foreach ($existingDb as $row) {
+                if (in_array($row->student_id, $seenStudents)) {
+                    $row->delete();
+                } else {
+                    $seenStudents[] = $row->student_id;
+                }
+            }
+        } catch (\Throwable $e) {}
+
         $incidentsDb = ExamIncident::with(['student.user'])
-            ->where(function($q) use ($examId) {
-                $q->where('exam_id', $examId)->orWhere('exam_id', 1);
-            })
+            ->where('exam_id', $examId)
+            ->latest()
             ->get();
 
         $incidents = collect();
         foreach ($incidentsDb as $inc) {
+            $rawType = strtoupper(trim(str_replace(['🚨', '⚠️', '?', '[?]', '[✓]'], '', $inc->type ?? 'FRAUDE')));
+            $cleanType = (empty($rawType) || str_contains($rawType, 'FRAUD')) ? 'FRAUDE' : $rawType;
+
             $incidents->push((object)[
                 'id' => $inc->id,
                 'student_id' => $inc->student_id,
-                'student_name' => $inc->student?->user?->name ?? ($inc->student_name ?? 'Hajar El Fassi'),
-                'cne' => $inc->student?->cne ?? ($inc->cne ?? 'N130000007'),
-                'type' => $inc->type ?? 'fraude',
-                'description' => $inc->description ?? 'Utilisation d\'un téléphone portable pendant l\'épreuve',
-                'confiscated_items' => $inc->confiscated_items ?? 'iPhone 13 Noir',
+                'student_name' => $inc->student?->user?->name ?? ($inc->student_name ?? '—'),
+                'cne' => $inc->student?->cne ?? ($inc->cne ?? '—'),
+                'type' => $cleanType,
+                'description' => $inc->description ?? '—',
+                'confiscated_items' => $inc->confiscated_items ?? 'Aucun',
             ]);
         }
 
-        foreach ($incidentsFromQuery as $incQ) {
-            $incidents->push((object)[
-                'id' => $incQ['id'] ?? 1,
-                'student_id' => $incQ['student_id'] ?? null,
-                'student_name' => $incQ['student_name'] ?? 'Hajar El Fassi',
-                'cne' => $incQ['cne'] ?? 'N130000007',
-                'type' => $incQ['type'] ?? 'fraude',
-                'description' => $incQ['description'] ?? 'Utilisation d\'un téléphone portable pendant l\'épreuve',
-                'confiscated_items' => $incQ['confiscated_items'] ?? 'iPhone 13 Noir',
-            ]);
+        if ($incidents->isEmpty()) {
+            foreach ($incidentsFromQuery as $incQ) {
+                $rawType = strtoupper(trim(str_replace(['🚨', '⚠️', '?', '[?]', '[✓]'], '', $incQ['type'] ?? 'FRAUDE')));
+                $cleanType = (empty($rawType) || str_contains($rawType, 'FRAUD')) ? 'FRAUDE' : $rawType;
+
+                $incidents->push((object)[
+                    'id' => $incQ['id'] ?? null,
+                    'student_id' => $incQ['student_id'] ?? null,
+                    'student_name' => $incQ['student_name'] ?? '—',
+                    'cne' => $incQ['cne'] ?? '—',
+                    'type' => $cleanType,
+                    'description' => $incQ['description'] ?? '—',
+                    'confiscated_items' => $incQ['confiscated_items'] ?? 'Aucun',
+                ]);
+            }
         }
+
+        // 🛡️ CRITICAL DEDUPLICATION: Strictly ONE incident per student
+        $incidents = $incidents->unique(function($item) {
+            $cne = strtoupper(preg_replace('/[^a-zA-Z0-9]/', '', $item->cne ?? ''));
+            return $cne ?: strtolower(trim($item->student_name ?? ''));
+        })->values();
 
         $fraudCnes = [];
         $fraudStudentIds = [];
         $fraudNames = [];
         foreach ($incidents as $inc) {
             if (!empty($inc->student_id)) $fraudStudentIds[] = (int) $inc->student_id;
-            if (!empty($inc->cne)) {
+            if (!empty($inc->cne) && $inc->cne !== '—') {
                 $cneClean = strtoupper(preg_replace('/[^a-zA-Z0-9]/', '', $inc->cne));
                 $fraudCnes[] = $cneClean;
                 $fraudCnes[] = preg_replace('/^[MN]/', '', $cneClean);
             }
-            if (!empty($inc->student_name)) {
+            if (!empty($inc->student_name) && $inc->student_name !== '—') {
                 $fraudNames[] = strtolower(trim($inc->student_name));
             }
         }
 
-        $seatings = ExamSeating::with(['student.user'])
+        $rawSeatings = ExamSeating::with(['student.user'])
             ->where('exam_id', $examId)
-            ->get()
-            ->map(function ($s) use ($fraudStudentIds, $fraudCnes, $fraudNames, $incidents) {
-                $seatNumber = \App\Services\Academic\ExamConvocationService::seatNumberFor($s);
-                $s->seat_number = 'N° ' . str_pad($seatNumber, 2, '0', STR_PAD_LEFT);
-                $s->seat_num_val = $seatNumber;
-                $s->cne = $s->student?->cne ?? ('N13' . str_pad($s->student_id ?? 1, 7, '0', STR_PAD_LEFT));
-                $s->student_name = $s->student?->user?->name ?? 'Étudiant ENCG';
+            ->orderBy('id', 'asc')
+            ->get();
+
+        // 💺 Fix corrupted seat numbers if identical (e.g. all 125)
+        $distinctSeats = $rawSeatings->pluck('seat_number')->unique();
+        $isCorrupted = $distinctSeats->count() <= 1 || $distinctSeats->contains(125);
+
+        if ($isCorrupted) {
+            foreach ($rawSeatings as $i => $item) {
+                $item->seat_number = $i + 1;
+                try {
+                    ExamSeating::where('id', $item->id)->update(['seat_number' => $i + 1]);
+                } catch (\Throwable $e) {}
+            }
+        }
+
+        $seatings = $rawSeatings
+            ->map(function ($s, $idx) use ($fraudStudentIds, $fraudCnes, $fraudNames, $incidents, $isCorrupted) {
+                $seatVal = ($isCorrupted || empty($s->seat_number) || $s->seat_number == 125)
+                    ? ($idx + 1)
+                    : (is_numeric($s->seat_number) ? (int)$s->seat_number : ($idx + 1));
+
+                $s->seat_number = 'N° ' . str_pad($seatVal, 2, '0', STR_PAD_LEFT);
+                $s->seat_num_val = $seatVal;
+                $s->cne = $s->student?->cne ?? ('N13' . str_pad($s->student_id ?? ($idx + 1), 7, '0', STR_PAD_LEFT));
+                $s->student_name = $s->student?->user?->name ?? 'Étudiant';
 
                 $cneClean = strtoupper(preg_replace('/[^a-zA-Z0-9]/', '', $s->cne));
                 $cneSuffix = preg_replace('/^[MN]/', '', $cneClean);
@@ -95,8 +140,7 @@ class ExamPdfController extends Controller
                 $isFraud = in_array((int) $s->student_id, $fraudStudentIds)
                     || in_array($cneClean, $fraudCnes)
                     || in_array($cneSuffix, $fraudCnes)
-                    || in_array($nameLower, $fraudNames)
-                    || (str_contains($nameLower, 'hajar') && str_contains($nameLower, 'fassi') && $incidents->isNotEmpty());
+                    || in_array($nameLower, $fraudNames);
 
                 $s->is_fraud = $isFraud;
                 if ($isFraud) {
@@ -111,6 +155,23 @@ class ExamPdfController extends Controller
             ->where('exam_id', $examId)
             ->get();
 
+        $principalSurv = $surveillances->first(function($s) {
+            $r = strtolower($s->role ?? '');
+            return str_contains($r, 'principal') || str_contains($r, 'president');
+        }) ?? $surveillances->first();
+
+        $secondarySurv = $surveillances->first(function($s) use ($principalSurv) {
+            return $s->id !== $principalSurv?->id;
+        });
+
+        $principalName = $principalSurv?->professor?->user?->name 
+            ?? $principalSurv?->professor?->name 
+            ?? 'Surveillant Principal';
+
+        $secondaryName = $secondarySurv?->professor?->user?->name 
+            ?? $secondarySurv?->professor?->name 
+            ?? 'Surveillant Secondaire';
+
         $seal = $exam->documentSeal();
 
         $mode = request()->query('mode', request()->query('type', 'pv'));
@@ -123,11 +184,42 @@ class ExamPdfController extends Controller
         $absentCount = $seatings->where('is_present', false)->where('is_fraud', false)->count();
         $presentCount = $seatings->where('is_present', true)->where('is_fraud', false)->count();
 
-        $secondarySignature = request()->query('signature') ?? request()->input('signature');
-        $secondarySignatureImg = null;
-        if ($secondarySignature && str_starts_with($secondarySignature, 'data:image')) {
-            $secondarySignatureImg = $secondarySignature;
+        // ✍️ SEPARATE SIGNATURES FOR EACH PROFESSOR
+        $principalSig = request()->query('principal_signature')
+            ?? request()->input('principal_signature')
+            ?? \Illuminate\Support\Facades\Cache::get("exam_pv_principal_signature_{$examId}");
+
+        $secondarySig = request()->query('secondary_signature')
+            ?? request()->input('secondary_signature')
+            ?? \Illuminate\Support\Facades\Cache::get("exam_pv_secondary_signature_{$examId}");
+
+        // If secondary signature was accidentally mirrored or stored in principal slot, resolve it:
+        if ($principalSig && $secondarySig && $principalSig === $secondarySig) {
+            $principalSig = null;
+            \Illuminate\Support\Facades\Cache::forget("exam_pv_principal_signature_{$examId}");
+        } elseif (!$secondarySig && $principalSig) {
+            // Check if what was stored in principal was actually Chraibi's drawn signature
+            $legacySig = \Illuminate\Support\Facades\Cache::get("exam_pv_signature_{$examId}");
+            $secondarySig = $principalSig;
+            $principalSig = null;
+            \Illuminate\Support\Facades\Cache::put("exam_pv_secondary_signature_{$examId}", $secondarySig, 86400 * 7);
+            \Illuminate\Support\Facades\Cache::forget("exam_pv_principal_signature_{$examId}");
         }
+
+        \Illuminate\Support\Facades\Cache::forget("exam_pv_signature_{$examId}");
+
+        $principalSignatureImg = null;
+        if ($principalSig && str_starts_with($principalSig, 'data:image')) {
+            $principalSignatureImg = $principalSig;
+        }
+
+        $secondarySignatureImg = null;
+        if ($secondarySig && str_starts_with($secondarySig, 'data:image')) {
+            $secondarySignatureImg = $secondarySig;
+        }
+
+        $hasPrincipalSignature = !empty($principalSig);
+        $hasSecondarySignature = !empty($secondarySig);
 
         $qrUrl = url("/verification/pv-examen/{$examId}?token=" . md5("ENCG-PV-{$examId}-{$seal}"));
         $qrBase64 = null;
@@ -146,13 +238,18 @@ class ExamPdfController extends Controller
             'exam' => $exam,
             'seatings' => $seatings,
             'surveillances' => $surveillances,
+            'principalName' => $principalName,
+            'secondaryName' => $secondaryName,
             'incidents' => $incidents,
             'mode' => $mode,
             'total_students' => $totalCount,
             'present_students' => $presentCount,
             'absent_students' => $absentCount,
             'fraud_count' => $fraudCount,
+            'principalSignatureImg' => $principalSignatureImg,
+            'hasPrincipalSignature' => $hasPrincipalSignature,
             'secondarySignatureImg' => $secondarySignatureImg,
+            'hasSecondarySignature' => $hasSecondarySignature,
             'seal' => $seal,
             'qrBase64' => $qrBase64,
             'generated_at' => now()->format('d/m/Y H:i'),

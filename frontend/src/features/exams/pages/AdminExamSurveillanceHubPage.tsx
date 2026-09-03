@@ -44,6 +44,15 @@ export default function AdminExamSurveillanceHubPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
 
+  // Authenticated user profile
+  const storedUser = (() => {
+    try {
+      return JSON.parse(localStorage.getItem('auth_user') || '{}')
+    } catch {
+      return {}
+    }
+  })()
+
   // View Mode: 'list' | 'grid' (Plan de Salle Visual Grid)
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
   
@@ -55,7 +64,7 @@ export default function AdminExamSurveillanceHubPage() {
 
   // Admin / Professor Supervisor Mode & Exam Metadata
   const [adminSupervisorName, setAdminSupervisorName] = useState(
-    isProfessorView ? 'Pr. Amina Chraibi (Surveillant Secondaire)' : 'Admin ENCG Fès (Responsable)'
+    storedUser?.name ? `${storedUser.name} (${isProfessorView ? 'Surveillant' : 'Responsable'})` : (isProfessorView ? 'Surveillant de Salle' : 'Responsable d\'Examen')
   )
   const [customCopiesCount, setCustomCopiesCount] = useState<number | ''>('')
 
@@ -125,8 +134,11 @@ export default function AdminExamSurveillanceHubPage() {
   // Printable PV Preview Modal State
   const [showPvPreviewModal, setShowPvPreviewModal] = useState(false)
 
-  // Signature & Lock State
+  // Signature & Lock State (Separated for Principal & Secondary Professors)
   const [showSignatureModal, setShowSignatureModal] = useState(false)
+  const [signingSupervisorRole, setSigningSupervisorRole] = useState<'principal' | 'secondary'>('secondary')
+  const [principalSignatureUrl, setPrincipalSignatureUrl] = useState('')
+  const [secondarySignatureUrl, setSecondarySignatureUrl] = useState('')
   const [isDrawing, setIsDrawing] = useState(false)
   const [signatureDataUrl, setSignatureDataUrl] = useState('')
   const [hasDrawn, setHasDrawn] = useState(false)
@@ -186,6 +198,46 @@ export default function AdminExamSurveillanceHubPage() {
     enabled: !!id
   })
 
+  // 👥 Extract Real Proctors & Supervisors from DB
+  const surveillancesList: any[] = Array.isArray(detailsData?.surveillances) ? detailsData.surveillances : []
+  
+  const principalSurv = surveillancesList.find((s: any) => {
+    const r = (s.role || '').toLowerCase()
+    return r.includes('principal') || r.includes('president') || r.includes('responsable')
+  }) || surveillancesList[0]
+
+  const secondarySurv = surveillancesList.find((s: any) => s.id !== principalSurv?.id)
+
+  const principalSupervisorName = principalSurv?.professor?.user?.name 
+    || principalSurv?.professor?.name 
+    || 'Surveillant Principal'
+
+  const principalSupervisorEmail = principalSurv?.professor?.user?.email 
+    || principalSurv?.professor?.email 
+    || ''
+
+  const secondarySupervisorName = secondarySurv?.professor?.user?.name 
+    || secondarySurv?.professor?.name 
+    || (storedUser?.name ? storedUser.name : 'Surveillant Secondaire')
+
+  const secondarySupervisorEmail = secondarySurv?.professor?.user?.email 
+    || secondarySurv?.professor?.email 
+    || (storedUser?.email ? storedUser.email : '')
+
+  const isCurrentUserPrincipal = Boolean(
+    (storedUser?.id && principalSurv?.professor?.user?.id === storedUser.id) ||
+    (storedUser?.email && principalSupervisorEmail && storedUser.email.toLowerCase() === principalSupervisorEmail.toLowerCase()) ||
+    (storedUser?.name && principalSupervisorName !== 'Surveillant Principal' && storedUser.name.toLowerCase().includes(principalSupervisorName.toLowerCase()))
+  )
+
+  useEffect(() => {
+    if (isCurrentUserPrincipal) {
+      setSigningSupervisorRole('principal')
+    } else {
+      setSigningSupervisorRole('secondary')
+    }
+  }, [isCurrentUserPrincipal])
+
   // 2. Fetch Live Stats
   const { data: liveStatsData } = useQuery({
     queryKey: ['admin-exam-live-stats', id],
@@ -221,7 +273,7 @@ export default function AdminExamSurveillanceHubPage() {
                 student_id: item.student.id,
                 type: 'fraude',
                 description: item.description || "Fraude constatée en salle d'examen",
-                confiscated_items: item.confiscated_items || 'Téléphone portable'
+                confiscated_items: item.confiscated_items || null
               })
               await api.post(`/exam-planning/${id}/update-seating-status`, {
                 student_id: item.student.id,
@@ -246,6 +298,16 @@ export default function AdminExamSurveillanceHubPage() {
         const lockedAt = detailsData.exam.locked_at ? new Date(detailsData.exam.locked_at).getTime().toString(36).toUpperCase() : Date.now().toString(36).toUpperCase()
         setPvLockSeal(`SHA256:ENCG-FES-${id}-${lockedAt}`)
       }
+      if (detailsData.exam.principal_signature && detailsData.exam.principal_signature !== detailsData.exam.secondary_signature) {
+        setPrincipalSignatureUrl(detailsData.exam.principal_signature)
+      } else {
+        setPrincipalSignatureUrl('')
+      }
+      if (detailsData.exam.secondary_signature) {
+        setSecondarySignatureUrl(detailsData.exam.secondary_signature)
+      } else {
+        setSecondarySignatureUrl('')
+      }
       if (detailsData.exam.signature_data) {
         setSignatureDataUrl(detailsData.exam.signature_data)
       }
@@ -259,9 +321,17 @@ export default function AdminExamSurveillanceHubPage() {
       : (Array.isArray(detailsData?.incidents) ? detailsData.incidents : [])
 
     if (rawIncidents.length > 0) {
-      const mappedIncidents: IncidentReport[] = rawIncidents.map((inc: any) => ({
+      const seen = new Set<string>()
+      const uniqueRaw = rawIncidents.filter((inc: any) => {
+        const key = (inc.student_id || inc.student?.id || inc.cne || inc.student?.cne || inc.student_name || '').toString().toLowerCase().trim()
+        if (!key || seen.has(key)) return false
+        seen.add(key)
+        return true
+      })
+
+      const mappedIncidents: IncidentReport[] = uniqueRaw.map((inc: any) => ({
         id: inc.id,
-        student_name: inc.student?.user?.name || inc.student_name || 'Étudiant',
+        student_name: inc.student_name || inc.student?.user?.name || `${inc.student?.first_name || ''} ${inc.student?.last_name || ''}`.trim() || 'Étudiant',
         cne: inc.cne || inc.student?.cne || 'N/A',
         type: inc.type || 'fraude',
         description: inc.description || inc.details || 'Incident signalé',
@@ -348,7 +418,7 @@ export default function AdminExamSurveillanceHubPage() {
             id: s.id || idx + 1,
             seating_id: s.id,
             student_id: s.student_id,
-            cne: s.cne || s.student?.cne || `E${1000 + (s.student_id || idx)}`,
+            cne: s.cne || s.student?.cne || (s.student_id ? `E${s.student_id}` : '—'),
             name: s.student_name || s.student?.user?.name || `Étudiant #${s.student_id || idx + 1}`,
             seat_number: formattedSeatNumber,
             status: resolvedStatus,
@@ -376,7 +446,7 @@ export default function AdminExamSurveillanceHubPage() {
               return {
                 id: st.id,
                 student_id: st.id,
-                cne: st.cne || st.user?.email?.split('@')[0] || `E${2000 + idx}`,
+                cne: st.cne || st.user?.email?.split('@')[0] || (st.id ? `E${st.id}` : '—'),
                 name: st.user?.name || `${st.last_name?.toUpperCase()} ${st.first_name}`,
                 seat_number: `N° ${String(idx + 1).padStart(2, '0')}`,
                 status: isFraud ? 'present' : 'absent',
@@ -554,14 +624,14 @@ export default function AdminExamSurveillanceHubPage() {
           cne: selectedStudentForFraud.cne,
           apogee: selectedStudentForFraud.cne,
           email: `${selectedStudentForFraud.name.toLowerCase().replace(/\s+/g, '.')}@encg-fes.ac.ma`,
-          filiere: 'ENCG Grande École S4',
+          filiere: examObj?.module?.filiere?.name || '—',
           guardian_email: `tuteur.${selectedStudentForFraud.cne.toLowerCase()}@gmail.com`
         },
-        module_name: examObj?.module?.name || 'Management Stratégique',
-        exam_date: new Date().toISOString().split('T')[0],
-        type: '🚨 Fraude (Utilisation Smartphone)',
+        module_name: examObj?.module?.name || '—',
+        exam_date: examObj?.exam_date || new Date().toISOString().split('T')[0],
+        type: 'Fraude',
         description: fraudDescription,
-        confiscated_items: confiscatedItems || 'Téléphone Portable',
+        confiscated_items: confiscatedItems || 'Aucun',
         severity: 'high',
         status: 'pending',
         created_at: new Date().toISOString().split('T')[0]
@@ -572,7 +642,10 @@ export default function AdminExamSurveillanceHubPage() {
         sessionStorage.setItem('encg_exam_incidents_queue', JSON.stringify([newDisciplineCase, ...existingQueue]))
       } catch (e) {}
 
-      setIncidentsList(prev => [newReport, ...prev])
+      setIncidentsList(prev => {
+        const filtered = prev.filter(p => p.cne !== selectedStudentForFraud.cne && p.student_name !== selectedStudentForFraud.name)
+        return [newReport, ...filtered]
+      })
       setCandidates(prev => prev.map(c => c.id === selectedStudentForFraud.id ? { ...c, has_fraud: true, status: 'present', fraud_details: fraudDescription } : c))
 
       setShowFraudModal(false)
@@ -598,14 +671,14 @@ export default function AdminExamSurveillanceHubPage() {
           cne: selectedStudentForFraud.cne,
           apogee: selectedStudentForFraud.cne,
           email: `${selectedStudentForFraud.name.toLowerCase().replace(/\s+/g, '.')}@encg-fes.ac.ma`,
-          filiere: 'ENCG Grande École S4',
+          filiere: examObj?.module?.filiere?.name || '—',
           guardian_email: `tuteur.${selectedStudentForFraud.cne.toLowerCase()}@gmail.com`
         },
-        module_name: examObj?.module?.name || 'Management Stratégique',
-        exam_date: new Date().toISOString().split('T')[0],
-        type: '🚨 Fraude (Utilisation Smartphone)',
+        module_name: examObj?.module?.name || '—',
+        exam_date: examObj?.exam_date || new Date().toISOString().split('T')[0],
+        type: 'Fraude',
         description: fraudDescription,
-        confiscated_items: confiscatedItems || 'Téléphone Portable',
+        confiscated_items: confiscatedItems || 'Aucun',
         severity: 'high',
         status: 'pending',
         created_at: new Date().toISOString().split('T')[0]
@@ -616,7 +689,10 @@ export default function AdminExamSurveillanceHubPage() {
         sessionStorage.setItem('encg_exam_incidents_queue', JSON.stringify([newDisciplineCase, ...existingQueue]))
       } catch (e) {}
 
-      setIncidentsList(prev => [newReport, ...prev])
+      setIncidentsList(prev => {
+        const filtered = prev.filter(p => p.cne !== selectedStudentForFraud.cne && p.student_name !== selectedStudentForFraud.name)
+        return [newReport, ...filtered]
+      })
       setCandidates(prev => prev.map(c => c.id === selectedStudentForFraud.id ? { ...c, has_fraud: true, status: 'present' } : c))
       setShowFraudModal(false)
       toast.success(`🚨 Incident enregistré au PV & Transmis au Conseil de Discipline !`, { id: toastId })
@@ -681,18 +757,26 @@ export default function AdminExamSurveillanceHubPage() {
       signatureToSave = canvas.toDataURL('image/png')
     }
     
+    if (signingSupervisorRole === 'principal') {
+      setPrincipalSignatureUrl(signatureToSave)
+    } else {
+      setSecondarySignatureUrl(signatureToSave)
+    }
     setSignatureDataUrl(signatureToSave)
     setShowSignatureModal(false)
+
+    const signerName = signingSupervisorRole === 'principal' ? principalSupervisorName : secondarySupervisorName
 
     try {
       await api.post(`/exam-planning/${id}/save-signature`, {
         signature_data: signatureToSave,
-        supervisor_name: adminSupervisorName
+        supervisor_name: signerName,
+        role: signingSupervisorRole
       })
       queryClient.invalidateQueries({ queryKey: ['admin-exam-details', id] })
-      toast.success('✍️ Signature officielle enregistrée et synchronisée avec l\'autre surveillant !')
+      toast.success(`✍️ Signature enregistrée pour le ${signingSupervisorRole === 'principal' ? `Surveillant Principal (${principalSupervisorName})` : `Surveillant Secondaire (${secondarySupervisorName})`} !`)
     } catch (e) {
-      toast.success('✍️ Signature officielle du surveillant enregistrée & certifiée !')
+      toast.success('✍️ Signature officielle enregistrée & certifiée !')
     }
   }
 
@@ -745,22 +829,52 @@ export default function AdminExamSurveillanceHubPage() {
   const finalCopiesCount = customCopiesCount !== '' ? Number(customCopiesCount) : totalAttendedWithCopies
 
   // Trigger Print Only A4 PV Document
-  const handlePrintOfficialPV = () => {
+  const handlePrintOfficialPV = async () => {
     const apiUrl = api.defaults.baseURL || '/api'
-    const sigParam = signatureDataUrl ? `signature=${encodeURIComponent(signatureDataUrl)}` : ''
-    const incParam = incidentsList.length > 0 ? `incidents=${encodeURIComponent(JSON.stringify(incidentsList))}` : ''
-    const queryParams = [sigParam, incParam].filter(Boolean).join('&')
-    const queryString = queryParams ? `?${queryParams}` : ''
-    openAuthenticatedUrl(`${apiUrl}/exams/${id}/pv-pdf${queryString}`)
+
+    // 🛡️ Auto-sync signatures to backend without passing huge Base64 in URL
+    try {
+      if (principalSignatureUrl && principalSignatureUrl.startsWith('data:image') && principalSignatureUrl !== secondarySignatureUrl) {
+        await api.post(`/exam-planning/${id}/save-signature`, {
+          signature_data: principalSignatureUrl,
+          role: 'principal'
+        })
+      }
+      if (secondarySignatureUrl && secondarySignatureUrl.startsWith('data:image')) {
+        await api.post(`/exam-planning/${id}/save-signature`, {
+          signature_data: secondarySignatureUrl,
+          role: 'secondary'
+        })
+      }
+    } catch (e) {
+      console.warn('Signatures auto-sync error:', e)
+    }
+
+    openAuthenticatedUrl(`${apiUrl}/exams/${id}/pv-pdf`)
   }
 
   // Trigger Download Incident & Fraud Report PDF
-  const handleDownloadFraudReport = () => {
+  const handleDownloadFraudReport = async () => {
     const apiUrl = api.defaults.baseURL || '/api'
-    const sigParam = signatureDataUrl ? `signature=${encodeURIComponent(signatureDataUrl)}` : ''
-    const incParam = incidentsList.length > 0 ? `incidents=${encodeURIComponent(JSON.stringify(incidentsList))}` : ''
-    const queryParams = [sigParam, incParam, 'mode=incident'].filter(Boolean).join('&')
-    openAuthenticatedUrl(`${apiUrl}/exams/${id}/pv-pdf?${queryParams}`)
+
+    try {
+      if (principalSignatureUrl && principalSignatureUrl.startsWith('data:image') && principalSignatureUrl !== secondarySignatureUrl) {
+        await api.post(`/exam-planning/${id}/save-signature`, {
+          signature_data: principalSignatureUrl,
+          role: 'principal'
+        })
+      }
+      if (secondarySignatureUrl && secondarySignatureUrl.startsWith('data:image')) {
+        await api.post(`/exam-planning/${id}/save-signature`, {
+          signature_data: secondarySignatureUrl,
+          role: 'secondary'
+        })
+      }
+    } catch (e) {
+      console.warn('Signatures auto-sync error:', e)
+    }
+
+    openAuthenticatedUrl(`${apiUrl}/exams/${id}/pv-pdf?mode=incident`)
   }
 
   return (
@@ -848,7 +962,7 @@ export default function AdminExamSurveillanceHubPage() {
                   Hub de Surveillance d'Examen & Émargement Officiel
                 </h1>
                 <p className="text-xs text-blue-100/80 mt-0.5">
-                  Module : <strong>{examObj?.module?.name || 'Management Stratégique'}</strong> • Filière : <strong>{examObj?.module?.filiere?.name || 'ENCG Grande École'}</strong> • Salle : <strong>{examObj?.room?.name || 'Amphi A'}</strong>
+                  Module : <strong>{examObj?.module?.name || '—'}</strong> • Filière : <strong>{examObj?.module?.filiere?.name || '—'}</strong> • Salle : <strong>{examObj?.room?.name || '—'}</strong>
                 </p>
               </div>
             </div>
@@ -910,10 +1024,13 @@ export default function AdminExamSurveillanceHubPage() {
 
               <button
                 type="button"
-                onClick={() => setShowSignatureModal(true)}
+                onClick={() => {
+                  setSigningSupervisorRole(isCurrentUserPrincipal ? 'principal' : 'secondary')
+                  setShowSignatureModal(true)
+                }}
                 className="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-xl text-xs font-bold transition-all flex items-center gap-2 backdrop-blur-md"
               >
-                <FileText className="w-4 h-4" /> {signatureDataUrl ? '✓ PV Signé' : '✍️ Signer le PV'}
+                <FileText className="w-4 h-4" /> {(isCurrentUserPrincipal ? principalSignatureUrl : secondarySignatureUrl) ? '✓ Mon PV Signé' : '✍️ Signer le PV'}
               </button>
 
               <button
@@ -974,13 +1091,31 @@ export default function AdminExamSurveillanceHubPage() {
                 <span className="text-[9px] font-black uppercase text-amber-300 tracking-wider block">
                   👑 Surveillant Principal (Responsable)
                 </span>
-                <strong className="text-white text-xs font-black">Pr. Amina Tazi</strong>
-                <span className="text-[10px] text-blue-200/70 block">a.tazi@encg-fes.ac.ma</span>
+                <strong className="text-white text-xs font-black">{principalSupervisorName}</strong>
+                {principalSupervisorEmail && <span className="text-[10px] text-blue-200/70 block">{principalSupervisorEmail}</span>}
               </div>
-              <div className="text-right">
-                <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 rounded-lg text-[9px] font-black uppercase inline-block">
-                  ✓ Pointage & Gestion
-                </span>
+              <div className="text-right flex items-center gap-2">
+                {principalSignatureUrl ? (
+                  <div className="flex items-center gap-1.5">
+                    {principalSignatureUrl.startsWith('data:image') && (
+                      <img src={principalSignatureUrl} alt={`Signature ${principalSupervisorName}`} className="h-6 max-w-[65px] bg-white rounded px-1 border border-white/20 object-contain" />
+                    )}
+                    <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 rounded-lg text-[9px] font-black uppercase inline-block">
+                      ✓ Signé ({principalSupervisorName.split(' ')[0]})
+                    </span>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSigningSupervisorRole('principal')
+                      setShowSignatureModal(true)
+                    }}
+                    className="px-2.5 py-1 bg-amber-400 hover:bg-amber-500 text-slate-950 font-black rounded-lg text-[9px] uppercase tracking-wider cursor-pointer shadow-xs transition-all"
+                  >
+                    ✍️ Signer ({principalSupervisorName.split(' ')[0]})
+                  </button>
+                )}
               </div>
             </div>
 
@@ -990,21 +1125,29 @@ export default function AdminExamSurveillanceHubPage() {
                 <span className="text-[9px] font-black uppercase text-sky-300 tracking-wider block">
                   🧑‍🏫 Surveillant Secondaire (Salle)
                 </span>
-                <strong className="text-white text-xs font-black">{adminSupervisorName}</strong>
-                <span className="text-[10px] text-blue-200/70 block">chraibi.amina@encg-fes.ac.ma</span>
+                <strong className="text-white text-xs font-black">{secondarySupervisorName}</strong>
+                {secondarySupervisorEmail && <span className="text-[10px] text-blue-200/70 block">{secondarySupervisorEmail}</span>}
               </div>
-              <div className="text-right">
-                {signatureDataUrl ? (
-                  <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 rounded-lg text-[9px] font-black uppercase inline-block">
-                    ✓ PV Signé
-                  </span>
+              <div className="text-right flex items-center gap-2">
+                {secondarySignatureUrl ? (
+                  <div className="flex items-center gap-1.5">
+                    {secondarySignatureUrl.startsWith('data:image') && (
+                      <img src={secondarySignatureUrl} alt={`Signature ${secondarySupervisorName}`} className="h-6 max-w-[65px] bg-white rounded px-1 border border-white/20 object-contain" />
+                    )}
+                    <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 rounded-lg text-[9px] font-black uppercase inline-block">
+                      ✓ Signé ({secondarySupervisorName.split(' ')[0]})
+                    </span>
+                  </div>
                 ) : (
                   <button
                     type="button"
-                    onClick={() => setShowSignatureModal(true)}
-                    className="px-2 py-1 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black rounded-lg text-[9px] uppercase tracking-wider cursor-pointer shadow-xs transition-all"
+                    onClick={() => {
+                      setSigningSupervisorRole('secondary')
+                      setShowSignatureModal(true)
+                    }}
+                    className="px-2.5 py-1 bg-sky-400 hover:bg-sky-500 text-slate-950 font-black rounded-lg text-[9px] uppercase tracking-wider cursor-pointer shadow-xs transition-all"
                   >
-                    ✍️ Signer le PV
+                    ✍️ Signer ({secondarySupervisorName.split(' ')[0]})
                   </button>
                 )}
               </div>
@@ -1313,7 +1456,7 @@ export default function AdminExamSurveillanceHubPage() {
           {viewMode === 'grid' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
-                <span>🗺️ Représentation graphique de la salle d'examen (Amphi A) — Cliquez sur une table pour changer le statut :</span>
+                <span>🗺️ Représentation graphique de la salle d'examen ({examObj?.room?.name || 'Salle'}) — Cliquez sur une table pour changer le statut :</span>
                 <div className="flex items-center gap-3">
                   <span className="flex items-center gap-1 text-emerald-600 font-bold"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Présent</span>
                   <span className="flex items-center gap-1 text-red-600 font-bold"><span className="w-2.5 h-2.5 rounded-full bg-red-500" /> Absent</span>
@@ -1521,23 +1664,30 @@ export default function AdminExamSurveillanceHubPage() {
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5 text-[11px] bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800">
                   <div>
                     <span className="text-slate-400 uppercase text-[9px] font-black block">Module</span>
-                    <strong className="text-slate-900 dark:text-white">{examObj?.module?.name || 'Comptabilité Générale I'}</strong>
+                    <strong className="text-slate-900 dark:text-white">{examObj?.module?.name || '—'}</strong>
                   </div>
                   <div>
                     <span className="text-slate-400 uppercase text-[9px] font-black block">Date & Horaire</span>
-                    <strong className="text-slate-900 dark:text-white">21/08/2026 • 16:30 - 18:30 (120 min)</strong>
+                    <strong className="text-slate-900 dark:text-white">
+                      {examObj?.exam_date ? new Date(examObj.exam_date).toLocaleDateString('fr-FR') : '—'}
+                      {examObj?.start_time ? ` • ${examObj.start_time.slice(0, 5)}` : ''} ({examObj?.duration_minutes || 120} min)
+                    </strong>
                   </div>
                   <div>
                     <span className="text-slate-400 uppercase text-[9px] font-black block">Filière / Niveau</span>
-                    <strong className="text-slate-900 dark:text-white">Tronc Commun ENCG • S1 (G1 + G2)</strong>
+                    <strong className="text-slate-900 dark:text-white">
+                      {examObj?.module?.filiere?.name || '—'}
+                      {examObj?.module?.semester_number ? ` • S${examObj.module.semester_number}` : ''}
+                      {examObj?.group?.name ? ` (${examObj.group.name})` : ''}
+                    </strong>
                   </div>
                   <div>
                     <span className="text-slate-400 uppercase text-[9px] font-black block">Lieu de l'Épreuve</span>
-                    <strong className="text-[#0f2863] dark:text-sky-400">{examObj?.room?.name || 'Amphithéâtre B'}</strong>
+                    <strong className="text-[#0f2863] dark:text-sky-400">{examObj?.room?.name || '—'}</strong>
                   </div>
                   <div>
                     <span className="text-slate-400 uppercase text-[9px] font-black block">Surveillant Responsable</span>
-                    <strong className="text-slate-900 dark:text-white">{adminSupervisorName}</strong>
+                    <strong className="text-slate-900 dark:text-white">{principalSupervisorName}</strong>
                   </div>
                   <div>
                     <span className="text-slate-400 uppercase text-[9px] font-black block">Copies Rendues & Scellées</span>
@@ -1571,7 +1721,7 @@ export default function AdminExamSurveillanceHubPage() {
                     <span className="font-black text-[11px] text-slate-800 dark:text-white uppercase tracking-wider">
                       📋 Registre d'Émargement des Candidats ({candidates.length} Étudiants)
                     </span>
-                    <span className="text-[10px] text-slate-500 font-medium">Amphithéâtre B</span>
+                    <span className="text-[10px] text-slate-500 font-medium">{examObj?.room?.name || 'Salle'}</span>
                   </div>
                   <div className="max-h-56 overflow-y-auto">
                     <table className="w-full text-left text-[10px] border-collapse">
@@ -1635,7 +1785,7 @@ export default function AdminExamSurveillanceHubPage() {
                       Surveillant Principal (Responsable)
                     </div>
                     <div className="font-black text-xs text-slate-900 dark:text-white">
-                      Pr. Amina Tazi
+                      {principalSupervisorName}
                     </div>
                     <div>
                       <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 rounded-full text-[9px] font-black">
@@ -1643,7 +1793,7 @@ export default function AdminExamSurveillanceHubPage() {
                       </span>
                     </div>
                     <div className="text-[9px] text-slate-400 font-mono">
-                      Horodaté le 21/08/2026 à 18:32
+                      {detailsData?.exam?.locked_at ? `Horodaté le ${new Date(detailsData.exam.locked_at).toLocaleString('fr-FR')}` : 'En cours de surveillance'}
                     </div>
                   </div>
 
@@ -1653,7 +1803,7 @@ export default function AdminExamSurveillanceHubPage() {
                       Surveillant Secondaire (Salle)
                     </div>
                     <div className="font-black text-xs text-slate-900 dark:text-white">
-                      {adminSupervisorName}
+                      {secondarySupervisorName}
                     </div>
 
                     {signatureDataUrl ? (
@@ -1663,7 +1813,7 @@ export default function AdminExamSurveillanceHubPage() {
                             ✓ SIGNÉ & CERTIFIÉ ÉLECTRONIQUEMENT
                           </span>
                           <div className="text-[9px] text-slate-400 font-mono">
-                            Horodaté le 21/08/2026 à 18:34
+                            {detailsData?.exam?.locked_at ? `Horodaté le ${new Date(detailsData.exam.locked_at).toLocaleString('fr-FR')}` : 'Horodaté lors de la signature'}
                           </div>
                         </div>
                       ) : (
@@ -1972,6 +2122,42 @@ export default function AdminExamSurveillanceHubPage() {
                 </button>
               </div>
 
+              {/* Professor Role Selection */}
+              <div className="p-3 bg-blue-50/60 dark:bg-slate-800/80 rounded-2xl border border-blue-100 dark:border-slate-700">
+                <span className="text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 tracking-wider block mb-2">
+                  Partie à Signer (Choix de l'Enseignant)
+                </span>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSigningSupervisorRole('principal')}
+                    className={cn(
+                      "py-2 px-3 rounded-xl text-xs font-bold transition-all border text-left flex flex-col gap-0.5 cursor-pointer",
+                      signingSupervisorRole === 'principal'
+                        ? "bg-[#0f2863] text-white border-[#0f2863] shadow-xs ring-2 ring-[#0f2863]/20"
+                        : "bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 hover:border-slate-300"
+                    )}
+                  >
+                    <span className="text-[10px] uppercase font-black tracking-wider text-amber-300">👑 Surveillant Principal</span>
+                    <span className="font-extrabold text-xs truncate">{principalSupervisorName}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setSigningSupervisorRole('secondary')}
+                    className={cn(
+                      "py-2 px-3 rounded-xl text-xs font-bold transition-all border text-left flex flex-col gap-0.5 cursor-pointer",
+                      signingSupervisorRole === 'secondary'
+                        ? "bg-[#0f2863] text-white border-[#0f2863] shadow-xs ring-2 ring-[#0f2863]/20"
+                        : "bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 hover:border-slate-300"
+                    )}
+                  >
+                    <span className="text-[10px] uppercase font-black tracking-wider text-sky-300">🧑‍🏫 Surveillant Secondaire</span>
+                    <span className="font-extrabold text-xs truncate">{secondarySupervisorName}</span>
+                  </button>
+                </div>
+              </div>
+
               {/* Mode Toggle Tabs */}
               <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
                 <button
@@ -1999,7 +2185,9 @@ export default function AdminExamSurveillanceHubPage() {
               {signatureMode === 'digital' ? (
                 <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-2">
                   <div className="text-xs font-bold text-slate-700 dark:text-slate-200">
-                    Signataire officiel : <strong className="text-[#0f2863] dark:text-sky-400">{adminSupervisorName}</strong>
+                    Signataire officiel : <strong className="text-[#0f2863] dark:text-sky-400">
+                      {signingSupervisorRole === 'principal' ? `${principalSupervisorName} (Surveillant Principal)` : `${secondarySupervisorName} (Surveillant Secondaire)`}
+                    </strong>
                   </div>
                   <div className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
                     Horodatage certifié : {new Date().toLocaleString('fr-FR')}
@@ -2094,25 +2282,27 @@ export default function AdminExamSurveillanceHubPage() {
             <tr>
               <td className="p-2 border border-slate-400 bg-slate-100 font-bold w-1/4">Intitulé du Module :</td>
               <td className="p-2 border border-slate-400 font-black text-[#0f2863]" colSpan={3}>
-                {examObj?.module?.name || 'Management Stratégique'}
+                {examObj?.module?.name || '—'}
               </td>
             </tr>
             <tr>
               <td className="p-2 border border-slate-400 bg-slate-100 font-bold">Filière / Promotion :</td>
-              <td className="p-2 border border-slate-400 font-semibold">{examObj?.module?.filiere?.name || 'ENCG Grande École'}</td>
+              <td className="p-2 border border-slate-400 font-semibold">{examObj?.module?.filiere?.name || '—'}</td>
               <td className="p-2 border border-slate-400 bg-slate-100 font-bold">Groupe / Section :</td>
               <td className="p-2 border border-slate-400 font-semibold">{examObj?.group?.name || 'Tous Groupes'}</td>
             </tr>
             <tr>
               <td className="p-2 border border-slate-400 bg-slate-100 font-bold">Lieu / Salle :</td>
-              <td className="p-2 border border-slate-400 font-bold text-slate-900">{examObj?.room?.name || 'Amphi A'}</td>
+              <td className="p-2 border border-slate-400 font-bold text-slate-900">{examObj?.room?.name || '—'}</td>
               <td className="p-2 border border-slate-400 bg-slate-100 font-bold">Horaires :</td>
-              <td className="p-2 border border-slate-400 font-mono">{examObj?.start_time?.substring(0, 5) || '09:00'} - {examObj?.end_time?.substring(0, 5) || '11:00'}</td>
+              <td className="p-2 border border-slate-400 font-mono">
+                {examObj?.start_time ? examObj.start_time.substring(0, 5) : '—'} {examObj?.end_time ? `- ${examObj.end_time.substring(0, 5)}` : ''}
+              </td>
             </tr>
             <tr>
               <td className="p-2 border border-slate-400 bg-slate-100 font-bold">Surveillant Responsable :</td>
               <td className="p-2 border border-slate-400 font-bold" colSpan={3}>
-                {adminSupervisorName}
+                {principalSupervisorName}
               </td>
             </tr>
           </tbody>
@@ -2236,7 +2426,7 @@ export default function AdminExamSurveillanceHubPage() {
         <div className="mt-6 pt-4 border-t-2 border-slate-400 grid grid-cols-2 gap-8 text-[9pt]">
           <div className="border border-slate-300 rounded p-3 text-center space-y-2">
             <div className="font-bold text-[#0f2863]">Signature du Surveillant Responsable :</div>
-            <div className="text-[8pt] text-slate-500">{adminSupervisorName}</div>
+            <div className="text-[8pt] text-slate-500">{principalSupervisorName}</div>
             <div className="h-16 flex items-center justify-center">
               {signatureDataUrl ? (
                 <img src={signatureDataUrl} alt="Signature" className="h-14 object-contain" />

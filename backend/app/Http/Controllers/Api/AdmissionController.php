@@ -185,8 +185,8 @@ class AdmissionController extends Controller
                     'id' => $student->id,
                     'rank' => $idx + 1,
                     'list_type' => $idx < 12 ? 'LISTE_PRINCIPALE' : 'LISTE_ATTENTE',
-                    'name' => $student->user->name ?? 'N/A',
-                    'cne' => $student->cne ?? ('K'.rand(10000000, 99999999)),
+                    'name' => $student->user->name ?? '—',
+                    'cne' => $student->cne ?? '—',
                     'apogee_code' => $student->student_number ?? 'En attente',
                     'physical_dossier_status' => $student->student_number ? 'DOSSIER_CONFORME' : 'EN_ATTENTE_DEPOT',
                 ];
