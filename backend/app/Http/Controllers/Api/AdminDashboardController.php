@@ -156,7 +156,7 @@ class AdminDashboardController extends Controller
         }
 
         // Student Requests
-        $studentRequests = DocumentRequest::with(['student.user', 'documentType'])
+        $studentRequests = DocumentRequest::with(['student.user', 'student.filiere', 'student.registrations.filiere', 'documentType'])
             ->where('status', 'pending')
             ->latest()
             ->take(5)
@@ -164,11 +164,14 @@ class AdminDashboardController extends Controller
 
         foreach ($studentRequests as $sr) {
             $sUser = $sr->student?->user;
+            $filiereCode = $sr->student?->filiere?->code
+                ?? $sr->student?->registrations?->first()?->filiere?->code
+                ?? 'ENCG';
             $pendingRequests[] = [
                 'id' => $sr->id,
                 'target_type' => 'student',
                 'name' => $sUser ? "{$sUser->first_name} {$sUser->last_name}" : 'Étudiant',
-                'filiere' => $sr->student?->filiere?->code ?? 'ENCG',
+                'filiere' => $filiereCode,
                 'docType' => $sr->documentType?->name ?? 'Attestation de Scolarité',
                 'tracking_code' => $sr->tracking_number ?? "DOC-STU-{$sr->id}",
                 'date' => $sr->created_at->format('d/m/Y H:i'),
