@@ -103,13 +103,22 @@ class GradeService
     }
 
     /**
-     * Vérifie si l'évaluation est une épreuve d'examen.
+     * Vérifie si l'évaluation est une épreuve d'examen (et non un contrôle continu / TP / Projet).
      */
     public function isExamAssessment(Assessment $assessment): bool
     {
         $type = strtolower(trim((string) $assessment->type));
 
-        return in_array($type, ['exam', 'examen', 'final', 'rattrapage', 'r', 'cc', 'cc1', 'cc2', 'tp']);
+        // CC, CC1, CC2, TP, Projet sont des contrôles continus, PAS des examens terminaux !
+        if (in_array($type, ['cc', 'cc1', 'cc2', 'cc3', 'tp', 'tp1', 'tp2', 'projet', 'expose', 'devoir']) 
+            || str_starts_with($type, 'cc') 
+            || str_starts_with($type, 'tp') 
+            || str_contains($type, 'continu')) {
+            return false;
+        }
+
+        return in_array($type, ['exam', 'examen', 'final', 'examen final', 'examen ordinaire', 'eo', 'ef', 'rattrapage', 'resit', 'r'])
+            || str_contains($type, 'exam');
     }
 
     /**

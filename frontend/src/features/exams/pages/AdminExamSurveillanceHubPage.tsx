@@ -14,6 +14,7 @@ import { Button } from '@shared/components/ui/Button'
 import { Spinner } from '@shared/components/ui/Spinner'
 import { toast } from 'sonner'
 import { QRCodeSVG } from 'qrcode.react'
+import { useAuthStore } from '@stores/authStore'
 
 interface Candidate {
   id: number
@@ -45,7 +46,8 @@ export default function AdminExamSurveillanceHubPage() {
   const queryClient = useQueryClient()
 
   // Authenticated user profile
-  const storedUser = (() => {
+  const authUser = useAuthStore((s) => s.user)
+  const storedUser = authUser || (() => {
     try {
       return JSON.parse(localStorage.getItem('auth_user') || '{}')
     } catch {
@@ -216,19 +218,26 @@ export default function AdminExamSurveillanceHubPage() {
     || principalSurv?.professor?.email 
     || ''
 
+  const currentUserName = storedUser?.name || authUser?.name || ''
+  const currentUserEmail = storedUser?.email || authUser?.email || ''
+  const currentUserId = storedUser?.id || authUser?.id || null
+
+  const isCurrentUserPrincipal = Boolean(
+    (currentUserId && principalSurv?.professor?.user?.id === currentUserId) ||
+    (currentUserEmail && principalSupervisorEmail && currentUserEmail.toLowerCase() === principalSupervisorEmail.toLowerCase()) ||
+    (currentUserName && principalSupervisorName !== 'Surveillant Principal' && (
+      currentUserName.toLowerCase().includes(principalSupervisorName.toLowerCase()) ||
+      principalSupervisorName.toLowerCase().includes(currentUserName.toLowerCase())
+    ))
+  )
+
   const secondarySupervisorName = secondarySurv?.professor?.user?.name 
     || secondarySurv?.professor?.name 
-    || (storedUser?.name ? storedUser.name : 'Surveillant Secondaire')
+    || (!isCurrentUserPrincipal && storedUser?.name ? storedUser.name : 'Surveillant Secondaire')
 
   const secondarySupervisorEmail = secondarySurv?.professor?.user?.email 
     || secondarySurv?.professor?.email 
-    || (storedUser?.email ? storedUser.email : '')
-
-  const isCurrentUserPrincipal = Boolean(
-    (storedUser?.id && principalSurv?.professor?.user?.id === storedUser.id) ||
-    (storedUser?.email && principalSupervisorEmail && storedUser.email.toLowerCase() === principalSupervisorEmail.toLowerCase()) ||
-    (storedUser?.name && principalSupervisorName !== 'Surveillant Principal' && storedUser.name.toLowerCase().includes(principalSupervisorName.toLowerCase()))
-  )
+    || (!isCurrentUserPrincipal && storedUser?.email ? storedUser.email : '')
 
   useEffect(() => {
     if (isCurrentUserPrincipal) {
@@ -308,8 +317,11 @@ export default function AdminExamSurveillanceHubPage() {
       } else {
         setSecondarySignatureUrl('')
       }
-      if (detailsData.exam.signature_data) {
-        setSignatureDataUrl(detailsData.exam.signature_data)
+      // ONLY set personal signatureDataUrl for current user's role
+      if (isCurrentUserPrincipal) {
+        setSignatureDataUrl(detailsData.exam.principal_signature || '')
+      } else {
+        setSignatureDataUrl(detailsData.exam.secondary_signature || '')
       }
     }
   }, [detailsData?.exam, id])
@@ -759,10 +771,15 @@ export default function AdminExamSurveillanceHubPage() {
     
     if (signingSupervisorRole === 'principal') {
       setPrincipalSignatureUrl(signatureToSave)
+      if (isCurrentUserPrincipal) {
+        setSignatureDataUrl(signatureToSave)
+      }
     } else {
       setSecondarySignatureUrl(signatureToSave)
+      if (!isCurrentUserPrincipal) {
+        setSignatureDataUrl(signatureToSave)
+      }
     }
-    setSignatureDataUrl(signatureToSave)
     setShowSignatureModal(false)
 
     const signerName = signingSupervisorRole === 'principal' ? principalSupervisorName : secondarySupervisorName
@@ -1558,20 +1575,151 @@ export default function AdminExamSurveillanceHubPage() {
           </div>
         )}
 
-        {/* Signature Preview Banner if signed */}
-        {signatureDataUrl && (
-          <div className="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 rounded-3xl p-5 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-bold">
-                ✓
+        {/* Dual Signatures Official Status Banner */}
+        {(principalSignatureUrl || secondarySignatureUrl) && (
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3 gap-2">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-300 flex items-center justify-center font-bold">
+                  ✍️
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">
+                    Signatures Officielles d'Émargement du Procès-Verbal
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Attestation officielle de conformité du déroulement de l'épreuve
+                  </p>
+                </div>
               </div>
               <div>
-                <div className="font-black text-emerald-950 dark:text-emerald-200 text-sm">PV d'Examen Signé & Certifié</div>
-                <div className="text-xs text-emerald-700 dark:text-emerald-400">Responsable : {adminSupervisorName}</div>
+                <span className={cn(
+                  "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border inline-flex items-center gap-1.5",
+                  (principalSignatureUrl && secondarySignatureUrl)
+                    ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800"
+                    : "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800"
+                )}>
+                  {(principalSignatureUrl && secondarySignatureUrl) ? (
+                    <>✓ PV Bi-Signé Conjointement (100% Conforme)</>
+                  ) : (
+                    <>⏳ Signature Partielle (1/2 Enregistrée)</>
+                  )}
+                </span>
               </div>
             </div>
-            <div className="bg-white p-2 rounded-xl border border-emerald-300">
-              <img src={signatureDataUrl} alt="Signature Surveillant" className="h-10 object-contain" />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Carte Surveillant Principal */}
+              <div className={cn(
+                "p-4 rounded-2xl border transition-all flex items-center justify-between gap-4",
+                principalSignatureUrl 
+                  ? "bg-emerald-50/60 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800/60" 
+                  : "bg-amber-50/60 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800/60"
+              )}>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-md bg-amber-400/20 text-amber-800 dark:text-amber-300">
+                      👑 Surveillant Principal
+                    </span>
+                    {principalSignatureUrl ? (
+                      <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
+                        <CheckCircle2 className="w-3.5 h-3.5" /> Signé & Scellé
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 flex items-center gap-1">
+                        <Clock className="w-3.5 h-3.5" /> En attente de signature
+                      </span>
+                    )}
+                  </div>
+                  <div className="font-black text-sm text-slate-900 dark:text-white">
+                    {principalSupervisorName}
+                  </div>
+                  <div className="text-[10px] text-slate-500 font-mono">
+                    {principalSupervisorEmail || 'Responsable d\'épreuve'}
+                  </div>
+                </div>
+
+                <div className="shrink-0 text-right">
+                  {principalSignatureUrl ? (
+                    <div className="bg-white dark:bg-slate-900 p-2 rounded-xl border border-emerald-300 shadow-xs">
+                      {principalSignatureUrl.startsWith('data:image') ? (
+                        <img src={principalSignatureUrl} alt={`Signature ${principalSupervisorName}`} className="h-10 max-w-[130px] object-contain" />
+                      ) : (
+                        <span className="text-[10px] font-mono font-bold text-emerald-700">✓ Sceau Numérique</span>
+                      )}
+                    </div>
+                  ) : isCurrentUserPrincipal ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSigningSupervisorRole('principal')
+                        setShowSignatureModal(true)
+                      }}
+                      className="px-3.5 py-2 bg-[#0f2863] hover:bg-[#1a387e] text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-sm transition-all cursor-pointer"
+                    >
+                      ✍️ Signer mon PV
+                    </button>
+                  ) : (
+                    <span className="text-xs text-amber-600 font-bold italic">En attente</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Carte Surveillant Secondaire */}
+              <div className={cn(
+                "p-4 rounded-2xl border transition-all flex items-center justify-between gap-4",
+                secondarySignatureUrl 
+                  ? "bg-emerald-50/60 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800/60" 
+                  : "bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700"
+              )}>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-md bg-sky-400/20 text-sky-800 dark:text-sky-300">
+                      🧑‍🏫 Surveillant Secondaire
+                    </span>
+                    {secondarySignatureUrl ? (
+                      <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
+                        <CheckCircle2 className="w-3.5 h-3.5" /> Signé & Scellé
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-bold text-slate-500 flex items-center gap-1">
+                        <Clock className="w-3.5 h-3.5" /> En attente de signature
+                      </span>
+                    )}
+                  </div>
+                  <div className="font-black text-sm text-slate-900 dark:text-white">
+                    {secondarySupervisorName}
+                  </div>
+                  <div className="text-[10px] text-slate-500 font-mono">
+                    {secondarySupervisorEmail || 'Surveillant adjoint'}
+                  </div>
+                </div>
+
+                <div className="shrink-0 text-right">
+                  {secondarySignatureUrl ? (
+                    <div className="bg-white dark:bg-slate-900 p-2 rounded-xl border border-emerald-300 shadow-xs">
+                      {secondarySignatureUrl.startsWith('data:image') ? (
+                        <img src={secondarySignatureUrl} alt={`Signature ${secondarySupervisorName}`} className="h-10 max-w-[130px] object-contain" />
+                      ) : (
+                        <span className="text-[10px] font-mono font-bold text-emerald-700">✓ Sceau Numérique</span>
+                      )}
+                    </div>
+                  ) : !isCurrentUserPrincipal ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSigningSupervisorRole('secondary')
+                        setShowSignatureModal(true)
+                      }}
+                      className="px-3.5 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-sm transition-all cursor-pointer"
+                    >
+                      ✍️ Signer mon PV
+                    </button>
+                  ) : (
+                    <span className="text-xs text-slate-400 font-bold italic">En attente</span>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -1787,27 +1935,8 @@ export default function AdminExamSurveillanceHubPage() {
                     <div className="font-black text-xs text-slate-900 dark:text-white">
                       {principalSupervisorName}
                     </div>
-                    <div>
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 rounded-full text-[9px] font-black">
-                        ✓ SIGNÉ ÉLECTRONIQUEMENT
-                      </span>
-                    </div>
-                    <div className="text-[9px] text-slate-400 font-mono">
-                      {detailsData?.exam?.locked_at ? `Horodaté le ${new Date(detailsData.exam.locked_at).toLocaleString('fr-FR')}` : 'En cours de surveillance'}
-                    </div>
-                  </div>
-
-                  {/* Surveillant Secondaire */}
-                  <div className="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center space-y-1.5">
-                    <div className="text-[10px] font-black uppercase text-[#0f2863] dark:text-sky-400">
-                      Surveillant Secondaire (Salle)
-                    </div>
-                    <div className="font-black text-xs text-slate-900 dark:text-white">
-                      {secondarySupervisorName}
-                    </div>
-
-                    {signatureDataUrl ? (
-                      signatureDataUrl === 'DIGITAL_CERTIFIED_STAMP_ENCG' ? (
+                    {principalSignatureUrl ? (
+                      principalSignatureUrl === 'DIGITAL_CERTIFIED_STAMP_ENCG' ? (
                         <div className="space-y-1">
                           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 rounded-full text-[9px] font-black">
                             ✓ SIGNÉ & CERTIFIÉ ÉLECTRONIQUEMENT
@@ -1818,7 +1947,7 @@ export default function AdminExamSurveillanceHubPage() {
                         </div>
                       ) : (
                         <div className="space-y-1">
-                          <img src={signatureDataUrl} alt="Signature Surveillant" className="h-9 object-contain mx-auto" />
+                          <img src={principalSignatureUrl} alt={`Signature ${principalSupervisorName}`} className="h-9 object-contain mx-auto" />
                           <div className="text-[9px] text-emerald-600 font-bold">✓ Signature Manuelle Apposée</div>
                         </div>
                       )
@@ -1831,6 +1960,54 @@ export default function AdminExamSurveillanceHubPage() {
                           <button
                             type="button"
                             onClick={() => {
+                              setSigningSupervisorRole('principal');
+                              setShowPvPreviewModal(false);
+                              setShowSignatureModal(true);
+                            }}
+                            className="text-[10px] text-[#0f2863] dark:text-sky-400 font-black hover:underline cursor-pointer"
+                          >
+                            ✍️ Signer maintenant
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Surveillant Secondaire */}
+                  <div className="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center space-y-1.5">
+                    <div className="text-[10px] font-black uppercase text-[#0f2863] dark:text-sky-400">
+                      Surveillant Secondaire (Salle)
+                    </div>
+                    <div className="font-black text-xs text-slate-900 dark:text-white">
+                      {secondarySupervisorName}
+                    </div>
+
+                    {secondarySignatureUrl ? (
+                      secondarySignatureUrl === 'DIGITAL_CERTIFIED_STAMP_ENCG' ? (
+                        <div className="space-y-1">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 rounded-full text-[9px] font-black">
+                            ✓ SIGNÉ & CERTIFIÉ ÉLECTRONIQUEMENT
+                          </span>
+                          <div className="text-[9px] text-slate-400 font-mono">
+                            {detailsData?.exam?.locked_at ? `Horodaté le ${new Date(detailsData.exam.locked_at).toLocaleString('fr-FR')}` : 'Horodaté lors de la signature'}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-1">
+                          <img src={secondarySignatureUrl} alt={`Signature ${secondarySupervisorName}`} className="h-9 object-contain mx-auto" />
+                          <div className="text-[9px] text-emerald-600 font-bold">✓ Signature Manuelle Apposée</div>
+                        </div>
+                      )
+                    ) : (
+                      <div className="space-y-1">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 rounded-full text-[9px] font-bold">
+                          En Attente de Signature
+                        </span>
+                        <div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSigningSupervisorRole('secondary');
                               setShowPvPreviewModal(false);
                               setShowSignatureModal(true);
                             }}
@@ -2423,27 +2600,47 @@ export default function AdminExamSurveillanceHubPage() {
         </div>
 
         {/* Official Signatures & SHA-256 Seal Block */}
-        <div className="mt-6 pt-4 border-t-2 border-slate-400 grid grid-cols-2 gap-8 text-[9pt]">
+        <div className="mt-6 pt-4 border-t-2 border-slate-400 grid grid-cols-3 gap-4 text-[9pt]">
           <div className="border border-slate-300 rounded p-3 text-center space-y-2">
-            <div className="font-bold text-[#0f2863]">Signature du Surveillant Responsable :</div>
+            <div className="font-bold text-[#0f2863]">Surveillant Principal :</div>
             <div className="text-[8pt] text-slate-500">{principalSupervisorName}</div>
             <div className="h-16 flex items-center justify-center">
-              {signatureDataUrl ? (
-                <img src={signatureDataUrl} alt="Signature" className="h-14 object-contain" />
+              {principalSignatureUrl ? (
+                principalSignatureUrl.startsWith('data:image') ? (
+                  <img src={principalSignatureUrl} alt="Signature" className="h-14 object-contain" />
+                ) : (
+                  <span className="text-emerald-700 font-bold text-[8pt]">✓ Signé Électroniquement</span>
+                )
               ) : (
-                <span className="text-slate-400 italic text-[8pt]">(Non signé électroniquement)</span>
+                <span className="text-slate-400 italic text-[8pt]">(Non signé)</span>
               )}
             </div>
           </div>
 
           <div className="border border-slate-300 rounded p-3 text-center space-y-2">
-            <div className="font-bold text-[#0f2863]">Certification Service des Examens :</div>
-            <div className="text-[8pt] text-slate-500">École Nationale de Commerce et de Gestion de Fès</div>
-            <div className="h-16 flex items-center justify-center gap-3">
-              <QRCodeSVG value={`https://encg.usmba.ac.ma/verify-exam-pv?id=${id}&seal=${pvLockSeal || 'OFFICIAL-PV'}`} size={56} />
-              <div className="text-left text-[7pt] font-mono text-slate-600 space-y-0.5">
+            <div className="font-bold text-[#0f2863]">Surveillant Secondaire :</div>
+            <div className="text-[8pt] text-slate-500">{secondarySupervisorName}</div>
+            <div className="h-16 flex items-center justify-center">
+              {secondarySignatureUrl ? (
+                secondarySignatureUrl.startsWith('data:image') ? (
+                  <img src={secondarySignatureUrl} alt="Signature" className="h-14 object-contain" />
+                ) : (
+                  <span className="text-emerald-700 font-bold text-[8pt]">✓ Signé Électroniquement</span>
+                )
+              ) : (
+                <span className="text-slate-400 italic text-[8pt]">(Non signé)</span>
+              )}
+            </div>
+          </div>
+
+          <div className="border border-slate-300 rounded p-3 text-center space-y-2">
+            <div className="font-bold text-[#0f2863]">Certification Examens :</div>
+            <div className="text-[8pt] text-slate-500">ENCG Fès</div>
+            <div className="h-16 flex items-center justify-center gap-2">
+              <QRCodeSVG value={`https://encg.usmba.ac.ma/verify-exam-pv?id=${id}&seal=${pvLockSeal || 'OFFICIAL-PV'}`} size={48} />
+              <div className="text-left text-[6.5pt] font-mono text-slate-600 space-y-0.5">
                 <div><b>Sceau SHA-256 :</b></div>
-                <div className="break-all">{pvLockSeal || 'SHA256:ENCRYPTED-OFFICIAL-STAMP-ENCG'}</div>
+                <div className="break-all">{pvLockSeal ? pvLockSeal.substring(0, 24) : 'SHA256:ENCG-PV-STAMP'}</div>
               </div>
             </div>
           </div>

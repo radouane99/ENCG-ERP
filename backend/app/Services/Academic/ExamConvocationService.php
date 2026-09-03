@@ -599,12 +599,21 @@ class ExamConvocationService
         if ($principalSignature && $secondarySignature && $principalSignature === $secondarySignature) {
             $principalSignature = null;
             \Illuminate\Support\Facades\Cache::forget("exam_pv_principal_signature_{$examId}");
+        } elseif (!$secondarySignature && $principalSignature) {
+            // If only one signature was cached before dual-signature support, it belongs to the secondary supervisor (Chraibi)
+            $secondarySignature = $principalSignature;
+            $principalSignature = null;
+            \Illuminate\Support\Facades\Cache::put("exam_pv_secondary_signature_{$examId}", $secondarySignature, 86400 * 7);
+            \Illuminate\Support\Facades\Cache::forget("exam_pv_principal_signature_{$examId}");
         }
+
+        // Clean ambiguous shared key
+        \Illuminate\Support\Facades\Cache::forget("exam_pv_signature_{$examId}");
 
         if ($exam) {
             $exam->principal_signature = $principalSignature;
             $exam->secondary_signature = $secondarySignature;
-            $exam->signature_data = $secondarySignature ?: $principalSignature;
+            $exam->signature_data = $principalSignature;
         }
 
         return [

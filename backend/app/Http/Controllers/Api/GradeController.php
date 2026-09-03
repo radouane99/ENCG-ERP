@@ -44,18 +44,19 @@ class GradeController extends Controller
         $students = $this->gradeService->getRegisteredStudents($assessment->module, $groupId);
         $fraudIds = $this->gradeService->getFraudStudentIds($assessment->module);
         $isRattrapage = $this->gradeService->isRattrapageAssessment($assessment);
+        $isExam = $this->gradeService->isExamAssessment($assessment);
         $isSigned = $this->gradeService->isPvSigned($assessment->module_id);
 
         $signatureRecord = ModulePvSignature::where('module_id', $assessment->module_id)
             ->with('signer')->latest()->first();
 
-        $data = $students->map(function ($student) use ($assessment, $fraudIds) {
+        $data = $students->map(function ($student) use ($assessment, $fraudIds, $isExam) {
             $grade = Grade::where('student_id', $student->id)
                 ->where('assessment_id', $assessment->id)
                 ->first();
 
             $hasFraud = $this->gradeService->isStudentFraud($student->id, $fraudIds);
-            $isExam = $this->gradeService->isExamAssessment($assessment);
+            // La fraude ne bloque à 0/20 QUE lors de l'examen. Pour les contrôles continus (CC), le prof garde l'accès.
             $isFraud = $hasFraud && $isExam;
 
             return [
@@ -67,13 +68,16 @@ class GradeController extends Controller
                 'value' => $isFraud ? 0.0 : ($grade ? (float) $grade->value : null),
                 'is_absent' => $isFraud ? false : ($grade ? (bool) $grade->absent : false),
                 'is_fraud' => $isFraud,
+                'has_exam_fraud' => $hasFraud,
             ];
         });
 
         return response()->json([
             'success' => true,
             'data' => $data,
-            'is_locked' => $isSigned,
+            'is_locked' => $isSigned && $isExam,
+            'is_module_pv_signed' => $isSigned,
+            'is_exam' => $isExam,
             'signature' => $signatureRecord ? [
                 'signed_by' => $signatureRecord->signer?->name ?? 'Enseignant',
                 'signed_at' => $signatureRecord->signed_at?->toIso8601String(),
@@ -109,10 +113,10 @@ class GradeController extends Controller
             }
         }
 
-        // Vérification PV signé pour cette session spécifique (pour les non-admins)
-        if (! $isAdmin && $this->gradeService->isPvSigned($assessment->module_id, $session)) {
+        // Vérification PV signé : Le verrouillage du PV ne bloque QUE les notes d'examen ! Les contrôles continus (CC) restent toujours éditables.
+        if (! $isAdmin && $this->gradeService->isExamAssessment($assessment) && $this->gradeService->isPvSigned($assessment->module_id, $session)) {
             return response()->json([
-                'message' => "Le Procès-Verbal ({$session}) est déjà signé. La modification des notes est verrouillée.",
+                'message' => "Le Procès-Verbal d'examen ({$session}) est déjà signé. La modification des notes d'examen est verrouillée.",
             ], 403);
         }
 
