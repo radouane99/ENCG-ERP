@@ -2276,3 +2276,108 @@ Garantit la traçabilité intégrale, non-répudiable et granulaire de toutes le
 - **Interface Client React :** `AdminActivityLogsPage.tsx` (`frontend/src/features/admin/pages/`)
   - Route : `/admin/activity-logs`.
   - Tableau de bord avec 4 compteurs clés, filtres par catégorie d'action et sévérité, modal d'audit de chaîne SHA-256 en direct, et tiroir inspecteur de diffs coloré (Rouge/Vert).
+
+---
+
+### 21.5 ✍️ Séparation Stricte du Bi-Émargement des Surveillants d'Examens & Sceau SHA-256
+
+#### A. Rôle Métier & Problématique Résolue
+Dans le cadre de l'organisation des examens universitaires à l'ENCG Fès, chaque salle d'examen est supervisée conjointement par deux enseignants assermentés :
+1. **Le Surveillant Principal (Responsable de Salle)** : Supervise le déroulement global, procède aux contrôles d'identité, valide les incidents et acte la clôture officielle du procès-verbal (PV).
+2. **Le Surveillant Secondaire (Adjoint de Salle)** : Assure la distribution des sujets, l'émargement physique et la co-signature du PV.
+
+Auparavant, la signature électronique du surveillant secondaire (ex. Pr. Amina Chraibi) pouvait écraser ou fuiter dans l'état global du PV sous l'intitulé générique *"Surveillant de Salle"*, laissant croire au surveillant principal (ex. Pr. Amina Tazi) que son propre slot avait été signé par autrui.
+
+#### B. Architecture Technique & Isolation Cryptographique
+- **Isolation Cache Redis & Base de Données (`ExamConvocationService.php`) :**
+  - Clés Redis strictement distinctes :
+    - `exam_pv_principal_signature_{examId}` : Dédiée exclusivement au Surveillant Principal.
+    - `exam_pv_secondary_signature_{examId}` : Dédiée exclusivement au Surveillant Secondaire.
+  - L'attribut `$exam->signature_data` est désormais réservé à la signature officielle du surveillant principal et n'accepte plus de repli polluant par la signature secondaire.
+  - Horodatage et traçabilité nominative de chaque acte d'émargement numérique.
+- **Résolution Automatique des Rôles Frontend (`AdminExamSurveillanceHubPage.tsx`) :**
+  - Connexion native au store Zustand `useAuthStore` pour identifier l'utilisateur authentifié sans dépendre du `localStorage`.
+  - Détection contextuelle : si l'utilisateur connecté est le Surveillant Principal, l'application lui propose directement `[ ✍️ Signer mon PV ]` pour son propre rôle ; si c'est le Surveillant Secondaire, son bouton est orienté sur son slot respectif.
+- **Bannière d'État Officiel à Deux Cartes Découplées :**
+  - **Carte Surveillant Principal** : Affiche l'identité du responsable, le statut de signature (`✓ Signé & Scellé` ou `⏳ En attente de signature`), et l'image exacte de son émargement ou son sceau numérique.
+  - **Carte Surveillant Secondaire** : Affiche l'identité de l'adjoint de salle avec son statut d'émargement indépendant.
+  - **Badge de Synthèse Légale** : Indique clairement si le PV est *"✓ PV Bi-Signé Conjointement (100% Conforme)"* ou *"⏳ Signature Partielle (1/2 Enregistrée)"*.
+- **PV Imprimable & Modal de Prévisualisation :**
+  - Affichage en 3 colonnes normalisées : Surveillant Principal, Surveillant Secondaire, et Sceau de Certification du Service des Examens avec QR Code et empreinte SHA-256 inaltérable.
+
+---
+
+### 21.6 ⚖️ Découplage du Verrouillage PV (Examen vs CC) & Gestion Granulaire des Fraudes LMD
+
+#### A. Rôle Métier & Contexte Académique ENCG / LMD
+Dans le système LMD marocain, l'évaluation d'un module semestriel combine deux composantes distinctes :
+1. **Les Contrôles Continus (CC1, CC2, TP, Projets...)** : Évaluations continues au fil du semestre placées sous l'entière autonomie pédagogique de l'enseignant du module.
+2. **L'Examen Terminal (Session Ordinaire / Rattrapage)** : Épreuve officielle encadrée et scellée par procès-verbal à l'issue de la surveillance.
+
+Deux anomalies bloquantes ont été résolues :
+1. **Le verrouillage d'un PV d'examen ne doit JAMAIS bloquer la saisie des Contrôles Continus** : L'enseignant doit pouvoir renseigner ou ajuster ses notes de CC à tout moment, même après la clôture du PV d'examen final.
+2. **Gestion de la Fraude à l'Examen** : Si un étudiant fait l'objet d'un procès-verbal d'incident/fraude lors de l'examen final (ex. tricherie constatée par les surveillants), cette fraude invalide l'examen (note bloquée à 00/20) et sanctionne le module à 00/20 lors des délibérations. En revanche, **les notes de contrôle continu (CC) obtenues en amont doivent rester accessibles et enregistrables** pour documenter fidèlement le parcours semestriel de l'étudiant.
+
+#### B. Architecture Backend (`GradeService.php` & `GradeController.php`)
+- **Correction de la Détection des Évaluations (`GradeService::isExamAssessment`) :**
+  - Auparavant, la méthode englobait par erreur `'cc'`, `'cc1'`, `'cc2'`, `'tp'`, les traitant comme des examens terminaux.
+  - Refactorisation stricte :
+    ```php
+    public function isExamAssessment(Assessment $assessment): bool {
+        $type = strtolower(trim((string) $assessment->type));
+        if (in_array($type, ['cc', 'cc1', 'cc2', 'cc3', 'tp', 'tp1', 'tp2', 'projet', 'expose', 'devoir']) 
+            || str_starts_with($type, 'cc') || str_starts_with($type, 'tp') || str_contains($type, 'continu')) {
+            return false;
+        }
+        return in_array($type, ['exam', 'examen', 'final', 'examen final', 'examen ordinaire', 'eo', 'ef', 'rattrapage', 'resit', 'r'])
+            || str_contains($type, 'exam');
+    }
+    ```
+- **Déverrouillage de la Saisie en Masse (`GradeController::storeBulk`) :**
+  - La vérification du PV signé (`isPvSigned`) n'interdit la modification que si l'évaluation courante est un examen :
+    ```php
+    if (! $isAdmin && $this->gradeService->isExamAssessment($assessment) && $this->gradeService->isPvSigned($assessment->module_id, $session)) {
+        return response()->json(['message' => "Le Procès-Verbal d'examen est déjà signé. La modification des notes d'examen est verrouillée."], 403);
+    }
+    ```
+- **Attribution Conditionnelle de la Fraude (`GradeController::getForAssessment`) :**
+  - `$isFraud = $hasFraud && $isExam;` : La note 00/20 imposée et le blocage ne s'appliquent qu'à l'examen.
+  - L'attribut `has_exam_fraud` est transmis au frontend pour contextualiser l'incident sans bloquer l'édition du CC.
+- **Calculs et Délibérations Finales (`GradeController::getModulePv`) :**
+  - En présence d'une fraude confirmée, la note finale du module passe automatiquement à `00.00 / FRAUDE`, garantissant la sanction réglementaire tout en conservant l'historique complet des évaluations dans `grades_detail`.
+
+#### C. Expérience Utilisateur Frontend (`AdminGradesEditPage.tsx`)
+- **Adaptation Dynamique du Bandeau de Statut :**
+  - Sur un **Contrôle Continu (`CC1`, `CC2`, `TP`)** : Affichage d'un bandeau informatif bleu avec badge vert :
+    > **PROCÈS-VERBAL D'EXAMEN SCELLÉ — SAISIE DES CONTRÔLES OUVERTE**  
+    > *Le PV d'examen final est scellé. La saisie et l'ajustement des notes de Contrôle Continu restent pleinement ouverts et accessibles.*
+  - Sur un **Examen (`Examen Final`, `Rattrapage`)** : Affichage du bandeau ambre de scellement avec champs verrouillés.
+- **Gestion Visuelle de l'Étudiant Frauduleux :**
+  - Sur l'évaluation `CC1` : L'étudiant (ex. Hajar El Fassi) dispose d'un champ de saisie déverrouillé, permettant au professeur de saisir sa note de CC, accompagné d'un badge jaune explicatif : `⚠️ FRAUDE EXAMEN (CC LIBRE · MOYENNE = 0)`.
+  - Sur l'évaluation `Examen` : Le champ est bloqué à `0` avec badge rouge clignotant `🚨 FRAUDE PV EXAMEN (00/20 BLOQUÉ)` et mention `Note 00/20 (Conseil)`.
+- **Bouton d'Enregistrement & Import Excel :**
+  - Pleinement opérationnels sur les contrôles continus même après signature du PV de l'examen.
+
+---
+
+### 21.7 🧹 Assainissement Zéro Donnée Statique/Mock & Conformité Linter CI/CD
+
+#### A. Purge Complète des Données Synthétiques (Deep Scan Zero-Mock)
+Dans le cadre de l'exigence d'intégrité absolue et de connexion directe aux données réelles de PostgreSQL :
+- **`ProfessorAttendanceController.php`** : Suppression intégrale de la cohorte synthétique de secours (`// 5. Cohorte de secours`, 24 faux étudiants aux identifiants fictifs `N13...`). L'endpoint retourne désormais un tableau vide authentique si aucune inscription n'est trouvée.
+- **`OrientationAdvisorService.php`** : Remplacement des valeurs par défaut `'Étudiant ENCG'` et `'N/A'` par des données réelles ou des tirets typographiques d'absence (`'—'`).
+- **`ExamPlanningController.php`** : Suppression des horaires et filières codés en dur (`'09:00'`, `'Tronc Commun'`).
+- **Templates PDF Blade Officiels** (`exam_door_sign.blade.php`, `exam_pv_official.blade.php`, `pv_examen.blade.php`, `convocation.blade.php`) : Éradication de toutes les chaînes statiques de substitution au profit des véritables relations Eloquent (`$exam->module->filiere->name`, `$exam->surveillances`, horaires planifiés).
+
+#### B. Résolution des 10 Avertissements ESLint & Notice Fast Refresh
+Assainissement complet du code frontend conformément aux règles de build strictes de la CI GitHub Actions :
+- **`ProfilePage.tsx`** : Suppression de 6 imports `lucide-react` orphelins (`Save`, `User as UserIcon`, `Lock`, `Mail`, `Phone`, `Upload`).
+- **`Header.tsx`** : Nettoyage de la variable `i18n` inutilisée dans `useTranslation`.
+- **`StudentDigitalLibrary.tsx`** : Suppression de l'import `Download` et du hook `useTranslation` inutilisés.
+- **`AdminGradesEditPage.tsx`** : Élimination de la variable `isContinuousAssessment` non référencée.
+- **`CandidateDossierPortal.tsx`** : Suppression des icônes `ArrowRight`, `Calendar`, `MapPin`, `Phone`, de l'état `loading` inutilisé, et migration des blocs `catch (err)` vers la syntaxe ES2019 `catch { ... }`.
+- **`MassImportView.tsx`** : Suppression de `FileSpreadsheet` et passage au `catch` sans paramètre.
+- **Architecture Modulaire `Badge.tsx` & `badgeVariants.ts`** :
+  - Résolution de la notice React Fast Refresh (*"Fast refresh only works when a file only exports components"*).
+  - Extraction de `badgeVariants` dans un fichier dédié `badgeVariants.ts`, calqué sur l'architecture éprouvée de `buttonVariants.ts` et `alertVariants.ts`.
+  - Re-exportation propre via `@shared/components/ui/index.ts`.

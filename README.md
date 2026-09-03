@@ -722,6 +722,26 @@ flowchart TD
 | **$10.00 \le M < 12.00$** | 👍 **Passable** |
 | **$M < 10.00$** | ❌ **Ajourné** |
 
+### ⚖️ Découplage du Verrouillage des PV (Examen vs Contrôle Continu) & Traitement de la Fraude
+
+```mermaid
+flowchart LR
+    subgraph ExamLockRule["🔒 Règle de Verrouillage des Évaluations"]
+        PVSigned["✍️ PV d'Examen Signé & Scellé"] --> ExamCheck{"Type d'Évaluation ?"}
+        ExamCheck -- Examen Terminal / Rattrapage --> LockExam["🔒 Saisie Verrouillée Définitivement"]
+        ExamCheck -- Contrôle Continu / CC1 / CC2 / TP --> OpenCC["🔓 Saisie & Ajustements Libres à tout moment"]
+    end
+
+    subgraph FraudDiscipline["🚨 Traitement Rigoureux de la Fraude"]
+        FraudIncident["🚩 PV d'Incident d'Examen (Fraude)"] --> Split1["✍️ Épreuve Examen : Note 00/20 Bloquée"]
+        FraudIncident --> Split2["📝 Contrôle Continu : Saisie Normale Autorisée"]
+        Split1 & Split2 --> ModuleDelib["⚖️ Délibération Module : Note Finale 00.00 (FRAUDE)"]
+    end
+```
+
+* **Autonomie des Contrôles Continus (CC)** : Le scellement d'un PV d'examen ne bloque jamais la saisie ou la modification des notes de CC (`CC1`, `CC2`, `TP`, `Projet`). Le professeur conserve son autonomie pédagogique complète tout au long de la période d'évaluation.
+* **Transparence et Sanction Disciplinaire** : L'étudiant fraudeur est sanctionné à l'examen (00/20 imposé) et au résultat final du module (00.00 / décision `FRAUDE`). Ses notes de CC obtenues au cours du semestre sont toutefois rigoureusement préservées dans son dossier académique à des fins d'audit et de traçabilité.
+
 ---
 
 ## 11. 🛡️ Sécurité, Signature Numérique SHA-256 & Conformité CNDP
@@ -742,6 +762,13 @@ graph LR
 
     PDF --> Scan
 ```
+
+### ✍️ Bi-Émargement Conjoint des Surveillants & Isolation Cryptographique
+
+* **Double Cache Redis Découplé** : Clés séparées `exam_pv_principal_signature_{id}` et `exam_pv_secondary_signature_{id}`, interdisant toute pollution ou attribution croisée des émargements.
+* **Résolution Automatisée des Rôles** : L'interface de surveillance (`/admin/exams/:id/surveillance`) identifie instantanément le surveillant principal (responsable de salle) et le surveillant adjoint via le store d'authentification Zustand.
+* **Bannière d'Émargement Bi-Certifiée** : Deux cartes distinctes affichant pour chaque surveillant son statut en direct (`✓ Signé & Scellé` ou `⏳ En attente de signature`), son sceau cryptographique et l'empreinte SHA-256 globale du PV.
+* **Politique Zero-Mock Intégrale** : Élimination absolue des données statiques/synthétiques de secours au profit de requêtes directes sur PostgreSQL (cohortes d'étudiants, présences, plannings, feuilles de porte et convocations).
 
 ---
 
