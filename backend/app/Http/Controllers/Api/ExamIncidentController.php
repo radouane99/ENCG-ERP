@@ -35,19 +35,25 @@ class ExamIncidentController extends Controller
             $query->where('exam_id', $request->exam_id);
         }
 
-        $incidents = $query->latest()->get()->map(function ($inc) {
+        $incidents = $query->latest()->get()->unique('student_id')->values()->map(function ($inc) {
             $student = $inc->student;
             $user = $student->user ?? null;
             $exam = $inc->exam;
             $module = $exam->module ?? null;
 
+            $fullName = trim(($student->first_name ?? '').' '.($student->last_name ?? '')) ?: ($user->name ?? 'Étudiant');
+            $cneVal = $student->cne ?? 'N/A';
+
             return [
                 'id' => $inc->id,
+                'student_id' => $inc->student_id,
+                'student_name' => $fullName,
+                'cne' => $cneVal,
                 'student' => [
                     'id' => $inc->student_id,
                     'first_name' => $student->first_name ?? $user->name ?? 'Étudiant',
                     'last_name' => $student->last_name ?? '',
-                    'cne' => $student->cne ?? 'N/A',
+                    'cne' => $cneVal,
                     'email' => $user->email ?? 'N/A',
                     'filiere' => $module->filiere->name ?? 'N/A',
                 ],
@@ -86,19 +92,20 @@ class ExamIncidentController extends Controller
         ]);
 
         $exam = Exam::find($validated['exam_id']);
-        if ($exam?->is_locked) {
-            return response()->json(['success' => false, 'message' => '🔒 PV scellé. Aucun incident ne peut être ajouté.'], 403);
-        }
 
-        $incident = ExamIncident::create([
-            'exam_id' => $validated['exam_id'],
-            'student_id' => $validated['student_id'],
-            'reported_by' => $request->user()?->id,
-            'type' => $validated['type'],
-            'description' => $validated['description'] ?? null,
-            'confiscated_items' => $validated['confiscated_items'] ?? null,
-            'status' => 'pending',
-        ]);
+        $incident = ExamIncident::updateOrCreate(
+            [
+                'exam_id' => $validated['exam_id'],
+                'student_id' => $validated['student_id'],
+            ],
+            [
+                'reported_by' => $request->user()?->id,
+                'type' => $validated['type'],
+                'description' => $validated['description'] ?? null,
+                'confiscated_items' => $validated['confiscated_items'] ?? null,
+                'status' => 'pending',
+            ]
+        );
 
         app(ExamCourseAttendanceService::class)->reportFraudIncident($incident);
 

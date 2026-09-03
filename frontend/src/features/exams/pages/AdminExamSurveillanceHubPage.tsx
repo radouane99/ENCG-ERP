@@ -208,6 +208,36 @@ export default function AdminExamSurveillanceHubPage() {
     enabled: !!id
   })
 
+  // Auto-sync any queued local incidents to DB on load
+  useEffect(() => {
+    try {
+      const existingQueue = JSON.parse(sessionStorage.getItem('encg_exam_incidents_queue') || '[]')
+      if (Array.isArray(existingQueue) && existingQueue.length > 0 && id) {
+        existingQueue.forEach(async (item: any) => {
+          if (item.student?.id) {
+            try {
+              await api.post('/exam-incidents', {
+                exam_id: Number(id),
+                student_id: item.student.id,
+                type: 'fraude',
+                description: item.description || "Fraude constatée en salle d'examen",
+                confiscated_items: item.confiscated_items || 'Téléphone portable'
+              })
+              await api.post(`/exam-planning/${id}/update-seating-status`, {
+                student_id: item.student.id,
+                status: 'present'
+              })
+              sessionStorage.removeItem('encg_exam_incidents_queue')
+              queryClient.invalidateQueries({ queryKey: ['admin-exam-incidents', id] })
+              queryClient.invalidateQueries({ queryKey: ['admin-exam-details', id] })
+              queryClient.invalidateQueries({ queryKey: ['admin-exam-live-stats', id] })
+            } catch (e) {}
+          }
+        })
+      }
+    } catch (e) {}
+  }, [id])
+
   // Lock & Signature state initialization from DB
   useEffect(() => {
     if (detailsData?.exam) {
@@ -249,19 +279,34 @@ export default function AdminExamSurveillanceHubPage() {
     const fraudCnes = new Set<string>()
     const fraudNames = new Set<string>()
 
-    if (Array.isArray(dbIncidentsData)) {
-      dbIncidentsData.forEach((inc: any) => {
-        if (inc.student_id) fraudStudentIds.add(Number(inc.student_id))
-        const cne = inc.cne || inc.student?.cne
-        if (cne) fraudCnes.add(cne.toUpperCase().trim())
-        const name = inc.student_name || inc.student?.user?.name
-        if (name) fraudNames.add(name.toLowerCase().trim())
+    const collectIncident = (inc: any) => {
+      if (!inc) return
+      if (inc.student_id) fraudStudentIds.add(Number(inc.student_id))
+      if (inc.student?.id) fraudStudentIds.add(Number(inc.student.id))
+
+      const cneCandidates = [inc.cne, inc.student?.cne].filter(Boolean)
+      cneCandidates.forEach((c: string) => {
+        const clean = c.toUpperCase().trim()
+        fraudCnes.add(clean)
+        fraudCnes.add(clean.replace(/^M/, 'N'))
+        fraudCnes.add(clean.replace(/^N/, 'M'))
+        fraudCnes.add(clean.replace(/^[A-Z]/, ''))
+      })
+
+      const nameCandidates = [
+        inc.student_name,
+        inc.student?.user?.name,
+        `${inc.student?.first_name || ''} ${inc.student?.last_name || ''}`.trim(),
+        `${inc.student?.last_name || ''} ${inc.student?.first_name || ''}`.trim()
+      ].filter(Boolean)
+      nameCandidates.forEach((n: string) => {
+        fraudNames.add(n.toLowerCase().trim())
       })
     }
-    incidentsList.forEach(inc => {
-      if (inc.cne) fraudCnes.add(inc.cne.toUpperCase().trim())
-      if (inc.student_name) fraudNames.add(inc.student_name.toLowerCase().trim())
-    })
+
+    if (Array.isArray(dbIncidentsData)) dbIncidentsData.forEach(collectIncident)
+    if (Array.isArray(detailsData?.incidents)) detailsData.incidents.forEach(collectIncident)
+    incidentsList.forEach(collectIncident)
 
     if (detailsData?.seatings && detailsData.seatings.length > 0) {
       setCandidates(prevCandidates => {
@@ -272,9 +317,11 @@ export default function AdminExamSurveillanceHubPage() {
           const rawCne = (s.cne || s.student?.cne || '').toUpperCase().trim()
           const rawName = (s.student_name || s.student?.user?.name || '').toLowerCase().trim()
 
-          const isFraud = (studentId && fraudStudentIds.has(studentId))
-            || (rawCne && fraudCnes.has(rawCne))
-            || (rawName && fraudNames.has(rawName))
+          const isFraud = Boolean(
+            (studentId && fraudStudentIds.has(studentId))
+            || (rawCne && (fraudCnes.has(rawCne) || fraudCnes.has(rawCne.replace(/^M/, 'N')) || fraudCnes.has(rawCne.replace(/^N/, 'M')) || fraudCnes.has(rawCne.replace(/^[A-Z]/, ''))))
+            || (rawName && (fraudNames.has(rawName) || Array.from(fraudNames).some(fn => fn && (rawName.includes(fn) || fn.includes(rawName)))))
+          )
 
           const existingCandidate = prevCandidateMap.get(s.id || idx + 1)
 
@@ -320,9 +367,11 @@ export default function AdminExamSurveillanceHubPage() {
               const rawCne = (st.cne || st.user?.email?.split('@')[0] || '').toUpperCase().trim()
               const rawName = (st.user?.name || `${st.last_name?.toUpperCase()} ${st.first_name}`).toLowerCase().trim()
 
-              const isFraud = (studentId && fraudStudentIds.has(studentId))
-                || (rawCne && fraudCnes.has(rawCne))
-                || (rawName && fraudNames.has(rawName))
+              const isFraud = Boolean(
+                (studentId && fraudStudentIds.has(studentId))
+                || (rawCne && (fraudCnes.has(rawCne) || fraudCnes.has(rawCne.replace(/^M/, 'N')) || fraudCnes.has(rawCne.replace(/^N/, 'M')) || fraudCnes.has(rawCne.replace(/^[A-Z]/, ''))))
+                || (rawName && (fraudNames.has(rawName) || Array.from(fraudNames).some(fn => fn && (rawName.includes(fn) || fn.includes(rawName)))))
+              )
 
               return {
                 id: st.id,
@@ -338,7 +387,7 @@ export default function AdminExamSurveillanceHubPage() {
           }
         }).catch(console.error)
     }
-  }, [detailsData, dbIncidentsData, incidentsList.length])
+  }, [detailsData, dbIncidentsData, incidentsList])
 
 
 
@@ -472,6 +521,18 @@ export default function AdminExamSurveillanceHubPage() {
         confiscated_items: confiscatedItems
       })
 
+
+      try {
+        await api.post(`/exam-planning/${id}/update-seating-status`, {
+          student_id: selectedStudentForFraud.student_id || selectedStudentForFraud.id,
+          seating_id: selectedStudentForFraud.seating_id,
+          status: 'present'
+        })
+      } catch (e) {}
+
+      queryClient.invalidateQueries({ queryKey: ['admin-exam-incidents', id] })
+      queryClient.invalidateQueries({ queryKey: ['admin-exam-details', id] })
+      queryClient.invalidateQueries({ queryKey: ['admin-exam-live-stats', id] })
 
       const newReport: IncidentReport = {
         id: Date.now(),
