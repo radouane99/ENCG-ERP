@@ -64,16 +64,33 @@ class ProctorAssignmentService
         }
 
         return DB::transaction(function () use ($session) {
-            $availableProfessors = User::whereHas('roles', fn ($q) => $q->where('name', 'professor'))
-                ->where('is_active', true)
-                ->get();
+            // Sélection exhaustive : Professeurs Permanents, Vacataires et Doctorants surveillants
+            $availableProfessors = User::where(function ($query) {
+                $query->whereHas('roles', fn ($q) => $q->whereIn('name', [
+                    'professor',
+                    'department-head',
+                    'enseignant',
+                    'vacataire',
+                    'doctorant',
+                ]))
+                ->orWhereHas('professor', fn ($q) => $q->where('is_active', true));
+            })
+            ->where('is_active', true)
+            ->with(['roles', 'professor'])
+            ->get();
 
             if ($availableProfessors->isEmpty()) {
-                $availableProfessors = User::whereHas('roles', fn ($q) => $q->where('name', 'professor'))->get();
+                $availableProfessors = User::whereHas('roles', fn ($q) => $q->whereIn('name', [
+                    'professor',
+                    'department-head',
+                    'enseignant',
+                    'vacataire',
+                    'doctorant',
+                ]))->get();
             }
 
             if ($availableProfessors->isEmpty()) {
-                return ['success' => false, 'message' => 'Aucun professeur actif trouvé.'];
+                return ['success' => false, 'message' => 'Aucun surveillant actif (permanent, vacataire ou doctorant) trouvé.'];
             }
 
             // Remove previous session surveillances to prevent accumulation
@@ -81,10 +98,12 @@ class ProctorAssignmentService
             ExamSurveillance::whereIn('exam_id', $sessionExamIds)->delete();
 
             $workloadMap = [];
+            $dailyMap = [];
             $assignedCount = 0;
 
             foreach ($availableProfessors as $prof) {
                 $workloadMap[$prof->id] = 0;
+                $dailyMap[$prof->id] = [];
             }
 
             foreach ($session->exams as $exam) {
@@ -92,7 +111,30 @@ class ProctorAssignmentService
                     continue;
                 }
 
-                $sortedProfs = $availableProfessors->sortBy(fn ($p) => $workloadMap[$p->id] ?? 0);
+                $examDateStr = \Carbon\Carbon::parse($exam->exam_date)->toDateString();
+
+                // Tri intelligent : Priorité aux enseignants déjà présents avec 1 séance aujourd'hui (bloc consécutif)
+                $sortedProfs = $availableProfessors->sort(function ($a, $b) use ($dailyMap, $workloadMap, $examDateStr) {
+                    $aToday = $dailyMap[$a->id][$examDateStr] ?? 0;
+                    $bToday = $dailyMap[$b->id][$examDateStr] ?? 0;
+
+                    $aConsecutive = ($aToday === 1) ? 0 : 1;
+                    $bConsecutive = ($bToday === 1) ? 0 : 1;
+
+                    if ($aConsecutive !== $bConsecutive) {
+                        return $aConsecutive <=> $bConsecutive;
+                    }
+
+                    $aWork = $workloadMap[$a->id] ?? 0;
+                    $bWork = $workloadMap[$b->id] ?? 0;
+
+                    if ($aWork !== $bWork) {
+                        return $aWork <=> $bWork;
+                    }
+
+                    return $a->id <=> $b->id;
+                })->values();
+
                 $proctorsNeeded = 3; // 1 Surveillant Principal + 2 Surveillants Secondaires
                 $assignedForExam = 0;
 
@@ -101,15 +143,36 @@ class ProctorAssignmentService
                         break;
                     }
 
+                    // Plafond ergonomique : max 2 surveillances par jour
+                    if (($dailyMap[$prof->id][$examDateStr] ?? 0) >= 2) {
+                        continue;
+                    }
+
+                    $candParts = explode(':', $exam->start_time);
+                    $candStart = ((int) ($candParts[0] ?? 8) * 60) + (int) ($candParts[1] ?? 30);
+                    $candEnd = $candStart + ($exam->duration_minutes ?: 120);
+
+                    // Conflit strict d'intervalle temporel : candStart < otherEnd && otherStart < candEnd
                     $timeConflict = ExamSurveillance::where('professor_id', $prof->id)
-                        ->whereHas('exam', fn ($q) => $q->where('exam_date', $exam->exam_date)->where('start_time', $exam->start_time))
-                        ->exists();
+                        ->whereHas('exam', fn ($q) => $q->where('exam_date', $exam->exam_date))
+                        ->with('exam')
+                        ->get()
+                        ->contains(function ($s) use ($candStart, $candEnd) {
+                            $ex = $s->exam;
+                            if (! $ex || ! $ex->start_time) {
+                                return false;
+                            }
+                            $p = explode(':', $ex->start_time);
+                            $exStart = ((int) ($p[0] ?? 0) * 60) + (int) ($p[1] ?? 0);
+                            $exEnd = $exStart + ($ex->duration_minutes ?: 120);
+
+                            return $candStart < $exEnd && $exStart < $candEnd;
+                        });
 
                     if (! $timeConflict) {
                         $role = match ($assignedForExam) {
-                            0 => 'Surveillant Principal',
-                            1 => 'Surveillant Secondaire (Salle)',
-                            default => 'Surveillant Secondaire (Appui)',
+                            0 => 'president_salle',
+                            default => 'surveillant',
                         };
 
                         ExamSurveillance::create([
@@ -121,6 +184,7 @@ class ProctorAssignmentService
                         ]);
 
                         $workloadMap[$prof->id] = ($workloadMap[$prof->id] ?? 0) + 1;
+                        $dailyMap[$prof->id][$examDateStr] = ($dailyMap[$prof->id][$examDateStr] ?? 0) + 1;
                         $assignedCount++;
                         $assignedForExam++;
                     }
@@ -128,15 +192,59 @@ class ProctorAssignmentService
             }
 
             $totalWorkloads = array_values($workloadMap);
-            $avgWorkload = count($totalWorkloads) > 0 ? round(array_sum($totalWorkloads) / count($totalWorkloads), 1) : 0;
+            $totalAssigned = array_sum($totalWorkloads);
+            $activeCount = count(array_filter($totalWorkloads, fn ($w) => $w > 0));
+            $avgWorkload = $activeCount > 0 ? round($totalAssigned / $activeCount, 1) : 0;
+
+            // Calcul mathématique dynamique réel de l'écart-type et du score d'équité (Zéro mock data)
+            $variance = 0.0;
+            if ($activeCount > 0) {
+                foreach ($totalWorkloads as $w) {
+                    if ($w > 0) {
+                        $variance += pow($w - $avgWorkload, 2);
+                    }
+                }
+                $variance /= $activeCount;
+            }
+            $stdDev = sqrt($variance);
+            $equitability = ($avgWorkload > 0)
+                ? max(0, min(100, round((1 - ($stdDev / $avgWorkload)) * 100, 1)))
+                : 100.0;
+
+            // Calcul dynamique réel du taux sans conflit
+            $conflictCount = 0;
+            $allAssignedSurvs = ExamSurveillance::whereIn('exam_id', $sessionExamIds)->with('exam')->get();
+            $groupedByProfDate = $allAssignedSurvs->groupBy(fn ($s) => $s->professor_id.'_'.($s->exam?->exam_date ?? ''));
+            foreach ($groupedByProfDate as $survGroup) {
+                if ($survGroup->count() > 1) {
+                    $intervals = [];
+                    foreach ($survGroup as $s) {
+                        if (! $s->exam || ! $s->exam->start_time) {
+                            continue;
+                        }
+                        $p = explode(':', $s->exam->start_time);
+                        $start = ((int) ($p[0] ?? 0) * 60) + (int) ($p[1] ?? 0);
+                        $end = $start + ($s->exam->duration_minutes ?: 120);
+                        foreach ($intervals as [$prevStart, $prevEnd]) {
+                            if ($start < $prevEnd && $prevStart < $end) {
+                                $conflictCount++;
+                            }
+                        }
+                        $intervals[] = [$start, $end];
+                    }
+                }
+            }
+            $conflictFreeRate = $assignedCount > 0
+                ? max(0, min(100, round((($assignedCount - $conflictCount) / $assignedCount) * 100, 1)))
+                : 100.0;
 
             return [
                 'success' => true,
                 'message' => "{$assignedCount} affectations optimisées.",
                 'ai_metrics' => [
                     'assigned_count' => $assignedCount,
-                    'equitability_score' => '98.6%',
-                    'conflict_free_rate' => '100%',
+                    'equitability_score' => "{$equitability}%",
+                    'conflict_free_rate' => "{$conflictFreeRate}%",
                     'average_hours_per_prof' => "{$avgWorkload} H",
                 ],
             ];

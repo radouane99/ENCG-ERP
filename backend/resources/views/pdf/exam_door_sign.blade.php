@@ -2,188 +2,424 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Affiche de Porte — {{ $room->name ?? 'Salle' }}</title>
+    <title>Affiche de Porte — {{ $room->name ?? 'Salle d\'Examen' }}</title>
     <style>
         @page {
-            margin: 15mm;
+            margin: 7mm 10mm 7mm 10mm;
             size: A4 portrait;
+        }
+        * {
+            box-sizing: border-box;
         }
         body {
             font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            color: #1e293b;
+            color: #0f172a;
             margin: 0;
             padding: 0;
-            font-size: 11px;
+            font-size: 9pt;
+            line-height: 1.2;
+            background-color: #ffffff;
         }
-        .header-table {
+
+        /* En-tête Institutionnel Officiel */
+        .institution-header {
             width: 100%;
-            border-bottom: 2px solid #0f2863;
-            padding-bottom: 12px;
-            margin-bottom: 15px;
+            border-bottom: 2px solid #002e5b;
+            padding-bottom: 6px;
+            margin-bottom: 8px;
         }
-        .header-title {
+        .header-logo {
+            width: 22%;
+            vertical-align: middle;
+        }
+        .header-logo img {
+            max-height: 44px;
+            width: auto;
+            display: block;
+        }
+        .header-center {
+            width: 56%;
+            text-align: center;
+            vertical-align: middle;
+        }
+        .header-center .sub-title {
+            font-size: 7pt;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: #475569;
+            font-weight: bold;
+            margin: 0 0 1px 0;
+        }
+        .header-center .main-title {
+            font-size: 11pt;
+            font-weight: 900;
+            color: #002e5b;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin: 0 0 2px 0;
+        }
+        .header-center .document-badge {
+            display: inline-block;
+            background-color: #002e5b;
+            color: #ffffff;
+            font-size: 7.5pt;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            padding: 2px 12px;
+            border-radius: 12px;
+        }
+        .header-right {
+            width: 22%;
+            text-align: right;
+            vertical-align: middle;
+            font-size: 7pt;
+            color: #64748b;
+            line-height: 1.2;
+        }
+
+        /* Bannière Visuelle de Salle & Épreuve */
+        .hero-banner {
+            width: 100%;
+            background-color: #f8fafc;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 6px;
+            margin-bottom: 7px;
+            border-collapse: collapse;
+        }
+        .hero-banner td {
+            padding: 5px 8px;
+            vertical-align: top;
+        }
+        .banner-cell-room {
+            width: 28%;
+            background-color: #002e5b;
+            color: #ffffff;
+            border-top-left-radius: 5px;
+            border-bottom-left-radius: 5px;
+            padding: 8px 10px !important;
             text-align: center;
         }
-        .header-title h1 {
-            margin: 0;
-            font-size: 18px;
-            color: #0f2863;
+        .room-tag {
+            font-size: 6.5pt;
             text-transform: uppercase;
             letter-spacing: 1px;
+            color: #93c5fd;
+            font-weight: 800;
+            margin-bottom: 1px;
         }
-        .header-title h2 {
-            margin: 4px 0 0 0;
-            font-size: 13px;
+        .room-name {
+            font-size: 13pt;
+            font-weight: 900;
+            color: #ffffff;
+            text-transform: uppercase;
+            line-height: 1.1;
+        }
+        .room-capacity {
+            font-size: 7.5pt;
+            color: #fde047;
+            font-weight: bold;
+            margin-top: 2px;
+        }
+
+        .meta-label {
+            font-size: 6.5pt;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #64748b;
+            font-weight: bold;
+            margin-bottom: 1px;
+        }
+        .meta-value {
+            font-size: 9.5pt;
+            font-weight: bold;
+            color: #0f172a;
+            line-height: 1.15;
+        }
+        .meta-sub {
+            font-size: 7.5pt;
             color: #475569;
             font-weight: normal;
         }
-        .banner {
-            background-color: #f1f5f9;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            padding: 10px 14px;
-            margin-bottom: 20px;
-        }
-        .banner-table {
+
+        /* Barre de Consignes & Surveillants */
+        .notice-bar {
             width: 100%;
+            background-color: #f1f5f9;
+            border-left: 3.5px solid #002e5b;
+            padding: 3.5px 8px;
+            margin-bottom: 7px;
+            font-size: 7pt;
+            color: #334155;
         }
-        .banner-label {
-            font-weight: bold;
-            color: #475569;
-            text-transform: uppercase;
-            font-size: 9px;
-            letter-spacing: 0.5px;
+        .notice-bar strong {
+            color: #002e5b;
         }
-        .banner-val {
-            font-size: 13px;
-            font-weight: bold;
-            color: #0f2863;
-        }
+
+        /* Grille des Sièges & Candidats (3 colonnes, sans émargement) */
         .seats-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 10px;
+            margin-top: 1px;
+        }
+        .seats-table thead tr {
+            background-color: #002e5b;
+            color: #ffffff;
         }
         .seats-table th {
-            background-color: #0f2863;
-            color: #ffffff;
-            font-weight: bold;
+            padding: 4.5px 8px;
+            font-size: 7.5pt;
+            font-weight: 800;
             text-transform: uppercase;
-            font-size: 10px;
-            padding: 8px 10px;
-            text-align: left;
             letter-spacing: 0.5px;
+            border-right: 1px solid #1e3a8a;
+            text-align: left;
+        }
+        .seats-table th:last-child {
+            border-right: none;
         }
         .seats-table td {
-            padding: 7px 10px;
+            padding: 3.8px 8px;
             border-bottom: 1px solid #e2e8f0;
-            font-size: 11px;
+            border-right: 1px solid #f1f5f9;
+            font-size: 8.5pt;
+            vertical-align: middle;
         }
-        .seats-table tr:nth-child(even) {
+        .seats-table td:last-child {
+            border-right: none;
+        }
+        .seats-table tbody tr:nth-child(even) {
             background-color: #f8fafc;
         }
-        .seat-badge {
-            display: inline-block;
-            background-color: #3b82f6;
-            color: #ffffff;
-            font-weight: bold;
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-size: 11px;
-            text-align: center;
+        .seats-table tbody tr {
+            page-break-inside: avoid;
         }
-        .footer {
-            margin-top: 25px;
+
+        /* Badges Siège & CNE */
+        .seat-pill {
+            display: inline-block;
+            background-color: #002e5b;
+            color: #ffffff;
+            font-weight: 900;
+            font-size: 8.5pt;
+            padding: 2px 8px;
+            border-radius: 10px;
             text-align: center;
-            font-size: 9px;
-            color: #94a3b8;
-            border-top: 1px solid #e2e8f0;
-            padding-top: 8px;
+            min-width: 48px;
+        }
+        .cne-code {
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+            font-size: 8.5pt;
+            color: #334155;
+            letter-spacing: 0.5px;
+        }
+        .student-name-bold {
+            font-weight: 900;
+            color: #0f172a;
+            text-transform: uppercase;
+        }
+        .student-name-first {
+            font-weight: normal;
+            color: #334155;
+            text-transform: capitalize;
+        }
+
+        /* Footer & Signature de Vérification */
+        .door-footer {
+            margin-top: 7px;
+            border-top: 1px solid #cbd5e1;
+            padding-top: 4px;
+            width: 100%;
+        }
+        .footer-table {
+            width: 100%;
+        }
+        .footer-qr {
+            width: 42px;
+            vertical-align: middle;
+        }
+        .footer-qr img {
+            width: 38px;
+            height: 38px;
+            display: block;
+            border: 1px solid #cbd5e1;
+            padding: 1px;
+            background: #fff;
+        }
+        .footer-text {
+            font-size: 6.5pt;
+            color: #64748b;
+            line-height: 1.25;
+            vertical-align: middle;
+            padding-left: 6px;
+        }
+        .footer-legal {
+            font-weight: bold;
+            color: #002e5b;
         }
     </style>
 </head>
 <body>
 
-    <table class="header-table">
+    {{-- En-tête Institutionnel --}}
+    <table class="institution-header">
         <tr>
-            <td style="width: 20%;">
+            <td class="header-logo">
                 @if(!empty($logoBase64))
-                    <img src="{{ $logoBase64 }}" style="max-height: 50px;" alt="ENCG Fès">
+                    <img src="{{ $logoBase64 }}" alt="Logo ENCG Fes">
                 @endif
             </td>
-            <td class="header-title" style="width: 80%;">
-                <h1>Royaume du Maroc — ENCG Fès</h1>
-                <h2>Plan de Placement d'Examen — Affiche de Porte</h2>
+            <td class="header-center">
+                <div class="sub-title">Royaume du Maroc - Universite Sidi Mohamed Ben Abdellah</div>
+                <div class="main-title">Ecole Nationale de Commerce et de Gestion de Fes</div>
+                <div class="document-badge">AFFICHE DE PORTE - REPARTITION DES PLACES</div>
+            </td>
+            <td class="header-right">
+                <strong>Session :</strong> {{ $exam->examSession->name ?? 'Session d\'Examens' }}<br>
+                <strong>Annee :</strong> {{ date('Y') }}/{{ date('Y') + 1 }}<br>
+                <strong>Epreuve ID :</strong> EXAM-{{ str_pad($exam->id, 4, '0', STR_PAD_LEFT) }}
             </td>
         </tr>
     </table>
 
-    <div class="banner">
-        <table class="banner-table">
+    {{-- Bannière Visuelle de Salle & Épreuve --}}
+    <table class="hero-banner">
+        <tr>
+            <td class="banner-cell-room">
+                <div class="room-tag">Local d'Examen</div>
+                <div class="room-name">{{ $room->name ?? ($exam->room->name ?? 'Amphitheatre B') }}</div>
+                <div class="room-capacity">Effectif : {{ count($seatings) }} Convoque(s)</div>
+            </td>
+            <td style="width: 42%; padding-left: 10px;">
+                <div class="meta-label">Module / Epreuve Academique</div>
+                <div class="meta-value" style="color: #002e5b; font-size: 10pt;">
+                    {{ $exam->module->name ?? 'Examen' }}
+                </div>
+                <div class="meta-sub">
+                    <strong>Filiere :</strong> {{ $exam->module?->filiere?->name ?? 'Tronc Commun ENCG' }}
+                    @if($exam->group)
+                        - <strong>Groupe :</strong> {{ $exam->group->name }}
+                    @endif
+                </div>
+            </td>
+            <td style="width: 30%; border-left: 1px dashed #cbd5e1; padding-left: 10px;">
+                <div class="meta-label">Date & Horaires Officiels</div>
+                <div class="meta-value">
+                    {{ $dateFormatted ?? ($exam->exam_date ? \Carbon\Carbon::parse($exam->exam_date)->translatedFormat('l d F Y') : 'Date a definir') }}
+                </div>
+                <div class="meta-sub" style="font-weight: bold; color: #b45309; margin-top: 2px;">
+                    Horaire : {{ $startTime ?? substr($exam->start_time ?? '08:30', 0, 5) }} - {{ $endTime ?? '10:30' }} ({{ $durationMins ?? ($exam->duration_minutes ?? 120) }} min)
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    {{-- Barre de Consignes & Surveillants --}}
+    <div class="notice-bar">
+        <table style="width: 100%; border-collapse: collapse;">
             <tr>
-                <td style="width: 30%;">
-                    <div class="banner-label">Local / Salle</div>
-                    <div class="banner-val">{{ $room->name ?? 'Salle d\'Examen' }}</div>
+                <td style="width: 58%; vertical-align: middle;">
+                    <strong>Surveillance :</strong>
+                    @if(!empty($presidentName))
+                        {{ $presidentName }} (President)
+                    @endif
+                    @if(!empty($surveillantNames) && count($surveillantNames) > 0)
+                        - {{ implode(', ', $surveillantNames) }}
+                    @elseif(empty($presidentName))
+                        Comite de surveillance assigne par le Decanat
+                    @endif
                 </td>
-                <td style="width: 45%;">
-                    <div class="banner-label">Module / Examen</div>
-                    <div class="banner-val">{{ $exam->module->name ?? 'Examen' }}</div>
-                </td>
-                <td style="width: 25%;">
-                    <div class="banner-label">Capacité / Effectif</div>
-                    <div class="banner-val">{{ count($seatings) }} Étudiants</div>
-                </td>
-            </tr>
-            <tr>
-                <td style="padding-top: 8px;">
-                    <div class="banner-label">Date & Horaire</div>
-                    <div class="banner-val">{{ $exam->exam_date ?? $exam->date ?? date('d/m/Y') }} ({{ $exam->start_time ? substr($exam->start_time, 0, 5) : '—' }} - {{ $exam->end_time ? substr($exam->end_time, 0, 5) : '—' }})</div>
-                </td>
-                <td style="padding-top: 8px;" colspan="2">
-                    <div class="banner-label">Groupe / Filière</div>
-                    <div class="banner-val">{{ $exam->group->name ?? ($exam->module?->filiere?->name ?? '—') }}</div>
+                <td style="width: 42%; text-align: right; vertical-align: middle;">
+                    <strong>Consigne :</strong> CNIE / Carte d'Etudiant obligatoire - Acces selon place assignee
                 </td>
             </tr>
         </table>
     </div>
 
+    {{-- Grille des Étudiants et Numéros de Sièges (3 COLONNES SANS ÉMARGEMENT) --}}
     <table class="seats-table">
         <thead>
             <tr>
-                <th style="width: 20%; text-align: center;">N° Siège</th>
-                <th style="width: 50%;">Nom & Prénom</th>
-                <th style="width: 30%;">CNE / Massar</th>
+                <th style="width: 16%; text-align: center;">N° Siege</th>
+                <th style="width: 54%; text-align: center;">Nom & Prenom de l'Etudiant</th>
+                <th style="width: 30%; text-align: center;">Code CNE / Massar</th>
             </tr>
         </thead>
         <tbody>
             @forelse($seatings as $seating)
+                @php
+                    $sStudent = is_array($seating) ? null : ($seating->student ?? null);
+                    $sUser = $sStudent?->user ?? null;
+                    
+                    $lastName = is_array($seating)
+                        ? ($seating['last_name'] ?? '')
+                        : ($sUser?->last_name ?? $sStudent?->last_name ?? '');
+                    
+                    $firstName = is_array($seating)
+                        ? ($seating['first_name'] ?? '')
+                        : ($sUser?->first_name ?? $sStudent?->first_name ?? '');
+                    
+                    $cne = is_array($seating)
+                        ? ($seating['cne'] ?? $seating['massar'] ?? '—')
+                        : ($sStudent?->cne ?? $sStudent?->massar_code ?? $sStudent?->student_number ?? '—');
+                    
+                    $seatNum = is_array($seating)
+                        ? ($seating['seat_number'] ?? $loop->iteration)
+                        : ($seating->seat_number ?: $loop->iteration);
+
+                    $hasName = !empty($lastName) || !empty($firstName);
+                    $fullDisplayName = is_array($seating) 
+                        ? ($seating['full_name'] ?? $seating['name'] ?? null)
+                        : ($sUser?->name ?? null);
+                @endphp
                 <tr>
                     <td style="text-align: center;">
-                        <span class="seat-badge">Siège {{ !empty($seating->seat_number) ? sprintf('%02d', $seating->seat_number) : '—' }}</span>
+                        <span class="seat-pill">N° {{ sprintf('%02d', $seatNum) }}</span>
                     </td>
-                    <td style="font-weight: bold; color: #1e293b;">
-                        @if(!empty($seating->last_name) || !empty($seating->first_name))
-                            {{ strtoupper($seating->last_name ?? '') }} {{ ucfirst($seating->first_name ?? '') }}
+                    <td style="text-align: center;">
+                        @if($hasName)
+                            <span class="student-name-bold">{{ strtoupper($lastName) }}</span>
+                            <span class="student-name-first">{{ ucfirst(strtolower($firstName)) }}</span>
+                        @elseif(!empty($fullDisplayName))
+                            <span class="student-name-bold">{{ strtoupper($fullDisplayName) }}</span>
                         @else
-                            {{ $seating->full_name ?? $seating->student_name ?? '—' }}
+                            <span style="color: #94a3b8;">- Non renseigne -</span>
                         @endif
                     </td>
-                    <td style="font-family: monospace; color: #475569;">
-                        {{ $seating->cne ?? $seating->cin ?? '—' }}
+                    <td style="text-align: center;">
+                        <span class="cne-code">{{ $cne }}</span>
                     </td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="3" style="text-align: center; color: #94a3b8; padding: 20px;">
-                        Aucun étudiant placé dans cette salle.
+                    <td colspan="3" style="text-align: center; color: #64748b; padding: 18px;">
+                        Aucun etudiant place dans cette salle pour cette epreuve.
                     </td>
                 </tr>
             @endforelse
         </tbody>
     </table>
 
-    <div class="footer">
-        Document officiel généré automatiquement par le Système ERP ENCG Fès — {{ date('d/m/Y H:i') }}
+    {{-- Pied de Page Officiel avec QR Anti-Fraude --}}
+    <div class="door-footer">
+        <table class="footer-table">
+            <tr>
+                @if(!empty($qrBase64))
+                    <td class="footer-qr">
+                        <img src="{{ $qrBase64 }}" alt="QR Code">
+                    </td>
+                @endif
+                <td class="footer-text">
+                    <span class="footer-legal">Document d'Affichage Officiel - Anti-Fraude Numerique (Loi 53-05)</span><br>
+                    Authenticite certifiee par le Systeme d'Information ENCG Fes - Genere le {{ date('d/m/Y a H:i') }}<br>
+                    Scannez le QR code de porte pour verifier la conformite du plan de placement et de la session en direct.
+                </td>
+                <td style="text-align: right; vertical-align: middle; font-size: 7.5pt; font-weight: bold; color: #002e5b;">
+                    PAGE 1 / 1
+                </td>
+            </tr>
+        </table>
     </div>
 
 </body>

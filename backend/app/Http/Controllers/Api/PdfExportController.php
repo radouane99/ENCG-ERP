@@ -1466,52 +1466,81 @@ class PdfExportController extends Controller
         return $pdf->stream("PV_Accreditation_Module_{$safeCode}.pdf");
     }
 
+    /**
+     * Feuille d'émargement liée à un examen — aucun PII dans l'URL (id seul).
+     */
+    public function exportExamEmargementPdf(Exam $exam)
+    {
+        $exam->loadMissing(['module.filiere', 'group.filiere', 'seatings.student.user']);
+
+        return $this->streamEmargementGroupePdf(
+            exam: $exam,
+            group: $exam->group,
+        );
+    }
+
+    /**
+     * Feuille d'émargement liée à un groupe — aucun PII dans l'URL (id seul).
+     */
+    public function exportGroupEmargementPdf(Group $group)
+    {
+        $group->loadMissing(['filiere', 'students.user']);
+
+        return $this->streamEmargementGroupePdf(
+            exam: null,
+            group: $group,
+        );
+    }
+
+    /**
+     * @deprecated Use exportExamEmargementPdf / exportGroupEmargementPdf (no query PII).
+     */
     public function exportEmargementGroupePdf(Request $request)
     {
-        $code = $request->query('code', 'Tous Groupes');
-        $filiere = $request->query('filiere', 'Tronc Commun ENCG');
-        if (strtoupper($filiere) === 'ENCG' || empty($filiere) || $filiere === '—' || $filiere === '-') {
+        abort(410, 'Endpoint obsolète. Utilisez /api/v1/admin/exams/{id}/emargement-pdf ou /api/v1/admin/groups/{id}/emargement-pdf.');
+    }
+
+    private function streamEmargementGroupePdf(?Exam $exam, ?Group $group)
+    {
+        $code = $group?->name ?? 'Tous Groupes';
+        $filiere = $exam?->module?->filiere?->name
+            ?? $exam?->group?->filiere?->name
+            ?? $group?->filiere?->name
+            ?? 'Tronc Commun ENCG';
+        if (strtoupper((string) $filiere) === 'ENCG' || $filiere === '' || $filiere === '—' || $filiere === '-') {
             $filiere = 'Tronc Commun ENCG';
         }
-        $semester = $request->query('semester', 'S1');
-        $examId = $request->query('exam_id');
+        $semester = 'S'.(
+            $exam?->module?->semester_number
+            ?? $exam?->group?->semester_number
+            ?? $group?->semester_number
+            ?? 1
+        );
+        $examId = $exam?->id;
 
         $realStudents = [];
         $displayGroupName = $code;
 
-        // 1. If exam_id is provided, check if seatings exist for this specific exam
-        if ($examId) {
-            $exam = Exam::with(['module.filiere', 'group.filiere', 'seatings.student.user'])->find($examId);
-            if ($exam) {
-                $filiere = $exam->module?->filiere?->name ?? ($exam->group?->filiere?->name ?? $filiere);
-                $semester = 'S'.($exam->module?->semester_number ?? ($exam->group?->semester_number ?? 1));
-
-                if ($exam->seatings && $exam->seatings->isNotEmpty()) {
-                    foreach ($exam->seatings as $seating) {
-                        $st = $seating->student;
-                        if ($st) {
-                            $user = $st->user;
-                            $cin = $st->cin ?? ($user?->cin ?? '—');
-                            $realStudents[] = [
-                                'cne' => $st->cne ?? '—',
-                                'cin' => $cin,
-                                'name' => trim(($user?->first_name ?? $st->first_name ?? '').' '.($user?->last_name ?? $st->last_name ?? '')) ?: ($user?->name ?? '—'),
-                            ];
-                        }
-                    }
+        if ($exam && $exam->seatings && $exam->seatings->isNotEmpty()) {
+            foreach ($exam->seatings as $seating) {
+                $st = $seating->student;
+                if ($st) {
+                    $user = $st->user;
+                    $cin = $st->cin ?? ($user?->cin ?? '—');
+                    $realStudents[] = [
+                        'cne' => $st->cne ?? '—',
+                        'cin' => $cin,
+                        'name' => trim(($user?->first_name ?? $st->first_name ?? '').' '.($user?->last_name ?? $st->last_name ?? '')) ?: ($user?->name ?? '—'),
+                    ];
                 }
             }
         }
 
-        // 2. If realStudents is empty, load all students across all groups of this filiere & semester (G1 + G2 = full cohort!)
-        if (empty($realStudents)) {
-            $dbGroup = Group::where('name', $code)->with(['filiere', 'students.user'])->first();
-            $filiereId = $dbGroup?->filiere_id;
-            $semesterNum = $dbGroup?->semester_number ?? (int) str_replace('S', '', $semester);
+        if (empty($realStudents) && $group) {
+            $filiereId = $group->filiere_id;
+            $semesterNum = $group->semester_number ?? (int) str_replace('S', '', $semester);
 
             if ($filiereId) {
-                $filiere = $dbGroup->filiere?->name ?? $filiere;
-                // Query all groups of this filiere and semester (G1, G2, etc.)
                 $allGroups = Group::where('filiere_id', $filiereId)
                     ->where('semester_number', $semesterNum)
                     ->with('students.user')
@@ -1537,15 +1566,23 @@ class PdfExportController extends Controller
                         ];
                     }
                 }
+            } elseif ($group->students && $group->students->isNotEmpty()) {
+                foreach ($group->students as $st) {
+                    $user = $st->user;
+                    $cin = $st->cin ?? ($user?->cin ?? '—');
+                    $realStudents[] = [
+                        'cne' => $st->cne ?? '—',
+                        'cin' => $cin,
+                        'name' => trim(($user?->first_name ?? $st->first_name ?? '').' '.($user?->last_name ?? $st->last_name ?? '')) ?: ($user?->name ?? '—'),
+                    ];
+                }
             }
         }
 
-        // If no students enrolled in group, realStudents remains empty
         $count = count($realStudents);
         $capacity = max(35, $count);
         $delegateName = 'Non assigné';
 
-        // Token Cryptographique Sécurisé conforme Loi 53-05 (Anti-Fraude & Répudiation)
         $examIdStr = $examId ? (string) $examId : '0';
         $safeCode = Str::slug($code ?: 'groupe');
         $safeSemester = str_replace('S', '', $semester ?: '1');
@@ -1553,7 +1590,6 @@ class PdfExportController extends Controller
         $securityHmac = substr(hash_hmac('sha256', $sigPayload, config('app.key') ?: 'encg_master_key_2026'), 0, 16);
         $verificationToken = "EMG-{$examIdStr}-{$safeCode}-S{$safeSemester}-{$securityHmac}";
 
-        // URL publique sécurisée scannable par tout smartphone ou navigateur
         $frontendBase = rtrim(config('app.frontend_url') ?: env('FRONTEND_URL', 'http://localhost:5173'), '/');
         $verifyUrl = "{$frontendBase}/verify/document/{$verificationToken}";
         $qrBase64 = $this->generateQrBase64($verifyUrl);
@@ -1561,7 +1597,7 @@ class PdfExportController extends Controller
         $pdf = $this->getPdfInstance('pdf.emargement_groupe', [
             'groupName' => $displayGroupName ?: $code,
             'filiereName' => $filiere,
-            'semester' => $semester,
+            'semestre' => $semester,
             'studentCount' => $count,
             'capacity' => $capacity,
             'delegateName' => $delegateName,
@@ -1571,8 +1607,6 @@ class PdfExportController extends Controller
             'verificationToken' => $verificationToken,
             'securityHmac' => $securityHmac,
         ]);
-
-        $safeCode = Str::slug($code);
 
         return $pdf->stream("Liste_Emargement_Groupe_{$safeCode}.pdf");
     }
@@ -1689,16 +1723,79 @@ class PdfExportController extends Controller
         return $pdf->download("fiche_emargement_{$examId}.pdf");
     }
 
-    public function downloadDoorSignPdf(Request $request, int $examId, ?int $roomId = null)
+    public function downloadDoorSignPdf(Request $request, Exam $exam, ?Room $room = null)
     {
-        $exam = Exam::with(['module.filiere', 'group', 'room'])->findOrFail($examId);
-        $room = $roomId ? Room::find($roomId) : $exam->room;
+        $exam->loadMissing([
+            'module.filiere',
+            'group',
+            'room',
+            'examSession',
+            'surveillances.professor.roles',
+            'surveillances.professor.professor',
+        ]);
+        $resolvedRoom = $room ?? $exam->room;
 
-        $seatings = ExamSeating::with('student.user')->where('exam_id', $examId)->orderBy('seat_number')->get();
+        $seatings = ExamSeating::with(['student.user'])
+            ->where('exam_id', $exam->id)
+            ->orderBy('seat_number')
+            ->get();
 
-        $pdf = $this->getPdfInstance('pdf.exam_door_sign', compact('exam', 'room', 'seatings'))->setPaper('a4', 'portrait');
+        // Calcul dynamique exact des horaires
+        $startTime = $exam->start_time ? substr($exam->start_time, 0, 5) : '08:30';
+        $durationMins = $exam->duration_minutes ?: 120;
+        $startParts = explode(':', $startTime);
+        $totalStartMins = ((int) ($startParts[0] ?? 8) * 60) + (int) ($startParts[1] ?? 30);
+        $totalEndMins = $totalStartMins + $durationMins;
+        $endTime = sprintf('%02d:%02d', floor($totalEndMins / 60) % 24, $totalEndMins % 60);
 
-        return $pdf->download("Affiche_Porte_Examen_{$examId}.pdf");
+        // Formatage de la date en français
+        $examDate = $exam->exam_date ? Carbon::parse($exam->exam_date) : Carbon::today();
+        $dateFormatted = $examDate->translatedFormat('l d F Y');
+        $dateShort = $examDate->format('d/m/Y');
+
+        // Extraction des surveillants
+        $presidentName = null;
+        $surveillantNames = [];
+        foreach ($exam->surveillances as $s) {
+            $u = $s->professor; // Relation professor() pointe vers User (professor_id = user_id)
+            $pName = trim(($u?->first_name ?? '').' '.($u?->last_name ?? ''));
+            if (! $pName) {
+                continue;
+            }
+
+            $isDoctorant = ($u && $u->hasRole('doctorant')) || ($u?->professor?->grade === 'Doctorant') || ($u?->professor?->contract_type === 'doctorant');
+            $prefix = $isDoctorant ? 'Doctorant ' : 'Pr. ';
+
+            if (in_array(strtolower($s->role ?? ''), ['president_salle', 'principal', 'responsable', 'surveillant principal'])) {
+                $presidentName = $prefix.$pName;
+            } else {
+                $surveillantNames[] = $prefix.$pName;
+            }
+        }
+
+        // Jeton cryptographique officiel anti-fraude (Loi 53-05)
+        $safeCode = Str::slug($exam->group?->name ?? 'TC-S2-G1');
+        $safeSemester = $exam->module?->semester_number ?? 1;
+        $hmacKey = config('app.key') ?: 'encg-door-sign-key';
+        $signature = substr(hash_hmac('sha256', "EMARGEMENT:{$exam->id}:{$safeCode}:{$safeSemester}", $hmacKey), 0, 16);
+        $verificationToken = "EMG-{$exam->id}-{$safeCode}-S{$safeSemester}-{$signature}";
+        $verifyUrl = url("/verify/document/{$verificationToken}");
+
+        $pdf = $this->getPdfInstance('pdf.exam_door_sign', [
+            'exam' => $exam,
+            'room' => $resolvedRoom,
+            'seatings' => $seatings,
+            'startTime' => $startTime,
+            'endTime' => $endTime,
+            'durationMins' => $durationMins,
+            'dateFormatted' => $dateFormatted,
+            'dateShort' => $dateShort,
+            'presidentName' => $presidentName,
+            'surveillantNames' => $surveillantNames,
+            'verifyUrl' => $verifyUrl,
+        ])->setPaper('a4', 'portrait');
+
+        return $pdf->stream("Affiche_Porte_Examen_{$exam->id}.pdf");
     }
 
     public function convocationDisciplinePdf(int $incidentId)

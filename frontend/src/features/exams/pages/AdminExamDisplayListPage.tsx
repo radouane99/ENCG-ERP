@@ -4,7 +4,8 @@ import { cn } from '@shared/lib/utils'
 import { useQuery } from '@tanstack/react-query'
 import { examsApi } from '@shared/api/exams'
 import api from '@shared/lib/api'
-import { openAuthenticatedUrl } from '@shared/lib/documentAccess'
+import { openExamDoorSignPdf, examDoorSignPdfUrl } from '@shared/lib/documentAccess'
+import { toast } from 'sonner'
 
 export default function AdminExamDisplayListPage() {
   const { id } = useParams()
@@ -15,27 +16,22 @@ export default function AdminExamDisplayListPage() {
     enabled: !!id
   })
 
-  const fetchPdfBlob = async () => {
-    if (!id) return null;
-    const endpoints = [
-      `/admin/exams/${id}/door-sign-pdf`,
-      `/exams/${id}/door-sign-pdf`,
-      `/admin/exams/${id}/rooms/${exam?.room_id || exam?.room?.id || 1}/door-sign-pdf`,
-      `/exams/${id}/rooms/${exam?.room_id || exam?.room?.id || 1}/door-sign-pdf`
-    ];
-
-    for (const ep of endpoints) {
-      try {
-        const response = await api.get(ep, { responseType: 'blob' });
-        if (response && response.data) {
-          return new Blob([response.data], { type: 'application/pdf' });
-        }
-      } catch (err: any) {
-        console.error('Endpoint attempt error:', ep, err);
-      }
-    }
-    return null;
-  };
+  const downloadDoorSign = async () => {
+    if (!id) return
+    const response = await api.get(examDoorSignPdfUrl(id).replace(/^\/api/, ''), {
+      responseType: 'blob',
+      headers: { Accept: 'application/pdf' },
+    })
+    const blob = new Blob([response.data], { type: 'application/pdf' })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', `Affiche_Porte_Exam_${id}.pdf`)
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.setTimeout(() => URL.revokeObjectURL(url), 60_000)
+  }
 
   if (isLoading) {
     return <div className="min-h-screen flex items-center justify-center bg-slate-100"><Loader2 className="w-8 h-8 animate-spin text-blue-500" /></div>
@@ -57,14 +53,8 @@ export default function AdminExamDisplayListPage() {
           </Link>
           
           <button
-            onClick={async () => {
-              const blob = await fetchPdfBlob();
-              if (blob) {
-                const url = window.URL.createObjectURL(blob);
-                window.open(url, '_blank');
-              } else {
-                openAuthenticatedUrl(`/api/admin/exams/${id}/door-sign-pdf`);
-              }
+            onClick={() => {
+              void openExamDoorSignPdf(id!).catch(() => toast.error("Impossible d'ouvrir l'affiche de porte."))
             }}
             className="h-10 px-4 rounded-xl border border-blue-600 bg-blue-50 text-blue-700 hover:bg-blue-100 text-sm font-bold flex items-center gap-2 transition-colors shadow-sm"
           >
@@ -72,17 +62,8 @@ export default function AdminExamDisplayListPage() {
           </button>
 
           <button
-            onClick={async () => {
-              const blob = await fetchPdfBlob();
-              if (blob) {
-                const url = window.URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.setAttribute('download', `Affiche_Porte_Exam_${id}.pdf`);
-                document.body.appendChild(link);
-                link.click();
-                link.remove();
-              }
+            onClick={() => {
+              void downloadDoorSign().catch(() => toast.error("Impossible de télécharger l'affiche de porte."))
             }}
             className="h-10 px-4 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-bold flex items-center gap-2 transition-colors shadow-sm"
           >

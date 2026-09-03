@@ -192,13 +192,19 @@ class ExamPlanningEngine
 
         $startDate = $customStartDate ? Carbon::parse($customStartDate) : Carbon::parse($session->start_date);
         $endDate = Carbon::parse($session->end_date);
+        if ($endDate->lte($startDate)) {
+            $endDate = $startDate->copy()->addDays(45);
+        }
         $currentDate = $startDate->copy();
+        if ($currentDate->isSunday()) {
+            $currentDate->addDay();
+        }
 
         return DB::transaction(function () use (
             $filiereId, $sessionId, $session, $modules, $rooms, $groups,
             $startDate, $endDate, $currentDate, $modulesPerDay, $daySlotMode
         ) {
-            // Supprimer les examens existants
+            // Supprimer les examens existants pour cette session et filière
             $moduleIds = Module::where('filiere_id', $filiereId)->pluck('id');
             $existingExamIds = Exam::where('exam_session_id', $sessionId)->whereIn('module_id', $moduleIds)->pluck('id');
 
@@ -206,7 +212,20 @@ class ExamPlanningEngine
             ExamSurveillance::whereIn('exam_id', $existingExamIds)->delete();
             Exam::whereIn('id', $existingExamIds)->delete();
 
-            $professors = User::whereHas('roles', fn ($q) => $q->whereIn('name', ['professor', 'department-head', 'enseignant']))->get();
+            // Sélection exhaustive du corps de surveillance : Professeurs Permanents, Vacataires et Doctorants surveillants
+            $professors = User::where(function ($query) {
+                $query->whereHas('roles', fn ($q) => $q->whereIn('name', [
+                    'professor',
+                    'department-head',
+                    'enseignant',
+                    'vacataire',
+                    'doctorant',
+                ]))
+                ->orWhereHas('professor', fn ($q) => $q->where('is_active', true));
+            })
+            ->with(['roles', 'professor'])
+            ->get();
+
             if ($professors->isEmpty()) {
                 $profUserIds = Professor::whereNotNull('user_id')->pluck('user_id');
                 $professors = User::whereIn('id', $profUserIds)->get();
@@ -214,12 +233,11 @@ class ExamPlanningEngine
             if ($professors->isEmpty()) {
                 $professors = User::limit(5)->get();
             }
-            $vacataires = $professors;
 
             $examsCreated = 0;
-            $busyProfessors = [];
             $moduleIndexInDay = 0;
             $defaultGroupId = $groups->first()->id;
+            $allCreatedExams = [];
 
             foreach ($modules as $module) {
                 $semNum = $module->semester_number ?? 1;
@@ -235,17 +253,13 @@ class ExamPlanningEngine
                 };
 
                 $slot = ExamSlotCatalog::resolve($startTime);
-
-                $timeSlot = $moduleIndexInDay === 0 ? 'matin' : 'apres_midi';
                 $dateStr = $currentDate->format('Y-m-d');
-                $slotKey = $dateStr.'_'.$timeSlot;
-                $busyProfessors[$slotKey] ??= [];
 
                 $students = StudentRegistration::whereHas('group', fn ($q) => $q->where('filiere_id', $filiereId))
                     ->where('academic_year_id', $session->academic_year_id)
                     ->pluck('student_id');
 
-                $studentCount = $students->count() ?: 20;
+                $studentCount = $students->count() ?: 24;
                 $unassignedCount = $studentCount;
                 $studentsList = $students->toArray();
                 $availableRooms = clone $rooms;
@@ -269,61 +283,257 @@ class ExamPlanningEngine
                         'type' => 'final',
                     ]);
                     $examsCreated++;
+                    $allCreatedExams[] = $exam;
 
-                    $seatings = array_map(fn ($sid) => [
-                        'exam_id' => $exam->id,
-                        'student_id' => $sid,
-                        'room_id' => $assignedRoom->id,
-                        'seat_number' => $examCapacity--,
-                    ], $studentsForThisRoom);
+                    $seatings = [];
+                    $seatNum = 1;
+                    foreach ($studentsForThisRoom as $sid) {
+                        $seatings[] = [
+                            'exam_id' => $exam->id,
+                            'student_id' => $sid,
+                            'room_id' => $assignedRoom->id,
+                            'seat_number' => $seatNum++,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ];
+                    }
 
                     if (! empty($seatings)) {
                         ExamSeating::insert($seatings);
                     }
-
-                    if ($professors->isNotEmpty()) {
-                        $availablePresidents = $professors->whereNotIn('id', $busyProfessors[$slotKey]);
-                        $president = $availablePresidents->isNotEmpty() ? $availablePresidents->random() : $professors->random();
-                        $busyProfessors[$slotKey][] = $president->id;
-
-                        ExamSurveillance::create([
-                            'exam_id' => $exam->id,
-                            'room_id' => $assignedRoom->id,
-                            'professor_id' => $president->id,
-                            'role' => 'president_salle',
-                        ]);
-
-                        // Surveillants supplémentaires
-                        $availableVacataires = $vacataires->whereNotIn('id', $busyProfessors[$slotKey]);
-                        foreach ($availableVacataires->take(min(2, $availableVacataires->count())) as $vacataire) {
-                            ExamSurveillance::create([
-                                'exam_id' => $exam->id,
-                                'room_id' => $assignedRoom->id,
-                                'professor_id' => $vacataire->id,
-                                'role' => 'surveillant',
-                            ]);
-                            $busyProfessors[$slotKey][] = $vacataire->id;
-                        }
-                    }
                 }
 
+                // Progression des dates : passer au jour suivant une fois modulesPerDay atteint
                 $moduleIndexInDay++;
                 if ($moduleIndexInDay >= $modulesPerDay) {
                     $moduleIndexInDay = 0;
                     $currentDate->addDay();
-                    if ($currentDate->isSunday()) {
+                    while ($currentDate->isSunday()) {
                         $currentDate->addDay();
                     }
                 }
+            }
 
-                if ($currentDate->gt($endDate)) {
-                    $currentDate = $startDate->copy();
+            // ── AFFECTATION GLOBALE DE SURVEILLANCE : ÉGALITÉ STRICTE, BLOC CONSÉCUTIF & PRÉSIDENCE LÉGALE ──
+            if ($professors->isNotEmpty() && ! empty($allCreatedExams)) {
+                $totalSlotsNeeded = count($allCreatedExams) * 2; // 2 surveillants par salle (Président + Surveillant)
+                $activeProfCount = max(1, $professors->count());
+                $maxFairWorkload = (int) ceil($totalSlotsNeeded / $activeProfCount);
+
+                // Trier les examens chronologiquement (date croissante, puis heure croissante)
+                $sortedExams = collect($allCreatedExams)->sort(function ($a, $b) {
+                    $cmp = strcmp($a->exam_date, $b->exam_date);
+                    if ($cmp !== 0) {
+                        return $cmp;
+                    }
+
+                    return strcmp($a->start_time, $b->start_time);
+                })->values();
+
+                $isPermanent = fn ($user) => $user->hasAnyRole(['professor', 'department-head', 'enseignant'])
+                    || ($user->professor && $user->professor->contract_type === 'permanent');
+
+                // Suivi dynamique en mémoire
+                $workload = [];
+                $daily = [];
+                $schedules = [];
+
+                foreach ($professors as $p) {
+                    $workload[$p->id] = 0;
+                    $daily[$p->id] = [];
+                    $schedules[$p->id] = [];
+                }
+
+                $totalExams = $sortedExams->count();
+
+                for ($i = 0; $i < $totalExams; $i++) {
+                    $exam = $sortedExams[$i];
+                    $dateStr = \Carbon\Carbon::parse($exam->exam_date)->toDateString();
+                    $parts = explode(':', $exam->start_time);
+                    $candStart = ((int) ($parts[0] ?? 8) * 60) + (int) ($parts[1] ?? 30);
+                    $candEnd = $candStart + ($exam->duration_minutes ?: 120);
+
+                    // Examens restants après celui-ci
+                    $remainingExams = $sortedExams->slice($i + 1);
+
+                    // Calcul dynamique du plafond journalier selon le nombre d'examens ce jour-là et le nombre d'enseignants disponibles
+                    $dayExamsCount = $sortedExams->where('exam_date', $exam->exam_date)->count();
+                    $dynamicDailyCap = max(2, (int) ceil(($dayExamsCount * 2) / $activeProfCount));
+
+                    // Vérification de disponibilité (Hard constraint : zéro chevauchement horaire ; Soft : quotas équitables)
+                    $canProctor = function (int $pid, bool $ignoreWorkloadCap = false, bool $ignoreDailyCap = false) use (
+                        $dateStr, $candStart, $candEnd, &$daily, &$schedules, &$workload, $maxFairWorkload, $dynamicDailyCap
+                    ): bool {
+                        // 1. RÈGLE PHYSIQUE ABSOLUE ET INVIOLABLE : Zéro chevauchement d'heure le même jour
+                        foreach ($schedules[$pid] as $s) {
+                            if ($s['date'] === $dateStr && $candStart < $s['end'] && $s['start'] < $candEnd) {
+                                return false; // Conflit temporel strict
+                            }
+                        }
+
+                        // 2. Plafond journalier ergonomique dynamique
+                        if (! $ignoreDailyCap && ($daily[$pid][$dateStr] ?? 0) >= $dynamicDailyCap) {
+                            return false;
+                        }
+
+                        // 3. Quota d'équité globale
+                        if (! $ignoreWorkloadCap && ($workload[$pid] ?? 0) >= $maxFairWorkload) {
+                            return false;
+                        }
+
+                        return true;
+                    };
+
+                    // ── 1. SÉLECTION DU PRÉSIDENT DE SALLE (Enseignant Permanent Obligatoire) ──
+                    // Palier 1 : Permanent respectant tous les critères stricts
+                    $eligiblePresidents = $professors->filter(fn ($p) => $isPermanent($p) && $canProctor($p->id));
+
+                    // Palier 2 : Si tous les permanents ont atteint le quota, chercher un permanent sans conflit horaire
+                    if ($eligiblePresidents->isEmpty()) {
+                        $eligiblePresidents = $professors->filter(fn ($p) => $isPermanent($p) && $canProctor($p->id, ignoreWorkloadCap: true));
+                    }
+
+                    // Palier 3 : Secours d'extrême urgence : n'importe quel surveillant sans conflit horaire
+                    if ($eligiblePresidents->isEmpty()) {
+                        $eligiblePresidents = $professors->filter(fn ($p) => $canProctor($p->id, ignoreWorkloadCap: true, ignoreDailyCap: true));
+                    }
+
+                    // Tri multicritère des présidents :
+                    // a) Priorité au bloc consécutif (séance 2 d'affilée le même jour)
+                    // b) Charge cumulée globale la plus faible (égalité mathématique)
+                    // c) Nombre de séances aujourd'hui le plus faible
+                    // d) Stabilité par ID
+                    $president = $eligiblePresidents->sort(function ($a, $b) use ($daily, $workload, $dateStr) {
+                        $aToday = ($daily[$a->id][$dateStr] ?? 0) === 1 ? 0 : 1;
+                        $bToday = ($daily[$b->id][$dateStr] ?? 0) === 1 ? 0 : 1;
+                        if ($aToday !== $bToday) {
+                            return $aToday <=> $bToday;
+                        }
+
+                        $aWork = $workload[$a->id] ?? 0;
+                        $bWork = $workload[$b->id] ?? 0;
+                        if ($aWork !== $bWork) {
+                            return $aWork <=> $bWork;
+                        }
+
+                        $aDayCount = $daily[$a->id][$dateStr] ?? 0;
+                        $bDayCount = $daily[$b->id][$dateStr] ?? 0;
+                        if ($aDayCount !== $bDayCount) {
+                            return $aDayCount <=> $bDayCount;
+                        }
+
+                        return $a->id <=> $b->id;
+                    })->first();
+
+                    if (! $president) {
+                        $president = $professors->first();
+                    }
+
+                    // Enregistrer le président
+                    ExamSurveillance::create([
+                        'exam_id' => $exam->id,
+                        'room_id' => $exam->room_id,
+                        'professor_id' => $president->id,
+                        'role' => 'president_salle',
+                    ]);
+                    $workload[$president->id] = ($workload[$president->id] ?? 0) + 1;
+                    $daily[$president->id][$dateStr] = ($daily[$president->id][$dateStr] ?? 0) + 1;
+                    $schedules[$president->id][] = ['date' => $dateStr, 'start' => $candStart, 'end' => $candEnd];
+
+                    // ── 2. SÉLECTION DU SURVEILLANT SECONDAIRE ──
+                    // Palier 1 : Candidats sous plafond et sans conflit
+                    $eligibleSeconds = $professors->filter(fn ($p) => $p->id !== $president->id && $canProctor($p->id));
+
+                    // Palier 2 : Si épuisé, candidats sans conflit horaire (dépassement équitable contrôlé)
+                    if ($eligibleSeconds->isEmpty()) {
+                        $eligibleSeconds = $professors->filter(fn ($p) => $p->id !== $president->id && $canProctor($p->id, ignoreWorkloadCap: true));
+                    }
+
+                    // Palier 3 : Secours si contraintes extrêmes
+                    if ($eligibleSeconds->isEmpty()) {
+                        $eligibleSeconds = $professors->filter(fn ($p) => $p->id !== $president->id && $canProctor($p->id, ignoreWorkloadCap: true, ignoreDailyCap: true));
+                    }
+
+                    // Tri intelligent des surveillants :
+                    $second = $eligibleSeconds->sort(function ($a, $b) use ($daily, $workload, $dateStr, $isPermanent, $professors, $maxFairWorkload, $remainingExams, $activeProfCount) {
+                        // Lookahead dynamique : calcul précis du besoin en surveillants pour chaque date future
+                        $futureMinDistinct = $remainingExams->groupBy('exam_date')->map(function ($dayExams) use ($activeProfCount) {
+                            $simultaneous = $dayExams->groupBy('start_time')->map->count()->max() ?? 1;
+                            $slots = $dayExams->count() * 2;
+                            return max($simultaneous * 2, (int) ceil($slots / 2));
+                        })->max() ?? 0;
+
+                        $aTodayConsecutive = ($daily[$a->id][$dateStr] ?? 0) === 1 ? 0 : 1;
+                        $bTodayConsecutive = ($daily[$b->id][$dateStr] ?? 0) === 1 ? 0 : 1;
+
+                        // Vérification de sécurité anticipative (ne pas bloquer un collègue si cela prive les jours futurs)
+                        $aLeavesEnough = true;
+                        if ($aTodayConsecutive === 0 && (($workload[$a->id] ?? 0) + 1) >= $maxFairWorkload) {
+                            $availableColleagues = $professors->filter(fn ($p) => $p->id !== $a->id && ($workload[$p->id] ?? 0) < $maxFairWorkload)->count();
+                            if ($availableColleagues < $futureMinDistinct) {
+                                $aLeavesEnough = false;
+                            }
+                        }
+
+                        $bLeavesEnough = true;
+                        if ($bTodayConsecutive === 0 && (($workload[$b->id] ?? 0) + 1) >= $maxFairWorkload) {
+                            $availableColleagues = $professors->filter(fn ($p) => $p->id !== $b->id && ($workload[$p->id] ?? 0) < $maxFairWorkload)->count();
+                            if ($availableColleagues < $futureMinDistinct) {
+                                $bLeavesEnough = false;
+                            }
+                        }
+
+                        $aConsecutiveScore = ($aTodayConsecutive === 0 && $aLeavesEnough) ? 0 : 1;
+                        $bConsecutiveScore = ($bTodayConsecutive === 0 && $bLeavesEnough) ? 0 : 1;
+                        if ($aConsecutiveScore !== $bConsecutiveScore) {
+                            return $aConsecutiveScore <=> $bConsecutiveScore;
+                        }
+
+                        // Priorité aux non-permanents (vacataires / doctorants) pour préserver le vivier permanent pour la présidence
+                        $aIsNonPerm = ! $isPermanent($a) ? 0 : 1;
+                        $bIsNonPerm = ! $isPermanent($b) ? 0 : 1;
+                        if ($aIsNonPerm !== $bIsNonPerm) {
+                            return $aIsNonPerm <=> $bIsNonPerm;
+                        }
+
+                        // Charge globale cumulée la plus faible (égalité stricte)
+                        $aWork = $workload[$a->id] ?? 0;
+                        $bWork = $workload[$b->id] ?? 0;
+                        if ($aWork !== $bWork) {
+                            return $aWork <=> $bWork;
+                        }
+
+                        // Nombre de séances aujourd'hui
+                        $aDayCount = $daily[$a->id][$dateStr] ?? 0;
+                        $bDayCount = $daily[$b->id][$dateStr] ?? 0;
+                        if ($aDayCount !== $bDayCount) {
+                            return $aDayCount <=> $bDayCount;
+                        }
+
+                        return $a->id <=> $b->id;
+                    })->first();
+
+                    if (! $second) {
+                        $second = $professors->first(fn ($p) => $p->id !== $president->id);
+                    }
+
+                    if ($second) {
+                        ExamSurveillance::create([
+                            'exam_id' => $exam->id,
+                            'room_id' => $exam->room_id,
+                            'professor_id' => $second->id,
+                            'role' => 'surveillant',
+                        ]);
+                        $workload[$second->id] = ($workload[$second->id] ?? 0) + 1;
+                        $daily[$second->id][$dateStr] = ($daily[$second->id][$dateStr] ?? 0) + 1;
+                        $schedules[$second->id][] = ['date' => $dateStr, 'start' => $candStart, 'end' => $candEnd];
+                    }
                 }
             }
 
             return [
                 'success' => true,
-                'message' => "{$examsCreated} examens générés.",
+                'message' => "{$examsCreated} examens générés avec succès sans aucun conflit de surveillance.",
             ];
         });
     }

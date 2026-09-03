@@ -334,7 +334,7 @@ class ExamPlanningController extends Controller
      */
     public function downloadDoorSignPdf(Request $request, int $examId, ?int $roomId = null)
     {
-        $exam = Exam::with(['module.filiere', 'group', 'room'])->findOrFail($examId);
+        $exam = Exam::with(['module.filiere', 'group', 'room', 'examSession', 'surveillances.professor.user'])->findOrFail($examId);
 
         $room = $roomId ? Room::find($roomId) : $exam->room;
 
@@ -345,17 +345,47 @@ class ExamPlanningController extends Controller
             $seatingsQuery->where('room_id', $roomId);
         }
 
-        $seatings = $seatingsQuery->orderBy('seat_number')->get()->map(fn ($s) => [
-            'seat_number' => $s->seat_number,
-            'full_name' => $s->student->user->name ?? 'N/A',
-            'cne' => $s->student->cne ?? 'N/A',
-            'cin' => $s->student->user->cin ?? 'N/A',
-        ]);
+        $seatings = $seatingsQuery->orderBy('seat_number')->get();
+
+        $startTime = $exam->start_time ? substr($exam->start_time, 0, 5) : '08:30';
+        $durationMins = $exam->duration_minutes ?: 120;
+        $startParts = explode(':', $startTime);
+        $totalStartMins = ((int) ($startParts[0] ?? 8) * 60) + (int) ($startParts[1] ?? 30);
+        $totalEndMins = $totalStartMins + $durationMins;
+        $endTime = sprintf('%02d:%02d', floor($totalEndMins / 60) % 24, $totalEndMins % 60);
+
+        $examDate = $exam->exam_date ? \Carbon\Carbon::parse($exam->exam_date) : \Carbon\Carbon::today();
+        $dateFormatted = $examDate->translatedFormat('l d F Y');
+
+        $presidentName = null;
+        $surveillantNames = [];
+        foreach ($exam->surveillances as $s) {
+            $pUser = $s->professor?->user ?? null;
+            $pName = trim(($pUser?->first_name ?? '').' '.($pUser?->last_name ?? ''));
+            if (! $pName && $s->professor) {
+                $pName = trim(($s->professor->first_name ?? '').' '.($s->professor->last_name ?? ''));
+            }
+            if (! $pName) {
+                continue;
+            }
+
+            if (in_array(strtolower($s->role ?? ''), ['president_salle', 'principal', 'responsable', 'surveillant principal'])) {
+                $presidentName = 'Pr. '.$pName;
+            } else {
+                $surveillantNames[] = 'Pr. '.$pName;
+            }
+        }
 
         $pdf = Pdf::loadView('pdf.exam_door_sign', [
             'exam' => $exam,
             'room' => $room ?? (object) ['name' => 'Non assignée', 'code' => 'N/A'],
             'seatings' => $seatings,
+            'startTime' => $startTime,
+            'endTime' => $endTime,
+            'durationMins' => $durationMins,
+            'dateFormatted' => $dateFormatted,
+            'presidentName' => $presidentName,
+            'surveillantNames' => $surveillantNames,
         ])->setPaper('a4', 'portrait');
 
         return $pdf->download("Affiche_Porte_Examen_{$examId}.pdf");

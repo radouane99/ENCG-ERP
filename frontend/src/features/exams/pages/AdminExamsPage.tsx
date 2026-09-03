@@ -37,7 +37,7 @@ import { useTranslation } from 'react-i18next'
 import { academicApi } from '@shared/api/academic'
 import { examsApi } from '@shared/api/exams'
 import api from '@shared/lib/api'
-import { openAuthenticatedUrl } from '@shared/lib/documentAccess'
+import { openExamEmargementPdf, openExamDoorSignPdf } from '@shared/lib/documentAccess'
 import { toast } from 'sonner'
 import { CustomSelect, SelectOption } from '@shared/components/ui'
 
@@ -573,8 +573,7 @@ export default function AdminExamsPage() {
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             onClick={() => {
-                              const filiereParam = encodeURIComponent(exam.module?.filiere?.name || 'Tronc Commun ENCG');
-                              openAuthenticatedUrl(`/api/v1/groups/emargement-pdf?exam_id=${exam.id}&code=${encodeURIComponent(exam.group?.name || exam.group || '')}&filiere=${filiereParam}&semester=S${exam.module?.semester_number || 1}`);
+                              void openExamEmargementPdf(exam.id)
                             }}
                             className="p-1.5 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 rounded-xl border border-amber-200 dark:border-amber-800 cursor-pointer active:scale-95"
                             title="Feuille d'Émargement A4"
@@ -605,9 +604,15 @@ export default function AdminExamsPage() {
             const monthNames = ["JAN", "FÉV", "MAR", "AVR", "MAI", "JUI", "JUL", "AOU", "SEP", "OCT", "NOV", "DÉC"];
             const dayNames = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
             
-            const timeEndHour = exam.start_time ? parseInt(exam.start_time.split(':')[0]) + Math.floor((exam.duration_minutes || 120) / 60) : 0;
-            const timeEndMin = exam.start_time ? parseInt(exam.start_time.split(':')[1]) + ((exam.duration_minutes || 120) % 60) : 0;
-            const endTimeStr = `${String(timeEndHour).padStart(2, '0')}:${String(timeEndMin).padStart(2, '0')}`;
+            let endTimeStr = '10:30';
+            if (exam.start_time) {
+              const [hStr, mStr] = exam.start_time.split(':');
+              const startMins = (parseInt(hStr, 10) || 0) * 60 + (parseInt(mStr, 10) || 0);
+              const endMins = startMins + (exam.duration_minutes || 120);
+              const endH = String(Math.floor(endMins / 60) % 24).padStart(2, '0');
+              const endM = String(endMins % 60).padStart(2, '0');
+              endTimeStr = `${endH}:${endM}`;
+            }
             
             const proctorsText = Array.isArray(exam.proctors) && exam.proctors.length > 0
               ? exam.proctors.join(', ')
@@ -618,8 +623,13 @@ export default function AdminExamsPage() {
                 id={exam.id}
                 title={cleanUtf8Text(typeof exam.module === 'object' ? (exam.module?.name || '—') : (exam.module || '—'))}
                 group={typeof exam.group === 'object' ? (exam.group?.name || '—') : (exam.group || '—')}
-                filiereCode={exam.module?.filiere?.code || '—'}
-                filiereName={cleanUtf8Text(exam.module?.filiere?.name || '—')}
+                filiereCode={
+                  exam.module?.filiere?.code ||
+                  exam.group?.filiere?.code ||
+                  (typeof exam.group === 'string' ? exam.group.split('-')[0] : exam.group?.name?.split('-')[0]) ||
+                  'ENCG'
+                }
+                filiereName={cleanUtf8Text(exam.module?.filiere?.name || exam.group?.filiere?.name || 'Tronc Commun')}
                 semester={exam.module?.semester_number || 1}
                 time={`${exam.start_time?.substring(0, 5) || '08:30'} – ${endTimeStr}`}
                 duration={`${exam.duration_minutes || 120} min`}
@@ -833,22 +843,28 @@ function ExamCard({ id, title, group, filiereCode, filiereName, semester, time, 
 
   const handleExportEmargementPdf = () => {
     toast.loading(`Génération de la Liste d'Émargement A4...`);
-    setTimeout(() => {
-      toast.dismiss();
-      toast.success(`📜 Feuille d'Émargement A4 générée pour ${cleanTitle} !`);
-      const validFiliere = (cleanFiliereName && cleanFiliereName !== '—' && cleanFiliereName !== '-') ? cleanFiliereName : 'Tronc Commun ENCG';
-      const filiereParam = encodeURIComponent(validFiliere);
-      openAuthenticatedUrl(`/api/v1/groups/emargement-pdf?exam_id=${id}&code=${encodeURIComponent(group)}&filiere=${filiereParam}&semester=S${semester}`);
-    }, 600);
+    void openExamEmargementPdf(id)
+      .then(() => {
+        toast.dismiss();
+        toast.success(`📜 Feuille d'Émargement A4 générée pour ${cleanTitle} !`);
+      })
+      .catch(() => {
+        toast.dismiss();
+        toast.error(`Impossible de générer la feuille d'émargement.`);
+      });
   }
 
   const handleExportDoorSignPdf = () => {
     toast.loading(`Génération de l'Affiche de Porte A4/A3...`);
-    setTimeout(() => {
-      toast.dismiss();
-      toast.success(`🚪 Affiche de Porte générée pour ${cleanTitle} !`);
-      openAuthenticatedUrl(`/api/v1/exams/${id}/door-sign-pdf`);
-    }, 600);
+    void openExamDoorSignPdf(id)
+      .then(() => {
+        toast.dismiss();
+        toast.success(`🚪 Affiche de Porte générée pour ${cleanTitle} !`);
+      })
+      .catch(() => {
+        toast.dismiss();
+        toast.error(`Impossible de générer l'affiche de porte.`);
+      });
   }
 
   const percentSent = generated > 0 ? Math.min(100, Math.round((sent / generated) * 100)) : 0
@@ -885,7 +901,7 @@ function ExamCard({ id, title, group, filiereCode, filiereName, semester, time, 
           <div className="flex items-center gap-2 flex-wrap">
             <span className="px-3 py-1 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 rounded-full text-[10px] font-black uppercase tracking-wider border border-indigo-200 dark:border-indigo-800 flex items-center gap-1.5 shadow-2xs">
               <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
-              {filiereCode} · S{semester}
+              {filiereCode && filiereCode !== '—' ? `${filiereCode} · ` : ''}S{semester}
             </span>
             <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-full text-[10px] font-black uppercase tracking-wider border border-slate-200 dark:border-slate-700 shadow-2xs">
               Groupe : {group}

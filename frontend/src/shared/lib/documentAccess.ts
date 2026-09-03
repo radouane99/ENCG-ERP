@@ -93,6 +93,45 @@ export function openStudentAttestationPdf(
   openAuthenticatedUrl(studentAttestationPdfUrl(studentId, type, extra))
 }
 
+/** Secure URL — exam id only, no PII in query string. */
+export function examEmargementPdfUrl(examId: string | number): string {
+  return `/api/v1/admin/exams/${examId}/emargement-pdf`
+}
+
+/** Secure URL — group id only, no PII in query string. */
+export function groupEmargementPdfUrl(groupId: string | number): string {
+  return `/api/v1/admin/groups/${groupId}/emargement-pdf`
+}
+
+async function openPdfBlob(apiPath: string): Promise<void> {
+  const response = await api.get(apiPath.replace(/^\/api/, ''), {
+    responseType: 'blob',
+    headers: { Accept: 'application/pdf' },
+  })
+  const blob = new Blob([response.data], { type: 'application/pdf' })
+  const objectUrl = URL.createObjectURL(blob)
+  window.open(objectUrl, '_blank', 'noopener,noreferrer')
+  window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000)
+}
+
+/** Open émargement PDF via authenticated blob — address bar shows blob:, not API params. */
+export async function openExamEmargementPdf(examId: string | number): Promise<void> {
+  await openPdfBlob(examEmargementPdfUrl(examId))
+}
+
+export async function openGroupEmargementPdf(groupId: string | number): Promise<void> {
+  await openPdfBlob(groupEmargementPdfUrl(groupId))
+}
+
+/** Secure URL — exam id only. */
+export function examDoorSignPdfUrl(examId: string | number): string {
+  return `/api/v1/admin/exams/${examId}/door-sign-pdf`
+}
+
+export async function openExamDoorSignPdf(examId: string | number): Promise<void> {
+  await openPdfBlob(examDoorSignPdfUrl(examId))
+}
+
 /** Preview / custom attestation — sensitive fields sent in POST body, not URL. */
 export async function openCustomAttestationPdf(payload: CustomAttestationPayload): Promise<void> {
   const response = await api.post('/v1/enrollments/attestation-pdf', payload, {

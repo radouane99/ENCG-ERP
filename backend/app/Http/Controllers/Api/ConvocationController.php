@@ -341,8 +341,14 @@ class ConvocationController extends Controller
             $day = $examDate ? $examDate->format('d') : '21';
             $dateFull = $examDate ? $examDate->format('d/m/Y') : '21/08/2026';
 
-            $startTime = $s->exam?->start_time ? substr($s->exam->start_time, 0, 5) : '16:30';
-            $endTime = $s->exam?->end_time ? substr($s->exam->end_time, 0, 5) : '18:30';
+            $startTime = $s->exam?->start_time ? substr($s->exam->start_time, 0, 5) : '08:30';
+            $durationMins = $s->exam?->duration_minutes ?: 120;
+            $startParts = explode(':', $startTime);
+            $totalStartMins = ((int) ($startParts[0] ?? 8) * 60) + (int) ($startParts[1] ?? 30);
+            $totalEndMins = $totalStartMins + $durationMins;
+            $endH = str_pad(floor($totalEndMins / 60) % 24, 2, '0', STR_PAD_LEFT);
+            $endM = str_pad($totalEndMins % 60, 2, '0', STR_PAD_LEFT);
+            $endTime = "{$endH}:{$endM}";
 
             $roomName = $s->room->name ?? ($s->exam->room->name ?? 'Amphithéâtre B');
             $filiereName = $s->exam?->module?->filiere?->name ?? 'ENCG - S1 • Groupe: TC-S2-G1';

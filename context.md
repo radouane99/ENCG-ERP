@@ -2507,3 +2507,280 @@ Afin de prémunir l'établissement contre toute perte accidentelle de données (
   - Date et heure officielle de délivrance.
   - Empreinte cryptographique SHA-256 avec bouton de copie en 1 clic.
 - **Gestion des Échecs :** En cas de token inexistant ou altéré, affichage immédiat d'un avertissement de sécurité rouge invitant à contacter l'administration.
+
+---
+
+### 21.11 ⚖️ Résolution Définitive des Conflits de Surveillance & Anti-Chevauchement Strict (Loi Zéro-Collision)
+
+#### A. Diagnostic Approfondi & Anomalies Détectées
+1. **Double Affectation Temporelle des Enseignants :**
+   - Sur l'espace enseignant (`/professor/proctoring`), le professeur **Amina Chraibi** se retrouvait assignée à **trois examens le même jour (06 Septembre)** à des heures concurrentes (`08:30` et `10:45`), violant le principe d'ubiquité physique impossible.
+   - Dans le moteur initial `ExamPlanningEngine.php`, lorsque la réserve d'enseignants disponibles était épuisée ou qu'une date dépassait la session, le script basculait sur `$professors->random()`, réattribuant des enseignants déjà occupés sur le même créneau.
+2. **Bug de Débordement des Dates de Session (`endDate`) :**
+   - La session 3 en base de données avait une date de fin antérieure à 2026, provoquant la condition `$currentDate->gt($endDate)` à chaque itération.
+   - Conséquence : le calendrier réinitialisait `$currentDate = $startDate` en boucle, entassant les 7 épreuves d'une filière sur le même jour (`2026-09-06`).
+3. **Bug d'Affichage Horodateur Frontend `11:75` (`AdminExamsPage.tsx`) :**
+   - Calcul naïf des minutes de fin sans modulo ni retenue : `exam.start_time (10:45) + 90 min` calculait `45 + (90 % 60) = 45 + 30 = 75`, produisant la chaîne aberrante `11:75` au lieu de `12:15`.
+4. **Bug de Repli Backend `18:30` (`ConvocationController.php`) :**
+   - Le contrôleur tentait d'extraire `$s->exam?->end_time`. Or cette colonne n'existe pas sur la table `exams`, ce qui déclenchait la valeur de secours par défaut `'18:30'`. Tous les examens du matin affichaient ainsi `08:30 - 18:30`.
+
+#### B. Corrections Architecturales Appliquées
+
+1. **Moteur d'Affectation Anti-Chevauchement Strict (`ExamPlanningEngine.php` & `ProctorAssignmentService.php`) :**
+   - Implémentation du contrôle mathématique d'intersection d'intervalles $[T_{\text{start}}, T_{\text{end}}]$ :
+     Deux examens $A$ et $B$ chevauchent si et seulement si :
+     $$A.\text{start} < B.\text{end} \quad\text{ET}\quad B.\text{start} < A.\text{end}$$
+   - **Double Vérification :**
+     1. *En mémoire (`$proctorSchedules`)* : enregistrement des créneaux affectés au cours du batch de génération.
+     2. *En base de données (`ExamSurveillance`)* : recherche de tout autre examen de l'enseignant le même jour avec calcul d'intersection d'intervalles en minutes.
+   - **Distribution Équitable :** Tri ascendant par charge de surveillance (`$proctorWorkload`) pour répartir équitablement les créneaux (2 à 3 épreuves par enseignant au total).
+   - **Interdiction Formelle du Duplicat :** Si aucun enseignant n'est disponible sur un créneau, l'algorithme n'assigne pas de doublon et préserve l'intégrité du planning.
+
+2. **Progression Séquentielle des Dates de Session :**
+   - Étalement automatique des épreuves : 2 modules maximum par jour (Matin 1: `08:30–10:30`, pause 15 min, Matin 2: `10:45–12:15`).
+   - Saut automatique des dimanches (`isSunday()`).
+   - Élargissement dynamique de `$endDate` si nécessaire pour éviter tout repli forcé sur le jour 1.
+
+3. **Correction Frontend du Calcul d'Heure de Fin (`AdminExamsPage.tsx`) :**
+   - Conversion en minutes absolues `(hours * 60 + mins) + duration_minutes`.
+   - Extraction formatée avec `Math.floor(endMins / 60) % 24` et `endMins % 60` avec zéro initial (`padStart`).
+   - Résultat : `10:45 + 90 min` s'affiche désormais rigoureusement comme `10:45 – 12:15`.
+
+4. **Calcul Dynamique de l'Heure de Fin Backend (`ConvocationController.php`) :**
+   - Remplacement du fallback `'18:30'` par le calcul dynamique à partir de `start_time` et `duration_minutes`.
+   - Affichage exact : `08:30 - 10:30` (120 min) et `10:45 - 12:15` (90 min).
+
+#### C. Validation & Résultat en Base de Données
+- Commande Artisan `exams:regenerate-schedule` exécutée avec succès :
+  - **Lundi 07/09/2026 :** Langue Anglaise I (08:30–10:30) & Management de Base (10:45–12:15)
+  - **Mardi 08/09/2026 :** Informatique de Gestion I (08:30–10:30) & Soft Skills I (10:45–12:15)
+  - **Mercredi 09/09/2026 :** Mathématiques pour la Gestion (08:30–10:30) & Comptabilité Générale I (10:45–12:15)
+  - **Jeudi 10/09/2026 :** Économie Générale I (08:30–10:30)
+- **Surveillances Pr. Amina Chraibi :**
+  1. `08/09/2026 08:30 - 10:30` : Informatique de Gestion I (Présidente de salle)
+  2. `09/09/2026 08:30 - 10:30` : Mathématiques pour la Gestion (Surveillante)
+  $\rightarrow$ **Zéro conflit, deux journées distinctes, horaires exacts.**
+- **Build Frontend :** `✓ built in 22.05s` avec 0 erreur TypeScript.
+- **Sauvegarde :** Exécution réussie du script `backup_database.ps1 -Silent`.
+
+---
+
+### 21.12 🚪 Refonte Complète de l'Affiche de Porte d'Examen (Plan de Placement A4)
+
+#### A. Diagnostic Approfondi & Problèmes Résolus
+1. **Numérotation des Sièges Figée sur `Siège 125` :**
+   - **Cause :** Dans `ExamPlanningEngine.php`, l'instruction `array_map(fn ($sid) => ['seat_number' => $examCapacity--])` capturait `$examCapacity` par valeur dans la fermeture fléchée PHP. Tous les étudiants recevaient la valeur statique `125`.
+   - **Correction :** Remplacement par une boucle séquentielle `$seatNum = 1; foreach (...) { ... $seatNum++; }` assurant une numérotation continue croissante (`N° 01`, `N° 02`... jusqu'à `N° 24`).
+   - **Mise à jour BDD :** Exécution d'une requête `ROW_NUMBER() OVER (PARTITION BY exam_id ORDER BY id)` pour régulariser les 168 enregistrements de `exam_seatings`.
+2. **Noms d'Étudiants et CNE Vides (`—`) :**
+   - **Cause :** La vue `exam_door_sign.blade.php` tentait d'accéder aux propriétés directes `$seating->last_name`, `$seating->full_name` et `$seating->cne` au lieu des relations Eloquent `$seating->student->user->last_name` et `$seating->student->cne`.
+   - **Correction :** Décodage sécurisé et résilient gérant à la fois les modèles Eloquent (`$seating->student->user`) et les tableaux associatifs, avec mise en valeur typographique (**NOM** en majuscules grasses, *Prénom* en minuscules capitalisées).
+3. **Format Date/Heure Brut (`2026-09-06 00:00:00 (08:30 - —)`) :**
+   - **Cause :** Horodatage brut affiché sans parsing Carbon, et heure de fin absente suite à l'inexistence de `end_time` en BDD.
+   - **Correction :** Formatage élégant en français (ex : *Lundi 07 Septembre 2026*) et calcul dynamique de l'heure de fin via `start_time` et `duration_minutes` (ex : `08:30 – 10:30 (120 min)`).
+4. **Débordement sur Page 2 Injustifié :**
+   - **Cause :** Marges et paddings trop élevés faisant déborder 2 lignes sur une deuxième page blanche.
+   - **Correction :** Marges A4 optimisées (`8mm 10mm 8mm 10mm`), mise en page compacte et aérée permettant à une cohorte de **24 à 28 étudiants de tenir impeccablement sur une SEULE page A4**.
+
+#### B. Architecture Graphique & Données Officielles (`exam_door_sign.blade.php`)
+- **En-tête Royal ENCG Fès :** Logo officiel en Base64, mention du Ministère, de l'USMBA et badge `AFFICHE DE PORTE — RÉPARTITION DES PLACES`.
+- **Bannière Amphi / Salle Hero :**
+  - Bloc bleu nuit contrasté mettant en valeur le local en gros caractères : **AMPHITHÉÂTRE B** (visibilité immédiate dans le couloir à plusieurs mètres).
+  - Module d'examen, filière et groupe convoqué (*TC-S2-G1*).
+  - Date officielle et créneau horaire avec durée (ex: `Horaire : 08:30 - 10:30 (120 min)`), sans aucun caractère parasite ni emoji Unicode dégradé en `?`.
+- **Barre Institutionnelle des Consignes & Surveillants :**
+  - Affichage clair du Président de salle et des surveillants affectés.
+  - Consigne réglementaire propre : *Consigne : CNIE / Carte d'Étudiant obligatoire - Accès selon place assignée* (sans caractère d'avertissement emoji dégradé en `??`).
+- **Tableau de Placement Épuré (3 Colonnes - Sans Émargement) :**
+  - *Suppression de la colonne d'émargement* : l'affiche de porte étant un document placardé à l'extérieur pour orientation préalable des étudiants, la signature d'émargement est exclusivement réservée à la feuille d'émargement en salle.
+  - Colonne 1 : Badge pilule bleu nuit `N° 01`, `N° 02`... (centré).
+  - Colonne 2 : Nom & prénom de l'étudiant (**BENNANI** Salma) — **entièrement centré** pour un équilibre visuel parfait.
+  - Colonne 3 : Code CNE / Massar en police à chasse fixe `N130000002` (centré).
+- **Pied de Page avec QR Code de Vérification (Loi 53-05) :**
+  - QR Code vectoriel reliant directement au portail public d'authentification du SI ENCG Fès.
+  - Horodatage certifié de génération et mention de conformité légale.
+
+#### C. Validation
+- Test de rendu PDF DomPDF : `SUCCÈS ! Taille du PDF généré : 97426 octets`.
+- Données vérifiées : 24 étudiants numérotés de 1 à 24, noms complets centrés, CNE propres, horaires exacts, 0 point d'interrogation `??`, 0 colonne d'émargement inutile.
+
+---
+
+### 21.13 🧠 Optimisation Ergonomique Professorale : Bloc Demi-Journée Consécutive (Continuous Half-Day Block)
+
+#### A. Problématique Métier & Psychologie Enseignante
+- **Constat Initial :** L'algorithme d'affectation équitable naïf distribuait 1 séance par jour par enseignant (ex: Pr. Amina Chraibi devait se déplacer à l'ENCG le 08/09 pour 2h de 08:30 à 10:30, puis revenir le 09/09 pour 2h de 08:30 à 10:30).
+- **Conséquence Ergonomique :** Déplacements répétés, perte de temps et fragmentation de la semaine des professeurs pour de simples vacations de 2h.
+- **Règle Métier Demandée :** *"le prof mayerhch yji ydir deux surveillances dyalo suivi par exemple yji mn 8:30 juqsqu'a 12:30 f3awt mayji deux jours... sauf ila kan des conflits."*
+- **Solution Opérationnelle :** Priorité absolue au regroupement consécutif en une demi-journée d'affilée (`08:30 - 10:30` suivi de `10:45 - 12:15`), avec pause de 15 minutes, sous réserve de non-conflit et avec un plafond strict de 2 surveillances par jour.
+
+#### B. Implémentation Algorithmique ([ExamPlanningEngine.php](file:///c:/Users/najlae/Desktop/ENCG-ERP-V1/backend/app/Services/Academic/ExamPlanningEngine.php) & [ProctorAssignmentService.php](file:///c:/Users/najlae/Desktop/ENCG-ERP-V1/backend/app/Services/ProctorAssignmentService.php))
+1. **Plafond Ergonomique Journalier :**
+   ```php
+   if (($proctorDaily[$profId][$dateStr] ?? 0) >= 2) {
+       return false; // Pas plus de 2 surveillances le même jour pour préserver la vigilance
+   }
+   ```
+2. **Tri par Bloc Consécutif Prioritaire (2 Paliers) :**
+   ```php
+   $sortedProfs = $eligibleProfs->sort(function ($a, $b) use ($proctorDaily, $proctorWorkload, $dateStr) {
+       $aToday = $proctorDaily[$a->id][$dateStr] ?? 0;
+       $bToday = $proctorDaily[$b->id][$dateStr] ?? 0;
+
+       // Palier 1 : Priorité absolue aux professeurs déjà sur place avec 1 séance aujourd'hui
+       // (Score = 0 si déjà présent pour lui attribuer sa 2ème séance consécutive)
+       $aConsecutive = ($aToday === 1) ? 0 : 1;
+       $bConsecutive = ($bToday === 1) ? 0 : 1;
+       if ($aConsecutive !== $bConsecutive) {
+           return $aConsecutive <=> $bConsecutive;
+       }
+
+       // Palier 2 : Équité de charge globale
+       $aWork = $proctorWorkload[$a->id] ?? 0;
+       $bWork = $proctorWorkload[$b->id] ?? 0;
+       if ($aWork !== $bWork) {
+           return $aWork <=> $bWork;
+       }
+
+       return $a->id <=> $b->id;
+   })->values();
+   ```
+3. **Mise à Jour Dynamique :**
+   Incrémentation automatique de `$proctorDaily[$profId][$dateStr]` et `$proctorWorkload[$profId]`.
+
+#### C. Validation en Base de Données
+- Exécution de `exams:regenerate-schedule 1 3 --start_date=2026-09-07 --modules_per_day=2`.
+- Planning vérifié en base :
+  - **Pr. Amina Chraibi** le `07/09/2026` :
+    - `08:30 – 10:30` : Langue Anglaise I (Surveillante)
+    - `10:45 – 12:15` : Management de Base (Surveillante)
+    $\rightarrow$ **2 séances consécutives regroupées dans la même matinée (08:30 à 12:15) ! Zéro déplacement superflu le 08/09 ni le 09/09.**
+  - **Pr. Bouchra Bennani & Pr. Tarik Meziane** le `08/09/2026` :
+    - `08:30 – 10:30` : Informatique de Gestion I
+    - `10:45 – 12:15` : Soft Skills I
+    $\rightarrow$ **2 séances consécutives regroupées.**
+  - **Pr. Mohamed Benjelloun & Pr. Abdelhak El Amrani** le `09/09/2026` :
+    - `08:30 – 10:30` : Mathématiques pour la Gestion
+    - `10:45 – 12:15` : Comptabilité Générale I
+    $\rightarrow$ **2 séances consécutives regroupées.**
+- **Sauvegarde BDD :** Script `backup_database.ps1 -Silent` exécuté avec succès.
+
+---
+
+### 21.14 ⚖️ Équité Stricte & Équilibre Mathématique Parfait des Surveillances
+
+#### A. Problématique & Règle d'Égalité Absolue
+- **Exigence Métier :** *"matnsach khass ykon egaliter o equilibre entre les professeurs !"*
+- **Analyse Mathématique :**
+  - Nombre total de créneaux de surveillance requis : $N = 7 \text{ modules} \times 2 \text{ surveillants} = 14 \text{ vacations}$.
+  - Effectif professoral actif : $P = 5 \text{ enseignants}$.
+  - Quota équitable : $\text{Moyenne} = 14 / 5 = 2.8 \text{ séances/professeur}$.
+  - **Équilibre Parfait :** 4 enseignants doivent avoir exactement **3 séances** et 1 enseignant doit avoir **2 séances** ($3+3+3+3+2 = 14$). L'écart maximal entre n'importe quels deux collègues ne doit **JAMAIS dépasser 1** ($\Delta \le 1$).
+
+#### B. Algorithme de Plafond Équitable Dynamique (`maxFairWorkload`)
+Dans [ExamPlanningEngine.php](file:///c:/Users/najlae/Desktop/ENCG-ERP-V1/backend/app/Services/Academic/ExamPlanningEngine.php) :
+1. Calcul dynamique :
+   ```php
+   $totalSlotsNeeded = count($modules) * 2;
+   $activeProfCount = max(1, $professors->count());
+   $maxFairWorkload = (int) ceil($totalSlotsNeeded / $activeProfCount); // = 3
+   ```
+2. Verrouillage du plafond d'égalité dans `$isProfAvailable` :
+   ```php
+   if (($proctorWorkload[$profId] ?? 0) >= $maxFairWorkload) {
+       $othersUnderCap = $professors->filter(fn ($p) => $p->id !== $profId && ($proctorWorkload[$p->id] ?? 0) < $maxFairWorkload);
+       if ($othersUnderCap->count() >= 2) {
+           return false; // Interdiction formelle de dépasser le quota tant que des collègues sont en dessous
+       }
+   }
+   ```
+3. Tri Hiérarchisé en 3 Paliers :
+   - **Palier 1 :** Pénalisation stricte de tout enseignant ayant atteint le plafond équitable pour prioriser ceux qui n'ont pas encore leur quota.
+   - **Palier 2 :** Attribution du bloc consécutif (2ème séance le même matin) **uniquement si** l'enseignant ne dépasse pas `$maxFairWorkload`.
+   - **Palier 3 :** Charge cumulée globale minimale croissante.
+
+#### C. Résultats en Base de Données (Session Automne 2026/2027)
+Distribution obtenue après exécution de `exams:regenerate-schedule 1 3 --start_date=2026-09-07 --modules_per_day=2` :
+
+| Enseignant | Total Surveillances | Séances & Horaires Détaillés | Blocs Consécutifs Demi-Journée |
+| :--- | :---: | :--- | :--- |
+| **Pr. Abdelhak El Amrani** | **3** | 07/09 (08:30), 07/09 (10:45), 09/09 (08:30) | ✅ Bloc le 07/09 (08:30 à 12:15) |
+| **Pr. Amina Chraibi** | **3** | 07/09 (08:30), 07/09 (10:45), 09/09 (10:45) | ✅ Bloc le 07/09 (08:30 à 12:15) |
+| **Pr. Bouchra Bennani** | **3** | 08/09 (08:30), 08/09 (10:45), 10/09 (08:30) | ✅ Bloc le 08/09 (08:30 à 12:15) |
+| **Pr. Tarik Meziane** | **3** | 08/09 (08:30), 08/09 (10:45), 10/09 (08:30) | ✅ Bloc le 08/09 (08:30 à 12:15) |
+| **Pr. Mohamed Benjelloun** | **2** | 09/09 (08:30), 09/09 (10:45) | ✅ Bloc le 09/09 (08:30 à 12:15) |
+
+- **Total :** $3 + 3 + 3 + 3 + 2 = 14$ vacations exactes.
+- **Écart maximal :** $\mathbf{1}$ (Équilibre et égalité mathématique absolue).
+- **Sauvegarde BDD :** Script `backup_database.ps1 -Silent` exécuté avec succès.
+
+---
+
+### 21.15 🎓 Corps de Surveillance Tripartite : Professeurs Permanents, Vacataires & Doctorants
+
+#### A. Règle Métier & Conformité Académique
+- **Exigence Métier :** *"hadchi kayntabq 3la professeurs permanant et vacataire et meem les doctorants !"*
+- **Architecture Tripartite :**
+  1. **Professeurs Permanents :** Rôles `professor`, `department-head`, `enseignant` (statut PES, PH, PA, contract_type `permanent`). Priorité statutaire pour le rôle de **Président de salle** (Surveillant Principal).
+  2. **Professeurs Vacataires :** Rôle `vacataire` (contract_type `vacataire`). Assurent la surveillance d'examen selon leur convention.
+  3. **Doctorants Chercheurs (CEDoc) :** Rôle `doctorant` (grade `Doctorant`, contract_type `doctorant`). Mobilisés comme surveillants secondaires/appui dans le cadre de leurs charges académiques doctorales.
+
+#### B. Implémentation du Pool Élargi & Hiérarchisé ([ExamPlanningEngine.php](file:///c:/Users/najlae/Desktop/ENCG-ERP-V1/backend/app/Services/Academic/ExamPlanningEngine.php) & [ProctorAssignmentService.php](file:///c:/Users/najlae/Desktop/ENCG-ERP-V1/backend/app/Services/ProctorAssignmentService.php))
+- **Sélection Inclusive :**
+  ```php
+  $professors = User::where(function ($query) {
+      $query->whereHas('roles', fn ($q) => $q->whereIn('name', [
+          'professor', 'department-head', 'enseignant', 'vacataire', 'doctorant',
+      ]))
+      ->orWhereHas('professor', fn ($q) => $q->where('is_active', true));
+  })
+  ->with(['roles', 'professor'])
+  ->get();
+  ```
+- **Affectation Respectueuse des Prérogatives Académiques :**
+  - **Président de salle :** Attribué en priorité absolue à un professeur permanent disponible parmi les candidats libres.
+  - **Surveillant Secondaire :** Attribué équitablement entre les permanents, vacataires et doctorants.
+- **Titres Distingués sur l'Affiche de Porte ([PdfExportController.php](file:///c:/Users/najlae/Desktop/ENCG-ERP-V1/backend/app/Http/Controllers/Api/PdfExportController.php)) :**
+  - Titre `Pr. Nom Prénom` pour les enseignants permanents et vacataires.
+  - Titre `Doctorant Nom Prénom` pour les doctorants chercheurs (ex: *Doctorant Omar Bennouna*).
+
+#### C. Validation Réelle en Base de Données (Égalité Absolue : 2 Séances Exactes par Surveillant)
+Après intégration de l'algorithme d'affectation globale à protection anticipatrice (Lookahead Engine) dans [ExamPlanningEngine.php](file:///c:/Users/najlae/Desktop/ENCG-ERP-V1/backend/app/Services/Academic/ExamPlanningEngine.php), les 14 créneaux de surveillance sont distribués avec une égalité stricte et absolue ($14 / 7 = \mathbf{2.00}$) :
+
+| Enseignant / Surveillant | Statut | Rôle(s) | Nb Séances | Détail Créneaux & Présence |
+| :--- | :--- | :--- | :---: | :--- |
+| **Pr. Abdelhak El Amrani** | Permanent | Président | **2** | 07/09 (08:30), 07/09 (10:45) **(Bloc 1 jour)** |
+| **Pr. Youssef El Mansouri** | Vacataire | Surveillant | **2** | 07/09 (08:30), 07/09 (10:45) **(Bloc 1 jour)** |
+| **Pr. Amina Chraibi** | Permanent | Président | **2** | 08/09 (08:30), 08/09 (10:45) **(Bloc 1 jour)** |
+| **Doctorant Omar Bennouna** | Doctorant | Surveillant | **2** | 08/09 (08:30), 08/09 (10:45) **(Bloc 1 jour)** |
+| **Pr. Tarik Meziane** | Permanent | Président | **2** | 09/09 (08:30), 09/09 (10:45) **(Bloc 1 jour)** |
+| **Pr. Bouchra Bennani** | Permanent | Surveillant / Président | **2** | 09/09 (08:30), 10/09 (08:30) (2 jours) |
+| **Pr. Mohamed Benjelloun** | Permanent | Surveillant | **2** | 09/09 (10:45), 10/09 (08:30) (2 jours) |
+
+$\rightarrow$ **Garanties Métier & Résultats Obtenus :**
+1. **Égalité Stricte et Absolue :** Chaque intervenant (permanent, vacataire, doctorant) effectue **EXACTEMENT 2 surveillances**. Aucun intervenant n'en fait 3, aucun n'en fait 1 ($2, 2, 2, 2, 2, 2, 2 = 14$).
+2. **Pr. Abdelhak El Amrani ne se déplace plus le 10/09 :** Ses 2 séances sont regroupées le **lundi 07/09** en bloc consécutif (08:30 - 12:15). Il ne revient pas pour le 7ème module.
+3. **5 intervenants sur 7 ne viennent qu'un seul jour :** Blocs consécutifs d'affilée (08:30 & 10:45).
+4. **Présidence Statutaire 100% Respectée :** Les 7 examens sont tous présidés par un professeur permanent (statut légal garanti).
+5. **Résolution du Module Isolé du 10/09 :** Réparti équitablement sur Bouchra (Présidente) et Mohamed (Surveillant), qui avaient chacun réalisé 1 séance le 09/09.
+- **Sauvegarde BDD :** Script `backup_database.ps1 -Silent` exécuté avec succès.
+
+---
+
+### 21.16 ⚙️ Architecture 100% Dynamique & Suppression Totale de Mock Data
+
+Conformément à la directive : *"Khass ykon hadchi dynamique m3a chhal makan dyal les examens o chhal makan dyal les professeurs maykonch hadchi statique wla mockdatat"* :
+
+1. **Généricité Totale ($N$ Examens $\times$ $M$ Enseignants) :**
+   - **Nombre de créneaux :** `$totalSlotsNeeded = count($allCreatedExams) * 2` (dynamique selon le nombre réel d'examens créés et de salles mobilisées).
+   - **Effectif surveillants :** `$activeProfCount = max(1, $professors->count())` (requête dynamique sur la base de données réelle).
+   - **Plafond d'équité :** `$maxFairWorkload = (int) ceil($totalSlotsNeeded / $activeProfCount)` (calcul mathématique exact, aucun chiffre en dur).
+   - **Plafond journalier dynamique :** `$dynamicDailyCap = max(2, (int) ceil(($dayExamsCount * 2) / $activeProfCount))` (s'adapte automatiquement si le nombre de surveillants est réduit sur une journée chargée).
+   - **Lookahead dynamique :** `$futureMinDistinct = max(simultaneousRooms * 2, ceil(futureSlots / 2))` calculé en direct sur les dates futures restantes.
+
+2. **Élimination de Toute Mock Data ([ProctorAssignmentService.php](file:///c:/Users/najlae/Desktop/ENCG-ERP-V1/backend/app/Services/ProctorAssignmentService.php)) :**
+   - Remplacement des anciennes chaînes statiques (ex: `'98.6%'`) par des calculs statistiques réels :
+     - **Variance & Écart-Type :** $\sigma = \sqrt{\frac{1}{K}\sum (w_i - \bar{w})^2}$ calculé sur les charges réelles.
+     - **Score d'équité réel :** $\text{Equitability} = \max(0, \min(100, (1 - \sigma / \bar{w}) \times 100))\%$.
+     - **Taux sans conflit réel :** Vérification géométrique de chaque intervalle $[start, end]$ en base de données.
+   - [Academic/ProctorAssignmentService.php](file:///c:/Users/najlae/Desktop/ENCG-ERP-V1/backend/app/Services/Academic/ProctorAssignmentService.php) délégué directement au service réel, sans aucune donnée simulée.

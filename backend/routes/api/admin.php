@@ -121,6 +121,10 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     Route::get('/admin/exams/{exam}/door-sign-pdf', [PdfExportController::class, 'downloadDoorSignPdf']);
     Route::get('/exams/{exam}/rooms/{room}/door-sign-pdf', [PdfExportController::class, 'downloadDoorSignPdf']);
     Route::get('/exams/{exam}/door-sign-pdf', [PdfExportController::class, 'downloadDoorSignPdf']);
+    Route::get('/v1/admin/exams/{exam}/rooms/{room}/door-sign-pdf', [PdfExportController::class, 'downloadDoorSignPdf']);
+    Route::get('/v1/admin/exams/{exam}/door-sign-pdf', [PdfExportController::class, 'downloadDoorSignPdf']);
+    Route::get('/v1/exams/{exam}/rooms/{room}/door-sign-pdf', [PdfExportController::class, 'downloadDoorSignPdf']);
+    Route::get('/v1/exams/{exam}/door-sign-pdf', [PdfExportController::class, 'downloadDoorSignPdf']);
     Route::post('/exams/pv/sign', [ExamIncidentController::class, 'storePvSignature']);
     Route::get('/exams/{exam}/pv/pdf', [ExamIncidentController::class, 'downloadOfficialPvPdf']);
     Route::post('/notifications/broadcast-urgent', [NotificationController::class, 'broadcastUrgentAlert']);
@@ -805,6 +809,12 @@ Route::middleware(['auth:sanctum', $staffRoles])->group(function () {
     Route::get('/v1/modules/pv-accreditation-pdf', [PdfExportController::class, 'exportPvAccreditationModulePdf']);
     Route::get('/v1/admin/modules/pv-accreditation-pdf', [PdfExportController::class, 'exportPvAccreditationModulePdf']);
 
+    // Émargement — id only in path, no PII query string (CIN/CNE/filière)
+    Route::get('/v1/admin/exams/{exam}/emargement-pdf', [PdfExportController::class, 'exportExamEmargementPdf']);
+    Route::get('/admin/exams/{exam}/emargement-pdf', [PdfExportController::class, 'exportExamEmargementPdf']);
+    Route::get('/v1/admin/groups/{group}/emargement-pdf', [PdfExportController::class, 'exportGroupEmargementPdf']);
+    Route::get('/admin/groups/{group}/emargement-pdf', [PdfExportController::class, 'exportGroupEmargementPdf']);
+    // Legacy query-string URLs — hard-disabled (410)
     Route::get('/groups/emargement-pdf', [PdfExportController::class, 'exportEmargementGroupePdf']);
     Route::get('/admin/groups/emargement-pdf', [PdfExportController::class, 'exportEmargementGroupePdf']);
     Route::get('/v1/groups/emargement-pdf', [PdfExportController::class, 'exportEmargementGroupePdf']);

@@ -21,7 +21,7 @@ class AdminExamController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Exam::with(['module', 'group', 'room', 'surveillances.professor.user'])
+        $query = Exam::with(['module.filiere', 'group.filiere', 'room', 'surveillances.professor.user'])
             ->withCount(['seatings', 'incidents'])
             ->latest();
 
