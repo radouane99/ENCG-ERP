@@ -1,8 +1,7 @@
 import React, { useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import {
   Bell, BarChart2, MessageSquare, AlertTriangle, Sparkles, CheckCircle2,
-  Search, Award, Star, HelpCircle, ToggleLeft, ToggleRight, ArrowUpRight, Loader2
+  Search, Award, Star, ToggleLeft, ToggleRight, Loader2
 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@shared/lib/api'
@@ -10,15 +9,13 @@ import { cn } from '@shared/lib/utils'
 import { toast } from 'sonner'
 
 export default function AdminEvaluationsPage() {
-  const { t, i18n } = useTranslation(['admin', 'common'])
-  const isRtl = i18n.language === 'ar'
   const queryClient = useQueryClient()
 
   const [selectedFiliere, setSelectedFiliere] = useState('all')
   const [search, setSearch] = useState('')
 
   // Fetch REAL Database Evaluations & Campaign metrics
-  const { data: fetchRes, isLoading, isError } = useQuery({
+  const { data: fetchRes, isLoading } = useQuery({
     queryKey: ['admin-course-evaluations-stats'],
     queryFn: async () => {
       try {

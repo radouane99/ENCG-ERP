@@ -6,8 +6,9 @@
  */
 
 // ── Primitives ───────────────────────────────────────────────────
-export { Button, buttonVariants }   from './Button'
-export type { ButtonProps }         from './Button'
+export { Button } from './Button'
+export { buttonVariants } from './buttonVariants'
+export type { ButtonProps } from './Button'
 
 export { Input }                    from './Input'
 export type { InputProps }          from './Input'
