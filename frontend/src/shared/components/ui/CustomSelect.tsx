@@ -98,8 +98,11 @@ export function CustomSelect({
         )}
       >
         <div className="flex items-center gap-2 truncate">
-          {icon && <span className={cn("shrink-0", isHero ? "text-amber-300" : "text-primary")}>{icon}</span>}
-          {selectedOption?.icon && <span className="shrink-0">{selectedOption.icon}</span>}
+          {(selectedOption?.icon || icon) && (
+            <span className={cn("shrink-0", isHero ? "text-amber-300" : "text-primary")}>
+              {selectedOption?.icon || icon}
+            </span>
+          )}
           <span className="truncate">
             {selectedOption ? cleanUtf8Text(selectedOption.label) : placeholder}
           </span>

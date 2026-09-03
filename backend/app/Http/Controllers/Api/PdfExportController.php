@@ -54,6 +54,11 @@ class PdfExportController extends Controller
     {
         $data['logoBase64'] ??= $this->resolveLogoBase64();
 
+        // Si verifyUrl est fourni mais qrBase64 est absent, générer le QR Code automatiquement
+        if (!empty($data['verifyUrl']) && empty($data['qrBase64'])) {
+            $data['qrBase64'] = $this->generateQrBase64($data['verifyUrl']);
+        }
+
         return Pdf::loadView($view, $data)->setPaper('a4', 'portrait');
     }
 
@@ -79,16 +84,17 @@ class PdfExportController extends Controller
     private function generateQrBase64(string $data): string
     {
         try {
-            $raw = QrCode::format('png')->size(140)->margin(1)->generate($data);
+            // Priorité absolue au format SVG : rendu vectoriel ultra-net et sans dépendance imagick
+            $raw = QrCode::format('svg')->size(140)->margin(0)->generate($data);
 
-            return 'data:image/png;base64,'.base64_encode($raw);
-        } catch (\Throwable $e) {
+            return 'data:image/svg+xml;base64,'.base64_encode((string) $raw);
+        } catch (\Throwable) {
             try {
-                $raw = QrCode::format('svg')->size(140)->margin(1)->generate($data);
+                $raw = QrCode::format('png')->size(140)->margin(0)->generate($data);
 
-                return 'data:image/svg+xml;base64,'.base64_encode($raw);
-            } catch (\Throwable $e2) {
-                return '';
+                return 'data:image/png;base64,'.base64_encode((string) $raw);
+            } catch (\Throwable) {
+                return 'https://api.qrserver.com/v1/create-qr-code/?size=140x140&data='.urlencode($data);
             }
         }
     }
@@ -1464,7 +1470,7 @@ class PdfExportController extends Controller
     {
         $code = $request->query('code', 'Tous Groupes');
         $filiere = $request->query('filiere', 'Tronc Commun ENCG');
-        if (strtoupper($filiere) === 'ENCG' || empty($filiere)) {
+        if (strtoupper($filiere) === 'ENCG' || empty($filiere) || $filiere === '—' || $filiere === '-') {
             $filiere = 'Tronc Commun ENCG';
         }
         $semester = $request->query('semester', 'S1');
@@ -1539,6 +1545,19 @@ class PdfExportController extends Controller
         $capacity = max(35, $count);
         $delegateName = 'Non assigné';
 
+        // Token Cryptographique Sécurisé conforme Loi 53-05 (Anti-Fraude & Répudiation)
+        $examIdStr = $examId ? (string) $examId : '0';
+        $safeCode = Str::slug($code ?: 'groupe');
+        $safeSemester = str_replace('S', '', $semester ?: '1');
+        $sigPayload = "EMARGEMENT:{$examIdStr}:{$code}:{$semester}";
+        $securityHmac = substr(hash_hmac('sha256', $sigPayload, config('app.key') ?: 'encg_master_key_2026'), 0, 16);
+        $verificationToken = "EMG-{$examIdStr}-{$safeCode}-S{$safeSemester}-{$securityHmac}";
+
+        // URL publique sécurisée scannable par tout smartphone ou navigateur
+        $frontendBase = rtrim(config('app.frontend_url') ?: env('FRONTEND_URL', 'http://localhost:5173'), '/');
+        $verifyUrl = "{$frontendBase}/verify/document/{$verificationToken}";
+        $qrBase64 = $this->generateQrBase64($verifyUrl);
+
         $pdf = $this->getPdfInstance('pdf.emargement_groupe', [
             'groupName' => $displayGroupName ?: $code,
             'filiereName' => $filiere,
@@ -1547,7 +1566,10 @@ class PdfExportController extends Controller
             'capacity' => $capacity,
             'delegateName' => $delegateName,
             'realStudents' => $realStudents,
-            'verifyUrl' => url('/verify/document/EMARGEMENT-'.md5($code.$semester)),
+            'verifyUrl' => $verifyUrl,
+            'qrBase64' => $qrBase64,
+            'verificationToken' => $verificationToken,
+            'securityHmac' => $securityHmac,
         ]);
 
         $safeCode = Str::slug($code);

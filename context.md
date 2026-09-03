@@ -2412,3 +2412,98 @@ Afin de prémunir l'établissement contre toute perte accidentelle de données (
 4. **Dépendance Docker Pérène (`docker/php/Dockerfile`) :**
    - Ajout du paquet `postgresql-client` dans les dépendances système pour garantir la présence native de `/usr/bin/pg_dump` dans l'image PHP-FPM.
    - Résolution de la configuration des notifications Spatie Backup (`config/backup.php`) pour interdire les adresses orphelines `example.com` incompatibles avec le driver Resend.
+
+---
+
+### 21.9 🎨 Refonte Prestigieuse & Assainissement Encodage du Hub Examens (`/admin/exams`)
+
+#### A. Diagnostic & Résolution de l'Altération d'Encodage UTF-8 (Mojibake BDD)
+- **Origine du problème :** À l'import historique depuis les anciens dumps MySQL/Windows-1252 vers PostgreSQL, certains intitulés de modules et filières contenaient des artefacts CP850/Mojibake tels que `Comptabilit├⌐ G├⌐n├⌐rale II`, `Analyse Financi├¿re`, `├ëconomie G├⌐n├⌐rale`, `Gestion Financi├¿re et Comptable`.
+- **Correction en BDD PostgreSQL :** Exécution d'un script SQL de normalisation restaurant 100% des accents français (`é`, `è`, `É`, `ê`) sur l'intégralité des tables `modules` et `filieres`.
+- **Mise à Jour de l'Archive de Référence :** Régénération du dump miroir `backup_encg_erp_latest.sql` et exécution de `scripts/backup_database.ps1` afin de pérenniser ces corrections dans les sauvegardes automatisées.
+- **Blindage Applicatif & Helper Universel :**
+  - Enrichissement de la fonction `cleanUtf8Text` dans `frontend/src/shared/lib/utils.ts` avec des expressions régulières avancées pour intercepter et normaliser toute chaîne issue de flux externes ou de saisies manuelles (`Comptabilité Générale`, `Comptabilité Approfondie`, `Statistiques et Probabilités`, `Générale`, etc.).
+  - Application systématique de `cleanUtf8Text()` dans `AdminExamsPage.tsx` sur les titres de modules, noms de filières et libellés de salles aussi bien en vue Cartes qu'en vue Tableau.
+
+#### B. Résolution de la Duplication des Icônes dans `CustomSelect`
+- **Analyse du composant :** Dans `CustomSelect.tsx`, le déclencheur (*trigger*) rendait simultanément la prop `icon` et la propriété `selectedOption.icon`, provoquant un double affichage d'icône calendrier sur le sélecteur de session d'examen.
+- **Correction :** Conditionnement exclusif `{(selectedOption?.icon || icon) && ...}` éliminant toute duplication tout en conservant l'icône contextuelle de l'option choisie.
+- **Libellés unifiés :** Remplacement du placeholder brut `-- Session d'Examen --` par `Toutes les sessions d'examen` pour une ergonomie SaaS premium.
+
+#### C. Refonte Graphique & Expérience Utilisateur Haute Définition
+1. **Bandeau Hero Exécutif Réinventé :**
+   - Dégradé profond saphir/nuit (`#091838` via `#0f2863` vers `#07132c`) avec halo lumineux et flous d'arrière-plan.
+   - Puces d'accréditation institutionnelle (*Organisation & Planification des Sessions ENCG Fès*, *Anti-Chevauchement IA*).
+   - 4 Cartes d'indicateurs clés de performance (KPIs) avec correction grammaticale du pluriel (`1 Salle` vs `X Salles`) et affichage direct du pourcentage d'acheminement des convocations (`XX% Envoyées`).
+   - Bouton de raccourci d'action rapide `[Scanner QR]` ouvrant le hub de validation d'assiduité par QR code `/admin/exams/scan`.
+2. **Centre de Contrôle, Filtres & Barre d'Actions Aérée :**
+   - Grille 3 colonnes équilibrée pour les sélecteurs de filières, sessions et semestres.
+   - Barre de recherche en temps réel élargie avec bouton d'effacement rapide 1-clic.
+   - Regroupement harmonieux des actions :
+     - Bouton principal `[Auto-Générer IA]` en dégradé bleu royal et lueur ambrée.
+     - Bouton secondaire `[Sur Mesure (2 Ex/J)]` pour le cadencement par paires d'épreuves.
+     - Bouton d'accès aux `[Archives PVs]` et bouton de remise à zéro rapide avec confirmation.
+     - Sélecteur de vue segmenté `[Cartes]` / `[Tableau]` avec contrastes élevés.
+3. **Cartes d'Épreuves Redessinées (`ExamCard`) :**
+   - **Ruban Calendrier Latéral :** Bloc vertical élégant avec mois en lettres majuscules d'or, quantième du jour en grand corps monospace, jour de la semaine en toutes lettres et badge de type de session (*EXAMEN FINAL* / *RATTRAPAGE*).
+   - **Zone Centrale d'Informations :** Badges hiérarchiques de filière, semestre, groupe d'étudiants et effectif inscrit. Titre de module net et lisible. Créneau horaire et salle/amphi mis en exergue par des puces dédiées.
+   - **Supervision & Équipe de Surveillance :** Ligne d'affectation des professeurs surveillants avec puces visuelles ou mention d'attente d'affectation.
+   - **Barre de Progression des Convocations :** Jauge dynamique bicolore affichant en temps réel le taux d'expédition des convocations certifiées aux étudiants avec badge vert `100% Envoyées`.
+   - **Panneau d'Actions Stratégiques (Hub Latéral) :**
+     - Bouton maître proéminent : `[Hub Surveillance Live]` avec icône de bouclier doré pour superviser l'épreuve et les émargements en temps réel.
+     - Grille 2 colonnes pour les documents officiels : `[Émargement]` (téléchargement instantané de la feuille A4 officielle) et `[Affiche Porte]` (génération de l'affiche de salle).
+     - Action dynamique de convocation : `[Générer Convocations]` si non encore créées, basculant automatiquement en `[Envoyer Convocations]` par email institutionnel une fois prêtes.
+     - Bouton compact `[Notifier Absents]` pour alerter les défaillants.
+4. **Vue Tableau Synoptique Sublimée :**
+   - Nettoyage UTF-8 complet des lignes du tableau.
+   - Accès direct en un clic aux feuilles d'émargement A4 et au Hub de Surveillance Live pour chaque ligne.
+
+---
+
+### 21.10 🔐 Système de Vérification Électronique Sécurisée & QR Code Anti-Fraude (Loi 53-05)
+
+#### A. Problématique & Exigence Réglementaire
+- **Constat Initial :** Sur les listes d'émargement d'examens générées en PDF, la mention légale *"Anti-Fraude : Scannez le QR pour vérifier l'authenticité numérique (Loi 53-05)"* était affichée mais l'emplacement du QR Code demeurait vide en raison de l'absence de génération et de transmission de la variable `$qrBase64` dans `exportEmargementGroupePdf`.
+- **Exigence Légale :** Conformément à la **Loi marocaine n° 53-05** relative à l'échange électronique de données juridiques, tout document académique ou officiel délivré par le SI ENCG Fès doit comporter :
+  1. Un sceau électronique visible sous forme de QR Code haute résolution.
+  2. Une URL publique de vérification inviolable, infalsifiable et cryptographiquement signée.
+  3. Un portail public d'attestation de conformité validant l'intégrité de la pièce.
+
+#### B. Architecture Cryptographique & Signature HMAC
+1. **Génération du Jeton Cryptographique (`PdfExportController.php`) :**
+   - Concaténation de la charge utile : `EMARGEMENT:{exam_id}:{groupe}:{semestre}`.
+   - Calcul de la signature d'intégrité via HMAC-SHA256 alimenté par la clé secrète du serveur (`config('app.key')`).
+   - Format standardisé du jeton : `EMG-{examId}-{safeCode}-S{safeSemester}-{hmac16}`.
+   - URL publique sécurisée : `{FRONTEND_URL}/verify/document/{verificationToken}`.
+
+2. **Génération Universelle du QR Code Vectoriel SVG / Base64 :**
+   - Refonte de la méthode `generateQrBase64()` dans `PdfExportController.php` pour privilégier le format SVG vectoriel (`QrCode::format('svg')->size(140)->margin(0)`).
+   - Intégration transparente dans le helper centralisé `getPdfInstance()` : dès lors qu'un contrôleur fournit `verifyUrl`, `qrBase64` est automatiquement synthétisé s'il n'est pas déjà présent.
+   - Mise à jour du layout maître `pdf_master.blade.php` avec conteneur `.qr-box` aux dimensions normalisées (48x48px), bordure nette et fond blanc contrasté.
+
+3. **Assainissement des Noms de Salles et Départements (Base de Données PostgreSQL) :**
+   - Détection et correction des artefacts d'encodage résiduels dans la table `rooms` (`Amphithéâtre A`, `Amphithéâtre B`) et la table `departments` (`Économie Appliquée`).
+   - Sauvegarde miroir synchronisée via `scripts/backup_database.ps1 -Silent`.
+
+#### C. Contrôleur de Vérification Multi-Sources (`PublicVerificationController.php`)
+- **Décodage & Vérification des Listes d'Émargement :**
+  - Reconnaissance automatique des préfixes `EMG-` et `EMARGEMENT-`.
+  - Résolution dynamique de l'épreuve, du module, de la filière, du semestre, du groupe et de la salle assignée.
+  - Calcul de l'empreinte de contrôle SHA-256 (`security_hash`).
+  - Journalisation de l'accès dans `activity_log` (audit trail de conformité CNDP).
+- **Couverture Étendue :** Gestion transparente des documents étudiants (`GeneratedDocument`, `DocumentRequest`), des pièces de professeurs (`ProfessorDocumentRequest`) et des cartes d'étudiants.
+- **Routage Hybride :**
+  - Route API publique : `/api/verify/document/{documentId}` et `/api/v1/verify/document/{documentId}`.
+  - Redirection Web automatique (`routes/web.php`) : toute requête directe sur le serveur web redirige instantanément l'usager vers la page de vérification du portail frontend.
+
+#### D. Modernisation Prestigieuse de la Page Publique (`VerifyDocument.tsx`)
+- **Palette Identitaire Royale :** Remplacement de l'ancien bandeau rouge par le dégradé bleu saphir officiel de l'ENCG Fès (`#002e5b` $\rightarrow$ `#0f2863` $\rightarrow$ `#091838`) rehaussé de puces dorées.
+- **Badge d'Accréditation Légale :** Mention visible *Conformité Loi 53-05 (Validité Numérique)*.
+- **Fiche Technique Complète :**
+  - Nature du document certifié.
+  - Intitulé du module et créneau d'épreuve.
+  - Filière, semestre et cohorte assignée.
+  - Salle / Amphithéâtre d'examen.
+  - Date et heure officielle de délivrance.
+  - Empreinte cryptographique SHA-256 avec bouton de copie en 1 clic.
+- **Gestion des Échecs :** En cas de token inexistant ou altéré, affichage immédiat d'un avertissement de sécurité rouge invitant à contacter l'administration.

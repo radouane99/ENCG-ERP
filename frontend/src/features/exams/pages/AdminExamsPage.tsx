@@ -26,10 +26,12 @@ import {
   Building2,
   CheckSquare,
   ChevronRight,
-  BarChart3
+  BarChart3,
+  ScanLine,
+  DoorOpen
 } from 'lucide-react'
 
-import { cn } from '@shared/lib/utils'
+import { cn, cleanUtf8Text } from '@shared/lib/utils'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { academicApi } from '@shared/api/academic'
@@ -229,7 +231,7 @@ export default function AdminExamsPage() {
   ], [filieres])
 
   const sessionOptions: SelectOption[] = useMemo(() => [
-    { value: '', label: "-- Session d'Examen --", badge: 'Toutes', icon: <Calendar className="w-3.5 h-3.5 text-amber-500" /> },
+    { value: '', label: "Toutes les sessions d'examen", badge: 'Global', icon: <Calendar className="w-3.5 h-3.5 text-amber-500" /> },
     ...(examSessions?.map((s: any) => ({
       value: String(s.id),
       label: `${s.name} (${s.academic_year || '2026/2027'})`,
@@ -284,55 +286,75 @@ export default function AdminExamsPage() {
   const totalSent = filteredExams.reduce((acc: number, e: any) => acc + (e.sent_count || 0), 0);
 
   return (
-    <div className="max-w-[1500px] mx-auto p-4 md:p-8 space-y-8 font-sans animate-in duration-500 pb-24">
+    <div className="max-w-[1550px] mx-auto p-4 md:p-8 space-y-7 font-sans animate-in duration-500 pb-24">
       
       {/* 🌟 Luxury Hero Header Banner */}
-      <div className="relative bg-gradient-to-r from-[#0b1b3d] via-[#102a6b] to-[#081530] p-6 md:p-10 rounded-[2.5rem] shadow-2xl text-white border border-blue-800/40 overflow-hidden">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/15 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-purple-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4 pointer-events-none" />
+      <div className="relative bg-gradient-to-r from-[#091838] via-[#0f2863] to-[#07132c] p-6 md:p-10 rounded-[2.5rem] shadow-2xl text-white border border-blue-800/40 overflow-hidden">
+        <div className="absolute top-0 right-0 w-[550px] h-[550px] bg-blue-500/15 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-[450px] h-[450px] bg-indigo-500/15 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4 pointer-events-none" />
 
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          <div className="flex items-center gap-5">
+        <div className="relative z-10 flex flex-col xl:flex-row xl:items-center justify-between gap-6">
+          <div className="flex items-start md:items-center gap-5">
             <div className="w-16 h-16 md:w-20 md:h-20 rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-amber-300 shadow-2xl shrink-0">
               <Calendar className="w-8 h-8 md:w-10 md:h-10 text-amber-400" />
             </div>
             <div>
-              <div className="inline-flex items-center gap-2 bg-blue-500/20 text-blue-200 px-3.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-1.5 border border-blue-400/30">
-                <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Organisation des Examens & Sessions ENCG Fès
+              <div className="flex items-center gap-2 flex-wrap mb-2">
+                <span className="inline-flex items-center gap-1.5 bg-blue-500/20 text-blue-200 px-3.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-blue-400/30">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Organisation & Planification des Sessions ENCG Fès
+                </span>
+                <span className="inline-flex items-center gap-1.5 bg-emerald-500/20 text-emerald-300 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-emerald-400/30">
+                  <ShieldCheck className="w-3 h-3 text-emerald-300" /> Anti-Chevauchement IA
+                </span>
               </div>
               <h1 className="text-2xl md:text-4xl font-black text-white tracking-tight leading-tight">
                 Gestion des Examens & Convocations
               </h1>
               <p className="text-blue-100/80 text-xs md:text-sm max-w-2xl font-medium mt-1">
-                Planification des sessions, répartition automatique anti-chevauchement des amphis, impression des bordereaux et convocations QR.
+                Planification des épreuves, répartition automatique des amphis, impression des bordereaux et convocations QR certifiées.
               </p>
             </div>
           </div>
 
-          {/* Quick KPI stats row in header */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 shrink-0">
-            <div className="bg-white/10 backdrop-blur-md px-4 py-3 rounded-2xl border border-white/15 text-center min-w-[90px]">
-              <div className="text-xl md:text-2xl font-black text-white font-mono">{totalExams}</div>
-              <div className="text-[10px] font-black uppercase tracking-wider text-blue-200 mt-0.5">Épreuves</div>
+          {/* Quick KPI stats row + Action Shortcut in header */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              <div className="bg-white/10 backdrop-blur-md px-4 py-3 rounded-2xl border border-white/15 text-center min-w-[85px] shadow-sm">
+                <div className="text-xl md:text-2xl font-black text-white font-mono">{totalExams}</div>
+                <div className="text-[10px] font-black uppercase tracking-wider text-blue-200 mt-0.5">Épreuves</div>
+              </div>
+              <div className="bg-white/10 backdrop-blur-md px-4 py-3 rounded-2xl border border-white/15 text-center min-w-[85px] shadow-sm">
+                <div className="text-xl md:text-2xl font-black text-amber-300 font-mono">{uniqueRooms}</div>
+                <div className="text-[10px] font-black uppercase tracking-wider text-blue-200 mt-0.5">
+                  {uniqueRooms > 1 ? 'Salles' : 'Salle'}
+                </div>
+              </div>
+              <div className="bg-white/10 backdrop-blur-md px-4 py-3 rounded-2xl border border-white/15 text-center min-w-[85px] shadow-sm">
+                <div className="text-xl md:text-2xl font-black text-emerald-300 font-mono">{totalConvocations}</div>
+                <div className="text-[10px] font-black uppercase tracking-wider text-blue-200 mt-0.5">Convocations</div>
+              </div>
+              <div className="bg-white/10 backdrop-blur-md px-4 py-3 rounded-2xl border border-white/15 text-center min-w-[85px] shadow-sm">
+                <div className="text-xl md:text-2xl font-black text-cyan-300 font-mono">{totalSent}</div>
+                <div className="text-[10px] font-black uppercase tracking-wider text-blue-200 mt-0.5">
+                  {totalConvocations > 0 ? `${Math.round((totalSent / totalConvocations) * 100)}% Envoyées` : 'Envoyées'}
+                </div>
+              </div>
             </div>
-            <div className="bg-white/10 backdrop-blur-md px-4 py-3 rounded-2xl border border-white/15 text-center min-w-[90px]">
-              <div className="text-xl md:text-2xl font-black text-amber-300 font-mono">{uniqueRooms}</div>
-              <div className="text-[10px] font-black uppercase tracking-wider text-blue-200 mt-0.5">Salles</div>
-            </div>
-            <div className="bg-white/10 backdrop-blur-md px-4 py-3 rounded-2xl border border-white/15 text-center min-w-[90px]">
-              <div className="text-xl md:text-2xl font-black text-emerald-300 font-mono">{totalConvocations}</div>
-              <div className="text-[10px] font-black uppercase tracking-wider text-blue-200 mt-0.5">Convocations</div>
-            </div>
-            <div className="bg-white/10 backdrop-blur-md px-4 py-3 rounded-2xl border border-white/15 text-center min-w-[90px]">
-              <div className="text-xl md:text-2xl font-black text-cyan-300 font-mono">{totalSent}</div>
-              <div className="text-[10px] font-black uppercase tracking-wider text-blue-200 mt-0.5">Envoyées</div>
-            </div>
+
+            <Link
+              to="/admin/exams/scan"
+              className="px-4 py-3 bg-amber-400 hover:bg-amber-300 active:scale-95 text-[#091838] font-black rounded-2xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg hover:shadow-amber-400/30 shrink-0"
+              title="Ouvrir le scanner de code QR pour valider les présences en salle"
+            >
+              <ScanLine className="w-4 h-4" />
+              <span>Scanner QR</span>
+            </Link>
           </div>
         </div>
       </div>
 
       {/* 🔍 Dedicated Control & Filter Center */}
-      <div className="bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] border border-slate-200/90 dark:border-slate-800 shadow-sm space-y-5">
+      <div className="bg-white dark:bg-slate-900 p-6 md:p-7 rounded-[2.5rem] border border-slate-200/90 dark:border-slate-800 shadow-sm space-y-5">
         {/* Row 1: Dropdown Filters */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
@@ -357,7 +379,7 @@ export default function AdminExamsPage() {
               value={selectedSessionId ? String(selectedSessionId) : ''}
               onChange={(val) => setSelectedSessionId(val ? Number(val) : '')}
               options={sessionOptions}
-              placeholder="-- Sélectionner une Session --"
+              placeholder="Toutes les sessions d'examen"
               icon={<Calendar className="w-4 h-4 text-amber-500" />}
               className="w-full"
             />
@@ -379,45 +401,45 @@ export default function AdminExamsPage() {
         </div>
 
         {/* Row 2: Search Input + Actions & View Switcher */}
-        <div className="pt-4 border-t border-slate-100 dark:border-slate-800/80 flex flex-col lg:flex-row items-center justify-between gap-4">
-          <div className="relative w-full lg:w-96">
+        <div className="pt-4 border-t border-slate-100 dark:border-slate-800/80 flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-4">
+          <div className="relative flex-1 max-w-lg">
             <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Rechercher module, salle, surveillant..."
-              className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-bold text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+              placeholder="Rechercher par module, salle, surveillant, groupe..."
+              className="w-full pl-10 pr-10 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-bold text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
             />
             {searchQuery && (
-              <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs">
+              <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs font-bold p-1">
                 ✕
               </button>
             )}
           </div>
 
           {/* Action Buttons & Switcher */}
-          <div className="flex items-center gap-2.5 flex-wrap w-full lg:w-auto justify-end">
-            <button
-              onClick={openCustomGenModal}
-              className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold rounded-2xl text-xs uppercase tracking-wider transition-all border border-slate-200 dark:border-slate-700 shadow-2xs flex items-center gap-2 cursor-pointer active:scale-95"
-            >
-              <Sliders className="w-4 h-4 text-indigo-500" /> Sur Mesure (2 Ex/J)
-            </button>
-
+          <div className="flex items-center gap-2.5 flex-wrap justify-end">
             <button
               onClick={handleAutoGenerateExams}
               disabled={isAutoGenerating}
-              className="px-5 py-2.5 bg-[#0f2863] hover:bg-[#1a387e] text-white font-black rounded-2xl text-xs uppercase tracking-wider transition-all shadow-md flex items-center gap-2 cursor-pointer disabled:opacity-50 active:scale-95"
+              className="px-4 py-2.5 bg-gradient-to-r from-[#0f2863] to-[#1e40af] hover:from-[#16357d] hover:to-[#2563eb] text-white font-black rounded-2xl text-xs uppercase tracking-wider transition-all shadow-md hover:shadow-indigo-500/20 flex items-center gap-2 cursor-pointer disabled:opacity-50 active:scale-95 border border-indigo-400/20"
             >
-              {isAutoGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4 text-amber-400" />} Auto-Générer IA
+              {isAutoGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4 text-amber-300" />} Auto-Générer IA
+            </button>
+
+            <button
+              onClick={openCustomGenModal}
+              className="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold rounded-2xl text-xs uppercase tracking-wider transition-all border border-slate-200 dark:border-slate-700 shadow-2xs flex items-center gap-2 cursor-pointer active:scale-95"
+            >
+              <Sliders className="w-3.5 h-3.5 text-indigo-500" /> Sur Mesure (2 Ex/J)
             </button>
 
             <button
               onClick={() => navigate('/admin/exams/pv-archive')}
-              className="px-4 py-2.5 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-950/70 text-amber-800 dark:text-amber-300 font-bold rounded-2xl text-xs uppercase tracking-wider transition-all border border-amber-200 dark:border-amber-800 shadow-2xs flex items-center gap-2 cursor-pointer active:scale-95"
+              className="px-3.5 py-2.5 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-950/70 text-amber-800 dark:text-amber-300 font-bold rounded-2xl text-xs uppercase tracking-wider transition-all border border-amber-200/80 dark:border-amber-800 shadow-2xs flex items-center gap-2 cursor-pointer active:scale-95"
             >
-              <Archive className="w-4 h-4 text-amber-600" /> Archives PVs
+              <Archive className="w-3.5 h-3.5 text-amber-600" /> Archives PVs
             </button>
 
             <button
@@ -425,13 +447,13 @@ export default function AdminExamsPage() {
               className="p-2.5 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-950/70 text-rose-700 dark:text-rose-300 font-bold rounded-2xl text-xs transition-all border border-rose-200 dark:border-rose-800 cursor-pointer active:scale-95"
               title="Remise à zéro des épreuves"
             >
-              <RefreshCw className="w-4 h-4" />
+              <RefreshCw className="w-3.5 h-3.5" />
             </button>
 
             <div className="h-6 w-px bg-slate-200 dark:bg-slate-700 mx-1 hidden sm:block" />
 
             {/* View switcher */}
-            <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl border border-slate-200 dark:border-slate-700">
+            <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl border border-slate-200 dark:border-slate-700 shrink-0">
               <button
                 onClick={() => setViewMode('cards')}
                 className={cn(
@@ -523,7 +545,7 @@ export default function AdminExamsPage() {
                         </div>
                       </td>
                       <td className="p-4">
-                        <div className="font-black text-slate-900 dark:text-white line-clamp-1">{exam.module?.name || exam.module}</div>
+                        <div className="font-black text-slate-900 dark:text-white line-clamp-1">{cleanUtf8Text(exam.module?.name || exam.module)}</div>
                         <div className="text-[10px] text-slate-400 font-bold">{exam.module?.filiere?.code || 'ENCG'} · Semestre S{exam.module?.semester_number || 1}</div>
                       </td>
                       <td className="p-4">
@@ -533,27 +555,39 @@ export default function AdminExamsPage() {
                       </td>
                       <td className="p-4">
                         <span className="font-bold text-[#0f2863] dark:text-blue-300 flex items-center gap-1">
-                          <Monitor className="w-3.5 h-3.5 text-amber-500" />
-                          {exam.room?.name || exam.room || 'Amphi'}
+                          <Building2 className="w-3.5 h-3.5 text-amber-500" />
+                          {cleanUtf8Text(exam.room?.name || exam.room || 'Amphi')}
                         </span>
                       </td>
                       <td className="p-4">
                         <span className="text-[11px] text-slate-600 dark:text-slate-300 line-clamp-1 font-medium">
-                          {Array.isArray(exam.proctors) && exam.proctors.length > 0 ? exam.proctors.join(', ') : exam.surveillants || 'À affecter'}
+                          {cleanUtf8Text(Array.isArray(exam.proctors) && exam.proctors.length > 0 ? exam.proctors.join(', ') : exam.surveillants || 'À affecter')}
                         </span>
                       </td>
                       <td className="p-4 text-center">
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          {exam.sent_count || 0}/{exam.convocations_generated || 0}
+                        <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                          {exam.sent_count || 0} / {exam.convocations_generated || 0}
                         </span>
                       </td>
                       <td className="p-4 pr-6 text-right">
-                        <Link
-                          to={`/admin/exams/${exam.id}/surveillance`}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 bg-[#0f2863] hover:bg-[#1a387e] text-white rounded-xl text-[10px] font-black uppercase tracking-wider shadow-sm transition-all"
-                        >
-                          <ShieldCheck className="w-3 h-3 text-amber-400" /> Gérer
-                        </Link>
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={() => {
+                              const filiereParam = encodeURIComponent(exam.module?.filiere?.name || 'Tronc Commun ENCG');
+                              openAuthenticatedUrl(`/api/v1/groups/emargement-pdf?exam_id=${exam.id}&code=${encodeURIComponent(exam.group?.name || exam.group || '')}&filiere=${filiereParam}&semester=S${exam.module?.semester_number || 1}`);
+                            }}
+                            className="p-1.5 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 rounded-xl border border-amber-200 dark:border-amber-800 cursor-pointer active:scale-95"
+                            title="Feuille d'Émargement A4"
+                          >
+                            <Printer className="w-3.5 h-3.5" />
+                          </button>
+                          <Link
+                            to={`/admin/exams/${exam.id}/surveillance`}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#0f2863] hover:bg-[#1a387e] text-white rounded-xl text-[10px] font-black uppercase tracking-wider shadow-sm transition-all active:scale-95"
+                          >
+                            <ShieldCheck className="w-3 h-3 text-amber-400" /> Surveillance
+                          </Link>
+                        </div>
                       </td>
                     </tr>
                   )
@@ -582,14 +616,14 @@ export default function AdminExamsPage() {
             return (
               <ExamCard key={exam.id}
                 id={exam.id}
-                title={typeof exam.module === 'object' ? (exam.module?.name || '—') : (exam.module || '—')}
+                title={cleanUtf8Text(typeof exam.module === 'object' ? (exam.module?.name || '—') : (exam.module || '—'))}
                 group={typeof exam.group === 'object' ? (exam.group?.name || '—') : (exam.group || '—')}
                 filiereCode={exam.module?.filiere?.code || '—'}
-                filiereName={exam.module?.filiere?.name || '—'}
+                filiereName={cleanUtf8Text(exam.module?.filiere?.name || '—')}
                 semester={exam.module?.semester_number || 1}
                 time={`${exam.start_time?.substring(0, 5) || '08:30'} – ${endTimeStr}`}
                 duration={`${exam.duration_minutes || 120} min`}
-                room={typeof exam.room === 'object' ? (exam.room?.name || '—') : (exam.room || '—')}
+                room={cleanUtf8Text(typeof exam.room === 'object' ? (exam.room?.name || '—') : (exam.room || '—'))}
                 surveillants={proctorsText}
                 day={day}
                 month={monthNames[dateObj.getMonth()]}
@@ -756,6 +790,10 @@ export default function AdminExamsPage() {
 function ExamCard({ id, title, group, filiereCode, filiereName, semester, time, duration, room, surveillants, day, month, dayName, type, generated, sent, pending, onNotify }: any) {
   const [isGenerating, setIsGenerating] = useState(false)
 
+  const cleanTitle = cleanUtf8Text(title)
+  const cleanFiliereName = cleanUtf8Text(filiereName)
+  const cleanRoom = cleanUtf8Text(room)
+
   const generateMutation = useMutation({
     mutationFn: (examId: number) => examsApi.generateConvocations(examId),
     onSuccess: (data) => {
@@ -797,129 +835,206 @@ function ExamCard({ id, title, group, filiereCode, filiereName, semester, time, 
     toast.loading(`Génération de la Liste d'Émargement A4...`);
     setTimeout(() => {
       toast.dismiss();
-      toast.success(`📜 Feuille d'Émargement A4 générée pour ${title} !`);
-      const filiereParam = encodeURIComponent(filiereName || 'Tronc Commun ENCG');
+      toast.success(`📜 Feuille d'Émargement A4 générée pour ${cleanTitle} !`);
+      const validFiliere = (cleanFiliereName && cleanFiliereName !== '—' && cleanFiliereName !== '-') ? cleanFiliereName : 'Tronc Commun ENCG';
+      const filiereParam = encodeURIComponent(validFiliere);
       openAuthenticatedUrl(`/api/v1/groups/emargement-pdf?exam_id=${id}&code=${encodeURIComponent(group)}&filiere=${filiereParam}&semester=S${semester}`);
     }, 600);
   }
 
+  const handleExportDoorSignPdf = () => {
+    toast.loading(`Génération de l'Affiche de Porte A4/A3...`);
+    setTimeout(() => {
+      toast.dismiss();
+      toast.success(`🚪 Affiche de Porte générée pour ${cleanTitle} !`);
+      openAuthenticatedUrl(`/api/v1/exams/${id}/door-sign-pdf`);
+    }, 600);
+  }
+
+  const percentSent = generated > 0 ? Math.min(100, Math.round((sent / generated) * 100)) : 0
+
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200/90 dark:border-slate-800 shadow-xl overflow-hidden flex flex-col lg:flex-row transition-all hover:shadow-2xl hover:border-indigo-300 dark:hover:border-indigo-800/60">
+    <div className="group bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200/90 dark:border-slate-800 shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col xl:flex-row hover:border-indigo-300 dark:hover:border-indigo-700/60">
       
-      {/* Left Date Ribbon Badge */}
-      <div className="w-full lg:w-36 bg-gradient-to-br from-[#0f2863] via-[#15347e] to-[#0a1b42] text-white flex flex-col items-center justify-center p-6 shrink-0 border-b lg:border-b-0 lg:border-r border-blue-900/50">
-        <span className="text-[10px] font-black uppercase tracking-widest text-amber-300 mb-1">{month}</span>
-        <span className="text-4xl md:text-5xl font-black tracking-tight mb-1 font-mono">{day}</span>
-        <span className="text-xs font-bold text-blue-200 mb-3 capitalize">{dayName}</span>
-        <span className="px-3 py-1 bg-white/10 rounded-full text-[9px] font-black uppercase tracking-wider border border-white/20 text-blue-100">
+      {/* 📅 Left Date Ribbon Badge */}
+      <div className="w-full xl:w-40 bg-gradient-to-br from-[#091838] via-[#0f2863] to-[#081530] text-white flex flex-col items-center justify-center p-6 shrink-0 border-b xl:border-b-0 xl:border-r border-blue-900/40 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-28 h-28 bg-blue-400/10 rounded-full blur-xl pointer-events-none" />
+        <span className="text-[11px] font-black uppercase tracking-widest text-amber-400 mb-1">
+          {month}
+        </span>
+        <span className="text-4xl xl:text-5xl font-black tracking-tight mb-1 font-mono text-white">
+          {day}
+        </span>
+        <span className="text-xs font-bold text-blue-200 mb-3 capitalize">
+          {dayName}
+        </span>
+        <span className={cn(
+          "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider border shadow-2xs",
+          type?.toLowerCase().includes('rattrapage')
+            ? "bg-amber-400/20 text-amber-300 border-amber-400/40"
+            : "bg-white/15 text-blue-100 border-white/20"
+        )}>
           {type}
         </span>
       </div>
 
-      {/* Middle Details Body */}
-      <div className="p-6 md:p-8 flex-1 flex flex-col justify-between space-y-4">
-        <div>
-          <div className="flex items-center gap-2 mb-2 flex-wrap">
-            <span className="px-2.5 py-0.5 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 rounded-full text-[10px] font-black uppercase tracking-wider border border-indigo-200 dark:border-indigo-800">
+      {/* 📄 Middle Details Body */}
+      <div className="p-6 md:p-7 flex-1 flex flex-col justify-between space-y-4">
+        <div className="space-y-2.5">
+          {/* Top badges */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="px-3 py-1 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 rounded-full text-[10px] font-black uppercase tracking-wider border border-indigo-200 dark:border-indigo-800 flex items-center gap-1.5 shadow-2xs">
+              <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
               {filiereCode} · S{semester}
             </span>
-            <span className="px-2.5 py-0.5 bg-blue-50 dark:bg-blue-950/60 text-[#0f2863] dark:text-blue-300 rounded-full text-[10px] font-bold border border-blue-200 dark:border-blue-800">
-              Groupe: {group}
+            <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-full text-[10px] font-black uppercase tracking-wider border border-slate-200 dark:border-slate-700 shadow-2xs">
+              Groupe : {group}
             </span>
+            {generated > 0 && (
+              <span className="px-2.5 py-0.5 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 rounded-full text-[10px] font-bold border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
+                <CheckSquare className="w-3 h-3 text-emerald-500" />
+                {generated} Inscrits
+              </span>
+            )}
           </div>
 
-          <h2 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white tracking-tight leading-snug">
-            {title}
+          {/* Module Title */}
+          <h2 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white tracking-tight leading-snug group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+            {cleanTitle}
           </h2>
-          
-          <div className="flex flex-wrap items-center gap-2.5 text-xs font-bold mt-3">
-            <span className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700">
-              <Clock className="w-3.5 h-3.5 text-indigo-500" /> {time} ({duration})
-            </span>
-            <span className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 px-3 py-1.5 rounded-xl border border-amber-200 dark:border-amber-800 font-black">
-              <Monitor className="w-3.5 h-3.5 text-amber-600" /> Salle / Amphi : {room}
-            </span>
+
+          {/* Time & Room Meta */}
+          <div className="flex flex-wrap items-center gap-2.5 pt-1">
+            <div className="inline-flex items-center gap-2 bg-slate-50 dark:bg-slate-800/90 text-slate-700 dark:text-slate-200 px-3.5 py-2 rounded-2xl border border-slate-200 dark:border-slate-700 text-xs font-bold shadow-2xs">
+              <Clock className="w-4 h-4 text-indigo-500 shrink-0" />
+              <span>{time}</span>
+              <span className="text-slate-400 font-normal">({duration})</span>
+            </div>
+
+            <div className="inline-flex items-center gap-2 bg-amber-50/80 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200 px-3.5 py-2 rounded-2xl border border-amber-200/90 dark:border-amber-800/80 text-xs font-black shadow-2xs">
+              <Building2 className="w-4 h-4 text-amber-600 shrink-0" />
+              <span>Salle / Amphi : {cleanRoom}</span>
+            </div>
           </div>
         </div>
 
         {/* Proctors Row */}
-        <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2">
-          <div className="text-xs font-bold text-slate-500 dark:text-slate-400 flex items-center gap-2 flex-wrap">
-            <span className="uppercase tracking-wider text-[10px] font-black text-slate-400">Surveillants Affectés :</span>
-            {surveillants && surveillants !== 'À affecter' && !surveillants.toLowerCase().includes('inconnu') ? (
-              <span className="text-slate-800 dark:text-slate-200 font-extrabold flex items-center gap-1.5">
+        <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2 flex-wrap text-xs">
+          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+            Surveillants :
+          </span>
+          {surveillants && surveillants !== 'À affecter' && !surveillants.toLowerCase().includes('inconnu') ? (
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-xl font-bold flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 shadow-2xs">
                 <Users className="w-3.5 h-3.5 text-indigo-500" />
                 {surveillants}
               </span>
-            ) : (
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
-                ⏳ À affecter
-              </span>
-            )}
-          </div>
+            </div>
+          ) : (
+            <span className="px-3 py-1 rounded-xl text-[10px] font-bold bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+              ⏳ À affecter par l'administration
+            </span>
+          )}
         </div>
 
-        {/* Convocations Status Bar */}
-        <div className="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/60 flex items-center justify-between flex-wrap gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold">
-              <FileText className="w-4 h-4" />
+        {/* Convocations Progress Tracker */}
+        <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 space-y-2">
+          <div className="flex items-center justify-between text-xs font-bold">
+            <div className="flex items-center gap-2">
+              <FileText className="w-4 h-4 text-indigo-500" />
+              <span className="text-slate-800 dark:text-slate-200 font-extrabold">{generated} convocations</span>
+              <span className="text-slate-400 font-normal">({sent} transmises)</span>
             </div>
-            <div>
-              <span className="text-xl font-black text-slate-900 dark:text-white font-mono">{generated}</span>
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Convocations Générées</span>
+            <div className="flex items-center gap-2">
+              <span className={cn(
+                "px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider",
+                percentSent === 100
+                  ? "bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300"
+                  : percentSent > 0
+                  ? "bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300"
+                  : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
+              )}>
+                {percentSent}% Envoyées
+              </span>
             </div>
           </div>
-
-          <div className="flex items-center gap-2">
-            <span className="px-3 py-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 rounded-xl text-[10px] font-black uppercase tracking-wider border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
-              <CheckCircle2 className="w-3 h-3" /> {sent} Envoyées
-            </span>
-            <span className="px-3 py-1 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 rounded-xl text-[10px] font-black uppercase tracking-wider border border-amber-200 dark:border-amber-800">
-              {pending} En Attente
-            </span>
+          <div className="w-full bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
+            <div
+              className={cn(
+                "h-full transition-all duration-500 rounded-full",
+                percentSent === 100
+                  ? "bg-emerald-500"
+                  : percentSent > 0
+                  ? "bg-indigo-600"
+                  : "bg-slate-400"
+              )}
+              style={{ width: `${percentSent}%` }}
+            />
           </div>
         </div>
       </div>
 
-      {/* Action Buttons Panel */}
-      <div className="bg-slate-50/70 dark:bg-slate-800/50 p-6 flex flex-col gap-2.5 w-full lg:w-60 shrink-0 border-t lg:border-t-0 lg:border-l border-slate-200 dark:border-slate-800 justify-center">
-        <button 
-          onClick={handleGenerateClick}
-          disabled={isGenerating}
-          className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all cursor-pointer shadow-xs active:scale-95 disabled:opacity-50"
+      {/* 🛠️ Right Action Panel */}
+      <div className="bg-slate-50/90 dark:bg-slate-800/50 p-6 flex flex-col gap-2.5 w-full xl:w-72 shrink-0 border-t xl:border-t-0 xl:border-l border-slate-200 dark:border-slate-800 justify-center">
+        {/* Primary CTA: Hub Surveillance Live */}
+        <Link
+          to={`/admin/exams/${id}/surveillance`}
+          className="w-full bg-gradient-to-r from-[#0f2863] to-[#1e40af] hover:from-[#16357d] hover:to-[#2563eb] text-white py-3 px-4 rounded-2xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-md hover:shadow-indigo-500/20 active:scale-95 text-center group border border-indigo-400/20"
         >
-          {isGenerating ? <Loader2 className="w-3.5 h-3.5 text-amber-500 animate-spin" /> : <FileText className="w-3.5 h-3.5 text-indigo-500" />} 
-          Générer Convocations
-        </button>
-
-        <button 
-          onClick={() => sendMutation.mutate(id)}
-          disabled={sendMutation.isPending}
-          className="w-full bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 active:scale-95"
-        >
-          {sendMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />} 
-          Envoyer Convocations
-        </button>
-
-        <button 
-          onClick={handleExportEmargementPdf}
-          className="w-full bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-950/70 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-95"
-        >
-          <Printer className="w-3.5 h-3.5 text-amber-600" /> Feuille d'Émargement
-        </button>
-
-        <Link to={`/admin/exams/${id}/surveillance`} className="w-full bg-[#0f2863] hover:bg-[#1a387e] text-white py-2.5 rounded-xl text-[11px] font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-md cursor-pointer active:scale-95 text-center">
-          <ShieldCheck className="w-3.5 h-3.5 text-amber-400" /> Hub Surveillance Live
+          <ShieldCheck className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform" />
+          <span>Hub Surveillance Live</span>
         </Link>
 
-        <button 
+        {/* 2-Column Official Docs buttons */}
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            onClick={handleExportEmargementPdf}
+            className="bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-950/70 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 py-2.5 px-3 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95 shadow-2xs"
+            title="Télécharger la feuille d'émargement officielle pour l'examen"
+          >
+            <Printer className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+            <span>Émargement</span>
+          </button>
+
+          <button
+            onClick={handleExportDoorSignPdf}
+            className="bg-slate-100 hover:bg-slate-200 dark:bg-slate-700/60 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 py-2.5 px-3 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95 shadow-2xs"
+            title="Affiche de porte A4/A3 de la salle d'examen"
+          >
+            <DoorOpen className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+            <span>Affiche Porte</span>
+          </button>
+        </div>
+
+        {/* Convocations Actions */}
+        {generated === 0 ? (
+          <button
+            onClick={handleGenerateClick}
+            disabled={isGenerating}
+            className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all cursor-pointer shadow-xs active:scale-95 disabled:opacity-50"
+          >
+            {isGenerating ? <Loader2 className="w-3.5 h-3.5 text-amber-500 animate-spin" /> : <FileText className="w-3.5 h-3.5 text-indigo-500" />}
+            <span>Générer Convocations</span>
+          </button>
+        ) : (
+          <button
+            onClick={() => sendMutation.mutate(id)}
+            disabled={sendMutation.isPending}
+            className="w-full bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 active:scale-95 shadow-2xs"
+          >
+            {sendMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5 text-emerald-600" />}
+            <span>Envoyer Convocations</span>
+          </button>
+        )}
+
+        {/* Absents Notification */}
+        <button
           onClick={() => notifyAbsentsMutation.mutate(id)}
           disabled={notifyAbsentsMutation.isPending}
           className="w-full text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/30 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
         >
-          {notifyAbsentsMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <AlertTriangle className="w-3 h-3" />} 
-          Notifier Absents
+          {notifyAbsentsMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <AlertTriangle className="w-3 h-3" />}
+          <span>Notifier Absents</span>
         </button>
       </div>
     </div>

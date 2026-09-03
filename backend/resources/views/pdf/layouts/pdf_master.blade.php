@@ -86,14 +86,19 @@
         }
 
         .qr-box {
-            width: 50px;
-            height: 50px;
+            width: 48px;
+            height: 48px;
             float: left;
             margin-right: 8px;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            padding: 1px;
+            border-radius: 3px;
         }
         .qr-box img {
             width: 100%;
             height: 100%;
+            display: block;
         }
 
         .encg-bottom-bar {
