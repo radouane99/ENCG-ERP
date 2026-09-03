@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Search, Book, PlayCircle, Clock, Star } from 'lucide-react'
+import { Search, Book, Clock, Star } from 'lucide-react'
 
 export default function CoursesPage() {
   const [courses] = useState([

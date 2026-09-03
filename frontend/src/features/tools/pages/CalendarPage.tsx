@@ -1,5 +1,5 @@
 ﻿import React from 'react';
-import { Calendar as CalendarIcon, Clock, BookOpen, Building, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 
 export default function CalendarPage() {

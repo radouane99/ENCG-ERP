@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Search, BookOpen, Clock, AlertTriangle } from 'lucide-react'
+import { Search, BookOpen, AlertTriangle } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 
 export default function BorrowingsPage() {

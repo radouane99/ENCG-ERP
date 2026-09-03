@@ -1,8 +1,7 @@
-import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, BookOpen, Download, PlayCircle, FileText } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { ArrowLeft, BookOpen, PlayCircle, FileText } from 'lucide-react'
 
 export default function CourseDetailPage() {
-  const { id } = useParams()
   const navigate = useNavigate()
 
   return (

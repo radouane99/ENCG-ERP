@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Search, BookMarked, Clock, CheckCircle } from 'lucide-react'
+import { Search } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 export default function LibraryPage() {

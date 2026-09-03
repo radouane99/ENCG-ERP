@@ -1,5 +1,4 @@
 ﻿import React from 'react';
-import { Mail, MessageCircle } from 'lucide-react';
 
 export default function ChatPage() {
   return (
