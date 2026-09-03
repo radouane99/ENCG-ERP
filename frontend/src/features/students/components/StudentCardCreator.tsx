@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Upload, Calendar, ArrowRight, ShieldCheck, AlertCircle, RefreshCw, Eye, Check } from 'lucide-react';
+import { Upload, Calendar, ShieldCheck, AlertCircle, Eye, Check } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import api from '@/shared/lib/api';
 import { Button } from '@/shared/components/ui/Button';

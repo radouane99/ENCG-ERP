@@ -9,11 +9,14 @@ use App\Models\ExamIncident;
 use App\Models\ExamSeating;
 use App\Models\ExamSession;
 use App\Models\ExamSurveillance;
+use App\Models\Group;
 use App\Models\Professor;
 use App\Models\Room;
 use App\Models\Student;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -77,14 +80,14 @@ class ExamConvocationService
     /**
      * Liste des étudiants convoqués pour une épreuve.
      */
-    private function resolveStudentsForExam(Exam $exam): \Illuminate\Support\Collection
+    private function resolveStudentsForExam(Exam $exam): Collection
     {
         $filiereId = $exam->module?->filiere_id ?? $exam->group?->filiere_id;
         $semesterNum = $exam->module?->semester_number ?? $exam->group?->semester_number;
 
         $students = collect();
         if ($filiereId) {
-            $groups = \App\Models\Group::where('filiere_id', $filiereId)
+            $groups = Group::where('filiere_id', $filiereId)
                 ->when($semesterNum, fn ($q) => $q->where('semester_number', $semesterNum))
                 ->with('students')
                 ->get();
@@ -104,7 +107,7 @@ class ExamConvocationService
     /**
      * Mélange déterministe par épreuve : un même étudiant n'a jamais la même place N à chaque examen.
      */
-    private function orderStudentsForExam(int $examId, \Illuminate\Support\Collection $students): \Illuminate\Support\Collection
+    private function orderStudentsForExam(int $examId, Collection $students): Collection
     {
         return $students->unique('id')->sortBy(function ($student) use ($examId) {
             $studentKey = (string) ($student->id ?? $student);
@@ -116,7 +119,7 @@ class ExamConvocationService
     /**
      * Crée ou met à jour les places — numérotation 1..N selon l'ordre mélangé par épreuve.
      */
-    private function assignAntiCheatSeatsForExam(int $examId, \Illuminate\Support\Collection $students, ?int $defaultRoomId): void
+    private function assignAntiCheatSeatsForExam(int $examId, Collection $students, ?int $defaultRoomId): void
     {
         $ordered = $this->orderStudentsForExam($examId, $students);
 
@@ -183,6 +186,7 @@ class ExamConvocationService
         }
 
         $sessionId = $exam->exam_session_id ?? 1;
+
         return $this->sendBatchEmails($sessionId, $seatingIds);
     }
 
@@ -352,6 +356,7 @@ class ExamConvocationService
 
             $profExams = $profSurveillances->map(function ($s) {
                 $token = $s->fresh()?->qr_token;
+
                 return [
                     'moduleName' => $s->exam->module->name ?? 'N/A',
                     'examDate' => $s->exam->exam_date?->format('Y-m-d') ?? 'N/A',
@@ -389,7 +394,7 @@ class ExamConvocationService
             if (str_contains($baseUrl, 'encg_nginx') || str_contains($baseUrl, 'localhost')) {
                 $baseUrl = 'http://localhost';
             }
-            $confirmUrl = $baseUrl . '/api/verify/surveillance/' . $primaryToken . '/confirm';
+            $confirmUrl = $baseUrl.'/api/verify/surveillance/'.$primaryToken.'/confirm';
 
             $emailData = [
                 'professorName' => $professor->name,
@@ -564,7 +569,8 @@ class ExamConvocationService
                 $item->seat_number = $i + 1;
                 try {
                     ExamSeating::where('id', $item->id)->update(['seat_number' => $i + 1]);
-                } catch (\Throwable $e) {}
+                } catch (\Throwable $e) {
+                }
             }
         }
 
@@ -572,10 +578,11 @@ class ExamConvocationService
             ->map(function ($s, $idx) use ($isCorrupted) {
                 $seatNumber = ($isCorrupted || empty($s->seat_number) || $s->seat_number == 125)
                     ? ($idx + 1)
-                    : (is_numeric($s->seat_number) ? (int)$s->seat_number : ($idx + 1));
+                    : (is_numeric($s->seat_number) ? (int) $s->seat_number : ($idx + 1));
                 $s->seat_number = $seatNumber;
                 $s->cne = $s->student?->cne ?? '—';
                 $s->student_name = $s->student?->user?->name ?? '—';
+
                 return $s;
             })
             ->sortBy('seat_number')
@@ -592,23 +599,23 @@ class ExamConvocationService
             ->unique('student_id')
             ->values();
 
-        $principalSignature = \Illuminate\Support\Facades\Cache::get("exam_pv_principal_signature_{$examId}");
-        $secondarySignature = \Illuminate\Support\Facades\Cache::get("exam_pv_secondary_signature_{$examId}");
+        $principalSignature = Cache::get("exam_pv_principal_signature_{$examId}");
+        $secondarySignature = Cache::get("exam_pv_secondary_signature_{$examId}");
 
         // If secondary was mistakenly placed into principal slot
         if ($principalSignature && $secondarySignature && $principalSignature === $secondarySignature) {
             $principalSignature = null;
-            \Illuminate\Support\Facades\Cache::forget("exam_pv_principal_signature_{$examId}");
-        } elseif (!$secondarySignature && $principalSignature) {
+            Cache::forget("exam_pv_principal_signature_{$examId}");
+        } elseif (! $secondarySignature && $principalSignature) {
             // If only one signature was cached before dual-signature support, it belongs to the secondary supervisor (Chraibi)
             $secondarySignature = $principalSignature;
             $principalSignature = null;
-            \Illuminate\Support\Facades\Cache::put("exam_pv_secondary_signature_{$examId}", $secondarySignature, 86400 * 7);
-            \Illuminate\Support\Facades\Cache::forget("exam_pv_principal_signature_{$examId}");
+            Cache::put("exam_pv_secondary_signature_{$examId}", $secondarySignature, 86400 * 7);
+            Cache::forget("exam_pv_principal_signature_{$examId}");
         }
 
         // Clean ambiguous shared key
-        \Illuminate\Support\Facades\Cache::forget("exam_pv_signature_{$examId}");
+        Cache::forget("exam_pv_signature_{$examId}");
 
         if ($exam) {
             $exam->principal_signature = $principalSignature;

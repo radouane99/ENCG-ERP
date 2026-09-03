@@ -28,21 +28,6 @@ const InfrastructurePage = lazy(() => import('@features/public/pages/LandingPage
 const StudentRouter = lazy(() => import('./StudentRouter'))
 const ProfessorRouter = lazy(() => import('./ProfessorRouter'))
 
-// Professor Portal
-const ProfessorDashboard = lazy(() => import('@features/professor-portal/pages/ProfessorDashboard'))
-const ProfessorScanner = lazy(() => import('@features/professor-portal/pages/ProfessorScanner'))
-const ProfessorProctoring = lazy(() => import('@features/professor-portal/pages/ProfessorProctoring'))
-const ProfessorAvailability = lazy(() => import('@features/professor-portal/pages/ProfessorAvailability'))
-const ProfessorInternships = lazy(() => import('@features/professor-portal/pages/ProfessorInternships'))
-const ProfessorAbsences = lazy(() => import('@features/professor-portal/pages/ProfessorAbsences'))
-const ProfessorCall = lazy(() => import('@features/professor-portal/pages/ProfessorCall'))
-const ProfessorClassroom = lazy(() => import('@features/professor-portal/pages/ProfessorClassroom'))
-const ProfessorReservations = lazy(() => import('@features/professor-portal/pages/ProfessorReservations'))
-const ProfessorQCMGenerator = lazy(() => import('@features/professor-portal/pages/ProfessorQCMGenerator'))
-const ProfessorAnalytics = lazy(() => import('@features/professor-portal/pages/ProfessorAnalytics'))
-const ProfessorSmartGrading = lazy(() => import('@features/professor-portal/pages/ProfessorSmartGrading'))
-const ProfessorProjectsKanban = lazy(() => import('@features/professor-portal/pages/ProfessorProjectsKanban'))
-
 // Outils
 const CalendarPage = lazy(() => import('@features/tools/pages/CalendarPage'))
 const ChatPage = lazy(() => import('@features/tools/pages/ChatPage'))
@@ -55,20 +40,6 @@ const StudentDetailPage = lazy(() => import('@features/students/pages/StudentDet
 const DigitalCardPage = lazy(() => import('@features/students/pages/DigitalCardPage'))
 const AdminStudentCardsPage = lazy(() => import('@features/students/pages/AdminStudentCardsPage'))
 const StudentCreatePage = lazy(() => import('@features/students/pages/StudentCreatePage'))
-// Student Portal
-const StudentDashboard = lazy(() => import('@features/dashboard/pages/StudentDashboard'))
-const StudentGrades = lazy(() => import('@features/students/pages/StudentGrades'))
-const StudentExams = lazy(() => import('@features/students/pages/StudentExams'))
-const StudentConvocations = lazy(() => import('@features/students/pages/StudentConvocations'))
-const ConvocationPDFView = lazy(() => import('@features/students/pages/ConvocationPDFView'))
-const StudentInternships = lazy(() => import('@features/students/pages/StudentInternships'))
-const StudentEvaluations = lazy(() => import('@features/students/pages/StudentEvaluations'))
-const StudentSchedule = lazy(() => import('@features/students/pages/StudentSchedule'))
-const StudentPortfolio = lazy(() => import('@features/students/pages/StudentPortfolio'))
-const StudentProjectsMarket = lazy(() => import('@features/students/pages/StudentProjectsMarket'))
-const StudentClubsHub = lazy(() => import('@features/students/pages/StudentClubsHub'))
-const StudentDigitalLibrary = lazy(() => import('@features/students/pages/StudentDigitalLibrary'))
-const StudentGamification = lazy(() => import('@features/students/pages/StudentGamification'))
 
 // HR
 const VacatairesManager = lazy(() => import('@features/hr/pages/VacatairesManager'))
@@ -82,9 +53,6 @@ const ApplicationsPage = lazy(() => import('@features/admissions/pages/Applicati
 
 const AcademicYearsPage = lazy(() => import('@features/academic/pages/AcademicYearsPage'))
 const AcademicArchitecturePage = lazy(() => import('@features/academic/pages/AcademicArchitecturePage'))
-const GroupsPage = lazy(() => import('@features/academic/pages/GroupsPage'))
-const FilieresPage = lazy(() => import('@features/academic/components/FiliereList'))
-const DepartmentsPage = lazy(() => import('@features/academic/components/DepartmentList'))
 const ModulesListPage = lazy(() => import('@features/modules/pages/ModulesListPage'))
 const DeliberationManager = lazy(() => import('@features/academic/pages/DeliberationManager'))
 
@@ -93,13 +61,10 @@ const ProfessorAttendanceView = lazy(() => import('@features/attendance/pages/Pr
 const QRScannerPage = lazy(() => import('@features/attendance/pages/QRScannerPage'))
 
 const TimetablePage = lazy(() => import('@features/timetable/pages/ModernTimetable'))
-const AdminTimetableEnginePage = lazy(() => import('@features/admin/pages/AdminTimetableEnginePage'))
 const AdminRoomAvailabilityPage = lazy(() => import('@features/admin/pages/AdminRoomAvailabilityPage'))
 const AttendancePage = lazy(() => import('@features/attendance/pages/AttendancePage'))
 
 const ExamSessionsPage = lazy(() => import('@features/exams/pages/ExamSessionsPage'))
-const GradeEntryPage = lazy(() => import('@features/exams/components/GradeEntry'))
-const DeliberationPage = lazy(() => import('@features/deliberation/pages/DeliberationPage'))
 const AdminExamAnalyticsPage = lazy(() => import('@features/exams/pages/AdminExamAnalyticsPage'))
 
 
@@ -135,15 +100,12 @@ const ExamDisplayList = lazy(() => import('@features/academic/pages/ExamDisplayL
 const ExamAttendanceSheet = lazy(() => import('@features/academic/pages/ExamAttendanceSheet'))
 const AdminExamSurveillanceHubPage = lazy(() => import('@features/exams/pages/AdminExamSurveillanceHubPage'))
 
-const ConvocationDashboard = lazy(() => import('@features/academic/pages/ConvocationDashboard'))
 const StudentConvocationPdf = lazy(() => import('@features/academic/pages/StudentConvocationPdf'))
 const ProfessorConvocationPdf = lazy(() => import('@features/academic/pages/ProfessorConvocationPdf'))
 const ProfessorScannerApp = lazy(() => import('@features/academic/pages/ProfessorScannerApp'))
-const StudentAbsenceUpload = lazy(() => import('@features/academic/pages/StudentAbsenceUpload'))
 const EnrollmentManager = lazy(() => import('@features/academic/pages/EnrollmentManager'))
 const HolidayManager = lazy(() => import('@features/academic/pages/HolidayManager'))
 const CreditsAndDerogations = lazy(() => import('@features/academic/pages/CreditsAndDerogations'))
-const InternshipManager = lazy(() => import('@features/academic/pages/InternshipManager'))
 const PredictiveDashboard = lazy(() => import('@features/analytics/pages/PredictiveDashboard'))
 const DocumentCenter = lazy(() => import('@features/documents/pages/DocumentCenter'))
 const PublicDocumentVerification = lazy(() => import('@features/documents/pages/PublicDocumentVerification'))
@@ -159,13 +121,9 @@ const SettingsPage = lazy(() => import('@features/settings/pages/SettingsPage'))
 // Administration
 const ActivityLogsPage = lazy(() => import('@features/admin/pages/ActivityLogsPage'))
 const TextbooksPage = lazy(() => import('@features/admin/pages/TextbooksPage'))
-const EvaluationsPage = lazy(() => import('@features/admin/pages/EvaluationsPage'))
 const AdminClubsPage = lazy(() => import('@features/admin/pages/ClubsPage'))
-const AdminPilotage = lazy(() => import('@features/admin/pages/AdminPilotage'))
 const AdminTafem = lazy(() => import('@features/admin/pages/AdminTafem'))
 const AdminMobility = lazy(() => import('@features/admin/pages/AdminMobility'))
-const AdminJuryPFE = lazy(() => import('@features/admin/pages/AdminJuryPFE'))
-const StudentMobility = lazy(() => import('@features/students/pages/StudentMobility'))
 const DoctorantDashboard = lazy(() => import('@features/cedoc/pages/DoctorantDashboard'))
 const AdminPredictiveAnalytics = lazy(() => import('@features/admin/pages/AdminPredictiveAnalytics'))
 const AdminSmartCampus = lazy(() => import('@features/admin/pages/AdminSmartCampus'))
@@ -179,7 +137,6 @@ const EditUserPage = lazy(() => import('@features/admin/pages/EditUserPage'))
 const ViewUserPage = lazy(() => import('@features/admin/pages/ViewUserPage'))
 const AdminStudentsPage = lazy(() => import('@features/admin/pages/AdminStudentsPage'))
 const AdminStudentDetailPage = lazy(() => import('@features/admin/pages/AdminStudentDetailPage'))
-const SchedulesEnginePage = lazy(() => import('@features/admin/pages/SchedulesEnginePage'))
 const CreateSchedulePage = lazy(() => import('@features/admin/pages/CreateSchedulePage'))
 const ReservationsPage = lazy(() => import('@features/admin/pages/ReservationsPage'))
 const ReservationCreatePage = lazy(() => import('@features/admin/pages/ReservationCreatePage'))
@@ -196,7 +153,6 @@ const AdminTextbooksPage = lazy(() => import('@features/admin/pages/AdminTextboo
 const AdminInternshipsPage = lazy(() => import('@features/internships/ui/pages/AdminInternshipsPage'))
 const StudentInternshipsPage = lazy(() => import('@features/internships/ui/pages/StudentInternshipsPage'))
 const AdminConvocationsUIPage = lazy(() => import('@features/exams/ui/pages/AdminConvocationsPage'))
-const AdminRequestsPage = lazy(() => import('@features/admin/pages/AdminRequestsPage'))
 const AdminMessagesPage = lazy(() => import('@features/admin/pages/AdminMessagesPage'))
 const AdminActivityLogsPage = lazy(() => import('@features/admin/pages/AdminActivityLogsPage'))
 const AdminEvaluationsPage = lazy(() => import('@features/admin/pages/AdminEvaluationsPage'))
@@ -274,7 +230,7 @@ function ProtectedRoute({ roles, children }: { roles: string[]; children?: React
 
 // ── App Component ──────────────────────────────────────────────
 export default function RootRouter() {
-  const { user, fetchUser } = useAuthStore()
+  const { fetchUser } = useAuthStore()
 
   useEffect(() => {
     void fetchUser()

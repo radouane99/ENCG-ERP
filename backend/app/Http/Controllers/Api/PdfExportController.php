@@ -243,7 +243,7 @@ class PdfExportController extends Controller
             ],
         ];
 
-        $verifyToken = \Illuminate\Support\Str::uuid()->toString();
+        $verifyToken = Str::uuid()->toString();
         $verifyUrl = url('/api/convocations/'.$verifyToken.'/verify');
         $qrCodeBase64 = null;
         try {
@@ -303,7 +303,7 @@ class PdfExportController extends Controller
             if ($s->exam) {
                 $profName = $s->exam->professor?->name ?? ($s->exam->module?->professor?->name ?? 'Corps Professoral ENCG');
                 $startTime = $s->exam->start_time ? substr($s->exam->start_time, 0, 5) : '14:30';
-                $endTime = $s->exam->end_time ? substr($s->exam->end_time, 0, 5) : date('H:i', strtotime($startTime . ' +2 hours'));
+                $endTime = $s->exam->end_time ? substr($s->exam->end_time, 0, 5) : date('H:i', strtotime($startTime.' +2 hours'));
                 $timeRange = "{$startTime} – {$endTime}";
 
                 $exams[] = [
@@ -376,7 +376,7 @@ class PdfExportController extends Controller
         foreach ($allSurveillances as $s) {
             if ($s->exam) {
                 $startTime = $s->exam->start_time ? substr($s->exam->start_time, 0, 5) : '14:30';
-                $endTime = $s->exam->end_time ? substr($s->exam->end_time, 0, 5) : date('H:i', strtotime($startTime . ' +2 hours'));
+                $endTime = $s->exam->end_time ? substr($s->exam->end_time, 0, 5) : date('H:i', strtotime($startTime.' +2 hours'));
                 $timeRange = "{$startTime} – {$endTime}";
 
                 $exams[] = [
@@ -495,7 +495,7 @@ class PdfExportController extends Controller
                 if ($s->exam) {
                     $profName = $this->getProfessorNameForModule($s->exam->module_id);
                     $startTime = $s->exam->start_time ? substr($s->exam->start_time, 0, 5) : '14:30';
-                    $endTime = $s->exam->end_time ? substr($s->exam->end_time, 0, 5) : date('H:i', strtotime($startTime . ' +2 hours'));
+                    $endTime = $s->exam->end_time ? substr($s->exam->end_time, 0, 5) : date('H:i', strtotime($startTime.' +2 hours'));
                     $timeRange = "{$startTime} – {$endTime}";
 
                     $exams[] = [
@@ -594,7 +594,7 @@ class PdfExportController extends Controller
                 $exam = $session->exams->firstWhere('id', $s->exam_id);
                 if ($exam) {
                     $startTime = $exam->start_time ? substr($exam->start_time, 0, 5) : '14:30';
-                    $endTime = $exam->end_time ? substr($exam->end_time, 0, 5) : date('H:i', strtotime($startTime . ' +2 hours'));
+                    $endTime = $exam->end_time ? substr($exam->end_time, 0, 5) : date('H:i', strtotime($startTime.' +2 hours'));
                     $timeRange = "{$startTime} – {$endTime}";
 
                     $exams[] = [

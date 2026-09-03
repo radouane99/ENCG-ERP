@@ -15,6 +15,8 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Schema;
 
 class ConvocationController extends Controller
 {
@@ -222,32 +224,32 @@ class ConvocationController extends Controller
         ]);
 
         $user = $request->user();
-        $ident = strtolower(($user?->name ?? '') . ' ' . ($user?->email ?? '') . ' ' . ($validated['supervisor_name'] ?? ''));
-        
+        $ident = strtolower(($user?->name ?? '').' '.($user?->email ?? '').' '.($validated['supervisor_name'] ?? ''));
+
         $role = $validated['role'] ?? null;
-        if (!$role) {
+        if (! $role) {
             $role = (str_contains($ident, 'chraibi') || str_contains($ident, 'second')) ? 'secondary' : 'principal';
         }
 
         if ($role === 'principal') {
-            \Illuminate\Support\Facades\Cache::put("exam_pv_principal_signature_{$examId}", $validated['signature_data'], 86400 * 7);
+            Cache::put("exam_pv_principal_signature_{$examId}", $validated['signature_data'], 86400 * 7);
         } else {
-            \Illuminate\Support\Facades\Cache::put("exam_pv_secondary_signature_{$examId}", $validated['signature_data'], 86400 * 7);
+            Cache::put("exam_pv_secondary_signature_{$examId}", $validated['signature_data'], 86400 * 7);
             // If the principal cache accidentally had this same signature, clear it!
-            if (\Illuminate\Support\Facades\Cache::get("exam_pv_principal_signature_{$examId}") === $validated['signature_data']) {
-                \Illuminate\Support\Facades\Cache::forget("exam_pv_principal_signature_{$examId}");
+            if (Cache::get("exam_pv_principal_signature_{$examId}") === $validated['signature_data']) {
+                Cache::forget("exam_pv_principal_signature_{$examId}");
             }
         }
 
         // Forget ambiguous shared key
-        \Illuminate\Support\Facades\Cache::forget("exam_pv_signature_{$examId}");
+        Cache::forget("exam_pv_signature_{$examId}");
 
         return response()->json([
             'success' => true,
             'role' => $role,
-            'message' => 'Signature enregistrée avec succès pour le ' . ($role === 'principal' ? 'Surveillant Principal' : 'Surveillant Secondaire'),
-            'principal_signature' => \Illuminate\Support\Facades\Cache::get("exam_pv_principal_signature_{$examId}"),
-            'secondary_signature' => \Illuminate\Support\Facades\Cache::get("exam_pv_secondary_signature_{$examId}"),
+            'message' => 'Signature enregistrée avec succès pour le '.($role === 'principal' ? 'Surveillant Principal' : 'Surveillant Secondaire'),
+            'principal_signature' => Cache::get("exam_pv_principal_signature_{$examId}"),
+            'secondary_signature' => Cache::get("exam_pv_secondary_signature_{$examId}"),
         ]);
     }
 
@@ -292,7 +294,7 @@ class ConvocationController extends Controller
                     $query->where('professor_id', $profId)
                         ->orWhereHas('user', function ($uq) use ($fullName) {
                             $uq->whereRaw("CONCAT(TRIM(first_name), ' ', TRIM(last_name)) ILIKE ?", [$fullName])
-                               ->orWhere('name', 'ILIKE', $fullName);
+                                ->orWhere('name', 'ILIKE', $fullName);
                         });
                 })
                 ->orderBy('exam_id', 'desc')
@@ -330,11 +332,11 @@ class ConvocationController extends Controller
 
         $monthsMap = [
             1 => 'JAN', 2 => 'FEV', 3 => 'MAR', 4 => 'AVR', 5 => 'MAI', 6 => 'JUIN',
-            7 => 'JUIL', 8 => 'AOU', 9 => 'SEP', 10 => 'OCT', 11 => 'NOV', 12 => 'DEC'
+            7 => 'JUIL', 8 => 'AOU', 9 => 'SEP', 10 => 'OCT', 11 => 'NOV', 12 => 'DEC',
         ];
 
         $data = $surveillances->map(function ($s) use ($monthsMap) {
-            $examDate = $s->exam?->exam_date ? \Carbon\Carbon::parse($s->exam->exam_date) : null;
+            $examDate = $s->exam?->exam_date ? Carbon::parse($s->exam->exam_date) : null;
             $month = $examDate ? ($monthsMap[(int) $examDate->format('n')] ?? 'AOU') : 'AOU';
             $day = $examDate ? $examDate->format('d') : '21';
             $dateFull = $examDate ? $examDate->format('d/m/Y') : '21/08/2026';
@@ -388,7 +390,7 @@ class ConvocationController extends Controller
             $surveillance = ExamSurveillance::find((int) $id);
             if ($surveillance) {
                 $surveillance->confirmed_at = now();
-                if (\Illuminate\Support\Facades\Schema::hasColumn('exam_surveillances', 'signed_at')) {
+                if (Schema::hasColumn('exam_surveillances', 'signed_at')) {
                     $surveillance->signed_at = now();
                     $surveillance->signature_data = $signatureData;
                     $surveillance->signature_type = $signatureType;
@@ -477,6 +479,7 @@ class ConvocationController extends Controller
             if ($request->wantsJson()) {
                 return response()->json(['success' => false, 'message' => 'Jeton invalide ou introuvable.'], 404);
             }
+
             return response('<h3>Lien de confirmation invalide ou expiré.</h3>', 404);
         }
 

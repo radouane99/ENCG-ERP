@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import {
-  FileText, Sparkles, Send, Download, Loader2, CheckCircle2, Clock, Mail, ShieldCheck, Plus
+  FileText, Sparkles, Send, Download, Loader2, CheckCircle2, Clock, ShieldCheck, Plus
 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@shared/lib/api'
@@ -10,7 +10,7 @@ import { toast } from 'sonner'
 export default function StudentRecommendationsPage() {
   const qc = useQueryClient()
   const [purpose, setPurpose] = useState('Master / Mobilité Internationale')
-  const [professorId, setProfessorId] = useState(1)
+  const [professorId] = useState(1)
   const [deliveryMethod, setDeliveryMethod] = useState<'both' | 'platform' | 'email'>('both')
 
   const { data: requestsData, isLoading: isRequestsLoading } = useQuery({

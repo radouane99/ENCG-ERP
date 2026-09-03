@@ -6,6 +6,7 @@ use App\Models\AcademicYear;
 use App\Models\EdtCampaign;
 use App\Models\Filiere;
 use App\Models\Group;
+use App\Models\Institution;
 use App\Models\Module;
 use App\Models\Professor;
 use App\Models\Room;
@@ -15,7 +16,6 @@ use App\Models\Semester;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Str;
 
 class TimetableCampaignService
 {
@@ -386,8 +386,8 @@ class TimetableCampaignService
         if ($semesterNumber && $semesterNumber >= 1 && $semesterNumber <= 10) {
             $query->where(function ($sq) use ($semesterNumber) {
                 $sq->whereHas('group', fn ($g) => $g->where('semester_number', $semesterNumber))
-                   ->orWhereHas('module', fn ($m) => $m->where('semester_number', $semesterNumber))
-                   ->orWhereHas('semester', fn ($s) => $s->where('number', ($semesterNumber % 2 === 1) ? 1 : 2));
+                    ->orWhereHas('module', fn ($m) => $m->where('semester_number', $semesterNumber))
+                    ->orWhereHas('semester', fn ($s) => $s->where('number', ($semesterNumber % 2 === 1) ? 1 : 2));
             });
         }
 
@@ -602,6 +602,20 @@ class TimetableCampaignService
         $yearId = $version?->academic_year_id ?? (AcademicYear::where('is_current', true)->value('id') ?? 1);
         $semesterId = $version?->semester_id ?? (DB::table('semesters')->value('id') ?? 1);
         $now = now();
+
+        if ($day >= 1) {
+            $overlap = Schedule::query()
+                ->where('schedule_version_id', $vId)
+                ->whereIn('group_id', $groupIds)
+                ->where('day_of_week', $day)
+                ->where('start_time', '<', $end)
+                ->where('end_time', '>', $start)
+                ->exists();
+
+            if ($overlap) {
+                return ['success' => false, 'message' => 'Ce groupe a déjà une séance sur ce créneau.'];
+            }
+        }
 
         foreach ($groupIds as $groupId) {
             $row = [

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Globe2, MapPin, Star, CheckCircle2, Send, Zap, Check, GraduationCap } from 'lucide-react';
+import { Globe2, MapPin, Star, CheckCircle2, Send, Zap, GraduationCap } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { toast } from 'sonner';
 

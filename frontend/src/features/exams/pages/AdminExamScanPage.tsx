@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   QrCode, 
   Camera, 
@@ -7,19 +7,15 @@ import {
   AlertTriangle, 
   Clock, 
   XCircle, 
-  User, 
   FileText, 
   MapPin, 
-  Calendar, 
   Loader2, 
   ArrowLeft,
   Volume2,
   VolumeX,
   Sparkles,
-  ShieldCheck,
-  Zap,
   Wifi,
-  WifiOff
+  WifiOff,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';

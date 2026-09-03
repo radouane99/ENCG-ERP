@@ -1,6 +1,5 @@
 import React, { useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useTranslation } from 'react-i18next';
 import QRCode from 'react-qr-code';
 import { Download, IdCard, Building2, User, Mail, Hash, BookOpen } from 'lucide-react';
 import api from '@/shared/lib/api';
@@ -25,7 +24,6 @@ const getStatusBadge = (status: string) => {
 };
 
 export default function DigitalCardPage() {
-  const { t } = useTranslation('common');
   const cardRef = useRef<HTMLDivElement>(null);
 
   const { data: cardData, isLoading, refetch } = useQuery({
