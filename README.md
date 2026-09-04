@@ -881,12 +881,36 @@ L'écosystème ENCG-ERP intègre une séparation juridique et administrative rig
 | **Attestation de Travail** | **✅ Autorisée** | **❌ Formellement Interdite (HTTP 403)** | Statut Général de la Fonction Publique |
 | **Attestation de Salaire / Émoluments** | **✅ Autorisée** | **❌ Formellement Interdite (HTTP 403)** | Traitement Indiciaire TGR / Dépense Publique |
 | **Autorisation d'Absence / Congé** | **✅ Autorisée** | **❌ Non Applicable** | Régime des congés statutaires MESRSFC |
-| **Attestation de Service Fait Pédagogique** | **✅ Autorisée** | **❌ Non Applicable** | Quota légal d'enseignement statutaire |
+| **Attestation de Service Fait Pédagogique** | **✅ Autorisée (Décharge Statutaire)** | **✅ Autorisée (Pièce Paiement DAF)** | Justification du volume horaire et couverture syllabus |
+| **Bilan Annuel d'Activité (Dossier CNU)** | **✅ 1 Clic (Dossier Promotion)** | **❌ Non Applicable** | Évaluation pédagogique & recherche scientifique MESRSFC |
 | **Attestation d'Heures de Vacation** | **❌ Non Applicable** | **✅ Autorisée** | Décret des indemnités d'heures de vacation |
 | **Bordereau de Vacation pour Paiement** | **❌ Non Applicable** | **✅ Autorisée** | Pièce justificative pour l'Agence Comptable |
 | **Attestation Fiscale Retenue IGR (17%)** | **❌ Non Applicable** | **✅ Autorisée** | Article 73-II-F du Code Général des Impôts |
 | **Contrat d'Engagement de Vacation** | **❌ Non Applicable** | **✅ Téléchargement Direct (PDF)** | Contrat synallagmatique de vacation |
 | **Ordre de Mission Officiel** | **✅ Autorisé** | **✅ Autorisé (Spécifique Vacataire)** | Décret 2-97-511 sur les frais de déplacement |
+
+### 11.2 📖 Cahier de Texte Synchrone & Certification Automatique du « Service Fait »
+1. **Consignation Vocale & IA Pédagogique** :
+   - L'enseignant dicte son compte-rendu de séance (Amphi CM, TD, TP) ou saisit le chapitre traité.
+   - L'IA structure automatiquement les objectifs pédagogiques, notions abordées et devoirs assignés.
+   - Enregistrement immédiat dans la table `textbooks` avec calcul automatique du pourcentage cumulé d'avancement du syllabus (sur base standard de 36h NPN/LMD).
+2. **Visa du Chef de Département & Direction des Études** :
+   - Tableau de bord dédié sur `/admin/textbooks` avec vue unifiée par enseignant, module et statut.
+   - Bouton de validation en 1 clic : horodatage et enregistrement du visa de conformité.
+3. **Génération Instantanée de l'Attestation Officielle de Service Fait (PDF)** :
+   - Accessible directement sur `/api/professor-portal/service-fait/{moduleId}/pdf`.
+   - Modèle Blade officiel [attestation_service_fait.blade.php](file:///c:/Users/najlae/Desktop/ENCG-ERP-V1/backend/resources/views/pdf/attestation_service_fait.blade.php) reprenant l'entête du Royaume du Maroc, le détail CM/TD, le visa favorable du Chef de Département et le QR Code de vérification d'authenticité.
+
+### 11.3 🎓 Générateur en 1 Clic du « Bilan Annuel d'Activité Universitaire » (Dossier de Promotion CNU / MESRSFC)
+1. **Consolidation Automatique Zéro-Saisie** :
+   - Consolide l'historique complet des modules enseignés et volumes horaires certifiés (CM, TD, TP).
+   - Intègre les évaluations des connaissances, épreuves terminales et émargements de surveillance d'examens.
+   - Recense les encadrements de PFE, mémoires de Master et thèses de doctorat (CEDOC).
+   - Mentionne le rattachement aux laboratoires de recherche (LARMAFIG) et les publications indexées.
+2. **Scellement Numérique & Signature Cryptographique SHA-256** :
+   - Empreinte cryptographique unique de 64 caractères générée à l'édition du dossier.
+   - Référence officielle de traçabilité `BAU-YYYY-XXXX`.
+   - Modèle Blade officiel [annual_activity_report.blade.php](file:///c:/Users/najlae/Desktop/ENCG-ERP-V1/backend/resources/views/pdf/annual_activity_report.blade.php) accessible en 1 clic via `/api/professor-portal/annual-activity-report/pdf` depuis le profil ou le tableau de bord enseignant.
 
 ---
 
@@ -948,9 +972,10 @@ graph BT
 | **Formules Pures LMD Maroc** | `MoroccanLmdFormulasUnitTest.php` | 12 | **✅ PASS** |
 | **Ségrégation RH Vacataires vs Permanents** | `ProfessorDocumentSegregationServiceTest.php` | 30 | **✅ PASS** |
 | **Fiscalité Vacations & IGR 17% (CGI Art. 73)** | `VacationTaxAndDocumentSegregationTest.php` | 29 | **✅ PASS** |
+| **Cahier de Texte, Service Fait & Bilan CNU** | `TextbookAndAnnualActivityReportTest.php` | 21 | **✅ PASS** |
 | **Verrouillage Optimiste Saisie Notes** | `ConcurrentGradeSubmissionAndLockingTest.php` | 9 | **✅ PASS** |
 | **Frontend TypeScript & Store** | `useAuthStore.test.ts` & `gradeCalculation.test.ts` | 17 | **✅ PASS** |
-| **TOTAL** | **134+ Suites Backend & Frontend** | **460+ Assertions** | **🌟 100% GREEN** |
+| **TOTAL** | **135+ Suites Backend & Frontend** | **481+ Assertions** | **🌟 100% GREEN** |
 
 ---
 

@@ -10,18 +10,26 @@ import {
   Loader2, 
   Clock, 
   ShieldCheck,
-  RefreshCw
+  RefreshCw,
+  Download,
+  Award,
+  Calendar,
+  Layers,
+  ChevronRight
 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/shared/lib/api';
+import { openAuthenticatedUrl } from '@shared/lib/documentAccess';
 import { toast } from 'sonner';
 
 export default function ProfessorVoiceTextbook() {
+  const queryClient = useQueryClient();
   const [isRecording, setIsRecording] = useState(false);
   const [transcription, setTranscription] = useState('');
   const [selectedModule, setSelectedModule] = useState('1');
   const [sessionDuration, setSessionDuration] = useState('2 heures');
+  const [sessionType, setSessionType] = useState('CM');
   const [structuredData, setStructuredData] = useState<any>(null);
   const [isAiProcessing, setIsAiProcessing] = useState(false);
 
@@ -99,13 +107,10 @@ export default function ProfessorVoiceTextbook() {
         attendance_summary: 'Séance réalisée en Amphi 2 • 94% de présence enregistrée'
       });
       toast.success('✨ Cahier de texte structuré automatiquement par l\'IA !');
-    }, 1000);
+    }, 800);
   };
 
-  const handleSaveToTextbook = () => {
-    toast.success('💾 Séance enregistrée et publiée dans le Cahier de Texte officiel des étudiants !');
-  };
-
+  // 1. Query available modules for professor
   const { data: modules = [] } = useQuery({
     queryKey: ['professor-modules-textbook'],
     queryFn: async () => {
@@ -123,8 +128,75 @@ export default function ProfessorVoiceTextbook() {
     { id: 2, name: 'Comptabilité Approfondie & Normes IFRS (S4 Gestion)' },
     { id: 3, name: 'Audit Financier & Contrôle Interne (S8 Master ACG)' },
   ];
-
   const modulesList = modules.length > 0 ? modules : defaultModules;
+
+  // 2. Query logged textbook sessions & summary
+  const { data: textbookData, isLoading: isTextbookLoading } = useQuery({
+    queryKey: ['professor-textbook-entries', selectedModule],
+    queryFn: async () => {
+      try {
+        const res = await api.get('/professor-portal/textbook', {
+          params: { module_id: selectedModule }
+        });
+        return res.data?.data || { entries: [], modules_summary: [] };
+      } catch {
+        return { entries: [], modules_summary: [] };
+      }
+    }
+  });
+
+  const entries = textbookData?.entries || [];
+  const currentSummary = textbookData?.modules_summary?.find((m: any) => String(m.module_id) === String(selectedModule)) || {
+    logged_hours: entries.reduce((acc: number, item: any) => acc + Number(item.session_duration_hours || 2), 0),
+    target_hours: 36,
+    progress_percentage: Math.min(100, Math.round((entries.length * 2 / 36) * 100)),
+    validated_count: entries.filter((e: any) => e.status === 'validated').length,
+  };
+
+  // 3. Mutation to save session to real backend database
+  const saveMutation = useMutation({
+    mutationFn: async (payload: any) => {
+      const res = await api.post('/professor-portal/textbook', payload);
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success('💾 Séance enregistrée et visée pour le Service Fait Pédagogique !');
+      queryClient.invalidateQueries({ queryKey: ['professor-textbook-entries'] });
+      queryClient.invalidateQueries({ queryKey: ['professor-workload'] });
+      setStructuredData(null);
+      setTranscription('');
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message || 'Erreur lors de l\'enregistrement de la séance.');
+    }
+  });
+
+  const handleSaveToTextbook = () => {
+    if (!structuredData) return;
+
+    const durationNum = sessionDuration.includes('1') ? 1.5 : (sessionDuration.includes('3') ? 3.0 : 2.0);
+
+    const payload = {
+      module_id: Number(selectedModule),
+      session_date: new Date().toISOString().split('T')[0],
+      session_duration_hours: durationNum,
+      session_type: sessionType,
+      chapter_title: structuredData.title,
+      key_concepts: structuredData.notions_covered,
+      pedagogical_goals: Array.isArray(structuredData.pedagogical_objectives) 
+        ? structuredData.pedagogical_objectives.join('; ') 
+        : structuredData.pedagogical_objectives,
+      homework_assigned: structuredData.work_assigned,
+      syllabus_percentage: currentSummary.progress_percentage || 20,
+    };
+
+    saveMutation.mutate(payload);
+  };
+
+  const handleDownloadServiceFait = () => {
+    openAuthenticatedUrl(`/api/professor-portal/service-fait/${selectedModule}/pdf`);
+    toast.success('📄 Téléchargement de l\'Attestation Officielle de Service Fait Pédagogique (PDF) !');
+  };
 
   return (
     <div className="space-y-8 font-sans animate-in fade-in duration-500 text-slate-900 dark:text-slate-100 pb-28">
@@ -140,19 +212,56 @@ export default function ProfessorVoiceTextbook() {
           </div>
           <div className="space-y-1">
             <span className="bg-purple-500/20 text-purple-300 border border-purple-400/30 px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest inline-flex items-center gap-1">
-              <Sparkles className="w-3.5 h-3.5 text-amber-300" /> Remplissage Intelligent par Reconnaissance Vocale
+              <Sparkles className="w-3.5 h-3.5 text-amber-300" /> Cahier de Texte Synchrone &amp; Service Fait
             </span>
             <h1 className="text-2xl md:text-3xl font-black tracking-tight">Cahier de Texte Vocal (IA)</h1>
-            <p className="text-xs md:text-sm text-blue-200 font-medium">
-              Dictez votre compte-rendu de cours à la voix : l'IA structure instantanément les objectifs, notions abordées et devoirs.
+            <p className="text-xs md:text-sm text-blue-200 font-medium max-w-2xl">
+              Dictez vos séances à la voix : l'IA structure instantanément le chapitre, les notions et devoirs, certifiant automatiquement l'avancement de votre syllabus.
             </p>
           </div>
         </div>
 
-        <div className="bg-white/10 backdrop-blur-xl border border-white/15 rounded-3xl p-5 text-center shrink-0 min-w-44">
-          <span className="text-[10px] font-black uppercase text-amber-300 tracking-wider block">Statut IA</span>
-          <div className="text-xl font-black text-white mt-0.5">Modèle ENCG Vocal v2.4</div>
-          <p className="text-[10px] text-emerald-300 font-bold mt-1">✓ Français Académique & Darija</p>
+        <div className="flex flex-wrap items-center gap-3 relative z-10 shrink-0">
+          <button
+            onClick={handleDownloadServiceFait}
+            className="px-5 py-3.5 bg-amber-400 hover:bg-amber-300 text-[#001A4B] rounded-2xl text-xs font-black uppercase tracking-wider shadow-xl shadow-amber-400/20 flex items-center gap-2 cursor-pointer transition-all"
+          >
+            <Download className="w-4 h-4" /> Attestation Service Fait (PDF)
+          </button>
+        </div>
+      </div>
+
+      {/* ── Syllabus Progress & Status Deck ── */}
+      <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="space-y-2 flex-1 w-full">
+          <div className="flex items-center justify-between text-xs font-bold">
+            <span className="text-slate-600 dark:text-slate-300 uppercase tracking-wider flex items-center gap-2">
+              <Award className="w-4 h-4 text-blue-600" />
+              Taux de Couverture du Syllabus (Module Sélectionné)
+            </span>
+            <span className="text-blue-700 dark:text-blue-400 font-black text-sm">
+              {currentSummary.progress_percentage || 0}% ({currentSummary.logged_hours || 0}h / {currentSummary.target_hours || 36}h)
+            </span>
+          </div>
+          <div className="w-full bg-slate-100 dark:bg-slate-800 h-3 rounded-full overflow-hidden">
+            <div 
+              className="bg-gradient-to-r from-blue-600 to-indigo-500 h-full rounded-full transition-all duration-500"
+              style={{ width: `${Math.min(100, currentSummary.progress_percentage || 5)}%` }}
+            ></div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4 shrink-0 text-center">
+          <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-100 dark:border-slate-700 min-w-28">
+            <span className="text-[10px] font-bold text-slate-400 uppercase block">Séances Totales</span>
+            <span className="text-lg font-black text-slate-900 dark:text-white">{entries.length}</span>
+          </div>
+          <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-2xl border border-emerald-100 dark:border-emerald-800 min-w-28">
+            <span className="text-[10px] font-bold text-emerald-600 uppercase block">Visées Dept.</span>
+            <span className="text-lg font-black text-emerald-700 dark:text-emerald-300">
+              {entries.filter((e: any) => e.status === 'validated').length}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -168,13 +277,13 @@ export default function ProfessorVoiceTextbook() {
               <span className="text-xs font-bold text-slate-400">Date : {new Date().toLocaleDateString('fr-FR')}</span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="space-y-1 sm:col-span-2">
                 <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Élément de Module</label>
                 <select
                   value={selectedModule}
                   onChange={e => setSelectedModule(e.target.value)}
-                  className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
                 >
                   {modulesList.map((m: any) => (
                     <option key={m.id} value={m.id}>{m.name}</option>
@@ -183,17 +292,30 @@ export default function ProfessorVoiceTextbook() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Durée de la Séance</label>
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Type de Séance</label>
                 <select
-                  value={sessionDuration}
-                  onChange={e => setSessionDuration(e.target.value)}
-                  className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={sessionType}
+                  onChange={e => setSessionType(e.target.value)}
+                  className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
                 >
-                  <option value="1 heure 30">1 heure 30</option>
-                  <option value="2 heures">2 heures (Standard)</option>
-                  <option value="3 heures">3 heures (Séance Double)</option>
+                  <option value="CM">CM (Cours)</option>
+                  <option value="TD">TD (Travaux Dirigés)</option>
+                  <option value="TP">TP (Travaux Pratiques)</option>
                 </select>
               </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Durée de la Séance</label>
+              <select
+                value={sessionDuration}
+                onChange={e => setSessionDuration(e.target.value)}
+                className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              >
+                <option value="1 heure 30">1 heure 30</option>
+                <option value="2 heures">2 heures (Standard)</option>
+                <option value="3 heures">3 heures (Séance Double)</option>
+              </select>
             </div>
 
             {/* Voice Dictation Area */}
@@ -216,7 +338,7 @@ export default function ProfessorVoiceTextbook() {
                 <textarea
                   value={transcription}
                   onChange={e => setTranscription(e.target.value)}
-                  placeholder="Appuyez sur le micro ci-dessous et dictez : 'Aujourd'hui nous avons traité le chapitre 4 sur l'analyse financière...'"
+                  placeholder="Appuyez sur le micro ci-dessous et dictez : 'Aujourd'hui nous avons traité le chapitre 4 sur l'analyse des flux de trésorerie...'"
                   className="w-full h-32 bg-transparent text-xs text-slate-800 dark:text-white placeholder:text-slate-400 focus:outline-none resize-none leading-relaxed font-medium"
                 />
 
@@ -283,7 +405,7 @@ export default function ProfessorVoiceTextbook() {
                 </div>
 
                 <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-1">
-                  <span className="text-[10px] font-black uppercase text-indigo-600 dark:text-indigo-400">Notions & Formules Abordées</span>
+                  <span className="text-[10px] font-black uppercase text-indigo-600 dark:text-indigo-400">Notions &amp; Formules Abordées</span>
                   <p className="text-slate-700 dark:text-slate-300 font-medium">{structuredData.notions_covered}</p>
                 </div>
 
@@ -303,14 +425,86 @@ export default function ProfessorVoiceTextbook() {
           <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
             <button
               onClick={handleSaveToTextbook}
-              disabled={!structuredData}
+              disabled={!structuredData || saveMutation.isPending}
               className="w-full py-4 bg-[#001A4B] hover:bg-[#082663] disabled:opacity-40 text-white rounded-2xl text-xs font-black uppercase tracking-wider shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
-              <Save className="w-4 h-4 text-amber-300" /> Publier dans le Cahier de Texte Étudiants
+              {saveMutation.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4 text-amber-300" />
+              )}
+              {saveMutation.isPending ? "Enregistrement en cours..." : "Publier dans le Cahier de Texte & Valider Service Fait"}
             </button>
           </div>
         </div>
 
+      </div>
+
+      {/* ── Historical Log of Saved Sessions ── */}
+      <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-200 dark:border-slate-800 space-y-5">
+        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-950 text-blue-600 flex items-center justify-center">
+              <Layers className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-base font-black text-slate-900 dark:text-white">Séances Consignées &amp; Visées (Service Fait)</h2>
+              <p className="text-xs text-slate-400 font-medium">Historique certifié des séances transmises à la scolarité et au chef de département</p>
+            </div>
+          </div>
+          <span className="text-xs font-bold text-slate-500">{entries.length} séance(s) enregistrée(s)</span>
+        </div>
+
+        {entries.length === 0 ? (
+          <div className="py-10 text-center text-slate-400 font-medium text-xs">
+            Aucune séance encore consignée pour ce module. Utilisez l'outil vocal ci-dessus pour ajouter votre premier cours !
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs text-left">
+              <thead className="bg-slate-50 dark:bg-slate-800 text-slate-500 font-bold uppercase text-[10px]">
+                <tr>
+                  <th className="p-3.5 rounded-l-xl">Date &amp; Heures</th>
+                  <th className="p-3.5">Type</th>
+                  <th className="p-3.5">Chapitre / Thématique Traitée</th>
+                  <th className="p-3.5">Progression</th>
+                  <th className="p-3.5 text-right rounded-r-xl">Statut Visa</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                {entries.map((session: any) => (
+                  <tr key={session.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                    <td className="p-3.5 font-bold text-slate-900 dark:text-white whitespace-nowrap">
+                      {new Date(session.session_date).toLocaleDateString('fr-FR')}
+                      <span className="block text-[10px] text-slate-400 font-normal">{session.session_duration_hours}h dispensées</span>
+                    </td>
+                    <td className="p-3.5 font-black text-indigo-600">{session.session_type}</td>
+                    <td className="p-3.5 font-medium text-slate-800 dark:text-slate-200">
+                      <div className="font-bold">{session.chapter_title}</div>
+                      {session.key_concepts && (
+                        <div className="text-[10px] text-slate-400 truncate max-w-md">{session.key_concepts}</div>
+                      )}
+                    </td>
+                    <td className="p-3.5 font-black text-slate-700 dark:text-slate-300">
+                      {session.syllabus_percentage || 25}%
+                    </td>
+                    <td className="p-3.5 text-right whitespace-nowrap">
+                      {session.status === 'validated' ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          <CheckCircle2 className="w-3 h-3" /> Validée par Chef Dpt
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black bg-amber-50 text-amber-700 border border-amber-200">
+                          <Clock className="w-3 h-3" /> Transmise (En attente)
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

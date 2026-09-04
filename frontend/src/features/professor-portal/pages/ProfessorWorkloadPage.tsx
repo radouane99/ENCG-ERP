@@ -58,6 +58,11 @@ export default function ProfessorWorkloadPage() {
     );
   };
 
+  const handleDownloadAnnualActivityPdf = () => {
+    openAuthenticatedUrl('/api/professor-portal/annual-activity-report/pdf');
+    toast.success('🎓 Téléchargement du Bilan Annuel d\'Activité Universitaire (Dossier de Promotion CNU / MESRSFC) !');
+  };
+
   // Loading Skeleton Screen
   if (isLoading) {
     return (
@@ -194,13 +199,25 @@ export default function ProfessorWorkloadPage() {
           </div>
         </div>
 
-        <button
-          onClick={handleDownloadWorkloadPdf}
-          className="px-6 py-3.5 rounded-2xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg shrink-0 cursor-pointer bg-amber-400 hover:bg-amber-300 text-[#001A4B] shadow-amber-400/20"
-        >
-          <Download className="w-4 h-4" /> 
-          {isVacataire ? "Bordereau de Vacation (PDF)" : "Bordereau Certifié (PDF)"}
-        </button>
+        <div className="flex flex-wrap items-center gap-3 shrink-0">
+          <button
+            onClick={handleDownloadWorkloadPdf}
+            className="px-5 py-3.5 rounded-2xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg shrink-0 cursor-pointer bg-white/15 hover:bg-white/25 text-white border border-white/20 backdrop-blur-sm"
+          >
+            <Download className="w-4 h-4 text-amber-300" /> 
+            {isVacataire ? "Bordereau de Vacation (PDF)" : "Attestation Service Fait (PDF)"}
+          </button>
+
+          {!isVacataire && (
+            <button
+              onClick={handleDownloadAnnualActivityPdf}
+              className="px-5 py-3.5 rounded-2xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg shrink-0 cursor-pointer bg-amber-400 hover:bg-amber-300 text-[#001A4B] shadow-amber-400/20"
+            >
+              <GraduationCap className="w-4 h-4" /> 
+              Bilan Annuel d'Activité (PDF CNU)
+            </button>
+          )}
+        </div>
       </div>
 
       {/* ── AUTOMATIC VIEW SWITCHING: PERMANENT vs VACATAIRE ── */}

@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\Admin\AdminDocumentTypeController;
 use App\Http\Controllers\Api\Admin\AdminExamConvocationController;
 use App\Http\Controllers\Api\Admin\AdminInternshipController;
 use App\Http\Controllers\Api\Admin\AdminMinistryReportController;
+use App\Http\Controllers\Api\Admin\AdminTextbookController;
 use App\Http\Controllers\Api\Admin\AuditForensicController;
 use App\Http\Controllers\Api\Admin\StudentChatbotController;
 use App\Http\Controllers\Api\AdminAiController;
@@ -1133,6 +1134,12 @@ Route::middleware(['auth:sanctum', $staffRoles])->group(function () {
     Route::get('/students/fiche-medicale-pdf', [PdfExportController::class, 'ficheMedicalePdf']);
     Route::post('/public/toggle-lock-candidate-dossier', [AdmissionController::class, 'toggleLockCandidateDossier']);
     Route::post('/public/send-convocation-email', [AdmissionController::class, 'sendCandidateConvocationEmail']);
+
+    // Cahiers de Texte & Visa Chef de Département / Scolarité
+    Route::get('/admin/textbooks', [AdminTextbookController::class, 'index']);
+    Route::post('/admin/textbooks/{id}/validate', [AdminTextbookController::class, 'validateSession']);
+    Route::get('/v1/admin/textbooks', [AdminTextbookController::class, 'index']);
+    Route::post('/v1/admin/textbooks/{id}/validate', [AdminTextbookController::class, 'validateSession']);
 });
 
 // ──────────────────────────────────────────────────────────────────────────────

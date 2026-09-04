@@ -100,6 +100,12 @@ Route::middleware(['auth:sanctum', 'role:professor|vacataire|department-head|fil
     Route::get('/professor-portal/documents', [ProfessorPortalController::class, 'getDocumentRequests']);
     Route::post('/professor-portal/documents', [ProfessorPortalController::class, 'storeDocumentRequest']);
 
+    // Cahier de Texte Numérique & Service Fait
+    Route::get('/professor-portal/textbook', [ProfessorPortalController::class, 'getTextbookEntries']);
+    Route::post('/professor-portal/textbook', [ProfessorPortalController::class, 'storeTextbookEntry']);
+    Route::get('/professor-portal/service-fait/{moduleId}/pdf', [ProfessorPortalController::class, 'downloadServiceFaitPdf']);
+    Route::get('/professor-portal/annual-activity-report/pdf', [ProfessorPortalController::class, 'downloadAnnualActivityReportPdf']);
+
     // Surveillances & Convocations PDF & PV Signature & Confirmation
     Route::get('/professor/my-surveillances', [ConvocationController::class, 'mySurveillances']);
     Route::post('/professor/surveillances/{id}/confirm', [ConvocationController::class, 'confirmSurveillance']);
@@ -114,6 +120,8 @@ Route::middleware(['auth:sanctum', 'role:professor|vacataire|department-head|fil
     Route::get('/v1/professor-portal/documents/{id}/pdf', [ProfessorPortalController::class, 'downloadDocumentPdf']);
     Route::get('/v1/professor-portal/workload-pdf', [ProfessorPortalController::class, 'downloadWorkloadPdf']);
     Route::get('/v1/professor-portal/vacation-contract/pdf', [ProfessorPortalController::class, 'downloadVacationContractPdf']);
+    Route::get('/v1/professor-portal/service-fait/{moduleId}/pdf', [ProfessorPortalController::class, 'downloadServiceFaitPdf']);
+    Route::get('/v1/professor-portal/annual-activity-report/pdf', [ProfessorPortalController::class, 'downloadAnnualActivityReportPdf']);
     Route::get('/v1/professor/surveillances/all-pdf', [PdfExportController::class, 'downloadMySurveillancesPdf']);
     Route::get('/v1/professor/surveillances/{id}/pdf', [PdfExportController::class, 'surveillantConvocationPdf']);
 });

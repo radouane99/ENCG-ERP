@@ -62,4 +62,9 @@ class Textbook extends Model
     {
         return $this->belongsTo(Schedule::class);
     }
+
+    public function validator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'validated_by');
+    }
 }
