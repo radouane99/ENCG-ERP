@@ -645,6 +645,8 @@ class ProfessorPortalController extends Controller
         }
 
         $prof = $user->professor;
+        $isVacataire = ($prof?->contract_type === 'vacataire') || ($prof?->type === 'vacataire') || $user->hasRole('vacataire');
+
         $dbRequests = ProfessorDocumentRequest::where('user_id', $user->id)
             ->latest()
             ->get();
@@ -652,9 +654,12 @@ class ProfessorPortalController extends Controller
         $history = $dbRequests->map(function ($r) {
             $typeLabel = match ($r->document_type) {
                 'attestation_travail' => 'Attestation de Travail',
+                'attestation_vacation' => 'Attestation d\'Heures de Vacation',
+                'bordereau_decompte_vacation' => 'Bordereau de Vacation pour Paiement',
                 'ordre_de_mission' => 'Ordre de Mission',
                 'attestation_salaire' => 'Attestation de Salaire',
                 'autorisation_absence' => 'Autorisation d\'Absence',
+                'attestation_service_fait' => 'Attestation de Service Fait Pédagogique',
                 default => ucwords(str_replace('_', ' ', $r->document_type))
             };
 
@@ -679,43 +684,86 @@ class ProfessorPortalController extends Controller
             ];
         });
 
+        // Strict Separation of Administrative Documents:
+        // - Vacataires CANNOT request Attestation de Travail / Attestation de Salaire.
+        // - Vacataires have dedicated Attestation d'Heures de Vacation and Bordereau de Vacation.
+        if ($isVacataire) {
+            $availableTypes = [
+                [
+                    'id' => 'attestation_vacation',
+                    'title' => 'Attestation d\'Heures de Vacation',
+                    'title_ar' => 'شهادة إنجاز ساعات التدريس العرضية',
+                    'description' => 'Certificat officiel attestant du volume horaire de vacation effectué, des modules dispensés et des filières d\'affectation à l\'ENCG Fès.',
+                    'icon' => 'Award',
+                    'processing_time' => 'Délivrance Immédiate (Signée Numériquement)',
+                ],
+                [
+                    'id' => 'bordereau_decompte_vacation',
+                    'title' => 'Bordereau & Décompte de Vacation pour Paiement',
+                    'title_ar' => 'بيان تصفية المستحقات عن حصص التدريس العرضية',
+                    'description' => 'Relevé certifié des cours et TD assurés, taux horaire contractuel et montant net des indemnités pour le service financier.',
+                    'icon' => 'Coins',
+                    'processing_time' => 'Validation Service Comptabilité',
+                ],
+                [
+                    'id' => 'ordre_de_mission',
+                    'title' => 'Ordre de Mission (Enseignant Vacataire)',
+                    'title_ar' => 'أمر بمهمة (أستاذ عرضي)',
+                    'description' => 'Autorisation officielle de déplacement pour missions ou soutenances liées aux enseignements dispensés à l\'ENCG Fès.',
+                    'icon' => 'PlaneTakeoff',
+                    'processing_time' => 'Validation SG & Décharge',
+                ],
+            ];
+        } else {
+            $availableTypes = [
+                [
+                    'id' => 'attestation_travail',
+                    'title' => 'Attestation de Travail',
+                    'title_ar' => 'شهادة العمل',
+                    'description' => 'Certificat officiel attestant de votre fonction d\'enseignant-chercheur titulaire à l\'ENCG Fès (pour visa, banque, démarches administratives).',
+                    'icon' => 'FileText',
+                    'processing_time' => 'Délivrance Immédiate (Signée Numériquement)',
+                ],
+                [
+                    'id' => 'ordre_de_mission',
+                    'title' => 'Ordre de Mission',
+                    'title_ar' => 'أمر بمهمة',
+                    'description' => 'Autorisation officielle de déplacement pour congrès, séminaires, jurys de thèse externes ou visites d\'entreprises.',
+                    'icon' => 'PlaneTakeoff',
+                    'processing_time' => 'Validation SG & Décharge',
+                ],
+                [
+                    'id' => 'attestation_salaire',
+                    'title' => 'Attestation de Salaire / Émoluments',
+                    'title_ar' => 'شهادة الأجرة والتعويضات',
+                    'description' => 'Relevé certifié des émoluments et du traitement indiciaire (Grade, Échelon, Somme nette perçue de l\'État).',
+                    'icon' => 'Coins',
+                    'processing_time' => 'Délivrance Immédiate',
+                ],
+                [
+                    'id' => 'autorisation_absence',
+                    'title' => 'Autorisation d\'Absence / Titre de Congé',
+                    'title_ar' => 'رخصة التغيب الإدارية',
+                    'description' => 'Demande d\'absence justifiée pour raison médicale, pèlerinage, ou convenance personnelle.',
+                    'icon' => 'CalendarClock',
+                    'processing_time' => 'Accord Chef de Département',
+                ],
+                [
+                    'id' => 'attestation_service_fait',
+                    'title' => 'Attestation de Service Fait Pédagogique',
+                    'title_ar' => 'شهادة استيفاء الحصص التدريسية',
+                    'description' => 'Attestation officielle certifiant l\'accomplissement des obligations statutaires annuelles d\'enseignement (quota légal MESRSFC).',
+                    'icon' => 'ShieldCheck',
+                    'processing_time' => 'Visa Chef de Département',
+                ],
+            ];
+        }
+
         return response()->json([
             'success' => true,
             'data' => [
-                'available_types' => [
-                    [
-                        'id' => 'attestation_travail',
-                        'title' => 'Attestation de Travail',
-                        'title_ar' => 'شهادة العمل',
-                        'description' => 'Certificat officiel attestant de votre fonction d\'enseignant-chercheur à l\'ENCG Fès (pour visa, banque, démarches administratives).',
-                        'icon' => 'FileText',
-                        'processing_time' => 'Délivrance Immédiate (Signée Numériquement)',
-                    ],
-                    [
-                        'id' => 'ordre_de_mission',
-                        'title' => 'Ordre de Mission',
-                        'title_ar' => 'أمر بمهمة',
-                        'description' => 'Autorisation officielle de déplacement pour congrès, séminaires, jurys de thèse externes ou visites d\'entreprises.',
-                        'icon' => 'PlaneTakeoff',
-                        'processing_time' => 'Validation SG & Décharge',
-                    ],
-                    [
-                        'id' => 'attestation_salaire',
-                        'title' => 'Attestation de Salaire / Émoluments',
-                        'title_ar' => 'شهادة الأجرة والتعويضات',
-                        'description' => 'Relevé certifié des émoluments et du traitement indiciaire (Grade, Échelon, Somme nette perçue).',
-                        'icon' => 'Coins',
-                        'processing_time' => 'Délivrance Immédiate',
-                    ],
-                    [
-                        'id' => 'autorisation_absence',
-                        'title' => 'Autorisation d\'Absence / Titre de Congé',
-                        'title_ar' => 'رخصة التغيب الإدارية',
-                        'description' => 'Demande d\'absence justifiée pour raison médicale, pèlerinage, ou convenance personnelle.',
-                        'icon' => 'CalendarClock',
-                        'processing_time' => 'Accord Chef de Département',
-                    ],
-                ],
+                'is_vacataire' => $isVacataire,
+                'available_types' => $availableTypes,
                 'requests_history' => $history,
             ],
         ]);
@@ -743,12 +791,33 @@ class ProfessorPortalController extends Controller
         }
 
         $prof = $user->professor;
+        $isVacataire = ($prof?->contract_type === 'vacataire') || ($prof?->type === 'vacataire') || $user->hasRole('vacataire');
+
+        // Security check: Vacataire CANNOT request statutory permanent documents (Attestation de travail / salaire)
+        if ($isVacataire && in_array($validated['document_type'], ['attestation_travail', 'attestation_salaire', 'autorisation_absence'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Accès restreint : En tant qu\'enseignant vacataire, vous ne pouvez pas demander d\'Attestation de Travail ou de Salaire statutaire. Veuillez solliciter une Attestation d\'Heures de Vacation.',
+            ], 403);
+        }
+
+        // Security check: Permanent Professor cannot request vacation documents
+        if (! $isVacataire && in_array($validated['document_type'], ['attestation_vacation', 'bordereau_decompte_vacation'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Accès restreint : Ce document est réservé aux enseignants vacataires. En tant que professeur titulaire, veuillez demander une Attestation de Travail ou de Service Fait.',
+            ], 403);
+        }
+
         $trackingCode = 'DOC-PROF-'.date('Y').'-'.str_pad(rand(100, 9999), 4, '0', STR_PAD_LEFT);
         $typeLabel = match ($validated['document_type']) {
             'attestation_travail' => 'Attestation de Travail',
+            'attestation_vacation' => 'Attestation d\'Heures de Vacation',
+            'bordereau_decompte_vacation' => 'Bordereau de Vacation pour Paiement',
             'ordre_de_mission' => 'Ordre de Mission',
             'attestation_salaire' => 'Attestation de Salaire',
             'autorisation_absence' => 'Autorisation d\'Absence',
+            'attestation_service_fait' => 'Attestation de Service Fait Pédagogique',
             default => ucwords(str_replace('_', ' ', $validated['document_type']))
         };
 
@@ -871,6 +940,13 @@ class ProfessorPortalController extends Controller
         $profFirstName = $user ? ucfirst($user->first_name ?? '') : 'Abdelhak';
         $deptName = $prof?->department?->name ?? 'Sciences de Gestion';
 
+        $isVacataire = ($prof?->contract_type === 'vacataire') || ($prof?->type === 'vacataire') || $user?->hasRole('vacataire');
+
+        // Security check: if vacataire attempts to download attestation_travail, block it!
+        if ($isVacataire && in_array($doc?->document_type, ['attestation_travail', 'attestation_salaire', 'autorisation_absence'])) {
+            abort(403, 'Document non autorisé pour un enseignant vacataire. Veuillez télécharger une Attestation d\'Heures de Vacation.');
+        }
+
         $trackingCode = $doc?->tracking_code ?? ('DOC-PROF-'.date('Y').'-'.str_pad($id, 4, '0', STR_PAD_LEFT));
         $verifyUrl = config('app.frontend_url', 'http://localhost:5173')."/verify/{$trackingCode}";
 
@@ -904,7 +980,122 @@ class ProfessorPortalController extends Controller
         $startDateStr = $startDate ? $startDate->format('d/m/Y') : now()->format('d/m/Y');
         $endDateStr = $endDate ? $endDate->format('d/m/Y') : ($startDate ? $startDate->copy()->addDays(3)->format('d/m/Y') : now()->addDays(3)->format('d/m/Y'));
 
-        // If Attestation de Travail
+        // 1. Attestation d'Heures de Vacation (Dédiée Enseignant Vacataire)
+        if ($doc?->document_type === 'attestation_vacation') {
+            $contracts = VacationContract::with(['module', 'group'])
+                ->where(function($q) use ($prof, $user) {
+                    if ($prof?->id) $q->where('professor_id', $prof->id);
+                    if ($user?->id) $q->orWhere('user_id', $user->id);
+                })
+                ->get();
+
+            // If no explicit contracts, synthesize from real schedules
+            if ($contracts->isEmpty() && ($prof?->id || $user?->id)) {
+                $scheds = Schedule::with(['module', 'group'])
+                    ->where(function($q) use ($prof, $user) {
+                        if ($prof?->id) $q->where('professor_id', $prof->id);
+                        if ($user?->id) $q->orWhere('professor_id', $user->id);
+                    })
+                    ->get()
+                    ->groupBy('module_id');
+
+                $contracts = $scheds->map(function($group) {
+                    $first = $group->first();
+                    $hours = $group->count() * 2 * 14; // 14 teaching weeks
+                    return (object) [
+                        'module' => $first->module,
+                        'group' => $first->group,
+                        'agreed_hours' => $hours,
+                        'status' => 'validated',
+                    ];
+                });
+            }
+
+            $totalHours = collect($contracts)->sum('agreed_hours');
+
+            $pdf = Pdf::loadView('pdf.attestation_vacations', [
+                'trackingCode' => $trackingCode,
+                'signatoryTitle' => $doc?->signed_by ?? 'LE DIRECTEUR DE L\'ENCG FÈS',
+                'professor' => (object) [
+                    'id' => $prof?->id ?? 1,
+                    'first_name' => $profFirstName,
+                    'last_name' => $profLastName,
+                    'cin' => $user?->cin ?? ($prof?->cin ?? ($user?->cne ?? 'Non renseigné')),
+                    'department' => (object) ['name' => $deptName],
+                    'specialty' => $prof?->specialty ?? 'Sciences de Gestion & Commerce',
+                ],
+                'contracts' => $contracts,
+                'totalHours' => $totalHours,
+                'year' => '2026/2027',
+                'date' => $doc?->created_at?->format('d/m/Y') ?? now()->format('d/m/Y'),
+                'logoBase64' => $logoBase64,
+                'qrBase64' => $qrBase64,
+                'verifyUrl' => $verifyUrl,
+            ]);
+
+            return $pdf->stream("Attestation_Vacation_{$trackingCode}.pdf", ['Attachment' => false]);
+        }
+
+        // 2. Bordereau de Vacation pour Paiement (Vacataire)
+        if ($doc?->document_type === 'bordereau_decompte_vacation') {
+            $summaryResponse = $this->getWorkloadSummary($request);
+            $summaryData = $summaryResponse->getData(true)['data'] ?? [];
+
+            $data = [
+                'user' => $user,
+                'prof' => $prof,
+                'isVacataire' => true,
+                'academicYear' => '2026/2027',
+                'generationDate' => now()->format('d/m/Y à H:i:s'),
+                'verifyUrl' => $verifyUrl,
+                'contractRef' => $summaryData['contract_ref'] ?? ('CONTRAT-VAC-2026-ENCG-' . $user->id),
+                'hourlyRate' => $summaryData['hourly_rate'] ?? 0,
+                'totalHours' => $summaryData['hours_done'] ?? 0,
+                'hoursCm' => $summaryData['hours_cm'] ?? 0,
+                'hoursTd' => $summaryData['hours_td'] ?? 0,
+                'totalSessions' => $summaryData['total_sessions'] ?? 0,
+                'totalAmount' => $summaryData['estimated_payment'] ?? 0,
+                'monthlyBreakdown' => $summaryData['monthly_breakdown'] ?? [],
+            ];
+
+            $pdf = app(\App\Services\Documents\OfficialPdfFactory::class)
+                ->make('pdf.bordereau_vacataire', $data)
+                ->setPaper('a4', 'portrait');
+
+            return $pdf->download("Bordereau_Vacation_{$trackingCode}.pdf");
+        }
+
+        // 3. Attestation de Service Fait (Permanent)
+        if ($doc?->document_type === 'attestation_service_fait') {
+            $summaryResponse = $this->getWorkloadSummary($request);
+            $summaryData = $summaryResponse->getData(true)['data'] ?? [];
+
+            $data = [
+                'user' => $user,
+                'prof' => $prof,
+                'isVacataire' => false,
+                'academicYear' => '2026/2027',
+                'generationDate' => now()->format('d/m/Y à H:i:s'),
+                'verifyUrl' => $verifyUrl,
+                'statutoryHours' => $summaryData['statutory_hours'] ?? 200,
+                'totalHoursDone' => $summaryData['hours_done'] ?? 0,
+                'hoursCm' => $summaryData['hours_cm'] ?? 0,
+                'hoursTd' => $summaryData['hours_td'] ?? 0,
+                'hoursTp' => $summaryData['hours_tp'] ?? 0,
+                'totalSessions' => $summaryData['total_sessions'] ?? 0,
+                'completionPercent' => $summaryData['completion_percent'] ?? 0,
+                'modulesBreakdown' => $summaryData['modules_breakdown'] ?? [],
+                'monthlyBreakdown' => $summaryData['monthly_breakdown'] ?? [],
+            ];
+
+            $pdf = app(\App\Services\Documents\OfficialPdfFactory::class)
+                ->make('pdf.bordereau_permanent', $data)
+                ->setPaper('a4', 'portrait');
+
+            return $pdf->download("Attestation_Service_Fait_{$trackingCode}.pdf");
+        }
+
+        // 4. Attestation de Travail (Permanent titulaire uniquement)
         if ($doc?->document_type === 'attestation_travail') {
             $pdf = Pdf::loadView('pdf.attestation_travail', [
                 'trackingCode' => $trackingCode,
@@ -915,9 +1106,9 @@ class ProfessorPortalController extends Controller
                     'last_name' => $profLastName,
                     'cin' => $user?->cin ?? ($prof?->cin ?? ($user?->cne ?? 'Non renseigné')),
                     'department' => (object) ['name' => $deptName],
-                    'specialty' => 'Finance d\'Entreprise & Gouvernance',
+                    'specialty' => $prof?->specialty ?? 'Sciences de Gestion & Commerce',
                 ],
-                'year' => '2025/2026',
+                'year' => '2026/2027',
                 'date' => $doc?->created_at?->format('d/m/Y') ?? now()->format('d/m/Y'),
                 'logoBase64' => $logoBase64,
                 'qrBase64' => $qrBase64,
@@ -926,7 +1117,7 @@ class ProfessorPortalController extends Controller
             return $pdf->stream("Attestation_Travail_{$trackingCode}.pdf", ['Attachment' => false]);
         }
 
-        // Default: Ordre de Mission
+        // 5. Default: Ordre de Mission
         $pdf = Pdf::loadView('pdf.ordre_mission', [
             'trackingCode' => $trackingCode,
             'signatoryTitle' => $doc?->signed_by ?? 'LE SECRÉTAIRE GÉNÉRAL DE L\'ENCG FÈS',
@@ -936,7 +1127,7 @@ class ProfessorPortalController extends Controller
                 'last_name' => $profLastName,
                 'cin' => $user?->cin ?? ($prof?->cin ?? ($user?->cne ?? 'Non renseigné')),
                 'department' => (object) ['name' => $deptName],
-                'specialty' => 'Finance d\'Entreprise & Gouvernance',
+                'specialty' => $prof?->specialty ?? 'Sciences de Gestion & Commerce',
             ],
             'mission' => [
                 'destination' => $doc?->destination ?? 'Casablanca / Rabat (Maroc)',

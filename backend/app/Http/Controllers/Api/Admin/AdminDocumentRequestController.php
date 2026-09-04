@@ -70,12 +70,19 @@ class AdminDocumentRequestController extends Controller
             $profRequests = $profQuery->latest()->get()->map(function ($pDoc) {
                 $status = in_array($pDoc->status, ['ready', 'processing', 'approved'], true) ? 'approved' : $pDoc->status;
                 $user = $pDoc->user;
+                $prof = $user?->professor;
+                $isVac = ($prof?->contract_type === 'vacataire') || ($prof?->type === 'vacataire') || $user?->hasRole('vacataire');
                 $profName = $user ? "Pr. {$user->first_name} {$user->last_name}" : 'Enseignant';
+                $roleLabel = $isVac ? 'Enseignant Vacataire' : 'Professeur Permanent';
+
                 $typeLabel = match ($pDoc->document_type) {
                     'attestation_travail' => 'Attestation de Travail',
-                    'ordre_de_mission' => 'Ordre de Mission',
+                    'attestation_vacation' => 'Attestation d\'Heures de Vacation',
+                    'bordereau_decompte_vacation' => 'Bordereau de Vacation pour Paiement',
+                    'ordre_de_mission' => $isVac ? 'Ordre de Mission (Vacataire)' : 'Ordre de Mission',
                     'attestation_salaire' => 'Attestation de Salaire',
                     'autorisation_absence' => 'Autorisation d\'Absence',
+                    'attestation_service_fait' => 'Attestation de Service Fait',
                     default => ucwords(str_replace('_', ' ', $pDoc->document_type))
                 };
 
@@ -84,7 +91,7 @@ class AdminDocumentRequestController extends Controller
                     'real_id' => $pDoc->id,
                     'is_professor' => true,
                     'person' => $profName,
-                    'role' => 'Enseignant',
+                    'role' => $roleLabel,
                     'type' => $typeLabel,
                     'motif' => $pDoc->purpose.($pDoc->destination ? " (Destination: {$pDoc->destination})" : ''),
                     'destination' => $pDoc->destination,
