@@ -281,9 +281,45 @@ export default function AdminExamsPage() {
 
   // Statistics calculation
   const totalExams = filteredExams.length;
-  const uniqueRooms = new Set(filteredExams.map((e: any) => e.room?.id || e.room_id || e.room)).size;
-  const totalConvocations = filteredExams.reduce((acc: number, e: any) => acc + (e.convocations_generated || e.generated_count || 0), 0);
-  const totalSent = filteredExams.reduce((acc: number, e: any) => acc + (e.sent_count || 0), 0);
+  const uniqueRooms = new Set(filteredExams.map((e: any) => e.room?.id || e.room_id || e.room).filter(Boolean)).size;
+
+  // Calcul du nombre réel d'étudiants uniques convoqués (1 convocation globale par étudiant)
+  const uniqueStudentIds = useMemo(() => {
+    const ids = new Set<number>();
+    filteredExams.forEach((e: any) => {
+      if (Array.isArray(e.student_ids) && e.student_ids.length > 0) {
+        e.student_ids.forEach((id: number) => ids.add(id));
+      }
+    });
+    return ids;
+  }, [filteredExams]);
+
+  const uniqueSentStudentIds = useMemo(() => {
+    const ids = new Set<number>();
+    filteredExams.forEach((e: any) => {
+      if (Array.isArray(e.sent_student_ids) && e.sent_student_ids.length > 0) {
+        e.sent_student_ids.forEach((id: number) => ids.add(id));
+      }
+    });
+    return ids;
+  }, [filteredExams]);
+
+  // Si les student_ids sont présents, on prend les étudiants uniques (ex: 24).
+  // Sinon fallback intelligent sur la taille max d'un groupe pour éviter d'additionner 7 fois les mêmes 24 étudiants.
+  const totalConvocations = useMemo(() => {
+    if (uniqueStudentIds.size > 0) {
+      return uniqueStudentIds.size;
+    }
+    const maxInSingleExam = Math.max(0, ...filteredExams.map((e: any) => e.generated_count || 0));
+    return maxInSingleExam > 0 ? maxInSingleExam : 0;
+  }, [uniqueStudentIds, filteredExams]);
+
+  const totalSent = useMemo(() => {
+    if (uniqueSentStudentIds.size > 0) {
+      return uniqueSentStudentIds.size;
+    }
+    return 0;
+  }, [uniqueSentStudentIds]);
 
   return (
     <div className="max-w-[1550px] mx-auto p-4 md:p-8 space-y-7 font-sans animate-in duration-500 pb-24">

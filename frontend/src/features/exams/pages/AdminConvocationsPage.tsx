@@ -238,6 +238,16 @@ export default function AdminConvocationsPage() {
     onError: () => notify('Erreur lors de l\'envoi des emails.', 'error'),
   })
 
+  const adminConfirmSurveillantMutation = useMutation({
+    mutationFn: (survIds: number[]) => api.post('/convocations/surveillances/batch-confirm', { surveillance_ids: survIds }),
+    onSuccess: (res: any) => {
+      notify(res.data?.message || 'Présence validée avec succès !')
+      refetchList()
+      refetchStats()
+    },
+    onError: (err: any) => notify(err?.response?.data?.message || 'Erreur lors de la validation.', 'error'),
+  })
+
   const stats = sessionStats
   const students: any[] = convocationList?.students || []
   const surveillants: any[] = convocationList?.surveillants || []
@@ -414,6 +424,7 @@ export default function AdminConvocationsPage() {
             cin: curr.cin,
             role: curr.role,
             seances_count: 0,
+            confirmed_count: 0,
             exams: [],
             sent_at: curr.sent_at,
             confirmed_at: curr.confirmed_at,
@@ -430,7 +441,10 @@ export default function AdminConvocationsPage() {
           role: curr.role,
         })
         if (curr.sent_at) acc[key].sent_at = curr.sent_at
-        if (curr.confirmed_at) acc[key].confirmed_at = curr.confirmed_at
+        if (curr.confirmed_at) {
+          acc[key].confirmed_at = curr.confirmed_at
+          acc[key].confirmed_count = (acc[key].confirmed_count || 0) + 1
+        }
         return acc
       }, {} as Record<string, any>)
     )
@@ -1324,7 +1338,9 @@ export default function AdminConvocationsPage() {
                                   <div className="inline-flex flex-col items-center">
                                     <span className="px-2.5 py-1 bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 rounded-full text-[10px] font-black flex items-center gap-1">
                                       <CheckCircle className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-                                      Présence Confirmée
+                                      {s.confirmed_count && s.seances_count && s.confirmed_count < s.seances_count
+                                        ? `Présence (${s.confirmed_count}/${s.seances_count})`
+                                        : 'Présence Confirmée'}
                                     </span>
                                     <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">
                                       {new Date(s.confirmed_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })} à {new Date(s.confirmed_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
@@ -1343,6 +1359,16 @@ export default function AdminConvocationsPage() {
                               </td>
                               <td className="px-5 py-4 text-right">
                                 <div className="flex items-center justify-end gap-2">
+                                  {!s.confirmed_at && (
+                                    <button
+                                      onClick={() => adminConfirmSurveillantMutation.mutate(s.all_ids)}
+                                      disabled={adminConfirmSurveillantMutation.isPending}
+                                      className="p-2 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 rounded-xl transition-colors cursor-pointer disabled:opacity-40"
+                                      title="Valider la présence manuellement"
+                                    >
+                                      <CheckCircle className="w-4 h-4" />
+                                    </button>
+                                  )}
                                   <button
                                     onClick={() => handlePreviewSurveillantPdf(s.id, s.professor_name)}
                                     className="p-2 text-slate-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40 rounded-xl transition-colors cursor-pointer"

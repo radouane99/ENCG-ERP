@@ -358,7 +358,7 @@ class ConvocationController extends Controller
             $roleLabel = $isPrincipal ? 'Surveillant Principal (Responsable de Salle)' : 'Surveillant Secondaire (Salle)';
 
             return [
-                'id' => $s->exam_id ?: ($s->exam?->id ?: 193),
+                'id' => $s->id,
                 'exam_id' => $s->exam_id ?: ($s->exam?->id ?: 193),
                 'surveillance_id' => $s->id,
                 'reference' => 'SURV-2026-'.str_pad($s->id, 3, '0', STR_PAD_LEFT),
@@ -381,6 +381,102 @@ class ConvocationController extends Controller
         });
 
         return response()->json(['success' => true, 'data' => $data], 200, [], JSON_UNESCAPED_UNICODE);
+    }
+
+    /**
+     * Confirmation officielle de présence et accusé de réception par le surveillant.
+     */
+    public function confirmSurveillance(Request $request, mixed $id): JsonResponse
+    {
+        $user = $request->user();
+        $now = now();
+
+        // Cas 0 : Liste d'IDs transmis en batch
+        $ids = $request->input('surveillance_ids');
+        if (is_array($ids) && count($ids) > 0) {
+            $count = ExamSurveillance::whereIn('id', $ids)->update(['confirmed_at' => $now]);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Présence confirmée pour {$count} séance(s).",
+                'confirmed_at' => $now->toDateTimeString(),
+            ]);
+        }
+
+        // Cas 1 : Confirmer toutes les séances assignées au professeur
+        if ($id === 'all' || $request->input('all') === true) {
+            $profId = $user?->id;
+            $fullName = trim(($user?->first_name ?? '').' '.($user?->last_name ?? ''));
+            if ($fullName === '') {
+                $fullName = $user?->name ?? '';
+            }
+
+            $query = ExamSurveillance::where(function ($q) use ($profId, $fullName) {
+                if ($profId) {
+                    $q->where('professor_id', $profId);
+                }
+                if (! empty($fullName)) {
+                    $q->orWhereHas('user', function ($uq) use ($fullName) {
+                        $uq->whereRaw("CONCAT(TRIM(first_name), ' ', TRIM(last_name)) ILIKE ?", [$fullName])
+                            ->orWhere('name', 'ILIKE', $fullName);
+                    });
+                }
+            });
+
+            $count = $query->update(['confirmed_at' => $now]);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Toutes vos surveillances ({$count}) ont été confirmées avec succès.",
+                'confirmed_at' => $now->toDateTimeString(),
+            ]);
+        }
+
+        // Cas 2 : Confirmer une séance spécifique par ID ou Référence
+        $surveillance = null;
+        if (is_numeric($id) && (int) $id > 0) {
+            $surveillance = ExamSurveillance::find((int) $id);
+            if (! $surveillance) {
+                $surveillance = ExamSurveillance::where('exam_id', (int) $id)->first();
+            }
+        }
+
+        if (! $surveillance) {
+            $surveillance = ExamSurveillance::where('qr_token', (string) $id)->first();
+        }
+
+        if (! $surveillance && is_string($id) && preg_match('/SURV-\d+-(\d+)/', $id, $m)) {
+            $surveillance = ExamSurveillance::find((int) $m[1]);
+        }
+
+        if (! $surveillance) {
+            return response()->json(['success' => false, 'message' => 'Séance de surveillance introuvable.'], 404);
+        }
+
+        $surveillance->confirmed_at = $now;
+        $surveillance->save();
+
+        // Harmoniser avec le comportement de confirmation par email :
+        // Si cette séance fait partie d'une session d'examen, confirmer également
+        // l'ensemble des créneaux de surveillance de ce professeur pour la session.
+        $profId = $surveillance->professor_id ?? ($user?->id ?? null);
+        $sessionId = $surveillance->exam?->exam_session_id;
+        if ($profId && $sessionId) {
+            ExamSurveillance::where('professor_id', $profId)
+                ->whereHas('exam', fn ($q) => $q->where('exam_session_id', $sessionId))
+                ->update(['confirmed_at' => $now]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Accusé de réception et présence confirmés avec succès.',
+            'confirmed_at' => $now->toDateTimeString(),
+            'surveillance' => [
+                'id' => $surveillance->id,
+                'reference' => 'SURV-2026-'.str_pad($surveillance->id, 3, '0', STR_PAD_LEFT),
+                'confirmed_at' => $surveillance->confirmed_at,
+            ],
+        ]);
     }
 
     /**

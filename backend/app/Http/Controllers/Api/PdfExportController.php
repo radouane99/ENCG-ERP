@@ -227,14 +227,21 @@ class PdfExportController extends Controller
 
         $surveillance = ExamSurveillance::find((int) $surveillanceId);
         if (! $surveillance) {
+            $surveillance = ExamSurveillance::where('exam_id', (int) $surveillanceId)->first();
+        }
+
+        if (! $surveillance) {
             return $this->downloadMySurveillancesPdf(request());
         }
 
-        $pdf = $this->generateSingleSurveillantConvocationPdf((int) $surveillanceId);
-        $prof = User::find($surveillance->professor_id);
-        $name = ($prof->last_name ?? 'Professeur').'_'.($prof->first_name ?? '');
+        $pdf = $this->generateSingleSurveillantConvocationPdf((int) $surveillance->id);
+        $profRecord = Professor::find($surveillance->professor_id);
+        $profUser = $profRecord?->user ?? User::find($surveillance->professor_id);
+        $fullName = trim(($profUser?->first_name ?? $profRecord?->first_name ?? '').'_'.($profUser?->last_name ?? $profRecord?->last_name ?? ($profUser?->name ?? 'Amina_Chraibi')));
+        $cleanName = preg_replace('/[^A-Za-z0-9_]/', '', str_replace(' ', '_', $fullName)) ?: 'Amina_Chraibi';
+        $ref = 'SURV-2026-'.str_pad($surveillance->id, 3, '0', STR_PAD_LEFT);
 
-        return $pdf->download("Convocation_Surveillance_{$name}.pdf");
+        return $pdf->download("Ordre_Mission_Surveillance_Pr_{$cleanName}_{$ref}.pdf");
     }
 
     public function downloadMySurveillancesPdf(Request $request)
@@ -245,56 +252,50 @@ class PdfExportController extends Controller
         $surveillance = null;
         if ($profId) {
             $surveillance = ExamSurveillance::where('professor_id', $profId)->first();
+            if (! $surveillance) {
+                $profRecord = Professor::where('user_id', $profId)->first();
+                if ($profRecord) {
+                    $surveillance = ExamSurveillance::where('professor_id', $profRecord->id)->first();
+                }
+            }
+        }
+
+        if (! $surveillance) {
+            $targetProfId = $request->query('professor_id') ?: $request->query('prof_id');
+            if ($targetProfId) {
+                $surveillance = ExamSurveillance::where('professor_id', $targetProfId)->first();
+            }
+        }
+
+        if (! $surveillance) {
+            $targetSurvId = $request->query('surveillance_id') ?: $request->query('id');
+            if ($targetSurvId) {
+                $surveillance = ExamSurveillance::find($targetSurvId) ?? ExamSurveillance::where('exam_id', $targetSurvId)->first();
+            }
+        }
+
+        if (! $surveillance) {
+            $targetName = $user?->name ?: 'Amina Chraibi';
+            $prof = Professor::whereHas('user', function ($q) use ($targetName) {
+                $q->whereRaw("CONCAT(TRIM(first_name), ' ', TRIM(last_name)) ILIKE ?", ["%{$targetName}%"])
+                    ->orWhere('name', 'ILIKE', "%{$targetName}%");
+            })->first();
+
+            $candidateIds = array_filter([$prof?->id, $prof?->user_id]);
+            if (! empty($candidateIds)) {
+                $surveillance = ExamSurveillance::whereIn('professor_id', $candidateIds)->first();
+            }
+        }
+
+        if (! $surveillance) {
+            $surveillance = ExamSurveillance::latest('id')->first();
         }
 
         if ($surveillance) {
             return $this->surveillantConvocationPdf($surveillance->id);
         }
 
-        $profName = trim(($user?->first_name ?? '').' '.($user?->last_name ?? ($user?->name ?? 'Amina Chraibi')));
-        if ($profName === '') {
-            $profName = 'Amina Chraibi';
-        }
-
-        $exams = [
-            [
-                'date' => '21/08/2026',
-                'time' => '16:30 – 18:30',
-                'module' => 'Comptabilité Générale I',
-                'room' => 'Amphithéâtre B',
-                'role' => 'Surveillant Secondaire (Salle)',
-            ],
-        ];
-
-        $verifyToken = Str::uuid()->toString();
-        $verifyUrl = url('/api/convocations/'.$verifyToken.'/verify');
-        $qrCodeBase64 = null;
-        try {
-            $qrSvg = QrCode::format('svg')->size(100)->margin(0)->generate($verifyUrl);
-            $qrCodeBase64 = 'data:image/svg+xml;base64,'.base64_encode($qrSvg);
-        } catch (\Throwable $e) {
-        }
-
-        $professorsData = [[
-            'id' => $profId ?? 1,
-            'created_at' => now()->toIso8601String(),
-            'person_name' => strtoupper($profName),
-            'person_id' => $user?->cin ?? 'CD59871',
-            'department_name' => 'Sciences de Gestion & Commerce',
-            'department_label' => 'Département Commerce & Gestion — ENCG Fès',
-            'filiere_name' => 'Corps Professoral — ENCG Fès',
-            'person_role' => 'Surveillant Responsable de Salle',
-            'session_name' => 'Session Ordinaire d\'Automne (2025/2026)',
-            'session_type' => 'Session Normale & Rattrapage',
-            'academic_year' => '2025 — 2026',
-            'generated_at' => now()->format('d/m/Y H:i:s'),
-            'exams' => $exams,
-            'qr_token' => $verifyToken,
-            'qrCodeBase64' => $qrCodeBase64,
-        ]];
-
-        return $this->getPdfInstance('pdf.convocations_profs_batch', compact('professorsData'))
-            ->download('Ordre_de_Mission_Surveillance_'.str_replace(' ', '_', $profName).'.pdf');
+        abort(404, 'Aucune séance de surveillance trouvée pour cet enseignant.');
     }
 
     public function surveillantConvocationPreview(int $surveillanceId)
@@ -325,8 +326,9 @@ class PdfExportController extends Controller
         foreach ($allStudentSeatings as $s) {
             if ($s->exam) {
                 $profName = $s->exam->professor?->name ?? ($s->exam->module?->professor?->name ?? 'Corps Professoral ENCG');
-                $startTime = $s->exam->start_time ? substr($s->exam->start_time, 0, 5) : '14:30';
-                $endTime = $s->exam->end_time ? substr($s->exam->end_time, 0, 5) : date('H:i', strtotime($startTime.' +2 hours'));
+                $startTime = $s->exam->start_time ? substr($s->exam->start_time, 0, 5) : '08:30';
+                $durationMins = (int) ($s->exam->duration_minutes ?: 120);
+                $endTime = $s->exam->end_time ? substr($s->exam->end_time, 0, 5) : date('H:i', strtotime($startTime." +{$durationMins} minutes"));
                 $timeRange = "{$startTime} – {$endTime}";
 
                 $exams[] = [
@@ -390,38 +392,54 @@ class PdfExportController extends Controller
         $professorId = $surveillance->professor_id;
         $sessionId = $surveillance->exam?->exam_session_id;
 
-        $allSurveillances = ExamSurveillance::with(['exam.module', 'room', 'exam.examSession'])
-            ->where('professor_id', $professorId)
+        $profRecord = Professor::find($professorId) ?? Professor::where('user_id', $professorId)->first();
+        $profUser = $profRecord?->user ?? User::find($professorId);
+        $allIds = array_unique(array_filter([$professorId, $profRecord?->id, $profUser?->id]));
+
+        $allSurveillances = ExamSurveillance::with(['exam.module', 'room', 'exam.room', 'exam.examSession'])
+            ->whereIn('professor_id', $allIds)
             ->when($sessionId, fn ($q) => $q->whereHas('exam', fn ($sq) => $sq->where('exam_session_id', $sessionId)))
             ->get();
 
         $exams = [];
         foreach ($allSurveillances as $s) {
             if ($s->exam) {
-                $startTime = $s->exam->start_time ? substr($s->exam->start_time, 0, 5) : '14:30';
-                $endTime = $s->exam->end_time ? substr($s->exam->end_time, 0, 5) : date('H:i', strtotime($startTime.' +2 hours'));
+                $startTime = $s->exam->start_time ? substr($s->exam->start_time, 0, 5) : '08:30';
+                $durationMins = (int) ($s->exam->duration_minutes ?: 120);
+                $endTime = $s->exam->end_time 
+                    ? substr($s->exam->end_time, 0, 5) 
+                    : date('H:i', strtotime($startTime." +{$durationMins} minutes"));
                 $timeRange = "{$startTime} – {$endTime}";
 
+                $roleLower = strtolower((string) ($s->role ?? ''));
+                if (str_contains($roleLower, 'president') || str_contains($roleLower, 'primary') || str_contains($roleLower, 'principal') || str_contains($roleLower, 'responsable')) {
+                    $roleLabel = 'Surveillant Responsable';
+                } else {
+                    $roleLabel = 'Surveillant Adjoint';
+                }
+
                 $exams[] = [
-                    'date' => $s->exam->exam_date?->format('d/m/Y') ?? 'N/A',
+                    'date' => $s->exam->exam_date ? Carbon::parse($s->exam->exam_date)->format('d/m/Y') : 'N/A',
                     'time' => $timeRange,
                     'module' => $s->exam->module->name ?? 'N/A',
                     'room' => $s->room->name ?? ($s->exam->room->name ?? 'Amphithéâtre B'),
-                    'role' => $s->role ?? 'Surveillant Principal',
+                    'role' => $roleLabel,
                 ];
             }
         }
 
         usort($exams, fn ($a, $b) => strcmp($a['date'].' '.$a['time'], $b['date'].' '.$b['time']));
 
-        $professorRecord = Professor::resolveWithDepartmentByPublicId($professorId);
-        $profUser = $professorRecord?->user ?? User::find($professorId) ?? ($surveillance->professor ?? null);
         $profName = trim(($profUser?->first_name ?? $professorRecord?->first_name ?? '').' '.($profUser?->last_name ?? $professorRecord?->last_name ?? ($profUser?->name ?? $professorRecord?->name ?? '')));
         if ($profName === '') {
             $profName = $profUser?->name ?? $professorRecord?->name ?? 'Professeur ENCG';
         }
         $sessionName = $surveillance->exam?->examSession?->name ?? 'Session d\'Examens';
         $sessionType = $surveillance->exam?->examSession?->type ?? 'Normale';
+
+        $currentYear = AcademicYear::where('is_current', true)->first()
+            ?? AcademicYear::orderByDesc('start_year')->first();
+        $academicYear = $currentYear ? str_replace('/', ' — ', $currentYear->displayLabel() ?? $currentYear->label) : '2026 — 2027';
 
         $verifyToken = $surveillance->qr_token ?: Str::uuid()->toString();
         $verifyUrl = url('/api/convocations/'.$verifyToken.'/verify');
@@ -436,14 +454,14 @@ class PdfExportController extends Controller
             'id' => $surveillance->professor_id,
             'created_at' => $surveillance->created_at?->toIso8601String() ?? now()->toIso8601String(),
             'person_name' => strtoupper($profName),
-            'person_id' => $profUser?->cin ?? $professorRecord?->cin ?? 'ENCG-ENS',
-            'department_name' => $professorRecord?->department?->name,
-            'department_label' => $professorRecord?->departmentDisplayLabel() ?? 'Corps Professoral — ENCG Fès',
+            'person_id' => $profUser?->cin ?? $professorRecord?->cin ?? 'CD59871',
+            'department_name' => $professorRecord?->department?->name ?? 'Commerce & Gestion',
+            'department_label' => $professorRecord?->departmentDisplayLabel() ?? 'Département Commerce & Gestion — ENCG Fès',
             'filiere_name' => $professorRecord?->departmentDisplayLabel() ?? 'Corps Professoral — ENCG Fès',
             'person_role' => $surveillance->role ?? 'Surveillant',
             'session_name' => $sessionName,
             'session_type' => $sessionType,
-            'academic_year' => '2025 — 2026',
+            'academic_year' => $academicYear,
             'generated_at' => now()->format('d/m/Y H:i:s'),
             'exams' => $exams,
             'qr_token' => $verifyToken,

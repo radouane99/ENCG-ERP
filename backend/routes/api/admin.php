@@ -575,6 +575,8 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
         Route::get('/session/{sessionId}/stats', [ConvocationController::class, 'sessionStats']);
         Route::get('/session/{sessionId}/live-stats', [ConvocationController::class, 'globalLiveStats']);
         Route::get('/session/{sessionId}/list', [ConvocationController::class, 'sessionList']);
+        Route::post('/surveillances/{id}/confirm', [ConvocationController::class, 'confirmSurveillance']);
+        Route::post('/surveillances/batch-confirm', [ConvocationController::class, 'confirmSurveillance']);
 
         Route::get('/{reference}/verify', [ConvocationController::class, 'verify']);
         Route::post('/{reference}/present', [ConvocationController::class, 'markPresent']);

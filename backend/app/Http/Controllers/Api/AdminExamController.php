@@ -21,7 +21,13 @@ class AdminExamController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Exam::with(['module.filiere', 'group.filiere', 'room', 'surveillances.professor.user'])
+        $query = Exam::with([
+            'module.filiere',
+            'group.filiere',
+            'room',
+            'surveillances.professor.user',
+            'seatings' => fn ($q) => $q->select('id', 'exam_id', 'student_id', 'sent_at', 'is_present'),
+        ])
             ->withCount(['seatings', 'incidents'])
             ->latest();
 
@@ -38,10 +44,12 @@ class AdminExamController extends Controller
         }
 
         $exams = $query->get()->map(function ($exam) {
-            $generatedCount = $exam->seatings_count;
-            $presentsCount = ExamSeating::where('exam_id', $exam->id)->where('is_present', true)->count();
-            $sentCount = ExamSeating::where('exam_id', $exam->id)->whereNotNull('sent_at')->count();
-            $incidentsCount = $exam->incidents_count;
+            $studentIds = $exam->seatings->pluck('student_id')->filter()->unique()->values()->all();
+            $sentStudentIds = $exam->seatings->whereNotNull('sent_at')->pluck('student_id')->filter()->unique()->values()->all();
+            $generatedCount = count($studentIds) > 0 ? count($studentIds) : (int) $exam->seatings_count;
+            $presentsCount = $exam->seatings->where('is_present', true)->count();
+            $sentCount = count($sentStudentIds);
+            $incidentsCount = (int) $exam->incidents_count;
 
             $surveillantsText = $exam->surveillances->map(function ($s) {
                 if ($s->professor) {
@@ -94,6 +102,9 @@ class AdminExamController extends Controller
                 'duration_minutes' => $exam->duration_minutes,
                 'type' => $exam->session_type ?? 'EXAMEN',
                 'surveillants' => $surveillantsText,
+                'student_ids' => $studentIds,
+                'sent_student_ids' => $sentStudentIds,
+                'unique_students_count' => count($studentIds),
                 'generated_count' => $generatedCount,
                 'presents_count' => $presentsCount,
                 'absents_count' => max(0, $generatedCount - $presentsCount),

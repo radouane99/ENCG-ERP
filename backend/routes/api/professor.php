@@ -98,8 +98,10 @@ Route::middleware(['auth:sanctum', 'role:professor|vacataire|department-head|fil
     Route::get('/professor-portal/documents', [ProfessorPortalController::class, 'getDocumentRequests']);
     Route::post('/professor-portal/documents', [ProfessorPortalController::class, 'storeDocumentRequest']);
 
-    // Surveillances & Convocations PDF & PV Signature
+    // Surveillances & Convocations PDF & PV Signature & Confirmation
     Route::get('/professor/my-surveillances', [ConvocationController::class, 'mySurveillances']);
+    Route::post('/professor/surveillances/{id}/confirm', [ConvocationController::class, 'confirmSurveillance']);
+    Route::post('/professor/surveillances/all/confirm', [ConvocationController::class, 'confirmSurveillance']);
     Route::get('/professor/surveillances/all-pdf', [PdfExportController::class, 'downloadMySurveillancesPdf']);
     Route::get('/professor/surveillances/{id}/pdf', [PdfExportController::class, 'surveillantConvocationPdf']);
     Route::post('/professor/surveillances/{id}/sign-pv', [ConvocationController::class, 'signExamPv']);

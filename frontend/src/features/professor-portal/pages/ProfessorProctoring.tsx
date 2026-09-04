@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '@/shared/lib/api';
+import { useAuthStore } from '@stores/authStore';
 import { toast } from 'sonner';
 import { 
   Eye, 
@@ -16,6 +17,8 @@ import {
   Download,
   Search,
   Check,
+  CheckCheck,
+  Loader2,
   UserX,
   AlertTriangle,
   X,
@@ -51,8 +54,17 @@ interface SurveillanceItem {
 
 export default function ProfessorProctoring() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const authUser = useAuthStore((s) => s.user);
+  const teacherSlug = (
+    authUser?.name 
+    || ((authUser as any)?.first_name ? `${(authUser as any).first_name} ${(authUser as any).last_name || ''}`.trim() : '')
+    || 'Amina_Chraibi'
+  ).replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '');
+
   const [filter, setFilter] = useState<'all' | 'confirmed' | 'pending'>('all');
   const [confirmedMap, setConfirmedMap] = useState<Record<string, boolean>>({});
+  const [confirmingRef, setConfirmingRef] = useState<string | null>(null);
   const [activeExamAttendance, setActiveExamAttendance] = useState<SurveillanceItem | null>(null);
   const [searchStudent, setSearchStudent] = useState('');
   const [studentStatuses, setStudentStatuses] = useState<Record<number, 'present' | 'absent' | 'fraud'>>({});
@@ -177,17 +189,87 @@ export default function ProfessorProctoring() {
     ? serverSurveillances 
     : defaultSurveillances;
 
-  const handleConfirm = (ref: string) => {
-    setConfirmedMap(prev => ({ ...prev, [ref]: true }));
-    toast.success(`Accusé de réception & présence confirmés pour ${ref} !`, {
-      description: "Le bureau des examens et le chef de centre ont été notifiés de votre confirmation."
-    });
+  const handleConfirm = async (item: SurveillanceItem) => {
+    const survId = (item as any).surveillance_id || item.id || item.reference;
+    setConfirmingRef(item.reference);
+    try {
+      const res = await api.post(`/professor/surveillances/${survId}/confirm`);
+      setConfirmedMap(prev => ({ ...prev, [item.reference]: true }));
+      await queryClient.invalidateQueries({ queryKey: ['professor-surveillances'] });
+      await queryClient.invalidateQueries({ queryKey: ['convocation-list'] });
+      await queryClient.invalidateQueries({ queryKey: ['convocation-stats'] });
+      toast.success(`Accusé de réception & présence confirmés pour ${item.reference} !`, {
+        description: res.data?.message || "Le bureau des examens et le chef de centre ont été notifiés de votre confirmation."
+      });
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Erreur lors de la confirmation de présence.");
+    } finally {
+      setConfirmingRef(null);
+    }
+  };
+
+  const handleConfirmAll = async () => {
+    setConfirmingRef('all');
+    try {
+      const res = await api.post('/professor/surveillances/all/confirm');
+      items.forEach(it => {
+        setConfirmedMap(prev => ({ ...prev, [it.reference]: true }));
+      });
+      await queryClient.invalidateQueries({ queryKey: ['professor-surveillances'] });
+      await queryClient.invalidateQueries({ queryKey: ['convocation-list'] });
+      await queryClient.invalidateQueries({ queryKey: ['convocation-stats'] });
+      toast.success("Toutes vos séances ont été confirmées avec succès !", {
+        description: res.data?.message || "Le bureau des examens et le chef de centre ont été notifiés."
+      });
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Erreur lors de la confirmation globale.");
+    } finally {
+      setConfirmingRef(null);
+    }
+  };
+
+  const handleDownloadPdf = async (url: string, defaultFilename: string) => {
+    try {
+      toast.loading("Génération de l'ordre de mission officiel...", { id: 'pdf-dl' });
+      const res = await api.get(url, {
+        responseType: 'blob',
+        headers: { Accept: 'application/pdf' },
+      });
+
+      // Extraire le nom de fichier personnalisé officiel renvoyé par le backend
+      const disposition = res.headers['content-disposition'] || res.headers['Content-Disposition'];
+      let serverFilename = '';
+      if (disposition && typeof disposition === 'string' && disposition.includes('filename=')) {
+        const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(disposition);
+        if (matches != null && matches[1]) {
+          serverFilename = matches[1].replace(/['"]/g, '').trim();
+        }
+      }
+
+      const filename = serverFilename || defaultFilename;
+      const blob = new Blob([res.data], { type: 'application/pdf' });
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = objectUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60000);
+      toast.success(`Document (${filename}) téléchargé avec succès !`, { id: 'pdf-dl' });
+    } catch (e) {
+      window.open(url, '_blank');
+      toast.dismiss('pdf-dl');
+    }
   };
 
   const handleDownloadSingleConvocation = (item: SurveillanceItem) => {
-    const surveillanceId = item.id || (item as any).surveillance_id || 1;
-    window.open(`/api/professor/surveillances/${surveillanceId}/pdf`, '_blank');
-    toast.success(`Téléchargement de la convocation officielle (${item.reference})...`);
+    const surveillanceId = (item as any).surveillance_id || item.id || 1;
+    const ref = item.reference || `SURV-${surveillanceId}`;
+    handleDownloadPdf(
+      `/professor/surveillances/${surveillanceId}/pdf`, 
+      `Ordre_Mission_Surveillance_Pr_${teacherSlug}_${ref}.pdf`
+    );
   };
 
   const handleSignExamPv = async () => {
@@ -288,8 +370,26 @@ export default function ProfessorProctoring() {
         </div>
 
         <div className="flex flex-wrap items-center gap-3 relative z-10">
+          {pendingCount > 0 && (
+            <button
+              onClick={handleConfirmAll}
+              disabled={confirmingRef === 'all'}
+              className="px-5 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-white font-black text-xs uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-emerald-500/20 transition-all cursor-pointer disabled:opacity-50"
+            >
+              {confirmingRef === 'all' ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <CheckCheck className="w-4 h-4" />
+              )}
+              Confirmer Toutes mes Présences ({pendingCount})
+            </button>
+          )}
+
           <button
-            onClick={() => window.open('/api/professor/surveillances/all-pdf', '_blank')}
+            onClick={() => handleDownloadPdf(
+              '/professor/surveillances/all-pdf', 
+              `Ordre_Mission_Surveillance_Global_Pr_${teacherSlug}_2026-2027.pdf`
+            )}
             className="px-5 py-3 rounded-2xl bg-amber-400 hover:bg-amber-300 text-[#001A4B] font-black text-xs uppercase tracking-wider flex items-center gap-2 shadow-lg transition-all cursor-pointer"
           >
             <Download className="w-4 h-4" /> Ordre de Surveillance Global (PDF A4)
@@ -442,10 +542,19 @@ export default function ProfessorProctoring() {
                     </span>
                   ) : (
                     <button
-                      onClick={() => handleConfirm(item.reference)}
-                      className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-md transition-all flex items-center gap-2 cursor-pointer"
+                      onClick={() => handleConfirm(item)}
+                      disabled={confirmingRef === item.reference}
+                      className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-md transition-all flex items-center gap-2 cursor-pointer disabled:opacity-60"
                     >
-                      <CheckCircle2 className="w-4 h-4" /> Confirmer ma Présence
+                      {confirmingRef === item.reference ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" /> Confirmation...
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle2 className="w-4 h-4" /> Confirmer ma Présence
+                        </>
+                      )}
                     </button>
                   )}
                 </div>
