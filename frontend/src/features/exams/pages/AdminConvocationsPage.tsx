@@ -48,12 +48,14 @@ import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
 import { openAuthenticatedUrl, openCustomAttestationPdf, openStudentAttestationPdf } from '@shared/lib/documentAccess'
 import { examsApi } from '@shared/api/exams'
+import ManualProctorAssignmentModal from '../components/ManualProctorAssignmentModal'
 
 export default function AdminConvocationsPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [selectedSessionId, setSelectedSessionId] = useState<number | null>(null)
   const [activeTab, setActiveTab] = useState<'students' | 'surveillants' | 'overview'>('students')
+  const [isManualAssignModalOpen, setIsManualAssignModalOpen] = useState(false)
   const [selectedFiliere, setSelectedFiliere] = useState<string>('all')
   const [statusFilter, setStatusFilter] = useState<'all' | 'sent' | 'pending'>('all')
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table')
@@ -782,23 +784,32 @@ export default function AdminConvocationsPage() {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] font-black uppercase tracking-wider text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950 px-2.5 py-0.5 rounded-full">
-                        Étape 2 • Affectation IA
+                        Étape 2 • Affectation Surveillants
                       </span>
                       <Shield className="w-4 h-4 text-slate-400 group-hover:text-amber-600 transition-colors" />
                     </div>
                     <h4 className="font-black text-sm text-slate-900 dark:text-white">Affecter les Surveillants</h4>
                     <p className="text-xs text-slate-500 leading-relaxed">
-                      Répartition équitable optimisée par IA selon les disponibilités et créneaux des professeurs.
+                      Répartition équitable optimisée par IA ou sur-mesure manuelle (permanents, vacataires, doctorants).
                     </p>
                   </div>
-                  <button
-                    onClick={() => assignMutation.mutate()}
-                    disabled={assignMutation.isPending}
-                    className="w-full bg-amber-500 hover:bg-amber-600 text-white py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-md shadow-amber-500/20 cursor-pointer disabled:opacity-60 hover:scale-[1.01] active:scale-[0.99]"
-                  >
-                    {assignMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4 fill-white" />}
-                    <span>Auto-Affecter par IA</span>
-                  </button>
+                  <div className="flex flex-col gap-2">
+                    <button
+                      onClick={() => assignMutation.mutate()}
+                      disabled={assignMutation.isPending}
+                      className="w-full bg-amber-500 hover:bg-amber-600 text-white py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-md shadow-amber-500/20 cursor-pointer disabled:opacity-60 hover:scale-[1.01] active:scale-[0.99]"
+                    >
+                      {assignMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4 fill-white" />}
+                      <span>Auto-Affecter par IA</span>
+                    </button>
+                    <button
+                      onClick={() => setIsManualAssignModalOpen(true)}
+                      type="button"
+                      className="w-full bg-white dark:bg-slate-800 border-2 border-amber-300 dark:border-amber-700 hover:bg-amber-50 dark:hover:bg-amber-950/40 text-amber-800 dark:text-amber-300 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs hover:scale-[1.01] active:scale-[0.99]"
+                    >
+                      <span>Affectation Sur-Mesure ✍️</span>
+                    </button>
+                  </div>
                 </div>
 
                 {/* Step 3 */}
@@ -916,6 +927,32 @@ export default function AdminConvocationsPage() {
                       </button>
                     </div>
                   </>
+                )}
+
+                {activeTab === 'surveillants' && (
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setIsManualAssignModalOpen(true)}
+                      type="button"
+                      className="h-10 px-4 bg-white dark:bg-slate-800 border-2 border-amber-400 dark:border-amber-600 text-amber-800 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/40 rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-xs cursor-pointer hover:scale-[1.01] active:scale-[0.99]"
+                    >
+                      <Shield className="w-3.5 h-3.5 text-amber-600" />
+                      <span>Affectation Sur-Mesure ✍️</span>
+                    </button>
+                    <button
+                      onClick={() => assignMutation.mutate()}
+                      disabled={assignMutation.isPending}
+                      type="button"
+                      className="h-10 px-4 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-md shadow-amber-500/20 cursor-pointer disabled:opacity-60 hover:scale-[1.01] active:scale-[0.99]"
+                    >
+                      {assignMutation.isPending ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Zap className="w-3.5 h-3.5 fill-white" />
+                      )}
+                      <span>Auto-Affecter (IA)</span>
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
@@ -1243,14 +1280,25 @@ export default function AdminConvocationsPage() {
                     </div>
                     <h3 className="text-base font-black text-slate-800 dark:text-white">Aucun surveillant affecté</h3>
                     <p className="text-xs text-slate-500 max-w-md mx-auto mt-1 mb-5">
-                      Cliquez sur "Auto-Affecter les Surveillants" pour que l'algorithme d'équilibrage répartisse les créneaux.
+                      Affectez les créneaux automatiquement par IA ou personnalisez sur-mesure séance par séance (permanents, vacataires, doctorants).
                     </p>
-                    <button
-                      onClick={() => assignMutation.mutate()}
-                      className="px-5 py-2.5 bg-amber-500 text-white rounded-xl text-xs font-black uppercase tracking-wider hover:bg-amber-600 transition-all cursor-pointer shadow-md"
-                    >
-                      Affecter Automatiquement
-                    </button>
+                    <div className="flex items-center justify-center gap-3 flex-wrap">
+                      <button
+                        onClick={() => assignMutation.mutate()}
+                        disabled={assignMutation.isPending}
+                        className="px-5 py-2.5 bg-amber-500 text-white rounded-xl text-xs font-black uppercase tracking-wider hover:bg-amber-600 transition-all cursor-pointer shadow-md flex items-center gap-2"
+                      >
+                        {assignMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4 fill-white" />}
+                        <span>Auto-Affecter (IA)</span>
+                      </button>
+                      <button
+                        onClick={() => setIsManualAssignModalOpen(true)}
+                        type="button"
+                        className="px-5 py-2.5 bg-white dark:bg-slate-800 border-2 border-amber-400 dark:border-amber-600 text-amber-800 dark:text-amber-300 rounded-xl text-xs font-black uppercase tracking-wider hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-all cursor-pointer shadow-sm flex items-center gap-1.5"
+                      >
+                        <span>Affectation Sur-Mesure ✍️</span>
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   <>
@@ -1829,6 +1877,19 @@ export default function AdminConvocationsPage() {
             </div>
           </div>,
           document.body
+        )}
+
+        {/* MODAL: AFFECTATION MANUELLE & SUR-MESURE DES SURVEILLANTS */}
+        {selectedSessionId && (
+          <ManualProctorAssignmentModal
+            isOpen={isManualAssignModalOpen}
+            onClose={() => setIsManualAssignModalOpen(false)}
+            sessionId={selectedSessionId}
+            onSuccess={() => {
+              refetchStats()
+              refetchList()
+            }}
+          />
         )}
       </div>
     </div>

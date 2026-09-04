@@ -32,6 +32,29 @@ class ConvocationController extends Controller
         return response()->json($this->proctorService->autoAssignProctors($sessionId));
     }
 
+    public function assignmentData(int $sessionId): JsonResponse
+    {
+        $result = $this->proctorService->getAssignmentData($sessionId);
+
+        return response()->json($result, $result['success'] ? 200 : 404);
+    }
+
+    public function manualAssign(Request $request, int $sessionId): JsonResponse
+    {
+        $validated = $request->validate([
+            'assignments' => 'required|array',
+            'assignments.*.exam_id' => 'required|integer',
+            'assignments.*.room_id' => 'nullable|integer',
+            'assignments.*.principal_id' => 'nullable|integer',
+            'assignments.*.secondary_ids' => 'nullable|array',
+            'assignments.*.secondary_id' => 'nullable|integer',
+        ]);
+
+        $result = $this->proctorService->saveManualAssignments($sessionId, $validated['assignments']);
+
+        return response()->json($result, $result['success'] ? 200 : 400);
+    }
+
     public function sendAvailabilitySurvey(int $sessionId): JsonResponse
     {
         return response()->json($this->proctorService->sendAvailabilitySurvey($sessionId));

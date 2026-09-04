@@ -537,7 +537,9 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
         });
 
         // New Convocations & Live routes
+        Route::get('/{sessionId}/proctor-assignment-data', [ConvocationController::class, 'assignmentData']);
         Route::post('/{sessionId}/auto-assign-proctors', [ConvocationController::class, 'autoAssign']);
+        Route::post('/{sessionId}/manual-assign-proctors', [ConvocationController::class, 'manualAssign']);
         // Old endpoints are replaced by the /convocations group below
         Route::get('/{examId}/live-stats', [ConvocationController::class, 'liveStats']);
         Route::get('/{examId}/details', [ConvocationController::class, 'getDetails']);

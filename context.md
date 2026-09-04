@@ -2784,3 +2784,61 @@ Conformément à la directive : *"Khass ykon hadchi dynamique m3a chhal makan dy
      - **Score d'équité réel :** $\text{Equitability} = \max(0, \min(100, (1 - \sigma / \bar{w}) \times 100))\%$.
      - **Taux sans conflit réel :** Vérification géométrique de chaque intervalle $[start, end]$ en base de données.
    - [Academic/ProctorAssignmentService.php](file:///c:/Users/najlae/Desktop/ENCG-ERP-V1/backend/app/Services/Academic/ProctorAssignmentService.php) délégué directement au service réel, sans aucune donnée simulée.
+
+---
+
+### 21.17 📋 Workflow Bi-Canal de Confirmation de Présence aux Surveillances (Plateforme & Email)
+
+Conformément à la directive : *"confirmation de presence soi f platform nit wla b email o ydkel yclii 3lih email fhmti deux choix mhm yconfirmer l presence"* :
+
+#### A. Architecture Bi-Canal Parfaitement Harmonisant
+Le système offre au corps professoral et aux surveillants deux canaux d'accusé de réception et de confirmation officielle de présence d'égale valeur juridique et académique :
+
+```
+                        ┌──────────────────────────────────────────────────────────┐
+                        │          AFFECTATION OFFICIELLE EN BDD                   │
+                        │       Table PostgreSQL : exam_surveillances              │
+                        └───────────────────────────┬──────────────────────────────┘
+                                                    │
+                   ┌────────────────────────────────┴────────────────────────────────┐
+                   ▼ (Canal 1 : Email de Convocation)                                ▼ (Canal 2 : Espace Web Enseignant)
+┌───────────────────────────────────────────────────────┐         ┌───────────────────────────────────────────────────────┐
+│ Email Officiel Resend (Mailable Blade)                │         │ Portail Enseignant (/professor/proctoring)            │
+│ Bouton : "Accuser Réception & Confirmer Présence"     │         │ Bouton : "Confirmer ma Présence" ou "Confirmer Tout"  │
+│ ➔ GET /api/verify/surveillance/{token}/confirm       │         │ ➔ POST /api/professor/surveillances/{id}/confirm     │
+└──────────────────────────┬────────────────────────────┘         └──────────────────────────┬────────────────────────────┘
+                           │                                                                 │
+                           └────────────────────────────────┬────────────────────────────────┘
+                                                            ▼
+                                        ┌───────────────────────────────────────┐
+                                        │  Enregistrement BDD Immédiat          │
+                                        │  exam_surveillances.confirmed_at=NOW()│
+                                        └───────────────────┬───────────────────┘
+                                                            │
+                                                            ▼
+                                        ┌───────────────────────────────────────┐
+                                        │  Hub Administrateur Convocations      │
+                                        │  (/admin/convocations)                │
+                                        │  Badge Vert : ✓ PRÉSENCE CONFIRMÉE   │
+                                        │  Date & Heure précises horodatées     │
+                                        └───────────────────────────────────────┘
+```
+
+#### B. Spécifications Techniques des Deux Canaux :
+1. **Canal 1 — Lien Dynamique Email (`/api/verify/surveillance/{token}/confirm`) :**
+   - L'enseignant reçoit un email formel intégrant son ordre de mission détaillé.
+   - Le clic sur le bouton déclenche `ConvocationController::confirmReception($token)`.
+   - Toutes les séances assignées à cet enseignant pour la session d'examen sont horodatées (`confirmed_at = now()`).
+   - Une page de confirmation haute fidélité (`surveillance_confirmed.blade.php`) s'affiche avec le récapitulatif complet des épreuves et le rappel de la charte de surveillance.
+
+2. **Canal 2 — Confirmation Directe sur la Plateforme (`/professor/proctoring`) :**
+   - L'enseignant connecté visualise l'ensemble de ses créneaux assignés.
+   - Il dispose de deux modes d'action :
+     - **Par séance :** Clic sur *« Confirmer ma Présence »* sur la carte de l'épreuve (`POST /api/professor/surveillances/{id}/confirm`).
+     - **Global (1 clic) :** Bouton d'en-tête *« Confirmer Toutes mes Présences »* (`POST /api/professor/surveillances/all/confirm`).
+   - L'API valide et met à jour instantanément la base PostgreSQL, puis harmonise l'ensemble des créneaux de la session.
+   - Le cache React Query (`['professor-surveillances']`, `['convocation-list']`, `['convocation-stats']`) est automatiquement invalidé, transformant instantanément le bouton en badge vert **`PRÉSENCE CONFIRMÉE ✓`**.
+
+3. **Visibilité & Actions Administrateur (`/admin/convocations`) :**
+   - Le tableau de gestion centralisée détecte immédiatement `confirmed_at` et affiche le badge vert **`✓ Présence Confirmée`** horodaté (ex: *04/09 à 01:45*).
+   - L'administrateur dispose également d'un bouton d'action directe pour valider manuellement un créneau si l'enseignant confirme par téléphone ou guichet physique (`POST /api/convocations/surveillances/batch-confirm`).

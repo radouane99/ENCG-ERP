@@ -193,6 +193,22 @@ export const examsApi = {
     const response = await api.post(`/exam-planning/${sessionId}/auto-assign-proctors`);
     return response.data;
   },
+  getProctorAssignmentData: async (sessionId: number) => {
+    const response = await api.get(`/exam-planning/${sessionId}/proctor-assignment-data`);
+    return response.data;
+  },
+  saveManualProctorAssignments: async (
+    sessionId: number,
+    assignments: Array<{
+      exam_id: number;
+      room_id?: number | null;
+      principal_id?: number | null;
+      secondary_ids?: number[];
+    }>
+  ) => {
+    const response = await api.post(`/exam-planning/${sessionId}/manual-assign-proctors`, { assignments });
+    return response.data;
+  },
 
   // Professor Availability
   getProfessorAvailabilities: async () => {

@@ -6,10 +6,12 @@ use App\Mail\ProfessorAvailabilitySurveyMail;
 use App\Models\ExamSession;
 use App\Models\ExamSurveillance;
 use App\Models\Professor;
+use App\Models\Room;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 
 class ProctorAssignmentService
 {
@@ -247,6 +249,188 @@ class ProctorAssignmentService
                     'conflict_free_rate' => "{$conflictFreeRate}%",
                     'average_hours_per_prof' => "{$avgWorkload} H",
                 ],
+            ];
+        });
+    }
+
+    /**
+     * Récupérer les données pour l'affectation manuelle des surveillants.
+     */
+    public function getAssignmentData(int $sessionId): array
+    {
+        $session = ExamSession::with([
+            'exams.room',
+            'exams.module.filiere',
+            'exams.group',
+            'exams.surveillances.professor.user',
+        ])->find($sessionId);
+
+        if (! $session) {
+            return ['success' => false, 'message' => 'Session introuvable.', 'data' => null];
+        }
+
+        // Proctors : permanents, chefs de département, vacataires, doctorants
+        $proctors = User::where(function ($query) {
+            $query->whereHas('roles', fn ($q) => $q->whereIn('name', [
+                'professor',
+                'department-head',
+                'enseignant',
+                'vacataire',
+                'doctorant',
+            ]))
+            ->orWhereHas('professor', fn ($q) => $q->where('is_active', true));
+        })
+        ->where('is_active', true)
+        ->with(['roles', 'professor.department'])
+        ->get()
+        ->map(function ($u) {
+            $name = trim(($u->first_name ?? '').' '.($u->last_name ?? ''));
+            if (empty($name)) {
+                $name = $u->name ?? 'Surveillant';
+            }
+
+            $roleNames = $u->roles->pluck('name')->toArray();
+            $type = 'Permanent';
+            if (in_array('doctorant', $roleNames)) {
+                $type = 'Doctorant';
+            } elseif (in_array('vacataire', $roleNames)) {
+                $type = 'Vacataire';
+            } elseif (in_array('department-head', $roleNames)) {
+                $type = 'Chef de Département';
+            }
+
+            return [
+                'id' => $u->id,
+                'name' => $name,
+                'email' => $u->email,
+                'cin' => $u->cin ?? ($u->professor?->cin ?? ''),
+                'type' => $type,
+                'department' => $u->professor?->department?->name ?? 'ENCG',
+            ];
+        })
+        ->sortBy('name')
+        ->values()
+        ->toArray();
+
+        $rooms = Room::select(['id', 'name', 'code', 'capacity'])->orderBy('name')->get();
+
+        $exams = $session->exams->sortBy(['exam_date', 'start_time'])->map(function ($exam) {
+            $principalSurv = $exam->surveillances->first(fn ($s) => in_array($s->role, ['president_salle', 'Surveillant Principal']));
+            $secondarySurvs = $exam->surveillances->filter(fn ($s) => ! in_array($s->role, ['president_salle', 'Surveillant Principal']));
+
+            $principalId = $principalSurv?->professor_id;
+            $secondaryIds = $secondarySurvs->pluck('professor_id')->toArray();
+
+            return [
+                'id' => $exam->id,
+                'exam_date' => $exam->exam_date?->format('Y-m-d'),
+                'date_formatted' => $exam->exam_date?->format('d/m/Y'),
+                'start_time' => $exam->start_time ? substr($exam->start_time, 0, 5) : '08:30',
+                'duration_minutes' => $exam->duration_minutes ?: 120,
+                'module_name' => $exam->module?->name ?? 'Module N/A',
+                'module_code' => $exam->module?->code ?? '',
+                'filiere_name' => $exam->module?->filiere?->name ?? ($exam->module?->filiere?->code ?? ''),
+                'group_name' => $exam->group?->name ?? '',
+                'room_id' => $exam->room_id,
+                'room_name' => $exam->room?->name ?? 'Non assignée',
+                'principal_id' => $principalId,
+                'secondary_ids' => $secondaryIds,
+            ];
+        })->values()->toArray();
+
+        return [
+            'success' => true,
+            'data' => [
+                'session_id' => $sessionId,
+                'session_name' => $session->name,
+                'proctors' => $proctors,
+                'rooms' => $rooms,
+                'exams' => $exams,
+            ],
+        ];
+    }
+
+    /**
+     * Affectation manuelle et sur-mesure des surveillants par l'administrateur.
+     */
+    public function saveManualAssignments(int $examSessionId, array $assignments): array
+    {
+        $session = ExamSession::with(['exams.room', 'exams.module'])->find($examSessionId);
+        if (! $session) {
+            return ['success' => false, 'message' => 'Session d\'examen introuvable.'];
+        }
+
+        return DB::transaction(function () use ($session, $assignments) {
+            $sessionExamIds = $session->exams->pluck('id')->toArray();
+
+            // Récupérer les confirmations existantes pour les préserver si même prof
+            $existingConfirmed = ExamSurveillance::whereIn('exam_id', $sessionExamIds)
+                ->whereNotNull('confirmed_at')
+                ->get()
+                ->keyBy(fn ($s) => "{$s->exam_id}_{$s->professor_id}");
+
+            // Supprimer les affectations précédentes de cette session
+            ExamSurveillance::whereIn('exam_id', $sessionExamIds)->delete();
+
+            $createdCount = 0;
+            $examsMap = $session->exams->keyBy('id');
+            $defaultRoomId = Room::first()?->id;
+
+            foreach ($assignments as $item) {
+                $examId = (int) ($item['exam_id'] ?? 0);
+                if (! in_array($examId, $sessionExamIds) || ! isset($examsMap[$examId])) {
+                    continue;
+                }
+
+                $exam = $examsMap[$examId];
+                $roomId = ! empty($item['room_id']) ? (int) $item['room_id'] : ($exam->room_id ?: $defaultRoomId);
+
+                // 1. Surveillant Principal (Président de salle)
+                if (! empty($item['principal_id'])) {
+                    $profId = (int) $item['principal_id'];
+                    $confirmedAt = $existingConfirmed->get("{$examId}_{$profId}")?->confirmed_at;
+
+                    ExamSurveillance::create([
+                        'exam_id' => $examId,
+                        'room_id' => $roomId,
+                        'professor_id' => $profId,
+                        'role' => 'Surveillant Principal',
+                        'qr_token' => 'SURV-'.strtoupper(Str::random(12)),
+                        'confirmed_at' => $confirmedAt,
+                    ]);
+                    $createdCount++;
+                }
+
+                // 2. Surveillant(s) Secondaire(s)
+                $secIds = [];
+                if (! empty($item['secondary_ids'])) {
+                    $secIds = is_array($item['secondary_ids']) ? $item['secondary_ids'] : [$item['secondary_ids']];
+                } elseif (! empty($item['secondary_id'])) {
+                    $secIds = [$item['secondary_id']];
+                }
+
+                foreach ($secIds as $sId) {
+                    if (! empty($sId) && (int) $sId !== (int) ($item['principal_id'] ?? 0)) {
+                        $profId = (int) $sId;
+                        $confirmedAt = $existingConfirmed->get("{$examId}_{$profId}")?->confirmed_at;
+
+                        ExamSurveillance::create([
+                            'exam_id' => $examId,
+                            'room_id' => $roomId,
+                            'professor_id' => $profId,
+                            'role' => 'Surveillant Secondaire',
+                            'qr_token' => 'SURV-'.strtoupper(Str::random(12)),
+                            'confirmed_at' => $confirmedAt,
+                        ]);
+                        $createdCount++;
+                    }
+                }
+            }
+
+            return [
+                'success' => true,
+                'message' => "Affectation manuelle enregistrée avec succès ({$createdCount} créneaux pourvus).",
+                'created_count' => $createdCount,
             ];
         });
     }

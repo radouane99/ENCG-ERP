@@ -540,6 +540,41 @@ sequenceDiagram
 
 ---
 
+### 5.5 Séquence 5 : Workflow Bi-Canal des Convocations & Confirmation de Présence aux Examens
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Admin as 👨‍💼 Service des Examens ENCG
+    actor Prof as 👨‍🏫 Surveillant (Permanent / Vacataire / Doctorant)
+    participant API as ⚙️ Laravel 12 API
+    participant Mailer as 📧 Service Resend Mailer
+    participant DB as 🐘 PostgreSQL (exam_surveillances)
+    participant AdminUI as 📊 Hub Convocations (/admin/convocations)
+
+    Admin->>API: 1. Affectation des surveillants & Envoi Convocations Session
+    API->>DB: INSERT / UPDATE exam_surveillances (sent_at=NOW(), qr_token)
+    API->>Mailer: 2. Notification Email avec Ordre de Mission Officiel PDF
+
+    alt Option A : Confirmation Directe par Email
+        Mailer-->>Prof: 3a. Réception Email avec lien d'accusé
+        Prof->>API: 4a. Clic sur le bouton de confirmation (GET /api/verify/surveillance/{token}/confirm)
+        API->>DB: UPDATE exam_surveillances SET confirmed_at=NOW()
+        API-->>Prof: 5a. Affichage de l'accusé de réception officiel HTML
+    else Option B : Confirmation Directe sur le Portail Web Enseignant
+        Prof->>API: 3b. Connexion sur /professor/proctoring (GET /api/professor/my-surveillances)
+        API-->>Prof: Affichage des séances avec bouton "Confirmer ma Présence"
+        Prof->>API: 4b. Clic "Confirmer ma Présence" ou "Confirmer Tout" (POST /api/professor/surveillances/{id}/confirm)
+        API->>DB: UPDATE exam_surveillances SET confirmed_at=NOW()
+        API-->>Prof: 5b. Badge Vert instantané : PRÉSENCE CONFIRMÉE ✓
+    end
+
+    AdminUI->>API: 6. Consultation en direct (GET /api/convocations/session/{id}/list)
+    API-->>AdminUI: 7. Affichage dynamique du badge "✓ Présence Confirmée" horodaté
+```
+
+---
+
 ## 6. 🏛️ Hub Intelligent des Salles & Moteur de Rattrapage (Smart Room Hub)
 
 Le module **Smart Room Hub** offre une gestion unifiée de l'occupation des salles en temps réel et un assistant algorithmique pour la planification des séances de rattrapage et des cours extras.
@@ -671,7 +706,7 @@ classDiagram
 | **3** | **👨‍🏫 Corps Professoral & Vacations** | Gestion PES/PH/PA, contrats de vacation avec calcul des heures et décompte 45h/module. |
 | **4** | **🏛️ Smart Campus & Hub des Salles** | Matrice d'occupation en direct, Smart Finder de rattrapage, panneaux de porte PDF A4 et iCal. |
 | **5** | **🗓️ Générateur d'Emplois du Temps (CSP IA)** | Résolution par contraintes (MRV-Degree-LCV) avec zéro conflit prof/salle/groupe. |
-| **6** | **📝 Planification des Examens & Surveillance** | Répartition spatiale anti-fraude (1 place sur 2), convocations QR et PVs d'incidents. |
+| **6** | **📝 Planification des Examens & Surveillance** | Répartition spatiale anti-fraude (1 place/2), affectation équitable tripartite (Permanents, Vacataires, Doctorants), convocations QR, confirmation bi-canal de présence (Email/Plateforme), émargement PV numérique et PVs d'incidents. |
 | **7** | **📊 Saisie des Notes & Verrouillage Optimiste** | Double saisie CC/Exam, gestion de concurrence (`version`), application du max au rattrapage. |
 | **8** | **📇 Cartes Étudiant PVC Smart Card** | Format ISO/IEC 7810 ID-1 (CR80) avec puce NFC, Code 128 et QR Token crypté. |
 | **9** | **📱 Assiduité & Émargement QR Code** | Séance d'émargement projetée en direct, dépôt et validation des justificatifs médicaux. |
