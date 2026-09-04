@@ -26,7 +26,7 @@
 8. [👥 Matrice des Rôles & Permissions (RBAC)](#8-matrice-des-rôles--permissions-rbac)
 9. [📦 Description Détaillée des 18 Modules Fonctionnels](#9-description-détaillée-des-18-modules-fonctionnels)
 10. [📐 Moteur de Délibération & Règles Académiques LMD (NPN Maroc)](#10-moteur-de-délibération--règles-académiques-lmd-npn-maroc)
-11. [🛡️ Sécurité, Signature Numérique SHA-256 & Conformité CNDP](#11-sécurité-signature-numérique-sha-256--conformité-cndp)
+11. [🛡️ Sécurité, Signature Numérique SHA-256, Parapheur RH & Conformité CNDP](#11-sécurité-signature-numérique-sha-256--conformité-cndp)
 12. [🧪 Pyramide de Tests, Principes ISTQB & Couverture Complète (100% Green)](#12-pyramide-de-tests-principes-istqb--couverture-complète-100-green)
 13. [⚙️ Référentiel des Commandes & Variables d'Environnement](#13-référentiel-des-commandes--variables-denvironnement)
 
@@ -575,6 +575,50 @@ sequenceDiagram
 
 ---
 
+### 5.6 Séquence 6 : Parapheur Électronique à 3 Niveaux & Ségrégation Vacataires / Permanents
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Prof as 👨‍🏫 Enseignant (Vacataire ou Titulaire)
+    participant UI as 💻 Portail Enseignant (/professor/documents)
+    participant API as ⚙️ Laravel 12 REST API
+    participant Guard as 🛡️ Security Guard (Contrôle de Rôle & Statut)
+    participant DB as 🐘 PostgreSQL (professor_document_requests)
+    participant Parapheur as 📑 Parapheur Numérique (Chef Dépt ➔ Direction)
+    participant Resend as 📧 Service Resend Mailer
+
+    Prof->>UI: 1. Consultation catalogue des documents & Dossier RH
+    UI->>API: GET /api/professor-portal/documents
+    API-->>UI: Payload dynamique (is_vacataire, available_types, administrative_dossier)
+    
+    alt Enseignant Vacataire (Régime Heures de Vacation)
+        Note over Prof,UI: Catalogue : Heures Vacation, Décompte Paiement, Attestation Fiscale IGR (17%), Ordre Mission
+        Prof->>UI: 2a. Demande d'Attestation Vacation / IGR
+        UI->>API: POST /api/professor-portal/documents (document_type, purpose)
+        API->>Guard: Contrôle de conformité statutaire
+        Guard-->>API: Statut Vacataire validé (Tentative Attestation Travail/Salaire => Rejet HTTP 403 Forbidden)
+    else Professeur Permanent Titulaire (Statut MESRSFC Fonction Publique)
+        Note over Prof,UI: Catalogue : Attestation Travail, Attestation Salaire, Congé Administratif, Service Fait
+        Prof->>UI: 2b. Demande d'Attestation de Travail / Salaire
+        UI->>API: POST /api/professor-portal/documents (document_type, purpose)
+        API->>Guard: Contrôle de conformité statutaire
+        Guard-->>API: Statut Permanent validé (Tentative Bordereau Vacation => Rejet HTTP 403 Forbidden)
+    end
+
+    API->>DB: 3. Enregistrement demande (tracking_code: DOC-PROF-YYYY-XXXX, status: pending)
+    API-->>UI: 4. Confirmation & affichage du suivi Parapheur (Jalons 1 ➔ 2 ➔ 3)
+
+    Note over Parapheur,DB: Circuit officiel de signature conforme Loi 53-05
+    Parapheur->>DB: 5. Niveau 2 : Visa Favorable Chef de Département
+    Parapheur->>DB: 6. Niveau 3 : Signature Numérique Direction / SG + Scellement QR SHA-256
+    Parapheur->>Resend: 7. Déclenchement Notification Email Transactionnelle (Mailable Resend)
+    Resend-->>Prof: 8. Email officiel avec libellé dynamique & lien d'accès direct
+    Prof->>UI: 9. Téléchargement immédiat du PDF scellé avec QR Code de vérification
+```
+
+---
+
 ## 6. 🏛️ Hub Intelligent des Salles & Moteur de Rattrapage (Smart Room Hub)
 
 Le module **Smart Room Hub** offre une gestion unifiée de l'occupation des salles en temps réel et un assistant algorithmique pour la planification des séances de rattrapage et des cours extras.
@@ -779,7 +823,7 @@ flowchart LR
 
 ---
 
-## 11. 🛡️ Sécurité, Signature Numérique SHA-256 & Conformité CNDP
+## 11. 🛡️ Sécurité, Signature Numérique SHA-256, Parapheur RH & Conformité CNDP
 
 ```mermaid
 graph LR
@@ -805,12 +849,43 @@ graph LR
 * **Bannière d'Émargement Bi-Certifiée** : Deux cartes distinctes affichant pour chaque surveillant son statut en direct (`✓ Signé & Scellé` ou `⏳ En attente de signature`), son sceau cryptographique et l'empreinte SHA-256 globale du PV.
 * **Politique Zero-Mock Intégrale** : Élimination absolue des données statiques/synthétiques de secours au profit de requêtes directes sur PostgreSQL (cohortes d'étudiants, présences, plannings, feuilles de porte et convocations).
 
-### 💾 Sauvegardes Quotidiennes Automatiques (PCA / PRA & RPO < 24h)
+### 📜 Guichet Numérique RH & Parapheur Électronique : Ségrégation Enseignants Vacataires vs Professeurs Permanents (5 Piliers Stratégiques)
 
-* **Déclenchement Automatique Nocturne (02:00)** : Sauvegarde intégrale de PostgreSQL planifiée via la tâche système **`ENCG_ERP_Daily_Backup`** et le scheduler Laravel (`php artisan db:backup-daily`).
-* **Miroir de Référence Permanent** : Chaque sauvegarde horodatée dans `backups/encg_erp_YYYYMMDD_HHMMSS.sql` met instantanément à jour le fichier racine `backup_encg_erp_latest.sql`.
-* **Restauration d'Urgence en 1 Clic** : Script `restore_database.ps1` restaurant le dump complet, réappliquant les contraintes et index (`scripts/fix_pks.sql`), appliquant les migrations et purgeant le cache en moins de 60 secondes.
-* **Rétention Glissante 30 Jours & Audit** : Purge automatique des archives de plus d'un mois et journalisation non répudiable de chaque opération dans les `audit_logs`.
+L'écosystème ENCG-ERP intègre une séparation juridique et administrative rigoureuse conforme aux réglementations de l'Enseignement Supérieur marocain (MESRSFC) et du Code Général des Impôts (CGI) :
+
+#### 1. Différenciation Statutaire & Risque Juridique
+* **Professeurs Permanents (Enseignants-Chercheurs Titulaires)** : Régis par le statut général de la fonction publique, rémunérés par la Trésorerie Générale du Royaume (TGR) sur indice/grade. Documents statutaires autorisés : *Attestation de Travail*, *Attestation de Salaire*, *Autorisation d'Absence*, *Attestation de Service Fait Pédagogique*, et *Ordre de Mission*.
+* **Enseignants Vacataires (Intervenants Externes à la Vacation)** : Professionnels ou universitaires extérieurs rémunérés à la vacation horaire. **L'émission d'une Attestation de Travail ou de Salaire à un vacataire est formellement prohibée par la loi** (elle engagerait la responsabilité juridique de l'ENCG/USMBA en créant un préjudice d'assimilation abusive à la fonction publique). Leurs documents officiels sont strictement circonscrits aux décomptes et attestations d'heures de vacation.
+
+#### 2. Les 5 Piliers Fonctionnels Stratégiques Déployés
+1. **Attestation Fiscale de Retenue à la Source IGR (17% - Article 73-II-F du CGI marocain)** :
+   * Calcul automatique du montant brut, de la retenue libératoire à la source de **17%**, et du montant net payable.
+   * Document PDF haute fidélité (`pdf.attestation_igr_vacation`) avec entête du Royaume du Maroc, tableau de décomposition fiscale, cachet de l'Agence Comptable et QR code de vérification.
+2. **Dossier Administratif RH & Conformité Paiement** :
+   * Widget de contrôle en direct sur le portail enseignant avec vérification de 4 pièces indispensables à l'ordonnancement : RIB Bancaire certifié, Autorisation d'enseigner de l'employeur d'origine (circulaire ministérielle), Diplôme le plus élevé vérifié (Doctorat / Master), et Pièce d'Identité CIN.
+3. **Téléchargement Direct du Contrat d'Engagement de Vacation (PDF)** :
+   * Bouton en accès direct (`/api/professor-portal/vacation-contract/pdf`) permettant le téléchargement instantané du contrat récapitulant les modules, les volumes horaires, le tarif horaire homologué et les obligations déontologiques.
+4. **Parapheur Numérique à 3 Niveaux & Scellement Électronique (Loi 53-05)** :
+   * **Niveau 1** : Dépôt & horodatage SHA-256 avec code de suivi `DOC-PROF-YYYY-XXXX`.
+   * **Niveau 2** : Visa et recommandation du Chef de Département.
+   * **Niveau 3** : Signature électronique du Secrétariat Général / Direction avec scellement QR Code.
+   * **Garde-Fou Sécurité** : Rejet HTTP 403 Forbidden immédiat en cas de tentative de sollicitation de documents croisés non autorisés.
+5. **Notifications Email Automatisées (Transport Resend)** :
+   * Notifications transactionnelles automatiques via Resend dès que le document est validé et scellé, avec titre personnalisé et lien de téléchargement direct.
+
+#### 3. Matrice Comparative des Documents Administratifs Enseignants
+
+| Type de Document Administratif | Professeur Permanent | Enseignant Vacataire | Fondement Juridique / Réglementaire |
+|---|:---:|:---:|---|
+| **Attestation de Travail** | **✅ Autorisée** | **❌ Formellement Interdite (HTTP 403)** | Statut Général de la Fonction Publique |
+| **Attestation de Salaire / Émoluments** | **✅ Autorisée** | **❌ Formellement Interdite (HTTP 403)** | Traitement Indiciaire TGR / Dépense Publique |
+| **Autorisation d'Absence / Congé** | **✅ Autorisée** | **❌ Non Applicable** | Régime des congés statutaires MESRSFC |
+| **Attestation de Service Fait Pédagogique** | **✅ Autorisée** | **❌ Non Applicable** | Quota légal d'enseignement statutaire |
+| **Attestation d'Heures de Vacation** | **❌ Non Applicable** | **✅ Autorisée** | Décret des indemnités d'heures de vacation |
+| **Bordereau de Vacation pour Paiement** | **❌ Non Applicable** | **✅ Autorisée** | Pièce justificative pour l'Agence Comptable |
+| **Attestation Fiscale Retenue IGR (17%)** | **❌ Non Applicable** | **✅ Autorisée** | Article 73-II-F du Code Général des Impôts |
+| **Contrat d'Engagement de Vacation** | **❌ Non Applicable** | **✅ Téléchargement Direct (PDF)** | Contrat synallagmatique de vacation |
+| **Ordre de Mission Officiel** | **✅ Autorisé** | **✅ Autorisé (Spécifique Vacataire)** | Décret 2-97-511 sur les frais de déplacement |
 
 ---
 
@@ -870,9 +945,11 @@ graph BT
 | **Non-Régression & Valeurs Limites (BVA)** | `AcademicNonRegressionAndBoundaryTest.php` | 8 | **✅ PASS** |
 | **Schéma BDD & Clés Étrangères (134 Tables)** | `DatabaseSchemaAndRelationshipIntegrityTest.php` | 25 | **✅ PASS** |
 | **Formules Pures LMD Maroc** | `MoroccanLmdFormulasUnitTest.php` | 12 | **✅ PASS** |
+| **Ségrégation RH Vacataires vs Permanents** | `ProfessorDocumentSegregationServiceTest.php` | 30 | **✅ PASS** |
+| **Fiscalité Vacations & IGR 17% (CGI Art. 73)** | `VacationTaxAndDocumentSegregationTest.php` | 29 | **✅ PASS** |
 | **Verrouillage Optimiste Saisie Notes** | `ConcurrentGradeSubmissionAndLockingTest.php` | 9 | **✅ PASS** |
 | **Frontend TypeScript & Store** | `useAuthStore.test.ts` & `gradeCalculation.test.ts` | 17 | **✅ PASS** |
-| **TOTAL** | **132+ Suites Backend & Frontend** | **400+ Assertions** | **🌟 100% GREEN** |
+| **TOTAL** | **134+ Suites Backend & Frontend** | **460+ Assertions** | **🌟 100% GREEN** |
 
 ---
 

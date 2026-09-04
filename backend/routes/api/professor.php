@@ -93,6 +93,7 @@ Route::middleware(['auth:sanctum', 'role:professor|vacataire|department-head|fil
     Route::get('/professor-portal/analytics', [ProfessorPortalController::class, 'getAnalytics']);
     Route::get('/professor-portal/workload', [ProfessorPortalController::class, 'getWorkloadSummary']);
     Route::get('/professor-portal/workload-pdf', [ProfessorPortalController::class, 'downloadWorkloadPdf']);
+    Route::get('/professor-portal/vacation-contract/pdf', [ProfessorPortalController::class, 'downloadVacationContractPdf']);
     Route::get('/professor-portal/research', [ProfessorPortalController::class, 'getResearchDashboard']);
     Route::get('/professor-portal/double-grading', [ProfessorPortalController::class, 'getDoubleGrading']);
     // Documents & Attestations RH
@@ -112,6 +113,7 @@ Route::middleware(['auth:sanctum', 'role:professor|vacataire|department-head|fil
     Route::get('/professor-portal/documents/{id}/pdf', [ProfessorPortalController::class, 'downloadDocumentPdf']);
     Route::get('/v1/professor-portal/documents/{id}/pdf', [ProfessorPortalController::class, 'downloadDocumentPdf']);
     Route::get('/v1/professor-portal/workload-pdf', [ProfessorPortalController::class, 'downloadWorkloadPdf']);
+    Route::get('/v1/professor-portal/vacation-contract/pdf', [ProfessorPortalController::class, 'downloadVacationContractPdf']);
     Route::get('/v1/professor/surveillances/all-pdf', [PdfExportController::class, 'downloadMySurveillancesPdf']);
     Route::get('/v1/professor/surveillances/{id}/pdf', [PdfExportController::class, 'surveillantConvocationPdf']);
 });

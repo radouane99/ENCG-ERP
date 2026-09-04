@@ -29,3 +29,17 @@
 - All new Mailables must extend `Illuminate\Mail\Mailable`, use `Queueable` + `SerializesModels`, and define `envelope()` / `content()` / `attachments()` methods.
 - Email views live in `resources/views/emails/` and must be standard Blade HTML templates (inline CSS only, no external stylesheets).
 - The `MAIL_FROM_ADDRESS` is `noreply@encg-fes.ac.ma` and `MAIL_FROM_NAME` is `ENCG Portail`.
+
+## Academic & Legal Segregation
+
+### 6. Teacher Document Segregation & Moroccan CGI Compliance (Vacataire vs Permanent)
+- **Enseignants Vacataires** are external/hourly contractors and **MUST NEVER** have access to request or receive an `Attestation de Travail` or `Attestation de Salaire` (which are legally restricted to permanent civil servants / fonctionnaires titulaires d'État).
+- Vacataires are strictly entitled to:
+  1. `attestation_vacation` — Attestation d'Heures de Vacation (modules, groups, certified hours).
+  2. `bordereau_decompte_vacation` — Bordereau de Vacation pour Paiement (hourly rate, gross, net).
+  3. `attestation_igr_vacation` — Attestation Fiscale de Retenue à la Source IGR (Article 73-II-F du CGI marocain).
+  4. `ordre_de_mission` — Ordre de Mission (Vacataire).
+  5. Direct download of official signed `Contrat d'Engagement de Vacation (PDF)`.
+- **Fiscal Withholding Rate (IGR)**: Withholding tax on vacation remuneration is strictly **17%** as stipulated by Article 73-II-F of the Moroccan Code Général des Impôts.
+- **Backend Guard**: All controller endpoints (`ProfessorPortalController`) must return HTTP 403 Forbidden if a vacataire requests statutory permanent documents, or if a permanent professor requests vacation documents.
+

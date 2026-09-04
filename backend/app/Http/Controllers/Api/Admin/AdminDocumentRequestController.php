@@ -79,6 +79,7 @@ class AdminDocumentRequestController extends Controller
                     'attestation_travail' => 'Attestation de Travail',
                     'attestation_vacation' => 'Attestation d\'Heures de Vacation',
                     'bordereau_decompte_vacation' => 'Bordereau de Vacation pour Paiement',
+                    'attestation_igr_vacation' => 'Attestation Fiscale de Retenue IGR (Vacations)',
                     'ordre_de_mission' => $isVac ? 'Ordre de Mission (Vacataire)' : 'Ordre de Mission',
                     'attestation_salaire' => 'Attestation de Salaire',
                     'autorisation_absence' => 'Autorisation d\'Absence',
@@ -187,9 +188,13 @@ class AdminDocumentRequestController extends Controller
         $user = $pDoc->user ?? User::find($pDoc->user_id);
         $typeLabel = match ($pDoc->document_type) {
             'attestation_travail' => 'Attestation de Travail',
+            'attestation_vacation' => 'Attestation d\'Heures de Vacation',
+            'bordereau_decompte_vacation' => 'Bordereau de Vacation pour Paiement',
+            'attestation_igr_vacation' => 'Attestation Fiscale de Retenue IGR (Vacations)',
             'ordre_de_mission' => 'Ordre de Mission',
             'attestation_salaire' => 'Attestation de Salaire',
             'autorisation_absence' => 'Autorisation d\'Absence',
+            'attestation_service_fait' => 'Attestation de Service Fait Pédagogique',
             default => ucwords(str_replace('_', ' ', $pDoc->document_type))
         };
 

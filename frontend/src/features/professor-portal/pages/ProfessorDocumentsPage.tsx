@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { 
   FileText, PlaneTakeoff, Coins, CalendarClock, Download, Sparkles, 
   Plus, CheckCircle2, Clock, X, ShieldCheck, 
-  ChevronRight, Send, Loader2, Stamp, Award, AlertCircle, GraduationCap
+  ChevronRight, Send, Loader2, Stamp, Award, AlertCircle, GraduationCap,
+  Building2, CreditCard, FileCheck
 } from 'lucide-react';
 import api from '@/shared/lib/api';
 import { openAuthenticatedUrl } from '@shared/lib/documentAccess';
@@ -17,6 +18,19 @@ interface DocumentType {
   description: string;
   icon: string;
   processing_time: string;
+}
+
+interface AdministrativeDossier {
+  is_vacataire: boolean;
+  is_complete: boolean;
+  status_label: string;
+  rib_status: string;
+  rib_number: string;
+  bank_name: string;
+  employer_authorization: string;
+  diploma_status: string;
+  cin_status: string;
+  last_verified_at: string;
 }
 
 interface DocumentRequestItem {
@@ -46,6 +60,7 @@ export default function ProfessorDocumentsPage() {
 
   const [availableTypes, setAvailableTypes] = useState<DocumentType[]>([]);
   const [history, setHistory] = useState<DocumentRequestItem[]>([]);
+  const [administrativeDossier, setAdministrativeDossier] = useState<AdministrativeDossier | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [isVacataire, setIsVacataire] = useState<boolean>(false);
@@ -70,6 +85,9 @@ export default function ProfessorDocumentsPage() {
         setAvailableTypes(res.data.data.available_types || []);
         setHistory(res.data.data.requests_history || []);
         setIsVacataire(Boolean(res.data.data.is_vacataire) || hasRole('vacataire'));
+        if (res.data.data.administrative_dossier) {
+          setAdministrativeDossier(res.data.data.administrative_dossier);
+        }
       }
     } catch (err) {
       console.error('Error fetching documents:', err);
@@ -158,6 +176,12 @@ export default function ProfessorDocumentsPage() {
     toast.success(`📄 Téléchargement de l'${req.type_label} PDF Officiel !`);
   };
 
+  const handleDownloadContract = () => {
+    const url = '/api/professor-portal/vacation-contract/pdf';
+    openAuthenticatedUrl(url);
+    toast.success("📄 Téléchargement du Contrat Officiel de Vacation (PDF) !");
+  };
+
   const renderIcon = (typeId: string) => {
     switch (typeId) {
       case 'ordre_de_mission':
@@ -166,6 +190,8 @@ export default function ProfessorDocumentsPage() {
         return <Award className="w-6 h-6 text-amber-500" />;
       case 'bordereau_decompte_vacation':
         return <Coins className="w-6 h-6 text-emerald-500" />;
+      case 'attestation_igr_vacation':
+        return <Coins className="w-6 h-6 text-indigo-500" />;
       case 'attestation_salaire':
         return <Coins className="w-6 h-6 text-amber-500" />;
       case 'autorisation_absence':
@@ -236,7 +262,7 @@ export default function ProfessorDocumentsPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-3 relative z-10">
+        <div className="flex flex-wrap items-center gap-3 relative z-10">
           <button
             onClick={() => handleOpenRequestModal(isVacataire ? 'attestation_vacation' : 'attestation_travail')}
             className={cn(
@@ -247,8 +273,19 @@ export default function ProfessorDocumentsPage() {
             )}
           >
             <Plus className="w-4 h-4" /> 
-            {isVacataire ? "Demander Attestation de Vacation" : "Demander Attestation de Travail"}
+            {isVacataire ? "Demander Attestation Vacation" : "Demander Attestation de Travail"}
           </button>
+
+          {isVacataire && (
+            <button
+              onClick={handleDownloadContract}
+              className="px-4 py-3 bg-white/15 hover:bg-white/25 text-white font-bold rounded-xl text-xs uppercase tracking-wider transition-all border border-white/20 cursor-pointer flex items-center gap-2 shadow-sm"
+              title="Télécharger votre Contrat d'Engagement de Vacation signé"
+            >
+              <Download className="w-4 h-4 text-amber-400" /> Mon Contrat Vacation (PDF)
+            </button>
+          )}
+
           <button
             onClick={() => handleOpenRequestModal('ordre_de_mission')}
             className="px-5 py-3 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl text-xs uppercase tracking-wider transition-all border border-white/20 cursor-pointer flex items-center gap-2"
@@ -269,8 +306,117 @@ export default function ProfessorDocumentsPage() {
               Réglementation Académique MESRSFC — Spécificité Enseignant Vacataire
             </h3>
             <p className="text-amber-800 dark:text-amber-300 leading-relaxed font-medium">
-              Conformément à la réglementation universitaire en vigueur, les enseignants vacataires accomplissant des prestations d'enseignement à la vacation bénéficient d'<strong>Attestations d'Heures de Vacation</strong> certifiant les modules et volumes horaires effectués, ainsi que de <strong>Bordereaux de Vacation pour Paiement</strong>. L'Attestation de Travail statutaire et l'Attestation de Salaire de la Fonction Publique sont légalement réservées aux professeurs titulaires / permanents d'État.
+              Conformément à la réglementation universitaire en vigueur, les enseignants vacataires accomplissant des prestations d'enseignement à la vacation bénéficient d'<strong>Attestations d'Heures de Vacation</strong> certifiant les modules et volumes horaires effectués, de <strong>Bordereaux de Vacation pour Paiement</strong>, et d'<strong>Attestations Fiscales de Retenue à la Source IGR (17%)</strong>. L'Attestation de Travail statutaire et l'Attestation de Salaire de la Fonction Publique sont légalement réservées aux professeurs titulaires / permanents d'État.
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* Mon Dossier Administratif RH & Conformité Paiement */}
+      {administrativeDossier && (
+        <div className="bg-card border border-border rounded-3xl p-6 md:p-7 shadow-sm space-y-5 animate-in fade-in">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 text-[#001A4B] dark:text-blue-400 flex items-center justify-center shrink-0">
+                <ShieldCheck className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-extrabold text-sm md:text-base text-foreground flex items-center gap-2">
+                  Dossier Administratif RH &amp; Conformité
+                  {administrativeDossier.is_complete ? (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300/60">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" /> Conforme
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300/60">
+                      <Clock className="w-3 h-3 text-amber-600" /> En Révision
+                    </span>
+                  )}
+                </h3>
+                <p className="text-xs text-muted-foreground font-medium mt-0.5">
+                  {administrativeDossier.status_label} • Contrôlé le {administrativeDossier.last_verified_at}
+                </p>
+              </div>
+            </div>
+
+            {isVacataire && (
+              <button
+                onClick={handleDownloadContract}
+                className="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:opacity-95 text-slate-950 font-black rounded-xl text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer flex items-center gap-2 shrink-0 self-start sm:self-auto"
+              >
+                <Download className="w-4 h-4" /> Contrat d'Engagement (PDF)
+              </button>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* RIB Bancaire */}
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/80 dark:border-slate-800 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">RIB Bancaire Paiement</span>
+                <CreditCard className="w-4 h-4 text-indigo-500" />
+              </div>
+              <div className="font-mono text-xs font-bold text-foreground">
+                {administrativeDossier.rib_number}
+              </div>
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="text-muted-foreground font-medium truncate max-w-[150px]">{administrativeDossier.bank_name}</span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-extrabold flex items-center gap-1 text-[10px]">
+                  <CheckCircle2 className="w-3 h-3" /> Validé
+                </span>
+              </div>
+            </div>
+
+            {/* Autorisation d'enseigner */}
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/80 dark:border-slate-800 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Autorisation Employeur</span>
+                <Building2 className="w-4 h-4 text-purple-500" />
+              </div>
+              <div className="text-xs font-bold text-foreground">
+                {administrativeDossier.employer_authorization}
+              </div>
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="text-muted-foreground font-medium">Circulaire Ministérielle</span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-extrabold flex items-center gap-1 text-[10px]">
+                  <CheckCircle2 className="w-3 h-3" /> Conforme
+                </span>
+              </div>
+            </div>
+
+            {/* Diplôme le plus élevé */}
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/80 dark:border-slate-800 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Qualification &amp; Diplôme</span>
+                <GraduationCap className="w-4 h-4 text-emerald-500" />
+              </div>
+              <div className="text-xs font-bold text-foreground">
+                {administrativeDossier.diploma_status}
+              </div>
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="text-muted-foreground font-medium">Contrôle Académique</span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-extrabold flex items-center gap-1 text-[10px]">
+                  <CheckCircle2 className="w-3 h-3" /> Certifié
+                </span>
+              </div>
+            </div>
+
+            {/* Pièce d'identité CIN */}
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/80 dark:border-slate-800 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Identité &amp; Statut Légal</span>
+                <ShieldCheck className="w-4 h-4 text-amber-500" />
+              </div>
+              <div className="text-xs font-bold text-foreground">
+                {administrativeDossier.cin_status}
+              </div>
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="text-muted-foreground font-medium">Dossier Numérique RH</span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-extrabold flex items-center gap-1 text-[10px]">
+                  <CheckCircle2 className="w-3 h-3" /> À Jour
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       )}

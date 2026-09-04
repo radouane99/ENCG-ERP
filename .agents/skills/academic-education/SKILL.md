@@ -32,3 +32,18 @@ This skill defines standard domain patterns, business logic constraints, and arc
 
 ## 6. Code placement
 - Structural rules (layers, canonical models, routes, React slices): see skill `code-architecture`.
+
+## 7. Teacher Document Segregation & Moroccan Fiscal Compliance (Vacataire vs Permanent)
+- **Legal Status Separation**:
+  - **Professeurs Permanents** are tenured civil servants under the Moroccan Ministry of Higher Education (MESRSFC). They are entitled to: `Attestation de Travail`, `Attestation de Salaire`, `Autorisation d'Absence`, `Attestation de Service Fait Pédagogique`, and `Ordre de Mission`.
+  - **Enseignants Vacataires** are contractual external teachers performing hourly services. Under Moroccan administrative and labor law, issuing an `Attestation de Travail` or `Attestation de Salaire` to a vacataire is legally invalid and prohibited. Vacataires are strictly limited to: `Attestation d'Heures de Vacation`, `Bordereau de Vacation pour Paiement`, `Attestation Fiscale de Retenue à la Source IGR (17%)`, and `Ordre de Mission (Vacataire)`.
+- **Taxation Rule (CGI Article 73-II-F)**:
+  - Higher education vacation remuneration paid to non-permanent personnel is subject to a flat 17% withholding tax at source (`taux libératoire de 17%`).
+  - The ERP automatically calculates: `Gross = Hours * Rate`, `IGR = Gross * 17%`, `Net = Gross - IGR`.
+- **Administrative Compliance Dossier (RH)**:
+  - For payment processing, vacataires must have a certified RIB, employer authorization (`Autorisation d'enseigner`), verified highest diploma, and valid CIN in their electronic file.
+- **3-Tier Parapheur Workflow**:
+  - Step 1: Submission by teacher & SHA-256 timestamping.
+  - Step 2: Department Head visa & recommendation (`Visa Chef de Département`).
+  - Step 3: Direction / Secretary General electronic signature with verification QR code.
+
