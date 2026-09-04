@@ -267,9 +267,9 @@ class ProfessorPortalController extends Controller
             })->where('module_id', $moduleId)->count();
 
             $totalPlannedSessions = max(1, (int) round($modTotal / 2));
-            $syllabusProgress = $recordedSessionsCount > 0 
+            $syllabusProgress = ($totalPlannedSessions > 0 && $recordedSessionsCount > 0)
                 ? min(100, (int) round(($recordedSessionsCount / $totalPlannedSessions) * 100))
-                : 82;
+                : 0;
 
             $modulesBreakdown[] = [
                 'id' => $module->id ?? $moduleId,
@@ -287,23 +287,16 @@ class ProfessorPortalController extends Controller
         }
 
         $totalHoursDone = round($totalCmHours + $totalTdHours + $totalTpHours);
-        if ($totalHoursDone === 0) {
-            $totalHoursDone = 160;
-            $totalCmHours = 96;
-            $totalTdHours = 48;
-            $totalTpHours = 16;
-            $weeklyHours = 12;
-        }
 
-        // 4. Décompte mensuel
+        // 4. Décompte mensuel calculé sur les 4 mois du semestre
         $monthlyBreakdown = [];
         $semesterMonths = ['Octobre', 'Novembre', 'Décembre', 'Janvier'];
         $monthCount = count($semesterMonths);
 
         foreach ($semesterMonths as $idx => $mName) {
-            $mCm = round($totalCmHours / $monthCount);
-            $mTd = round($totalTdHours / $monthCount);
-            $mTp = round($totalTpHours / $monthCount);
+            $mCm = $monthCount > 0 ? round($totalCmHours / $monthCount) : 0;
+            $mTd = $monthCount > 0 ? round($totalTdHours / $monthCount) : 0;
+            $mTp = $monthCount > 0 ? round($totalTpHours / $monthCount) : 0;
             $mTotal = $mCm + $mTd + $mTp;
             $monthlyBreakdown[] = [
                 'month' => $mName,
@@ -312,7 +305,7 @@ class ProfessorPortalController extends Controller
                 'tp' => $mTp,
                 'total' => $mTotal,
                 'sessions' => (int) round($mTotal / 2),
-                'status' => $idx < 3 ? 'Certifié Conforme' : 'En cours d\'émargement',
+                'status' => $totalHoursDone > 0 ? ($idx < 3 ? 'Certifié Conforme' : 'En cours d\'émargement') : 'Non entamé',
             ];
         }
 
@@ -323,24 +316,25 @@ class ProfessorPortalController extends Controller
                 $q->orWhere('user_id', $userId);
             })->first();
 
-            $hourlyRate = $vacContract?->hourly_rate ? (float) $vacContract->hourly_rate : 350.0;
-            $vacationHours = $vacContract?->agreed_hours ? (int) $vacContract->agreed_hours : max(36, $totalHoursDone);
+            $hourlyRate = $vacContract?->hourly_rate ? (float) $vacContract->hourly_rate : 0.0;
+            $agreedHours = $vacContract?->agreed_hours ? (int) $vacContract->agreed_hours : 0;
+            $vacationHours = $totalHoursDone > 0 ? $totalHoursDone : $agreedHours;
             $estimatedPayment = $vacationHours * $hourlyRate;
             $contractRef = $vacContract?->id 
                 ? ('CONTRAT-VAC-2026-ENCG-' . str_pad((string)$vacContract->id, 3, '0', STR_PAD_LEFT))
-                : ('CONTRAT-VAC-2026-ENCG-' . str_pad((string)($profId ?? $userId), 3, '0', STR_PAD_LEFT));
+                : ($profId ? 'CONTRAT-VAC-2026-ENCG-' . str_pad((string)$profId, 3, '0', STR_PAD_LEFT) : 'Non assigné');
 
             $vacMonthly = [];
             foreach ($monthlyBreakdown as $mb) {
-                $mHours = round($vacationHours / count($monthlyBreakdown));
+                $mHours = $monthCount > 0 ? round($vacationHours / $monthCount) : 0;
                 $vacMonthly[] = [
                     'month' => $mb['month'],
-                    'cm' => round($mb['cm'] * ($vacationHours / max(1, $totalHoursDone))),
-                    'td' => round($mb['td'] * ($vacationHours / max(1, $totalHoursDone))),
+                    'cm' => $totalHoursDone > 0 ? round($mb['cm'] * ($vacationHours / $totalHoursDone)) : 0,
+                    'td' => $totalHoursDone > 0 ? round($mb['td'] * ($vacationHours / $totalHoursDone)) : 0,
                     'tp' => 0,
                     'total' => $mHours,
                     'amount' => $mHours * $hourlyRate,
-                    'status' => 'Certifié Payé',
+                    'status' => $vacationHours > 0 ? 'Certifié Payé' : 'Non éligible',
                 ];
             }
 
@@ -357,8 +351,10 @@ class ProfessorPortalController extends Controller
                     'total_sessions' => (int) round($vacationHours / 2),
                     'hourly_rate' => $hourlyRate,
                     'estimated_payment' => $estimatedPayment,
-                    'virement_status' => 'Bordereau Validé par la Direction — En cours d\'Ordonnancement Trésorerie',
-                    'virement_step' => 3,
+                    'virement_status' => $vacationHours > 0 
+                        ? 'Bordereau Validé par la Direction — En cours d\'Ordonnancement Trésorerie'
+                        : 'Aucune vacation enregistrée',
+                    'virement_step' => $vacationHours > 0 ? 3 : 0,
                     'monthly_breakdown' => $vacMonthly,
                     'weekly_schedule_summary' => $weeklyScheduleList,
                     'modules_breakdown' => $modulesBreakdown,
@@ -368,15 +364,23 @@ class ProfessorPortalController extends Controller
 
         // --- PROFESSEUR PERMANENT ---
         // 100% Pédagogique et Statutaire - Aucune mention de paiement/taux/virement
-        $statutoryHours = 200; // Quota statutaire légal (PES / PH / PA)
+        $statutoryHours = 200; // Quota statutaire légal MESRSFC (PES / PH / PA)
         $remainingHours = max(0, $statutoryHours - $totalHoursDone);
-        $completionPercent = min(100, (int) round(($totalHoursDone / $statutoryHours) * 100));
+        $completionPercent = $statutoryHours > 0 ? min(100, (int) round(($totalHoursDone / $statutoryHours) * 100)) : 0;
         $totalSessions = (int) round($totalHoursDone / 2);
 
         $attendanceCount = AttendanceSession::where(function($q) use ($profId, $userId) {
             if ($profId) $q->where('professor_id', $profId);
             $q->orWhere('professor_id', $userId);
         })->count();
+
+        $avgSyllabusProgress = !empty($modulesBreakdown) 
+            ? (int) round(collect($modulesBreakdown)->avg('progress')) 
+            : 0;
+
+        $cahierCompliance = ($attendanceCount >= $totalSessions && $totalSessions > 0)
+            ? '100% à jour'
+            : ($attendanceCount > 0 ? round(($attendanceCount / max(1, $totalSessions)) * 100) . '% renseigné' : ($totalSessions > 0 ? '0% renseigné' : 'Aucune séance'));
 
         return response()->json([
             'success' => true,
@@ -392,10 +396,12 @@ class ProfessorPortalController extends Controller
                 'weekly_hours' => $weeklyHours,
                 'monthly_hours' => round($totalHoursDone / 4),
                 'total_sessions' => $totalSessions,
-                'cahier_de_texte_count' => $attendanceCount > 0 ? $attendanceCount : $totalSessions,
-                'cahier_de_texte_compliance' => '100% à jour',
-                'syllabus_progress' => !empty($modulesBreakdown) ? (int) round(collect($modulesBreakdown)->avg('progress')) : 84,
-                'service_status' => 'Conforme aux obligations statutaires (Validé par Chef de Département)',
+                'cahier_de_texte_count' => $attendanceCount,
+                'cahier_de_texte_compliance' => $cahierCompliance,
+                'syllabus_progress' => $avgSyllabusProgress,
+                'service_status' => $totalHoursDone > 0 
+                    ? 'Conforme aux obligations statutaires (Validé par Chef de Département)' 
+                    : 'Planning prévisionnel en attente de validation',
                 'weekly_schedule_summary' => $weeklyScheduleList,
                 'monthly_breakdown' => $monthlyBreakdown,
                 'modules_breakdown' => $modulesBreakdown,
@@ -432,18 +438,18 @@ class ProfessorPortalController extends Controller
             'generationDate' => now()->format('d/m/Y à H:i:s'),
             'verifyUrl' => url('/verify/document/SRV-' . $user->id . '-' . strtoupper(substr(md5($user->email . now()->format('Ymd')), 0, 8))),
             'statutoryHours' => $summaryData['statutory_hours'] ?? 200,
-            'totalHoursDone' => $summaryData['hours_done'] ?? 160,
-            'totalHours' => $summaryData['hours_done'] ?? 64,
-            'hoursCm' => $summaryData['hours_cm'] ?? 96,
-            'hoursTd' => $summaryData['hours_td'] ?? 48,
-            'hoursTp' => $summaryData['hours_tp'] ?? 16,
-            'totalSessions' => $summaryData['total_sessions'] ?? 80,
-            'completionPercent' => $summaryData['completion_percent'] ?? 80,
+            'totalHoursDone' => $summaryData['hours_done'] ?? 0,
+            'totalHours' => $summaryData['hours_done'] ?? 0,
+            'hoursCm' => $summaryData['hours_cm'] ?? 0,
+            'hoursTd' => $summaryData['hours_td'] ?? 0,
+            'hoursTp' => $summaryData['hours_tp'] ?? 0,
+            'totalSessions' => $summaryData['total_sessions'] ?? 0,
+            'completionPercent' => $summaryData['completion_percent'] ?? 0,
             'modulesBreakdown' => $summaryData['modules_breakdown'] ?? [],
             'monthlyBreakdown' => $summaryData['monthly_breakdown'] ?? [],
             'contractRef' => $summaryData['contract_ref'] ?? ('CONTRAT-VAC-2026-ENCG-' . $user->id),
-            'hourlyRate' => $summaryData['hourly_rate'] ?? 350,
-            'totalAmount' => $summaryData['estimated_payment'] ?? (($summaryData['hours_done'] ?? 64) * 350),
+            'hourlyRate' => $summaryData['hourly_rate'] ?? 0,
+            'totalAmount' => $summaryData['estimated_payment'] ?? 0,
         ];
 
         $pdf = app(\App\Services\Documents\OfficialPdfFactory::class)
