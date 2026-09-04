@@ -20,10 +20,10 @@ class OfficialPdfFactory
         }
 
         try {
-            $qrSvg = QrCode::size(150)->margin(0)->generate($data['verifyUrl']);
+            $qrSvg = QrCode::format('svg')->size(150)->margin(0)->generate($data['verifyUrl']);
             $data['qrBase64'] = 'data:image/svg+xml;base64,'.base64_encode($qrSvg);
         } catch (\Throwable) {
-            $data['qrBase64'] = 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data='.urlencode($data['verifyUrl']);
+            $data['qrBase64'] = '';
         }
 
         return Pdf::loadView($view, $data)->setPaper('a4', 'portrait');

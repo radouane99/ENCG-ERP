@@ -82,24 +82,24 @@ export function CustomSelect({
   const isHero = variant === 'hero'
 
   return (
-    <div ref={containerRef} className={cn("relative inline-block text-left min-w-[220px]", className)}>
+    <div ref={containerRef} className={cn("relative inline-block text-left", !className?.includes('min-w-') && "min-w-[180px]", className)}>
       {/* Trigger Button */}
       <button
         type="button"
         disabled={disabled}
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "w-full px-4 py-2.5 rounded-2xl text-xs font-bold transition-all duration-200 cursor-pointer flex items-center justify-between gap-2.5 outline-none select-none",
+          "w-full px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer flex items-center justify-between gap-2.5 outline-none select-none",
           isHero
             ? "bg-white/15 hover:bg-white/25 active:bg-white/30 border border-white/30 text-white shadow-lg backdrop-blur-xl"
-            : "bg-background hover:bg-muted/60 border border-input text-foreground shadow-2xs dark:bg-slate-900 dark:border-slate-800",
-          isOpen && (isHero ? "ring-2 ring-amber-400/60 border-amber-400/80 bg-white/25" : "ring-2 ring-primary/30 border-primary shadow-md"),
+            : "bg-white hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 shadow-2xs hover:border-slate-300 dark:hover:border-slate-600",
+          isOpen && (isHero ? "ring-2 ring-amber-400/60 border-amber-400/80 bg-white/25" : "ring-2 ring-indigo-500/25 border-indigo-500 shadow-xs"),
           disabled && "opacity-50 cursor-not-allowed"
         )}
       >
         <div className="flex items-center gap-2 truncate">
           {(selectedOption?.icon || icon) && (
-            <span className={cn("shrink-0", isHero ? "text-amber-300" : "text-primary")}>
+            <span className={cn("shrink-0", isHero ? "text-amber-300" : "text-indigo-600 dark:text-indigo-400")}>
               {selectedOption?.icon || icon}
             </span>
           )}
@@ -122,8 +122,8 @@ export function CustomSelect({
           <ChevronDown
             className={cn(
               "w-4 h-4 shrink-0 transition-transform duration-200",
-              isHero ? "text-amber-300" : "text-muted-foreground",
-              isOpen && "rotate-180 text-primary"
+              isHero ? "text-amber-300" : "text-slate-400",
+              isOpen && "rotate-180 text-indigo-600 dark:text-indigo-400"
             )}
           />
         </div>
@@ -133,10 +133,10 @@ export function CustomSelect({
       {isOpen && (
         <div
           className={cn(
-            "absolute left-0 top-full mt-2 w-max min-w-full max-w-[420px] max-h-80 overflow-hidden rounded-2xl z-[100] shadow-[0_20px_60px_rgba(0,0,0,0.45)] animate-in fade-in zoom-in-95 duration-150 border flex flex-col",
+            "absolute left-0 top-full mt-1.5 w-max min-w-full max-w-[420px] max-h-80 overflow-hidden rounded-2xl z-[100] shadow-[0_20px_50px_rgba(0,0,0,0.16)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.6)] animate-in fade-in zoom-in-95 duration-150 border flex flex-col",
             isHero
               ? "bg-[#081533]/98 backdrop-blur-2xl border-white/25 text-white ring-1 ring-white/10"
-              : "bg-popover/98 backdrop-blur-2xl border-border text-popover-foreground shadow-2xl dark:bg-slate-900 dark:border-slate-800"
+              : "bg-white/98 dark:bg-slate-900/98 backdrop-blur-2xl border-slate-200/90 dark:border-slate-700/80 text-slate-800 dark:text-slate-100 shadow-2xl"
           )}
         >
           {/* Optional Search Filter Header */}
@@ -185,8 +185,8 @@ export function CustomSelect({
                           ? "bg-blue-600 text-white font-extrabold shadow-md border border-blue-400/40"
                           : "text-blue-100 hover:bg-white/15 hover:text-white"
                         : isSelected
-                          ? "bg-primary text-primary-foreground font-extrabold shadow-sm"
-                          : "hover:bg-muted text-foreground"
+                          ? "bg-indigo-600 text-white font-extrabold shadow-xs"
+                          : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-100 font-bold"
                     )}
                   >
                     <div className="flex items-center gap-2.5 truncate">
@@ -201,14 +201,14 @@ export function CustomSelect({
                           isHero
                             ? "bg-white/20 text-amber-300"
                             : isSelected
-                              ? "bg-primary-foreground/20 text-primary-foreground"
-                              : "bg-muted text-muted-foreground"
+                              ? "bg-white/20 text-white"
+                              : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700"
                         )}>
                           {opt.badge}
                         </span>
                       )}
                       {isSelected && (
-                        <Check className={cn("w-4 h-4 shrink-0", isHero ? "text-amber-300" : "text-primary-foreground")} />
+                        <Check className={cn("w-4 h-4 shrink-0", isHero ? "text-amber-300" : "text-white")} />
                       )}
                     </div>
                   </div>

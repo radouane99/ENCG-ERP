@@ -7,6 +7,7 @@ use App\Mail\ScheduleChangeNotificationMail;
 use App\Models\Module;
 use App\Models\Room;
 use App\Models\RoomBooking;
+use App\Models\Schedule;
 use App\Models\Student;
 use App\Notifications\RattrapageSessionScheduledNotification;
 use App\Services\Academic\RoomAvailabilityService;
@@ -109,9 +110,14 @@ class RoomBookingController extends Controller
             ->get();
 
         $verifyUrl = url('/public/rooms/'.$room->code);
-        $qrCodeSvg = class_exists(QrCode::class)
-            ? QrCode::size(120)->margin(0)->generate($verifyUrl)
-            : null;
+        $qrCodeSvg = null;
+        if (class_exists(QrCode::class)) {
+            try {
+                $qrCodeSvg = QrCode::format('svg')->size(120)->margin(0)->generate($verifyUrl);
+            } catch (\Throwable $e) {
+                Log::warning('QR generation error for Door Sign: '.$e->getMessage());
+            }
+        }
 
         $pdf = app(OfficialPdfFactory::class)
             ->make('pdf.door_sign', [
@@ -122,7 +128,8 @@ class RoomBookingController extends Controller
             ])
             ->setPaper('a4', 'portrait');
 
-        return $pdf->download("Affiche_Porte_{$room->code}.pdf");
+        $fileName = 'Affiche_Porte_' . preg_replace('/\s+/', '_', $room->name) . '.pdf';
+        return $pdf->download($fileName);
     }
 
     /**

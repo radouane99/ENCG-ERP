@@ -30,12 +30,20 @@ import {
   Table,
   Grid,
   FileSpreadsheet,
-  RefreshCw
+  RefreshCw,
+  GraduationCap,
+  QrCode,
+  Eye,
+  Wifi,
+  LayoutList,
+  CalendarDays
 } from 'lucide-react'
 import api from '@/shared/lib/api'
 import { toast } from 'sonner'
 import { cn } from '@/shared/lib/utils'
-import { format, startOfWeek, addDays } from 'date-fns'
+import { CustomSelect } from '@/shared/components/ui/CustomSelect'
+import { DatePicker } from '@/shared/components/ui/DatePicker'
+import { format, startOfWeek, addDays, parseISO } from 'date-fns'
 import { fr } from 'date-fns/locale'
 
 const TIME_BLOCKS = [
@@ -86,6 +94,9 @@ export default function RoomAvailabilityHubPage() {
   const [roomScheduleEvents, setRoomScheduleEvents] = useState<any[]>([])
   const [roomScheduleLoading, setRoomScheduleLoading] = useState(false)
   const [exportingPdf, setExportingPdf] = useState(false)
+  const [scheduleViewMode, setScheduleViewMode] = useState<'timeline' | 'preview_a4' | 'matrix'>('timeline')
+  const [selectedScheduleDay, setSelectedScheduleDay] = useState<number>(0) // 0 = All days, 1 = Mon, ..., 6 = Sat
+  const [scheduleSearchQuery, setScheduleSearchQuery] = useState<string>('')
 
   // --- Bookings State ---
   const [bookings, setBookings] = useState<any[]>([])
@@ -250,6 +261,46 @@ export default function RoomAvailabilityHubPage() {
     }
   }, [activeTab, selectedScheduleRoomId])
 
+  // Current room details for Tab 4
+  const currentScheduleRoom = useMemo(() => {
+    return rooms.find((r: any) => String(r.id) === String(selectedScheduleRoomId)) || null
+  }, [rooms, selectedScheduleRoomId])
+
+  // Standard Moroccan academic days
+  const DAYS_LIST = useMemo(() => [
+    { index: 1, label: 'Lundi', short: 'Lun' },
+    { index: 2, label: 'Mardi', short: 'Mar' },
+    { index: 3, label: 'Mercredi', short: 'Mer' },
+    { index: 4, label: 'Jeudi', short: 'Jeu' },
+    { index: 5, label: 'Vendredi', short: 'Ven' },
+    { index: 6, label: 'Samedi', short: 'Sam' },
+  ], [])
+
+  // Filtered room schedule events based on search query
+  const filteredScheduleEvents = useMemo(() => {
+    if (!scheduleSearchQuery) return roomScheduleEvents
+    const q = scheduleSearchQuery.toLowerCase()
+    return roomScheduleEvents.filter((evt: any) => {
+      const title = (evt.title || '').toLowerCase()
+      const prof = (evt.extendedProps?.professor || '').toLowerCase()
+      const code = (evt.extendedProps?.module_code || '').toLowerCase()
+      const grp = (evt.extendedProps?.group || '').toLowerCase()
+      return title.includes(q) || prof.includes(q) || code.includes(q) || grp.includes(q)
+    })
+  }, [roomScheduleEvents, scheduleSearchQuery])
+
+  // Count events per day (1 = Mon, ..., 6 = Sat)
+  const eventsCountByDay = useMemo(() => {
+    const counts: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 }
+    roomScheduleEvents.forEach((evt: any) => {
+      if (evt.start) {
+        const d = new Date(evt.start).getDay()
+        if (counts[d] !== undefined) counts[d]++
+      }
+    })
+    return counts
+  }, [roomScheduleEvents])
+
   // Load Bookings
   const loadBookings = async () => {
     try {
@@ -326,6 +377,8 @@ export default function RoomAvailabilityHubPage() {
   // Download Door Sign PDF
   const handleDownloadDoorSign = async () => {
     if (!selectedScheduleRoomId) return
+    const currentRoom = rooms.find((r: any) => String(r.id) === String(selectedScheduleRoomId))
+    const roomFileSuffix = currentRoom?.name ? currentRoom.name.replace(/\s+/g, '_') : `Salle_${selectedScheduleRoomId}`
     try {
       setExportingPdf(true)
       toast.info('Génération du panneau de porte PDF A4 officiel avec QR Code…')
@@ -336,7 +389,7 @@ export default function RoomAvailabilityHubPage() {
       const url = window.URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
-      link.setAttribute('download', `Affiche_Porte_Salle_${selectedScheduleRoomId}.pdf`)
+      link.setAttribute('download', `Affiche_Porte_${roomFileSuffix}.pdf`)
       document.body.appendChild(link)
       link.click()
       link.remove()
@@ -429,34 +482,38 @@ export default function RoomAvailabilityHubPage() {
     <div className="max-w-[1700px] mx-auto p-4 md:p-6 space-y-5 font-sans pb-28">
 
       {/* ══════════════════════════════════════════════════════
-          HERO HEADER — Deep ENCG Navy with Mode Toggle
+          HERO HEADER — Executive Campus Infrastructure Hub
       ══════════════════════════════════════════════════════ */}
-      <div className="relative overflow-hidden rounded-2xl" style={{ background: 'linear-gradient(135deg, #001A4B 0%, #003087 50%, #001A4B 100%)' }}>
-        <div className="absolute top-0 right-0 w-80 h-80 opacity-10 pointer-events-none" style={{ background: 'radial-gradient(circle, #6366f1 0%, transparent 70%)' }} />
-        <div className="absolute bottom-0 left-1/3 w-48 h-48 opacity-8 pointer-events-none" style={{ background: 'radial-gradient(circle, #06b6d4 0%, transparent 70%)' }} />
+      <div className="relative overflow-hidden rounded-3xl border border-slate-800/80 bg-gradient-to-br from-[#060D1E] via-[#0A1A38] to-[#041026] text-white p-6 md:p-8 shadow-2xl shadow-indigo-950/25">
+        {/* Subtle Ambient Glow Elements */}
+        <div className="absolute top-0 right-0 w-96 h-96 opacity-15 pointer-events-none" style={{ background: 'radial-gradient(circle, #6366f1 0%, transparent 70%)' }} />
+        <div className="absolute bottom-0 left-1/3 w-64 h-64 opacity-10 pointer-events-none" style={{ background: 'radial-gradient(circle, #06b6d4 0%, transparent 70%)' }} />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.12),rgba(255,255,255,0))] pointer-events-none" />
 
-        <div className="relative z-10 p-6 md:p-8 flex flex-col xl:flex-row xl:items-center justify-between gap-6">
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-blue-300/90 inline-flex items-center gap-1">
-                <Sparkles className="w-3 h-3 text-amber-400" /> Infrastructure & Gestion du Campus · ENCG Fès
+        <div className="relative z-10 flex flex-col xl:flex-row xl:items-center justify-between gap-6">
+          <div className="space-y-2 max-w-3xl">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-blue-500/15 text-blue-300 border border-blue-400/25 inline-flex items-center gap-1.5 shadow-2xs backdrop-blur-md">
+                <Sparkles className="w-3 h-3 text-amber-400" /> Infrastructure & Gestion des Espaces · ENCG Fès
               </span>
               {isExamMode && (
-                <span className="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-rose-500 text-white shadow-xs animate-pulse">
+                <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-500/20 text-rose-300 border border-rose-400/30 shadow-xs animate-pulse inline-flex items-center gap-1">
                   🛡️ Mode Capacité Examen (1 place sur 2)
                 </span>
               )}
             </div>
-            <h1 className="text-2xl md:text-3xl font-black tracking-tight text-white">
+
+            <h1 className="text-2xl md:text-3xl lg:text-4xl font-black tracking-tight text-white">
               Occupation des Salles & Moteur de Rattrapage
             </h1>
-            <p className="text-xs md:text-sm text-blue-200/70 font-medium max-w-2xl">
-              Matrice de répartition hebdomadaire des amphithéâtres et salles TD, diagnostic de collision et assistant intelligent pour les rattrapages.
+            <p className="text-xs md:text-sm text-slate-300/80 font-medium leading-relaxed">
+              Matrice de répartition hebdomadaire des amphithéâtres et salles TD, diagnostic de collision en temps réel et assistant intelligent pour les réservations de rattrapage.
             </p>
           </div>
 
+          {/* Quick Metrics & Mode Examen Toggle */}
           <div className="flex flex-wrap items-center gap-3">
-            {/* Mode Examen Switch */}
+            {/* Mode Examen Toggle Button */}
             <button
               type="button"
               onClick={() => {
@@ -464,132 +521,238 @@ export default function RoomAvailabilityHubPage() {
                 toast.info(!isExamMode ? 'Mode Examen activé : les jauges sont basculées à 50% (Anti-fraude).' : 'Mode Enseignement standard rétabli.')
               }}
               className={cn(
-                "flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border shadow-sm",
+                "flex items-center gap-2 px-4 py-3 rounded-2xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer border shadow-md backdrop-blur-md active:scale-95",
                 isExamMode
-                  ? "bg-rose-600 text-white border-rose-400 ring-2 ring-rose-300/30"
-                  : "bg-white/10 hover:bg-white/20 text-white border-white/20"
+                  ? "bg-rose-600 text-white border-rose-400 ring-2 ring-rose-400/30 shadow-rose-900/30"
+                  : "bg-white/10 hover:bg-white/15 text-slate-200 hover:text-white border-white/15"
               )}
             >
-              <ShieldCheck className="w-4 h-4" />
-              {isExamMode ? 'Jauge Examen : 1 place sur 2 (Active)' : 'Activer Jauge Examen (Anti-fraude)'}
+              <ShieldCheck className="w-4 h-4 text-amber-400" />
+              <span>{isExamMode ? 'Jauge Examen : Active (50%)' : 'Activer Jauge Examen'}</span>
             </button>
 
-            <div className="flex items-center gap-3 px-4 py-2 rounded-xl bg-white/10 border border-white/15 backdrop-blur-md">
-              <DoorOpen className="w-5 h-5 text-indigo-300" />
+            {/* Total Salles KPI */}
+            <div className="flex items-center gap-3.5 px-4.5 py-2.5 rounded-2xl bg-white/[0.07] hover:bg-white/[0.1] border border-white/15 backdrop-blur-md transition-all shadow-xs">
+              <div className="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-300 border border-indigo-400/20 flex items-center justify-center shrink-0">
+                <DoorOpen className="w-5 h-5" />
+              </div>
               <div>
-                <p className="text-[10px] uppercase font-bold text-blue-200/70">Total Salles</p>
-                <p className="text-sm font-black text-white">{rooms.length}</p>
+                <p className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Total Salles</p>
+                <p className="text-base font-black text-white">{rooms.length}</p>
               </div>
             </div>
-            <div className="flex items-center gap-3 px-4 py-2 rounded-xl bg-white/10 border border-white/15 backdrop-blur-md">
-              <Building2 className="w-5 h-5 text-emerald-300" />
+
+            {/* Places Enseignement KPI */}
+            <div className="flex items-center gap-3.5 px-4.5 py-2.5 rounded-2xl bg-white/[0.07] hover:bg-white/[0.1] border border-white/15 backdrop-blur-md transition-all shadow-xs">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-400/20 flex items-center justify-center shrink-0">
+                <Building2 className="w-5 h-5" />
+              </div>
               <div>
-                <p className="text-[10px] uppercase font-bold text-blue-200/70">Places {isExamMode ? 'Examen' : 'Enseignement'}</p>
-                <p className="text-sm font-black text-white">
+                <p className="text-[10px] uppercase font-bold tracking-wider text-slate-400">
+                  Places {isExamMode ? 'Examen' : 'Enseignement'}
+                </p>
+                <p className="text-base font-black text-white">
                   {rooms.reduce((acc, r) => acc + getDisplayCapacity(r), 0)}
                 </p>
               </div>
             </div>
           </div>
         </div>
-        <div className="absolute bottom-0 left-0 right-0 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(99,102,241,0.4), transparent)' }} />
       </div>
 
       {/* ══════════════════════════════════════════════════════
-          TAB NAVIGATION (With Master Matrix as Primary Tab)
+          NAVIGATION DES MODULES — Grille Executive Structurée
       ══════════════════════════════════════════════════════ */}
-      <div className="flex gap-1 p-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 w-full md:w-fit overflow-x-auto">
+      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3">
         {[
-          { id: 'master_matrix' as const, label: '📊 Matrice Hebdomadaire (Vue Maître Globale)', icon: Table },
-          { id: 'finder' as const, label: '🎯 Assistant Rattrapage & Smart Finder', icon: Sparkles },
-          { id: 'matrix' as const, label: '🗺️ Vue Journalière (Heatmap)', icon: Layers },
-          { id: 'room_schedule' as const, label: '📅 Planning & Panneau de Porte PDF', icon: Calendar },
-          { id: 'bookings' as const, label: '📋 Registre des Réservations', icon: FileText },
-        ].map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={cn(
-              "flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer",
-              activeTab === tab.id
-                ? "bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-xs"
-                : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
-            )}
-          >
-            <tab.icon size={13} />
-            {tab.label}
-          </button>
-        ))}
+          {
+            id: 'master_matrix' as const,
+            title: 'Matrice Hebdomadaire',
+            subtitle: 'Vue globale par salle & créneau',
+            badge: 'EDT Officiel',
+            icon: Table,
+            iconColor: 'text-indigo-600 dark:text-indigo-400',
+            iconBg: 'bg-indigo-50 dark:bg-indigo-950/60 border-indigo-200 dark:border-indigo-800/80',
+            activeBorder: 'border-indigo-500 dark:border-indigo-400',
+            activeRing: 'ring-indigo-500/20',
+            accentBar: 'bg-indigo-600',
+          },
+          {
+            id: 'finder' as const,
+            title: 'Assistant Rattrapage',
+            subtitle: 'Diagnostic & Smart Finder',
+            badge: 'Anti-collision',
+            icon: Sparkles,
+            iconColor: 'text-amber-600 dark:text-amber-400',
+            iconBg: 'bg-amber-50 dark:bg-amber-950/60 border-amber-200 dark:border-amber-800/80',
+            activeBorder: 'border-amber-500 dark:border-amber-400',
+            activeRing: 'ring-amber-500/20',
+            accentBar: 'bg-amber-500',
+          },
+          {
+            id: 'matrix' as const,
+            title: 'Vue Journalière',
+            subtitle: 'Heatmap de disponibilité',
+            badge: 'Temps réel',
+            icon: Layers,
+            iconColor: 'text-sky-600 dark:text-sky-400',
+            iconBg: 'bg-sky-50 dark:bg-sky-950/60 border-sky-200 dark:border-sky-800/80',
+            activeBorder: 'border-sky-500 dark:border-sky-400',
+            activeRing: 'ring-sky-500/20',
+            accentBar: 'bg-sky-500',
+          },
+          {
+            id: 'room_schedule' as const,
+            title: 'Panneaux de Porte',
+            subtitle: 'Affiches PDF A4 & Export iCal',
+            badge: 'Export PDF',
+            icon: Calendar,
+            iconColor: 'text-emerald-600 dark:text-emerald-400',
+            iconBg: 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-800/80',
+            activeBorder: 'border-emerald-500 dark:border-emerald-400',
+            activeRing: 'ring-emerald-500/20',
+            accentBar: 'bg-emerald-500',
+          },
+          {
+            id: 'bookings' as const,
+            title: 'Mes Réservations',
+            subtitle: 'Registre & suivi des séances',
+            badge: bookings.length > 0 ? `${bookings.length} Réservation${bookings.length > 1 ? 's' : ''}` : 'Registre',
+            icon: FileText,
+            iconColor: 'text-purple-600 dark:text-purple-400',
+            iconBg: 'bg-purple-50 dark:bg-purple-950/60 border-purple-200 dark:border-purple-800/80',
+            activeBorder: 'border-purple-500 dark:border-purple-400',
+            activeRing: 'ring-purple-500/20',
+            accentBar: 'bg-purple-600',
+          },
+        ].map(tab => {
+          const isActive = activeTab === tab.id
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={cn(
+                "group relative p-3.5 rounded-2xl text-left transition-all duration-200 cursor-pointer border select-none flex flex-col justify-between gap-3 overflow-hidden",
+                isActive
+                  ? cn("bg-white dark:bg-slate-900 shadow-md ring-2", tab.activeBorder, tab.activeRing)
+                  : "bg-white/70 dark:bg-slate-900/60 hover:bg-white dark:hover:bg-slate-900 border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-2xs hover:shadow-xs"
+              )}
+            >
+              {/* Top Accent line when active */}
+              {isActive && (
+                <div className={cn("absolute top-0 left-0 right-0 h-1", tab.accentBar)} />
+              )}
+
+              {/* Icon & Badge Row */}
+              <div className="flex items-center justify-between gap-2">
+                <div className={cn(
+                  "w-8 h-8 rounded-xl flex items-center justify-center border transition-all duration-200 group-hover:scale-105 shrink-0 shadow-2xs",
+                  isActive ? "bg-slate-900 dark:bg-slate-800 text-white border-slate-700" : tab.iconBg
+                )}>
+                  <tab.icon size={15} className={isActive ? "text-amber-400" : tab.iconColor} />
+                </div>
+                <span className={cn(
+                  "text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shrink-0",
+                  isActive
+                    ? "bg-slate-900 text-slate-100 dark:bg-slate-800 dark:text-slate-200"
+                    : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
+                )}>
+                  {tab.badge}
+                </span>
+              </div>
+
+              {/* Title & Subtitle */}
+              <div>
+                <p className={cn(
+                  "text-xs font-black tracking-tight transition-colors line-clamp-1",
+                  isActive ? "text-slate-900 dark:text-white" : "text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white"
+                )}>
+                  {tab.title}
+                </p>
+                <p className="text-[10px] font-medium text-slate-400 dark:text-slate-500 line-clamp-1 mt-0.5">
+                  {tab.subtitle}
+                </p>
+              </div>
+            </button>
+          )
+        })}
       </div>
 
       {/* ══════════════════════════════════════════════════════
           TAB 1 (PRIMARY): MASTER WEEKLY ROOM ALLOCATION MATRIX
       ══════════════════════════════════════════════════════ */}
       {activeTab === 'master_matrix' && (
-        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 space-y-4 shadow-xs">
+        <div className="rounded-3xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 md:p-6 space-y-4.5 shadow-sm">
           
           {/* Top Controls & Filters */}
-          <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
+          <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4.5">
             <div>
-              <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300">
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/80 shadow-2xs">
                   Vue Synthétique ENCG Fès
                 </span>
-                <h2 className="text-base font-black text-slate-900 dark:text-slate-100">
+                <h2 className="text-base md:text-lg font-black text-slate-900 dark:text-slate-100 tracking-tight">
                   Capacité, Répartition & Disponibilité des Salles (Semaine)
                 </h2>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-xs text-slate-400 mt-1">
                 {masterMatrixData?.week_label || 'Planning hebdomadaire officiel par salle et par créneau'}.
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2.5">
+            <div className="flex flex-wrap items-center gap-3">
               {/* Semester Filter */}
-              <select
+              <CustomSelect
                 value={masterSemester}
-                onChange={(e) => setMasterSemester(e.target.value)}
-                className="h-9 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold"
-              >
-                <option value="">Tous les semestres</option>
-                <option value="1">Semestre 1 (S1)</option>
-                <option value="2">Semestre 2 (S2)</option>
-                <option value="3">Semestre 3 (S3)</option>
-                <option value="4">Semestre 4 (S4)</option>
-                <option value="5">Semestre 5 (S5)</option>
-                <option value="6">Semestre 6 (S6)</option>
-                <option value="7">Semestre 7 (S7)</option>
-                <option value="8">Semestre 8 (S8)</option>
-              </select>
+                onChange={(v) => setMasterSemester(String(v))}
+                icon={<GraduationCap size={14} className="text-indigo-500" />}
+                options={[
+                  { value: '', label: 'Tous les semestres' },
+                  { value: '1', label: 'Semestre 1 (S1)', badge: 'S1' },
+                  { value: '2', label: 'Semestre 2 (S2)', badge: 'S2' },
+                  { value: '3', label: 'Semestre 3 (S3)', badge: 'S3' },
+                  { value: '4', label: 'Semestre 4 (S4)', badge: 'S4' },
+                  { value: '5', label: 'Semestre 5 (S5)', badge: 'S5' },
+                  { value: '6', label: 'Semestre 6 (S6)', badge: 'S6' },
+                  { value: '7', label: 'Semestre 7 (S7)', badge: 'S7' },
+                  { value: '8', label: 'Semestre 8 (S8)', badge: 'S8' },
+                ]}
+                placeholder="Tous les semestres"
+                className="w-56 min-w-0"
+              />
 
               {/* Room Type Filter */}
-              <select
+              <CustomSelect
                 value={masterTypeFilter}
-                onChange={(e) => setMasterTypeFilter(e.target.value)}
-                className="h-9 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold"
-              >
-                <option value="all">Tous les espaces</option>
-                <option value="amphitheater">Amphithéâtres (CM)</option>
-                <option value="classroom">Salles de Cours / TD</option>
-                <option value="lab">Laboratoires TP / Info</option>
-              </select>
+                onChange={(v) => setMasterTypeFilter(String(v))}
+                icon={<Building2 size={14} className="text-amber-500" />}
+                options={[
+                  { value: 'all', label: 'Tous les espaces' },
+                  { value: 'amphitheater', label: 'Amphithéâtres (CM)', badge: 'Amphi' },
+                  { value: 'classroom', label: 'Salles de Cours / TD', badge: 'TD' },
+                  { value: 'lab', label: 'Laboratoires TP / Info', badge: 'Labo' },
+                ]}
+                placeholder="Tous les espaces"
+                className="w-56 min-w-0"
+              />
 
-              {/* Week Date Picker */}
-              <input
-                type="date"
+              {/* Week Date Picker in JJ/MM/AAAA format */}
+              <DatePicker
                 value={masterStartDate}
-                onChange={(e) => setMasterStartDate(e.target.value)}
-                className="h-9 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold"
+                onChange={setMasterStartDate}
+                placeholder="JJ/MM/AAAA"
+                inputClassName="h-10"
+                ariaLabel="Sélectionner la date de début de semaine"
               />
 
               {/* Export CSV / Excel */}
               <button
                 type="button"
                 onClick={handleExportMasterCsv}
-                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-xs"
+                className="flex items-center gap-1.5 h-10 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-black uppercase tracking-wider transition-all active:scale-95 cursor-pointer shadow-sm shadow-emerald-600/25"
               >
                 <FileSpreadsheet size={13} />
-                Exporter Excel (.csv)
+                <span>Exporter Excel</span>
               </button>
 
               {/* Refresh */}
@@ -597,34 +760,36 @@ export default function RoomAvailabilityHubPage() {
                 type="button"
                 onClick={loadMasterMatrix}
                 disabled={masterLoading}
-                className="p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 text-slate-600 dark:text-slate-300 transition-colors"
+                className="h-10 w-10 flex items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors shadow-2xs cursor-pointer disabled:opacity-50"
                 title="Actualiser la matrice"
               >
-                <RefreshCw size={14} className={cn(masterLoading && "animate-spin")} />
+                <RefreshCw size={14} className={cn(masterLoading && "animate-spin text-indigo-500")} />
               </button>
             </div>
           </div>
 
-          {/* Filiere Color Legend */}
-          <div className="flex flex-wrap items-center gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 text-[10px] font-bold">
-            <span className="text-slate-400 uppercase tracking-wider mr-1">Légende Filières ENCG :</span>
-            <span className="px-2 py-0.5 rounded-md bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200">
-              TC (Tronc Commun)
+          {/* Filiere Color Legend Bar */}
+          <div className="flex flex-wrap items-center gap-2 p-3 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-800 text-[10px] font-bold">
+            <span className="text-slate-400 uppercase tracking-wider mr-1 flex items-center gap-1">
+              <Layers size={11} className="text-slate-400" /> Légende des Filières :
             </span>
-            <span className="px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200">
-              GFC (Finance & Comptabilité)
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 border border-indigo-200/80 dark:border-indigo-800">
+              <span className="w-2 h-2 rounded-full bg-indigo-600"></span> TC (Tronc Commun)
             </span>
-            <span className="px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border border-amber-200">
-              MCM / MAC (Marketing & Commerce)
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800">
+              <span className="w-2 h-2 rounded-full bg-emerald-600"></span> GFC (Finance & Comptabilité)
             </span>
-            <span className="px-2 py-0.5 rounded-md bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border border-purple-200">
-              ACG (Audit & Contrôle de Gestion)
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800">
+              <span className="w-2 h-2 rounded-full bg-amber-500"></span> MCM / MAC (Marketing & Commerce)
             </span>
-            <span className="px-2 py-0.5 rounded-md bg-cyan-100 dark:bg-cyan-950 text-cyan-700 dark:text-cyan-300 border border-cyan-200">
-              Rattrapage / Extra
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-50 dark:bg-purple-950/70 text-purple-700 dark:text-purple-300 border border-purple-200/80 dark:border-purple-800">
+              <span className="w-2 h-2 rounded-full bg-purple-600"></span> ACG (Audit & Contrôle de Gestion)
             </span>
-            <span className="px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 border border-dashed border-emerald-300">
-              Libre (Clic pour réserver)
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-cyan-50 dark:bg-cyan-950/70 text-cyan-700 dark:text-cyan-300 border border-cyan-200/80 dark:border-cyan-800">
+              <span className="w-2 h-2 rounded-full bg-cyan-600"></span> Rattrapage / Extra
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-dashed border-emerald-400">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Libre (Clic pour réserver)
             </span>
           </div>
 
@@ -639,29 +804,53 @@ export default function RoomAvailabilityHubPage() {
               Aucune salle trouvée avec ces critères.
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-xl border border-slate-300 dark:border-slate-700 shadow-xs">
-              <table className="w-full min-w-[1100px] border-collapse text-xs">
+            <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-700/80 shadow-md">
+              <table className="w-full min-w-[1150px] border-collapse text-xs">
                 <thead>
-                  {/* Top Header Row: School Banner */}
-                  <tr className="bg-[#001A4B] text-white text-center font-black tracking-wider uppercase text-[11px] border-b border-indigo-900">
-                    <th colSpan={9} className="py-2.5 px-4">
-                      ÉCOLE NATIONALE DE COMMERCE ET DE GESTION — ENCG FÈS · REPARTITION HEBDOMADAIRE DES ESPACES
+                  {/* Top Institutional Header Row */}
+                  <tr className="bg-gradient-to-r from-[#001438] via-[#00225A] to-[#001438] text-white border-b border-indigo-900/60">
+                    <th colSpan={9} className="py-3 px-5">
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <span className="text-[10px] uppercase font-mono text-indigo-200/90 font-semibold tracking-widest flex items-center gap-2">
+                          <Building2 size={13} className="text-amber-400" />
+                          ENCG FÈS · DIRECTION DES ÉTUDES & GESTION DES ESPACES
+                        </span>
+                        <span className="text-xs font-black uppercase tracking-wider text-white">
+                          Grille Hebdomadaire d'Occupation des Espaces Pédagogiques
+                        </span>
+                        <span className="text-[10px] font-mono text-indigo-300 font-semibold bg-white/10 px-2 py-0.5 rounded-md">
+                          {masterMatrixData?.week_label || 'Semaine en cours'}
+                        </span>
+                      </div>
                     </th>
                   </tr>
-                  {/* Column Titles */}
-                  <tr className="bg-amber-300 dark:bg-amber-400 text-slate-950 font-black uppercase text-[10px] tracking-wide border-b-2 border-slate-400">
-                    <th className="py-2.5 px-3 text-left w-36 border-r border-amber-400">Salle</th>
-                    <th className="py-2.5 px-2 text-center w-24 border-r border-amber-400">Nbre Places</th>
-                    <th className="py-2.5 px-3 text-center w-36 border-r border-amber-400">Créneau</th>
-                    <th className="py-2.5 px-2 text-center w-40 border-r border-amber-400">Lundi</th>
-                    <th className="py-2.5 px-2 text-center w-40 border-r border-amber-400">Mardi</th>
-                    <th className="py-2.5 px-2 text-center w-40 border-r border-amber-400">Mercredi</th>
-                    <th className="py-2.5 px-2 text-center w-40 border-r border-amber-400">Jeudi</th>
-                    <th className="py-2.5 px-2 text-center w-40 border-r border-amber-400">Vendredi</th>
-                    <th className="py-2.5 px-2 text-center w-40">Samedi</th>
+
+                  {/* Executive Columns Header */}
+                  <tr className="bg-slate-900 dark:bg-slate-950 text-slate-100 font-black uppercase text-[10px] tracking-wider border-b-2 border-indigo-500/50 shadow-xs">
+                    <th className="py-3 px-3.5 text-left w-44 border-r border-slate-800">
+                      <span className="flex items-center gap-1.5">
+                        <DoorOpen size={12} className="text-amber-400" /> Salle & Type
+                      </span>
+                    </th>
+                    <th className="py-3 px-2.5 text-center w-28 border-r border-slate-800">
+                      <span className="flex items-center justify-center gap-1">
+                        <Users size={12} className="text-blue-400" /> Capacité
+                      </span>
+                    </th>
+                    <th className="py-3 px-3 text-center w-36 border-r border-slate-800">
+                      <span className="flex items-center justify-center gap-1">
+                        <Clock size={12} className="text-amber-400" /> Créneau
+                      </span>
+                    </th>
+                    <th className="py-3 px-2 text-center w-40 border-r border-slate-800">Lundi</th>
+                    <th className="py-3 px-2 text-center w-40 border-r border-slate-800">Mardi</th>
+                    <th className="py-3 px-2 text-center w-40 border-r border-slate-800">Mercredi</th>
+                    <th className="py-3 px-2 text-center w-40 border-r border-slate-800">Jeudi</th>
+                    <th className="py-3 px-2 text-center w-40 border-r border-slate-800">Vendredi</th>
+                    <th className="py-3 px-2 text-center w-40">Samedi</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y-2 divide-slate-300 dark:divide-slate-700">
+                <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
                   {masterMatrixData.rooms.map((room: any) => (
                     <React.Fragment key={room.room_id}>
                       {room.slots.map((slot: any, sIdx: number) => {
@@ -669,20 +858,34 @@ export default function RoomAvailabilityHubPage() {
                         return (
                           <tr
                             key={`${room.room_id}-${slot.slot_index}`}
-                            className="hover:bg-slate-50/70 dark:hover:bg-slate-800/30 transition-colors divide-x divide-slate-200 dark:divide-slate-800"
+                            className="hover:bg-slate-50/70 dark:hover:bg-slate-800/30 transition-colors divide-x divide-slate-100 dark:divide-slate-800/70"
                           >
                             {/* Room Name (RowSpan = 4) */}
                             {isFirstSlot && (
                               <td
                                 rowSpan={room.slots.length}
-                                className="py-3 px-3.5 bg-slate-50 dark:bg-slate-800/60 font-black text-slate-900 dark:text-slate-100 text-left align-middle border-r border-slate-300 dark:border-slate-700"
+                                className="py-3.5 px-3.5 bg-slate-50/70 dark:bg-slate-900/60 font-black text-slate-900 dark:text-slate-100 text-left align-middle border-r border-slate-200 dark:border-slate-800 shadow-2xs"
                               >
-                                <div className="space-y-0.5">
-                                  <p className="text-xs font-black text-[#001A4B] dark:text-blue-300">{room.name}</p>
-                                  <p className="text-[9px] text-slate-400 font-bold uppercase">
-                                    {room.type === 'amphitheater' ? 'Amphithéâtre' : (room.type === 'lab' ? 'Labo Info' : 'Salle TD')}
+                                <div className="space-y-1.5">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="w-2 h-2 rounded-full bg-indigo-500 shrink-0"></span>
+                                    <p className="text-xs font-black text-slate-900 dark:text-white tracking-tight">{room.name}</p>
+                                  </div>
+                                  <div>
+                                    <span className={cn(
+                                      "inline-block px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider border",
+                                      room.type === 'amphitheater'
+                                        ? "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800"
+                                        : room.type === 'lab'
+                                        ? "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/60 dark:text-purple-300 dark:border-purple-800"
+                                        : "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700"
+                                    )}>
+                                      {room.type === 'amphitheater' ? '🏛️ Amphithéâtre' : (room.type === 'lab' ? '💻 Labo Info' : '📖 Salle TD')}
+                                    </span>
+                                  </div>
+                                  <p className="text-[10px] text-slate-400 font-medium truncate flex items-center gap-1">
+                                    <MapPin size={10} className="text-slate-400 shrink-0" /> {room.building || 'Campus Principal'}
                                   </p>
-                                  <p className="text-[9px] text-slate-400 font-medium truncate">{room.building}</p>
                                 </div>
                               </td>
                             )}
@@ -691,18 +894,27 @@ export default function RoomAvailabilityHubPage() {
                             {isFirstSlot && (
                               <td
                                 rowSpan={room.slots.length}
-                                className="py-3 px-2 bg-slate-50 dark:bg-slate-800/60 text-center align-middle font-black text-xs text-slate-800 dark:text-slate-200 border-r border-slate-300 dark:border-slate-700"
+                                className="py-3 px-2 bg-slate-50/50 dark:bg-slate-900/40 text-center align-middle border-r border-slate-200 dark:border-slate-800"
                               >
-                                <div>
-                                  <span className="text-sm font-black text-slate-900 dark:text-slate-100">{getDisplayCapacity(room)}</span>
-                                  {isExamMode && <p className="text-[8px] text-rose-500 font-bold uppercase">(Exam 50%)</p>}
+                                <div className="flex flex-col items-center justify-center">
+                                  <span className="text-base font-black text-slate-900 dark:text-slate-100 leading-none">
+                                    {getDisplayCapacity(room)}
+                                  </span>
+                                  <span className="text-[9px] uppercase font-bold text-slate-400 mt-0.5">Places</span>
+                                  {isExamMode && (
+                                    <span className="mt-1 px-1.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-900">
+                                      Exam 50%
+                                    </span>
+                                  )}
                                 </div>
                               </td>
                             )}
 
                             {/* Time Slot Label */}
-                            <td className="py-2 px-2.5 bg-amber-50/40 dark:bg-slate-800/40 text-center font-bold text-[10px] text-slate-700 dark:text-slate-300 border-r border-slate-300 dark:border-slate-700">
-                              <span className="font-mono">{slot.time_label}</span>
+                            <td className="py-2.5 px-2 bg-slate-100/40 dark:bg-slate-800/30 text-center border-r border-slate-200 dark:border-slate-800">
+                              <span className="font-mono text-[10px] font-bold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 px-2 py-1 rounded-md border border-slate-200/80 dark:border-slate-700 shadow-2xs inline-block">
+                                {slot.time_label}
+                              </span>
                             </td>
 
                             {/* Days 1 to 6 (Lundi to Samedi) */}
@@ -718,46 +930,45 @@ export default function RoomAvailabilityHubPage() {
                                   {isOccupied ? (
                                     <div
                                       className={cn(
-                                        "p-2 rounded-lg border text-left transition-all shadow-2xs group relative cursor-default",
+                                        "p-2.5 rounded-xl border text-left transition-all shadow-2xs hover:shadow-xs group relative cursor-default",
                                         getThemeClasses(cell.color_theme, true)
                                       )}
                                       title={`${cell.module_name} — ${cell.professor_name}`}
                                     >
                                       {/* Promo / Group Badge */}
-                                      <div className="flex items-center justify-between gap-1">
+                                      <div className="flex items-center justify-between gap-1 mb-1">
                                         <span className="font-black text-[10px] uppercase tracking-wide truncate">
                                           {cell.badge_label}
                                         </span>
-                                        <span className="text-[8px] opacity-75 uppercase font-mono">
+                                        <span className="text-[8px] font-black uppercase px-1.5 py-0.2 rounded bg-black/10 dark:bg-white/10 font-mono">
                                           {cell.session_type === 'cm' ? 'CM' : (cell.session_type === 'td' ? 'TD' : 'TP')}
                                         </span>
                                       </div>
 
                                       {/* Module Title */}
-                                      <p className="text-[9.5px] font-bold truncate mt-0.5 leading-tight" title={cell.module_name}>
+                                      <p className="text-[10px] font-black truncate leading-snug" title={cell.module_name}>
                                         {cell.module_name}
                                       </p>
 
                                       {/* Professor Name */}
-                                      <p className="text-[8.5px] opacity-75 truncate mt-0.5">
-                                        {cell.professor_name}
+                                      <p className="text-[9px] opacity-80 truncate mt-1 flex items-center gap-1 font-medium">
+                                        <Users size={10} className="shrink-0 opacity-70" />
+                                        <span>{cell.professor_name}</span>
                                       </p>
                                     </div>
                                   ) : (
                                     <button
                                       type="button"
                                       onClick={() => handleOpenBooking(room, cell?.date, slot.slot_index - 1)}
-                                      className={cn(
-                                        "w-full h-full min-h-[50px] p-2 rounded-lg border border-dashed text-center transition-all flex flex-col items-center justify-center cursor-pointer group",
-                                        getThemeClasses('free', false)
-                                      )}
+                                      className="w-full h-full min-h-[56px] p-2 rounded-xl border border-dashed border-emerald-300/70 dark:border-emerald-800/60 bg-emerald-500/[0.03] hover:bg-emerald-500/[0.09] text-center transition-all flex flex-col items-center justify-center cursor-pointer group hover:border-emerald-500 shadow-2xs"
                                       title="Créneau libre — Cliquer pour réserver un rattrapage"
                                     >
-                                      <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 group-hover:hidden">
+                                      <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 group-hover:hidden flex items-center gap-1">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                                         Libre
                                       </span>
-                                      <span className="hidden group-hover:inline-flex items-center gap-1 text-[9px] font-black text-indigo-600 dark:text-indigo-400">
-                                        <PlusCircle size={11} /> Réserver
+                                      <span className="hidden group-hover:inline-flex items-center gap-1 text-[10px] font-black text-indigo-600 dark:text-indigo-400">
+                                        <PlusCircle size={12} /> Réserver
                                       </span>
                                     </button>
                                   )}
@@ -795,14 +1006,16 @@ export default function RoomAvailabilityHubPage() {
             </div>
 
             <div className="space-y-3">
-              {/* Date */}
+              {/* Date in JJ/MM/AAAA format */}
               <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">Date Souhaitée</label>
-                <input
-                  type="date"
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">Date Souhaitée (JJ/MM/AAAA)</label>
+                <DatePicker
                   value={targetDate}
-                  onChange={(e) => setTargetDate(e.target.value)}
-                  className={selectClass}
+                  onChange={setTargetDate}
+                  placeholder="JJ/MM/AAAA"
+                  className="w-full"
+                  inputClassName="h-10 w-full"
+                  ariaLabel="Sélectionner la date souhaitée"
                 />
               </div>
 
@@ -830,37 +1043,43 @@ export default function RoomAvailabilityHubPage() {
 
               {/* Type of Session */}
               <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">Type de Séance</label>
-                <select
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Type de Séance</label>
+                <CustomSelect
                   value={sessionType}
-                  onChange={(e) => setSessionType(e.target.value)}
-                  className={selectClass}
-                >
-                  <option value="cm">Cours Magistral (CM) — Amphi requis</option>
-                  <option value="td">Travaux Dirigés (TD) — Salle standard</option>
-                  <option value="rattrapage">Séance de Rattrapage</option>
-                  <option value="seminar">Séminaire / Master</option>
-                  <option value="exam">Examen / Épreuve de contrôle (Jauge 50%)</option>
-                </select>
+                  onChange={(val) => setSessionType(String(val))}
+                  options={[
+                    { value: 'cm', label: 'Cours Magistral (CM)', badge: 'Amphi requis' },
+                    { value: 'td', label: 'Travaux Dirigés (TD)', badge: 'Salle standard' },
+                    { value: 'rattrapage', label: 'Séance de Rattrapage', badge: 'Rattrapage' },
+                    { value: 'seminar', label: 'Séminaire / Master', badge: 'Master' },
+                    { value: 'exam', label: 'Examen / Épreuve de contrôle', badge: 'Jauge 50%' },
+                  ]}
+                  className="w-full min-w-0"
+                />
               </div>
 
               {/* Filiere & Groups */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">Filière</label>
-                  <select
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Filière</label>
+                  <CustomSelect
                     value={selectedFiliereId}
-                    onChange={(e) => setSelectedFiliereId(e.target.value)}
-                    className={selectClass}
-                  >
-                    <option value="">Sélectionner une filière</option>
-                    {filieres.map(f => (
-                      <option key={f.id} value={f.id}>{f.code} — {f.name}</option>
-                    ))}
-                  </select>
+                    onChange={(val) => setSelectedFiliereId(String(val))}
+                    options={[
+                      { value: '', label: 'Toutes les filières (Aucune)' },
+                      ...filieres.map(f => ({
+                        value: String(f.id),
+                        label: `${f.code || f.label} — ${f.name || f.label}`,
+                        badge: f.code
+                      }))
+                    ]}
+                    searchable
+                    placeholder="Sélectionner une filière"
+                    className="w-full min-w-0"
+                  />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">Effectif Personnalisé</label>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Effectif Personnalisé</label>
                   <input
                     type="number"
                     min="1"
@@ -908,21 +1127,24 @@ export default function RoomAvailabilityHubPage() {
 
               {/* Target Room (Optional) */}
               <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">
                   Salle Spécifique Souhaitée <span className="font-normal text-slate-400">(optionnel)</span>
                 </label>
-                <select
+                <CustomSelect
                   value={preferredRoomId}
-                  onChange={(e) => setPreferredRoomId(e.target.value)}
-                  className={selectClass}
-                >
-                  <option value="">Aucune préférence (Trouver la meilleure salle)</option>
-                  {rooms.map(r => (
-                    <option key={r.id} value={r.id}>
-                      {r.name} ({r.type === 'amphitheater' ? 'Amphi' : 'Salle'} · {getDisplayCapacity(r)} places {isExamMode ? 'exam' : ''})
-                    </option>
-                  ))}
-                </select>
+                  onChange={(val) => setPreferredRoomId(String(val))}
+                  options={[
+                    { value: '', label: 'Aucune préférence (Trouver la meilleure salle)' },
+                    ...rooms.map(r => ({
+                      value: String(r.id),
+                      label: `${r.name} (${r.type === 'amphitheater' ? 'Amphi' : 'Salle TD'} · ${getDisplayCapacity(r)} places)`,
+                      badge: `${getDisplayCapacity(r)} pl.`
+                    }))
+                  ]}
+                  searchable
+                  placeholder="Aucune préférence"
+                  className="w-full min-w-0"
+                />
               </div>
 
               {/* Submit Button */}
@@ -1104,27 +1326,36 @@ export default function RoomAvailabilityHubPage() {
                 Matrice Journalière d'Occupation des Salles
               </h2>
               <p className="text-xs text-slate-400 mt-0.5">
-                Vue synoptique de toutes les salles pour la journée du {matrixData?.day_name || matrixDate}.
+                Vue synoptique de toutes les salles pour la journée du{' '}
+                <span className="font-bold text-slate-700 dark:text-slate-300">
+                  {matrixDate ? format(parseISO(matrixDate), 'EEEE d MMMM yyyy', { locale: fr }) : ''}
+                </span>{' '}
+                ({matrixDate ? format(parseISO(matrixDate), 'dd/MM/yyyy') : ''}).
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
-              <input
-                type="date"
+            <div className="flex flex-wrap items-center gap-2.5">
+              {/* Date Picker strictly in JJ/MM/AAAA format */}
+              <DatePicker
                 value={matrixDate}
-                onChange={(e) => setMatrixDate(e.target.value)}
-                className="h-9 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold"
+                onChange={setMatrixDate}
+                placeholder="JJ/MM/AAAA"
+                ariaLabel="Sélectionner la date de la matrice journalière"
               />
-              <select
+
+              {/* Room Type Filter */}
+              <CustomSelect
                 value={matrixTypeFilter}
-                onChange={(e) => setMatrixTypeFilter(e.target.value)}
-                className="h-9 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold"
-              >
-                <option value="all">Tous les types</option>
-                <option value="amphitheater">Amphithéâtres</option>
-                <option value="classroom">Salles TD</option>
-                <option value="lab">Laboratoires TP</option>
-              </select>
+                onChange={(val) => setMatrixTypeFilter(String(val))}
+                options={[
+                  { value: 'all', label: 'Tous les types de salles', badge: 'Tous' },
+                  { value: 'amphitheater', label: 'Amphithéâtres de Cours', badge: 'Amphi' },
+                  { value: 'classroom', label: 'Salles de TD standard', badge: 'TD' },
+                  { value: 'lab', label: 'Laboratoires TP & Info', badge: 'Labo' },
+                ]}
+                placeholder="Filtrer par type"
+                className="w-48 min-w-0"
+              />
             </div>
           </div>
 
@@ -1222,82 +1453,695 @@ export default function RoomAvailabilityHubPage() {
           TAB 4: SINGLE ROOM SCHEDULE & DOOR SIGN PDF
       ══════════════════════════════════════════════════════ */}
       {activeTab === 'room_schedule' && (
-        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 space-y-4 shadow-xs">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
-            <div>
-              <h2 className="text-sm font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-indigo-500" />
-                Planning Détaillé & Panneau de Porte PDF
-              </h2>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Consultez toutes les séances, exportez le panneau de porte A4 avec QR Code ou synchronisez votre agenda.
-              </p>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="w-64">
-                <select
-                  value={selectedScheduleRoomId}
-                  onChange={(e) => setSelectedScheduleRoomId(e.target.value)}
-                  className={selectClass}
-                >
-                  {rooms.map(r => (
-                    <option key={r.id} value={r.id}>
-                      {r.name} ({r.type === 'amphitheater' ? 'Amphi' : 'Salle'} · {getDisplayCapacity(r)} pl.)
-                    </option>
-                  ))}
-                </select>
+        <div className="space-y-5">
+          {/* 1. Selected Room Showcase Banner */}
+          <div className="rounded-3xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900/95 p-6 shadow-xs backdrop-blur-sm space-y-5">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-5 border-b border-slate-100 dark:border-slate-800">
+              {/* Room Identity */}
+              <div className="flex items-start gap-4">
+                <div className="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-950/80 border border-indigo-200 dark:border-indigo-800 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0 shadow-2xs">
+                  {currentScheduleRoom?.type === 'amphitheater' ? (
+                    <Building2 size={28} />
+                  ) : currentScheduleRoom?.type === 'lab' ? (
+                    <Monitor size={28} />
+                  ) : (
+                    <DoorOpen size={28} />
+                  )}
+                </div>
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h2 className="text-xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
+                      {currentScheduleRoom?.name || 'Sélectionner une salle'}
+                    </h2>
+                    {currentScheduleRoom && (
+                      <>
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                          {currentScheduleRoom.type === 'amphitheater' ? 'Amphithéâtre' : currentScheduleRoom.type === 'lab' ? 'Laboratoire TP' : 'Salle TD'}
+                        </span>
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                          Code: {currentScheduleRoom.code}
+                        </span>
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
+                          <CheckCircle2 size={11} />
+                          Opérationnelle
+                        </span>
+                      </>
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-2">
+                    <span>Emploi du temps officiel par salle</span>
+                    <span>•</span>
+                    <span>Affichage de porte A4 avec QR Code dynamique</span>
+                    <span>•</span>
+                    <span className="text-indigo-600 dark:text-indigo-400 font-semibold">{filteredScheduleEvents.length} séances planifiées</span>
+                  </p>
+                </div>
               </div>
 
-              {/* PDF Door Sign Export */}
+              {/* Action Controls & Room Dropdown */}
+              <div className="flex flex-wrap items-center gap-2.5">
+                <CustomSelect
+                  value={selectedScheduleRoomId}
+                  onChange={(val) => setSelectedScheduleRoomId(String(val))}
+                  icon={<Building2 size={14} className="text-indigo-500" />}
+                  options={rooms.map((r: any) => ({
+                    value: String(r.id),
+                    label: `${r.name} (${r.type === 'amphitheater' ? 'Amphi' : 'Salle TD'} · ${getDisplayCapacity(r)} pl.)`,
+                    badge: `${getDisplayCapacity(r)} pl.`
+                  }))}
+                  searchable
+                  placeholder="Rechercher une salle..."
+                  className="w-72 min-w-0"
+                />
+
+                {/* PDF Door Sign Export */}
+                <button
+                  type="button"
+                  onClick={handleDownloadDoorSign}
+                  disabled={exportingPdf || !selectedScheduleRoomId}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-900 to-indigo-800 hover:from-blue-950 hover:to-indigo-900 text-white text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-sm hover:shadow-md disabled:opacity-50"
+                  title="Télécharger l'affiche officielle A4 prête pour impression"
+                >
+                  {exportingPdf ? <Loader2 size={14} className="animate-spin" /> : <Printer size={14} />}
+                  <span>Affiche de Porte PDF (A4)</span>
+                </button>
+
+                {/* iCal Export */}
+                <button
+                  type="button"
+                  onClick={handleExportIcs}
+                  disabled={!selectedScheduleRoomId}
+                  className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition-all active:scale-95 cursor-pointer border border-slate-200 dark:border-slate-700 disabled:opacity-50"
+                  title="Exporter au format .ics pour Google Calendar, Outlook, Apple Calendar"
+                >
+                  <CalendarPlus size={14} className="text-indigo-600 dark:text-indigo-400" />
+                  <span>Sync (.ics)</span>
+                </button>
+
+                {/* Direct Booking Shortcut */}
+                {currentScheduleRoom && (
+                  <button
+                    type="button"
+                    onClick={() => handleOpenBooking(currentScheduleRoom)}
+                    className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 text-xs font-bold transition-all active:scale-95 cursor-pointer border border-indigo-200/80 dark:border-indigo-800/80"
+                    title="Réserver une séance de rattrapage dans cette salle"
+                  >
+                    <PlusCircle size={14} />
+                    <span>Réserver</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Room Features & KPIs */}
+            {currentScheduleRoom && (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
+                <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/70 dark:border-slate-800 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                    <GraduationCap size={18} />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Capacité Cours</p>
+                    <p className="text-sm font-black text-slate-900 dark:text-slate-100">{currentScheduleRoom.capacity} places</p>
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/70 dark:border-slate-800 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-950/80 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                    <ShieldCheck size={18} />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Capacité Examen</p>
+                    <p className="text-sm font-black text-amber-600 dark:text-amber-400">
+                      {currentScheduleRoom.exam_capacity ?? Math.floor(currentScheduleRoom.capacity / 2)} places (Anti-fraude)
+                    </p>
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/70 dark:border-slate-800 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                    <Monitor size={18} />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Vidéoprojecteur</p>
+                    <p className="text-sm font-black text-slate-900 dark:text-slate-100">
+                      {currentScheduleRoom.has_projector ? '✅ Installé & Connecté' : '❌ Non équipé'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/70 dark:border-slate-800 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-cyan-100 dark:bg-cyan-950/80 text-cyan-600 dark:text-cyan-400 flex items-center justify-center shrink-0">
+                    <Thermometer size={18} />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Climatisation</p>
+                    <p className="text-sm font-black text-slate-900 dark:text-slate-100">
+                      {currentScheduleRoom.has_ac ? '✅ Équipée (Réversible)' : '❌ Non équipée'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* 2. Mode Switcher & Filters Toolbar */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 p-2 rounded-2xl bg-slate-100 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80">
+            {/* View Mode Buttons */}
+            <div className="flex items-center gap-1.5 bg-white dark:bg-slate-900 p-1 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-2xs">
               <button
                 type="button"
-                onClick={handleDownloadDoorSign}
-                disabled={exportingPdf}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-xs disabled:opacity-60"
+                onClick={() => setScheduleViewMode('timeline')}
+                className={cn(
+                  'flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer',
+                  scheduleViewMode === 'timeline'
+                    ? 'bg-indigo-600 text-white shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                )}
               >
-                {exportingPdf ? <Loader2 size={13} className="animate-spin" /> : <Printer size={13} />}
-                Affiche de Porte PDF (A4)
+                <LayoutList size={13} />
+                <span>Planning par Jour</span>
               </button>
 
-              {/* iCal Export */}
               <button
                 type="button"
-                onClick={handleExportIcs}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition-all active:scale-95 cursor-pointer border border-slate-200 dark:border-slate-700"
+                onClick={() => setScheduleViewMode('preview_a4')}
+                className={cn(
+                  'flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer',
+                  scheduleViewMode === 'preview_a4'
+                    ? 'bg-indigo-600 text-white shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                )}
               >
-                <CalendarPlus size={13} className="text-indigo-600" />
-                Sync Agenda (.ics)
+                <Eye size={13} />
+                <span>Aperçu Affiche A4</span>
               </button>
+
+              <button
+                type="button"
+                onClick={() => setScheduleViewMode('matrix')}
+                className={cn(
+                  'flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer',
+                  scheduleViewMode === 'matrix'
+                    ? 'bg-indigo-600 text-white shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                )}
+              >
+                <Table size={13} />
+                <span>Matrice Hebdo</span>
+              </button>
+            </div>
+
+            {/* Day Filter Pills (shown in timeline view) */}
+            {scheduleViewMode === 'timeline' && (
+              <div className="flex items-center gap-1 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
+                <button
+                  type="button"
+                  onClick={() => setSelectedScheduleDay(0)}
+                  className={cn(
+                    'px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 flex items-center gap-1.5',
+                    selectedScheduleDay === 0
+                      ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-2xs'
+                      : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800'
+                  )}
+                >
+                  <span>Tous</span>
+                  <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 font-extrabold">
+                    {roomScheduleEvents.length}
+                  </span>
+                </button>
+
+                {DAYS_LIST.map((d) => (
+                  <button
+                    key={d.index}
+                    type="button"
+                    onClick={() => setSelectedScheduleDay(d.index)}
+                    className={cn(
+                      'px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 flex items-center gap-1.5',
+                      selectedScheduleDay === d.index
+                        ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-2xs'
+                        : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800'
+                    )}
+                  >
+                    <span>{d.label}</span>
+                    <span className={cn(
+                      'px-1.5 py-0.2 rounded-full text-[10px] font-extrabold',
+                      eventsCountByDay[d.index] > 0
+                        ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-400'
+                    )}>
+                      {eventsCountByDay[d.index]}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Search filter inside sessions */}
+            <div className="relative shrink-0">
+              <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                value={scheduleSearchQuery}
+                onChange={(e) => setScheduleSearchQuery(e.target.value)}
+                placeholder="Filtrer prof, module, grp…"
+                className="w-full sm:w-56 pl-8 pr-3 py-1.5 rounded-xl text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+              />
+              {scheduleSearchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setScheduleSearchQuery('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                >
+                  <X size={12} />
+                </button>
+              )}
             </div>
           </div>
 
+          {/* 3. Main Views Content */}
           {roomScheduleLoading ? (
-            <div className="py-20 flex items-center justify-center gap-3 text-slate-400">
-              <Loader2 className="w-5 h-5 animate-spin" />
-              <span className="text-sm font-medium">Chargement du planning…</span>
-            </div>
-          ) : roomScheduleEvents.length === 0 ? (
-            <div className="py-16 text-center text-slate-400 text-xs font-medium">
-              Aucune séance programmée pour cette salle sur la période courante.
+            <div className="py-24 flex flex-col items-center justify-center gap-3 text-slate-400 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800">
+              <Loader2 className="w-6 h-6 animate-spin text-indigo-500" />
+              <span className="text-sm font-semibold">Chargement des séances de la salle…</span>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {roomScheduleEvents.map((evt: any, i: number) => (
-                <div key={i} className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 space-y-1.5">
-                  <div className="flex justify-between items-center text-[10px] font-black uppercase text-indigo-600 dark:text-indigo-400">
-                    <span>{evt.start ? format(new Date(evt.start), 'EEEE', { locale: fr }) : 'Jour'}</span>
-                    <span className="px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950 font-mono">
-                      {evt.start ? format(new Date(evt.start), 'HH:mm') : ''} – {evt.end ? format(new Date(evt.end), 'HH:mm') : ''}
+            <>
+              {/* VIEW 1: STRUCTURED TIMELINE BY DAY */}
+              {scheduleViewMode === 'timeline' && (
+                <div className="space-y-4">
+                  {DAYS_LIST
+                    .filter((d) => selectedScheduleDay === 0 || selectedScheduleDay === d.index)
+                    .map((dayItem) => {
+                      // Get all events scheduled on this day
+                      const dayEvents = filteredScheduleEvents.filter((evt: any) => {
+                        if (!evt.start) return false
+                        const dayNum = new Date(evt.start).getDay()
+                        return dayNum === dayItem.index
+                      })
+
+                      return (
+                        <div
+                          key={dayItem.index}
+                          className="rounded-3xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900/90 p-5 shadow-xs space-y-4"
+                        >
+                          {/* Day Header */}
+                          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                            <div className="flex items-center gap-2.5">
+                              <span className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 font-black text-xs flex items-center justify-center border border-indigo-200/60 dark:border-indigo-800/60">
+                                {dayItem.short}
+                              </span>
+                              <div>
+                                <h3 className="text-sm font-black text-slate-900 dark:text-slate-100">
+                                  {dayItem.label}
+                                </h3>
+                                <p className="text-[11px] text-slate-400 font-medium">
+                                  {dayEvents.length === 0
+                                    ? 'Aucune séance programmée — Salle entièrement libre'
+                                    : `${dayEvents.length} séance(s) programmée(s)`}
+                                </p>
+                              </div>
+                            </div>
+
+                            <span className={cn(
+                              'px-3 py-1 rounded-full text-xs font-bold border',
+                              dayEvents.length > 0
+                                ? 'bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800'
+                                : 'bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
+                            )}>
+                              {dayEvents.length > 0 ? `${dayEvents.length} occupée(s)` : '100% Disponible'}
+                            </span>
+                          </div>
+
+                          {/* 4 Standard Time Blocks */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                            {TIME_BLOCKS.map((slot, slotIdx) => {
+                              // Find sessions in this slot
+                              const slotEvents = dayEvents.filter((evt: any) => {
+                                if (!evt.start) return false
+                                const timeStr = format(new Date(evt.start), 'HH:mm')
+                                if (slot.start === '08:30') return timeStr.startsWith('08:') || timeStr.startsWith('09:')
+                                if (slot.start === '10:45') return timeStr.startsWith('10:') || timeStr.startsWith('11:') || timeStr.startsWith('12:')
+                                if (slot.start === '14:30') return timeStr.startsWith('14:') || timeStr.startsWith('15:')
+                                if (slot.start === '16:45') return timeStr.startsWith('16:') || timeStr.startsWith('17:') || timeStr.startsWith('18:')
+                                return false
+                              })
+
+                              const isOccupied = slotEvents.length > 0
+
+                              return (
+                                <div
+                                  key={slotIdx}
+                                  className={cn(
+                                    'p-4 rounded-2xl border transition-all flex flex-col justify-between min-h-[140px]',
+                                    isOccupied
+                                      ? 'bg-indigo-50/40 dark:bg-indigo-950/20 border-indigo-200 dark:border-indigo-800/80 shadow-2xs'
+                                      : 'bg-slate-50/60 dark:bg-slate-800/30 border-dashed border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
+                                  )}
+                                >
+                                  {/* Slot Header */}
+                                  <div className="flex items-center justify-between pb-2 border-b border-slate-200/60 dark:border-slate-800">
+                                    <span className="text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                                      <Clock size={11} className={isOccupied ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400'} />
+                                      {slot.start} – {slot.end}
+                                    </span>
+                                    <span className={cn(
+                                      'px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider',
+                                      isOccupied
+                                        ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200'
+                                        : 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300'
+                                    )}>
+                                      {isOccupied ? 'Occupé' : 'Libre'}
+                                    </span>
+                                  </div>
+
+                                  {/* Content */}
+                                  {isOccupied ? (
+                                    <div className="py-2.5 space-y-2">
+                                      {slotEvents.map((evt: any, evIdx: number) => (
+                                        <div key={evIdx} className="space-y-1">
+                                          <div className="flex items-center gap-1.5 flex-wrap">
+                                            <span className="px-1.5 py-0.5 rounded-md text-[9px] font-black uppercase bg-indigo-600 text-white">
+                                              {evt.extendedProps?.type || 'CM'}
+                                            </span>
+                                            {evt.extendedProps?.module_code && (
+                                              <span className="px-1.5 py-0.5 rounded-md text-[9px] font-mono font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                                                {evt.extendedProps.module_code}
+                                              </span>
+                                            )}
+                                          </div>
+                                          <p className="text-xs font-black text-slate-900 dark:text-slate-100 line-clamp-2 leading-tight">
+                                            {evt.title}
+                                          </p>
+                                          <p className="text-[11px] text-slate-600 dark:text-slate-400 font-medium truncate flex items-center gap-1">
+                                            <span>👤</span>
+                                            <span>{evt.extendedProps?.professor || 'Enseignant'}</span>
+                                          </p>
+                                          <p className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold">
+                                            👥 {evt.extendedProps?.group || 'Groupe'}
+                                          </p>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <div className="py-4 text-center space-y-2">
+                                      <p className="text-xs text-slate-400 font-medium">
+                                        Salle disponible
+                                      </p>
+                                      {currentScheduleRoom && (
+                                        <button
+                                          type="button"
+                                          onClick={() => handleOpenBooking(currentScheduleRoom, undefined, slotIdx)}
+                                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold transition-all border border-emerald-200 dark:border-emerald-800 cursor-pointer shadow-2xs"
+                                        >
+                                          <PlusCircle size={11} />
+                                          <span>Réserver ce créneau</span>
+                                        </button>
+                                      )}
+                                    </div>
+                                  )}
+
+                                  {/* Slot Footer */}
+                                  <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 text-[10px] text-slate-400 font-medium flex justify-between items-center">
+                                    <span>{slot.label.split('(')[1]?.replace(')', '') || ''}</span>
+                                    {isOccupied && (
+                                      <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-0.5">
+                                        <Check size={10} /> Validé
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      )
+                    })}
+                </div>
+              )}
+
+              {/* VIEW 2: REALISTIC A4 DOOR SIGN PREVIEW */}
+              {scheduleViewMode === 'preview_a4' && (
+                <div className="space-y-4">
+                  {/* Action Bar for Preview */}
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900">
+                    <div className="flex items-center gap-2 text-xs font-bold text-indigo-900 dark:text-indigo-200">
+                      <Eye size={16} className="text-indigo-600 dark:text-indigo-400" />
+                      <span>Aperçu fidèle du panneau de porte A4 officiel qui sera imprimé et affiché à l'entrée de la salle</span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={handleDownloadDoorSign}
+                        disabled={exportingPdf}
+                        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-xs disabled:opacity-60"
+                      >
+                        {exportingPdf ? <Loader2 size={13} className="animate-spin" /> : <Printer size={13} />}
+                        <span>Télécharger PDF A4 Officiel</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* A4 Sheet Container */}
+                  <div className="max-w-4xl mx-auto bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 p-8 sm:p-12 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-xl space-y-6 font-sans">
+                    {/* Official Institutional Header */}
+                    <div className="text-center pb-4 border-b-2 border-[#001A4B] space-y-1">
+                      <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
+                        Royaume du Maroc • Université Sidi Mohamed Ben Abdellah
+                      </p>
+                      <h1 className="text-base sm:text-lg font-black text-[#001A4B] dark:text-blue-400 uppercase tracking-wide">
+                        École Nationale de Commerce et de Gestion — ENCG Fès
+                      </h1>
+                      <p className="text-[10px] text-slate-500 font-semibold">
+                        Direction Académique & des Affaires Pédagogiques • Emploi du Temps Officiel
+                      </p>
+                    </div>
+
+                    {/* Room Hero Navy Box */}
+                    <div className="bg-[#001A4B] text-white p-6 rounded-2xl text-center space-y-1 shadow-md">
+                      <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-wider">
+                        {currentScheduleRoom?.name || 'SALLE DE COURS'}
+                      </h2>
+                      <p className="text-xs font-bold text-blue-200 tracking-wide">
+                        {currentScheduleRoom?.type === 'amphitheater'
+                          ? 'AMPHITHÉÂTRE DE COURS MAGISTRAUX'
+                          : currentScheduleRoom?.type === 'lab'
+                          ? 'LABORATOIRE INFORMATIQUE & TP'
+                          : 'SALLE DE TRAVAUX DIRIGÉS (TD)'}{' '}
+                        • CODE : {currentScheduleRoom?.code || 'S-XXX'}
+                      </p>
+                    </div>
+
+                    {/* Metrics Grid */}
+                    <div className="grid grid-cols-4 gap-2 text-center text-xs">
+                      <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                        <p className="text-[9px] font-bold text-slate-400 uppercase">Capacité Cours</p>
+                        <p className="text-sm font-black text-slate-900 dark:text-slate-100">{currentScheduleRoom?.capacity || 40} places</p>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                        <p className="text-[9px] font-bold text-slate-400 uppercase">Capacité Examen</p>
+                        <p className="text-sm font-black text-rose-600 dark:text-rose-400">
+                          {currentScheduleRoom?.exam_capacity ?? Math.floor((currentScheduleRoom?.capacity || 40) / 2)} places
+                        </p>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                        <p className="text-[9px] font-bold text-slate-400 uppercase">Vidéoprojecteur</p>
+                        <p className="text-xs font-bold text-slate-800 dark:text-slate-200 mt-0.5">
+                          {currentScheduleRoom?.has_projector ? '✅ Installé' : '❌ Non'}
+                        </p>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                        <p className="text-[9px] font-bold text-slate-400 uppercase">Climatisation</p>
+                        <p className="text-xs font-bold text-slate-800 dark:text-slate-200 mt-0.5">
+                          {currentScheduleRoom?.has_ac ? '✅ Équipée' : '❌ Non'}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Official Timetable Matrix Table */}
+                    <div className="overflow-x-auto rounded-xl border border-slate-300 dark:border-slate-800">
+                      <table className="w-full text-left text-xs border-collapse">
+                        <thead>
+                          <tr className="bg-[#001A4B] text-white text-[10px] font-bold uppercase tracking-wider">
+                            <th className="p-2.5 border-r border-blue-900 w-24 text-center">Jour</th>
+                            <th className="p-2.5 border-r border-blue-900 text-center">08:30 – 10:30</th>
+                            <th className="p-2.5 border-r border-blue-900 text-center">10:45 – 12:45</th>
+                            <th className="p-2.5 border-r border-blue-900 text-center">14:30 – 16:30</th>
+                            <th className="p-2.5 text-center">16:45 – 18:45</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-200 dark:divide-slate-800 text-[11px]">
+                          {DAYS_LIST.map((dayItem) => {
+                            const dayEvents = roomScheduleEvents.filter((evt: any) => {
+                              if (!evt.start) return false
+                              return new Date(evt.start).getDay() === dayItem.index
+                            })
+
+                            return (
+                              <tr key={dayItem.index} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/50">
+                                <td className="p-2.5 font-bold text-slate-800 dark:text-slate-200 bg-slate-100/70 dark:bg-slate-900/70 text-center border-r border-slate-200 dark:border-slate-800">
+                                  {dayItem.label}
+                                </td>
+                                {TIME_BLOCKS.map((slot, slotIdx) => {
+                                  const matching = dayEvents.filter((evt: any) => {
+                                    if (!evt.start) return false
+                                    const timeStr = format(new Date(evt.start), 'HH:mm')
+                                    if (slot.start === '08:30') return timeStr.startsWith('08:') || timeStr.startsWith('09:')
+                                    if (slot.start === '10:45') return timeStr.startsWith('10:') || timeStr.startsWith('11:') || timeStr.startsWith('12:')
+                                    if (slot.start === '14:30') return timeStr.startsWith('14:') || timeStr.startsWith('15:')
+                                    if (slot.start === '16:45') return timeStr.startsWith('16:') || timeStr.startsWith('17:') || timeStr.startsWith('18:')
+                                    return false
+                                  })
+
+                                  return (
+                                    <td
+                                      key={slotIdx}
+                                      className={cn(
+                                        'p-2 border-r last:border-r-0 border-slate-200 dark:border-slate-800 align-top',
+                                        matching.length > 0 ? 'bg-blue-50/30 dark:bg-blue-950/20' : ''
+                                      )}
+                                    >
+                                      {matching.length > 0 ? (
+                                        matching.map((evt: any, idx: number) => (
+                                          <div
+                                            key={idx}
+                                            className="p-2 rounded-lg bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-[10px] space-y-1 mb-1 last:mb-0"
+                                          >
+                                            <p className="font-bold text-blue-900 dark:text-blue-200 leading-tight">
+                                              {evt.title}
+                                            </p>
+                                            <p className="text-[9px] text-slate-500 font-mono">
+                                              {evt.extendedProps?.module_code} • {evt.extendedProps?.group}
+                                            </p>
+                                            <p className="text-[9px] text-slate-700 dark:text-slate-300 font-medium">
+                                              Pr. {evt.extendedProps?.professor}
+                                            </p>
+                                          </div>
+                                        ))
+                                      ) : (
+                                        <span className="text-[10px] text-slate-300 dark:text-slate-700 italic block text-center py-2">
+                                          Libre
+                                        </span>
+                                      )}
+                                    </td>
+                                  )
+                                })}
+                              </tr>
+                            )
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Official Sign Footer with Live QR Preview */}
+                    <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+                      <div className="space-y-1 text-center sm:text-left">
+                        <p className="text-[11px] font-bold text-slate-900 dark:text-slate-100">
+                          Direction des Études & de la Planification • ENCG Fès
+                        </p>
+                        <p className="text-[9px] text-slate-400">
+                          Document officiel certifié. Toute modification ou cours de rattrapage est répercuté automatiquement en direct.
+                        </p>
+                      </div>
+
+                      {/* Live QR Box */}
+                      <div className="flex items-center gap-3 p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shrink-0">
+                        <div className="w-14 h-14 bg-white p-1 rounded-xl border border-slate-200 flex items-center justify-center shadow-2xs">
+                          <QrCode size={46} className="text-slate-900" />
+                        </div>
+                        <div className="text-left text-[9px] space-y-0.5">
+                          <span className="font-black text-indigo-600 uppercase tracking-wider block">QR Code Sécurisé</span>
+                          <span className="text-slate-500 block">Scanner pour vérifier</span>
+                          <span className="text-slate-500 block font-semibold">le statut en direct</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* VIEW 3: COMPACT WEEKLY MATRIX */}
+              {scheduleViewMode === 'matrix' && (
+                <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs space-y-4">
+                  <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                    <h3 className="text-sm font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                      <Table size={15} className="text-indigo-500" />
+                      <span>Matrice Hebdomadaire Synthétique — {currentScheduleRoom?.name}</span>
+                    </h3>
+                    <span className="text-xs text-slate-400 font-medium">
+                      Synthèse de tous les créneaux
                     </span>
                   </div>
-                  <p className="font-black text-sm text-slate-900 dark:text-slate-100">{evt.title}</p>
-                  <p className="text-xs text-slate-400 font-medium">
-                    {evt.extendedProps?.professor} · {evt.extendedProps?.group}
-                  </p>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead>
+                        <tr className="bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 font-bold uppercase text-[10px] tracking-wider">
+                          <th className="p-3 w-32 border-b border-slate-200 dark:border-slate-700">Jour</th>
+                          {TIME_BLOCKS.map((tb, idx) => (
+                            <th key={idx} className="p-3 border-b border-slate-200 dark:border-slate-700 text-center">
+                              {tb.start} – {tb.end}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+                        {DAYS_LIST.map((dayItem) => {
+                          const dayEvents = roomScheduleEvents.filter((evt: any) => {
+                            if (!evt.start) return false
+                            return new Date(evt.start).getDay() === dayItem.index
+                          })
+
+                          return (
+                            <tr key={dayItem.index} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
+                              <td className="p-3 font-bold text-slate-800 dark:text-slate-200 bg-slate-50/50 dark:bg-slate-800/30">
+                                {dayItem.label}
+                              </td>
+                              {TIME_BLOCKS.map((slot, slotIdx) => {
+                                const matching = dayEvents.filter((evt: any) => {
+                                  if (!evt.start) return false
+                                  const timeStr = format(new Date(evt.start), 'HH:mm')
+                                  if (slot.start === '08:30') return timeStr.startsWith('08:') || timeStr.startsWith('09:')
+                                  if (slot.start === '10:45') return timeStr.startsWith('10:') || timeStr.startsWith('11:') || timeStr.startsWith('12:')
+                                  if (slot.start === '14:30') return timeStr.startsWith('14:') || timeStr.startsWith('15:')
+                                  if (slot.start === '16:45') return timeStr.startsWith('16:') || timeStr.startsWith('17:') || timeStr.startsWith('18:')
+                                  return false
+                                })
+
+                                return (
+                                  <td key={slotIdx} className="p-2.5 text-center">
+                                    {matching.length > 0 ? (
+                                      <div className="space-y-1">
+                                        {matching.map((m: any, mIdx: number) => (
+                                          <div
+                                            key={mIdx}
+                                            className="px-2.5 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-900 dark:text-indigo-200 border border-indigo-200 dark:border-indigo-800 text-[11px] font-bold"
+                                          >
+                                            <p className="truncate">{m.title}</p>
+                                            <p className="text-[9px] text-slate-500 font-normal">
+                                              Pr. {m.extendedProps?.professor} ({m.extendedProps?.group})
+                                            </p>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    ) : (
+                                      <span className="inline-block px-2.5 py-1 rounded-lg text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/60">
+                                        Libre
+                                      </span>
+                                    )}
+                                  </td>
+                                )
+                              })}
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
-              ))}
-            </div>
+              )}
+            </>
           )}
         </div>
       )}
@@ -1423,7 +2267,7 @@ export default function RoomAvailabilityHubPage() {
               </span>
               <h3 className="font-black text-xl tracking-tight">Réserver {bookingRoom.name}</h3>
               <p className="text-xs text-blue-200/80 font-medium mt-1">
-                Créneau : {targetDate} · {TIME_BLOCKS[selectedSlotIndex]?.label || 'Créneau sélectionné'}
+                Créneau : {targetDate ? format(parseISO(targetDate), 'dd/MM/yyyy') : ''} · {TIME_BLOCKS[selectedSlotIndex]?.label || 'Créneau sélectionné'}
               </p>
             </div>
 
@@ -1444,7 +2288,7 @@ export default function RoomAvailabilityHubPage() {
               <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-400 space-y-1">
                 <p><strong>Salle :</strong> {bookingRoom.name} ({getDisplayCapacity(bookingRoom)} places {isExamMode ? 'exam' : ''})</p>
                 <p><strong>Effectif prévu :</strong> {calculatedHeadcount} étudiants</p>
-                <p><strong>Date & Heure :</strong> {targetDate} ({TIME_BLOCKS[selectedSlotIndex]?.label})</p>
+                <p><strong>Date & Heure :</strong> {targetDate ? format(parseISO(targetDate), 'dd/MM/yyyy') : ''} ({TIME_BLOCKS[selectedSlotIndex]?.label})</p>
               </div>
 
               {/* Notification Toggle */}

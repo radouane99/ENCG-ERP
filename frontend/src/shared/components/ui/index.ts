@@ -44,5 +44,7 @@ export { StatCard }                 from './StatCard'
 export { CustomSelect }             from './CustomSelect'
 export type { CustomSelectProps, SelectOption } from './CustomSelect'
 
+export { DatePicker }               from './DatePicker'
+
 // ── Design tokens ────────────────────────────────────────────────
 export * from '@shared/design-system/tokens'
