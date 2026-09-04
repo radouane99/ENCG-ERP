@@ -140,6 +140,7 @@ class RbacSeeder extends Seeder
             'documents.process', 'documents.generate', 'diplomas.*',
             'announcements.*', 'discipline.*',
             'reports.view', 'reports.export',
+            'infrastructure.view',
         ],
 
         'department-head' => [
@@ -148,11 +149,13 @@ class RbacSeeder extends Seeder
             'timetable.view', 'timetable.create', 'timetable.edit',
             'grades.view', 'grades.validate', 'exams.view',
             'reports.view',
+            'infrastructure.view',
         ],
 
         'professor' => [
             'students.view',
             'timetable.view',
+            'infrastructure.view',
             'attendance.mark', 'attendance.edit', 'attendance.view',
             'attendance.review-justification',
             'grades.enter', 'grades.edit', 'exams.view',
@@ -167,6 +170,7 @@ class RbacSeeder extends Seeder
 
         'vacataire' => [
             'timetable.view',
+            'infrastructure.view',
             'attendance.mark',
             'grades.enter',
             'lms.create-content', 'lms.manage-assignments',

@@ -14,7 +14,15 @@ class RoomController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        abort_unless($request->user()->can('infrastructure.view'), 403);
+        abort_unless(
+            $request->user()->can('infrastructure.view')
+            || $request->user()->can('timetable.view')
+            || $request->user()->hasAnyRole([
+                'super-admin', 'super_admin', 'admin', 'institution-admin', 'institution_admin',
+                'director', 'department-head', 'filiere-head', 'professor', 'vacataire',
+            ]),
+            403
+        );
 
         $query = Room::query();
 
@@ -51,6 +59,38 @@ class RoomController extends Controller
                 'amphitheatres' => $rooms->where('type', 'amphitheatre')->count(),
                 'total_capacity' => $rooms->sum('capacity'),
                 'total_exam_capacity' => $rooms->sum('exam_capacity'),
+            ],
+        ]);
+    }
+
+    /**
+     * Afficher une salle.
+     */
+    public function show(Request $request, Room $room): JsonResponse
+    {
+        abort_unless(
+            $request->user()->can('infrastructure.view')
+            || $request->user()->can('timetable.view')
+            || $request->user()->hasAnyRole([
+                'super-admin', 'super_admin', 'admin', 'institution-admin', 'institution_admin',
+                'director', 'department-head', 'filiere-head', 'professor', 'vacataire',
+            ]),
+            403
+        );
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'id' => $room->id,
+                'name' => $room->name,
+                'code' => $room->code,
+                'type' => $room->type,
+                'capacity' => $room->capacity,
+                'exam_capacity' => $room->exam_capacity ?? (int) floor($room->capacity / 2),
+                'has_projector' => $room->has_projector,
+                'has_ac' => $room->has_ac,
+                'is_available' => $room->is_available,
+                'equipment_status' => $room->equipment_status ?? ['projector' => 'ok', 'ac' => 'ok', 'sound' => 'ok', 'pc_lab' => 'ok'],
             ],
         ]);
     }
