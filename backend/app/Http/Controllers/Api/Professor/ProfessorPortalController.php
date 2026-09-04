@@ -10,6 +10,8 @@ use App\Models\Schedule;
 use App\Models\User;
 use App\Models\AttendanceSession;
 use App\Models\VacationContract;
+use App\Models\Textbook;
+use App\Models\Module;
 use Carbon\Carbon;
 use App\Services\Academic\TimetableCampaignService;
 use Barryvdh\DomPDF\Facade\Pdf;

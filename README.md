@@ -103,7 +103,8 @@ Mot de passe universel : password
 | 🛡️ **Super Administrateur** | **`admin@encg.ma`** | Radouane El Bahi | Tableau de bord 360°, gestion des utilisateurs, audit CNDP, paramétrage global, Horizon |
 | 📋 **Direction de la Scolarité** | **`scolarite@encg.ma`** | Fatim-Zahra Alami | Emplois du temps, Hub des salles, inscriptions TAFEM, réinscriptions, cartes d'étudiants, PVs |
 | 👨‍🏫 **Chef de Département / Professeur** | **`meziane.tarik@encg-fes.ma`** | Pr. Tarik Meziane | Saisie des notes CC/Examens, réservation de rattrapages, signature numérique PV (SHA-256) |
-| 👩‍🏫 **Professeur Permanent** | **`bennani.bouchra@encg-fes.ma`** | Pr. Bouchra Bennani | Émargement QR Code, cahier de texte, encadrement PFE & stages, synchronisation iCal |
+| 👩‍🏫 **Professeur Permanent** | **`bennani.bouchra@encg-fes.ma`** | Pr. Bouchra Bennani | Émargement QR Code, cahier de texte, encadrement PFE & stages, synchronisation iCal, Attestation de Travail |
+| 💼 **Enseignant Vacataire** | **`elmansouri.youssef@encg-fes.ma`** | Dr. Youssef El Mansouri | Emploi du temps, saisie notes, surveillances, Classroom, **Guichet Vacataire** (Attestation Heures, Bordereau Paiement, IGR 17%, Contrat PDF) |
 | 🎓 **Étudiant (Espace Étudiant)** | **`student@encg.ma`** | Youssef El Mansouri | Emploi du temps live, réclamation de notes, scan QR présence, demandes de documents PDF |
 | 🎓 **Étudiant (Délégué de Groupe)** | **`salma.bennani2@student.encg.ma`** | Salma Bennani | Alertes push rattrapages, liaison département, consultation des cours et absences |
 
