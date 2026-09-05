@@ -21,7 +21,9 @@ import {
   X,
   Building2,
   CheckCircle2,
-  BrainCircuit
+  BrainCircuit,
+  Compass,
+  Scale
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
@@ -261,6 +263,39 @@ export default function StudentDashboard() {
                 <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mt-2 block">
                   Progression 50%
                 </span>
+              </div>
+            </div>
+
+            {/* ── Active Strategic Academic Campaigns Banner ── */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="p-5 rounded-3xl bg-gradient-to-br from-[#001A4B] to-[#0a2f77] text-white shadow-md relative overflow-hidden flex flex-col justify-between">
+                <div className="space-y-1.5 z-10">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-400/20 text-amber-300 text-[10px] font-black uppercase tracking-wider">
+                    <Compass className="w-3.5 h-3.5" /> Tronc Commun → S6/S7
+                  </div>
+                  <h3 className="text-sm font-black pt-1">Choix de Spécialité au Mérite</h3>
+                  <p className="text-xs text-blue-200 leading-relaxed">GFC, MACG, MCI, MRH, MLOG. Classement automatique au mérite et numerus clausus.</p>
+                </div>
+                <div className="pt-4 z-10">
+                  <Link to="/student/specialty-choices" className="inline-flex items-center gap-1.5 px-4 py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-xl text-xs font-black uppercase tracking-wider transition-colors shadow-sm">
+                    Déposer mes 5 vœux →
+                  </Link>
+                </div>
+              </div>
+
+              <div className="p-5 rounded-3xl bg-gradient-to-br from-emerald-950 to-teal-900 text-white shadow-md relative overflow-hidden flex flex-col justify-between">
+                <div className="space-y-1.5 z-10">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-400/20 text-emerald-300 text-[10px] font-black uppercase tracking-wider">
+                    <Scale className="w-3.5 h-3.5" /> Délibérations & Affichages
+                  </div>
+                  <h3 className="text-sm font-black pt-1">Guichet Recours & Réclamations</h3>
+                  <p className="text-xs text-emerald-200 leading-relaxed">Délai légal LMD 48h pour vérification de sommation ou report de note d'examen.</p>
+                </div>
+                <div className="pt-4 z-10">
+                  <Link to="/student/grades" className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-400 hover:bg-emerald-300 text-slate-950 rounded-xl text-xs font-black uppercase tracking-wider transition-colors shadow-sm">
+                    Consulter mes notes & Recours →
+                  </Link>
+                </div>
               </div>
             </div>
 

@@ -914,6 +914,62 @@ L'écosystème ENCG-ERP intègre une séparation juridique et administrative rig
 
 ---
 
+### 11.4 ⏱️ Plateforme Officielle de « Réclamation de Notes & Consultation des Copies » (Guichet LMD 48h)
+* **Cadre Réglementaire & Charte LMD** : À la publication d'un PV de délibération, un compte à rebours légal de **48 heures** s'ouvre pour le dépôt d'un recours officiel (erreur matérielle de sommation, oubli de report CC/Examen).
+* **Guichet Étudiant Dématérialisé** :
+  - Dépôt d'une réclamation motivée directement depuis le portail étudiant (`/student/grades`) avec sélection du motif officiel (`sommation_error`, `cc_report_error`, `copy_consultation`, `other`) et justificatifs.
+  - Verrouillage automatique et interdiction stricte de dépôt après expiration de la fenêtre de 48h (HTTP 422).
+* **Guichet de Traitement Enseignant & Scolarité** :
+  - Tableau de bord dédié pour l'enseignant responsable et le pôle scolarité (`/admin/grade-appeals` et `/professor/grade-appeals`).
+  - Deux issues souveraines :
+    1. **Note Maintenue** : Avec explication pédagogique motivée envoyée à l'étudiant.
+    2. **Rectification pour Erreur Matérielle** : Saisie de la nouvelle note rectifiée, mise à jour immédiate de la table `grades` avec protection d'optimistic locking, génération d'une entrée d'audit dans `grade_audits`, et recalcul instantané des moyennes.
+
+---
+
+### 11.5 🎯 Moteur d'« Orientation & Choix de Spécialité » au Mérite (Gale-Shapley & Numerus Clausus)
+* **Périmètre Pédagogique** : Affectation des étudiants de Tronc Commun vers les 5 filières d'excellence du cycle Master ENCG :
+  - **GFC** : Gestion Financière et Comptable (Capacité : 60 places)
+  - **MACG** : Management Audit et Contrôle de Gestion (Capacité : 60 places)
+  - **MCI** : Commerce International (Capacité : 60 places)
+  - **MRH** : Management des Ressources Humaines (Capacité : 45 places)
+  - **MLOG** : Management Logistique et Achats (Capacité : 45 places)
+* **Formule de Mérite Pondérée ENCG** :
+  $$\text{Score} = \frac{\text{Moyenne}_{S1} \times 1 + \text{Moyenne}_{S2} \times 1 + \text{Moyenne}_{S3} \times 1.5 + \text{Moyenne}_{S4} \times 1.5}{5}$$
+* **Processus Dématérialisé** :
+  - **Étudiant** (`/student/specialty-choices`) : Sélection par drag-and-drop de 5 vœux ordonnés avec accusé de réception certifié.
+  - **Administration** (`/admin/specialty-allocation`) : Simulateur interactif visualisant les jauges de remplissage par filière, et moteur d'attribution automatique en 1 clic appliquant l'algorithme d'acceptation différée de Gale-Shapley avec respect strict des numerus clausus.
+
+---
+
+### 11.6 📄 Workflow Numérique des « Conventions de Stage Tripartites & Assurance RC »
+* **Typologie des Stages ENCG** :
+  - **Stage d'Initiation** (Semestre 4 - 4 semaines)
+  - **Stage d'Application** (Semestre 6 - 8 semaines)
+  - **Projet de Fin d'Études / Stage PFE** (Semestre 10 - 16 à 24 semaines)
+* **Conformité Juridique Marocaine & Clauses Tripartites** :
+  - Saisie complète des informations de l'entreprise d'accueil, du tuteur professionnel et des coordonnées de la compagnie d'assurance de Responsabilité Civile (Police d'assurance RC étudiante).
+  - Validation pédagogique et administrative dématérialisée (`pending_approval` $\to$ `approved`).
+  - Génération en 1 clic de la convention tripartite officielle en PDF [convention_stage.blade.php](file:///c:/Users/najlae/Desktop/ENCG-ERP-V1/backend/resources/views/pdf/convention_stage.blade.php) avec 8 articles juridiques complets, cachets officiels et QR Code de certification.
+
+---
+
+### 11.7 🌐 Générateur Officiel du « Diploma Supplement » (Annexe Descriptive 300 ECTS Bologne)
+* **Standard EHEA / Bologne Bilingue FR/EN** :
+  - Modèle officiel d'Annexe Descriptive au Diplôme conforme au référentiel conjoint UNESCO/Conseil de l'Europe/Commission Européenne.
+  - Structuré en **8 sections canoniques** :
+    1. Information sur le titulaire du diplôme (Nom, Prénom, CNE/Massar, CIN, Date & Lieu de naissance).
+    2. Information sur le diplôme (Diplôme des ENCG, Grade Master, Domaine Sciences de Gestion).
+    3. Information sur le niveau de qualification (Bac+5, 300 ECTS, Accès au Doctorat).
+    4. Contenu et résultats obtenus (Détail semestriel complet S1 à S10, crédits ECTS par module, mentions).
+    5. Fonction du diplôme (Accès aux professions réglementées d'audit, finance, direction d'entreprise).
+    6. Renseignements complémentaires (Affiliation USMBA / MESRSFC, double diplômes internationaux).
+    7. Certification du supplément (Date, Cachet officiel du Directeur, Sceau cryptographique SHA-256).
+    8. Information sur le système national d'enseignement supérieur marocain (Architecture LMD).
+  - Modèle Blade officiel [diploma_supplement.blade.php](file:///c:/Users/najlae/Desktop/ENCG-ERP-V1/backend/resources/views/pdf/diploma_supplement.blade.php) téléchargeable en 1 clic par les étudiants diplômés depuis `/student/grades`.
+
+---
+
 ## 12. 🧪 Pyramide de Tests, Principes ISTQB & Couverture Complète (100% Green)
 
 La stratégie d'assurance qualité du projet est adossée aux **7 principes fondamentaux de test de l'ISTQB** et à des techniques de conception de tests rigoureuses (boîte noire & boîte blanche) documentées dans **[TESTING.md](TESTING.md)**.
@@ -928,6 +984,7 @@ La stratégie d'assurance qualité du projet est adossée aux **7 principes fond
 | **4** | **Regroupement des défauts (*Defect Clustering*)** | Les modules à haute complexité métier (délibération des jurys, gestion des conflits de salles, saisie de notes multi-professeurs) concentrent le plus grand nombre d'assertions dédiées. |
 | **5** | **Paradoxe du pesticide** | Les suites de tests sont continuellement enrichies lors de chaque nouvelle fonctionnalité (ex: ajout de `RoomAvailabilityAndSmartFinderTest.php` lors du développement du Smart Room Hub). |
 | **6** | **Le test dépend du contexte** | Adaptation stricte au contexte Grande École marocaine : bilinguisme FR/AR, système modulaire LMD (semestres S1 à S10), zéro frais sur cursus public, et normes MESRSFC. |
+| **7** | **L'illusion de l'absence d'erreurs (*Absence-of-errors fallacy*)** | Validation conjointe par tests automatisés et conformité avec les processus administratifs réels de l'ENCG Fès (scolarité, chefs de département, régie, jurys). |
 | **7** | **L'illusion de l'absence d'erreurs (*Absence-of-errors fallacy*)** | Validation conjointe par tests automatisés et conformité avec les processus administratifs réels de l'ENCG Fès (scolarité, chefs de département, régie, jurys). |
 
 ---
@@ -973,9 +1030,10 @@ graph BT
 | **Ségrégation RH Vacataires vs Permanents** | `ProfessorDocumentSegregationServiceTest.php` | 30 | **✅ PASS** |
 | **Fiscalité Vacations & IGR 17% (CGI Art. 73)** | `VacationTaxAndDocumentSegregationTest.php` | 29 | **✅ PASS** |
 | **Cahier de Texte, Service Fait & Bilan CNU** | `TextbookAndAnnualActivityReportTest.php` | 21 | **✅ PASS** |
+| **Modules Stratégiques Académiques (4 Modules)** | `AcademicStrategicModulesTest.php` | 30 | **✅ PASS** |
 | **Verrouillage Optimiste Saisie Notes** | `ConcurrentGradeSubmissionAndLockingTest.php` | 9 | **✅ PASS** |
 | **Frontend TypeScript & Store** | `useAuthStore.test.ts` & `gradeCalculation.test.ts` | 17 | **✅ PASS** |
-| **TOTAL** | **135+ Suites Backend & Frontend** | **481+ Assertions** | **🌟 100% GREEN** |
+| **TOTAL** | **136+ Suites Backend & Frontend** | **511+ Assertions** | **🌟 100% GREEN** |
 
 ---
 

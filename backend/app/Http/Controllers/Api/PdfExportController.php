@@ -2007,17 +2007,32 @@ class PdfExportController extends Controller
 
         $modulesList = [];
         foreach ($assignedModules as $item) {
+            $moduleHours = (int) ($item->assigned_hours ?? 0);
+            if ($moduleHours <= 0) {
+                $moduleHours = (int) ($item->module->credit_hours ?? 0);
+            }
+            if ($moduleHours <= 0) {
+                $moduleHours = (int) (
+                    ($item->module->hours_cm ?? 0)
+                    + ($item->module->hours_td ?? 0)
+                    + ($item->module->hours_tp ?? 0)
+                );
+            }
+            if ($moduleHours <= 0) {
+                $moduleHours = 36;
+            }
+
             $modulesList[] = [
                 'code' => $item->module->code ?? 'MOD',
                 'name' => $item->module->name ?? 'Module Académique',
                 'group' => $item->group->name ?? 'Tous Groupes',
-                'hours' => (int) ($item->module->credit_hours ?? 48),
+                'hours' => $moduleHours,
             ];
         }
 
         $totalModulesCount = count($modulesList);
         $totalHours = array_reduce($modulesList, fn ($sum, $m) => $sum + $m['hours'], 0);
-        $weeklyHours = $totalModulesCount * 4;
+        $weeklyHours = $totalModulesCount > 0 ? (int) max(1, round($totalHours / 15)) : 0;
 
         $trackingCode = 'ODS-'.date('Y').'-'.strtoupper(substr(str_replace('-', '', (string) $professor->id), 0, 8));
         $verifyUrl = url("/verify/document/{$trackingCode}");
@@ -2137,16 +2152,23 @@ class PdfExportController extends Controller
 
         $formattedAssignments = [];
         foreach ($assignedModules as $a) {
+            $hours = (int) ($a->assigned_hours ?? 0);
+            if ($hours <= 0) {
+                $hours = (int) ($a->module->credit_hours ?? 0);
+            }
+            if ($hours <= 0) {
+                $hours = 36;
+            }
             $formattedAssignments[] = [
                 'module' => ($a->module->code ?? 'MOD').' '.($a->module->name ?? 'Module'),
                 'group' => $a->group->name ?? 'Tous Groupes',
-                'hours' => (int) ($a->module->credit_hours ?? 48),
+                'hours' => $hours,
             ];
         }
 
         $count = count($formattedAssignments);
         $totalHours = array_reduce($formattedAssignments, fn ($sum, $m) => $sum + $m['hours'], 0);
-        $weeklyHours = $count * 4;
+        $weeklyHours = $count > 0 ? (int) max(1, round($totalHours / 15)) : 0;
 
         $profName = trim(($profUser?->first_name ?? '').' '.($profUser?->last_name ?? ''));
         if (empty($profName)) {

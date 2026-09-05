@@ -145,13 +145,13 @@ export default function ProfessorDashboard() {
   });
 
   const stats: ProfessorStatsResponse = {
-    total_students: statsData?.total_students ?? 24,
-    total_modules: statsData?.total_modules ?? 4,
-    total_groups: statsData?.total_groups ?? 2,
+    total_students: statsData?.total_students ?? 0,
+    total_modules: statsData?.total_modules ?? 0,
+    total_groups: statsData?.total_groups ?? 0,
     pending_grades: statsData?.pending_grades ?? 0,
-    statutory_hours_done: statsData?.statutory_hours_done ?? 168,
+    statutory_hours_done: statsData?.statutory_hours_done ?? 0,
     statutory_hours_total: statsData?.statutory_hours_total ?? 240,
-    pfe_supervised_count: statsData?.pfe_supervised_count ?? 3,
+    pfe_supervised_count: statsData?.pfe_supervised_count ?? 0,
     next_classes: Array.isArray(statsData?.next_classes) ? statsData.next_classes : [],
     modules_list: Array.isArray(statsData?.modules_list) ? statsData.modules_list : [],
     pfe_list: Array.isArray(statsData?.pfe_list) ? statsData.pfe_list : [],

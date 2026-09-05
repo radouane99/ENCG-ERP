@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CheckCircle2, FlaskConical, Download, AlertCircle, Award, BookOpen, Sparkles, TrendingUp, ShieldCheck } from 'lucide-react';
+import { CheckCircle2, FlaskConical, Download, AlertCircle, Award, BookOpen, Sparkles, Scale, Clock, X, Send } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import api from '@shared/lib/api';
@@ -16,14 +16,53 @@ import { toast } from 'sonner';
 export default function StudentGrades() {
   const { i18n } = useTranslation(['students', 'common']);
   const isRtl = i18n.language === 'ar';
+
   const { data, isLoading, isError } = useQuery({
     queryKey: ['student-grades'],
     queryFn: () => api.get('/student-portal/grades').then(res => res.data)
   });
+
+  const { data: appealsData, refetch: refetchAppeals } = useQuery({
+    queryKey: ['student-grade-appeals'],
+    queryFn: () => api.get('/student-portal/grade-appeals').then(res => res.data?.data || res.data || [])
+  });
+
   const [isRevealed, setIsRevealed] = useState(false);
   const [judge, setJudge] = useState<{ verdict?: string; explanation_fr?: string; explanation_ar?: string } | null>(null);
   const [judgeLoading, setJudgeLoading] = useState(false);
   const [selectedSemester, setSelectedSemester] = useState<string>('all');
+
+  // Modal Réclamation LMD 48h
+  const [appealModalOpen, setAppealModalOpen] = useState(false);
+  const [selectedModuleForAppeal, setSelectedModuleForAppeal] = useState<any>(null);
+  const [appealReasonType, setAppealReasonType] = useState('erreur_sommation');
+  const [appealReasonDetails, setAppealReasonDetails] = useState('');
+  const [submittingAppeal, setSubmittingAppeal] = useState(false);
+
+  const handleSubmitAppeal = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedModuleForAppeal) return;
+    setSubmittingAppeal(true);
+    const reasonFull = `[${appealReasonType.toUpperCase()}] ${appealReasonDetails.trim()}`;
+    try {
+      await api.post('/student-portal/grade-appeals', {
+        module_id: selectedModuleForAppeal.module_id || selectedModuleForAppeal.id || 1,
+        assessment_id: selectedModuleForAppeal.assessment_id,
+        original_grade: selectedModuleForAppeal.moyenne_finale || selectedModuleForAppeal.moyenne_normale || 10,
+        reason: reasonFull,
+      });
+      toast.success('Réclamation enregistrée et transmise à l\'enseignant responsable !');
+      setAppealModalOpen(false);
+      setSelectedModuleForAppeal(null);
+      setAppealReasonDetails('');
+      refetchAppeals();
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || 'Erreur lors du dépôt de la réclamation.';
+      toast.error(msg);
+    } finally {
+      setSubmittingAppeal(false);
+    }
+  };
 
   if (isLoading) {
     return <div className="flex h-[50vh] items-center justify-center"><Spinner size="lg" /></div>;
@@ -47,6 +86,8 @@ export default function StudentGrades() {
     return String(g.semester_number || g.semester || '').toLowerCase().includes(selectedSemester.toLowerCase());
   }) : [];
 
+  const appealsList = Array.isArray(appealsData) ? appealsData : [];
+
   return (
     <div data-testid="student-grades-page" className="space-y-8 font-sans animate-in fade-in duration-500 text-slate-900 dark:text-slate-100">
       <PageHeader 
@@ -67,6 +108,9 @@ export default function StudentGrades() {
             </span>
             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
               Année 2026/2027
+            </span>
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1">
+              <Clock className="w-3 h-3" /> Guichet LMD 48h Actif
             </span>
           </div>
 
@@ -137,6 +181,27 @@ export default function StudentGrades() {
             >
               <Download className="w-4 h-4 text-emerald-200" /> Attestation de Réussite
             </button>
+
+            <button 
+              onClick={() => {
+                const tid = toast.loading("Génération du Diploma Supplement (300 ECTS EHEA)...");
+                api.get('/student-portal/diploma-supplement/pdf', { responseType: 'blob' })
+                  .then(res => {
+                    const url = window.URL.createObjectURL(new Blob([res.data]));
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.setAttribute('download', 'Diploma_Supplement_300_ECTS_ENCG.pdf');
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove();
+                    toast.success('Diploma Supplement (300 ECTS) téléchargé !', { id: tid });
+                  })
+                  .catch(() => toast.error("Erreur lors de la génération du Diploma Supplement.", { id: tid }));
+              }}
+              className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2.5 rounded-xl font-bold text-xs shadow-md flex items-center gap-2 border border-indigo-400/30 transition-all cursor-pointer"
+            >
+              <Award className="w-4 h-4 text-indigo-200" /> Diploma Supplement (300 ECTS)
+            </button>
           </div>
         </div>
 
@@ -176,7 +241,7 @@ export default function StudentGrades() {
             <h2 className="text-lg font-black text-[#001A4B] dark:text-white flex items-center gap-2">
               <BookOpen className="w-5 h-5 text-blue-600" /> Détail des Modules & Éléments Pédagogiques
             </h2>
-            <p className="text-xs text-slate-400 mt-0.5">Notes de contrôle continu, examen final et session de rattrapage</p>
+            <p className="text-xs text-slate-400 mt-0.5">Notes de contrôle continu, examen final et session de rattrapage (Guichet Réclamations 48h)</p>
           </div>
 
           {/* Semester Filter Pills */}
@@ -228,7 +293,8 @@ export default function StudentGrades() {
                 <th className="pb-4 text-center">CC</th>
                 <th className="pb-4 text-center">Examen</th>
                 <th className="pb-4 text-center">Moyenne Finale</th>
-                <th className="pb-4 text-right pr-4">Décision LMD</th>
+                <th className="pb-4 text-center">Décision LMD</th>
+                <th className="pb-4 text-right pr-4">Recours / Réclamation</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -252,17 +318,29 @@ export default function StudentGrades() {
                     <td className="py-4 text-center font-mono font-black text-[#001A4B] dark:text-blue-300 text-base">
                       {Number(total).toFixed(2)}
                     </td>
-                    <td className="py-4 text-right pr-4">
-                      <div className="flex justify-end mt-1">
+                    <td className="py-4 text-center">
+                      <div className="flex justify-center mt-1">
                         <LmdBadge decision={code} score={total} />
                       </div>
+                    </td>
+                    <td className="py-4 text-right pr-4">
+                      <button
+                        onClick={() => {
+                          setSelectedModuleForAppeal(grade);
+                          setAppealModalOpen(true);
+                        }}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30 text-[11px] font-black transition-all cursor-pointer shadow-xs"
+                        title="Déposer un recours ou demander une vérification matérielle sous 48h"
+                      >
+                        <Scale className="w-3.5 h-3.5 text-amber-600" /> Réclamation 48h
+                      </button>
                     </td>
                   </tr>
                 );
               })}
               {(!filteredGrades || filteredGrades.length === 0) && (
                 <tr>
-                  <td colSpan={5} className="py-10">
+                  <td colSpan={6} className="py-10">
                     <EmptyState
                       icon={AlertCircle}
                       title="Aucune note disponible pour ce semestre"
@@ -281,6 +359,132 @@ export default function StudentGrades() {
           </div>
         </div>
       </div>
+
+      {/* ── Active Appeals Section ── */}
+      {appealsList.length > 0 && (
+        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-200 dark:border-slate-800 space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-black text-[#001A4B] dark:text-white flex items-center gap-2">
+              <Scale className="w-5 h-5 text-amber-600" /> Suivi de mes Réclamations de Notes (Guichet LMD 48h)
+            </h2>
+            <span className="px-3 py-1 bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 rounded-full text-xs font-black">
+              {appealsList.length} Demande{appealsList.length > 1 ? 's' : ''}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+            {appealsList.map((appeal: any) => (
+              <div key={appeal.id} className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h4 className="font-black text-sm text-slate-900 dark:text-white">{appeal.module?.name || `Module #${appeal.module_id}`}</h4>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase">Note contestée : {Number(appeal.original_grade).toFixed(2)} / 20</span>
+                  </div>
+                  <span className={cn(
+                    "px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider",
+                    appeal.status === 'rectified' && "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300",
+                    appeal.status === 'maintained' && "bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-300",
+                    (appeal.status === 'submitted' || appeal.status === 'under_review') && "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
+                  )}>
+                    {appeal.status === 'rectified' ? `Note Rectifiée : ${Number(appeal.rectified_grade).toFixed(2)}/20` : 
+                     appeal.status === 'maintained' ? 'Note Maintenue' : 'En Instruction (48h)'}
+                  </span>
+                </div>
+
+                <p className="text-xs text-slate-600 dark:text-slate-300 font-medium line-clamp-2">
+                  <span className="font-bold">Motif invoqué :</span> {appeal.reason}
+                </p>
+
+                {appeal.resolution_notes && (
+                  <div className="p-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-700 dark:text-slate-300">
+                    <span className="font-bold text-[#001A4B] dark:text-blue-300">Avis de l'Enseignant :</span> {appeal.resolution_notes}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Grade Appeal Modal ── */}
+      {appealModalOpen && selectedModuleForAppeal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl border border-slate-200 dark:border-slate-800 space-y-5">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-2 text-amber-600">
+                <Scale className="w-5 h-5" />
+                <h3 className="text-base font-black text-slate-900 dark:text-white">Déposer un Recours / Réclamation de Note</h3>
+              </div>
+              <button 
+                onClick={() => setAppealModalOpen(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-300 text-xs space-y-1">
+              <p className="font-black flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5" /> Compte à Rebours LMD : 48 Heures Légales
+              </p>
+              <p className="text-[11px] leading-relaxed">
+                Conformément à la charte des examens ENCG, tout recours doit porter sur une erreur matérielle objective (sommation, report ou omission de copie).
+              </p>
+            </div>
+
+            <div className="space-y-1">
+              <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Module concerné</span>
+              <p className="font-black text-sm text-slate-800 dark:text-white">{selectedModuleForAppeal.module_name || selectedModuleForAppeal.module?.name}</p>
+              <p className="text-xs font-mono text-slate-500">Note actuelle : {Number(selectedModuleForAppeal.moyenne_finale || selectedModuleForAppeal.moyenne_normale || 10).toFixed(2)} / 20</p>
+            </div>
+
+            <form onSubmit={handleSubmitAppeal} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Nature du Recours</label>
+                <select
+                  value={appealReasonType}
+                  onChange={(e) => setAppealReasonType(e.target.value)}
+                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-800 dark:text-slate-200 focus:outline-hidden focus:ring-2 focus:ring-[#001A4B]"
+                >
+                  <option value="erreur_sommation">Erreur matérielle de sommation des points sur l'épreuve</option>
+                  <option value="omission_cc">Omission ou erreur de report de la note de Contrôle Continu (CC)</option>
+                  <option value="omission_copie">Omission d'évaluation d'une copie double ou intercalaire</option>
+                  <option value="discordance_saisie">Discordance entre la note affichée et le barème de l'épreuve</option>
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Détails & Arguments Précis</label>
+                <textarea
+                  rows={4}
+                  required
+                  placeholder="Précisez la question ou la copie concernée (ex : Exercice 3 non comptabilisé sur 4 points)..."
+                  value={appealReasonDetails}
+                  onChange={(e) => setAppealReasonDetails(e.target.value)}
+                  className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-800 dark:text-slate-200 focus:outline-hidden focus:ring-2 focus:ring-[#001A4B]"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setAppealModalOpen(false)}
+                  className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  disabled={submittingAppeal}
+                  className="px-5 py-2.5 rounded-xl text-xs font-black bg-[#001A4B] hover:bg-[#082663] text-white shadow-md flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                >
+                  <Send className="w-3.5 h-3.5" /> {submittingAppeal ? 'Transmission...' : 'Soumettre le Recours'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

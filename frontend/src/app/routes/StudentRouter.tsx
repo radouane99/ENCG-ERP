@@ -22,6 +22,7 @@ const StudentAiTutorPage = lazy(() => import('@features/students/pages/StudentAi
 const StudentReinscriptionPage = lazy(() => import('@features/students/pages/StudentReinscriptionPage'))
 const DigitalCardPage = lazy(() => import('@features/students/pages/DigitalCardPage'))
 const StudentOrientationAdvisorPage = lazy(() => import('@features/academic/pages/StudentOrientationAdvisorPage'))
+const StudentSpecialtyOrientationPage = lazy(() => import('@features/students/pages/StudentSpecialtyOrientationPage'))
 
 export default function StudentRouter() {
   return (
@@ -29,6 +30,8 @@ export default function StudentRouter() {
       <Route path="dashboard" element={<StudentDashboard />} />
       <Route path="card" element={<DigitalCardPage />} />
       <Route path="grades" element={<StudentGrades />} />
+      <Route path="specialty-choices" element={<StudentSpecialtyOrientationPage />} />
+      <Route path="specialty-wishes" element={<StudentSpecialtyOrientationPage />} />
       <Route path="orientation" element={<StudentOrientationAdvisorPage />} />
       <Route path="path-advisor" element={<StudentOrientationAdvisorPage />} />
       <Route path="reinscription" element={<StudentReinscriptionPage />} />

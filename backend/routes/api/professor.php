@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\Academic\GradeAppealController;
 use App\Http\Controllers\Api\AiAssistantController;
 use App\Http\Controllers\Api\AttendanceController;
 use App\Http\Controllers\Api\ConvocationController;
@@ -113,6 +114,12 @@ Route::middleware(['auth:sanctum', 'role:professor|vacataire|department-head|fil
     Route::get('/professor/surveillances/all-pdf', [PdfExportController::class, 'downloadMySurveillancesPdf']);
     Route::get('/professor/surveillances/{id}/pdf', [PdfExportController::class, 'surveillantConvocationPdf']);
     Route::post('/professor/surveillances/{id}/sign-pv', [ConvocationController::class, 'signExamPv']);
+
+    // Réclamations de Notes LMD 48h (Traitement Enseignant)
+    Route::get('/professor-portal/grade-appeals', [GradeAppealController::class, 'index']);
+    Route::post('/professor-portal/grade-appeals/{id}/resolve', [GradeAppealController::class, 'resolve']);
+    Route::get('/v1/professor-portal/grade-appeals', [GradeAppealController::class, 'index']);
+    Route::post('/v1/professor-portal/grade-appeals/{id}/resolve', [GradeAppealController::class, 'resolve']);
 });
 
 Route::middleware(['auth:sanctum', 'role:professor|vacataire|department-head|filiere-head|super-admin|institution-admin|director'])->group(function () {

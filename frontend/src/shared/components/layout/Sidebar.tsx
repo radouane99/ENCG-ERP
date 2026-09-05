@@ -16,7 +16,7 @@ import {
   X, Layers, IdCard, Eye, Calculator, TrendingUp, Search, BellRing,
   UserX, Gavel, CalendarCheck, AreaChart, MailCheck, RotateCcw, Repeat, FileEdit, UserCog, UserCheck,
   Clock3, CalendarSync, DoorOpen, Cpu, Palmtree, HeartHandshake, CreditCard, Stamp, Send,
-  BookMarked, GitFork, FilterX, Archive, Key, Mic, ArrowRightLeft
+  BookMarked, GitFork, FilterX, Archive, Key, Mic, ArrowRightLeft, Scale
 } from 'lucide-react'
 
 interface NavItem {
@@ -83,6 +83,8 @@ const navigation: (NavItem | NavGroup)[] = [
       { label: 'Scanner QR des Présences', labelAr: 'ماسح الحضور بالباركود', href: '/admin/exams/scan', icon: ScanLine, badge: 'QR', roles: ['super-admin', 'institution-admin', 'director', 'scolarite'] },
       { label: 'Saisie des Notes & Rattrapages', labelAr: 'إدخال النقاط والتدارك', href: '/admin/grades', icon: FileEdit, roles: ['super-admin', 'institution-admin', 'director', 'department-head', 'filiere-head', 'scolarite'] },
       { label: 'Délibérations & PVs Apogée', labelAr: 'المداولات ومحاضر أبوجي', href: '/admin/grades/pv', icon: Calculator, badge: 'LMD', roles: ['super-admin', 'institution-admin', 'director', 'department-head', 'filiere-head', 'scolarite'] },
+      { label: 'Réclamations & Recours (48h)', labelAr: 'شكايات ومراجعة النقاط', href: '/admin/grade-appeals', icon: Scale, badge: '48h', roles: ['super-admin', 'institution-admin', 'director', 'department-head', 'filiere-head', 'scolarite'] },
+      { label: 'Orientation & Spécialités S6/S7', labelAr: 'توجيه واختيار الشعب', href: '/admin/specialty-allocation', icon: Compass, badge: 'LMD', roles: ['super-admin', 'institution-admin', 'director', 'scolarite'] },
       { label: 'Archives PVs & Émargements', labelAr: 'أرشيف المحاضر والتوقيعات', href: '/admin/exams/pv-archive', icon: Archive, badge: 'PV', roles: ['super-admin', 'institution-admin', 'director', 'scolarite'] },
       { label: 'Verrouillage des Épreuves', labelAr: 'قفل الاختبارات والنتائج', href: '/admin/exam-locking', icon: Lock, roles: ['super-admin', 'institution-admin', 'director'] },
     ]
@@ -158,6 +160,7 @@ const navigation: (NavItem | NavGroup)[] = [
       { label: 'Salles libres (extra / rattrapage)', labelAr: 'القاعات المتاحة للاستدراك', href: '/professor/rooms/availability', icon: MapPin, badge: 'DISPO', roles: ['professor', 'vacataire'] },
       { label: 'Saisie des Notes (Apogée)', labelAr: 'إدخال النقاط (أبوجي)', href: '/admin/grades', icon: FileEdit, roles: ['professor', 'vacataire'] },
       { label: 'Double Correction Apogée', labelAr: 'التصحيح المزدوج للمواد', href: '/professor/double-grading', icon: ArrowRightLeft, badge: 'LMD', roles: ['professor'] },
+      { label: 'Recours & Réclamations (48h)', labelAr: 'شكايات ومراجعة النقاط', href: '/professor/grade-appeals', icon: Scale, badge: '48h', roles: ['professor', 'vacataire'] },
       { label: 'Cahier de Texte Vocal (IA)', labelAr: 'دفتر النصوص الصوتي الذكي', href: '/professor/voice-textbook', icon: Mic, badge: 'IA', roles: ['professor', 'vacataire'] },
       { label: 'Saisie des Absences & Appel', labelAr: 'تسجيل الغيابات والمناداة', href: '/professor/absences', icon: UserX, roles: ['professor', 'vacataire'] },
       { label: 'Surveillances Planifiées', labelAr: 'جدول الحراسات المبرمجة', href: '/professor/proctoring', icon: Eye, roles: ['professor'] },

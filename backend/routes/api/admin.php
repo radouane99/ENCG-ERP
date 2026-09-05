@@ -2,6 +2,10 @@
 
 use App\Exports\StudentsExport;
 use App\Http\Controllers\Api\AbsenceJustificationController;
+use App\Http\Controllers\Api\Academic\DiplomaSupplementController;
+use App\Http\Controllers\Api\Academic\GradeAppealController;
+use App\Http\Controllers\Api\Academic\InternshipConventionController;
+use App\Http\Controllers\Api\Academic\SpecialtyOrientationController;
 use App\Http\Controllers\Api\AcademicReportController;
 use App\Http\Controllers\Api\AcademicYearController;
 use App\Http\Controllers\Api\Admin\AdminAbsenceController;
@@ -1140,6 +1144,27 @@ Route::middleware(['auth:sanctum', $staffRoles])->group(function () {
     Route::post('/admin/textbooks/{id}/validate', [AdminTextbookController::class, 'validateSession']);
     Route::get('/v1/admin/textbooks', [AdminTextbookController::class, 'index']);
     Route::post('/v1/admin/textbooks/{id}/validate', [AdminTextbookController::class, 'validateSession']);
+
+    // Réclamations de Notes LMD 48h (Administration / Scolarité)
+    Route::get('/admin/grade-appeals', [GradeAppealController::class, 'index']);
+    Route::post('/admin/grade-appeals/{id}/resolve', [GradeAppealController::class, 'resolve']);
+    Route::get('/v1/admin/grade-appeals', [GradeAppealController::class, 'index']);
+    Route::post('/v1/admin/grade-appeals/{id}/resolve', [GradeAppealController::class, 'resolve']);
+
+    // Orientation & Choix de Spécialité (Simulation & Allocation Gale-Shapley)
+    Route::get('/admin/specialty-allocation/simulation', [SpecialtyOrientationController::class, 'adminGetSimulation']);
+    Route::post('/admin/specialty-allocation/run', [SpecialtyOrientationController::class, 'adminRunAllocation']);
+    Route::get('/v1/admin/specialty-allocation/simulation', [SpecialtyOrientationController::class, 'adminGetSimulation']);
+    Route::post('/v1/admin/specialty-allocation/run', [SpecialtyOrientationController::class, 'adminRunAllocation']);
+
+    // Conventions de Stage Tripartites Dématérialisées (Admin)
+    Route::get('/admin/internships/conventions', [InternshipConventionController::class, 'studentIndex']);
+    Route::get('/admin/internships/{id}/convention-pdf', [InternshipConventionController::class, 'downloadConventionPdf']);
+    Route::get('/v1/admin/internships/{id}/convention-pdf', [InternshipConventionController::class, 'downloadConventionPdf']);
+
+    // Diploma Supplement 300 ECTS (Export Officiel Étudiant)
+    Route::get('/admin/students/{id}/diploma-supplement/pdf', [DiplomaSupplementController::class, 'download']);
+    Route::get('/v1/admin/students/{id}/diploma-supplement/pdf', [DiplomaSupplementController::class, 'download']);
 });
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -1160,4 +1185,5 @@ Route::middleware('throttle:20,1')->group(function () {
     Route::get('/public/inscription/status', [StudentController::class, 'getInscriptionStatusPublic']);
     Route::post('/public/validate-photo-quality', [StudentController::class, 'validatePhotoQuality'])->middleware('throttle:uploads');
     Route::post('/public/scolarbot/chat', [AiScolarBotController::class, 'chat'])->middleware('throttle:10,1');
+    Route::post('/public/convention-sign/{token}', [InternshipConventionController::class, 'publicSignCompany']);
 });

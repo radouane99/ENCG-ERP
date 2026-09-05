@@ -1,5 +1,9 @@
 <?php
 
+use App\Http\Controllers\Api\Academic\DiplomaSupplementController;
+use App\Http\Controllers\Api\Academic\GradeAppealController;
+use App\Http\Controllers\Api\Academic\InternshipConventionController;
+use App\Http\Controllers\Api\Academic\SpecialtyOrientationController;
 use App\Http\Controllers\Api\AiCourseTutorController;
 use App\Http\Controllers\Api\AttendanceController;
 use App\Http\Controllers\Api\CedocController;
@@ -123,6 +127,24 @@ $studentPortalRoutes = function () {
         Route::get('/profile', [OrientationAdvisorController::class, 'getStudentProfile']);
         Route::post('/simulate-compensation', [OrientationAdvisorController::class, 'simulateCompensation']);
     });
+
+    // Grade Appeals (Guichet Numérique LMD 48h)
+    Route::get('/grade-appeals', [GradeAppealController::class, 'studentIndex']);
+    Route::post('/grade-appeals', [GradeAppealController::class, 'studentStore']);
+
+    // Orientation & Choix de Spécialité (S6/S7 Numerus Clausus)
+    Route::get('/specialty-wishes', [SpecialtyOrientationController::class, 'studentGetChoices']);
+    Route::post('/specialty-wishes', [SpecialtyOrientationController::class, 'studentSubmitChoices']);
+
+    // Conventions de Stage Tripartites Dématérialisées & Assurance RC
+    Route::prefix('internships')->group(function () {
+        Route::get('/conventions', [InternshipConventionController::class, 'studentIndex']);
+        Route::post('/conventions', [InternshipConventionController::class, 'studentStore']);
+        Route::get('/{id}/convention-pdf', [InternshipConventionController::class, 'downloadConventionPdf']);
+    });
+
+    // Diploma Supplement (300 ECTS Bologne / EHEA bilingue FR/EN)
+    Route::get('/diploma-supplement/pdf', [DiplomaSupplementController::class, 'download']);
 };
 
 Route::middleware(['auth:sanctum', 'role:student'])->prefix('v1/student-portal')->group($studentPortalRoutes);

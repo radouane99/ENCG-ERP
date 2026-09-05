@@ -223,104 +223,124 @@ class DashboardAnalyticsService
         try {
             $user = User::find($userId);
 
-            // 1. Obtenir le professeur associé (par user_id, email ou id)
-            $professor = Professor::where('user_id', $userId)->first();
-            if (! $professor && $user) {
-                $professor = Professor::where('email', $user->email)
-                    ->orWhere('id', $userId)
-                    ->orWhereHas('user', fn ($q) => $q->where('email', $user->email))
+            // 1. Professeur lié au user (Query Builder — évite un bug de double-include du modèle Eloquent sur volume Docker Windows)
+            $professorRow = DB::table('professors')->where('user_id', $userId)->whereNull('deleted_at')->first();
+            if (! $professorRow && $user?->email) {
+                $professorRow = DB::table('professors')
+                    ->join('users', 'users.id', '=', 'professors.user_id')
+                    ->where('users.email', $user->email)
+                    ->whereNull('professors.deleted_at')
+                    ->select('professors.*')
                     ->first();
             }
 
-            if (! $professor) {
-                $professor = Professor::first();
+            if (! $professorRow) {
+                return [
+                    'success' => true,
+                    'data' => [
+                        'total_students' => 0,
+                        'total_modules' => 0,
+                        'total_groups' => 0,
+                        'pending_grades' => 0,
+                        'statutory_hours_done' => 0,
+                        'statutory_hours_total' => 240,
+                        'pfe_supervised_count' => 0,
+                        'next_classes' => [],
+                        'modules_list' => [],
+                        'pfe_list' => [],
+                        'surveillances' => [],
+                        'has_contract' => false,
+                        'professor_id' => $userId,
+                        'department_name' => 'ENCG Fès',
+                        'rank' => 'Professeur',
+                    ],
+                ];
             }
 
-            $profId = $professor?->id;
-            $profIds = array_values(array_unique(array_filter([$profId, $userId, 1])));
+            $profId = (int) $professorRow->id;
+            $departmentName = 'Management, Finance & Comptabilité';
+            if (! empty($professorRow->department_id)) {
+                $departmentName = DB::table('departments')->where('id', $professorRow->department_id)->value('name')
+                    ?: $departmentName;
+            }
+            $rankName = (string) ($user?->rank ?? $professorRow->grade ?? 'Professeur de l’Enseignement Supérieur (PES)');
+            $isVisiting = ($professorRow->contract_type ?? '') === 'visiting';
 
-            // 2. Affectations Modules (module_professor + modules.professor_id + département)
+            // 2. Affectations = table pivot module_professor uniquement (pas modules.professor_id)
             $assignedFromPivot = DB::table('module_professor')
-                ->whereIn('professor_id', $profIds)
+                ->where('professor_id', $profId)
                 ->get();
 
-            $assignedModuleIds = $assignedFromPivot->pluck('module_id')->filter()->toArray();
-            $directModuleIds = DB::table('modules')
-                ->whereIn('professor_id', $profIds)
-                ->pluck('id')
-                ->toArray();
-
-            $allModuleIds = array_values(array_unique(array_merge($assignedModuleIds, $directModuleIds)));
-
-            if (empty($allModuleIds)) {
-                $deptId = $professor?->department_id;
-                if ($deptId) {
-                    $allModuleIds = DB::table('modules')->where('department_id', $deptId)->pluck('id')->take(6)->toArray();
-                }
-                if (empty($allModuleIds)) {
-                    $allModuleIds = DB::table('modules')->pluck('id')->take(6)->toArray();
-                }
-            }
-
+            $allModuleIds = $assignedFromPivot->pluck('module_id')->filter()->unique()->values()->all();
             $totalModules = count($allModuleIds);
 
             // 3. Groupes assignés
-            $assignedGroupIds = $assignedFromPivot->pluck('group_id')->filter()->unique()->toArray();
-            $totalGroups = max(1, count($assignedGroupIds));
+            $assignedGroupIds = $assignedFromPivot->pluck('group_id')->filter()->unique()->values()->all();
+            $totalGroups = count($assignedGroupIds);
 
-            // 4. Total Étudiants réels
+            // 4. Total étudiants (inscriptions + pathways courants)
             $studentCount = 0;
             if (! empty($assignedGroupIds)) {
-                $studentCount = DB::table('student_registrations')
+                $fromRegistrations = (int) DB::table('student_registrations')
                     ->whereIn('group_id', $assignedGroupIds)
-                    ->distinct('student_id')
+                    ->distinct()
                     ->count('student_id');
-            }
-            if ($studentCount === 0 && ! empty($allModuleIds)) {
-                $studentCount = DB::table('student_module_reservations')
-                    ->whereIn('module_id', $allModuleIds)
-                    ->distinct('student_id')
-                    ->count('student_id');
-            }
-            if ($studentCount === 0) {
-                $studentCount = DB::table('students')->count() ?: 24;
+
+                $fromPathways = 0;
+                if (Schema::hasTable('student_pathways')) {
+                    $fromPathways = (int) DB::table('student_pathways')
+                        ->whereIn('group_id', $assignedGroupIds)
+                        ->where('is_current', true)
+                        ->distinct()
+                        ->count('student_id');
+                }
+
+                $studentCount = max($fromRegistrations, $fromPathways);
             }
 
-            // 5. Notes Apogée en attente
+            // 5. Notes Apogée en attente (uniquement modules affectés)
             $pendingGrades = 0;
             if (! empty($allModuleIds)) {
                 $assessmentIds = DB::table('assessments')->whereIn('module_id', $allModuleIds)->pluck('id');
                 if ($assessmentIds->isNotEmpty()) {
-                    $pendingGrades = DB::table('grades')
+                    $pendingGrades = (int) DB::table('grades')
                         ->whereIn('assessment_id', $assessmentIds)
                         ->whereNull('value')
                         ->count();
                     if ($pendingGrades === 0) {
-                        $pendingGrades = DB::table('assessments')->whereIn('id', $assessmentIds)->where('status', 'draft')->count();
+                        $pendingGrades = (int) DB::table('assessments')
+                            ->whereIn('id', $assessmentIds)
+                            ->where('status', 'draft')
+                            ->count();
                     }
                 }
             }
-            if ($pendingGrades === 0) {
-                $pendingGrades = DB::table('assessments')->count() ?: 4;
-            }
 
-            // 6. Charge Statutaire Réelle
+            // 6. Charge statutaire : heures affectées vs service annuel
             $statutoryTotal = 240;
-            if ($professor && $professor->contract_type === 'visiting') {
-                $contractHours = DB::table('vacation_contracts')->where('professor_id', $profId)->sum('total_hours');
-                $statutoryTotal = $contractHours > 0 ? (int) $contractHours : 120;
+            if ($isVisiting) {
+                $contractHours = (int) DB::table('vacation_contracts')->where('professor_id', $profId)->sum('total_hours');
+                $statutoryTotal = $contractHours > 0 ? $contractHours : 120;
             }
 
-            // Heures dispensées calculées
-            $completedSessionsCount = DB::table('attendance_sessions')
-                ->whereIn('professor_id', $profIds)
-                ->where('status', 'completed')
-                ->count();
-            $statutoryDone = $completedSessionsCount > 0 ? $completedSessionsCount * 2 : (int) round($statutoryTotal * 0.70);
+            $assignedHoursTotal = (int) $assignedFromPivot->sum('assigned_hours');
+
+            $completedSessionsCount = 0;
+            if (Schema::hasColumn('attendance_sessions', 'professor_id')) {
+                $completedSessionsCount = (int) DB::table('attendance_sessions')
+                    ->where('professor_id', $profId)
+                    ->where('status', 'completed')
+                    ->count();
+            }
+            $statutoryDone = $completedSessionsCount > 0
+                ? $completedSessionsCount * 2
+                : $assignedHoursTotal;
 
             // 7. Modules List avec Progression & Détails
-            $modules = DB::table('modules')
-                ->whereIn('id', $allModuleIds)
+            $modules = collect();
+            if (! empty($allModuleIds)) {
+                $modules = DB::table('modules')
+                ->whereIn('modules.id', $allModuleIds)
                 ->leftJoin('filieres', 'modules.filiere_id', '=', 'filieres.id')
                 ->select(
                     'modules.id',
@@ -333,7 +353,8 @@ class DashboardAnalyticsService
                 )
                 ->get()
                 ->map(function ($mod) use ($assignedFromPivot) {
-                    $assignmentRow = $assignedFromPivot->firstWhere('module_id', $mod->id);
+                    $assignmentRows = $assignedFromPivot->where('module_id', $mod->id);
+                    $assignmentRow = $assignmentRows->first();
                     $groupName = 'Section A';
                     if ($assignmentRow && ! empty($assignmentRow->group_id)) {
                         $groupName = DB::table('groups')->where('id', $assignmentRow->group_id)->value('name') ?? 'Groupe Affecté';
@@ -348,9 +369,12 @@ class DashboardAnalyticsService
                         $enteredGrades = DB::table('grades')->whereIn('assessment_id', $assIds)->whereNotNull('value')->count();
                     }
                     $expected = max(1, $totalAssessments * 30);
-                    $progress = $totalAssessments > 0 ? (int) round(min(100, max(25, ($enteredGrades / $expected) * 100))) : 65;
+                    $progress = $totalAssessments > 0
+                        ? (int) round(min(100, ($enteredGrades / $expected) * 100))
+                        : 0;
 
-                    $creditHours = (int) ($mod->credit_hours ?? 48);
+                    $creditHours = (int) ($assignmentRows->sum('assigned_hours')
+                        ?: ($mod->credit_hours > 0 ? $mod->credit_hours : 36));
                     $hoursDone = (int) round(($progress / 100) * $creditHours);
 
                     return [
@@ -364,17 +388,17 @@ class DashboardAnalyticsService
                         'hours_total' => $creditHours,
                     ];
                 });
-
+            }
             // 8. Emploi du Temps / Séances (Schedules) connectés 100% à la matrice officielle Admin
             $daysMap = [1 => 'Lundi', 2 => 'Mardi', 3 => 'Mercredi', 4 => 'Jeudi', 5 => 'Vendredi', 6 => 'Samedi'];
             $nextClasses = [];
 
-            if (class_exists(Schedule::class)) {
+            if (class_exists(\App\Models\Schedule::class)) {
                 $userName = trim($user?->name ?? 'Amina Chraibi');
                 $userLastName = trim($user?->last_name ?? '');
                 $userFirstName = trim($user?->first_name ?? '');
 
-                $allDbSchedules = Schedule::with(['module', 'professor.user', 'room', 'group.filiere'])
+                $allDbSchedules = \App\Models\Schedule::with(['module', 'professor.user', 'room', 'group.filiere'])
                     ->where('is_active', true)
                     ->orWhereNull('is_active')
                     ->orderBy('day_of_week')
@@ -453,7 +477,7 @@ class DashboardAnalyticsService
             $pfeList = [];
             if (Schema::hasTable('internships')) {
                 $pfeList = DB::table('internships')
-                    ->whereIn('supervisor_id', $profIds)
+                    ->where('supervisor_id', $profId)
                     ->leftJoin('students', 'internships.student_id', '=', 'students.id')
                     ->leftJoin('users', 'students.user_id', '=', 'users.id')
                     ->select(
@@ -512,7 +536,7 @@ class DashboardAnalyticsService
             $surveillances = [];
             if (Schema::hasTable('exam_surveillances')) {
                 $surveillances = DB::table('exam_surveillances')
-                    ->whereIn('exam_surveillances.professor_id', $profIds)
+                    ->where('exam_surveillances.professor_id', $profId)
                     ->leftJoin('exams', 'exam_surveillances.exam_id', '=', 'exams.id')
                     ->leftJoin('modules', 'exams.module_id', '=', 'modules.id')
                     ->leftJoin('rooms', 'exam_surveillances.room_id', '=', 'rooms.id')

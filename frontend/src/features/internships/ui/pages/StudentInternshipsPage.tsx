@@ -25,6 +25,11 @@ export default function StudentInternshipsPage() {
     company_name: '',
     company_city: '',
     position_title: '',
+    company_mentor_name: '',
+    company_mentor_email: '',
+    insurance_company: 'MAMDA-MCMA',
+    insurance_policy_number: '',
+    internship_type: 'application',
     start_date: '',
     end_date: '',
   });
@@ -40,13 +45,13 @@ export default function StudentInternshipsPage() {
   const handleCreateRequest = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await api.post('/internships', form);
-      toast.success('Demande de convention soumise avec succès à la Direction des Stages !');
+      await api.post('/student-portal/internships/conventions', form);
+      toast.success('Convention tripartite enregistrée avec succès !');
       setShowRequestModal(false);
       refetch();
-    } catch {
-      toast.success('Demande de convention soumise à l\'administration ENCG Fès !');
-      setShowRequestModal(false);
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || 'Erreur lors de la soumission de la convention.';
+      toast.error(msg);
     }
   };
 
@@ -101,49 +106,19 @@ export default function StudentInternshipsPage() {
   };
 
   const handlePrintConvention = (internship: any) => {
-    const win = window.open('', '_blank');
-    if (!win) return;
-    win.document.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Convention de Stage - ENCG Fès - ${internship.company_name}</title>
-          <style>
-            body { font-family: 'Segoe UI', Arial, sans-serif; padding: 40px; color: #0f2863; max-width: 800px; margin: 0 auto; }
-            .header { text-align: center; border-bottom: 3px double #0f2863; padding-bottom: 20px; margin-bottom: 30px; }
-            .title { font-size: 20px; font-weight: 900; color: #0f2863; text-transform: uppercase; margin-top: 10px; }
-            .box { background: #f8fafc; border: 2px solid #cbd5e1; border-radius: 20px; padding: 25px; margin: 20px 0; }
-            .row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 14px; }
-            .lbl { font-weight: bold; color: #64748b; }
-            .val { font-weight: 900; color: #0f2863; }
-            .footer { margin-top: 50px; display: flex; justify-content: space-between; font-size: 12px; font-weight: bold; }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <div style="font-size: 16px; font-weight: 900;">ROYAUME DU MAROC — ENCG FÈS</div>
-            <div style="font-size: 11px; color: #64748b; font-weight: 800;">DIRECTION DES RELATIONS ENTREPRISES & STAGES</div>
-            <div class="title">CONVENTION OFFICIELLE DE STAGE ACADÉMIQUE</div>
-          </div>
-
-          <div class="box">
-            <div class="row"><span class="lbl">Intitulé du Poste :</span><span class="val">${internship.position_title || 'Stagiaire Management / Finance'}</span></div>
-            <div class="row"><span class="lbl">Entreprise d'Accueil :</span><span class="val" style="color: #2563eb;">${internship.company_name || 'Entreprise Partenaire'} (${internship.company_city || 'Fès'})</span></div>
-            <div class="row"><span class="lbl">Période du Stage :</span><span class="val">Du ${internship.start_date} au ${internship.end_date}</span></div>
-            <div class="row"><span class="lbl">Statut Validation :</span><span class="val" style="color: #16a34a;">${(internship.status || 'APPROVED').toUpperCase()}</span></div>
-          </div>
-
-          <div class="footer">
-            <div>Signature de l'Étudiant</div>
-            <div>Cachet de l'Entreprise</div>
-            <div>Le Directeur ENCG Fès</div>
-          </div>
-          <script>window.print();</script>
-        </body>
-      </html>
-    `);
-    win.document.close();
-    toast.success('Convention de stage prête pour l\'impression !');
+    const tid = toast.loading('Génération de la Convention Tripartite Officielle (PDF)...');
+    api.get(`/student-portal/internships/${internship.id}/convention-pdf`, { responseType: 'blob' })
+      .then(res => {
+        const url = window.URL.createObjectURL(new Blob([res.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `Convention_Stage_ENCG_${internship.id}.pdf`);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        toast.success('Convention Tripartite officielle téléchargée !', { id: tid });
+      })
+      .catch(() => toast.error('Erreur lors du téléchargement de la convention.', { id: tid }));
   };
 
   if (isLoading) return <LoadingScreen />;
@@ -425,14 +400,46 @@ export default function StudentInternshipsPage() {
                 <input required value={form.company_name} onChange={e => setForm(p => ({ ...p, company_name: e.target.value }))} className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50 dark:bg-slate-800 text-xs font-bold focus:ring-4 focus:ring-indigo-500/15 outline-none" placeholder="Ex: BMCE Bank / Attijariwafa" />
               </div>
 
-              <div>
-                <label className="block text-xs font-black uppercase text-slate-400 tracking-wider mb-1">Ville de l'Entreprise *</label>
-                <input required value={form.company_city} onChange={e => setForm(p => ({ ...p, company_city: e.target.value }))} className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50 dark:bg-slate-800 text-xs font-bold focus:ring-4 focus:ring-indigo-500/15 outline-none" placeholder="Ex: Casablanca / Fès" />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-black uppercase text-slate-400 tracking-wider mb-1">Ville Entreprise *</label>
+                  <input required value={form.company_city} onChange={e => setForm(p => ({ ...p, company_city: e.target.value }))} className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50 dark:bg-slate-800 text-xs font-bold focus:ring-4 focus:ring-indigo-500/15 outline-none" placeholder="Ex: Casablanca / Fès" />
+                </div>
+                <div>
+                  <label className="block text-xs font-black uppercase text-slate-400 tracking-wider mb-1">Type de Stage *</label>
+                  <select value={form.internship_type} onChange={e => setForm(p => ({ ...p, internship_type: e.target.value }))} className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50 dark:bg-slate-800 text-xs font-bold focus:ring-4 focus:ring-indigo-500/15 outline-none">
+                    <option value="initiation">Stage d'Initiation (1ère / 2ème Année)</option>
+                    <option value="application">Stage d'Application (3ème / 4ème Année)</option>
+                    <option value="pfe">Stage de Fin d'Études (PFE Bac+5)</option>
+                  </select>
+                </div>
               </div>
 
               <div>
                 <label className="block text-xs font-black uppercase text-slate-400 tracking-wider mb-1">Intitulé du Poste / Mission *</label>
                 <input required value={form.position_title} onChange={e => setForm(p => ({ ...p, position_title: e.target.value }))} className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50 dark:bg-slate-800 text-xs font-bold focus:ring-4 focus:ring-indigo-500/15 outline-none" placeholder="Ex: Stagiaire Audit & Contrôle de Gestion" />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-black uppercase text-slate-400 tracking-wider mb-1">Nom du Tuteur Entreprise *</label>
+                  <input required value={form.company_mentor_name} onChange={e => setForm(p => ({ ...p, company_mentor_name: e.target.value }))} className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50 dark:bg-slate-800 text-xs font-bold focus:ring-4 focus:ring-indigo-500/15 outline-none" placeholder="Ex: M. Mehdi BENJELLOUN" />
+                </div>
+                <div>
+                  <label className="block text-xs font-black uppercase text-slate-400 tracking-wider mb-1">Email du Tuteur Entreprise *</label>
+                  <input required type="email" value={form.company_mentor_email} onChange={e => setForm(p => ({ ...p, company_mentor_email: e.target.value }))} className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50 dark:bg-slate-800 text-xs font-bold focus:ring-4 focus:ring-indigo-500/15 outline-none" placeholder="tuteur@entreprise.ma" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-black uppercase text-slate-400 tracking-wider mb-1">Compagnie Assurance RC *</label>
+                  <input required value={form.insurance_company} onChange={e => setForm(p => ({ ...p, insurance_company: e.target.value }))} className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50 dark:bg-slate-800 text-xs font-bold focus:ring-4 focus:ring-indigo-500/15 outline-none" placeholder="Ex: MAMDA-MCMA / WAFA" />
+                </div>
+                <div>
+                  <label className="block text-xs font-black uppercase text-slate-400 tracking-wider mb-1">N° Police Assurance RC *</label>
+                  <input required value={form.insurance_policy_number} onChange={e => setForm(p => ({ ...p, insurance_policy_number: e.target.value }))} className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50 dark:bg-slate-800 text-xs font-bold focus:ring-4 focus:ring-indigo-500/15 outline-none" placeholder="RC-ETUD-2026-XXXX" />
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -447,8 +454,8 @@ export default function StudentInternshipsPage() {
               </div>
 
               <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
-                <button type="button" onClick={() => setShowRequestModal(false)} className="px-5 py-2.5 text-xs font-black text-slate-500 hover:bg-slate-100 rounded-xl">ANNULER</button>
-                <button type="submit" className="px-6 py-2.5 text-xs font-black bg-[#0f2863] text-white hover:bg-blue-900 rounded-xl shadow-md">SOUMETTRE DEMANDE</button>
+                <button type="button" onClick={() => setShowRequestModal(false)} className="px-5 py-2.5 text-xs font-black text-slate-500 hover:bg-slate-100 rounded-xl cursor-pointer">ANNULER</button>
+                <button type="submit" className="px-6 py-2.5 text-xs font-black bg-[#0f2863] text-white hover:bg-blue-900 rounded-xl shadow-md cursor-pointer">SOUMETTRE CONVENTION</button>
               </div>
             </form>
           </div>

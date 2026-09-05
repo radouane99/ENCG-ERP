@@ -146,6 +146,8 @@ const ManageStudentCreditPage = lazy(() => import('@features/admin/pages/ManageS
 const AdminGradesPage = lazy(() => import('@features/admin/pages/AdminGradesPage'))
 const AdminGradesEditPage = lazy(() => import('@features/admin/pages/AdminGradesEditPage'))
 const AdminGradesPVPage = lazy(() => import('@features/admin/pages/AdminGradesPVPage'))
+const AdminGradeAppealsPage = lazy(() => import('@features/admin/pages/AdminGradeAppealsPage'))
+const AdminSpecialtyAllocationPage = lazy(() => import('@features/admin/pages/AdminSpecialtyAllocationPage'))
 const AdminReservistesPage = lazy(() => import('@features/admin/pages/AdminReservistesPage'))
 const AdminAbsencesPage = lazy(() => import('@features/admin/pages/AdminAbsencesPage'))
 const StudentsRiskPage = lazy(() => import('@features/admin/pages/StudentsRiskPage'))
@@ -348,6 +350,9 @@ export default function RootRouter() {
             <Route path="/admin/grades/edit" element={<AdminGradesEditPage />} />
             <Route path="/admin/grades/pv" element={<AdminGradesPVPage />} />
             <Route path="/professor/grades" element={<AdminGradesPage />} />
+            <Route path="/admin/grade-appeals" element={<AdminGradeAppealsPage />} />
+            <Route path="/professor/grade-appeals" element={<AdminGradeAppealsPage />} />
+            <Route path="/admin/specialty-allocation" element={<AdminSpecialtyAllocationPage />} />
           </Route>
 
           {/* Timetable & Exams */}
