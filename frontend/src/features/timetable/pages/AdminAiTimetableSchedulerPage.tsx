@@ -73,24 +73,16 @@ export default function AdminAiTimetableSchedulerPage() {
   const [buildingWeight, setBuildingWeight] = useState<number>(75);
   const [selectedStrategy, setSelectedStrategy] = useState<string>('mrv_degree_lcv');
   
-  // Dedicated Rooms per Filière / Department (e.g. GFC, MCM, TC)
-  const [dedicatedRooms, setDedicatedRooms] = useState<Record<string, string[]>>({
-    'TC': ['Salle 105', 'Salle 106'],
-    'GFC': ['Salle 101', 'Salle 102'],
-    'MCM': ['Salle 103', 'Salle 104'],
-  });
+  // Dedicated Rooms per Filière / Department (Configurable par l'admin, vide par défaut)
+  const [dedicatedRooms, setDedicatedRooms] = useState<Record<string, string[]>>({});
 
-  // Dedicated Professors per Filière / Department (e.g. GFC, MCM, TC)
-  const [dedicatedProfessors, setDedicatedProfessors] = useState<Record<string, string[]>>({
-    'TC': ['Mohamed Benjelloun', 'Tarik Meziane', 'Bouchra Bennani', 'Youssef El Mansouri'],
-    'GFC': ['Abdelhak El Amrani', 'Youssef El Mansouri', 'Omar Bennouna'],
-    'MCM': ['Amina Chraibi', 'Tarik Meziane', 'Bouchra Bennani'],
-  });
+  // Dedicated Professors per Filière / Department (Configurable par l'admin, vide par défaut)
+  const [dedicatedProfessors, setDedicatedProfessors] = useState<Record<string, string[]>>({});
 
   const [showDedicatedRoomsModal, setShowDedicatedRoomsModal] = useState<boolean>(false);
   const [resourceModalTab, setResourceModalTab] = useState<'rooms' | 'professors'>('rooms');
 
-  // Query live resources from backend API (rooms, professors, filieres)
+  // Query live resources from backend API (rooms, professors, filieres 100% réelles de la BDD)
   const { data: resourcesData } = useQuery({
     queryKey: ['timetable-resources'],
     queryFn: async () => {
@@ -101,31 +93,58 @@ export default function AdminAiTimetableSchedulerPage() {
     retry: false,
   });
 
+  // Liste des professeurs réels de la BDD (aucun mock statique)
   const availableProfessorsList = useMemo(() => {
-    if (resourcesData?.professors && Array.isArray(resourcesData.professors) && resourcesData.professors.length > 0) {
+    if (resourcesData?.professors && Array.isArray(resourcesData.professors)) {
       return resourcesData.professors;
     }
-    return [
-      { id: 1, name: 'Abdelhak El Amrani', specialty: 'Finance', department: 'Sciences de Gestion' },
-      { id: 2, name: 'Amina Chraibi', specialty: 'Management', department: 'Sciences de Gestion' },
-      { id: 3, name: 'Tarik Meziane', specialty: 'Droit des Affaires', department: 'Droit des Affaires' },
-      { id: 4, name: 'Bouchra Bennani', specialty: 'Communication & Langues', department: 'Langues et Communication' },
-      { id: 5, name: 'Mohamed Benjelloun', specialty: 'Informatique de Gestion', department: 'Informatique de Gestion' },
-      { id: 6, name: 'Youssef El Mansouri', specialty: 'Comptabilité & Audit', department: 'Sciences de Gestion' },
-      { id: 7, name: 'Omar Bennouna', specialty: 'Management Stratégique', department: 'Sciences de Gestion' },
-    ];
+    return [];
   }, [resourcesData]);
 
+  // Liste des salles réelles de la BDD (aucun mock statique)
   const availableRoomsList = useMemo<string[]>(() => {
-    if (resourcesData?.rooms && Array.isArray(resourcesData.rooms) && resourcesData.rooms.length > 0) {
+    if (resourcesData?.rooms && Array.isArray(resourcesData.rooms)) {
       return resourcesData.rooms.map((r: any) => String(r.name));
     }
-    return [
-      'Salle 101', 'Salle 102', 'Salle 103', 'Salle 104',
-      'Salle 105', 'Salle 106', 'Salle 107', 'Salle 108',
-      'Amphithéâtre A', 'Amphithéâtre B'
-    ];
+    return [];
   }, [resourcesData]);
+
+  // Liste des filières réelles de la BDD (aucun mock statique)
+  const availableFilieresList = useMemo(() => {
+    if (resourcesData?.filieres && Array.isArray(resourcesData.filieres)) {
+      return resourcesData.filieres;
+    }
+    return [];
+  }, [resourcesData]);
+
+  // Classification dynamique des salles réelles de la base de données
+  const campusRoomsList = useMemo(() => {
+    return (resourcesData?.rooms && Array.isArray(resourcesData.rooms)) ? resourcesData.rooms : [];
+  }, [resourcesData]);
+
+  const campusAmphis = useMemo(() => {
+    return campusRoomsList.filter((r: any) => {
+      const t = String(r.type || '').toLowerCase();
+      const n = String(r.name || '').toLowerCase();
+      return t === 'amphitheater' || t === 'amphi' || n.includes('amphi');
+    });
+  }, [campusRoomsList]);
+
+  const campusClassrooms = useMemo(() => {
+    return campusRoomsList.filter((r: any) => {
+      const t = String(r.type || '').toLowerCase();
+      const n = String(r.name || '').toLowerCase();
+      return !n.includes('amphi') && !n.includes('info') && t !== 'lab';
+    });
+  }, [campusRoomsList]);
+
+  const campusLabs = useMemo(() => {
+    return campusRoomsList.filter((r: any) => {
+      const t = String(r.type || '').toLowerCase();
+      const n = String(r.name || '').toLowerCase();
+      return t === 'lab' || n.includes('info') || n.includes('lab');
+    });
+  }, [campusRoomsList]);
 
   // Filter & Search state for preview grid
   const [dayFilter, setDayFilter] = useState<number | 'all'>('all');
@@ -133,6 +152,7 @@ export default function AdminAiTimetableSchedulerPage() {
   const [filiereFilter, setFiliereFilter] = useState<string>('all');
   const [profFilter, setProfFilter] = useState<string>('all');
   const [roomFilter, setRoomFilter] = useState<string>('all');
+  const [formatFilter, setFormatFilter] = useState<'all' | 'cm' | 'td' | 'tp'>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [searchScope, setSearchScope] = useState<'all' | 'module' | 'professor' | 'group' | 'room'>('all');
   const [sortBy, setSortBy] = useState<'chrono' | 'module' | 'professor' | 'group' | 'room'>('chrono');
@@ -307,6 +327,31 @@ export default function AdminAiTimetableSchedulerPage() {
     return Array.from(new Set(scheduledSessions.map((s: any) => s.room_name).filter(Boolean))).sort();
   }, [scheduledSessions]);
 
+  // ── 🏛️ Effectifs & Comptage par format pédagogique ENCG Fès (CM: 75, TD: 35, TP: 30) ──
+  const cmCount = useMemo(() => {
+    return scheduledSessions.filter((s: any) => 
+      s.session_format === 'cm' || 
+      String(s.session_badge || '').toUpperCase().includes('CM') || 
+      String(s.room_name || '').toLowerCase().includes('amphi')
+    ).length;
+  }, [scheduledSessions]);
+
+  const tdCount = useMemo(() => {
+    return scheduledSessions.filter((s: any) => 
+      s.session_format === 'td' || 
+      (String(s.session_badge || '').toUpperCase().includes('TD') && !String(s.session_badge || '').toUpperCase().includes('TP'))
+    ).length;
+  }, [scheduledSessions]);
+
+  const tpCount = useMemo(() => {
+    return scheduledSessions.filter((s: any) => 
+      s.session_format === 'tp' || 
+      String(s.session_badge || '').toUpperCase().includes('TP') || 
+      String(s.room_type || '').toLowerCase().includes('lab') || 
+      String(s.room_name || '').toLowerCase().includes('info')
+    ).length;
+  }, [scheduledSessions]);
+
   const filteredSessions = useMemo(() => {
     const list = scheduledSessions.filter((s: any) => {
       if (dayFilter !== 'all' && s.day_of_week !== dayFilter) return false;
@@ -314,6 +359,17 @@ export default function AdminAiTimetableSchedulerPage() {
       if (filiereFilter !== 'all' && s.filiere_code !== filiereFilter) return false;
       if (profFilter !== 'all' && s.professor_name !== profFilter) return false;
       if (roomFilter !== 'all' && s.room_name !== roomFilter) return false;
+
+      // Filter by pedagogical format (CM: Amphi/75, TD: Classe/35, TP: Lab/30)
+      if (formatFilter !== 'all') {
+        const isCM = s.session_format === 'cm' || String(s.session_badge || '').toUpperCase().includes('CM') || String(s.room_name || '').toLowerCase().includes('amphi');
+        const isTP = s.session_format === 'tp' || String(s.session_badge || '').toUpperCase().includes('TP') || String(s.room_type || '').toLowerCase().includes('lab') || String(s.room_name || '').toLowerCase().includes('info');
+        const isTD = !isCM && !isTP;
+
+        if (formatFilter === 'cm' && !isCM) return false;
+        if (formatFilter === 'td' && !isTD) return false;
+        if (formatFilter === 'tp' && !isTP) return false;
+      }
 
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
@@ -405,6 +461,7 @@ export default function AdminAiTimetableSchedulerPage() {
     filiereFilter,
     profFilter,
     roomFilter,
+    formatFilter,
     searchQuery,
     searchScope,
     sortBy,
@@ -418,6 +475,7 @@ export default function AdminAiTimetableSchedulerPage() {
     filiereFilter !== 'all' ||
     profFilter !== 'all' ||
     roomFilter !== 'all' ||
+    formatFilter !== 'all' ||
     sortBy !== 'chrono';
 
   const resetAllFilters = () => {
@@ -428,6 +486,7 @@ export default function AdminAiTimetableSchedulerPage() {
     setFiliereFilter('all');
     setProfFilter('all');
     setRoomFilter('all');
+    setFormatFilter('all');
     setSortBy('chrono');
   };
 
@@ -451,15 +510,22 @@ export default function AdminAiTimetableSchedulerPage() {
     { value: 10, label: 'Semestre 10 (S10 - PFE & Stage)', badge: 'PFE', icon: <Sparkles className="w-4 h-4 text-teal-500" /> },
   ];
 
-  const filiereOptions: SelectOption[] = [
-    { value: 'all', label: 'Toutes les filières (TC & Spécialités)', badge: 'Global', icon: <Building2 className="w-4 h-4 text-indigo-500" /> },
-    { value: '1', label: 'Tronc Commun ENCG (TC)', badge: 'TC', icon: <BookOpen className="w-4 h-4 text-blue-500" /> },
-    { value: '2', label: 'Gestion Financière & Comptable (GFC)', badge: 'Finance', icon: <Building2 className="w-4 h-4 text-emerald-500" /> },
-    { value: '3', label: 'Management Commercial & Marketing (MCM)', badge: 'Marketing', icon: <Building2 className="w-4 h-4 text-orange-500" /> },
-    { value: '4', label: 'Audit & Contrôle de Gestion (ACG)', badge: 'Audit', icon: <Building2 className="w-4 h-4 text-purple-500" /> },
-    { value: '5', label: 'Management des Ressources Humaines (GRH)', badge: 'RH', icon: <Building2 className="w-4 h-4 text-teal-500" /> },
-    { value: '6', label: 'Management du Commerce International (MACI)', badge: 'Global', icon: <Building2 className="w-4 h-4 text-sky-500" /> },
-  ];
+  const filiereOptions: SelectOption[] = useMemo(() => {
+    const list: SelectOption[] = [
+      { value: 'all', label: 'Toutes les filières (TC & Spécialités)', badge: 'Global', icon: <Building2 className="w-4 h-4 text-indigo-500" /> },
+    ];
+    if (resourcesData?.filieres && Array.isArray(resourcesData.filieres)) {
+      resourcesData.filieres.forEach((f: any) => {
+        list.push({
+          value: String(f.id),
+          label: `${f.name} (${f.code})`,
+          badge: f.code || 'FIL',
+          icon: <Building2 className="w-4 h-4 text-blue-500" />,
+        });
+      });
+    }
+    return list;
+  }, [resourcesData]);
 
   const strategyOptions: SelectOption[] = [
     { value: 'mrv_degree_lcv', label: 'MRV + Degree + LCV (Optimal & Recommandé)', badge: 'Recommandé', icon: <Cpu className="w-4 h-4 text-emerald-500" /> },
@@ -893,25 +959,33 @@ export default function AdminAiTimetableSchedulerPage() {
                     </button>
                   </div>
 
-                  <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200/80 dark:border-slate-700 space-y-1.5">
-                    {Object.entries(dedicatedRooms).map(([filCode, rNames]) => (
-                      <div key={filCode} className="flex items-center justify-between text-xs">
-                        <span className="font-black text-slate-800 dark:text-slate-200 px-2 py-0.5 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-[10px]">
-                          {filCode}
-                        </span>
-                        <div className="flex items-center gap-1 flex-wrap justify-end">
-                          {rNames.length > 0 ? (
-                            rNames.map(rName => (
-                              <span key={rName} className="px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 font-extrabold text-[10px] border border-blue-200/60 dark:border-blue-900/40">
-                                🏛️ {rName}
-                              </span>
-                            ))
-                          ) : (
-                            <span className="text-[10px] text-slate-400 italic">Salles libres</span>
-                          )}
-                        </div>
+                  <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200/80 dark:border-slate-700">
+                    {Object.keys(dedicatedRooms).length > 0 ? (
+                      <div className="space-y-1.5">
+                        {Object.entries(dedicatedRooms).map(([filCode, rNames]) => (
+                          <div key={filCode} className="flex items-center justify-between text-xs">
+                            <span className="font-black text-slate-800 dark:text-slate-200 px-2 py-0.5 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-[10px]">
+                              {filCode}
+                            </span>
+                            <div className="flex items-center gap-1 flex-wrap justify-end">
+                              {rNames.length > 0 ? (
+                                rNames.map(rName => (
+                                  <span key={rName} className="px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 font-extrabold text-[10px] border border-blue-200/60 dark:border-blue-900/40">
+                                    🏛️ {rName}
+                                  </span>
+                                ))
+                              ) : (
+                                <span className="text-[10px] text-slate-400 italic">Salles libres</span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    ) : (
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 italic leading-relaxed">
+                        ✨ Attribution automatique : Le solveur sélectionne directement les amphis et salles de cours de la base selon les effectifs et capacités réelles.
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -933,28 +1007,36 @@ export default function AdminAiTimetableSchedulerPage() {
                     </button>
                   </div>
 
-                  <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200/80 dark:border-slate-700 space-y-1.5">
-                    {Object.entries(dedicatedProfessors).map(([filCode, pNames]) => (
-                      <div key={filCode} className="flex items-center justify-between text-xs">
-                        <span className="font-black text-slate-800 dark:text-slate-200 px-2 py-0.5 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-[10px]">
-                          {filCode}
-                        </span>
-                        <div className="flex items-center gap-1 flex-wrap justify-end">
-                          {pNames.length > 0 ? (
-                            pNames.map(pName => {
-                              const shortName = pName.split(' ')[0] + ' ' + (pName.split(' ')[1] ? pName.split(' ')[1][0] + '.' : '');
-                              return (
-                                <span key={pName} className="px-1.5 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-extrabold text-[10px] border border-emerald-200/60 dark:border-emerald-900/40" title={pName}>
-                                  👨‍🏫 {shortName}
-                                </span>
-                              );
-                            })
-                          ) : (
-                            <span className="text-[10px] text-slate-400 italic">Tous les enseignants</span>
-                          )}
-                        </div>
+                  <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200/80 dark:border-slate-700">
+                    {Object.keys(dedicatedProfessors).length > 0 ? (
+                      <div className="space-y-1.5">
+                        {Object.entries(dedicatedProfessors).map(([filCode, pNames]) => (
+                          <div key={filCode} className="flex items-center justify-between text-xs">
+                            <span className="font-black text-slate-800 dark:text-slate-200 px-2 py-0.5 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-[10px]">
+                              {filCode}
+                            </span>
+                            <div className="flex items-center gap-1 flex-wrap justify-end">
+                              {pNames.length > 0 ? (
+                                pNames.map(pName => {
+                                  const shortName = pName.split(' ')[0] + ' ' + (pName.split(' ')[1] ? pName.split(' ')[1][0] + '.' : '');
+                                  return (
+                                    <span key={pName} className="px-1.5 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-extrabold text-[10px] border border-emerald-200/60 dark:border-emerald-900/40" title={pName}>
+                                      👨‍🏫 {shortName}
+                                    </span>
+                                  );
+                                })
+                              ) : (
+                                <span className="text-[10px] text-slate-400 italic">Tous les enseignants</span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    ) : (
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 italic leading-relaxed">
+                        ✨ Attribution automatique : L'ensemble des enseignants de la base de données sont affectés selon leurs départements et modules associés.
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -1022,33 +1104,35 @@ export default function AdminAiTimetableSchedulerPage() {
                       </div>
                     </div>
 
-                    {/* Live Campus Room Occupancy Radar */}
+                    {/* Live Campus Room Occupancy Radar (100% Réel de la BDD) */}
                     <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200/80 dark:border-slate-700 space-y-3">
                       <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
                         <span className="flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-slate-500 font-black">
-                          🏛️ Radar d'Occupation des Espaces & Salles :
+                          🏛️ Radar des Espaces & Salles (BDD) :
                         </span>
                         <span className="text-[10px] font-extrabold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded">
-                          18 Salles Opérationnelles
+                          {campusRoomsList.length} Salle{campusRoomsList.length > 1 ? 's' : ''} en Base de Données
                         </span>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                         <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-700 space-y-1">
-                          <div className="text-[10px] font-bold text-slate-400 uppercase">Amphithéâtres (A & B)</div>
+                          <div className="text-[10px] font-bold text-slate-400 uppercase">Amphithéâtres ({campusAmphis.length})</div>
                           <div className="text-xs font-black text-slate-900 dark:text-white flex items-center justify-between">
-                            <span>Amphi A, Amphi B</span>
-                            <span className="text-emerald-600 text-[10px]">100% Libre</span>
+                            <span className="truncate" title={campusAmphis.map((r: any) => r.name).join(', ')}>
+                              {campusAmphis.length > 0 ? campusAmphis.map((r: any) => r.name).slice(0, 2).join(', ') + (campusAmphis.length > 2 ? '...' : '') : 'Aucun amphi'}
+                            </span>
+                            <span className="text-emerald-600 text-[10px] shrink-0 ml-1">Opérationnel</span>
                           </div>
                           <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                            <div className="h-full bg-emerald-500 rounded-full w-full" />
+                            <div className="h-full bg-amber-500 rounded-full w-full" />
                           </div>
                         </div>
 
                         <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-700 space-y-1">
-                          <div className="text-[10px] font-bold text-slate-400 uppercase">Salles de TD (101 à 108)</div>
+                          <div className="text-[10px] font-bold text-slate-400 uppercase">Salles de TD & Cours ({campusClassrooms.length})</div>
                           <div className="text-xs font-black text-slate-900 dark:text-white flex items-center justify-between">
-                            <span>8 Salles de Cours</span>
+                            <span>{campusClassrooms.length} Salles de cours</span>
                             <span className="text-emerald-600 text-[10px]">Disponible</span>
                           </div>
                           <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
@@ -1057,10 +1141,12 @@ export default function AdminAiTimetableSchedulerPage() {
                         </div>
 
                         <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-700 space-y-1">
-                          <div className="text-[10px] font-bold text-slate-400 uppercase">Labos Informatique</div>
+                          <div className="text-[10px] font-bold text-slate-400 uppercase">Labos Informatique ({campusLabs.length})</div>
                           <div className="text-xs font-black text-slate-900 dark:text-white flex items-center justify-between">
-                            <span>Lab 1, Lab 2, Lab 3</span>
-                            <span className="text-emerald-600 text-[10px]">Prêt</span>
+                            <span className="truncate" title={campusLabs.map((r: any) => r.name).join(', ')}>
+                              {campusLabs.length > 0 ? campusLabs.map((r: any) => r.name).slice(0, 2).join(', ') + (campusLabs.length > 2 ? '...' : '') : 'Aucun labo'}
+                            </span>
+                            <span className="text-emerald-600 text-[10px] shrink-0 ml-1">Prêt</span>
                           </div>
                           <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                             <div className="h-full bg-purple-500 rounded-full w-full" />
@@ -1208,6 +1294,40 @@ export default function AdminAiTimetableSchedulerPage() {
                 </div>
               </div>
 
+              {/* ── 📅 Règle Pédagogique ENCG Fès (Calendrier Semestriel S1 vs S4) ── */}
+              <div className="p-4 bg-gradient-to-r from-blue-900/10 via-indigo-900/10 to-blue-900/10 border border-blue-200/80 dark:border-blue-900/50 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-10 h-10 rounded-2xl bg-[#0f2863] text-white flex items-center justify-center shrink-0 shadow-xs text-base">
+                    📅
+                  </div>
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-2">
+                      <span className="font-black text-slate-900 dark:text-white uppercase tracking-wider text-[11px]">
+                        Règle Pédagogique ENCG Fès (Structure & Calendrier Officiel)
+                      </span>
+                      <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-200 rounded text-[9px] font-black uppercase">
+                        Norme USMBA
+                      </span>
+                    </div>
+                    <p className="text-slate-600 dark:text-slate-400 text-[11px] leading-relaxed">
+                      Démarrage des <strong>Cours Magistraux (CM • Section entière de 75 étudiants en Amphithéâtre)</strong> dès la semaine <strong>S1</strong> (mi-septembre) • Démarrage des <strong>Travaux Dirigés (TD • Sous-groupes de 35 étudiants en Salle de classe)</strong> à partir de la semaine <strong>S4</strong> (+3 semaines).
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+                  <span className="px-2.5 py-1 rounded-lg bg-amber-500/15 text-amber-800 dark:text-amber-300 font-extrabold text-[10px] border border-amber-300/40">
+                    🏛️ CM = 75 étuds
+                  </span>
+                  <span className="px-2.5 py-1 rounded-lg bg-blue-500/15 text-blue-800 dark:text-blue-300 font-extrabold text-[10px] border border-blue-300/40">
+                    📝 TD = 35 étuds
+                  </span>
+                  <span className="px-2.5 py-1 rounded-lg bg-purple-500/15 text-purple-800 dark:text-purple-300 font-extrabold text-[10px] border border-purple-300/40">
+                    💻 TP = 30 étuds
+                  </span>
+                </div>
+              </div>
+
               {/* ── 🔍 Barre de Recherche Multi-Critères (Module / Professeur / Groupe / Salle) ── */}
               <div className="bg-slate-50/80 dark:bg-slate-900/60 p-4 sm:p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 space-y-3.5">
                 {/* Search Omnibox */}
@@ -1222,14 +1342,14 @@ export default function AdminAiTimetableSchedulerPage() {
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder={
                         searchScope === 'module'
-                          ? "Rechercher par intitulé de module (ex: Finance d'Entreprise, Marketing, Fiscalité)..."
+                          ? "Rechercher par intitulé de module pédagogique..."
                           : searchScope === 'professor'
-                          ? "Rechercher par nom d'enseignant (ex: Amina Chraibi, Abdelhak El Amrani, Tarik Meziane)..."
+                          ? "Rechercher par nom d'enseignant..."
                           : searchScope === 'group'
-                          ? "Rechercher par groupe ou section (ex: GFC-S5-G1, MCM-S5-G1&G2, TC-S1)..."
+                          ? "Rechercher par groupe ou section d'étudiants..."
                           : searchScope === 'room'
-                          ? "Rechercher par salle ou amphithéâtre (ex: Salle 101, Amphithéâtre A, Labo Info)..."
-                          : "Recherche rapide : module, professeur, groupe, salle, type (ex: Finance, Chraibi, G1, 101)..."
+                          ? "Rechercher par salle ou amphithéâtre..."
+                          : "Recherche rapide : module, enseignant, section, salle..."
                       }
                       className="w-full pl-10 pr-24 py-2.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-xs sm:text-sm font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 shadow-xs transition-all"
                     />
@@ -1265,8 +1385,71 @@ export default function AdminAiTimetableSchedulerPage() {
                   )}
                 </div>
 
+                {/* ── 🎓 Filtres Rapides par Format Pédagogique (CM / TD / TP) ── */}
+                <div className="flex items-center gap-2 flex-wrap pt-1">
+                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-muted-foreground mr-1 flex items-center gap-1">
+                    <GraduationCap className="w-3.5 h-3.5 text-indigo-500" /> Format :
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={() => setFormatFilter('all')}
+                    className={cn(
+                      "px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5",
+                      formatFilter === 'all'
+                        ? "bg-[#0f2863] text-white shadow-xs"
+                        : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-100"
+                    )}
+                  >
+                    <span>Tous les formats</span>
+                    <span className="px-1.5 py-0.2 bg-black/20 rounded-md text-[10px]">{scheduledSessions.length}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setFormatFilter('cm')}
+                    className={cn(
+                      "px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5",
+                      formatFilter === 'cm'
+                        ? "bg-amber-600 text-white shadow-xs"
+                        : "bg-white dark:bg-slate-800 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-900/50 hover:bg-amber-50"
+                    )}
+                  >
+                    <span>🏛️ CM • Section (75 étuds)</span>
+                    <span className="px-1.5 py-0.2 bg-amber-500/20 rounded-md text-[10px]">{cmCount}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setFormatFilter('td')}
+                    className={cn(
+                      "px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5",
+                      formatFilter === 'td'
+                        ? "bg-blue-600 text-white shadow-xs"
+                        : "bg-white dark:bg-slate-800 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-900/50 hover:bg-blue-50"
+                    )}
+                  >
+                    <span>📝 TD • Sous-groupe (35 étuds)</span>
+                    <span className="px-1.5 py-0.2 bg-blue-500/20 rounded-md text-[10px]">{tdCount}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setFormatFilter('tp')}
+                    className={cn(
+                      "px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5",
+                      formatFilter === 'tp'
+                        ? "bg-purple-600 text-white shadow-xs"
+                        : "bg-white dark:bg-slate-800 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-900/50 hover:bg-purple-50"
+                    )}
+                  >
+                    <span>💻 TP • Machine (30 étuds)</span>
+                    <span className="px-1.5 py-0.2 bg-purple-500/20 rounded-md text-[10px]">{tpCount}</span>
+                  </button>
+                </div>
+
                 {/* Scope selector tabs */}
-                <div className="flex items-center gap-1.5 flex-wrap">
+                <div className="flex items-center gap-1.5 flex-wrap pt-1 border-t border-slate-200/60 dark:border-slate-800/80">
                   <span className="text-[11px] font-extrabold uppercase tracking-wider text-muted-foreground mr-1 flex items-center gap-1">
                     <Filter className="w-3 h-3 text-indigo-500" /> Critère ciblé :
                   </span>
@@ -1449,12 +1632,31 @@ export default function AdminAiTimetableSchedulerPage() {
                     const isIT = String(session.session_nature || '').includes('Informatique') || isLab;
                     const isLanguage = String(session.session_nature || '').includes('Langues') || String(session.module_name || '').toLowerCase().includes('langue') || String(session.module_name || '').toLowerCase().includes('soft skills');
 
+                    // Pedagogical format detection (ENCG Fès)
+                    const isCM = session.session_format === 'cm' || isAmphi || String(session.session_badge || '').toUpperCase().includes('CM');
+                    const isTP = session.session_format === 'tp' || isIT || String(session.session_badge || '').toUpperCase().includes('TP');
+                    const isTD = !isCM && !isTP;
+
+                    // Student counts: CM = 75, TD = 35, TP = 30
+                    const studentCount = session.students_count || (isCM ? 75 : isTP ? 30 : 35);
+                    const studentLabel = isCM 
+                      ? `${studentCount} Étudiants (Section entière)` 
+                      : isTP 
+                      ? `${studentCount} Étudiants (Postes machine)` 
+                      : `${studentCount} Étudiants (Sous-groupe dédoublé)`;
+
                     return (
                       <div
                         key={idx}
                         className={cn(
                           "p-5 rounded-2xl border transition-all space-y-3.5 shadow-sm bg-card hover:shadow-md",
-                          isIT ? "border-purple-500/30 hover:border-purple-500" : isLanguage ? "border-emerald-500/30 hover:border-emerald-500" : "border-border hover:border-indigo-400"
+                          isCM 
+                            ? "border-amber-500/30 hover:border-amber-500" 
+                            : isTP 
+                            ? "border-purple-500/30 hover:border-purple-500" 
+                            : isLanguage 
+                            ? "border-emerald-500/30 hover:border-emerald-500" 
+                            : "border-blue-500/30 hover:border-blue-500"
                         )}
                       >
                         {/* Card Header: Day, Time & Nature Badge */}
@@ -1463,16 +1665,18 @@ export default function AdminAiTimetableSchedulerPage() {
                             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200">
                               {session.day_name}
                             </span>
-                            {session.session_badge && (
-                              <span className={cn(
-                                "px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wide border",
-                                isIT
-                                  ? "bg-purple-50 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 border-purple-200"
-                                  : isLanguage
-                                  ? "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-200"
-                                  : "bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border-blue-200"
-                              )}>
-                                {session.session_badge}
+                            {/* Format Badge (CM / TD / TP) */}
+                            {isCM ? (
+                              <span className="px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wide border bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-200 border-amber-300">
+                                🏛️ CM • Section
+                              </span>
+                            ) : isTP ? (
+                              <span className="px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wide border bg-purple-50 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 border-purple-200">
+                                💻 TP • Labo PC
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wide border bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border-blue-200">
+                                📝 TD • Sous-groupe
                               </span>
                             )}
                           </div>
@@ -1488,13 +1692,20 @@ export default function AdminAiTimetableSchedulerPage() {
                           <h4 className="font-black text-sm text-foreground line-clamp-1">
                             {highlightMatch(session.module_name, searchQuery)}
                           </h4>
-                          <div className="flex items-center gap-2 mt-1 flex-wrap">
+                          <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                             <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400">
                               {highlightMatch(session.group_name, searchQuery)} • {session.filiere_code}
                             </span>
-                            <span className="text-[10px] font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded-md flex items-center gap-1">
-                              <Users className="w-3 h-3 text-muted-foreground" />
-                              {session.students_count ? `${session.students_count} Étudiants` : '35 Étudiants'}
+                            <span className={cn(
+                              "text-[10px] font-extrabold px-2 py-0.5 rounded-md flex items-center gap-1 border",
+                              isCM 
+                                ? "bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 border-amber-200 dark:border-amber-900/50" 
+                                : isTP 
+                                ? "bg-purple-50 dark:bg-purple-950/40 text-purple-900 dark:text-purple-200 border-purple-200 dark:border-purple-900/50" 
+                                : "bg-blue-50 dark:bg-blue-950/40 text-blue-900 dark:text-blue-200 border-blue-200 dark:border-blue-900/50"
+                            )}>
+                              <Users className="w-3 h-3" />
+                              {studentLabel}
                             </span>
                           </div>
                         </div>
@@ -1503,7 +1714,7 @@ export default function AdminAiTimetableSchedulerPage() {
                         <div className="pt-2.5 border-t border-border flex items-center justify-between text-xs gap-2">
                           <span className="flex items-center gap-1 text-muted-foreground truncate" title={session.professor_name}>
                             <User className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                            <span className="truncate">{highlightMatch(session.professor_name, searchQuery)}</span>
+                            <span className="truncate font-medium">{highlightMatch(session.professor_name, searchQuery)}</span>
                           </span>
                           
                           <span className={cn(
@@ -1904,70 +2115,79 @@ export default function AdminAiTimetableSchedulerPage() {
                   <button
                     type="button"
                     onClick={() => {
-                      setDedicatedRooms({
-                        'GFC': ['Salle 101', 'Salle 102'],
-                        'MCM': ['Salle 103', 'Salle 104'],
-                        'TC': ['Salle 105', 'Salle 106'],
+                      if (availableFilieresList.length === 0 || availableRoomsList.length === 0) {
+                        toast.info("Aucune salle ou filière trouvée en base de données.");
+                        return;
+                      }
+                      const newMap: Record<string, string[]> = {};
+                      const perFil = Math.max(1, Math.floor(availableRoomsList.length / availableFilieresList.length));
+                      availableFilieresList.forEach((fil: any, idx: number) => {
+                        newMap[fil.code] = availableRoomsList.slice(idx * perFil, (idx + 1) * perFil);
                       });
-                      toast.success("Répartition standard des salles appliquée !");
+                      setDedicatedRooms(newMap);
+                      toast.success("Répartition équilibrée appliquée selon vos salles réelles !");
                     }}
                     className="px-3 py-1.5 rounded-xl bg-[#0f2863] text-white text-[11px] font-black whitespace-nowrap cursor-pointer hover:bg-blue-900 transition-all shadow-xs"
                   >
-                    ⚡ Répartition Équilibrée
+                    ⚡ Répartition Équilibrée Réelle
                   </button>
                 </div>
 
-                {/* Filières mapping list */}
+                {/* Filières mapping list (100% Dynamique depuis la base de données) */}
                 <div className="space-y-3.5 max-h-[50vh] overflow-y-auto pr-1">
-                  {[
-                    { code: 'TC', label: 'Tronc Commun (S1 / S2 / S3 / S4)' },
-                    { code: 'GFC', label: 'Gestion Financière et Comptable (GFC)' },
-                    { code: 'MCM', label: 'Management Commercial & Marketing (MCM)' },
-                  ].map((fil) => {
-                    const assigned = dedicatedRooms[fil.code] || [];
-                    return (
-                      <div key={fil.code} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700 space-y-2.5">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <span className="font-black text-xs text-slate-900 dark:text-white">{fil.label}</span>
-                            <span className="text-[10px] font-bold text-muted-foreground ml-2">
-                              ({assigned.length} salle{assigned.length > 1 ? 's' : ''} dédiée{assigned.length > 1 ? 's' : ''})
-                            </span>
+                  {availableFilieresList.length === 0 ? (
+                    <div className="p-8 text-center bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-200/80 dark:border-slate-700 text-xs text-slate-500">
+                      Chargement des filières réelles depuis la base de données...
+                    </div>
+                  ) : (
+                    availableFilieresList.map((fil: any) => {
+                      const fCode = fil.code;
+                      const fLabel = `${fil.name} (${fil.code})`;
+                      const assigned = dedicatedRooms[fCode] || [];
+                      return (
+                        <div key={fCode} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700 space-y-2.5">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <span className="font-black text-xs text-slate-900 dark:text-white">{fLabel}</span>
+                              <span className="text-[10px] font-bold text-muted-foreground ml-2">
+                                ({assigned.length} salle{assigned.length > 1 ? 's' : ''} dédiée{assigned.length > 1 ? 's' : ''})
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-wrap gap-1.5">
+                            {availableRoomsList.map((rName: string) => {
+                              const isSelected = assigned.includes(rName);
+                              return (
+                                <button
+                                  key={rName}
+                                  type="button"
+                                  onClick={() => {
+                                    setDedicatedRooms(prev => {
+                                      const current = prev[fCode] || [];
+                                      const updated = isSelected 
+                                        ? current.filter((r: string) => r !== rName)
+                                        : [...current, rName];
+                                      return { ...prev, [fCode]: updated };
+                                    });
+                                  }}
+                                  className={cn(
+                                    "px-2.5 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1 border",
+                                    isSelected
+                                      ? "bg-indigo-600 text-white border-indigo-700 shadow-xs"
+                                      : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100"
+                                  )}
+                                >
+                                  <span>{isSelected ? '✓' : '+'}</span>
+                                  <span>{rName}</span>
+                                </button>
+                              );
+                            })}
                           </div>
                         </div>
-
-                        <div className="flex flex-wrap gap-1.5">
-                          {availableRoomsList.map((rName: string) => {
-                            const isSelected = assigned.includes(rName);
-                            return (
-                              <button
-                                key={rName}
-                                type="button"
-                                onClick={() => {
-                                  setDedicatedRooms(prev => {
-                                    const current = prev[fil.code] || [];
-                                    const updated = isSelected 
-                                      ? current.filter((r: string) => r !== rName)
-                                      : [...current, rName];
-                                    return { ...prev, [fil.code]: updated };
-                                  });
-                                }}
-                                className={cn(
-                                  "px-2.5 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1 border",
-                                  isSelected
-                                    ? "bg-indigo-600 text-white border-indigo-700 shadow-xs"
-                                    : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100"
-                                )}
-                              >
-                                <span>{isSelected ? '✓' : '+'}</span>
-                                <span>{rName}</span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })
+                  )}
                 </div>
               </div>
             )}
@@ -1978,114 +2198,126 @@ export default function AdminAiTimetableSchedulerPage() {
                 {/* Quick Auto-preset button for Professors */}
                 <div className="flex items-center justify-between bg-emerald-500/10 dark:bg-emerald-950/30 p-3.5 rounded-2xl border border-emerald-200 dark:border-emerald-800">
                   <div className="text-xs text-emerald-900 dark:text-emerald-200">
-                    <strong className="font-bold">Astuce pédagogique :</strong> Affecter les enseignants selon leur spécialité (Finance, Audit, Marketing...) évite la dispersion pédagogique et stabilise l'encadrement.
+                    <strong className="font-bold">Astuce pédagogique :</strong> Affecter les enseignants selon leur spécialité évite la dispersion pédagogique.
                   </div>
                   <button
                     type="button"
                     onClick={() => {
-                      setDedicatedProfessors({
-                        'GFC': ['Abdelhak El Amrani', 'Youssef El Mansouri', 'Omar Bennouna'],
-                        'MCM': ['Amina Chraibi', 'Tarik Meziane', 'Bouchra Bennani'],
-                        'TC': ['Mohamed Benjelloun', 'Tarik Meziane', 'Bouchra Bennani', 'Youssef El Mansouri'],
+                      if (availableFilieresList.length === 0 || availableProfessorsList.length === 0) {
+                        toast.info("Aucun professeur ou filière trouvé en base de données.");
+                        return;
+                      }
+                      const newMap: Record<string, string[]> = {};
+                      availableFilieresList.forEach((fil: any) => {
+                        const matches = availableProfessorsList.filter((p: any) => {
+                          const dep = String(p.department_code || p.department || '').toLowerCase();
+                          const fCode = String(fil.code || '').toLowerCase();
+                          return dep.includes(fCode) || fCode.includes(dep);
+                        });
+                        newMap[fil.code] = matches.length > 0 ? matches.map((p: any) => p.name) : availableProfessorsList.slice(0, 3).map((p: any) => p.name);
                       });
-                      toast.success("Répartition pédagogique recommandée appliquée !");
+                      setDedicatedProfessors(newMap);
+                      toast.success("Affectation automatique par département appliquée selon vos enseignants réels !");
                     }}
                     className="px-3 py-1.5 rounded-xl bg-emerald-700 text-white text-[11px] font-black whitespace-nowrap cursor-pointer hover:bg-emerald-800 transition-all shadow-xs"
                   >
-                    ⚡ Répartition Recommandée
+                    ⚡ Affectation par Département Réelle
                   </button>
                 </div>
 
-                {/* Filières mapping list for Professors */}
+                {/* Filières mapping list for Professors (100% Dynamique depuis la base de données) */}
                 <div className="space-y-3.5 max-h-[50vh] overflow-y-auto pr-1">
-                  {[
-                    { code: 'TC', label: 'Tronc Commun (S1 / S2 / S3 / S4)', desc: 'Mathématiques, Économie, Informatique, Langues & Soft Skills' },
-                    { code: 'GFC', label: 'Gestion Financière et Comptable (GFC)', desc: 'Finance d’entreprise, Comptabilité approfondie, Audit & Fiscalité' },
-                    { code: 'MCM', label: 'Management Commercial & Marketing (MCM)', desc: 'Marketing stratégique, Droit des affaires, Communication & Management' },
-                  ].map((fil) => {
-                    const assigned = dedicatedProfessors[fil.code] || [];
-                    return (
-                      <div key={fil.code} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700 space-y-2.5">
-                        <div className="flex items-center justify-between flex-wrap gap-2">
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <span className="font-black text-xs text-slate-900 dark:text-white">{fil.label}</span>
-                              <span className="px-2 py-0.5 rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-[10px] font-black text-emerald-600 dark:text-emerald-400">
-                                {assigned.length} prof{assigned.length > 1 ? 's' : ''} affecté{assigned.length > 1 ? 's' : ''}
-                              </span>
+                  {availableFilieresList.length === 0 ? (
+                    <div className="p-8 text-center bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-200/80 dark:border-slate-700 text-xs text-slate-500">
+                      Chargement des filières réelles depuis la base de données...
+                    </div>
+                  ) : (
+                    availableFilieresList.map((fil: any) => {
+                      const fCode = fil.code;
+                      const fLabel = `${fil.name} (${fil.code})`;
+                      const assigned = dedicatedProfessors[fCode] || [];
+                      return (
+                        <div key={fCode} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700 space-y-2.5">
+                          <div className="flex items-center justify-between flex-wrap gap-2">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="font-black text-xs text-slate-900 dark:text-white">{fLabel}</span>
+                                <span className="px-2 py-0.5 rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-[10px] font-black text-emerald-600 dark:text-emerald-400">
+                                  {assigned.length} prof{assigned.length > 1 ? 's' : ''} affecté{assigned.length > 1 ? 's' : ''}
+                                </span>
+                              </div>
                             </div>
-                            <p className="text-[10px] text-slate-400 mt-0.5">{fil.desc}</p>
-                          </div>
 
-                          <div className="flex items-center gap-1.5 text-[10px]">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setDedicatedProfessors(prev => ({
-                                  ...prev,
-                                  [fil.code]: availableProfessorsList.map((p: any) => p.name)
-                                }));
-                              }}
-                              className="px-2 py-0.5 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-bold text-slate-600 dark:text-slate-300 hover:text-emerald-600 cursor-pointer"
-                            >
-                              Tout cocher
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setDedicatedProfessors(prev => ({
-                                  ...prev,
-                                  [fil.code]: []
-                                }));
-                              }}
-                              className="px-2 py-0.5 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-bold text-slate-400 hover:text-rose-600 cursor-pointer"
-                            >
-                              Vider
-                            </button>
-                          </div>
-                        </div>
-
-                        <div className="flex flex-wrap gap-2">
-                          {availableProfessorsList.map((prof: any) => {
-                            const pName = prof.name;
-                            const isSelected = assigned.includes(pName);
-                            return (
+                            <div className="flex items-center gap-1.5 text-[10px]">
                               <button
-                                key={pName}
                                 type="button"
                                 onClick={() => {
-                                  setDedicatedProfessors(prev => {
-                                    const current = prev[fil.code] || [];
-                                    const updated = isSelected 
-                                      ? current.filter((p: string) => p !== pName)
-                                      : [...current, pName];
-                                    return { ...prev, [fil.code]: updated };
-                                  });
+                                  setDedicatedProfessors(prev => ({
+                                    ...prev,
+                                    [fCode]: availableProfessorsList.map((p: any) => p.name)
+                                  }));
                                 }}
-                                className={cn(
-                                  "px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 border text-left",
-                                  isSelected
-                                    ? "bg-emerald-600 text-white border-emerald-700 shadow-sm"
-                                    : "bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-emerald-500 hover:bg-emerald-50/40"
-                                )}
+                                className="px-2 py-0.5 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-bold text-slate-600 dark:text-slate-300 hover:text-emerald-600 cursor-pointer"
                               >
-                                <span className="font-black text-xs">{isSelected ? '✓' : '+'}</span>
-                                <div className="flex flex-col">
-                                  <span className="font-bold leading-tight">{pName}</span>
-                                  <span className={cn(
-                                    "text-[9px] font-semibold leading-tight",
-                                    isSelected ? "text-emerald-100" : "text-slate-400"
-                                  )}>
-                                    {prof.specialty || prof.department || 'Enseignant'}
-                                  </span>
-                                </div>
+                                Tout cocher
                               </button>
-                            );
-                          })}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setDedicatedProfessors(prev => ({
+                                    ...prev,
+                                    [fCode]: []
+                                  }));
+                                }}
+                                className="px-2 py-0.5 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-bold text-slate-400 hover:text-rose-600 cursor-pointer"
+                              >
+                                Vider
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-wrap gap-2">
+                            {availableProfessorsList.map((prof: any) => {
+                              const pName = prof.name;
+                              const isSelected = assigned.includes(pName);
+                              return (
+                                <button
+                                  key={pName}
+                                  type="button"
+                                  onClick={() => {
+                                    setDedicatedProfessors(prev => {
+                                      const current = prev[fCode] || [];
+                                      const updated = isSelected 
+                                        ? current.filter((p: string) => p !== pName)
+                                        : [...current, pName];
+                                      return { ...prev, [fCode]: updated };
+                                    });
+                                  }}
+                                  className={cn(
+                                    "px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 border text-left",
+                                    isSelected
+                                      ? "bg-emerald-600 text-white border-emerald-700 shadow-sm"
+                                      : "bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-emerald-500 hover:bg-emerald-50/40"
+                                  )}
+                                >
+                                  <span className="font-black text-xs">{isSelected ? '✓' : '+'}</span>
+                                  <div className="flex flex-col">
+                                    <span className="font-bold leading-tight">{pName}</span>
+                                    <span className={cn(
+                                      "text-[9px] font-semibold leading-tight",
+                                      isSelected ? "text-emerald-100" : "text-slate-400"
+                                    )}>
+                                      {prof.specialty || prof.department || 'Enseignant'}
+                                    </span>
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })
+                  )}
                 </div>
               </div>
             )}

@@ -112,10 +112,43 @@ class AiTimetableSchedulerController extends Controller
             $rType = strtolower($s->room_type ?? 'classroom');
             $roomTypeLabel = ($rType === 'lab') ? 'Labo Informatique (PC)' : (($rType === 'amphitheater' || $rType === 'amphi') ? 'Amphithéâtre' : 'Salle de TD');
             $isLab = $rType === 'lab' || str_contains(strtolower($s->room_name ?? ''), 'info');
+            $isAmphi = ($rType === 'amphitheater' || $rType === 'amphi' || str_contains(strtolower($s->room_name ?? ''), 'amphi'));
             $isLanguage = str_contains(strtolower($s->module_name ?? ''), 'langue') || str_contains(strtolower($s->module_name ?? ''), 'soft skills') || str_contains(strtolower($s->schedule_type ?? ''), 'langue');
 
-            $natureLabel = $isLab ? 'TP Informatique (Travaux Pratiques)' : ($isLanguage ? 'TD Langues & Soft Skills' : 'Cours Magistral & TD Intégré');
-            $natureBadge = $isLab ? 'TP MACHINE' : ($isLanguage ? 'TD GROUPE' : 'CM / TD');
+            $schedType = strtolower($s->schedule_type ?? '');
+            $isCM = ($schedType === 'cm' || $isAmphi);
+            $isTD = ($schedType === 'td' || $isLanguage);
+            $isTP = ($schedType === 'tp' || $isLab);
+
+            // Règle d'or institutionnelle ENCG Fès :
+            // CM = 75 étuds (Section entière en Amphi)
+            // TD = 35 étuds (Sous-groupe dédoublé en Salle)
+            // TP = 30 étuds (Labo informatique PC)
+            if ($isTP) {
+                $studentsCount = 30;
+                $natureLabel = 'TP Informatique (Labo PC)';
+                $natureBadge = 'TP MACHINE';
+                $sessionFormat = 'tp';
+            } elseif ($isTD) {
+                $studentsCount = 35;
+                $natureLabel = 'Travaux Dirigés (Sous-groupe dédoublé)';
+                $natureBadge = 'TD GROUPE';
+                $sessionFormat = 'td';
+            } else {
+                $studentsCount = 75;
+                $natureLabel = 'Cours Magistral (Section entière)';
+                $natureBadge = 'CM SECTION';
+                $sessionFormat = 'cm';
+            }
+
+            // Normalisation de l'appellation du professeur selon le format réel ENCG :
+            $profDisplayName = $s->professor_name;
+            if ($isCM && ! str_starts_with($profDisplayName, 'Pr.') && $profDisplayName !== 'Enseignant non assigné') {
+                $profDisplayName = "Pr. {$profDisplayName}";
+            } elseif ($isTD && ! str_ends_with($profDisplayName, '(TD)') && $profDisplayName !== 'Enseignant non assigné') {
+                $cleanName = preg_replace('/^Pr\.\s*/i', '', $profDisplayName);
+                $profDisplayName = "{$cleanName} (TD)";
+            }
 
             $items[] = [
                 'id' => $s->id,
@@ -132,14 +165,15 @@ class AiTimetableSchedulerController extends Controller
                 'group_name' => $s->group_name ?: 'Section ENCG',
                 'filiere_code' => $s->filiere_code ?: 'TC',
                 'professor_id' => $s->professor_id,
-                'professor_name' => $s->professor_name,
+                'professor_name' => $profDisplayName,
                 'room_id' => $s->room_id,
                 'room_name' => $s->room_name ?: 'Salle',
                 'room_type' => $s->room_type ?: 'classroom',
                 'room_type_label' => $roomTypeLabel,
-                'students_count' => $s->students_count ?: 35,
+                'students_count' => $studentsCount,
                 'session_nature' => $natureLabel,
                 'session_badge' => $natureBadge,
+                'session_format' => $sessionFormat,
                 'is_database_active' => true,
             ];
         }
@@ -238,9 +272,10 @@ class AiTimetableSchedulerController extends Controller
             foreach ($items as $item) {
                 // Déterminer le type de séance (cm, td, tp)
                 $badge = $item['session_badge'] ?? '';
-                $sessionType = ($badge === 'TP Labo' || str_contains($item['session_nature'] ?? '', 'Informatique'))
+                $format = $item['session_format'] ?? '';
+                $sessionType = ($format === 'tp' || str_contains($badge, 'TP') || str_contains($item['session_nature'] ?? '', 'Informatique'))
                     ? 'tp'
-                    : (($badge === 'TD Groupe' || str_contains($item['session_nature'] ?? '', 'Langues')) ? 'td' : 'cm');
+                    : (($format === 'td' || str_contains($badge, 'TD') || str_contains($item['session_nature'] ?? '', 'Langues')) ? 'td' : 'cm');
 
                 // Déterminer le semester_id adapté
                 $groupSemesterNum = null;

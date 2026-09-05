@@ -164,16 +164,30 @@ class AiTimetableSchedulerService
             foreach ($groupModules as $module) {
                 $courses = $this->getModuleSessions($module);
 
-                // Déterminer la nature pédagogique du module
-                $nameLower = mb_strtolower($module->name);
-                $isIT = str_contains($nameLower, 'informatique') || str_contains($nameLower, 'système') || str_contains($nameLower, 'logiciel') || str_contains($nameLower, 'data') || str_contains($nameLower, 'bureautique');
-                $isLanguageOrSoftSkills = str_contains($nameLower, 'langue') || str_contains($nameLower, 'anglais') || str_contains($nameLower, 'français') || str_contains($nameLower, 'soft skills') || str_contains($nameLower, 'communication');
-
-                $natureLabel = $isIT ? 'TP Informatique' : ($isLanguageOrSoftSkills ? 'Langues & Soft Skills' : 'Cours Magistral / TD');
-                $natureBadge = $isIT ? 'TP Labo' : ($isLanguageOrSoftSkills ? 'TD Groupe' : 'CM / TD');
-                $studentsCount = (int) ($group->capacity ?? 35);
-
                 foreach ($courses as $course) {
+                    $cType = $course->type ?? 'cm';
+                    $isCM = ($cType === 'cm' || $cType === 'cours');
+                    $isTD = ($cType === 'td');
+                    $isTP = ($cType === 'tp');
+
+                    // Règle d'or institutionnelle ENCG Fès pour les effectifs & badges :
+                    // 1. CM : Section entière en Amphithéâtre -> 75 Étudiants
+                    // 2. TD : Sous-groupe dédoublé en Salle de TD -> 35 Étudiants
+                    // 3. TP : Labo informatique avec postes PC -> 30 Étudiants
+                    if ($isCM) {
+                        $studentsCount = 75;
+                        $natureLabel = 'Cours Magistral (Section entière)';
+                        $natureBadge = 'CM SECTION';
+                    } elseif ($isTD) {
+                        $studentsCount = 35;
+                        $natureLabel = 'Travaux Dirigés (Sous-groupe dédoublé)';
+                        $natureBadge = 'TD GROUPE';
+                    } else {
+                        $studentsCount = 30;
+                        $natureLabel = 'TP Informatique (Labo PC)';
+                        $natureBadge = 'TP MACHINE';
+                    }
+
                     // Chercher l'enseignant réellement affecté dans module_professor
                     $assignedProfId = DB::table('module_professor')
                         ->where('module_id', $module->id)
@@ -244,9 +258,21 @@ class AiTimetableSchedulerService
                     }
 
                     $profId = $assignedProf ? $assignedProf->id : 1;
-                    $profName = $assignedProf && $assignedProf->user
+                    $rawProfName = $assignedProf && $assignedProf->user
                         ? trim(($assignedProf->user->first_name ?? '').' '.($assignedProf->user->last_name ?? ''))
                         : ($assignedProf?->user?->name ?? 'Enseignant Chercheur');
+
+                    // Règle d'appellation institutionnelle ENCG Fès :
+                    // CM -> Pr. [Nom] (Professeur permanent titulaire)
+                    // TD -> [Nom] (TD) (Intervenant / Chargé de TD)
+                    if ($isCM) {
+                        $profName = str_starts_with($rawProfName, 'Pr.') ? $rawProfName : "Pr. {$rawProfName}";
+                    } elseif ($isTD) {
+                        $cleanName = preg_replace('/^Pr\.\s*/i', '', $rawProfName);
+                        $profName = str_ends_with($cleanName, '(TD)') ? $cleanName : "{$cleanName} (TD)";
+                    } else {
+                        $profName = str_starts_with($rawProfName, 'Pr.') ? $rawProfName : "Pr. {$rawProfName}";
+                    }
 
                     // Salles classées par pertinence pédagogique et affectation de salles dédiées par filière
                     $rankedRooms = $this->rankRoomsForModule($rooms, $module, $course, $group, $options['dedicated_rooms'] ?? []);
@@ -366,7 +392,8 @@ class AiTimetableSchedulerService
                                         'students_count' => $studentsCount,
                                         'session_nature' => $natureLabel,
                                         'session_badge' => $natureBadge,
-                                        'is_group_format' => $isLanguageOrSoftSkills || $isIT,
+                                        'is_group_format' => $isTD || $isTP,
+                                        'session_format' => $isCM ? 'cm' : ($isTD ? 'td' : 'tp'),
                                         'status' => 'OPTIMIZED_ZERO_CONFLICT',
                                     ];
 
@@ -650,7 +677,7 @@ class AiTimetableSchedulerService
         $sessions = collect();
 
         if (($module->hours_cm ?? 0) > 0) {
-            $sessions->push((object) ['id' => $module->id, 'name' => "{$module->name} (CM)", 'type' => 'cours']);
+            $sessions->push((object) ['id' => $module->id, 'name' => "{$module->name} (CM)", 'type' => 'cm']);
         }
         if (($module->hours_td ?? 0) > 0) {
             $sessions->push((object) ['id' => $module->id, 'name' => "{$module->name} (TD)", 'type' => 'td']);
@@ -660,7 +687,33 @@ class AiTimetableSchedulerService
         }
 
         if ($sessions->isEmpty()) {
-            $sessions->push((object) ['id' => $module->id, 'name' => $module->name, 'type' => 'cours']);
+            $nameLower = mb_strtolower($module->name);
+
+            // 1. Informatique / TP Machine
+            if (str_contains($nameLower, 'informatique') || str_contains($nameLower, 'système') || str_contains($nameLower, 'bureautique') || str_contains($nameLower, 'data')) {
+                $sessions->push((object) ['id' => $module->id, 'name' => "{$module->name} (TP Machine)", 'type' => 'tp']);
+            }
+            // 2. Langues & Soft Skills (strictement en format TD / Dédoublé)
+            elseif (str_contains($nameLower, 'langue') || str_contains($nameLower, 'anglais') || str_contains($nameLower, 'français') || str_contains($nameLower, 'soft skills') || str_contains($nameLower, 'communication')) {
+                $sessions->push((object) ['id' => $module->id, 'name' => "{$module->name} (TD)", 'type' => 'td']);
+            }
+            // 3. Modules fondamentaux de gestion d'ENCG Fès (Management, Comptabilité, Économie, Mathématiques/Stats, Finance)
+            // Modèle réel ENCG : Ils comportent obligatoirement 1 séance de CM (Amphi, 75 étuds) ET 1 séance de TD (Salle, 35 étuds)
+            elseif (
+                str_contains($nameLower, 'management') ||
+                str_contains($nameLower, 'comptab') ||
+                str_contains($nameLower, 'économie') || str_contains($nameLower, 'economie') ||
+                str_contains($nameLower, 'math') || str_contains($nameLower, 'stat') ||
+                str_contains($nameLower, 'financ') || str_contains($nameLower, 'fiscal') ||
+                str_contains($nameLower, 'marketing')
+            ) {
+                $sessions->push((object) ['id' => $module->id, 'name' => "{$module->name} (CM)", 'type' => 'cm']);
+                $sessions->push((object) ['id' => $module->id, 'name' => "{$module->name} (TD)", 'type' => 'td']);
+            }
+            // 4. Droit & Autres modules magistraux
+            else {
+                $sessions->push((object) ['id' => $module->id, 'name' => "{$module->name} (CM)", 'type' => 'cm']);
+            }
         }
 
         return $sessions;
@@ -809,23 +862,48 @@ class AiTimetableSchedulerService
         }
         $dedicatedForOtherFilieres = array_unique($dedicatedForOtherFilieres);
 
-        return $nonLabRooms->sortBy(function ($r) use ($isLanguageOrSoftSkills, $dedicatedForThisFiliere, $dedicatedForOtherFilieres) {
+        $isCM = ($course->type ?? '') === 'cm' || ($course->type ?? '') === 'cours';
+        $isTD = ($course->type ?? '') === 'td';
+
+        return $nonLabRooms->sortBy(function ($r) use ($isCM, $isTD, $isLanguageOrSoftSkills, $dedicatedForThisFiliere, $dedicatedForOtherFilieres) {
             $rId = (int) $r->id;
             $rType = strtolower($r->type ?? 'classroom');
+            $isAmphi = ($rType === 'amphitheater' || $rType === 'amphi' || str_contains(strtolower($r->name), 'amphi'));
 
-            // 1. Salle explicitement attribuée à cette filière / département -> Top Priorité (Score 5)
+            // 1. Cours Magistral CM (Section entière de 75 étudiants) :
+            // Règle institutionnelle ENCG : Priorité absolue aux Amphithéâtres (Amphi 1, 2, 3) !
+            if ($isCM) {
+                if ($isAmphi) {
+                    return 2; // Top priorité absolue
+                }
+                if (in_array($rId, $dedicatedForThisFiliere, true)) {
+                    return 10;
+                }
+                return 40;
+            }
+
+            // 2. Travaux Dirigés TD & Langues (Sous-groupe dédoublé de 35 étudiants) :
+            // Règle institutionnelle ENCG : Priorité absolue aux Salles de classe classiques (Salles 11-28 / Salles 101-108).
+            // Interdiction / forte pénalité d'attribuer un amphi de 300 places pour un petit groupe de TD !
+            if ($isTD || $isLanguageOrSoftSkills) {
+                if ($isAmphi) {
+                    return 100; // Éviter l'amphi pour un sous-groupe de 35 étuds
+                }
+                if (in_array($rId, $dedicatedForThisFiliere, true)) {
+                    return 5; // Top priorité salle dédiée
+                }
+                if (in_array($rId, $dedicatedForOtherFilieres, true)) {
+                    return 80;
+                }
+                return 15;
+            }
+
+            // 3. Salles standard pour autres formats
             if (in_array($rId, $dedicatedForThisFiliere, true)) {
                 return 5;
             }
-
-            // 2. Salle réservée pour une autre filière -> Priorité faible (Score 80)
             if (in_array($rId, $dedicatedForOtherFilieres, true)) {
                 return 80;
-            }
-
-            // 3. Salles standard selon la matière
-            if ($isLanguageOrSoftSkills) {
-                return ($rType === 'classroom' || str_contains(strtolower($r->name), 'salle')) ? 20 : 30;
             }
 
             return ($rType === 'classroom') ? 20 : 30;
@@ -837,6 +915,11 @@ class AiTimetableSchedulerService
      */
     protected function ensureCampusRooms(): void
     {
+        // Ne jamais injecter de salles statiques si des salles existent déjà dans la base de données
+        if (Room::exists()) {
+            return;
+        }
+
         $institutionId = Institution::first()?->id ?? null;
         $campusId = Campus::first()?->id ?? null;
 
