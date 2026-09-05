@@ -117,7 +117,13 @@ export default function StudentDashboard() {
   const mention = getMention(Number(stats.gpa) || 14.85);
   const studentCne = user?.cne || 'N130000003';
   const studentCin = user?.cin || 'CD748291';
-  const studentFiliere = (user as any)?.filiere?.name || 'ENCG Grande École • S6 Gestion Financière & Comptable (GFC)';
+  const academicInfo = (user as any)?.academic_info || (statsPayload as any)?.academic_info;
+  const studentSection = (user as any)?.section || (statsPayload as any)?.section || academicInfo?.section_label || 'Section 1';
+  const studentSubGroup = (user as any)?.sub_group || (statsPayload as any)?.sub_group || academicInfo?.sub_group || 'G1.1';
+  const studentGroupName = (user as any)?.group_name || (statsPayload as any)?.group_name || academicInfo?.group_name || 'GFC-S5-G1';
+  const studentFiliere = academicInfo?.filiere_name 
+    ? `ENCG Grande École • S${academicInfo.semester || 5} ${academicInfo.filiere_name}`
+    : ((user as any)?.filiere?.name || 'ENCG Grande École • S5 Gestion Financière & Comptable (GFC)');
   const studentInitials = user?.name ? user.name.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase() : 'ET';
 
   return (
@@ -156,6 +162,22 @@ export default function StudentDashboard() {
                 <Building2 className="w-4 h-4 text-blue-300" />
                 {studentFiliere}
               </p>
+
+              {/* ── Official ENCG Section & Sub-Group TD Badges ── */}
+              <div className="flex flex-wrap items-center gap-2 pt-1.5">
+                <span className="bg-amber-400/20 text-amber-300 border border-amber-400/40 px-3 py-0.5 rounded-lg text-xs font-bold shadow-sm flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+                  {studentSection} (Amphi CM)
+                </span>
+                <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-3 py-0.5 rounded-lg text-xs font-black shadow-sm flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                  Sous-Groupe TD : {studentSubGroup}
+                </span>
+                <span className="bg-white/10 text-slate-300 px-2 py-0.5 rounded-lg text-xs font-mono border border-white/10">
+                  {studentGroupName}
+                </span>
+              </div>
+
               <div className="flex flex-wrap items-center gap-3 pt-1 text-xs text-slate-300 font-mono font-bold">
                 <span className="bg-white/10 px-2.5 py-0.5 rounded-lg border border-white/10">CNE: {studentCne}</span>
                 <span className="bg-white/10 px-2.5 py-0.5 rounded-lg border border-white/10">CIN: {studentCin}</span>

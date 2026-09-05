@@ -232,4 +232,31 @@ class GroupController extends Controller
             'dispatched_count' => $dispatched,
         ]);
     }
+
+    /**
+     * Découpage automatique officiel des sous-groupes TD/TP par ordre alphabétique (ENCG Fès).
+     */
+    public function dispatchSubGroups(Request $request, \App\Services\Academic\StudentSubGroupDispatcherService $dispatcher): JsonResponse
+    {
+        $groupId = $request->input('group_id');
+        if ($groupId) {
+            $group = Group::findOrFail($groupId);
+            $result = $dispatcher->dispatchGroup($group);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Sous-groupes TD répartis avec succès pour {$group->name}.",
+                'data' => $result,
+            ]);
+        }
+
+        $academicYearId = $request->input('academic_year_id');
+        $result = $dispatcher->dispatchAllActiveGroups($academicYearId ? (int) $academicYearId : null);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Sous-groupes TD répartis avec succès pour {$result['groups_processed']} groupes ({$result['total_students']} étudiants).",
+            'data' => $result,
+        ]);
+    }
 }

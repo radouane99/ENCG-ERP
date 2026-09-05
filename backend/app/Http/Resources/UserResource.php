@@ -19,6 +19,14 @@ class UserResource extends JsonResource
 
         $roles = $this->roles->pluck('name')->values()->toArray();
 
+        $academicInfo = null;
+        if (in_array('student', $roles)) {
+            $student = $this->student ?? \App\Models\Student::where('user_id', $this->id)->first();
+            if ($student) {
+                $academicInfo = app(\App\Services\Academic\StudentSubGroupDispatcherService::class)->getStudentSubGroupInfo($student->id);
+            }
+        }
+
         return [
             'id' => $this->uuid ?? $this->id,
             'first_name' => Utf8Text::repair($this->first_name),
@@ -42,6 +50,11 @@ class UserResource extends JsonResource
                 ? ($roles[0] ?? 'user')
                 : (count($roles) ? 'admin' : 'user'),
             'role_label' => $roles[0] ?? 'Non assigné',
+            'academic_info' => $academicInfo,
+            'filiere' => $academicInfo ? ['name' => $academicInfo['filiere_name'], 'code' => $academicInfo['filiere_code']] : null,
+            'section' => $academicInfo['section_label'] ?? null,
+            'sub_group' => $academicInfo['sub_group'] ?? null,
+            'group_name' => $academicInfo['group_name'] ?? null,
             'last_login_at' => $this->last_login_at?->toIso8601String(),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),

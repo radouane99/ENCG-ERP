@@ -6,7 +6,7 @@
     <style>
         @page { 
             size: A4 landscape; 
-            margin: 5mm 7mm 5mm 7mm; 
+            margin: 2.5mm 4mm 2.5mm 4mm; 
         }
         * { box-sizing: border-box; }
         body {
@@ -14,20 +14,21 @@
             color: #0f172a;
             margin: 0;
             padding: 0;
-            font-size: 7.5pt;
-            line-height: 1.25;
+            font-size: 6.8pt;
+            line-height: 1.15;
             background: #ffffff;
         }
         .outer-frame {
-            border: 2px solid #001A4B;
-            padding: 7px 9px;
+            border: 1.5px solid #001A4B;
+            padding: 3px 5px;
             background: #ffffff;
             position: relative;
+            page-break-inside: avoid;
         }
         .header-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
         }
         .header-table td {
             vertical-align: middle;
@@ -35,51 +36,53 @@
             padding: 0;
         }
         .gold-divider {
-            height: 2px;
+            height: 1.5px;
             background: #c9a227;
-            margin: 3px 0 5px 0;
+            margin: 2px 0 3px 0;
         }
         .title-banner {
             background-color: #001A4B;
             color: #ffffff;
             text-align: center;
-            padding: 4px 6px;
-            border-radius: 3px;
-            margin-bottom: 4px;
+            padding: 2.5px 4px;
+            border-radius: 2px;
+            margin-bottom: 3px;
         }
         .title-banner h1 {
-            font-size: 11pt;
+            font-size: 9.5pt;
             font-weight: 900;
-            letter-spacing: 0.8px;
+            letter-spacing: 0.5px;
             color: #ffffff;
             text-transform: uppercase;
             margin: 0;
+            line-height: 1.1;
         }
         .title-banner .sub {
-            font-size: 6.8pt;
+            font-size: 6.0pt;
             font-weight: bold;
             color: #fef08a;
             margin-top: 1px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.4px;
         }
         .info-card {
             width: 100%;
             background: #f8fafc;
             border: 1px solid #cbd5e1;
-            padding: 4px 6px;
-            margin-bottom: 5px;
-            border-radius: 3px;
+            padding: 2.5px 4px;
+            margin-bottom: 3px;
+            border-radius: 2px;
         }
         .info-table {
             width: 100%;
             border-collapse: collapse;
         }
         .info-table td {
-            font-size: 7.2pt;
+            font-size: 6.5pt;
             border: none;
-            padding: 1.5px 3px;
+            padding: 1px 2px;
             color: #334155;
+            line-height: 1.1;
         }
         .info-table strong {
             color: #001A4B;
@@ -90,13 +93,14 @@
             width: 100%;
             border-collapse: collapse;
             table-layout: fixed;
-            margin-bottom: 5px;
+            margin-bottom: 3px;
+            page-break-inside: avoid;
         }
         table.grid th, table.grid td {
             border: 0.8px solid #001A4B;
             vertical-align: middle;
             text-align: center;
-            padding: 3px 2px;
+            padding: 2px 1.5px;
         }
         table.grid th {
             background: #001A4B;
@@ -166,43 +170,47 @@
         table.recap {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 4px;
-            font-size: 6.8pt;
+            margin-bottom: 2px;
+            font-size: 5.8pt;
+            line-height: 1.05;
         }
         table.recap th, table.recap td {
             border: 0.5px solid #cbd5e1;
-            padding: 2.5px 3px;
+            padding: 1.5px 2.5px;
         }
         table.recap th {
             background: #e2e8f0;
             color: #001A4B;
             font-weight: bold;
             text-transform: uppercase;
+            padding: 2px 2.5px;
         }
 
         /* Footer */
         .footer-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 3px;
+            margin-top: 2px;
         }
         .footer-table td {
             border: none;
             vertical-align: middle;
-            font-size: 6.2pt;
+            font-size: 5.5pt;
             color: #475569;
-            padding: 0 3px;
+            padding: 0 2px;
+            line-height: 1.1;
         }
         .sig-box {
             border: 1px solid #cbd5e1;
             background: #f8fafc;
-            border-radius: 3px;
-            height: 42px;
-            padding: 3px;
+            border-radius: 2px;
+            height: 28px;
+            padding: 2px;
             text-align: center;
             font-weight: bold;
             color: #1e293b;
-            font-size: 6.5pt;
+            font-size: 5.5pt;
+            line-height: 1.1;
         }
     </style>
 </head>

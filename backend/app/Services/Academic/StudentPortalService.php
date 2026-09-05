@@ -151,6 +151,8 @@ class StudentPortalService
             ])
             ->toArray();
 
+        $subGroupInfo = app(\App\Services\Academic\StudentSubGroupDispatcherService::class)->getStudentSubGroupInfo($studentId);
+
         return [
             'absences' => $absences,
             'published_grades' => $gradesCount,
@@ -158,6 +160,10 @@ class StudentPortalService
             'gpa' => $gpa,
             'upcoming_exams' => $upcomingExams,
             'recent_documents' => $recentDocuments,
+            'academic_info' => $subGroupInfo,
+            'section' => $subGroupInfo['section_label'] ?? null,
+            'sub_group' => $subGroupInfo['sub_group'] ?? null,
+            'group_name' => $subGroupInfo['group_name'] ?? null,
         ];
     }
 }

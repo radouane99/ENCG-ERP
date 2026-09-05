@@ -296,6 +296,7 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     Route::get('/groups/{id}/students', [GroupController::class, 'getGroupStudents']);
     Route::post('/groups/{id}/assign-delegate', [GroupController::class, 'assignDelegate']);
     Route::post('/groups/dispatch-students', [GroupController::class, 'dispatchStudentsToGroups']);
+    Route::post('/groups/dispatch-subgroups', [GroupController::class, 'dispatchSubGroups']);
     Route::apiResource('groups', GroupController::class);
 
     Route::get('semesters', function () {

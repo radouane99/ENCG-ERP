@@ -181,6 +181,8 @@ class DashboardAnalyticsService
                 $upcomingExams = DB::table('exams')->where('date', '>=', now())->count();
             }
 
+            $subGroupInfo = app(\App\Services\Academic\StudentSubGroupDispatcherService::class)->getStudentSubGroupInfo($student->id);
+
             return [
                 'success' => true,
                 'data' => [
@@ -195,6 +197,10 @@ class DashboardAnalyticsService
                     'pending_assignments' => 0,
                     'upcoming_classes' => [],
                     'recent_documents' => [],
+                    'academic_info' => $subGroupInfo,
+                    'section' => $subGroupInfo['section_label'] ?? null,
+                    'sub_group' => $subGroupInfo['sub_group'] ?? null,
+                    'group_name' => $subGroupInfo['group_name'] ?? null,
                 ],
             ];
         } catch (\Throwable $e) {

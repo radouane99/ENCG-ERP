@@ -196,6 +196,19 @@ export default function OfficialTimetableMatrix({ matrix }: { matrix: any }) {
   const [tempCoursStart, setTempCoursStart] = useState<string>('16/09/2024')
   const [tempTdTpStart, setTempTdTpStart] = useState<string>('07/10/2024')
   const [isSavingDates, setIsSavingDates] = useState(false)
+  const [isDispatchingSubGroups, setIsDispatchingSubGroups] = useState(false)
+
+  const handleDispatchSubGroups = async () => {
+    try {
+      setIsDispatchingSubGroups(true)
+      const res = await api.post('/groups/dispatch-subgroups')
+      toast.success(res.data?.message || 'Sous-groupes TD (G1.1, G1.2) répartis avec succès par ordre alphabétique !')
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Erreur lors de la répartition des sous-groupes')
+    } finally {
+      setIsDispatchingSubGroups(false)
+    }
+  }
 
   // Initialiser les dates à partir de la matrice ou de la config persistée
   useEffect(() => {
@@ -279,7 +292,18 @@ export default function OfficialTimetableMatrix({ matrix }: { matrix: any }) {
           )}
         </div>
 
-        <div className="flex items-center gap-2 text-xs text-slate-500">
+        <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
+          <button
+            type="button"
+            disabled={isDispatchingSubGroups}
+            onClick={handleDispatchSubGroups}
+            className="px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shadow-2xs"
+            title="Découpage automatique de chaque section en sous-groupes TD (G1.1, G1.2) par ordre alphabétique officiel"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
+            <span>{isDispatchingSubGroups ? 'Répartition...' : '⚡ Répartir Sous-Groupes TD (Alpha)'}</span>
+          </button>
+
           <span>{sections.length} grille{sections.length > 1 ? 's' : ''} · format officiel affichage ENCG Fès</span>
           {searchQuery && (
             <button

@@ -4,7 +4,10 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <title>Emploi du temps — ENCG Fès</title>
     <style>
-        @page { size: A4 landscape; margin: 3.5mm 5mm 3.5mm 5mm; }
+        @page { 
+            size: A4 landscape; 
+            margin: 2mm 3.5mm 2mm 3.5mm; 
+        }
         * { box-sizing: border-box; }
         body {
             font-family: 'DejaVu Sans', sans-serif;
@@ -13,27 +16,19 @@
             padding: 0;
         }
         .frame {
-            border: 1.8px solid #0f2863;
-            padding: 4px 6px 3px 6px;
+            border: 1.2px solid #0f2863;
         }
         .gold-line {
-            height: 2px;
             background: #c9a227;
-            margin: 2px 0 3px 0;
         }
         h1 {
             text-align: center;
-            font-size: 11.5pt;
-            margin: 1px 0 0 0;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
             color: #0f2863;
             text-transform: uppercase;
-            line-height: 1.1;
         }
         .sub {
             text-align: center;
-            font-size: 7.5pt;
-            margin: 1px 0 3px 0;
             color: #334155;
             font-weight: bold;
         }
@@ -48,15 +43,13 @@
             vertical-align: middle;
             overflow: hidden;
             word-wrap: break-word;
-            line-height: 1.15;
+            line-height: 1.05;
         }
         table.edt th {
             background: #0f2863;
             color: #ffffff;
-            font-size: 7pt;
             text-align: center;
             font-weight: bold;
-            padding: 3px 2px;
         }
         .module { font-weight: bold; text-align: center; background: #f8fafc; }
         .prof { font-weight: bold; }
@@ -65,27 +58,22 @@
         .foot {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 3px;
         }
         .foot td { border: none; padding: 0 2px; vertical-align: middle; }
-        .qr img { width: 34px; height: 34px; }
-        .meta {
-            font-size: 5.8pt;
-            color: #475569;
-            line-height: 1.25;
-        }
         .section { 
             page-break-after: always; 
             page-break-inside: avoid; 
         }
-        .section:last-child { page-break-after: auto; }
+        .section:last-child { 
+            page-break-after: avoid !important; 
+        }
         .badge {
             display: inline-block;
             background: #e8eef5;
             color: #0f2863;
-            font-size: 6.5pt;
+            font-size: 5.8pt;
             font-weight: bold;
-            padding: 1px 6px;
+            padding: 0.5px 5px;
             border: 0.5px solid #0f2863;
             border-radius: 2px;
         }
@@ -100,30 +88,89 @@
 @forelse($sections as $section)
     @php
         $rowCount = max(1, count($section['rows'] ?? []));
-        if ($rowCount <= 7) {
-            $tdPadding = '7.5px 4px';
+        
+        if ($rowCount <= 8) {
+            $tdPadding = '6.5px 3.5px';
             $mainFontSize = '8.0pt';
-            $slotFontSize = '7.2pt';
-        } elseif ($rowCount <= 10) {
-            $tdPadding = '5.8px 3px';
-            $mainFontSize = '7.5pt';
+            $slotFontSize = '7.5pt';
+            $thPadding = '3.5px 2px';
+            $thFontSize = '7.2pt';
+            $logoMaxHeight = '46px';
+            $h1FontSize = '11.5pt';
+            $subFontSize = '7.5pt';
+            $dateFontSize = '6.8pt';
+            $qrSize = '30px';
+            $footFontSize = '6.0pt';
+            $framePadding = '4px 6px';
+            $headerCompact = false;
+        } elseif ($rowCount <= 12) {
+            $tdPadding = '4.5px 2.5px';
+            $mainFontSize = '7.2pt';
             $slotFontSize = '6.8pt';
-        } elseif ($rowCount <= 14) {
-            $tdPadding = '4.0px 2.5px';
-            $mainFontSize = '6.8pt';
-            $slotFontSize = '6.3pt';
-        } else {
+            $thPadding = '2.5px 2px';
+            $thFontSize = '6.8pt';
+            $logoMaxHeight = '38px';
+            $h1FontSize = '10.5pt';
+            $subFontSize = '7.0pt';
+            $dateFontSize = '6.4pt';
+            $qrSize = '26px';
+            $footFontSize = '5.8pt';
+            $framePadding = '3px 5px';
+            $headerCompact = false;
+        } elseif ($rowCount <= 16) {
             $tdPadding = '3.0px 2.0px';
-            $mainFontSize = '6.3pt';
-            $slotFontSize = '5.8pt';
+            $mainFontSize = '6.5pt';
+            $slotFontSize = '6.0pt';
+            $thPadding = '2.0px 1.5px';
+            $thFontSize = '6.2pt';
+            $logoMaxHeight = '32px';
+            $h1FontSize = '9.8pt';
+            $subFontSize = '6.5pt';
+            $dateFontSize = '6.0pt';
+            $qrSize = '24px';
+            $footFontSize = '5.5pt';
+            $framePadding = '2.5px 4px';
+            $headerCompact = true;
+        } elseif ($rowCount <= 20) {
+            $tdPadding = '1.8px 1.5px';
+            $mainFontSize = '5.8pt';
+            $slotFontSize = '5.4pt';
+            $thPadding = '1.5px 1.0px';
+            $thFontSize = '5.8pt';
+            $logoMaxHeight = '28px';
+            $h1FontSize = '9.0pt';
+            $subFontSize = '6.0pt';
+            $dateFontSize = '5.6pt';
+            $qrSize = '20px';
+            $footFontSize = '5.2pt';
+            $framePadding = '2px 4px';
+            $headerCompact = true;
+        } else { // 21 à 28+ lignes (cas de S5 GFC avec 24 lignes)
+            $tdPadding = '0.8px 1.0px';
+            $mainFontSize = '5.1pt';
+            $slotFontSize = '4.8pt';
+            $thPadding = '1.0px 0.8px';
+            $thFontSize = '5.2pt';
+            $logoMaxHeight = '23px';
+            $h1FontSize = '8.5pt';
+            $subFontSize = '5.5pt';
+            $dateFontSize = '5.1pt';
+            $qrSize = '17px';
+            $footFontSize = '4.7pt';
+            $framePadding = '1.5px 3px';
+            $headerCompact = true;
         }
     @endphp
     <div class="section">
-        <div class="frame">
-            @include('pdf.encg-header', ['academic_year' => $section['academic_year'] ?? $year])
-            <div class="gold-line"></div>
-            <h1>{{ $section['title'] ?? 'EMPLOI DU TEMPS' }}</h1>
-            <div class="sub">
+        <div class="frame" style="padding: {{ $framePadding }};">
+            @include('pdf.encg-header', [
+                'academic_year' => $section['academic_year'] ?? $year,
+                'logoHeight' => $logoMaxHeight,
+                'compact' => $headerCompact
+            ])
+            <div class="gold-line" style="height: {{ $rowCount > 16 ? '1px' : '1.8px' }}; margin: {{ $rowCount > 16 ? '1px 0' : '2px 0 3px 0' }};"></div>
+            <h1 style="font-size: {{ $h1FontSize }}; margin: 0; line-height: 1.05;">{{ $section['title'] ?? 'EMPLOI DU TEMPS' }}</h1>
+            <div class="sub" style="font-size: {{ $subFontSize }}; margin: {{ $rowCount > 16 ? '1px 0' : '1px 0 2px 0' }};">
                 {{ $section['filiere_code'] ?? '' }} {{ $section['filiere_name'] ?? '' }}
                 — Année universitaire {{ $section['academic_year'] ?? $year }}
                 &nbsp;<span class="badge">Document officiel</span>
@@ -133,7 +180,7 @@
                     $tDisplay = $tVal ? (\Illuminate\Support\Str::startsWith($tVal, 'la semaine du') ? $tVal : 'la semaine du ' . $tVal) : null;
                 @endphp
                 @if(!empty($cStart) || !empty($tVal))
-                    <div style="margin-top:2px; font-size:6.8pt; color:#0f2863; font-weight:bold;">
+                    <div style="margin-top:1px; font-size: {{ $dateFontSize }}; color:#0f2863; font-weight:bold;">
                         @if(!empty($cStart))
                             Démarrage des cours le {{ $cStart }}
                         @endif
@@ -147,7 +194,7 @@
                 @endif
             </div>
 
-            <table class="edt">
+            <table class="edt" style="margin-top: {{ $rowCount > 16 ? '1px' : '2px' }};">
                 <colgroup>
                     <col style="width: 7.5%;">
                     <col style="width: 14%;">
@@ -162,14 +209,14 @@
                 </colgroup>
                 <thead>
                     <tr>
-                        <th>Semestre</th>
-                        <th>Modules</th>
-                        <th>Éléments de modules</th>
-                        <th>Intervenants</th>
+                        <th style="padding: {{ $thPadding }}; font-size: {{ $thFontSize }};">Semestre</th>
+                        <th style="padding: {{ $thPadding }}; font-size: {{ $thFontSize }};">Modules</th>
+                        <th style="padding: {{ $thPadding }}; font-size: {{ $thFontSize }};">Éléments de modules</th>
+                        <th style="padding: {{ $thPadding }}; font-size: {{ $thFontSize }};">Intervenants</th>
                         @foreach($days as $dayName)
-                            <th>{{ $dayName }}</th>
+                            <th style="padding: {{ $thPadding }}; font-size: {{ $thFontSize }};">{{ $dayName }}</th>
                         @endforeach
-                        <th>Salles</th>
+                        <th style="padding: {{ $thPadding }}; font-size: {{ $thFontSize }};">Salles</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -181,48 +228,48 @@
                             @if(!empty($row['show_module']))
                                 <td class="module" rowspan="{{ $row['module_rowspan'] }}" style="padding: {{ $tdPadding }}; font-size: {{ $mainFontSize }};">{{ $row['module_label'] }}</td>
                             @endif
-                            <td class="element" style="padding: {{ $tdPadding }}; font-size: {{ $mainFontSize }};">{{ $row['element_name'] }}</td>
-                            <td class="prof" style="color: {{ $row['color'] }}; padding: {{ $tdPadding }}; font-size: {{ $mainFontSize }};">{{ $row['professor_name'] }}</td>
+                            <td class="element" style="padding: {{ $tdPadding }}; font-size: {{ $mainFontSize }}; line-height: 1.05;">{{ $row['element_name'] }}</td>
+                            <td class="prof" style="color: {{ $row['color'] }}; padding: {{ $tdPadding }}; font-size: {{ $mainFontSize }}; white-space: nowrap;">{{ $row['professor_name'] }}</td>
                             @foreach($days as $dayId => $dayName)
                                 <td class="day" style="color: {{ $row['color'] }}; padding: {{ $tdPadding }};">
                                     @foreach($row['days'][$dayId] ?? [] as $slot)
-                                        <span style="display:inline-block; font-size: {{ $slotFontSize }}; font-weight:bold;">{{ $slot }}</span>@if(!$loop->last)<br>@endif
+                                        <span style="display:inline-block; font-size: {{ $slotFontSize }}; font-weight:bold; white-space: nowrap; line-height: 1.0;">{{ $slot }}</span>@if(!$loop->last)<br>@endif
                                     @endforeach
                                 </td>
                             @endforeach
-                            <td class="salle" style="padding: {{ $tdPadding }}; font-size: {{ $mainFontSize }};">{{ $row['room_label'] }}</td>
+                            <td class="salle" style="padding: {{ $tdPadding }}; font-size: {{ $mainFontSize }}; white-space: nowrap;">{{ $row['room_label'] }}</td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="10" style="text-align:center;padding:24px;font-size:9pt;">Aucune séance à afficher.</td>
+                            <td colspan="10" style="text-align:center;padding:12px;font-size:8pt;">Aucune séance à afficher.</td>
                         </tr>
                     @endforelse
                 </tbody>
             </table>
 
-            <table class="foot">
+            <table class="foot" style="margin-top: {{ $rowCount > 16 ? '1.5px' : '3px' }};">
                 <tr>
-                    <td class="qr" style="width:50px;">
+                    <td class="qr" style="width: {{ $qrSize }}; padding: 0;">
                         @if(!empty($qrBase64))
-                            <img src="{{ $qrBase64 }}" alt="QR authentification">
+                            <img src="{{ $qrBase64 }}" alt="QR" style="width: {{ $qrSize }}; height: {{ $qrSize }}; display: block;">
                         @endif
                     </td>
-                    <td class="meta">
+                    <td class="meta" style="font-size: {{ $footFontSize }}; line-height: 1.08; padding: 0 4px;">
                         @if(!empty($section['footer']['cours']))
                             <strong>Calendrier académique :</strong> Début des cours le {{ $section['footer']['cours'] }} — Début des TD/TP le {{ $section['footer']['td_tp'] }}.<br>
                         @endif
                         Document officiel certifié par l'administration pédagogique de l'ENCG Fès. Généré le {{ $date ?? now()->format('d/m/Y') }}.
                     </td>
-                    <td style="text-align:right;font-weight:bold;color:#0f2863;font-size:7.5pt;width:220px;">
+                    <td style="text-align:right;font-weight:bold;color:#0f2863;font-size: {{ $footFontSize }};width:190px;line-height:1.08;padding:0;">
                         {{ $section['footer']['school'] ?? 'ENCG FÈS' }} — {{ $section['academic_year'] ?? $year }}<br>
-                        <span style="font-size:6.2pt;font-weight:normal;color:#64748b;">Direction des Études & Affaires Pédagogiques</span>
+                        <span style="font-size: {{ $footFontSize }};font-weight:normal;color:#64748b;">Direction des Études & Affaires Pédagogiques</span>
                     </td>
                 </tr>
             </table>
         </div>
     </div>
 @empty
-    <div class="frame">
+    <div class="frame" style="padding: 10px;">
         @include('pdf.encg-header', ['academic_year' => $year])
         <p style="text-align:center;padding:24px;">Aucune séance à afficher pour ce périmètre (filières / semestres).</p>
     </div>
