@@ -7,18 +7,6 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-Artisan::command('debug:prof-stats {userId=10}', function (string $userId) {
-    $result = app(\App\Services\Analytics\DashboardAnalyticsService::class)->getProfessorStats((int) $userId);
-    $this->line(json_encode([
-        'error' => $result['error_debug'] ?? null,
-        'modules' => $result['data']['total_modules'] ?? null,
-        'students' => $result['data']['total_students'] ?? null,
-        'groups' => $result['data']['total_groups'] ?? null,
-        'hours' => $result['data']['statutory_hours_done'] ?? null,
-        'list' => count($result['data']['modules_list'] ?? []),
-    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-})->purpose('Debug professor dashboard stats');
-
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schedule;
 

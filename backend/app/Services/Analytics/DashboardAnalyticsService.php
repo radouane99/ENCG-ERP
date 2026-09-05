@@ -389,100 +389,81 @@ class DashboardAnalyticsService
                     ];
                 });
             }
-            // 8. Emploi du Temps / Séances (Schedules) connectés 100% à la matrice officielle Admin
+            // 8. Emploi du Temps / Séances (Query Builder — pas de morph Professor)
             $daysMap = [1 => 'Lundi', 2 => 'Mardi', 3 => 'Mercredi', 4 => 'Jeudi', 5 => 'Vendredi', 6 => 'Samedi'];
             $nextClasses = [];
 
-            if (class_exists(\App\Models\Schedule::class)) {
-                $userName = trim($user?->name ?? 'Amina Chraibi');
-                $userLastName = trim($user?->last_name ?? '');
-                $userFirstName = trim($user?->first_name ?? '');
-
-                $allDbSchedules = \App\Models\Schedule::with(['module', 'professor.user', 'room', 'group.filiere'])
-                    ->where('is_active', true)
-                    ->orWhereNull('is_active')
-                    ->orderBy('day_of_week')
-                    ->orderBy('start_time')
+            if (Schema::hasTable('schedules')) {
+                $scheduleRows = DB::table('schedules')
+                    ->leftJoin('modules', 'schedules.module_id', '=', 'modules.id')
+                    ->leftJoin('rooms', 'schedules.room_id', '=', 'rooms.id')
+                    ->leftJoin('groups', 'schedules.group_id', '=', 'groups.id')
+                    ->where(function ($q) {
+                        $q->where('schedules.is_active', true)->orWhereNull('schedules.is_active');
+                    })
+                    ->where(function ($q) use ($profId, $userId) {
+                        $q->where('schedules.professor_id', $profId)
+                            ->orWhere('schedules.professor_id', $userId);
+                    })
+                    ->orderBy('schedules.day_of_week')
+                    ->orderBy('schedules.start_time')
+                    ->select(
+                        'schedules.id',
+                        'schedules.day_of_week',
+                        'schedules.start_time',
+                        'schedules.end_time',
+                        'schedules.session_type',
+                        'modules.name as module_name',
+                        'modules.code as module_code',
+                        'rooms.name as room_name',
+                        'groups.name as group_name'
+                    )
+                    ->limit(12)
                     ->get();
 
-                $matchedSchedules = $allDbSchedules->filter(function ($s) use ($userId, $profId, $userName, $user) {
-                    if ($s->professor_id == $userId || $s->professor_id == $profId) {
-                        return true;
-                    }
-                    $pUser = $s->professor?->user;
-                    if ($pUser) {
-                        if ($pUser->id == $userId) {
-                            return true;
-                        }
-                        if ($user && $user->email && strcasecmp($pUser->email, $user->email) === 0) {
-                            return true;
-                        }
-                        $pFullName = trim(($pUser->first_name ?? '').' '.($pUser->last_name ?? ''));
-                        if ($pFullName === '') {
-                            $pFullName = trim($pUser->name ?? '');
-                        }
-                        // Exact match only (evite de matcher Youssef Chraibi ou Amina Tazi)
-                        if ($userName !== '' && strcasecmp($pFullName, $userName) === 0) {
-                            return true;
-                        }
-                    }
-
-                    return false;
-                });
-
-                $nextClasses = $matchedSchedules->map(function ($sched) use ($daysMap) {
+                $nextClasses = $scheduleRows->map(function ($sched) use ($daysMap) {
                     $dayName = $daysMap[$sched->day_of_week] ?? 'Jour';
                     $startTime = date('H:i', strtotime($sched->start_time));
                     $endTime = date('H:i', strtotime($sched->end_time));
                     $type = strtoupper($sched->session_type ?? 'CM');
-                    $groupName = $sched->group?->name ?? 'Groupe 1';
 
                     return [
                         'session_id' => $sched->id,
-                        'title' => $sched->module?->name ?? 'Séance Pédagogique',
-                        'code' => $sched->module?->code ?? $type,
+                        'title' => $sched->module_name ?? 'Séance Pédagogique',
+                        'code' => $sched->module_code ?? $type,
                         'time' => "{$startTime} - {$endTime}",
                         'start_time' => $startTime,
                         'end_time' => $endTime,
                         'day_of_week' => (int) $sched->day_of_week,
                         'day_name' => $dayName,
                         'full_time' => "{$dayName} {$startTime} - {$endTime}",
-                        'location' => $sched->room?->name ?? 'Salle ENCG',
-                        'room' => $sched->room?->name ?? 'Salle ENCG',
-                        'group' => $groupName,
+                        'location' => $sched->room_name ?? 'Salle ENCG',
+                        'room' => $sched->room_name ?? 'Salle ENCG',
+                        'group' => $sched->group_name ?? 'Groupe 1',
                         'session_type' => $type,
                     ];
                 })->values()->toArray();
             }
 
-            if ((empty($nextClasses) || (is_object($nextClasses) && $nextClasses->isEmpty())) && $modules->isNotEmpty()) {
-                $nextClasses = $modules->take(3)->map(function ($mod, $idx) {
-                    $slots = ['Lundi 08:30 - 10:30', 'Mercredi 10:45 - 12:45', 'Vendredi 14:30 - 16:30'];
-                    $rooms = ['Amphi Ibn Battouta', 'Salle 12', 'Salle 05'];
-
-                    return [
-                        'session_id' => $mod['id'],
-                        'title' => $mod['name'],
-                        'code' => $mod['code'],
-                        'time' => $slots[$idx % 3],
-                        'day_name' => explode(' ', $slots[$idx % 3])[0],
-                        'full_time' => $slots[$idx % 3],
-                        'location' => $rooms[$idx % 3],
-                        'group' => $mod['group_name'],
-                    ];
-                });
+            if ((empty($nextClasses)) && $modules->isNotEmpty()) {
+                $nextClasses = [];
             }
 
             // 9. Encadrements PFE & Stages Réels
             $pfeList = [];
+            try {
             if (Schema::hasTable('internships')) {
+                $titleCol = Schema::hasColumn('internships', 'topic')
+                    ? 'internships.topic'
+                    : (Schema::hasColumn('internships', 'title') ? 'internships.title' : 'internships.type');
+
                 $pfeList = DB::table('internships')
                     ->where('supervisor_id', $profId)
                     ->leftJoin('students', 'internships.student_id', '=', 'students.id')
                     ->leftJoin('users', 'students.user_id', '=', 'users.id')
                     ->select(
                         'internships.id',
-                        'internships.topic as title',
+                        DB::raw("{$titleCol} as title"),
                         'internships.company_name as company',
                         'internships.status',
                         'users.name as student_name',
@@ -497,86 +478,73 @@ class DashboardAnalyticsService
                         return [
                             'id' => $p->id,
                             'student_name' => $name ?: 'Étudiant PFE',
-                            'title' => $p->title ?: 'Audit & Optimisation Financière',
-                            'company' => $p->company ?: 'PwC Maroc',
-                            'status' => $p->status ?: 'ready_for_defense',
+                            'title' => $p->title ?: 'Stage / PFE',
+                            'company' => $p->company ?: '—',
+                            'status' => $p->status ?: 'pending',
                         ];
                     });
             }
-
-            if (empty($pfeList) || (is_object($pfeList) && $pfeList->isEmpty())) {
-                $pfeList = DB::table('internships')
-                    ->leftJoin('students', 'internships.student_id', '=', 'students.id')
-                    ->leftJoin('users', 'students.user_id', '=', 'users.id')
-                    ->select(
-                        'internships.id',
-                        'internships.topic as title',
-                        'internships.company_name as company',
-                        'internships.status',
-                        'users.name as student_name',
-                        'users.first_name',
-                        'users.last_name'
-                    )
-                    ->take(3)
-                    ->get()
-                    ->map(function ($p) {
-                        $name = $p->student_name ?: trim(($p->first_name ?? '').' '.($p->last_name ?? ''));
-
-                        return [
-                            'id' => $p->id,
-                            'student_name' => $name ?: 'Amine Bennani',
-                            'title' => $p->title ?: 'Impact des normes IFRS sur la valorisation boursière',
-                            'company' => $p->company ?: 'PwC Maroc',
-                            'status' => $p->status ?: 'ready_for_defense',
-                        ];
-                    });
+            } catch (\Throwable $e) {
+                \Log::warning('Professor PFE stats skipped: '.$e->getMessage());
+                $pfeList = [];
             }
 
             // 10. Surveillances d'Examens Réelles
             $surveillances = [];
+            try {
             if (Schema::hasTable('exam_surveillances')) {
+                $hasEndTime = Schema::hasColumn('exams', 'end_time');
+                $hasDuration = Schema::hasColumn('exams', 'duration_minutes');
                 $surveillances = DB::table('exam_surveillances')
                     ->where('exam_surveillances.professor_id', $profId)
                     ->leftJoin('exams', 'exam_surveillances.exam_id', '=', 'exams.id')
                     ->leftJoin('modules', 'exams.module_id', '=', 'modules.id')
                     ->leftJoin('rooms', 'exam_surveillances.room_id', '=', 'rooms.id')
                     ->leftJoin('exam_sessions', 'exams.exam_session_id', '=', 'exam_sessions.id')
-                    ->select(
+                    ->select(array_values(array_filter([
                         'exam_surveillances.id',
                         'exam_surveillances.role',
                         'exam_surveillances.confirmed_at',
                         'exam_surveillances.sent_at',
                         'exams.exam_date',
                         'exams.start_time',
-                        'exams.end_time',
+                        $hasEndTime ? 'exams.end_time' : null,
+                        $hasDuration ? 'exams.duration_minutes' : null,
                         'modules.name as module_name',
                         'rooms.name as room_name',
-                        'exam_sessions.name as session_name'
-                    )
+                        'exam_sessions.name as session_name',
+                    ])))
                     ->orderBy('exams.exam_date')
                     ->take(5)
                     ->get()
                     ->map(function ($s) {
-                        $startTime = $s->start_time ? substr($s->start_time, 0, 5) : '14:30';
-                        $endTime = $s->end_time ? substr($s->end_time, 0, 5) : '16:30';
-                        $dateFormatted = $s->exam_date ? date('d/m/Y', strtotime($s->exam_date)) : '21/08/2026';
+                        $startTime = $s->start_time ? substr((string) $s->start_time, 0, 5) : '14:30';
+                        if (! empty($s->end_time)) {
+                            $endTime = substr((string) $s->end_time, 0, 5);
+                        } elseif (! empty($s->duration_minutes) && $s->start_time) {
+                            $endTime = date('H:i', strtotime($s->start_time) + ((int) $s->duration_minutes * 60));
+                        } else {
+                            $endTime = '16:30';
+                        }
+                        $dateFormatted = $s->exam_date ? date('d/m/Y', strtotime($s->exam_date)) : '—';
 
                         return [
                             'id' => $s->id,
-                            'module_name' => $s->module_name ?? 'Mathématiques pour la Gestion',
+                            'module_name' => $s->module_name ?? 'Épreuve',
                             'date' => $dateFormatted,
                             'time' => "{$startTime} - {$endTime}",
-                            'room' => $s->room_name ?? 'Amphithéâtre B',
-                            'role' => $s->role ?? 'Surveillant Principal',
-                            'session_name' => $s->session_name ?? 'Session Normale Automne',
+                            'room' => $s->room_name ?? '—',
+                            'role' => $s->role ?? 'Surveillant',
+                            'session_name' => $s->session_name ?? 'Session',
                             'is_confirmed' => ! empty($s->confirmed_at),
                             'confirmed_at' => $s->confirmed_at,
                         ];
                     });
             }
-
-            $departmentName = $professor?->department?->name ?? 'Management, Finance & Comptabilité';
-            $rankName = (string) ($user?->rank ?? $professor?->rank ?? 'Professeur de l’Enseignement Supérieur (PES)');
+            } catch (\Throwable $e) {
+                \Log::warning('Professor surveillances stats skipped: '.$e->getMessage());
+                $surveillances = [];
+            }
 
             return [
                 'success' => true,
@@ -589,10 +557,10 @@ class DashboardAnalyticsService
                     'statutory_hours_total' => $statutoryTotal,
                     'pfe_supervised_count' => count($pfeList),
                     'next_classes' => $nextClasses,
-                    'modules_list' => $modules,
-                    'pfe_list' => $pfeList,
-                    'surveillances' => $surveillances,
-                    'has_contract' => ($professor?->contract_type === 'visiting'),
+                    'modules_list' => $modules instanceof \Illuminate\Support\Collection ? $modules->values()->all() : $modules,
+                    'pfe_list' => $pfeList instanceof \Illuminate\Support\Collection ? $pfeList->values()->all() : $pfeList,
+                    'surveillances' => $surveillances instanceof \Illuminate\Support\Collection ? $surveillances->values()->all() : $surveillances,
+                    'has_contract' => $isVisiting,
                     'professor_id' => $profId ?? $userId,
                     'department_name' => $departmentName,
                     'rank' => $rankName,
