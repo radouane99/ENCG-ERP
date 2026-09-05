@@ -4,7 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\AcademicYear;
+use App\Models\Filiere;
 use App\Models\Institution;
+use App\Models\Professor;
+use App\Models\Room;
 use App\Models\Schedule;
 use App\Services\Academic\AiTimetableSchedulerService;
 use Illuminate\Http\JsonResponse;
@@ -33,6 +36,7 @@ class AiTimetableSchedulerController extends Controller
             'avoid_saturday_afternoon' => 'nullable|boolean',
             'prefer_morning_lectures' => 'nullable|boolean',
             'dedicated_rooms' => 'nullable|array',
+            'dedicated_professors' => 'nullable|array',
         ]);
 
         $academicYearId = (! empty($validated['academic_year_id']) ? $validated['academic_year_id'] : null)
@@ -47,6 +51,7 @@ class AiTimetableSchedulerController extends Controller
             'avoid_saturday_afternoon' => $validated['avoid_saturday_afternoon'] ?? true,
             'prefer_morning_lectures' => $validated['prefer_morning_lectures'] ?? true,
             'dedicated_rooms' => $validated['dedicated_rooms'] ?? [],
+            'dedicated_professors' => $validated['dedicated_professors'] ?? [],
         ];
 
         $result = $this->scheduler->generateSchedule($academicYearId, $semesterSelection, $options);
@@ -54,6 +59,97 @@ class AiTimetableSchedulerController extends Controller
         return response()->json([
             'success' => true,
             'data' => $result,
+        ]);
+    }
+
+    /**
+     * Obtenir les séances actives enregistrées en base de données.
+     */
+    public function activeSessions(Request $request): JsonResponse
+    {
+        $academicYearId = (! empty($request->query('academic_year_id')) ? (int) $request->query('academic_year_id') : null)
+            ?? AcademicYear::where('is_current', true)->value('id')
+            ?? AcademicYear::first()?->id
+            ?? 1;
+
+        $schedules = DB::table('schedules')
+            ->leftJoin('rooms', 'schedules.room_id', '=', 'rooms.id')
+            ->leftJoin('professors', 'schedules.professor_id', '=', 'professors.id')
+            ->leftJoin('users', 'professors.user_id', '=', 'users.id')
+            ->leftJoin('modules', 'schedules.module_id', '=', 'modules.id')
+            ->leftJoin('groups', 'schedules.group_id', '=', 'groups.id')
+            ->leftJoin('filieres', 'groups.filiere_id', '=', 'filieres.id')
+            ->where(function ($q) use ($academicYearId) {
+                $q->where('schedules.academic_year_id', $academicYearId)
+                    ->orWhereNull('schedules.academic_year_id');
+            })
+            ->whereRaw('(schedules.is_active = true OR schedules.is_active IS NULL)')
+            ->select([
+                'schedules.id',
+                'schedules.day_of_week',
+                'schedules.start_time',
+                'schedules.end_time',
+                'schedules.module_id',
+                'schedules.group_id',
+                'schedules.professor_id',
+                'schedules.room_id',
+                'schedules.session_type as schedule_type',
+                'rooms.name as room_name',
+                'rooms.type as room_type',
+                DB::raw("COALESCE(NULLIF(TRIM(CONCAT(users.first_name, ' ', users.last_name)), ''), users.name, 'Enseignant non assigné') as professor_name"),
+                'modules.name as module_name',
+                'groups.name as group_name',
+                'groups.capacity as students_count',
+                'filieres.code as filiere_code',
+            ])
+            ->orderBy('schedules.day_of_week')
+            ->orderBy('schedules.start_time')
+            ->get();
+
+        $items = [];
+        foreach ($schedules as $s) {
+            $dayOfWeek = (int) ($s->day_of_week ?? 1);
+            $rType = strtolower($s->room_type ?? 'classroom');
+            $roomTypeLabel = ($rType === 'lab') ? 'Labo Informatique (PC)' : (($rType === 'amphitheater' || $rType === 'amphi') ? 'Amphithéâtre' : 'Salle de TD');
+            $isLab = $rType === 'lab' || str_contains(strtolower($s->room_name ?? ''), 'info');
+            $isLanguage = str_contains(strtolower($s->module_name ?? ''), 'langue') || str_contains(strtolower($s->module_name ?? ''), 'soft skills') || str_contains(strtolower($s->schedule_type ?? ''), 'langue');
+
+            $natureLabel = $isLab ? 'TP Informatique (Travaux Pratiques)' : ($isLanguage ? 'TD Langues & Soft Skills' : 'Cours Magistral & TD Intégré');
+            $natureBadge = $isLab ? 'TP MACHINE' : ($isLanguage ? 'TD GROUPE' : 'CM / TD');
+
+            $items[] = [
+                'id' => $s->id,
+                'temp_id' => 'SCHED_'.$s->id,
+                'day_of_week' => $dayOfWeek,
+                'day_name' => AiTimetableSchedulerService::DAYS[$dayOfWeek] ?? "Jour {$dayOfWeek}",
+                'start_time' => substr((string) $s->start_time, 0, 5),
+                'end_time' => substr((string) $s->end_time, 0, 5),
+                'module_id' => $s->module_id,
+                'module_name' => $s->module_name ?: 'Module',
+                'course_id' => $s->module_id,
+                'course_name' => $s->module_name ?: 'Module',
+                'group_id' => $s->group_id,
+                'group_name' => $s->group_name ?: 'Section ENCG',
+                'filiere_code' => $s->filiere_code ?: 'TC',
+                'professor_id' => $s->professor_id,
+                'professor_name' => $s->professor_name,
+                'room_id' => $s->room_id,
+                'room_name' => $s->room_name ?: 'Salle',
+                'room_type' => $s->room_type ?: 'classroom',
+                'room_type_label' => $roomTypeLabel,
+                'students_count' => $s->students_count ?: 35,
+                'session_nature' => $natureLabel,
+                'session_badge' => $natureBadge,
+                'is_database_active' => true,
+            ];
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'total_sessions' => count($items),
+                'scheduled_sessions' => $items,
+            ],
         ]);
     }
 
@@ -267,6 +363,53 @@ class AiTimetableSchedulerController extends Controller
             'success' => true,
             'message' => "{$count} séance(s) d'emploi du temps ont été supprimées. La planification est remise à zéro.",
             'deleted_count' => $count,
+        ]);
+    }
+
+    /**
+     * Obtenir les ressources disponibles pour la configuration du planificateur (salles, professeurs, filières).
+     */
+    public function resources(): JsonResponse
+    {
+        $rooms = Room::where('is_available', true)
+            ->select(['id', 'name', 'code', 'type', 'capacity'])
+            ->orderBy('name')
+            ->get();
+
+        if ($rooms->isEmpty()) {
+            $rooms = Room::select(['id', 'name', 'code', 'type', 'capacity'])->orderBy('name')->get();
+        }
+
+        $professors = Professor::with(['user', 'department'])
+            ->where('is_active', true)
+            ->get()
+            ->map(function ($p) {
+                $name = $p->user ? trim(($p->user->first_name ?? '').' '.($p->user->last_name ?? '')) : null;
+                if (! $name) {
+                    $name = $p->user?->name ?? "Professeur #{$p->id}";
+                }
+
+                return [
+                    'id' => $p->id,
+                    'name' => $name,
+                    'email' => $p->user?->email,
+                    'department' => $p->department?->name ?? 'Sciences de Gestion',
+                    'department_code' => $p->department?->code ?? 'SG',
+                    'specialty' => $p->specialty ?? $p->department?->name ?? 'Enseignant Chercheur',
+                ];
+            });
+
+        $filieres = Filiere::where('is_active', true)
+            ->select(['id', 'name', 'code', 'type'])
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'rooms' => $rooms,
+                'professors' => $professors,
+                'filieres' => $filieres,
+            ],
         ]);
     }
 }

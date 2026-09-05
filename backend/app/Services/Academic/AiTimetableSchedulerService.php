@@ -100,8 +100,8 @@ class AiTimetableSchedulerService
             $rooms = Room::all();
         }
 
-        // 6. Récupérer les professeurs
-        $professors = Professor::with('user')->get();
+        // 6. Récupérer les professeurs avec utilisateur et département
+        $professors = Professor::with(['user', 'department'])->get();
 
         // 7. Moteur de planification sous contraintes (Constraint Satisfaction Solver)
         $scheduledItems = [];
@@ -114,6 +114,7 @@ class AiTimetableSchedulerService
 
         $groupDailySessions = [];
         $profDailySessions = [];
+        $profDailyShift = []; // [profId][day] = 'morning' | 'afternoon'
 
         // Charger les indisponibilités existantes de la BDD pour éviter tout clash
         $existingSchedules = DB::table('schedules')
@@ -131,6 +132,8 @@ class AiTimetableSchedulerService
                 if ($s->professor_id) {
                     $occupiedSlots['professors'][$s->professor_id][$day][$slotIndex] = true;
                     $profDailySessions[$s->professor_id][$day] = ($profDailySessions[$s->professor_id][$day] ?? 0) + 1;
+                    $isMorn = ($slotIndex === 1 || $slotIndex === 2);
+                    $profDailyShift[$s->professor_id][$day] = $isMorn ? 'morning' : 'afternoon';
                 }
                 if ($s->group_id) {
                     $occupiedSlots['groups'][$s->group_id][$day][$slotIndex] = true;
@@ -181,7 +184,63 @@ class AiTimetableSchedulerService
 
                     $assignedProf = $assignedProfId ? $professors->firstWhere('id', $assignedProfId) : null;
                     if (! $assignedProf && $professors->isNotEmpty()) {
-                        $assignedProf = $professors->get(($profCycleIndex++) % $professors->count());
+                        // VÉRIFICATION DÉDIÉE PAR FILIÈRE :
+                        // Si des professeurs dédiés sont configurés pour cette filière, les choisir en priorité absolue
+                        $filiereId = (int) ($group->filiere_id ?? $module->filiere_id ?? 0);
+                        $filiereCode = strtoupper(trim((string) ($group->filiere?->code ?? $module->filiere?->code ?? '')));
+                        $dedicatedProfList = $options['dedicated_professors'][$filiereCode]
+                            ?? $options['dedicated_professors'][$filiereId]
+                            ?? $options['dedicated_professors'][(string) $filiereId]
+                            ?? [];
+
+                        if (! empty($dedicatedProfList)) {
+                            $candidateProfs = $professors->filter(function ($p) use ($dedicatedProfList) {
+                                $pFullName = trim(($p->user?->first_name ?? '').' '.($p->user?->last_name ?? ''));
+                                $pUserName = $p->user?->name ?? '';
+
+                                return in_array($pFullName, $dedicatedProfList, true)
+                                    || in_array($pUserName, $dedicatedProfList, true)
+                                    || in_array((string) $p->id, $dedicatedProfList, true)
+                                    || in_array($p->id, $dedicatedProfList, true);
+                            });
+
+                            if ($candidateProfs->isNotEmpty()) {
+                                // Trier selon l'affinité pédagogique (spécialité de l'enseignant vs intitulé du module)
+                                $sortedCandidates = $candidateProfs->sortByDesc(function ($p) use ($nameLower) {
+                                    $specLower = mb_strtolower($p->specialty ?? $p->department?->name ?? '');
+                                    $score = 0;
+                                    if (str_contains($nameLower, 'financ') && str_contains($specLower, 'financ')) {
+                                        $score += 20;
+                                    }
+                                    if (str_contains($nameLower, 'comptab') && str_contains($specLower, 'comptab')) {
+                                        $score += 20;
+                                    }
+                                    if (str_contains($nameLower, 'droit') && str_contains($specLower, 'droit')) {
+                                        $score += 20;
+                                    }
+                                    if (str_contains($nameLower, 'market') && (str_contains($specLower, 'market') || str_contains($specLower, 'gestion'))) {
+                                        $score += 20;
+                                    }
+                                    if (str_contains($nameLower, 'manag') && str_contains($specLower, 'manag')) {
+                                        $score += 20;
+                                    }
+                                    if (str_contains($nameLower, 'info') && str_contains($specLower, 'info')) {
+                                        $score += 20;
+                                    }
+                                    if ((str_contains($nameLower, 'lang') || str_contains($nameLower, 'anglais') || str_contains($nameLower, 'franc') || str_contains($nameLower, 'soft') || str_contains($nameLower, 'commun')) && (str_contains($specLower, 'commun') || str_contains($specLower, 'lang'))) {
+                                        $score += 20;
+                                    }
+
+                                    return $score;
+                                });
+
+                                $assignedProf = $sortedCandidates->values()->get(($profCycleIndex++) % $sortedCandidates->count());
+                            }
+                        }
+
+                        if (! $assignedProf) {
+                            $assignedProf = $professors->get(($profCycleIndex++) % $professors->count());
+                        }
                     }
 
                     $profId = $assignedProf ? $assignedProf->id : 1;
@@ -245,6 +304,22 @@ class AiTimetableSchedulerService
                                     continue;
                                 }
 
+                                // CONTRAINTE STRICTE ENCG : Un enseignant enseigne SOIT le matin (slots 1,2) SOIT l'après-midi (slots 3,4) sur une même journée.
+                                // Interdiction formelle d'enseigner matin ET après-midi le même jour !
+                                $isCurrentSlotMorning = in_array($slotNum, [1, 2], true);
+                                $isCurrentSlotAfternoon = in_array($slotNum, [3, 4], true);
+                                $currentProfShift = $profDailyShift[$profId][$day] ?? null;
+
+                                if ($currentProfShift === 'morning' && $isCurrentSlotAfternoon) {
+                                    continue; // L'enseignant a déjà cours le matin ce jour-là, interdiction l'après-midi !
+                                }
+                                if ($currentProfShift === 'afternoon' && $isCurrentSlotMorning) {
+                                    continue; // L'enseignant a déjà cours l'après-midi ce jour-là, interdiction le matin !
+                                }
+                                if (($profDailySessions[$profId][$day] ?? 0) >= 2) {
+                                    continue; // Max 2 séances par jour par enseignant (une seule demi-journée)
+                                }
+
                                 // Trouver la salle la plus adaptée disponible
                                 $suitableRoom = null;
                                 foreach ($rankedRooms as $room) {
@@ -262,6 +337,7 @@ class AiTimetableSchedulerService
 
                                     $groupDailySessions[$group->id][$day] = ($groupDailySessions[$group->id][$day] ?? 0) + 1;
                                     $profDailySessions[$profId][$day] = ($profDailySessions[$profId][$day] ?? 0) + 1;
+                                    $profDailyShift[$profId][$day] = $isCurrentSlotMorning ? 'morning' : 'afternoon';
 
                                     $rType = strtolower($suitableRoom->type ?? 'classroom');
                                     $roomTypeLabel = ($rType === 'lab') ? 'Labo Informatique (PC)' : (($rType === 'amphitheater' || $rType === 'amphi') ? 'Amphithéâtre' : 'Salle de TD');
@@ -356,6 +432,7 @@ class AiTimetableSchedulerService
         $conflicts = [];
         $seenRooms = [];
         $seenProfs = [];
+        $profDayShifts = [];
 
         foreach ($schedules as $s) {
             $startTime = substr((string) $s->start_time, 0, 5);
@@ -412,6 +489,34 @@ class AiTimetableSchedulerService
                     ];
                 } else {
                     $seenProfs[$key][$s->professor_id] = $s;
+                }
+
+                // Check Professor Dual Shift (Matin & Après-midi sur la même journée)
+                $isMorn = ($startTime < '13:00');
+                $shiftKey = $isMorn ? 'morning' : 'afternoon';
+                $oppKey = $isMorn ? 'afternoon' : 'morning';
+
+                if (isset($profDayShifts[$s->professor_id][$s->day_of_week][$oppKey])) {
+                    $otherShift = $profDayShifts[$s->professor_id][$s->day_of_week][$oppKey];
+                    $conflicts[] = [
+                        'type' => 'PROFESSOR_DUAL_SHIFT',
+                        'type_label' => 'Surcharge Enseignant (Matin & Après-midi)',
+                        'schedule_id' => $s->id,
+                        'conflicting_schedule_id' => $otherShift->id,
+                        'day_of_week' => $s->day_of_week,
+                        'day_name' => $dayName,
+                        'start_time' => $startTime,
+                        'end_time' => $endTime,
+                        'room_name' => $s->room_name ?: "Salle #{$s->room_id}",
+                        'professor_name' => $s->professor_name,
+                        'module_name' => $s->module_name ?: "Module #{$s->module_id}",
+                        'group_name' => $s->group_name ?: "Groupe #{$s->group_id}",
+                        'reason' => "L'enseignant {$s->professor_name} est planifié le matin ({$otherShift->start_time}) ET l'après-midi ({$startTime}) le même jour ({$dayName}).",
+                        'description' => "Règle pédagogique : un enseignant doit enseigner soit le matin soit l'après-midi sur une journée donnée.",
+                        'severity' => 'MEDIUM',
+                    ];
+                } else {
+                    $profDayShifts[$s->professor_id][$s->day_of_week][$shiftKey] = $s;
                 }
             }
         }

@@ -1,16 +1,31 @@
-import React from 'react'
+import React, { useState, useMemo } from 'react'
 import { cn } from '@/shared/lib/utils'
-import { FileText } from 'lucide-react'
+import { FileText, Search, X, RotateCcw } from 'lucide-react'
 
 const DAYS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi']
 
-function SectionTable({ section }: { section: any }) {
-  const rows = section?.rows || []
+function SectionTable({ section, searchQuery }: { section: any; searchQuery: string }) {
+  const rawRows = section?.rows || []
   const filiereId = section?.filiere_id || 0
   const semesterNum = section?.semester_number || ''
   const exportUrl = filiereId 
     ? `/api/timetable/export/filiere/${filiereId}/pdf${semesterNum ? `?semester_number=${semesterNum}` : ''}`
     : `/api/timetable/export/all/0/pdf${semesterNum ? `?semester_number=${semesterNum}` : ''}`
+
+  const rows = useMemo(() => {
+    if (!searchQuery.trim()) return rawRows
+    const q = searchQuery.toLowerCase().trim()
+    return rawRows.filter((r: any) => 
+      String(r.module_label || '').toLowerCase().includes(q) ||
+      String(r.element_name || '').toLowerCase().includes(q) ||
+      String(r.professor_name || '').toLowerCase().includes(q) ||
+      String(r.room_label || '').toLowerCase().includes(q)
+    )
+  }, [rawRows, searchQuery])
+
+  if (searchQuery.trim() && rows.length === 0) {
+    return null
+  }
 
   return (
     <div className="space-y-3 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-5 md:p-6 shadow-xs">
@@ -21,6 +36,11 @@ function SectionTable({ section }: { section: any }) {
               {section.filiere_code || 'FILIÈRE'}
             </span>
             <h3 className="text-base font-black tracking-tight text-slate-900 dark:text-white">{section.title}</h3>
+            {searchQuery.trim() && (
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300">
+                {rows.length} résultat(s)
+              </span>
+            )}
           </div>
           <p className="text-xs text-slate-500 mt-0.5">{section.filiere_name} · {section.semester_label} · Année {section.academic_year}</p>
         </div>
@@ -65,7 +85,7 @@ function SectionTable({ section }: { section: any }) {
           <tbody>
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={10} className="p-8 text-center text-slate-400">Aucune séance</td>
+                <td colSpan={10} className="p-8 text-center text-slate-400">Aucune séance correspondante</td>
               </tr>
             ) : rows.map((row: any, index: number) => (
               <tr key={`${section.filiere_code}-${section.semester_number}-${row.module_label}-${row.professor_id}-${index}`}>
@@ -99,6 +119,8 @@ function SectionTable({ section }: { section: any }) {
 }
 
 export default function OfficialTimetableMatrix({ matrix }: { matrix: any }) {
+  const [searchQuery, setSearchQuery] = useState('')
+
   if (!matrix) {
     return <p className="text-sm text-slate-400 py-10 text-center">Charge des emplois du temps pour voir le modèle officiel (toutes filières / semestres).</p>
   }
@@ -110,13 +132,51 @@ export default function OfficialTimetableMatrix({ matrix }: { matrix: any }) {
   }
 
   return (
-    <div className="space-y-10">
-      <p className="text-xs text-slate-500">
-        {sections.length} grille{sections.length > 1 ? 's' : ''} · même format que le PDF papier ENCG (TC, GFC, MCM… / S1 à S10)
-      </p>
-      {sections.map((section: any) => (
-        <SectionTable key={`${section.filiere_id}-${section.semester_number}-${section.filiere_code}`} section={section} />
-      ))}
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs">
+        <div className="relative flex-1 max-w-md">
+          <Search className="w-4 h-4 text-indigo-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Filtrer la matrice par module, enseignant, salle..."
+            className="w-full pl-10 pr-8 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500/20 shadow-xs"
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded cursor-pointer"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 text-xs text-slate-500">
+          <span>{sections.length} grille{sections.length > 1 ? 's' : ''} · format officiel affichage ENCG Fès</span>
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              className="text-[11px] text-rose-600 hover:underline flex items-center gap-1 font-bold cursor-pointer"
+            >
+              <RotateCcw className="w-3 h-3" /> Effacer filtre
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="space-y-10">
+        {sections.map((section: any) => (
+          <SectionTable 
+            key={`${section.filiere_id}-${section.semester_number}-${section.filiere_code}`} 
+            section={section} 
+            searchQuery={searchQuery}
+          />
+        ))}
+      </div>
     </div>
   )
 }

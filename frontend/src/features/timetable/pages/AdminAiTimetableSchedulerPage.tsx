@@ -7,12 +7,31 @@ import {
   RefreshCw, Play, Save, MapPin, User,
   Building2, Sliders, Cpu, Hand, Grid, Leaf,
   Wand2, BookOpen, GraduationCap, Sparkles, Trash2, RotateCcw, X, AlertCircle,
-  Users, Monitor, FileText
+  Users, Monitor, FileText, Search, SearchX, Filter
 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { CustomSelect, SelectOption } from '@/shared/components/ui/CustomSelect';
 import ManualTimetableBoard from '@/features/admin/pages/ManualTimetableBoard';
 import OfficialTimetableMatrix from '@/features/admin/pages/OfficialTimetableMatrix';
+
+function highlightMatch(text: string, query: string) {
+  if (!query || !text) return text;
+  const parts = String(text).split(new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi'));
+  if (parts.length === 1) return text;
+  return (
+    <>
+      {parts.map((part, i) =>
+        part.toLowerCase() === query.toLowerCase() ? (
+          <mark key={i} className="bg-amber-300 dark:bg-amber-500/40 text-amber-950 dark:text-amber-100 rounded px-0.5 font-black">
+            {part}
+          </mark>
+        ) : (
+          part
+        )
+      )}
+    </>
+  );
+}
 
 interface ConflictItem {
   type: string;
@@ -60,12 +79,73 @@ export default function AdminAiTimetableSchedulerPage() {
     'GFC': ['Salle 101', 'Salle 102'],
     'MCM': ['Salle 103', 'Salle 104'],
   });
-  const [showDedicatedRoomsModal, setShowDedicatedRoomsModal] = useState<boolean>(false);
 
-  // Filter state for preview grid
+  // Dedicated Professors per Filière / Department (e.g. GFC, MCM, TC)
+  const [dedicatedProfessors, setDedicatedProfessors] = useState<Record<string, string[]>>({
+    'TC': ['Mohamed Benjelloun', 'Tarik Meziane', 'Bouchra Bennani', 'Youssef El Mansouri'],
+    'GFC': ['Abdelhak El Amrani', 'Youssef El Mansouri', 'Omar Bennouna'],
+    'MCM': ['Amina Chraibi', 'Tarik Meziane', 'Bouchra Bennani'],
+  });
+
+  const [showDedicatedRoomsModal, setShowDedicatedRoomsModal] = useState<boolean>(false);
+  const [resourceModalTab, setResourceModalTab] = useState<'rooms' | 'professors'>('rooms');
+
+  // Query live resources from backend API (rooms, professors, filieres)
+  const { data: resourcesData } = useQuery({
+    queryKey: ['timetable-resources'],
+    queryFn: async () => {
+      const res = await api.get('/admin/timetable/ai-scheduler/resources');
+      return res.data?.data || res.data || {};
+    },
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
+
+  const availableProfessorsList = useMemo(() => {
+    if (resourcesData?.professors && Array.isArray(resourcesData.professors) && resourcesData.professors.length > 0) {
+      return resourcesData.professors;
+    }
+    return [
+      { id: 1, name: 'Abdelhak El Amrani', specialty: 'Finance', department: 'Sciences de Gestion' },
+      { id: 2, name: 'Amina Chraibi', specialty: 'Management', department: 'Sciences de Gestion' },
+      { id: 3, name: 'Tarik Meziane', specialty: 'Droit des Affaires', department: 'Droit des Affaires' },
+      { id: 4, name: 'Bouchra Bennani', specialty: 'Communication & Langues', department: 'Langues et Communication' },
+      { id: 5, name: 'Mohamed Benjelloun', specialty: 'Informatique de Gestion', department: 'Informatique de Gestion' },
+      { id: 6, name: 'Youssef El Mansouri', specialty: 'Comptabilité & Audit', department: 'Sciences de Gestion' },
+      { id: 7, name: 'Omar Bennouna', specialty: 'Management Stratégique', department: 'Sciences de Gestion' },
+    ];
+  }, [resourcesData]);
+
+  const availableRoomsList = useMemo<string[]>(() => {
+    if (resourcesData?.rooms && Array.isArray(resourcesData.rooms) && resourcesData.rooms.length > 0) {
+      return resourcesData.rooms.map((r: any) => String(r.name));
+    }
+    return [
+      'Salle 101', 'Salle 102', 'Salle 103', 'Salle 104',
+      'Salle 105', 'Salle 106', 'Salle 107', 'Salle 108',
+      'Amphithéâtre A', 'Amphithéâtre B'
+    ];
+  }, [resourcesData]);
+
+  // Filter & Search state for preview grid
   const [dayFilter, setDayFilter] = useState<number | 'all'>('all');
   const [groupFilter, setGroupFilter] = useState<string>('all');
   const [filiereFilter, setFiliereFilter] = useState<string>('all');
+  const [profFilter, setProfFilter] = useState<string>('all');
+  const [roomFilter, setRoomFilter] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [searchScope, setSearchScope] = useState<'all' | 'module' | 'professor' | 'group' | 'room'>('all');
+  const [sortBy, setSortBy] = useState<'chrono' | 'module' | 'professor' | 'group' | 'room'>('chrono');
+
+  // Query active database schedules if no AI generation has run yet
+  const { data: activeSessionsData, refetch: refetchActiveSessions } = useQuery({
+    queryKey: ['timetable-active-sessions'],
+    queryFn: async () => {
+      const res = await api.get('/admin/timetable/ai-scheduler/active-sessions');
+      return res.data?.data || res.data || {};
+    },
+    retry: false,
+  });
 
   // 1. Conflict Scanner Query
   const { data: conflictData, refetch: refetchConflicts, isFetching: isScanning } = useQuery({
@@ -104,6 +184,7 @@ export default function AdminAiTimetableSchedulerPage() {
         building_weight: buildingWeight,
         strategy: selectedStrategy,
         dedicated_rooms: dedicatedRooms,
+        dedicated_professors: dedicatedProfessors,
       };
 
       if (['odd', 'even', 'all', 'autumn', 'spring'].includes(String(selectedSemester))) {
@@ -205,17 +286,151 @@ export default function AdminAiTimetableSchedulerPage() {
   });
 
   const generatedData = generateMutation.data;
-  const scheduledSessions: any[] = generatedData?.scheduled_items || generatedData?.scheduled_sessions || [];
+  const scheduledSessions: any[] = generatedData?.scheduled_items 
+    || generatedData?.scheduled_sessions 
+    || activeSessionsData?.scheduled_sessions 
+    || [];
 
-  const filteredSessions = scheduledSessions.filter((s: any) => {
-    if (dayFilter !== 'all' && s.day_of_week !== dayFilter) return false;
-    if (groupFilter !== 'all' && s.group_name !== groupFilter) return false;
-    if (filiereFilter !== 'all' && s.filiere_code !== filiereFilter) return false;
-    return true;
-  });
+  const uniqueGroups = useMemo(() => {
+    return Array.from(new Set(scheduledSessions.map((s: any) => s.group_name).filter(Boolean))).sort();
+  }, [scheduledSessions]);
 
-  const uniqueGroups = Array.from(new Set(scheduledSessions.map((s: any) => s.group_name)));
-  const uniqueFilieres = Array.from(new Set(scheduledSessions.map((s: any) => s.filiere_code).filter(Boolean)));
+  const uniqueFilieres = useMemo(() => {
+    return Array.from(new Set(scheduledSessions.map((s: any) => s.filiere_code).filter(Boolean))).sort();
+  }, [scheduledSessions]);
+
+  const uniqueProfessors = useMemo(() => {
+    return Array.from(new Set(scheduledSessions.map((s: any) => s.professor_name).filter(Boolean))).sort();
+  }, [scheduledSessions]);
+
+  const uniqueRooms = useMemo(() => {
+    return Array.from(new Set(scheduledSessions.map((s: any) => s.room_name).filter(Boolean))).sort();
+  }, [scheduledSessions]);
+
+  const filteredSessions = useMemo(() => {
+    const list = scheduledSessions.filter((s: any) => {
+      if (dayFilter !== 'all' && s.day_of_week !== dayFilter) return false;
+      if (groupFilter !== 'all' && s.group_name !== groupFilter) return false;
+      if (filiereFilter !== 'all' && s.filiere_code !== filiereFilter) return false;
+      if (profFilter !== 'all' && s.professor_name !== profFilter) return false;
+      if (roomFilter !== 'all' && s.room_name !== roomFilter) return false;
+
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase().trim();
+        const mod = String(s.module_name || s.course_name || '').toLowerCase();
+        const grp = String(s.group_name || '').toLowerCase();
+        const fil = String(s.filiere_code || '').toLowerCase();
+        const prof = String(s.professor_name || '').toLowerCase();
+        const room = String(s.room_name || '').toLowerCase();
+        const day = String(s.day_name || '').toLowerCase();
+        const nature = String(s.session_nature || s.session_badge || '').toLowerCase();
+
+        switch (searchScope) {
+          case 'module':
+            return mod.includes(q);
+          case 'professor':
+            return prof.includes(q);
+          case 'group':
+            return grp.includes(q) || fil.includes(q);
+          case 'room':
+            return room.includes(q);
+          case 'all':
+          default:
+            return (
+              mod.includes(q) ||
+              prof.includes(q) ||
+              grp.includes(q) ||
+              fil.includes(q) ||
+              room.includes(q) ||
+              day.includes(q) ||
+              nature.includes(q)
+            );
+        }
+      }
+      return true;
+    });
+
+    // ── ⏱️ Triage Chronologique par Défaut (Lundi 08:30 ➔ Vendredi/Samedi) ──
+    return [...list].sort((a: any, b: any) => {
+      if (sortBy === 'module') {
+        return String(a.module_name || '').localeCompare(String(b.module_name || ''));
+      }
+      if (sortBy === 'professor') {
+        return String(a.professor_name || '').localeCompare(String(b.professor_name || ''));
+      }
+      if (sortBy === 'group') {
+        return String(a.group_name || '').localeCompare(String(b.group_name || ''));
+      }
+      if (sortBy === 'room') {
+        return String(a.room_name || '').localeCompare(String(b.room_name || ''));
+      }
+
+      // Default: 'chrono'
+      // 1. Jour de la semaine (1 = Lundi, 2 = Mardi, 3 = Mercredi, 4 = Jeudi, 5 = Vendredi, 6 = Samedi)
+      const parseDay = (item: any): number => {
+        if (typeof item.day_of_week === 'number' && item.day_of_week > 0) return item.day_of_week;
+        if (typeof item.day === 'number' && item.day > 0) return item.day;
+        const dName = String(item.day_name || item.day || '').toLowerCase();
+        if (dName.includes('lun')) return 1;
+        if (dName.includes('mar')) return 2;
+        if (dName.includes('mer')) return 3;
+        if (dName.includes('jeu')) return 4;
+        if (dName.includes('ven')) return 5;
+        if (dName.includes('sam')) return 6;
+        if (dName.includes('dim')) return 7;
+        return 99;
+      };
+
+      const dayA = parseDay(a);
+      const dayB = parseDay(b);
+      if (dayA !== dayB) return dayA - dayB;
+
+      // 2. Heure de début (ex: "08:30" avant "10:30")
+      const timeA = String(a.start_time || '00:00').substring(0, 5);
+      const timeB = String(b.start_time || '00:00').substring(0, 5);
+      if (timeA !== timeB) return timeA.localeCompare(timeB);
+
+      // 3. Heure de fin
+      const endA = String(a.end_time || '00:00').substring(0, 5);
+      const endB = String(b.end_time || '00:00').substring(0, 5);
+      if (endA !== endB) return endA.localeCompare(endB);
+
+      // 4. Groupe / Module
+      return String(a.group_name || '').localeCompare(String(b.group_name || ''));
+    });
+  }, [
+    scheduledSessions,
+    dayFilter,
+    groupFilter,
+    filiereFilter,
+    profFilter,
+    roomFilter,
+    searchQuery,
+    searchScope,
+    sortBy,
+  ]);
+
+  const isAnyFilterActive =
+    searchQuery.trim() !== '' ||
+    searchScope !== 'all' ||
+    dayFilter !== 'all' ||
+    groupFilter !== 'all' ||
+    filiereFilter !== 'all' ||
+    profFilter !== 'all' ||
+    roomFilter !== 'all' ||
+    sortBy !== 'chrono';
+
+  const resetAllFilters = () => {
+    setSearchQuery('');
+    setSearchScope('all');
+    setDayFilter('all');
+    setGroupFilter('all');
+    setFiliereFilter('all');
+    setProfFilter('all');
+    setRoomFilter('all');
+    setSortBy('chrono');
+  };
+
   const conflictsList: ConflictItem[] = conflictData?.conflicts || [];
   const conflictsCount = conflictData?.conflicts_count ?? conflictsList.length;
 
@@ -264,10 +479,32 @@ export default function AdminAiTimetableSchedulerPage() {
 
   const groupFilterOptions: SelectOption[] = useMemo(() => {
     return [
-      { value: 'all', label: 'Tous les groupes d\'étudiants', icon: <User className="w-4 h-4 text-indigo-500" /> },
-      ...uniqueGroups.map((g) => ({ value: String(g), label: String(g) })),
+      { value: 'all', label: 'Tous les groupes d\'étudiants', icon: <Users className="w-4 h-4 text-indigo-500" /> },
+      ...uniqueGroups.map((g) => ({ value: String(g), label: String(g), icon: <Users className="w-3.5 h-3.5 text-slate-500" /> })),
     ];
   }, [uniqueGroups]);
+
+  const profFilterOptions: SelectOption[] = useMemo(() => {
+    return [
+      { value: 'all', label: 'Tous les professeurs', icon: <User className="w-4 h-4 text-indigo-500" /> },
+      ...uniqueProfessors.map((p) => ({ value: String(p), label: String(p), icon: <User className="w-3.5 h-3.5 text-slate-500" /> })),
+    ];
+  }, [uniqueProfessors]);
+
+  const roomFilterOptions: SelectOption[] = useMemo(() => {
+    return [
+      { value: 'all', label: 'Toutes les salles & amphis', icon: <Building2 className="w-4 h-4 text-indigo-500" /> },
+      ...uniqueRooms.map((r) => ({ value: String(r), label: String(r), icon: <MapPin className="w-3.5 h-3.5 text-slate-500" /> })),
+    ];
+  }, [uniqueRooms]);
+
+  const sortOptions: SelectOption[] = [
+    { value: 'chrono', label: '⏱️ Triage Chronologique (Lundi 08:30 ➔ Vendredi)', badge: 'Défaut', icon: <Clock className="w-4 h-4 text-indigo-500" /> },
+    { value: 'module', label: '📚 Par Module (A-Z)', badge: 'Module', icon: <BookOpen className="w-4 h-4 text-emerald-500" /> },
+    { value: 'professor', label: '👨‍🏫 Par Enseignant (A-Z)', badge: 'Prof', icon: <User className="w-4 h-4 text-blue-500" /> },
+    { value: 'group', label: '👥 Par Groupe (A-Z)', badge: 'Groupe', icon: <Users className="w-4 h-4 text-purple-500" /> },
+    { value: 'room', label: '🏛️ Par Salle (A-Z)', badge: 'Salle', icon: <Building2 className="w-4 h-4 text-amber-500" /> },
+  ];
 
   return (
     <div className="space-y-6 pb-24 animate-in fade-in max-w-[1700px] mx-auto p-4 md:p-8 font-sans">
@@ -646,7 +883,10 @@ export default function AdminAiTimetableSchedulerPage() {
                     </label>
                     <button
                       type="button"
-                      onClick={() => setShowDedicatedRoomsModal(true)}
+                      onClick={() => {
+                        setResourceModalTab('rooms');
+                        setShowDedicatedRoomsModal(true);
+                      }}
                       className="text-[10px] font-black text-blue-600 dark:text-blue-400 hover:underline cursor-pointer flex items-center gap-1"
                     >
                       <Sliders className="w-3 h-3" /> Configurer
@@ -668,6 +908,49 @@ export default function AdminAiTimetableSchedulerPage() {
                             ))
                           ) : (
                             <span className="text-[10px] text-slate-400 italic">Salles libres</span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 6. Affectation des Professeurs par Filière */}
+                <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                      6. Professeurs par Filière :
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setResourceModalTab('professors');
+                        setShowDedicatedRoomsModal(true);
+                      }}
+                      className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer flex items-center gap-1"
+                    >
+                      <Sliders className="w-3 h-3" /> Configurer
+                    </button>
+                  </div>
+
+                  <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200/80 dark:border-slate-700 space-y-1.5">
+                    {Object.entries(dedicatedProfessors).map(([filCode, pNames]) => (
+                      <div key={filCode} className="flex items-center justify-between text-xs">
+                        <span className="font-black text-slate-800 dark:text-slate-200 px-2 py-0.5 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-[10px]">
+                          {filCode}
+                        </span>
+                        <div className="flex items-center gap-1 flex-wrap justify-end">
+                          {pNames.length > 0 ? (
+                            pNames.map(pName => {
+                              const shortName = pName.split(' ')[0] + ' ' + (pName.split(' ')[1] ? pName.split(' ')[1][0] + '.' : '');
+                              return (
+                                <span key={pName} className="px-1.5 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-extrabold text-[10px] border border-emerald-200/60 dark:border-emerald-900/40" title={pName}>
+                                  👨‍🏫 {shortName}
+                                </span>
+                              );
+                            })
+                          ) : (
+                            <span className="text-[10px] text-slate-400 italic">Tous les enseignants</span>
                           )}
                         </div>
                       </div>
@@ -886,47 +1169,214 @@ export default function AdminAiTimetableSchedulerPage() {
             </div>
           </div>
 
-          {/* Schedule Preview Grid (When AI has generated a proposal) */}
+          {/* Schedule Preview Grid (When AI has generated a proposal OR active database schedules exist) */}
           {scheduledSessions.length > 0 && (
             <div className="bg-card border border-border rounded-3xl p-6 md:p-8 shadow-sm space-y-6">
+              {/* Header */}
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-border">
-                <div>
-                  <h3 className="text-lg font-black text-foreground">
-                    Aperçu de la Grille Optimisée par l'IA
-                  </h3>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-lg font-black text-foreground">
+                      Aperçu de la Grille Optimisée par l'IA
+                    </h3>
+                    <span className={cn(
+                      "px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wide border",
+                      generatedData
+                        ? "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-300"
+                        : "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-300"
+                    )}>
+                      {generatedData ? "⚡ Proposition IA (Prête au déploiement)" : "💾 Séances Actives en Base"}
+                    </span>
+                  </div>
                   <p className="text-xs text-muted-foreground">
                     Séances hebdomadaires générées selon les contraintes de disponibilité et de capacité.
                   </p>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
+                  {generatedData && (
+                    <button
+                      type="button"
+                      onClick={() => applyMutation.mutate(scheduledSessions)}
+                      disabled={applyMutation.isPending}
+                      className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-wider shadow-sm transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                    >
+                      {applyMutation.isPending ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                      <span>Déployer ({scheduledSessions.length})</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* ── 🔍 Barre de Recherche Multi-Critères (Module / Professeur / Groupe / Salle) ── */}
+              <div className="bg-slate-50/80 dark:bg-slate-900/60 p-4 sm:p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 space-y-3.5">
+                {/* Search Omnibox */}
+                <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
+                  <div className="relative flex-1">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground">
+                      <Search className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                    </div>
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder={
+                        searchScope === 'module'
+                          ? "Rechercher par intitulé de module (ex: Finance d'Entreprise, Marketing, Fiscalité)..."
+                          : searchScope === 'professor'
+                          ? "Rechercher par nom d'enseignant (ex: Amina Chraibi, Abdelhak El Amrani, Tarik Meziane)..."
+                          : searchScope === 'group'
+                          ? "Rechercher par groupe ou section (ex: GFC-S5-G1, MCM-S5-G1&G2, TC-S1)..."
+                          : searchScope === 'room'
+                          ? "Rechercher par salle ou amphithéâtre (ex: Salle 101, Amphithéâtre A, Labo Info)..."
+                          : "Recherche rapide : module, professeur, groupe, salle, type (ex: Finance, Chraibi, G1, 101)..."
+                      }
+                      className="w-full pl-10 pr-24 py-2.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-xs sm:text-sm font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 shadow-xs transition-all"
+                    />
+
+                    {/* Clear X button & result badge inside search input */}
+                    <div className="absolute inset-y-0 right-0 pr-2.5 flex items-center gap-1.5">
+                      {searchQuery && (
+                        <button
+                          type="button"
+                          onClick={() => setSearchQuery('')}
+                          className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all cursor-pointer"
+                          title="Effacer la recherche"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-700 text-[10px] font-bold text-slate-600 dark:text-slate-300">
+                        {filteredSessions.length}/{scheduledSessions.length}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Reset all button if any filter is active */}
+                  {isAnyFilterActive && (
+                    <button
+                      type="button"
+                      onClick={resetAllFilters}
+                      className="px-3.5 py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:hover:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-900/50 text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs shrink-0"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      <span>Réinitialiser les filtres</span>
+                    </button>
+                  )}
+                </div>
+
+                {/* Scope selector tabs */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-muted-foreground mr-1 flex items-center gap-1">
+                    <Filter className="w-3 h-3 text-indigo-500" /> Critère ciblé :
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={() => setSearchScope('all')}
+                    className={cn(
+                      "px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5",
+                      searchScope === 'all'
+                        ? "bg-[#0f2863] text-white shadow-xs"
+                        : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-100"
+                    )}
+                  >
+                    <span>Tous les critères</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setSearchScope('module')}
+                    className={cn(
+                      "px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5",
+                      searchScope === 'module'
+                        ? "bg-indigo-600 text-white shadow-xs"
+                        : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-100"
+                    )}
+                  >
+                    <BookOpen className="w-3 h-3" />
+                    <span>Par Module</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setSearchScope('professor')}
+                    className={cn(
+                      "px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5",
+                      searchScope === 'professor'
+                        ? "bg-emerald-600 text-white shadow-xs"
+                        : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-100"
+                    )}
+                  >
+                    <User className="w-3 h-3" />
+                    <span>Par Professeur</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setSearchScope('group')}
+                    className={cn(
+                      "px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5",
+                      searchScope === 'group'
+                        ? "bg-purple-600 text-white shadow-xs"
+                        : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-100"
+                    )}
+                  >
+                    <Users className="w-3 h-3" />
+                    <span>Par Groupe</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setSearchScope('room')}
+                    className={cn(
+                      "px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5",
+                      searchScope === 'room'
+                        ? "bg-amber-600 text-white shadow-xs"
+                        : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-100"
+                    )}
+                  >
+                    <Building2 className="w-3 h-3" />
+                    <span>Par Salle</span>
+                  </button>
+                </div>
+
+                {/* Dropdowns Filters & Sorting Bar */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 pt-2.5 border-t border-slate-200/60 dark:border-slate-800/80">
                   <CustomSelect
                     value={dayFilter}
                     onChange={(val) => setDayFilter(val === 'all' ? 'all' : Number(val))}
                     options={dayFilterOptions}
                     placeholder="Filtrer par jour..."
-                    className="w-44"
                   />
 
-                  {uniqueGroups.length > 0 && (
-                    <CustomSelect
-                      value={groupFilter}
-                      onChange={(val) => setGroupFilter(String(val))}
-                      options={groupFilterOptions}
-                      placeholder="Filtrer par groupe..."
-                      className="w-48"
-                    />
-                  )}
+                  <CustomSelect
+                    value={groupFilter}
+                    onChange={(val) => setGroupFilter(String(val))}
+                    options={groupFilterOptions}
+                    placeholder="Filtrer par groupe..."
+                  />
 
-                  <button
-                    type="button"
-                    onClick={() => applyMutation.mutate(scheduledSessions)}
-                    disabled={applyMutation.isPending}
-                    className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-wider shadow-sm transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-                  >
-                    {applyMutation.isPending ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-                    <span>Déployer ({scheduledSessions.length})</span>
-                  </button>
+                  <CustomSelect
+                    value={profFilter}
+                    onChange={(val) => setProfFilter(String(val))}
+                    options={profFilterOptions}
+                    placeholder="Filtrer par professeur..."
+                  />
+
+                  <CustomSelect
+                    value={roomFilter}
+                    onChange={(val) => setRoomFilter(String(val))}
+                    options={roomFilterOptions}
+                    placeholder="Filtrer par salle..."
+                  />
+
+                  <CustomSelect
+                    value={sortBy}
+                    onChange={(val) => setSortBy(val as any)}
+                    options={sortOptions}
+                    placeholder="Trier par..."
+                  />
                 </div>
               </div>
 
@@ -968,93 +1418,117 @@ export default function AdminAiTimetableSchedulerPage() {
                 </div>
               )}
 
-              {/* Sessions Cards Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredSessions.map((session: any, idx: number) => {
-                  const isLab = session.room_type === 'lab' || String(session.room_name).toLowerCase().includes('info');
-                  const isAmphi = session.room_type === 'amphitheater' || session.room_type === 'amphi' || String(session.room_name).toLowerCase().includes('amphi');
-                  const isIT = String(session.session_nature || '').includes('Informatique') || isLab;
-                  const isLanguage = String(session.session_nature || '').includes('Langues') || String(session.module_name || '').toLowerCase().includes('langue') || String(session.module_name || '').toLowerCase().includes('soft skills');
+              {/* Sessions Cards Grid OR Empty State */}
+              {filteredSessions.length === 0 ? (
+                <div className="p-12 text-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-3xl space-y-3 bg-muted/20 animate-in fade-in">
+                  <div className="w-14 h-14 mx-auto rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+                    <SearchX className="w-7 h-7" />
+                  </div>
+                  <h4 className="text-base font-black text-foreground">
+                    Aucune séance ne correspond aux critères
+                  </h4>
+                  <p className="text-xs text-muted-foreground max-w-md mx-auto leading-relaxed">
+                    {searchQuery
+                      ? `Aucune séance trouvée pour « ${searchQuery} » avec les filtres sélectionnés.`
+                      : "Aucune séance ne correspond aux filtres actifs."} Essayez d'ajuster votre recherche ou réinitialisez les filtres.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={resetAllFilters}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#0f2863] hover:bg-[#1a3d8f] text-white font-black text-xs uppercase tracking-wider transition-all cursor-pointer shadow-sm"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    <span>Réinitialiser la recherche & les filtres</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredSessions.map((session: any, idx: number) => {
+                    const isLab = session.room_type === 'lab' || String(session.room_name).toLowerCase().includes('info');
+                    const isAmphi = session.room_type === 'amphitheater' || session.room_type === 'amphi' || String(session.room_name).toLowerCase().includes('amphi');
+                    const isIT = String(session.session_nature || '').includes('Informatique') || isLab;
+                    const isLanguage = String(session.session_nature || '').includes('Langues') || String(session.module_name || '').toLowerCase().includes('langue') || String(session.module_name || '').toLowerCase().includes('soft skills');
 
-                  return (
-                    <div
-                      key={idx}
-                      className={cn(
-                        "p-5 rounded-2xl border transition-all space-y-3.5 shadow-sm bg-card hover:shadow-md",
-                        isIT ? "border-purple-500/30 hover:border-purple-500" : isLanguage ? "border-emerald-500/30 hover:border-emerald-500" : "border-border hover:border-indigo-400"
-                      )}
-                    >
-                      {/* Card Header: Day, Time & Nature Badge */}
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200">
-                            {session.day_name}
-                          </span>
-                          {session.session_badge && (
-                            <span className={cn(
-                              "px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wide border",
-                              isIT
-                                ? "bg-purple-50 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 border-purple-200"
-                                : isLanguage
-                                ? "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-200"
-                                : "bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border-blue-200"
-                            )}>
-                              {session.session_badge}
+                    return (
+                      <div
+                        key={idx}
+                        className={cn(
+                          "p-5 rounded-2xl border transition-all space-y-3.5 shadow-sm bg-card hover:shadow-md",
+                          isIT ? "border-purple-500/30 hover:border-purple-500" : isLanguage ? "border-emerald-500/30 hover:border-emerald-500" : "border-border hover:border-indigo-400"
+                        )}
+                      >
+                        {/* Card Header: Day, Time & Nature Badge */}
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200">
+                              {session.day_name}
                             </span>
-                          )}
-                        </div>
+                            {session.session_badge && (
+                              <span className={cn(
+                                "px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wide border",
+                                isIT
+                                  ? "bg-purple-50 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 border-purple-200"
+                                  : isLanguage
+                                  ? "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-200"
+                                  : "bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border-blue-200"
+                              )}>
+                                {session.session_badge}
+                              </span>
+                            )}
+                          </div>
 
-                        <span className="text-xs font-black text-foreground font-mono flex items-center gap-1 shrink-0">
-                          <Clock className="w-3.5 h-3.5 text-indigo-600" />
-                          {session.start_time} - {session.end_time}
-                        </span>
-                      </div>
-
-                      {/* Module Title & Group Info */}
-                      <div>
-                        <h4 className="font-black text-sm text-foreground line-clamp-1">
-                          {session.module_name}
-                        </h4>
-                        <div className="flex items-center gap-2 mt-1 flex-wrap">
-                          <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400">
-                            {session.group_name} • {session.filiere_code}
-                          </span>
-                          <span className="text-[10px] font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded-md flex items-center gap-1">
-                            <Users className="w-3 h-3 text-muted-foreground" />
-                            {session.students_count ? `${session.students_count} Étudiants` : '35 Étudiants'}
+                          <span className="text-xs font-black text-foreground font-mono flex items-center gap-1 shrink-0">
+                            <Clock className="w-3.5 h-3.5 text-indigo-600" />
+                            {session.start_time} - {session.end_time}
                           </span>
                         </div>
-                      </div>
 
-                      {/* Footer: Professor & Room with Type Badge */}
-                      <div className="pt-2.5 border-t border-border flex items-center justify-between text-xs gap-2">
-                        <span className="flex items-center gap-1 text-muted-foreground truncate" title={session.professor_name}>
-                          <User className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                          <span className="truncate">{session.professor_name}</span>
-                        </span>
-                        
-                        <span className={cn(
-                          "font-bold px-2 py-0.8 rounded-lg flex items-center gap-1.5 shrink-0 text-[11px] border",
-                          isLab
-                            ? "bg-purple-50 text-purple-800 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300"
-                            : isAmphi
-                            ? "bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300"
-                            : "bg-blue-50 text-blue-800 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300"
-                        )}>
-                          {isLab ? (
-                            <Monitor className="w-3.5 h-3.5 text-purple-600" />
-                          ) : isAmphi ? (
-                            <Building2 className="w-3.5 h-3.5 text-amber-600" />
-                          ) : (
-                            <MapPin className="w-3.5 h-3.5 text-blue-600" />
-                          )}
-                          <span>{session.room_name}</span>
-                        </span>
+                        {/* Module Title & Group Info */}
+                        <div>
+                          <h4 className="font-black text-sm text-foreground line-clamp-1">
+                            {highlightMatch(session.module_name, searchQuery)}
+                          </h4>
+                          <div className="flex items-center gap-2 mt-1 flex-wrap">
+                            <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400">
+                              {highlightMatch(session.group_name, searchQuery)} • {session.filiere_code}
+                            </span>
+                            <span className="text-[10px] font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded-md flex items-center gap-1">
+                              <Users className="w-3 h-3 text-muted-foreground" />
+                              {session.students_count ? `${session.students_count} Étudiants` : '35 Étudiants'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Footer: Professor & Room with Type Badge */}
+                        <div className="pt-2.5 border-t border-border flex items-center justify-between text-xs gap-2">
+                          <span className="flex items-center gap-1 text-muted-foreground truncate" title={session.professor_name}>
+                            <User className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                            <span className="truncate">{highlightMatch(session.professor_name, searchQuery)}</span>
+                          </span>
+                          
+                          <span className={cn(
+                            "font-bold px-2 py-0.8 rounded-lg flex items-center gap-1.5 shrink-0 text-[11px] border",
+                            isLab
+                              ? "bg-purple-50 text-purple-800 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300"
+                              : isAmphi
+                              ? "bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300"
+                              : "bg-blue-50 text-blue-800 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300"
+                          )}>
+                            {isLab ? (
+                              <Monitor className="w-3.5 h-3.5 text-purple-600" />
+                            ) : isAmphi ? (
+                              <Building2 className="w-3.5 h-3.5 text-amber-600" />
+                            ) : (
+                              <MapPin className="w-3.5 h-3.5 text-blue-600" />
+                            )}
+                            <span>{highlightMatch(session.room_name, searchQuery)}</span>
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
 
@@ -1349,22 +1823,27 @@ export default function AdminAiTimetableSchedulerPage() {
         </div>
       )}
 
-      {/* ── 🏛️ Modal: Affectation des Salles Dédiées par Filière / Département ── */}
+      {/* ── 🏛️ Modal: Affectation des Ressources Dédiées (Salles & Professeurs) par Filière ── */}
       {showDedicatedRoomsModal && (
         <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl max-w-2xl w-full p-6 md:p-8 space-y-6 animate-in zoom-in-95">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl max-w-3xl w-full p-6 md:p-8 space-y-5 animate-in zoom-in-95">
             
             <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-black border border-indigo-100 dark:border-indigo-900/40">
-                  <Building2 className="w-5 h-5" />
+                <div className={cn(
+                  "w-10 h-10 rounded-2xl flex items-center justify-center font-black border transition-all",
+                  resourceModalTab === 'professors'
+                    ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/40"
+                    : "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border-indigo-100 dark:border-indigo-900/40"
+                )}>
+                  {resourceModalTab === 'professors' ? <GraduationCap className="w-5 h-5" /> : <Building2 className="w-5 h-5" />}
                 </div>
                 <div>
                   <h3 className="text-base font-black text-slate-900 dark:text-white">
-                    Affectation des Salles par Filière & Département
+                    Affectation des Ressources par Filière & Département
                   </h3>
                   <p className="text-xs text-slate-400">
-                    Spécifiez les salles réservées en priorité pour chaque chef de filière / département.
+                    Spécifiez les salles réservées et les professeurs assignés en priorité à chaque filière.
                   </p>
                 </div>
               </div>
@@ -1377,91 +1856,255 @@ export default function AdminAiTimetableSchedulerPage() {
               </button>
             </div>
 
-            {/* Quick Auto-preset button */}
-            <div className="flex items-center justify-between bg-blue-500/10 dark:bg-blue-950/30 p-3.5 rounded-2xl border border-blue-200 dark:border-blue-800">
-              <div className="text-xs text-blue-900 dark:text-blue-200">
-                <strong className="font-bold">Astuce académique :</strong> Attribuer des salles fixes évite les déplacements d'étudiants entre bâtiments.
+            {/* 📑 Segmented Tabs: Salles vs Professeurs */}
+            <div className="flex items-center gap-2 p-1.5 bg-slate-100 dark:bg-slate-800/80 rounded-2xl border border-slate-200/80 dark:border-slate-700/80">
+              <button
+                type="button"
+                onClick={() => setResourceModalTab('rooms')}
+                className={cn(
+                  "flex-1 py-2 px-4 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer",
+                  resourceModalTab === 'rooms'
+                    ? "bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-300 shadow-sm border border-slate-200/60 dark:border-slate-700"
+                    : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                )}
+              >
+                <Building2 className="w-4 h-4 text-indigo-500" />
+                <span>1. Salles Dédiées par Filière</span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 font-extrabold">
+                  {Object.values(dedicatedRooms).reduce((acc, curr) => acc + curr.length, 0)}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setResourceModalTab('professors')}
+                className={cn(
+                  "flex-1 py-2 px-4 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer",
+                  resourceModalTab === 'professors'
+                    ? "bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-300 shadow-sm border border-slate-200/60 dark:border-slate-700"
+                    : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                )}
+              >
+                <GraduationCap className="w-4 h-4 text-emerald-500" />
+                <span>2. Professeurs Affectés par Filière</span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] bg-emerald-50 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 font-extrabold">
+                  {Object.values(dedicatedProfessors).reduce((acc, curr) => acc + curr.length, 0)}
+                </span>
+              </button>
+            </div>
+
+            {/* ─── TAB 1: SALLES ──────────────────────────────────────────────────────── */}
+            {resourceModalTab === 'rooms' && (
+              <div className="space-y-4">
+                {/* Quick Auto-preset button */}
+                <div className="flex items-center justify-between bg-blue-500/10 dark:bg-blue-950/30 p-3.5 rounded-2xl border border-blue-200 dark:border-blue-800">
+                  <div className="text-xs text-blue-900 dark:text-blue-200">
+                    <strong className="font-bold">Astuce académique :</strong> Attribuer des salles fixes évite les déplacements d'étudiants entre bâtiments.
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDedicatedRooms({
+                        'GFC': ['Salle 101', 'Salle 102'],
+                        'MCM': ['Salle 103', 'Salle 104'],
+                        'TC': ['Salle 105', 'Salle 106'],
+                      });
+                      toast.success("Répartition standard des salles appliquée !");
+                    }}
+                    className="px-3 py-1.5 rounded-xl bg-[#0f2863] text-white text-[11px] font-black whitespace-nowrap cursor-pointer hover:bg-blue-900 transition-all shadow-xs"
+                  >
+                    ⚡ Répartition Équilibrée
+                  </button>
+                </div>
+
+                {/* Filières mapping list */}
+                <div className="space-y-3.5 max-h-[50vh] overflow-y-auto pr-1">
+                  {[
+                    { code: 'TC', label: 'Tronc Commun (S1 / S2 / S3 / S4)' },
+                    { code: 'GFC', label: 'Gestion Financière et Comptable (GFC)' },
+                    { code: 'MCM', label: 'Management Commercial & Marketing (MCM)' },
+                  ].map((fil) => {
+                    const assigned = dedicatedRooms[fil.code] || [];
+                    return (
+                      <div key={fil.code} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700 space-y-2.5">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <span className="font-black text-xs text-slate-900 dark:text-white">{fil.label}</span>
+                            <span className="text-[10px] font-bold text-muted-foreground ml-2">
+                              ({assigned.length} salle{assigned.length > 1 ? 's' : ''} dédiée{assigned.length > 1 ? 's' : ''})
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap gap-1.5">
+                          {availableRoomsList.map((rName: string) => {
+                            const isSelected = assigned.includes(rName);
+                            return (
+                              <button
+                                key={rName}
+                                type="button"
+                                onClick={() => {
+                                  setDedicatedRooms(prev => {
+                                    const current = prev[fil.code] || [];
+                                    const updated = isSelected 
+                                      ? current.filter((r: string) => r !== rName)
+                                      : [...current, rName];
+                                    return { ...prev, [fil.code]: updated };
+                                  });
+                                }}
+                                className={cn(
+                                  "px-2.5 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1 border",
+                                  isSelected
+                                    ? "bg-indigo-600 text-white border-indigo-700 shadow-xs"
+                                    : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100"
+                                )}
+                              >
+                                <span>{isSelected ? '✓' : '+'}</span>
+                                <span>{rName}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* ─── TAB 2: PROFESSEURS ─────────────────────────────────────────────────── */}
+            {resourceModalTab === 'professors' && (
+              <div className="space-y-4">
+                {/* Quick Auto-preset button for Professors */}
+                <div className="flex items-center justify-between bg-emerald-500/10 dark:bg-emerald-950/30 p-3.5 rounded-2xl border border-emerald-200 dark:border-emerald-800">
+                  <div className="text-xs text-emerald-900 dark:text-emerald-200">
+                    <strong className="font-bold">Astuce pédagogique :</strong> Affecter les enseignants selon leur spécialité (Finance, Audit, Marketing...) évite la dispersion pédagogique et stabilise l'encadrement.
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDedicatedProfessors({
+                        'GFC': ['Abdelhak El Amrani', 'Youssef El Mansouri', 'Omar Bennouna'],
+                        'MCM': ['Amina Chraibi', 'Tarik Meziane', 'Bouchra Bennani'],
+                        'TC': ['Mohamed Benjelloun', 'Tarik Meziane', 'Bouchra Bennani', 'Youssef El Mansouri'],
+                      });
+                      toast.success("Répartition pédagogique recommandée appliquée !");
+                    }}
+                    className="px-3 py-1.5 rounded-xl bg-emerald-700 text-white text-[11px] font-black whitespace-nowrap cursor-pointer hover:bg-emerald-800 transition-all shadow-xs"
+                  >
+                    ⚡ Répartition Recommandée
+                  </button>
+                </div>
+
+                {/* Filières mapping list for Professors */}
+                <div className="space-y-3.5 max-h-[50vh] overflow-y-auto pr-1">
+                  {[
+                    { code: 'TC', label: 'Tronc Commun (S1 / S2 / S3 / S4)', desc: 'Mathématiques, Économie, Informatique, Langues & Soft Skills' },
+                    { code: 'GFC', label: 'Gestion Financière et Comptable (GFC)', desc: 'Finance d’entreprise, Comptabilité approfondie, Audit & Fiscalité' },
+                    { code: 'MCM', label: 'Management Commercial & Marketing (MCM)', desc: 'Marketing stratégique, Droit des affaires, Communication & Management' },
+                  ].map((fil) => {
+                    const assigned = dedicatedProfessors[fil.code] || [];
+                    return (
+                      <div key={fil.code} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700 space-y-2.5">
+                        <div className="flex items-center justify-between flex-wrap gap-2">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-black text-xs text-slate-900 dark:text-white">{fil.label}</span>
+                              <span className="px-2 py-0.5 rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-[10px] font-black text-emerald-600 dark:text-emerald-400">
+                                {assigned.length} prof{assigned.length > 1 ? 's' : ''} affecté{assigned.length > 1 ? 's' : ''}
+                              </span>
+                            </div>
+                            <p className="text-[10px] text-slate-400 mt-0.5">{fil.desc}</p>
+                          </div>
+
+                          <div className="flex items-center gap-1.5 text-[10px]">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setDedicatedProfessors(prev => ({
+                                  ...prev,
+                                  [fil.code]: availableProfessorsList.map((p: any) => p.name)
+                                }));
+                              }}
+                              className="px-2 py-0.5 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-bold text-slate-600 dark:text-slate-300 hover:text-emerald-600 cursor-pointer"
+                            >
+                              Tout cocher
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setDedicatedProfessors(prev => ({
+                                  ...prev,
+                                  [fil.code]: []
+                                }));
+                              }}
+                              className="px-2 py-0.5 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-bold text-slate-400 hover:text-rose-600 cursor-pointer"
+                            >
+                              Vider
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap gap-2">
+                          {availableProfessorsList.map((prof: any) => {
+                            const pName = prof.name;
+                            const isSelected = assigned.includes(pName);
+                            return (
+                              <button
+                                key={pName}
+                                type="button"
+                                onClick={() => {
+                                  setDedicatedProfessors(prev => {
+                                    const current = prev[fil.code] || [];
+                                    const updated = isSelected 
+                                      ? current.filter((p: string) => p !== pName)
+                                      : [...current, pName];
+                                    return { ...prev, [fil.code]: updated };
+                                  });
+                                }}
+                                className={cn(
+                                  "px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 border text-left",
+                                  isSelected
+                                    ? "bg-emerald-600 text-white border-emerald-700 shadow-sm"
+                                    : "bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-emerald-500 hover:bg-emerald-50/40"
+                                )}
+                              >
+                                <span className="font-black text-xs">{isSelected ? '✓' : '+'}</span>
+                                <div className="flex flex-col">
+                                  <span className="font-bold leading-tight">{pName}</span>
+                                  <span className={cn(
+                                    "text-[9px] font-semibold leading-tight",
+                                    isSelected ? "text-emerald-100" : "text-slate-400"
+                                  )}>
+                                    {prof.specialty || prof.department || 'Enseignant'}
+                                  </span>
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
+              <div className="text-[11px] text-slate-400">
+                {resourceModalTab === 'professors' ? (
+                  <span>Ces choix définiront les priorités d'assignation du <strong>Solveur IA</strong> par filière.</span>
+                ) : (
+                  <span>Les salles attribuées seront réservées prioritairement pour ces filières.</span>
+                )}
               </div>
               <button
                 type="button"
                 onClick={() => {
-                  setDedicatedRooms({
-                    'GFC': ['Salle 101', 'Salle 102'],
-                    'MCM': ['Salle 103', 'Salle 104'],
-                    'TC': ['Salle 105', 'Salle 106'],
-                  });
-                  toast.success("Répartition standard des départements appliquée !");
+                  setShowDedicatedRoomsModal(false);
+                  toast.success("Affectations enregistrées et prêtes pour la génération !");
                 }}
-                className="px-3 py-1.5 rounded-xl bg-[#0f2863] text-white text-[11px] font-black whitespace-nowrap cursor-pointer hover:bg-blue-900 transition-all"
-              >
-                ⚡ Répartition Équilibrée
-              </button>
-            </div>
-
-            {/* Filières mapping list */}
-            <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-1">
-              {[
-                { code: 'TC', label: 'Tronc Commun (S1 / S2 / S3 / S4)' },
-                { code: 'GFC', label: 'Gestion Financière et Comptable (GFC)' },
-                { code: 'MCM', label: 'Management Commercial & Marketing (MCM)' },
-              ].map((fil) => {
-                const assigned = dedicatedRooms[fil.code] || [];
-                const availableRoomsList = [
-                  'Salle 101', 'Salle 102', 'Salle 103', 'Salle 104',
-                  'Salle 105', 'Salle 106', 'Salle 107', 'Salle 108',
-                  'Amphithéâtre A', 'Amphithéâtre B'
-                ];
-
-                return (
-                  <div key={fil.code} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700 space-y-2.5">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <span className="font-black text-xs text-slate-900 dark:text-white">{fil.label}</span>
-                        <span className="text-[10px] font-bold text-muted-foreground ml-2">
-                          ({assigned.length} salle{assigned.length > 1 ? 's' : ''} dédiée{assigned.length > 1 ? 's' : ''})
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-wrap gap-1.5">
-                      {availableRoomsList.map((rName) => {
-                        const isSelected = assigned.includes(rName);
-                        return (
-                          <button
-                            key={rName}
-                            type="button"
-                            onClick={() => {
-                              setDedicatedRooms(prev => {
-                                const current = prev[fil.code] || [];
-                                const updated = isSelected 
-                                  ? current.filter(r => r !== rName)
-                                  : [...current, rName];
-                                return { ...prev, [fil.code]: updated };
-                              });
-                            }}
-                            className={cn(
-                              "px-2.5 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1 border",
-                              isSelected
-                                ? "bg-indigo-600 text-white border-indigo-700 shadow-xs"
-                                : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100"
-                            )}
-                          >
-                            <span>{isSelected ? '✓' : '+'}</span>
-                            <span>{rName}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setShowDedicatedRoomsModal(false)}
-                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-700 text-white font-black text-xs uppercase tracking-wider shadow-md hover:shadow-indigo-500/20 transition-all cursor-pointer"
+                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 via-blue-700 to-[#0f2863] text-white font-black text-xs uppercase tracking-wider shadow-md hover:shadow-indigo-500/20 transition-all cursor-pointer"
               >
                 Enregistrer & Appliquer au Solveur
               </button>
