@@ -11,6 +11,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
+if (class_exists(Professor::class, false)) {
+    return;
+}
+
 class Professor extends Model
 {
     use HasFactory, HasUuids, SoftDeletes;
