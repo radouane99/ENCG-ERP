@@ -121,7 +121,7 @@ class TimetableExportController extends Controller
             return $pdf->download($filename);
         }
 
-        $catalog = $this->officialMatrix->catalog($schedules, $this->matrixMeta($type, $id, $schedules));
+        $catalog = $this->officialMatrix->catalog($schedules, $this->matrixMeta($type, $id, $schedules, $request));
         $stamp = $catalog['sections'][0]['semester_label'] ?? 'EDT';
         $scope = $type === 'all' ? 'TOUTES_FILIERES' : ($catalog['sections'][0]['filiere_code'] ?? $type);
         $filename = 'EDT_'.$scope.'_'.$stamp.'.pdf';
@@ -143,7 +143,7 @@ class TimetableExportController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $this->officialMatrix->catalog($schedules, $this->matrixMeta($type, $id, $schedules)),
+            'data' => $this->officialMatrix->catalog($schedules, $this->matrixMeta($type, $id, $schedules, $request)),
         ]);
     }
 
@@ -253,12 +253,71 @@ class TimetableExportController extends Controller
         return $query->orderBy('day_of_week')->orderBy('start_time')->get();
     }
 
-    private function matrixMeta(string $type, int $id, $schedules): array
+    private function matrixMeta(string $type, int $id, $schedules, ?Request $request = null): array
     {
         $filiere = $type === 'filiere'
             ? Filiere::query()->find($id)
             : $schedules->first()?->group?->filiere;
 
-        return ['filiere' => $filiere];
+        $meta = ['filiere' => $filiere];
+
+        // 1. Récupération des dates depuis le cache système (persistance globale)
+        $cachedConfig = \Illuminate\Support\Facades\Cache::get('encg_timetable_dates_config', [
+            'cours_start' => '16/09/2024',
+            'td_tp_start' => '07/10/2024',
+        ]);
+
+        $meta['cours_start'] = $cachedConfig['cours_start'] ?? '16/09/2024';
+        $meta['td_tp_start'] = $cachedConfig['td_tp_start'] ?? '07/10/2024';
+
+        // 2. Surcharge dynamique par les query params du client si fournis
+        if ($request && $request->filled('cours_start')) {
+            $meta['cours_start'] = trim((string) $request->input('cours_start'));
+        }
+        if ($request && $request->filled('td_tp_start')) {
+            $meta['td_tp_start'] = trim((string) $request->input('td_tp_start'));
+        }
+
+        return $meta;
+    }
+
+    /**
+     * Enregistrer la configuration globale des dates officielles de démarrage.
+     */
+    public function saveDatesConfig(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'cours_start' => 'required|string|max:80',
+            'td_tp_start' => 'required|string|max:80',
+        ]);
+
+        $config = [
+            'cours_start' => trim($validated['cours_start']),
+            'td_tp_start' => trim($validated['td_tp_start']),
+        ];
+
+        \Illuminate\Support\Facades\Cache::forever('encg_timetable_dates_config', $config);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Dates officielles de démarrage enregistrées avec succès.',
+            'data' => $config,
+        ]);
+    }
+
+    /**
+     * Obtenir la configuration des dates officielles actuelles.
+     */
+    public function getDatesConfig(): JsonResponse
+    {
+        $config = \Illuminate\Support\Facades\Cache::get('encg_timetable_dates_config', [
+            'cours_start' => '16/09/2024',
+            'td_tp_start' => '07/10/2024',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'data' => $config,
+        ]);
     }
 }

@@ -58,9 +58,15 @@ class OfficialTimetableMatrixService
             [$b['filiere_code'] ?? '', $b['semester_number'] ?? 0]
         );
 
+        $firstSection = $sections[0] ?? null;
+        $coursStart   = $meta['cours_start'] ?? ($firstSection['footer']['cours_start'] ?? '16/09/2024');
+        $tdTpStart    = $meta['td_tp_start'] ?? ($firstSection['footer']['td_tp_start'] ?? '07/10/2024');
+
         return [
             'days'          => self::DAYS,
             'academic_year' => $year?->label ?? (($year?->start_year ?? now()->year) . '-' . ($year?->end_year ?? now()->year + 1)),
+            'cours_start'   => $coursStart,
+            'td_tp_start'   => $tdTpStart,
             'sections'      => $sections,
             'section_count' => count($sections),
         ];
@@ -79,9 +85,10 @@ class OfficialTimetableMatrixService
             $semesterNumber = 1;
         }
 
-        $palette     = ['#1e3a8a', '#b45309', '#047857', '#7c3aed', '#be123c', '#0f766e', '#1d4ed8'];
-        $moduleOrder = [];
-        $rowsByKey   = [];
+        $palette         = ['#1e3a8a', '#b45309', '#047857', '#7c3aed', '#be123c', '#0f766e', '#1d4ed8'];
+        $moduleOrder     = [];
+        $rowsByKey       = [];
+        $groupSubCounter = [];
 
         foreach ($schedules as $session) {
             if ((int) $session->day_of_week < 1 || (int) $session->day_of_week > 5) {
@@ -97,7 +104,7 @@ class OfficialTimetableMatrixService
             /*
              * Format officiel ENCG :
              *  - CM  : 1 ligne par (module × professeur) — chaque prof a son groupe en CM
-             *  - TD  : 1 ligne par (module × professeur) — TD en sous-groupes
+             *  - TD  : 1 ligne par (module × professeur) — TD en sous-groupes (G1.1, G1.2, G2.1, G2.2)
              *  - TP  : idem TD
              * La clé inclut TOUJOURS le professor_id pour séparer les intervenants.
              */
@@ -137,10 +144,10 @@ class OfficialTimetableMatrixService
             }
 
             // ---- Créneau horaire ----
-            // CM et TD/TP : même format — toujours avec label du groupe/sous-groupe
-            // Ex: « G1: 08h30-12h30 » (CM) ou « G1.1: 14h30-16h00 » (TD sous-groupe)
+            // CM : Affichage au niveau Section (ex: « G1: 08h30-10h15 »)
+            // TD / TP : Affichage obligatoire au niveau Sous-Groupe ENCG (ex: « G1.1: 08h30-10h15 » ou « G1.2 », « G2.1 », « G2.2 »)
             $day        = (int) $session->day_of_week;
-            $groupLabel = $this->groupShort($session->group?->name);
+            $groupLabel = $this->formatSessionGroupLabel($session, $sessionType, $groupSubCounter);
             $slot       = $groupLabel . ': ' . $this->frenchRange($session->start_time, $session->end_time);
 
             if (! in_array($slot, $rowsByKey[$key]['days'][$day], true)) {
@@ -198,9 +205,13 @@ class OfficialTimetableMatrixService
             ?? ($schedules->first()?->relationLoaded('semester') ? $schedules->first()->semester : null)
             ?? ($year ? \App\Models\Semester::where('academic_year_id', $year->id)->where('is_current', true)->first() : null);
 
-        // Dates officielles (format ENCG Fès)
-        $coursStart  = $semester?->start_date?->format('d/m/Y');
-        $tdStartDate = $semester?->start_date?->copy()->addWeeks(3)->format('d/m/Y');
+        // Dates officielles configurables (format ENCG Fès)
+        $coursStart  = $meta['cours_start']
+            ?? $semester?->start_date?->format('d/m/Y')
+            ?? '16/09/2024';
+
+        $tdStartDate = $meta['td_tp_start']
+            ?? ($semester?->start_date ? $semester->start_date->copy()->addWeeks(3)->format('d/m/Y') : '07/10/2024');
 
         return [
             'title'           => 'EMPLOI DU TEMPS S' . $semesterNumber,
@@ -214,7 +225,7 @@ class OfficialTimetableMatrixService
             'rows'            => $rows,
             'footer'          => [
                 'cours_start'  => $coursStart,           // Démarrage des cours
-                'td_tp_start'  => $tdStartDate,          // Démarrage des TD/TP (S+3 semaines)
+                'td_tp_start'  => $tdStartDate,          // Démarrage des TD/TP
                 'cours'        => $coursStart,
                 'td_tp'        => $tdStartDate,
                 'school'       => 'ENCG-FES',
@@ -256,13 +267,83 @@ class OfficialTimetableMatrixService
     }
 
     /**
+     * Raccourcit et formate le label du groupe ou sous-groupe selon le type de séance :
+     *  - CM : G1, G2 (section entière)
+     *  - TD / TP : G1.1, G1.2, G2.1, G2.2 (sous-groupes obligatoires conformes à la norme ENCG)
+     */
+    public function formatSessionGroupLabel($session, string $sessionType, array &$groupSubCounter = []): string
+    {
+        $rawName = is_string($session) ? $session : ($session->group?->name ?? '');
+
+        // 1. Attribut explicite sub_group sur le schedule s'il existe
+        $explicitSub = is_object($session) ? ($session->sub_group ?? $session->subgroup ?? null) : null;
+        if ($explicitSub) {
+            $cleaned = trim((string) $explicitSub);
+            if (preg_match('/G?(\d+(?:\.\d+)?)/i', $cleaned, $m)) {
+                return 'G' . $m[1];
+            }
+
+            return $cleaned;
+        }
+
+        // 2. Extraire le numéro de groupe de base et sous-groupe éventuel
+        // Formats reconnus : "G1.1", "TC-S1-G1.2", "G1-1", "G1_2", "G1A", "G1-B", "Groupe 2.1"
+        $baseGroupNum = null;
+        $subNum = null;
+
+        if (preg_match('/G(?:roupe)?\s*[.\-_]?\s*(\d+)(?:[.\-_](\d+)|([A-Za-z]))?/i', $rawName, $m)) {
+            $baseGroupNum = $m[1];
+            if (! empty($m[2])) {
+                $subNum = $m[2];
+            } elseif (! empty($m[3])) {
+                $letter = strtoupper($m[3]);
+                $subNum = in_array($letter, ['B', '2']) ? '2' : '1';
+            }
+        }
+
+        if (! $baseGroupNum) {
+            return $this->groupShort($rawName);
+        }
+
+        // Séance CM : Niveau Section (G1, G2)
+        if ($sessionType === 'cm') {
+            return 'G' . $baseGroupNum;
+        }
+
+        // Séance TD / TP : Niveau Sous-Groupe obligatoire (G1.1, G1.2, G2.1, G2.2)
+        if ($sessionType === 'td' || $sessionType === 'tp') {
+            if ($subNum !== null) {
+                return 'G' . $baseGroupNum . '.' . $subNum;
+            }
+
+            // Si le groupe est seulement G1 ou G2 en base :
+            // Alterner automatiquement G1.1 et G1.2 pour chaque séance TD du module
+            $modId = is_object($session) ? ($session->module_id ?? 0) : 0;
+            $counterKey = $modId . '|' . $baseGroupNum;
+            if (! isset($groupSubCounter[$counterKey])) {
+                $groupSubCounter[$counterKey] = 1;
+            } else {
+                $groupSubCounter[$counterKey]++;
+            }
+
+            $assignedSub = ($groupSubCounter[$counterKey] % 2 === 1) ? '1' : '2';
+
+            return 'G' . $baseGroupNum . '.' . $assignedSub;
+        }
+
+        return 'G' . $baseGroupNum;
+    }
+
+    /**
      * Raccourcit le nom du groupe/sous-groupe pour l'affichage dans les cellules.
      * Exemples : "GFC-S5-G1" → "G1", "Groupe 1.2" → "G1.2", "MCM-S5-G2.1" → "G2.1"
      */
     public function groupShort(?string $name): string
     {
-        if ($name && preg_match('/G(?:roupe)?\s*[.\-_]?\s*(\d+(?:\.\d+)?)/i', $name, $match)) {
-            return 'G' . $match[1];
+        if ($name && preg_match('/G(?:roupe)?\s*[.\-_]?\s*(\d+(?:[.\-_]\d+)?)/i', $name, $match)) {
+            $cleaned = str_replace(['-', '_'], '.', $match[1]);
+
+            return 'G' . $cleaned;
         }
 
         return $name ? trim($name) : 'G?';

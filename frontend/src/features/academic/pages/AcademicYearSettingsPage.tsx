@@ -170,6 +170,209 @@ function CustomSelect({
   )
 }
 
+// ─── 1.B CUSTOM MULTI-SELECT COMPONENT (POUR GROUPES & MODULES) ──────────────
+interface CustomMultiSelectProps {
+  label: string
+  stepNumber: string
+  placeholder: string
+  values: string[]
+  onChange: (vals: string[]) => void
+  options: CustomSelectOption[]
+  icon: React.ReactNode
+  searchable?: boolean
+  selectAllOption?: boolean
+}
+
+function CustomMultiSelect({
+  label,
+  stepNumber,
+  placeholder,
+  values,
+  onChange,
+  options,
+  icon,
+  searchable = true,
+  selectAllOption = true
+}: CustomMultiSelectProps) {
+  const [isOpen, setIsOpen] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  const filteredOptions = options.filter(o =>
+    o.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (o.sublabel && o.sublabel.toLowerCase().includes(searchTerm.toLowerCase()))
+  )
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  const toggleOption = (val: string) => {
+    if (values.includes(val)) {
+      onChange(values.filter(v => v !== val))
+    } else {
+      onChange([...values, val])
+    }
+  }
+
+  const allSelected = options.length > 0 && options.every(o => values.includes(String(o.value)))
+
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      onChange([])
+    } else {
+      onChange(options.map(o => String(o.value)))
+    }
+  }
+
+  return (
+    <div className="relative" ref={containerRef}>
+      <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5 flex items-center justify-between">
+        <span className="flex items-center gap-1.5">
+          <span className="w-4 h-4 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-[10px] font-black flex items-center justify-center">
+            {stepNumber}
+          </span>
+          {label}
+        </span>
+        {values.length > 0 && (
+          <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-1 bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded-md border border-indigo-200/50">
+            {values.length} sélectionné{values.length > 1 ? 's' : ''}
+          </span>
+        )}
+      </label>
+
+      {/* Trigger Button */}
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className={cn(
+          "w-full px-3.5 py-2.5 bg-slate-50/80 dark:bg-slate-800/80 border rounded-xl text-xs font-semibold transition-all flex items-center justify-between gap-2 cursor-pointer shadow-xs text-left",
+          isOpen
+            ? "border-indigo-500 ring-3 ring-indigo-500/10 bg-white dark:bg-slate-800 shadow-sm"
+            : values.length > 0
+              ? "border-indigo-300 dark:border-indigo-600 text-slate-900 dark:text-white bg-white dark:bg-slate-800"
+              : "border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 hover:border-slate-300 dark:hover:border-slate-600"
+        )}
+      >
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className={cn(
+            "p-1.5 rounded-lg shrink-0 transition-colors",
+            values.length > 0 ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400" : "bg-slate-200/70 dark:bg-slate-700/60 text-slate-400"
+          )}>
+            {icon}
+          </div>
+          <span className="truncate">
+            {values.length === 0 
+              ? placeholder 
+              : values.length === 1 
+                ? (options.find(o => String(o.value) === String(values[0]))?.label || `${values.length} sélectionné`)
+                : `${values.length} éléments sélectionnés`}
+          </span>
+        </div>
+        <div className="flex items-center gap-1 shrink-0">
+          {values.length > 0 && (
+            <span className="w-5 h-5 rounded-full bg-indigo-600 text-white text-[10px] font-bold flex items-center justify-center">
+              {values.length}
+            </span>
+          )}
+          <ChevronDown className={cn(
+            "w-4 h-4 text-slate-400 transition-transform duration-200",
+            isOpen ? "rotate-180 text-indigo-600" : ""
+          )} />
+        </div>
+      </button>
+
+      {/* Multi-Select Dropdown Popover */}
+      {isOpen && (
+        <div className="absolute z-50 left-0 right-0 mt-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden animate-in fade-in-80 zoom-in-95">
+          {searchable && options.length > 3 && (
+            <div className="p-2 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+              <div className="relative">
+                <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder={`Rechercher ${label.toLowerCase()}...`}
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                  autoFocus
+                  className="w-full pl-9 pr-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-medium text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20"
+                />
+              </div>
+            </div>
+          )}
+
+          {selectAllOption && options.length > 1 && (
+            <div className="p-1.5 border-b border-slate-100 dark:border-slate-800 bg-indigo-50/30 dark:bg-slate-800/40 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={toggleSelectAll}
+                className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 flex items-center gap-1.5 px-2 py-1 rounded cursor-pointer"
+              >
+                <div className={cn(
+                  "w-3.5 h-3.5 rounded border flex items-center justify-center transition-colors",
+                  allSelected ? "bg-indigo-600 border-indigo-600 text-white" : "border-slate-300 dark:border-slate-600"
+                )}>
+                  {allSelected && <Check className="w-2.5 h-2.5 stroke-[3]" />}
+                </div>
+                <span>{allSelected ? "Tout désélectionner" : "Sélectionner tous"}</span>
+              </button>
+              <span className="text-[10px] text-slate-400 pr-2">
+                {values.length}/{options.length}
+              </span>
+            </div>
+          )}
+
+          <div className="max-h-56 overflow-y-auto p-1 space-y-0.5 custom-scrollbar">
+            {filteredOptions.length === 0 ? (
+              <div className="py-4 text-center text-xs text-slate-400">Aucun résultat trouvé</div>
+            ) : (
+              filteredOptions.map(opt => {
+                const isSelected = values.includes(String(opt.value))
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => toggleOption(String(opt.value))}
+                    className={cn(
+                      "w-full px-3 py-2 text-left rounded-lg text-xs font-medium transition-all flex items-center justify-between cursor-pointer group",
+                      isSelected
+                        ? "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-900 dark:text-indigo-200 font-bold"
+                        : "text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+                    )}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                      <div className={cn(
+                        "w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-colors",
+                        isSelected ? "bg-indigo-600 border-indigo-600 text-white shadow-xs" : "border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800"
+                      )}>
+                        {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="truncate font-semibold">{opt.label}</div>
+                        {opt.sublabel && (
+                          <div className={cn("text-[10px] truncate", isSelected ? "text-indigo-600 dark:text-indigo-400" : "text-slate-400")}>
+                            {opt.sublabel}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                )
+              })
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── 2. PREMIUM TOOLBAR FILTER DROPDOWN COMPONENT ─────────────────────────────
 interface FilterDropdownOption {
   value: string
@@ -333,11 +536,18 @@ export default function AcademicYearSettingsPage() {
   const [showResetDistributeModal, setShowResetDistributeModal] = useState(false)
   const [showUnassignAllModal, setShowUnassignAllModal] = useState(false)
 
-  const [assignmentForm, setAssignmentForm] = useState({
+  const [assignmentForm, setAssignmentForm] = useState<{
+    department_id: string
+    professor_id: string
+    module_ids: string[]
+    group_ids: string[]
+    session_type: 'cm' | 'td' | 'both'
+  }>({
     department_id: '',
     professor_id: '',
-    module_id: '',
-    group_id: ''
+    module_ids: [],
+    group_ids: [],
+    session_type: 'cm'
   })
 
   const [newYearLabel, setNewYearLabel] = useState('')
@@ -673,10 +883,11 @@ export default function AcademicYearSettingsPage() {
 
   const createAssignmentMutation = useMutation({
     mutationFn: (payload: any) => api.post('/professor-assignments', payload),
-    onSuccess: () => {
-      toast.success('✍️ Affectation ajoutée avec succès !')
+    onSuccess: (res: any) => {
+      const msg = res?.data?.message || '✍️ Affectation(s) ajoutée(s) avec succès !'
+      toast.success(msg)
       queryClient.invalidateQueries({ queryKey: ['professor-assignments'] })
-      setAssignmentForm(prev => ({ ...prev, professor_id: '', module_id: '', group_id: '' }))
+      setAssignmentForm(prev => ({ ...prev, module_ids: [], group_ids: [] }))
     },
     onError: (err: any) => {
       toast.error(err.response?.data?.message || 'Erreur lors de l\'ajout de l\'affectation')
@@ -778,8 +989,8 @@ export default function AcademicYearSettingsPage() {
   }
 
   const handleCreateAssignment = () => {
-    if (!assignmentForm.professor_id || !assignmentForm.module_id || !assignmentForm.group_id) {
-      toast.error('Veuillez sélectionner le Professeur, le Module et le Groupe')
+    if (!assignmentForm.professor_id || assignmentForm.module_ids.length === 0 || assignmentForm.group_ids.length === 0) {
+      toast.error('Veuillez sélectionner l\'Enseignant, au moins un Module et au moins un Groupe/Section')
       return
     }
     createAssignmentMutation.mutate(assignmentForm)
@@ -1214,75 +1425,144 @@ export default function AcademicYearSettingsPage() {
                 ]}
               />
 
-              {/* Step 3: Module */}
-              <CustomSelect
-                label="Module"
+              {/* Step 3: Module (Multi-sélection) */}
+              <CustomMultiSelect
+                label="Module(s)"
                 stepNumber="3"
-                placeholder="Sélectionner le module"
-                value={assignmentForm.module_id}
-                onChange={(val) => setAssignmentForm(prev => ({ ...prev, module_id: val }))}
+                placeholder="Sélectionner le(s) module(s)"
+                values={assignmentForm.module_ids}
+                onChange={(vals) => setAssignmentForm(prev => ({ ...prev, module_ids: vals }))}
                 icon={<BookOpen className="w-4 h-4" />}
-                options={[
-                  { value: '', label: 'Sélectionner le module' },
-                  ...modules
-                    .filter((m: any) => {
-                      if (selectedSemesterPeriod === 'odd' || selectedSemesterPeriod === 'autumn' || selectedSemesterPeriod === 's1') {
-                        return [1, 3, 5, 7, 9].includes(m.semester_number || m.semester)
-                      }
-                      if (selectedSemesterPeriod === 'even' || selectedSemesterPeriod === 'spring' || selectedSemesterPeriod === 's2') {
-                        return [2, 4, 6, 8, 10].includes(m.semester_number || m.semester)
-                      }
-                      if (['1','2','3','4','5','6','7','8','9','10'].includes(String(selectedSemesterPeriod))) {
-                        return String(m.semester_number || m.semester) === String(selectedSemesterPeriod)
-                      }
-                      return true
-                    })
-                    .map((m: any) => {
-                      const semNum = m.semester_number || m.semester
-                      const semTag = semNum ? `[S${semNum}] ` : ''
-                      return {
-                        value: String(m.id),
-                        label: `${semTag}${m.code ? m.code + ' - ' : ''}${m.name}`,
-                        sublabel: semNum ? `Semestre S${semNum} • Filière ${m.filiere?.name || 'ENCG'}` : 'Module académique'
-                      }
-                    })
-                ]}
+                selectAllOption={true}
+                options={modules
+                  .filter((m: any) => {
+                    if (selectedSemesterPeriod === 'odd' || selectedSemesterPeriod === 'autumn' || selectedSemesterPeriod === 's1') {
+                      return [1, 3, 5, 7, 9].includes(m.semester_number || m.semester)
+                    }
+                    if (selectedSemesterPeriod === 'even' || selectedSemesterPeriod === 'spring' || selectedSemesterPeriod === 's2') {
+                      return [2, 4, 6, 8, 10].includes(m.semester_number || m.semester)
+                    }
+                    if (['1','2','3','4','5','6','7','8','9','10'].includes(String(selectedSemesterPeriod))) {
+                      return String(m.semester_number || m.semester) === String(selectedSemesterPeriod)
+                    }
+                    return true
+                  })
+                  .map((m: any) => {
+                    const semNum = m.semester_number || m.semester
+                    const semTag = semNum ? `[S${semNum}] ` : ''
+                    return {
+                      value: String(m.id),
+                      label: `${semTag}${m.code ? m.code + ' - ' : ''}${m.name}`,
+                      sublabel: semNum ? `Semestre S${semNum} • Filière ${m.filiere?.name || 'ENCG'}` : 'Module académique'
+                    }
+                  })
+                }
               />
 
-              {/* Step 4: Group */}
-              <CustomSelect
-                label="Groupe / Section"
+              {/* Step 4: Group / Section (Multi-sélection) */}
+              <CustomMultiSelect
+                label="Groupe(s) / Section(s)"
                 stepNumber="4"
-                placeholder="Sélectionner le groupe"
-                value={assignmentForm.group_id}
-                onChange={(val) => setAssignmentForm(prev => ({ ...prev, group_id: val }))}
+                placeholder="Sélectionner le(s) groupe(s)"
+                values={assignmentForm.group_ids}
+                onChange={(vals) => setAssignmentForm(prev => ({ ...prev, group_ids: vals }))}
                 icon={<Users className="w-4 h-4" />}
-                options={[
-                  { value: '', label: 'Sélectionner le groupe' },
-                  ...groups.map((g: any) => ({
-                    value: String(g.id),
-                    label: g.name,
-                    sublabel: g.filiere_name || 'Section Académique'
-                  }))
-                ]}
+                selectAllOption={true}
+                options={groups.map((g: any) => ({
+                  value: String(g.id),
+                  label: g.name,
+                  sublabel: g.filiere_name || 'Section Académique'
+                }))}
               />
             </div>
 
+            {/* Format d'enseignement (CM / TD / Les deux) & Générateur en 1 clic */}
+            <div className="mt-3.5 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex flex-wrap items-center justify-between gap-3 bg-slate-50/70 dark:bg-slate-900/40 p-3 rounded-xl border border-dashed border-slate-200 dark:border-slate-800">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                  <span>Format de séance :</span>
+                </span>
+                <div className="inline-flex rounded-xl bg-white dark:bg-slate-800 p-1 border border-slate-200 dark:border-slate-700 shadow-xs">
+                  <button
+                    type="button"
+                    onClick={() => setAssignmentForm(prev => ({ ...prev, session_type: 'cm' }))}
+                    className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
+                      assignmentForm.session_type === 'cm'
+                        ? 'bg-[#0f2863] text-white shadow-xs'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    }`}
+                  >
+                    <span>🏛️ Cours (CM)</span>
+                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-blue-500/30 text-blue-100 font-mono">36h</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAssignmentForm(prev => ({ ...prev, session_type: 'td' }))}
+                    className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
+                      assignmentForm.session_type === 'td'
+                        ? 'bg-emerald-600 text-white shadow-xs'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    }`}
+                  >
+                    <span>📝 TD (Travaux Dirigés)</span>
+                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-700/50 text-emerald-100 font-mono">18h</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAssignmentForm(prev => ({ ...prev, session_type: 'both' }))}
+                    className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
+                      assignmentForm.session_type === 'both'
+                        ? 'bg-purple-600 text-white shadow-xs'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    }`}
+                  >
+                    <span>✨ CM + TD (Les deux)</span>
+                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-purple-700/50 text-purple-100 font-mono">54h total</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Dynamic total count badge */}
+              <div className="flex items-center gap-2">
+                {assignmentForm.module_ids.length > 0 && assignmentForm.group_ids.length > 0 ? (
+                  <span className="inline-flex items-center gap-1.5 bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 px-3 py-1 rounded-lg text-xs font-semibold">
+                    <span>⚡ Génération automatique :</span>
+                    <span className="px-1.5 py-0.2 bg-blue-600 text-white rounded font-mono font-bold text-[11px]">
+                      {assignmentForm.module_ids.length * assignmentForm.group_ids.length * (assignmentForm.session_type === 'both' ? 2 : 1)} affectation(s)
+                    </span>
+                  </span>
+                ) : (
+                  <span className="text-[11px] text-slate-400 italic">
+                    💡 Astuce : Vous pouvez sélectionner plusieurs modules et groupes pour affecter en 1 clic
+                  </span>
+                )}
+              </div>
+            </div>
+
             {/* Form Actions */}
-            <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
-              <span className="text-xs text-slate-400">
-                {assignmentForm.professor_id && assignmentForm.module_id && assignmentForm.group_id 
-                  ? 'Prêt pour enregistrement' 
-                  : 'Renseignez les 4 étapes pour affecter le cours.'}
+            <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800">
+              <span className="text-xs text-slate-500">
+                {assignmentForm.professor_id && assignmentForm.module_ids.length > 0 && assignmentForm.group_ids.length > 0 ? (
+                  <span className="text-emerald-600 dark:text-emerald-400 font-medium">
+                    ✓ Prêt : {assignmentForm.module_ids.length} module(s) × {assignmentForm.group_ids.length} groupe(s) • Format : {assignmentForm.session_type === 'both' ? 'CM + TD' : assignmentForm.session_type.toUpperCase()}
+                  </span>
+                ) : (
+                  'Renseignez l\'enseignant, au moins un module et au moins un groupe pour valider.'
+                )}
               </span>
 
               <button 
                 onClick={handleCreateAssignment}
-                disabled={createAssignmentMutation.isPending || !assignmentForm.professor_id || !assignmentForm.module_id || !assignmentForm.group_id}
+                disabled={createAssignmentMutation.isPending || !assignmentForm.professor_id || assignmentForm.module_ids.length === 0 || assignmentForm.group_ids.length === 0}
                 className="px-6 py-2.5 bg-[#0f2863] hover:bg-[#1a3a8a] text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-sm transition-all cursor-pointer flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <Plus className="w-4 h-4 text-emerald-400 font-bold" />
-                <span>{createAssignmentMutation.isPending ? 'Enregistrement...' : 'Valider l\'Affectation'}</span>
+                <span>
+                  {createAssignmentMutation.isPending 
+                    ? 'Enregistrement...' 
+                    : `Valider l'Affectation (${assignmentForm.module_ids.length * assignmentForm.group_ids.length * (assignmentForm.session_type === 'both' ? 2 : 1)})`}
+                </span>
               </button>
             </div>
           </div>

@@ -91,8 +91,12 @@ class ProfessorAssignmentController extends Controller
     {
         $validated = $request->validate([
             'professor_id' => 'required',
-            'module_id' => 'required',
-            'group_id' => 'required',
+            'module_id' => 'nullable',
+            'module_ids' => 'nullable|array',
+            'group_id' => 'nullable',
+            'group_ids' => 'nullable|array',
+            'session_type' => 'nullable|string', // cm, td, tp, both (cm+td)
+            'assigned_hours' => 'nullable|integer',
         ]);
 
         $currentYear = AcademicYear::where('is_current', true)->first() ?? AcademicYear::latest('start_year')->first();
@@ -115,35 +119,80 @@ class ProfessorAssignmentController extends Controller
         };
 
         $profId = $resolveId(Professor::class, $validated['professor_id']);
-        $modId = $resolveId(Module::class, $validated['module_id']);
-        $grpId = $resolveId(Group::class, $validated['group_id']);
-
-        if (! $profId || ! $modId || ! $grpId) {
-            return response()->json(['success' => false, 'message' => 'Entités invalides.'], 400);
+        if (! $profId) {
+            return response()->json(['success' => false, 'message' => 'Enseignant invalide.'], 400);
         }
 
-        $exists = ModuleProfessor::where('module_id', $modId)
-            ->where('professor_id', $profId)
-            ->exists();
+        // Collecter les modules (soit array module_ids soit single module_id)
+        $rawModuleIds = ! empty($validated['module_ids']) ? $validated['module_ids'] : (array) ($validated['module_id'] ?? []);
+        $resolvedModuleIds = [];
+        foreach ($rawModuleIds as $mId) {
+            $r = $resolveId(Module::class, $mId);
+            if ($r) {
+                $resolvedModuleIds[] = $r;
+            }
+        }
+        $resolvedModuleIds = array_unique($resolvedModuleIds);
 
-        if ($exists) {
-            return response()->json(['success' => false, 'message' => 'Cet enseignant est déjà affecté à ce module.'], 400);
+        // Collecter les groupes (soit array group_ids soit single group_id)
+        $rawGroupIds = ! empty($validated['group_ids']) ? $validated['group_ids'] : (array) ($validated['group_id'] ?? []);
+        $resolvedGroupIds = [];
+        foreach ($rawGroupIds as $gId) {
+            if ($gId === 'all') {
+                continue;
+            }
+            $r = $resolveId(Group::class, $gId);
+            if ($r) {
+                $resolvedGroupIds[] = $r;
+            }
+        }
+        $resolvedGroupIds = array_unique($resolvedGroupIds);
+
+        if (empty($resolvedModuleIds)) {
+            return response()->json(['success' => false, 'message' => 'Veuillez sélectionner au moins un module.'], 400);
         }
 
-        $assignment = ModuleProfessor::create([
-            'academic_year_id' => $currentYear->id,
-            'module_id' => $modId,
-            'group_id' => $grpId,
-            'professor_id' => $profId,
-            'professor_type' => 'App\\Models\\Professor',
-            'session_type' => 'cm',
-            'assigned_hours' => 36,
-        ]);
+        if (empty($resolvedGroupIds)) {
+            return response()->json(['success' => false, 'message' => 'Veuillez sélectionner au moins un groupe ou section.'], 400);
+        }
+
+        $sessionTypeInput = strtolower($validated['session_type'] ?? 'cm');
+        $typesToCreate = ($sessionTypeInput === 'both') ? ['cm', 'td'] : [$sessionTypeInput];
+
+        $createdCount = 0;
+        foreach ($resolvedModuleIds as $modId) {
+            foreach ($resolvedGroupIds as $grpId) {
+                foreach ($typesToCreate as $sType) {
+                    $exists = ModuleProfessor::where('module_id', $modId)
+                        ->where('professor_id', $profId)
+                        ->where('group_id', $grpId)
+                        ->where('session_type', $sType)
+                        ->where('academic_year_id', $currentYear->id)
+                        ->exists();
+
+                    if (! $exists) {
+                        $hours = (int) ($validated['assigned_hours'] ?? ($sType === 'cm' ? 36 : 18));
+                        ModuleProfessor::create([
+                            'academic_year_id' => $currentYear->id,
+                            'module_id' => $modId,
+                            'group_id' => $grpId,
+                            'professor_id' => $profId,
+                            'professor_type' => 'App\\Models\\Professor',
+                            'session_type' => $sType,
+                            'assigned_hours' => $hours,
+                        ]);
+                        $createdCount++;
+                    }
+                }
+            }
+        }
 
         return response()->json([
             'success' => true,
-            'message' => 'Affectation ajoutée avec succès.',
-            'data' => ['id' => $assignment->id],
+            'message' => $createdCount > 1 
+                ? "{$createdCount} affectations enregistrées avec succès !" 
+                : ($createdCount === 1 ? 'Affectation ajoutée avec succès.' : 'Les affectations sélectionnées existent déjà.'),
+            'data' => ['created_count' => $createdCount],
         ]);
     }
 

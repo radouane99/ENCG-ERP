@@ -1310,20 +1310,20 @@ export default function AdminAiTimetableSchedulerPage() {
                       </span>
                     </div>
                     <p className="text-slate-600 dark:text-slate-400 text-[11px] leading-relaxed">
-                      Démarrage des <strong>Cours Magistraux (CM • Section entière de 75 étudiants en Amphithéâtre)</strong> dès la semaine <strong>S1</strong> (mi-septembre) • Démarrage des <strong>Travaux Dirigés (TD • Sous-groupes de 35 étudiants en Salle de classe)</strong> à partir de la semaine <strong>S4</strong> (+3 semaines).
+                      Démarrage des <strong>Cours Magistraux (CM • Section en Amphithéâtre)</strong> dès la semaine <strong>S1</strong> (mi-septembre) • Démarrage des <strong>Travaux Dirigés (TD • Sous-groupes en Salle de classe)</strong> à partir de la semaine <strong>S4</strong> (+3 semaines).
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
                   <span className="px-2.5 py-1 rounded-lg bg-amber-500/15 text-amber-800 dark:text-amber-300 font-extrabold text-[10px] border border-amber-300/40">
-                    🏛️ CM = 75 étuds
+                    🏛️ CM • Section entière
                   </span>
                   <span className="px-2.5 py-1 rounded-lg bg-blue-500/15 text-blue-800 dark:text-blue-300 font-extrabold text-[10px] border border-blue-300/40">
-                    📝 TD = 35 étuds
+                    📝 TD • Sous-groupe
                   </span>
                   <span className="px-2.5 py-1 rounded-lg bg-purple-500/15 text-purple-800 dark:text-purple-300 font-extrabold text-[10px] border border-purple-300/40">
-                    💻 TP = 30 étuds
+                    💻 TP • Labo PC
                   </span>
                 </div>
               </div>
@@ -1333,8 +1333,8 @@ export default function AdminAiTimetableSchedulerPage() {
                 {/* Search Omnibox */}
                 <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
                   <div className="relative flex-1">
-                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground">
-                      <Search className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                      <Search className="w-4 h-4" />
                     </div>
                     <input
                       type="text"
@@ -1415,7 +1415,7 @@ export default function AdminAiTimetableSchedulerPage() {
                         : "bg-white dark:bg-slate-800 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-900/50 hover:bg-amber-50"
                     )}
                   >
-                    <span>🏛️ CM • Section (75 étuds)</span>
+                    <span>🏛️ CM • Section</span>
                     <span className="px-1.5 py-0.2 bg-amber-500/20 rounded-md text-[10px]">{cmCount}</span>
                   </button>
 
@@ -1429,7 +1429,7 @@ export default function AdminAiTimetableSchedulerPage() {
                         : "bg-white dark:bg-slate-800 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-900/50 hover:bg-blue-50"
                     )}
                   >
-                    <span>📝 TD • Sous-groupe (35 étuds)</span>
+                    <span>📝 TD • Sous-groupe</span>
                     <span className="px-1.5 py-0.2 bg-blue-500/20 rounded-md text-[10px]">{tdCount}</span>
                   </button>
 
@@ -1443,7 +1443,7 @@ export default function AdminAiTimetableSchedulerPage() {
                         : "bg-white dark:bg-slate-800 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-900/50 hover:bg-purple-50"
                     )}
                   >
-                    <span>💻 TP • Machine (30 étuds)</span>
+                    <span>💻 TP • Machine</span>
                     <span className="px-1.5 py-0.2 bg-purple-500/20 rounded-md text-[10px]">{tpCount}</span>
                   </button>
                 </div>
@@ -1637,13 +1637,13 @@ export default function AdminAiTimetableSchedulerPage() {
                     const isTP = session.session_format === 'tp' || isIT || String(session.session_badge || '').toUpperCase().includes('TP');
                     const isTD = !isCM && !isTP;
 
-                    // Student counts: CM = 75, TD = 35, TP = 30
-                    const studentCount = session.students_count || (isCM ? 75 : isTP ? 30 : 35);
+                    // Effectif réel provenant directement de la base de données (student_pathways / groups)
+                    const studentCount = session.students_count ? Number(session.students_count) : null;
                     const studentLabel = isCM 
-                      ? `${studentCount} Étudiants (Section entière)` 
+                      ? (studentCount ? `${studentCount} Étudiants (Section entière)` : "Section entière")
                       : isTP 
-                      ? `${studentCount} Étudiants (Postes machine)` 
-                      : `${studentCount} Étudiants (Sous-groupe dédoublé)`;
+                      ? (studentCount ? `${studentCount} Étudiants (Postes machine)` : "Postes machine")
+                      : (studentCount ? `${studentCount} Étudiants (Sous-groupe dédoublé)` : "Sous-groupe dédoublé");
 
                     return (
                       <div

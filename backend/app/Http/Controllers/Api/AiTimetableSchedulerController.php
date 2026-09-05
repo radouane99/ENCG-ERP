@@ -120,25 +120,55 @@ class AiTimetableSchedulerController extends Controller
             $isTD = ($schedType === 'td' || $isLanguage);
             $isTP = ($schedType === 'tp' || $isLab);
 
-            // Règle d'or institutionnelle ENCG Fès :
-            // CM = 75 étuds (Section entière en Amphi)
-            // TD = 35 étuds (Sous-groupe dédoublé en Salle)
-            // TP = 30 étuds (Labo informatique PC)
-            if ($isTP) {
-                $studentsCount = 30;
+            // Récupérer la filière et le semestre réels associés
+            $filiereIdFromGroup = DB::table('groups')->where('id', $s->group_id)->value('filiere_id');
+            if (! $filiereIdFromGroup) {
+                $filiereIdFromGroup = DB::table('modules')->where('id', $s->module_id)->value('filiere_id');
+            }
+            if (! $filiereIdFromGroup && ! empty($s->filiere_code)) {
+                $filiereIdFromGroup = DB::table('filieres')->where('code', $s->filiere_code)->value('id');
+            }
+
+            // Nombre réel d'étudiants inscrits dans cette filière (student_pathways)
+            $totalFiliereStudents = 0;
+            if ($filiereIdFromGroup) {
+                $totalFiliereStudents = (int) DB::table('student_pathways')
+                    ->where('filiere_id', $filiereIdFromGroup)
+                    ->where('is_current', true)
+                    ->count();
+            }
+
+            // Nombre réel par sous-groupe (soit par group_id, soit la moitié de la filière pour G1/G2)
+            $realGroupStudents = 0;
+            if ($s->group_id) {
+                $realGroupStudents = (int) DB::table('student_pathways')
+                    ->where('group_id', $s->group_id)
+                    ->where('is_current', true)
+                    ->count();
+            }
+
+            if ($realGroupStudents === 0 && $totalFiliereStudents > 0) {
+                // Si les étudiants sont inscrits dans la filière mais pas encore subdivisés en sous-groupes,
+                // un sous-groupe TD = la moitié de l'effectif réel de la filière (ex: 24 / 2 = 12)
+                $realGroupStudents = (int) ceil($totalFiliereStudents / 2);
+            }
+
+            // Si c'est un CM en Amphithéâtre regroupant la filière entière :
+            if ($isCM) {
+                $natureLabel = 'Cours Magistral (Section)';
+                $natureBadge = 'CM SECTION';
+                $sessionFormat = 'cm';
+                $studentsCount = $totalFiliereStudents > 0 ? $totalFiliereStudents : ($realGroupStudents > 0 ? $realGroupStudents : 0);
+            } elseif ($isTD) {
+                $natureLabel = 'Travaux Dirigés (Sous-groupe)';
+                $natureBadge = 'TD GROUPE';
+                $sessionFormat = 'td';
+                $studentsCount = $realGroupStudents;
+            } else {
                 $natureLabel = 'TP Informatique (Labo PC)';
                 $natureBadge = 'TP MACHINE';
                 $sessionFormat = 'tp';
-            } elseif ($isTD) {
-                $studentsCount = 35;
-                $natureLabel = 'Travaux Dirigés (Sous-groupe dédoublé)';
-                $natureBadge = 'TD GROUPE';
-                $sessionFormat = 'td';
-            } else {
-                $studentsCount = 75;
-                $natureLabel = 'Cours Magistral (Section entière)';
-                $natureBadge = 'CM SECTION';
-                $sessionFormat = 'cm';
+                $studentsCount = $realGroupStudents;
             }
 
             // Normalisation de l'appellation du professeur selon le format réel ENCG :

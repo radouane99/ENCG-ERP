@@ -88,6 +88,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/export/{type}/{id}/matrix', [TimetableExportController::class, 'officialMatrix']);
         Route::get('/export/{type}/{id}/pdf', [TimetableExportController::class, 'exportPdf']);
         Route::get('/export/{type}/{id}/ics', [TimetableExportController::class, 'exportIcs']);
+        Route::get('/dates-config', [TimetableExportController::class, 'getDatesConfig']);
+        Route::post('/dates-config', [TimetableExportController::class, 'saveDatesConfig']);
     });
 
     // Room Bookings & Real-time Availability

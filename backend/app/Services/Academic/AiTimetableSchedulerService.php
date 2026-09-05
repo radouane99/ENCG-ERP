@@ -170,22 +170,35 @@ class AiTimetableSchedulerService
                     $isTD = ($cType === 'td');
                     $isTP = ($cType === 'tp');
 
-                    // Règle d'or institutionnelle ENCG Fès pour les effectifs & badges :
-                    // 1. CM : Section entière en Amphithéâtre -> 75 Étudiants
-                    // 2. TD : Sous-groupe dédoublé en Salle de TD -> 35 Étudiants
-                    // 3. TP : Labo informatique avec postes PC -> 30 Étudiants
+                    // Effectif réel calculé dynamiquement depuis la base de données :
+                    // 1. Nombre réel d'étudiants inscrits dans cette filière (student_pathways)
+                    $totalFiliereStudents = (int) DB::table('student_pathways')
+                        ->where('filiere_id', $group->filiere_id)
+                        ->where('is_current', true)
+                        ->count();
+
+                    // 2. Nombre réel par sous-groupe (soit par group_id, soit la moitié de la filière pour G1/G2)
+                    $realGroupStudents = (int) DB::table('student_pathways')
+                        ->where('group_id', $group->id)
+                        ->where('is_current', true)
+                        ->count();
+
+                    if ($realGroupStudents === 0 && $totalFiliereStudents > 0) {
+                        $realGroupStudents = (int) ceil($totalFiliereStudents / 2);
+                    }
+
                     if ($isCM) {
-                        $studentsCount = 75;
-                        $natureLabel = 'Cours Magistral (Section entière)';
+                        $natureLabel = 'Cours Magistral (Section)';
                         $natureBadge = 'CM SECTION';
+                        $studentsCount = $totalFiliereStudents > 0 ? $totalFiliereStudents : ($realGroupStudents > 0 ? $realGroupStudents : 0);
                     } elseif ($isTD) {
-                        $studentsCount = 35;
-                        $natureLabel = 'Travaux Dirigés (Sous-groupe dédoublé)';
+                        $natureLabel = 'Travaux Dirigés (Sous-groupe)';
                         $natureBadge = 'TD GROUPE';
+                        $studentsCount = $realGroupStudents;
                     } else {
-                        $studentsCount = 30;
                         $natureLabel = 'TP Informatique (Labo PC)';
                         $natureBadge = 'TP MACHINE';
+                        $studentsCount = $realGroupStudents;
                     }
 
                     // Chercher l'enseignant réellement affecté dans module_professor

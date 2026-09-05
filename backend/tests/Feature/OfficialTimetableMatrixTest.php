@@ -68,7 +68,7 @@ class OfficialTimetableMatrixTest extends TestCase
 
         $this->assertSame('EMPLOI DU TEMPS S1', $matrix['title']);
         $this->assertSame('S1 AP', $matrix['semester_label']);
-        $this->assertSame('G1: 14h30-16h30', $matrix['rows'][0]['days'][1][0]);
+        $this->assertSame('G1.1: 14h30-16h30', $matrix['rows'][0]['days'][1][0]);
         $this->assertSame('Management', $matrix['rows'][0]['module_name']);
         $this->assertSame('TD Management', $matrix['rows'][0]['element_name']);
         $this->assertNotSame($matrix['rows'][0]['module_name'], $matrix['rows'][0]['element_name']);
