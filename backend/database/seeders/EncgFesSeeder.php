@@ -1187,10 +1187,11 @@ class EncgFesSeeder extends Seeder
 
                 // Create borrowing record for copy 3
                 if (! $isAvail) {
+                    $scolariteId = User::where('email', 'scolarite@encg.ma')->value('id') ?? $studentUser->id;
                     DB::table('borrowings')->insert([
                         'book_copy_id' => $copyId,
                         'user_id' => $studentUser->id,
-                        'issued_by' => 2, // scolarite agent
+                        'issued_by' => $scolariteId,
                         'borrow_date' => now()->subDays(5)->format('Y-m-d'),
                         'due_date' => now()->addDays(10)->format('Y-m-d'),
                         'status' => 'borrowed',
@@ -1289,8 +1290,12 @@ class EncgFesSeeder extends Seeder
             // Generate convocations/seatings for the first 5 students enrolled in this group
             $registrations = StudentRegistration::where('group_id', $exam->group_id)->take(5)->get();
             foreach ($registrations as $sIndex => $reg) {
-                // Find student user profile
-                $studentUser = User::find($reg->student_id);
+                // Find student profile and user
+                $studentProfile = Student::find($reg->student_id);
+                if (! $studentProfile) {
+                    continue;
+                }
+                $studentUser = User::find($studentProfile->user_id);
                 if (! $studentUser) {
                     continue;
                 }
@@ -1311,7 +1316,7 @@ class EncgFesSeeder extends Seeder
 
                 DB::table('exam_seatings')->insertOrIgnore([
                     'exam_id' => $exam->id,
-                    'student_id' => $studentUser->id,
+                    'student_id' => $studentProfile->id,
                     'room_id' => $exam->room_id,
                     'seat_number' => $seatNo,
                     'is_present' => true,
@@ -1332,20 +1337,21 @@ class EncgFesSeeder extends Seeder
         array $professors
     ): void {
         foreach ($groups as $gIndex => $group) {
-            $delibRow = [
-                'institution_id' => $institution->id,
-                'academic_year_id' => $academicYear->id,
-                'semester_id' => $semester->id,
-                'filiere_id' => $group->filiere_id,
-                'group_id' => $group->id,
-                'type' => 'semester',
-                'status' => 'completed',
-                'deliberation_date' => now()->subDays(2)->format('Y-m-d'),
-                'pv_content' => "PV de délibération du semestre pour le groupe {$group->name}. Délibération validée à l'unanimité du jury.",
-                'president_id' => 1, // Radouane admin
-                'created_at' => now(),
-                'updated_at' => now(),
-            ];
+                $adminId = User::where('email', 'admin@encg.ma')->value('id') ?? ($professors[0]->user_id ?? 1);
+                $delibRow = [
+                    'institution_id' => $institution->id,
+                    'academic_year_id' => $academicYear->id,
+                    'semester_id' => $semester->id,
+                    'filiere_id' => $group->filiere_id,
+                    'group_id' => $group->id,
+                    'type' => 'semester',
+                    'status' => 'completed',
+                    'deliberation_date' => now()->subDays(2)->format('Y-m-d'),
+                    'pv_content' => "PV de délibération du semestre pour le groupe {$group->name}. Délibération validée à l'unanimité du jury.",
+                    'president_id' => $adminId,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
             if (Schema::hasColumn('deliberations', 'is_sealed')) {
                 $delibRow['is_sealed'] = false;
             }
@@ -1534,6 +1540,8 @@ class EncgFesSeeder extends Seeder
         }
         $contractId = DB::table('vacation_contracts')->insertGetId($contract);
 
+        $adminId = User::where('email', 'admin@encg.ma')->value('id') ?? 1;
+
         // Seed vacation session
         DB::table('vacation_sessions')->insert([
             'vacation_contract_id' => $contractId,
@@ -1542,7 +1550,7 @@ class EncgFesSeeder extends Seeder
             'end_time' => '10:30:00',
             'hours' => 2.00,
             'status' => 'validated',
-            'validated_by' => 1,
+            'validated_by' => $adminId,
             'validated_at' => now()->format('Y-m-d H:i:s'),
             'notes' => 'Séance d\'introduction au droit commercial.',
             'created_at' => now(),
@@ -1577,6 +1585,9 @@ class EncgFesSeeder extends Seeder
         array $students,
         array $professors
     ): void {
+        $adminId = User::where('email', 'admin@encg.ma')->value('id') ?? 1;
+        $scolariteId = User::where('email', 'scolarite@encg.ma')->value('id') ?? $adminId;
+
         // Iterate through all groups to seed rich attendance data
         foreach ($groups as $group) {
             $modules = Module::where('filiere_id', $group->filiere_id)->where('semester_number', $group->semester_number)->get();
@@ -1585,13 +1596,10 @@ class EncgFesSeeder extends Seeder
             }
 
             // Get students registered in this group
-            $groupStudentRegistrations = StudentRegistration::where('group_id', $group->id)->pluck('student_id')->toArray();
-            if (empty($groupStudentRegistrations)) {
+            $groupStudentProfileIds = StudentRegistration::where('group_id', $group->id)->pluck('student_id')->toArray();
+            if (empty($groupStudentProfileIds)) {
                 continue;
             }
-
-            // Find matching User IDs for these students
-            $groupStudentUserIds = Student::whereIn('id', $groupStudentRegistrations)->pluck('user_id')->toArray();
 
             // Seed 3 sessions per group
             for ($sessIdx = 1; $sessIdx <= 3; $sessIdx++) {
@@ -1613,13 +1621,13 @@ class EncgFesSeeder extends Seeder
                     'session_type' => 'cm',
                     'room' => 'Salle 10'.rand(1, 9),
                     'is_locked' => true,
-                    'created_by' => 1,
+                    'created_by' => $adminId,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
 
                 // Mark students present/absent
-                foreach ($groupStudentUserIds as $index => $uId) {
+                foreach ($groupStudentProfileIds as $index => $sId) {
                     // 10% chance of absence
                     $roll = rand(1, 10);
                     $status = ($roll === 1) ? 'absent' : 'present';
@@ -1632,7 +1640,7 @@ class EncgFesSeeder extends Seeder
 
                     $attId = DB::table('attendances')->insertGetId([
                         'attendance_session_id' => $sessionId,
-                        'student_id' => $uId,
+                        'student_id' => $sId,
                         'status' => $status,
                         'is_justified' => $isJust,
                         'created_at' => now(),
@@ -1642,11 +1650,11 @@ class EncgFesSeeder extends Seeder
                     if ($status === 'absent' && $isJust) {
                         DB::table('absence_justifications')->insert([
                             'attendance_id' => $attId,
-                            'student_id' => $uId,
+                            'student_id' => $sId,
                             'reason' => rand(1, 2) === 1 ? 'medical' : 'family',
                             'description' => rand(1, 2) === 1 ? 'Certificat médical pour maladie.' : 'Événement familial justifié.',
                             'status' => rand(1, 3) === 1 ? 'pending' : 'approved',
-                            'reviewed_by' => rand(1, 3) === 1 ? null : 2,
+                            'reviewed_by' => rand(1, 3) === 1 ? null : $scolariteId,
                             'reviewed_at' => rand(1, 3) === 1 ? null : now()->subDays(1)->format('Y-m-d H:i:s'),
                             'created_at' => now(),
                             'updated_at' => now(),
@@ -1732,7 +1740,7 @@ class EncgFesSeeder extends Seeder
         array $students
     ): void {
         $adminUser = User::where('email', 'admin@encg.ma')->first();
-        $profUser = $professors[0]; // User object
+        $profUser = User::find($professors[0]->user_id) ?? $adminUser;
         $studentUser = $students[0];
 
         // Conversation 1 — Admin ↔ Professeur
@@ -1855,17 +1863,20 @@ class EncgFesSeeder extends Seeder
         array $professors
     ): void {
         $adminUser = User::where('email', 'admin@encg.ma')->first();
-        $profUser = $professors[1]; // second prof as reporter
+        $student2Profile = Student::where('user_id', $students[2]->id)->first() ?? Student::first();
+        $student4Profile = Student::where('user_id', $students[4]->id)->first() ?? Student::first();
+        $prof0User = User::find($professors[0]->user_id);
+        $prof1User = User::find($professors[1]->user_id);
 
         // Case 1 — Fraude aux examens, clôturé
         $case1Id = DB::table('disciplinary_cases')->insertGetId([
             'institution_id' => $institution->id,
-            'student_id' => $students[2]->id,
+            'student_id' => $student2Profile->id,
             'case_number' => 'DISC-2025-001',
             'infraction_type' => 'fraud',
             'description' => 'L\'étudiant a été surpris en possession d\'un aide-mémoire non autorisé lors de l\'examen de Comptabilité Approfondie.',
             'incident_date' => '2025-05-20',
-            'reported_by_name' => $profUser->name,
+            'reported_by_name' => $prof1User?->name ?? 'Professeur',
             'status' => 'closed',
             'student_statement' => 'Je reconnais les faits et je m\'en excuse. C\'était la première fois et je n\'ai pas eu l\'intention de tricher.',
             'created_at' => now()->subMonths(1),
@@ -1887,12 +1898,12 @@ class EncgFesSeeder extends Seeder
         // Case 2 — Comportement irrespectueux, en cours
         DB::table('disciplinary_cases')->insert([
             'institution_id' => $institution->id,
-            'student_id' => $students[4]->id,
+            'student_id' => $student4Profile->id,
             'case_number' => 'DISC-2025-002',
             'infraction_type' => 'misconduct',
             'description' => 'Comportement irrespectueux envers un enseignant lors d\'un cours magistral de Finance d\'Entreprise.',
             'incident_date' => '2025-06-03',
-            'reported_by_name' => $professors[0]->name,
+            'reported_by_name' => $prof0User?->name ?? 'Professeur',
             'status' => 'pending',
             'student_statement' => null,
             'created_at' => now()->subWeeks(3),
@@ -1940,10 +1951,11 @@ class EncgFesSeeder extends Seeder
 
         foreach ($modules as $i => $module) {
             $prof = $professors[$i % count($professors)];
+            $profUser = User::find($prof->user_id);
             $group = $groups[$i % count($groups)];
             $seal = hash('sha256', $module->id.$group->id.$prof->id);
             $sigData = json_encode([
-                'professor' => $prof->name,
+                'professor' => $profUser?->name ?? 'Professeur',
                 'module' => $module->name,
                 'group' => $group->name,
                 'signed_at' => now()->subDays(rand(1, 10))->toISOString(),
@@ -1953,7 +1965,7 @@ class EncgFesSeeder extends Seeder
                 'module_id' => $module->id,
                 'group_id' => $group->id,
                 'academic_year_id' => $academicYear->id,
-                'signed_by' => $prof->id,
+                'signed_by' => $prof->user_id,
                 'signature_data' => $sigData,
                 'digital_seal' => $seal,
                 'ip_address' => '192.168.1.'.rand(10, 50),
@@ -2034,7 +2046,7 @@ class EncgFesSeeder extends Seeder
             'id' => (string) Str::uuid(),
             'type' => 'App\Notifications\VacationContractApproved',
             'notifiable_type' => 'App\Models\User',
-            'notifiable_id' => $professors[0]->id,
+            'notifiable_id' => $professors[0]->user_id,
             'data' => json_encode(['message' => 'Votre contrat de vacation pour l\'année 2024-2025 a été approuvé.', 'url' => '/professor/vacation']),
             'read_at' => now()->subWeeks(2),
             'created_at' => now()->subWeeks(3),
@@ -2063,15 +2075,15 @@ class EncgFesSeeder extends Seeder
         Institution $institution,
         array $professors
     ): void {
-        $prof0 = $professors[0];
-        $prof1 = $professors[1];
+        $prof0UserId = $professors[0]->user_id;
+        $prof1UserId = $professors[1]->user_id;
 
         // Lab 1 — Finance & Comptabilité
         $lab1Id = DB::table('research_labs')->insertGetId([
             'institution_id' => $institution->id,
             'name' => 'Laboratoire de Recherche en Finance et Comptabilité (LARFCO)',
             'acronym' => 'LARFCO',
-            'director_id' => $prof0->id,
+            'director_id' => $prof0UserId,
             'description' => 'Recherches en finance d\'entreprise, audit et comptabilité internationale. Partenariats avec Bank Al-Maghrib et CFC.',
             'created_at' => now()->subYears(2),
             'updated_at' => now(),
@@ -2081,7 +2093,7 @@ class EncgFesSeeder extends Seeder
             'institution_id' => $institution->id,
             'name' => 'Centre de Recherche en Management et Marketing (CR2M)',
             'acronym' => 'CR2M',
-            'director_id' => $prof1->id,
+            'director_id' => $prof1UserId,
             'description' => 'Recherches sur le comportement du consommateur marocain, e-commerce et digitalisation des entreprises au Maroc.',
             'created_at' => now()->subYears(1),
             'updated_at' => now(),
@@ -2091,7 +2103,7 @@ class EncgFesSeeder extends Seeder
         DB::table('publications')->insert([
             [
                 'research_lab_id' => $lab1Id,
-                'author_id' => $prof0->id,
+                'author_id' => $prof0UserId,
                 'title' => 'Impact de la Norme IFRS 9 sur les Banques Marocaines : Analyse Empirique',
                 'journal' => 'Revue Marocaine de Finance et Comptabilité',
                 'publish_date' => '2024-03-15',
@@ -2101,7 +2113,7 @@ class EncgFesSeeder extends Seeder
             ],
             [
                 'research_lab_id' => $lab1Id,
-                'author_id' => $prof0->id,
+                'author_id' => $prof0UserId,
                 'title' => 'Audit Interne et Gouvernance d\'Entreprise dans les PME du Maroc',
                 'journal' => 'International Journal of Accounting',
                 'publish_date' => '2023-11-01',
@@ -2111,7 +2123,7 @@ class EncgFesSeeder extends Seeder
             ],
             [
                 'research_lab_id' => $lab2Id,
-                'author_id' => $prof1->id,
+                'author_id' => $prof1UserId,
                 'title' => 'Digitalisation du Commerce de Détail au Maroc : Opportunités et Défis',
                 'journal' => 'Journal of Business Studies — Maghreb',
                 'publish_date' => '2024-06-20',
@@ -2121,7 +2133,7 @@ class EncgFesSeeder extends Seeder
             ],
             [
                 'research_lab_id' => $lab2Id,
-                'author_id' => $prof1->id,
+                'author_id' => $prof1UserId,
                 'title' => 'L\'Influence des Réseaux Sociaux sur la Décision d\'Achat des Millennials Marocains',
                 'journal' => 'Revue Africaine de Management',
                 'publish_date' => '2023-09-10',

@@ -115,6 +115,7 @@ class OfficialTimetableMatrixTest extends TestCase
         $this->assertSame('S5 GFC', $catalog['sections'][0]['semester_label']);
         $this->assertSame('Finance', $catalog['sections'][0]['rows'][0]['module_name']);
         $this->assertSame('CM Finance', $catalog['sections'][0]['rows'][0]['element_name']);
+        // CM : créneau avec label de groupe (ex: G1: 08h30-10h30)
         $this->assertSame('G1: 08h30-10h30', $catalog['sections'][0]['rows'][0]['days'][3][0]);
     }
 }

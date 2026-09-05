@@ -127,6 +127,14 @@
                 {{ $section['filiere_code'] ?? '' }} {{ $section['filiere_name'] ?? '' }}
                 — Année universitaire {{ $section['academic_year'] ?? $year }}
                 &nbsp;<span class="badge">Document officiel</span>
+                @if(!empty($section['footer']['cours_start']) || !empty($section['footer']['cours']))
+                    <div style="margin-top:2px; font-size:6.8pt; color:#0f2863; font-weight:bold;">
+                        Démarrage des cours le {{ $section['footer']['cours_start'] ?? $section['footer']['cours'] }}
+                        @if(!empty($section['footer']['td_tp_start']) || !empty($section['footer']['td_tp']))
+                            &nbsp;—&nbsp; Démarrage des TD/TP : la semaine du {{ $section['footer']['td_tp_start'] ?? $section['footer']['td_tp'] }}
+                        @endif
+                    </div>
+                @endif
             </div>
 
             <table class="edt">
