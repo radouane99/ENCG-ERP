@@ -194,7 +194,9 @@ class OfficialTimetableMatrixService
         }
 
         $track    = $this->trackLabel($filiere, $semesterNumber);
-        $semester = $meta['semester'] ?? null;
+        $semester = $meta['semester']
+            ?? ($schedules->first()?->relationLoaded('semester') ? $schedules->first()->semester : null)
+            ?? ($year ? \App\Models\Semester::where('academic_year_id', $year->id)->where('is_current', true)->first() : null);
 
         // Dates officielles (format ENCG Fès)
         $coursStart  = $semester?->start_date?->format('d/m/Y');

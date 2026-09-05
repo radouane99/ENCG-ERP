@@ -222,7 +222,7 @@ class TimetableExportController extends Controller
      */
     private function fetchSchedules(string $type, int $id, ?Request $request = null)
     {
-        $query = Schedule::with(['module', 'professor.user', 'room', 'group.filiere']);
+        $query = Schedule::with(['module', 'professor.user', 'room', 'group.filiere', 'semester']);
         $versionId = $request?->integer('version_id') ?: null;
         $semesterNumber = $request?->integer('semester_number') ?: null;
 
