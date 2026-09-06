@@ -5,7 +5,7 @@
 @section('styles')
 <style>
     @page {
-        size: {{ ($mode ?? 'emargement') === 'seances' ? 'A4 landscape' : 'A4 portrait' }};
+        size: {{ ($orientation ?? (($mode ?? 'emargement') === 'seances' ? 'landscape' : 'portrait')) === 'landscape' ? 'A4 landscape' : 'A4 portrait' }};
         margin: 8mm 10mm 10mm 10mm;
     }
     .roster-header {
@@ -194,8 +194,12 @@
                             {{ $st['cin'] ?? '—' }}
                         </td>
                     @endif
-                    <td style="font-weight: bold; color: #0f172a; padding-left: 6px;">
+                    @php $isAbs = in_array($st['id'], $absentIds ?? []); @endphp
+                    <td style="font-weight: bold; color: {{ $isAbs ? '#b91c1c' : '#0f172a' }}; padding-left: 6px;">
                         {{ $st['last_name'] ?? '' }} {{ $st['first_name'] ?? '' }}
+                        @if($isAbs)
+                            <span style="font-size: 6.5pt; color: #dc2626; font-weight: 900; margin-left: 5px; border: 0.5px solid #f87171; background-color: #fee2e2; border-radius: 2px; padding: 1px 4px;">ABSENT</span>
+                        @endif
                     </td>
                     <td style="text-align: center; font-weight: bold; color: {{ !empty($st['sub_group']) && str_contains($st['sub_group'], '.1') ? '#059669' : '#4338ca' }};">
                         {{ $st['sub_group'] ?? '—' }}
@@ -214,8 +218,12 @@
                         <td style="text-align: center; border-color: #cbd5e1;"></td>
                         <td style="text-align: center; background-color: #f1f5f9;"></td>
                     @else
-                        <td style="text-align: center; background-color: #ffffff; padding: 2px 6px;">
-                            <div class="sig-box"></div>
+                        <td style="text-align: center; background-color: {{ $isAbs ? '#fff1f2' : '#ffffff' }}; padding: 2px 6px;">
+                            @if($isAbs)
+                                <div style="font-size: 7pt; color: #e11d48; font-weight: bold; padding: 4px 0;">ABSENCE CONSTATÉE</div>
+                            @else
+                                <div class="sig-box"></div>
+                            @endif
                         </td>
                     @endif
                 </tr>

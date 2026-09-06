@@ -110,6 +110,8 @@ Route::middleware(['auth:sanctum', 'role:professor|vacataire|department-head|fil
     // Listes d'Étudiants & Émargement Officiel (Permanent / Vacataire / Doctorant)
     Route::get('/professor-portal/student-lists/options', [ProfessorPortalController::class, 'getStudentListOptions']);
     Route::get('/professor-portal/student-lists', [ProfessorPortalController::class, 'getStudentList']);
+    Route::get('/professor-portal/student-lists/attendance', [ProfessorPortalController::class, 'getStudentListAttendance']);
+    Route::post('/professor-portal/student-lists/attendance', [ProfessorPortalController::class, 'saveStudentListAttendance']);
     Route::get('/professor-portal/student-lists/pdf', [ProfessorPortalController::class, 'downloadStudentListPdf']);
     Route::get('/professor-portal/student-lists/excel', [ProfessorPortalController::class, 'exportStudentListExcel']);
     Route::get('/v1/professor-portal/student-lists/pdf', [ProfessorPortalController::class, 'downloadStudentListPdf']);

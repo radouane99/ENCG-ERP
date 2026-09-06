@@ -6,7 +6,8 @@ import {
   FileText, X, CheckCircle2, BarChart3, Download, Copy,
   LayoutGrid, LayoutList, UserX, RotateCcw, QrCode,
   Lock, Unlock, MessageCircle, Eye, Calendar, Pencil, SlidersHorizontal,
-  Tag, AlertCircle, Share2, Check, ExternalLink, PrinterIcon
+  Tag, AlertCircle, Share2, Check, ExternalLink, PrinterIcon,
+  Save, Database
 } from 'lucide-react';
 import api from '@/shared/lib/api';
 import { openAuthenticatedUrl } from '@shared/lib/documentAccess';
@@ -144,6 +145,10 @@ export default function ProfessorStudentRosterPage() {
 
   // 7. Individual Student Sheet Modal
   const [individualStudent, setIndividualStudent] = useState<StudentRow | null>(null);
+
+  // 8. Backend Persistence State
+  const [savingAttendance, setSavingAttendance] = useState(false);
+  const [loadingAttendanceHistory, setLoadingAttendanceHistory] = useState(false);
 
   // Storage key for caching séances locally
   const storageKey = useMemo(() => {
@@ -295,8 +300,36 @@ export default function ProfessorStudentRosterPage() {
     setLoadingOptions(true);
     try {
       const res = await api.get('/professor-portal/student-lists/options');
-      setOptions(res.data);
-      const firstModule = res.data.modules?.[0];
+      const payload = res.data?.data ?? res.data;
+      let modulesList: ModuleOption[] = payload?.modules ?? [];
+
+      // Si les modules ne sont pas directement regroupés mais les groupes existent
+      if ((!modulesList || modulesList.length === 0) && payload?.groups?.length > 0) {
+        const map: Record<number, ModuleOption> = {};
+        payload.groups.forEach((g: any) => {
+          const mId = g.module_id || 0;
+          if (!map[mId]) {
+            map[mId] = {
+              module_id: mId,
+              module_name: g.module_name || 'Module d\'Enseignement',
+              module_code: g.module_code || 'MOD',
+              sections: [],
+            };
+          }
+          map[mId].sections.push({
+            group_id: g.id,
+            group_code: g.name,
+            filiere_name: g.filiere_name || 'Filière',
+            semester: `S${g.semester || 1}`,
+            academic_year: '2025/2026',
+            sub_groups: g.sub_groups || [],
+          });
+        });
+        modulesList = Object.values(map);
+      }
+
+      setOptions({ modules: modulesList });
+      const firstModule = modulesList[0];
       if (firstModule) {
         setSelectedModuleId(firstModule.module_id);
         const firstSection = firstModule.sections?.[0];
@@ -318,16 +351,105 @@ export default function ProfessorStudentRosterPage() {
       const params: Record<string, string> = { group_id: String(selectedGroupId) };
       if (listMode === 'subgroup' && selectedSubGroup) params.sub_group = selectedSubGroup;
       const res = await api.get('/professor-portal/student-lists', { params });
-      setStudents(res.data.students ?? res.data.data ?? []);
+      const rawList = res.data?.students ?? res.data?.data?.students ?? res.data?.data ?? [];
+      const normalized: StudentRow[] = (Array.isArray(rawList) ? rawList : []).map((s: any) => ({
+        id: s.id,
+        matricule: s.matricule || s.student_number || '—',
+        cne: s.cne || s.massar_code || '—',
+        massar_code: s.massar_code || '',
+        cin: s.cin || '—',
+        first_name: s.first_name || '',
+        last_name: s.last_name || '',
+        section: s.section || selectedSection?.group_code || '—',
+        sub_group: s.sub_group || '',
+        gender: s.gender,
+      }));
+      setStudents(normalized);
     } catch {
       toast.error('Erreur lors du chargement de la liste');
     } finally {
       setLoadingStudents(false);
     }
-  }, [selectedGroupId, listMode, selectedSubGroup]);
+  }, [selectedGroupId, listMode, selectedSubGroup, selectedSection]);
+
+  // Fetch Attendance History from Backend
+  const fetchAttendanceHistory = useCallback(async () => {
+    if (!selectedGroupId || !selectedModuleId) return;
+    setLoadingAttendanceHistory(true);
+    try {
+      const params: Record<string, string> = {
+        group_id: String(selectedGroupId),
+        module_id: String(selectedModuleId),
+      };
+      if (listMode === 'subgroup' && selectedSubGroup) params.sub_group = selectedSubGroup;
+      const res = await api.get('/professor-portal/student-lists/attendance', { params });
+      const backendSeances = res.data?.seances ?? res.data?.data?.seances ?? {};
+      if (Object.keys(backendSeances).length > 0) {
+        setSeanceStore(prev => {
+          const merged = { ...prev };
+          Object.entries(backendSeances).forEach(([code, sData]: [string, any]) => {
+            merged[code] = {
+              absentIds: sData.absent_ids || [],
+              annotations: sData.annotations || {},
+              isLocked: !!sData.is_locked,
+              date: sData.date || new Date().toISOString().slice(0, 10),
+              savedAt: sData.saved_at || new Date().toISOString(),
+            };
+          });
+          return merged;
+        });
+
+        // Appliquer à la séance en cours si elle existe en BDD
+        const currentData = backendSeances[selectedSeance];
+        if (currentData) {
+          setAbsentIds(new Set(currentData.absent_ids || []));
+          setAnnotations(currentData.annotations || {});
+          setIsLocked(!!currentData.is_locked);
+          if (currentData.date) setSeanceDate(currentData.date);
+        }
+      }
+    } catch {
+      // Ignorer l'erreur réseau pour continuer avec le cache local
+    } finally {
+      setLoadingAttendanceHistory(false);
+    }
+  }, [selectedGroupId, selectedModuleId, listMode, selectedSubGroup, selectedSeance]);
+
+  // Save attendance to Backend Database
+  const handleSaveAttendanceToDb = async () => {
+    if (!selectedGroupId || !selectedModuleId) {
+      toast.error('Veuillez sélectionner un module et un groupe');
+      return;
+    }
+    setSavingAttendance(true);
+    try {
+      const payload = {
+        group_id: selectedGroupId,
+        module_id: selectedModuleId,
+        sub_group: listMode === 'subgroup' ? selectedSubGroup : undefined,
+        seance_code: selectedSeance,
+        session_date: seanceDate,
+        is_locked: isLocked,
+        absent_ids: Array.from(absentIds),
+        annotations,
+      };
+      const res = await api.post('/professor-portal/student-lists/attendance', payload);
+      toast.success(res.data?.message || `Feuille de présence ${selectedSeance} enregistrée en base de données`);
+      persistCurrentSeance(absentIds, annotations, isLocked, seanceDate);
+    } catch {
+      toast.error('Erreur lors de l\'enregistrement en base de données');
+    } finally {
+      setSavingAttendance(false);
+    }
+  };
 
   useEffect(() => { fetchOptions(); }, [fetchOptions]);
   useEffect(() => { if (selectedGroupId) fetchStudents(); }, [selectedGroupId, listMode, selectedSubGroup]);
+  useEffect(() => {
+    if (selectedGroupId && selectedModuleId) {
+      fetchAttendanceHistory();
+    }
+  }, [selectedGroupId, selectedModuleId, listMode, selectedSubGroup]);
   useEffect(() => { setSelectedSubGroup(availableSubGroups[0] ?? ''); }, [availableSubGroups]);
   useEffect(() => {
     const firstSection = selectedModule?.sections?.[0];
@@ -803,6 +925,17 @@ export default function ProfessorStudentRosterPage() {
                         <span className="text-rose-400 font-semibold">{absentIds.size} absent{absentIds.size > 1 ? 's' : ''}</span>
                       )}
                     </span>
+
+                    {/* Save to DB Button */}
+                    <button
+                      onClick={handleSaveAttendanceToDb}
+                      disabled={savingAttendance || !selectedGroupId}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-md shadow-emerald-950/40 disabled:opacity-50"
+                      title="Persister la feuille d'émargement en base de données"
+                    >
+                      {savingAttendance ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                      <span>{savingAttendance ? 'Enregistrement…' : 'Enregistrer en BDD'}</span>
+                    </button>
                   </div>
                 </div>
               </div>

@@ -1781,6 +1781,30 @@ class ProfessorPortalController extends Controller
             ];
         });
 
+        // Organiser également par module pour compatibilité ascendante avec l'UI
+        $modulesMap = [];
+        foreach ($groupList as $g) {
+            $mId = $g['module_id'] ?: 0;
+            if (! isset($modulesMap[$mId])) {
+                $modulesMap[$mId] = [
+                    'module_id' => $mId,
+                    'module_name' => $g['module_name'],
+                    'module_code' => $g['module_code'],
+                    'sections' => [],
+                ];
+            }
+            $modulesMap[$mId]['sections'][] = [
+                'group_id' => $g['id'],
+                'group_code' => $g['name'],
+                'filiere_name' => $g['filiere_name'],
+                'filiere_code' => $g['filiere_code'],
+                'semester' => 'S'.$g['semester'],
+                'academic_year' => date('Y').'/'.(date('Y') + 1),
+                'sub_groups' => $g['sub_groups'],
+            ];
+        }
+        $modulesList = array_values($modulesMap);
+
         // Détection du statut de l'enseignant (Permanent / Vacataire / Doctorant)
         $statusLabel = 'Professeur Titulaire (Permanent)';
         if (($prof?->contract_type === 'vacataire') || ($user && $user->hasRole('vacataire'))) {
@@ -1790,16 +1814,22 @@ class ProfessorPortalController extends Controller
             $statusLabel = 'Doctorant Moniteur / Vacataire';
         }
 
+        $profPayload = [
+            'id' => $profId,
+            'name' => trim(($user->first_name ?? '').' '.($user->last_name ?? '')) ?: ($user->name ?? 'Enseignant'),
+            'status' => $statusLabel,
+            'email' => $user?->email,
+        ];
+
         return response()->json([
             'success' => true,
+            'modules' => $modulesList,
+            'groups' => $groupList,
+            'professor' => $profPayload,
             'data' => [
+                'modules' => $modulesList,
                 'groups' => $groupList,
-                'professor' => [
-                    'id' => $profId,
-                    'name' => trim(($user->first_name ?? '').' '.($user->last_name ?? '')) ?: ($user->name ?? 'Enseignant'),
-                    'status' => $statusLabel,
-                    'email' => $user?->email,
-                ],
+                'professor' => $profPayload,
             ],
         ]);
     }
@@ -1843,22 +1873,26 @@ class ProfessorPortalController extends Controller
         $students = $query->orderBy('users.last_name', 'asc')
             ->orderBy('users.first_name', 'asc')
             ->get()
-            ->map(function ($s) {
+            ->map(function ($s) use ($group) {
                 return [
                     'id' => $s->id,
                     'student_number' => $s->student_number,
+                    'matricule' => $s->student_number ?: '—',
                     'cne' => $s->cne ?: ($s->massar_code ?: '—'),
                     'massar_code' => $s->massar_code,
                     'cin' => $s->cin ?: ($s->user?->cin ?: '—'),
                     'first_name' => $s->user?->first_name ?? '—',
                     'last_name' => $s->user?->last_name ?? '—',
                     'email' => $s->user?->email ?? '—',
+                    'section' => $group->name,
                     'sub_group' => $s->latestPathway?->sub_group ?? ($s->sub_group ?? '—'),
                 ];
             });
 
         return response()->json([
             'success' => true,
+            'students' => $students,
+            'total' => $students->count(),
             'data' => [
                 'group' => [
                     'id' => $group->id,
@@ -1875,6 +1909,192 @@ class ProfessorPortalController extends Controller
     }
 
     /**
+     * Récupération de l'historique des présences et séances enregistrées en base.
+     */
+    public function getStudentListAttendance(Request $request): JsonResponse
+    {
+        $groupId = (int) $request->input('group_id');
+        $moduleId = (int) $request->input('module_id');
+        $subGroup = trim((string) $request->input('sub_group', ''));
+
+        if (! $groupId) {
+            return response()->json(['success' => false, 'message' => 'Groupe obligatoire.'], 422);
+        }
+
+        $query = AttendanceSession::with(['attendances'])
+            ->where('group_id', $groupId);
+
+        if ($moduleId) {
+            $query->where('module_id', $moduleId);
+        }
+
+        $sessions = $query->orderBy('session_date', 'asc')->get();
+
+        $seancesMap = [];
+        foreach ($sessions as $s) {
+            $code = $s->room ?: ('S'.(count($seancesMap) + 1));
+            $absentIds = [];
+            $annotations = [];
+
+            foreach ($s->attendances as $att) {
+                $statusVal = is_object($att->status) ? $att->status->value : (string) $att->status;
+                if ($statusVal === 'absent' || $statusVal === 'excused') {
+                    $absentIds[] = $att->student_id;
+                }
+                if (! empty($att->notes) || $statusVal === 'late' || $att->is_justified) {
+                    $tag = 'remarque';
+                    if ($att->is_justified || $statusVal === 'excused') {
+                        $tag = 'justifie';
+                    } elseif ($statusVal === 'late') {
+                        $tag = 'retard';
+                    }
+
+                    $annotations[$att->student_id] = [
+                        'text' => $att->notes ?? '',
+                        'tag' => $tag,
+                    ];
+                }
+            }
+
+            $seancesMap[$code] = [
+                'session_id' => $s->id,
+                'seance_code' => $code,
+                'date' => $s->session_date ? Carbon::parse($s->session_date)->format('Y-m-d') : date('Y-m-d'),
+                'is_locked' => (bool) $s->is_locked,
+                'absent_ids' => $absentIds,
+                'annotations' => $annotations,
+                'saved_at' => $s->updated_at ? $s->updated_at->toISOString() : null,
+            ];
+        }
+
+        return response()->json([
+            'success' => true,
+            'seances' => $seancesMap,
+            'data' => [
+                'seances' => $seancesMap,
+            ],
+        ]);
+    }
+
+    /**
+     * Sauvegarde officielle de la feuille de présence d'une séance en base de données.
+     */
+    public function saveStudentListAttendance(Request $request): JsonResponse
+    {
+        $groupId = (int) $request->input('group_id');
+        $moduleId = (int) $request->input('module_id');
+        $subGroup = trim((string) $request->input('sub_group', ''));
+        $rawCode = trim((string) $request->input('seance_code', 'S1'));
+        $seanceCode = preg_replace('/[^a-zA-Z0-9_\-\.]/', '', $rawCode) ?: 'S1';
+        $rawDate = (string) $request->input('session_date', '');
+        $sessionDate = preg_match('/^\d{4}-\d{2}-\d{2}$/', $rawDate) ? $rawDate : date('Y-m-d');
+        $isLocked = (bool) $request->input('is_locked', false);
+        $absentIds = array_filter(array_map('intval', (array) $request->input('absent_ids', [])));
+        $annotations = (array) $request->input('annotations', []);
+
+        if (! $groupId || ! $moduleId) {
+            return response()->json(['success' => false, 'message' => 'Groupe et Module obligatoires.'], 422);
+        }
+
+        $user = $request->user();
+        if (! $user) {
+            return response()->json(['success' => false, 'message' => 'Non authentifié.'], 401);
+        }
+
+        $prof = $user->professor;
+        $profId = $prof?->id ?: $user->id;
+        $profType = ($prof?->contract_type === 'vacataire') ? 'vacataire' : 'permanent';
+
+        $group = Group::with('academicYear')->findOrFail($groupId);
+        $academicYearId = $group->academic_year_id ?: (\App\Models\AcademicYear::where('is_current', true)->value('id') ?: 1);
+        $sessionType = ! empty($subGroup) ? 'td' : 'cm';
+
+        $session = AttendanceSession::firstOrNew([
+            'module_id' => $moduleId,
+            'group_id' => $groupId,
+            'session_date' => $sessionDate,
+            'session_type' => $sessionType,
+        ]);
+
+        // Vérification de sécurité IDOR : empêcher un enseignant de modifier les séances d'un autre
+        if ($session->exists && $session->created_by && $session->created_by !== $user->id) {
+            $isPrivileged = method_exists($user, 'hasAnyRole') && $user->hasAnyRole(['super-admin', 'institution-admin', 'director', 'department-head', 'filiere-head']);
+            if (! $isPrivileged) {
+                return response()->json(['success' => false, 'message' => 'Accès refusé : vous ne pouvez pas modifier la séance d\'un autre enseignant.'], 403);
+            }
+        }
+
+        return DB::transaction(function () use ($session, $academicYearId, $profId, $profType, $user, $seanceCode, $isLocked, $groupId, $subGroup, $absentIds, $annotations, $sessionDate) {
+            if (! $session->exists) {
+                $session->academic_year_id = $academicYearId;
+                $session->professor_id = $profId;
+                $session->professor_type = $profType;
+                $session->start_time = '08:30:00';
+                $session->end_time = '10:30:00';
+                $session->created_by = $user->id;
+            }
+
+            $session->room = $seanceCode;
+            $session->is_locked = $isLocked;
+            $session->save();
+
+            // Récupérer uniquement les étudiants inscrits dans ce groupe / sous-groupe (isolation stricte)
+            $students = Student::whereHas('pathways', function ($p) use ($groupId, $subGroup) {
+                $p->where('group_id', $groupId)->where('is_current', true);
+                if (! empty($subGroup)) {
+                    $p->where('sub_group', $subGroup);
+                }
+            })->pluck('id');
+
+            $absentSet = array_flip($absentIds);
+
+            foreach ($students as $studentId) {
+                $isAbsent = isset($absentSet[$studentId]);
+                $ann = $annotations[$studentId] ?? null;
+                $notes = is_array($ann) ? ($ann['text'] ?? '') : (is_string($ann) ? $ann : null);
+                $tag = is_array($ann) ? ($ann['tag'] ?? null) : null;
+
+                if ($tag && $tag !== 'remarque') {
+                    $notes = "[{$tag}] ".($notes ?: '');
+                }
+
+                $status = $isAbsent ? \App\Enums\AttendanceStatus::ABSENT : \App\Enums\AttendanceStatus::PRESENT;
+                if ($tag === 'justifie' && $isAbsent) {
+                    $status = \App\Enums\AttendanceStatus::EXCUSED;
+                } elseif ($tag === 'retard') {
+                    $status = \App\Enums\AttendanceStatus::LATE;
+                }
+
+                Attendance::updateOrCreate(
+                    [
+                        'attendance_session_id' => $session->id,
+                        'student_id' => $studentId,
+                    ],
+                    [
+                        'status' => $status,
+                        'is_justified' => ($tag === 'justifie'),
+                        'notes' => $notes ?: null,
+                    ]
+                );
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => "Feuille de présence de la séance {$seanceCode} enregistrée avec succès en base de données.",
+                'data' => [
+                    'session_id' => $session->id,
+                    'seance_code' => $seanceCode,
+                    'session_date' => $sessionDate,
+                    'is_locked' => $session->is_locked,
+                    'total_students' => count($students),
+                    'absent_count' => count($absentIds),
+                    'present_count' => count($students) - count($absentIds),
+                ],
+            ]);
+        });
+    }
+
+    /**
      * Téléchargement de la fiche d'émargement officielle en format PDF A4.
      */
     public function downloadStudentListPdf(Request $request)
@@ -1883,6 +2103,7 @@ class ProfessorPortalController extends Controller
         $subGroup = trim((string) $request->input('sub_group', ''));
         $moduleId = (int) $request->input('module_id');
         $mode = $request->input('mode', 'emargement'); // 'emargement' ou 'seances'
+        $reqOrientation = $request->input('orientation');
 
         if (! $groupId) {
             return response()->json(['success' => false, 'message' => 'Groupe obligatoire.'], 422);
@@ -1902,6 +2123,8 @@ class ProfessorPortalController extends Controller
         if (str_contains(strtolower($prof?->specialty ?? ''), 'doctorant') || str_contains(strtolower($prof?->grade ?? ''), 'doctorant')) {
             $statusLabel = 'Doctorant Moniteur / Vacataire';
         }
+
+        $absentIds = array_filter(array_map('intval', explode(',', (string) $request->input('absent_ids', ''))));
 
         $students = Student::with(['user', 'latestPathway'])
             ->select('students.*')
@@ -1929,7 +2152,13 @@ class ProfessorPortalController extends Controller
 
         $academicYear = $group->academicYear?->name ?? (date('Y').'/'.(date('Y') + 1));
 
-        $orientation = ($mode === 'seances') ? 'landscape' : 'portrait';
+        if ($reqOrientation === 'paysage' || $reqOrientation === 'landscape') {
+            $orientation = 'landscape';
+        } elseif ($reqOrientation === 'portrait') {
+            $orientation = 'portrait';
+        } else {
+            $orientation = ($mode === 'seances') ? 'landscape' : 'portrait';
+        }
 
         $pdf = Pdf::loadView('pdf.fiche_emargement_professeur', [
             'professorName' => $professorName,
@@ -1942,6 +2171,8 @@ class ProfessorPortalController extends Controller
             'subGroup' => $subGroup ?: null,
             'academicYear' => $academicYear,
             'mode' => $mode,
+            'orientation' => $orientation,
+            'absentIds' => $absentIds,
             'students' => $students,
         ])->setPaper('a4', $orientation);
 

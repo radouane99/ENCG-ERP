@@ -37,9 +37,6 @@ Route::get('/v1/verify/document/{documentId}', [PublicVerificationController::cl
 Route::get('/verify/pv/{moduleId}/{groupId}', [PublicVerificationController::class, 'verifyModulePv']);
 Route::get('/verify/card/{token}', [StudentCardController::class, 'verify']);
 Route::get('/verify/surveillance/{token}/confirm', [ConvocationController::class, 'confirmReception']);
-Route::get('/professor/surveillances/all-pdf', [PdfExportController::class, 'downloadMySurveillancesPdf']);
-Route::get('/professor/surveillances/{id}/pdf', [PdfExportController::class, 'surveillantConvocationPdf']);
-Route::match(['get', 'post'], '/exams/{examId}/pv-pdf', [ExamPdfController::class, 'pvExamen']);
 
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::match(['get', 'post'], '/exams/{examId}/pv-pdf', [ExamPdfController::class, 'pvExamen']);
