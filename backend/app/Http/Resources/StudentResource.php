@@ -31,7 +31,7 @@ class StudentResource extends JsonResource
             'cin' => $this->cin ?? ($this->relationLoaded('user') ? $this->user?->cin : null),
             'current_filiere' => $this->current_filiere ?? ($this->relationLoaded('latestPathway') ? $this->latestPathway?->filiere?->code : null),
             'current_group' => $this->current_group ?? ($this->relationLoaded('latestPathway') ? $this->latestPathway?->group?->name : null),
-            'section' => ($this->relationLoaded('latestPathway') && $this->latestPathway?->group?->name && preg_match('/G(?:roupe)?\s*[.\-_]?\s*(\d+)/i', (string) $this->latestPathway->group->name, $m)) ? ('Section ' . $m[1]) : null,
+            'section' => ($this->relationLoaded('latestPathway') && $this->latestPathway?->group?->name && preg_match('/G(?:roupe)?\s*[.\-_]?\s*(\d+)/i', (string) $this->latestPathway->group->name, $m)) ? ('Section '.$m[1]) : null,
             'sub_group' => $this->relationLoaded('latestPathway') ? $this->latestPathway?->sub_group : ($this->sub_group ?? null),
             // Wrap the related user model in UserResource if it's loaded
             'user' => $this->whenLoaded('user', function () {

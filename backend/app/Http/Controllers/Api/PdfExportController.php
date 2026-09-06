@@ -55,7 +55,7 @@ class PdfExportController extends Controller
         $data['logoBase64'] ??= $this->resolveLogoBase64();
 
         // Si verifyUrl est fourni mais qrBase64 est absent, générer le QR Code automatiquement
-        if (!empty($data['verifyUrl']) && empty($data['qrBase64'])) {
+        if (! empty($data['verifyUrl']) && empty($data['qrBase64'])) {
             $data['qrBase64'] = $this->generateQrBase64($data['verifyUrl']);
         }
 
@@ -406,8 +406,8 @@ class PdfExportController extends Controller
             if ($s->exam) {
                 $startTime = $s->exam->start_time ? substr($s->exam->start_time, 0, 5) : '08:30';
                 $durationMins = (int) ($s->exam->duration_minutes ?: 120);
-                $endTime = $s->exam->end_time 
-                    ? substr($s->exam->end_time, 0, 5) 
+                $endTime = $s->exam->end_time
+                    ? substr($s->exam->end_time, 0, 5)
                     : date('H:i', strtotime($startTime." +{$durationMins} minutes"));
                 $timeRange = "{$startTime} – {$endTime}";
 

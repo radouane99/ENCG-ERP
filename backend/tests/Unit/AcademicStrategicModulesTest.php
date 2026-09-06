@@ -246,7 +246,7 @@ class AcademicStrategicModulesTest extends TestCase
         $semesters = [];
         for ($i = 1; $i <= 10; $i++) {
             $semesters[] = [
-                'semester_code' => 'S' . $i,
+                'semester_code' => 'S'.$i,
                 'ects_credits' => 30, // 30 ECTS par semestre selon la Charte Bologne / MESRSFC
                 'average' => 14.25,
             ];

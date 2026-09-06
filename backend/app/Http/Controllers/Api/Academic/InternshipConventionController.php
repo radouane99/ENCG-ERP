@@ -62,7 +62,7 @@ class InternshipConventionController extends Controller
             'insurance_policy_number' => 'nullable|string|max:100',
         ]);
 
-        $conventionRef = 'CONV-ENCG-' . date('Y') . '-' . strtoupper(Str::random(6));
+        $conventionRef = 'CONV-ENCG-'.date('Y').'-'.strtoupper(Str::random(6));
         $securityToken = Str::random(40);
 
         $internship = Internship::create([
@@ -82,7 +82,7 @@ class InternshipConventionController extends Controller
             'start_date' => $validated['start_date'],
             'end_date' => $validated['end_date'],
             'monthly_allowance' => $validated['monthly_allowance'] ?? 0,
-            'insurance_policy_number' => $validated['insurance_policy_number'] ?? ('POL-ENCG-' . date('Y') . '-' . $student->id),
+            'insurance_policy_number' => $validated['insurance_policy_number'] ?? ('POL-ENCG-'.date('Y').'-'.$student->id),
             'insurance_company' => 'MAMDA-MCMA / Assurance Scolaire',
             'insurance_verified' => true,
             'convention_ref' => $conventionRef,
@@ -124,16 +124,16 @@ class InternshipConventionController extends Controller
         $internship = Internship::with(['student.user', 'student.filiere'])->findOrFail($id);
         $student = $internship->student;
 
-        $trackingCode = $internship->convention_ref ?? ('CONV-ENCG-' . date('Y') . '-' . str_pad($id, 4, '0', STR_PAD_LEFT));
-        $verifyUrl = config('app.frontend_url', 'http://localhost:5173') . "/verify/{$trackingCode}";
+        $trackingCode = $internship->convention_ref ?? ('CONV-ENCG-'.date('Y').'-'.str_pad($id, 4, '0', STR_PAD_LEFT));
+        $verifyUrl = config('app.frontend_url', 'http://localhost:5173')."/verify/{$trackingCode}";
 
         $qrBase64 = '';
         if (class_exists(QrCode::class)) {
             try {
                 $qrSvg = QrCode::format('svg')->size(90)->margin(0)->generate($verifyUrl);
-                $qrBase64 = 'data:image/svg+xml;base64,' . base64_encode($qrSvg);
+                $qrBase64 = 'data:image/svg+xml;base64,'.base64_encode($qrSvg);
             } catch (\Throwable $e) {
-                Log::warning('QR Code error: ' . $e->getMessage());
+                Log::warning('QR Code error: '.$e->getMessage());
             }
         }
 

@@ -201,8 +201,7 @@ class ExamPlanningEngine
         }
 
         return DB::transaction(function () use (
-            $filiereId, $sessionId, $session, $modules, $rooms, $groups,
-            $startDate, $endDate, $currentDate, $modulesPerDay, $daySlotMode
+            $filiereId, $sessionId, $session, $modules, $rooms, $groups, $currentDate, $modulesPerDay, $daySlotMode
         ) {
             // Supprimer les examens existants pour cette session et filière
             $moduleIds = Module::where('filiere_id', $filiereId)->pluck('id');
@@ -221,10 +220,10 @@ class ExamPlanningEngine
                     'vacataire',
                     'doctorant',
                 ]))
-                ->orWhereHas('professor', fn ($q) => $q->where('is_active', true));
+                    ->orWhereHas('professor', fn ($q) => $q->where('is_active', true));
             })
-            ->with(['roles', 'professor'])
-            ->get();
+                ->with(['roles', 'professor'])
+                ->get();
 
             if ($professors->isEmpty()) {
                 $profUserIds = Professor::whereNotNull('user_id')->pluck('user_id');
@@ -348,7 +347,7 @@ class ExamPlanningEngine
 
                 for ($i = 0; $i < $totalExams; $i++) {
                     $exam = $sortedExams[$i];
-                    $dateStr = \Carbon\Carbon::parse($exam->exam_date)->toDateString();
+                    $dateStr = Carbon::parse($exam->exam_date)->toDateString();
                     $parts = explode(':', $exam->start_time);
                     $candStart = ((int) ($parts[0] ?? 8) * 60) + (int) ($parts[1] ?? 30);
                     $candEnd = $candStart + ($exam->duration_minutes ?: 120);
@@ -455,11 +454,12 @@ class ExamPlanningEngine
                     }
 
                     // Tri intelligent des surveillants :
-                    $second = $eligibleSeconds->sort(function ($a, $b) use ($daily, $workload, $dateStr, $isPermanent, $professors, $maxFairWorkload, $remainingExams, $activeProfCount) {
+                    $second = $eligibleSeconds->sort(function ($a, $b) use ($daily, $workload, $dateStr, $isPermanent, $professors, $maxFairWorkload, $remainingExams) {
                         // Lookahead dynamique : calcul précis du besoin en surveillants pour chaque date future
-                        $futureMinDistinct = $remainingExams->groupBy('exam_date')->map(function ($dayExams) use ($activeProfCount) {
+                        $futureMinDistinct = $remainingExams->groupBy('exam_date')->map(function ($dayExams) {
                             $simultaneous = $dayExams->groupBy('start_time')->map->count()->max() ?? 1;
                             $slots = $dayExams->count() * 2;
+
                             return max($simultaneous * 2, (int) ceil($slots / 2));
                         })->max() ?? 0;
 

@@ -2,19 +2,30 @@
 
 namespace App\Console\Commands;
 
+use App\Http\Controllers\Api\PdfExportController;
+use App\Models\Exam;
+use App\Models\ExamSurveillance;
+use App\Models\Professor;
+use App\Models\User;
 use App\Services\Academic\ExamPlanningEngine;
+use App\Services\ProctorAssignmentService;
+use Carbon\Carbon;
 use Illuminate\Console\Command;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Spatie\Permission\Models\Role;
 
 class RegenerateExamScheduleCommand extends Command
 {
     protected $signature = 'exams:regenerate-schedule {filiere_id=1} {session_id=3} {--start_date=2026-09-07} {--modules_per_day=2} {--test-door-sign} {--seed-proctor-types} {--test-auto-assign}';
+
     protected $description = 'Régénère le planning des examens et affectations de surveillance avec vérification stricte anti-chevauchement.';
 
     public function handle(ExamPlanningEngine $engine): int
     {
         if ($this->option('seed-proctor-types')) {
-            $vacRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'vacataire', 'guard_name' => 'sanctum']);
-            $vacUser = \App\Models\User::firstOrCreate(
+            $vacRole = Role::firstOrCreate(['name' => 'vacataire', 'guard_name' => 'sanctum']);
+            $vacUser = User::firstOrCreate(
                 ['email' => 'elmansouri.youssef@encg-fes.ma'],
                 [
                     'first_name' => 'Youssef',
@@ -25,7 +36,7 @@ class RegenerateExamScheduleCommand extends Command
             );
             $vacUser->forceFill(['is_active' => true])->save();
             $vacUser->assignRole($vacRole);
-            \App\Models\Professor::firstOrCreate(
+            Professor::firstOrCreate(
                 ['user_id' => $vacUser->id],
                 [
                     'institution_id' => 1,
@@ -38,8 +49,8 @@ class RegenerateExamScheduleCommand extends Command
                 ]
             );
 
-            $docRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'doctorant', 'guard_name' => 'sanctum']);
-            $docUser = \App\Models\User::firstOrCreate(
+            $docRole = Role::firstOrCreate(['name' => 'doctorant', 'guard_name' => 'sanctum']);
+            $docUser = User::firstOrCreate(
                 ['email' => 'bennouna.omar@cedoc.encg-fes.ma'],
                 [
                     'first_name' => 'Omar',
@@ -50,7 +61,7 @@ class RegenerateExamScheduleCommand extends Command
             );
             $docUser->forceFill(['is_active' => true])->save();
             $docUser->assignRole($docRole);
-            \App\Models\Professor::firstOrCreate(
+            Professor::firstOrCreate(
                 ['user_id' => $docUser->id],
                 [
                     'institution_id' => 1,
@@ -69,27 +80,28 @@ class RegenerateExamScheduleCommand extends Command
         }
 
         if ($this->option('test-door-sign')) {
-            $exam = \App\Models\Exam::with('module')->first();
+            $exam = Exam::with('module')->first();
             if (! $exam) {
                 $this->error("Aucun examen trouvé pour tester l'affiche de porte.");
 
                 return Command::FAILURE;
             }
-            $user = \App\Models\User::first();
-            \Illuminate\Support\Facades\Auth::login($user);
-            $req = \Illuminate\Http\Request::create("/api/v1/admin/exams/{$exam->id}/door-sign-pdf", 'GET');
+            $user = User::first();
+            Auth::login($user);
+            $req = Request::create("/api/v1/admin/exams/{$exam->id}/door-sign-pdf", 'GET');
             $req->setUserResolver(fn () => $user);
 
             try {
-                $ctrl = app(\App\Http\Controllers\Api\PdfExportController::class);
+                $ctrl = app(PdfExportController::class);
                 $response = $ctrl->downloadDoorSignPdf($req, $exam);
                 $bytes = strlen($response->getContent());
                 $this->info("Test Affiche de Porte pour Examen #{$exam->id} ({$exam->module?->name}) : SUCCÈS ! Taille du PDF généré : {$bytes} octets.");
 
                 return Command::SUCCESS;
             } catch (\Throwable $e) {
-                $this->error("Erreur PDF : " . $e->getMessage());
-                $this->error("Fichier : " . $e->getFile() . ":" . $e->getLine());
+                $this->error('Erreur PDF : '.$e->getMessage());
+                $this->error('Fichier : '.$e->getFile().':'.$e->getLine());
+
                 return Command::FAILURE;
             }
         }
@@ -97,9 +109,10 @@ class RegenerateExamScheduleCommand extends Command
         if ($this->option('test-auto-assign')) {
             $sessionId = (int) $this->argument('session_id');
             $this->info("Test ProctorAssignmentService::autoAssignProctors pour Session {$sessionId}...");
-            $service = app(\App\Services\ProctorAssignmentService::class);
+            $service = app(ProctorAssignmentService::class);
             $res = $service->autoAssignProctors($sessionId);
-            $this->info("Résultat : " . json_encode($res, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+            $this->info('Résultat : '.json_encode($res, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+
             return Command::SUCCESS;
         }
 
@@ -121,13 +134,13 @@ class RegenerateExamScheduleCommand extends Command
                 customStartDate: $startDate
             );
 
-            $this->info("Succès : " . ($result['message'] ?? 'OK'));
+            $this->info('Succès : '.($result['message'] ?? 'OK'));
 
             // Afficher le récapitulatif détaillé de la charge par surveillant
-            $survs = \App\Models\ExamSurveillance::with(['professor', 'exam'])->get();
+            $survs = ExamSurveillance::with(['professor', 'exam'])->get();
             $tableData = [];
             foreach ($survs->groupBy('professor_id') as $pid => $list) {
-                $user = \App\Models\User::with('roles', 'professor')->find($pid);
+                $user = User::with('roles', 'professor')->find($pid);
                 $isPerm = $user->hasAnyRole(['professor', 'department-head', 'enseignant'])
                     || ($user->professor && $user->professor->contract_type === 'permanent');
                 $isVac = $user->hasRole('vacataire') || ($user->professor && $user->professor->contract_type === 'vacataire');
@@ -136,8 +149,9 @@ class RegenerateExamScheduleCommand extends Command
 
                 $roles = $list->pluck('role')->unique()->map(fn ($r) => $r === 'president_salle' ? 'Président' : 'Surveillant')->join('/');
                 $slots = $list->map(function ($s) {
-                    $dt = \Carbon\Carbon::parse($s->exam->exam_date)->format('d/m');
+                    $dt = Carbon::parse($s->exam->exam_date)->format('d/m');
                     $time = substr($s->exam->start_time, 0, 5);
+
                     return "{$dt} ({$time})";
                 })->join(', ');
 
@@ -149,7 +163,7 @@ class RegenerateExamScheduleCommand extends Command
                     'Statut' => $typeLabel,
                     'Rôle' => $roles,
                     'Séances' => $list->count(),
-                    'Créneaux & Jours' => $slots . $blocInfo,
+                    'Créneaux & Jours' => $slots.$blocInfo,
                 ];
             }
 
@@ -157,8 +171,9 @@ class RegenerateExamScheduleCommand extends Command
 
             return Command::SUCCESS;
         } catch (\Throwable $e) {
-            $this->error("Erreur : " . $e->getMessage());
+            $this->error('Erreur : '.$e->getMessage());
             $this->error($e->getTraceAsString());
+
             return Command::FAILURE;
         }
     }

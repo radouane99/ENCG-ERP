@@ -42,8 +42,8 @@ class DispatchStudentSubGroupsCommand extends Command
             $rows[] = [
                 $detail['group_name'],
                 $detail['total'],
-                $detail['sub_group_1'] . " ({$detail['count_1']} ét.)",
-                $detail['sub_group_2'] . " ({$detail['count_2']} ét.)",
+                $detail['sub_group_1']." ({$detail['count_1']} ét.)",
+                $detail['sub_group_2']." ({$detail['count_2']} ét.)",
             ];
         }
 

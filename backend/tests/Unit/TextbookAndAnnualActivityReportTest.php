@@ -143,7 +143,7 @@ class TextbookAndAnnualActivityReportTest extends TestCase
         $this->assertMatchesRegularExpression('/^[a-f0-9]{64}$/', $digitalSealHash, 'L\'empreinte doit être une chaîne hexadécimale valide');
 
         // Tracking code format: BAU-YYYY-XXXX
-        $trackingCode = 'BAU-2026-' . str_pad($userId, 4, '0', STR_PAD_LEFT);
+        $trackingCode = 'BAU-2026-'.str_pad($userId, 4, '0', STR_PAD_LEFT);
         $this->assertEquals('BAU-2026-0015', $trackingCode, 'Le code de traçabilité officiel doit respecter la nomenclature BAU-2026-XXXX');
     }
 }

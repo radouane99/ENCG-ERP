@@ -189,8 +189,8 @@ class ProfessorAssignmentController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => $createdCount > 1 
-                ? "{$createdCount} affectations enregistrées avec succès !" 
+            'message' => $createdCount > 1
+                ? "{$createdCount} affectations enregistrées avec succès !"
                 : ($createdCount === 1 ? 'Affectation ajoutée avec succès.' : 'Les affectations sélectionnées existent déjà.'),
             'data' => ['created_count' => $createdCount],
         ]);

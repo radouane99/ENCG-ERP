@@ -12,6 +12,7 @@ use App\Services\Documents\OfficialPdfFactory;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class TimetableExportController extends Controller
@@ -262,7 +263,7 @@ class TimetableExportController extends Controller
         $meta = ['filiere' => $filiere];
 
         // 1. Récupération des dates depuis le cache système (persistance globale)
-        $cachedConfig = \Illuminate\Support\Facades\Cache::get('encg_timetable_dates_config', [
+        $cachedConfig = Cache::get('encg_timetable_dates_config', [
             'cours_start' => '16/09/2024',
             'td_tp_start' => '07/10/2024',
         ]);
@@ -296,7 +297,7 @@ class TimetableExportController extends Controller
             'td_tp_start' => trim($validated['td_tp_start']),
         ];
 
-        \Illuminate\Support\Facades\Cache::forever('encg_timetable_dates_config', $config);
+        Cache::forever('encg_timetable_dates_config', $config);
 
         return response()->json([
             'success' => true,
@@ -310,7 +311,7 @@ class TimetableExportController extends Controller
      */
     public function getDatesConfig(): JsonResponse
     {
-        $config = \Illuminate\Support\Facades\Cache::get('encg_timetable_dates_config', [
+        $config = Cache::get('encg_timetable_dates_config', [
             'cours_start' => '16/09/2024',
             'td_tp_start' => '07/10/2024',
         ]);

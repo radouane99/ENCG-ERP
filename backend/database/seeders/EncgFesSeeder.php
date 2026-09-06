@@ -1337,21 +1337,21 @@ class EncgFesSeeder extends Seeder
         array $professors
     ): void {
         foreach ($groups as $gIndex => $group) {
-                $adminId = User::where('email', 'admin@encg.ma')->value('id') ?? ($professors[0]->user_id ?? 1);
-                $delibRow = [
-                    'institution_id' => $institution->id,
-                    'academic_year_id' => $academicYear->id,
-                    'semester_id' => $semester->id,
-                    'filiere_id' => $group->filiere_id,
-                    'group_id' => $group->id,
-                    'type' => 'semester',
-                    'status' => 'completed',
-                    'deliberation_date' => now()->subDays(2)->format('Y-m-d'),
-                    'pv_content' => "PV de délibération du semestre pour le groupe {$group->name}. Délibération validée à l'unanimité du jury.",
-                    'president_id' => $adminId,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ];
+            $adminId = User::where('email', 'admin@encg.ma')->value('id') ?? ($professors[0]->user_id ?? 1);
+            $delibRow = [
+                'institution_id' => $institution->id,
+                'academic_year_id' => $academicYear->id,
+                'semester_id' => $semester->id,
+                'filiere_id' => $group->filiere_id,
+                'group_id' => $group->id,
+                'type' => 'semester',
+                'status' => 'completed',
+                'deliberation_date' => now()->subDays(2)->format('Y-m-d'),
+                'pv_content' => "PV de délibération du semestre pour le groupe {$group->name}. Délibération validée à l'unanimité du jury.",
+                'president_id' => $adminId,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
             if (Schema::hasColumn('deliberations', 'is_sealed')) {
                 $delibRow['is_sealed'] = false;
             }

@@ -11,6 +11,8 @@ use App\Models\Professor;
 use App\Models\Student;
 use App\Models\User;
 use App\Models\VacationContract;
+use App\Services\Academic\StudentSubGroupDispatcherService;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -181,7 +183,7 @@ class DashboardAnalyticsService
                 $upcomingExams = DB::table('exams')->where('date', '>=', now())->count();
             }
 
-            $subGroupInfo = app(\App\Services\Academic\StudentSubGroupDispatcherService::class)->getStudentSubGroupInfo($student->id);
+            $subGroupInfo = app(StudentSubGroupDispatcherService::class)->getStudentSubGroupInfo($student->id);
 
             return [
                 'success' => true,
@@ -346,54 +348,54 @@ class DashboardAnalyticsService
             $modules = collect();
             if (! empty($allModuleIds)) {
                 $modules = DB::table('modules')
-                ->whereIn('modules.id', $allModuleIds)
-                ->leftJoin('filieres', 'modules.filiere_id', '=', 'filieres.id')
-                ->select(
-                    'modules.id',
-                    'modules.name',
-                    'modules.code',
-                    'modules.credit_hours',
-                    'modules.filiere_id',
-                    'filieres.name as filiere_name',
-                    'filieres.code as filiere_code'
-                )
-                ->get()
-                ->map(function ($mod) use ($assignedFromPivot) {
-                    $assignmentRows = $assignedFromPivot->where('module_id', $mod->id);
-                    $assignmentRow = $assignmentRows->first();
-                    $groupName = 'Section A';
-                    if ($assignmentRow && ! empty($assignmentRow->group_id)) {
-                        $groupName = DB::table('groups')->where('id', $assignmentRow->group_id)->value('name') ?? 'Groupe Affecté';
-                    } else {
-                        $groupName = $mod->filiere_code ?? ($mod->filiere_name ?? 'Tronc Commun');
-                    }
+                    ->whereIn('modules.id', $allModuleIds)
+                    ->leftJoin('filieres', 'modules.filiere_id', '=', 'filieres.id')
+                    ->select(
+                        'modules.id',
+                        'modules.name',
+                        'modules.code',
+                        'modules.credit_hours',
+                        'modules.filiere_id',
+                        'filieres.name as filiere_name',
+                        'filieres.code as filiere_code'
+                    )
+                    ->get()
+                    ->map(function ($mod) use ($assignedFromPivot) {
+                        $assignmentRows = $assignedFromPivot->where('module_id', $mod->id);
+                        $assignmentRow = $assignmentRows->first();
+                        $groupName = 'Section A';
+                        if ($assignmentRow && ! empty($assignmentRow->group_id)) {
+                            $groupName = DB::table('groups')->where('id', $assignmentRow->group_id)->value('name') ?? 'Groupe Affecté';
+                        } else {
+                            $groupName = $mod->filiere_code ?? ($mod->filiere_name ?? 'Tronc Commun');
+                        }
 
-                    $totalAssessments = DB::table('assessments')->where('module_id', $mod->id)->count();
-                    $enteredGrades = 0;
-                    if ($totalAssessments > 0) {
-                        $assIds = DB::table('assessments')->where('module_id', $mod->id)->pluck('id');
-                        $enteredGrades = DB::table('grades')->whereIn('assessment_id', $assIds)->whereNotNull('value')->count();
-                    }
-                    $expected = max(1, $totalAssessments * 30);
-                    $progress = $totalAssessments > 0
-                        ? (int) round(min(100, ($enteredGrades / $expected) * 100))
-                        : 0;
+                        $totalAssessments = DB::table('assessments')->where('module_id', $mod->id)->count();
+                        $enteredGrades = 0;
+                        if ($totalAssessments > 0) {
+                            $assIds = DB::table('assessments')->where('module_id', $mod->id)->pluck('id');
+                            $enteredGrades = DB::table('grades')->whereIn('assessment_id', $assIds)->whereNotNull('value')->count();
+                        }
+                        $expected = max(1, $totalAssessments * 30);
+                        $progress = $totalAssessments > 0
+                            ? (int) round(min(100, ($enteredGrades / $expected) * 100))
+                            : 0;
 
-                    $creditHours = (int) ($assignmentRows->sum('assigned_hours')
-                        ?: ($mod->credit_hours > 0 ? $mod->credit_hours : 36));
-                    $hoursDone = (int) round(($progress / 100) * $creditHours);
+                        $creditHours = (int) ($assignmentRows->sum('assigned_hours')
+                            ?: ($mod->credit_hours > 0 ? $mod->credit_hours : 36));
+                        $hoursDone = (int) round(($progress / 100) * $creditHours);
 
-                    return [
-                        'id' => $mod->id,
-                        'name' => $mod->name,
-                        'code' => $mod->code ?? "MOD-{$mod->id}",
-                        'filiere' => $mod->filiere_name ?? 'ENCG Fès',
-                        'group_name' => $groupName,
-                        'progress' => $progress,
-                        'hours_done' => $hoursDone,
-                        'hours_total' => $creditHours,
-                    ];
-                });
+                        return [
+                            'id' => $mod->id,
+                            'name' => $mod->name,
+                            'code' => $mod->code ?? "MOD-{$mod->id}",
+                            'filiere' => $mod->filiere_name ?? 'ENCG Fès',
+                            'group_name' => $groupName,
+                            'progress' => $progress,
+                            'hours_done' => $hoursDone,
+                            'hours_total' => $creditHours,
+                        ];
+                    });
             }
             // 8. Emploi du Temps / Séances (Query Builder — pas de morph Professor)
             $daysMap = [1 => 'Lundi', 2 => 'Mardi', 3 => 'Mercredi', 4 => 'Jeudi', 5 => 'Vendredi', 6 => 'Samedi'];
@@ -458,38 +460,38 @@ class DashboardAnalyticsService
             // 9. Encadrements PFE & Stages Réels
             $pfeList = [];
             try {
-            if (Schema::hasTable('internships')) {
-                $titleCol = Schema::hasColumn('internships', 'topic')
-                    ? 'internships.topic'
-                    : (Schema::hasColumn('internships', 'title') ? 'internships.title' : 'internships.type');
+                if (Schema::hasTable('internships')) {
+                    $titleCol = Schema::hasColumn('internships', 'topic')
+                        ? 'internships.topic'
+                        : (Schema::hasColumn('internships', 'title') ? 'internships.title' : 'internships.type');
 
-                $pfeList = DB::table('internships')
-                    ->where('supervisor_id', $profId)
-                    ->leftJoin('students', 'internships.student_id', '=', 'students.id')
-                    ->leftJoin('users', 'students.user_id', '=', 'users.id')
-                    ->select(
-                        'internships.id',
-                        DB::raw("{$titleCol} as title"),
-                        'internships.company_name as company',
-                        'internships.status',
-                        'users.name as student_name',
-                        'users.first_name',
-                        'users.last_name'
-                    )
-                    ->take(5)
-                    ->get()
-                    ->map(function ($p) {
-                        $name = $p->student_name ?: trim(($p->first_name ?? '').' '.($p->last_name ?? ''));
+                    $pfeList = DB::table('internships')
+                        ->where('supervisor_id', $profId)
+                        ->leftJoin('students', 'internships.student_id', '=', 'students.id')
+                        ->leftJoin('users', 'students.user_id', '=', 'users.id')
+                        ->select(
+                            'internships.id',
+                            DB::raw("{$titleCol} as title"),
+                            'internships.company_name as company',
+                            'internships.status',
+                            'users.name as student_name',
+                            'users.first_name',
+                            'users.last_name'
+                        )
+                        ->take(5)
+                        ->get()
+                        ->map(function ($p) {
+                            $name = $p->student_name ?: trim(($p->first_name ?? '').' '.($p->last_name ?? ''));
 
-                        return [
-                            'id' => $p->id,
-                            'student_name' => $name ?: 'Étudiant PFE',
-                            'title' => $p->title ?: 'Stage / PFE',
-                            'company' => $p->company ?: '—',
-                            'status' => $p->status ?: 'pending',
-                        ];
-                    });
-            }
+                            return [
+                                'id' => $p->id,
+                                'student_name' => $name ?: 'Étudiant PFE',
+                                'title' => $p->title ?: 'Stage / PFE',
+                                'company' => $p->company ?: '—',
+                                'status' => $p->status ?: 'pending',
+                            ];
+                        });
+                }
             } catch (\Throwable $e) {
                 \Log::warning('Professor PFE stats skipped: '.$e->getMessage());
                 $pfeList = [];
@@ -498,55 +500,55 @@ class DashboardAnalyticsService
             // 10. Surveillances d'Examens Réelles
             $surveillances = [];
             try {
-            if (Schema::hasTable('exam_surveillances')) {
-                $hasEndTime = Schema::hasColumn('exams', 'end_time');
-                $hasDuration = Schema::hasColumn('exams', 'duration_minutes');
-                $surveillances = DB::table('exam_surveillances')
-                    ->where('exam_surveillances.professor_id', $profId)
-                    ->leftJoin('exams', 'exam_surveillances.exam_id', '=', 'exams.id')
-                    ->leftJoin('modules', 'exams.module_id', '=', 'modules.id')
-                    ->leftJoin('rooms', 'exam_surveillances.room_id', '=', 'rooms.id')
-                    ->leftJoin('exam_sessions', 'exams.exam_session_id', '=', 'exam_sessions.id')
-                    ->select(array_values(array_filter([
-                        'exam_surveillances.id',
-                        'exam_surveillances.role',
-                        'exam_surveillances.confirmed_at',
-                        'exam_surveillances.sent_at',
-                        'exams.exam_date',
-                        'exams.start_time',
-                        $hasEndTime ? 'exams.end_time' : null,
-                        $hasDuration ? 'exams.duration_minutes' : null,
-                        'modules.name as module_name',
-                        'rooms.name as room_name',
-                        'exam_sessions.name as session_name',
-                    ])))
-                    ->orderBy('exams.exam_date')
-                    ->take(5)
-                    ->get()
-                    ->map(function ($s) {
-                        $startTime = $s->start_time ? substr((string) $s->start_time, 0, 5) : '14:30';
-                        if (! empty($s->end_time)) {
-                            $endTime = substr((string) $s->end_time, 0, 5);
-                        } elseif (! empty($s->duration_minutes) && $s->start_time) {
-                            $endTime = date('H:i', strtotime($s->start_time) + ((int) $s->duration_minutes * 60));
-                        } else {
-                            $endTime = '16:30';
-                        }
-                        $dateFormatted = $s->exam_date ? date('d/m/Y', strtotime($s->exam_date)) : '—';
+                if (Schema::hasTable('exam_surveillances')) {
+                    $hasEndTime = Schema::hasColumn('exams', 'end_time');
+                    $hasDuration = Schema::hasColumn('exams', 'duration_minutes');
+                    $surveillances = DB::table('exam_surveillances')
+                        ->where('exam_surveillances.professor_id', $profId)
+                        ->leftJoin('exams', 'exam_surveillances.exam_id', '=', 'exams.id')
+                        ->leftJoin('modules', 'exams.module_id', '=', 'modules.id')
+                        ->leftJoin('rooms', 'exam_surveillances.room_id', '=', 'rooms.id')
+                        ->leftJoin('exam_sessions', 'exams.exam_session_id', '=', 'exam_sessions.id')
+                        ->select(array_values(array_filter([
+                            'exam_surveillances.id',
+                            'exam_surveillances.role',
+                            'exam_surveillances.confirmed_at',
+                            'exam_surveillances.sent_at',
+                            'exams.exam_date',
+                            'exams.start_time',
+                            $hasEndTime ? 'exams.end_time' : null,
+                            $hasDuration ? 'exams.duration_minutes' : null,
+                            'modules.name as module_name',
+                            'rooms.name as room_name',
+                            'exam_sessions.name as session_name',
+                        ])))
+                        ->orderBy('exams.exam_date')
+                        ->take(5)
+                        ->get()
+                        ->map(function ($s) {
+                            $startTime = $s->start_time ? substr((string) $s->start_time, 0, 5) : '14:30';
+                            if (! empty($s->end_time)) {
+                                $endTime = substr((string) $s->end_time, 0, 5);
+                            } elseif (! empty($s->duration_minutes) && $s->start_time) {
+                                $endTime = date('H:i', strtotime($s->start_time) + ((int) $s->duration_minutes * 60));
+                            } else {
+                                $endTime = '16:30';
+                            }
+                            $dateFormatted = $s->exam_date ? date('d/m/Y', strtotime($s->exam_date)) : '—';
 
-                        return [
-                            'id' => $s->id,
-                            'module_name' => $s->module_name ?? 'Épreuve',
-                            'date' => $dateFormatted,
-                            'time' => "{$startTime} - {$endTime}",
-                            'room' => $s->room_name ?? '—',
-                            'role' => $s->role ?? 'Surveillant',
-                            'session_name' => $s->session_name ?? 'Session',
-                            'is_confirmed' => ! empty($s->confirmed_at),
-                            'confirmed_at' => $s->confirmed_at,
-                        ];
-                    });
-            }
+                            return [
+                                'id' => $s->id,
+                                'module_name' => $s->module_name ?? 'Épreuve',
+                                'date' => $dateFormatted,
+                                'time' => "{$startTime} - {$endTime}",
+                                'room' => $s->room_name ?? '—',
+                                'role' => $s->role ?? 'Surveillant',
+                                'session_name' => $s->session_name ?? 'Session',
+                                'is_confirmed' => ! empty($s->confirmed_at),
+                                'confirmed_at' => $s->confirmed_at,
+                            ];
+                        });
+                }
             } catch (\Throwable $e) {
                 \Log::warning('Professor surveillances stats skipped: '.$e->getMessage());
                 $surveillances = [];
@@ -563,9 +565,9 @@ class DashboardAnalyticsService
                     'statutory_hours_total' => $statutoryTotal,
                     'pfe_supervised_count' => count($pfeList),
                     'next_classes' => $nextClasses,
-                    'modules_list' => $modules instanceof \Illuminate\Support\Collection ? $modules->values()->all() : $modules,
-                    'pfe_list' => $pfeList instanceof \Illuminate\Support\Collection ? $pfeList->values()->all() : $pfeList,
-                    'surveillances' => $surveillances instanceof \Illuminate\Support\Collection ? $surveillances->values()->all() : $surveillances,
+                    'modules_list' => $modules instanceof Collection ? $modules->values()->all() : $modules,
+                    'pfe_list' => $pfeList instanceof Collection ? $pfeList->values()->all() : $pfeList,
+                    'surveillances' => $surveillances instanceof Collection ? $surveillances->values()->all() : $surveillances,
                     'has_contract' => $isVisiting,
                     'professor_id' => $profId ?? $userId,
                     'department_name' => $departmentName,

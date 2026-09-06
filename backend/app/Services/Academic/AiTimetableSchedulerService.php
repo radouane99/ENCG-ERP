@@ -892,6 +892,7 @@ class AiTimetableSchedulerService
                 if (in_array($rId, $dedicatedForThisFiliere, true)) {
                     return 10;
                 }
+
                 return 40;
             }
 
@@ -908,6 +909,7 @@ class AiTimetableSchedulerService
                 if (in_array($rId, $dedicatedForOtherFilieres, true)) {
                     return 80;
                 }
+
                 return 15;
             }
 

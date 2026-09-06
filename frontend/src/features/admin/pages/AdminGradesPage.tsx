@@ -127,7 +127,7 @@ function CustomSelect({ value, onChange, options, placeholder, icon: Icon, disab
 
 export default function AdminGradesPage() {
   const navigate = useNavigate()
-  const { t, i18n } = useTranslation(['admin', 'common'])
+  const { i18n } = useTranslation(['admin', 'common'])
   const isRtl = i18n.language === 'ar'
   
   const [filiere, setFiliere] = useState('')
@@ -191,7 +191,7 @@ export default function AdminGradesPage() {
     try {
       const res = await api.post('/admin/grades/send-prof-reminder', { module_id: modId })
       toast.success(res.data.message || 'Rappel envoyé avec succès !')
-    } catch (err) {
+    } catch {
       toast.error('Erreur lors de l\'envoi du rappel.')
     } finally {
       setSendingReminderId(null)

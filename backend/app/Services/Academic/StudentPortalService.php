@@ -151,7 +151,7 @@ class StudentPortalService
             ])
             ->toArray();
 
-        $subGroupInfo = app(\App\Services\Academic\StudentSubGroupDispatcherService::class)->getStudentSubGroupInfo($studentId);
+        $subGroupInfo = app(StudentSubGroupDispatcherService::class)->getStudentSubGroupInfo($studentId);
 
         return [
             'absences' => $absences,

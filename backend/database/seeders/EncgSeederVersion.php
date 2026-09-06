@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Process;
 use Symfony\Component\Process\Process as SymfonyProcess;
 
 class EncgSeederVersion extends Seeder
@@ -35,10 +34,11 @@ class EncgSeederVersion extends Seeder
 
         if (! $sqlFile) {
             $this->command?->error('❌ Clean backup SQL file not found in candidates!');
+
             return;
         }
 
-        $this->command?->info("📂 Found backup file: {$sqlFile} (" . round(filesize($sqlFile) / 1024 / 1024, 2) . ' MB)');
+        $this->command?->info("📂 Found backup file: {$sqlFile} (".round(filesize($sqlFile) / 1024 / 1024, 2).' MB)');
 
         // Retrieve database configuration
         $host = config('database.connections.pgsql.host', env('DB_HOST', 'postgres'));

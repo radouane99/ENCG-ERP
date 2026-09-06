@@ -4,20 +4,25 @@ namespace App\Http\Controllers\Api\Professor;
 
 use App\Http\Controllers\Controller;
 use App\Models\Attendance;
+use App\Models\AttendanceSession;
+use App\Models\ExamSurveillance;
+use App\Models\FinalProject;
+use App\Models\Group;
+use App\Models\Module;
+use App\Models\ModuleProfessor;
+use App\Models\Professor;
 use App\Models\ProfessorDocumentRequest;
 use App\Models\RoomBooking;
 use App\Models\Schedule;
-use App\Models\User;
-use App\Models\AttendanceSession;
-use App\Models\VacationContract;
+use App\Models\Student;
+use App\Models\StudentPathway;
 use App\Models\Textbook;
-use App\Models\Module;
-use App\Models\Professor;
-use App\Models\ExamSurveillance;
-use App\Models\FinalProject;
-use Carbon\Carbon;
+use App\Models\User;
+use App\Models\VacationContract;
 use App\Services\Academic\TimetableCampaignService;
+use App\Services\Documents\OfficialPdfFactory;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -215,8 +220,8 @@ class ProfessorPortalController extends Controller
 
             $weeklyScheduleList[] = [
                 'id' => $s->id,
-                'day' => $dayNames[(int)$s->day_of_week] ?? ('Jour ' . $s->day_of_week),
-                'time' => $start->format('H:i') . ' – ' . $end->format('H:i'),
+                'day' => $dayNames[(int) $s->day_of_week] ?? ('Jour '.$s->day_of_week),
+                'time' => $start->format('H:i').' – '.$end->format('H:i'),
                 'module' => $s->module->name ?? 'Module Pédagogique',
                 'module_code' => $s->module->code ?? 'MOD',
                 'group' => $s->group->name ?? 'Tous groupes',
@@ -266,8 +271,10 @@ class ProfessorPortalController extends Controller
             $totalTpHours += $modTp;
 
             // Sessions réelles enregistrées dans attendance_sessions
-            $recordedSessionsCount = AttendanceSession::where(function($q) use ($profId, $userId) {
-                if ($profId) $q->where('professor_id', $profId);
+            $recordedSessionsCount = AttendanceSession::where(function ($q) use ($profId, $userId) {
+                if ($profId) {
+                    $q->where('professor_id', $profId);
+                }
                 $q->orWhere('professor_id', $userId);
             })->where('module_id', $moduleId)->count();
 
@@ -278,7 +285,7 @@ class ProfessorPortalController extends Controller
 
             $modulesBreakdown[] = [
                 'id' => $module->id ?? $moduleId,
-                'code' => $module->code ?? ('MOD-' . $moduleId),
+                'code' => $module->code ?? ('MOD-'.$moduleId),
                 'name' => $module->name ?? 'Module Pédagogique',
                 'filiere' => $filiereName,
                 'type' => $modCm > 0 && ($modTd > 0 || $modTp > 0) ? 'CM + TD' : ($modTd > 0 ? 'TD' : 'CM'),
@@ -317,7 +324,9 @@ class ProfessorPortalController extends Controller
         // --- ENSEIGNANT VACATAIRE ---
         if ($isVacataire) {
             $vacContract = VacationContract::where(function ($q) use ($profId, $userId) {
-                if ($profId) $q->where('professor_id', $profId);
+                if ($profId) {
+                    $q->where('professor_id', $profId);
+                }
                 $q->orWhere('user_id', $userId);
             })->first();
 
@@ -325,9 +334,9 @@ class ProfessorPortalController extends Controller
             $agreedHours = $vacContract?->agreed_hours ? (int) $vacContract->agreed_hours : 0;
             $vacationHours = $totalHoursDone > 0 ? $totalHoursDone : $agreedHours;
             $estimatedPayment = $vacationHours * $hourlyRate;
-            $contractRef = $vacContract?->id 
-                ? ('CONTRAT-VAC-2026-ENCG-' . str_pad((string)$vacContract->id, 3, '0', STR_PAD_LEFT))
-                : ($profId ? 'CONTRAT-VAC-2026-ENCG-' . str_pad((string)$profId, 3, '0', STR_PAD_LEFT) : 'Non assigné');
+            $contractRef = $vacContract?->id
+                ? ('CONTRAT-VAC-2026-ENCG-'.str_pad((string) $vacContract->id, 3, '0', STR_PAD_LEFT))
+                : ($profId ? 'CONTRAT-VAC-2026-ENCG-'.str_pad((string) $profId, 3, '0', STR_PAD_LEFT) : 'Non assigné');
 
             $vacMonthly = [];
             foreach ($monthlyBreakdown as $mb) {
@@ -356,7 +365,7 @@ class ProfessorPortalController extends Controller
                     'total_sessions' => (int) round($vacationHours / 2),
                     'hourly_rate' => $hourlyRate,
                     'estimated_payment' => $estimatedPayment,
-                    'virement_status' => $vacationHours > 0 
+                    'virement_status' => $vacationHours > 0
                         ? 'Bordereau Validé par la Direction — En cours d\'Ordonnancement Trésorerie'
                         : 'Aucune vacation enregistrée',
                     'virement_step' => $vacationHours > 0 ? 3 : 0,
@@ -374,18 +383,20 @@ class ProfessorPortalController extends Controller
         $completionPercent = $statutoryHours > 0 ? min(100, (int) round(($totalHoursDone / $statutoryHours) * 100)) : 0;
         $totalSessions = (int) round($totalHoursDone / 2);
 
-        $attendanceCount = AttendanceSession::where(function($q) use ($profId, $userId) {
-            if ($profId) $q->where('professor_id', $profId);
+        $attendanceCount = AttendanceSession::where(function ($q) use ($profId, $userId) {
+            if ($profId) {
+                $q->where('professor_id', $profId);
+            }
             $q->orWhere('professor_id', $userId);
         })->count();
 
-        $avgSyllabusProgress = !empty($modulesBreakdown) 
-            ? (int) round(collect($modulesBreakdown)->avg('progress')) 
+        $avgSyllabusProgress = ! empty($modulesBreakdown)
+            ? (int) round(collect($modulesBreakdown)->avg('progress'))
             : 0;
 
         $cahierCompliance = ($attendanceCount >= $totalSessions && $totalSessions > 0)
             ? '100% à jour'
-            : ($attendanceCount > 0 ? round(($attendanceCount / max(1, $totalSessions)) * 100) . '% renseigné' : ($totalSessions > 0 ? '0% renseigné' : 'Aucune séance'));
+            : ($attendanceCount > 0 ? round(($attendanceCount / max(1, $totalSessions)) * 100).'% renseigné' : ($totalSessions > 0 ? '0% renseigné' : 'Aucune séance'));
 
         return response()->json([
             'success' => true,
@@ -404,8 +415,8 @@ class ProfessorPortalController extends Controller
                 'cahier_de_texte_count' => $attendanceCount,
                 'cahier_de_texte_compliance' => $cahierCompliance,
                 'syllabus_progress' => $avgSyllabusProgress,
-                'service_status' => $totalHoursDone > 0 
-                    ? 'Conforme aux obligations statutaires (Validé par Chef de Département)' 
+                'service_status' => $totalHoursDone > 0
+                    ? 'Conforme aux obligations statutaires (Validé par Chef de Département)'
                     : 'Planning prévisionnel en attente de validation',
                 'weekly_schedule_summary' => $weeklyScheduleList,
                 'monthly_breakdown' => $monthlyBreakdown,
@@ -432,8 +443,8 @@ class ProfessorPortalController extends Controller
 
         $view = $isVacataire ? 'pdf.bordereau_vacataire' : 'pdf.bordereau_permanent';
         $fileName = $isVacataire
-            ? 'Bordereau_Vacation_' . preg_replace('/\s+/', '_', $user->last_name ?? 'Enseignant') . '.pdf'
-            : 'Attestation_Service_Fait_' . preg_replace('/\s+/', '_', $user->last_name ?? 'Enseignant') . '.pdf';
+            ? 'Bordereau_Vacation_'.preg_replace('/\s+/', '_', $user->last_name ?? 'Enseignant').'.pdf'
+            : 'Attestation_Service_Fait_'.preg_replace('/\s+/', '_', $user->last_name ?? 'Enseignant').'.pdf';
 
         $data = [
             'user' => $user,
@@ -441,7 +452,7 @@ class ProfessorPortalController extends Controller
             'isVacataire' => $isVacataire,
             'academicYear' => '2026/2027',
             'generationDate' => now()->format('d/m/Y à H:i:s'),
-            'verifyUrl' => url('/verify/document/SRV-' . $user->id . '-' . strtoupper(substr(md5($user->email . now()->format('Ymd')), 0, 8))),
+            'verifyUrl' => url('/verify/document/SRV-'.$user->id.'-'.strtoupper(substr(md5($user->email.now()->format('Ymd')), 0, 8))),
             'statutoryHours' => $summaryData['statutory_hours'] ?? 200,
             'totalHoursDone' => $summaryData['hours_done'] ?? 0,
             'totalHours' => $summaryData['hours_done'] ?? 0,
@@ -452,12 +463,12 @@ class ProfessorPortalController extends Controller
             'completionPercent' => $summaryData['completion_percent'] ?? 0,
             'modulesBreakdown' => $summaryData['modules_breakdown'] ?? [],
             'monthlyBreakdown' => $summaryData['monthly_breakdown'] ?? [],
-            'contractRef' => $summaryData['contract_ref'] ?? ('CONTRAT-VAC-2026-ENCG-' . $user->id),
+            'contractRef' => $summaryData['contract_ref'] ?? ('CONTRAT-VAC-2026-ENCG-'.$user->id),
             'hourlyRate' => $summaryData['hourly_rate'] ?? 0,
             'totalAmount' => $summaryData['estimated_payment'] ?? 0,
         ];
 
-        $pdf = app(\App\Services\Documents\OfficialPdfFactory::class)
+        $pdf = app(OfficialPdfFactory::class)
             ->make($view, $data)
             ->setPaper('a4', 'portrait');
 
@@ -778,7 +789,7 @@ class ProfessorPortalController extends Controller
             'is_complete' => true,
             'status_label' => $isVacataire ? 'Dossier Administratif Conforme pour Ordonnancement' : 'Dossier Statutaire Conforme (PPR Actif)',
             'rib_status' => 'validé',
-            'rib_number' => '230 780 000' . str_pad((string)($user->id * 42), 10, '0', STR_PAD_LEFT) . ' 45',
+            'rib_number' => '230 780 000'.str_pad((string) ($user->id * 42), 10, '0', STR_PAD_LEFT).' 45',
             'bank_name' => 'Banque Populaire (Agence Fès Ville Nouvelle)',
             'employer_authorization' => $isVacataire ? 'Déposée & Conforme (Exercice 2026)' : 'Non applicable (Titulaire)',
             'diploma_status' => $isVacataire ? 'Doctorat d\'État / National Vérifié' : 'Doctorat / Habilitation à Diriger des Recherches',
@@ -1012,25 +1023,34 @@ class ProfessorPortalController extends Controller
         // 1. Attestation d'Heures de Vacation (Dédiée Enseignant Vacataire)
         if ($doc?->document_type === 'attestation_vacation') {
             $contracts = VacationContract::with(['module', 'group'])
-                ->where(function($q) use ($prof, $user) {
-                    if ($prof?->id) $q->where('professor_id', $prof->id);
-                    if ($user?->id) $q->orWhere('user_id', $user->id);
+                ->where(function ($q) use ($prof, $user) {
+                    if ($prof?->id) {
+                        $q->where('professor_id', $prof->id);
+                    }
+                    if ($user?->id) {
+                        $q->orWhere('user_id', $user->id);
+                    }
                 })
                 ->get();
 
             // If no explicit contracts, synthesize from real schedules
             if ($contracts->isEmpty() && ($prof?->id || $user?->id)) {
                 $scheds = Schedule::with(['module', 'group'])
-                    ->where(function($q) use ($prof, $user) {
-                        if ($prof?->id) $q->where('professor_id', $prof->id);
-                        if ($user?->id) $q->orWhere('professor_id', $user->id);
+                    ->where(function ($q) use ($prof, $user) {
+                        if ($prof?->id) {
+                            $q->where('professor_id', $prof->id);
+                        }
+                        if ($user?->id) {
+                            $q->orWhere('professor_id', $user->id);
+                        }
                     })
                     ->get()
                     ->groupBy('module_id');
 
-                $contracts = $scheds->map(function($group) {
+                $contracts = $scheds->map(function ($group) {
                     $first = $group->first();
                     $hours = $group->count() * 2 * 14; // 14 teaching weeks
+
                     return (object) [
                         'module' => $first->module,
                         'group' => $first->group,
@@ -1077,7 +1097,7 @@ class ProfessorPortalController extends Controller
                 'academicYear' => '2026/2027',
                 'generationDate' => now()->format('d/m/Y à H:i:s'),
                 'verifyUrl' => $verifyUrl,
-                'contractRef' => $summaryData['contract_ref'] ?? ('CONTRAT-VAC-2026-ENCG-' . $user->id),
+                'contractRef' => $summaryData['contract_ref'] ?? ('CONTRAT-VAC-2026-ENCG-'.$user->id),
                 'hourlyRate' => $summaryData['hourly_rate'] ?? 0,
                 'totalHours' => $summaryData['hours_done'] ?? 0,
                 'hoursCm' => $summaryData['hours_cm'] ?? 0,
@@ -1087,7 +1107,7 @@ class ProfessorPortalController extends Controller
                 'monthlyBreakdown' => $summaryData['monthly_breakdown'] ?? [],
             ];
 
-            $pdf = app(\App\Services\Documents\OfficialPdfFactory::class)
+            $pdf = app(OfficialPdfFactory::class)
                 ->make('pdf.bordereau_vacataire', $data)
                 ->setPaper('a4', 'portrait');
 
@@ -1113,7 +1133,7 @@ class ProfessorPortalController extends Controller
                     'cin' => $user?->cin ?? ($prof?->cin ?? 'Non renseigné'),
                     'department' => (object) ['name' => $deptName],
                 ],
-                'contractRef' => $summaryData['contract_ref'] ?? ('CONTRAT-VAC-2026-ENCG-' . $user->id),
+                'contractRef' => $summaryData['contract_ref'] ?? ('CONTRAT-VAC-2026-ENCG-'.$user->id),
                 'fiscalYear' => '2026',
                 'hoursDone' => $hoursDone,
                 'hourlyRate' => $hourlyRate,
@@ -1151,7 +1171,7 @@ class ProfessorPortalController extends Controller
                 'monthlyBreakdown' => $summaryData['monthly_breakdown'] ?? [],
             ];
 
-            $pdf = app(\App\Services\Documents\OfficialPdfFactory::class)
+            $pdf = app(OfficialPdfFactory::class)
                 ->make('pdf.bordereau_permanent', $data)
                 ->setPaper('a4', 'portrait');
 
@@ -1221,23 +1241,31 @@ class ProfessorPortalController extends Controller
         }
 
         $contract = VacationContract::with(['module', 'group'])
-            ->where(function($q) use ($prof, $user) {
-                if ($prof?->id) $q->where('professor_id', $prof->id);
-                if ($user?->id) $q->orWhere('user_id', $user->id);
+            ->where(function ($q) use ($prof, $user) {
+                if ($prof?->id) {
+                    $q->where('professor_id', $prof->id);
+                }
+                if ($user?->id) {
+                    $q->orWhere('user_id', $user->id);
+                }
             })->first();
 
         // If no explicit contract row, synthesize from active schedule
         if (! $contract) {
             $sched = Schedule::with(['module', 'group'])
-                ->where(function($q) use ($prof, $user) {
-                    if ($prof?->id) $q->where('professor_id', $prof->id);
-                    if ($user?->id) $q->orWhere('professor_id', $user->id);
+                ->where(function ($q) use ($prof, $user) {
+                    if ($prof?->id) {
+                        $q->where('professor_id', $prof->id);
+                    }
+                    if ($user?->id) {
+                        $q->orWhere('professor_id', $user->id);
+                    }
                 })->first();
 
             $contract = (object) [
                 'id' => $prof?->id ?? $user->id,
-                'module' => $sched?->module ?? (object)['code' => 'M-VAC', 'name' => 'Module Pédagogique'],
-                'group' => $sched?->group ?? (object)['name' => 'TC-S2-G1'],
+                'module' => $sched?->module ?? (object) ['code' => 'M-VAC', 'name' => 'Module Pédagogique'],
+                'group' => $sched?->group ?? (object) ['name' => 'TC-S2-G1'],
                 'agreed_hours' => 36,
                 'hourly_rate' => 350.0,
                 'status' => 'validated',
@@ -1247,7 +1275,9 @@ class ProfessorPortalController extends Controller
         }
 
         $logoPath = public_path('images/encg_logo.png');
-        if (! file_exists($logoPath)) $logoPath = public_path('logo-encg.png');
+        if (! file_exists($logoPath)) {
+            $logoPath = public_path('logo-encg.png');
+        }
         $logoBase64 = file_exists($logoPath) ? 'data:image/png;base64,'.base64_encode(file_get_contents($logoPath)) : '';
 
         $pdf = Pdf::loadView('pdf.vacation_contract', [
@@ -1256,7 +1286,7 @@ class ProfessorPortalController extends Controller
                 'last_name' => $user->last_name ?? 'Vacataire',
                 'cin' => $user->cin ?? ($prof?->cin ?? 'Non renseigné'),
                 'specialty' => $prof?->specialty ?? 'Sciences de Gestion & Commerce',
-                'department' => (object)['name' => $prof?->department?->name ?? 'Sciences de Gestion'],
+                'department' => (object) ['name' => $prof?->department?->name ?? 'Sciences de Gestion'],
                 'phone' => $user->phone ?? '06 00 00 00 00',
                 'email' => $user->email,
             ],
@@ -1264,7 +1294,7 @@ class ProfessorPortalController extends Controller
             'logoBase64' => $logoBase64,
         ]);
 
-        return $pdf->download('Contrat_Vacation_ENCG_' . preg_replace('/\s+/', '_', $user->last_name ?? 'Enseignant') . '.pdf');
+        return $pdf->download('Contrat_Vacation_ENCG_'.preg_replace('/\s+/', '_', $user->last_name ?? 'Enseignant').'.pdf');
     }
 
     /**
@@ -1313,7 +1343,9 @@ class ProfessorPortalController extends Controller
         $modulesSummary = [];
         foreach ($modulesAssigned as $modId => $scheds) {
             $mod = $scheds->first()->module;
-            if (! $mod) continue;
+            if (! $mod) {
+                continue;
+            }
 
             $modEntries = $entries->where('module_id', $modId);
             $totalLoggedHours = (float) $modEntries->sum('session_duration_hours');
@@ -1423,7 +1455,7 @@ class ProfessorPortalController extends Controller
                 'updated_at' => now(),
             ]);
         } catch (\Throwable $e) {
-            Log::warning('Textbook notification error: ' . $e->getMessage());
+            Log::warning('Textbook notification error: '.$e->getMessage());
         }
 
         return response()->json([
@@ -1471,22 +1503,24 @@ class ProfessorPortalController extends Controller
         $cmHours = round($completedHours * 0.6);
         $tdHours = round($completedHours * 0.4);
 
-        $trackingCode = 'ASF-' . date('Y') . '-' . str_pad($user->id, 3, '0', STR_PAD_LEFT) . '-' . str_pad($moduleId, 3, '0', STR_PAD_LEFT);
-        $verifyUrl = config('app.frontend_url', 'http://localhost:5173') . "/verify/{$trackingCode}";
+        $trackingCode = 'ASF-'.date('Y').'-'.str_pad($user->id, 3, '0', STR_PAD_LEFT).'-'.str_pad($moduleId, 3, '0', STR_PAD_LEFT);
+        $verifyUrl = config('app.frontend_url', 'http://localhost:5173')."/verify/{$trackingCode}";
 
         $qrBase64 = '';
         if (class_exists(QrCode::class)) {
             try {
                 $qrSvg = QrCode::format('svg')->size(100)->margin(0)->generate($verifyUrl);
-                $qrBase64 = 'data:image/svg+xml;base64,' . base64_encode($qrSvg);
+                $qrBase64 = 'data:image/svg+xml;base64,'.base64_encode($qrSvg);
             } catch (\Throwable $e) {
-                Log::warning('QR Code error: ' . $e->getMessage());
+                Log::warning('QR Code error: '.$e->getMessage());
             }
         }
 
         $logoPath = public_path('images/encg_logo.png');
-        if (! file_exists($logoPath)) $logoPath = public_path('logo-encg.png');
-        $logoBase64 = file_exists($logoPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath)) : '';
+        if (! file_exists($logoPath)) {
+            $logoPath = public_path('logo-encg.png');
+        }
+        $logoBase64 = file_exists($logoPath) ? 'data:image/png;base64,'.base64_encode(file_get_contents($logoPath)) : '';
 
         $pdf = Pdf::loadView('pdf.attestation_service_fait', [
             'trackingCode' => $trackingCode,
@@ -1541,7 +1575,9 @@ class ProfessorPortalController extends Controller
             foreach ($grouped as $mId => $schedList) {
                 $first = $schedList->first();
                 $mod = $first->module;
-                if (! $mod) continue;
+                if (! $mod) {
+                    continue;
+                }
 
                 $hours = $schedList->count() * 2 * 14; // 14 weeks semester
                 $cm = round($hours * 0.6);
@@ -1598,30 +1634,36 @@ class ProfessorPortalController extends Controller
         $surveillancesCount = ExamSurveillance::where(function ($q) use ($profId, $user) {
             $q->where('professor_id', $profId)->orWhere('professor_id', $user->id);
         })->count();
-        if ($surveillancesCount === 0) $surveillancesCount = 6;
+        if ($surveillancesCount === 0) {
+            $surveillancesCount = 6;
+        }
 
         // 3. PFE / Theses supervisions
         $pfeCount = FinalProject::where(function ($q) use ($profId, $user) {
             $q->where('supervisor_id', $profId)->orWhere('supervisor_id', $user->id);
         })->count();
-        if ($pfeCount === 0) $pfeCount = 4;
+        if ($pfeCount === 0) {
+            $pfeCount = 4;
+        }
 
-        $trackingCode = 'BAU-' . date('Y') . '-' . str_pad($user->id, 4, '0', STR_PAD_LEFT);
-        $verifyUrl = config('app.frontend_url', 'http://localhost:5173') . "/verify/{$trackingCode}";
+        $trackingCode = 'BAU-'.date('Y').'-'.str_pad($user->id, 4, '0', STR_PAD_LEFT);
+        $verifyUrl = config('app.frontend_url', 'http://localhost:5173')."/verify/{$trackingCode}";
 
         $qrBase64 = '';
         if (class_exists(QrCode::class)) {
             try {
                 $qrSvg = QrCode::format('svg')->size(100)->margin(0)->generate($verifyUrl);
-                $qrBase64 = 'data:image/svg+xml;base64,' . base64_encode($qrSvg);
+                $qrBase64 = 'data:image/svg+xml;base64,'.base64_encode($qrSvg);
             } catch (\Throwable $e) {
-                Log::warning('QR Code error: ' . $e->getMessage());
+                Log::warning('QR Code error: '.$e->getMessage());
             }
         }
 
         $logoPath = public_path('images/encg_logo.png');
-        if (! file_exists($logoPath)) $logoPath = public_path('logo-encg.png');
-        $logoBase64 = file_exists($logoPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath)) : '';
+        if (! file_exists($logoPath)) {
+            $logoPath = public_path('logo-encg.png');
+        }
+        $logoBase64 = file_exists($logoPath) ? 'data:image/png;base64,'.base64_encode(file_get_contents($logoPath)) : '';
 
         $pdf = Pdf::loadView('pdf.annual_activity_report', [
             'trackingCode' => $trackingCode,
@@ -1678,7 +1720,7 @@ class ProfessorPortalController extends Controller
             }
 
             if ($profId) {
-                $mpGroups = \App\Models\ModuleProfessor::where('professor_id', $profId)
+                $mpGroups = ModuleProfessor::where('professor_id', $profId)
                     ->whereNotNull('group_id')
                     ->pluck('module_id', 'group_id')
                     ->toArray();
@@ -1695,13 +1737,13 @@ class ProfessorPortalController extends Controller
 
         // Si aucun groupe n'est encore explicitement assigné dans le planning, on propose les groupes actifs
         if (empty($groupIds)) {
-            $groupsQuery = \App\Models\Group::with(['filiere', 'academicYear'])
+            $groupsQuery = Group::with(['filiere', 'academicYear'])
                 ->whereHas('pathways', fn ($p) => $p->where('is_current', true))
                 ->orderBy('filiere_id')
                 ->orderBy('semester_number')
                 ->orderBy('name');
         } else {
-            $groupsQuery = \App\Models\Group::with(['filiere', 'academicYear'])
+            $groupsQuery = Group::with(['filiere', 'academicYear'])
                 ->whereIn('id', $groupIds)
                 ->orderBy('name');
         }
@@ -1717,10 +1759,10 @@ class ProfessorPortalController extends Controller
             }
 
             $moduleId = $modulesAssigned[$g->id] ?? null;
-            $module = $moduleId ? \App\Models\Module::find($moduleId) : null;
+            $module = $moduleId ? Module::find($moduleId) : null;
 
             // Compte étudiants dans ce groupe
-            $totalStudents = \App\Models\StudentPathway::where('group_id', $g->id)
+            $totalStudents = StudentPathway::where('group_id', $g->id)
                 ->where('is_current', true)
                 ->count();
 
@@ -1775,9 +1817,9 @@ class ProfessorPortalController extends Controller
             return response()->json(['success' => false, 'message' => 'Groupe obligatoire.'], 422);
         }
 
-        $group = \App\Models\Group::with('filiere')->findOrFail($groupId);
+        $group = Group::with('filiere')->findOrFail($groupId);
 
-        $query = \App\Models\Student::with(['user', 'latestPathway.filiere', 'latestPathway.group'])
+        $query = Student::with(['user', 'latestPathway.filiere', 'latestPathway.group'])
             ->select('students.*')
             ->leftJoin('users', 'students.user_id', '=', 'users.id')
             ->whereHas('pathways', function ($p) use ($groupId, $subGroup) {
@@ -1846,8 +1888,8 @@ class ProfessorPortalController extends Controller
             return response()->json(['success' => false, 'message' => 'Groupe obligatoire.'], 422);
         }
 
-        $group = \App\Models\Group::with(['filiere', 'academicYear'])->findOrFail($groupId);
-        $module = $moduleId ? \App\Models\Module::find($moduleId) : null;
+        $group = Group::with(['filiere', 'academicYear'])->findOrFail($groupId);
+        $module = $moduleId ? Module::find($moduleId) : null;
 
         $user = $request->user();
         $prof = $user?->professor;
@@ -1861,7 +1903,7 @@ class ProfessorPortalController extends Controller
             $statusLabel = 'Doctorant Moniteur / Vacataire';
         }
 
-        $students = \App\Models\Student::with(['user', 'latestPathway'])
+        $students = Student::with(['user', 'latestPathway'])
             ->select('students.*')
             ->leftJoin('users', 'students.user_id', '=', 'users.id')
             ->whereHas('pathways', function ($p) use ($groupId, $subGroup) {
@@ -1885,7 +1927,7 @@ class ProfessorPortalController extends Controller
                 ];
             });
 
-        $academicYear = $group->academicYear?->name ?? (date('Y').'/'.(date('Y')+1));
+        $academicYear = $group->academicYear?->name ?? (date('Y').'/'.(date('Y') + 1));
 
         $orientation = ($mode === 'seances') ? 'landscape' : 'portrait';
 
@@ -1922,9 +1964,9 @@ class ProfessorPortalController extends Controller
             return response()->json(['success' => false, 'message' => 'Groupe obligatoire.'], 422);
         }
 
-        $group = \App\Models\Group::with('filiere')->findOrFail($groupId);
+        $group = Group::with('filiere')->findOrFail($groupId);
 
-        $students = \App\Models\Student::with(['user', 'latestPathway'])
+        $students = Student::with(['user', 'latestPathway'])
             ->select('students.*')
             ->leftJoin('users', 'students.user_id', '=', 'users.id')
             ->whereHas('pathways', function ($p) use ($groupId, $subGroup) {
@@ -1937,17 +1979,17 @@ class ProfessorPortalController extends Controller
             ->orderBy('users.first_name', 'asc')
             ->get();
 
-        $filename = "Liste_Etudiants_{$group->name}".($subGroup ? "_{$subGroup}" : '').".csv";
+        $filename = "Liste_Etudiants_{$group->name}".($subGroup ? "_{$subGroup}" : '').'.csv';
 
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
         ];
 
-        $callback = function () use ($students, $group, $subGroup) {
+        $callback = function () use ($students, $group) {
             $file = fopen('php://output', 'w');
             // Write UTF-8 BOM for Excel to properly display accents
-            fputs($file, "\xEF\xBB\xBF");
+            fwrite($file, "\xEF\xBB\xBF");
 
             fputcsv($file, ['N°', 'Matricule Apogée', 'CNE / Massar', 'CIN', 'Nom', 'Prénom', 'Filière', 'Semestre', 'Groupe / Section', 'Sous-Groupe TD'], ';');
 
@@ -1972,4 +2014,3 @@ class ProfessorPortalController extends Controller
         return response()->stream($callback, 200, $headers);
     }
 }
-

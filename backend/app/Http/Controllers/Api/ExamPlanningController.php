@@ -12,6 +12,7 @@ use App\Models\Room;
 use App\Services\Academic\ExamConvocationService;
 use App\Services\Academic\ExamPlanningEngine;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -354,7 +355,7 @@ class ExamPlanningController extends Controller
         $totalEndMins = $totalStartMins + $durationMins;
         $endTime = sprintf('%02d:%02d', floor($totalEndMins / 60) % 24, $totalEndMins % 60);
 
-        $examDate = $exam->exam_date ? \Carbon\Carbon::parse($exam->exam_date) : \Carbon\Carbon::today();
+        $examDate = $exam->exam_date ? Carbon::parse($exam->exam_date) : Carbon::today();
         $dateFormatted = $examDate->translatedFormat('l d F Y');
 
         $presidentName = null;

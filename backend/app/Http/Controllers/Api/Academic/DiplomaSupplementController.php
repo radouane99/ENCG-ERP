@@ -50,16 +50,16 @@ class DiplomaSupplementController extends Controller
         $pfeTitle = $pfe?->title ?? 'Optimisation de la Structure Financière et Digitalisation du Contrôle de Gestion';
 
         // 3. Verification & Digital Seal
-        $trackingCode = 'DS-ENCG-' . date('Y') . '-' . str_pad($student->id, 5, '0', STR_PAD_LEFT);
-        $verifyUrl = config('app.frontend_url', 'http://localhost:5173') . "/verify/{$trackingCode}";
+        $trackingCode = 'DS-ENCG-'.date('Y').'-'.str_pad($student->id, 5, '0', STR_PAD_LEFT);
+        $verifyUrl = config('app.frontend_url', 'http://localhost:5173')."/verify/{$trackingCode}";
 
         $qrBase64 = '';
         if (class_exists(QrCode::class)) {
             try {
                 $qrSvg = QrCode::format('svg')->size(90)->margin(0)->generate($verifyUrl);
-                $qrBase64 = 'data:image/svg+xml;base64,' . base64_encode($qrSvg);
+                $qrBase64 = 'data:image/svg+xml;base64,'.base64_encode($qrSvg);
             } catch (\Throwable $e) {
-                Log::warning('QR Code error: ' . $e->getMessage());
+                Log::warning('QR Code error: '.$e->getMessage());
             }
         }
 

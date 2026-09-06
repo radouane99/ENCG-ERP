@@ -11,4 +11,3 @@ Route::get('/verify/document/{token}', function (string $token) {
 
     return redirect("{$frontendUrl}/verify/document/{$token}");
 });
-

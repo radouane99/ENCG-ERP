@@ -8,7 +8,6 @@ use App\Models\GradeAppeal;
 use App\Models\GradeAudit;
 use App\Models\Module;
 use App\Models\Student;
-use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -115,7 +114,7 @@ class GradeAppealController extends Controller
                 'updated_at' => now(),
             ]);
         } catch (\Throwable $e) {
-            Log::warning('Grade appeal notification error: ' . $e->getMessage());
+            Log::warning('Grade appeal notification error: '.$e->getMessage());
         }
 
         return response()->json([
@@ -197,10 +196,10 @@ class GradeAppealController extends Controller
                         'user_id' => $user->id,
                         'old_grade' => $oldScore,
                         'new_grade' => $validated['rectified_grade'],
-                        'reason' => 'Rectification suite à recours LMD : ' . $validated['professor_comment'],
+                        'reason' => 'Rectification suite à recours LMD : '.$validated['professor_comment'],
                     ]);
                 } catch (\Throwable $e) {
-                    Log::warning('Grade audit log error: ' . $e->getMessage());
+                    Log::warning('Grade audit log error: '.$e->getMessage());
                 }
             }
         }
@@ -213,8 +212,8 @@ class GradeAppealController extends Controller
             if ($studentUserId) {
                 $decisionLabel = match ($validated['decision']) {
                     'rectified' => "Note Rectifiée à {$validated['rectified_grade']}/20 ✓",
-                    'maintained' => "Note Maintenue après recomptage",
-                    default => "Recours clôturé",
+                    'maintained' => 'Note Maintenue après recomptage',
+                    default => 'Recours clôturé',
                 };
 
                 DB::table('notifications')->insert([
@@ -233,7 +232,7 @@ class GradeAppealController extends Controller
                 ]);
             }
         } catch (\Throwable $e) {
-            Log::warning('Grade resolution notification error: ' . $e->getMessage());
+            Log::warning('Grade resolution notification error: '.$e->getMessage());
         }
 
         return response()->json([

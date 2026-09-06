@@ -8,6 +8,7 @@ use App\Models\ExamSurveillance;
 use App\Models\Professor;
 use App\Models\Room;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -75,11 +76,11 @@ class ProctorAssignmentService
                     'vacataire',
                     'doctorant',
                 ]))
-                ->orWhereHas('professor', fn ($q) => $q->where('is_active', true));
+                    ->orWhereHas('professor', fn ($q) => $q->where('is_active', true));
             })
-            ->where('is_active', true)
-            ->with(['roles', 'professor'])
-            ->get();
+                ->where('is_active', true)
+                ->with(['roles', 'professor'])
+                ->get();
 
             if ($availableProfessors->isEmpty()) {
                 $availableProfessors = User::whereHas('roles', fn ($q) => $q->whereIn('name', [
@@ -113,7 +114,7 @@ class ProctorAssignmentService
                     continue;
                 }
 
-                $examDateStr = \Carbon\Carbon::parse($exam->exam_date)->toDateString();
+                $examDateStr = Carbon::parse($exam->exam_date)->toDateString();
 
                 // Tri intelligent : Priorité aux enseignants déjà présents avec 1 séance aujourd'hui (bloc consécutif)
                 $sortedProfs = $availableProfessors->sort(function ($a, $b) use ($dailyMap, $workloadMap, $examDateStr) {
@@ -278,39 +279,39 @@ class ProctorAssignmentService
                 'vacataire',
                 'doctorant',
             ]))
-            ->orWhereHas('professor', fn ($q) => $q->where('is_active', true));
+                ->orWhereHas('professor', fn ($q) => $q->where('is_active', true));
         })
-        ->where('is_active', true)
-        ->with(['roles', 'professor.department'])
-        ->get()
-        ->map(function ($u) {
-            $name = trim(($u->first_name ?? '').' '.($u->last_name ?? ''));
-            if (empty($name)) {
-                $name = $u->name ?? 'Surveillant';
-            }
+            ->where('is_active', true)
+            ->with(['roles', 'professor.department'])
+            ->get()
+            ->map(function ($u) {
+                $name = trim(($u->first_name ?? '').' '.($u->last_name ?? ''));
+                if (empty($name)) {
+                    $name = $u->name ?? 'Surveillant';
+                }
 
-            $roleNames = $u->roles->pluck('name')->toArray();
-            $type = 'Permanent';
-            if (in_array('doctorant', $roleNames)) {
-                $type = 'Doctorant';
-            } elseif (in_array('vacataire', $roleNames)) {
-                $type = 'Vacataire';
-            } elseif (in_array('department-head', $roleNames)) {
-                $type = 'Chef de Département';
-            }
+                $roleNames = $u->roles->pluck('name')->toArray();
+                $type = 'Permanent';
+                if (in_array('doctorant', $roleNames)) {
+                    $type = 'Doctorant';
+                } elseif (in_array('vacataire', $roleNames)) {
+                    $type = 'Vacataire';
+                } elseif (in_array('department-head', $roleNames)) {
+                    $type = 'Chef de Département';
+                }
 
-            return [
-                'id' => $u->id,
-                'name' => $name,
-                'email' => $u->email,
-                'cin' => $u->cin ?? ($u->professor?->cin ?? ''),
-                'type' => $type,
-                'department' => $u->professor?->department?->name ?? 'ENCG',
-            ];
-        })
-        ->sortBy('name')
-        ->values()
-        ->toArray();
+                return [
+                    'id' => $u->id,
+                    'name' => $name,
+                    'email' => $u->email,
+                    'cin' => $u->cin ?? ($u->professor?->cin ?? ''),
+                    'type' => $type,
+                    'department' => $u->professor?->department?->name ?? 'ENCG',
+                ];
+            })
+            ->sortBy('name')
+            ->values()
+            ->toArray();
 
         $rooms = Room::select(['id', 'name', 'code', 'capacity'])->orderBy('name')->get();
 

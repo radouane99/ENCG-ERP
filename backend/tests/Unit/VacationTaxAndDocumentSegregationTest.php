@@ -128,7 +128,7 @@ class VacationTaxAndDocumentSegregationTest extends TestCase
     {
         $year = date('Y');
         $randomNum = 1234;
-        $trackingCode = 'DOC-PROF-'.$year.'-'.str_pad((string)$randomNum, 4, '0', STR_PAD_LEFT);
+        $trackingCode = 'DOC-PROF-'.$year.'-'.str_pad((string) $randomNum, 4, '0', STR_PAD_LEFT);
 
         $this->assertMatchesRegularExpression(
             '/^DOC-PROF-\d{4}-\d{4}$/',

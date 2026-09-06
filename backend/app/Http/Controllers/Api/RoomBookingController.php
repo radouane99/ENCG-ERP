@@ -128,7 +128,8 @@ class RoomBookingController extends Controller
             ])
             ->setPaper('a4', 'portrait');
 
-        $fileName = 'Affiche_Porte_' . preg_replace('/\s+/', '_', $room->name) . '.pdf';
+        $fileName = 'Affiche_Porte_'.preg_replace('/\s+/', '_', $room->name).'.pdf';
+
         return $pdf->download($fileName);
     }
 

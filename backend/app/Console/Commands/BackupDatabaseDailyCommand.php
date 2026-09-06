@@ -34,7 +34,7 @@ class BackupDatabaseDailyCommand extends Command
         $dateHuman = date('Y-m-d H:i:s');
 
         $backupsDir = storage_path('app/backups');
-        if (!File::isDirectory($backupsDir)) {
+        if (! File::isDirectory($backupsDir)) {
             File::makeDirectory($backupsDir, 0777, true, true);
         }
 
@@ -42,11 +42,11 @@ class BackupDatabaseDailyCommand extends Command
         $latestFile = "{$backupsDir}/backup_encg_erp_latest.sql";
         $baseLatest = base_path('backup_encg_erp_latest.sql');
 
-        if (!$silent) {
-            $this->info("================================================================");
-            $this->info("  ENCG ERP - Sauvegarde Automatique Quotidienne");
+        if (! $silent) {
+            $this->info('================================================================');
+            $this->info('  ENCG ERP - Sauvegarde Automatique Quotidienne');
             $this->info("  Date : {$dateHuman}");
-            $this->info("================================================================");
+            $this->info('================================================================');
         }
 
         $host = config('database.connections.pgsql.host', 'postgres');
@@ -67,12 +67,13 @@ class BackupDatabaseDailyCommand extends Command
 
         exec($cmd, $output, $returnVar);
 
-        if ($returnVar !== 0 || !file_exists($backupFile) || filesize($backupFile) < 10000) {
+        if ($returnVar !== 0 || ! file_exists($backupFile) || filesize($backupFile) < 10000) {
             $errorMsg = "Échec de la sauvegarde quotidienne PostgreSQL (code: {$returnVar}).";
             Log::error($errorMsg);
-            if (!$silent) {
+            if (! $silent) {
                 $this->error("❌ {$errorMsg}");
             }
+
             return self::FAILURE;
         }
 
@@ -117,10 +118,10 @@ class BackupDatabaseDailyCommand extends Command
                 'created_at' => now(),
             ]);
         } catch (\Throwable $e) {
-            Log::warning("Impossible d'enregistrer l'audit de sauvegarde : " . $e->getMessage());
+            Log::warning("Impossible d'enregistrer l'audit de sauvegarde : ".$e->getMessage());
         }
 
-        if (!$silent) {
+        if (! $silent) {
             $this->info("✅ Sauvegarde réussie : {$sizeMB} Mo");
             $this->info("📁 Fichier archive  : {$backupFile}");
             $this->info("🔄 Fichier récent   : {$latestFile}");

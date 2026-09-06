@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Textbook;
-use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -101,7 +100,7 @@ class AdminTextbookController extends Controller
         $user = $request->user();
 
         $entry->status = $validated['decision'];
-        $entry->validated_by = $user ? ($user->first_name . ' ' . $user->last_name) : 'Chef de Département';
+        $entry->validated_by = $user ? ($user->first_name.' '.$user->last_name) : 'Chef de Département';
         $entry->validated_at = now();
         $entry->save();
 
@@ -128,7 +127,7 @@ class AdminTextbookController extends Controller
                 ]);
             }
         } catch (\Throwable $e) {
-            Log::warning('Textbook validation notification error: ' . $e->getMessage());
+            Log::warning('Textbook validation notification error: '.$e->getMessage());
         }
 
         return response()->json([

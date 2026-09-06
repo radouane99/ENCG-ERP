@@ -24,7 +24,8 @@ class OfficialTimetablePdfTest extends TestCase
         $this->assertStringContainsString('Probabilités', $html);
         $this->assertStringContainsString('Amphithéâtre', $html);
         $this->assertStringContainsString('data:image/png;base64,QQ==', $html);
-        $this->assertStringContainsString('QR authentification', $html);
+        $this->assertStringContainsString('alt="QR"', $html);
+        $this->assertStringContainsString('data:image/svg+xml;base64,QQ==', $html);
         $this->assertStringNotContainsString('Probabilité??', $html);
     }
 

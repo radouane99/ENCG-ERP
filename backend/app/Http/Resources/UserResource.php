@@ -2,6 +2,8 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Student;
+use App\Services\Academic\StudentSubGroupDispatcherService;
 use App\Support\Utf8Text;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -23,9 +25,9 @@ class UserResource extends JsonResource
         if (in_array('student', $roles)) {
             $student = $this->relationLoaded('student')
                 ? $this->student
-                : \App\Models\Student::where('user_id', $this->id)->first();
+                : Student::where('user_id', $this->id)->first();
             if ($student) {
-                $academicInfo = app(\App\Services\Academic\StudentSubGroupDispatcherService::class)->getStudentSubGroupInfo($student->id);
+                $academicInfo = app(StudentSubGroupDispatcherService::class)->getStudentSubGroupInfo($student->id);
             }
         }
 

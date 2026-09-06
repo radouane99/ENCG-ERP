@@ -100,7 +100,7 @@ class SpecialtyOrientationController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Vos vœux de filière ont été enregistrés avec succès ! Score de mérite calculé : ' . $meritScore . '/20.',
+            'message' => 'Vos vœux de filière ont été enregistrés avec succès ! Score de mérite calculé : '.$meritScore.'/20.',
             'data' => SpecialtyWish::where('student_id', $student->id)->orderBy('preference_rank')->get(),
         ]);
     }
@@ -178,8 +178,11 @@ class SpecialtyOrientationController extends Controller
                         $assigned = true;
                         $allocatedStudents++;
 
-                        if ($wish->preference_rank === 1) $satisfactionRank1++;
-                        elseif ($wish->preference_rank === 2) $satisfactionRank2++;
+                        if ($wish->preference_rank === 1) {
+                            $satisfactionRank1++;
+                        } elseif ($wish->preference_rank === 2) {
+                            $satisfactionRank2++;
+                        }
 
                         // Mark other wishes of this student as not selected
                         SpecialtyWish::where('student_id', $studentId)

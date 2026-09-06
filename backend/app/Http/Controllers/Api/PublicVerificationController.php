@@ -44,7 +44,8 @@ class PublicVerificationController extends Controller
                         'document_id' => $documentId,
                     ])
                     ->log('Document étudiant vérifié via portail public');
-            } catch (\Throwable) {}
+            } catch (\Throwable) {
+            }
 
             return response()->json([
                 'success' => true,
@@ -172,7 +173,8 @@ class PublicVerificationController extends Controller
                     'document_type' => "Liste d'Émargement Officielle",
                 ])
                 ->log("Liste d'émargement vérifiée via QR Code public");
-        } catch (\Throwable) {}
+        } catch (\Throwable) {
+        }
 
         return response()->json([
             'success' => true,

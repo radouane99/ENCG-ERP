@@ -51,13 +51,13 @@ class StudentSubGroupDispatcherService
         $total = $students->count();
         if ($total === 0) {
             return [
-                'group_id'    => $group->id,
-                'group_name'  => $group->name,
-                'total'       => 0,
+                'group_id' => $group->id,
+                'group_name' => $group->name,
+                'total' => 0,
                 'sub_group_1' => $subGroup1,
-                'count_1'     => 0,
+                'count_1' => 0,
                 'sub_group_2' => $subGroup2,
-                'count_2'     => 0,
+                'count_2' => 0,
             ];
         }
 
@@ -84,7 +84,7 @@ class StudentSubGroupDispatcherService
                     ->where('student_id', $student->student_id)
                     ->where('group_id', $group->id)
                     ->update([
-                        'sub_group'  => $assignedSubGroup,
+                        'sub_group' => $assignedSubGroup,
                         'updated_at' => now(),
                     ]);
             }
@@ -95,7 +95,7 @@ class StudentSubGroupDispatcherService
                     ->where('student_id', $student->student_id)
                     ->where('group_id', $group->id)
                     ->update([
-                        'sub_group'  => $assignedSubGroup,
+                        'sub_group' => $assignedSubGroup,
                         'updated_at' => now(),
                     ]);
             }
@@ -104,13 +104,13 @@ class StudentSubGroupDispatcherService
         Log::info("Découpage sous-groupes TD réalisé pour {$group->name}: {$total} étudiants ({$count1} dans {$subGroup1}, {$count2} dans {$subGroup2})");
 
         return [
-            'group_id'    => $group->id,
-            'group_name'  => $group->name,
-            'total'       => $total,
+            'group_id' => $group->id,
+            'group_name' => $group->name,
+            'total' => $total,
             'sub_group_1' => $subGroup1,
-            'count_1'     => $count1,
+            'count_1' => $count1,
             'sub_group_2' => $subGroup2,
-            'count_2'     => $count2,
+            'count_2' => $count2,
         ];
     }
 
@@ -143,8 +143,8 @@ class StudentSubGroupDispatcherService
         return [
             'academic_year_id' => $yearId,
             'groups_processed' => count($results),
-            'total_students'   => $totalStudents,
-            'details'          => $results,
+            'total_students' => $totalStudents,
+            'details' => $results,
         ];
     }
 
@@ -218,13 +218,13 @@ class StudentSubGroupDispatcherService
         $finalSubGroup = $subGroup ?: "G{$sectionNum}.1";
 
         return [
-            'filiere_name'    => $pathway->filiere_name,
-            'filiere_code'    => $pathway->filiere_code,
-            'semester'        => $pathway->current_semester,
-            'section_number'  => $sectionNum,
-            'section_label'   => "Section {$sectionNum}",
-            'group_name'      => $pathway->group_name,
-            'sub_group'       => $finalSubGroup,
+            'filiere_name' => $pathway->filiere_name,
+            'filiere_code' => $pathway->filiere_code,
+            'semester' => $pathway->current_semester,
+            'section_number' => $sectionNum,
+            'section_label' => "Section {$sectionNum}",
+            'group_name' => $pathway->group_name,
+            'sub_group' => $finalSubGroup,
             'full_assignment' => "Section {$sectionNum} • Sous-groupe TD {$finalSubGroup}",
         ];
     }

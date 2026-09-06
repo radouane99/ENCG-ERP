@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Assessment;
 use App\Models\Department;
 use App\Models\Exam;
-use App\Models\ExamSeating;
 use App\Models\Grade;
 use App\Models\Module;
 use App\Models\Professor;

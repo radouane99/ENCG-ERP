@@ -12,6 +12,7 @@ use App\Models\Student;
 use App\Models\StudentPathway;
 use App\Models\StudentRegistration;
 use App\Services\Academic\GroupService;
+use App\Services\Academic\StudentSubGroupDispatcherService;
 use App\Services\Security\ProfessorAccessService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -236,7 +237,7 @@ class GroupController extends Controller
     /**
      * Découpage automatique officiel des sous-groupes TD/TP par ordre alphabétique (ENCG Fès).
      */
-    public function dispatchSubGroups(Request $request, \App\Services\Academic\StudentSubGroupDispatcherService $dispatcher): JsonResponse
+    public function dispatchSubGroups(Request $request, StudentSubGroupDispatcherService $dispatcher): JsonResponse
     {
         $groupId = $request->input('group_id');
         if ($groupId) {
