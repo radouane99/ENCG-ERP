@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
 import {
   Calculator, Lock, Unlock, FileText, CheckCircle2,
-  AlertTriangle, Users, BookOpen, Calendar
+  AlertTriangle
 } from 'lucide-react';
 import api from '@/shared/lib/api';
 import { openAuthenticatedUrl } from '@shared/lib/documentAccess';
@@ -23,7 +22,7 @@ export default function DeliberationManager() {
       const res = await api.get(`/admin/academic/deliberate?semester=${selectedSemester}&session=${selectedSession}`);
       setDeliberationResults(res.data.data.stats);
       toast.success('Délibération générée avec succès selon le modèle APOGEE.');
-    } catch (error) {
+    } catch {
       toast.error('Erreur lors de la délibération.');
     } finally {
       setIsDeliberating(false);
@@ -40,7 +39,7 @@ export default function DeliberationManager() {
         end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
       });
       toast.success('Période de saisie des notes ouverte pour les professeurs.');
-    } catch (error) {
+    } catch {
       toast.error('Erreur lors de l\'ouverture de la période.');
     }
   };

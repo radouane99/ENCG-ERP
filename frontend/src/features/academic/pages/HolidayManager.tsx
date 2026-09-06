@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { CalendarOff, Plus, Trash2, Edit2, X, CalendarDays, Palmtree, School, AlertTriangle, Sparkles, Download, Check, ChevronDown, Bell, Lock, ShieldCheck } from 'lucide-react';
+import { CalendarOff, Plus, Trash2, Edit2, X, Palmtree, AlertTriangle, Sparkles, Download, Check, ChevronDown, Lock, ShieldCheck } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import api from '@shared/lib/api';
 import { toast } from 'sonner';
