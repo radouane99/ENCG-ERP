@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import { useParams, Link } from 'react-router-dom';
-import { Check, X, Calendar as CalendarIcon, Save, Users, Clock, ShieldCheck, ChevronLeft, Loader2, Sparkles } from 'lucide-react';
+import { Check, X, Save, Users, ShieldCheck, ChevronLeft, Loader2 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import api from '@/shared/lib/api';
@@ -15,14 +14,10 @@ interface Student {
 }
 
 export default function ProfessorCall() {
-  const { t, i18n } = useTranslation(['professors', 'common']);
   const { sessionId } = useParams();
 
-  const [date, setDate] = useState(new Date().toLocaleDateString('fr-FR'));
-  const [type, setType] = useState('Cours Magistral (CM)');
-
   // Fetch real students or fallback to group students
-  const { data: sessionData, isLoading } = useQuery({
+  const { data: sessionData } = useQuery({
     queryKey: ['attendance-session', sessionId],
     queryFn: async () => {
       try {
