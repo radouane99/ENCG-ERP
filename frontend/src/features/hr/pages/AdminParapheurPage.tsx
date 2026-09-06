@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   FileSignature, 
   Stamp, 
@@ -104,7 +104,7 @@ export default function AdminParapheurPage() {
   const [signatoryTitle, setSignatoryTitle] = useState('LE DIRECTEUR DE L\'ENCG FÈS');
   const [processingAction, setProcessingAction] = useState(false);
 
-  const fetchParapheurData = async (silent = false) => {
+  const fetchParapheurData = useCallback(async (silent = false) => {
     try {
       if (!silent) setLoading(true);
       const [listRes, countRes] = await Promise.all([
@@ -130,11 +130,11 @@ export default function AdminParapheurPage() {
     } finally {
       if (!silent) setLoading(false);
     }
-  };
+  }, [activeStage, selectedDocType, searchTerm]);
 
   useEffect(() => {
     fetchParapheurData(false);
-  }, [activeStage, selectedDocType]);
+  }, [fetchParapheurData]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();

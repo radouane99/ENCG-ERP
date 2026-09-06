@@ -5,10 +5,9 @@ import { useAuthStore } from '@stores/authStore'
 import { cn } from '@shared/lib/utils'
 import {
   LayoutDashboard, Users, GraduationCap, BookOpen, Calendar,
-  ClipboardList, FileText, Award, Library, MessageSquare,
-  HelpCircle, Users2, AlertTriangle, Settings,
-  ChevronRight, ChevronDown, Building2, Briefcase,
-  Trophy, BarChart3, Clock, Edit3, 
+  ClipboardList, Award, Settings,
+  ChevronRight, ChevronDown, Briefcase,
+  Trophy, Clock, Edit3, 
   ShieldAlert, UserPlus, Target,
   ScanLine, CheckSquare, CalendarDays, InboxIcon, MonitorPlay, Zap, Activity, FileSignature, Kanban,
   Network, MapPin, Ticket, Crown, Book,

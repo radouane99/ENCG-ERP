@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Api\Professor;
 
+use App\Enums\AttendanceStatus;
 use App\Http\Controllers\Controller;
+use App\Models\AcademicYear;
 use App\Models\Attendance;
 use App\Models\AttendanceSession;
 use App\Models\ExamSurveillance;
@@ -12,24 +14,17 @@ use App\Models\Module;
 use App\Models\ModuleProfessor;
 use App\Models\Professor;
 use App\Models\ProfessorDocumentRequest;
-use App\Models\RoomBooking;
 use App\Models\Schedule;
 use App\Models\Student;
-use App\Models\StudentPathway;
 use App\Models\Textbook;
 use App\Models\User;
 use App\Models\VacationContract;
-use App\Services\Academic\TimetableCampaignService;
-use App\Services\Documents\OfficialPdfFactory;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Str;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class ProfessorPortalController extends Controller
@@ -2006,7 +2001,7 @@ class ProfessorPortalController extends Controller
         $profType = ($prof?->contract_type === 'vacataire') ? 'vacataire' : 'permanent';
 
         $group = Group::with('academicYear')->findOrFail($groupId);
-        $academicYearId = $group->academic_year_id ?: (\App\Models\AcademicYear::where('is_current', true)->value('id') ?: 1);
+        $academicYearId = $group->academic_year_id ?: (AcademicYear::where('is_current', true)->value('id') ?: 1);
         $sessionType = ! empty($subGroup) ? 'td' : 'cm';
 
         $session = AttendanceSession::firstOrNew([
@@ -2058,11 +2053,11 @@ class ProfessorPortalController extends Controller
                     $notes = "[{$tag}] ".($notes ?: '');
                 }
 
-                $status = $isAbsent ? \App\Enums\AttendanceStatus::ABSENT : \App\Enums\AttendanceStatus::PRESENT;
+                $status = $isAbsent ? AttendanceStatus::ABSENT : AttendanceStatus::PRESENT;
                 if ($tag === 'justifie' && $isAbsent) {
-                    $status = \App\Enums\AttendanceStatus::EXCUSED;
+                    $status = AttendanceStatus::EXCUSED;
                 } elseif ($tag === 'retard') {
-                    $status = \App\Enums\AttendanceStatus::LATE;
+                    $status = AttendanceStatus::LATE;
                 }
 
                 Attendance::updateOrCreate(

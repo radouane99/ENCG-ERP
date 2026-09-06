@@ -5,9 +5,8 @@ import {
   UserCheck, ShieldAlert, RefreshCw, Printer, Info,
   FileText, X, CheckCircle2, BarChart3, Download, Copy,
   LayoutGrid, LayoutList, UserX, RotateCcw, QrCode,
-  Lock, Unlock, MessageCircle, Eye, Calendar, Pencil, SlidersHorizontal,
-  Tag, AlertCircle, Share2, Check, ExternalLink, PrinterIcon,
-  Save, Database
+  Lock, Unlock, MessageCircle, Eye, Calendar, Pencil,
+  Tag, PrinterIcon, Save
 } from 'lucide-react';
 import api from '@/shared/lib/api';
 import { openAuthenticatedUrl } from '@shared/lib/documentAccess';
