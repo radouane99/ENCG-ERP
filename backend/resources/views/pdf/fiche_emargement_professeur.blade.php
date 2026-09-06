@@ -92,10 +92,38 @@
         padding: 8px;
         font-size: 8pt;
     }
+    .pdf-watermark {
+        position: fixed;
+        top: 35%;
+        left: 5%;
+        width: 90%;
+        text-align: center;
+        opacity: 0.038;
+        font-size: 32pt;
+        font-weight: 900;
+        color: #002e5b;
+        transform: rotate(-25deg);
+        z-index: -1000;
+        text-transform: uppercase;
+        letter-spacing: 5px;
+        line-height: 1.5;
+    }
+    .integrity-footer {
+        margin-top: 10px;
+        border-top: 0.8px solid #cbd5e1;
+        padding-top: 4px;
+        font-size: 6.5pt;
+        color: #64748b;
+    }
 </style>
 @endsection
 
 @section('content')
+    <!-- FILIGRANE OFFICIEL DE SÉCURITÉ EN ARRIÈRE-PLAN -->
+    <div class="pdf-watermark">
+        ENCG FÈS • USMBA • DOCUMENT OFFICIEL • ÉMARGEMENT PÉDAGOGIQUE
+    </div>
+
     <div class="roster-header">
         <h1 class="roster-title">
             {{ ($mode ?? 'emargement') === 'seances' ? 'FEUILLE DE PRÉSENCE OFFICIELLE AUX SÉANCES' : 'LISTE OFFICIELLE DES ÉTUDIANTS & FICHE D\'ÉMARGEMENT' }}
@@ -261,6 +289,20 @@
                     <div style="border-top: 0.8px dotted #94a3b8; text-align: center; font-size: 7pt; color: #94a3b8;">
                         Cachet de l'Établissement
                     </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- BANDEAU D'INTÉGRITÉ NUMÉRIQUE & CONFORMITÉ CNDP -->
+    <div class="integrity-footer">
+        <table width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+                <td style="text-align: left; font-size: 6.5pt;">
+                    <strong>Authentification & Intégrité :</strong> Réf #{{ $trackingCode ?? ('EMG-'.date('Y').'-'.str_pad($group->id ?? 1, 4, '0', STR_PAD_LEFT)) }} • Empreinte SHA-256 : <span style="font-family: monospace; color: #002e5b; font-weight: bold;">{{ substr($securityHash ?? hash('sha256', date('YmdHis')), 0, 32) }}…</span>
+                </td>
+                <td style="text-align: right; font-size: 6.5pt;">
+                    Extrait officiel du {{ date('d/m/Y à H:i') }} • Portail ERP Intégré ENCG Fès
                 </td>
             </tr>
         </table>

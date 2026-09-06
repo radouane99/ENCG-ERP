@@ -41,7 +41,11 @@ Route::middleware(['auth:sanctum', 'role:professor|vacataire|department-head|fil
 
     Route::prefix('copilot')->group(function () {
         Route::post('textbook-outline', [ProfessorAiCopilotController::class, 'generateTextbookOutline']);
+        Route::post('voice-textbook', [ProfessorAiCopilotController::class, 'structureVoiceTextbook']);
+        Route::post('attendance-textbook-suggestion', [ProfessorAiCopilotController::class, 'autoCompleteAttendanceTextbook']);
+        Route::post('attendance-risk-analysis', [ProfessorAiCopilotController::class, 'analyzeAttendanceRisk']);
         Route::post('generate-exam-paper', [ProfessorAiCopilotController::class, 'generateExamPaper']);
+        Route::post('download-exam-pdf', [ProfessorAiCopilotController::class, 'downloadExamPaperPdf']);
     });
 });
 

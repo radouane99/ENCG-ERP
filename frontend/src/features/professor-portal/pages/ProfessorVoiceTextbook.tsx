@@ -83,31 +83,55 @@ export default function ProfessorVoiceTextbook() {
     }
   };
 
-  const handleStructureWithAi = () => {
+  const handleStructureWithAi = async () => {
     if (!transcription.trim()) {
       toast.error('Veuillez dicter ou saisir le contenu de la séance.');
       return;
     }
 
     setIsAiProcessing(true);
-    toast.loading('Intelligence Artificielle ENCG en cours de structuration...');
+    const toastId = toast.loading('Intelligence Artificielle ENCG (Gemini 1.5) en cours de structuration...');
 
-    setTimeout(() => {
-      setIsAiProcessing(false);
-      toast.dismiss();
-      setStructuredData({
-        title: 'Chapitre 4 : Analyse des Flux de Trésorerie & Tableaux de Financement',
-        pedagogical_objectives: [
-          'Comprendre la construction du tableau des flux de trésorerie (OEC / IFRS)',
-          'Distinguer flux d\'exploitation, d\'investissement et de financement',
-          'Calculer la Capacité d\'Autofinancement (CAF) et l\'EBE'
-        ],
-        notions_covered: 'Ratios de liquidité, Free Cash Flow to Firm (FCFF), variations du BFR d\'exploitation',
-        work_assigned: 'Exercices 3 & 4 du polycopié de TD à rendre avant la séance du mardi prochain',
-        attendance_summary: 'Séance réalisée en Amphi 2 • 94% de présence enregistrée'
+    try {
+      const res = await api.post('/v1/professor/copilot/voice-textbook', {
+        transcription: transcription.trim(),
+        module_id: selectedModule ? Number(selectedModule) : undefined,
+        session_type: sessionType,
+        session_duration: sessionDuration.includes('1') ? 1.5 : (sessionDuration.includes('3') ? 3.0 : 2.0),
       });
-      toast.success('✨ Cahier de texte structuré automatiquement par l\'IA !');
-    }, 800);
+
+      const structured = res.data?.data;
+      if (structured) {
+        setStructuredData({
+          title: structured.title,
+          pedagogical_objectives: Array.isArray(structured.pedagogical_objectives)
+            ? structured.pedagogical_objectives
+            : [structured.pedagogical_objectives],
+          notions_covered: structured.notions_covered,
+          work_assigned: structured.work_assigned,
+          attendance_summary: `Séance ${sessionType} structurée par IA • Avancement estimé : +${structured.estimated_syllabus_progress || 8}%`,
+          estimated_progress: structured.estimated_syllabus_progress || 8,
+        });
+        toast.success('✨ Cahier de texte structuré avec succès par l\'IA Gemini !', { id: toastId });
+      } else {
+        throw new Error('Format de réponse non conforme');
+      }
+    } catch {
+      toast.error('Erreur lors de la structuration par l\'IA. Mode dégradé activé.', { id: toastId });
+      setStructuredData({
+        title: `Séance : ${transcription.slice(0, 50)}...`,
+        pedagogical_objectives: [
+          'Compréhension des fondements conceptuels de la séance',
+          'Application pratique et exercices d\'illustration',
+        ],
+        notions_covered: transcription,
+        work_assigned: 'Exercices du syllabus à préparer pour la prochaine séance.',
+        attendance_summary: `Séance ${sessionType} enregistrée`,
+        estimated_progress: 8,
+      });
+    } finally {
+      setIsAiProcessing(false);
+    }
   };
 
   // 1. Query available modules for professor

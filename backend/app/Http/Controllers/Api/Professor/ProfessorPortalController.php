@@ -16,6 +16,7 @@ use App\Models\Professor;
 use App\Models\ProfessorDocumentRequest;
 use App\Models\Schedule;
 use App\Models\Student;
+use App\Models\StudentPathway;
 use App\Models\Textbook;
 use App\Models\User;
 use App\Models\VacationContract;
@@ -23,8 +24,10 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class ProfessorPortalController extends Controller
@@ -1695,137 +1698,146 @@ class ProfessorPortalController extends Controller
         $profId = $prof?->id;
         $userId = $user?->id;
 
-        // 1. Récupérer les groupes associés à l'enseignant via Schedule ou ModuleProfessor
-        $groupIds = [];
-        $modulesAssigned = [];
+        $cacheKey = "encg_roster_options_{$userId}_{$profId}";
+        if ($request->boolean('refresh')) {
+            Cache::forget($cacheKey);
+        }
 
-        if ($profId || $userId) {
-            $scheduleGroups = Schedule::where(function ($q) use ($profId, $userId) {
-                if ($profId) {
-                    $q->where('professor_id', $profId);
-                }
-                $q->orWhere('professor_id', $userId);
-            })->whereNotNull('group_id')->pluck('module_id', 'group_id')->toArray();
+        $cached = Cache::remember($cacheKey, 43200, function () use ($profId, $userId, $prof, $user) {
+            // 1. Récupérer les groupes associés à l'enseignant via Schedule ou ModuleProfessor
+            $groupIds = [];
+            $modulesAssigned = [];
 
-            foreach ($scheduleGroups as $gId => $mId) {
-                $groupIds[] = (int) $gId;
-                if ($mId) {
-                    $modulesAssigned[$gId] = (int) $mId;
-                }
-            }
+            if ($profId || $userId) {
+                $scheduleGroups = Schedule::where(function ($q) use ($profId, $userId) {
+                    if ($profId) {
+                        $q->where('professor_id', $profId);
+                    }
+                    $q->orWhere('professor_id', $userId);
+                })->whereNotNull('group_id')->pluck('module_id', 'group_id')->toArray();
 
-            if ($profId) {
-                $mpGroups = ModuleProfessor::where('professor_id', $profId)
-                    ->whereNotNull('group_id')
-                    ->pluck('module_id', 'group_id')
-                    ->toArray();
-                foreach ($mpGroups as $gId => $mId) {
+                foreach ($scheduleGroups as $gId => $mId) {
                     $groupIds[] = (int) $gId;
-                    if ($mId && empty($modulesAssigned[$gId])) {
+                    if ($mId) {
                         $modulesAssigned[$gId] = (int) $mId;
                     }
                 }
-            }
-        }
 
-        $groupIds = array_unique($groupIds);
-
-        // Si aucun groupe n'est encore explicitement assigné dans le planning, on propose les groupes actifs
-        if (empty($groupIds)) {
-            $groupsQuery = Group::with(['filiere', 'academicYear'])
-                ->whereHas('pathways', fn ($p) => $p->where('is_current', true))
-                ->orderBy('filiere_id')
-                ->orderBy('semester_number')
-                ->orderBy('name');
-        } else {
-            $groupsQuery = Group::with(['filiere', 'academicYear'])
-                ->whereIn('id', $groupIds)
-                ->orderBy('name');
-        }
-
-        $groups = $groupsQuery->get();
-
-        $groupList = $groups->map(function ($g) use ($modulesAssigned) {
-            // Détection sous-groupes TD (ex: G1 -> G1.1, G1.2)
-            $subGroups = [];
-            if (preg_match('/G(?:roupe)?\s*[.\-_]?\s*(\d+)/i', $g->name, $m)) {
-                $num = $m[1];
-                $subGroups = ["G{$num}.1", "G{$num}.2"];
+                if ($profId) {
+                    $mpGroups = ModuleProfessor::where('professor_id', $profId)
+                        ->whereNotNull('group_id')
+                        ->pluck('module_id', 'group_id')
+                        ->toArray();
+                    foreach ($mpGroups as $gId => $mId) {
+                        $groupIds[] = (int) $gId;
+                        if ($mId && empty($modulesAssigned[$gId])) {
+                            $modulesAssigned[$gId] = (int) $mId;
+                        }
+                    }
+                }
             }
 
-            $moduleId = $modulesAssigned[$g->id] ?? null;
-            $module = $moduleId ? Module::find($moduleId) : null;
+            $groupIds = array_unique($groupIds);
 
-            // Compte étudiants dans ce groupe
-            $totalStudents = StudentPathway::where('group_id', $g->id)
-                ->where('is_current', true)
-                ->count();
+            // Si aucun groupe n'est encore explicitement assigné dans le planning, on propose les groupes actifs
+            if (empty($groupIds)) {
+                $groupsQuery = Group::with(['filiere', 'academicYear'])
+                    ->whereHas('pathways', fn ($p) => $p->where('is_current', true))
+                    ->orderBy('filiere_id')
+                    ->orderBy('semester_number')
+                    ->orderBy('name');
+            } else {
+                $groupsQuery = Group::with(['filiere', 'academicYear'])
+                    ->whereIn('id', $groupIds)
+                    ->orderBy('name');
+            }
 
-            return [
-                'id' => $g->id,
-                'name' => $g->name,
-                'filiere_id' => $g->filiere_id,
-                'filiere_code' => $g->filiere?->code ?? 'TC',
-                'filiere_name' => $g->filiere?->name ?? 'Tronc Commun',
-                'semester' => $g->semester_number ?? 1,
-                'sub_groups' => $subGroups,
-                'module_id' => $module?->id,
-                'module_name' => $module?->name ?? 'Module d\'Enseignement',
-                'module_code' => $module?->code ?? 'MOD',
-                'total_students' => $totalStudents,
-            ];
-        });
+            $groups = $groupsQuery->get();
 
-        // Organiser également par module pour compatibilité ascendante avec l'UI
-        $modulesMap = [];
-        foreach ($groupList as $g) {
-            $mId = $g['module_id'] ?: 0;
-            if (! isset($modulesMap[$mId])) {
-                $modulesMap[$mId] = [
-                    'module_id' => $mId,
-                    'module_name' => $g['module_name'],
-                    'module_code' => $g['module_code'],
-                    'sections' => [],
+            $groupList = $groups->map(function ($g) use ($modulesAssigned) {
+                // Détection sous-groupes TD (ex: G1 -> G1.1, G1.2)
+                $subGroups = [];
+                if (preg_match('/G(?:roupe)?\s*[.\-_]?\s*(\d+)/i', $g->name, $m)) {
+                    $num = $m[1];
+                    $subGroups = ["G{$num}.1", "G{$num}.2"];
+                }
+
+                $moduleId = $modulesAssigned[$g->id] ?? null;
+                $module = $moduleId ? Module::find($moduleId) : null;
+
+                // Compte étudiants dans ce groupe
+                $totalStudents = StudentPathway::where('group_id', $g->id)
+                    ->where('is_current', true)
+                    ->count();
+
+                return [
+                    'id' => $g->id,
+                    'name' => $g->name,
+                    'filiere_id' => $g->filiere_id,
+                    'filiere_code' => $g->filiere?->code ?? 'TC',
+                    'filiere_name' => $g->filiere?->name ?? 'Tronc Commun',
+                    'semester' => $g->semester_number ?? 1,
+                    'sub_groups' => $subGroups,
+                    'module_id' => $module?->id,
+                    'module_name' => $module?->name ?? 'Module d\'Enseignement',
+                    'module_code' => $module?->code ?? 'MOD',
+                    'total_students' => $totalStudents,
+                ];
+            });
+
+            // Organiser également par module pour compatibilité ascendante avec l'UI
+            $modulesMap = [];
+            foreach ($groupList as $g) {
+                $mId = $g['module_id'] ?: 0;
+                if (! isset($modulesMap[$mId])) {
+                    $modulesMap[$mId] = [
+                        'module_id' => $mId,
+                        'module_name' => $g['module_name'],
+                        'module_code' => $g['module_code'],
+                        'sections' => [],
+                    ];
+                }
+                $modulesMap[$mId]['sections'][] = [
+                    'group_id' => $g['id'],
+                    'group_code' => $g['name'],
+                    'filiere_name' => $g['filiere_name'],
+                    'filiere_code' => $g['filiere_code'],
+                    'semester' => 'S'.$g['semester'],
+                    'academic_year' => date('Y').'/'.(date('Y') + 1),
+                    'sub_groups' => $g['sub_groups'],
                 ];
             }
-            $modulesMap[$mId]['sections'][] = [
-                'group_id' => $g['id'],
-                'group_code' => $g['name'],
-                'filiere_name' => $g['filiere_name'],
-                'filiere_code' => $g['filiere_code'],
-                'semester' => 'S'.$g['semester'],
-                'academic_year' => date('Y').'/'.(date('Y') + 1),
-                'sub_groups' => $g['sub_groups'],
+            $modulesList = array_values($modulesMap);
+
+            // Détection du statut de l'enseignant (Permanent / Vacataire / Doctorant)
+            $statusLabel = 'Professeur Titulaire (Permanent)';
+            if (($prof?->contract_type === 'vacataire') || ($user && $user->hasRole('vacataire'))) {
+                $statusLabel = 'Enseignant Vacataire';
+            }
+            if (str_contains(strtolower($prof?->specialty ?? ''), 'doctorant') || str_contains(strtolower($prof?->grade ?? ''), 'doctorant')) {
+                $statusLabel = 'Doctorant Moniteur / Vacataire';
+            }
+
+            $profPayload = [
+                'id' => $profId,
+                'name' => trim(($user->first_name ?? '').' '.($user->last_name ?? '')) ?: ($user->name ?? 'Enseignant'),
+                'status' => $statusLabel,
+                'email' => $user?->email,
             ];
-        }
-        $modulesList = array_values($modulesMap);
 
-        // Détection du statut de l'enseignant (Permanent / Vacataire / Doctorant)
-        $statusLabel = 'Professeur Titulaire (Permanent)';
-        if (($prof?->contract_type === 'vacataire') || ($user && $user->hasRole('vacataire'))) {
-            $statusLabel = 'Enseignant Vacataire';
-        }
-        if (str_contains(strtolower($prof?->specialty ?? ''), 'doctorant') || str_contains(strtolower($prof?->grade ?? ''), 'doctorant')) {
-            $statusLabel = 'Doctorant Moniteur / Vacataire';
-        }
-
-        $profPayload = [
-            'id' => $profId,
-            'name' => trim(($user->first_name ?? '').' '.($user->last_name ?? '')) ?: ($user->name ?? 'Enseignant'),
-            'status' => $statusLabel,
-            'email' => $user?->email,
-        ];
-
-        return response()->json([
-            'success' => true,
-            'modules' => $modulesList,
-            'groups' => $groupList,
-            'professor' => $profPayload,
-            'data' => [
+            return [
                 'modules' => $modulesList,
                 'groups' => $groupList,
                 'professor' => $profPayload,
-            ],
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'modules' => $cached['modules'],
+            'groups' => $cached['groups'],
+            'professor' => $cached['professor'],
+            'data' => $cached,
         ]);
     }
 
@@ -1986,6 +1998,9 @@ class ProfessorPortalController extends Controller
         $isLocked = (bool) $request->input('is_locked', false);
         $absentIds = array_filter(array_map('intval', (array) $request->input('absent_ids', [])));
         $annotations = (array) $request->input('annotations', []);
+        $syncTextbook = (bool) $request->input('sync_textbook', false);
+        $chapterTitle = trim((string) $request->input('chapter_title', ''));
+        $keyConcepts = trim((string) $request->input('key_concepts', ''));
 
         if (! $groupId || ! $moduleId) {
             return response()->json(['success' => false, 'message' => 'Groupe et Module obligatoires.'], 422);
@@ -2019,7 +2034,7 @@ class ProfessorPortalController extends Controller
             }
         }
 
-        return DB::transaction(function () use ($session, $academicYearId, $profId, $profType, $user, $seanceCode, $isLocked, $groupId, $subGroup, $absentIds, $annotations, $sessionDate) {
+        return DB::transaction(function () use ($session, $academicYearId, $profId, $profType, $user, $seanceCode, $isLocked, $groupId, $subGroup, $absentIds, $annotations, $sessionDate, $syncTextbook, $prof, $moduleId, $sessionType, $chapterTitle, $keyConcepts) {
             if (! $session->exists) {
                 $session->academic_year_id = $academicYearId;
                 $session->professor_id = $profId;
@@ -2073,6 +2088,35 @@ class ProfessorPortalController extends Controller
                 );
             }
 
+            // Synergie Pédagogique : Synchronisation automatique avec le Cahier de Texte Numérique
+            $textbookSynced = false;
+            if ($syncTextbook && $prof) {
+                $moduleObj = Module::find($moduleId);
+                $cleanNum = preg_replace('/[^0-9]/', '', $seanceCode) ?: '1';
+                $defaultTitle = "Séance {$seanceCode} — ".($moduleObj?->name ?? 'Enseignement');
+                $defaultConcepts = "Séance officielle {$seanceCode} (".strtoupper($sessionType)."). Effectif : ".count($students)." inscrits, ".(count($students) - count($absentIds))." présents, ".count($absentIds)." absents.";
+
+                Textbook::updateOrCreate(
+                    [
+                        'professor_id' => $prof->id,
+                        'module_id' => $moduleId,
+                        'session_date' => $sessionDate,
+                        'session_type' => $sessionType,
+                    ],
+                    [
+                        'user_id' => $user->id,
+                        'group_id' => $groupId,
+                        'session_duration_hours' => 2.0,
+                        'chapter_title' => $chapterTitle ?: $defaultTitle,
+                        'key_concepts' => $keyConcepts ?: $defaultConcepts,
+                        'pedagogical_goals' => "Progression du syllabus officiel & contrôle d'assiduité",
+                        'syllabus_percentage' => min(100, (int) $cleanNum * 8 ?: 15),
+                        'status' => 'submitted',
+                    ]
+                );
+                $textbookSynced = true;
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => "Feuille de présence de la séance {$seanceCode} enregistrée avec succès en base de données.",
@@ -2084,6 +2128,7 @@ class ProfessorPortalController extends Controller
                     'total_students' => count($students),
                     'absent_count' => count($absentIds),
                     'present_count' => count($students) - count($absentIds),
+                    'textbook_synced' => $textbookSynced,
                 ],
             ]);
         });
@@ -2155,6 +2200,9 @@ class ProfessorPortalController extends Controller
             $orientation = ($mode === 'seances') ? 'landscape' : 'portrait';
         }
 
+        $trackingCode = 'EMG-'.date('Y').'-'.str_pad($group->id, 4, '0', STR_PAD_LEFT);
+        $securityHash = hash('sha256', ($group->id ?? 0).'_'.($module?->id ?? 0).'_'.date('Ymd').'_'.($user?->id ?? 0));
+
         $pdf = Pdf::loadView('pdf.fiche_emargement_professeur', [
             'professorName' => $professorName,
             'professorStatus' => $statusLabel,
@@ -2169,6 +2217,8 @@ class ProfessorPortalController extends Controller
             'orientation' => $orientation,
             'absentIds' => $absentIds,
             'students' => $students,
+            'trackingCode' => $trackingCode,
+            'securityHash' => $securityHash,
         ])->setPaper('a4', $orientation);
 
         $cleanGroupName = Str::slug($group->name);

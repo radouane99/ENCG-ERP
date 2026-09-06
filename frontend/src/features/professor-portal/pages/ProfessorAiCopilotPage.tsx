@@ -1,7 +1,8 @@
 import React, { useState } from 'react'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { 
-  Sparkles, BrainCircuit, BookOpen, FileText, CheckCircle2, Printer
+  Sparkles, BrainCircuit, BookOpen, FileText, CheckCircle2, Printer,
+  Download, Loader2
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@shared/lib/utils'
@@ -79,8 +80,50 @@ export default function ProfessorAiCopilotPage() {
     })
   }
 
+  const [downloadingPdf, setDownloadingPdf] = useState(false)
+
   const handlePrintExam = () => {
     window.print()
+  }
+
+  const handleDownloadExamPdf = async () => {
+    if (!examResult || !selectedModuleExam) {
+      toast.error('Aucun sujet à exporter.')
+      return
+    }
+    setDownloadingPdf(true)
+    const toastId = toast.loading('Génération du PDF officiel de l\'épreuve ENCG Fès...')
+    try {
+      const res = await api.post(
+        '/v1/professor/copilot/download-exam-pdf',
+        {
+          module_id: Number(selectedModuleExam),
+          title: examResult.title,
+          context: examResult.context,
+          sections: examResult.sections,
+          rubric: examResult.rubric,
+          total_points: examResult.total_points || 20,
+          duration: '2 Heures',
+          include_corrige: true,
+        },
+        { responseType: 'blob' }
+      )
+
+      const blob = new Blob([res.data], { type: 'application/pdf' })
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', `Epreuve_Examen_ENCG_${selectedModuleExam}.pdf`)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+      toast.success('📄 Épreuve d\'examen officielle téléchargée avec succès !', { id: toastId })
+    } catch {
+      toast.error('Erreur lors du téléchargement du PDF officiel.', { id: toastId })
+    } finally {
+      setDownloadingPdf(false)
+    }
   }
 
   return (
@@ -320,12 +363,22 @@ export default function ProfessorAiCopilotPage() {
                   <span className="px-3 py-1 bg-purple-50 text-purple-700 border border-purple-200 rounded-xl text-xs font-black uppercase">
                     Sujet Officiel d'Examen sur 20 Points
                   </span>
-                  <button
-                    onClick={handlePrintExam}
-                    className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-black hover:bg-slate-800 transition-all cursor-pointer"
-                  >
-                    <Printer className="w-4 h-4" /> Imprimer / Exporter PDF
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleDownloadExamPdf}
+                      disabled={downloadingPdf}
+                      className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-black hover:bg-indigo-500 transition-all cursor-pointer shadow-md shadow-indigo-950/20 disabled:opacity-50"
+                    >
+                      {downloadingPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                      <span>{downloadingPdf ? 'Génération PDF…' : 'Télécharger PDF Officiel'}</span>
+                    </button>
+                    <button
+                      onClick={handlePrintExam}
+                      className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-black hover:bg-slate-800 transition-all cursor-pointer"
+                    >
+                      <Printer className="w-4 h-4" /> Imprimer
+                    </button>
+                  </div>
                 </div>
 
                 {/* Exam Title & Context */}

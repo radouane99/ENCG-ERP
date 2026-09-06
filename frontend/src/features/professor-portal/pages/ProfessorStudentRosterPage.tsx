@@ -6,7 +6,7 @@ import {
   FileText, X, CheckCircle2, BarChart3, Download, Copy,
   LayoutGrid, LayoutList, UserX, RotateCcw, QrCode,
   Lock, Unlock, MessageCircle, Eye, Calendar, Pencil,
-  Tag, PrinterIcon, Save
+  Tag, PrinterIcon, Save, Sparkles, AlertTriangle
 } from 'lucide-react';
 import api from '@/shared/lib/api';
 import { openAuthenticatedUrl } from '@shared/lib/documentAccess';
@@ -145,9 +145,19 @@ export default function ProfessorStudentRosterPage() {
   // 7. Individual Student Sheet Modal
   const [individualStudent, setIndividualStudent] = useState<StudentRow | null>(null);
 
-  // 8. Backend Persistence State
+  // 8. Backend Persistence State & Textbook Sync
   const [savingAttendance, setSavingAttendance] = useState(false);
   const [loadingAttendanceHistory, setLoadingAttendanceHistory] = useState(false);
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [syncTextbook, setSyncTextbook] = useState(true);
+  const [customChapterTitle, setCustomChapterTitle] = useState('');
+  const [customKeyConcepts, setCustomKeyConcepts] = useState('');
+
+  // 9. AI Copilot & Predictive Attendance Risk
+  const [isGeneratingAiSuggestion, setIsGeneratingAiSuggestion] = useState(false);
+  const [showRiskModal, setShowRiskModal] = useState(false);
+  const [loadingRiskAnalysis, setLoadingRiskAnalysis] = useState(false);
+  const [riskData, setRiskData] = useState<any>(null);
 
   // Storage key for caching séances locally
   const storageKey = useMemo(() => {
@@ -294,11 +304,13 @@ export default function ProfessorStudentRosterPage() {
     return { total, absent, present, annotatedCount, rate, subGroupBreakdown };
   }, [students, absentIds, annotations]);
 
-  // Fetch Options
-  const fetchOptions = useCallback(async () => {
+  // Fetch Options (with Redis caching & refresh bypass)
+  const fetchOptions = useCallback(async (refresh = false) => {
     setLoadingOptions(true);
     try {
-      const res = await api.get('/professor-portal/student-lists/options');
+      const res = await api.get('/professor-portal/student-lists/options', {
+        params: refresh ? { refresh: 1 } : {},
+      });
       const payload = res.data?.data ?? res.data;
       let modulesList: ModuleOption[] = payload?.modules ?? [];
 
@@ -414,7 +426,7 @@ export default function ProfessorStudentRosterPage() {
     }
   }, [selectedGroupId, selectedModuleId, listMode, selectedSubGroup, selectedSeance]);
 
-  // Save attendance to Backend Database
+  // Save attendance to Backend Database & optionally sync with Textbook
   const handleSaveAttendanceToDb = async () => {
     if (!selectedGroupId || !selectedModuleId) {
       toast.error('Veuillez sélectionner un module et un groupe');
@@ -431,14 +443,70 @@ export default function ProfessorStudentRosterPage() {
         is_locked: isLocked,
         absent_ids: Array.from(absentIds),
         annotations,
+        sync_textbook: syncTextbook,
+        chapter_title: customChapterTitle.trim() || undefined,
+        key_concepts: customKeyConcepts.trim() || undefined,
       };
       const res = await api.post('/professor-portal/student-lists/attendance', payload);
-      toast.success(res.data?.message || `Feuille de présence ${selectedSeance} enregistrée en base de données`);
+      const isSynced = res.data?.data?.textbook_synced;
+      toast.success(
+        isSynced
+          ? `Feuille de présence ${selectedSeance} et Cahier de Texte enregistrés avec succès !`
+          : (res.data?.message || `Feuille de présence ${selectedSeance} enregistrée en base de données`)
+      );
       persistCurrentSeance(absentIds, annotations, isLocked, seanceDate);
+      setShowSaveModal(false);
     } catch {
       toast.error('Erreur lors de l\'enregistrement en base de données');
     } finally {
       setSavingAttendance(false);
+    }
+  };
+
+  // 🪄 AI Auto-complete attendance session content for Textbook
+  const handleAiSuggestAttendanceTextbook = async () => {
+    if (!selectedModuleId) {
+      toast.error('Veuillez d\'abord sélectionner un module');
+      return;
+    }
+    setIsGeneratingAiSuggestion(true);
+    try {
+      const res = await api.post('/v1/professor/copilot/attendance-textbook-suggestion', {
+        module_id: selectedModuleId,
+        seance_code: selectedSeance,
+        session_type: listMode === 'subgroup' ? 'TD' : 'CM',
+      });
+      if (res.data?.data) {
+        setCustomChapterTitle(res.data.data.chapter_title);
+        setCustomKeyConcepts(res.data.data.key_concepts);
+        toast.success('✨ Contenu de la séance suggéré avec succès par l\'IA !');
+      }
+    } catch {
+      toast.error('Impossible de générer le contenu avec l\'IA.');
+    } finally {
+      setIsGeneratingAiSuggestion(false);
+    }
+  };
+
+  // 🛡️ Fetch AI Attendance Risk & Early Warning Analysis
+  const handleFetchAttendanceRisk = async () => {
+    if (!selectedGroupId) {
+      toast.error('Veuillez sélectionner un groupe d\'étudiants');
+      return;
+    }
+    setShowRiskModal(true);
+    setLoadingRiskAnalysis(true);
+    try {
+      const res = await api.post('/v1/professor/copilot/attendance-risk-analysis', {
+        group_id: selectedGroupId,
+        module_id: selectedModuleId || undefined,
+        sub_group: listMode === 'subgroup' ? selectedSubGroup : undefined,
+      });
+      setRiskData(res.data?.data);
+    } catch {
+      toast.error('Erreur lors de l\'analyse prédictive d\'assiduité.');
+    } finally {
+      setLoadingRiskAnalysis(false);
     }
   };
 
@@ -790,12 +858,15 @@ export default function ProfessorStudentRosterPage() {
 
               {/* Refresh */}
               <button
-                onClick={fetchStudents}
-                disabled={loadingStudents || !selectedGroupId}
+                onClick={() => {
+                  fetchOptions(true);
+                  fetchStudents();
+                }}
+                disabled={loadingStudents || loadingOptions || !selectedGroupId}
                 className="p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 border border-slate-700/80 text-slate-300 transition-all disabled:opacity-40"
-                title="Actualiser la liste"
+                title="Actualiser la liste (invalide le cache)"
               >
-                <RefreshCw className={cn('w-4 h-4', loadingStudents && 'animate-spin')} />
+                <RefreshCw className={cn('w-4 h-4', (loadingStudents || loadingOptions) && 'animate-spin')} />
               </button>
 
               {/* WhatsApp Share Button */}
@@ -925,12 +996,23 @@ export default function ProfessorStudentRosterPage() {
                       )}
                     </span>
 
+                    {/* AI Attendance Risk Analysis Button */}
+                    <button
+                      onClick={handleFetchAttendanceRisk}
+                      disabled={!selectedGroupId}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-semibold transition-all shadow-sm disabled:opacity-50"
+                      title="Analyse prédictive des risques d'absence et d'exclusion (Art. 14 ENCG Fès)"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Risque Décrochage IA</span>
+                    </button>
+
                     {/* Save to DB Button */}
                     <button
-                      onClick={handleSaveAttendanceToDb}
+                      onClick={() => setShowSaveModal(true)}
                       disabled={savingAttendance || !selectedGroupId}
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-md shadow-emerald-950/40 disabled:opacity-50"
-                      title="Persister la feuille d'émargement en base de données"
+                      title="Enregistrer la feuille de présence et synchroniser avec le Cahier de Texte"
                     >
                       {savingAttendance ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
                       <span>{savingAttendance ? 'Enregistrement…' : 'Enregistrer en BDD'}</span>
@@ -1993,6 +2075,311 @@ export default function ProfessorStudentRosterPage() {
             <div className="p-4 border-t border-slate-800 bg-slate-900/90 flex justify-end">
               <button
                 onClick={() => setIndividualStudent(null)}
+                className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors"
+              >
+                Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Modal: Save to DB & Sync Textbook ─────────────────────────── */}
+      {showSaveModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in">
+          <div className="relative w-full max-w-xl bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+            {/* Header */}
+            <div className="p-5 border-b border-slate-800 bg-slate-900/90 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
+                  <BookOpen className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white">Enregistrement & Synergie Pédagogique</h3>
+                  <p className="text-xs text-slate-400">Sauvegarde de la présence et liaison avec le Cahier de Texte</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowSaveModal(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+              {/* Session Recap */}
+              <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-slate-400">Séance & Date :</span>
+                  <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded">
+                    {selectedSeance} • {seanceDate}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-slate-400">Module :</span>
+                  <span className="text-xs font-semibold text-white truncate max-w-[280px]">
+                    {selectedModule?.module_code} - {selectedModule?.module_name}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-slate-400">Groupe / Section :</span>
+                  <span className="text-xs font-medium text-slate-300">
+                    {selectedSection?.group_code} {listMode === 'subgroup' && selectedSubGroup ? `(${selectedSubGroup})` : ''}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between pt-1 border-t border-slate-800/80">
+                  <span className="text-xs text-slate-400">Effectif présent :</span>
+                  <span className="text-xs font-bold text-white">
+                    {students.length - absentIds.size} / {students.length} ({absentIds.size} absent{absentIds.size > 1 ? 's' : ''})
+                  </span>
+                </div>
+              </div>
+
+              {/* Textbook Sync Toggle Card */}
+              <div className={cn(
+                'rounded-xl border p-4 transition-all',
+                syncTextbook
+                  ? 'bg-emerald-950/20 border-emerald-500/40 ring-1 ring-emerald-500/20'
+                  : 'bg-slate-950/40 border-slate-800'
+              )}>
+                <label className="flex items-start gap-3 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={syncTextbook}
+                    onChange={(e) => setSyncTextbook(e.target.checked)}
+                    className="mt-1 h-4 w-4 rounded border-slate-700 bg-slate-800 text-emerald-500 focus:ring-emerald-400 focus:ring-offset-slate-900 cursor-pointer"
+                  />
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-white">
+                      Enregistrer en même temps dans le Cahier de Texte Numérique
+                    </p>
+                    <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">
+                      Crée automatiquement une séance de 2.0h avec statut « Réalisé » dans votre cahier de texte officiel ENCG Fès.
+                    </p>
+                  </div>
+                </label>
+
+                {/* Additional Textbook Inputs */}
+                {syncTextbook && (
+                  <div className="mt-4 pt-3 border-t border-emerald-500/20 space-y-3 animate-in fade-in">
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-xs font-semibold text-slate-300">
+                          Intitulé du Chapitre / Séance <span className="text-slate-500">(optionnel)</span>
+                        </label>
+                        <button
+                          type="button"
+                          onClick={handleAiSuggestAttendanceTextbook}
+                          disabled={isGeneratingAiSuggestion || !selectedModuleId}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/30 text-[11px] font-bold transition-all disabled:opacity-50"
+                          title="Suggérer le chapitre et les concepts clés de cette séance avec Gemini AI"
+                        >
+                          {isGeneratingAiSuggestion ? (
+                            <Loader2 className="w-3 h-3 animate-spin text-purple-400" />
+                          ) : (
+                            <Sparkles className="w-3 h-3 text-amber-300" />
+                          )}
+                          <span>{isGeneratingAiSuggestion ? 'Génération IA…' : '🪄 Auto-compléter avec l\'IA'}</span>
+                        </button>
+                      </div>
+                      <input
+                        type="text"
+                        value={customChapterTitle}
+                        onChange={(e) => setCustomChapterTitle(e.target.value)}
+                        placeholder={`Ex: Séance ${selectedSeance} — Concepts fondamentaux & Études de cas`}
+                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-300 mb-1">
+                        Notions abordées & Activités <span className="text-slate-500">(optionnel)</span>
+                      </label>
+                      <textarea
+                        rows={2}
+                        value={customKeyConcepts}
+                        onChange={(e) => setCustomKeyConcepts(e.target.value)}
+                        placeholder="Ex: Présentation du cours magistral, exercices d'application en sous-groupes..."
+                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 resize-none"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 border-t border-slate-800 bg-slate-900/90 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowSaveModal(false)}
+                disabled={savingAttendance}
+                className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors disabled:opacity-50"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveAttendanceToDb}
+                disabled={savingAttendance}
+                className="flex items-center gap-2 px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-md shadow-emerald-950/40 disabled:opacity-50"
+              >
+                {savingAttendance ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                <span>{savingAttendance ? 'Enregistrement en cours…' : 'Confirmer & Enregistrer'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Modal: AI Attendance Risk & Early Warning ─────────────────── */}
+      {showRiskModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in">
+          <div className="relative w-full max-w-2xl bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+            {/* Header */}
+            <div className="p-5 border-b border-slate-800 bg-slate-900/90 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400">
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white flex items-center gap-2">
+                    <span>Détection Prédictive Décrochage & Risque d'Absence (IA)</span>
+                    <span className="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full font-bold">Art. 14 ENCG Fès</span>
+                  </h3>
+                  <p className="text-xs text-slate-400">Analyse de conformité réglementaire LMD & Alerte d'assiduité précoce</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowRiskModal(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-6 space-y-5 overflow-y-auto">
+              {loadingRiskAnalysis ? (
+                <div className="flex flex-col items-center justify-center py-16 gap-3">
+                  <Loader2 className="w-8 h-8 text-amber-400 animate-spin" />
+                  <p className="text-sm font-semibold text-slate-300">Analyse de l'assiduité par l'IA en cours…</p>
+                  <p className="text-xs text-slate-500">Examen des 12 séances d'émargement et seuils légaux ENCG</p>
+                </div>
+              ) : riskData ? (
+                <>
+                  {/* KPIs Stats */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="bg-slate-950/60 border border-rose-500/30 rounded-xl p-3.5 flex flex-col gap-1">
+                      <div className="flex items-center justify-between text-rose-400 text-xs font-semibold">
+                        <span>Risque Critique</span>
+                        <AlertTriangle className="w-4 h-4" />
+                      </div>
+                      <p className="text-2xl font-bold text-white">{riskData.critical_count ?? 0}</p>
+                      <p className="text-[11px] text-slate-400">≥ 3 absences (Exclusion Art. 14)</p>
+                    </div>
+
+                    <div className="bg-slate-950/60 border border-amber-500/30 rounded-xl p-3.5 flex flex-col gap-1">
+                      <div className="flex items-center justify-between text-amber-400 text-xs font-semibold">
+                        <span>Zone Vigilance</span>
+                        <Info className="w-4 h-4" />
+                      </div>
+                      <p className="text-2xl font-bold text-white">{riskData.warning_count ?? 0}</p>
+                      <p className="text-[11px] text-slate-400">2 absences non justifiées</p>
+                    </div>
+
+                    <div className="bg-slate-950/60 border border-emerald-500/30 rounded-xl p-3.5 flex flex-col gap-1">
+                      <div className="flex items-center justify-between text-emerald-400 text-xs font-semibold">
+                        <span>Assiduité Globale</span>
+                        <CheckCircle2 className="w-4 h-4" />
+                      </div>
+                      <p className="text-2xl font-bold text-white">{riskData.global_attendance_rate ?? 100}%</p>
+                      <p className="text-[11px] text-slate-400">{riskData.total_sessions_evaluated ?? 1} séances évaluées</p>
+                    </div>
+                  </div>
+
+                  {/* AI Diagnosis */}
+                  <div className="bg-purple-950/20 border border-purple-500/30 rounded-xl p-4 space-y-2">
+                    <div className="flex items-center gap-2 text-purple-300 font-bold text-xs uppercase tracking-wider">
+                      <Sparkles className="w-4 h-4 text-purple-400" />
+                      <span>Diagnostic Synthétique du Copilote IA</span>
+                    </div>
+                    <p className="text-xs text-slate-300 leading-relaxed">
+                      {riskData.ai_summary}
+                    </p>
+                  </div>
+
+                  {/* Critical Students Table */}
+                  <div>
+                    <h4 className="text-xs font-bold text-rose-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                      <AlertTriangle className="w-3.5 h-3.5" />
+                      <span>Étudiants exposés à l'élimination ({riskData.critical_students?.length ?? 0})</span>
+                    </h4>
+                    {riskData.critical_students?.length === 0 ? (
+                      <div className="bg-slate-950/40 border border-slate-800 rounded-xl p-4 text-center text-xs text-emerald-400 font-medium">
+                        ✅ Aucun étudiant en situation critique d'exclusion pour ce groupe.
+                      </div>
+                    ) : (
+                      <div className="border border-slate-800 rounded-xl overflow-hidden">
+                        <table className="w-full text-left text-xs">
+                          <thead className="bg-slate-800/80 text-slate-400 font-semibold uppercase text-[10px]">
+                            <tr>
+                              <th className="p-2.5">Étudiant(e)</th>
+                              <th className="p-2.5">Matricule / CNE</th>
+                              <th className="p-2.5 text-center">Absences Non-Justifiées</th>
+                              <th className="p-2.5 text-center">Taux Présence</th>
+                              <th className="p-2.5">Statut Légal</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-800 bg-slate-900/60">
+                            {riskData.critical_students.map((st: any) => (
+                              <tr key={st.id} className="hover:bg-slate-800/40 transition-colors">
+                                <td className="p-2.5 font-bold text-white">{st.name}</td>
+                                <td className="p-2.5 text-slate-400 font-mono text-[11px]">{st.matricule} • {st.cne}</td>
+                                <td className="p-2.5 text-center font-bold text-rose-400">{st.unexcused_absences} séance{st.unexcused_absences > 1 ? 's' : ''}</td>
+                                <td className="p-2.5 text-center font-bold text-white">{st.attendance_rate}%</td>
+                                <td className="p-2.5">
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                                    Éliminatoire Art. 14
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* AI Recommendations */}
+                  {riskData.ai_recommendations?.length > 0 && (
+                    <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-4 space-y-2">
+                      <div className="text-xs font-bold text-amber-300 uppercase tracking-wider">
+                        💡 Recommandations Opérationnelles du Modèle IA :
+                      </div>
+                      <ul className="space-y-1 text-xs text-slate-300 list-disc list-inside">
+                        {riskData.ai_recommendations.map((rec: string, idx: number) => (
+                          <li key={idx} className="leading-relaxed">{rec}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="text-center py-10 text-xs text-slate-500">
+                  Aucune donnée d'assiduité disponible pour ce groupe.
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 border-t border-slate-800 bg-slate-900/90 flex items-center justify-between">
+              <span className="text-[11px] text-slate-500">Conforme à la Charte des Études ENCG Fès</span>
+              <button
+                type="button"
+                onClick={() => setShowRiskModal(false)}
                 className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors"
               >
                 Fermer
