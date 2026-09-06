@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Building, ArrowLeft, Check, X, Calendar as CalendarIcon, Clock, Loader2, Sparkles, Key, QrCode, Printer, CheckCircle2 } from 'lucide-react'
+import { Building, ArrowLeft, Check, X, Clock, Sparkles, Key, QrCode, Printer, CheckCircle2 } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
 import { openAuthenticatedUrl } from '@shared/lib/documentAccess'
@@ -11,7 +11,7 @@ import { fr } from 'date-fns/locale'
 export default function AdminClubsRoomRequestsPage() {
   const [filter, setFilter] = useState<'pending' | 'approved' | 'rejected' | 'all'>('pending')
   const [requests, setRequests] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
+  const [, setLoading] = useState(true)
   const [selectedPassModal, setSelectedPassModal] = useState<any>(null)
 
   const fetchRequests = async () => {
@@ -20,7 +20,7 @@ export default function AdminClubsRoomRequestsPage() {
       const res = await api.get('/room-bookings')
       const data = res.data?.data || res.data || []
       setRequests(data)
-    } catch (error) {
+    } catch {
       setRequests([])
     } finally {
       setLoading(false)
@@ -36,7 +36,7 @@ export default function AdminClubsRoomRequestsPage() {
       await api.put(`/room-bookings/${id}/status`, { status })
       toast.success(`Demande de salle ${status === 'approved' ? 'approuvée' : 'refusée'} avec succès !`)
       setRequests(prev => prev.map(r => r.id === id ? { ...r, status } : r))
-    } catch (error) {
+    } catch {
       setRequests(prev => prev.map(r => r.id === id ? { ...r, status } : r))
       toast.success(`Demande de salle ${status === 'approved' ? 'approuvée' : 'refusée'} !`)
     }
@@ -64,7 +64,7 @@ export default function AdminClubsRoomRequestsPage() {
       link.remove();
       toast.dismiss();
       toast.success("📄 Autorisation Officielle d'Occupation d'Amphi téléchargée en PDF !");
-    } catch (e) {
+    } catch {
       toast.dismiss();
       openAuthenticatedUrl(`/api/admin/room-bookings/${req.id}/autorisation-pdf`);
       toast.success("Impression de l'autorisation lancée !");

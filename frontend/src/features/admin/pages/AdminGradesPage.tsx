@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { 
   Target, 
-  BarChart2, 
   FileText, 
   BookOpen, 
   Users, 
@@ -12,14 +11,11 @@ import {
   ShieldCheck, 
   Layers, 
   ArrowRight, 
-  RefreshCw, 
   Zap, 
   Edit3, 
   CalendarDays,
-  Award,
   ChevronDown,
   Check,
-  Search
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'

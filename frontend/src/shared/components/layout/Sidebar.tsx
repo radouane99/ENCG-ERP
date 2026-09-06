@@ -16,7 +16,7 @@ import {
   X, Layers, IdCard, Eye, Calculator, TrendingUp, Search, BellRing,
   UserX, Gavel, CalendarCheck, AreaChart, MailCheck, RotateCcw, Repeat, FileEdit, UserCog, UserCheck,
   Clock3, CalendarSync, DoorOpen, Cpu, Palmtree, HeartHandshake, CreditCard, Stamp, Send,
-  BookMarked, GitFork, FilterX, Archive, Key, Mic, ArrowRightLeft, Scale, ClipboardList
+  BookMarked, GitFork, FilterX, Archive, Key, Mic, ArrowRightLeft, Scale
 } from 'lucide-react'
 
 interface NavItem {
