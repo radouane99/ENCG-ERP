@@ -537,7 +537,7 @@ class ProfessorAiCopilotController extends Controller
             'include_corrige' => 'nullable|boolean',
         ]);
 
-        $module = Module::with(['filiere', 'academicYear'])->findOrFail($validated['module_id']);
+        $module = Module::with('filiere')->findOrFail($validated['module_id']);
         $user = $request->user();
         $professorName = $user ? trim(($user->first_name ?? '').' '.($user->last_name ?? '')) : 'Professeur ENCG';
 
