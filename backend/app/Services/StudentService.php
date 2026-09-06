@@ -19,19 +19,22 @@ class StudentService
      */
     public function getPaginatedStudents(array $filters, int $perPage = 20, string $sortField = 'last_name', string $sortOrder = 'asc'): LengthAwarePaginator
     {
+        // On sélectionne explicitement `students.*` et on fait un leftJoin sur `users`
+        // pour permettre le tri et la recherche rapide sur first_name, last_name, email.
         $query = Student::with(['latestPathway.filiere', 'latestPathway.group', 'user'])
-            ->join('users', 'students.user_id', '=', 'users.id')
-            ->select('students.*', 'users.first_name', 'users.last_name', 'users.email', 'users.phone', 'students.gender');
+            ->select('students.*')
+            ->leftJoin('users', 'students.user_id', '=', 'users.id');
 
         if (! empty($filters['search'])) {
             $search = trim($filters['search']);
             $query->where(function ($q) use ($search) {
-                $q->where('users.first_name', 'like', "%{$search}%")
-                    ->orWhere('users.last_name', 'like', "%{$search}%")
-                    ->orWhere('users.email', 'like', "%{$search}%")
-                    ->orWhere('users.cin', 'like', "%{$search}%")
-                    ->orWhere('students.student_number', 'like', "%{$search}%")
-                    ->orWhere('students.cne', 'like', "%{$search}%");
+                $q->where('students.student_number', 'ilike', "%{$search}%")
+                    ->orWhere('students.cne', 'ilike', "%{$search}%")
+                    ->orWhere('students.massar_code', 'ilike', "%{$search}%")
+                    ->orWhere('users.first_name', 'ilike', "%{$search}%")
+                    ->orWhere('users.last_name', 'ilike', "%{$search}%")
+                    ->orWhere('users.email', 'ilike', "%{$search}%")
+                    ->orWhere('users.cin', 'ilike', "%{$search}%");
             });
         }
 
@@ -72,12 +75,28 @@ class StudentService
             });
         }
 
-        $allowedSorts = ['last_name', 'first_name', 'student_number', 'created_at', 'status'];
-        $sortField = in_array($sortField, $allowedSorts) ? $sortField : 'last_name';
-        $sortField = in_array($sortField, ['first_name', 'last_name']) ? 'users.'.$sortField : 'students.'.$sortField;
+        if (! empty($filters['sub_group'])) {
+            $subGroup = trim($filters['sub_group']);
+            $query->where(function ($q) use ($subGroup) {
+                $q->whereHas('pathways', fn ($p) => $p->where('sub_group', $subGroup))
+                    ->orWhereHas('registrations', fn ($r) => $r->where('sub_group', $subGroup));
+            });
+        }
+
+        $allowedUserSorts = ['last_name', 'first_name', 'email'];
+        $allowedStudentSorts = ['student_number', 'created_at', 'status'];
+
         $sortOrder = strtolower($sortOrder) === 'desc' ? 'desc' : 'asc';
 
-        return $query->orderBy($sortField, $sortOrder)->paginate($perPage);
+        if (in_array($sortField, $allowedUserSorts)) {
+            $query->orderBy('users.'.$sortField, $sortOrder);
+        } elseif (in_array($sortField, $allowedStudentSorts)) {
+            $query->orderBy('students.'.$sortField, $sortOrder);
+        } else {
+            $query->orderBy('users.last_name', $sortOrder);
+        }
+
+        return $query->paginate($perPage);
     }
 
     /**

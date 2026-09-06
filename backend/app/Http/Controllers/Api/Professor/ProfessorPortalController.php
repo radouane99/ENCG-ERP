@@ -1647,5 +1647,329 @@ class ProfessorPortalController extends Controller
 
         return $pdf->stream("Bilan_Activite_Universitaire_{$trackingCode}.pdf", ['Attachment' => false]);
     }
+
+    /**
+     * Options de sélection pour les listes d'étudiants d'un enseignant (Permanent, Vacataire, Doctorant).
+     */
+    public function getStudentListOptions(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $prof = $user?->professor;
+        $profId = $prof?->id;
+        $userId = $user?->id;
+
+        // 1. Récupérer les groupes associés à l'enseignant via Schedule ou ModuleProfessor
+        $groupIds = [];
+        $modulesAssigned = [];
+
+        if ($profId || $userId) {
+            $scheduleGroups = Schedule::where(function ($q) use ($profId, $userId) {
+                if ($profId) {
+                    $q->where('professor_id', $profId);
+                }
+                $q->orWhere('professor_id', $userId);
+            })->whereNotNull('group_id')->pluck('module_id', 'group_id')->toArray();
+
+            foreach ($scheduleGroups as $gId => $mId) {
+                $groupIds[] = (int) $gId;
+                if ($mId) {
+                    $modulesAssigned[$gId] = (int) $mId;
+                }
+            }
+
+            if ($profId) {
+                $mpGroups = \App\Models\ModuleProfessor::where('professor_id', $profId)
+                    ->whereNotNull('group_id')
+                    ->pluck('module_id', 'group_id')
+                    ->toArray();
+                foreach ($mpGroups as $gId => $mId) {
+                    $groupIds[] = (int) $gId;
+                    if ($mId && empty($modulesAssigned[$gId])) {
+                        $modulesAssigned[$gId] = (int) $mId;
+                    }
+                }
+            }
+        }
+
+        $groupIds = array_unique($groupIds);
+
+        // Si aucun groupe n'est encore explicitement assigné dans le planning, on propose les groupes actifs
+        if (empty($groupIds)) {
+            $groupsQuery = \App\Models\Group::with(['filiere', 'academicYear'])
+                ->whereHas('pathways', fn ($p) => $p->where('is_current', true))
+                ->orderBy('filiere_id')
+                ->orderBy('semester_number')
+                ->orderBy('name');
+        } else {
+            $groupsQuery = \App\Models\Group::with(['filiere', 'academicYear'])
+                ->whereIn('id', $groupIds)
+                ->orderBy('name');
+        }
+
+        $groups = $groupsQuery->get();
+
+        $groupList = $groups->map(function ($g) use ($modulesAssigned) {
+            // Détection sous-groupes TD (ex: G1 -> G1.1, G1.2)
+            $subGroups = [];
+            if (preg_match('/G(?:roupe)?\s*[.\-_]?\s*(\d+)/i', $g->name, $m)) {
+                $num = $m[1];
+                $subGroups = ["G{$num}.1", "G{$num}.2"];
+            }
+
+            $moduleId = $modulesAssigned[$g->id] ?? null;
+            $module = $moduleId ? \App\Models\Module::find($moduleId) : null;
+
+            // Compte étudiants dans ce groupe
+            $totalStudents = \App\Models\StudentPathway::where('group_id', $g->id)
+                ->where('is_current', true)
+                ->count();
+
+            return [
+                'id' => $g->id,
+                'name' => $g->name,
+                'filiere_id' => $g->filiere_id,
+                'filiere_code' => $g->filiere?->code ?? 'TC',
+                'filiere_name' => $g->filiere?->name ?? 'Tronc Commun',
+                'semester' => $g->semester_number ?? 1,
+                'sub_groups' => $subGroups,
+                'module_id' => $module?->id,
+                'module_name' => $module?->name ?? 'Module d\'Enseignement',
+                'module_code' => $module?->code ?? 'MOD',
+                'total_students' => $totalStudents,
+            ];
+        });
+
+        // Détection du statut de l'enseignant (Permanent / Vacataire / Doctorant)
+        $statusLabel = 'Professeur Titulaire (Permanent)';
+        if (($prof?->contract_type === 'vacataire') || ($user && $user->hasRole('vacataire'))) {
+            $statusLabel = 'Enseignant Vacataire';
+        }
+        if (str_contains(strtolower($prof?->specialty ?? ''), 'doctorant') || str_contains(strtolower($prof?->grade ?? ''), 'doctorant')) {
+            $statusLabel = 'Doctorant Moniteur / Vacataire';
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'groups' => $groupList,
+                'professor' => [
+                    'id' => $profId,
+                    'name' => trim(($user->first_name ?? '').' '.($user->last_name ?? '')) ?: ($user->name ?? 'Enseignant'),
+                    'status' => $statusLabel,
+                    'email' => $user?->email,
+                ],
+            ],
+        ]);
+    }
+
+    /**
+     * Liste des étudiants pour un groupe / sous-groupe sélectionné par l'enseignant.
+     */
+    public function getStudentList(Request $request): JsonResponse
+    {
+        $groupId = (int) $request->input('group_id');
+        $subGroup = trim((string) $request->input('sub_group', ''));
+        $search = trim((string) $request->input('search', ''));
+
+        if (! $groupId) {
+            return response()->json(['success' => false, 'message' => 'Groupe obligatoire.'], 422);
+        }
+
+        $group = \App\Models\Group::with('filiere')->findOrFail($groupId);
+
+        $query = \App\Models\Student::with(['user', 'latestPathway.filiere', 'latestPathway.group'])
+            ->select('students.*')
+            ->leftJoin('users', 'students.user_id', '=', 'users.id')
+            ->whereHas('pathways', function ($p) use ($groupId, $subGroup) {
+                $p->where('group_id', $groupId)->where('is_current', true);
+                if (! empty($subGroup)) {
+                    $p->where('sub_group', $subGroup);
+                }
+            });
+
+        if (! empty($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('students.student_number', 'ilike', "%{$search}%")
+                    ->orWhere('students.cne', 'ilike', "%{$search}%")
+                    ->orWhere('students.massar_code', 'ilike', "%{$search}%")
+                    ->orWhere('users.first_name', 'ilike', "%{$search}%")
+                    ->orWhere('users.last_name', 'ilike', "%{$search}%")
+                    ->orWhere('users.cin', 'ilike', "%{$search}%");
+            });
+        }
+
+        $students = $query->orderBy('users.last_name', 'asc')
+            ->orderBy('users.first_name', 'asc')
+            ->get()
+            ->map(function ($s) {
+                return [
+                    'id' => $s->id,
+                    'student_number' => $s->student_number,
+                    'cne' => $s->cne ?: ($s->massar_code ?: '—'),
+                    'massar_code' => $s->massar_code,
+                    'cin' => $s->cin ?: ($s->user?->cin ?: '—'),
+                    'first_name' => $s->user?->first_name ?? '—',
+                    'last_name' => $s->user?->last_name ?? '—',
+                    'email' => $s->user?->email ?? '—',
+                    'sub_group' => $s->latestPathway?->sub_group ?? ($s->sub_group ?? '—'),
+                ];
+            });
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'group' => [
+                    'id' => $group->id,
+                    'name' => $group->name,
+                    'filiere_code' => $group->filiere?->code ?? 'TC',
+                    'filiere_name' => $group->filiere?->name ?? 'Tronc Commun',
+                    'semester' => $group->semester_number ?? 1,
+                ],
+                'sub_group' => $subGroup ?: null,
+                'total' => $students->count(),
+                'students' => $students,
+            ],
+        ]);
+    }
+
+    /**
+     * Téléchargement de la fiche d'émargement officielle en format PDF A4.
+     */
+    public function downloadStudentListPdf(Request $request)
+    {
+        $groupId = (int) $request->input('group_id');
+        $subGroup = trim((string) $request->input('sub_group', ''));
+        $moduleId = (int) $request->input('module_id');
+        $mode = $request->input('mode', 'emargement'); // 'emargement' ou 'seances'
+
+        if (! $groupId) {
+            return response()->json(['success' => false, 'message' => 'Groupe obligatoire.'], 422);
+        }
+
+        $group = \App\Models\Group::with(['filiere', 'academicYear'])->findOrFail($groupId);
+        $module = $moduleId ? \App\Models\Module::find($moduleId) : null;
+
+        $user = $request->user();
+        $prof = $user?->professor;
+        $professorName = $user ? trim(($user->first_name ?? '').' '.($user->last_name ?? '')) : 'Professeur ENCG';
+
+        $statusLabel = 'Professeur Titulaire (Permanent)';
+        if (($prof?->contract_type === 'vacataire') || ($user && $user->hasRole('vacataire'))) {
+            $statusLabel = 'Enseignant Vacataire';
+        }
+        if (str_contains(strtolower($prof?->specialty ?? ''), 'doctorant') || str_contains(strtolower($prof?->grade ?? ''), 'doctorant')) {
+            $statusLabel = 'Doctorant Moniteur / Vacataire';
+        }
+
+        $students = \App\Models\Student::with(['user', 'latestPathway'])
+            ->select('students.*')
+            ->leftJoin('users', 'students.user_id', '=', 'users.id')
+            ->whereHas('pathways', function ($p) use ($groupId, $subGroup) {
+                $p->where('group_id', $groupId)->where('is_current', true);
+                if (! empty($subGroup)) {
+                    $p->where('sub_group', $subGroup);
+                }
+            })
+            ->orderBy('users.last_name', 'asc')
+            ->orderBy('users.first_name', 'asc')
+            ->get()
+            ->map(function ($s) {
+                return [
+                    'id' => $s->id,
+                    'student_number' => $s->student_number,
+                    'cne' => $s->cne ?: ($s->massar_code ?: '—'),
+                    'cin' => $s->cin ?: ($s->user?->cin ?: '—'),
+                    'first_name' => $s->user?->first_name ?? '',
+                    'last_name' => $s->user?->last_name ?? '',
+                    'sub_group' => $s->latestPathway?->sub_group ?? ($s->sub_group ?? '—'),
+                ];
+            });
+
+        $academicYear = $group->academicYear?->name ?? (date('Y').'/'.(date('Y')+1));
+
+        $orientation = ($mode === 'seances') ? 'landscape' : 'portrait';
+
+        $pdf = Pdf::loadView('pdf.fiche_emargement_professeur', [
+            'professorName' => $professorName,
+            'professorStatus' => $statusLabel,
+            'groupName' => $group->name,
+            'filiereCode' => $group->filiere?->code ?? 'TC',
+            'filiereName' => $group->filiere?->name ?? 'Tronc Commun',
+            'semester' => $group->semester_number ?? 1,
+            'moduleName' => $module?->name ?? 'Module Pédagogique',
+            'subGroup' => $subGroup ?: null,
+            'academicYear' => $academicYear,
+            'mode' => $mode,
+            'students' => $students,
+        ])->setPaper('a4', $orientation);
+
+        $cleanGroupName = Str::slug($group->name);
+        $cleanSubGroup = $subGroup ? "_{$subGroup}" : '_Section_Complete';
+        $filename = "Emargement_{$cleanGroupName}{$cleanSubGroup}.pdf";
+
+        return $pdf->stream($filename, ['Attachment' => false]);
+    }
+
+    /**
+     * Export CSV / Excel pour les listes d'étudiants.
+     */
+    public function exportStudentListExcel(Request $request)
+    {
+        $groupId = (int) $request->input('group_id');
+        $subGroup = trim((string) $request->input('sub_group', ''));
+
+        if (! $groupId) {
+            return response()->json(['success' => false, 'message' => 'Groupe obligatoire.'], 422);
+        }
+
+        $group = \App\Models\Group::with('filiere')->findOrFail($groupId);
+
+        $students = \App\Models\Student::with(['user', 'latestPathway'])
+            ->select('students.*')
+            ->leftJoin('users', 'students.user_id', '=', 'users.id')
+            ->whereHas('pathways', function ($p) use ($groupId, $subGroup) {
+                $p->where('group_id', $groupId)->where('is_current', true);
+                if (! empty($subGroup)) {
+                    $p->where('sub_group', $subGroup);
+                }
+            })
+            ->orderBy('users.last_name', 'asc')
+            ->orderBy('users.first_name', 'asc')
+            ->get();
+
+        $filename = "Liste_Etudiants_{$group->name}".($subGroup ? "_{$subGroup}" : '').".csv";
+
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ];
+
+        $callback = function () use ($students, $group, $subGroup) {
+            $file = fopen('php://output', 'w');
+            // Write UTF-8 BOM for Excel to properly display accents
+            fputs($file, "\xEF\xBB\xBF");
+
+            fputcsv($file, ['N°', 'Matricule Apogée', 'CNE / Massar', 'CIN', 'Nom', 'Prénom', 'Filière', 'Semestre', 'Groupe / Section', 'Sous-Groupe TD'], ';');
+
+            foreach ($students as $idx => $s) {
+                fputcsv($file, [
+                    $idx + 1,
+                    $s->student_number,
+                    $s->cne ?: ($s->massar_code ?: ''),
+                    $s->cin ?: ($s->user?->cin ?: ''),
+                    $s->user?->last_name ?? '',
+                    $s->user?->first_name ?? '',
+                    $group->filiere?->code ?? 'TC',
+                    'S'.($group->semester_number ?? 1),
+                    $group->name,
+                    $s->latestPathway?->sub_group ?? ($s->sub_group ?? ''),
+                ], ';');
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
 }
 

@@ -21,7 +21,9 @@ class UserResource extends JsonResource
 
         $academicInfo = null;
         if (in_array('student', $roles)) {
-            $student = $this->student ?? \App\Models\Student::where('user_id', $this->id)->first();
+            $student = $this->relationLoaded('student')
+                ? $this->student
+                : \App\Models\Student::where('user_id', $this->id)->first();
             if ($student) {
                 $academicInfo = app(\App\Services\Academic\StudentSubGroupDispatcherService::class)->getStudentSubGroupInfo($student->id);
             }

@@ -47,3 +47,17 @@ This skill defines standard domain patterns, business logic constraints, and arc
   - Step 2: Department Head visa & recommendation (`Visa Chef de Département`).
   - Step 3: Direction / Secretary General electronic signature with verification QR code.
 
+## 8. Pedagogical Segregation & Timetable Standards (ENCG Fès)
+- **Promotion vs Section vs Sous-groupes**:
+  - **Tronc Commun (S1 to S4)** : Effectif volumineux (~400 étudiants), divisé en **Sections** (`Section 1` à `Section 4` / `TC-S1-G1` à `TC-S1-G4`, ~100 étudiants par section).
+  - **Filières de Spécialité (S5 à S10)** : Effectif réduit (~50-80 étudiants), 1 ou 2 groupes de base (`G1`, `G2`).
+  - **Cours Magistraux (CM)** : Toute la section assiste réunie en **Amphithéâtre** (Amphi A, Amphi B). L'emploi du temps affiche le niveau Section : `G1`, `G2`, `G3`, `G4`.
+  - **Travaux Dirigés (TD) & Pratiques (TP)** : Capacité de salle restreinte (~35-50 places). Chaque Section est obligatoirement scindée en deux sous-groupes équilibrés par **ordre alphabétique officiel** (`last_name ASC, first_name ASC`) :
+    - Section 1 ➔ **`G1.1`** (A à K) et **`G1.2`** (L à Z).
+    - Section 2 ➔ **`G2.1`** et **`G2.2`**.
+    - L'emploi du temps affiche obligatoirement `G1.1`, `G1.2`, `G2.1`, `G2.2` pour les TD/TP.
+  - **Service & Commande** : `App\Services\Academic\StudentSubGroupDispatcherService` et commande `php artisan encg:dispatch-subgroups`.
+- **Strict 1-Page PDF Fit** :
+  - Tout affichage officiel d'emploi du temps doit tenir sur exactement 1 page A4 Paysage (1 of 1), avec calcul dynamique du scaling pour éviter tout débordement sur une 2ème page.
+
+

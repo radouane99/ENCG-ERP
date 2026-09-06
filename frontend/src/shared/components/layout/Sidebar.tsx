@@ -16,7 +16,7 @@ import {
   X, Layers, IdCard, Eye, Calculator, TrendingUp, Search, BellRing,
   UserX, Gavel, CalendarCheck, AreaChart, MailCheck, RotateCcw, Repeat, FileEdit, UserCog, UserCheck,
   Clock3, CalendarSync, DoorOpen, Cpu, Palmtree, HeartHandshake, CreditCard, Stamp, Send,
-  BookMarked, GitFork, FilterX, Archive, Key, Mic, ArrowRightLeft, Scale
+  BookMarked, GitFork, FilterX, Archive, Key, Mic, ArrowRightLeft, Scale, ClipboardList
 } from 'lucide-react'
 
 interface NavItem {
@@ -167,6 +167,7 @@ const navigation: (NavItem | NavGroup)[] = [
       { label: 'Grille Soutenance PFE', labelAr: 'شبكة تقييم مناقشات PFE', href: '/professor/pfe-evaluation', icon: Award, badge: 'PFE', roles: ['professor', 'vacataire'] },
       { label: 'Charge Statutaire & Vacations', labelAr: 'الحصص ومستحقات الساعات', href: '/professor/workload', icon: Clock, badge: 'RH', roles: ['professor', 'vacataire'] },
       { label: 'Guichet RH & Ordres de Mission', labelAr: 'شباك الوثائق الإدارية والمهمات', href: '/professor/documents', icon: Stamp, badge: 'RH', roles: ['professor', 'vacataire'] },
+      { label: 'Listes Étudiants & Émargement', labelAr: 'لوائح الطلبة وأوراق الحضور', href: '/professor/student-rosters', icon: ClipboardList, roles: ['professor', 'vacataire'] },
     ]
   },
 ]

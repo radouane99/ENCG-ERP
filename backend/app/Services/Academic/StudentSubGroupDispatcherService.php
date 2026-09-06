@@ -39,12 +39,13 @@ class StudentSubGroupDispatcherService
         // 2. Récupérer les étudiants du groupe triés par ordre alphabétique strict
         $students = DB::table('student_pathways')
             ->join('students', 'student_pathways.student_id', '=', 'students.id')
+            ->leftJoin('users', 'students.user_id', '=', 'users.id')
             ->where('student_pathways.group_id', $group->id)
             ->where('student_pathways.is_current', true)
-            ->orderBy('students.last_name', 'asc')
-            ->orderBy('students.first_name', 'asc')
+            ->orderBy('users.last_name', 'asc')
+            ->orderBy('users.first_name', 'asc')
             ->orderBy('students.id', 'asc')
-            ->select('students.id as student_id', 'students.last_name', 'students.first_name')
+            ->select('students.id as student_id', 'users.last_name', 'users.first_name')
             ->get();
 
         $total = $students->count();
@@ -190,10 +191,11 @@ class StudentSubGroupDispatcherService
         if (! $subGroup && $pathway->group_id) {
             $studentsInGroup = DB::table('student_pathways')
                 ->join('students', 'student_pathways.student_id', '=', 'students.id')
+                ->leftJoin('users', 'students.user_id', '=', 'users.id')
                 ->where('student_pathways.group_id', $pathway->group_id)
                 ->where('student_pathways.is_current', true)
-                ->orderBy('students.last_name', 'asc')
-                ->orderBy('students.first_name', 'asc')
+                ->orderBy('users.last_name', 'asc')
+                ->orderBy('users.first_name', 'asc')
                 ->orderBy('students.id', 'asc')
                 ->pluck('students.id')
                 ->toArray();

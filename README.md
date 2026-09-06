@@ -767,6 +767,45 @@ classDiagram
 
 ---
 
+### 🗓️ Architecture Pédagogique des Emplois du Temps & Découpage TD/TP (Normes ENCG Fès)
+
+L'ERP implémente rigoureusement l'organisation académique des Grandes Écoles de Commerce marocaines pour la gestion des promotions à fort effectif (Tronc Commun S1–S4 : ~400 étudiants) et des spécialisations (S5–S10 : ~50–80 étudiants) :
+
+```mermaid
+graph TD
+    Promo["🎓 Promotion Tronc Commun (~400 étudiants)"] --> Sec1["🏛️ Section 1 (~100 ét.)"]
+    Promo --> Sec2["🏛️ Section 2 (~100 ét.)"]
+    Promo --> Sec3["🏛️ Section 3 (~100 ét.)"]
+    Promo --> Sec4["🏛️ Section 4 (~100 ét.)"]
+
+    Sec1 -->|Cours Magistral CM| Amphi1["🏟️ Amphithéâtre A (Label G1)"]
+    Sec1 -->|Ordre Alphabétique A-K| TD11["📝 Sous-Groupe G1.1 (~50 ét.) • Salle TD"]
+    Sec1 -->|Ordre Alphabétique L-Z| TD12["📝 Sous-Groupe G1.2 (~50 ét.) • Salle TD"]
+
+    Sec2 -->|Cours Magistral CM| Amphi2["🏟️ Amphithéâtre B (Label G2)"]
+    Sec2 -->|Ordre Alphabétique A-K| TD21["📝 Sous-Groupe G2.1 (~50 ét.) • Salle TD"]
+    Sec2 -->|Ordre Alphabétique L-Z| TD22["📝 Sous-Groupe G2.2 (~50 ét.) • Salle TD"]
+```
+
+| Niveau | Séance | Lieu | Effectif | Nomenclature Grille |
+| :--- | :--- | :--- | :--- | :--- |
+| **Section (Niveau Promotion)** | **CM** (Cours Magistral) | **Amphithéâtre** (Amphi A / Amphi B) | ~100 étudiants (Section entière) | **`G1`**, **`G2`**, **`G3`**, **`G4`** |
+| **Sous-Groupe (Niveau TD/TP)** | **TD / TP** (Travaux Dirigés) | **Salle de cours** (S-101, INFO-1...) | ~50 étudiants (Moitié alphabétique) | **`G1.1`** & **`G1.2`**, **`G2.1`** & **`G2.2`** |
+
+#### ⚡ Fonctionnalités Clés du Moteur d'Emplois du Temps :
+1. **Découpage Automatique des Sous-Groupes par Ordre Alphabétique** :
+   - Service : `StudentSubGroupDispatcherService.php`
+   - Commande CLI : `docker exec encg_backend php artisan encg:dispatch-subgroups`
+   - Déclenchement 1-clic : Bouton **`⚡ Répartir Sous-Groupes TD (Alpha)`** dans l'interface d'administration.
+2. **Export PDF Officiel Strictement 1 Page A4 Paysage** :
+   - Moteur Dompdf optimisé avec scaling dynamique responsive à 5 tiers selon `$rowCount` (jusqu'à 28 lignes en S5 GFC sans aucun débordement sur une 2ème page).
+3. **Dates Officielles Configurables** :
+   - Dates de rentrée pour les cours (CM) et les TD/TP paramétrables dynamiquement via modale et persistées en base (`/api/timetable/dates-config`).
+4. **Transparence sur le Portail Étudiant** :
+   - Affichage immédiat dans le bandeau supérieur de l'étudiant de son amphi (`Section 1 (Amphi CM)`) et de son sous-groupe de TD (`Sous-Groupe TD : G1.1`).
+
+---
+
 ## 10. 📐 Moteur de Délibération & Règles Académiques LMD (NPN Maroc)
 
 ```mermaid

@@ -23,7 +23,10 @@ import {
   CheckCircle2,
   BrainCircuit,
   Compass,
-  Scale
+  Scale,
+  Users,
+  Layers,
+  Info
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
@@ -163,19 +166,24 @@ export default function StudentDashboard() {
                 {studentFiliere}
               </p>
 
-              {/* ── Official ENCG Section & Sub-Group TD Badges ── */}
+              {/* ── Official ENCG Pedagogical Affectation Compact Badges ── */}
               <div className="flex flex-wrap items-center gap-2 pt-1.5">
-                <span className="bg-amber-400/20 text-amber-300 border border-amber-400/40 px-3 py-0.5 rounded-lg text-xs font-bold shadow-sm flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-                  {studentSection} (Amphi CM)
-                </span>
-                <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-3 py-0.5 rounded-lg text-xs font-black shadow-sm flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-                  Sous-Groupe TD : {studentSubGroup}
-                </span>
-                <span className="bg-white/10 text-slate-300 px-2 py-0.5 rounded-lg text-xs font-mono border border-white/10">
-                  {studentGroupName}
-                </span>
+                {/* Section Amphi badge */}
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-amber-400/15 border border-amber-400/30 backdrop-blur-sm shadow-sm">
+                  <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse shrink-0" />
+                  <span className="text-[10.5px] font-black text-amber-300 uppercase tracking-wide">Amphi</span>
+                  <span className="text-xs font-black text-amber-200">{studentSection}</span>
+                </div>
+                {/* Sub-group TD badge */}
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-violet-500/15 border border-violet-400/30 backdrop-blur-sm shadow-sm">
+                  <span className="w-2 h-2 rounded-full bg-violet-400 shrink-0" />
+                  <span className="text-[10.5px] font-black text-violet-300 uppercase tracking-wide">TD/TP</span>
+                  <span className="text-xs font-black text-violet-200">{studentSubGroup}</span>
+                </div>
+                {/* Filiere code badge */}
+                <div className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-white/8 border border-white/10 backdrop-blur-sm">
+                  <span className="text-[10.5px] font-mono font-bold text-slate-300">{studentGroupName}</span>
+                </div>
               </div>
 
               <div className="flex flex-wrap items-center gap-3 pt-1 text-xs text-slate-300 font-mono font-bold">
@@ -209,6 +217,90 @@ export default function StudentDashboard() {
       </div>
 
       <PageHeader title="Mon Espace Académique" subtitle={currentDate} />
+
+      {/* ── Official Pedagogical Affectation Card (ENCG Architecture) ── */}
+      <div className="relative overflow-hidden rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-gradient-to-br from-white via-slate-50 to-indigo-50/40 dark:from-slate-900 dark:via-slate-900 dark:to-indigo-950/20 p-5 sm:p-6 shadow-sm">
+        {/* Subtle decorative corner */}
+        <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-bl from-blue-100/60 to-transparent dark:from-blue-900/20 rounded-full -mr-16 -mt-16 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-violet-100/40 to-transparent dark:from-violet-900/10 rounded-full -ml-10 -mb-10 pointer-events-none" />
+
+        <div className="relative z-10">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="p-2 rounded-xl bg-[#001A4B]/8 dark:bg-blue-500/10 border border-[#001A4B]/10 dark:border-blue-500/20">
+              <GraduationCap className="w-4 h-4 text-[#001A4B] dark:text-blue-400" />
+            </div>
+            <div>
+              <h3 className="text-sm font-black text-[#001A4B] dark:text-white">Affectation Pédagogique Officielle</h3>
+              <p className="text-[10.5px] text-slate-400 font-medium">Architecture ENCG Fès — Année 2026/2027</p>
+            </div>
+            <div className="ml-auto inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/40 text-emerald-700 dark:text-emerald-300 text-[10px] font-black uppercase tracking-wider">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              Actif
+            </div>
+          </div>
+
+          {/* Three-column academic identity grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {/* Cours Magistraux Block */}
+            <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600/8 via-blue-500/5 to-indigo-500/8 dark:from-blue-500/15 dark:to-indigo-500/10 border border-blue-200/60 dark:border-blue-800/50 p-4 hover:shadow-sm transition-all">
+              <div className="absolute -top-3 -right-3 w-16 h-16 bg-blue-500/8 rounded-full blur-xl pointer-events-none" />
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-7 h-7 rounded-xl bg-blue-600/10 dark:bg-blue-500/20 border border-blue-300/40 dark:border-blue-700/50 flex items-center justify-center">
+                  <Building2 className="w-3.5 h-3.5 text-blue-700 dark:text-blue-300" />
+                </div>
+                <span className="text-[10px] font-black uppercase tracking-wider text-blue-600 dark:text-blue-400">Cours Magistraux</span>
+              </div>
+              <div className="text-xl font-black text-[#001A4B] dark:text-white">{studentSection}</div>
+              <p className="text-[10.5px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">Section en Amphithéâtre</p>
+              <div className="mt-2.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 text-[9.5px] font-black uppercase tracking-wide">
+                ~100 étudiants
+              </div>
+            </div>
+
+            {/* TD/TP Sub-Group Block */}
+            <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-600/8 via-purple-500/5 to-pink-500/8 dark:from-violet-500/15 dark:to-purple-500/10 border border-violet-200/60 dark:border-violet-800/50 p-4 hover:shadow-sm transition-all">
+              <div className="absolute -top-3 -right-3 w-16 h-16 bg-violet-500/8 rounded-full blur-xl pointer-events-none" />
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-7 h-7 rounded-xl bg-violet-600/10 dark:bg-violet-500/20 border border-violet-300/40 dark:border-violet-700/50 flex items-center justify-center">
+                  <Layers className="w-3.5 h-3.5 text-violet-700 dark:text-violet-300" />
+                </div>
+                <span className="text-[10px] font-black uppercase tracking-wider text-violet-600 dark:text-violet-400">Sous-Groupe TD/TP</span>
+              </div>
+              <div className="text-xl font-black text-violet-900 dark:text-violet-100">{studentSubGroup}</div>
+              <p className="text-[10.5px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">Salle de Travaux Dirigés</p>
+              <div className="mt-2.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 text-[9.5px] font-black uppercase tracking-wide">
+                Ordre alphabétique
+              </div>
+            </div>
+
+            {/* Filière Group Block */}
+            <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-500/8 via-orange-400/5 to-amber-300/8 dark:from-amber-500/15 dark:to-orange-500/10 border border-amber-200/60 dark:border-amber-800/50 p-4 hover:shadow-sm transition-all">
+              <div className="absolute -top-3 -right-3 w-16 h-16 bg-amber-500/8 rounded-full blur-xl pointer-events-none" />
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-7 h-7 rounded-xl bg-amber-500/10 dark:bg-amber-500/20 border border-amber-300/40 dark:border-amber-700/50 flex items-center justify-center">
+                  <Users className="w-3.5 h-3.5 text-amber-700 dark:text-amber-300" />
+                </div>
+                <span className="text-[10px] font-black uppercase tracking-wider text-amber-600 dark:text-amber-400">Groupe Filière</span>
+              </div>
+              <div className="text-xl font-black text-amber-900 dark:text-amber-100 font-mono">{studentGroupName}</div>
+              <p className="text-[10.5px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">{studentFiliere.split('•')[1]?.trim() || 'Filière Active'}</p>
+              <div className="mt-2.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 text-[9.5px] font-black uppercase tracking-wide">
+                2026 / 2027
+              </div>
+            </div>
+          </div>
+
+          {/* Info banner */}
+          <div className="mt-3 flex items-start gap-2 px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/40">
+            <Info className="w-3.5 h-3.5 text-slate-400 mt-0.5 shrink-0" />
+            <p className="text-[10.5px] text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
+              Votre sous-groupe TD (<span className="font-black text-violet-600 dark:text-violet-300">{studentSubGroup}</span>) est attribué automatiquement par ordre alphabétique officiel.
+              Pour les <span className="font-bold">Cours Magistraux</span> : toute votre section se réunit en Amphithéâtre.
+              Pour les <span className="font-bold">TD/TP</span> : votre sous-groupe occupe une salle dédiée.
+            </p>
+          </div>
+        </div>
+      </div>
 
       {/* ── Quick Role Actions Navigation ── */}
       <RoleQuickActions

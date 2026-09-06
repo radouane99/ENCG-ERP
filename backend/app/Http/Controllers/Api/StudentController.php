@@ -41,7 +41,7 @@ class StudentController extends Controller
 
         try {
             $paginated = $this->studentService->getPaginatedStudents(
-                $request->only(['search', 'status', 'filiere_id', 'semester', 'group_id']),
+                $request->only(['search', 'status', 'filiere_id', 'semester', 'group_id', 'sub_group']),
                 $perPage,
                 $sortField,
                 $sortOrder

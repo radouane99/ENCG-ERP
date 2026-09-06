@@ -107,6 +107,14 @@ Route::middleware(['auth:sanctum', 'role:professor|vacataire|department-head|fil
     Route::get('/professor-portal/service-fait/{moduleId}/pdf', [ProfessorPortalController::class, 'downloadServiceFaitPdf']);
     Route::get('/professor-portal/annual-activity-report/pdf', [ProfessorPortalController::class, 'downloadAnnualActivityReportPdf']);
 
+    // Listes d'Étudiants & Émargement Officiel (Permanent / Vacataire / Doctorant)
+    Route::get('/professor-portal/student-lists/options', [ProfessorPortalController::class, 'getStudentListOptions']);
+    Route::get('/professor-portal/student-lists', [ProfessorPortalController::class, 'getStudentList']);
+    Route::get('/professor-portal/student-lists/pdf', [ProfessorPortalController::class, 'downloadStudentListPdf']);
+    Route::get('/professor-portal/student-lists/excel', [ProfessorPortalController::class, 'exportStudentListExcel']);
+    Route::get('/v1/professor-portal/student-lists/pdf', [ProfessorPortalController::class, 'downloadStudentListPdf']);
+    Route::get('/v1/professor-portal/student-lists/excel', [ProfessorPortalController::class, 'exportStudentListExcel']);
+
     // Surveillances & Convocations PDF & PV Signature & Confirmation
     Route::get('/professor/my-surveillances', [ConvocationController::class, 'mySurveillances']);
     Route::post('/professor/surveillances/{id}/confirm', [ConvocationController::class, 'confirmSurveillance']);

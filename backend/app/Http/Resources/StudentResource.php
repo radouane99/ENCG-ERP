@@ -31,8 +31,14 @@ class StudentResource extends JsonResource
             'cin' => $this->cin ?? ($this->relationLoaded('user') ? $this->user?->cin : null),
             'current_filiere' => $this->current_filiere ?? ($this->relationLoaded('latestPathway') ? $this->latestPathway?->filiere?->code : null),
             'current_group' => $this->current_group ?? ($this->relationLoaded('latestPathway') ? $this->latestPathway?->group?->name : null),
+            'section' => ($this->relationLoaded('latestPathway') && $this->latestPathway?->group?->name && preg_match('/G(?:roupe)?\s*[.\-_]?\s*(\d+)/i', (string) $this->latestPathway->group->name, $m)) ? ('Section ' . $m[1]) : null,
+            'sub_group' => $this->relationLoaded('latestPathway') ? $this->latestPathway?->sub_group : ($this->sub_group ?? null),
             // Wrap the related user model in UserResource if it's loaded
             'user' => $this->whenLoaded('user', function () {
+                if ($this->user && ! $this->user->relationLoaded('student')) {
+                    $this->user->setRelation('student', $this->resource);
+                }
+
                 return new UserResource($this->user);
             }),
             'latest_pathway' => $this->whenLoaded('latestPathway', function () {
@@ -40,6 +46,9 @@ class StudentResource extends JsonResource
                     'id' => $this->latestPathway->id,
                     'current_semester' => $this->latestPathway->current_semester,
                     'academic_year_id' => $this->latestPathway->academic_year_id,
+                    'group_id' => $this->latestPathway->group_id,
+                    'group_name' => $this->latestPathway->group?->name,
+                    'sub_group' => $this->latestPathway->sub_group,
                     'filiere' => $this->latestPathway->relationLoaded('filiere') ? [
                         'id' => $this->latestPathway->filiere?->id,
                         'name' => $this->latestPathway->filiere?->name,

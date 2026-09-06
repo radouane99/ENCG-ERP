@@ -68,6 +68,8 @@ export interface Student {
   current_filiere?: string;
   current_semester?: number;
   current_group?: string;
+  section?: string;
+  sub_group?: string;
   pathways?: StudentPathway[];
   latest_pathway?: StudentPathway;
   created_at: string;
@@ -125,6 +127,9 @@ export interface StudentPathway {
   academic_year_id: number;
   current_semester: number;
   is_current: boolean;
+  group_id?: number | null;
+  group_name?: string | null;
+  sub_group?: string | null;
 }
 
 // ── Internship ────────────────────────────────────────────────────────────────

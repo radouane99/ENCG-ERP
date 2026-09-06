@@ -2842,3 +2842,79 @@ Le système offre au corps professoral et aux surveillants deux canaux d'accusé
 3. **Visibilité & Actions Administrateur (`/admin/convocations`) :**
    - Le tableau de gestion centralisée détecte immédiatement `confirmed_at` et affiche le badge vert **`✓ Présence Confirmée`** horodaté (ex: *04/09 à 01:45*).
    - L'administrateur dispose également d'un bouton d'action directe pour valider manuellement un créneau si l'enseignant confirme par téléphone ou guichet physique (`POST /api/convocations/surveillances/batch-confirm`).
+
+---
+
+### 21.18 🗓️ Architecture Pédagogique des Emplois du Temps, Découpage des Sous-Groupes TD (G1.1, G1.2) & Export Strict 1-Page PDF (Normes ENCG Fès)
+
+#### A. Rôle Métier & Règle d'Or Pédagogique ENCG Fès
+Le système modélise avec fidélité la structure d'enseignement des universités marocaines et des Grandes Écoles de Commerce :
+1. **Niveau Section (Cours Magistraux / CM en Amphithéâtre) :**
+   - En **Tronc Commun (S1 à S4)**, les promotions comptent ~400 étudiants, scindés en 4 Sections (`Section 1` à `Section 4`, soit `TC-S1-G1` à `TC-S1-G4`). En CM, toute la section (100 étudiants) assiste réunie en Amphithéâtre (Amphi A / B).
+   - En **Spécialité (S5 à S10)**, les promotions comptent ~50 à 80 étudiants par filière (GFC, MCM, ACG, etc.), réparties en 1 ou 2 groupes (`G1`, `G2`).
+   - Les cellules d'emploi du temps pour les CM affichent les libellés au niveau Section : **`G1`**, **`G2`**, **`G3`**, **`G4`**.
+2. **Niveau Sous-Groupe (Travaux Dirigés & Pratiques / TD & TP en Salles de Cours) :**
+   - La capacité des salles de cours et d'informatique étant limitée (~35 à 50 places), chaque section est obligatoirement subdivisée en **deux sous-groupes équilibrés par ordre alphabétique officiel** (`last_name ASC, first_name ASC`) :
+     - 1ère moitié (ex: Noms A à K) ➔ **`G1.1`** (ou `G2.1`, `G3.1`, etc.).
+     - 2ème moitié (ex: Noms L à Z) ➔ **`G1.2`** (ou `G2.2`, `G3.2`, etc.).
+   - Les cellules d'emploi du temps pour les TD/TP affichent obligatoirement les sous-groupes : **`G1.1`**, **`G1.2`**, **`G2.1`**, **`G2.2`**.
+
+```mermaid
+graph TD
+    Promo["🎓 Promotion Tronc Commun (~400 étudiants)"] --> Sec1["🏛️ Section 1 (~100 ét.)"]
+    Promo --> Sec2["🏛️ Section 2 (~100 ét.)"]
+    Promo --> Sec3["🏛️ Section 3 (~100 ét.)"]
+    Promo --> Sec4["🏛️ Section 4 (~100 ét.)"]
+
+    Sec1 -->|Cours Magistral CM| Amphi1["🏟️ Amphithéâtre A (Label G1)"]
+    Sec1 -->|Ordre Alphabétique A-K| TD11["📝 Sous-Groupe G1.1 (~50 ét.) • Salle TD"]
+    Sec1 -->|Ordre Alphabétique L-Z| TD12["📝 Sous-Groupe G1.2 (~50 ét.) • Salle TD"]
+
+    Sec2 -->|Cours Magistral CM| Amphi2["🏟️ Amphithéâtre B (Label G2)"]
+    Sec2 -->|Ordre Alphabétique A-K| TD21["📝 Sous-Groupe G2.1 (~50 ét.) • Salle TD"]
+    Sec2 -->|Ordre Alphabétique L-Z| TD22["📝 Sous-Groupe G2.2 (~50 ét.) • Salle TD"]
+```
+
+#### B. Architecture Backend & Traçabilité en Base de Données
+1. **Migration PostgreSQL :**
+   - Fichier : `2026_09_06_000001_add_sub_group_to_student_pathways_and_registrations.php`.
+   - Ajout du champ indexé `sub_group` (`string(20)->nullable()`) dans les tables `student_pathways` et `student_registrations`.
+2. **Moteur Métier de Découpage (`StudentSubGroupDispatcherService.php`) :**
+   - Trie les étudiants d'un groupe donné par ordre alphabétique officiel (`last_name ASC, first_name ASC, id ASC`).
+   - Calcule le point médian $M = \lceil N/2 \rceil$.
+   - Assigne automatiquement `Gx.1` aux $M$ premiers étudiants et `Gx.2` aux suivants.
+   - Met à jour simultanément `student_pathways` et `student_registrations` avec garde-fous `Schema::hasColumn`.
+   - Fournit `dispatchAllActiveGroups(?int $academicYearId)` pour la bascule de rentrée.
+3. **Commande Artisan :**
+   - `docker exec encg_backend php artisan encg:dispatch-subgroups`
+4. **Contrôleur API & Exposition :**
+   - Route `POST /api/groups/dispatch-subgroups` dans `GroupController.php`.
+   - `UserResource.php`, `DashboardAnalyticsService.php`, et `StudentPortalService.php` exposent `section`, `sub_group`, `group_name`, et `academic_info`.
+
+#### C. Moteur d'Export PDF Officiel — Strictement 1 Page A4 Paysage (1 of 1)
+Pour garantir la conformité aux tableaux d'affichage officiels des universités marocaines :
+- **Scaling Dynamique Responsive (5 Paliers) :**
+  - Le template Blade `emploi_du_temps_officiel.blade.php` adapte automatiquement la taille de police, les espacements, les paddings de cellules et la taille des logos selon le nombre de lignes (`$rowCount`) :
+    - $\le 8$ lignes : font 7.2pt, padding 4px 6px.
+    - $\le 12$ lignes : font 6.5pt, padding 3px 5px.
+    - $\le 16$ lignes : font 5.8pt, padding 2px 3.5px.
+    - $\le 20$ lignes : font 5.4pt, padding 1.2px 2px.
+    - $> 20$ lignes (ex: S5 GFC à 24-28 lignes) : font 5.1pt, padding 0.8px 1px, logo 23px, QR 17px, `nowrap` sur profs et salles.
+- **Éradication des Débordements :**
+  - Marges de page réduites à `2mm 3.5mm`.
+  - Application de `.section:last-child { page-break-after: avoid !important; }` garantissant un export strict sur 1 page (1 of 1).
+- **Emploi du Temps Professeur :**
+  - Template `emploi_du_temps_professeur.blade.php` doté de marges compactes (`2.5mm 4mm`), tableau récapitulatif compact, boîte signature à 28px et `page-break-inside: avoid`.
+
+#### D. Configuration Dynamique des Dates Officielles de Démarrage
+- **Persistance Cache :** `TimetableExportController.php` expose `GET /api/timetable/dates-config` et `POST /api/timetable/dates-config` sous la clé `encg_timetable_dates_config`.
+- **Paramétrage Administrateur :** Modale dédiée avec sauvegarde persistante des dates de « Démarrage des cours (CM) » et « Démarrage des TD/TP ».
+
+#### E. Couche Présentation Frontend (React SPA)
+- **Portail Étudiant (`StudentDashboard.tsx`) :**
+  - Affichage direct et bien en évidence sur le Hero Banner de l'affectation officielle :
+    - 🏛️ Badge ambré : **`Section 1 (Amphi CM)`**
+    - 📝 Badge émeraude : **`Sous-Groupe TD : G1.1`** (ou `G1.2`)
+    - 🏷️ Badge groupe : **`GFC-S5-G1`**
+- **Matrice d'Affichage Admin (`OfficialTimetableMatrix.tsx`) :**
+  - Bouton d'action rapide : **`⚡ Répartir Sous-Groupes TD (Alpha)`** déclenchant la répartition automatique avec notification toast.

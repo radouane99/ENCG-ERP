@@ -30,6 +30,7 @@ export default function AdminStudentsPage() {
   const [selectedFiliere, setSelectedFiliere] = useState('')
   const [selectedSemester, setSelectedSemester] = useState('')
   const [selectedGroup, setSelectedGroup] = useState('')
+  const [selectedSubGroup, setSelectedSubGroup] = useState('')
 
   // Modals & Menus
   const [editingStudent, setEditingStudent] = useState<Student | null>(null)
@@ -57,6 +58,7 @@ export default function AdminStudentsPage() {
       if (selectedFiliere) params.filiere_id = selectedFiliere
       if (selectedSemester) params.semester = selectedSemester
       if (selectedGroup) params.group_id = selectedGroup
+      if (selectedSubGroup) params.sub_group = selectedSubGroup
 
       const res = await studentsApi.getStudents(params)
       setStudents(res.data)
@@ -71,7 +73,7 @@ export default function AdminStudentsPage() {
 
   useEffect(() => {
     fetchStudents()
-  }, [page, search, selectedFiliere, selectedSemester, selectedGroup])
+  }, [page, search, selectedFiliere, selectedSemester, selectedGroup, selectedSubGroup])
 
   useEffect(() => {
     academicApi.getFilieres().then(setFilieres).catch(console.error)
@@ -83,6 +85,7 @@ export default function AdminStudentsPage() {
     setSelectedFiliere('')
     setSelectedSemester('')
     setSelectedGroup('')
+    setSelectedSubGroup('')
     setPage(1)
   }
 
@@ -124,7 +127,7 @@ export default function AdminStudentsPage() {
     return `${f}${l}` || '?'
   }
 
-  const hasActiveFilters = !!(search || selectedFiliere || selectedSemester || selectedGroup)
+  const hasActiveFilters = !!(search || selectedFiliere || selectedSemester || selectedGroup || selectedSubGroup)
 
   return (
     <div className="space-y-8 animate-in p-6 max-w-[1400px] mx-auto font-sans pb-24">
@@ -286,7 +289,7 @@ export default function AdminStudentsPage() {
           )}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
           <div>
             <label className="block text-[10px] font-black uppercase text-slate-400 mb-1.5">Filière</label>
             <CustomSelect
@@ -330,7 +333,7 @@ export default function AdminStudentsPage() {
           </div>
 
           <div>
-            <label className="block text-[10px] font-black uppercase text-slate-400 mb-1.5">Groupe d'Étude</label>
+            <label className="block text-[10px] font-black uppercase text-slate-400 mb-1.5">Groupe d'Étude (CM)</label>
             <CustomSelect
               value={selectedGroup}
               onChange={(val) => {
@@ -345,6 +348,30 @@ export default function AdminStudentsPage() {
                   label: g.name,
                   badge: 'GROUPE'
                 }))
+              ]}
+              className="w-full"
+            />
+          </div>
+
+          <div>
+            <label className="block text-[10px] font-black uppercase text-slate-400 mb-1.5">Sous-Groupe TD / TP</label>
+            <CustomSelect
+              value={selectedSubGroup}
+              onChange={(val) => {
+                setSelectedSubGroup(val)
+                setPage(1)
+              }}
+              placeholder="Tous les sous-groupes TD"
+              options={[
+                { value: '', label: 'Tous les sous-groupes TD', badge: 'TOUS' },
+                { value: 'G1.1', label: 'G1.1 (Sous-groupe 1)', badge: 'G1.1' },
+                { value: 'G1.2', label: 'G1.2 (Sous-groupe 2)', badge: 'G1.2' },
+                { value: 'G2.1', label: 'G2.1 (Sous-groupe 1)', badge: 'G2.1' },
+                { value: 'G2.2', label: 'G2.2 (Sous-groupe 2)', badge: 'G2.2' },
+                { value: 'G3.1', label: 'G3.1 (Sous-groupe 1)', badge: 'G3.1' },
+                { value: 'G3.2', label: 'G3.2 (Sous-groupe 2)', badge: 'G3.2' },
+                { value: 'G4.1', label: 'G4.1 (Sous-groupe 1)', badge: 'G4.1' },
+                { value: 'G4.2', label: 'G4.2 (Sous-groupe 2)', badge: 'G4.2' },
               ]}
               className="w-full"
             />
@@ -371,7 +398,7 @@ export default function AdminStudentsPage() {
               <tr>
                 <th className="px-8 py-5">Identité de l'Étudiant</th>
                 <th className="px-8 py-5">CIN & CNE / Massar</th>
-                <th className="px-8 py-5">Filière, Semestre & Groupe</th>
+                <th className="px-8 py-5">Filière, Semestre & Groupe / TD</th>
                 <th className="px-8 py-5 text-right">Actions & Documents PDF</th>
               </tr>
             </thead>
@@ -413,12 +440,49 @@ export default function AdminStudentsPage() {
                   </td>
 
                   <td className="px-8 py-5">
-                    <div className="font-bold text-slate-900 dark:text-white text-xs mb-1">
-                      {s.current_filiere 
-                        ? `${s.current_filiere}${s.current_group ? ` - ${s.current_group.split(' - ')[0]}` : ''} - S${s.current_semester || 1}` 
-                        : 'Tronc Commun ENCG'}
+                    <div className="flex flex-col gap-1.5">
+                      {/* Filière, Semestre & Groupe CM */}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-extrabold text-slate-900 dark:text-white text-xs">
+                          {s.current_filiere || 'TC'}
+                        </span>
+                        <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60">
+                          S{s.current_semester || 1}
+                        </span>
+                        {s.current_group && (
+                          <span className="text-[11px] text-slate-600 dark:text-slate-300 font-bold truncate max-w-[140px]" title={s.current_group}>
+                            {s.current_group.split(' - ')[0]}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Sous-groupe TD & Matricule */}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {(s.sub_group || s.latest_pathway?.sub_group) ? (
+                          <span
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[11px] font-black tracking-wide border shadow-2xs ${
+                              (s.sub_group || s.latest_pathway?.sub_group)?.includes('.1')
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800'
+                                : 'bg-indigo-50 text-indigo-700 border-indigo-300 dark:bg-indigo-950/60 dark:text-indigo-300 dark:border-indigo-800'
+                            }`}
+                            title={`Affectation officielle Travaux Dirigés / TP : ${s.sub_group || s.latest_pathway?.sub_group}`}
+                          >
+                            <span className={`w-1.5 h-1.5 rounded-full ${
+                              (s.sub_group || s.latest_pathway?.sub_group)?.includes('.1') ? 'bg-emerald-500' : 'bg-indigo-500'
+                            }`} />
+                            TD : <strong className="font-black">{s.sub_group || s.latest_pathway?.sub_group}</strong>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                            Non scindé
+                          </span>
+                        )}
+
+                        <span className="text-[10px] font-mono font-bold text-slate-400">
+                          MATRICULE : {s.student_number || ('2026' + s.id)}
+                        </span>
+                      </div>
                     </div>
-                    <div className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">MATRICULE : {s.student_number || ('2026' + s.id)}</div>
                   </td>
 
                   <td className="px-8 py-5 text-right">
@@ -542,6 +606,33 @@ export default function AdminStudentsPage() {
                 <div className="flex justify-between">
                   <span className="text-slate-500">Email Académique :</span>
                   <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400">{selectedStudentForModal.email}</span>
+                </div>
+                <div className="flex justify-between border-t border-slate-200 dark:border-slate-700 pt-2">
+                  <span className="text-slate-500">Filière & Semestre :</span>
+                  <span className="font-bold text-slate-900 dark:text-white">
+                    {selectedStudentForModal.current_filiere || 'TC'} — Semestre {selectedStudentForModal.current_semester || 1}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Section Amphi (CM) :</span>
+                  <span className="font-bold text-slate-900 dark:text-white">
+                    {selectedStudentForModal.current_group || 'TC-S2-G1'}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-500">Sous-Groupe TD / TP :</span>
+                  {(selectedStudentForModal.sub_group || selectedStudentForModal.latest_pathway?.sub_group) ? (
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-black border ${
+                      (selectedStudentForModal.sub_group || selectedStudentForModal.latest_pathway?.sub_group)?.includes('.1')
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300'
+                        : 'bg-indigo-50 text-indigo-700 border-indigo-300 dark:bg-indigo-950 dark:text-indigo-300'
+                    }`}>
+                      <span className="w-2 h-2 rounded-full bg-current" />
+                      Sous-groupe {selectedStudentForModal.sub_group || selectedStudentForModal.latest_pathway?.sub_group}
+                    </span>
+                  ) : (
+                    <span className="text-slate-400 italic">Non scindé</span>
+                  )}
                 </div>
               </div>
 
