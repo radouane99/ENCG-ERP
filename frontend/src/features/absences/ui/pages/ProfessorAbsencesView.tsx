@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
-  Users, Check, X, Clock, QrCode, Sparkles, Mic, MicOff, 
+  Users, Check, Clock, QrCode, Sparkles, Mic, MicOff, 
   Search, Play, BookOpen, Layers,
   CalendarDays, Zap, CheckSquare
 } from 'lucide-react';

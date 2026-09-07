@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom'
 import {
   Calendar,
   Users,
-  Monitor,
   Loader2,
   Sliders,
   Sparkles,
@@ -19,13 +18,9 @@ import {
   AlertTriangle,
   Printer,
   ShieldCheck,
-  CheckCircle2,
   Search,
-  Filter,
-  GraduationCap,
   Building2,
   CheckSquare,
-  ChevronRight,
   BarChart3,
   ScanLine,
   DoorOpen
@@ -43,7 +38,7 @@ import { CustomSelect, SelectOption } from '@shared/components/ui'
 
 export default function AdminExamsPage() {
   const navigate = useNavigate()
-  const { t } = useTranslation('exams')
+  const { t: _t } = useTranslation('exams')
   const queryClient = useQueryClient()
 
   const [selectedSemesterNum, setSelectedSemesterNum] = useState<number | ''>('')
@@ -72,7 +67,7 @@ export default function AdminExamsPage() {
     queryFn: academicApi.getModules
   })
 
-  const { data: rooms } = useQuery({
+  const { data: _rooms } = useQuery({
     queryKey: ['rooms'],
     queryFn: academicApi.getRooms
   })
@@ -833,7 +828,7 @@ export default function AdminExamsPage() {
   )
 }
 
-function ExamCard({ id, title, group, filiereCode, filiereName, semester, time, duration, room, surveillants, day, month, dayName, type, generated, sent, pending, onNotify }: any) {
+function ExamCard({ id, title, group, filiereCode, filiereName, semester, time, duration, room, surveillants, day, month, dayName, type, generated, sent, _pending, onNotify }: any) {
   const [isGenerating, setIsGenerating] = useState(false)
 
   const cleanTitle = cleanUtf8Text(title)
