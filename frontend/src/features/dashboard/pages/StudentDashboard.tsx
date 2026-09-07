@@ -26,34 +26,56 @@ import {
   Scale,
   Users,
   Layers,
-  Info
+  Info,
+  RefreshCcw,
+  CheckCircle
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import api from '@shared/lib/api';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import RoleQuickActions from '@shared/components/layout/RoleQuickActions';
-import PageHeader from '@shared/components/layout/PageHeader';
-import { useCreateDocumentRequest, useDocumentTypes, useStudentRequests } from '@features/guichet/api/guichetApi';
+import { useCreateDocumentRequest, useDocumentTypes } from '@features/guichet/api/guichetApi';
 import { cn } from '@shared/lib/utils';
 import { openAuthenticatedUrl } from '@shared/lib/documentAccess';
 
+interface UpcomingClass {
+  time: string;
+  title: string;
+  location: string;
+  professor: string;
+  status: 'completed' | 'current' | 'upcoming';
+}
+
+interface RecentDocument {
+  id: number;
+  title: string;
+  date: string;
+  status: string;
+  hash: string;
+}
+
 export default function StudentDashboard() {
   const { user } = useAuthStore();
-  const currentDate = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  const currentDate = new Date().toLocaleDateString('fr-FR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  }).toUpperCase();
+
   const { data: documentTypes } = useDocumentTypes();
-  const { data: documentRequests } = useStudentRequests();
   const createRequest = useCreateDocumentRequest();
   const [showPassModal, setShowPassModal] = useState(false);
 
-  // Fetch real student stats
-  const { data: statsData, isLoading } = useQuery({
+  // Fetch real student stats from backend
+  const { data: statsData, isLoading, refetch, isFetching } = useQuery({
     queryKey: ['student-stats'],
     queryFn: async () => {
       const res = await api.get('/dashboard/student/stats');
       return res.data.data;
-    }
+    },
+    staleTime: 60000,
   });
 
   const emptyStats = {
@@ -63,8 +85,8 @@ export default function StudentDashboard() {
     upcoming_exams: 3,
     credits_earned: 150,
     total_credits: 300,
-    upcoming_classes: [] as unknown[],
-    recent_documents: [] as unknown[],
+    upcoming_classes: [] as UpcomingClass[],
+    recent_documents: [] as RecentDocument[],
   };
 
   const statsPayload = statsData && !Array.isArray(statsData) ? statsData : {};
@@ -72,19 +94,19 @@ export default function StudentDashboard() {
     ...emptyStats,
     ...statsPayload,
     absences: { ...emptyStats.absences, ...(statsPayload.absences ?? {}) },
-    upcoming_classes: Array.isArray(statsPayload.upcoming_classes) && statsPayload.upcoming_classes.length > 0 
-      ? statsPayload.upcoming_classes 
+    upcoming_classes: (Array.isArray(statsPayload.upcoming_classes) && statsPayload.upcoming_classes.length > 0
+      ? statsPayload.upcoming_classes
       : [
           { time: '08:30 - 10:30', title: 'Management Stratégique & Gouvernance', location: 'Amphi Ibn Khaldoun', professor: 'Pr. El Amrani', status: 'completed' },
           { time: '10:45 - 12:45', title: 'Diagnostic Financier & Analyse de la Valeur', location: 'Salle 14 (Pôle Gestion)', professor: 'Pr. Bensouda', status: 'current' },
           { time: '14:30 - 16:30', title: 'Marketing International & Négociation', location: 'Salle 08', professor: 'Pr. Tazi', status: 'upcoming' },
-        ],
-    recent_documents: Array.isArray(statsPayload.recent_documents) && statsPayload.recent_documents.length > 0
+        ]) as UpcomingClass[],
+    recent_documents: (Array.isArray(statsPayload.recent_documents) && statsPayload.recent_documents.length > 0
       ? statsPayload.recent_documents
       : [
           { id: 1, title: 'Attestation de Scolarité 2026-2027', date: '15 Janvier 2026', status: 'signed', hash: 'SHA256-A89F-4982-BC' },
           { id: 2, title: 'Relevé de Notes Semestre 5', date: '10 Février 2026', status: 'signed', hash: 'SHA256-7E12-9844-DF' }
-        ],
+        ]) as RecentDocument[],
   };
 
   const requestDocument = async (kind: 'attestation' | 'releve') => {
@@ -118,29 +140,124 @@ export default function StudentDashboard() {
   };
 
   const mention = getMention(Number(stats.gpa) || 14.85);
-  const studentCne = user?.cne || 'N130000003';
-  const studentCin = user?.cin || 'CD748291';
-  const academicInfo = (user as any)?.academic_info || (statsPayload as any)?.academic_info;
-  const studentSection = (user as any)?.section || (statsPayload as any)?.section || academicInfo?.section_label || 'Section 1';
-  const studentSubGroup = (user as any)?.sub_group || (statsPayload as any)?.sub_group || academicInfo?.sub_group || 'G1.1';
-  const studentGroupName = (user as any)?.group_name || (statsPayload as any)?.group_name || academicInfo?.group_name || 'GFC-S5-G1';
+  const userAny = user as any;
+  const studentCne = userAny?.cne || 'N130000003';
+  const studentCin = userAny?.cin || 'CD748291';
+  const academicInfo = userAny?.academic_info || (statsPayload as any)?.academic_info;
+  const studentSection = userAny?.section || (statsPayload as any)?.section || academicInfo?.section_label || 'Section 1';
+  const studentSubGroup = userAny?.sub_group || (statsPayload as any)?.sub_group || academicInfo?.sub_group || 'G1.2';
+  const studentGroupName = userAny?.group_name || (statsPayload as any)?.group_name || academicInfo?.group_name || 'TC-S2-G1';
   const studentFiliere = academicInfo?.filiere_name 
-    ? `ENCG Grande École • S${academicInfo.semester || 5} ${academicInfo.filiere_name}`
-    : ((user as any)?.filiere?.name || 'ENCG Grande École • S5 Gestion Financière & Comptable (GFC)');
+    ? `ENCG Grande École • S${academicInfo.semester || 2} ${academicInfo.filiere_name}`
+    : (userAny?.filiere?.name || 'ENCG Grande École • S2 Tronc Commun ENCG');
   const studentInitials = user?.name ? user.name.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase() : 'ET';
 
+  const quickActions = [
+    {
+      to: '/student/grades',
+      label: 'Mes Notes',
+      sublabel: 'Résultats & Recours',
+      icon: BookOpen,
+      testId: 'cta-student-grades',
+      accent: 'blue',
+      iconBg: 'bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-300',
+      border: 'hover:border-blue-500/40',
+      tag: 'Délibérations',
+    },
+    {
+      to: '/student/schedule',
+      label: 'Emploi du Temps',
+      sublabel: 'Planning & Séances',
+      icon: CalendarIcon,
+      testId: 'cta-student-schedule',
+      accent: 'emerald',
+      iconBg: 'bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-300',
+      border: 'hover:border-emerald-500/40',
+      tag: 'Temps Réel',
+    },
+    {
+      to: '/student/documents',
+      label: 'Guichet Numérique',
+      sublabel: 'Attestations & Relevés',
+      icon: Stamp,
+      testId: 'cta-student-documents',
+      accent: 'amber',
+      iconBg: 'bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-300',
+      border: 'hover:border-amber-500/40',
+      tag: 'Demandes 1-Clic',
+    },
+    {
+      to: '/student/absences',
+      label: 'Assiduité & Absences',
+      sublabel: 'Dépôt Justificatifs',
+      icon: UserX,
+      testId: 'cta-student-absences',
+      accent: 'rose',
+      iconBg: 'bg-rose-500/10 text-rose-600 dark:bg-rose-500/20 dark:text-rose-300',
+      border: 'hover:border-rose-500/40',
+      tag: 'Régularisation',
+    },
+    {
+      to: '/student/convocations',
+      label: 'Convocations',
+      sublabel: 'Examens & N° Table',
+      icon: MailCheck,
+      testId: 'cta-student-convocations',
+      accent: 'purple',
+      iconBg: 'bg-purple-500/10 text-purple-600 dark:bg-purple-500/20 dark:text-purple-300',
+      border: 'hover:border-purple-500/40',
+      tag: 'Officiel',
+    },
+  ];
+
   return (
-    <div data-testid="student-dashboard" className="space-y-8 font-sans animate-in fade-in duration-500 text-slate-900 dark:text-slate-100">
+    <div data-testid="student-dashboard" className="space-y-8 font-sans animate-in fade-in duration-500 text-slate-900 dark:text-slate-100 pb-12">
       
-      {/* ── Executive Hero Profile Banner ── */}
-      <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-[#001A4B] via-[#07255e] to-[#0a1833] text-white p-6 sm:p-8 shadow-2xl border border-white/10">
+      {/* ── Executive Top Cockpit Header (Matching Admin & Professor Cockpit) ── */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800/80 pb-5">
+        <div>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-black tracking-tight text-[#001A4B] dark:text-white">
+              Cockpit Étudiant · Espace Académique
+            </h1>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              Système Opérationnel
+            </span>
+          </div>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
+            École Nationale de Commerce et de Gestion de Fès · Année Universitaire 2026-2027 · {currentDate}
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => refetch()}
+            disabled={isFetching}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 shadow-2xs hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer"
+          >
+            <RefreshCcw className={cn("w-3.5 h-3.5 text-blue-600", isFetching && "animate-spin")} />
+            Actualiser
+          </button>
+
+          <Link
+            to="/student/schedule"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#001A4B] hover:bg-[#082663] text-white text-xs font-black uppercase tracking-wider shadow-md transition-all"
+          >
+            <CalendarIcon className="w-3.5 h-3.5 text-amber-300" /> Mon Emploi du Temps
+          </Link>
+        </div>
+      </div>
+
+      {/* ── Executive Hero Profile Card ── */}
+      <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-[#001A4B] via-[#092868] to-[#041233] text-white p-6 sm:p-8 shadow-2xl border border-white/10">
         <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
-        <div className="absolute bottom-0 left-1/3 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div className="absolute bottom-0 left-1/3 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
         <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
           <div className="flex items-center gap-5">
             {/* Avatar Initials Badge */}
-            <div className="relative">
+            <div className="relative shrink-0">
               <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-gradient-to-tr from-amber-400 via-amber-500 to-amber-300 p-0.5 shadow-xl flex items-center justify-center">
                 <div className="w-full h-full bg-[#001A4B] rounded-[22px] flex items-center justify-center font-black text-2xl sm:text-3xl text-amber-300 tracking-wider">
                   {studentInitials}
@@ -151,22 +268,27 @@ export default function StudentDashboard() {
 
             <div className="space-y-1.5">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-white/10 backdrop-blur-md text-amber-300 border border-white/10">
+                <span className="px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-white/10 backdrop-blur-md text-amber-300 border border-white/10">
                   Étudiant ENCG Fès
                 </span>
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                   Année 2026/2027
                 </span>
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                  {studentGroupName}
+                </span>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+              
+              <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
                 {user?.name || 'Étudiant ENCG'}
-              </h1>
+              </h2>
+              
               <p className="text-xs sm:text-sm text-blue-200 font-medium flex items-center gap-2">
                 <Building2 className="w-4 h-4 text-blue-300" />
                 {studentFiliere}
               </p>
 
-              {/* ── Official ENCG Pedagogical Affectation Compact Badges ── */}
+              {/* Official ENCG Pedagogical Affectation Compact Badges */}
               <div className="flex flex-wrap items-center gap-2 pt-1.5">
                 {/* Section Amphi badge */}
                 <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-amber-400/15 border border-amber-400/30 backdrop-blur-sm shadow-sm">
@@ -175,27 +297,27 @@ export default function StudentDashboard() {
                   <span className="text-xs font-black text-amber-200">{studentSection}</span>
                 </div>
                 {/* Sub-group TD badge */}
-                <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-violet-500/15 border border-violet-400/30 backdrop-blur-sm shadow-sm">
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-violet-500/20 border border-violet-400/30 backdrop-blur-sm shadow-sm">
                   <span className="w-2 h-2 rounded-full bg-violet-400 shrink-0" />
                   <span className="text-[10.5px] font-black text-violet-300 uppercase tracking-wide">TD/TP</span>
                   <span className="text-xs font-black text-violet-200">{studentSubGroup}</span>
                 </div>
-                {/* Filiere code badge */}
-                <div className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-white/8 border border-white/10 backdrop-blur-sm">
-                  <span className="text-[10.5px] font-mono font-bold text-slate-300">{studentGroupName}</span>
+                {/* CNE & CIN */}
+                <div className="flex items-center gap-2 text-xs text-slate-300 font-mono font-bold">
+                  <span className="bg-white/10 px-2.5 py-0.5 rounded-lg border border-white/10">CNE: {studentCne}</span>
+                  <span className="bg-white/10 px-2.5 py-0.5 rounded-lg border border-white/10">CIN: {studentCin}</span>
                 </div>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-3 pt-1 text-xs text-slate-300 font-mono font-bold">
-                <span className="bg-white/10 px-2.5 py-0.5 rounded-lg border border-white/10">CNE: {studentCne}</span>
-                <span className="bg-white/10 px-2.5 py-0.5 rounded-lg border border-white/10">CIN: {studentCin}</span>
               </div>
             </div>
           </div>
 
           {/* Pass Digital QR Fast Access Card */}
           <div className="w-full lg:w-auto bg-white/10 backdrop-blur-xl p-4 sm:p-5 rounded-3xl border border-white/15 shadow-xl flex items-center justify-between lg:justify-start gap-4">
-            <div className="bg-white p-2 rounded-2xl shadow-md shrink-0 cursor-pointer hover:scale-105 transition-transform" onClick={() => setShowPassModal(true)}>
+            <div
+              className="bg-white p-2 rounded-2xl shadow-md shrink-0 cursor-pointer hover:scale-105 transition-transform"
+              onClick={() => setShowPassModal(true)}
+              title="Agrandir le QR Pass"
+            >
               <img 
                 src={`https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=https://encg-fes.ac.ma/verify-document/student-pass-${studentCne}`} 
                 alt="QR Pass" 
@@ -216,106 +338,120 @@ export default function StudentDashboard() {
         </div>
       </div>
 
-      <PageHeader title="Mon Espace Académique" subtitle={currentDate} />
+      {/* ── Executive Quick Role Actions Navigation (Refined Glass Tiles matching Admin & Professor) ── */}
+      <div data-testid="role-quick-actions" className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        {quickActions.map((action) => {
+          const Icon = action.icon;
+          return (
+            <Link
+              key={action.to}
+              to={action.to}
+              data-testid={action.testId}
+              className={cn(
+                "group relative flex flex-col justify-between p-4 rounded-2xl border transition-all duration-200 hover:-translate-y-1 hover:shadow-lg",
+                "bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-slate-200/80 dark:border-slate-800 shadow-2xs",
+                action.border
+              )}
+            >
+              <div className="flex items-start justify-between gap-2 mb-3">
+                <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center transition-transform duration-200 group-hover:scale-110", action.iconBg)}>
+                  <Icon size={20} />
+                </div>
+                <span className="text-[9.5px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
+                  {action.tag}
+                </span>
+              </div>
+              <div>
+                <div className="text-xs font-black text-slate-800 dark:text-white group-hover:text-[#001A4B] dark:group-hover:text-blue-300 transition-colors">
+                  {action.label}
+                </div>
+                <div className="text-[10px] font-bold text-slate-400 mt-0.5">
+                  {action.sublabel}
+                </div>
+              </div>
+            </Link>
+          );
+        })}
+      </div>
 
-      {/* ── Official Pedagogical Affectation Card (ENCG Architecture) ── */}
-      <div className="relative overflow-hidden rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-gradient-to-br from-white via-slate-50 to-indigo-50/40 dark:from-slate-900 dark:via-slate-900 dark:to-indigo-950/20 p-5 sm:p-6 shadow-sm">
-        {/* Subtle decorative corner */}
-        <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-bl from-blue-100/60 to-transparent dark:from-blue-900/20 rounded-full -mr-16 -mt-16 pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-violet-100/40 to-transparent dark:from-violet-900/10 rounded-full -ml-10 -mb-10 pointer-events-none" />
+      {/* ── Official Pedagogical Affectation Architecture Card ── */}
+      <div className="relative overflow-hidden rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 sm:p-6 shadow-sm">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="p-2 rounded-xl bg-[#001A4B]/8 dark:bg-blue-500/10 border border-[#001A4B]/10 dark:border-blue-500/20">
+            <GraduationCap className="w-4 h-4 text-[#001A4B] dark:text-blue-400" />
+          </div>
+          <div>
+            <h3 className="text-sm font-black text-[#001A4B] dark:text-white">Affectation Pédagogique Officielle</h3>
+            <p className="text-[10.5px] text-slate-400 font-medium">Architecture ENCG Fès — Année Universitaire 2026/2027</p>
+          </div>
+          <div className="ml-auto inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/40 text-emerald-700 dark:text-emerald-300 text-[10px] font-black uppercase tracking-wider">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            Statut Actif
+          </div>
+        </div>
 
-        <div className="relative z-10">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="p-2 rounded-xl bg-[#001A4B]/8 dark:bg-blue-500/10 border border-[#001A4B]/10 dark:border-blue-500/20">
-              <GraduationCap className="w-4 h-4 text-[#001A4B] dark:text-blue-400" />
+        {/* Three-column academic identity grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {/* Cours Magistraux Block */}
+          <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600/5 via-blue-500/5 to-indigo-500/5 dark:from-blue-500/10 dark:to-indigo-500/10 border border-blue-200/60 dark:border-blue-800/50 p-4 hover:shadow-xs transition-all">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-7 h-7 rounded-xl bg-blue-600/10 dark:bg-blue-500/20 border border-blue-300/40 dark:border-blue-700/50 flex items-center justify-center">
+                <Building2 className="w-3.5 h-3.5 text-blue-700 dark:text-blue-300" />
+              </div>
+              <span className="text-[10px] font-black uppercase tracking-wider text-blue-600 dark:text-blue-400">Cours Magistraux (CM)</span>
             </div>
-            <div>
-              <h3 className="text-sm font-black text-[#001A4B] dark:text-white">Affectation Pédagogique Officielle</h3>
-              <p className="text-[10.5px] text-slate-400 font-medium">Architecture ENCG Fès — Année 2026/2027</p>
-            </div>
-            <div className="ml-auto inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/40 text-emerald-700 dark:text-emerald-300 text-[10px] font-black uppercase tracking-wider">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              Actif
+            <div className="text-xl font-black text-[#001A4B] dark:text-white">{studentSection}</div>
+            <p className="text-[10.5px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">Section réunie en Amphithéâtre</p>
+            <div className="mt-2.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 text-[9.5px] font-black uppercase tracking-wide">
+              ~100 étudiants
             </div>
           </div>
 
-          {/* Three-column academic identity grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {/* Cours Magistraux Block */}
-            <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600/8 via-blue-500/5 to-indigo-500/8 dark:from-blue-500/15 dark:to-indigo-500/10 border border-blue-200/60 dark:border-blue-800/50 p-4 hover:shadow-sm transition-all">
-              <div className="absolute -top-3 -right-3 w-16 h-16 bg-blue-500/8 rounded-full blur-xl pointer-events-none" />
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-7 h-7 rounded-xl bg-blue-600/10 dark:bg-blue-500/20 border border-blue-300/40 dark:border-blue-700/50 flex items-center justify-center">
-                  <Building2 className="w-3.5 h-3.5 text-blue-700 dark:text-blue-300" />
-                </div>
-                <span className="text-[10px] font-black uppercase tracking-wider text-blue-600 dark:text-blue-400">Cours Magistraux</span>
+          {/* TD/TP Sub-Group Block */}
+          <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-600/5 via-purple-500/5 to-pink-500/5 dark:from-violet-500/10 dark:to-purple-500/10 border border-violet-200/60 dark:border-violet-800/50 p-4 hover:shadow-xs transition-all">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-7 h-7 rounded-xl bg-violet-600/10 dark:bg-violet-500/20 border border-violet-300/40 dark:border-violet-700/50 flex items-center justify-center">
+                <Layers className="w-3.5 h-3.5 text-violet-700 dark:text-violet-300" />
               </div>
-              <div className="text-xl font-black text-[#001A4B] dark:text-white">{studentSection}</div>
-              <p className="text-[10.5px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">Section en Amphithéâtre</p>
-              <div className="mt-2.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 text-[9.5px] font-black uppercase tracking-wide">
-                ~100 étudiants
-              </div>
+              <span className="text-[10px] font-black uppercase tracking-wider text-violet-600 dark:text-violet-400">Sous-Groupe TD/TP</span>
             </div>
-
-            {/* TD/TP Sub-Group Block */}
-            <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-600/8 via-purple-500/5 to-pink-500/8 dark:from-violet-500/15 dark:to-purple-500/10 border border-violet-200/60 dark:border-violet-800/50 p-4 hover:shadow-sm transition-all">
-              <div className="absolute -top-3 -right-3 w-16 h-16 bg-violet-500/8 rounded-full blur-xl pointer-events-none" />
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-7 h-7 rounded-xl bg-violet-600/10 dark:bg-violet-500/20 border border-violet-300/40 dark:border-violet-700/50 flex items-center justify-center">
-                  <Layers className="w-3.5 h-3.5 text-violet-700 dark:text-violet-300" />
-                </div>
-                <span className="text-[10px] font-black uppercase tracking-wider text-violet-600 dark:text-violet-400">Sous-Groupe TD/TP</span>
-              </div>
-              <div className="text-xl font-black text-violet-900 dark:text-violet-100">{studentSubGroup}</div>
-              <p className="text-[10.5px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">Salle de Travaux Dirigés</p>
-              <div className="mt-2.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 text-[9.5px] font-black uppercase tracking-wide">
-                Ordre alphabétique
-              </div>
-            </div>
-
-            {/* Filière Group Block */}
-            <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-500/8 via-orange-400/5 to-amber-300/8 dark:from-amber-500/15 dark:to-orange-500/10 border border-amber-200/60 dark:border-amber-800/50 p-4 hover:shadow-sm transition-all">
-              <div className="absolute -top-3 -right-3 w-16 h-16 bg-amber-500/8 rounded-full blur-xl pointer-events-none" />
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-7 h-7 rounded-xl bg-amber-500/10 dark:bg-amber-500/20 border border-amber-300/40 dark:border-amber-700/50 flex items-center justify-center">
-                  <Users className="w-3.5 h-3.5 text-amber-700 dark:text-amber-300" />
-                </div>
-                <span className="text-[10px] font-black uppercase tracking-wider text-amber-600 dark:text-amber-400">Groupe Filière</span>
-              </div>
-              <div className="text-xl font-black text-amber-900 dark:text-amber-100 font-mono">{studentGroupName}</div>
-              <p className="text-[10.5px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">{studentFiliere.split('•')[1]?.trim() || 'Filière Active'}</p>
-              <div className="mt-2.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 text-[9.5px] font-black uppercase tracking-wide">
-                2026 / 2027
-              </div>
+            <div className="text-xl font-black text-violet-900 dark:text-violet-100">{studentSubGroup}</div>
+            <p className="text-[10.5px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">Salle de Travaux Dirigés</p>
+            <div className="mt-2.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 text-[9.5px] font-black uppercase tracking-wide">
+              Ordre alphabétique
             </div>
           </div>
 
-          {/* Info banner */}
-          <div className="mt-3 flex items-start gap-2 px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/40">
-            <Info className="w-3.5 h-3.5 text-slate-400 mt-0.5 shrink-0" />
-            <p className="text-[10.5px] text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
-              Votre sous-groupe TD (<span className="font-black text-violet-600 dark:text-violet-300">{studentSubGroup}</span>) est attribué automatiquement par ordre alphabétique officiel.
-              Pour les <span className="font-bold">Cours Magistraux</span> : toute votre section se réunit en Amphithéâtre.
-              Pour les <span className="font-bold">TD/TP</span> : votre sous-groupe occupe une salle dédiée.
-            </p>
+          {/* Filière Group Block */}
+          <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-500/5 via-orange-400/5 to-amber-300/5 dark:from-amber-500/10 dark:to-orange-500/10 border border-amber-200/60 dark:border-amber-800/50 p-4 hover:shadow-xs transition-all">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-7 h-7 rounded-xl bg-amber-500/10 dark:bg-amber-500/20 border border-amber-300/40 dark:border-amber-700/50 flex items-center justify-center">
+                <Users className="w-3.5 h-3.5 text-amber-700 dark:text-amber-300" />
+              </div>
+              <span className="text-[10px] font-black uppercase tracking-wider text-amber-600 dark:text-amber-400">Groupe Filière</span>
+            </div>
+            <div className="text-xl font-black text-amber-900 dark:text-amber-100 font-mono">{studentGroupName}</div>
+            <p className="text-[10.5px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">{studentFiliere.split('•')[1]?.trim() || 'Filière Active'}</p>
+            <div className="mt-2.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 text-[9.5px] font-black uppercase tracking-wide">
+              2026 / 2027
+            </div>
           </div>
+        </div>
+
+        {/* Info pedagogical note */}
+        <div className="mt-3 flex items-start gap-2 px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/40">
+          <Info className="w-3.5 h-3.5 text-slate-400 mt-0.5 shrink-0" />
+          <p className="text-[10.5px] text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
+            Votre sous-groupe TD (<span className="font-black text-violet-600 dark:text-violet-300">{studentSubGroup}</span>) est attribué automatiquement par ordre alphabétique officiel.
+            Pour les <span className="font-bold">Cours Magistraux (CM)</span> : toute votre section se réunit en Amphithéâtre.
+            Pour les <span className="font-bold">TD/TP</span> : votre sous-groupe occupe une salle dédiée.
+          </p>
         </div>
       </div>
 
-      {/* ── Quick Role Actions Navigation ── */}
-      <RoleQuickActions
-        actions={[
-          { to: '/student/grades', label: 'Mes notes', icon: BookOpen, testId: 'cta-student-grades' },
-          { to: '/student/schedule', label: 'EDT', icon: CalendarIcon, testId: 'cta-student-schedule' },
-          { to: '/student/documents', label: 'Guichet', icon: Stamp, testId: 'cta-student-documents' },
-          { to: '/student/absences', label: 'Justificatif', icon: UserX, testId: 'cta-student-absences' },
-          { to: '/student/convocations', label: 'Convocations', icon: MailCheck, testId: 'cta-student-convocations' },
-        ]}
-      />
-
       {isLoading ? (
         <div className="flex justify-center items-center py-20 text-slate-400 font-bold animate-pulse">
-          Chargement de votre dossier académique...
+          Chargement de votre cockpit académique...
         </div>
       ) : (
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
@@ -420,7 +556,7 @@ export default function StudentDashboard() {
                   <h2 className="text-base font-black text-[#001A4B] dark:text-white flex items-center gap-2">
                     <CalendarIcon className="w-5 h-5 text-blue-600" /> Emploi du Temps du Jour
                   </h2>
-                  <p className="text-xs text-slate-400 mt-0.5">Séances et salles en temps réel pour votre groupe</p>
+                  <p className="text-xs text-slate-400 mt-0.5">Séances et salles en temps réel pour votre groupe ({studentGroupName} • {studentSubGroup})</p>
                 </div>
                 <Link to="/student/schedule" className="px-3.5 py-1.5 bg-blue-50 dark:bg-blue-950/50 hover:bg-blue-100 text-blue-700 dark:text-blue-300 rounded-xl text-xs font-black uppercase tracking-wider transition-colors">
                   Planning Complet →
@@ -428,7 +564,7 @@ export default function StudentDashboard() {
               </div>
 
               <div className="space-y-3">
-                {stats.upcoming_classes.map((cls: any, i: number) => {
+                {stats.upcoming_classes.map((cls: UpcomingClass, i: number) => {
                   const isCurrent = cls.status === 'current';
                   const isDone = cls.status === 'completed';
                   return (
@@ -446,9 +582,9 @@ export default function StudentDashboard() {
                       <div className="flex items-start gap-3.5">
                         <div className={cn(
                           "w-10 h-10 rounded-xl flex items-center justify-center font-black text-xs shrink-0",
-                          isCurrent ? "bg-blue-600 text-white" : isDone ? "bg-slate-200 dark:bg-slate-800 text-slate-600" : "bg-indigo-50 text-indigo-700"
+                          isCurrent ? "bg-blue-600 text-white shadow-md shadow-blue-500/20" : isDone ? "bg-slate-200 dark:bg-slate-800 text-slate-600" : "bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300"
                         )}>
-                          <Clock className="w-5 h-5" />
+                          {isDone ? <CheckCircle className="w-5 h-5 text-emerald-600" /> : <Clock className="w-5 h-5" />}
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
@@ -475,7 +611,7 @@ export default function StudentDashboard() {
               </div>
             </div>
 
-            {/* ── Secrétariat Express & Documents Numériques Signés ── */}
+            {/* ── Secrétariat Numérique & Guichet Express ── */}
             <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-7 shadow-sm border border-slate-200 dark:border-slate-800 space-y-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -496,7 +632,7 @@ export default function StudentDashboard() {
                     <Plus className="w-4 h-4 text-blue-600" /> Demande Rapide 1-Clic
                   </div>
                   <p className="text-xs text-slate-600 dark:text-slate-300">
-                    Générez instantanément votre document officiel certifié par l'administration de l'ENCG.
+                    Générez instantanément votre document officiel certifié par l'administration de l'ENCG Fès.
                   </p>
                   <div className="flex flex-wrap gap-2 pt-1">
                     <button
@@ -523,7 +659,7 @@ export default function StudentDashboard() {
                 {/* Recent Signed Documents */}
                 <div className="bg-slate-50 dark:bg-slate-800/50 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
                   <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block">Dernières Pièces Signées</span>
-                  {stats.recent_documents.map((doc: any, i: number) => (
+                  {stats.recent_documents.map((doc: RecentDocument, i: number) => (
                     <div key={i} className="flex items-center justify-between bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-100 dark:border-slate-800 shadow-2xs">
                       <div className="space-y-0.5">
                         <p className="text-xs font-bold text-slate-800 dark:text-slate-200">{doc.title}</p>
@@ -575,7 +711,7 @@ export default function StudentDashboard() {
             <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 space-y-5">
               <div className="flex items-center justify-between">
                 <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">Assiduité & Absences</h3>
-                <span className="text-xs font-bold text-slate-500">Semestre 6</span>
+                <span className="text-xs font-bold text-slate-500">Semestre Actif</span>
               </div>
 
               <div className="grid grid-cols-3 gap-2 text-center">

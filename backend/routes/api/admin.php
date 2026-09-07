@@ -509,15 +509,12 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
         return Excel::download(new StudentsExport, 'etudiants.xlsx');
     });
 
-    // Timetable & Smart Scheduling
+    // Timetable & Smart Scheduling (Administration)
     Route::prefix('timetable')->group(function () {
         Route::get('/', [TimetableController::class, 'index']);
         Route::post('/', [TimetableController::class, 'store']);
         Route::put('/{id}', [TimetableController::class, 'update']);
         Route::delete('/{id}', [TimetableController::class, 'destroy']);
-        Route::get('/export/{type}/{id}', [TimetableExportController::class, 'exportForFullCalendar']);
-        Route::get('/export/{type}/{id}/pdf', [TimetableExportController::class, 'exportPdf']);
-        Route::get('/export/{type}/{id}/ics', [TimetableExportController::class, 'exportIcs']);
         Route::post('/generate', [TimetableController::class, 'generate']);
         Route::post('/publish', [TimetableController::class, 'publish']);
         Route::post('/check-conflict', [TimetableController::class, 'checkConflict']);

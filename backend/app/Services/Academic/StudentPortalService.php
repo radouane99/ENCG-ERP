@@ -25,14 +25,20 @@ class StudentPortalService
     /**
      * Get student schedule.
      */
+    /**
+     * Get student schedule.
+     */
     public function getSchedule(int $studentId): Collection
     {
-        $pathway = DB::table('student_pathways')
+        $groupId = DB::table('student_pathways')
             ->where('student_id', $studentId)
             ->where('is_current', true)
-            ->first();
+            ->value('group_id')
+            ?: DB::table('student_registrations')
+                ->where('student_id', $studentId)
+                ->value('group_id');
 
-        if (! $pathway || ! $pathway->group_id) {
+        if (! $groupId) {
             return collect([]);
         }
 
@@ -41,7 +47,7 @@ class StudentPortalService
             ->leftJoin('rooms', 'schedules.room_id', '=', 'rooms.id')
             ->leftJoin('professors', 'schedules.professor_id', '=', 'professors.id')
             ->leftJoin('users', 'professors.user_id', '=', 'users.id')
-            ->where('schedules.group_id', $pathway->group_id)
+            ->where('schedules.group_id', $groupId)
             ->where('schedules.is_active', true);
 
         if (Schema::hasTable('schedule_versions')) {
@@ -59,19 +65,63 @@ class StudentPortalService
             });
         }
 
+        $daysMap = [
+            1 => 'Lundi',
+            2 => 'Mardi',
+            3 => 'Mercredi',
+            4 => 'Jeudi',
+            5 => 'Vendredi',
+            6 => 'Samedi',
+            7 => 'Dimanche',
+        ];
+
         return $query
             ->select(
                 'schedules.id',
-                'schedules.day_of_week as day',
-                DB::raw("CONCAT(schedules.start_time, ' - ', schedules.end_time) as time"),
-                'modules.name as module',
-                'rooms.name as room',
+                'schedules.day_of_week',
+                'schedules.start_time',
+                'schedules.end_time',
+                'modules.id as module_id',
+                'modules.name as module_name',
+                'modules.code as module_code',
+                'rooms.name as room_name',
                 'schedules.session_type as type',
-                DB::raw("CONCAT(COALESCE(users.first_name, ''), ' ', COALESCE(users.last_name, '')) as professor")
+                DB::raw("COALESCE(NULLIF(users.name, ''), CONCAT(COALESCE(users.first_name, ''), ' ', COALESCE(users.last_name, ''))) as professor")
             )
             ->orderBy('schedules.day_of_week')
             ->orderBy('schedules.start_time')
-            ->get();
+            ->get()
+            ->map(function ($s) use ($daysMap) {
+                $dayName = $daysMap[(int) $s->day_of_week] ?? 'Lundi';
+                $startTime = substr((string) $s->start_time, 0, 5);
+                $endTime = substr((string) $s->end_time, 0, 5);
+                $timeFormatted = "{$startTime} - {$endTime}";
+                $rawType = strtolower((string) $s->type);
+                $typeLabel = $rawType === 'cm' ? 'Cours Magistral (CM)' : ($rawType === 'td' ? 'Travaux Dirigés (TD)' : ($rawType === 'tp' ? 'Travaux Pratiques (TP)' : ucfirst((string) $s->type)));
+                $profName = trim((string) $s->professor);
+                if (! empty($profName) && ! str_starts_with($profName, 'Pr.') && ! str_starts_with($profName, 'Dr.')) {
+                    $profName = "Pr. {$profName}";
+                }
+
+                return [
+                    'id' => $s->id,
+                    'day_of_week' => (int) $s->day_of_week,
+                    'day' => $dayName,
+                    'time' => $timeFormatted,
+                    'start_time' => $startTime,
+                    'end_time' => $endTime,
+                    'module_id' => $s->module_id,
+                    'module_code' => $s->module_code,
+                    'module_name' => $s->module_name,
+                    'module' => $s->module_name,
+                    'title' => $s->module_name,
+                    'room' => $s->room_name ?? 'Amphithéâtre / Salle non assignée',
+                    'location' => $s->room_name ?? 'Amphithéâtre / Salle non assignée',
+                    'type' => $typeLabel,
+                    'raw_type' => $rawType,
+                    'professor' => ! empty($profName) ? $profName : 'Enseignant non assigné',
+                ];
+            });
     }
 
     /**

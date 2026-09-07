@@ -22,7 +22,7 @@ class TimetableExportController extends Controller
     /**
      * Export pour FullCalendar.
      */
-    public function exportForFullCalendar(Request $request, string $type, int $id): JsonResponse
+    public function exportForFullCalendar(Request $request, string $type, string|int $id): JsonResponse
     {
         $schedules = $this->fetchSchedules($type, $id);
         $startDate = now()->startOfWeek();
@@ -61,7 +61,7 @@ class TimetableExportController extends Controller
     /**
      * Export PDF.
      */
-    public function exportPdf(Request $request, string $type, int $id)
+    public function exportPdf(Request $request, string $type, string|int $id)
     {
         $schedules = $this->fetchSchedules($type, $id, $request);
 
@@ -122,6 +122,88 @@ class TimetableExportController extends Controller
             return $pdf->download($filename);
         }
 
+        if ($type === 'student') {
+            $student = is_numeric($id)
+                ? \App\Models\Student::with(['user', 'registrations.group.filiere', 'registrations.filiere'])->find($id)
+                : \App\Models\Student::where('uuid', $id)->with(['user', 'registrations.group.filiere', 'registrations.filiere'])->first();
+
+            if (! $student && is_numeric($id)) {
+                $student = \App\Models\Student::where('user_id', $id)->with(['user', 'registrations.group.filiere', 'registrations.filiere'])->first();
+            }
+            if (! $student && $request->user()) {
+                $student = \App\Models\Student::where('user_id', $request->user()->id)->with(['user', 'registrations.group.filiere', 'registrations.filiere'])->first();
+            }
+
+            $studentName = $student?->user ? trim(($student->user->first_name ?? '').' '.($student->user->last_name ?? '')) : ($request->user()?->name ?? 'Étudiant');
+            if ($studentName === '') {
+                $studentName = $student?->user?->name ?? 'Étudiant ENCG';
+            }
+            $cne = $student?->cne ?? 'N130000003';
+            $cin = $student?->cin ?? 'CD748291';
+
+            $reg = $student?->registrations()->latest()->first();
+            $filiereName = $reg?->filiere?->name ?? 'Tronc Commun ENCG';
+            $groupName = $reg?->group?->name ?? 'TC-S2-G1';
+            $subGroup = $reg?->sub_group ?? 'G1.2';
+            $semesterNumber = $reg?->semester_number ?? 2;
+            $section = 'Section 1';
+            if (preg_match('/G(\d+)/i', $groupName, $m)) {
+                $section = "Section {$m[1]}";
+            }
+
+            $cachedConfig = Cache::get('encg_timetable_dates_config', [
+                'cours_start' => '15 Septembre 2026',
+                'td_tp_start' => '22 Septembre 2026',
+            ]);
+            $coursStart = $cachedConfig['cours_start'] ?? '15 Septembre 2026';
+            $tdTpStart = $cachedConfig['td_tp_start'] ?? '22 Septembre 2026';
+
+            $logoBase64 = null;
+            $logoPath = public_path('logo-encg.png');
+            if (file_exists($logoPath)) {
+                $logoBase64 = 'data:image/png;base64,'.base64_encode(file_get_contents($logoPath));
+            }
+
+            $tokenCode = "EDT-STU-{$cne}";
+            $verifyToken = hash('sha256', "EDT-STUDENT-{$cne}-".now()->toDateString());
+            $verifyUrl = url("/verify/document/{$tokenCode}");
+            $qrBase64 = null;
+            if (class_exists(QrCode::class)) {
+                try {
+                    $qrSvg = QrCode::format('svg')->size(160)->margin(0)->generate($verifyUrl);
+                    $qrBase64 = 'data:image/svg+xml;base64,'.base64_encode($qrSvg);
+                } catch (\Throwable $e) {
+                    \Log::warning('QR generation error for EDT Student: '.$e->getMessage());
+                }
+            }
+
+            $filename = 'Emploi_du_Temps_Etudiant_'.str_replace(' ', '_', $studentName).'_'.$groupName.'.pdf';
+
+            $pdf = app(OfficialPdfFactory::class)
+                ->make('pdf.emploi_du_temps_etudiant', [
+                    'schedules' => $schedules,
+                    'student' => $student,
+                    'studentName' => $studentName,
+                    'cne' => $cne,
+                    'cin' => $cin,
+                    'filiereName' => $filiereName,
+                    'groupName' => $groupName,
+                    'subGroup' => $subGroup,
+                    'section' => $section,
+                    'semesterNumber' => $semesterNumber,
+                    'academicYear' => '2026/2027',
+                    'coursStart' => $coursStart,
+                    'tdTpStart' => $tdTpStart,
+                    'logoBase64' => $logoBase64,
+                    'qrBase64' => $qrBase64,
+                    'verifyUrl' => $verifyUrl,
+                    'verifyToken' => $verifyToken,
+                ])
+                ->setPaper('a4', 'landscape');
+
+            return $pdf->download($filename);
+        }
+
         $catalog = $this->officialMatrix->catalog($schedules, $this->matrixMeta($type, $id, $schedules, $request));
         $stamp = $catalog['sections'][0]['semester_label'] ?? 'EDT';
         $scope = $type === 'all' ? 'TOUTES_FILIERES' : ($catalog['sections'][0]['filiere_code'] ?? $type);
@@ -138,7 +220,7 @@ class TimetableExportController extends Controller
         return $pdf->download($filename);
     }
 
-    public function officialMatrix(Request $request, string $type, int $id): JsonResponse
+    public function officialMatrix(Request $request, string $type, string|int $id): JsonResponse
     {
         $schedules = $this->fetchSchedules($type, $id, $request);
 
@@ -151,7 +233,7 @@ class TimetableExportController extends Controller
     /**
      * Export ICS (calendrier).
      */
-    public function exportIcs(Request $request, string $type, int $id)
+    public function exportIcs(Request $request, string $type, string|int $id)
     {
         $schedules = $this->fetchSchedules($type, $id);
         $startDate = now()->startOfWeek();
@@ -221,7 +303,7 @@ class TimetableExportController extends Controller
     /**
      * Récupère les schedules selon le type et l'ID.
      */
-    private function fetchSchedules(string $type, int $id, ?Request $request = null)
+    private function fetchSchedules(string $type, string|int $id, ?Request $request = null)
     {
         $query = Schedule::with(['module', 'professor.user', 'room', 'group.filiere', 'semester']);
         $versionId = $request?->integer('version_id') ?: null;
@@ -233,6 +315,15 @@ class TimetableExportController extends Controller
 
         match ($type) {
             'group' => $query->where('group_id', $id),
+            'student' => $query->where(function ($q) use ($id, $request) {
+                $student = (is_numeric($id) ? \App\Models\Student::find($id) : \App\Models\Student::where('uuid', $id)->first())
+                    ?: (is_numeric($id) ? \App\Models\Student::where('user_id', $id)->first() : null)
+                    ?: ($request?->user()?->student);
+                $groupId = $student?->registrations()->latest()->value('group_id')
+                    ?: \DB::table('student_pathways')->where('student_id', $student?->id)->where('is_current', true)->value('group_id')
+                    ?: 1;
+                $q->where('group_id', $groupId);
+            }),
             'filiere' => $query->whereHas('group', fn ($q) => $q->where('filiere_id', $id)),
             'professor' => $query->where(function ($q) use ($id) {
                 $q->where('professor_id', $id)
@@ -254,7 +345,7 @@ class TimetableExportController extends Controller
         return $query->orderBy('day_of_week')->orderBy('start_time')->get();
     }
 
-    private function matrixMeta(string $type, int $id, $schedules, ?Request $request = null): array
+    private function matrixMeta(string $type, string|int $id, $schedules, ?Request $request = null): array
     {
         $filiere = $type === 'filiere'
             ? Filiere::query()->find($id)

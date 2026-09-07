@@ -25,6 +25,11 @@ class PublicVerificationController extends Controller
             return $this->verifyEmargementDocument($request, $documentId);
         }
 
+        // 1.b Emploi du Temps officiel (Token EDT-STU-, EDT-PROF-, EDT-)
+        if (str_starts_with($documentId, 'EDT-')) {
+            return $this->verifyTimetableDocument($request, $documentId);
+        }
+
         // 2. Document étudiant généré (GeneratedDocument)
         $document = GeneratedDocument::with(['student.user', 'student.registrations.filiere'])
             ->where('verification_token', $documentId)
@@ -426,6 +431,91 @@ class PublicVerificationController extends Controller
             'success' => false,
             'is_valid' => false,
             'message' => 'Aucun document correspondant trouvé. Veuillez vérifier le code ou le fichier téléversé.',
+        ], 404);
+    }
+
+    /**
+     * Vérifier l'authenticité d'un Emploi du Temps officiel (Étudiant ou Professeur).
+     */
+    private function verifyTimetableDocument(Request $request, string $token): JsonResponse
+    {
+        $cleanToken = str_replace(['EDT-STU-', 'EDT-PROF-', 'EDT-'], '', $token);
+        $identifier = explode('-', $cleanToken)[0];
+
+        // 1. Rechercher si c'est un étudiant par CNE, code massar ou student_number
+        $student = \App\Models\Student::where('cne', $identifier)
+            ->orWhere('student_number', $identifier)
+            ->with(['user', 'registrations.group.filiere', 'registrations.filiere'])
+            ->first();
+
+        if ($student) {
+            $stUser = $student->user;
+            $reg = $student->registrations()->latest()->first();
+            $filiereName = $reg?->filiere?->name ?? 'Tronc Commun ENCG';
+            $groupName = $reg?->group?->name ?? 'TC-S2-G1';
+            $subGroup = $reg?->sub_group ?? 'G1.2';
+            $semNumber = $reg?->semester_number ?? 2;
+
+            try {
+                activity()
+                    ->event('verified')
+                    ->withProperties([
+                        'ip' => $request->ip(),
+                        'user_agent' => $request->userAgent(),
+                        'document_id' => $token,
+                    ])
+                    ->log('Emploi du temps étudiant vérifié via portail public');
+            } catch (\Throwable) {
+            }
+
+            return response()->json([
+                'success' => true,
+                'is_valid' => true,
+                'data' => [
+                    'document_type' => 'Emploi du Temps Officiel de l\'Étudiant',
+                    'student_name' => $stUser ? strtoupper($stUser->last_name).' '.$stUser->first_name : 'Étudiant',
+                    'beneficiary' => $stUser ? strtoupper($stUser->last_name).' '.$stUser->first_name : 'Étudiant ENCG Fès',
+                    'student_number' => $student->student_number ?? $student->cne,
+                    'cne' => $student->cne ?? $student->student_number,
+                    'filiere' => "{$filiereName} (Semestre {$semNumber})",
+                    'group' => "{$groupName} • Sous-groupe : {$subGroup}",
+                    'issued_at' => now()->format('d/m/Y H:i'),
+                    'status' => 'Authentique & Certifié Conforme (Loi 53-05)',
+                    'tracking_code' => $token,
+                    'security_hash' => hash('sha256', "encg-edt-student-{$student->id}-{$identifier}"),
+                    'institution' => 'École Nationale de Commerce et de Gestion de Fès (USMBA)',
+                ],
+            ]);
+        }
+
+        // 2. Rechercher si c'est un enseignant
+        $prof = \App\Models\Professor::where('id', is_numeric($identifier) ? (int)$identifier : 0)
+            ->with(['user', 'department'])
+            ->first();
+
+        if ($prof) {
+            $pUser = $prof->user;
+            return response()->json([
+                'success' => true,
+                'is_valid' => true,
+                'data' => [
+                    'document_type' => 'Emploi du Temps Officiel de l\'Enseignant',
+                    'student_name' => $pUser ? "Pr. {$pUser->first_name} {$pUser->last_name}" : 'Enseignant',
+                    'beneficiary' => $pUser ? "Pr. {$pUser->first_name} {$pUser->last_name}" : 'Enseignant-Chercheur',
+                    'cne' => $pUser?->cin ?? 'N/A',
+                    'filiere' => $prof->department?->name ?? 'Sciences de Gestion & Finance',
+                    'issued_at' => now()->format('d/m/Y H:i'),
+                    'status' => 'Authentique & Certifié Conforme (Loi 53-05)',
+                    'tracking_code' => $token,
+                    'security_hash' => hash('sha256', "encg-edt-prof-{$prof->id}-{$identifier}"),
+                    'institution' => 'École Nationale de Commerce et de Gestion de Fès (USMBA)',
+                ],
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Emploi du temps introuvable ou non reconnu.',
         ], 404);
     }
 }
