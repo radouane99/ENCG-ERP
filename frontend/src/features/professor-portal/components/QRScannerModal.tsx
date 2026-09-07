@@ -6,15 +6,8 @@ import {
   CheckCircle2,
   AlertTriangle,
   ListChecks,
-  Users,
   Search,
-  Check,
-  Clock,
-  UserX,
-  ShieldCheck,
   Save,
-  Sparkles,
-  BookOpen
 } from 'lucide-react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import api from '@shared/lib/api';
@@ -45,7 +38,7 @@ export function QRScannerModal({ isOpen, onClose, sessionId, sessionData }: QRSc
   const [studentStatuses, setStudentStatuses] = useState<Record<number, AttendanceStatus>>({});
 
   // 1. Fetch Students of the group for the checklist
-  const { data: students = [], isLoading: isLoadingStudents, refetch: refetchStudents } = useQuery({
+  const { data: students = [], isLoading: isLoadingStudents } = useQuery({
     queryKey: ['group-students-attendance', sessionId, sessionData?.group, sessionData?.filiere_code],
     queryFn: async () => {
       const res = await api.get('/professor/attendance/students', {

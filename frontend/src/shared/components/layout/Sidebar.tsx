@@ -269,7 +269,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
         return matches ? navItem : null
       }
     }).filter(Boolean) as (NavItem | (NavGroup & { items: NavItem[] }))[]
-  }, [searchQuery, hasAnyRole])
+  }, [searchQuery, hasAnyRole, activeRole])
 
   // Total matching routes count
   const totalMatchesCount = useMemo(() => {
@@ -502,7 +502,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
           className="flex items-center gap-3 px-4 py-4 bg-sidebar-background border-t border-sidebar-border cursor-pointer hover:bg-sidebar-accent transition-colors group shrink-0"
           onClick={() => {
             navigate('/profile');
-            onClose && onClose();
+            onClose?.();
           }}
         >
           <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xs font-black shadow-md shrink-0">
