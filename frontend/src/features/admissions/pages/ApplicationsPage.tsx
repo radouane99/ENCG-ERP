@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { Search, Edit2, Trash2, X, FileText, CheckCircle, Clock, AlertCircle, TrendingUp, Download, Upload } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react'
+import { Search, Trash2, X, FileText, CheckCircle, Clock, AlertCircle, TrendingUp, Download, Upload } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
 import { toast } from 'sonner'
@@ -62,7 +62,7 @@ export default function ApplicationsPage() {
     rejection_reason: ''
   })
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true)
       const campRes = await api.get('/admin/admissions/campaigns?status=active');
@@ -92,9 +92,9 @@ export default function ApplicationsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [search, statusFilter])
 
-  useEffect(() => { fetchData() }, [search, statusFilter])
+  useEffect(() => { fetchData() }, [fetchData])
 
   const handleDownloadTafemTemplate = async () => {
     toast.loading('Génération du modèle CSV officiel Ministère TAFEM...');
@@ -109,7 +109,7 @@ export default function ApplicationsPage() {
       link.remove();
       toast.dismiss();
       toast.success('📄 Modèle CSV Ministère TAFEM téléchargé avec succès !');
-    } catch (err) {
+    } catch {
       toast.dismiss();
       toast.error('Erreur lors du téléchargement du modèle CSV TAFEM.');
     }

@@ -4,7 +4,6 @@ namespace App\Services\Academic;
 
 use App\Models\AbsenceJustification;
 use App\Models\Attendance;
-use App\Models\Grade;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;

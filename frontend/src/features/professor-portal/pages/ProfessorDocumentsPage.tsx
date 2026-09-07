@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   FileText, PlaneTakeoff, Coins, CalendarClock, Download, Sparkles, 
   Plus, CheckCircle2, Clock, X, ShieldCheck, 
   ChevronRight, Send, Loader2, Stamp, Award, AlertCircle, GraduationCap,
-  Building2, CreditCard, FileCheck
+  Building2, CreditCard
 } from 'lucide-react';
 import api from '@/shared/lib/api';
 import { openAuthenticatedUrl } from '@shared/lib/documentAccess';
@@ -77,7 +77,7 @@ export default function ProfessorDocumentsPage() {
   const [missionCategory, setMissionCategory] = useState('colloque_international');
   const [expenseCoverage, setExpenseCoverage] = useState('charge_ecole');
 
-  const fetchDocumentsData = async (silent = false) => {
+  const fetchDocumentsData = useCallback(async (silent = false) => {
     try {
       if (!silent) setLoading(true);
       const res = await api.get('/professor-portal/documents');
@@ -94,7 +94,7 @@ export default function ProfessorDocumentsPage() {
     } finally {
       if (!silent) setLoading(false);
     }
-  };
+  }, [hasRole]);
 
   useEffect(() => {
     fetchDocumentsData(false);
@@ -102,7 +102,7 @@ export default function ProfessorDocumentsPage() {
       fetchDocumentsData(true);
     }, 6000);
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchDocumentsData]);
 
   const handleOpenRequestModal = (typeId?: string) => {
     const defaultType = typeId || availableTypes[0]?.id || (isVacataire ? 'attestation_vacation' : 'attestation_travail');

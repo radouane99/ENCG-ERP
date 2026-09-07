@@ -88,7 +88,7 @@ class StudentPortalController extends Controller
      */
     public function getLibraryMaterials(Request $request): JsonResponse
     {
-        $studentId = $this->resolveAuthenticatedStudentId($request);
+        $this->resolveAuthenticatedStudentId($request);
         $student = $request->user()?->student;
 
         $materials = LearningMaterial::where('is_published', true)

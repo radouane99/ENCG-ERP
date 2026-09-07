@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Services\Academic\StudentPortalService;
 use App\Services\Analytics\DashboardAnalyticsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -30,7 +31,8 @@ class DashboardController extends Controller
 
         $student = $user->student;
         if ($student) {
-            $stats = app(\App\Services\Academic\StudentPortalService::class)->getDashboardStats($student->id);
+            $stats = app(StudentPortalService::class)->getDashboardStats($student->id);
+
             return response()->json([
                 'success' => true,
                 'data' => $stats,
@@ -67,7 +69,7 @@ class DashboardController extends Controller
             return response()->json(['success' => false, 'message' => 'Profil étudiant introuvable'], 404);
         }
 
-        $stats = app(\App\Services\Academic\StudentPortalService::class)->getDashboardStats($student->id);
+        $stats = app(StudentPortalService::class)->getDashboardStats($student->id);
 
         return response()->json([
             'success' => true,
