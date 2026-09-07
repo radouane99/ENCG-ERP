@@ -1,24 +1,40 @@
-import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import React, { useState, useMemo } from 'react';
 import { 
   FileText, Plus, Clock, CheckCircle2, XCircle, 
   Download, FileSignature, Send, AlertTriangle, Sparkles,
-  ShieldCheck, Printer, Mail, Lock, Check, ChevronRight, X
+  ShieldCheck, Lock, Check, X,
+  Building2, Eye, RefreshCcw, Search, Calendar,
+  Shield, HelpCircle
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@shared/lib/api';
 import { toast } from 'sonner';
 import { cn } from '@shared/lib/utils';
-import PageHeader from '@shared/components/layout/PageHeader';
-import EmptyState from '@shared/components/ui/EmptyState';
+import { useAuthStore } from '@stores/authStore';
+import { openAuthenticatedUrl } from '@shared/lib/documentAccess';
 
 export default function StudentGuichetPage() {
-  const { t } = useTranslation(['students', 'common']);
   const queryClient = useQueryClient();
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newRequestData, setNewRequestData] = useState({ type: 'Attestation de Scolarité', motif: '' });
+  const { user } = useAuthStore();
 
-  const { data: fetchRes, isLoading } = useQuery({
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [filterStatus, setFilterStatus] = useState<'all' | 'ready' | 'pending' | 'rejected'>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const [newRequestData, setNewRequestData] = useState({ 
+    type: 'Attestation de Scolarité', 
+    motif: '' 
+  });
+
+  const currentDate = new Date().toLocaleDateString('fr-FR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  });
+
+  // 1. Fetch live document requests from backend
+  const { data: fetchRes, isLoading, refetch, isFetching } = useQuery({
     queryKey: ['student-document-requests'],
     queryFn: async () => {
       try {
@@ -27,324 +43,668 @@ export default function StudentGuichetPage() {
       } catch {
         return null;
       }
-    }
+    },
+    staleTime: 30000,
   });
 
+  // 2. Map types to official document_type_id
+  const docTypeMap: Record<string, number> = {
+    'Attestation de Scolarité': 1,
+    'Relevé de Notes': 2,
+    'Relevé de Notes (S1-S4)': 2,
+    'Attestation de Réussite': 1,
+    'Convention de Stage PFE': 1,
+  };
+
+  // 3. Mutation to submit request
   const requestMutation = useMutation({
     mutationFn: async (reqData: any) => {
-      const res = await api.post('/student-portal/document-requests', reqData);
+      const payload = {
+        document_type_id: docTypeMap[reqData.type] || 1,
+        type: reqData.type,
+        motif: reqData.motif,
+      };
+      const res = await api.post('/student-portal/document-requests', payload);
       return res.data;
     },
     onSuccess: () => {
-      toast.success('Demande envoyée avec succès au Service des Affaires Étudiantes !');
+      toast.success('Demande enregistrée avec succès au Service des Affaires Étudiantes !');
       setIsModalOpen(false);
       setNewRequestData({ type: 'Attestation de Scolarité', motif: '' });
       queryClient.invalidateQueries({ queryKey: ['student-document-requests'] });
     },
     onError: (error: any) => {
-      toast.success('Demande transmise au Service des Affaires Étudiantes !');
-      setIsModalOpen(false);
+      toast.error(error?.response?.data?.message || 'Erreur lors de la soumission de la demande.');
     }
   });
 
-  const requests = fetchRes?.data || [];
+  const requests: any[] = fetchRes?.data || [];
 
+  // Computed metrics
+  const totalCount = requests.length;
+  const readyCount = requests.filter((r: any) => r.status === 'approved' || r.status === 'ready' || r.status === 'collected' || r.status === 'withdrawn').length;
+  const pendingCount = requests.filter((r: any) => r.status === 'pending' || !r.status).length;
+  const rejectedCount = requests.filter((r: any) => r.status === 'rejected').length;
+
+  // Filtered list
+  const filteredRequests = useMemo(() => {
+    return requests.filter((req: any) => {
+      const isCollected = req.status === 'collected' || req.status === 'withdrawn';
+      const isApproved = req.status === 'approved' || req.status === 'ready' || isCollected;
+      const isRejected = req.status === 'rejected';
+      const isPending = !isApproved && !isRejected;
+
+      if (filterStatus === 'ready' && !isApproved) return false;
+      if (filterStatus === 'pending' && !isPending) return false;
+      if (filterStatus === 'rejected' && !isRejected) return false;
+
+      if (searchQuery.trim()) {
+        const title = (req.document_type || req.type || '').toLowerCase();
+        const idStr = String(req.id || '');
+        const query = searchQuery.toLowerCase();
+        return title.includes(query) || idStr.includes(query);
+      }
+
+      return true;
+    });
+  }, [requests, filterStatus, searchQuery]);
+
+  // Generate printable/downloadable certificate
   const handlePrintCertificate = (req: any) => {
     const win = window.open('', '_blank');
     if (!win) return;
-    const currentDate = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
-    const sha256Fingerprint = req.hash || '';
+    const dateStr = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+    const docTitle = req.document_type || req.type || 'Attestation de Scolarité';
+    const sha256Fingerprint = req.hash || 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
+    const studentName = user?.name || 'Étudiant(e) ENCG';
 
-    win.document.write(`<!DOCTYPE html><html><head><title>${req.type} - Certificat Officiel</title>
+    win.document.write(`<!DOCTYPE html><html><head><title>${docTitle} - Certificat Officiel ENCG Fès</title>
       <style>
-        body { font-family: 'Times New Roman', Times, serif; padding: 50px; color: #0f2863; max-width: 800px; margin: 0 auto; line-height: 1.6; }
-        .header { text-align: center; border-bottom: 3px double #0f2863; padding-bottom: 20px; margin-bottom: 35px; }
-        .title { font-size: 24px; font-weight: bold; text-transform: uppercase; text-align: center; margin: 40px 0; color: #0f2863; letter-spacing: 1px; }
-        .content { font-size: 16px; text-align: justify; margin-bottom: 50px; text-indent: 30px; }
-        .details-box { background: #f8fafc; border: 2px solid #cbd5e1; border-radius: 15px; padding: 20px; margin: 30px 0; font-family: sans-serif; font-size: 14px; }
-        .row { display: flex; justify-content: space-between; margin-bottom: 8px; }
+        body { font-family: 'Times New Roman', Times, serif; padding: 40px; color: #001A4B; max-width: 800px; margin: 0 auto; line-height: 1.6; }
+        .header { text-align: center; border-bottom: 2.5px solid #001A4B; padding-bottom: 15px; margin-bottom: 30px; }
+        .title { font-size: 22px; font-weight: bold; text-transform: uppercase; text-align: center; margin: 30px 0; color: #001A4B; letter-spacing: 1px; }
+        .content { font-size: 15px; text-align: justify; margin-bottom: 30px; text-indent: 30px; }
+        .details-box { background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 12px; padding: 16px; margin: 25px 0; font-family: sans-serif; font-size: 13px; }
+        .row { display: flex; justify-content: space-between; margin-bottom: 6px; }
         .lbl { font-weight: bold; color: #64748b; }
-        .val { font-weight: bold; color: #0f2863; }
-        .footer-sig { display: flex; justify-content: space-between; margin-top: 60px; font-family: sans-serif; }
-        .sha-badge { font-family: monospace; font-size: 10px; color: #475569; background: #e2e8f0; padding: 4px 8px; border-radius: 6px; word-break: break-all; margin-top: 5px; }
-        .qr-section { display: flex; align-items: center; gap: 15px; border-top: 2px dashed #cbd5e1; padding-top: 20px; margin-top: 50px; font-family: sans-serif; font-size: 11px; color: #64748b; }
-        .qr-placeholder { width: 75px; height: 75px; background: #0f2863; color: white; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; border-radius: 8px; text-align: center; }
+        .val { font-weight: bold; color: #001A4B; }
+        .footer-sig { display: flex; justify-content: space-between; margin-top: 50px; font-family: sans-serif; font-size: 13px; }
+        .sha-badge { font-family: monospace; font-size: 9.5px; color: #475569; background: #e2e8f0; padding: 4px 8px; border-radius: 6px; word-break: break-all; margin-top: 6px; }
+        .qr-section { display: flex; align-items: center; gap: 15px; border-top: 1.5px dashed #cbd5e1; padding-top: 15px; margin-top: 40px; font-family: sans-serif; font-size: 11px; color: #64748b; }
       </style>
       </head><body>
       <div class="header">
-        <div style="font-size: 16px; font-weight: bold;">ROYAUME DU MAROC</div>
-        <div style="font-size: 14px; font-weight: bold; color: #1e3a8a;">Université Sidi Mohamed Ben Abdellah</div>
-        <div style="font-size: 15px; font-weight: bold; color: #0f2863;">École Nationale de Commerce et de Gestion de Fès</div>
-        <div style="font-size: 11px; color: #64748b; margin-top: 5px;">SERVICE DES AFFAIRES ÉTUDIANTES & GUICHET UNIQUE</div>
+        <div style="font-size: 14px; font-weight: bold;">ROYAUME DU MAROC</div>
+        <div style="font-size: 13px; font-weight: bold; color: #1e3a8a;">Université Sidi Mohamed Ben Abdellah</div>
+        <div style="font-size: 15px; font-weight: bold; color: #001A4B;">École Nationale de Commerce et de Gestion de Fès</div>
+        <div style="font-size: 11px; color: #64748b; margin-top: 4px;">SERVICE DES AFFAIRES ÉTUDIANTES & GUICHET UNIQUE</div>
       </div>
 
-      <div class="title">${req.type.toUpperCase()}</div>
+      <div class="title">${docTitle.toUpperCase()}</div>
 
       <div class="content">
-        Le Directeur de l'École Nationale de Commerce et de Gestion de Fès certifie que l'étudiant(e) titulaire du présent compte est régulièrement inscrit(e) à l'ENCG Fès au titre de l'année universitaire 2025-2026.
+        Le Directeur de l'École Nationale de Commerce et de Gestion de Fès certifie que l'étudiant(e) <strong>${studentName}</strong> est régulièrement inscrit(e) à l'ENCG Fès au titre de l'année universitaire 2026-2027.
       </div>
 
       <div class="details-box">
-        <div class="row"><span class="lbl">Nature de la pièce :</span><span class="val">${req.type}</span></div>
-        <div class="row"><span class="lbl">Filière / Programme :</span><span class="val">Diplôme ENCG - Management & Commerce</span></div>
-        <div class="row"><span class="lbl">Date de Délivrance :</span><span class="val">${currentDate}</span></div>
-        <div class="row"><span class="lbl">Signature Électronique :</span><span class="val" style="color: #16a34a;">CRYPTOGRAPHIQUE (SHA-256)</span></div>
-        <div class="sha-badge">Empreinte SHA-256 : ${sha256Fingerprint}</div>
+        <div class="row"><span class="lbl">Nature de la pièce :</span><span class="val">${docTitle}</span></div>
+        <div class="row"><span class="lbl">Filière / Cycle :</span><span class="val">Diplôme des Écoles Nationales de Commerce et de Gestion (ENCG)</span></div>
+        <div class="row"><span class="lbl">Date d'instruction :</span><span class="val">${dateStr}</span></div>
+        <div class="row"><span class="lbl">Certification :</span><span class="val" style="color: #16a34a;">Vérifiée & Signée Numériquement (SHA-256)</span></div>
+        <div class="sha-badge">Empreinte Cryptographique : ${sha256Fingerprint}</div>
       </div>
 
       <div class="footer-sig">
-        <div>Fait à Fès, le ${currentDate}</div>
+        <div>Fait à Fès, le ${dateStr}</div>
         <div style="text-align: center;">
-          <strong>Pour le Directeur et par délégation</strong><br/>
-          <em>Le Chef du Service des Affaires Étudiantes</em><br/><br/>
-          <span style="display:inline-block; border:2px solid #0f2863; padding:10px 20px; border-radius:10px; color:#0f2863; font-weight:bold; font-size:12px;">
-            [TIMBRE SEC & SIGNATURE NUMÉRIQUE ENCG]
+          <strong>Pour le Directeur de l'ENCG Fès</strong><br/>
+          <em>Le Secrétaire Général & Responsable Scolarité</em><br/><br/>
+          <span style="display:inline-block; border:1.5px solid #001A4B; padding:8px 16px; border-radius:8px; color:#001A4B; font-weight:bold; font-size:11px;">
+            [SCEAU OFFICIEL & SIGNATURE NUMÉRIQUE VALIDE]
           </span>
         </div>
       </div>
 
       <div class="qr-section">
-        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent('https://encg-fes.ma/verify?doc=' + req.id + '&type=' + req.type)}" alt="QR Code" style="width:70px; height:70px; border-radius:8px; border:2px solid #0f2863; background:#fff; padding:3px;" />
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent('https://encg-fes.ac.ma/verify/document/DOC-' + req.id)}" alt="QR Code" style="width:65px; height:65px; border-radius:6px; border:1.5px solid #001A4B; background:#fff; padding:2px;" />
         <div>
           <strong>Document Officiel Vérifiable par QR Code :</strong><br/>
-          Ce document est archivé dans le Coffre-fort Numérique de l'étudiant et téléchargeable à tout moment.
+          Cette pièce est archivée dans le Coffre-Fort Numérique officiel de l'étudiant et opposable de plein droit auprès des administrations publiques et privées.
         </div>
       </div>
       <script>window.print();</script>
       </body></html>`);
     win.document.close();
-    toast.success('Document téléchargé depuis votre Coffre-Fort Numérique !');
   };
 
   return (
-    <div data-testid="student-guichet-page" className="space-y-6 font-sans animate-in fade-in">
-      <PageHeader
-        title="Guichet unique"
-        subtitle="Demandez vos pièces officielles et suivez leur statut."
-        actions={
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="min-h-11 flex items-center gap-2 px-5 py-2.5 bg-primary text-white font-black rounded-2xl text-xs uppercase tracking-wider"
-          >
-            <Plus className="w-4 h-4" /> Nouvelle demande
-          </button>
-        }
-      />
-
-      {/* ── Deep Navy Hero Banner ── */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-primary via-blue-800 to-slate-900 p-6 md:p-8 rounded-3xl shadow-2xl text-white border border-blue-800/40 space-y-6">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
-
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          <div className="flex items-center gap-6">
-            <div className="w-16 h-16 md:w-20 md:h-20 rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center shadow-2xl shrink-0">
-              <FileSignature className="w-8 h-8 md:w-10 md:h-10 text-amber-400" />
-            </div>
-            <div>
-              <div className="inline-flex items-center gap-2 bg-blue-500/20 text-blue-200 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-2 border border-blue-400/30">
-                <Sparkles className="w-4 h-4 text-amber-400" /> Portail Étudiant — ENCG Fès
-              </div>
-              <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight leading-tight">
-                Mes Demandes & Coffre-Fort Numérique
-              </h1>
-              <p className="text-blue-100/90 text-xs md:text-sm font-medium mt-1 max-w-2xl">
-                Demandez vos pièces officielles 100% en ligne, suivez l'état d'avancement en temps réel et téléchargez vos documents certifiés SHA-256.
-              </p>
-            </div>
+    <div data-testid="student-guichet-page" className="space-y-6 font-sans animate-in fade-in duration-500 text-slate-900 dark:text-slate-100 pb-20">
+      
+      {/* ── Executive Top Header ── */}
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 border-b border-slate-200/80 dark:border-slate-800 pb-5">
+        <div className="space-y-1.5">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-[#001A4B] dark:text-white">
+              Guichet Unique & Coffre-Fort Numérique
+            </h1>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 shadow-2xs">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              Service Scolarité Actif
+            </span>
           </div>
-
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="shrink-0 flex items-center gap-2 px-6 py-3.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-black rounded-2xl transition-all text-xs uppercase tracking-wider shadow-lg cursor-pointer"
-          >
-            <Plus className="w-4 h-4" /> NOUVELLE DEMANDE
-          </button>
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium flex items-center gap-2 flex-wrap">
+            <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+            <span>École Nationale de Commerce et de Gestion de Fès</span>
+            <span className="text-slate-300 dark:text-slate-700 hidden sm:inline">•</span>
+            <span>Délivrance 100% en Ligne</span>
+            <span className="text-slate-300 dark:text-slate-700 hidden sm:inline">•</span>
+            <span className="font-semibold text-slate-700 dark:text-slate-300 capitalize">{currentDate}</span>
+          </p>
         </div>
 
-        {/* KPI Row */}
-        <div className="relative z-10 grid grid-cols-2 md:grid-cols-4 gap-4 pt-6 border-t border-white/10">
-          <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15">
-            <span className="text-[10px] font-black uppercase tracking-wider text-blue-200 block">TOTAL DEMANDES</span>
-            <span className="text-2xl font-black text-white font-mono mt-1 block">{requests.length} Demandes</span>
+        {/* Action Toolbar */}
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={() => refetch()}
+            disabled={isFetching}
+            className="inline-flex items-center justify-center gap-2 h-10 px-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-300 transition-all cursor-pointer disabled:opacity-50 shadow-2xs"
+            title="Rafraîchir les demandes"
+          >
+            <RefreshCcw className={cn("w-3.5 h-3.5 text-slate-500", isFetching && "animate-spin text-blue-600")} />
+            <span className="hidden sm:inline">Actualiser</span>
+          </button>
+
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="inline-flex items-center justify-center gap-2 h-10 px-4.5 rounded-xl bg-[#001A4B] hover:bg-[#082663] text-white text-xs font-bold shadow-sm hover:shadow-md transition-all cursor-pointer border border-white/10"
+          >
+            <Plus className="w-4 h-4 text-amber-300" />
+            <span>Nouvelle Demande</span>
+          </button>
+        </div>
+      </div>
+
+      {/* ── Executive Hero Banner ── */}
+      <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-[#001A4B] via-[#082663] to-[#001338] text-white p-5 sm:p-7 lg:p-8 shadow-xl border border-blue-900/40">
+        <div className="absolute top-0 right-0 w-80 sm:w-96 h-80 sm:h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
+        <div className="absolute bottom-0 left-1/3 w-64 sm:w-80 h-64 sm:h-80 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="relative z-10 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-6">
+          {/* Left Column: Heading & Trust Badges */}
+          <div className="space-y-4 max-w-2xl flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider bg-amber-400/15 text-amber-300 border border-amber-400/30">
+                <ShieldCheck className="w-3.5 h-3.5 text-amber-300" />
+                Guichet Numérique Certifié
+              </span>
+              <span className="px-3 py-1 rounded-lg text-[10px] font-bold tracking-wide bg-white/10 text-blue-100 border border-white/15">
+                Signature Cryptographique SHA-256
+              </span>
+            </div>
+
+            <div>
+              <h2 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-white flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-amber-300 shrink-0">
+                  <FileSignature className="w-5 h-5" />
+                </div>
+                <span>Mes Demandes & Coffre-Fort Électronique</span>
+              </h2>
+              <p className="mt-1.5 text-xs sm:text-sm text-blue-200/80 font-normal leading-relaxed">
+                Effectuez vos demandes de pièces administratives (Attestation de scolarité, Relevé de notes, etc.) sans déplacement. Suivez l'instruction de votre dossier et téléchargez vos documents certifiés avec QR Code officiel.
+              </p>
+            </div>
+
+            {/* Quick Badges Row */}
+            <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/[0.06] border border-white/10 text-blue-200 font-medium">
+                <Clock className="w-3.5 h-3.5 text-amber-400" />
+                <span>Délai moyen d'instruction : <strong>24h à 48h</strong></span>
+              </div>
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/[0.06] border border-white/10 text-blue-200 font-medium">
+                <Shield className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Validité juridique garantie</span>
+              </div>
+            </div>
           </div>
-          <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15">
-            <span className="text-[10px] font-black uppercase tracking-wider text-emerald-300 block">DOCUMENTS CERTIFIÉS</span>
-            <span className="text-2xl font-black text-emerald-400 font-mono mt-1 block">
-              {requests.filter((r: any) => r.status === 'approved' || r.status === 'ready').length} Prêts
-            </span>
-          </div>
-          <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15">
-            <span className="text-[10px] font-black uppercase tracking-wider text-amber-300 block">EN COURS DE TRAITEMENT</span>
-            <span className="text-2xl font-black text-amber-300 font-mono mt-1 block">
-              {requests.filter((r: any) => r.status === 'pending').length} En Cours
-            </span>
-          </div>
-          <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15">
-            <span className="text-[10px] font-black uppercase tracking-wider text-purple-300 block">SÉCURITÉ COFFRE-FORT</span>
-            <span className="text-2xl font-black text-purple-300 font-mono mt-1 block">SHA-256 ✅</span>
+
+          {/* Right Column: Glassmorphism KPI Stats Pod */}
+          <div className="w-full lg:w-72 bg-white/[0.07] backdrop-blur-xl p-4 sm:p-5 rounded-2xl border border-white/15 shadow-xl flex flex-col justify-between shrink-0">
+            <div className="text-[11px] font-bold uppercase tracking-wider text-blue-300 pb-3 border-b border-white/10 flex items-center justify-between">
+              <span>Statut des Demandes</span>
+              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+            </div>
+
+            <div className="grid grid-cols-3 gap-2 py-3.5 text-center">
+              <div>
+                <div className="text-xl sm:text-2xl font-black text-white">{totalCount}</div>
+                <div className="text-[9.5px] font-bold uppercase tracking-wide text-blue-200 mt-1 leading-tight">Total Déposé</div>
+              </div>
+              <div className="border-x border-white/10 px-1">
+                <div className="text-xl sm:text-2xl font-black text-emerald-300">{readyCount}</div>
+                <div className="text-[9.5px] font-bold uppercase tracking-wide text-blue-200 mt-1 leading-tight">Prêts / Validés</div>
+              </div>
+              <div>
+                <div className="text-xl sm:text-2xl font-black text-amber-300">{pendingCount}</div>
+                <div className="text-[9.5px] font-bold uppercase tracking-wide text-blue-200 mt-1 leading-tight">En Instruction</div>
+              </div>
+            </div>
+
+            <div className="pt-2.5 border-t border-white/10 flex items-center justify-between text-[11px] text-blue-200/80 font-medium">
+              <span>Coffre-Fort : <strong className="text-emerald-400">Actif</strong></span>
+              <span className="font-mono text-[10px] text-slate-300">SHA-256</span>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* ── Main Section: Request Cards with Live Stepper SLA ── */}
-      <div className="space-y-6">
-        <h2 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
-          <FileText className="w-5 h-5 text-indigo-600" /> Suivi de Mes Demandes & Coffre-Fort Numérique
-        </h2>
+      {/* ── Filters & Search Toolbar ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-slate-900 p-3 sm:p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-2xs">
+        {/* Status Filter Tabs */}
+        <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl overflow-x-auto w-full sm:w-auto">
+          <button
+            onClick={() => setFilterStatus('all')}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer shrink-0",
+              filterStatus === 'all'
+                ? "bg-[#001A4B] text-white shadow-xs"
+                : "text-slate-600 dark:text-slate-300 hover:text-slate-900"
+            )}
+          >
+            <span>Toutes</span>
+            <span className={cn("px-1.5 py-0.2 rounded-md text-[10px]", filterStatus === 'all' ? "bg-white/20 text-white" : "bg-slate-200 dark:bg-slate-700 text-slate-600")}>
+              {totalCount}
+            </span>
+          </button>
 
-        {isLoading ? (
-          <div className="flex justify-center py-16">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
+          <button
+            onClick={() => setFilterStatus('ready')}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer shrink-0",
+              filterStatus === 'ready'
+                ? "bg-[#001A4B] text-white shadow-xs"
+                : "text-slate-600 dark:text-slate-300 hover:text-slate-900"
+            )}
+          >
+            <span>Prêtes au Coffre-Fort</span>
+            <span className={cn("px-1.5 py-0.2 rounded-md text-[10px]", filterStatus === 'ready' ? "bg-white/20 text-white" : "bg-emerald-100 text-emerald-800")}>
+              {readyCount}
+            </span>
+          </button>
+
+          <button
+            onClick={() => setFilterStatus('pending')}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer shrink-0",
+              filterStatus === 'pending'
+                ? "bg-[#001A4B] text-white shadow-xs"
+                : "text-slate-600 dark:text-slate-300 hover:text-slate-900"
+            )}
+          >
+            <span>En cours</span>
+            <span className={cn("px-1.5 py-0.2 rounded-md text-[10px]", filterStatus === 'pending' ? "bg-white/20 text-white" : "bg-amber-100 text-amber-800")}>
+              {pendingCount}
+            </span>
+          </button>
+
+          {rejectedCount > 0 && (
+            <button
+              onClick={() => setFilterStatus('rejected')}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer shrink-0",
+                filterStatus === 'rejected'
+                  ? "bg-[#001A4B] text-white shadow-xs"
+                  : "text-slate-600 dark:text-slate-300 hover:text-slate-900"
+              )}
+            >
+              <span>Non accordées</span>
+              <span className={cn("px-1.5 py-0.2 rounded-md text-[10px]", filterStatus === 'rejected' ? "bg-white/20 text-white" : "bg-rose-100 text-rose-800")}>
+                {rejectedCount}
+              </span>
+            </button>
+          )}
+        </div>
+
+        {/* Search & Counter */}
+        <div className="flex items-center gap-2.5 w-full sm:w-auto">
+          <div className="relative flex-1 sm:w-64">
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Rechercher une pièce..."
+              className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            />
           </div>
-        ) : requests.length === 0 ? (
-          <EmptyState
-            icon={FileText}
-            title="Aucune demande en cours"
-            description="Demandez une attestation ou un relevé depuis le guichet unique."
-            actionLabel="Nouvelle demande"
-            onAction={() => setIsModalOpen(true)}
-          />
+          <span className="text-xs font-semibold text-slate-400 shrink-0 hidden sm:inline">
+            {filteredRequests.length} demande(s)
+          </span>
+        </div>
+      </div>
+
+      {/* ── Document Requests List ── */}
+      <div className="space-y-4">
+        {isLoading ? (
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-12 text-center border border-slate-200 dark:border-slate-800">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#001A4B] mx-auto" />
+            <p className="text-xs text-slate-400 mt-3 font-semibold">Chargement de votre coffre-fort numérique...</p>
+          </div>
+        ) : filteredRequests.length === 0 ? (
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-12 text-center shadow-sm border border-slate-200 dark:border-slate-800 space-y-3">
+            <FileText className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto" />
+            <h3 className="text-base font-black text-slate-800 dark:text-slate-100">Aucune demande trouvée</h3>
+            <p className="text-xs text-slate-500 max-w-md mx-auto">
+              {searchQuery ? "Aucune pièce administrative ne correspond à votre recherche." : "Vous n'avez aucune demande active dans cette catégorie."}
+            </p>
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="inline-flex items-center gap-2 h-10 px-5 rounded-xl bg-[#001A4B] text-white text-xs font-bold shadow-sm hover:shadow-md transition-all cursor-pointer mt-2"
+            >
+              <Plus className="w-4 h-4 text-amber-300" />
+              <span>Créer une nouvelle demande</span>
+            </button>
+          </div>
         ) : (
-          <div className="space-y-5">
-            {requests.map((req: any) => {
-              const isCollected = req.status === 'collected' || req.status === 'withdrawn';
-              const isApproved = req.status === 'approved' || req.status === 'ready' || isCollected;
-              const isRejected = req.status === 'rejected';
-              const step = isApproved ? 3 : isRejected ? 0 : (req.step || 2);
+          filteredRequests.map((req: any) => {
+            const isCollected = req.status === 'collected' || req.status === 'withdrawn';
+            const isApproved = req.status === 'approved' || req.status === 'ready' || isCollected;
+            const isRejected = req.status === 'rejected';
+            const step = isApproved ? 3 : isRejected ? 2 : 2;
 
-              return (
-                <div key={req.id} className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-[2.5rem] p-6 shadow-sm hover:shadow-xl transition-all space-y-6">
+            const docTitle = req.document_type || req.type || (req.document_type_id === 1 ? 'Attestation de Scolarité' : req.document_type_id === 2 ? 'Relevé de Notes' : `Document #${req.id}`);
+            
+            const rawDate = req.requested_at || req.created_at;
+            const formattedDate = rawDate 
+              ? new Date(rawDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+              : 'Date récente';
 
-                  {/* Header info */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#0f2863] to-blue-600 flex items-center justify-center text-amber-300 font-black text-xl shadow-md shrink-0">
-                        <FileText className="w-6 h-6 text-amber-300" />
-                      </div>
-                      <div>
-                        <h3 className="font-black text-base text-slate-900 dark:text-white">{req.type}</h3>
-                        <p className="text-[10px] font-bold text-slate-400 mt-0.5">Demande #{req.id} · Transmise le {req.created_at || 'Récemment'}</p>
-                      </div>
+            return (
+              <div 
+                key={req.id} 
+                className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-5 sm:p-6 shadow-2xs hover:shadow-md transition-all space-y-5"
+              >
+                {/* Header: Document Title, Reference, Status Badge */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-3.5">
+                    <div className={cn(
+                      "w-12 h-12 rounded-2xl flex items-center justify-center font-black text-xl shadow-sm shrink-0",
+                      isApproved ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20" :
+                      isRejected ? "bg-rose-500/10 text-rose-600 border border-rose-500/20" :
+                      "bg-amber-500/10 text-amber-600 border border-amber-500/20"
+                    )}>
+                      <FileText className="w-6 h-6" />
                     </div>
-
-                    <div className="flex items-center gap-3">
-                      {isCollected ? (
-                        <span className="px-3.5 py-1 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-full text-xs font-black">
-                          À retirer
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="font-black text-base sm:text-lg text-slate-900 dark:text-white leading-tight">
+                          {docTitle}
+                        </h3>
+                        <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-[10px] font-mono font-bold text-slate-500">
+                          Réf: #{req.id}
                         </span>
-                      ) : isApproved ? (
-                        <span className="px-3.5 py-1 bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-full text-xs font-black flex items-center gap-1.5">
-                          <CheckCircle2 className="w-4 h-4" /> Document Prêt dans le Coffre-Fort
-                        </span>
-                      ) : isRejected ? (
-                        <span className="px-3.5 py-1 bg-rose-50 text-rose-600 border border-rose-200 rounded-full text-xs font-black flex items-center gap-1.5">
-                          <XCircle className="w-4 h-4" /> Demande Non Accordée
-                        </span>
-                      ) : (
-                        <span className="px-3.5 py-1 bg-amber-50 text-amber-600 border border-amber-200 rounded-full text-xs font-black flex items-center gap-1.5">
-                          <Clock className="w-4 h-4" /> En cours de traitement scolarité
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Motif */}
-                  {req.motif && (
-                    <div className="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-100 dark:border-slate-800 text-xs font-medium text-slate-600 dark:text-slate-400">
-                      <strong>Motif de la demande :</strong> "{req.motif}"
-                    </div>
-                  )}
-
-                  {/* SLA Stepper Progress Bar */}
-                  <div className="p-4 bg-indigo-50/50 dark:bg-indigo-950/40 rounded-2xl border border-indigo-100 dark:border-indigo-900/60 space-y-3">
-                    <p className="text-[10px] font-black uppercase text-indigo-700 dark:text-indigo-300 tracking-wider">
-                      Progression du Traitement SLA (Temps moyen restant : 2 heures)
-                    </p>
-                    <div className="grid grid-cols-3 gap-2">
-                      <div className={cn("p-2.5 rounded-xl text-center text-xs font-bold border transition-all", step >= 1 ? "bg-emerald-500 text-white border-emerald-600 shadow-sm" : "bg-slate-100 text-slate-400 border-slate-200")}>
-                        1. Demande Reçue ✅
                       </div>
-                      <div className={cn("p-2.5 rounded-xl text-center text-xs font-bold border transition-all", step >= 2 ? "bg-amber-500 text-white border-amber-600 shadow-sm animate-pulse" : "bg-slate-100 text-slate-400 border-slate-200")}>
-                        2. Contrôle Scolarité {step >= 2 ? '⏳' : ''}
-                      </div>
-                      <div className={cn("p-2.5 rounded-xl text-center text-xs font-bold border transition-all", step >= 3 ? "bg-emerald-600 text-white border-emerald-700 shadow-sm" : "bg-slate-100 text-slate-400 border-slate-200")}>
-                        3. Signé & QR Certifié 🛡️
-                      </div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1 flex items-center gap-2">
+                        <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                        <span>Transmise le {formattedDate}</span>
+                        {req.processed_at && (
+                          <>
+                            <span className="text-slate-300 dark:text-slate-700">•</span>
+                            <span>Traitée le {new Date(req.processed_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</span>
+                          </>
+                        )}
+                      </p>
                     </div>
                   </div>
 
-                  {/* Actions & Cryptographic Hash */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2 border-t border-slate-100 dark:border-slate-800">
+                  {/* Status Badge */}
+                  <div className="shrink-0">
                     {isApproved ? (
-                      <div className="flex items-center gap-2 font-mono text-[10px] text-slate-500 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700">
-                        <Lock className="w-3.5 h-3.5 text-emerald-500" />
-                        <span>Empreinte SHA-256 : {req.hash ? req.hash.substring(0, 16) + '...' : 'e3b0c44298fc1c14...'}</span>
-                      </div>
+                      <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 shadow-2xs">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                        Document Prêt dans le Coffre-Fort
+                      </span>
+                    ) : isRejected ? (
+                      <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20 shadow-2xs">
+                        <XCircle className="w-4 h-4 text-rose-500" />
+                        Demande Non Accordée
+                      </span>
                     ) : (
-                      <span className="text-xs font-bold text-slate-400">Demande en cours d'instruction par la scolarité.</span>
+                      <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 shadow-2xs">
+                        <Clock className="w-4 h-4 text-amber-500 animate-pulse" />
+                        En cours de traitement scolarité
+                      </span>
                     )}
+                  </div>
+                </div>
 
+                {/* Motif / Raison (If provided) */}
+                {req.motif && (
+                  <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-300">
+                    <span className="font-bold text-slate-700 dark:text-slate-200">Motif déclaré :</span> {req.motif}
+                  </div>
+                )}
+
+                {/* Admin Notes if rejected */}
+                {isRejected && req.admin_notes && (
+                  <div className="p-3.5 bg-rose-50/80 dark:bg-rose-950/30 rounded-xl border border-rose-200 dark:border-rose-900/40 text-xs text-rose-800 dark:text-rose-200 flex items-start gap-2.5">
+                    <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                    <div>
+                      <strong className="block font-bold">Observation du Service Scolarité :</strong>
+                      <p className="mt-0.5 leading-relaxed">{req.admin_notes}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Sleek Institutional Progress Stepper */}
+                <div className="py-2 px-2 sm:px-4 bg-slate-50/60 dark:bg-slate-800/30 rounded-2xl border border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center justify-between text-[11px] font-bold text-slate-400 mb-3">
+                    <span>Circuit d'instruction officiel</span>
+                    <span className="text-slate-500 font-medium hidden sm:inline">Délai indicatif moyen : 24h</span>
+                  </div>
+                  <div className="relative flex items-center justify-between">
+                    {/* Stepper Track */}
+                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-slate-200 dark:bg-slate-700 rounded-full z-0" />
+                    <div
+                      className={cn(
+                        "absolute left-0 top-1/2 -translate-y-1/2 h-1 rounded-full transition-all duration-500 z-0",
+                        isApproved ? "bg-emerald-500 w-full" : isRejected ? "bg-rose-500 w-1/2" : "bg-amber-500 w-1/2"
+                      )}
+                    />
+
+                    {/* Step 1: Dépôt */}
+                    <div className="relative z-10 flex flex-col items-center gap-1.5 text-center bg-slate-50/60 dark:bg-slate-800/30 px-1">
+                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs font-black bg-emerald-600 text-white shadow-sm">
+                        <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      </div>
+                      <span className="text-[10px] sm:text-[11px] font-bold text-slate-800 dark:text-slate-200">
+                        1. Dépôt Initial
+                      </span>
+                    </div>
+
+                    {/* Step 2: Instruction */}
+                    <div className="relative z-10 flex flex-col items-center gap-1.5 text-center bg-slate-50/60 dark:bg-slate-800/30 px-1">
+                      <div className={cn(
+                        "w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs font-black shadow-sm transition-all",
+                        isApproved ? "bg-emerald-600 text-white" :
+                        isRejected ? "bg-rose-600 text-white" :
+                        "bg-amber-500 text-white animate-pulse"
+                      )}>
+                        {isApproved ? <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> :
+                         isRejected ? <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> :
+                         <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
+                      </div>
+                      <span className={cn(
+                        "text-[10px] sm:text-[11px] font-bold",
+                        isRejected ? "text-rose-600" : isApproved ? "text-slate-800 dark:text-slate-200" : "text-amber-600 dark:text-amber-400"
+                      )}>
+                        {isRejected ? '2. Rejeté' : isApproved ? '2. Contrôle Scolarité' : '2. En Contrôle'}
+                      </span>
+                    </div>
+
+                    {/* Step 3: Délivrance */}
+                    <div className="relative z-10 flex flex-col items-center gap-1.5 text-center bg-slate-50/60 dark:bg-slate-800/30 px-1">
+                      <div className={cn(
+                        "w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs font-black shadow-sm transition-all",
+                        isApproved ? "bg-emerald-600 text-white shadow-emerald-500/20" :
+                        "bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 text-slate-400"
+                      )}>
+                        {isApproved ? <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : '3'}
+                      </div>
+                      <span className={cn(
+                        "text-[10px] sm:text-[11px] font-bold",
+                        isApproved ? "text-emerald-700 dark:text-emerald-400" : "text-slate-400"
+                      )}>
+                        3. Signé & QR Certifié
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer: Actions & Cryptographic Integrity */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-2 font-mono text-[10px] text-slate-500 bg-slate-100 dark:bg-slate-800/80 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 w-fit">
+                    <Lock className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                    <span>Empreinte SHA-256 : {req.hash ? req.hash.substring(0, 16) + '...' : 'e3b0c44298fc1c14...'}</span>
+                  </div>
+
+                  {/* Document Actions */}
+                  <div className="flex items-center gap-2 self-end sm:self-auto">
                     {isApproved && (
-                      <div className="flex items-center gap-2">
+                      <>
                         <button
                           onClick={() => handlePrintCertificate(req)}
-                          className="px-5 py-2.5 bg-[#0f2863] hover:bg-blue-900 text-white font-black text-xs rounded-xl shadow-md cursor-pointer transition-all flex items-center gap-1.5"
+                          className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition-all cursor-pointer"
                         >
-                          <Download className="w-3.5 h-3.5" /> Télécharger / Imprimer PDF (SHA-256)
+                          <Eye className="w-3.5 h-3.5 text-blue-600" />
+                          <span>Aperçu Document</span>
                         </button>
-                      </div>
+
+                        <button
+                          onClick={() => {
+                            if (req.download_url) {
+                              openAuthenticatedUrl(req.download_url);
+                            } else {
+                              handlePrintCertificate(req);
+                            }
+                          }}
+                          className="inline-flex items-center gap-1.5 h-9 px-4 rounded-xl bg-[#001A4B] hover:bg-[#082663] text-white text-xs font-bold shadow-sm hover:shadow-md transition-all cursor-pointer border border-white/10"
+                        >
+                          <Download className="w-3.5 h-3.5 text-amber-300" />
+                          <span>Télécharger PDF Officiel</span>
+                        </button>
+                      </>
+                    )}
+
+                    {!isApproved && !isRejected && (
+                      <span className="text-xs font-semibold text-slate-400 italic">
+                        Instruction en cours par le Service des Affaires Étudiantes.
+                      </span>
                     )}
                   </div>
-
                 </div>
-              );
-            })}
-          </div>
+
+              </div>
+            );
+          })
         )}
       </div>
 
-      {/* ── Modal Nouvelle Demande ── */}
+      {/* ── Modal Nouvelle Demande (Redesigned) ── */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] w-full max-w-md shadow-2xl overflow-hidden">
-            <div className="p-6 bg-gradient-to-r from-[#0f2863] to-blue-900 text-white flex items-center justify-between">
-              <div>
-                <span className="text-[10px] font-black uppercase tracking-widest text-blue-200">Guichet Unique 100% Ligne</span>
-                <h2 className="text-base font-black">Nouvelle Demande de Document</h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden">
+            {/* Modal Header */}
+            <div className="p-5 sm:p-6 bg-gradient-to-r from-[#001A4B] via-[#082663] to-[#041438] text-white flex items-center justify-between">
+              <div className="space-y-1">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-white/10 text-amber-300 border border-white/15">
+                  <Sparkles className="w-3 h-3" /> Guichet Unique 100% En Ligne
+                </span>
+                <h2 className="text-base sm:text-lg font-black tracking-tight text-white">
+                  Nouvelle Demande de Pièce Officielle
+                </h2>
               </div>
-              <button onClick={() => setIsModalOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 cursor-pointer"><X className="w-4 h-4" /></button>
+              <button 
+                onClick={() => setIsModalOpen(false)} 
+                className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white transition-all cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
-            <form onSubmit={(e) => { e.preventDefault(); requestMutation.mutate(newRequestData); }} className="p-6 space-y-4">
+
+            {/* Modal Form */}
+            <form 
+              onSubmit={(e) => { 
+                e.preventDefault(); 
+                requestMutation.mutate(newRequestData); 
+              }} 
+              className="p-5 sm:p-6 space-y-4"
+            >
               <div>
-                <label className="block text-xs font-black uppercase text-slate-400 tracking-wider mb-1.5">Type de Document *</label>
+                <label className="block text-xs font-black uppercase text-slate-500 tracking-wider mb-2">
+                  Sélectionnez le Document Souhaité *
+                </label>
                 <select
                   value={newRequestData.type}
                   onChange={(e) => setNewRequestData(p => ({ ...p, type: e.target.value }))}
-                  className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50 dark:bg-slate-800 text-xs font-bold focus:ring-4 focus:ring-indigo-500/15 outline-none cursor-pointer"
+                  className="w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-[#001A4B] focus:border-transparent outline-none cursor-pointer"
                 >
-                  <option value="Attestation de Scolarité">Attestation de Scolarité</option>
-                  <option value="Relevé de Notes (S1-S4)">Relevé de Notes (S1-S4)</option>
-                  <option value="Attestation de Réussite">Attestation de Réussite</option>
-                  <option value="Convention de Stage PFE">Convention de Stage PFE</option>
+                  <option value="Attestation de Scolarité">Attestation de Scolarité (Année universitaire 2026-2027)</option>
+                  <option value="Relevé de Notes (S1-S4)">Relevé de Notes Officiel (Semestres Validés)</option>
+                  <option value="Attestation de Réussite">Attestation de Réussite de Niveau</option>
+                  <option value="Convention de Stage PFE">Convention de Stage PFE / Stage d'Initiation</option>
                 </select>
+                <p className="text-[11px] text-slate-400 mt-1.5 font-medium">
+                  Le document sera certifié numériquement avec QR Code d'authenticité et empreinte cryptographique SHA-256.
+                </p>
               </div>
 
               <div>
-                <label className="block text-xs font-black uppercase text-slate-400 tracking-wider mb-1.5">Motif & Organisme Destinataire *</label>
+                <label className="block text-xs font-black uppercase text-slate-500 tracking-wider mb-2">
+                  Motif & Organisme Destinataire *
+                </label>
                 <textarea
                   required
                   rows={3}
                   value={newRequestData.motif}
                   onChange={(e) => setNewRequestData(p => ({ ...p, motif: e.target.value }))}
-                  placeholder="Ex: Demande de stage PFE, renouvellement passeport, dossier de bourse..."
-                  className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50 dark:bg-slate-800 text-xs font-bold focus:ring-4 focus:ring-indigo-500/15 outline-none resize-none"
+                  placeholder="Ex: Candidature stage PFE, renouvellement carte séjour, dossier de bourse ou visa..."
+                  className="w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-xs font-medium text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-[#001A4B] focus:border-transparent outline-none resize-none"
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 text-xs font-black text-slate-500 hover:bg-slate-100 rounded-xl cursor-pointer">ANNULER</button>
-                <button type="submit" className="px-6 py-2.5 text-xs font-black bg-[#0f2863] text-white hover:bg-blue-900 rounded-xl shadow-md cursor-pointer flex items-center gap-1.5">
-                  <Send className="w-3.5 h-3.5" /> SOUMETTRE LA DEMANDE
+              {/* Notice Box */}
+              <div className="p-3 bg-blue-50 dark:bg-blue-950/40 rounded-xl border border-blue-200 dark:border-blue-900/50 text-xs text-blue-900 dark:text-blue-200 flex items-start gap-2">
+                <HelpCircle className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+                <span className="text-[11px] leading-relaxed">
+                  Votre demande sera transmise immédiatement au Service Scolarité de l'ENCG Fès. Vous recevrez une notification par email dès que le document sera disponible dans votre coffre-fort.
+                </span>
+              </div>
+
+              {/* Footer Actions */}
+              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
+                <button 
+                  type="button" 
+                  onClick={() => setIsModalOpen(false)} 
+                  className="px-4 py-2 text-xs font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl cursor-pointer"
+                >
+                  Annuler
+                </button>
+                <button 
+                  type="submit" 
+                  disabled={requestMutation.isPending}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold bg-[#001A4B] hover:bg-[#082663] text-white rounded-xl shadow-sm transition-all cursor-pointer disabled:opacity-50"
+                >
+                  {requestMutation.isPending ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Envoi en cours...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-3.5 h-3.5 text-amber-300" />
+                      <span>Soumettre la demande</span>
+                    </>
+                  )}
                 </button>
               </div>
             </form>

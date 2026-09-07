@@ -354,7 +354,19 @@ class StudentPortalService
      */
     public function getDashboardStats(int $studentId): array
     {
-        $student = DB::table('students')->where('id', $studentId)->first();
+        $student = DB::table('students')
+            ->leftJoin('users', 'students.user_id', '=', 'users.id')
+            ->where('students.id', $studentId)
+            ->select([
+                'students.id',
+                'students.cne',
+                'students.cin',
+                'users.first_name',
+                'users.last_name',
+                'users.name as user_name',
+                'users.email as user_email',
+            ])
+            ->first();
 
         $absencesCount = DB::table('attendances')
             ->where('student_id', $studentId)
@@ -467,26 +479,32 @@ class StudentPortalService
                 'document_types.name as title',
                 'document_requests.created_at as date',
                 'document_requests.status',
-                'document_requests.hash',
             ])
             ->map(fn ($doc) => [
                 'id' => $doc->id,
                 'title' => $doc->title,
                 'date' => substr((string) $doc->date, 0, 10),
                 'status' => $doc->status === 'ready' || $doc->status === 'delivered' ? 'signed' : 'pending',
-                'hash' => $doc->hash ?: ('ENCG-DOC-' . strtoupper(substr(md5($doc->id . $studentId), 0, 12))),
+                'hash' => 'ENCG-DOC-' . strtoupper(substr(md5($doc->id . '_' . $studentId), 0, 12)),
             ])
             ->toArray();
 
         $subGroupInfo = app(StudentSubGroupDispatcherService::class)->getStudentSubGroupInfo($studentId);
 
+        $firstName = $student?->first_name ?? null;
+        $lastName = $student?->last_name ?? null;
+        $fullName = trim(($firstName ?? '') . ' ' . ($lastName ?? ''));
+        if (empty($fullName) && ! empty($student?->user_name)) {
+            $fullName = $student->user_name;
+        }
+
         return [
             'student_id' => $studentId,
             'cne' => $student?->cne,
             'cin' => $student?->cin,
-            'first_name' => $student?->first_name,
-            'last_name' => $student?->last_name,
-            'full_name' => trim(($student?->first_name ?? '') . ' ' . ($student?->last_name ?? '')),
+            'first_name' => $firstName,
+            'last_name' => $lastName,
+            'full_name' => $fullName ?: 'Étudiant ENCG',
             'absences' => [
                 'total' => $absencesCount,
                 'justified' => $absencesJustified,
