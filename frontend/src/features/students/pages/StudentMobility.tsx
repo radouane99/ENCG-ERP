@@ -1,27 +1,68 @@
 import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Globe2, MapPin, Star, CheckCircle2, Send, Zap, GraduationCap } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { toast } from 'sonner';
+import api from '@/shared/lib/api';
+import { Spinner } from '@shared/components/ui/Spinner';
 
 export default function StudentMobility() {
-  const [selectedVoeux, setSelectedVoeux] = useState<number[]>([1, 2]);
+  const queryClient = useQueryClient();
+  const [selectedVoeux, setSelectedVoeux] = useState<number[]>([]);
   const [applicationSubmitted, setApplicationSubmitted] = useState(false);
-  const [motivationText, setMotivationText] = useState('Je souhaite postuler pour un semestre d\'échange afin d\'approfondir mes connaissances en Finance et Management International.');
-  const [toeicScore, setToeicScore] = useState('880');
+  const [motivationText, setMotivationText] = useState('');
+  const [toeicScore, setToeicScore] = useState('');
 
-  const studentGpa = 16.42;
+  // Fetch partners and existing voeux from real API
+  const { data: mobilityData, isLoading } = useQuery({
+    queryKey: ['student-mobility-partners'],
+    queryFn: async () => {
+      const res = await api.get('/student-portal/mobility/partners');
+      return res.data?.data;
+    }
+  });
 
-  const partners = [
-    { id: 1, name: 'KEDGE Business School', country: 'France', city: 'Bordeaux / Marseille', type: 'Échange ECTS', slots: 15, gpaRequired: 14.00, matchChance: 96, badge: 'Excellente Compatibilité' },
-    { id: 2, name: 'Université Laval', country: 'Canada', city: 'Québec', type: 'Double Diplôme', slots: 10, gpaRequired: 14.50, matchChance: 91, badge: 'Forte Compatibilité' },
-    { id: 3, name: 'NEOMA Business School', country: 'France', city: 'Rouen / Reims', type: 'Échange ECTS', slots: 8, gpaRequired: 13.50, matchChance: 98, badge: 'Excellente Compatibilité' },
-    { id: 4, name: 'Kyung Hee University', country: 'Corée du Sud', city: 'Séoul', type: 'Échange ECTS', slots: 6, gpaRequired: 15.00, matchChance: 84, badge: 'Bonne Compatibilité' },
-    { id: 5, name: 'ESSEC Business School', country: 'France', city: 'Cergy', type: 'Double Diplôme', slots: 6, gpaRequired: 16.00, matchChance: 68, badge: 'Sélectif / Compétitif' },
-  ];
+  // Fetch student GPA from dashboard stats
+  const { data: dashboardData } = useQuery({
+    queryKey: ['student-stats-mobility'],
+    queryFn: async () => {
+      const res = await api.get('/student-portal/dashboard');
+      return res.data?.data;
+    }
+  });
+
+  const studentGpa = dashboardData?.gpa !== undefined && dashboardData?.gpa !== null ? Number(dashboardData.gpa) : null;
+  const partners = mobilityData?.partners || [];
+
+  // Initialize selected voeux from DB if available
+  React.useEffect(() => {
+    if (mobilityData?.voeux && Array.isArray(mobilityData.voeux) && selectedVoeux.length === 0) {
+      setSelectedVoeux(mobilityData.voeux);
+      if (mobilityData.voeux.length > 0) {
+        setApplicationSubmitted(true);
+      }
+    }
+  }, [mobilityData]);
+
+  const voeuxMutation = useMutation({
+    mutationFn: async (voeux: number[]) => {
+      const res = await api.post('/student-portal/mobility/voeux', { voeux });
+      return res.data;
+    },
+    onSuccess: () => {
+      setApplicationSubmitted(true);
+      queryClient.invalidateQueries({ queryKey: ['student-mobility-partners'] });
+      toast.success("🚀 Votre dossier de mobilité a été soumis avec succès au Jury de sélection !");
+    },
+    onError: (err: any) => {
+      const msg = err?.response?.data?.message || "Erreur lors de l'enregistrement de vos vœux.";
+      toast.error(msg);
+    }
+  });
 
   const handleToggleVoeu = (partnerId: number) => {
     if (selectedVoeux.includes(partnerId)) {
-      setSelectedVoeux(selectedVoeux.filter(id => id !== partnerId));
+      setSelectedVoeux(selectedVoeux.filter((id: number) => id !== partnerId));
     } else {
       if (selectedVoeux.length >= 3) {
         toast.error("Vous ne pouvez sélectionner que 3 vœux maximum.");
@@ -38,12 +79,7 @@ export default function StudentMobility() {
       return;
     }
 
-    toast.loading("Transmission de votre dossier de candidature à la Direction des Relations Internationales...");
-    setTimeout(() => {
-      toast.dismiss();
-      setApplicationSubmitted(true);
-      toast.success("🚀 Votre dossier de mobilité a été soumis avec succès au Jury de sélection !");
-    }, 800);
+    voeuxMutation.mutate(selectedVoeux);
   };
 
   return (
@@ -73,9 +109,11 @@ export default function StudentMobility() {
         </div>
 
         <div className="relative z-10 bg-white/10 backdrop-blur-xl p-5 rounded-3xl border border-white/15 text-center shrink-0 space-y-1">
-          <span className="text-[10px] font-black text-amber-300 uppercase tracking-widest block">Votre Score de Sélection</span>
-          <div className="text-3xl font-black text-white">{studentGpa} / 20</div>
-          <p className="text-[10px] text-emerald-300 font-bold">Éligible à 100% des partenariats</p>
+          <span className="text-[10px] font-black text-amber-300 uppercase tracking-widest block">Votre Score Académique</span>
+          <div className="text-3xl font-black text-white">{studentGpa !== null ? studentGpa.toFixed(2) : '—'} / 20</div>
+          <p className="text-[10px] text-emerald-300 font-bold">
+            {studentGpa !== null ? 'Moyenne générale certifiée' : "En attente des délibérations"}
+          </p>
         </div>
       </div>
 
@@ -94,7 +132,15 @@ export default function StudentMobility() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {partners.map((partner) => {
+            {isLoading ? (
+              <div className="col-span-2 p-12 flex justify-center items-center">
+                <Spinner />
+              </div>
+            ) : partners.length === 0 ? (
+              <div className="col-span-2 p-10 text-center rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-400 text-xs font-bold">
+                Aucun établissement partenaire ouvert aux candidatures actuellement.
+              </div>
+            ) : partners.map((partner: any) => {
               const isSelected = selectedVoeux.includes(partner.id);
               const voeuRank = selectedVoeux.indexOf(partner.id) + 1;
 
@@ -191,8 +237,8 @@ export default function StudentMobility() {
                   {selectedVoeux.length === 0 ? (
                     <div className="italic text-slate-400">Aucun vœu sélectionné</div>
                   ) : (
-                    selectedVoeux.map((id, i) => {
-                      const p = partners.find(item => item.id === id);
+                    selectedVoeux.map((id: number, i: number) => {
+                      const p = partners.find((item: any) => item.id === id);
                       return (
                         <div key={id} className="flex items-center gap-1 font-bold text-blue-900 dark:text-blue-300">
                           <span>#{i + 1}</span> {p?.name} ({p?.country})

@@ -28,13 +28,6 @@
             page-break-inside: avoid;
         }
 
-        /* Tables pleines largeurs strictes (100% alignement gauche et droite) */
-        table.full-width {
-            width: 100%;
-            border-collapse: collapse;
-            table-layout: fixed;
-        }
-
         /* En-tête officiel ENCG Fès */
         .header-table {
             width: 100%;
@@ -53,7 +46,7 @@
             margin: 2px 0 3px 0;
         }
 
-        /* Bannière Titre (Table pour 100% de largeur exacte) */
+        /* Bannière Titre (Table 100% pleine largeur) */
         .title-table {
             width: 100%;
             border-collapse: collapse;
@@ -86,7 +79,7 @@
             letter-spacing: 0.5px;
         }
 
-        /* Dossier Académique Étudiant (Pleine largeur 100% garantie) */
+        /* Dossier Académique Étudiant (Table 100% pleine largeur) */
         .dossier-table {
             width: 100%;
             border-collapse: collapse;
@@ -152,7 +145,18 @@
             border: 0.8px solid #a7f3d0;
         }
 
-        /* Bandeau Calendrier officiel (Table 100% pleine largeur) */
+        /* Pastille verte en pur CSS (aucun caractère spécial) */
+        .dot-green {
+            display: inline-block;
+            width: 4.5px;
+            height: 4.5px;
+            background-color: #059669;
+            border-radius: 50%;
+            vertical-align: middle;
+            margin-right: 2px;
+        }
+
+        /* Calendrier officiel (Table 100% pleine largeur) */
         .dates-table {
             width: 100%;
             border-collapse: collapse;
@@ -473,7 +477,7 @@
         </tr>
     </table>
 
-    <!-- Dossier Académique Étudiant (Table 100% pleine largeur) -->
+    <!-- Dossier Académique Étudiant (Table 100% pleine largeur, zéro caractère spécial) -->
     <table class="dossier-table">
         <tr>
             <td class="dossier-cell" style="width: 25%;">
@@ -515,7 +519,7 @@
             <td class="dossier-cell">
                 <div class="tile-label">STATUT DU DOSSIER</div>
                 <div class="tile-value">
-                    <span class="badge-pill badge-valid">&#10003; INSCRIPTION VALIDÉE (ACTIF)</span>
+                    <span class="badge-pill badge-valid"><span class="dot-green"></span> INSCRIPTION VALIDÉE (ACTIF)</span>
                 </div>
             </td>
         </tr>
@@ -622,7 +626,7 @@
                                                 </span>
                                             </div>
                                             <div class="session-title">{{ $moduleName }}</div>
-                                            <div class="session-prof">&#9658; {{ $profName }}</div>
+                                            <div class="session-prof">{{ $profName }}</div>
                                             <div>
                                                 <span class="session-room-badge">Lieu : {{ $roomName }}</span>
                                             </div>
@@ -650,7 +654,7 @@
                             </td>
                             <td style="width: 50%; text-align: center;">
                                 <span class="pause-title">
-                                    PAUSE DÉJEUNER & REPAS : 12H45 À 14H30 &bull; DURÉE OFFICIELLE : 1H45
+                                    PAUSE DÉJEUNER & REPAS : 12H45 À 14H30 • DURÉE OFFICIELLE : 1H45
                                 </span>
                             </td>
                             <td style="width: 25%; text-align: right;">
@@ -707,7 +711,7 @@
                                                 </span>
                                             </div>
                                             <div class="session-title">{{ $moduleName }}</div>
-                                            <div class="session-prof">&#9658; {{ $profName }}</div>
+                                            <div class="session-prof">{{ $profName }}</div>
                                             <div>
                                                 <span class="session-room-badge">Lieu : {{ $roomName }}</span>
                                             </div>
@@ -749,7 +753,7 @@
                                 SCAN POUR VÉRIFICATION
                             </div>
                             <div style="font-size: 5.4pt; font-weight: 900; color: #059669; margin: 1px 0;">
-                                &#10003; DOCUMENT CERTIFIÉ CONFORME
+                                <span class="dot-green"></span> DOCUMENT CERTIFIÉ CONFORME
                             </div>
                             <div style="font-size: 4.8pt; color: #475569; line-height: 1.15;">
                                 Scannez ce QR Code avec un smartphone pour authentifier l'emploi du temps et les affectations en temps réel sur le portail officiel de l'école.
@@ -783,7 +787,7 @@
                     <div class="stamp-title">POUR LE DIRECTEUR DE L'ÉCOLE</div>
                     <div class="stamp-sub">Le Directeur Adjoint aux Affaires Pédagogiques</div>
                     <div class="stamp-badge">
-                        &#10003; CACHET ÉLECTRONIQUE & VISA VALIDÉS
+                        <span class="dot-green"></span> CACHET ÉLECTRONIQUE & VISA VALIDÉS
                     </div>
                     <div style="font-size: 4.5pt; color: #94a3b8; margin-top: 1.5px;">
                         RÉF-SIG : DAP-{{ date('Ymd') }}-AUTH-ENCG

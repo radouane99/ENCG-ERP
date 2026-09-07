@@ -58,12 +58,7 @@ export default function StudentEvaluations() {
       });
       return Array.from(unique.values());
     }
-    return [
-      { id: 1, name: 'Management Stratégique & Gouvernance', code: 'M601', prof: 'Pr. El Amrani', department: 'Management & Stratégie', isEvaluated: !!evaluatedModules['Management Stratégique & Gouvernance'] },
-      { id: 2, name: 'Diagnostic Financier & Analyse de la Valeur', code: 'M602', prof: 'Pr. Bensouda', department: 'Finance & Comptabilité', isEvaluated: !!evaluatedModules['Diagnostic Financier & Analyse de la Valeur'] },
-      { id: 3, name: 'Marketing International & Négociation', code: 'M603', prof: 'Pr. Tazi', department: 'Marketing & Commerce', isEvaluated: !!evaluatedModules['Marketing International & Négociation'] },
-      { id: 4, name: 'Audit Financier & Contrôle Interne', code: 'M604', prof: 'Pr. Bennani', department: 'Finance & Audit', isEvaluated: !!evaluatedModules['Audit Financier & Contrôle Interne'] },
-    ];
+    return [];
   }, [schedule, evaluatedModules]);
 
   const handleSubmitEvaluation = (e: React.FormEvent) => {
@@ -144,6 +139,12 @@ export default function StudentEvaluations() {
       {isLoading ? (
         <div className="flex h-64 items-center justify-center text-slate-400 font-bold">
           <Spinner size="lg" />
+        </div>
+      ) : modulesList.length === 0 ? (
+        <div className="bg-white dark:bg-slate-900 rounded-3xl p-12 text-center border border-slate-200 dark:border-slate-800 space-y-3">
+          <BookOpen className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto" />
+          <h3 className="text-base font-black text-slate-800 dark:text-slate-100">Aucun module à évaluer</h3>
+          <p className="text-xs text-slate-400 max-w-md mx-auto">La campagne d'évaluation des enseignements pour votre semestre n'a pas encore de modules configurés.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

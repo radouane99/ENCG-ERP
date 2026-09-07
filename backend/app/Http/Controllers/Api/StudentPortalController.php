@@ -22,10 +22,17 @@ class StudentPortalController extends Controller
     public function getGrades(Request $request): JsonResponse
     {
         $studentId = $this->resolveAuthenticatedStudentId($request);
+        $result = $this->portalService->getGrades($studentId);
 
         return response()->json([
             'success' => true,
-            'data' => $this->portalService->getGrades($studentId),
+            'data' => $result['data'],
+            'overall_average' => $result['overall_average'],
+            'overall_decision' => $result['overall_decision'],
+            'total_modules' => $result['total_modules'],
+            'validated_modules' => $result['validated_modules'],
+            'credits_earned' => $result['credits_earned'],
+            'total_credits' => $result['total_credits'],
         ]);
     }
 

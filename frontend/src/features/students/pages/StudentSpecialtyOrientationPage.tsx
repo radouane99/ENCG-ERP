@@ -120,7 +120,7 @@ export default function StudentSpecialtyOrientationPage() {
     submitMutation.mutate(payload);
   };
 
-  const meritScore = data?.merit_score || 14.85;
+  const meritScore = data?.merit_score !== undefined && data?.merit_score !== null ? Number(data.merit_score) : null;
   const isAllocated = !!data?.allocated_filiere;
   const allocatedFiliere = data?.allocated_filiere;
 
@@ -150,10 +150,12 @@ export default function StudentSpecialtyOrientationPage() {
         <div className="bg-white/10 backdrop-blur-xl p-5 rounded-3xl border border-white/15 text-center shrink-0">
           <span className="text-[10px] font-black uppercase tracking-widest text-amber-300 block mb-1">Votre Score de Mérite</span>
           <div className="flex items-baseline justify-center gap-1">
-            <span className="text-4xl font-black text-white font-mono">{Number(meritScore).toFixed(2)}</span>
+            <span className="text-4xl font-black text-white font-mono">{meritScore !== null ? meritScore.toFixed(2) : '—'}</span>
             <span className="text-sm font-bold text-blue-200">/ 20</span>
           </div>
-          <span className="text-[10px] font-bold text-emerald-300 mt-2 block">Moyenne pondérée S1 à S4</span>
+          <span className="text-[10px] font-bold text-emerald-300 mt-2 block">
+            {meritScore !== null ? 'Moyenne pondérée S1 à S4' : 'Calcul en cours de délibération'}
+          </span>
         </div>
       </div>
 

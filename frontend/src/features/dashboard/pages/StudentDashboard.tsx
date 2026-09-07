@@ -72,41 +72,22 @@ export default function StudentDashboard() {
   const { data: statsData, isLoading, refetch, isFetching } = useQuery({
     queryKey: ['student-stats'],
     queryFn: async () => {
-      const res = await api.get('/dashboard/student/stats');
+      const res = await api.get('/student-portal/dashboard');
       return res.data.data;
     },
     staleTime: 60000,
   });
 
-  const emptyStats = {
-    gpa: 14.85,
-    classes_today: 0,
-    absences: { total: 2, justified: 2, unjustified: 0 },
-    upcoming_exams: 3,
-    credits_earned: 150,
-    total_credits: 300,
-    upcoming_classes: [] as UpcomingClass[],
-    recent_documents: [] as RecentDocument[],
-  };
-
   const statsPayload = statsData && !Array.isArray(statsData) ? statsData : {};
   const stats = {
-    ...emptyStats,
-    ...statsPayload,
-    absences: { ...emptyStats.absences, ...(statsPayload.absences ?? {}) },
-    upcoming_classes: (Array.isArray(statsPayload.upcoming_classes) && statsPayload.upcoming_classes.length > 0
-      ? statsPayload.upcoming_classes
-      : [
-          { time: '08:30 - 10:30', title: 'Management Stratégique & Gouvernance', location: 'Amphi Ibn Khaldoun', professor: 'Pr. El Amrani', status: 'completed' },
-          { time: '10:45 - 12:45', title: 'Diagnostic Financier & Analyse de la Valeur', location: 'Salle 14 (Pôle Gestion)', professor: 'Pr. Bensouda', status: 'current' },
-          { time: '14:30 - 16:30', title: 'Marketing International & Négociation', location: 'Salle 08', professor: 'Pr. Tazi', status: 'upcoming' },
-        ]) as UpcomingClass[],
-    recent_documents: (Array.isArray(statsPayload.recent_documents) && statsPayload.recent_documents.length > 0
-      ? statsPayload.recent_documents
-      : [
-          { id: 1, title: 'Attestation de Scolarité 2026-2027', date: '15 Janvier 2026', status: 'signed', hash: 'SHA256-A89F-4982-BC' },
-          { id: 2, title: 'Relevé de Notes Semestre 5', date: '10 Février 2026', status: 'signed', hash: 'SHA256-7E12-9844-DF' }
-        ]) as RecentDocument[],
+    gpa: statsPayload.gpa !== undefined && statsPayload.gpa !== null ? Number(statsPayload.gpa) : null,
+    classes_today: statsPayload.classes_today ?? 0,
+    absences: statsPayload.absences ?? { total: 0, justified: 0, unjustified: 0 },
+    upcoming_exams: statsPayload.upcoming_exams ?? 0,
+    credits_earned: statsPayload.credits_earned ?? 0,
+    total_credits: statsPayload.total_credits ?? 30,
+    upcoming_classes: (Array.isArray(statsPayload.upcoming_classes) ? statsPayload.upcoming_classes : []) as UpcomingClass[],
+    recent_documents: (Array.isArray(statsPayload.recent_documents) ? statsPayload.recent_documents : []) as RecentDocument[],
   };
 
   const requestDocument = async (kind: 'attestation' | 'releve') => {
@@ -139,17 +120,17 @@ export default function StudentDashboard() {
     return { label: 'AJOURNÉ (RATTRAPAGE)', color: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20' };
   };
 
-  const mention = getMention(Number(stats.gpa) || 14.85);
+  const mention = stats.gpa !== null ? getMention(stats.gpa) : { label: 'EN COURS', color: 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20' };
   const userAny = user as any;
-  const studentCne = userAny?.cne || 'N130000003';
-  const studentCin = userAny?.cin || 'CD748291';
-  const academicInfo = userAny?.academic_info || (statsPayload as any)?.academic_info;
-  const studentSection = userAny?.section || (statsPayload as any)?.section || academicInfo?.section_label || 'Section 1';
-  const studentSubGroup = userAny?.sub_group || (statsPayload as any)?.sub_group || academicInfo?.sub_group || 'G1.2';
-  const studentGroupName = userAny?.group_name || (statsPayload as any)?.group_name || academicInfo?.group_name || 'TC-S2-G1';
-  const studentFiliere = academicInfo?.filiere_name 
-    ? `ENCG Grande École • S${academicInfo.semester || 2} ${academicInfo.filiere_name}`
-    : (userAny?.filiere?.name || 'ENCG Grande École • S2 Tronc Commun ENCG');
+  const studentCne = statsPayload?.cne || userAny?.cne || userAny?.student?.cne || '—';
+  const studentCin = statsPayload?.cin || userAny?.cin || userAny?.student?.cin || '—';
+  const academicInfo = statsPayload?.academic_info || userAny?.academic_info;
+  const studentSection = statsPayload?.section || academicInfo?.section_label || userAny?.section || '—';
+  const studentSubGroup = statsPayload?.sub_group || academicInfo?.sub_group || userAny?.sub_group || '—';
+  const studentGroupName = statsPayload?.group_name || academicInfo?.group_name || userAny?.group_name || '—';
+  const studentFiliere = statsPayload?.filiere_name || academicInfo?.filiere_name 
+    ? `ENCG Grande École • S${academicInfo?.semester || statsPayload?.semester || 1} ${statsPayload?.filiere_name || academicInfo?.filiere_name}`
+    : (userAny?.filiere?.name || 'ENCG Grande École');
   const studentInitials = user?.name ? user.name.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase() : 'ET';
 
   const quickActions = [
@@ -564,50 +545,58 @@ export default function StudentDashboard() {
               </div>
 
               <div className="space-y-3">
-                {stats.upcoming_classes.map((cls: UpcomingClass, i: number) => {
-                  const isCurrent = cls.status === 'current';
-                  const isDone = cls.status === 'completed';
-                  return (
-                    <div 
-                      key={i} 
-                      className={cn(
-                        "p-4 rounded-2xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4",
-                        isCurrent 
-                          ? "bg-blue-50/80 dark:bg-blue-950/40 border-blue-300 dark:border-blue-700 shadow-sm" 
-                          : isDone 
-                          ? "bg-slate-50/60 dark:bg-slate-800/30 border-slate-200 dark:border-slate-800 opacity-75"
-                          : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
-                      )}
-                    >
-                      <div className="flex items-start gap-3.5">
-                        <div className={cn(
-                          "w-10 h-10 rounded-xl flex items-center justify-center font-black text-xs shrink-0",
-                          isCurrent ? "bg-blue-600 text-white shadow-md shadow-blue-500/20" : isDone ? "bg-slate-200 dark:bg-slate-800 text-slate-600" : "bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300"
-                        )}>
-                          {isDone ? <CheckCircle className="w-5 h-5 text-emerald-600" /> : <Clock className="w-5 h-5" />}
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="font-mono text-xs font-black text-blue-900 dark:text-blue-300">{cls.time}</span>
-                            {isCurrent && (
-                              <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-blue-600 text-white animate-pulse">
-                                En Cours
-                              </span>
-                            )}
+                {stats.upcoming_classes.length > 0 ? (
+                  stats.upcoming_classes.map((cls: UpcomingClass, i: number) => {
+                    const isCurrent = cls.status === 'current';
+                    const isDone = cls.status === 'completed';
+                    return (
+                      <div 
+                        key={i} 
+                        className={cn(
+                          "p-4 rounded-2xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4",
+                          isCurrent 
+                            ? "bg-blue-50/80 dark:bg-blue-950/40 border-blue-300 dark:border-blue-700 shadow-sm" 
+                            : isDone 
+                            ? "bg-slate-50/60 dark:bg-slate-800/30 border-slate-200 dark:border-slate-800 opacity-75"
+                            : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
+                        )}
+                      >
+                        <div className="flex items-start gap-3.5">
+                          <div className={cn(
+                            "w-10 h-10 rounded-xl flex items-center justify-center font-black text-xs shrink-0",
+                            isCurrent ? "bg-blue-600 text-white shadow-md shadow-blue-500/20" : isDone ? "bg-slate-200 dark:bg-slate-800 text-slate-600" : "bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300"
+                          )}>
+                            {isDone ? <CheckCircle className="w-5 h-5 text-emerald-600" /> : <Clock className="w-5 h-5" />}
                           </div>
-                          <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100 mt-0.5">{cls.title}</h3>
-                          <p className="text-xs text-slate-500 font-medium">{cls.professor}</p>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono text-xs font-black text-blue-900 dark:text-blue-300">{cls.time}</span>
+                              {isCurrent && (
+                                <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-blue-600 text-white animate-pulse">
+                                  En Cours
+                                </span>
+                              )}
+                            </div>
+                            <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100 mt-0.5">{cls.title}</h3>
+                            <p className="text-xs text-slate-500 font-medium">{cls.professor}</p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 sm:self-center shrink-0">
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-black">
+                            <MapPin className="w-3.5 h-3.5 text-rose-500" /> {cls.location}
+                          </span>
                         </div>
                       </div>
-
-                      <div className="flex items-center gap-2 sm:self-center shrink-0">
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-black">
-                          <MapPin className="w-3.5 h-3.5 text-rose-500" /> {cls.location}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })
+                ) : (
+                  <div className="p-8 text-center rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 space-y-2">
+                    <Clock className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto" />
+                    <p className="text-xs font-bold text-slate-700 dark:text-slate-200">Aucun cours programmé aujourd'hui</p>
+                    <p className="text-[11px] text-slate-400">Consultez votre emploi du temps hebdomadaire complet pour voir vos prochaines séances.</p>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -659,23 +648,31 @@ export default function StudentDashboard() {
                 {/* Recent Signed Documents */}
                 <div className="bg-slate-50 dark:bg-slate-800/50 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
                   <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block">Dernières Pièces Signées</span>
-                  {stats.recent_documents.map((doc: RecentDocument, i: number) => (
-                    <div key={i} className="flex items-center justify-between bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-100 dark:border-slate-800 shadow-2xs">
-                      <div className="space-y-0.5">
-                        <p className="text-xs font-bold text-slate-800 dark:text-slate-200">{doc.title}</p>
-                        <span className="text-[9px] font-mono text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
-                          <ShieldCheck className="w-3 h-3" /> Certifié SHA-256
-                        </span>
+                  {stats.recent_documents.length > 0 ? (
+                    stats.recent_documents.map((doc: RecentDocument, i: number) => (
+                      <div key={i} className="flex items-center justify-between bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-100 dark:border-slate-800 shadow-2xs">
+                        <div className="space-y-0.5">
+                          <p className="text-xs font-bold text-slate-800 dark:text-slate-200">{doc.title}</p>
+                          <span className="text-[9px] font-mono text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
+                            <ShieldCheck className="w-3 h-3" /> Certifié SHA-256
+                          </span>
+                        </div>
+                        <button 
+                          onClick={() => openAuthenticatedUrl(`/api/v1/student/documents/${doc.id}/download`)}
+                          className="p-2 bg-blue-50 dark:bg-blue-950 hover:bg-blue-100 text-blue-700 dark:text-blue-300 rounded-xl transition-colors cursor-pointer"
+                          title="Télécharger le document PDF"
+                        >
+                          <Download className="w-4 h-4" />
+                        </button>
                       </div>
-                      <button 
-                        onClick={() => openAuthenticatedUrl(`/api/v1/student/documents/${doc.id}/download`)}
-                        className="p-2 bg-blue-50 dark:bg-blue-950 hover:bg-blue-100 text-blue-700 dark:text-blue-300 rounded-xl transition-colors cursor-pointer"
-                        title="Télécharger le document PDF"
-                      >
-                        <Download className="w-4 h-4" />
-                      </button>
+                    ))
+                  ) : (
+                    <div className="p-4 text-center rounded-xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 space-y-1">
+                      <FileText className="w-5 h-5 text-slate-300 dark:text-slate-600 mx-auto" />
+                      <p className="text-xs font-bold text-slate-600 dark:text-slate-400">Aucun document demandé récemment</p>
+                      <p className="text-[10px] text-slate-400">Utilisez la demande 1-Clic pour commander une attestation ou un relevé officiel.</p>
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
             </div>

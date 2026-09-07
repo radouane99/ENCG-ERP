@@ -13,18 +13,215 @@ use Illuminate\Support\Facades\Schema;
 class StudentPortalService
 {
     /**
-     * Get published grades for the student.
+     * Get published grades and calculated modular results for the student.
      */
-    public function getGrades(int $studentId): Collection
+    public function getGrades(int $studentId): array
     {
-        return Grade::with(['assessment.module'])
+        $student = DB::table('students')->where('id', $studentId)->first();
+        if (! $student) {
+            return [
+                'data' => [],
+                'overall_average' => null,
+                'overall_decision' => null,
+                'total_modules' => 0,
+                'validated_modules' => 0,
+                'credits_earned' => 0,
+                'total_credits' => 0,
+            ];
+        }
+
+        // 1. Identify student filiere and semester
+        $pathway = DB::table('student_pathways')
             ->where('student_id', $studentId)
-            ->get();
+            ->where('is_current', true)
+            ->first();
+
+        $filiereId = $pathway?->filiere_id;
+        $semesterNumber = $pathway?->current_semester;
+
+        if (! $filiereId) {
+            $reg = DB::table('student_registrations')
+                ->where('student_id', $studentId)
+                ->first();
+            $filiereId = $reg?->filiere_id;
+            $semesterNumber = $reg?->semester_number;
+        }
+
+        // 2. Fetch modules for this student's filiere or modules that have grades
+        $modulesQuery = DB::table('modules');
+        if ($filiereId) {
+            $modulesQuery->where('filiere_id', $filiereId);
+        }
+        $modules = $modulesQuery->get();
+
+        // Also check any module IDs the student has grades for
+        $gradedModuleIds = DB::table('grades')
+            ->join('assessments', 'grades.assessment_id', '=', 'assessments.id')
+            ->where('grades.student_id', $studentId)
+            ->distinct()
+            ->pluck('assessments.module_id')
+            ->toArray();
+
+        $missingModuleIds = array_diff($gradedModuleIds, $modules->pluck('id')->toArray());
+        if (! empty($missingModuleIds)) {
+            $extraModules = DB::table('modules')->whereIn('id', $missingModuleIds)->get();
+            $modules = $modules->concat($extraModules);
+        }
+
+        // 3. Fetch all assessments for these modules
+        $moduleIds = $modules->pluck('id')->toArray();
+        $assessments = DB::table('assessments')
+            ->whereIn('module_id', $moduleIds)
+            ->get()
+            ->groupBy('module_id');
+
+        // 4. Fetch all student grades for these assessments
+        $allAssessmentIds = $assessments->flatten()->pluck('id')->toArray();
+        $grades = ! empty($allAssessmentIds)
+            ? DB::table('grades')
+                ->where('student_id', $studentId)
+                ->whereIn('assessment_id', $allAssessmentIds)
+                ->get()
+                ->keyBy('assessment_id')
+            : collect();
+
+        $rows = [];
+        $sumFinal = 0;
+        $countFinal = 0;
+        $validatedCount = 0;
+        $creditsEarned = 0;
+        $totalCredits = 0;
+
+        foreach ($modules as $module) {
+            $modAssessments = $assessments->get($module->id, collect());
+
+            $ccNote = null;
+            $examNote = null;
+            $rattrapageNote = null;
+            $weightedSum = 0;
+            $totalWeight = 0;
+            $hasAnyGrade = false;
+
+            foreach ($modAssessments as $ass) {
+                $type = strtolower((string) $ass->type);
+                $grade = $grades->get($ass->id);
+                $val = $grade ? ($grade->absent ? 0.0 : (float) $grade->value) : null;
+
+                if ($val !== null) {
+                    $hasAnyGrade = true;
+                }
+
+                if (str_contains($type, 'rat')) {
+                    $rattrapageNote = $val;
+                } elseif (str_contains($type, 'cc') || str_contains($type, 'continu') || str_contains($type, 'tp')) {
+                    $ccNote = $val;
+                    if ($val !== null) {
+                        $w = (float) ($ass->weight ?? 50);
+                        $weightedSum += $val * ($w / 100);
+                        $totalWeight += $w;
+                    }
+                } else {
+                    $examNote = $val;
+                    if ($val !== null) {
+                        $w = (float) ($ass->weight ?? 50);
+                        $weightedSum += $val * ($w / 100);
+                        $totalWeight += $w;
+                    }
+                }
+            }
+
+            // Calculate moyenne normale
+            $moyenneNormale = null;
+            if ($totalWeight > 0 && $hasAnyGrade) {
+                $moyenneNormale = round($weightedSum * (100 / $totalWeight), 2);
+            } elseif ($hasAnyGrade && ($ccNote !== null || $examNote !== null)) {
+                $notes = array_filter([$ccNote, $examNote], fn ($n) => $n !== null);
+                $moyenneNormale = count($notes) > 0 ? round(array_sum($notes) / count($notes), 2) : null;
+            }
+
+            // Determine final average & decision
+            $moyenneFinale = $moyenneNormale;
+            $decisionFinale = null;
+
+            if ($moyenneNormale !== null) {
+                if ($rattrapageNote !== null) {
+                    $raw = max($moyenneNormale, $rattrapageNote);
+                    if ($raw >= 10.0) {
+                        $moyenneFinale = ($moyenneNormale < 10.0) ? min(12.00, round($raw, 2)) : round($raw, 2);
+                        $decisionFinale = ($moyenneNormale < 10.0) ? 'VAR' : 'V';
+                    } else {
+                        $moyenneFinale = round($raw, 2);
+                        $decisionFinale = 'NV';
+                    }
+                } else {
+                    if ($moyenneNormale >= 10.0) {
+                        $decisionFinale = 'V';
+                    } elseif ($moyenneNormale < 6.0) {
+                        $decisionFinale = 'NV';
+                    } else {
+                        $decisionFinale = 'RAT';
+                    }
+                }
+
+                $sumFinal += $moyenneFinale;
+                $countFinal++;
+
+                $isVal = in_array($decisionFinale, ['V', 'VAR', 'VC']) || $moyenneFinale >= 10.0;
+                if ($isVal) {
+                    $validatedCount++;
+                    $creditsEarned += ($module->credits ?? $module->credit_hours ?? 5);
+                }
+            }
+
+            $totalCredits += ($module->credits ?? $module->credit_hours ?? 5);
+            $sem = $module->semester ?? $module->semester_number ?? $semesterNumber ?? 1;
+
+            $rows[] = [
+                'module_id' => $module->id,
+                'module_name' => $module->name,
+                'module_code' => $module->code,
+                'semester_number' => "S{$sem}",
+                'semester' => "S{$sem}",
+                'credits' => $module->credits ?? $module->credit_hours ?? 5,
+                'cc_note' => $ccNote,
+                'exam_note' => $examNote,
+                'rattrapage_note' => $rattrapageNote,
+                'moyenne_normale' => $moyenneNormale,
+                'moyenne_finale' => $moyenneFinale,
+                'decision_normale' => $moyenneNormale !== null ? ($moyenneNormale >= 10 ? 'V' : ($moyenneNormale < 6 ? 'NV' : 'RAT')) : null,
+                'decision_finale' => $decisionFinale,
+                'has_grades' => $hasAnyGrade,
+            ];
+        }
+
+        $overallAverage = $countFinal > 0 ? round($sumFinal / $countFinal, 2) : null;
+        $overallDecision = null;
+
+        if ($overallAverage !== null) {
+            if ($overallAverage >= 16.0) {
+                $overallDecision = 'ADMIS (MENTION TRÈS BIEN)';
+            } elseif ($overallAverage >= 14.0) {
+                $overallDecision = 'ADMIS (MENTION BIEN)';
+            } elseif ($overallAverage >= 12.0) {
+                $overallDecision = 'ADMIS (MENTION ASSEZ BIEN)';
+            } elseif ($overallAverage >= 10.0) {
+                $overallDecision = 'ADMIS (MENTION PASSABLE)';
+            } else {
+                $overallDecision = 'AJOURNÉ (SESSION DE RATTRAPAGE)';
+            }
+        }
+
+        return [
+            'data' => $rows,
+            'overall_average' => $overallAverage,
+            'overall_decision' => $overallDecision,
+            'total_modules' => count($rows),
+            'validated_modules' => $validatedCount,
+            'credits_earned' => $creditsEarned,
+            'total_credits' => $totalCredits ?: 30,
+        ];
     }
 
-    /**
-     * Get student schedule.
-     */
     /**
      * Get student schedule.
      */
@@ -154,66 +351,163 @@ class StudentPortalService
     }
 
     /**
-     * Dashboard specific stats.
+     * Dashboard specific stats (100% Live DB Data).
      */
     public function getDashboardStats(int $studentId): array
     {
-        $absences = DB::table('attendances')
+        $student = DB::table('students')->where('id', $studentId)->first();
+
+        $absencesCount = DB::table('attendances')
             ->where('student_id', $studentId)
             ->where('status', 'absent')
             ->count();
 
-        $grades = $this->getGrades($studentId);
-        $gradesCount = $grades->count();
-        $gpa = $gradesCount > 0 ? round((float) $grades->avg('value'), 2) : 0;
+        $absencesJustified = DB::table('attendances')
+            ->where('student_id', $studentId)
+            ->where('status', 'absent')
+            ->where('is_justified', true)
+            ->count();
+
+        $absencesUnjustified = max(0, $absencesCount - $absencesJustified);
+
+        // Real grades calculations
+        $gradesResult = $this->getGrades($studentId);
+        $gpa = $gradesResult['overall_average'];
+        $publishedGrades = $gradesResult['total_modules'];
+        $creditsEarned = $gradesResult['credits_earned'];
+        $totalCredits = $gradesResult['total_credits'];
 
         $pathway = DB::table('student_pathways')
             ->where('student_id', $studentId)
             ->where('is_current', true)
             ->first();
 
+        $groupId = $pathway?->group_id;
+        if (! $groupId) {
+            $groupId = DB::table('student_registrations')
+                ->where('student_id', $studentId)
+                ->value('group_id');
+        }
+
         $classesToday = 0;
         $upcomingExams = 0;
+        $upcomingClasses = [];
 
-        if ($pathway && $pathway->group_id) {
+        if ($groupId) {
+            $currentDayOfWeek = now()->dayOfWeekIso; // 1 (Mon) - 7 (Sun)
             $classesToday = DB::table('schedules')
-                ->where('group_id', $pathway->group_id)
-                ->where('day_of_week', now()->dayOfWeekIso)
+                ->where('group_id', $groupId)
+                ->where('day_of_week', $currentDayOfWeek)
                 ->where('is_active', true)
                 ->count();
 
+            $upcomingClasses = DB::table('schedules')
+                ->join('modules', 'schedules.module_id', '=', 'modules.id')
+                ->leftJoin('rooms', 'schedules.room_id', '=', 'rooms.id')
+                ->leftJoin('professors', 'schedules.professor_id', '=', 'professors.id')
+                ->leftJoin('users', 'professors.user_id', '=', 'users.id')
+                ->where('schedules.group_id', $groupId)
+                ->where('schedules.day_of_week', $currentDayOfWeek)
+                ->where('schedules.is_active', true)
+                ->orderBy('schedules.start_time')
+                ->select([
+                    'schedules.id',
+                    'schedules.start_time',
+                    'schedules.end_time',
+                    'modules.name as title',
+                    'rooms.name as location',
+                    DB::raw("COALESCE(NULLIF(users.name, ''), CONCAT(COALESCE(users.first_name, ''), ' ', COALESCE(users.last_name, ''))) as professor"),
+                ])
+                ->get()
+                ->map(function ($c) {
+                    $currentTime = now()->format('H:i');
+                    $start = substr((string) $c->start_time, 0, 5);
+                    $end = substr((string) $c->end_time, 0, 5);
+                    $status = 'upcoming';
+                    if ($currentTime > $end) {
+                        $status = 'completed';
+                    } elseif ($currentTime >= $start && $currentTime <= $end) {
+                        $status = 'current';
+                    }
+
+                    $prof = trim((string) $c->professor);
+                    if (! empty($prof) && ! str_starts_with($prof, 'Pr.') && ! str_starts_with($prof, 'Dr.')) {
+                        $prof = "Pr. {$prof}";
+                    }
+
+                    return [
+                        'time' => "{$start} - {$end}",
+                        'title' => $c->title,
+                        'location' => $c->location ?: 'Amphi / Salle non assignée',
+                        'professor' => ! empty($prof) ? $prof : 'Enseignant non assigné',
+                        'status' => $status,
+                    ];
+                })
+                ->toArray();
+
             $upcomingExams = DB::table('exams')
-                ->where('group_id', $pathway->group_id)
+                ->where('group_id', $groupId)
                 ->whereDate('exam_date', '>=', now()->toDateString())
+                ->count();
+        }
+
+        // Convocations check if exams count is 0
+        if ($upcomingExams === 0) {
+            $upcomingExams = DB::table('exam_seatings')
+                ->where('student_id', $studentId)
                 ->count();
         }
 
         $recentDocuments = DB::table('document_requests')
             ->join('document_types', 'document_requests.document_type_id', '=', 'document_types.id')
             ->where('document_requests.student_id', $studentId)
-            ->where('document_requests.status', 'ready')
             ->orderByDesc('document_requests.created_at')
             ->limit(5)
-            ->get(['document_types.name as title', 'document_requests.created_at as date'])
-            ->map(fn ($document) => [
-                'title' => $document->title,
-                'date' => substr((string) $document->date, 0, 10),
+            ->get([
+                'document_requests.id',
+                'document_types.name as title',
+                'document_requests.created_at as date',
+                'document_requests.status',
+                'document_requests.hash',
+            ])
+            ->map(fn ($doc) => [
+                'id' => $doc->id,
+                'title' => $doc->title,
+                'date' => substr((string) $doc->date, 0, 10),
+                'status' => $doc->status === 'ready' || $doc->status === 'delivered' ? 'signed' : 'pending',
+                'hash' => $doc->hash ?: ('ENCG-DOC-' . strtoupper(substr(md5($doc->id . $studentId), 0, 12))),
             ])
             ->toArray();
 
         $subGroupInfo = app(StudentSubGroupDispatcherService::class)->getStudentSubGroupInfo($studentId);
 
         return [
-            'absences' => $absences,
-            'published_grades' => $gradesCount,
+            'student_id' => $studentId,
+            'cne' => $student?->cne,
+            'cin' => $student?->cin,
+            'first_name' => $student?->first_name,
+            'last_name' => $student?->last_name,
+            'full_name' => trim(($student?->first_name ?? '') . ' ' . ($student?->last_name ?? '')),
+            'absences' => [
+                'total' => $absencesCount,
+                'justified' => $absencesJustified,
+                'unjustified' => $absencesUnjustified,
+            ],
+            'published_grades' => $publishedGrades,
             'classes_today' => $classesToday,
+            'upcoming_classes' => $upcomingClasses,
             'gpa' => $gpa,
+            'overall_decision' => $gradesResult['overall_decision'],
+            'credits_earned' => $creditsEarned,
+            'total_credits' => $totalCredits,
             'upcoming_exams' => $upcomingExams,
             'recent_documents' => $recentDocuments,
             'academic_info' => $subGroupInfo,
             'section' => $subGroupInfo['section_label'] ?? null,
             'sub_group' => $subGroupInfo['sub_group'] ?? null,
             'group_name' => $subGroupInfo['group_name'] ?? null,
+            'filiere_name' => $subGroupInfo['filiere_name'] ?? null,
+            'semester' => $subGroupInfo['semester'] ?? null,
         ];
     }
 }

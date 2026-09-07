@@ -46,9 +46,9 @@ export default function StudentGrades() {
     const reasonFull = `[${appealReasonType.toUpperCase()}] ${appealReasonDetails.trim()}`;
     try {
       await api.post('/student-portal/grade-appeals', {
-        module_id: selectedModuleForAppeal.module_id || selectedModuleForAppeal.id || 1,
+        module_id: selectedModuleForAppeal.module_id || selectedModuleForAppeal.id,
         assessment_id: selectedModuleForAppeal.assessment_id,
-        original_grade: selectedModuleForAppeal.moyenne_finale || selectedModuleForAppeal.moyenne_normale || 10,
+        original_grade: selectedModuleForAppeal.moyenne_finale ?? selectedModuleForAppeal.moyenne_normale ?? 0,
         reason: reasonFull,
       });
       toast.success('Réclamation enregistrée et transmise à l\'enseignant responsable !');
@@ -79,7 +79,8 @@ export default function StudentGrades() {
   }
 
   const grades = data.data || data;
-  const overallAvg = data.overall_average || 14.85;
+  const overallAvg = data.overall_average !== undefined && data.overall_average !== null ? Number(data.overall_average) : null;
+  const overallDecision = data.overall_decision || (overallAvg !== null ? (overallAvg >= 16 ? 'TRÈS BIEN' : overallAvg >= 14 ? 'BIEN' : overallAvg >= 12 ? 'ASSEZ BIEN' : overallAvg >= 10 ? 'PASSABLE' : 'AJOURNÉ') : null);
 
   const filteredGrades = Array.isArray(grades) ? grades.filter((g: any) => {
     if (selectedSemester === 'all') return true;
@@ -130,7 +131,7 @@ export default function StudentGrades() {
                   const res = await api.post('/v1/student-portal/ai/lmd-judge', { question: 'Est-ce que je valide ?' });
                   setJudge(res.data);
                 } catch {
-                  setJudge({ verdict: 'ADMIS (VALIDATION ORDINAIRE)', explanation_fr: 'Moyenne générale supérieure à 10/20 sans note éliminatoire (< 6.0).' });
+                  toast.error("Le simulateur LMD n'a pas pu traiter la demande. Veuillez réessayer ultérieurement.");
                 } finally {
                   setJudgeLoading(false);
                 }
@@ -209,12 +210,19 @@ export default function StudentGrades() {
           <span className="text-[10px] font-black text-amber-300 uppercase tracking-widest block mb-1">Moyenne Générale</span>
           <div className="flex items-baseline justify-center sm:justify-end gap-1.5">
             <span className="text-5xl sm:text-6xl font-black text-white">
-              {isRevealed ? Number(overallAvg).toFixed(2) : "14.85"}
+              {isRevealed ? (overallAvg !== null ? overallAvg.toFixed(2) : '—') : (overallAvg !== null ? '••••' : '—')}
             </span>
             <span className="text-xl font-bold text-blue-200">/ 20</span>
           </div>
-          <div className="mt-3 inline-flex items-center gap-1.5 bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-xs font-black px-3 py-1 rounded-full">
-            <Award className="w-3.5 h-3.5" /> MENTION BIEN • VALIDÉ
+          <div className={cn(
+            "mt-3 inline-flex items-center gap-1.5 text-xs font-black px-3 py-1 rounded-full border",
+            overallAvg !== null && overallAvg >= 10 
+              ? "bg-emerald-500/20 border-emerald-400/30 text-emerald-300"
+              : overallAvg !== null 
+                ? "bg-rose-500/20 border-rose-400/30 text-rose-300"
+                : "bg-slate-500/20 border-slate-400/30 text-slate-300"
+          )}>
+            <Award className="w-3.5 h-3.5" /> {overallAvg !== null ? (overallAvg >= 10 ? `MENTION ${overallDecision} • VALIDÉ` : 'SESSION DE RATTRAPAGE') : 'DÉLIBÉRATION EN ATTENTE'}
           </div>
         </div>
       </div>
@@ -299,9 +307,12 @@ export default function StudentGrades() {
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {filteredGrades.map((grade: any, idx: number) => {
-                const total = grade.moyenne_finale || grade.moyenne_normale || 14.5;
-                const decision = normalizeDecision(grade.decision_finale || grade.decision_normale, total);
-                const code = decisionLabel(String(decision));
+                const total = grade.moyenne_finale !== null && grade.moyenne_finale !== undefined 
+                  ? Number(grade.moyenne_finale) 
+                  : (grade.moyenne_normale !== null && grade.moyenne_normale !== undefined ? Number(grade.moyenne_normale) : null);
+                const rawDecision = grade.decision_finale || grade.decision_normale;
+                const decision = rawDecision ? normalizeDecision(rawDecision, total || 0) : null;
+                const code = decision ? decisionLabel(String(decision)) : null;
                 
                 return (
                   <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
@@ -310,17 +321,23 @@ export default function StudentGrades() {
                       <div className="text-[10px] font-mono font-bold text-slate-400 uppercase mt-0.5">{grade.module_code || grade.module?.code || `M-${idx + 101}`}</div>
                     </td>
                     <td className="py-4 text-center font-mono font-bold text-slate-600 dark:text-slate-300">
-                      {grade.cc_note ? Number(grade.cc_note).toFixed(2) : '15.00'}
+                      {grade.cc_note !== null && grade.cc_note !== undefined ? Number(grade.cc_note).toFixed(2) : '—'}
                     </td>
                     <td className="py-4 text-center font-mono font-bold text-slate-600 dark:text-slate-300">
-                      {grade.exam_note ? Number(grade.exam_note).toFixed(2) : '14.00'}
+                      {grade.exam_note !== null && grade.exam_note !== undefined ? Number(grade.exam_note).toFixed(2) : '—'}
                     </td>
                     <td className="py-4 text-center font-mono font-black text-[#001A4B] dark:text-blue-300 text-base">
-                      {Number(total).toFixed(2)}
+                      {total !== null ? Number(total).toFixed(2) : '—'}
                     </td>
                     <td className="py-4 text-center">
                       <div className="flex justify-center mt-1">
-                        <LmdBadge decision={code} score={total} />
+                        {total !== null && code ? (
+                          <LmdBadge decision={code} score={total} />
+                        ) : (
+                          <span className="text-[10px] font-bold text-slate-400 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-full">
+                            En attente
+                          </span>
+                        )}
                       </div>
                     </td>
                     <td className="py-4 text-right pr-4">

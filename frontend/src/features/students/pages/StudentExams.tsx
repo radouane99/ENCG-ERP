@@ -41,34 +41,38 @@ export default function StudentExams() {
           <h1 className="text-3xl font-black text-white italic mb-2">Mes Examens & Présences</h1>
           <p className="text-blue-100 mb-6">Consultez vos statuts de présence aux examens et gérez vos justifications.</p>
           <button className="bg-white/20 hover:bg-white/30 text-white border border-white/30 px-5 py-2.5 rounded-xl font-bold text-sm transition-colors flex items-center gap-2 w-max shadow-sm backdrop-blur-sm">
-            ðŸ¦… Mon Rattrapage
+            Session de Rattrapage
           </button>
         </div>
       </div>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-white/5 text-center flex flex-col justify-center items-center">
-          <div className="text-3xl font-black text-white">8</div>
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 text-center flex flex-col justify-center items-center">
+          <div className="text-3xl font-black text-slate-800 dark:text-white">{exams.length}</div>
           <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">TOTAL EXAMENS</div>
         </div>
-        <div className="bg-emerald-50 rounded-2xl p-6 shadow-sm border border-emerald-100 text-center flex flex-col justify-center items-center">
-          <div className="text-3xl font-black text-[#003a8c]">1</div>
+        <div className="bg-emerald-50 dark:bg-emerald-950/40 rounded-2xl p-6 shadow-sm border border-emerald-100 dark:border-emerald-800 text-center flex flex-col justify-center items-center">
+          <div className="text-3xl font-black text-emerald-600">{exams.filter((e: any) => e.status === 'Présent').length}</div>
           <div className="text-[10px] font-bold text-emerald-600/80 uppercase tracking-widest mt-1">PRÉSENT</div>
         </div>
-        <div className="bg-rose-50 rounded-2xl p-6 shadow-sm border border-rose-100 text-center flex flex-col justify-center items-center">
-          <div className="text-3xl font-black text-rose-600">0</div>
+        <div className="bg-rose-50 dark:bg-rose-950/40 rounded-2xl p-6 shadow-sm border border-rose-100 dark:border-rose-800 text-center flex flex-col justify-center items-center">
+          <div className="text-3xl font-black text-rose-600">{exams.filter((e: any) => e.status === 'Absent').length}</div>
           <div className="text-[10px] font-bold text-rose-600/80 uppercase tracking-widest mt-1">ABSENT</div>
         </div>
-        <div className="bg-amber-50 rounded-2xl p-6 shadow-sm border border-amber-100 text-center flex flex-col justify-center items-center">
-          <div className="text-3xl font-black text-amber-600">0</div>
-          <div className="text-[10px] font-bold text-amber-600/80 uppercase tracking-widest mt-1">JUSTIF. À DÉPOSER</div>
+        <div className="bg-amber-50 dark:bg-amber-950/40 rounded-2xl p-6 shadow-sm border border-amber-100 dark:border-amber-800 text-center flex flex-col justify-center items-center">
+          <div className="text-3xl font-black text-amber-600">{exams.filter((e: any) => e.status !== 'Présent' && e.status !== 'Absent').length}</div>
+          <div className="text-[10px] font-bold text-amber-600/80 uppercase tracking-widest mt-1">PLANIFIÉ / EN ATTENTE</div>
         </div>
       </div>
 
       {/* Exams List */}
       <div className="space-y-4">
-        {exams.map((exam: { name: string; type: string; date?: string; time?: string; duration?: string; status?: string; action?: string }, idx: number) => (
+        {exams.length === 0 ? (
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-10 text-center border border-slate-200 dark:border-slate-800 text-slate-400 text-sm font-bold">
+            Aucun examen programmé pour le moment.
+          </div>
+        ) : exams.map((exam: { name: string; type: string; date?: string; time?: string; duration?: string; status?: string; action?: string }, idx: number) => (
           <div key={idx} className="bg-white rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm border border-white/5 hover:shadow-md transition-shadow">
             
             <div className="flex-1">

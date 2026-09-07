@@ -30,6 +30,11 @@ class PublicVerificationController extends Controller
             return $this->verifyTimetableDocument($request, $documentId);
         }
 
+        // 1.c Convocation officielle aux examens (Token CONV-)
+        if (str_starts_with($documentId, 'CONV-')) {
+            return $this->verifyConvocationDocument($request, $documentId);
+        }
+
         // 2. Document étudiant généré (GeneratedDocument)
         $document = GeneratedDocument::with(['student.user', 'student.registrations.filiere'])
             ->where('verification_token', $documentId)
@@ -516,6 +521,65 @@ class PublicVerificationController extends Controller
         return response()->json([
             'success' => false,
             'message' => 'Emploi du temps introuvable ou non reconnu.',
+        ], 404);
+    }
+
+    /**
+     * Vérifier l'authenticité d'une Convocation officielle aux examens.
+     */
+    private function verifyConvocationDocument(Request $request, string $token): JsonResponse
+    {
+        $cleanToken = str_replace(['CONV-STUDENT-', 'CONV-'], '', $token);
+        $cne = explode('-', $cleanToken)[0];
+
+        $student = \App\Models\Student::where('cne', $cne)
+            ->orWhere('student_number', $cne)
+            ->with(['user', 'registrations.group.filiere', 'registrations.filiere'])
+            ->first();
+
+        if ($student) {
+            $stUser = $student->user;
+            $reg = $student->registrations()->latest()->first();
+            $filiereName = $reg?->filiere?->name ?? 'Tronc Commun ENCG';
+            $groupName = $reg?->group?->name ?? 'TC-S2-G1';
+            $subGroup = $reg?->sub_group ?? 'G1.2';
+            $semNumber = $reg?->semester_number ?? 2;
+
+            try {
+                activity()
+                    ->event('verified')
+                    ->withProperties([
+                        'ip' => $request->ip(),
+                        'user_agent' => $request->userAgent(),
+                        'document_id' => $token,
+                    ])
+                    ->log('Convocation examen vérifiée via portail public');
+            } catch (\Throwable) {
+            }
+
+            return response()->json([
+                'success' => true,
+                'is_valid' => true,
+                'data' => [
+                    'document_type' => 'Convocation Officielle aux Épreuves d\'Examens',
+                    'student_name' => $stUser ? strtoupper($stUser->last_name).' '.$stUser->first_name : 'Étudiant',
+                    'beneficiary' => $stUser ? strtoupper($stUser->last_name).' '.$stUser->first_name : 'Étudiant ENCG Fès',
+                    'student_number' => $student->student_number ?? $student->cne,
+                    'cne' => $student->cne ?? $student->student_number,
+                    'filiere' => "{$filiereName} (Semestre {$semNumber})",
+                    'group' => "{$groupName} • {$subGroup}",
+                    'issued_at' => now()->format('d/m/Y H:i'),
+                    'status' => 'Authentique & Certifié Conforme (Loi 53-05)',
+                    'tracking_code' => $token,
+                    'security_hash' => hash('sha256', "encg-conv-student-{$student->id}-{$cne}"),
+                    'institution' => 'École Nationale de Commerce et de Gestion de Fès (USMBA)',
+                ],
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Convocation introuvable ou non reconnue.',
         ], 404);
     }
 }

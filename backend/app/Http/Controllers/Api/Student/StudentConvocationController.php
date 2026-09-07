@@ -24,9 +24,58 @@ class StudentConvocationController extends Controller
         $student = Student::where('user_id', $request->user()->id)->first();
         $studentId = $student?->id ?? 0;
 
-        $seatings = ExamSeating::with(['exam.module', 'room'])
-            ->where('student_id', $studentId)
-            ->get();
+        $sessionType = strtoupper($request->query('session_type', ''));
+
+        $query = ExamSeating::with(['exam.module', 'exam.session', 'room'])
+            ->where('student_id', $studentId);
+
+        if ($sessionType === 'RATTRAPAGE') {
+            $query->where(function ($q) {
+                $q->whereHas('exam.session', function ($s) {
+                    $s->where('type', 'rattrapage')->orWhere('name', 'like', '%rattrapage%');
+                })->orWhereHas('exam', function ($e) {
+                    $e->where('type', 'rattrapage');
+                });
+            });
+        } elseif ($sessionType === 'ORDINAIRE' || $sessionType === 'NORMALE') {
+            $query->where(function ($q) {
+                $q->whereHas('exam.session', function ($s) {
+                    $s->whereIn('type', ['normale', 'ordinaire'])->orWhere('name', 'like', '%normale%')->orWhere('name', 'like', '%ordinaire%');
+                })->orWhereHas('exam', function ($e) {
+                    $e->whereIn('type', ['normale', 'ordinaire', 'written', 'oral']);
+                });
+            });
+        }
+
+        $seatings = $query->get();
+
+        // Fallback intelligent if session types aren't explicitly labeled
+        if ($seatings->isEmpty() && ! empty($sessionType)) {
+            $allSeatings = ExamSeating::with(['exam.module', 'exam.session', 'room'])
+                ->where('student_id', $studentId)
+                ->get();
+
+            if ($sessionType === 'RATTRAPAGE') {
+                $seatings = $allSeatings->filter(function ($s) {
+                    $date = $s->exam?->exam_date ? Carbon::parse($s->exam->exam_date) : null;
+                    return ($s->exam?->session && str_contains(strtolower($s->exam->session->name ?? ''), 'rattrapage'))
+                        || ($date && $date->day > 10);
+                });
+            } else {
+                $seatings = $allSeatings->filter(function ($s) {
+                    $date = $s->exam?->exam_date ? Carbon::parse($s->exam->exam_date) : null;
+                    return ! ($s->exam?->session && str_contains(strtolower($s->exam->session->name ?? ''), 'rattrapage'))
+                        && (! $date || $date->day <= 10);
+                });
+            }
+            if ($seatings->isEmpty()) {
+                $seatings = $allSeatings;
+            }
+        }
+
+        $seatings = $seatings->sortBy(function ($s) {
+            return ($s->exam?->exam_date ? Carbon::parse($s->exam->exam_date)->format('Ymd') : '99999999').'_'.($s->exam?->start_time ?? '00:00');
+        });
 
         $convocations = $seatings->map(function ($s) {
             $exam = $s->exam;

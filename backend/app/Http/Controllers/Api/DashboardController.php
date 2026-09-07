@@ -28,7 +28,16 @@ class DashboardController extends Controller
             return response()->json($this->analyticsService->getProfessorStats($user->id));
         }
 
-        return response()->json($this->analyticsService->getStudentStats($user->id));
+        $student = $user->student;
+        if ($student) {
+            $stats = app(\App\Services\Academic\StudentPortalService::class)->getDashboardStats($student->id);
+            return response()->json([
+                'success' => true,
+                'data' => $stats,
+            ]);
+        }
+
+        return response()->json(['success' => true, 'data' => []]);
     }
 
     /**
@@ -52,7 +61,18 @@ class DashboardController extends Controller
      */
     public function getStudentStats(Request $request): JsonResponse
     {
-        return response()->json($this->analyticsService->getStudentStats($request->user()->id));
+        $user = $request->user();
+        $student = $user->student;
+        if (! $student) {
+            return response()->json(['success' => false, 'message' => 'Profil étudiant introuvable'], 404);
+        }
+
+        $stats = app(\App\Services\Academic\StudentPortalService::class)->getDashboardStats($student->id);
+
+        return response()->json([
+            'success' => true,
+            'data' => $stats,
+        ]);
     }
 
     /**

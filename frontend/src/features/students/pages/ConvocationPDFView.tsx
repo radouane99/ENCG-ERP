@@ -81,23 +81,23 @@ export default function ConvocationPDFView() {
             <div className="grid grid-cols-2 gap-y-4 gap-x-8">
               <div className="flex font-bold text-sm text-[#001A4B]">
                 <div className="w-36 uppercase">CODE D'INSCRIPTION<br/>(CNE)</div>
-                <div>: S20260001</div>
+                <div>: {(user as any)?.cne || '—'}</div>
               </div>
               <div className="flex font-bold text-sm text-[#001A4B] items-center">
-                <div className="w-36 uppercase">NÂ° DE C.I.N</div>
-                <div>: Non renseigné</div>
+                <div className="w-36 uppercase">N° DE C.I.N</div>
+                <div>: {(user as any)?.cin || '—'}</div>
               </div>
               <div className="flex font-bold text-sm text-[#001A4B]">
                 <div className="w-36 uppercase">NOM & PRÉNOM</div>
-                <div className="uppercase">: {user?.name || 'ANISS EL ALAOUI'}</div>
+                <div className="uppercase">: {user?.name || 'Étudiant'}</div>
               </div>
               <div className="flex font-bold text-sm text-[#001A4B]">
-                <div className="w-36 uppercase">NIVEAU D'ÉTUDES</div>
-                <div>: 1Lème année</div>
+                <div className="w-36 uppercase">GROUPE / SECTION</div>
+                <div>: {(user as any)?.group_name || (user as any)?.section || '—'}</div>
               </div>
               <div className="flex font-bold text-sm text-[#001A4B] col-span-2">
                 <div className="w-36 uppercase">FILIÈRE D'ÉTUDES</div>
-                <div>: Génie Informatique</div>
+                <div>: {(user as any)?.filiere?.name || 'Diplôme ENCG Fès'}</div>
               </div>
             </div>
           </div>

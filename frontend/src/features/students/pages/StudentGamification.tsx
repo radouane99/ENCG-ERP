@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { Trophy, Gift, Target, Flame, ChevronRight, CheckCircle2, Lock, Zap } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { useAuthStore } from '@/stores/authStore';
@@ -52,7 +52,7 @@ export default function StudentGamification() {
             </div>
 
             <div className="flex justify-between items-end relative z-10">
-              <div className="text-sm font-bold uppercase tracking-wider">{user?.name || 'ANISS EL ALAOUI'}</div>
+              <div className="text-sm font-bold uppercase tracking-wider">{user?.name || 'ÉTUDIANT ENCG'}</div>
               <div className="text-[10px] font-bold text-blue-200 bg-white/20 px-2 py-1 rounded backdrop-blur-sm">
                 NIVEAU 4
               </div>

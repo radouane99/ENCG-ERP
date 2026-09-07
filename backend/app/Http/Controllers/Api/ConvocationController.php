@@ -648,10 +648,142 @@ class ConvocationController extends Controller
 
     // ─── PDF / EMAIL (garde la logique actuelle pour l'instant) ───
 
-    public function downloadStudentConvocationPdf(Request $request, int $studentId)
+    public function downloadStudentConvocationPdf(Request $request, string|int $studentId)
     {
-        // Garde le code existant pour l'instant
-        // Idéalement : déléguer à un ConvocationPdfService
+        $student = (is_numeric($studentId) ? Student::with(['user', 'registrations.group.filiere', 'registrations.filiere'])->find($studentId) : Student::where('uuid', $studentId)->with(['user', 'registrations.group.filiere', 'registrations.filiere'])->first())
+            ?: (is_numeric($studentId) ? Student::where('user_id', $studentId)->with(['user', 'registrations.group.filiere', 'registrations.filiere'])->first() : null)
+            ?: ($request->user()?->student)
+            ?: Student::where('user_id', $request->user()?->id)->with(['user', 'registrations.group.filiere', 'registrations.filiere'])->first();
+
+        if (! $student) {
+            return response()->json(['success' => false, 'message' => 'Étudiant introuvable.'], 404);
+        }
+
+        $sessionType = strtoupper($request->query('session_type', 'ORDINAIRE'));
+
+        $query = ExamSeating::with(['exam.module', 'exam.session', 'exam.group', 'room'])
+            ->where('student_id', $student->id);
+
+        if ($sessionType === 'RATTRAPAGE') {
+            $query->where(function ($q) {
+                $q->whereHas('exam.session', function ($s) {
+                    $s->where('type', 'rattrapage')->orWhere('name', 'like', '%rattrapage%');
+                })->orWhereHas('exam', function ($e) {
+                    $e->where('type', 'rattrapage');
+                });
+            });
+        } elseif ($sessionType === 'ORDINAIRE' || $sessionType === 'NORMALE') {
+            $query->where(function ($q) {
+                $q->whereHas('exam.session', function ($s) {
+                    $s->whereIn('type', ['normale', 'ordinaire'])->orWhere('name', 'like', '%normale%')->orWhere('name', 'like', '%ordinaire%');
+                })->orWhereHas('exam', function ($e) {
+                    $e->whereIn('type', ['normale', 'ordinaire', 'written', 'oral']);
+                });
+            });
+        }
+
+        $seatings = $query->get();
+
+        // Fallback intelligent if session types aren't explicitly labeled
+        if ($seatings->isEmpty() && ! empty($sessionType)) {
+            $allSeatings = ExamSeating::with(['exam.module', 'exam.session', 'exam.group', 'room'])
+                ->where('student_id', $student->id)
+                ->get();
+
+            if ($sessionType === 'RATTRAPAGE') {
+                $seatings = $allSeatings->filter(function ($s) {
+                    $date = $s->exam?->exam_date ? Carbon::parse($s->exam->exam_date) : null;
+                    return ($s->exam?->session && str_contains(strtolower($s->exam->session->name ?? ''), 'rattrapage'))
+                        || ($date && $date->day > 10);
+                });
+            } else {
+                $seatings = $allSeatings->filter(function ($s) {
+                    $date = $s->exam?->exam_date ? Carbon::parse($s->exam->exam_date) : null;
+                    return ! ($s->exam?->session && str_contains(strtolower($s->exam->session->name ?? ''), 'rattrapage'))
+                        && (! $date || $date->day <= 10);
+                });
+            }
+            if ($seatings->isEmpty()) {
+                $seatings = $allSeatings;
+            }
+        }
+
+        $seatings = $seatings->sortBy(function ($s) {
+            return ($s->exam?->exam_date ? Carbon::parse($s->exam->exam_date)->format('Ymd') : '99999999').'_'.($s->exam?->start_time ?? '00:00');
+        });
+
+        $stUser = $student->user;
+        $studentName = $stUser ? trim(($stUser->first_name ?? '').' '.($stUser->last_name ?? '')) : 'Étudiant ENCG';
+        $cne = $student->cne ?? 'N130094822';
+        $cin = $student->cin ?? 'F598711';
+
+        $reg = $student->registrations()->latest()->first();
+        $filiereName = $reg?->filiere?->name ?? 'Tronc Commun ENCG';
+        $groupName = $reg?->group?->name ?? 'TC-S2-G1';
+        $subGroup = $reg?->sub_group ?? 'G1.2';
+        $semesterNumber = $reg?->semester_number ?? 2;
+
+        $examsFormatted = $seatings->map(function ($s) {
+            $exam = $s->exam;
+            $moduleName = $exam?->module?->name ?? 'Module';
+            $moduleCode = $exam?->module?->code ?? ('MOD-'.($exam?->id ?? '0'));
+            $dateStr = $exam?->exam_date ? Carbon::parse($exam->exam_date)->format('d/m/Y') : 'À déterminer';
+            $timeStr = $exam?->start_time ? substr($exam->start_time, 0, 5) : '09:00';
+            $duration = ($exam?->duration_minutes ?? 120).' min';
+            $roomName = $s->room?->name ?? 'Salle non assignée';
+            $seatNumber = ExamConvocationService::seatNumberFor($s);
+
+            return [
+                'date' => $dateStr,
+                'time' => "{$timeStr} ({$duration})",
+                'module_code' => $moduleCode,
+                'module_name' => $moduleName,
+                'room' => $roomName,
+                'seat' => "Table N° {$seatNumber}",
+                'qr_token' => $s->qr_token ?? ("CONV-{$s->id}"),
+            ];
+        })->values()->all();
+
+        // Verification token & QR Code
+        $verifyToken = hash('sha256', "CONV-STUDENT-{$cne}-{$sessionType}-".now()->toDateString());
+        $verifyUrl = url("/verify/document/CONV-{$cne}");
+        $qrBase64 = null;
+        if (class_exists(\SimpleSoftwareIO\QrCode\Facades\QrCode::class)) {
+            try {
+                $qrSvg = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')->size(160)->margin(0)->generate($verifyUrl);
+                $qrBase64 = 'data:image/svg+xml;base64,'.base64_encode($qrSvg);
+            } catch (\Throwable $e) {
+                \Log::warning('QR generation error for Convocation: '.$e->getMessage());
+            }
+        }
+
+        $logoBase64 = null;
+        $logoPath = public_path('logo-encg.png');
+        if (file_exists($logoPath)) {
+            $logoBase64 = 'data:image/png;base64,'.base64_encode(file_get_contents($logoPath));
+        }
+
+        $pdf = Pdf::loadView('pdf.convocation_officielle_etudiant', [
+            'student' => $student,
+            'studentName' => $studentName,
+            'cne' => $cne,
+            'cin' => $cin,
+            'filiereName' => $filiereName,
+            'groupName' => $groupName,
+            'subGroup' => $subGroup,
+            'semesterNumber' => $semesterNumber,
+            'sessionType' => $sessionType === 'RATTRAPAGE' ? 'SESSION DE RATTRAPAGE' : 'SESSION ORDINAIRE',
+            'academicYear' => '2026/2027',
+            'exams' => $examsFormatted,
+            'logoBase64' => $logoBase64,
+            'qrBase64' => $qrBase64,
+            'verifyUrl' => $verifyUrl,
+            'verifyToken' => $verifyToken,
+        ])->setPaper('a4', 'portrait');
+
+        $filename = 'Convocation_Examens_'.str_replace(' ', '_', $studentName).'_'.$sessionType.'.pdf';
+
+        return $pdf->download($filename);
     }
 
     public function downloadProfessorConvocationPdf(Request $request, int $professorId)

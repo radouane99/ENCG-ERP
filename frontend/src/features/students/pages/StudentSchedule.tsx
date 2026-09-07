@@ -52,16 +52,6 @@ const TIME_SLOTS = [
   { start: '16:45', end: '18:45', label: '16:45 - 18:45', period: 'Après-midi 2' },
 ];
 
-const DEFAULT_SCHEDULE: ScheduleSession[] = [
-  { id: 1, day_of_week: 1, day: 'Lundi', time: '08:30 - 10:30', start_time: '08:30', end_time: '10:30', title: 'Statistiques et Probabilités', location: 'Amphithéâtre A', room: 'Amphithéâtre A', type: 'Cours Magistral (CM)', raw_type: 'cm', professor: 'Pr. Karim Alami' },
-  { id: 2, day_of_week: 1, day: 'Lundi', time: '10:45 - 12:45', start_time: '10:45', end_time: '12:45', title: 'Informatique de Gestion II', location: 'Amphithéâtre A', room: 'Amphithéâtre A', type: 'Cours Magistral (CM)', raw_type: 'cm', professor: 'Pr. Karim Alami' },
-  { id: 3, day_of_week: 2, day: 'Mardi', time: '10:45 - 12:45', start_time: '10:45', end_time: '12:45', title: 'Comptabilité Générale II', location: 'Amphithéâtre B', room: 'Amphithéâtre B', type: 'Cours Magistral (CM)', raw_type: 'cm', professor: 'Pr. Amina Chraibi' },
-  { id: 4, day_of_week: 2, day: 'Mardi', time: '14:30 - 16:30', start_time: '14:30', end_time: '16:30', title: 'Soft Skills II', location: 'Amphithéâtre B', room: 'Amphithéâtre B', type: 'Cours Magistral (CM)', raw_type: 'cm', professor: 'Pr. Amina Chraibi' },
-  { id: 5, day_of_week: 3, day: 'Mercredi', time: '14:30 - 16:30', start_time: '14:30', end_time: '16:30', title: 'Économie Générale II', location: 'Salle 101', room: 'Salle 101', type: 'Travaux Dirigés (TD)', raw_type: 'td', professor: 'Pr. Tarik Meziane' },
-  { id: 6, day_of_week: 4, day: 'Jeudi', time: '16:45 - 18:45', start_time: '16:45', end_time: '18:45', title: 'Langue Anglaise II', location: 'Salle 102', room: 'Salle 102', type: 'Travaux Dirigés (TD)', raw_type: 'td', professor: 'Pr. Bouchra Bennani' },
-  { id: 7, day_of_week: 5, day: 'Vendredi', time: '08:30 - 10:30', start_time: '08:30', end_time: '10:30', title: 'Marketing de Base', location: 'Salle Informatique I', room: 'Salle Informatique I', type: 'Travaux Pratiques (TP)', raw_type: 'tp', professor: 'Pr. Mohamed Benjelloun' },
-];
-
 export default function StudentSchedule() {
   const { user } = useAuthStore();
   const [viewMode, setViewMode] = useState<'matrix' | 'cards'>('matrix');
@@ -74,14 +64,25 @@ export default function StudentSchedule() {
     year: 'numeric'
   }).toUpperCase();
 
-  // Student details
-  const userAny = user as any;
-  const studentSection = userAny?.section || 'Section 1';
-  const studentSubGroup = userAny?.sub_group || 'G1.2';
-  const studentGroupName = userAny?.group_name || 'TC-S2-G1';
-  const studentFiliere = userAny?.filiere?.name || 'Tronc Commun ENCG (Semestre 2)';
+  // Fetch real student info & sub-group from backend
+  const { data: dashboardData } = useQuery({
+    queryKey: ['student-stats-schedule'],
+    queryFn: async () => {
+      const res = await api.get('/student-portal/dashboard');
+      return res.data?.data;
+    },
+    staleTime: 60000,
+  });
 
-  // 1. Fetch Schedule from backend API
+  const userAny = user as any;
+  const studentSection = dashboardData?.section || userAny?.section || '—';
+  const studentSubGroup = dashboardData?.sub_group || userAny?.sub_group || '—';
+  const studentGroupName = dashboardData?.group_name || userAny?.group_name || '—';
+  const studentFiliere = dashboardData?.filiere_name 
+    ? `ENCG Grande École • S${dashboardData?.semester || 1} ${dashboardData?.filiere_name}`
+    : (userAny?.filiere?.name || 'ENCG Grande École');
+
+  // 1. Fetch Schedule from backend API (100% Live DB Data)
   const { data: scheduleData, isLoading, refetch, isFetching } = useQuery({
     queryKey: ['student-schedule'],
     retry: 1,
@@ -95,7 +96,7 @@ export default function StudentSchedule() {
   // Harmonize schedule items
   const schedule: ScheduleSession[] = useMemo(() => {
     if (!Array.isArray(scheduleData) || scheduleData.length === 0) {
-      return DEFAULT_SCHEDULE;
+      return [];
     }
 
     const daysMap: Record<number, string> = {
@@ -421,6 +422,14 @@ export default function StudentSchedule() {
       {isLoading ? (
         <div className="flex h-64 items-center justify-center text-slate-400 font-bold">
           <Spinner size="lg" />
+        </div>
+      ) : schedule.length === 0 ? (
+        <div className="bg-white dark:bg-slate-900 rounded-3xl p-12 text-center shadow-sm border border-slate-200 dark:border-slate-800 space-y-3">
+          <CalendarIcon className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto" />
+          <h3 className="text-base font-black text-slate-800 dark:text-slate-100">Aucun cours programmé</h3>
+          <p className="text-xs text-slate-500 max-w-md mx-auto">
+            L'emploi du temps officiel pour votre groupe ({studentGroupName} • {studentSubGroup}) n'a pas encore de séances enregistrées dans la base de données.
+          </p>
         </div>
       ) : viewMode === 'matrix' ? (
         /* ══════════════════════════════════════════════════════════════

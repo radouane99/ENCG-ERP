@@ -4,8 +4,23 @@ import { cn } from '@shared/lib/utils';
 import { useAuthStore } from '@/stores/authStore';
 import { toast } from 'sonner';
 
+import { useQuery } from '@tanstack/react-query';
+import api from '@/shared/lib/api';
+
 export default function StudentPortfolio() {
   const { user } = useAuthStore();
+
+  const { data: dashboardData } = useQuery({
+    queryKey: ['student-stats-portfolio'],
+    queryFn: async () => {
+      const res = await api.get('/student-portal/dashboard');
+      return res.data?.data;
+    },
+    staleTime: 60000,
+  });
+
+  const filiereName = dashboardData?.filiere_name || (user as any)?.filiere?.name || 'Tronc Commun ENCG';
+  const semester = dashboardData?.semester || (user as any)?.current_semester || 1;
 
   const skills = [
     { name: 'Marketing Digital & Stratégie', level: 95 },
@@ -16,9 +31,9 @@ export default function StudentPortfolio() {
   ];
 
   const badges = [
-    { icon: <TrendingUp className="w-5 h-5 text-amber-500" />, name: 'As du Management', desc: 'Major de promo S1', color: 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-300' },
-    { icon: <Cpu className="w-5 h-5 text-blue-500" />, name: 'Digital Native', desc: 'Projet ERP & CRM certifié', color: 'bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800 text-blue-900 dark:text-blue-300' },
-    { icon: <Users className="w-5 h-5 text-emerald-500" />, name: 'Leader Associatif', desc: 'Membre actif Club ENCG', color: 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-300' },
+    { icon: <TrendingUp className="w-5 h-5 text-amber-500" />, name: 'Parcours Académique', desc: `Inscrit en Semestre ${semester}`, color: 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-300' },
+    { icon: <Cpu className="w-5 h-5 text-blue-500" />, name: 'Digital Native', desc: 'Portail Étudiant Certifié', color: 'bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800 text-blue-900 dark:text-blue-300' },
+    { icon: <Users className="w-5 h-5 text-emerald-500" />, name: 'Vie Étudiante', desc: 'Membre actif ENCG Fès', color: 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-300' },
   ];
 
   const handleShare = () => {
@@ -49,7 +64,7 @@ export default function StudentPortfolio() {
             <ShieldCheck className="w-3.5 h-3.5" /> Profil Certifié ENCG Fès
           </div>
           <h1 className="text-3xl sm:text-4xl font-black text-white">{user?.name || 'Étudiant ENCG'}</h1>
-          <p className="text-blue-200 text-sm font-medium">Grande École de Commerce et Gestion • Semestre 6 (GFC)</p>
+          <p className="text-blue-200 text-sm font-medium">Grande École de Commerce et Gestion • Semestre {semester} ({filiereName})</p>
           
           <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 pt-3">
             <button 

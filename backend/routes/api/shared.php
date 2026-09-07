@@ -45,6 +45,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
 
     Route::get('/students/{student}/dossier', [UnifiedStudentRecordController::class, 'show']);
+    Route::get('/students/{student}/convocation-pdf', [ConvocationController::class, 'downloadStudentConvocationPdf']);
 
     Route::prefix('calendar')->group(function () {
         Route::get('/events', [AcademicCalendarController::class, 'events']);

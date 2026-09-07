@@ -423,7 +423,6 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     Route::get('students/{student}/dossier-audit-log', [StudentController::class, 'getDossierAuditLog']);
     Route::get('students/{student}/transcript', [StudentTranscriptController::class, 'generateForAdmin']);
 
-    Route::get('students/{student}/convocation-pdf', [ConvocationController::class, 'downloadStudentConvocationPdf']);
     Route::get('professors/{professor}/convocation-pdf', [ConvocationController::class, 'downloadProfessorConvocationPdf']);
     Route::post('convocations/send-students', [ConvocationController::class, 'sendStudentConvocationsIntelligent']);
     Route::post('convocations/send-professors', [ConvocationController::class, 'sendProfessorConvocationsIntelligent']);
