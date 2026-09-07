@@ -22,7 +22,10 @@ class TafemQualityReportService
             ];
         }
 
-        $select = ['id', 'cne', 'cin', 'massar_code'];
+        $select = ['id', 'cne', 'cin'];
+        if (Schema::hasColumn('students', 'massar_code')) {
+            $select[] = 'massar_code';
+        }
         if (Schema::hasColumn('students', 'photo_path')) {
             $select[] = 'photo_path';
         }

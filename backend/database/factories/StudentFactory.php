@@ -23,7 +23,6 @@ class StudentFactory extends Factory
             'user_id' => User::factory(),
             'student_number' => $year.str_pad($count, 4, '0', STR_PAD_LEFT),
             'cne' => strtoupper(fake()->unique()->bothify('??#####')),
-            'massar_code' => fake()->optional()->bothify('G########'),
             'gender' => fake()->randomElement(['male', 'female']),
             'status' => 'active',
             'scholarship_type' => null,

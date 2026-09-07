@@ -36,6 +36,21 @@ class Student extends Model
         ];
     }
 
+    /**
+     * Alias virtuel pour le Code Massar. Dans le système unifié marocain,
+     * CNE et Code Massar désignent le même identifiant (ex: N132456789).
+     * Le stockage physique réside exclusivement dans la colonne `cne` (zéro redondance BDD).
+     */
+    protected function massarCode(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->attributes['cne'] ?? null,
+            set: fn ($val) => [
+                'cne' => $val,
+            ],
+        );
+    }
+
     public function getUserAttributeSafely(string $attribute)
     {
         $userVal = null;

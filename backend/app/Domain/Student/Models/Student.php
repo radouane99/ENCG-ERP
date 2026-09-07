@@ -67,6 +67,11 @@ class Student extends Model
         return "{$this->first_name_ar} {$this->last_name_ar}";
     }
 
+    public function getMassarCodeAttribute(): ?string
+    {
+        return $this->cne;
+    }
+
     // ── Relationships ──────────────────────────────────────────
     public function institution(): BelongsTo
     {

@@ -73,14 +73,14 @@ it('exports an empty APOGEE CSV without dummy rows', function () {
 it('exports real APOGEE rows with CNE and Massar', function () {
     $module = Module::factory()->create();
     $assessment = Assessment::create(['module_id' => $module->id, 'type' => 'Exam', 'weight' => 100]);
-    $a = Student::factory()->create(['cne' => 'CNE11111', 'massar_code' => 'G11111111']);
-    $b = Student::factory()->create(['cne' => 'CNE22222', 'massar_code' => 'G22222222']);
+    $a = Student::factory()->create(['cne' => 'G11111111']);
+    $b = Student::factory()->create(['cne' => 'G22222222']);
     Grade::create(['student_id' => $a->id, 'assessment_id' => $assessment->id, 'value' => 12.5]);
     Grade::create(['student_id' => $b->id, 'assessment_id' => $assessment->id, 'value' => 5.0]);
 
     $records = app(CanonicalApogeeExport::class)->generateExportData();
     expect($records)->toHaveCount(2)
-        ->and(collect($records)->pluck('COD_ETU')->all())->toContain('CNE11111', 'CNE22222')
+        ->and(collect($records)->pluck('COD_ETU')->all())->toContain('G11111111', 'G22222222')
         ->and(collect($records)->pluck('COD_MAS')->all())->toContain('G11111111', 'G22222222')
         ->and(collect($records)->pluck('COD_TRE')->all())->toContain('V', 'NV');
 });
@@ -302,7 +302,7 @@ it('keeps course and exam attendance counters separate and opens a discipline ca
 
 it('forbids IDOR on student dossier and records TAFEM-style audit lines', function () {
     $admin = roadmapAdmin();
-    $student = Student::factory()->create(['massar_code' => 'G99999999', 'cin' => 'AB123456']);
+    $student = Student::factory()->create(['cne' => 'G99999999', 'cin' => 'AB123456']);
     $other = User::factory()->create();
     Role::firstOrCreate(['name' => 'student', 'guard_name' => 'sanctum']);
     $other->assignRole('student');

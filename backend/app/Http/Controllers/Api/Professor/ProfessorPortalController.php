@@ -1870,7 +1870,6 @@ class ProfessorPortalController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('students.student_number', 'ilike', "%{$search}%")
                     ->orWhere('students.cne', 'ilike', "%{$search}%")
-                    ->orWhere('students.massar_code', 'ilike', "%{$search}%")
                     ->orWhere('users.first_name', 'ilike', "%{$search}%")
                     ->orWhere('users.last_name', 'ilike', "%{$search}%")
                     ->orWhere('users.cin', 'ilike', "%{$search}%");
