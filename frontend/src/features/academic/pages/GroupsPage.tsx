@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Search, Plus, Edit2, Trash2, X, Users, Layers, BookOpen, Upload, Printer, UserCheck, ShieldCheck, Zap } from 'lucide-react'
+import { Search, Plus, Edit2, Trash2, X, Users, Upload, Printer, UserCheck, Zap } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
 import { openGroupEmargementPdf } from '@shared/lib/documentAccess'
@@ -50,7 +50,7 @@ export default function GroupsPage() {
     try {
       const res = await api.get(`/groups/${g.id}/students`);
       setGroupStudents(res.data.students || []);
-    } catch (err) {
+    } catch {
       toast.error('Erreur lors du chargement des étudiants du groupe.');
     } finally {
       setLoadingStudents(false);

@@ -8,9 +8,11 @@
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16%20(134%20Tables)-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://postgresql.org)
 [![Redis](https://img.shields.io/badge/Redis-7-DC382D?style=for-the-badge&logo=redis&logoColor=white)](https://redis.io)
 [![Docker](https://img.shields.io/badge/Docker-Production%20Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://docker.com)
+[![AI Engine](https://img.shields.io/badge/AI%20Engine-Gemini%201.5%20Flash-8E75B2?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev)
+[![Legal Compliance](https://img.shields.io/badge/CGI%20Maroc-Art.%2073--II--F%20(17%25%20IGR)-006233?style=for-the-badge)](https://tax.gov.ma)
 
 > **Système d'Information et de Pilotage Pédagogique Intégré (ERP)** spécialement conçu pour les **Écoles Nationales de Commerce et de Gestion (ENCG)** du Royaume du Maroc (Université Sidi Mohamed Ben Abdellah - Fès).  
-> Totalement conforme au cahier des charges des **Normes Pédagogiques Nationales (NPN - LMD)** du **Ministère de l'Enseignement Supérieur (MESRSFC)** et nativement interopérable avec les référentiels ministériels **Massar / APOGEE**.
+> Totalement conforme au cahier des charges des **Normes Pédagogiques Nationales (NPN - LMD)** du **Ministère de l'Enseignement Supérieur (MESRSFC)**, aux exigences du **Code Général des Impôts (Art. 73-II-F - 17% IGR)** et nativement interopérable avec les référentiels ministériels **Massar / APOGEE**.
 
 ---
 
@@ -674,20 +676,40 @@ graph TD
     Poly --> Generator --> ProfTool
 ```
 
-### 🧠 Les 10 Services d'IA Spécialisés Intégrés :
+### 🧠 Les 11 Services d'IA Spécialisés Intégrés :
 
 | Service IA Backend | Classe PHP | Rôle & Fonctionnalité Métier |
 |---|---|---|
-| **1. 🎓 Tuteur Pédagogique RAG** | `AiTutorService.php` | Assistant interactif 24/7 pour les étudiants. Ses réponses sont **ancrées à 100% sur les cours PDF** déposés par les professeurs, avec citation des pages. |
-| **2. 👁️ Pipeline OCR Hybride** | `LocalOcrService.php` / `OcrPipeline.php` | Extraction automatique des données textuelles sur les pièces scannées (CIN, attestations de Baccalauréat, justificatifs médicaux) pour pré-remplir les dossiers d'admission. |
-| **3. 🛡️ Copilote Exécutif de Direction** | `AdminAiCopilotService.php` | Synthèse décisionnelle 360°, génération automatique de rapports institutionnels pour le Ministère (MESRSFC) et détection proactive d'anomalies. |
-| **4. 📈 Analytique Prédictive Anti-Décrochage** | `AiPredictiveAnalyticsService.php` | Identification précoce des étudiants en situation de vulnérabilité académique basée sur l'historique des notes, les retards et le taux d'absentéisme. |
-| **5. 🧭 Conseiller d'Orientation & Choix de Master** | `OrientationAdvisorService.php` | Algorithme de compatibilité multidimensionnelle (Radar 6 axes) guidant les étudiants de Tronc Commun vers les 5 Masters d'excellence (GFC, MCM, ACG, GRH, MACI). |
-| **6. 🧮 Simulateur Prédictif LMD** | `LmdCompensationPredictorService.php` | Calculateur stochastique de compensation LMD et solveur de note cible pour les sessions de rattrapage et l'obtention des mentions. |
-| **7. 🤖 Générateur d'Emplois du Temps Anti-Conflits (CSP)** | `AiTimetableSchedulerService.php` | Solveur de contraintes (Constraint Satisfaction) éliminant 100% des collisions de salles, d'enseignants et de groupes d'étudiants. |
-| **8. 👨‍🏫 Assistant Pédagogique Enseignant** | `ProfAiService.php` | Génération automatique d'exercices d'entraînement, banques de QCMs calibrées et aide à la rédaction des plans de cours (syllabus LMD). |
-| **9. 💰 Prévisionniste Budgétaire & Régie** | `AiFinancialForecasterService.php` | Modélisation prédictive des flux d'encaissement et projections financières pour les Masters Spécialisés et la Formation Continue. |
-| **10. 💼 Conseiller Carrière & Stage** | `StudentAiService.php` | Simulation d'entretiens de recrutement, optimisation du CV académique et recommandations professionnelles. |
+| **1. 🎓 Tuteur Pédagogique RAG** | `AiTutorService.php` | Assistant interactif 24/7 pour les étudiants. Réponses ancrées sur les cours PDF déposés par les professeurs, avec citation des pages. |
+| **2. 🤖 Copilote IA Professeur (4 Piliers)** | `ProfessorAiCopilotController.php` | Suite Gemini 1.5 Flash : dictée vocale de cours, auto-complétion émargement, alerte décrochage Art. 14 et génération d'épreuves PDF. |
+| **3. 👁️ Pipeline OCR Hybride** | `LocalOcrService.php` / `OcrExtractionService.php` | Extraction automatique des données textuelles sur les pièces scannées (CIN, attestations de Bac, certificats médicaux) pour l'admission. |
+| **4. 🛡️ Copilote Exécutif de Direction** | `AdminAiCopilotService.php` | Synthèse décisionnelle 360°, génération automatique de rapports institutionnels pour le Ministère (MESRSFC) et détection proactive d'anomalies. |
+| **5. 📈 Analytique Prédictive Anti-Décrochage** | `AiPredictiveAnalyticsService.php` | Identification précoce des étudiants en situation de vulnérabilité académique basée sur l'historique des notes, les retards et l'absentéisme. |
+| **6. 🧭 Conseiller d'Orientation & Master** | `OrientationAdvisorService.php` | Algorithme de compatibilité multidimensionnelle (Radar 6 axes) guidant les étudiants TC vers les 5 Masters (GFC, MCM, ACG, GRH, MACI). |
+| **7. 🧮 Simulateur Prédictif LMD** | `LmdCompensationPredictorService.php` | Calculateur stochastique de compensation LMD et solveur de note cible pour les sessions de rattrapage et l'obtention des mentions. |
+| **8. 🤖 Générateur d'EDT Anti-Conflits (CSP)** | `AiTimetableSchedulerService.php` | Solveur de contraintes (Constraint Satisfaction) éliminant 100% des collisions de salles, d'enseignants et de groupes d'étudiants. |
+| **9. 👨‍🏫 Assistant Pédagogique Enseignant** | `ProfAiService.php` | Génération automatique d'exercices d'entraînement, banques de QCMs calibrées et aide à la rédaction des plans de cours (syllabus). |
+| **10. 💰 Prévisionniste Budgétaire & Régie** | `AiFinancialForecasterService.php` | Modélisation prédictive des flux d'encaissement et projections financières pour les Masters Spécialisés et la Formation Continue. |
+| **11. 💼 Conseiller Carrière & Stage** | `StudentAiService.php` | Simulation d'entretiens de recrutement, optimisation du CV académique et recommandations professionnelles. |
+
+---
+
+### 🌟 Focus : Les 4 Piliers Majeurs du Copilote IA Professeur (Gemini 1.5 Flash)
+
+Le contrôleur [`ProfessorAiCopilotController.php`](file:///c:/Users/najlae/Desktop/ENCG-ERP-V1/backend/app/Http/Controllers/Api/ProfessorAiCopilotController.php) et la suite de tests [`ProfessorAiCopilotIntegrationTest.php`](file:///c:/Users/najlae/Desktop/ENCG-ERP-V1/backend/tests/Feature/ProfessorAiCopilotIntegrationTest.php) (32 assertions, 100% PASS) orchestrent 4 innovations pédagogiques concrètes :
+
+1. **🎙️ Dictée Vocale Structurée du Cahier de Texte (`voice-textbook`)** :
+   - L'enseignant enregistre son bilan de séance à la voix via le micro du navigateur (`ProfessorVoiceTextbook.tsx`).
+   - Gemini 1.5 Flash transcrit et structure automatiquement la séance : Titre académique, 3-4 objectifs Bloom, résumé chronologique, devoirs et mots-clés.
+2. **🪄 Auto-Complétion Intelligente lors de l'Émargement (`attendance-textbook-suggestion`)** :
+   - Bouton d'action magique dans le trombinoscope d'émargement (`ProfessorStudentRosterPage.tsx`).
+   - Pré-remplit instantanément le contenu du cours du jour à partir du syllabus officiel et du numéro de séance sans aucune ressaisie manuelle.
+3. **⚡ Détecteur Prédictif de Décrochage & Alerte Exclusion (Article 14 ENCG Fès)** :
+   - Conformément à l'Article 14 du Règlement Pédagogique ENCG Fès, 3 absences non justifiées entraînent l'exclusion de l'examen.
+   - L'IA identifie immédiatement les étudiants à risque critique ($\ge 3$ absences) et pré-critique (2 absences) et suggère des actions de tutorat ciblées.
+4. **📥 Générateur d'Épreuves & Études de Cas Marocaines avec Export PDF Scellé** :
+   - Conçoit des examens complets contextualisés à l'économie marocaine (OCP, Attijariwafa Bank, etc.) avec barème strict sommant 20/20.
+   - Téléchargement en 1-clic du PDF officiel d'examen ([`epreuve_examen_officiel.blade.php`](file:///c:/Users/najlae/Desktop/ENCG-ERP-V1/backend/resources/views/pdf/epreuve_examen_officiel.blade.php)) avec sceau cryptographique SHA-256.
 
 ### 🔒 Souveraineté & Anonymisation CNDP (Loi 09-08)
 - **Anonymisation préalable des prompts** : Les noms des étudiants, CIN et identifiants sensibles sont strippés ou hachés en amont de toute transmission au LLM.
@@ -754,12 +776,12 @@ classDiagram
 | **6** | **📝 Planification des Examens & Surveillance** | Répartition spatiale anti-fraude (1 place/2), affectation équitable tripartite (Permanents, Vacataires, Doctorants), convocations QR, confirmation bi-canal de présence (Email/Plateforme), émargement PV numérique et PVs d'incidents. |
 | **7** | **📊 Saisie des Notes & Verrouillage Optimiste** | Double saisie CC/Exam, gestion de concurrence (`version`), application du max au rattrapage. |
 | **8** | **📇 Cartes Étudiant PVC Smart Card** | Format ISO/IEC 7810 ID-1 (CR80) avec puce NFC, Code 128 et QR Token crypté. |
-| **9** | **📱 Assiduité & Émargement QR Code** | Séance d'émargement projetée en direct, dépôt et validation des justificatifs médicaux. |
+| **9** | **📱 Assiduité, Émargement & Synergie Cahier de Texte** | Émargement 12 séances avec synchronisation automatique vers le Cahier de Texte (`sync_to_textbook`), détection IA de décrochage (Art. 14 ENCG Fès), et index composites haute performance (> 50 000 pointages). |
 | **10** | **💼 Stages, PFE & Soutenances** | Conventions tripartites, jurys de soutenance et workflow d'évaluation numérique. |
 | **11** | **📜 Guichet Numérique & Grand Diplôme** | Attestations PDF signées instantanément et Grand Diplôme National Bac+5 A4 Paysage. |
 | **12** | **🔬 Études Doctorales CEDOC** | Suivi des 200h de formations doctorales et validation des thèses. |
 | **13** | **📚 Médiathèque & Prêts Koha LMS** | Gestion des emprunts d'ouvrages et alertes automatiques de retards. |
-| **14** | **🤖 Tuteur IA & Baromètre Qualité** | Assistant IA sur polycopiés de cours et évaluations anonymisées par hash SHA-256. |
+| **14** | **🤖 Copilote & Tuteur IA Pédagogique (Gemini 1.5)** | Suite Gemini 1.5 Flash : 4 piliers professeur (dictée vocale de cours, auto-complétion émargement, alerte Art. 14, générateur d'examens PDF) et tuteur étudiant. |
 | **15** | **🔒 Sécurité & Audit Forensics** | Journalisation milliseconde de toute modification et scellement HMAC-SHA256. |
 | **16** | **🧭 Simulateur d'Orientation & Choix de Master** | IA Path Advisor avec radar de compétences 6 axes et prédiction d'affinité vers les Masters GFC/MCM/ACG/GRH/MACI (`/student/orientation`). |
 | **17** | **🤖 AI Timetable Scheduler (Solveur CSP)** | Génération automatique d'emplois du temps sans conflits et scanner/résolveur d'anomalies en 1 clic (`/admin/ai-timetable-scheduler`). |
@@ -1024,7 +1046,6 @@ La stratégie d'assurance qualité du projet est adossée aux **7 principes fond
 | **5** | **Paradoxe du pesticide** | Les suites de tests sont continuellement enrichies lors de chaque nouvelle fonctionnalité (ex: ajout de `RoomAvailabilityAndSmartFinderTest.php` lors du développement du Smart Room Hub). |
 | **6** | **Le test dépend du contexte** | Adaptation stricte au contexte Grande École marocaine : bilinguisme FR/AR, système modulaire LMD (semestres S1 à S10), zéro frais sur cursus public, et normes MESRSFC. |
 | **7** | **L'illusion de l'absence d'erreurs (*Absence-of-errors fallacy*)** | Validation conjointe par tests automatisés et conformité avec les processus administratifs réels de l'ENCG Fès (scolarité, chefs de département, régie, jurys). |
-| **7** | **L'illusion de l'absence d'erreurs (*Absence-of-errors fallacy*)** | Validation conjointe par tests automatisés et conformité avec les processus administratifs réels de l'ENCG Fès (scolarité, chefs de département, régie, jurys). |
 
 ---
 
@@ -1071,8 +1092,9 @@ graph BT
 | **Cahier de Texte, Service Fait & Bilan CNU** | `TextbookAndAnnualActivityReportTest.php` | 21 | **✅ PASS** |
 | **Modules Stratégiques Académiques (4 Modules)** | `AcademicStrategicModulesTest.php` | 30 | **✅ PASS** |
 | **Verrouillage Optimiste Saisie Notes** | `ConcurrentGradeSubmissionAndLockingTest.php` | 9 | **✅ PASS** |
+| **Copilote IA Professeur (4 Piliers Gemini)** | `ProfessorAiCopilotIntegrationTest.php` | 32 | **✅ PASS** |
 | **Frontend TypeScript & Store** | `useAuthStore.test.ts` & `gradeCalculation.test.ts` | 17 | **✅ PASS** |
-| **TOTAL** | **136+ Suites Backend & Frontend** | **511+ Assertions** | **🌟 100% GREEN** |
+| **TOTAL** | **137+ Suites Backend & Frontend** | **543+ Assertions** | **🌟 100% GREEN** |
 
 ---
 

@@ -6,16 +6,15 @@ import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import arLocale from '@fullcalendar/core/locales/ar'
 import frLocale from '@fullcalendar/core/locales/fr'
-import { Calendar as CalendarIcon, Cpu, AlertTriangle, CheckCircle2, ChevronRight, Settings } from 'lucide-react'
+import { Calendar as CalendarIcon, Cpu, AlertTriangle, CheckCircle2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import api from '@shared/lib/api'
-import { cn } from '@shared/lib/utils'
 import { toast } from 'sonner'
 import { Button } from '@shared/components/ui/Button'
 import { Modal } from '@shared/components/ui/Modal'
 
 export default function TimetableAdminView() {
-  const { t, i18n } = useTranslation('common')
+  const { i18n } = useTranslation('common')
   const isRtl = i18n.language === 'ar'
   const calendarRef = useRef<FullCalendar>(null)
   const queryClient = useQueryClient()
@@ -24,7 +23,7 @@ export default function TimetableAdminView() {
   const [conflictDetails, setConflictDetails] = useState<any>(null)
 
   // State for selectors
-  const [academicYearId, setAcademicYearId] = useState(1)
+  const [academicYearId] = useState(1)
   const [semesterId, setSemesterId] = useState(1)
   const [filiereId, setFiliereId] = useState(1)
   const institutionId = 1 // Default institution
@@ -115,7 +114,7 @@ export default function TimetableAdminView() {
         })
         setConflictModalOpen(true)
       }
-    } catch (error) {
+    } catch {
       info.revert()
       toast.error(isRtl ? 'خطأ في الاتصال' : 'Erreur de validation réseau.')
     }
