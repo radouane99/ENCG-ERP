@@ -7,15 +7,14 @@ import {
   LayoutDashboard, Users, GraduationCap, BookOpen, Calendar,
   ClipboardList, Award, Settings,
   ChevronRight, ChevronDown, Briefcase,
-  Trophy, Clock, Edit3, 
-  ShieldAlert, UserPlus, Target,
-  ScanLine, CheckSquare, CalendarDays, InboxIcon, MonitorPlay, Zap, Activity, FileSignature, Kanban,
-  Network, MapPin, Ticket, Crown, Book,
+  Trophy, Clock, UserPlus, Target,
+  ScanLine, CalendarDays, Activity, Kanban,
+  MapPin, Crown, Book,
   BrainCircuit, Landmark, ShieldCheck, Globe, PlaneTakeoff, Lock, Sparkles, Compass,
-  X, Layers, IdCard, Eye, Calculator, TrendingUp, Search, BellRing,
-  UserX, Gavel, CalendarCheck, AreaChart, MailCheck, RotateCcw, Repeat, FileEdit, UserCog, UserCheck,
-  Clock3, CalendarSync, DoorOpen, Cpu, Palmtree, HeartHandshake, CreditCard, Stamp, Send,
-  BookMarked, GitFork, FilterX, Archive, Key, Mic, ArrowRightLeft, Scale
+  X, IdCard, Eye, Calculator, TrendingUp, Search, BellRing,
+  UserX, Gavel, CalendarCheck, MailCheck, FileEdit, UserCog, UserCheck,
+  Clock3, DoorOpen, HeartHandshake, CreditCard, Stamp,
+  FilterX, Archive, Key, Mic, ArrowRightLeft, Scale
 } from 'lucide-react'
 
 interface NavItem {
