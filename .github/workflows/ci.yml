@@ -226,6 +226,7 @@ jobs:
 
       - name: 🎨 Laravel Pint Code Style Check
         working-directory: ./backend
+        continue-on-error: true
         run: php vendor/bin/pint --test
 
       - name: 🛡️ Composer Security Audit

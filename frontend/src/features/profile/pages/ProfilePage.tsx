@@ -1,5 +1,4 @@
 import React, { useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@stores/authStore'
 import { Camera, Loader2, ShieldCheck } from 'lucide-react'
 import api from '@shared/lib/api'
@@ -8,7 +7,6 @@ import { QRCodeSVG } from 'qrcode.react'
 import { DsarPanel } from '../components/DsarPanel'
 
 export default function ProfilePage() {
-  const { t, i18n } = useTranslation('common')
   const { user, updateUser } = useAuthStore()
 
   const [isLoading, setIsLoading] = useState(false)

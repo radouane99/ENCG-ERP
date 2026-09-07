@@ -12,9 +12,6 @@ import {
   AlertCircle, 
   Loader2, 
   Ticket,
-  Printer,
-  Sparkles,
-  Building2,
   FileCheck2,
   X
 } from 'lucide-react';
@@ -34,7 +31,7 @@ export default function StudentConvocationsPage() {
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
 
   // Query real student exam seatings & convocations
-  const { data: convData, isLoading, refetch } = useQuery({
+  const { data: convData, isLoading } = useQuery({
     queryKey: ['studentConvocations', activeSession],
     queryFn: async () => {
       const res = await api.get(`/v1/student-portal/convocations?session_type=${activeSession}`);
