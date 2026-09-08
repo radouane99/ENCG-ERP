@@ -144,6 +144,15 @@ export default function StudentMobility() {
               const isSelected = selectedVoeux.includes(partner.id);
               const voeuRank = selectedVoeux.indexOf(partner.id) + 1;
 
+              const gpaReq = Number(partner.gpaRequired ?? partner.gpa_required ?? 12.0);
+              const matchChance = partner.matchChance ?? (() => {
+                if (!studentGpa) return 75;
+                if (studentGpa >= gpaReq + 1.5) return 95;
+                if (studentGpa >= gpaReq) return 85;
+                if (studentGpa >= gpaReq - 1.0) return 60;
+                return 40;
+              })();
+
               return (
                 <div 
                   key={partner.id}
@@ -176,13 +185,13 @@ export default function StudentMobility() {
                   <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2 text-xs">
                     <div className="flex justify-between items-center text-[11px] font-bold">
                       <span className="text-slate-400">Score Requis :</span>
-                      <span className="text-slate-700 dark:text-slate-200 font-mono">{partner.gpaRequired.toFixed(2)}/20</span>
+                      <span className="text-slate-700 dark:text-slate-200 font-mono">{gpaReq.toFixed(2)}/20</span>
                     </div>
 
                     <div className="flex justify-between items-center text-[11px] font-bold">
                       <span className="text-slate-400">Chances d'Admission :</span>
                       <span className="text-emerald-600 font-mono font-black flex items-center gap-1">
-                        <Zap className="w-3 h-3 text-emerald-500" /> {partner.matchChance}%
+                        <Zap className="w-3 h-3 text-emerald-500" /> {matchChance}%
                       </span>
                     </div>
                   </div>

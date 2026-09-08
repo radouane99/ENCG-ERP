@@ -43,8 +43,8 @@ class Attendance extends Model
         return $this->belongsTo(Student::class, 'student_id');
     }
 
-    public function absenceJustification(): BelongsTo
+    public function absenceJustification(): \Illuminate\Database\Eloquent\Relations\HasOne
     {
-        return $this->belongsTo(AbsenceJustification::class, 'absence_justification_id');
+        return $this->hasOne(AbsenceJustification::class, 'attendance_id');
     }
 }

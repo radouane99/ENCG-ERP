@@ -22,7 +22,7 @@ Write-Host "1. Utilisation du fichier de sauvegarde : $BackupFile" -ForegroundCo
 Write-Host "2. Preparation du fichier SQL (UTF-8)..." -ForegroundColor Yellow
 $TmpRestore = "$Workspace/tmp_restore_utf8.sql"
 try {
-    $content = [System.IO.File]::ReadAllText($BackupFile)
+    $content = [System.IO.File]::ReadAllText($BackupFile, [System.Text.Encoding]::UTF8)
     [System.IO.File]::WriteAllText($TmpRestore, $content, (New-Object System.Text.UTF8Encoding($false)))
 } catch {
     Copy-Item $BackupFile $TmpRestore

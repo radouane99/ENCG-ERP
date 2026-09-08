@@ -51,25 +51,33 @@ class OrientationAdvisorController extends Controller
 
         $analysis = $this->orientationAdvisor->analyzeStudent($student);
 
-        // Récupérer la liste des modules actuels pour pré-remplir le simulateur LMD
-        $currentSemester = $student->current_semester ?? 2;
-        $semesterModules = Module::where('semester_number', $currentSemester)->get()->map(fn ($m) => [
+        // Récupérer la liste des modules réels accrédités pour le semestre actuel
+        $registration = \Illuminate\Support\Facades\DB::table('student_registrations')
+            ->where('student_id', $student->id)
+            ->first();
+        $currentSemester = $registration?->semester_number ?? $student->current_semester ?? 5;
+        $filiereId = $registration?->filiere_id ?? $student->filiere_id;
+
+        $semesterModulesQuery = Module::where('semester_number', $currentSemester)->where('is_active', true);
+        if ($filiereId) {
+            $semesterModulesQuery->where('filiere_id', $filiereId);
+        }
+        $semesterModules = $semesterModulesQuery->get()->map(fn ($m) => [
             'id' => $m->id,
             'code' => $m->code,
             'name' => $m->name,
-            'coefficient' => $m->credits ?? 4,
-            'grade' => 12.0, // Valeur par défaut
+            'coefficient' => (float) ($m->coefficient ?? 2.0),
+            'grade' => 12.0, // Valeur par défaut pour simulation
         ]);
 
-        if ($semesterModules->isEmpty()) {
-            $semesterModules = [
-                ['name' => 'Comptabilité Générale II', 'coefficient' => 4, 'grade' => 13.5],
-                ['name' => 'Mathématiques Financières', 'coefficient' => 4, 'grade' => 11.0],
-                ['name' => 'Microéconomie II', 'coefficient' => 4, 'grade' => 12.5],
-                ['name' => 'Marketing Fondamental', 'coefficient' => 4, 'grade' => 14.0],
-                ['name' => 'Droit des Entreprises', 'coefficient' => 3, 'grade' => 10.5],
-                ['name' => 'Techniques d\'Expression & Anglais Commercial', 'coefficient' => 3, 'grade' => 15.0],
-            ];
+        if ($semesterModules->isEmpty() && $filiereId) {
+            $semesterModules = Module::where('filiere_id', $filiereId)->where('is_active', true)->take(7)->get()->map(fn ($m) => [
+                'id' => $m->id,
+                'code' => $m->code,
+                'name' => $m->name,
+                'coefficient' => (float) ($m->coefficient ?? 2.0),
+                'grade' => 12.0,
+            ]);
         }
 
         return response()->json([

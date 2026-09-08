@@ -32,4 +32,23 @@ class Grade extends Model
     {
         return $this->belongsTo(Assessment::class);
     }
+
+    public function module(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
+    {
+        return $this->hasOneThrough(
+            Module::class,
+            Assessment::class,
+            'id',
+            'id',
+            'assessment_id',
+            'module_id'
+        );
+    }
+
+    public function getModuleAttribute(): ?Module
+    {
+        return $this->relationLoaded('module')
+            ? $this->getRelation('module')
+            : $this->assessment?->module;
+    }
 }

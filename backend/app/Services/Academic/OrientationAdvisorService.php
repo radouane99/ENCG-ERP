@@ -120,7 +120,7 @@ class OrientationAdvisorService
     {
         // 1. Récupérer les notes réelles de l'étudiant
         $grades = Grade::where('student_id', $student->id)
-            ->with(['module', 'course'])
+            ->with(['assessment.module'])
             ->get();
 
         // 2. Extraire les moyennes par domaine de compétences
@@ -174,11 +174,16 @@ class OrientationAdvisorService
         $topMatch = $recommendations[0];
         $aiVerdict = "Au vu de vos excellents résultats dans les matières analytiques et managériales, la filière {$topMatch['name']} ({$topMatch['code']}) correspond le plus étroitement à vos points forts académiques avec un taux de compatibilité de {$topMatch['compatibility_score']}%.";
 
+        $registration = \Illuminate\Support\Facades\DB::table('student_registrations')
+            ->where('student_id', $student->id)
+            ->first();
+        $currentSemester = $registration?->semester_number ?? $student->current_semester ?? 5;
+
         return [
             'student_id' => $student->id,
             'student_name' => $student->user?->name ?? '—',
             'cne' => $student->cne ?? '—',
-            'current_semester' => $student->current_semester ?? 2,
+            'current_semester' => $currentSemester,
             'radar_skills' => $radarData,
             'top_recommendation' => $topMatch,
             'recommendations' => $recommendations,
@@ -204,8 +209,9 @@ class OrientationAdvisorService
         ];
 
         foreach ($grades as $grade) {
-            $note = $grade->final_grade ?? $grade->normal_grade ?? $grade->session_1_grade ?? 12.0;
-            $moduleName = strtolower($grade->module?->name ?? $grade->course?->name ?? '');
+            $note = $grade->absent ? 0.0 : (float) ($grade->value ?? 12.0);
+            $module = $grade->assessment?->module ?? $grade->module;
+            $moduleName = strtolower($module?->name ?? '');
 
             if (str_contains($moduleName, 'financ') || str_contains($moduleName, 'monnaie') || str_contains($moduleName, 'banque')) {
                 $categories['finance'][] = $note;

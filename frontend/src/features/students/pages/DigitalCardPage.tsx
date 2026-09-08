@@ -28,7 +28,7 @@ export default function DigitalCardPage() {
 
   const { data: cardData, isLoading, refetch } = useQuery({
     queryKey: ['student-card'],
-    queryFn: () => api.get('/v1/mobile/student/card').then((res) => res.data.data),
+    queryFn: () => api.get('/v1/mobile/student/card').then((res) => res.data?.data ?? null).catch(() => null),
   });
 
   const handleDownloadPDF = () => {

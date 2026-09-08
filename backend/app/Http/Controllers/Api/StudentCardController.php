@@ -116,9 +116,10 @@ class StudentCardController extends Controller
 
         if (! $card) {
             return response()->json([
-                'success' => false,
+                'success' => true,
+                'data' => null,
                 'message' => 'Aucune carte étudiant générée pour ce profil.',
-            ], 404);
+            ], 200);
         }
 
         $studentProfile = $user->student;

@@ -50,6 +50,7 @@ $studentPortalRoutes = function () {
     Route::get('/card', [StudentCardController::class, 'show']);
     Route::post('/card/preview', [StudentCardController::class, 'preview']);
     Route::post('/card', [StudentCardController::class, 'store']);
+    Route::get('/portfolio', [StudentPortalController::class, 'getPortfolio']);
 
     // Apogée Deliberation Engine - Transcript
     Route::get('/transcript', [DeliberationController::class, 'getStudentTranscript']);
@@ -107,7 +108,14 @@ $studentPortalRoutes = function () {
     Route::get('/job-offers', [JobOfferController::class, 'index']);
 
     // Clubs & Vie associative
-    Route::get('/clubs', [ClubController::class, 'index']);
+    Route::prefix('clubs')->group(function () {
+        Route::get('/', [ClubController::class, 'index']);
+        Route::post('/', [ClubController::class, 'store']);
+        Route::post('/{id}/join', [ClubController::class, 'join']);
+        Route::post('/{id}/leave', [ClubController::class, 'leave']);
+        Route::post('/events', [ClubController::class, 'createEvent']);
+        Route::post('/events/{id}/participate', [ClubController::class, 'participate']);
+    });
 
     // Official Documents PDF (Relevé, Attestation de Réussite, Diplôme d'État ENCG)
     Route::get('/transcript/pdf', [StudentTranscriptController::class, 'generateForStudent']);

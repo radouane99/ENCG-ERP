@@ -11,7 +11,7 @@ export const absencesKeys = {
 // --- Student API ---
 export const fetchStudentAbsences = async () => {
   const { data } = await api.get('/student-portal/absences');
-  return data.data || data.absences || [];
+  return data;
 };
 
 export const justifyAbsence = async ({ attendanceId, formData }: { attendanceId: number; formData: FormData }) => {

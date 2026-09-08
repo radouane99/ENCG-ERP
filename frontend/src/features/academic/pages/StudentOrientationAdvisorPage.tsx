@@ -34,14 +34,21 @@ export default function StudentOrientationAdvisorPage() {
   });
 
   // State for simulated modules
-  const [simulatedModules, setSimulatedModules] = useState<ModuleSimItem[]>([
-    { name: 'Comptabilité Générale II', coefficient: 4, grade: 13.5 },
-    { name: 'Mathématiques Financières', coefficient: 4, grade: 11.0 },
-    { name: 'Microéconomie II', coefficient: 4, grade: 12.5 },
-    { name: 'Marketing Fondamental', coefficient: 4, grade: 14.0 },
-    { name: 'Droit des Entreprises', coefficient: 3, grade: 10.5 },
-    { name: 'Techniques d\'Expression & Anglais', coefficient: 3, grade: 15.0 },
-  ]);
+  const [simulatedModules, setSimulatedModules] = useState<ModuleSimItem[]>([]);
+
+  // Sync real modules from database when profileData loads
+  React.useEffect(() => {
+    if (profileData?.current_semester_modules && profileData.current_semester_modules.length > 0) {
+      setSimulatedModules(profileData.current_semester_modules.map((m: any) => ({
+        name: m.name,
+        coefficient: Number(m.coefficient) || 2,
+        grade: Number(m.grade) || 12.0,
+      })));
+    }
+    if (profileData?.current_semester) {
+      setSelectedSemester(profileData.current_semester);
+    }
+  }, [profileData]);
 
   // 2. Simulation Mutation
   const simulationMutation = useMutation({

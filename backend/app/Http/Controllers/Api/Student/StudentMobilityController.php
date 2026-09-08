@@ -30,7 +30,8 @@ class StudentMobilityController extends Controller
                 'city' => $partner->city,
                 'type' => $partner->program_type,
                 'slots' => $partner->slots,
-                'gpaRequired' => number_format((float) $partner->gpa_required, 2, '.', ''),
+                'gpaRequired' => (float) ($partner->gpa_required ?? 12.0),
+                'gpa_required' => (float) ($partner->gpa_required ?? 12.0),
             ]);
 
         $voeux = StudentMobilityChoice::where('student_id', $student->id)

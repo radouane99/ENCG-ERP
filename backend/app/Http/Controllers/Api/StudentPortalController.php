@@ -31,8 +31,7 @@ class StudentPortalController extends Controller
             'overall_decision' => $result['overall_decision'],
             'total_modules' => $result['total_modules'],
             'validated_modules' => $result['validated_modules'],
-            'credits_earned' => $result['credits_earned'],
-            'total_credits' => $result['total_credits'],
+            'retake_modules' => $result['retake_modules'],
         ]);
     }
 
@@ -104,6 +103,20 @@ class StudentPortalController extends Controller
             'data' => $materials,
             'koha_loans' => $kohaLoans,
             'koha_configured' => filled(config('services.koha.base_url')),
+        ]);
+    }
+
+    /**
+     * Official Certified Student Portfolio & Competencies.
+     */
+    public function getPortfolio(Request $request): JsonResponse
+    {
+        $studentId = $this->resolveAuthenticatedStudentId($request);
+        $portfolio = $this->portalService->getPortfolio($studentId);
+
+        return response()->json([
+            'success' => true,
+            'data' => $portfolio,
         ]);
     }
 

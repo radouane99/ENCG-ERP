@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\AuditTrailMiddleware;
+use App\Http\Middleware\EnsureInstitutionContext;
 use App\Http\Middleware\EnsurePasswordChanged;
 use App\Http\Middleware\QueryTokenAuth;
 use App\Http\Middleware\RequireAdmin2FA;
@@ -46,6 +47,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => RoleMiddleware::class,
             'require-admin-2fa' => RequireAdmin2FA::class,
             'password.changed' => EnsurePasswordChanged::class,
+            'institution.context' => EnsureInstitutionContext::class,
         ]);
 
         $middleware->encryptCookies(except: [
