@@ -9,6 +9,7 @@ use App\Services\AcademicCalendarService;
 use App\Services\DocumentRequestService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class StudentDocumentRequestController extends Controller
@@ -33,6 +34,7 @@ class StudentDocumentRequestController extends Controller
             ->get()
             ->map(function (DocumentRequest $docRequest) {
                 $generatedDocument = $this->documentRequestService->getGeneratedDocument($docRequest);
+                $isReady = in_array($docRequest->status, ['ready', 'approved', 'collected', 'withdrawn'], true);
 
                 return [
                     'id' => $docRequest->id,
@@ -41,7 +43,9 @@ class StudentDocumentRequestController extends Controller
                     'processed_at' => $docRequest->processed_at,
                     'document_type' => $docRequest->documentType?->name,
                     'document_type_id' => $docRequest->document_type_id,
-                    'download_url' => $generatedDocument ? url("/api/v1/student-portal/document-requests/{$docRequest->id}/download") : null,
+                    'download_url' => $isReady ? url("/api/v1/student-portal/document-requests/{$docRequest->id}/download") : null,
+                    'preview_url' => $isReady ? url("/api/v1/student-portal/document-requests/{$docRequest->id}/preview") : null,
+                    'hash' => $generatedDocument?->verification_token ?? null,
                     'admin_notes' => $docRequest->admin_notes,
                 ];
             });
@@ -78,7 +82,48 @@ class StudentDocumentRequestController extends Controller
     }
 
     /**
-     * Télécharger un document généré.
+     * Prévisualiser le document officiel (exactement identique à l'administration).
+     */
+    public function preview(Request $request, int $id)
+    {
+        $student = $request->user()?->student;
+        if (! $student) {
+            return response()->json(['success' => false, 'message' => 'Profil étudiant introuvable.'], 403);
+        }
+
+        $documentRequest = DocumentRequest::with(['student.user', 'documentType'])->findOrFail($id);
+
+        if ((int) $documentRequest->student_id !== (int) $student->id) {
+            abort(403, 'Accès non autorisé.');
+        }
+
+        try {
+            // Toujours régénérer ou générer avec le service canonique pour garantir la fidélité avec l'administration
+            $generatedDocument = $this->documentRequestService->generateDocumentPdf($documentRequest);
+        } catch (\Throwable $e) {
+            Log::error('Student document preview generation failed', [
+                'document_request_id' => $documentRequest->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Impossible de générer le document : '.$e->getMessage(),
+            ], 500);
+        }
+
+        if ($generatedDocument && Storage::disk('private')->exists($generatedDocument->file_path)) {
+            return response()->file(Storage::disk('private')->path($generatedDocument->file_path), [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="'.basename($generatedDocument->file_path).'"',
+            ]);
+        }
+
+        return response()->json(['success' => false, 'message' => 'Aperçu indisponible.'], 404);
+    }
+
+    /**
+     * Télécharger un document généré officiel.
      */
     public function download(Request $request, int $id)
     {
@@ -87,21 +132,33 @@ class StudentDocumentRequestController extends Controller
             return response()->json(['success' => false, 'message' => 'Profil étudiant introuvable.'], 403);
         }
 
-        $documentRequest = DocumentRequest::findOrFail($id);
-        $this->authorize('view', $documentRequest);
+        $documentRequest = DocumentRequest::with(['student.user', 'documentType'])->findOrFail($id);
 
         if ((int) $documentRequest->student_id !== (int) $student->id) {
             abort(403, 'Accès non autorisé.');
         }
-        $generatedDocument = $this->documentRequestService->getGeneratedDocument($documentRequest);
 
-        if (! $generatedDocument || ! Storage::disk('private')->exists($generatedDocument->file_path)) {
-            return response()->json(['success' => false, 'message' => 'Document introuvable.'], 404);
+        try {
+            $generatedDocument = $this->documentRequestService->generateDocumentPdf($documentRequest);
+        } catch (\Throwable $e) {
+            Log::error('Student document download generation failed', [
+                'document_request_id' => $documentRequest->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Impossible de générer le document : '.$e->getMessage(),
+            ], 500);
         }
 
-        return Storage::disk('private')->download(
-            $generatedDocument->file_path,
-            basename($generatedDocument->file_path)
-        );
+        if ($generatedDocument && Storage::disk('private')->exists($generatedDocument->file_path)) {
+            return Storage::disk('private')->download(
+                $generatedDocument->file_path,
+                basename($generatedDocument->file_path)
+            );
+        }
+
+        return response()->json(['success' => false, 'message' => 'Document introuvable.'], 404);
     }
 }

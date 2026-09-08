@@ -89,6 +89,7 @@ $studentPortalRoutes = function () {
     Route::prefix('document-requests')->group(function () {
         Route::get('/', [StudentDocumentRequestController::class, 'index']);
         Route::post('/', [StudentDocumentRequestController::class, 'store']);
+        Route::get('/{id}/preview', [StudentDocumentRequestController::class, 'preview']);
         Route::get('/{id}/download', [StudentDocumentRequestController::class, 'download']);
     });
 
