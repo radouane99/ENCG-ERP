@@ -1666,6 +1666,114 @@ export default function UnifiedGuichetAttestationsPage() {
         </div>
       )}
 
+      {/* ── Modal de Motif de Refus Officiel ── */}
+      {rejectingId !== null && (
+        <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-card rounded-[2.5rem] max-w-lg w-full p-6 space-y-5 border border-border shadow-2xl animate-in zoom-in-95">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <div className="flex items-center gap-2 text-rose-600">
+                <XCircle className="w-5 h-5" />
+                <h3 className="text-sm font-black text-foreground uppercase tracking-wider">
+                  Refus de la Demande de Document
+                </h3>
+              </div>
+              <button
+                onClick={() => {
+                  setRejectingId(null)
+                  setRejectionReason('')
+                }}
+                className="p-1 rounded-xl text-muted-foreground hover:text-foreground cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Quick Presets */}
+            <div className="space-y-2">
+              <label className="text-xs font-black text-foreground uppercase tracking-wider block">
+                Motifs fréquents (Cliquer pour insérer) :
+              </label>
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  "Dossier incomplet ou pièce justificative manquante.",
+                  "Non-respect des conditions pédagogiques / absence de validation.",
+                  "Demande redondante : document identique déjà émis et disponible.",
+                  "Période de demande fermée ou hors calendrier officiel.",
+                  "Coordonnées de l'organisme d'accueil ou assurance non conformes."
+                ].map((preset, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setRejectionReason(preset)}
+                    className="text-[10.5px] font-bold px-2.5 py-1 rounded-lg bg-muted/60 hover:bg-muted text-muted-foreground hover:text-foreground border border-border/60 transition-all cursor-pointer text-left"
+                  >
+                    + {preset}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Form */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault()
+                const targetReq = rawRequests.find((r: any) => r.id === rejectingId)
+                if (!rejectionReason.trim()) {
+                  toast.error('Veuillez préciser le motif du refus pour informer le demandeur.')
+                  return
+                }
+                updateStatusMutation.mutate({
+                  id: targetReq?.id || rejectingId,
+                  status: 'rejected',
+                  reason: rejectionReason.trim(),
+                  isProfessor: targetReq?.is_professor,
+                  realId: targetReq?.real_id
+                })
+              }}
+              className="space-y-4"
+            >
+              <div className="space-y-1.5">
+                <label className="text-xs font-black text-foreground uppercase tracking-wider block">
+                  Motif Officiel Notifié au Demandeur *
+                </label>
+                <textarea
+                  required
+                  rows={3}
+                  value={rejectionReason}
+                  onChange={(e) => setRejectionReason(e.target.value)}
+                  placeholder="Expliquez clairement à l'étudiant la raison du rejet..."
+                  className="w-full px-3.5 py-2.5 bg-muted/40 border border-input rounded-xl text-xs font-medium focus:ring-4 focus:ring-rose-500/15 outline-none text-foreground resize-none"
+                />
+                <p className="text-[10px] text-muted-foreground">
+                  Ce motif s'affichera directement sur l'espace de l'étudiant et sera consigné dans l'historique d'audit.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3 pt-3 border-t border-border">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRejectingId(null)
+                    setRejectionReason('')
+                  }}
+                  className="flex-1 py-2.5 bg-muted hover:bg-muted/80 text-foreground rounded-xl text-xs font-black transition-all cursor-pointer"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  disabled={updateStatusMutation.isPending}
+                  className="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-black shadow-md transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5"
+                >
+                  <XCircle className="w-4 h-4" />
+                  {updateStatusMutation.isPending ? 'Enregistrement...' : 'Confirmer le Refus'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }

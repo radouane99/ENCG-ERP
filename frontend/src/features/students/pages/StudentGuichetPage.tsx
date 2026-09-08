@@ -3,8 +3,9 @@ import {
   FileText, Plus, Clock, CheckCircle2, XCircle, 
   Download, Send, AlertTriangle, Sparkles,
   ShieldCheck, Lock, Check, X,
-  Building2, Eye, RefreshCcw, Search,
-  HelpCircle, ExternalLink, Loader2
+  Building2, Eye, RefreshCcw, Search, Calendar,
+  HelpCircle, ExternalLink, Loader2,
+  FileSignature, Shield
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@shared/lib/api';
@@ -53,13 +54,15 @@ export default function StudentGuichetPage() {
     staleTime: 30000,
   });
 
-  // 2. Map types to official document_type_id
+  // 2. Map types to official document_type_id in database
   const docTypeMap: Record<string, number> = {
     'Attestation de Scolarité': 1,
     'Relevé de Notes': 2,
     'Relevé de Notes (S1-S4)': 2,
-    'Attestation de Réussite': 1,
-    'Convention de Stage PFE': 1,
+    'Convention de Stage': 3,
+    'Convention de Stage PFE': 3,
+    'Attestation de Réussite': 4,
+    'Attestation d\'Inscription': 5,
   };
 
   // 3. Mutation to submit request
@@ -412,7 +415,14 @@ export default function StudentGuichetPage() {
             const isRejected = req.status === 'rejected';
             const step = isApproved ? 3 : isRejected ? 2 : 2;
 
-            const docTitle = req.document_type || req.type || (req.document_type_id === 1 ? 'Attestation de Scolarité' : req.document_type_id === 2 ? 'Relevé de Notes' : `Document #${req.id}`);
+            const docTitle = req.document_type || req.type || (
+              req.document_type_id === 1 ? 'Attestation de Scolarité' :
+              req.document_type_id === 2 ? 'Relevé de Notes' :
+              req.document_type_id === 3 ? 'Convention de Stage PFE' :
+              req.document_type_id === 4 ? 'Attestation de Réussite' :
+              req.document_type_id === 5 ? 'Attestation d\'Inscription' :
+              `Document #${req.id}`
+            );
             
             const rawDate = req.requested_at || req.created_at;
             const formattedDate = rawDate 
@@ -485,13 +495,24 @@ export default function StudentGuichetPage() {
                   </div>
                 )}
 
-                {/* Admin Notes if rejected */}
-                {isRejected && req.admin_notes && (
-                  <div className="p-3.5 bg-rose-50/80 dark:bg-rose-950/30 rounded-xl border border-rose-200 dark:border-rose-900/40 text-xs text-rose-800 dark:text-rose-200 flex items-start gap-2.5">
-                    <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-                    <div>
-                      <strong className="block font-bold">Observation du Service Scolarité :</strong>
-                      <p className="mt-0.5 leading-relaxed">{req.admin_notes}</p>
+                {/* Motif de Refus Officiel (Visible dès que la demande est rejetée) */}
+                {isRejected && (
+                  <div className="p-4 bg-rose-50/90 dark:bg-rose-950/40 rounded-2xl border border-rose-200 dark:border-rose-900/50 text-xs text-rose-900 dark:text-rose-100 flex items-start gap-3 shadow-2xs">
+                    <div className="w-8 h-8 rounded-xl bg-rose-100 dark:bg-rose-900/60 text-rose-600 flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
+                      <AlertTriangle className="w-4 h-4" />
+                    </div>
+                    <div className="space-y-1 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <strong className="text-[11px] font-black uppercase text-rose-800 dark:text-rose-300 tracking-wide">
+                          Motif du Refus de l'Administration :
+                        </strong>
+                        <span className="px-2 py-0.5 rounded-full bg-rose-200/60 dark:bg-rose-900/60 text-rose-800 dark:text-rose-200 text-[10px] font-bold">
+                          Dossier non validé
+                        </span>
+                      </div>
+                      <p className="text-xs text-rose-950 dark:text-rose-100 font-medium leading-relaxed">
+                        {req.admin_notes || "Dossier administratif non conforme ou pièce justificative manquante. Veuillez vérifier les informations de votre demande ou vous rapprocher du Service des Affaires Étudiantes."}
+                      </p>
                     </div>
                   </div>
                 )}
@@ -657,8 +678,9 @@ export default function StudentGuichetPage() {
                 >
                   <option value="Attestation de Scolarité">Attestation de Scolarité (Année universitaire 2026-2027)</option>
                   <option value="Relevé de Notes (S1-S4)">Relevé de Notes Officiel (Semestres Validés)</option>
-                  <option value="Attestation de Réussite">Attestation de Réussite de Niveau</option>
                   <option value="Convention de Stage PFE">Convention de Stage PFE / Stage d'Initiation</option>
+                  <option value="Attestation de Réussite">Attestation de Réussite de Niveau</option>
+                  <option value="Attestation d'Inscription">Attestation d'Inscription & Récépissé</option>
                 </select>
                 <p className="text-[11px] text-slate-400 mt-1.5 font-medium">
                   Le document sera certifié numériquement avec QR Code d'authenticité et empreinte cryptographique SHA-256.

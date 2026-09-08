@@ -15,6 +15,8 @@ class StoreDocumentRequest extends FormRequest
     {
         return [
             'document_type_id' => ['required', 'integer', 'exists:document_types,id'],
+            'motif' => ['nullable', 'string', 'max:1000'],
+            'type' => ['nullable', 'string', 'max:255'],
         ];
     }
 }

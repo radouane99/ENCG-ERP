@@ -42,14 +42,15 @@ class AdminDocumentRequestController extends Controller
 
         $requests = $query->latest()->get()->map(function (DocumentRequest $documentRequest) {
             $status = in_array($documentRequest->status, ['ready', 'processing'], true) ? 'approved' : $documentRequest->status;
-            $adminNotes = $documentRequest->admin_notes ?? [];
+            $adminNotes = is_array($documentRequest->admin_notes) ? $documentRequest->admin_notes : [];
 
             return [
                 'id' => $documentRequest->id,
                 'person' => $documentRequest->student?->user?->name ?? 'Inconnu',
+                'student_cne' => $documentRequest->student?->cne ?? null,
                 'role' => 'Étudiant',
                 'type' => $documentRequest->documentType?->name ?? 'Document',
-                'motif' => 'Demande de document administratif',
+                'motif' => $adminNotes['motif'] ?? 'Demande de document administratif',
                 'time' => $documentRequest->requested_at?->diffForHumans() ?? $documentRequest->created_at?->diffForHumans(),
                 'status' => $status,
                 'reason' => $adminNotes['reason'] ?? $adminNotes['rejection_reason'] ?? null,
@@ -152,15 +153,30 @@ class AdminDocumentRequestController extends Controller
      */
     public function updateStatus(UpdateDocumentRequestStatus $request, DocumentRequest $documentRequest): JsonResponse
     {
+        $adminNotes = $request->validated('admin_notes') ?? [];
+        $rejectionReason = $request->input('rejection_reason') ?? $request->input('reason');
+        if (! empty($rejectionReason)) {
+            $adminNotes['reason'] = $rejectionReason;
+            $adminNotes['rejection_reason'] = $rejectionReason;
+        }
+
+        $existingNotes = is_array($documentRequest->admin_notes) ? $documentRequest->admin_notes : [];
+        $mergedNotes = array_merge($existingNotes, $adminNotes);
+
+        $status = $request->validated('status');
+        if ($status === 'approved') {
+            $status = 'ready';
+        }
+
         $updatedRequest = $this->documentRequestService->processRequest(
             $documentRequest,
-            $request->validated('status'),
-            $request->validated('admin_notes')
+            $status,
+            $mergedNotes
         );
 
         return response()->json([
             'success' => true,
-            'message' => 'Statut mis à jour.',
+            'message' => 'Statut mis à jour avec succès.',
             'data' => $updatedRequest,
         ]);
     }

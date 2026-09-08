@@ -43,10 +43,11 @@ class StudentDocumentRequestController extends Controller
                     'processed_at' => $docRequest->processed_at,
                     'document_type' => $docRequest->documentType?->name,
                     'document_type_id' => $docRequest->document_type_id,
+                    'motif' => is_array($docRequest->admin_notes) ? ($docRequest->admin_notes['motif'] ?? null) : null,
                     'download_url' => $isReady ? url("/api/v1/student-portal/document-requests/{$docRequest->id}/download") : null,
                     'preview_url' => $isReady ? url("/api/v1/student-portal/document-requests/{$docRequest->id}/preview") : null,
                     'hash' => $generatedDocument?->verification_token ?? null,
-                    'admin_notes' => $docRequest->admin_notes,
+                    'admin_notes' => is_array($docRequest->admin_notes) ? ($docRequest->admin_notes['reason'] ?? $docRequest->admin_notes['rejection_reason'] ?? null) : $docRequest->admin_notes,
                 ];
             });
 
