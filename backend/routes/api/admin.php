@@ -1128,6 +1128,8 @@ Route::middleware(['auth:sanctum', $staffRoles])->group(function () {
     Route::get('/admin/audit-logs/entity/{type}/{id}', [AuditForensicController::class, 'entityHistory']);
     Route::get('/admin/activity-logs', [AuditForensicController::class, 'index']);
     Route::get('/activity-logs', [AuditForensicController::class, 'index']);
+    Route::get('/admin/privacy/requests', [\App\Http\Controllers\Api\PrivacyController::class, 'adminIndex']);
+    Route::patch('/admin/privacy/requests/{id}/status', [\App\Http\Controllers\Api\PrivacyController::class, 'adminUpdateStatus']);
     Route::post('/students/{student}/biometric-match', [StudentController::class, 'runBiometricMatch']);
 
     Route::get('/v1/enrollments/scolarite-print-hub', [PdfExportController::class, 'scolaritePrintHub']);

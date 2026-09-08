@@ -67,6 +67,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/opposition', [PrivacyController::class, 'requestOpposition']);
         Route::get('/export', [PrivacyController::class, 'myExports']);
         Route::get('/export/{id}/download', [PrivacyController::class, 'download']);
+        Route::get('/export/{id}/preview', [PrivacyController::class, 'preview']);
+        Route::get('/export/{id}/pdf', [PrivacyController::class, 'downloadPdf']);
     });
 
     // Notifications

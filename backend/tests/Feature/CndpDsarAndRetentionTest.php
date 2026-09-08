@@ -125,3 +125,31 @@ it('lets the owner download a completed DSAR export with a Sanctum Bearer token'
         ->assertOk()
         ->assertDownload('encg-dsar-'.$export->id.'.json');
 });
+
+it('lets the owner preview and download the certified official CNDP PDF report', function () {
+    $owner = User::factory()->create();
+
+    $export = DataExportRequest::create([
+        'institution_id' => 1,
+        'user_id' => $owner->id,
+        'request_type' => 'access',
+        'status' => 'completed',
+        'export_format' => 'pdf',
+        'processed_at' => now(),
+    ]);
+
+    $res = actingAs($owner, 'sanctum')
+        ->get('/api/v1/privacy/export/'.$export->id.'/preview')
+        ->assertOk()
+        ->assertHeader('content-type', 'application/pdf');
+
+    $pdfContent = $res->getContent();
+    $pageCount = preg_match_all('/\/Type\s*\/Page[^s]/', $pdfContent, $matches);
+    expect($pageCount)->toBe(1);
+
+    actingAs($owner, 'sanctum')
+        ->get('/api/v1/privacy/export/'.$export->id.'/pdf')
+        ->assertOk()
+        ->assertHeader('content-type', 'application/pdf');
+});
+
