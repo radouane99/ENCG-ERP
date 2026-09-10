@@ -24,8 +24,6 @@ class StudentPortalService
                 'overall_decision' => null,
                 'total_modules' => 0,
                 'validated_modules' => 0,
-                'credits_earned' => 0,
-                'total_credits' => 0,
             ];
         }
 
@@ -383,8 +381,6 @@ class StudentPortalService
         $gradesResult = $this->getGrades($studentId);
         $gpa = $gradesResult['overall_average'];
         $publishedGrades = $gradesResult['total_modules'];
-        $creditsEarned = $gradesResult['credits_earned'];
-        $totalCredits = $gradesResult['total_credits'];
 
         $pathway = DB::table('student_pathways')
             ->where('student_id', $studentId)
@@ -513,8 +509,6 @@ class StudentPortalService
             'upcoming_classes' => $upcomingClasses,
             'gpa' => $gpa,
             'overall_decision' => $gradesResult['overall_decision'],
-            'credits_earned' => $creditsEarned,
-            'total_credits' => $totalCredits,
             'upcoming_exams' => $upcomingExams,
             'recent_documents' => $recentDocuments,
             'academic_info' => $subGroupInfo,

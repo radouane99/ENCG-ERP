@@ -84,8 +84,6 @@ export default function StudentDashboard() {
     classes_today: statsPayload.classes_today ?? 0,
     absences: statsPayload.absences ?? { total: 0, justified: 0, unjustified: 0 },
     upcoming_exams: statsPayload.upcoming_exams ?? 0,
-    credits_earned: statsPayload.credits_earned ?? 0,
-    total_credits: statsPayload.total_credits ?? 30,
     upcoming_classes: (Array.isArray(statsPayload.upcoming_classes) ? statsPayload.upcoming_classes : []) as UpcomingClass[],
     recent_documents: (Array.isArray(statsPayload.recent_documents) ? statsPayload.recent_documents : []) as RecentDocument[],
   };
@@ -481,21 +479,7 @@ export default function StudentDashboard() {
                   Convocations PDF →
                 </Link>
               </div>
-
-              {/* Crédits ECTS */}
-              <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 shadow-sm border border-slate-200 dark:border-slate-800 relative overflow-hidden group hover:shadow-md transition-all">
-                <div className="absolute top-0 right-0 p-3 opacity-5 group-hover:opacity-10 transition-opacity">
-                  <TrendingUp className="w-14 h-14 text-amber-500" />
-                </div>
-                <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 block mb-2">Crédits ECTS</span>
-                <div className="text-3xl font-black text-amber-600 dark:text-amber-400">
-                  {stats.credits_earned || 150}/{stats.total_credits || 300}
-                </div>
-                <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mt-2 block">
-                  Progression 50%
-                </span>
               </div>
-            </div>
 
             {/* ── Active Strategic Academic Campaigns Banner ── */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -658,7 +642,7 @@ export default function StudentDashboard() {
                           </span>
                         </div>
                         <button 
-                          onClick={() => openAuthenticatedUrl(`/api/v1/student/documents/${doc.id}/download`)}
+                          onClick={() => openAuthenticatedUrl(`/api/v1/student-portal/document-requests/${doc.id}/download`)}
                           className="p-2 bg-blue-50 dark:bg-blue-950 hover:bg-blue-100 text-blue-700 dark:text-blue-300 rounded-xl transition-colors cursor-pointer"
                           title="Télécharger le document PDF"
                         >
