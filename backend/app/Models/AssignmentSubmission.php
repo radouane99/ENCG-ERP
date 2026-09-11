@@ -10,7 +10,18 @@ class AssignmentSubmission extends Model
 {
     use HasFactory;
 
-    protected $guarded = ['id'];
+    protected $fillable = [
+        'assignment_id',
+        'student_id',
+        'file_path',
+        'submission_text',
+        'is_late',
+        'score',
+        'feedback',
+        'graded_by',
+        'graded_at',
+        'submitted_at',
+    ];
 
     protected function casts(): array
     {

@@ -14,7 +14,19 @@ class LearningMaterial extends Model implements HasMedia
     use HasFactory;
     use InteractsWithMedia;
 
-    protected $guarded = ['id'];
+    protected $fillable = [
+        'module_id',
+        'academic_year_id',
+        'professor_id',
+        'professor_type',
+        'title',
+        'description',
+        'type',
+        'file_path',
+        'external_url',
+        'is_published',
+        'order',
+    ];
 
     protected function casts(): array
     {
