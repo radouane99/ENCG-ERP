@@ -39,8 +39,8 @@ class ClubController extends Controller
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'ilike', "%{$search}%")
-                  ->orWhere('description', 'ilike', "%{$search}%")
-                  ->orWhere('president_name', 'ilike', "%{$search}%");
+                    ->orWhere('description', 'ilike', "%{$search}%")
+                    ->orWhere('president_name', 'ilike', "%{$search}%");
             });
         }
 
@@ -53,6 +53,7 @@ class ClubController extends Controller
         // Enrichir chaque club avec le statut d'adhésion de l'étudiant
         $enrichedClubs = collect($clubs->items())->map(function ($club) use ($userMemberships) {
             $membership = $userMemberships->get($club->id);
+
             return array_merge($club->toArray(), [
                 'is_member' => ! is_null($membership),
                 'my_role' => $membership?->role,

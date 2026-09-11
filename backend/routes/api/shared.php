@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AcademicCalendarController;
+use App\Http\Controllers\Api\Admin\AdminBlockchainController;
 use App\Http\Controllers\Api\AdmissionController;
 use App\Http\Controllers\Api\AiAssistantController;
 use App\Http\Controllers\Api\AiChatController;
@@ -38,9 +39,8 @@ Route::get('/v1/verify/document/{documentId}', [PublicVerificationController::cl
 Route::get('/verify/pv/{moduleId}/{groupId}', [PublicVerificationController::class, 'verifyModulePv']);
 Route::get('/verify/card/{token}', [StudentCardController::class, 'verify']);
 Route::get('/verify/surveillance/{token}/confirm', [ConvocationController::class, 'confirmReception']);
-Route::match(['get', 'post'], '/blockchain/public-verify', [\App\Http\Controllers\Api\Admin\AdminBlockchainController::class, 'verify']);
-Route::match(['get', 'post'], '/verify/blockchain', [\App\Http\Controllers\Api\Admin\AdminBlockchainController::class, 'verify']);
-
+Route::match(['get', 'post'], '/blockchain/public-verify', [AdminBlockchainController::class, 'verify']);
+Route::match(['get', 'post'], '/verify/blockchain', [AdminBlockchainController::class, 'verify']);
 
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::match(['get', 'post'], '/exams/{examId}/pv-pdf', [ExamPdfController::class, 'pvExamen']);

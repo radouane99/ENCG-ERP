@@ -10,10 +10,13 @@ use App\Models\Borrowing;
 use App\Models\LearningMaterial;
 use App\Services\Academic\StudentPortalService;
 use App\Services\Library\KohaLibraryClient;
+use App\Services\Notification\NotificationDispatcherService;
 use Carbon\Carbon;
+use Database\Seeders\LibrarySeeder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class StudentPortalController extends Controller
 {
@@ -103,7 +106,7 @@ class StudentPortalController extends Controller
 
         // Self-heal corrupted books in DB and ensure complete catalogue
         if (Book::count() <= 4) {
-            (new \Database\Seeders\LibrarySeeder())->run();
+            (new LibrarySeeder)->run();
         }
 
         foreach (Book::all() as $bCheck) {
@@ -150,7 +153,7 @@ class StudentPortalController extends Controller
             ->get()
             ->map(function ($mat) {
                 return [
-                    'id' => 'mat-' . $mat->id,
+                    'id' => 'mat-'.$mat->id,
                     'title' => $mat->title,
                     'author' => $mat->professor ? "Pr. {$mat->professor->last_name} {$mat->professor->first_name}" : 'Corps Enseignant ENCG',
                     'category' => $mat->module?->name ?? 'Cours Magistral',
@@ -259,9 +262,9 @@ class StudentPortalController extends Controller
 
         // Alerter le bibliothécaire de la réservation
         try {
-            app(\App\Services\Notification\NotificationDispatcherService::class)->notifyAdminBookReserved($borrowing);
+            app(NotificationDispatcherService::class)->notifyAdminBookReserved($borrowing);
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::warning('Failed notifying admin of book reservation: '.$e->getMessage());
+            Log::warning('Failed notifying admin of book reservation: '.$e->getMessage());
         }
 
         return response()->json([

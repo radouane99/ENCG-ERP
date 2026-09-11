@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Zap, CheckCircle2, Sparkles, Loader2, Send } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { useMutation, useQuery } from '@tanstack/react-query';
@@ -13,9 +12,7 @@ interface QCMQuestion {
 }
 
 export default function ProfessorQCMGenerator() {
-  const { i18n } = useTranslation(['professors', 'common']);
   const [step, setStep] = useState<'upload' | 'generating' | 'review'>('upload');
-  const [progress, setProgress] = useState(0);
   const [questions, setQuestions] = useState<QCMQuestion[]>([]);
 
   // Configuration fields

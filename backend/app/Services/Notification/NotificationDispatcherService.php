@@ -9,10 +9,10 @@ use App\Models\DocumentRequest;
 use App\Models\Module;
 use App\Models\Student;
 use App\Models\User;
-use App\Notifications\DocumentRequestCreatedNotification;
 use App\Notifications\DocumentRequestStatusUpdatedNotification;
 use App\Notifications\NewDocumentRequestAdminNotification;
 use App\Notifications\SystemNotification;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 
 class NotificationDispatcherService
@@ -142,7 +142,7 @@ class NotificationDispatcherService
             try {
                 $admin->notify(new SystemNotification(
                     "Justificatif d'absence déposé",
-                    "{$studentName}" . ($cne ? " ({$cne})" : "") . " a déposé un justificatif d'absence nécessitant examen sous 48h.",
+                    "{$studentName}".($cne ? " ({$cne})" : '')." a déposé un justificatif d'absence nécessitant examen sous 48h.",
                     'document_pending',
                     '/admin/absences'
                 ));
@@ -214,11 +214,11 @@ class NotificationDispatcherService
         $type = $approved ? 'academic' : 'danger';
         $message = $approved
             ? "Votre justificatif d'absence a été validé par la scolarité. Votre statut de présence est désormais régularisé."
-            : "Votre justificatif d'absence a été refusé par l'administration." . ($reason ? " Motif : {$reason}" : "");
+            : "Votre justificatif d'absence a été refusé par l'administration.".($reason ? " Motif : {$reason}" : '');
 
         try {
             $studentUser->notify(new SystemNotification(
-                "Justificatif d'absence " . ($approved ? "validé" : "refusé"),
+                "Justificatif d'absence ".($approved ? 'validé' : 'refusé'),
                 $message,
                 $type,
                 '/student/absences'
@@ -239,7 +239,7 @@ class NotificationDispatcherService
         }
 
         $bookTitle = $borrowing->bookCopy?->book?->title ?? 'Ouvrage de bibliothèque';
-        $dueDate = $borrowing->due_date ? \Carbon\Carbon::parse($borrowing->due_date)->format('d/m/Y') : 'prochainement';
+        $dueDate = $borrowing->due_date ? Carbon::parse($borrowing->due_date)->format('d/m/Y') : 'prochainement';
 
         if ($alertType === 'overdue') {
             $title = "Échéance dépassée : {$bookTitle}";
@@ -268,7 +268,7 @@ class NotificationDispatcherService
     public function notifyAdminGradesSubmittedForDeliberation(Module $module, ?string $profName = null): void
     {
         $admins = $this->getAdminUsers();
-        $profStr = $profName ? "par Pr. {$profName}" : "";
+        $profStr = $profName ? "par Pr. {$profName}" : '';
 
         foreach ($admins as $admin) {
             try {

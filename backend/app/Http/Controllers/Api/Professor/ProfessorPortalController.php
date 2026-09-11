@@ -2093,7 +2093,7 @@ class ProfessorPortalController extends Controller
                 $moduleObj = Module::find($moduleId);
                 $cleanNum = preg_replace('/[^0-9]/', '', $seanceCode) ?: '1';
                 $defaultTitle = "Séance {$seanceCode} — ".($moduleObj?->name ?? 'Enseignement');
-                $defaultConcepts = "Séance officielle {$seanceCode} (".strtoupper($sessionType)."). Effectif : ".count($students)." inscrits, ".(count($students) - count($absentIds))." présents, ".count($absentIds)." absents.";
+                $defaultConcepts = "Séance officielle {$seanceCode} (".strtoupper($sessionType).'). Effectif : '.count($students).' inscrits, '.(count($students) - count($absentIds)).' présents, '.count($absentIds).' absents.';
 
                 Textbook::updateOrCreate(
                     [

@@ -10,7 +10,6 @@ import {
   ExternalLink, 
   Search, 
   RefreshCw,
-  SlidersHorizontal,
   Check,
   Calendar,
   Sparkles

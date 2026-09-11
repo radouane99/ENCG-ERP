@@ -11,9 +11,11 @@ use App\Models\Student;
 use App\Models\StudentPathway;
 use App\Models\StudentRegistration;
 use App\Services\Academic\AcademicYearRolloverService;
+use App\Services\Academic\SmartAcademicProgressionService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 
 class AcademicYearController extends Controller
 {
@@ -169,7 +171,7 @@ class AcademicYearController extends Controller
     /**
      * Obtenir le registre complet de passage annuel avec détection intelligente des dettes.
      */
-    public function getProgressionRoster(Request $request, \App\Services\Academic\SmartAcademicProgressionService $progressionService): JsonResponse
+    public function getProgressionRoster(Request $request, SmartAcademicProgressionService $progressionService): JsonResponse
     {
         $yearId = $request->query('academic_year_id');
         $result = $progressionService->getProgressionRoster($yearId ? (int) $yearId : null);
@@ -189,7 +191,7 @@ class AcademicYearController extends Controller
         $inputCode = trim($validated['security_code']);
         $user = $request->user();
 
-        $isPasswordValid = $user && \Illuminate\Support\Facades\Hash::check($inputCode, $user->password);
+        $isPasswordValid = $user && Hash::check($inputCode, $user->password);
         $masterCodes = [
             'ENCG-ARCHIVE-SECURE',
             'ENCG@ADMIN2026',
@@ -215,7 +217,7 @@ class AcademicYearController extends Controller
     /**
      * Exécuter la bascule officielle intelligente et archiver l'année avec contrôle strict de sécurité.
      */
-    public function executeSmartRollover(Request $request, \App\Services\Academic\SmartAcademicProgressionService $progressionService): JsonResponse
+    public function executeSmartRollover(Request $request, SmartAcademicProgressionService $progressionService): JsonResponse
     {
         $validated = $request->validate([
             'current_year_id' => 'required|integer',
@@ -228,7 +230,7 @@ class AcademicYearController extends Controller
         $inputCode = trim($validated['security_code']);
         $user = $request->user();
 
-        $isPasswordValid = $user && \Illuminate\Support\Facades\Hash::check($inputCode, $user->password);
+        $isPasswordValid = $user && Hash::check($inputCode, $user->password);
         $masterCodes = [
             'ENCG-ARCHIVE-SECURE',
             'ENCG@ADMIN2026',
@@ -245,8 +247,8 @@ class AcademicYearController extends Controller
             ], 403);
         }
 
-        $authorizedBy = $user 
-            ? "{$user->first_name} {$user->last_name} ({$user->email})" 
+        $authorizedBy = $user
+            ? "{$user->first_name} {$user->last_name} ({$user->email})"
             : 'Direction Académique';
 
         $result = $progressionService->executeSmartRollover(
@@ -263,7 +265,7 @@ class AcademicYearController extends Controller
     /**
      * Simuler la bascule annuelle à blanc (Dry-Run sans impact DB).
      */
-    public function simulateSmartRollover(Request $request, \App\Services\Academic\SmartAcademicProgressionService $progressionService): JsonResponse
+    public function simulateSmartRollover(Request $request, SmartAcademicProgressionService $progressionService): JsonResponse
     {
         $validated = $request->validate([
             'current_year_id' => 'required|integer',
@@ -281,7 +283,7 @@ class AcademicYearController extends Controller
     /**
      * Télécharger la fiche officielle d'enjambement et de dette pédagogique (PDF certifié).
      */
-    public function downloadFicheDettePdf(Student $student, \App\Services\Academic\SmartAcademicProgressionService $progressionService)
+    public function downloadFicheDettePdf(Student $student, SmartAcademicProgressionService $progressionService)
     {
         $student->loadMissing(['user', 'pathways.filiere']);
         $debtRecord = $progressionService->getStudentDebtRecord($student->id);
@@ -291,7 +293,7 @@ class AcademicYearController extends Controller
         }
 
         $activeYear = AcademicYear::where('is_current', true)->first() ?? AcademicYear::first();
-        $verifyUrl = config('app.url') . "/verify/enjambement/{$student->id}/" . md5($student->cne . ($activeYear?->id ?? 1));
+        $verifyUrl = config('app.url')."/verify/enjambement/{$student->id}/".md5($student->cne.($activeYear?->id ?? 1));
 
         $data = [
             'student' => $student,
@@ -309,13 +311,13 @@ class AcademicYearController extends Controller
             $path = public_path($candidate);
             if (file_exists($path)) {
                 $mime = str_ends_with($candidate, '.png') ? 'image/png' : 'image/jpeg';
-                $data['logoBase64'] = 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($path));
+                $data['logoBase64'] = 'data:'.$mime.';base64,'.base64_encode(file_get_contents($path));
                 break;
             }
         }
 
         $pdf = Pdf::loadView('pdf.fiche_dette_enjambement', $data)->setPaper('a4', 'portrait');
-        $filename = "Fiche_Dette_Enjambement_{$student->cne}_" . date('Ymd') . ".pdf";
+        $filename = "Fiche_Dette_Enjambement_{$student->cne}_".date('Ymd').'.pdf';
 
         return $pdf->download($filename);
     }

@@ -57,7 +57,7 @@ class NotificationSeeder extends Seeder
                 ],
                 [
                     'title' => 'Emploi du temps : Amphi 2',
-                    'message' => "La séance de cours magistral de demain matin en Marketing Stratégique aura lieu en Amphi 2 à 10h30.",
+                    'message' => 'La séance de cours magistral de demain matin en Marketing Stratégique aura lieu en Amphi 2 à 10h30.',
                     'type' => 'system',
                     'action_url' => '/student/schedule',
                     'read' => true,
@@ -65,7 +65,7 @@ class NotificationSeeder extends Seeder
                 ],
                 [
                     'title' => 'Justificatif d\'absence validé',
-                    'message' => "Votre certificat médical déposé le 08/09/2026 a été validé par le service de scolarité. Votre assiduité est régularisée.",
+                    'message' => 'Votre certificat médical déposé le 08/09/2026 a été validé par le service de scolarité. Votre assiduité est régularisée.',
                     'type' => 'academic',
                     'action_url' => '/student/absences',
                     'read' => true,
@@ -73,7 +73,7 @@ class NotificationSeeder extends Seeder
                 ],
                 [
                     'title' => 'Convention de stage PFE validée',
-                    'message' => "Votre convention de stage tripartite a été signée numériquement par la Direction des Relations Entreprises.",
+                    'message' => 'Votre convention de stage tripartite a été signée numériquement par la Direction des Relations Entreprises.',
                     'type' => 'document_approved',
                     'action_url' => '/student/internships',
                     'read' => true,
@@ -115,7 +115,7 @@ class NotificationSeeder extends Seeder
                 ],
                 [
                     'title' => 'Rappel : Clôture saisie des notes CC2',
-                    'message' => "La date limite pour finaliser la saisie des notes du Contrôle Continu 2 (S5) est fixée au 18/09/2026 à 23h59.",
+                    'message' => 'La date limite pour finaliser la saisie des notes du Contrôle Continu 2 (S5) est fixée au 18/09/2026 à 23h59.',
                     'type' => 'system',
                     'action_url' => '/professor/grades',
                     'read' => false,

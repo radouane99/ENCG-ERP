@@ -9,7 +9,6 @@ use App\Models\Institution;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
 
 class InstitutionSettingsController extends Controller
 {
@@ -163,14 +162,26 @@ class InstitutionSettingsController extends Controller
         ]);
 
         return DB::transaction(function () use ($validated, $request) {
-            $institution = Institution::first() ?? new Institution();
+            $institution = Institution::first() ?? new Institution;
 
-            if (isset($validated['institutionName'])) $institution->name = $validated['institutionName'];
-            if (isset($validated['directorName'])) $institution->director_name = $validated['directorName'];
-            if (isset($validated['officialEmail'])) $institution->email = $validated['officialEmail'];
-            if (isset($validated['supportPhone'])) $institution->phone = $validated['supportPhone'];
-            if (isset($validated['address'])) $institution->address = $validated['address'];
-            if (isset($validated['websiteUrl'])) $institution->website = $validated['websiteUrl'];
+            if (isset($validated['institutionName'])) {
+                $institution->name = $validated['institutionName'];
+            }
+            if (isset($validated['directorName'])) {
+                $institution->director_name = $validated['directorName'];
+            }
+            if (isset($validated['officialEmail'])) {
+                $institution->email = $validated['officialEmail'];
+            }
+            if (isset($validated['supportPhone'])) {
+                $institution->phone = $validated['supportPhone'];
+            }
+            if (isset($validated['address'])) {
+                $institution->address = $validated['address'];
+            }
+            if (isset($validated['websiteUrl'])) {
+                $institution->website = $validated['websiteUrl'];
+            }
 
             $currentSettings = is_array($institution->settings) ? $institution->settings : [];
 
@@ -213,7 +224,7 @@ class InstitutionSettingsController extends Controller
                 $user = $request->user();
                 AuditLog::record([
                     'user_id' => $user?->id,
-                    'user_name' => $user ? ($user->first_name . ' ' . $user->last_name) : 'Super-Admin',
+                    'user_name' => $user ? ($user->first_name.' '.$user->last_name) : 'Super-Admin',
                     'user_email' => $user?->email ?? 'admin@encg-fes.ma',
                     'user_role' => 'Super-Admin',
                     'action' => 'Mise à jour des Paramètres Institutionnels & ERP',

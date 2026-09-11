@@ -316,72 +316,72 @@ Formule des recommandations actionnables. Sois direct, factuel et professionnel.
         // 1. Attestation de scolarité & Documents administratifs
         if (str_contains($p, 'attestation') || str_contains($p, 'scolarit') || str_contains($p, 'document') || str_contains($p, 'relev') || str_contains($p, 'certificat') || str_contains($p, 'chahada') || str_contains($p, 'guichet')) {
             return "📄 **Attestation de Scolarité & Documents Administratifs (ENCG Fès) :**\n\n"
-                . "Bonjour {$name} ! Vous pouvez demander vos documents officiels directement depuis votre portail :\n\n"
-                . "1. Rendez-vous dans le menu **Guichet Électronique** (`/student/documents`).\n"
-                . "2. Cliquez sur **\"Nouvelle Demande\"** et sélectionnez **Attestation de Scolarité** ou **Relevé de Notes**.\n"
-                . "3. Votre document est signé numériquement avec QR-code de certification sécurisé et est téléchargeable sous **24h à 48h ouvrables**.\n\n"
-                . "💡 *En cas de besoin physique urgent (visa, concours), vous pouvez également vous présenter au Guichet Scolarité muni de votre carte d'étudiant.*";
+                ."Bonjour {$name} ! Vous pouvez demander vos documents officiels directement depuis votre portail :\n\n"
+                ."1. Rendez-vous dans le menu **Guichet Électronique** (`/student/documents`).\n"
+                ."2. Cliquez sur **\"Nouvelle Demande\"** et sélectionnez **Attestation de Scolarité** ou **Relevé de Notes**.\n"
+                ."3. Votre document est signé numériquement avec QR-code de certification sécurisé et est téléchargeable sous **24h à 48h ouvrables**.\n\n"
+                ."💡 *En cas de besoin physique urgent (visa, concours), vous pouvez également vous présenter au Guichet Scolarité muni de votre carte d'étudiant.*";
         }
 
         // 2. Stages, PFE & Conventions
         if (str_contains($p, 'stage') || str_contains($p, 'pfe') || str_contains($p, 'convention') || str_contains($p, 'tadrib') || str_contains($p, 'entreprise') || str_contains($p, 'soutenance')) {
             return "💼 **Stages & Conventions de Stage Tripartites (ENCG Fès) :**\n\n"
-                . "1. Accédez à la rubrique **Mes Stages & PFE** (`/student/internships`).\n"
-                . "2. Vous pouvez générer votre **Convention de Stage Tripartite** officielle avec couverture d'assurance responsabilité civile.\n"
-                . "3. Faites signer votre entreprise d'accueil, puis téléversez l'exemplaire scanné pour validation définitive par la direction des stages.\n"
-                . "4. Le rapport de PFE et le dépôt du mémoire s'effectuent également sur cette même interface avec vérification anti-plagiat.";
+                ."1. Accédez à la rubrique **Mes Stages & PFE** (`/student/internships`).\n"
+                ."2. Vous pouvez générer votre **Convention de Stage Tripartite** officielle avec couverture d'assurance responsabilité civile.\n"
+                ."3. Faites signer votre entreprise d'accueil, puis téléversez l'exemplaire scanné pour validation définitive par la direction des stages.\n"
+                ."4. Le rapport de PFE et le dépôt du mémoire s'effectuent également sur cette même interface avec vérification anti-plagiat.";
         }
 
         // 3. Absences & Justifications (Délai 48h)
         if (str_contains($p, 'absence') || str_contains($p, 'justifi') || str_contains($p, 'malad') || str_contains($p, 'ghiyab') || str_contains($p, 'retard') || str_contains($p, 'certificat m')) {
             return "🚨 **Justification des Absences (Règlement Intérieur ENCG Fès) :**\n\n"
-                . "1. Rendez-vous dans **Mes Absences & Justificatifs** (`/student/absences`).\n"
-                . "2. Conformément au règlement officiel, vous disposez d'un délai strict de **48 heures** après la reprise pour déposer votre justificatif (certificat médical, convocation officielle).\n"
-                . "3. Téléversez le document scanné. Dès validation par l'administration, le statut passera à *\"Justifié\"*, préservant ainsi votre assiduité pour les examens.";
+                ."1. Rendez-vous dans **Mes Absences & Justificatifs** (`/student/absences`).\n"
+                ."2. Conformément au règlement officiel, vous disposez d'un délai strict de **48 heures** après la reprise pour déposer votre justificatif (certificat médical, convocation officielle).\n"
+                ."3. Téléversez le document scanné. Dès validation par l'administration, le statut passera à *\"Justifié\"*, préservant ainsi votre assiduité pour les examens.";
         }
 
         // 4. Notes, Rattrapages & Règles LMD
         if (str_contains($p, 'note') || str_contains($p, 'rattrapage') || str_contains($p, 'examen') || str_contains($p, 'lmd') || str_contains($p, 'moyenne') || str_contains($p, 'validation') || str_contains($p, 'no9at') || str_contains($p, 'controle') || str_contains($p, 'recours')) {
             return "📊 **Notes, Examens & Normes LMD (ENCG Fès) :**\n\n"
-                . "• **Pondération officielle d'un module** : **25% CC 1 + 25% CC 2 + 50% Examen Final**.\n"
-                . "• **Validation de module (V)** : Moyenne générale finale **≥ 10.00 / 20**.\n"
-                . "• **Rattrapage (RAT)** : Obligatoire si la moyenne est comprise entre **6.00 et 9.99 / 20**.\n"
-                . "• **Note éliminatoire** : Toute note **< 6.00 / 20** est éliminatoire et empêche la compensation semestrielle.\n"
-                . "• **Recours 48h** : Vous pouvez déposer une réclamation de note sur **Mes Notes & Résultats** (`/student/grades`) sous 48h après affichage.";
+                ."• **Pondération officielle d'un module** : **25% CC 1 + 25% CC 2 + 50% Examen Final**.\n"
+                ."• **Validation de module (V)** : Moyenne générale finale **≥ 10.00 / 20**.\n"
+                ."• **Rattrapage (RAT)** : Obligatoire si la moyenne est comprise entre **6.00 et 9.99 / 20**.\n"
+                ."• **Note éliminatoire** : Toute note **< 6.00 / 20** est éliminatoire et empêche la compensation semestrielle.\n"
+                .'• **Recours 48h** : Vous pouvez déposer une réclamation de note sur **Mes Notes & Résultats** (`/student/grades`) sous 48h après affichage.';
         }
 
         // 5. Emploi du temps & Groupes TD
         if (str_contains($p, 'emploi') || str_contains($p, 'temps') || str_contains($p, 'planning') || str_contains($p, 'salle') || str_contains($p, 'amphi') || str_contains($p, 'groupe') || str_contains($p, 'cours')) {
             return "📅 **Emplois du Temps & Groupes Pédagogiques :**\n\n"
-                . "• Consultez **Mon Emploi du Temps** (`/student/schedule`) pour voir en temps réel vos cours et vos salles.\n"
-                . "• **Cours Magistraux (CM)** : Toute la section réunie en Amphithéâtre (G1, G2, etc.).\n"
-                . "• **Travaux Dirigés (TD / TP)** : Séances par sous-groupes alphabétiques (G1.1, G1.2, etc.).\n"
-                . "• L'export PDF officiel au format A4 Paysage est téléchargeable directement depuis votre planning.";
+                ."• Consultez **Mon Emploi du Temps** (`/student/schedule`) pour voir en temps réel vos cours et vos salles.\n"
+                ."• **Cours Magistraux (CM)** : Toute la section réunie en Amphithéâtre (G1, G2, etc.).\n"
+                ."• **Travaux Dirigés (TD / TP)** : Séances par sous-groupes alphabétiques (G1.1, G1.2, etc.).\n"
+                ."• L'export PDF officiel au format A4 Paysage est téléchargeable directement depuis votre planning.";
         }
 
         // 6. Bibliothèque & Livres
         if (str_contains($p, 'biblioth') || str_contains($p, 'livre') || str_contains($p, 'book') || str_contains($p, 'emprunt') || str_contains($p, 'maktaba')) {
             return "📚 **Bibliothèque Numérique & Médiathèque ENCG :**\n\n"
-                . "• Rendez-vous sur **Bibliothèque Numérique** (`/student/library`).\n"
-                . "• Vous pouvez consulter des e-books académiques en ligne ou réserver un ouvrage physique en rayon pour une durée de **14 jours**.\n"
-                . "• Suivez vos prêts actifs et prolongez-les de 7 jours directement depuis votre tableau de bord.";
+                ."• Rendez-vous sur **Bibliothèque Numérique** (`/student/library`).\n"
+                ."• Vous pouvez consulter des e-books académiques en ligne ou réserver un ouvrage physique en rayon pour une durée de **14 jours**.\n"
+                .'• Suivez vos prêts actifs et prolongez-les de 7 jours directement depuis votre tableau de bord.';
         }
 
         // 7. Carte d'étudiant / Pass
         if (str_contains($p, 'carte') || str_contains($p, 'pass') || str_contains($p, 'badge') || str_contains($p, 'biometrique') || str_contains($p, 'cr80')) {
             return "🪪 **Carte Numérique d'Étudiant (Pass Campus) :**\n\n"
-                . "Votre carte d'étudiant dématérialisée avec QR-code d'accès aux infrastructures de l'ENCG (Bibliothèque, Amphis, Examens) est accessible sur **Carte Numérique** (`/student/card`).";
+                ."Votre carte d'étudiant dématérialisée avec QR-code d'accès aux infrastructures de l'ENCG (Bibliothèque, Amphis, Examens) est accessible sur **Carte Numérique** (`/student/card`).";
         }
 
         // 8. Réponse générale d'accueil
         return "👋 **Bonjour {$name} !** Je suis le Copilot IA officiel de l'ENCG Fès.\n\n"
-            . "Je suis à votre disposition pour vous orienter sur votre scolarité :\n"
-            . "• 📄 **Attestation de scolarité & Relevés de notes** (`/student/documents`)\n"
-            . "• 💼 **Conventions de stages & PFE** (`/student/internships`)\n"
-            . "• 🚨 **Justification des absences sous 48h** (`/student/absences`)\n"
-            . "• 📊 **Calcul des notes et délibérations LMD** (`/student/grades`)\n"
-            . "• 📅 **Emplois du temps & Salles** (`/student/schedule`)\n"
-            . "• 📚 **Prêts de livres & Bibliothèque numérique** (`/student/library`)\n\n"
-            . "Comment puis-je vous aider aujourd'hui ?";
+            ."Je suis à votre disposition pour vous orienter sur votre scolarité :\n"
+            ."• 📄 **Attestation de scolarité & Relevés de notes** (`/student/documents`)\n"
+            ."• 💼 **Conventions de stages & PFE** (`/student/internships`)\n"
+            ."• 🚨 **Justification des absences sous 48h** (`/student/absences`)\n"
+            ."• 📊 **Calcul des notes et délibérations LMD** (`/student/grades`)\n"
+            ."• 📅 **Emplois du temps & Salles** (`/student/schedule`)\n"
+            ."• 📚 **Prêts de livres & Bibliothèque numérique** (`/student/library`)\n\n"
+            ."Comment puis-je vous aider aujourd'hui ?";
     }
 }

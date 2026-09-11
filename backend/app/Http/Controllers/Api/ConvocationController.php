@@ -17,6 +17,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class ConvocationController extends Controller
 {
@@ -693,12 +694,14 @@ class ConvocationController extends Controller
             if ($sessionType === 'RATTRAPAGE') {
                 $seatings = $allSeatings->filter(function ($s) {
                     $date = $s->exam?->exam_date ? Carbon::parse($s->exam->exam_date) : null;
+
                     return ($s->exam?->session && str_contains(strtolower($s->exam->session->name ?? ''), 'rattrapage'))
                         || ($date && $date->day > 10);
                 });
             } else {
                 $seatings = $allSeatings->filter(function ($s) {
                     $date = $s->exam?->exam_date ? Carbon::parse($s->exam->exam_date) : null;
+
                     return ! ($s->exam?->session && str_contains(strtolower($s->exam->session->name ?? ''), 'rattrapage'))
                         && (! $date || $date->day <= 10);
                 });
@@ -748,9 +751,9 @@ class ConvocationController extends Controller
         $verifyToken = hash('sha256', "CONV-STUDENT-{$cne}-{$sessionType}-".now()->toDateString());
         $verifyUrl = url("/verify/document/CONV-{$cne}");
         $qrBase64 = null;
-        if (class_exists(\SimpleSoftwareIO\QrCode\Facades\QrCode::class)) {
+        if (class_exists(QrCode::class)) {
             try {
-                $qrSvg = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')->size(160)->margin(0)->generate($verifyUrl);
+                $qrSvg = QrCode::format('svg')->size(160)->margin(0)->generate($verifyUrl);
                 $qrBase64 = 'data:image/svg+xml;base64,'.base64_encode($qrSvg);
             } catch (\Throwable $e) {
                 \Log::warning('QR generation error for Convocation: '.$e->getMessage());

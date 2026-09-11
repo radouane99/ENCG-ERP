@@ -3,6 +3,7 @@
 namespace App\Domain\AI\Services;
 
 use App\Domain\AI\Contracts\AiDriverInterface;
+use App\Services\AI\GeminiApiService;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -36,10 +37,11 @@ class GeminiAiDriver implements AiDriverInterface
         }
 
         if (! $this->isConfigured()) {
-            $groqRes = app(\App\Services\AI\GeminiApiService::class)->generateContent($fullPrompt);
+            $groqRes = app(GeminiApiService::class)->generateContent($fullPrompt);
             if (! empty($groqRes)) {
                 return $groqRes;
             }
+
             return $this->getMockOrFallbackResponse($prompt);
         }
 
@@ -63,7 +65,7 @@ class GeminiAiDriver implements AiDriverInterface
             Log::error('Gemini API Connection Error: '.$e->getMessage());
         }
 
-        $groqRes = app(\App\Services\AI\GeminiApiService::class)->generateContent($fullPrompt);
+        $groqRes = app(GeminiApiService::class)->generateContent($fullPrompt);
         if (! empty($groqRes)) {
             return $groqRes;
         }

@@ -9,6 +9,7 @@ use App\Services\Academic\LmdCompensationPredictorService;
 use App\Services\Academic\OrientationAdvisorService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class OrientationAdvisorController extends Controller
 {
@@ -52,7 +53,7 @@ class OrientationAdvisorController extends Controller
         $analysis = $this->orientationAdvisor->analyzeStudent($student);
 
         // Récupérer la liste des modules réels accrédités pour le semestre actuel
-        $registration = \Illuminate\Support\Facades\DB::table('student_registrations')
+        $registration = DB::table('student_registrations')
             ->where('student_id', $student->id)
             ->first();
         $currentSemester = $registration?->semester_number ?? $student->current_semester ?? 5;

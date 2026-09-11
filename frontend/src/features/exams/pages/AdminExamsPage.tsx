@@ -832,7 +832,6 @@ function ExamCard({ id, title, group, filiereCode, filiereName, semester, time, 
   const [isGenerating, setIsGenerating] = useState(false)
 
   const cleanTitle = cleanUtf8Text(title)
-  const cleanFiliereName = cleanUtf8Text(filiereName)
   const cleanRoom = cleanUtf8Text(room)
 
   const generateMutation = useMutation({

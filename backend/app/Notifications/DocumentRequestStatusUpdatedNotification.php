@@ -38,7 +38,7 @@ class DocumentRequestStatusUpdatedNotification extends Notification
             $type = 'danger';
         } else {
             $title = "Mise à jour : {$docType}";
-            $message = "Le statut de votre demande de \"{$docType}\" est passé à : " . ucfirst($status) . ".";
+            $message = "Le statut de votre demande de \"{$docType}\" est passé à : ".ucfirst($status).'.';
             $type = 'info';
         }
 

@@ -7,6 +7,7 @@ use App\Models\Filiere;
 use App\Models\Professor;
 use App\Models\RoomBooking;
 use App\Models\Schedule;
+use App\Models\Student;
 use App\Services\Academic\OfficialTimetableMatrixService;
 use App\Services\Documents\OfficialPdfFactory;
 use Carbon\Carbon;
@@ -124,14 +125,14 @@ class TimetableExportController extends Controller
 
         if ($type === 'student') {
             $student = is_numeric($id)
-                ? \App\Models\Student::with(['user', 'registrations.group.filiere', 'registrations.filiere'])->find($id)
-                : \App\Models\Student::where('uuid', $id)->with(['user', 'registrations.group.filiere', 'registrations.filiere'])->first();
+                ? Student::with(['user', 'registrations.group.filiere', 'registrations.filiere'])->find($id)
+                : Student::where('uuid', $id)->with(['user', 'registrations.group.filiere', 'registrations.filiere'])->first();
 
             if (! $student && is_numeric($id)) {
-                $student = \App\Models\Student::where('user_id', $id)->with(['user', 'registrations.group.filiere', 'registrations.filiere'])->first();
+                $student = Student::where('user_id', $id)->with(['user', 'registrations.group.filiere', 'registrations.filiere'])->first();
             }
             if (! $student && $request->user()) {
-                $student = \App\Models\Student::where('user_id', $request->user()->id)->with(['user', 'registrations.group.filiere', 'registrations.filiere'])->first();
+                $student = Student::where('user_id', $request->user()->id)->with(['user', 'registrations.group.filiere', 'registrations.filiere'])->first();
             }
 
             $studentName = $student?->user ? trim(($student->user->first_name ?? '').' '.($student->user->last_name ?? '')) : ($request->user()?->name ?? 'Étudiant');
@@ -316,8 +317,8 @@ class TimetableExportController extends Controller
         match ($type) {
             'group' => $query->where('group_id', $id),
             'student' => $query->where(function ($q) use ($id, $request) {
-                $student = (is_numeric($id) ? \App\Models\Student::find($id) : \App\Models\Student::where('uuid', $id)->first())
-                    ?: (is_numeric($id) ? \App\Models\Student::where('user_id', $id)->first() : null)
+                $student = (is_numeric($id) ? Student::find($id) : Student::where('uuid', $id)->first())
+                    ?: (is_numeric($id) ? Student::where('user_id', $id)->first() : null)
                     ?: ($request?->user()?->student);
                 $groupId = $student?->registrations()->latest()->value('group_id')
                     ?: \DB::table('student_pathways')->where('student_id', $student?->id)->where('is_current', true)->value('group_id')

@@ -17,6 +17,7 @@ use Illuminate\Console\Command;
 class EnsureLmsDataCommand extends Command
 {
     protected $signature = 'encg:ensure-lms-data';
+
     protected $description = 'Vérifie et peuple la base de données avec des données LMS réelles (Supports, Devoirs, Annonces, Salon)';
 
     public function handle(): int
@@ -26,25 +27,28 @@ class EnsureLmsDataCommand extends Command
         $academicYear = AcademicYear::where('is_current', true)->first() ?? AcademicYear::first();
         if (! $academicYear) {
             $this->error('Aucune année académique trouvée.');
+
             return 1;
         }
 
         $modules = Module::with(['filiere.department'])->get();
         if ($modules->isEmpty()) {
             $this->error('Aucun module trouvé en base.');
+
             return 1;
         }
 
         $professor = Professor::with('user')->first();
         if (! $professor) {
             $this->error('Aucun professeur trouvé.');
+
             return 1;
         }
         $profUser = $professor->user ?? User::first();
         $student = Student::with('user')->first();
 
-        $this->info("Modules en base : " . $modules->count());
-        $this->info("Professeur : " . ($profUser->name ?? 'Pr. Titulaire'));
+        $this->info('Modules en base : '.$modules->count());
+        $this->info('Professeur : '.($profUser->name ?? 'Pr. Titulaire'));
 
         $seededMaterials = 0;
         $seededAssignments = 0;
@@ -63,10 +67,10 @@ class EnsureLmsDataCommand extends Command
                     'academic_year_id' => $academicYear->id,
                     'professor_id' => $professor->id,
                     'professor_type' => Professor::class,
-                    'title' => 'Syllabus & Contrat Pédagogique Officiel — ' . $module->name,
+                    'title' => 'Syllabus & Contrat Pédagogique Officiel — '.$module->name,
                     'description' => 'Objectifs d’apprentissage, prérequis, plan détaillé des séances, bibliographie de référence et barème du contrôle continu.',
                     'type' => 'document',
-                    'external_url' => '/storage/lms/materials/syllabus_' . $module->id . '.pdf',
+                    'external_url' => '/storage/lms/materials/syllabus_'.$module->id.'.pdf',
                     'is_published' => true,
                     'order' => 1,
                 ]);
@@ -79,7 +83,7 @@ class EnsureLmsDataCommand extends Command
                     'title' => 'Chapitre 1 : Fondements Théoriques et Applications Sectorielles',
                     'description' => 'Support magistral complet : définitions académiques, typologies, modèles d’analyse et cas pratiques introductifs.',
                     'type' => 'document',
-                    'external_url' => '/storage/lms/materials/chapitre1_' . $module->id . '.pdf',
+                    'external_url' => '/storage/lms/materials/chapitre1_'.$module->id.'.pdf',
                     'is_published' => true,
                     'order' => 2,
                 ]);
@@ -92,7 +96,7 @@ class EnsureLmsDataCommand extends Command
                     'title' => 'Série de Travaux Dirigés N°1 & Études de Cas',
                     'description' => 'Exercices d’application chiffrés, problématiques de gestion et méthodologie de résolution pour la séance de TD.',
                     'type' => 'document',
-                    'external_url' => '/storage/lms/materials/td1_' . $module->id . '.pdf',
+                    'external_url' => '/storage/lms/materials/td1_'.$module->id.'.pdf',
                     'is_published' => true,
                     'order' => 3,
                 ]);
@@ -114,7 +118,7 @@ class EnsureLmsDataCommand extends Command
                     'title' => 'Étude de Cas N°1 : Analyse Stratégique et Diagnostic Pratique',
                     'description' => 'À partir des documents d’entreprise distribués, rédigez une note de synthèse (3 à 5 pages) répondant aux axes directeurs du cas. Date limite de dépôt : dans 12 jours.',
                     'type' => 'assignment',
-                    'external_url' => '/storage/lms/assignments/sujet_cas1_' . $module->id . '.pdf',
+                    'external_url' => '/storage/lms/assignments/sujet_cas1_'.$module->id.'.pdf',
                     'is_published' => true,
                     'order' => 10,
                 ]);
@@ -127,7 +131,7 @@ class EnsureLmsDataCommand extends Command
                     'title' => 'Rendu TD N°2 : Synthèse Numérique et Cas Pratique en Équipe',
                     'description' => 'Dépôt des calculs et du compte-rendu d’application pratique en sous-groupe de TD. Date limite de dépôt : dans 5 jours.',
                     'type' => 'assignment',
-                    'external_url' => '/storage/lms/assignments/sujet_td2_' . $module->id . '.pdf',
+                    'external_url' => '/storage/lms/assignments/sujet_td2_'.$module->id.'.pdf',
                     'is_published' => true,
                     'order' => 11,
                 ]);
@@ -137,7 +141,7 @@ class EnsureLmsDataCommand extends Command
 
             // 3. Salon du Groupe (Conversation & Messages réels)
             $conversation = Conversation::firstOrCreate(
-                ['name' => 'Classroom-Module-' . $module->id],
+                ['name' => 'Classroom-Module-'.$module->id],
                 [
                     'institution_id' => $module->institution_id ?? 1,
                     'type' => 'group',
@@ -148,7 +152,7 @@ class EnsureLmsDataCommand extends Command
                 Message::create([
                     'conversation_id' => $conversation->id,
                     'sender_id' => $profUser->id,
-                    'body' => "Bonjour à tous les étudiants de la filière " . ($module->filiere?->name ?? 'ENCG') . ". Bienvenue sur l'espace d'échange officiel du module « " . $module->name . " ». Vous pouvez poser ici toutes vos questions concernant le cours et les TD.",
+                    'body' => 'Bonjour à tous les étudiants de la filière '.($module->filiere?->name ?? 'ENCG').". Bienvenue sur l'espace d'échange officiel du module « ".$module->name.' ». Vous pouvez poser ici toutes vos questions concernant le cours et les TD.',
                     'created_at' => Carbon::now()->subDays(2),
                 ]);
 
@@ -163,7 +167,7 @@ class EnsureLmsDataCommand extends Command
                     Message::create([
                         'conversation_id' => $conversation->id,
                         'sender_id' => $profUser->id,
-                        'body' => "Oui tout à fait, nous débuterons la séance de TD directement par la correction au tableau de cet exercice.",
+                        'body' => 'Oui tout à fait, nous débuterons la séance de TD directement par la correction au tableau de cet exercice.',
                         'created_at' => Carbon::now()->subHours(3),
                     ]);
                 }
@@ -172,12 +176,12 @@ class EnsureLmsDataCommand extends Command
             }
 
             // 4. Annonces pédagogiques réelles (Announcements)
-            $existingAnn = Announcement::where('title', 'like', '%' . $module->name . '%')->count();
+            $existingAnn = Announcement::where('title', 'like', '%'.$module->name.'%')->count();
             if ($existingAnn === 0 && $profUser) {
                 Announcement::create([
                     'institution_id' => $module->institution_id ?? 1,
                     'author_id' => $profUser->id,
-                    'title' => 'Mise en ligne des supports et consignes pour ' . $module->name,
+                    'title' => 'Mise en ligne des supports et consignes pour '.$module->name,
                     'body' => "Les supports du chapitre 1 ainsi que la série de TD N°1 sont disponibles en téléchargement direct dans l'onglet Supports. Merci de les consulter avant la prochaine séance en présentiel.",
                     'type' => 'academic',
                     'is_published' => true,
@@ -188,7 +192,7 @@ class EnsureLmsDataCommand extends Command
                 Announcement::create([
                     'institution_id' => $module->institution_id ?? 1,
                     'author_id' => $profUser->id,
-                    'title' => 'Cadrage méthodologique des Travaux Dirigés — ' . $module->name,
+                    'title' => 'Cadrage méthodologique des Travaux Dirigés — '.$module->name,
                     'body' => "Rappel important : la présence aux séances de TD est obligatoire. Les étudiants sont tenus de préparer la série d'exercices à l'avance et de se munir de leurs fiches de calcul.",
                     'type' => 'academic',
                     'is_published' => true,
@@ -200,7 +204,7 @@ class EnsureLmsDataCommand extends Command
             }
         }
 
-        $this->info("Opération terminée avec succès !");
+        $this->info('Opération terminée avec succès !');
         $this->info("Supports ajoutés : {$seededMaterials}");
         $this->info("Devoirs ajoutés : {$seededAssignments}");
         $this->info("Annonces ajoutées : {$seededAnnouncements}");

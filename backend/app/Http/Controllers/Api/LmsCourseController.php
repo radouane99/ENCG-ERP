@@ -127,27 +127,27 @@ class LmsCourseController extends Controller
         // 3. Annonces réelles
         $announcements = Announcement::where(function ($q) use ($module) {
             $q->where('title', 'like', "%{$module->name}%")
-              ->orWhere('body', 'like', "%{$module->name}%")
-              ->orWhere('type', 'academic');
+                ->orWhere('body', 'like', "%{$module->name}%")
+                ->orWhere('type', 'academic');
         })
-        ->where('is_published', true)
-        ->with('author')
-        ->latest('published_at')
-        ->take(10)
-        ->get()
-        ->map(function ($ann) {
-            return [
-                'id' => (string) $ann->id,
-                'title' => $ann->title,
-                'author' => $ann->author?->name ?? 'Pr. Enseignant ENCG',
-                'date' => $ann->published_at ? $ann->published_at->diffForHumans() : $ann->created_at->diffForHumans(),
-                'content' => $ann->body,
-            ];
-        });
+            ->where('is_published', true)
+            ->with('author')
+            ->latest('published_at')
+            ->take(10)
+            ->get()
+            ->map(function ($ann) {
+                return [
+                    'id' => (string) $ann->id,
+                    'title' => $ann->title,
+                    'author' => $ann->author?->name ?? 'Pr. Enseignant ENCG',
+                    'date' => $ann->published_at ? $ann->published_at->diffForHumans() : $ann->created_at->diffForHumans(),
+                    'content' => $ann->body,
+                ];
+            });
 
         // 4. Salon du Groupe (Conversation et Messages réels)
         $conversation = Conversation::firstOrCreate(
-            ['name' => 'Classroom-Module-' . $module->id],
+            ['name' => 'Classroom-Module-'.$module->id],
             [
                 'institution_id' => $module->institution_id ?? 1,
                 'type' => 'group',
@@ -207,7 +207,7 @@ class LmsCourseController extends Controller
         $announcement = Announcement::create([
             'institution_id' => $module->institution_id ?? 1,
             'author_id' => $request->user()->id,
-            'title' => $request->title ?: 'Communication pédagogique — ' . $module->name,
+            'title' => $request->title ?: 'Communication pédagogique — '.$module->name,
             'body' => $request->content,
             'type' => 'academic',
             'is_published' => true,
@@ -240,7 +240,7 @@ class LmsCourseController extends Controller
         ]);
 
         $conversation = Conversation::firstOrCreate(
-            ['name' => 'Classroom-Module-' . $module->id],
+            ['name' => 'Classroom-Module-'.$module->id],
             [
                 'institution_id' => $module->institution_id ?? 1,
                 'type' => 'group',
@@ -288,7 +288,7 @@ class LmsCourseController extends Controller
         $fileUrl = $request->external_url;
         if ($request->hasFile('file')) {
             $path = $request->file('file')->store('lms/materials', 'public');
-            $fileUrl = '/storage/' . $path;
+            $fileUrl = '/storage/'.$path;
         }
 
         $academicYear = AcademicYear::where('is_current', true)->first() ?? AcademicYear::first();

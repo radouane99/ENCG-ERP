@@ -7,12 +7,12 @@ use App\Jobs\ProcessDataExportRequest;
 use App\Models\DataExportRequest;
 use App\Models\Student;
 use App\Services\Documents\OfficialPdfFactory;
+use Barryvdh\DomPDF\PDF;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PrivacyController extends Controller
 {
@@ -163,7 +163,7 @@ class PrivacyController extends Controller
     /**
      * Generate official DomPDF instance with complete verified student and legal data.
      */
-    private function generateCndpPdf(DataExportRequest $export): \Barryvdh\DomPDF\PDF
+    private function generateCndpPdf(DataExportRequest $export): PDF
     {
         $user = $export->user;
         $student = $user ? Student::where('user_id', $user->id)

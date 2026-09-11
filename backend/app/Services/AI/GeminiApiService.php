@@ -26,7 +26,7 @@ class GeminiApiService
     {
         $this->geminiApiKey = config('services.gemini.key') ?: env('GEMINI_API_KEY', '');
         $this->groqApiKey = config('services.groq.key') ?: (config('services.groq.api_key') ?: env('GROQ_API_KEY', ''));
-        Log::info('[GeminiApiService] AI Drivers initialized - Gemini: ' . (!empty($this->geminiApiKey) ? 'configured' : 'empty') . ', Groq: ' . (!empty($this->groqApiKey) ? 'configured' : 'empty'));
+        Log::info('[GeminiApiService] AI Drivers initialized - Gemini: '.(! empty($this->geminiApiKey) ? 'configured' : 'empty').', Groq: '.(! empty($this->groqApiKey) ? 'configured' : 'empty'));
     }
 
     /**
@@ -128,6 +128,7 @@ class GeminiApiService
                     $text = $response->json('choices.0.message.content');
                     if (! empty($text)) {
                         Log::info("[GeminiApiService] Groq generation succeeded with model: {$model}");
+
                         return trim($text);
                     }
                 }

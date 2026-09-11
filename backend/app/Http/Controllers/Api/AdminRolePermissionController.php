@@ -77,7 +77,7 @@ class AdminRolePermissionController extends Controller
             } elseif ($cat === 'STUDENTS') {
                 $query->where(function ($sq) {
                     $sq->whereHas('roles', fn ($q) => $q->whereIn('name', ['student', 'etudiant']))
-                       ->orWhereDoesntHave('roles');
+                        ->orWhereDoesntHave('roles');
                 });
             }
         }
@@ -110,7 +110,7 @@ class AdminRolePermissionController extends Controller
             'staff' => User::whereHas('roles', fn ($q) => $q->whereIn('name', ['scolarite-agent', 'finance-officer', 'hr-officer']))->count(),
             'students' => User::where(function ($sq) {
                 $sq->whereHas('roles', fn ($q) => $q->whereIn('name', ['student', 'etudiant']))
-                   ->orWhereDoesntHave('roles');
+                    ->orWhereDoesntHave('roles');
             })->count(),
         ];
 

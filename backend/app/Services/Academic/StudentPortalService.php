@@ -3,10 +3,17 @@
 namespace App\Services\Academic;
 
 use App\Models\AbsenceJustification;
+use App\Models\AcademicYear;
 use App\Models\Attendance;
+use App\Models\ClubMember;
+use App\Models\Internship;
+use App\Models\Student;
+use App\Services\Notification\NotificationDispatcherService;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 
 class StudentPortalService
@@ -86,6 +93,7 @@ class StudentPortalService
         // Sort modules chronologically: semester_number ASC, then code ASC
         $modules = $modules->unique('id')->sortBy(function ($m) {
             $semNum = (int) ($m->semester_number ?? $m->semester ?? 1);
+
             return sprintf('%02d_%s', $semNum, $m->code ?? '');
         })->values();
 
@@ -164,8 +172,12 @@ class StudentPortalService
 
             // Consolidate CC1 and CC2 (25% each)
             if ($ccNote !== null) {
-                if ($cc1Note === null) $cc1Note = $ccNote;
-                if ($cc2Note === null) $cc2Note = $ccNote;
+                if ($cc1Note === null) {
+                    $cc1Note = $ccNote;
+                }
+                if ($cc2Note === null) {
+                    $cc2Note = $ccNote;
+                }
             } elseif ($cc1Note !== null && $cc2Note !== null) {
                 $ccNote = round(($cc1Note + $cc2Note) / 2, 2);
             } elseif ($cc1Note !== null) {
@@ -490,9 +502,9 @@ class StudentPortalService
 
         // Alerter l'administration du dépôt du justificatif d'absence
         try {
-            app(\App\Services\Notification\NotificationDispatcherService::class)->notifyAdminAbsenceJustificationSubmitted($justification);
+            app(NotificationDispatcherService::class)->notifyAdminAbsenceJustificationSubmitted($justification);
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::warning('Failed notifying admin of absence justification: '.$e->getMessage());
+            Log::warning('Failed notifying admin of absence justification: '.$e->getMessage());
         }
 
         return [
@@ -636,7 +648,7 @@ class StudentPortalService
                 'title' => $doc->title,
                 'date' => substr((string) $doc->date, 0, 10),
                 'status' => $doc->status === 'ready' || $doc->status === 'delivered' ? 'signed' : 'pending',
-                'hash' => 'ENCG-DOC-' . strtoupper(substr(md5($doc->id . '_' . $studentId), 0, 12)),
+                'hash' => 'ENCG-DOC-'.strtoupper(substr(md5($doc->id.'_'.$studentId), 0, 12)),
             ])
             ->toArray();
 
@@ -644,7 +656,7 @@ class StudentPortalService
 
         $firstName = $student?->first_name ?? null;
         $lastName = $student?->last_name ?? null;
-        $fullName = trim(($firstName ?? '') . ' ' . ($lastName ?? ''));
+        $fullName = trim(($firstName ?? '').' '.($lastName ?? ''));
         if (empty($fullName) && ! empty($student?->user_name)) {
             $fullName = $student->user_name;
         }
@@ -682,7 +694,7 @@ class StudentPortalService
      */
     public function getPortfolio(int $studentId): array
     {
-        $student = \App\Models\Student::with(['filiere', 'group', 'user'])->findOrFail($studentId);
+        $student = Student::with(['filiere', 'group', 'user'])->findOrFail($studentId);
 
         $registration = DB::table('student_registrations')
             ->leftJoin('filieres', 'student_registrations.filiere_id', '=', 'filieres.id')
@@ -715,12 +727,12 @@ class StudentPortalService
             $academicYear = "{$registration->start_year}-{$registration->end_year}";
         }
         if (! $academicYear) {
-            $curr = \App\Models\AcademicYear::where('is_current', true)->first();
+            $curr = AcademicYear::where('is_current', true)->first();
             $academicYear = $curr?->displayLabel() ?? '2026-2027';
         }
 
         // Real internships from DB
-        $internships = \App\Models\Internship::where('student_id', $studentId)
+        $internships = Internship::where('student_id', $studentId)
             ->orderByDesc('start_date')
             ->get()
             ->map(function ($i) {
@@ -732,10 +744,10 @@ class StudentPortalService
                     default => ucfirst(str_replace('_', ' ', (string) $i->type)),
                 };
 
-                $startDate = $i->start_date ? \Illuminate\Support\Carbon::parse($i->start_date) : null;
-                $endDate = $i->end_date ? \Illuminate\Support\Carbon::parse($i->end_date) : null;
+                $startDate = $i->start_date ? Carbon::parse($i->start_date) : null;
+                $endDate = $i->end_date ? Carbon::parse($i->end_date) : null;
                 $period = $startDate && $endDate
-                    ? $startDate->locale('fr')->isoFormat('MMM YYYY') . ' - ' . $endDate->locale('fr')->isoFormat('MMM YYYY')
+                    ? $startDate->locale('fr')->isoFormat('MMM YYYY').' - '.$endDate->locale('fr')->isoFormat('MMM YYYY')
                     : ($startDate ? $startDate->locale('fr')->isoFormat('MMM YYYY') : 'Période conventionnée');
 
                 return [
@@ -755,7 +767,7 @@ class StudentPortalService
             ->all();
 
         // Real clubs from DB
-        $clubs = \App\Models\ClubMember::with('club')
+        $clubs = ClubMember::with('club')
             ->where('user_id', $student->user_id)
             ->get()
             ->map(fn ($c) => [
@@ -845,7 +857,7 @@ class StudentPortalService
             [
                 'name' => 'Passeport Stages ENCG',
                 'desc' => count($internships) > 0
-                    ? count($internships) . " stage(s) enregistré(s) • {$internships[0]['company_name']}"
+                    ? count($internships)." stage(s) enregistré(s) • {$internships[0]['company_name']}"
                     : 'Cursus professionnel ENCG Fès',
                 'type' => 'professional',
                 'color' => 'bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800 text-blue-900 dark:text-blue-300',
@@ -884,7 +896,7 @@ class StudentPortalService
 
         foreach ($clubs as $club) {
             $milestones[] = [
-                'date' => $club['joined_at'] ? \Illuminate\Support\Carbon::parse($club['joined_at'])->locale('fr')->isoFormat('MMMM YYYY') : 'Adhésion officielle',
+                'date' => $club['joined_at'] ? Carbon::parse($club['joined_at'])->locale('fr')->isoFormat('MMMM YYYY') : 'Adhésion officielle',
                 'title' => "{$club['role']} — {$club['name']}",
                 'sub' => 'Vie Associative & Événementiel',
                 'desc' => 'Participation active aux projets associatifs et aux forums organisés par le club.',

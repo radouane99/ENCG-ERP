@@ -1,8 +1,8 @@
-﻿<?php
+<?php
 
 $host = getenv('DB_HOST') ?: 'postgres';
 $port = getenv('DB_PORT') ?: '5432';
-$db   = getenv('DB_DATABASE') ?: 'encg_erp';
+$db = getenv('DB_DATABASE') ?: 'encg_erp';
 $user = getenv('DB_USERNAME') ?: 'encg';
 $pass = getenv('DB_PASSWORD') ?: 'secret';
 
@@ -11,7 +11,7 @@ try {
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
     ]);
 } catch (PDOException $e) {
-    die("Connection failed: " . $e->getMessage() . "\n");
+    exit('Connection failed: '.$e->getMessage()."\n");
 }
 
 echo "Connected to PostgreSQL successfully.\n";
@@ -31,12 +31,15 @@ $utf8ToCp437["\u{2518}"] = chr(0xD9); // â”˜
 $utf8ToCp437["\u{2502}"] = chr(0xB3); // â”‚
 $utf8ToCp437["\u{251C}"] = chr(0xC3); // â”œ
 
-function repairMojibake(?string $str, array $utf8ToCp437): ?string {
-    if (!$str) return $str;
+function repairMojibake(?string $str, array $utf8ToCp437): ?string
+{
+    if (! $str) {
+        return $str;
+    }
 
     // Check if string contains typical CP437 mojibake symbols
-    if (!preg_match('/[â”œâ”€â”¬â”‚â”¤â•¡â•¢â•–â••â•£â•‘â•—â•â•œâ•›â”â””â”´â”¬â”œâ”€â”¼â•žâ•Ÿâ•šâ•”â•©â•¦â• â•â•¬â•§â•¨â•¤â•¥â•™â•˜â•’â•“â•«â•ªâ”˜â”Œâ–ˆâ–„â–Œâ–â–€âŒ\x{2310}]/u', $str) &&
-        !preg_match('/[ÃƒÃ‚][\x80-\xBF]/u', $str)) {
+    if (! preg_match('/[â”œâ”€â”¬â”‚â”¤â•¡â•¢â•–â••â•£â•‘â•—â•â•œâ•›â”â””â”´â”¬â”œâ”€â”¼â•žâ•Ÿâ•šâ•”â•©â•¦â• â•â•¬â•§â•¨â•¤â•¥â•™â•˜â•’â•“â•«â•ªâ”˜â”Œâ–ˆâ–„â–Œâ–â–€âŒ\x{2310}]/u', $str) &&
+        ! preg_match('/[ÃƒÃ‚][\x80-\xBF]/u', $str)) {
         return $str;
     }
 
@@ -64,12 +67,12 @@ function repairMojibake(?string $str, array $utf8ToCp437): ?string {
 }
 
 // 2. Repair Students table
-$stmt = $pdo->query("SELECT * FROM students");
+$stmt = $pdo->query('SELECT * FROM students');
 $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-echo "Processing " . count($students) . " students...\n";
+echo 'Processing '.count($students)." students...\n";
 
-$updateStudent = $pdo->prepare("
+$updateStudent = $pdo->prepare('
     UPDATE students SET
         first_name_ar = :first_name_ar,
         last_name_ar = :last_name_ar,
@@ -91,51 +94,51 @@ $updateStudent = $pdo->prepare("
         emergency_contact_name = :emergency_contact_name,
         emergency_contact_relation = :emergency_contact_relation
     WHERE id = :id
-");
+');
 
 $fixedCount = 0;
 foreach ($students as $s) {
     $fn_ar = repairMojibake($s['first_name_ar'], $utf8ToCp437);
     $ln_ar = repairMojibake($s['last_name_ar'], $utf8ToCp437);
-    $bc    = repairMojibake($s['birth_city'], $utf8ToCp437);
+    $bc = repairMojibake($s['birth_city'], $utf8ToCp437);
     $bc_ar = repairMojibake($s['birth_city_ar'], $utf8ToCp437);
-    $addr  = repairMojibake($s['address'], $utf8ToCp437);
-    $city  = repairMojibake($s['city'], $utf8ToCp437);
-    $fat   = repairMojibake($s['father_name'], $utf8ToCp437);
-    $fat_ar= repairMojibake($s['father_name_ar'], $utf8ToCp437);
-    $mot   = repairMojibake($s['mother_name'], $utf8ToCp437);
-    $mot_ar= repairMojibake($s['mother_name_ar'], $utf8ToCp437);
-    $hs    = repairMojibake($s['high_school'], $utf8ToCp437);
-    $ly    = repairMojibake($s['lycee'], $utf8ToCp437);
-    $acad  = repairMojibake($s['academy'], $utf8ToCp437);
-    $del   = repairMojibake($s['delegation'], $utf8ToCp437);
-    $prov  = repairMojibake($s['province'], $utf8ToCp437);
-    $bact  = repairMojibake($s['bac_type'], $utf8ToCp437);
-    $bacs  = repairMojibake($s['bac_serie'], $utf8ToCp437);
-    $em_n  = repairMojibake($s['emergency_contact_name'], $utf8ToCp437);
-    $em_r  = repairMojibake($s['emergency_contact_relation'], $utf8ToCp437);
+    $addr = repairMojibake($s['address'], $utf8ToCp437);
+    $city = repairMojibake($s['city'], $utf8ToCp437);
+    $fat = repairMojibake($s['father_name'], $utf8ToCp437);
+    $fat_ar = repairMojibake($s['father_name_ar'], $utf8ToCp437);
+    $mot = repairMojibake($s['mother_name'], $utf8ToCp437);
+    $mot_ar = repairMojibake($s['mother_name_ar'], $utf8ToCp437);
+    $hs = repairMojibake($s['high_school'], $utf8ToCp437);
+    $ly = repairMojibake($s['lycee'], $utf8ToCp437);
+    $acad = repairMojibake($s['academy'], $utf8ToCp437);
+    $del = repairMojibake($s['delegation'], $utf8ToCp437);
+    $prov = repairMojibake($s['province'], $utf8ToCp437);
+    $bact = repairMojibake($s['bac_type'], $utf8ToCp437);
+    $bacs = repairMojibake($s['bac_serie'], $utf8ToCp437);
+    $em_n = repairMojibake($s['emergency_contact_name'], $utf8ToCp437);
+    $em_r = repairMojibake($s['emergency_contact_relation'], $utf8ToCp437);
 
     $updateStudent->execute([
         ':first_name_ar' => $fn_ar,
-        ':last_name_ar'  => $ln_ar,
-        ':birth_city'    => $bc,
+        ':last_name_ar' => $ln_ar,
+        ':birth_city' => $bc,
         ':birth_city_ar' => $bc_ar,
-        ':address'       => $addr,
-        ':city'          => $city,
-        ':father_name'   => $fat,
-        ':father_name_ar'=> $fat_ar,
-        ':mother_name'   => $mot,
-        ':mother_name_ar'=> $mot_ar,
-        ':high_school'   => $hs,
-        ':lycee'         => $ly,
-        ':academy'       => $acad,
-        ':delegation'    => $del,
-        ':province'      => $prov,
-        ':bac_type'      => $bact,
-        ':bac_serie'     => $bacs,
+        ':address' => $addr,
+        ':city' => $city,
+        ':father_name' => $fat,
+        ':father_name_ar' => $fat_ar,
+        ':mother_name' => $mot,
+        ':mother_name_ar' => $mot_ar,
+        ':high_school' => $hs,
+        ':lycee' => $ly,
+        ':academy' => $acad,
+        ':delegation' => $del,
+        ':province' => $prov,
+        ':bac_type' => $bact,
+        ':bac_serie' => $bacs,
         ':emergency_contact_name' => $em_n,
         ':emergency_contact_relation' => $em_r,
-        ':id' => $s['id']
+        ':id' => $s['id'],
     ]);
 
     $fixedCount++;
@@ -144,10 +147,10 @@ foreach ($students as $s) {
 echo "Fixed $fixedCount students in students table.\n";
 
 // 3. Repair Users table
-$usersStmt = $pdo->query("SELECT id, name, name_ar, first_name, last_name, city, address FROM users");
+$usersStmt = $pdo->query('SELECT id, name, name_ar, first_name, last_name, city, address FROM users');
 $users = $usersStmt->fetchAll(PDO::FETCH_ASSOC);
 
-$updateUser = $pdo->prepare("
+$updateUser = $pdo->prepare('
     UPDATE users SET
         name = :name,
         name_ar = :name_ar,
@@ -156,7 +159,7 @@ $updateUser = $pdo->prepare("
         city = :city,
         address = :address
     WHERE id = :id
-");
+');
 
 $fixedUsers = 0;
 foreach ($users as $u) {
@@ -174,7 +177,7 @@ foreach ($users as $u) {
         ':last_name' => $ln,
         ':city' => $city,
         ':address' => $addr,
-        ':id' => $u['id']
+        ':id' => $u['id'],
     ]);
     $fixedUsers++;
 }
@@ -182,24 +185,24 @@ foreach ($users as $u) {
 echo "Fixed $fixedUsers users in users table.\n";
 
 // 4. Also repair filieres, departments, and modules
-$filieres = $pdo->query("SELECT id, name, name_ar FROM filieres")->fetchAll(PDO::FETCH_ASSOC);
-$upFiliere = $pdo->prepare("UPDATE filieres SET name = :name, name_ar = :name_ar WHERE id = :id");
+$filieres = $pdo->query('SELECT id, name, name_ar FROM filieres')->fetchAll(PDO::FETCH_ASSOC);
+$upFiliere = $pdo->prepare('UPDATE filieres SET name = :name, name_ar = :name_ar WHERE id = :id');
 foreach ($filieres as $f) {
     $upFiliere->execute([
         ':name' => repairMojibake($f['name'], $utf8ToCp437),
         ':name_ar' => repairMojibake($f['name_ar'], $utf8ToCp437),
-        ':id' => $f['id']
+        ':id' => $f['id'],
     ]);
 }
 echo "Fixed filieres.\n";
 
-$modules = $pdo->query("SELECT id, name, name_ar FROM modules")->fetchAll(PDO::FETCH_ASSOC);
-$upModule = $pdo->prepare("UPDATE modules SET name = :name, name_ar = :name_ar WHERE id = :id");
+$modules = $pdo->query('SELECT id, name, name_ar FROM modules')->fetchAll(PDO::FETCH_ASSOC);
+$upModule = $pdo->prepare('UPDATE modules SET name = :name, name_ar = :name_ar WHERE id = :id');
 foreach ($modules as $m) {
     $upModule->execute([
         ':name' => repairMojibake($m['name'], $utf8ToCp437),
         ':name_ar' => repairMojibake($m['name_ar'], $utf8ToCp437),
-        ':id' => $m['id']
+        ':id' => $m['id'],
     ]);
 }
 echo "Fixed modules.\n";

@@ -2,8 +2,9 @@
 
 require __DIR__.'/vendor/autoload.php';
 $app = require_once __DIR__.'/bootstrap/app.php';
-$app->make(\Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+$app->make(Kernel::class)->bootstrap();
 
+use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Support\Facades\DB;
 
 echo "Starting complete database encoding fix...\n";
@@ -31,7 +32,7 @@ $filiereUpdates = [
     'ACG' => ['name' => 'Audit et Contrôle de Gestion', 'name_ar' => 'تدقيق ومراقبة التسيير'],
     'MAC' => ['name' => 'Marketing et Action Commerciale', 'name_ar' => 'التسويق والعمل التجاري'],
     'MRH' => ['name' => 'Management des Ressources Humaines', 'name_ar' => 'تدبير الموارد البشرية'],
-    'CI'  => ['name' => 'Commerce International', 'name_ar' => 'التجارة الدولية'],
+    'CI' => ['name' => 'Commerce International', 'name_ar' => 'التجارة الدولية'],
 ];
 foreach ($filiereUpdates as $code => $data) {
     DB::table('filieres')->where('code', $code)->update($data);
@@ -296,7 +297,7 @@ $names = [
 
 // 6. Fix Students table
 $students = DB::table('students')->orderBy('id')->get();
-echo "Found " . $students->count() . " students in DB.\n";
+echo 'Found '.$students->count()." students in DB.\n";
 
 foreach ($students as $st) {
     $stNum = $st->student_number;
@@ -362,7 +363,7 @@ foreach ($students as $st) {
 
         if ($st->user_id) {
             DB::table('users')->where('id', $st->user_id)->update([
-                'name_ar' => $data['first_ar'] . ' ' . $data['last_ar'],
+                'name_ar' => $data['first_ar'].' '.$data['last_ar'],
                 'city' => $data['city'],
             ]);
         }

@@ -15,7 +15,7 @@ return new class extends Migration
             try {
                 DB::statement('CREATE INDEX IF NOT EXISTS attendances_session_student_idx ON attendances (attendance_session_id, student_id);');
                 DB::statement('CREATE INDEX IF NOT EXISTS attendances_student_status_idx ON attendances (student_id, status);');
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 // Graceful fallback for non-PostgreSQL drivers
             }
         }
@@ -24,7 +24,7 @@ return new class extends Migration
             try {
                 DB::statement('CREATE INDEX IF NOT EXISTS attendance_sessions_mod_grp_date_idx ON attendance_sessions (module_id, group_id, session_date);');
                 DB::statement('CREATE INDEX IF NOT EXISTS attendance_sessions_prof_date_idx ON attendance_sessions (professor_id, session_date);');
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 // Graceful fallback
             }
         }
@@ -39,7 +39,7 @@ return new class extends Migration
             try {
                 DB::statement('DROP INDEX IF EXISTS attendances_session_student_idx;');
                 DB::statement('DROP INDEX IF EXISTS attendances_student_status_idx;');
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
             }
         }
 
@@ -47,7 +47,7 @@ return new class extends Migration
             try {
                 DB::statement('DROP INDEX IF EXISTS attendance_sessions_mod_grp_date_idx;');
                 DB::statement('DROP INDEX IF EXISTS attendance_sessions_prof_date_idx;');
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
             }
         }
     }

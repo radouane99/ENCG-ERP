@@ -7,6 +7,7 @@ use App\Traits\OptimisticLocking;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Attendance extends Model
 {
@@ -43,7 +44,7 @@ class Attendance extends Model
         return $this->belongsTo(Student::class, 'student_id');
     }
 
-    public function absenceJustification(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function absenceJustification(): HasOne
     {
         return $this->hasOne(AbsenceJustification::class, 'attendance_id');
     }

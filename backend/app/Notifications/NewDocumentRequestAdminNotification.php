@@ -29,7 +29,7 @@ class NewDocumentRequestAdminNotification extends Notification
 
         return [
             'title' => "Nouvelle demande : {$docType}",
-            'message' => "{$studentName}" . ($studentCne ? " ({$studentCne})" : "") . " a soumis une demande de \"{$docType}\" nécessitant validation.",
+            'message' => "{$studentName}".($studentCne ? " ({$studentCne})" : '')." a soumis une demande de \"{$docType}\" nécessitant validation.",
             'type' => 'document_pending',
             'action_url' => '/admin/document-requests',
             'document_request_id' => $this->documentRequest->id,

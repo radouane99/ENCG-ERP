@@ -152,4 +152,3 @@ it('lets the owner preview and download the certified official CNDP PDF report',
         ->assertOk()
         ->assertHeader('content-type', 'application/pdf');
 });
-

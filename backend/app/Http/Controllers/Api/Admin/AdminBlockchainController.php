@@ -23,7 +23,7 @@ class AdminBlockchainController extends Controller
             ->map(function ($cert) {
                 $student = $cert->student;
                 $user = $student?->user;
-                $studentName = $user?->name ?? ($student ? $student->first_name . ' ' . $student->last_name : 'Étudiant Diplômé');
+                $studentName = $user?->name ?? ($student ? $student->first_name.' '.$student->last_name : 'Étudiant Diplômé');
                 $filiereName = $student?->latestPathway?->filiere?->name ?? null;
 
                 return [
@@ -38,8 +38,8 @@ class AdminBlockchainController extends Controller
                     'hash' => $cert->hash,
                     'transaction_id' => $cert->transaction_id,
                     'status' => $cert->network_status ?: 'VERIFIED',
-                    'block_number' => '54' . substr(crc32($cert->transaction_id), 0, 6),
-                    'polygon_scan_url' => 'https://polygonscan.com/tx/' . $cert->transaction_id,
+                    'block_number' => '54'.substr(crc32($cert->transaction_id), 0, 6),
+                    'polygon_scan_url' => 'https://polygonscan.com/tx/'.$cert->transaction_id,
                 ];
             });
 
@@ -96,16 +96,16 @@ class AdminBlockchainController extends Controller
             // Déterminer la filière et l'intitulé officiel du diplôme
             $filiere = $student->latestPathway?->filiere
                 ?? ($student->filiere_id ? Filiere::find($student->filiere_id) : null);
-            
+
             $filiereLabel = $filiere?->name ?? 'Gestion Financière et Comptable';
             $degreeName = "Diplôme de l'ENCG Fès — Spécialité {$filiereLabel}";
 
             // Génération de l'empreinte cryptographique SHA-256 infalsifiable
-            $cne = $student->cne ?? 'CNE' . $student->id;
-            $cin = $student->cin ?? 'CIN' . $student->id;
-            $rawPayload = "ENCG-FES|{$student->id}|{$cne}|{$cin}|{$degreeName}|{$year}|" . microtime(true);
-            $hash = '0x' . hash('sha256', $rawPayload);
-            $txId = 'tx_0x' . strtolower(Str::random(32));
+            $cne = $student->cne ?? 'CNE'.$student->id;
+            $cin = $student->cin ?? 'CIN'.$student->id;
+            $rawPayload = "ENCG-FES|{$student->id}|{$cne}|{$cin}|{$degreeName}|{$year}|".microtime(true);
+            $hash = '0x'.hash('sha256', $rawPayload);
+            $txId = 'tx_0x'.strtolower(Str::random(32));
 
             BlockchainCertificate::create([
                 'student_id' => $student->id,
@@ -145,7 +145,7 @@ class AdminBlockchainController extends Controller
 
         // Recherche multi-critères : Hash exact, Transaction ID, CNE, CIN ou Nom
         $cert = BlockchainCertificate::with(['student.user', 'student.latestPathway.filiere'])
-            ->where(function ($q) use ($query, $cleanQuery) {
+            ->where(function ($q) use ($query) {
                 $q->where('hash', $query)
                     ->orWhere('hash', 'like', "%{$query}%")
                     ->orWhere('transaction_id', $query)
@@ -170,7 +170,7 @@ class AdminBlockchainController extends Controller
         }
 
         $student = $cert->student;
-        $studentName = $student?->user?->name ?? ($student ? $student->first_name . ' ' . $student->last_name : 'Lauréat ENCG');
+        $studentName = $student?->user?->name ?? ($student ? $student->first_name.' '.$student->last_name : 'Lauréat ENCG');
 
         return response()->json([
             'success' => true,
@@ -185,7 +185,7 @@ class AdminBlockchainController extends Controller
                 'transaction_id' => $cert->transaction_id,
                 'network_status' => $cert->network_status ?: 'VERIFIED',
                 'smart_contract' => 'ENCG-POLYGON-LEDGER-v2.4',
-                'block_number' => '54' . substr(crc32($cert->transaction_id), 0, 6),
+                'block_number' => '54'.substr(crc32($cert->transaction_id), 0, 6),
             ],
         ]);
     }

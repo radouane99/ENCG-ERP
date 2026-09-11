@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Student;
 
 use App\Http\Controllers\Controller;
+use App\Models\AcademicYear;
 use App\Models\Attendance;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -132,8 +133,8 @@ class StudentAbsenceController extends Controller
         });
 
         $student->loadMissing(['filiere', 'group']);
-        $currentYear = \App\Models\AcademicYear::where('is_current', true)->first()
-            ?? \App\Models\AcademicYear::latest('id')->first();
+        $currentYear = AcademicYear::where('is_current', true)->first()
+            ?? AcademicYear::latest('id')->first();
         $academicYearName = $currentYear?->displayLabel() ?? '2025/2026';
 
         return response()->json([

@@ -20,6 +20,7 @@ use App\Models\Student;
 use App\Models\StudentRegistration;
 use App\Services\Academic\AcademicWindowGuard;
 use App\Services\Academic\GradeService;
+use App\Services\Notification\NotificationDispatcherService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -136,7 +137,7 @@ class GradeController extends Controller
         $studentIds = array_filter(array_column($validated['grades'], 'student_id'));
         if (! empty($studentIds)) {
             try {
-                app(\App\Services\Notification\NotificationDispatcherService::class)->notifyStudentsGradePublished($assessment, $studentIds);
+                app(NotificationDispatcherService::class)->notifyStudentsGradePublished($assessment, $studentIds);
             } catch (\Throwable $e) {
                 Log::warning('Failed notifying students of grades: '.$e->getMessage());
             }

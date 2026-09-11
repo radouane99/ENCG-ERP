@@ -4,7 +4,6 @@ namespace App\Services\Academic;
 
 use App\Models\AcademicYear;
 use App\Models\AuditLog;
-use App\Models\Grade;
 use App\Models\Group;
 use App\Models\Module;
 use App\Models\Student;
@@ -27,8 +26,8 @@ class SmartAcademicProgressionService
      */
     public function getProgressionRoster(?int $academicYearId = null): array
     {
-        $year = $academicYearId 
-            ? AcademicYear::find($academicYearId) 
+        $year = $academicYearId
+            ? AcademicYear::find($academicYearId)
             : AcademicYear::where('is_current', true)->first() ?? AcademicYear::first();
 
         if (! $year) {
@@ -217,27 +216,27 @@ class SmartAcademicProgressionService
                 } else {
                     $decisionCode = 'REDOUBLANT';
                     $decisionLabel = 'Ajourné (Maintien S9/S10)';
-                    $targetLevel = "Maintien 5ème Année (S9/S10)";
+                    $targetLevel = 'Maintien 5ème Année (S9/S10)';
                     $statRepeated++;
                 }
             } elseif ($failedCount === 0 && $annualAverage >= 10.0) {
                 $decisionCode = 'ADMIS_PUR';
                 $decisionLabel = 'Admis (Passage sans dette)';
                 $nextYear = $yearLevel + 1;
-                $targetLevel = "{$nextYear}ème Année (S" . (($nextYear * 2) - 1) . "/S" . ($nextYear * 2) . ")";
+                $targetLevel = "{$nextYear}ème Année (S".(($nextYear * 2) - 1).'/S'.($nextYear * 2).')';
                 $statPassed++;
             } elseif ($failedCount <= 2 && $annualAverage >= 10.0) {
                 // Règle d'enjambement : 1 seul module ou 2 modules max non validés
                 $decisionCode = 'ADMIS_AVEC_DETTE';
                 $debtCount = count($debtModules);
-                $decisionLabel = "Admis avec dette ({$debtCount} module" . ($debtCount > 1 ? 's' : '') . " à rattraper)";
+                $decisionLabel = "Admis avec dette ({$debtCount} module".($debtCount > 1 ? 's' : '').' à rattraper)';
                 $nextYear = $yearLevel + 1;
-                $targetLevel = "{$nextYear}ème Année (S" . (($nextYear * 2) - 1) . "/S" . ($nextYear * 2) . ")";
+                $targetLevel = "{$nextYear}ème Année (S".(($nextYear * 2) - 1).'/S'.($nextYear * 2).')';
                 $statDebt++;
             } else {
                 // Ajourné / Redoublant : conserve ses modules validés
                 $decisionCode = 'REDOUBLANT';
-                $decisionLabel = "Ajourné (Redoublement avec conservation des acquis)";
+                $decisionLabel = 'Ajourné (Redoublement avec conservation des acquis)';
                 $targetSemester = $currentSem;
                 $targetLevel = "Maintien {$levelLabel}";
                 $statRepeated++;
@@ -248,11 +247,11 @@ class SmartAcademicProgressionService
 
             $roster[] = [
                 'student_id' => $student->id,
-                'cne' => $student->cne ?? $student->student_number ?? "ENCG-".str_pad($student->id, 5, '0', STR_PAD_LEFT),
+                'cne' => $student->cne ?? $student->student_number ?? 'ENCG-'.str_pad($student->id, 5, '0', STR_PAD_LEFT),
                 'student_number' => $student->student_number ?? $student->cne,
                 'first_name' => $student->user?->first_name ?? $student->first_name ?? 'Étudiant',
                 'last_name' => $student->user?->last_name ?? $student->last_name ?? '',
-                'full_name' => trim(($student->user?->first_name ?? '') . ' ' . ($student->user?->last_name ?? '')),
+                'full_name' => trim(($student->user?->first_name ?? '').' '.($student->user?->last_name ?? '')),
                 'email' => $student->user?->email ?? '',
                 'filiere_code' => $filiereCode,
                 'filiere_name' => $filiereName,
@@ -276,6 +275,7 @@ class SmartAcademicProgressionService
             if ($a['current_semester'] !== $b['current_semester']) {
                 return $a['current_semester'] <=> $b['current_semester'];
             }
+
             return strcmp($a['last_name'], $b['last_name']);
         });
 
@@ -377,11 +377,14 @@ class SmartAcademicProgressionService
                 $targetSem = $studentItem['target_semester'];
 
                 $student = Student::find($studentId);
-                if (! $student) continue;
+                if (! $student) {
+                    continue;
+                }
 
                 if ($decision === 'DIPLOME') {
                     $student->update(['status' => 'graduated']);
                     $graduatedCount++;
+
                     continue;
                 }
 
@@ -537,7 +540,7 @@ class SmartAcademicProgressionService
                 }
 
                 $nextYear = (int) ceil($targetSem / 2);
-                $projLevel = "{$nextYear}ème Année (S{$targetSem}/S" . ($targetSem + 1) . ")";
+                $projLevel = "{$nextYear}ème Année (S{$targetSem}/S".($targetSem + 1).')';
 
                 // Orientation vers les spécialités si passage vers S5
                 if ($currentSem <= 4 && $targetSem >= 5) {

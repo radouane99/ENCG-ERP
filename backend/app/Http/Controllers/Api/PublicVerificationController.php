@@ -9,7 +9,9 @@ use App\Models\GeneratedDocument;
 use App\Models\Group;
 use App\Models\Module;
 use App\Models\ModulePvSignature;
+use App\Models\Professor;
 use App\Models\ProfessorDocumentRequest;
+use App\Models\Student;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -448,7 +450,7 @@ class PublicVerificationController extends Controller
         $identifier = explode('-', $cleanToken)[0];
 
         // 1. Rechercher si c'est un étudiant par CNE, code massar ou student_number
-        $student = \App\Models\Student::where('cne', $identifier)
+        $student = Student::where('cne', $identifier)
             ->orWhere('student_number', $identifier)
             ->with(['user', 'registrations.group.filiere', 'registrations.filiere'])
             ->first();
@@ -494,12 +496,13 @@ class PublicVerificationController extends Controller
         }
 
         // 2. Rechercher si c'est un enseignant
-        $prof = \App\Models\Professor::where('id', is_numeric($identifier) ? (int)$identifier : 0)
+        $prof = Professor::where('id', is_numeric($identifier) ? (int) $identifier : 0)
             ->with(['user', 'department'])
             ->first();
 
         if ($prof) {
             $pUser = $prof->user;
+
             return response()->json([
                 'success' => true,
                 'is_valid' => true,
@@ -532,7 +535,7 @@ class PublicVerificationController extends Controller
         $cleanToken = str_replace(['CONV-STUDENT-', 'CONV-'], '', $token);
         $cne = explode('-', $cleanToken)[0];
 
-        $student = \App\Models\Student::where('cne', $cne)
+        $student = Student::where('cne', $cne)
             ->orWhere('student_number', $cne)
             ->with(['user', 'registrations.group.filiere', 'registrations.filiere'])
             ->first();

@@ -8,16 +8,13 @@ use App\Models\Filiere;
 use App\Models\Grade;
 use App\Models\Module;
 use App\Models\Student;
-use App\Models\StudentPathway;
-use App\Models\StudentRegistration;
-use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 
 class EnsureStudentFullCursusCommand extends Command
 {
     protected $signature = 'encg:ensure-student-full-cursus';
+
     protected $description = 'Génère et archive l’historique académique complet (S1, S2, S3, S4 archivés + S5 en cours) pour les étudiants ENCG';
 
     public function handle(): int
@@ -27,6 +24,7 @@ class EnsureStudentFullCursusCommand extends Command
         $tc = Filiere::where('code', 'TC')->first() ?? Filiere::find(1);
         if (! $tc) {
             $this->error('Filière Tronc Commun introuvable.');
+
             return 1;
         }
 
@@ -122,7 +120,7 @@ class EnsureStudentFullCursusCommand extends Command
             $q->where('semester_number', 5);
         })->orWhere('id', 10)->get();
 
-        $this->info("Étudiants concernés par l'archivage S1-S4 : " . $studentsInS5->count());
+        $this->info("Étudiants concernés par l'archivage S1-S4 : ".$studentsInS5->count());
 
         // Barèmes types réalistes pour l'archivage avec mention bien / très bien
         $historicalScores = [

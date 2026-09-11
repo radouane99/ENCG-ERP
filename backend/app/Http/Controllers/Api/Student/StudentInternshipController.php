@@ -9,6 +9,7 @@ use App\Models\Internship;
 use App\Services\Academic\InternshipService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class StudentInternshipController extends Controller
 {
@@ -69,7 +70,7 @@ class StudentInternshipController extends Controller
         $data['company_mentor_email'] = $data['company_mentor_email'] ?? $data['supervisor_email'] ?? 'tuteur@entreprise.ma';
         $data['supervisor_email'] = $data['supervisor_email'] ?? $data['company_mentor_email'];
         $data['supervisor_phone'] = $data['supervisor_phone'] ?? '0600000000';
-        $data['convention_ref'] = 'CONV-ENCG-'.date('Y').'-'.strtoupper(\Illuminate\Support\Str::random(6));
+        $data['convention_ref'] = 'CONV-ENCG-'.date('Y').'-'.strtoupper(Str::random(6));
         $data['convention_status'] = 'school_signed';
         $data['insurance_company'] = $data['insurance_company'] ?? 'MAMDA-MCMA / Assurance Scolaire';
         $data['insurance_policy_number'] = $data['insurance_policy_number'] ?? ('POL-ENCG-'.date('Y').'-'.$student->id);

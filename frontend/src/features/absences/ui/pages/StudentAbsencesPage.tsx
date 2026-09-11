@@ -10,18 +10,15 @@ import {
   UploadCloud, 
   Search, 
   X, 
-  Download, 
   ShieldCheck, 
   ShieldAlert, 
   Info, 
   Building2, 
   User, 
   Sparkles,
-  ExternalLink,
-  ChevronRight
+  ExternalLink
 } from 'lucide-react';
 import { useStudentAbsences, useJustifyAbsence } from '../../api/absencesApi';
-import { Attendance } from '../../model/types';
 import { offlineJustificatifStore } from '@shared/lib/offlineJustificatifStore';
 import { cn } from '@shared/lib/utils';
 import { toast } from 'sonner';

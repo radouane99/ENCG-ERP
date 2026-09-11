@@ -58,12 +58,14 @@ class StudentConvocationController extends Controller
             if ($sessionType === 'RATTRAPAGE') {
                 $seatings = $allSeatings->filter(function ($s) {
                     $date = $s->exam?->exam_date ? Carbon::parse($s->exam->exam_date) : null;
+
                     return ($s->exam?->session && str_contains(strtolower($s->exam->session->name ?? ''), 'rattrapage'))
                         || ($date && $date->day > 10);
                 });
             } else {
                 $seatings = $allSeatings->filter(function ($s) {
                     $date = $s->exam?->exam_date ? Carbon::parse($s->exam->exam_date) : null;
+
                     return ! ($s->exam?->session && str_contains(strtolower($s->exam->session->name ?? ''), 'rattrapage'))
                         && (! $date || $date->day <= 10);
                 });

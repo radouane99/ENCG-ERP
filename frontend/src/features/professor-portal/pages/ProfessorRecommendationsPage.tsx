@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import {
-  FileText, Sparkles, Mail, Download, Loader2, ShieldCheck, User, Calendar, CheckCircle2
+  FileText, Sparkles, Loader2, ShieldCheck, User, CheckCircle2
 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@shared/lib/api'

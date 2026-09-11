@@ -149,7 +149,7 @@ class LibrarySeeder extends Seeder
             for ($i = 1; $i <= $copiesNeeded; $i++) {
                 BookCopy::create([
                     'book_id' => $book->id,
-                    'barcode' => 'ENCG-BC-' . strtoupper(Str::random(6)) . '-' . ($existingCopiesCount + $i),
+                    'barcode' => 'ENCG-BC-'.strtoupper(Str::random(6)).'-'.($existingCopiesCount + $i),
                     'condition' => 'good',
                     'is_available' => true,
                 ]);

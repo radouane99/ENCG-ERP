@@ -7,7 +7,7 @@ use App\Models\Book;
 use App\Models\BookCopy;
 use App\Models\Borrowing;
 use App\Models\Institution;
-use App\Models\User;
+use Database\Seeders\LibrarySeeder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -21,7 +21,7 @@ class LibraryController extends Controller
     public function getStats(): JsonResponse
     {
         if (Book::count() === 0) {
-            (new \Database\Seeders\LibrarySeeder())->run();
+            (new LibrarySeeder)->run();
         }
 
         $totalBooks = Book::count();
@@ -53,7 +53,7 @@ class LibraryController extends Controller
     public function indexBooks(Request $request): JsonResponse
     {
         if (Book::count() <= 4) {
-            (new \Database\Seeders\LibrarySeeder())->run();
+            (new LibrarySeeder)->run();
         }
 
         foreach (Book::all() as $bCheck) {
@@ -132,7 +132,7 @@ class LibraryController extends Controller
             for ($i = 1; $i <= $totalCopies; $i++) {
                 BookCopy::create([
                     'book_id' => $book->id,
-                    'barcode' => 'ENCG-BC-' . strtoupper(Str::random(6)) . '-' . $i,
+                    'barcode' => 'ENCG-BC-'.strtoupper(Str::random(6)).'-'.$i,
                     'condition' => 'good',
                     'is_available' => true,
                 ]);
@@ -178,7 +178,7 @@ class LibraryController extends Controller
                 for ($i = 1; $i <= $diff; $i++) {
                     BookCopy::create([
                         'book_id' => $book->id,
-                        'barcode' => 'ENCG-BC-' . strtoupper(Str::random(6)) . '-' . ($currentCopiesCount + $i),
+                        'barcode' => 'ENCG-BC-'.strtoupper(Str::random(6)).'-'.($currentCopiesCount + $i),
                         'condition' => 'good',
                         'is_available' => true,
                     ]);

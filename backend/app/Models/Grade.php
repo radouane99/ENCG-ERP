@@ -8,6 +8,7 @@ use App\Traits\OptimisticLocking;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 
 class Grade extends Model
 {
@@ -33,7 +34,7 @@ class Grade extends Model
         return $this->belongsTo(Assessment::class);
     }
 
-    public function module(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
+    public function module(): HasOneThrough
     {
         return $this->hasOneThrough(
             Module::class,
