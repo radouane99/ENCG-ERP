@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useLocation } from 'react-router-dom'
 import { 
   ChevronLeft, 
   Megaphone, 
@@ -80,6 +80,7 @@ interface ChatMessageItem {
 export default function ClassroomShowPage() {
   const { id, classId } = useParams()
   const courseId = id || classId || '1';
+  const location = useLocation()
   const { user, hasAnyRole } = useAuthStore()
   const isProfessorOrAdmin = hasAnyRole(['professor', 'vacataire', 'admin', 'super-admin', 'institution-admin'])
 
@@ -245,7 +246,8 @@ export default function ClassroomShowPage() {
   const courseCode = course?.code || `MOD-${courseId}`
   const filiereName = cleanMojibake(course?.filiere || 'TRONC COMMUN ENCG FÈS')
   const teacherName = course?.teacher || 'Pr. Responsable ENCG Fès'
-  const backUrl = user?.student ? '/student/classroom' : '/classroom'
+  const isStudent = hasAnyRole(['student']) || location.pathname.startsWith('/student')
+  const backUrl = isStudent ? '/student/classroom' : '/classroom'
 
   return (
     <div className="space-y-6 animate-in p-4 sm:p-6 md:p-8 max-w-7xl mx-auto pb-24 font-sans text-slate-900 dark:text-slate-100">
