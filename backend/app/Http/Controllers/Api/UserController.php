@@ -35,11 +35,13 @@ class UserController extends Controller
     /**
      * Afficher un utilisateur.
      */
-    public function show(int $id): JsonResponse
+    public function show(string|int $id): JsonResponse
     {
         abort_unless(request()->user()->can('users.view'), 403);
 
-        $user = User::with('roles')->findOrFail($id);
+        $user = User::with('roles')->find($id)
+            ?? User::with('roles')->where('id', (string) $id)->first()
+            ?? User::with('roles')->where('email', (string) $id)->firstOrFail();
 
         return response()->json([
             'success' => true,
@@ -50,11 +52,13 @@ class UserController extends Controller
     /**
      * Mettre à jour un utilisateur.
      */
-    public function update(Request $request, int $id): JsonResponse
+    public function update(Request $request, string|int $id): JsonResponse
     {
         abort_unless($request->user()->can('users.manage'), 403);
 
-        $user = User::findOrFail($id);
+        $user = User::find($id)
+            ?? User::where('id', (string) $id)->first()
+            ?? User::where('email', (string) $id)->firstOrFail();
 
         $validated = $request->validate([
             'name' => 'sometimes|required|string|max:255',
@@ -91,11 +95,15 @@ class UserController extends Controller
     /**
      * Supprimer un utilisateur.
      */
-    public function destroy(int $id): JsonResponse
+    public function destroy(string|int $id): JsonResponse
     {
         abort_unless(request()->user()->can('users.manage'), 403);
 
-        User::findOrFail($id)->delete();
+        $user = User::find($id)
+            ?? User::where('id', (string) $id)->first()
+            ?? User::where('email', (string) $id)->firstOrFail();
+
+        $user->delete();
 
         return response()->json([
             'success' => true,
