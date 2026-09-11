@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { Link, useParams, useLocation } from 'react-router-dom'
+import { useState, useEffect, useCallback } from 'react'
+import { Link, useParams } from 'react-router-dom'
 import { 
   ChevronLeft, 
   Megaphone, 
@@ -80,8 +80,7 @@ interface ChatMessageItem {
 export default function ClassroomShowPage() {
   const { id, classId } = useParams()
   const courseId = id || classId || '1';
-  const location = useLocation()
-  const { user, hasAnyRole } = useAuthStore()
+  const { hasAnyRole } = useAuthStore()
   const isProfessorOrAdmin = hasAnyRole(['professor', 'vacataire', 'admin', 'super-admin', 'institution-admin'])
 
   // 100% Real Database State — ZERO static mock data
@@ -90,7 +89,7 @@ export default function ClassroomShowPage() {
   const [assignments, setAssignments] = useState<Assignment[]>([])
   const [announcements, setAnnouncements] = useState<AnnouncementItem[]>([])
   const [chatMessages, setChatMessages] = useState<ChatMessageItem[]>([])
-  const [loading, setLoading] = useState(true)
+  const [_loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'annonces' | 'supports' | 'devoirs' | 'chat' | 'ia'>('annonces')
 
   // Chat input
@@ -118,7 +117,7 @@ export default function ClassroomShowPage() {
   const [iaLoading, setIaLoading] = useState(false)
 
   // Fetch real data from PostgreSQL database via Laravel API
-  const fetchCourseDetails = async () => {
+  const fetchCourseDetails = useCallback(async () => {
     try {
       setLoading(true)
       const res = await api.get(`/lms/courses/${courseId}`)
@@ -135,11 +134,11 @@ export default function ClassroomShowPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [courseId])
 
   useEffect(() => {
     fetchCourseDetails()
-  }, [courseId])
+  }, [fetchCourseDetails])
 
   // Real Database Chat Message
   const handleSendChat = async (e: React.FormEvent) => {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { ShieldCheck, ShieldAlert, FileText, CheckCircle2, Lock, Stamp } from 'lucide-react';
+import { ShieldCheck, ShieldAlert, CheckCircle2, Lock, Stamp } from 'lucide-react';
 import api from '@/shared/lib/api';
 
 export default function PublicDocumentVerification() {

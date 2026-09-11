@@ -40,6 +40,7 @@ export default function StudentInternshipsPage() {
   const [newComment,        setNewComment]        = useState('');
   const [submitting,        setSubmitting]        = useState(false);
   const [commentsList,      setCommentsList]      = useState<Array<{ author: string; date: string; text: string; isProf: boolean }>>([]);
+  const [activeGuideModal,  setActiveGuideModal]  = useState<'guide' | 'reglement' | 'recours' | null>(null);
 
   const [form, setForm] = useState({
     company_name: '', company_city: '', position_title: '',
@@ -175,8 +176,6 @@ export default function StudentInternshipsPage() {
       </div>
     );
   }
-
-  const [activeGuideModal, setActiveGuideModal] = useState<'guide' | 'reglement' | 'recours' | null>(null);
 
   /* ─── Derived data ─── */
   const list: any[] = Array.isArray(internships) ? internships : [];

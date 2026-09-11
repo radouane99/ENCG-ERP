@@ -13,7 +13,6 @@ import {
   MailCheck,
   Sparkles,
   ShieldCheck,
-  TrendingUp,
   Award,
   Clock,
   ArrowRight,

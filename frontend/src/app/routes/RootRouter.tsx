@@ -88,9 +88,7 @@ const MessagesPage = lazy(() => import('@features/communication/pages/MessagesPa
 const AnnouncementsPage = lazy(() => import('@features/communication/pages/AnnouncementsPage'))
 const TicketsPage = lazy(() => import('@features/support/pages/TicketsPage'))
 
-const LibraryPage = lazy(() => import('@features/admin/pages/AdminLibraryPage'))
 const AdminLibraryPage = lazy(() => import('@features/admin/pages/AdminLibraryPage'))
-const BorrowingsPage = lazy(() => import('@features/library/pages/BorrowingsPage'))
 const ClubsPage = lazy(() => import('@features/clubs/pages/ClubsPage'))
 
 const ClassroomsPage = lazy(() => import('@features/infrastructure/pages/ClassroomsPage'))

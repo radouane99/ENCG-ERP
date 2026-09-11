@@ -2,14 +2,13 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   Building2, Users, GraduationCap, Percent,
-  Wallet, Award, TrendingUp, BarChart3, AlertTriangle
+  Wallet, BarChart3, AlertTriangle
 } from 'lucide-react';
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
+  XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
   ResponsiveContainer, AreaChart, Area
 } from 'recharts';
 import api from '@/shared/lib/api';
-import { useAuthStore } from '@/stores/authStore';
 
 const trendData = [
   { year: '2020', rate: 85 },
@@ -20,8 +19,6 @@ const trendData = [
 ];
 
 export default function ExecutiveDashboard() {
-  const { user } = useAuthStore();
-
   const { data: stats, isLoading } = useQuery({
     queryKey: ['executive-stats'],
     queryFn: () => api.get('/dashboard/executive/stats').then(res => res.data.data),
