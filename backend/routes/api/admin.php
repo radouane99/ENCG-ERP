@@ -19,6 +19,7 @@ use App\Http\Controllers\Api\Admin\AdminInternshipController;
 use App\Http\Controllers\Api\Admin\AdminMinistryReportController;
 use App\Http\Controllers\Api\Admin\AdminTextbookController;
 use App\Http\Controllers\Api\Admin\AuditForensicController;
+use App\Http\Controllers\Api\Admin\LibraryController as AdminLibraryController;
 use App\Http\Controllers\Api\Admin\StudentChatbotController;
 use App\Http\Controllers\Api\AdminAiController;
 use App\Http\Controllers\Api\AdminAnalyticsController;
@@ -269,19 +270,6 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
         $count = StudentPathway::count();
 
         return 'Total assigned students: '.$count;
-    });
-    Route::prefix('notifications')->group(function () {
-        Route::get('/', [NotificationController::class, 'index']);
-        Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead']);
-        Route::patch('/{id}/read', [NotificationController::class, 'markAsRead']);
-        Route::delete('/{id}', [NotificationController::class, 'destroy']);
-    });
-
-    // LMS & E-Learning
-    Route::prefix('lms')->group(function () {
-        Route::get('/courses', [LmsCourseController::class, 'index']);
-        Route::get('/courses/{id}', [LmsCourseController::class, 'show']);
-        Route::post('/courses/{id}/materials', [LmsCourseController::class, 'storeMaterial']);
     });
 
     // Academic Structure
@@ -1168,6 +1156,28 @@ Route::middleware(['auth:sanctum', $staffRoles])->group(function () {
     // Diploma Supplement 300 ECTS (Export Officiel Étudiant)
     Route::get('/admin/students/{id}/diploma-supplement/pdf', [DiplomaSupplementController::class, 'download']);
     Route::get('/v1/admin/students/{id}/diploma-supplement/pdf', [DiplomaSupplementController::class, 'download']);
+
+    // Gestion de la Bibliothèque & Fonds Documentaire (Administration & Bibliothécaire)
+    Route::prefix('admin/library')->group(function () {
+        Route::get('/stats', [AdminLibraryController::class, 'getStats']);
+        Route::get('/books', [AdminLibraryController::class, 'indexBooks']);
+        Route::post('/books', [AdminLibraryController::class, 'storeBook']);
+        Route::put('/books/{id}', [AdminLibraryController::class, 'updateBook']);
+        Route::delete('/books/{id}', [AdminLibraryController::class, 'deleteBook']);
+        Route::get('/borrowings', [AdminLibraryController::class, 'indexBorrowings']);
+        Route::post('/borrowings', [AdminLibraryController::class, 'storeBorrowing']);
+        Route::post('/borrowings/{id}/return', [AdminLibraryController::class, 'returnBorrowing']);
+    });
+    Route::prefix('v1/admin/library')->group(function () {
+        Route::get('/stats', [AdminLibraryController::class, 'getStats']);
+        Route::get('/books', [AdminLibraryController::class, 'indexBooks']);
+        Route::post('/books', [AdminLibraryController::class, 'storeBook']);
+        Route::put('/books/{id}', [AdminLibraryController::class, 'updateBook']);
+        Route::delete('/books/{id}', [AdminLibraryController::class, 'deleteBook']);
+        Route::get('/borrowings', [AdminLibraryController::class, 'indexBorrowings']);
+        Route::post('/borrowings', [AdminLibraryController::class, 'storeBorrowing']);
+        Route::post('/borrowings/{id}/return', [AdminLibraryController::class, 'returnBorrowing']);
+    });
 });
 
 // ──────────────────────────────────────────────────────────────────────────────

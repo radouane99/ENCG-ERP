@@ -111,6 +111,7 @@ const navigation: (NavItem | NavGroup)[] = [
       { label: 'Campus, Salles & Réservations', labelAr: 'القاعات والمدرجات والحجوزات', href: '/infrastructure/classrooms', icon: DoorOpen, roles: ['super-admin', 'institution-admin', 'director', 'scolarite'] },
       { label: 'Clubs & Vie Étudiante', labelAr: 'الأندية والأنشطة الطلابية', href: '/admin/clubs', icon: HeartHandshake, roles: ['super-admin', 'institution-admin', 'director'] },
       { label: 'Mobilité Internationale', labelAr: 'برامج التبادل والحركية', href: '/admin/mobility', icon: PlaneTakeoff, roles: ['super-admin', 'institution-admin', 'director'] },
+      { label: 'Bibliothèque & Prêts', labelAr: 'المكتبة وإدارة الإعارات', href: '/admin/library', icon: BookOpen, badge: 'Biblio', roles: ['super-admin', 'institution-admin', 'director', 'library-manager', 'scolarite'] },
     ]
   },
 
@@ -135,6 +136,7 @@ const navigation: (NavItem | NavGroup)[] = [
     groupTitleAr: 'فضاء الطالب',
     items: [
       { label: 'Mon Emploi du Temps', labelAr: 'جداول أوقاتي', href: '/student/schedule', icon: CalendarDays, roles: ['student'] },
+      { label: 'Espace Classroom & LMS', labelAr: 'الفصول الافتراضية والمقررات', href: '/student/classroom', icon: GraduationCap, badge: 'LMS', roles: ['student'] },
       { label: 'Orientation Master & LMD (IA)', labelAr: 'التوجيه الذكي وحساب التعويض', href: '/student/orientation', icon: Compass, badge: 'IA', roles: ['student'] },
       { label: 'Mes Stages & PFE', labelAr: 'تداريبي ومشاريع التخرج', href: '/student/internships', icon: Briefcase, roles: ['student'] },
       { label: 'Mes Notes & Résultats', labelAr: 'نقاطي ونتائجي', href: '/student/grades', icon: TrendingUp, roles: ['student'] },
@@ -155,6 +157,7 @@ const navigation: (NavItem | NavGroup)[] = [
     groupTitleAr: 'فضاء الأستاذ',
     items: [
       { label: 'Mon Emploi du Temps', labelAr: 'جدول أوقاتي', href: '/professor/schedules', icon: CalendarDays, roles: ['professor', 'vacataire'] },
+      { label: 'Classes Virtuelles & LMS', labelAr: 'الفصول الافتراضية والدروس', href: '/classroom', icon: GraduationCap, badge: 'LMS', roles: ['professor', 'vacataire'] },
       { label: 'Salles libres (extra / rattrapage)', labelAr: 'القاعات المتاحة للاستدراك', href: '/professor/rooms/availability', icon: MapPin, badge: 'DISPO', roles: ['professor', 'vacataire'] },
       { label: 'Saisie des Notes (Apogée)', labelAr: 'إدخال النقاط (أبوجي)', href: '/admin/grades', icon: FileEdit, roles: ['professor', 'vacataire'] },
       { label: 'Double Correction Apogée', labelAr: 'التصحيح المزدوج للمواد', href: '/professor/double-grading', icon: ArrowRightLeft, badge: 'LMD', roles: ['professor'] },

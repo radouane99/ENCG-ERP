@@ -82,7 +82,15 @@ export function cleanUtf8Text(str: string): string {
     .replace(/Scolarit[\s\S]{1,6}/gi, 'Scolarité')
     .replace(/Relev[\s\S]{1,6}de/gi, 'Relevé de')
     .replace(/R[\s\S]{1,6}ussite/gi, 'Réussite')
-    .replace(/Financi[\s\S]{1,6}re/gi, 'Financière')
+    .replace(/Marketing\s*Management\s*16e[\s\S]{0,12}d\./gi, 'Marketing Management 16e éd.')
+    .replace(/16[l\sö£┬meïÉ\u0080-\u00FF]*dition/gi, '16ème édition')
+    .replace(/Comptabilit[\s\S]{1,15}Financi[\s\S]{1,15}re/gi, 'Comptabilité Financière')
+    .replace(/Comptabilit[^\w\s]*/gi, 'Comptabilité')
+    .replace(/Financi[\s\S]{1,10}re/gi, 'Financière')
+    .replace(/Гö£ГlÉ|Г¶£ГlÉ|ГlÉ|ö£ГlÉ/g, 'é')
+    .replace(/Г¶£┬\s*|ö£┬\s*/g, 'è')
+    .replace(/l\s*ö£┬\s*me/gi, 'ème')
+    .replace(/l\s*ö£l\s*ïÉ/gi, 'é')
     .replace(/├ëconomie|Ã‰conomie|├ë|Ã‰|\|├⌐conomie|\|├──conomie|├⌐conomie/g, 'Économie')
     .replace(/Appliqu├⌐e|Appliqu├¿e|AppliquÃ©e|AppliquÃ¨e/g, 'Appliquée')
     .replace(/╪╣┘ä┘ê┘à ╪º┘ä╪¬╪│┘è┘è╪▒|عـلوم الـتسيير/gi, 'شعبة علوم التدبير والتسيير')
@@ -100,9 +108,11 @@ export function cleanUtf8Text(str: string): string {
     .replace(/Ã¯|├¯/g, 'ï')
     .replace(/Ã´|├´/g, 'ô')
     .replace(/â€™/g, "'")
-    .replace(/[\u0080-\u009F├┬Γ]/g, '')
+    .replace(/[\u0080-\u009F├┬Γö¶£]/g, '')
     .trim()
 }
+
+export const cleanMojibake = cleanUtf8Text;
 
 export function getAcademicYearLabel(year: string): string {
   const [start] = year.split('-')

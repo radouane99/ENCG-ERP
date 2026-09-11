@@ -79,18 +79,27 @@ class LmsCourseController extends Controller
      */
     public function show(Request $request, string $id): JsonResponse
     {
-        $module = Module::findOrFail($id);
+        $module = Module::with(['filiere', 'department'])->findOrFail($id);
         $materials = LearningMaterial::where('module_id', $module->id)
-            ->with(['professor'])
+            ->with(['professor.user'])
             ->latest()
             ->get();
+
+        $profAssigned = ModuleProfessor::where('module_id', $module->id)->with('professor.user')->first();
+        $teacherName = $profAssigned?->professor?->user?->name ?? 'Pr. Enseignant ENCG Fès';
 
         return response()->json([
             'success' => true,
             'module' => [
                 'id' => $module->id,
                 'title' => $module->name,
-                'code' => $module->code,
+                'code' => $module->code ?? "MOD-{$module->id}",
+                'filiere' => $module->filiere?->name ?? 'TRONC COMMUN ENCG',
+                'department' => $module->department?->name ?? 'Gestion & Commerce',
+                'coefficient' => $module->coefficient ?? 2.0,
+                'credits' => $module->credits ?? 4,
+                'teacher' => $teacherName,
+                'materials_count' => $materials->count(),
             ],
             'materials' => $materials,
         ]);
@@ -99,8 +108,9 @@ class LmsCourseController extends Controller
     /**
      * Ajouter un support de cours (professeur uniquement).
      */
-    public function storeMaterial(Request $request, int $moduleId): JsonResponse
+    public function storeMaterial(Request $request, string $id): JsonResponse
     {
+        $moduleId = (int) $id;
         $hasPermittedRole = $request->user()->roles->pluck('name')
             ->intersect(['super-admin', 'admin', 'institution-admin', 'professor', 'vacataire'])
             ->isNotEmpty();

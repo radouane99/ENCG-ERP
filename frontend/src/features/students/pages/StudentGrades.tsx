@@ -78,11 +78,11 @@ export default function StudentGrades() {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'validated' | 'retake' | 'failed'>('all');
 
-  // Interactive Simulator Modal state
+  // Interactive Simulator Modal state (CC1 25% + CC2 25% + Exam 50%)
   const [simulatorModalOpen, setSimulatorModalOpen] = useState(false);
-  const [simCc, setSimCc] = useState<string>('12');
-  const [simExam, setSimExam] = useState<string>('11');
-  const [simWeightCc, setSimWeightCc] = useState<number>(50);
+  const [simCc1, setSimCc1] = useState<string>('13');
+  const [simCc2, setSimCc2] = useState<string>('14');
+  const [simExam, setSimExam] = useState<string>('12');
 
   // Modal Réclamation LMD 48h
   const [appealModalOpen, setAppealModalOpen] = useState(false);
@@ -174,14 +174,13 @@ export default function StudentGrades() {
     });
   }, [grades, selectedSemester, searchQuery, statusFilter]);
 
-  // Calculation for quick simulator
+  // Calculation for quick simulator: CC1 (25%) + CC2 (25%) + Examen (50%)
   const simulatedAverage = useMemo(() => {
-    const cc = parseFloat(simCc) || 0;
+    const cc1 = parseFloat(simCc1) || 0;
+    const cc2 = parseFloat(simCc2) || 0;
     const exam = parseFloat(simExam) || 0;
-    const wCc = simWeightCc / 100;
-    const wExam = (100 - simWeightCc) / 100;
-    return Number((cc * wCc + exam * wExam).toFixed(2));
-  }, [simCc, simExam, simWeightCc]);
+    return Number(((cc1 * 0.25) + (cc2 * 0.25) + (exam * 0.50)).toFixed(2));
+  }, [simCc1, simCc2, simExam]);
 
   const handleSubmitAppeal = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -304,7 +303,7 @@ export default function StudentGrades() {
               Relevé de Notes & Décisions de Jury
             </h2>
             <p className="text-xs sm:text-sm text-blue-200 font-medium leading-relaxed mt-1.5">
-              Contrôle Continu ({simWeightCc}%) + Examen Final ({100 - simWeightCc}%) — Compensation semestrielle automatique sous réserve d'aucune note éliminatoire (&lt; 6.0/20).
+              CC 1 (25%) + CC 2 (25%) + Examen Final (50%) — Compensation semestrielle automatique sous réserve d'aucune note éliminatoire (&lt; 6.0/20).
             </p>
           </div>
 
@@ -613,8 +612,9 @@ export default function StudentGrades() {
             <thead>
               <tr className="bg-slate-50/80 dark:bg-slate-800/60 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">
                 <th className="py-3.5 pl-4 pr-3">Élément de Module</th>
-                <th className="py-3.5 px-3 text-center">Contrôle Continu ({simWeightCc}%)</th>
-                <th className="py-3.5 px-3 text-center">Examen Final ({100 - simWeightCc}%)</th>
+                <th className="py-3.5 px-3 text-center">CC 1 (25%)</th>
+                <th className="py-3.5 px-3 text-center">CC 2 (25%)</th>
+                <th className="py-3.5 px-3 text-center">Examen Final (50%)</th>
                 <th className="py-3.5 px-3 text-center">Rattrapage</th>
                 <th className="py-3.5 px-3 text-center">Moyenne Finale</th>
                 <th className="py-3.5 px-3 text-center">Décision LMD</th>
@@ -651,12 +651,21 @@ export default function StudentGrades() {
                       </div>
                     </td>
 
-                    {/* CC Note */}
+                    {/* CC 1 Note (25%) */}
                     <td className="py-3.5 px-3 text-center font-mono font-bold text-slate-700 dark:text-slate-200">
                       {isRevealed ? (
-                        grade.cc_note !== null && grade.cc_note !== undefined 
-                          ? `${Number(grade.cc_note).toFixed(2)}` 
-                          : '—'
+                        grade.cc1_note !== null && grade.cc1_note !== undefined 
+                          ? `${Number(grade.cc1_note).toFixed(2)}` 
+                          : (grade.cc_note !== null && grade.cc_note !== undefined ? `${Number(grade.cc_note).toFixed(2)}` : '—')
+                      ) : '•••'}
+                    </td>
+
+                    {/* CC 2 Note (25%) */}
+                    <td className="py-3.5 px-3 text-center font-mono font-bold text-slate-700 dark:text-slate-200">
+                      {isRevealed ? (
+                        grade.cc2_note !== null && grade.cc2_note !== undefined 
+                          ? `${Number(grade.cc2_note).toFixed(2)}` 
+                          : (grade.cc_note !== null && grade.cc_note !== undefined ? `${Number(grade.cc_note).toFixed(2)}` : '—')
                       ) : '•••'}
                     </td>
 
@@ -839,34 +848,39 @@ export default function StudentGrades() {
                   <Sparkles className="w-3.5 h-3.5" /> Simulation Instantanée de Module
                 </span>
                 <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] font-bold text-slate-500">Pondération CC :</span>
-                  <select
-                    value={simWeightCc}
-                    onChange={(e) => setSimWeightCc(Number(e.target.value))}
-                    className="text-[10px] font-black bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-0.5"
-                  >
-                    <option value={50}>50% CC / 50% Exam</option>
-                    <option value={40}>40% CC / 60% Exam</option>
-                    <option value={30}>30% CC / 70% Exam</option>
-                  </select>
+                  <span className="text-[10px] font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-100 dark:bg-indigo-900/60 px-2 py-0.5 rounded-full font-mono">
+                    Formule LMD : 25% + 25% + 50%
+                  </span>
                 </div>
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Note CC ({simWeightCc}%)</label>
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">CC 1 (25%)</label>
                   <input
                     type="number"
                     min="0"
                     max="20"
                     step="0.25"
-                    value={simCc}
-                    onChange={(e) => setSimCc(e.target.value)}
+                    value={simCc1}
+                    onChange={(e) => setSimCc1(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-black"
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Note Examen ({100 - simWeightCc}%)</label>
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">CC 2 (25%)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="20"
+                    step="0.25"
+                    value={simCc2}
+                    onChange={(e) => setSimCc2(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-black"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Examen (50%)</label>
                   <input
                     type="number"
                     min="0"

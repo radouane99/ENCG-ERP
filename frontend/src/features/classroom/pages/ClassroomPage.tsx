@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { 
   Search, 
   Folder, 
@@ -13,7 +13,7 @@ import {
   ArrowRight,
   Filter
 } from 'lucide-react'
-import { cn } from '@shared/lib/utils'
+import { cn, cleanMojibake } from '@shared/lib/utils'
 import api from '@shared/lib/api'
 
 interface Classroom {
@@ -33,6 +33,15 @@ export default function ClassroomPage() {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [activeFilter, setActiveFilter] = useState<'all' | 'supports' | 'pubs'>('all');
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleOpenClassroom = (id: number) => {
+    if (location.pathname.startsWith('/student')) {
+      navigate(`/student/classroom/${id}`);
+    } else {
+      navigate(`/classroom/${id}`);
+    }
+  };
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -232,7 +241,7 @@ export default function ClassroomPage() {
                 
                 <div className="flex justify-between items-center mb-4 relative z-10">
                   <span className="text-[10px] font-black uppercase tracking-wider bg-black/30 backdrop-blur-md px-3 py-1 rounded-full border border-white/20">
-                    {c.group}
+                    {cleanMojibake(c.group)}
                   </span>
                   <span className="text-[10px] font-bold uppercase tracking-widest text-white/80 bg-white/10 px-2.5 py-1 rounded-md">
                     {c.code}
@@ -240,7 +249,7 @@ export default function ClassroomPage() {
                 </div>
                 
                 <h3 className="text-xl font-black mb-1 line-clamp-1 text-white leading-snug group-hover:text-white/90 transition-colors relative z-10">
-                  {c.title}
+                  {cleanMojibake(c.title)}
                 </h3>
                 <p className="text-white/70 text-[10px] font-bold uppercase tracking-widest relative z-10">
                   ÉTABLISSEMENT ENCG FÈS
@@ -277,8 +286,8 @@ export default function ClassroomPage() {
                 </div>
 
                 <button 
-                  onClick={() => navigate(`/student/classroom/${c.id}`)}
-                  className="w-full py-3.5 bg-slate-900 text-white rounded-2xl text-xs font-extrabold hover:bg-indigo-600 transition-all flex items-center justify-center gap-2 group/btn shadow-md hover:shadow-indigo-600/20"
+                  onClick={() => handleOpenClassroom(c.id)}
+                  className="w-full py-3.5 bg-slate-900 text-white rounded-2xl text-xs font-extrabold hover:bg-indigo-600 transition-all flex items-center justify-center gap-2 group/btn shadow-md hover:shadow-indigo-600/20 cursor-pointer"
                 >
                   <span>Accéder au Classroom</span>
                   <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />

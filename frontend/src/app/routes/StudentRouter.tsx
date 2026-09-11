@@ -23,6 +23,8 @@ const StudentReinscriptionPage = lazy(() => import('@features/students/pages/Stu
 const DigitalCardPage = lazy(() => import('@features/students/pages/DigitalCardPage'))
 const StudentOrientationAdvisorPage = lazy(() => import('@features/academic/pages/StudentOrientationAdvisorPage'))
 const StudentSpecialtyOrientationPage = lazy(() => import('@features/students/pages/StudentSpecialtyOrientationPage'))
+const ClassroomPage = lazy(() => import('@features/classroom/pages/ClassroomPage'))
+const ClassroomShowPage = lazy(() => import('@features/classroom/pages/ClassroomShowPage'))
 
 export default function StudentRouter() {
   return (
@@ -53,6 +55,9 @@ export default function StudentRouter() {
       <Route path="gamification" element={<StudentGamification />} />
       <Route path="absences" element={<StudentAbsencesPage />} />
       <Route path="documents" element={<StudentGuichetPage />} />
+      <Route path="classroom" element={<ClassroomPage />} />
+      <Route path="classroom/:id" element={<ClassroomShowPage />} />
+      <Route path="courses" element={<ClassroomPage />} />
     </Routes>
   );
 }

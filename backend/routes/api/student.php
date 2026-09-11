@@ -65,7 +65,12 @@ $studentPortalRoutes = function () {
         Route::post('exam-assistant', [StudentAiController::class, 'examAssistant']);
     });
 
-    // Digital Library
+    // Digital Library & Prêts d'ouvrages
+    Route::prefix('library')->group(function () {
+        Route::get('/', [StudentPortalController::class, 'getLibraryMaterials']);
+        Route::post('/borrow', [StudentPortalController::class, 'borrowBook']);
+        Route::post('/extend/{id}', [StudentPortalController::class, 'extendBorrowing']);
+    });
     Route::get('/library', [StudentPortalController::class, 'getLibraryMaterials']);
 
     // Internships

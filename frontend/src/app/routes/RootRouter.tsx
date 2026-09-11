@@ -88,7 +88,8 @@ const MessagesPage = lazy(() => import('@features/communication/pages/MessagesPa
 const AnnouncementsPage = lazy(() => import('@features/communication/pages/AnnouncementsPage'))
 const TicketsPage = lazy(() => import('@features/support/pages/TicketsPage'))
 
-const LibraryPage = lazy(() => import('@features/library/pages/LibraryPage'))
+const LibraryPage = lazy(() => import('@features/admin/pages/AdminLibraryPage'))
+const AdminLibraryPage = lazy(() => import('@features/admin/pages/AdminLibraryPage'))
 const BorrowingsPage = lazy(() => import('@features/library/pages/BorrowingsPage'))
 const ClubsPage = lazy(() => import('@features/clubs/pages/ClubsPage'))
 
@@ -117,6 +118,7 @@ const AiAssistantPage = lazy(() => import('@features/ai/pages/AiAssistantPage'))
 
 const ProfilePage = lazy(() => import('@features/profile/pages/ProfilePage'))
 const SettingsPage = lazy(() => import('@features/settings/pages/SettingsPage'))
+const NotificationsPage = lazy(() => import('@features/notifications/pages/NotificationsPage'))
 
 // Administration
 const ActivityLogsPage = lazy(() => import('@features/admin/pages/ActivityLogsPage'))
@@ -448,8 +450,9 @@ export default function RootRouter() {
           <Route path="/support" element={<TicketsPage />} />
 
           {/* Library */}
-          <Route path="/library" element={<LibraryPage />} />
-          <Route path="/library/borrowings" element={<BorrowingsPage />} />
+          <Route path="/library" element={<AdminLibraryPage />} />
+          <Route path="/admin/library" element={<AdminLibraryPage />} />
+          <Route path="/library/borrowings" element={<AdminLibraryPage />} />
 
           {/* Clubs & Discipline */}
           <Route path="/clubs" element={<ClubsPage />} />
@@ -460,8 +463,9 @@ export default function RootRouter() {
           {/* AI */}
           <Route path="/ai" element={<AiAssistantPage />} />
 
-          {/* Profile & Settings */}
+          {/* Profile & Settings & Notifications */}
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/notifications" element={<NotificationsPage />} />
           <Route element={<ProtectedRoute roles={ADMIN_ROLES} />}>
             <Route path="/settings" element={<SettingsPage />} />
           </Route>
@@ -550,6 +554,7 @@ export default function RootRouter() {
             <Route path="/admin/guichet" element={<AdminGuichetPage />} />
           </Route>
           <Route path="/classroom" element={<ClassroomPage />} />
+          <Route path="/classroom/:id" element={<ClassroomShowPage />} />
           <Route path="/classroom/show/:classId/:groupId" element={<ClassroomShowPage />} />
         </Route>
 

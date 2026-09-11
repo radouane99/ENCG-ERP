@@ -187,6 +187,17 @@ export default function StudentDashboard() {
       border: 'hover:border-purple-500/40',
       tag: 'Officiel',
     },
+    {
+      to: '/student/classroom',
+      label: 'Classroom & LMS',
+      sublabel: 'Cours & Supports PDF',
+      icon: GraduationCap,
+      testId: 'cta-student-classroom',
+      accent: 'indigo',
+      iconBg: 'bg-indigo-500/10 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-300',
+      border: 'hover:border-indigo-500/40',
+      tag: 'E-Learning',
+    },
   ];
 
   return (
@@ -318,7 +329,7 @@ export default function StudentDashboard() {
       </div>
 
       {/* ── Executive Quick Role Actions Navigation (Refined Glass Tiles matching Admin & Professor) ── */}
-      <div data-testid="role-quick-actions" className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+      <div data-testid="role-quick-actions" className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         {quickActions.map((action) => {
           const Icon = action.icon;
           return (

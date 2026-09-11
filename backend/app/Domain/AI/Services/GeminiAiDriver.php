@@ -30,13 +30,17 @@ class GeminiAiDriver implements AiDriverInterface
      */
     public function generate(string $prompt, array $context = []): string
     {
-        if (! $this->isConfigured()) {
-            return $this->getMockOrFallbackResponse($prompt);
-        }
-
         $fullPrompt = $prompt;
         if (! empty($context)) {
             $fullPrompt .= "\n\nContext:\n".json_encode($context, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        }
+
+        if (! $this->isConfigured()) {
+            $groqRes = app(\App\Services\AI\GeminiApiService::class)->generateContent($fullPrompt);
+            if (! empty($groqRes)) {
+                return $groqRes;
+            }
+            return $this->getMockOrFallbackResponse($prompt);
         }
 
         try {
@@ -57,6 +61,11 @@ class GeminiAiDriver implements AiDriverInterface
             Log::error('Gemini API Error', ['response' => $response->body()]);
         } catch (\Exception $e) {
             Log::error('Gemini API Connection Error: '.$e->getMessage());
+        }
+
+        $groqRes = app(\App\Services\AI\GeminiApiService::class)->generateContent($fullPrompt);
+        if (! empty($groqRes)) {
+            return $groqRes;
         }
 
         return $this->getMockOrFallbackResponse($prompt);

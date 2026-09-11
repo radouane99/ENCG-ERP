@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\DocumentController;
 use App\Http\Controllers\Api\ExamPdfController;
 use App\Http\Controllers\Api\InternalApiController;
+use App\Http\Controllers\Api\LmsCourseController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PdfExportController;
 use App\Http\Controllers\Api\PilotageController;
@@ -77,6 +78,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead']);
         Route::patch('/{id}/read', [NotificationController::class, 'markAsRead']);
         Route::delete('/{id}', [NotificationController::class, 'destroy']);
+    });
+
+    // LMS & E-Learning (Classroom for Students, Professors & Admin)
+    Route::prefix('lms')->group(function () {
+        Route::get('/courses', [LmsCourseController::class, 'index']);
+        Route::get('/courses/{id}', [LmsCourseController::class, 'show']);
+        Route::post('/courses/{id}/materials', [LmsCourseController::class, 'storeMaterial']);
     });
 
     // Timetable & Smart Scheduling (Shared/Admin view)

@@ -25,8 +25,8 @@ class GeminiApiService
     public function __construct()
     {
         $this->geminiApiKey = config('services.gemini.key') ?: env('GEMINI_API_KEY', '');
-        $this->groqApiKey = config('services.groq.key') ?: env('GROQ_API_KEY', '');
-        Log::info('[GeminiApiService] Gemini key active check');
+        $this->groqApiKey = config('services.groq.key') ?: (config('services.groq.api_key') ?: env('GROQ_API_KEY', ''));
+        Log::info('[GeminiApiService] AI Drivers initialized - Gemini: ' . (!empty($this->geminiApiKey) ? 'configured' : 'empty') . ', Groq: ' . (!empty($this->groqApiKey) ? 'configured' : 'empty'));
     }
 
     /**
@@ -55,7 +55,7 @@ class GeminiApiService
 
     protected function callGeminiApi(string $prompt, array $systemInstructions = []): ?string
     {
-        $url = "{$this->geminiBaseUrl}/gemini-flash-latest:generateContent";
+        $url = "{$this->geminiBaseUrl}/gemini-1.5-flash:generateContent?key={$this->geminiApiKey}";
 
         $payload = [
             'contents' => [
@@ -105,30 +105,39 @@ class GeminiApiService
         }
         $messages[] = ['role' => 'user', 'content' => $prompt];
 
-        try {
-            $response = Http::withoutVerifying()->timeout(15)->withHeaders([
-                'Authorization' => 'Bearer '.$this->groqApiKey,
-                'Content-Type' => 'application/json',
-            ])->post('https://api.groq.com/openai/v1/chat/completions', [
-                'model' => 'llama-3.3-70b-versatile',
-                'messages' => $messages,
-                'temperature' => 0.7,
-            ]);
+        $models = array_values(array_unique(array_filter([
+            config('services.groq.model'),
+            'openai/gpt-oss-120b',
+            'openai/gpt-oss-20b',
+            'groq/compound-mini',
+        ])));
 
-            if ($response->successful()) {
-                $text = $response->json('choices.0.message.content');
-                if (! empty($text)) {
-                    return trim($text);
+        foreach ($models as $model) {
+            try {
+                $response = Http::withoutVerifying()->timeout(15)->withHeaders([
+                    'Authorization' => 'Bearer '.$this->groqApiKey,
+                    'Content-Type' => 'application/json',
+                ])->post('https://api.groq.com/openai/v1/chat/completions', [
+                    'model' => $model,
+                    'messages' => $messages,
+                    'temperature' => 0.7,
+                    'max_tokens' => 1500,
+                ]);
+
+                if ($response->successful()) {
+                    $text = $response->json('choices.0.message.content');
+                    if (! empty($text)) {
+                        Log::info("[GeminiApiService] Groq generation succeeded with model: {$model}");
+                        return trim($text);
+                    }
                 }
+                Log::warning("Groq API Non-200 Response [{$model}]: ".$response->body());
+            } catch (\Exception $e) {
+                Log::warning("Groq API Exception [{$model}]: ".$e->getMessage());
             }
-            Log::warning('Groq API Non-200 Response: '.$response->body());
-
-            return null;
-        } catch (\Exception $e) {
-            Log::warning('Groq API Exception: '.$e->getMessage());
-
-            return null;
         }
+
+        return null;
     }
 
     /**
@@ -341,12 +350,12 @@ class GeminiApiService
             $docContent = "Contenu textuel du document :\n".$extractedText;
 
             try {
-                Log::info("OCR Tier 2: Triggering Groq Llama-3.3-70b Text LLM for {$docType}...");
+                Log::info("OCR Tier 2: Triggering Groq Text LLM for {$docType}...");
                 $gResText = Http::withoutVerifying()->timeout(15)->withHeaders([
                     'Authorization' => 'Bearer '.$this->groqApiKey,
                     'Content-Type' => 'application/json',
                 ])->post('https://api.groq.com/openai/v1/chat/completions', [
-                    'model' => 'llama-3.3-70b-versatile',
+                    'model' => 'openai/gpt-oss-20b',
                     'messages' => [
                         [
                             'role' => 'system',
@@ -365,14 +374,14 @@ class GeminiApiService
                     $rawJson = $gResText->json('choices.0.message.content');
                     $decodedG = $this->parseJsonResponse($rawJson);
                     if ($decodedG && count(array_filter($decodedG, fn ($v) => ! empty($v) && strtolower((string) $v) !== 'inconnu')) > 0) {
-                        Log::info('OCR Tier 2 Success via Groq Llama-3.3-70b Text LLM!', $decodedG);
+                        Log::info('OCR Tier 2 Success via Groq Text LLM!', $decodedG);
                         $this->lastError = null;
 
                         return $this->cleanAndNormalizeOcrData($decodedG);
                     }
                 } else {
                     $errBody = substr($gResText->body(), 0, 250);
-                    $this->lastError = 'Groq Text (llama-3.3-70b) HTTP '.$gResText->status().': '.$errBody;
+                    $this->lastError = 'Groq Text HTTP '.$gResText->status().': '.$errBody;
                 }
             } catch (\Throwable $ex) {
                 $this->lastError = 'Groq Text Exception: '.$ex->getMessage();

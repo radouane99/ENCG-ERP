@@ -132,6 +132,16 @@ class GradeController extends Controller
             }
         );
 
+        // Alerter automatiquement les étudiants concernés
+        $studentIds = array_filter(array_column($validated['grades'], 'student_id'));
+        if (! empty($studentIds)) {
+            try {
+                app(\App\Services\Notification\NotificationDispatcherService::class)->notifyStudentsGradePublished($assessment, $studentIds);
+            } catch (\Throwable $e) {
+                Log::warning('Failed notifying students of grades: '.$e->getMessage());
+            }
+        }
+
         return response()->json([
             'success' => true,
             'message' => "{$updatedCount} notes enregistrées avec succès.",
