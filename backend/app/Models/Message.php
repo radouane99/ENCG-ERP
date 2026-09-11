@@ -19,6 +19,8 @@ class Message extends Model
         'attachment_type',
         'is_read',
         'read_at',
+        'created_at',
+        'updated_at',
     ];
 
     protected function casts(): array

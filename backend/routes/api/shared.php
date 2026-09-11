@@ -85,6 +85,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/courses', [LmsCourseController::class, 'index']);
         Route::get('/courses/{id}', [LmsCourseController::class, 'show']);
         Route::post('/courses/{id}/materials', [LmsCourseController::class, 'storeMaterial']);
+        Route::post('/courses/{id}/announcements', [LmsCourseController::class, 'storeAnnouncement']);
+        Route::post('/courses/{id}/messages', [LmsCourseController::class, 'storeMessage']);
+        Route::post('/courses/{id}/assignments/{assignmentId}/submit', [LmsCourseController::class, 'submitAssignment']);
     });
 
     // Timetable & Smart Scheduling (Shared/Admin view)

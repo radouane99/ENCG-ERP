@@ -9,12 +9,16 @@ import {
   Folder, 
   FileText, 
   Send, 
-  Info,
-  Download,
-  CheckCircle2,
-  Sparkles,
-  GraduationCap,
-  HelpCircle
+  Info, 
+  Download, 
+  CheckCircle2, 
+  Sparkles, 
+  GraduationCap, 
+  HelpCircle,
+  Calendar,
+  Clock,
+  Upload,
+  AlertCircle
 } from 'lucide-react'
 import { cn, cleanMojibake } from '@shared/lib/utils'
 import { useAuthStore } from '@/stores/authStore'
@@ -42,11 +46,35 @@ interface Material {
   file_size?: string;
   description?: string;
   created_at: string;
-  professor?: {
-    user?: {
-      name: string;
-    };
-  };
+}
+
+interface Assignment {
+  id: number;
+  title: string;
+  description?: string;
+  type: string;
+  file_url?: string;
+  file_name?: string;
+  due_date: string;
+  max_score: number;
+  created_at: string;
+  is_submitted?: boolean;
+}
+
+interface AnnouncementItem {
+  id: string;
+  title: string;
+  author: string;
+  date: string;
+  content: string;
+}
+
+interface ChatMessageItem {
+  id: string;
+  sender: string;
+  isMe: boolean;
+  text: string;
+  time: string;
 }
 
 export default function ClassroomShowPage() {
@@ -55,77 +83,135 @@ export default function ClassroomShowPage() {
   const { user, hasAnyRole } = useAuthStore()
   const isProfessorOrAdmin = hasAnyRole(['professor', 'vacataire', 'admin', 'super-admin', 'institution-admin'])
 
+  // 100% Real Database State — ZERO static mock data
   const [course, setCourse] = useState<ModuleInfo | null>(null)
   const [materials, setMaterials] = useState<Material[]>([])
+  const [assignments, setAssignments] = useState<Assignment[]>([])
+  const [announcements, setAnnouncements] = useState<AnnouncementItem[]>([])
+  const [chatMessages, setChatMessages] = useState<ChatMessageItem[]>([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'annonces' | 'supports' | 'devoirs' | 'chat' | 'ia'>('annonces')
 
-  // Chat state
-  const [chatMessages, setChatMessages] = useState<Array<{ id: string; sender: string; isMe: boolean; text: string; time: string }>>([
-    {
-      id: '1',
-      sender: 'Pr. Karim Alami',
-      isMe: false,
-      text: 'Bienvenue sur l\'espace virtuel de cours. N\'hésitez pas à poser vos questions ici pour le prochain TD.',
-      time: 'Hier 14:30'
-    }
-  ])
+  // Chat input
   const [newChatMessage, setNewChatMessage] = useState('')
+  const [sendingMessage, setSendingMessage] = useState(false)
+
+  // Announcement input (for professors/admins)
+  const [announcementText, setAnnouncementText] = useState('')
+  const [announcementTitle, setAnnouncementTitle] = useState('')
+  const [publishingAnn, setPublishingAnn] = useState(false)
+
+  // Assignment submission state
+  const [submittingAssignmentId, setSubmittingAssignmentId] = useState<number | null>(null)
+  const [submissionText, setSubmissionText] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   // IA Tutor state
   const [iaMessages, setIaMessages] = useState<Array<{ role: 'ai' | 'user'; text: string }>>([
     {
       role: 'ai',
-      text: 'Bonjour ! Je suis le Tuteur Virtuel IA pour ce module à l\'ENCG Fès. Posez-moi vos questions sur le plan de cours, les définitions ou les exercices.'
+      text: 'Bonjour ! Je suis votre Tuteur Virtuel IA pour ce module à l\'ENCG Fès. Posez-moi vos questions sur le plan de cours, les concepts managériaux ou les exercices de TD.'
     }
   ])
   const [iaPrompt, setIaPrompt] = useState('')
   const [iaLoading, setIaLoading] = useState(false)
 
-  // Announcement state
-  const [announcementText, setAnnouncementText] = useState('')
-  const [announcements, setAnnouncements] = useState<Array<{ id: string; title: string; author: string; date: string; content: string }>>([
-    {
-      id: 'ann-1',
-      title: 'Séance de cadrage et supports de cours',
-      author: 'Pr. Karim Alami',
-      date: 'Il y a 2 jours',
-      content: 'Les supports du chapitre 1 et les études de cas associées sont désormais accessibles dans l\'onglet supports.'
+  // Fetch real data from PostgreSQL database via Laravel API
+  const fetchCourseDetails = async () => {
+    try {
+      setLoading(true)
+      const res = await api.get(`/lms/courses/${courseId}`)
+      if (res.data?.success) {
+        setCourse(res.data.module)
+        setMaterials(res.data.materials || [])
+        setAssignments(res.data.assignments || [])
+        setAnnouncements(res.data.announcements || [])
+        setChatMessages(res.data.messages || [])
+      }
+    } catch (err) {
+      console.error('Erreur chargement cours LMS:', err)
+      toast.error('Impossible de charger les données du module.')
+    } finally {
+      setLoading(false)
     }
-  ])
+  }
 
   useEffect(() => {
-    const fetchCourseDetails = async () => {
-      try {
-        setLoading(true)
-        const res = await api.get(`/lms/courses/${courseId}`)
-        if (res.data?.success) {
-          setCourse(res.data.module)
-          setMaterials(res.data.materials || [])
-        }
-      } catch (err) {
-        console.error('Erreur chargement cours LMS:', err)
-      } finally {
-        setLoading(false)
-      }
-    }
     fetchCourseDetails()
   }, [courseId])
 
-  const handleSendChat = (e: React.FormEvent) => {
+  // Real Database Chat Message
+  const handleSendChat = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!newChatMessage.trim()) return
-    const msg = {
-      id: Date.now().toString(),
-      sender: user?.name || 'Moi',
-      isMe: true,
-      text: newChatMessage.trim(),
-      time: 'À l\'instant'
-    }
-    setChatMessages(prev => [...prev, msg])
+    if (!newChatMessage.trim() || sendingMessage) return
+
+    const text = newChatMessage.trim()
     setNewChatMessage('')
+    setSendingMessage(true)
+
+    try {
+      const res = await api.post(`/lms/courses/${courseId}/messages`, { text })
+      if (res.data?.success && res.data.data) {
+        setChatMessages(prev => [...prev, res.data.data])
+      }
+    } catch (err) {
+      console.error('Erreur envoi message:', err)
+      toast.error('Erreur lors de l\'envoi du message.')
+      setNewChatMessage(text)
+    } finally {
+      setSendingMessage(false)
+    }
   }
 
+  // Real Database Announcement Publication
+  const handlePublishAnnouncement = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!announcementText.trim() || publishingAnn) return
+
+    setPublishingAnn(true)
+    try {
+      const res = await api.post(`/lms/courses/${courseId}/announcements`, {
+        title: announcementTitle.trim() || undefined,
+        content: announcementText.trim()
+      })
+      if (res.data?.success && res.data.data) {
+        setAnnouncements(prev => [res.data.data, ...prev])
+        setAnnouncementText('')
+        setAnnouncementTitle('')
+        toast.success('Annonce enregistrée et diffusée aux étudiants.')
+      }
+    } catch (err) {
+      console.error('Erreur publication annonce:', err)
+      toast.error('Erreur lors de la publication de l\'annonce.')
+    } finally {
+      setPublishingAnn(false)
+    }
+  }
+
+  // Real Database Assignment Submission
+  const handleSubmitAssignment = async (assignmentId: number) => {
+    if (isSubmitting) return
+    setIsSubmitting(true)
+
+    try {
+      const res = await api.post(`/lms/courses/${courseId}/assignments/${assignmentId}/submit`, {
+        text: submissionText.trim() || 'Devoir soumis via l\'espace numérique ENCG'
+      })
+      if (res.data?.success) {
+        toast.success(res.data.message || 'Votre travail a été transmis avec succès à l’enseignant.')
+        setAssignments(prev => prev.map(a => a.id === assignmentId ? { ...a, is_submitted: true } : a))
+        setSubmittingAssignmentId(null)
+        setSubmissionText('')
+      }
+    } catch (err) {
+      console.error('Erreur remise devoir:', err)
+      toast.error('Impossible de soumettre le devoir.')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  // IA Tutor Interaction
   const handleAskIa = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!iaPrompt.trim() || iaLoading) return
@@ -153,23 +239,6 @@ export default function ClassroomShowPage() {
     } finally {
       setIaLoading(false)
     }
-  }
-
-  const handlePublishAnnouncement = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!announcementText.trim()) return
-    setAnnouncements(prev => [
-      {
-        id: Date.now().toString(),
-        title: 'Communication aux étudiants',
-        author: user?.name || 'Enseignant',
-        date: 'À l\'instant',
-        content: announcementText.trim()
-      },
-      ...prev
-    ])
-    setAnnouncementText('')
-    toast.success('Annonce publiée aux étudiants.')
   }
 
   const courseTitle = cleanMojibake(course?.title || 'Module Académique ENCG')
@@ -213,7 +282,7 @@ export default function ClassroomShowPage() {
               📚 {courseTitle}
             </h2>
             <p className="text-blue-200/90 text-xs sm:text-sm max-w-2xl font-medium">
-              Espace numérique de cours, travaux dirigés, salon d'échange et assistance IA académique.
+              Espace numérique officiel de cours, travaux dirigés, salon d'échange et assistance IA académique.
             </p>
             <div className="flex flex-wrap items-center gap-4 pt-2 text-xs text-blue-200">
               <span className="flex items-center gap-1.5 font-semibold">
@@ -233,6 +302,10 @@ export default function ClassroomShowPage() {
             <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 text-center min-w-[100px] shadow-sm">
               <p className="text-2xl sm:text-3xl font-black text-amber-300">{materials.length}</p>
               <p className="text-[9px] font-extrabold uppercase tracking-widest text-blue-200">SUPPORTS</p>
+            </div>
+            <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 text-center min-w-[100px] shadow-sm">
+              <p className="text-2xl sm:text-3xl font-black text-emerald-300">{assignments.length}</p>
+              <p className="text-[9px] font-extrabold uppercase tracking-widest text-blue-200">DEVOIRS</p>
             </div>
           </div>
         </div>
@@ -259,12 +332,14 @@ export default function ClassroomShowPage() {
           onClick={() => setActiveTab('devoirs')} 
           icon={BookOpen} 
           label="Devoirs & Travaux" 
+          count={assignments.length}
         />
         <TabButton 
           active={activeTab === 'chat'} 
           onClick={() => setActiveTab('chat')} 
           icon={MessageSquare} 
           label="Salon du Groupe" 
+          count={chatMessages.length}
         />
         <TabButton 
           active={activeTab === 'ia'} 
@@ -275,13 +350,13 @@ export default function ClassroomShowPage() {
         />
       </div>
 
-      {/* Grid Layout Main Content + Sidebar */}
+      {/* Main Grid Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* Left Column (2 cols) */}
         <div className="lg:col-span-2 space-y-6">
           
-          {/* 1. Tab Annonces */}
+          {/* 1. Tab Annonces (Real Database Announcements) */}
           {activeTab === 'annonces' && (
             <div className="space-y-6">
               {isProfessorOrAdmin && (
@@ -291,10 +366,19 @@ export default function ClassroomShowPage() {
                       <Megaphone className="w-5 h-5" />
                     </div>
                     <div>
-                      <h3 className="text-sm font-extrabold text-slate-800 dark:text-slate-100">Publier une annonce aux étudiants</h3>
-                      <p className="text-xs text-slate-400">Diffusion instantanée pour {filiereName}</p>
+                      <h3 className="text-sm font-extrabold text-slate-800 dark:text-slate-100">Publier une annonce officielle</h3>
+                      <p className="text-xs text-slate-400">Diffusion instantanée et persistée pour {filiereName}</p>
                     </div>
                   </div>
+
+                  <input
+                    type="text"
+                    value={announcementTitle}
+                    onChange={(e) => setAnnouncementTitle(e.target.value)}
+                    placeholder="Titre de l'annonce (ex: Consignes pour la séance de TD)..."
+                    className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+
                   <textarea
                     rows={3}
                     value={announcementText}
@@ -305,43 +389,53 @@ export default function ClassroomShowPage() {
                   <div className="flex justify-end">
                     <button
                       type="submit"
-                      disabled={!announcementText.trim()}
+                      disabled={!announcementText.trim() || publishingAnn}
                       className="px-5 py-2.5 rounded-xl bg-[#001A4B] hover:bg-[#092868] text-white text-xs font-bold shadow-md transition-all disabled:opacity-50 cursor-pointer"
                     >
-                      Publier l'annonce
+                      {publishingAnn ? 'Publication en cours...' : 'Publier l\'annonce'}
                     </button>
                   </div>
                 </form>
               )}
 
               {/* Announcements Feed */}
-              <div className="space-y-4">
-                {announcements.map((ann) => (
-                  <div key={ann.id} className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-all">
-                    <div className="flex items-start justify-between gap-4 mb-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-2xl bg-[#001A4B] text-white font-black text-xs flex items-center justify-center shadow-sm">
-                          {ann.author.slice(0, 2).toUpperCase()}
-                        </div>
-                        <div>
-                          <h4 className="text-sm font-black text-slate-900 dark:text-white">{ann.title}</h4>
-                          <p className="text-xs text-slate-400">{ann.author} • {ann.date}</p>
-                        </div>
-                      </div>
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-500/10 text-blue-600 border border-blue-500/20">
-                        OFFICIEL
-                      </span>
-                    </div>
-                    <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed pl-13">
-                      {ann.content}
-                    </p>
+              {announcements.length === 0 ? (
+                <div className="bg-white dark:bg-slate-900 rounded-3xl p-10 border border-slate-200 dark:border-slate-800 text-center space-y-2">
+                  <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center mx-auto">
+                    <Megaphone className="w-6 h-6" />
                   </div>
-                ))}
-              </div>
+                  <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300">Aucune annonce publiée</h4>
+                  <p className="text-xs text-slate-400">Les communications officielles de l'enseignant apparaîtront ici.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {announcements.map((ann) => (
+                    <div key={ann.id} className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-all">
+                      <div className="flex items-start justify-between gap-4 mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-2xl bg-[#001A4B] text-white font-black text-xs flex items-center justify-center shadow-sm">
+                            {ann.author.slice(0, 2).toUpperCase()}
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-black text-slate-900 dark:text-white">{cleanMojibake(ann.title)}</h4>
+                            <p className="text-xs text-slate-400">{ann.author} • {ann.date}</p>
+                          </div>
+                        </div>
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-500/10 text-blue-600 border border-blue-500/20">
+                          OFFICIEL
+                        </span>
+                      </div>
+                      <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed pl-13">
+                        {cleanMojibake(ann.content)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
-          {/* 2. Tab Supports & Polycopiés */}
+          {/* 2. Tab Supports & Polycopiés (Real Database Records) */}
           {activeTab === 'supports' && (
             <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
               <div className="flex items-center justify-between">
@@ -350,7 +444,7 @@ export default function ClassroomShowPage() {
                     <Folder className="w-5 h-5 text-amber-500" />
                     Polycopiés, Séries TD & Diaporamas
                   </h3>
-                  <p className="text-xs text-slate-400 mt-0.5">Documents pédagogiques mis à disposition par l'équipe enseignante</p>
+                  <p className="text-xs text-slate-400 mt-0.5">Documents pédagogiques officiels mis à disposition par l'équipe enseignante</p>
                 </div>
               </div>
 
@@ -376,6 +470,11 @@ export default function ClassroomShowPage() {
                           <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate">
                             {cleanMojibake(mat.title)}
                           </h4>
+                          {mat.description && (
+                            <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">
+                              {cleanMojibake(mat.description)}
+                            </p>
+                          )}
                           <p className="text-[11px] text-slate-400 flex items-center gap-2 mt-0.5">
                             <span>{mat.file_size || 'Document Officiel'}</span>
                             <span>•</span>
@@ -388,7 +487,8 @@ export default function ClassroomShowPage() {
                         href={mat.file_url || '#'}
                         target="_blank"
                         rel="noreferrer"
-                        className="px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-[#001A4B] hover:text-white text-xs font-bold text-slate-700 dark:text-slate-200 transition-all flex items-center gap-1.5 shadow-2xs"
+                        download
+                        className="px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-[#001A4B] hover:text-white text-xs font-bold text-slate-700 dark:text-slate-200 transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer flex-shrink-0"
                       >
                         <Download className="w-3.5 h-3.5" />
                         <span>Télécharger</span>
@@ -400,7 +500,7 @@ export default function ClassroomShowPage() {
             </div>
           )}
 
-          {/* 3. Tab Devoirs */}
+          {/* 3. Tab Devoirs & Travaux (Real Database Records) */}
           {activeTab === 'devoirs' && (
             <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
               <div className="flex items-center justify-between">
@@ -409,23 +509,131 @@ export default function ClassroomShowPage() {
                     <BookOpen className="w-5 h-5 text-emerald-500" />
                     Travaux Dirigés & Devoirs à Rendre
                   </h3>
-                  <p className="text-xs text-slate-400 mt-0.5">Dépôt électronique des rendus et études de cas</p>
+                  <p className="text-xs text-slate-400 mt-0.5">Dépôt électronique des rendus et études de cas avec horodatage certifié</p>
                 </div>
               </div>
 
-              <div className="py-12 text-center">
-                <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center mx-auto mb-3">
-                  <CheckCircle2 className="w-7 h-7" />
+              {assignments.length === 0 ? (
+                <div className="py-12 text-center">
+                  <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center mx-auto mb-3">
+                    <CheckCircle2 className="w-7 h-7" />
+                  </div>
+                  <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300">Aucun devoir en attente de soumission</h4>
+                  <p className="text-xs text-slate-400 mt-1 max-w-md mx-auto">
+                    Toutes vos obligations pédagogiques pour ce module sont à jour.
+                  </p>
                 </div>
-                <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300">Aucun devoir en attente de soumission</h4>
-                <p className="text-xs text-slate-400 mt-1 max-w-md mx-auto">
-                  Toutes vos obligations pédagogiques pour ce module sont à jour.
-                </p>
-              </div>
+              ) : (
+                <div className="space-y-4">
+                  {assignments.map((assign) => (
+                    <div key={assign.id} className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 space-y-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-500/10 text-indigo-600 border border-indigo-500/20 uppercase">
+                              {assign.type === 'group' ? 'Travail de Groupe' : 'Individuel'}
+                            </span>
+                            <span className="text-xs font-bold text-slate-400">Barème : /{assign.max_score}</span>
+                          </div>
+                          <h4 className="text-sm font-black text-slate-900 dark:text-white">
+                            {cleanMojibake(assign.title)}
+                          </h4>
+                        </div>
+
+                        <div className="flex items-center gap-2 text-xs font-semibold">
+                          {assign.is_submitted ? (
+                            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-xl bg-emerald-500/10 text-emerald-600 font-bold border border-emerald-500/20">
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              <span>Rendu avec succès</span>
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-xl bg-amber-500/10 text-amber-600 font-bold border border-amber-500/20">
+                              <Clock className="w-3.5 h-3.5" />
+                              <span>À rendre</span>
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {assign.description && (
+                        <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                          {cleanMojibake(assign.description)}
+                        </p>
+                      )}
+
+                      <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-200/60 dark:border-slate-700/60">
+                        <div className="flex items-center gap-2 text-xs text-slate-500">
+                          <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                          <span>Échéance : {new Date(assign.due_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          {assign.file_url && (
+                            <a
+                              href={assign.file_url}
+                              target="_blank"
+                              rel="noreferrer"
+                              download
+                              className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 text-xs font-bold text-slate-700 dark:text-slate-200 transition-all inline-flex items-center gap-1"
+                            >
+                              <FileText className="w-3.5 h-3.5 text-blue-500" />
+                              <span>Sujet PDF</span>
+                            </a>
+                          )}
+
+                          {!assign.is_submitted && (
+                            <button
+                              onClick={() => setSubmittingAssignmentId(submittingAssignmentId === assign.id ? null : assign.id)}
+                              className="px-4 py-1.5 rounded-xl bg-[#001A4B] hover:bg-[#092868] text-white text-xs font-bold shadow-sm transition-all inline-flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <Upload className="w-3.5 h-3.5" />
+                              <span>Déposer mon travail</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Inline Submission Box */}
+                      {submittingAssignmentId === assign.id && (
+                        <div className="pt-3 border-t border-slate-200 dark:border-slate-700 space-y-3 animate-in">
+                          <textarea
+                            rows={2}
+                            value={submissionText}
+                            onChange={(e) => setSubmissionText(e.target.value)}
+                            placeholder="Commentaire ou lien de votre rendu (GitHub, Drive, rapport)..."
+                            className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs focus:outline-none focus:ring-2 focus:ring-primary"
+                          />
+                          <div className="flex items-center justify-between">
+                            <span className="text-[11px] text-slate-400 flex items-center gap-1">
+                              <AlertCircle className="w-3.5 h-3.5 text-amber-500" />
+                              La remise fait foi pour l'évaluation continue.
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => setSubmittingAssignmentId(null)}
+                                className="px-3 py-1.5 rounded-xl bg-slate-200 dark:bg-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300"
+                              >
+                                Annuler
+                              </button>
+                              <button
+                                onClick={() => handleSubmitAssignment(assign.id)}
+                                disabled={isSubmitting}
+                                className="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm"
+                              >
+                                {isSubmitting ? 'Envoi...' : 'Confirmer le dépôt'}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
-          {/* 4. Tab Chat */}
+          {/* 4. Tab Chat (Real Database Messages) */}
           {activeTab === 'chat' && (
             <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm h-[560px] flex flex-col overflow-hidden">
               <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-800/50">
@@ -436,27 +644,35 @@ export default function ClassroomShowPage() {
                   </h3>
                 </div>
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                  CANAL MODÉRÉ
+                  CANAL MODÉRÉ EN BASE
                 </span>
               </div>
 
               <div className="flex-1 p-4 sm:p-6 overflow-y-auto space-y-4">
-                {chatMessages.map((msg) => (
-                  <div key={msg.id} className={cn("flex flex-col", msg.isMe ? "items-end" : "items-start")}>
-                    <div className="flex items-baseline gap-2 mb-1">
-                      <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">{msg.sender}</span>
-                      <span className="text-[10px] text-slate-400">{msg.time}</span>
-                    </div>
-                    <div className={cn(
-                      "p-3.5 rounded-2xl max-w-md text-xs sm:text-sm leading-relaxed shadow-2xs",
-                      msg.isMe 
-                        ? "bg-[#001A4B] text-white rounded-tr-xs" 
-                        : "bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-tl-xs"
-                    )}>
-                      {msg.text}
-                    </div>
+                {chatMessages.length === 0 ? (
+                  <div className="py-12 text-center space-y-2">
+                    <MessageSquare className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto" />
+                    <p className="text-xs font-bold text-slate-500">Aucun message pour le moment dans le salon.</p>
+                    <p className="text-[11px] text-slate-400">Posez la première question à votre enseignant et vos collègues.</p>
                   </div>
-                ))}
+                ) : (
+                  chatMessages.map((msg) => (
+                    <div key={msg.id} className={cn("flex flex-col", msg.isMe ? "items-end" : "items-start")}>
+                      <div className="flex items-baseline gap-2 mb-1">
+                        <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">{msg.sender}</span>
+                        <span className="text-[10px] text-slate-400">{msg.time}</span>
+                      </div>
+                      <div className={cn(
+                        "p-3.5 rounded-2xl max-w-md text-xs sm:text-sm leading-relaxed shadow-2xs",
+                        msg.isMe 
+                          ? "bg-[#001A4B] text-white rounded-tr-xs" 
+                          : "bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-tl-xs"
+                      )}>
+                        {cleanMojibake(msg.text)}
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
 
               <form onSubmit={handleSendChat} className="p-3 sm:p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 flex items-center gap-2">
@@ -469,7 +685,7 @@ export default function ClassroomShowPage() {
                 />
                 <button
                   type="submit"
-                  disabled={!newChatMessage.trim()}
+                  disabled={!newChatMessage.trim() || sendingMessage}
                   className="h-11 px-4 rounded-xl bg-[#001A4B] hover:bg-[#092868] text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm transition-all disabled:opacity-50 cursor-pointer"
                 >
                   <Send className="w-4 h-4" />
@@ -566,7 +782,7 @@ export default function ClassroomShowPage() {
                 {materials.slice(0, 4).map((m) => (
                   <div key={m.id} className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700 flex items-center justify-between text-xs">
                     <span className="font-bold text-slate-700 dark:text-slate-200 truncate pr-2">{cleanMojibake(m.title)}</span>
-                    <a href={m.file_url || '#'} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline flex-shrink-0">
+                    <a href={m.file_url || '#'} target="_blank" rel="noreferrer" download className="text-blue-600 hover:underline flex-shrink-0">
                       <Download className="w-3.5 h-3.5" />
                     </a>
                   </div>
@@ -601,7 +817,7 @@ export default function ClassroomShowPage() {
               </div>
               <div className="flex justify-between items-center">
                 <span className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">ÉVALUATIONS</span>
-                <span className="font-black text-emerald-600 dark:text-emerald-400">CC1 (50%) • Examen (50%)</span>
+                <span className="font-black text-emerald-600 dark:text-emerald-400">CC (50%) • Examen (50%)</span>
               </div>
             </div>
           </div>
@@ -613,7 +829,7 @@ export default function ClassroomShowPage() {
               <span>Assistance Pédagogique</span>
             </div>
             <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-[11px]">
-              En cas de question relative au déroulement des séances ou aux supports, vous pouvez contacter directement votre enseignant ou utiliser le salon interactif.
+              En cas de question relative au déroulement des séances ou aux supports, vous pouvez contacter directement votre enseignant ou utiliser le salon interactif ci-contre.
             </p>
           </div>
 

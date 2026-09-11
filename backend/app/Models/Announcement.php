@@ -23,6 +23,8 @@ class Announcement extends Model
         'published_at',
         'expires_at',
         'attachment_path',
+        'created_at',
+        'updated_at',
     ];
 
     protected function casts(): array
