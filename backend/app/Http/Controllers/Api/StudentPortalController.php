@@ -32,6 +32,11 @@ class StudentPortalController extends Controller
         return response()->json([
             'success' => true,
             'data' => $result['data'],
+            'current_semester' => $result['current_semester'] ?? 'S5',
+            'current_semester_number' => $result['current_semester_number'] ?? 5,
+            'semesters_summary' => $result['semesters_summary'] ?? [],
+            'archived_semesters_count' => $result['archived_semesters_count'] ?? 0,
+            'total_credits_earned' => $result['total_credits_earned'] ?? 0,
             'overall_average' => $result['overall_average'],
             'overall_decision' => $result['overall_decision'],
             'total_modules' => $result['total_modules'],

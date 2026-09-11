@@ -19,6 +19,7 @@ use App\Http\Controllers\Api\Admin\AdminInternshipController;
 use App\Http\Controllers\Api\Admin\AdminMinistryReportController;
 use App\Http\Controllers\Api\Admin\AdminTextbookController;
 use App\Http\Controllers\Api\Admin\AuditForensicController;
+use App\Http\Controllers\Api\Admin\InstitutionSettingsController;
 use App\Http\Controllers\Api\Admin\LibraryController as AdminLibraryController;
 use App\Http\Controllers\Api\Admin\StudentChatbotController;
 use App\Http\Controllers\Api\AdminAiController;
@@ -102,7 +103,7 @@ use Maatwebsite\Excel\Facades\Excel;
 
 Route::post('/contact', [ContactController::class, 'send'])->middleware('throttle:6,1');
 
-Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|director|department-head|filiere-head|professor|vacataire|finance-officer|hr-officer|library-manager|discipline-committee'])->group(function () {
+Route::middleware(['auth:sanctum', 'role:admin|super-admin|super_admin|institution-admin|institution_admin|director|department-head|filiere-head|professor|vacataire|finance-officer|hr-officer|library-manager|discipline-committee'])->group(function () {
     Route::get('/user', function (Request $request) {
         return new UserResource($request->user());
     });
@@ -150,7 +151,13 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     Route::get('holidays/{holiday}/impact', [HolidayController::class, 'impact']);
     Route::apiResource('holidays', HolidayController::class);
     Route::get('admin/holidays/{holiday}/impact', [HolidayController::class, 'impact']);
-    Route::apiResource('admin/holidays', HolidayController::class);
+    // 🏛️ Institution & Global ERP Settings
+    Route::get('/admin/institution-settings', [InstitutionSettingsController::class, 'getSettings']);
+    Route::post('/admin/institution-settings', [InstitutionSettingsController::class, 'updateSettings']);
+    Route::post('/admin/institution-settings/test-email', [InstitutionSettingsController::class, 'testResendEmail']);
+    Route::get('/institution-settings', [InstitutionSettingsController::class, 'getSettings']);
+    Route::post('/institution-settings', [InstitutionSettingsController::class, 'updateSettings']);
+    Route::post('/institution-settings/test-email', [InstitutionSettingsController::class, 'testResendEmail']);
 
     // Room Bookings PDF Export & Management
     Route::get('/room-bookings/{id}/autorisation-pdf', [PdfExportController::class, 'exportAutorisationSallePdf']);
@@ -240,8 +247,19 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|institution-admin|dir
     Route::get('/admin/predictive-analytics', [AdminPredictiveAnalyticsController::class, 'index']);
     Route::post('/admin/predictive-analytics/refresh', [AdminPredictiveAnalyticsController::class, 'refresh']);
 
-    // Academic Years Rollover & Archiving
+    // Academic Years Rollover, Archiving & Smart Progression
     Route::get('/admin/archiving-stats', [AcademicYearController::class, 'getArchivingDashboard']);
+    Route::get('/archiving-stats', [AcademicYearController::class, 'getArchivingDashboard']);
+    Route::get('/admin/academic-archiving/progression-roster', [AcademicYearController::class, 'getProgressionRoster']);
+    Route::get('/academic-archiving/progression-roster', [AcademicYearController::class, 'getProgressionRoster']);
+    Route::post('/admin/academic-archiving/verify-security-code', [AcademicYearController::class, 'verifyArchiveSecurityCode']);
+    Route::post('/academic-archiving/verify-security-code', [AcademicYearController::class, 'verifyArchiveSecurityCode']);
+    Route::post('/admin/academic-archiving/simulate-rollover', [AcademicYearController::class, 'simulateSmartRollover']);
+    Route::post('/academic-archiving/simulate-rollover', [AcademicYearController::class, 'simulateSmartRollover']);
+    Route::post('/admin/academic-archiving/execute-smart-rollover', [AcademicYearController::class, 'executeSmartRollover']);
+    Route::post('/academic-archiving/execute-smart-rollover', [AcademicYearController::class, 'executeSmartRollover']);
+    Route::get('/admin/students/{student}/fiche-dette-pdf', [AcademicYearController::class, 'downloadFicheDettePdf']);
+    Route::get('/students/{student}/fiche-dette-pdf', [AcademicYearController::class, 'downloadFicheDettePdf']);
     Route::post('/academic-years/{id}/rollover', [AcademicYearController::class, 'rollover']);
     Route::post('/admin/academic-years/{id}/rollover', [AcademicYearController::class, 'rollover']);
 
@@ -1069,9 +1087,15 @@ Route::middleware(['auth:sanctum', $staffRoles])->group(function () {
         Route::post('/{id}/revoke', [ProfessorSubstitutionController::class, 'revoke']);
     });
 
-    Route::middleware(['role:super-admin|institution-admin|director|admin', 'require-admin-2fa'])->prefix('v1/admin/roles-permissions')->group(function () {
-        Route::get('/data', [AdminRolePermissionController::class, 'getData']);
-        Route::post('/users/{user}', [AdminRolePermissionController::class, 'updateUserPermissions']);
+    Route::middleware(['role:super-admin|super_admin|institution-admin|institution_admin|director|admin'])->group(function () {
+        Route::prefix('v1/admin/roles-permissions')->group(function () {
+            Route::get('/data', [AdminRolePermissionController::class, 'getData']);
+            Route::post('/users/{user}', [AdminRolePermissionController::class, 'updateUserPermissions']);
+        });
+        Route::prefix('admin/roles-permissions')->group(function () {
+            Route::get('/data', [AdminRolePermissionController::class, 'getData']);
+            Route::post('/users/{user}', [AdminRolePermissionController::class, 'updateUserPermissions']);
+        });
     });
     Route::post('/student/ai/analyze-course', [StudentAiController::class, 'analyzeCourse']);
 

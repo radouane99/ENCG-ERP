@@ -44,10 +44,28 @@ class StudentPortalService
             $semesterNumber = $reg?->semester_number;
         }
 
-        // 2. Fetch modules for this student's filiere or modules that have grades
+        $currentSemester = (int) ($semesterNumber ?? 5);
+
+        // 2. Fetch modules:
+        // - Tronc Commun modules for prior semesters (semesters 1 to currentSemester - 1)
+        // - Specialty/filiere modules for current semester
+        // - Any modules the student has grades for
+        $tcFiliere = DB::table('filieres')->where('code', 'TC')->first() ?? DB::table('filieres')->where('id', 1)->first();
+        $tcId = $tcFiliere?->id ?? 1;
+
         $modulesQuery = DB::table('modules');
         if ($filiereId) {
-            $modulesQuery->where('filiere_id', $filiereId);
+            $modulesQuery->where(function ($q) use ($filiereId, $tcId, $currentSemester) {
+                // Modules in student's current filiere
+                $q->where('filiere_id', $filiereId);
+                // Also Tronc Commun modules for previous semesters
+                if ($tcId && $currentSemester > 1) {
+                    $q->orWhere(function ($sub) use ($tcId, $currentSemester) {
+                        $sub->where('filiere_id', $tcId)
+                            ->where('semester_number', '<', $currentSemester);
+                    });
+                }
+            });
         }
         $modules = $modulesQuery->get();
 
@@ -64,6 +82,12 @@ class StudentPortalService
             $extraModules = DB::table('modules')->whereIn('id', $missingModuleIds)->get();
             $modules = $modules->concat($extraModules);
         }
+
+        // Sort modules chronologically: semester_number ASC, then code ASC
+        $modules = $modules->unique('id')->sortBy(function ($m) {
+            $semNum = (int) ($m->semester_number ?? $m->semester ?? 1);
+            return sprintf('%02d_%s', $semNum, $m->code ?? '');
+        })->values();
 
         // 3. Fetch all assessments for these modules
         $moduleIds = $modules->pluck('id')->toArray();
@@ -213,7 +237,13 @@ class StudentPortalService
                 }
             }
 
-            $sem = $module->semester ?? $module->semester_number ?? $semesterNumber ?? 1;
+            $sem = (int) ($module->semester_number ?? $module->semester ?? $semesterNumber ?? 1);
+            $isArchived = ($sem < $currentSemester);
+            $academicYear = match (true) {
+                $sem <= 2 => '2024-2025',
+                $sem <= 4 => '2025-2026',
+                default => '2026-2027',
+            };
 
             $rows[] = [
                 'module_id' => $module->id,
@@ -221,6 +251,12 @@ class StudentPortalService
                 'module_code' => $module->code,
                 'semester_number' => "S{$sem}",
                 'semester' => "S{$sem}",
+                'semester_digit' => $sem,
+                'is_archived' => $isArchived,
+                'archive_status' => $isArchived ? 'ARCHIVÉ' : 'EN COURS',
+                'academic_year' => $academicYear,
+                'deliberation_closed' => $isArchived,
+                'can_appeal' => ! $isArchived,
                 'coefficient' => (float) ($module->coefficient ?? 1.0),
                 'cc1_note' => $cc1Note,
                 'cc2_note' => $cc2Note,
@@ -234,6 +270,70 @@ class StudentPortalService
                 'has_grades' => $hasAnyGrade,
             ];
         }
+
+        // Compute per-semester summary & progression
+        $semestersGrouped = collect($rows)->groupBy('semester_digit');
+        $semestersSummary = [];
+        $totalCreditsEarned = 0;
+
+        foreach ($semestersGrouped as $sDigit => $sRows) {
+            $sDigit = (int) $sDigit;
+            $sArchived = ($sDigit < $currentSemester);
+            $sAcadYear = match (true) {
+                $sDigit <= 2 => '2024-2025',
+                $sDigit <= 4 => '2025-2026',
+                default => '2026-2027',
+            };
+
+            $sFinalGrades = $sRows->pluck('moyenne_finale')->filter(fn ($v) => $v !== null);
+            $sAverage = $sFinalGrades->isNotEmpty() ? round($sFinalGrades->avg(), 2) : null;
+            $sValidatedCount = $sRows->filter(fn ($r) => in_array($r['decision_finale'], ['V', 'VAR', 'VC']) || ($r['moyenne_finale'] ?? 0) >= 10.0)->count();
+            $sRetakeCount = $sRows->filter(fn ($r) => ($r['moyenne_finale'] ?? 0) >= 6.0 && ($r['moyenne_finale'] ?? 0) < 10.0)->count();
+            $sTotal = $sRows->count();
+
+            $sCredits = ($sValidatedCount === $sTotal && $sTotal > 0) ? 30 : ($sValidatedCount * 4);
+            $totalCreditsEarned += $sCredits;
+
+            $sDecision = null;
+            $sMention = null;
+            if ($sAverage !== null) {
+                if ($sAverage >= 16.0) {
+                    $sDecision = 'ADMIS';
+                    $sMention = 'TRÈS BIEN';
+                } elseif ($sAverage >= 14.0) {
+                    $sDecision = 'ADMIS';
+                    $sMention = 'BIEN';
+                } elseif ($sAverage >= 12.0) {
+                    $sDecision = 'ADMIS';
+                    $sMention = 'ASSEZ BIEN';
+                } elseif ($sAverage >= 10.0) {
+                    $sDecision = 'ADMIS';
+                    $sMention = 'PASSABLE';
+                } else {
+                    $sDecision = 'AJOURNÉ';
+                    $sMention = 'RATTRAPAGE';
+                }
+            }
+
+            $semestersSummary[] = [
+                'semester' => "S{$sDigit}",
+                'semester_number' => $sDigit,
+                'is_archived' => $sArchived,
+                'archive_status' => $sArchived ? 'ARCHIVÉ' : 'EN COURS',
+                'academic_year' => $sAcadYear,
+                'pv_reference' => "PV-ENCG-{$sAcadYear}-S{$sDigit}",
+                'deliberation_closed' => $sArchived,
+                'total_modules' => $sTotal,
+                'validated_modules' => $sValidatedCount,
+                'retake_modules' => $sRetakeCount,
+                'average' => $sAverage,
+                'decision' => $sDecision,
+                'mention' => $sMention,
+                'credits_earned' => $sCredits,
+            ];
+        }
+
+        usort($semestersSummary, fn ($a, $b) => $a['semester_number'] <=> $b['semester_number']);
 
         $overallAverage = $countFinal > 0 ? round($sumFinal / $countFinal, 2) : null;
         $overallDecision = null;
@@ -254,6 +354,11 @@ class StudentPortalService
 
         return [
             'data' => $rows,
+            'current_semester' => "S{$currentSemester}",
+            'current_semester_number' => $currentSemester,
+            'semesters_summary' => $semestersSummary,
+            'archived_semesters_count' => count(array_filter($semestersSummary, fn ($s) => $s['is_archived'])),
+            'total_credits_earned' => $totalCreditsEarned,
             'overall_average' => $overallAverage,
             'overall_decision' => $overallDecision,
             'total_modules' => count($rows),

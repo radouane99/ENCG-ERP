@@ -30,7 +30,7 @@ use App\Models\DocumentType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-// Public Documents & Cards Verification
+// Public Documents, Diplomas & Cards Verification
 Route::match(['get', 'post'], '/documents/universal-verify', [PublicVerificationController::class, 'universalVerify']);
 Route::get('/documents/verify/{documentId}', [PublicVerificationController::class, 'verifyDocument'])->name('document.verify');
 Route::get('/verify/document/{documentId}', [PublicVerificationController::class, 'verifyDocument'])->name('document.verify.direct');
@@ -38,6 +38,9 @@ Route::get('/v1/verify/document/{documentId}', [PublicVerificationController::cl
 Route::get('/verify/pv/{moduleId}/{groupId}', [PublicVerificationController::class, 'verifyModulePv']);
 Route::get('/verify/card/{token}', [StudentCardController::class, 'verify']);
 Route::get('/verify/surveillance/{token}/confirm', [ConvocationController::class, 'confirmReception']);
+Route::match(['get', 'post'], '/blockchain/public-verify', [\App\Http\Controllers\Api\Admin\AdminBlockchainController::class, 'verify']);
+Route::match(['get', 'post'], '/verify/blockchain', [\App\Http\Controllers\Api\Admin\AdminBlockchainController::class, 'verify']);
+
 
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::match(['get', 'post'], '/exams/{examId}/pv-pdf', [ExamPdfController::class, 'pvExamen']);

@@ -17,7 +17,20 @@ class AdminRolePermissionController extends Controller
     public function getData(Request $request): JsonResponse
     {
         // 1. Liste des rôles système
-        $roles = Role::all()->map(fn ($r) => [
+        $allRoles = Role::all();
+        if ($allRoles->isEmpty()) {
+            $defaultRoles = [
+                'super-admin', 'institution-admin', 'director', 'department-head',
+                'filiere-head', 'professor', 'vacataire', 'student', 'scolarite-agent',
+                'finance-officer', 'hr-officer',
+            ];
+            foreach ($defaultRoles as $dr) {
+                Role::findOrCreate($dr);
+            }
+            $allRoles = Role::all();
+        }
+
+        $roles = $allRoles->map(fn ($r) => [
             'id' => $r->id,
             'name' => $r->name,
             'label' => $this->formatRoleLabel($r->name),
@@ -47,7 +60,37 @@ class AdminRolePermissionController extends Controller
             $query->whereHas('roles', fn ($q) => $q->where('name', $roleName));
         }
 
-        $users = $query->paginate($request->input('per_page', 20))->through(function ($u) {
+        if ($request->filled('category') && $request->category !== 'ALL') {
+            $cat = strtoupper($request->category);
+            if ($cat === 'ADMINS') {
+                $query->whereHas('roles', fn ($q) => $q->whereIn('name', [
+                    'super-admin', 'super_admin', 'institution-admin', 'institution_admin', 'director', 'admin',
+                ]));
+            } elseif ($cat === 'PROFS') {
+                $query->whereHas('roles', fn ($q) => $q->whereIn('name', [
+                    'professor', 'enseignant', 'vacataire', 'department-head', 'filiere-head',
+                ]));
+            } elseif ($cat === 'STAFF') {
+                $query->whereHas('roles', fn ($q) => $q->whereIn('name', [
+                    'scolarite-agent', 'finance-officer', 'hr-officer', 'library-manager', 'discipline-committee',
+                ]));
+            } elseif ($cat === 'STUDENTS') {
+                $query->where(function ($sq) {
+                    $sq->whereHas('roles', fn ($q) => $q->whereIn('name', ['student', 'etudiant']))
+                       ->orWhereDoesntHave('roles');
+                });
+            }
+        }
+
+        // Priorité d'affichage : Administrateurs et Responsables en tête de liste
+        $query->orderByRaw("CASE 
+            WHEN EXISTS (SELECT 1 FROM model_has_roles mhr JOIN roles r ON mhr.role_id = r.id WHERE mhr.model_id = users.id AND r.name IN ('super-admin', 'super_admin', 'admin', 'institution-admin', 'director')) THEN 1
+            WHEN EXISTS (SELECT 1 FROM model_has_roles mhr JOIN roles r ON mhr.role_id = r.id WHERE mhr.model_id = users.id AND r.name IN ('department-head', 'filiere-head', 'professor', 'vacataire')) THEN 2
+            WHEN EXISTS (SELECT 1 FROM model_has_roles mhr JOIN roles r ON mhr.role_id = r.id WHERE mhr.model_id = users.id AND r.name IN ('scolarite-agent', 'finance-officer', 'hr-officer')) THEN 3
+            ELSE 4 END ASC")
+            ->orderBy('id', 'asc');
+
+        $users = $query->paginate($request->input('per_page', 50))->through(function ($u) {
             return [
                 'id' => $u->id,
                 'name' => $u->name,
@@ -55,15 +98,28 @@ class AdminRolePermissionController extends Controller
                 'avatar' => $u->avatar ?? null,
                 'roles' => $u->roles->pluck('name'),
                 'permissions' => $u->permissions->pluck('name'),
-                'created_at' => $u->created_at->format('Y-m-d'),
+                'created_at' => $u->created_at ? $u->created_at->format('Y-m-d') : null,
             ];
         });
+
+        // Totaux par catégorie pour les filtres rapides
+        $counts = [
+            'total' => User::count(),
+            'admins' => User::whereHas('roles', fn ($q) => $q->whereIn('name', ['super-admin', 'super_admin', 'institution-admin', 'director', 'admin']))->count(),
+            'profs' => User::whereHas('roles', fn ($q) => $q->whereIn('name', ['professor', 'enseignant', 'vacataire', 'department-head', 'filiere-head']))->count(),
+            'staff' => User::whereHas('roles', fn ($q) => $q->whereIn('name', ['scolarite-agent', 'finance-officer', 'hr-officer']))->count(),
+            'students' => User::where(function ($sq) {
+                $sq->whereHas('roles', fn ($q) => $q->whereIn('name', ['student', 'etudiant']))
+                   ->orWhereDoesntHave('roles');
+            })->count(),
+        ];
 
         return response()->json([
             'success' => true,
             'roles' => $roles,
             'permissions' => $groupedPermissions,
             'users' => $users,
+            'counts' => $counts,
         ]);
     }
 

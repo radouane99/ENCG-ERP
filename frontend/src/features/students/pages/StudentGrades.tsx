@@ -17,7 +17,10 @@ import {
   Search,
   GraduationCap,
   Info,
-  ShieldCheck
+  ShieldCheck,
+  Archive,
+  Layers,
+  Lock
 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { useQuery } from '@tanstack/react-query';
@@ -141,6 +144,59 @@ export default function StudentGrades() {
     });
     return Array.from(set).sort((a, b) => Number(a) - Number(b));
   }, [grades]);
+
+  // Semesters summary from backend (with archive and deliberation status)
+  const semestersSummary = useMemo(() => {
+    return Array.isArray(data?.semesters_summary) ? data.semesters_summary : [];
+  }, [data]);
+
+  const currentSemesterCode = useMemo(() => {
+    return data?.current_semester || 'S5';
+  }, [data]);
+
+  const activeSemSummary = useMemo(() => {
+    if (selectedSemester === 'all') return null;
+    return semestersSummary.find(
+      (s: any) => s.semester?.toUpperCase() === selectedSemester?.toUpperCase()
+    );
+  }, [semestersSummary, selectedSemester]);
+
+  // Contextual metrics adapting to the selected semester or global view
+  const displayAvg = useMemo(() => {
+    if (activeSemSummary && activeSemSummary.average !== null && activeSemSummary.average !== undefined) {
+      return Number(activeSemSummary.average);
+    }
+    return overallAvg;
+  }, [activeSemSummary, overallAvg]);
+
+  const displayDecision = useMemo(() => {
+    if (activeSemSummary) {
+      if (activeSemSummary.mention) return activeSemSummary.mention;
+      if (displayAvg !== null) {
+        if (displayAvg >= 16) return 'TRÈS BIEN';
+        if (displayAvg >= 14) return 'BIEN';
+        if (displayAvg >= 12) return 'ASSEZ BIEN';
+        if (displayAvg >= 10) return 'PASSABLE';
+        return 'AJOURNÉ';
+      }
+    }
+    return overallDecision;
+  }, [activeSemSummary, displayAvg, overallDecision]);
+
+  const displayValidatedModules = useMemo(() => {
+    if (activeSemSummary) return activeSemSummary.validated_modules ?? 0;
+    return validatedModules;
+  }, [activeSemSummary, validatedModules]);
+
+  const displayTotalModules = useMemo(() => {
+    if (activeSemSummary) return activeSemSummary.total_modules ?? 0;
+    return totalModules;
+  }, [activeSemSummary, totalModules]);
+
+  const displayRetakeModules = useMemo(() => {
+    if (activeSemSummary) return activeSemSummary.retake_modules ?? 0;
+    return retakeModules;
+  }, [activeSemSummary, retakeModules]);
 
   // Filtered grades based on semester, search, and status
   const filteredGrades = useMemo(() => {
@@ -361,43 +417,48 @@ export default function StudentGrades() {
           </div>
         </div>
 
-        {/* Hero Right Widget - Overall Grade Card */}
+        {/* Hero Right Widget - Contextual Grade Card */}
         <div className="relative z-10 bg-white/10 backdrop-blur-xl p-6 sm:p-7 rounded-3xl border border-white/20 text-center sm:text-right shrink-0 min-w-[280px]">
           <div className="flex items-center justify-between sm:justify-end gap-2 mb-1">
             <span className="text-[10px] font-black text-amber-300 uppercase tracking-widest">
-              Moyenne Semestrielle
+              {activeSemSummary ? `Moyenne ${activeSemSummary.semester}` : 'Moyenne Globale Cursus'}
             </span>
-            <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-white/10 text-white border border-white/10">
-              Système 20
+            <span className={cn(
+              "px-2 py-0.5 rounded-full text-[9px] font-bold border",
+              activeSemSummary?.is_archived
+                ? "bg-slate-800/80 text-slate-300 border-slate-700"
+                : "bg-white/10 text-white border-white/10"
+            )}>
+              {activeSemSummary ? (activeSemSummary.is_archived ? 'Archivé' : 'En cours') : 'Cycle Normal'}
             </span>
           </div>
           
           <div className="flex items-baseline justify-center sm:justify-end gap-1.5 my-1">
             <span className="text-5xl sm:text-6xl font-black text-white tracking-tight">
-              {isRevealed ? (overallAvg !== null ? overallAvg.toFixed(2) : '—') : (overallAvg !== null ? '••••' : '—')}
+              {isRevealed ? (displayAvg !== null ? displayAvg.toFixed(2) : '—') : (displayAvg !== null ? '••••' : '—')}
             </span>
             <span className="text-xl font-black text-blue-200">/ 20</span>
           </div>
 
           <div className={cn(
             "mt-3 inline-flex items-center gap-2 text-xs font-black px-3.5 py-1.5 rounded-full border shadow-sm",
-            overallAvg !== null && overallAvg >= 10 
+            displayAvg !== null && displayAvg >= 10 
               ? "bg-emerald-500/20 border-emerald-400/40 text-emerald-300"
-              : overallAvg !== null 
+              : displayAvg !== null 
                 ? "bg-rose-500/20 border-rose-400/40 text-rose-300"
                 : "bg-slate-500/20 border-slate-400/40 text-slate-300"
           )}>
             <Award className="w-4 h-4" />
             <span>
-              {overallAvg !== null 
-                ? (overallAvg >= 10 ? `MENTION ${overallDecision} • VALIDÉ` : 'SESSION DE RATTRAPAGE') 
+              {displayAvg !== null 
+                ? (displayAvg >= 10 ? `MENTION ${displayDecision} • VALIDÉ` : 'SESSION DE RATTRAPAGE') 
                 : 'DÉLIBÉRATION EN COURS'}
             </span>
           </div>
 
           <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between text-[11px] text-blue-200">
             <span>Modules Validés :</span>
-            <span className="font-black text-white">{isRevealed ? `${validatedModules} / ${totalModules}` : '•• / ••'}</span>
+            <span className="font-black text-white">{isRevealed ? `${displayValidatedModules} / ${displayTotalModules}` : '•• / ••'}</span>
           </div>
         </div>
       </div>
@@ -407,21 +468,23 @@ export default function StudentGrades() {
         {/* Card 1: Moyenne & Mention */}
         <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-black uppercase text-slate-400 tracking-wider">Moyenne Générale</span>
+            <span className="text-[11px] font-black uppercase text-slate-400 tracking-wider">
+              {activeSemSummary ? `Moyenne ${activeSemSummary.semester}` : 'Moyenne Globale'}
+            </span>
             <div className="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 flex items-center justify-center">
               <Award className="w-4 h-4" />
             </div>
           </div>
           <div className="flex items-baseline gap-1.5">
             <span className="text-2xl sm:text-3xl font-black text-[#001A4B] dark:text-white">
-              {isRevealed ? (overallAvg !== null ? overallAvg.toFixed(2) : '—') : '••••'}
+              {isRevealed ? (displayAvg !== null ? displayAvg.toFixed(2) : '—') : '••••'}
             </span>
             <span className="text-xs font-bold text-slate-400">/ 20</span>
           </div>
           <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-100 dark:border-slate-800">
             <span className="font-bold text-slate-500 dark:text-slate-400">Mention officielle :</span>
             <span className="font-black text-emerald-600 dark:text-emerald-400">
-              {overallAvg !== null && overallAvg >= 10 ? overallDecision : '—'}
+              {displayAvg !== null && displayAvg >= 10 ? displayDecision : '—'}
             </span>
           </div>
         </div>
@@ -436,20 +499,20 @@ export default function StudentGrades() {
           </div>
           <div className="flex items-baseline gap-1.5">
             <span className="text-2xl sm:text-3xl font-black text-blue-600 dark:text-blue-400">
-              {isRevealed ? `${totalModules > 0 ? Math.round((validatedModules / totalModules) * 100) : 0}%` : '••%'}
+              {isRevealed ? `${displayTotalModules > 0 ? Math.round((displayValidatedModules / displayTotalModules) * 100) : 0}%` : '••%'}
             </span>
-            <span className="text-xs font-bold text-slate-400">({validatedModules}/{totalModules} validés)</span>
+            <span className="text-xs font-bold text-slate-400">({displayValidatedModules}/{displayTotalModules} validés)</span>
           </div>
           <div className="space-y-1 pt-1 border-t border-slate-100 dark:border-slate-800">
             <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
               <div 
                 className="bg-blue-600 h-full rounded-full transition-all duration-500" 
-                style={{ width: `${totalModules > 0 ? Math.min(100, Math.round((validatedModules / totalModules) * 100)) : 0}%` }}
+                style={{ width: `${displayTotalModules > 0 ? Math.min(100, Math.round((displayValidatedModules / displayTotalModules) * 100)) : 0}%` }}
               />
             </div>
             <div className="flex justify-between text-[10px] text-slate-400 font-bold">
               <span>Progression de validation</span>
-              <span>{totalModules > 0 ? Math.round((validatedModules / totalModules) * 100) : 0}%</span>
+              <span>{displayTotalModules > 0 ? Math.round((displayValidatedModules / displayTotalModules) * 100) : 0}%</span>
             </div>
           </div>
         </div>
@@ -464,14 +527,14 @@ export default function StudentGrades() {
           </div>
           <div className="flex items-baseline gap-1.5">
             <span className="text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400">
-              {isRevealed ? `${validatedModules}` : '•'}
+              {isRevealed ? `${displayValidatedModules}` : '•'}
             </span>
-            <span className="text-xs font-bold text-slate-400">/ {totalModules} Validés</span>
+            <span className="text-xs font-bold text-slate-400">/ {displayTotalModules} Validés</span>
           </div>
           <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-100 dark:border-slate-800">
             <span className="text-slate-500 font-bold">Rattrapage :</span>
-            <span className={cn("font-black px-2 py-0.5 rounded-full text-[10px]", retakeModules > 0 ? "bg-amber-100 text-amber-800" : "bg-emerald-50 text-emerald-700")}>
-              {retakeModules > 0 ? `${retakeModules} à repasser` : '0 module'}
+            <span className={cn("font-black px-2 py-0.5 rounded-full text-[10px]", displayRetakeModules > 0 ? "bg-amber-100 text-amber-800" : "bg-emerald-50 text-emerald-700")}>
+              {displayRetakeModules > 0 ? `${displayRetakeModules} à repasser` : '0 module'}
             </span>
           </div>
         </div>
@@ -479,25 +542,141 @@ export default function StudentGrades() {
         {/* Card 4: Statut Délibération & Jury */}
         <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-black uppercase text-slate-400 tracking-wider">Jury & Délibération</span>
-            <div className="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950/50 text-purple-600 flex items-center justify-center">
-              <ShieldCheck className="w-4 h-4" />
+            <span className="text-[11px] font-black uppercase text-slate-400 tracking-wider">
+              {activeSemSummary?.is_archived ? 'Archivage Académique' : 'Jury & Délibération'}
+            </span>
+            <div className={cn(
+              "w-8 h-8 rounded-xl flex items-center justify-center",
+              activeSemSummary?.is_archived 
+                ? "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
+                : "bg-purple-50 dark:bg-purple-950/50 text-purple-600"
+            )}>
+              {activeSemSummary?.is_archived ? <Archive className="w-4 h-4" /> : <ShieldCheck className="w-4 h-4" />}
             </div>
           </div>
           <div>
             <span className="text-lg font-black text-[#001A4B] dark:text-white block">
-              {overallAvg !== null && overallAvg >= 10 ? 'Semestre Validé' : 'Délibération Clôturée'}
+              {activeSemSummary 
+                ? (activeSemSummary.is_archived ? 'Semestre Archivé' : 'Évaluation en Cours')
+                : 'Cursus S1 ➔ S5'}
             </span>
-            <span className="text-[11px] text-slate-500 font-medium">Session Ordinaire 2026</span>
+            <span className="text-[11px] text-slate-500 font-medium truncate block">
+              {activeSemSummary 
+                ? (activeSemSummary.is_archived ? `Réf: ${activeSemSummary.pv_reference}` : 'Session Ordinaire 2026/2027')
+                : 'Cycle Normal ENCG Fès'}
+            </span>
           </div>
           <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-100 dark:border-slate-800">
-            <span className="text-slate-500 font-bold">Recours 48h :</span>
-            <span className="inline-flex items-center gap-1 font-black text-amber-600 text-[11px]">
-              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" /> Actif
-            </span>
+            <span className="text-slate-500 font-bold">Statut légal :</span>
+            {activeSemSummary?.is_archived ? (
+              <span className="inline-flex items-center gap-1 font-black text-emerald-600 dark:text-emerald-400 text-[11px]">
+                <ShieldCheck className="w-3.5 h-3.5" /> PV Clôturé
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 font-black text-amber-600 text-[11px]">
+                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" /> Guichet 48h Actif
+              </span>
+            )}
           </div>
         </div>
       </div>
+
+      {/* ── Academic Cursus Progression Pipeline (S1 to S5) ── */}
+      {semestersSummary.length > 0 && (
+        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-2xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 flex items-center justify-center">
+                <Layers className="w-4 h-4" />
+              </div>
+              <div>
+                <h3 className="text-sm font-black text-[#001A4B] dark:text-white">
+                  Historique Académique & Cursus LMD (S1 ➔ {currentSemesterCode})
+                </h3>
+                <p className="text-[11px] text-slate-400 font-medium">
+                  Cycle Normal ENCG • 4 semestres archivés & délibérés • {currentSemesterCode} en cours d'évaluation
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="px-3 py-1 rounded-full text-[11px] font-black bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                {data?.total_credits_earned || 150} / 150 ECTS Acquis
+              </span>
+            </div>
+          </div>
+
+          {/* Interactive Semester Step Cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            {semestersSummary.map((s: any) => {
+              const isSelected = selectedSemester.toUpperCase() === s.semester.toUpperCase();
+              return (
+                <button
+                  key={s.semester}
+                  onClick={() => setSelectedSemester(s.semester)}
+                  className={cn(
+                    "p-3.5 rounded-2xl border text-left transition-all cursor-pointer relative overflow-hidden group",
+                    isSelected
+                      ? "bg-[#001A4B] text-white border-[#001A4B] shadow-md ring-2 ring-blue-500/30"
+                      : "bg-slate-50 dark:bg-slate-800/60 border-slate-200/80 dark:border-slate-700/60 hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-slate-300"
+                  )}
+                >
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className={cn(
+                      "text-xs font-black",
+                      isSelected ? "text-white" : "text-[#001A4B] dark:text-white"
+                    )}>
+                      {s.semester}
+                    </span>
+                    {s.is_archived ? (
+                      <span className={cn(
+                        "text-[9px] font-black px-2 py-0.5 rounded-full flex items-center gap-1",
+                        isSelected ? "bg-white/20 text-white" : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
+                      )}>
+                        <Archive className="w-2.5 h-2.5" /> Archivé
+                      </span>
+                    ) : (
+                      <span className={cn(
+                        "text-[9px] font-black px-2 py-0.5 rounded-full flex items-center gap-1",
+                        isSelected ? "bg-emerald-400 text-[#001A4B]" : "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+                      )}>
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Actif
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex items-baseline gap-1 my-0.5">
+                    <span className={cn(
+                      "text-lg font-mono font-black",
+                      isSelected ? "text-amber-300" : "text-emerald-600 dark:text-emerald-400"
+                    )}>
+                      {isRevealed ? (s.average !== null ? Number(s.average).toFixed(2) : '—') : '••••'}
+                    </span>
+                    <span className={cn(
+                      "text-[10px] font-bold",
+                      isSelected ? "text-blue-200" : "text-slate-400"
+                    )}>
+                      / 20
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between text-[10px] pt-1.5 border-t border-slate-200/50 dark:border-slate-700/50">
+                    <span className={isSelected ? "text-blue-200" : "text-slate-400"}>
+                      {s.academic_year}
+                    </span>
+                    <span className={cn(
+                      "font-black",
+                      isSelected ? "text-emerald-300" : "text-slate-700 dark:text-slate-300"
+                    )}>
+                      {s.mention || s.decision || 'Validé'}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* AI Judge Result Box (if evaluated) */}
       {judge && (
@@ -583,18 +762,39 @@ export default function StudentGrades() {
           {availableSemesters.map((sem) => {
             const semCode = `S${sem}`;
             const count = grades.filter((g: any) => String(g.semester_number || g.semester || '').toUpperCase().includes(semCode)).length;
+            const semInfo = semestersSummary.find((s: any) => s.semester?.toUpperCase() === semCode);
+            const isArchived = semInfo ? semInfo.is_archived : (Number(sem) < (data?.current_semester_number ?? 5));
             return (
               <button
                 key={sem}
                 onClick={() => setSelectedSemester(semCode)}
                 className={cn(
-                  "px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5",
+                  "px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-2",
                   selectedSemester.toUpperCase() === semCode
                     ? "bg-[#001A4B] text-white shadow-sm"
                     : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
                 )}
               >
                 <span>Semestre {sem}</span>
+                {isArchived ? (
+                  <span className={cn(
+                    "text-[9px] px-1.5 py-0.2 rounded-full font-bold flex items-center gap-1",
+                    selectedSemester.toUpperCase() === semCode 
+                      ? "bg-white/20 text-white" 
+                      : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
+                  )}>
+                    <Archive className="w-2.5 h-2.5" /> Archivé
+                  </span>
+                ) : (
+                  <span className={cn(
+                    "text-[9px] px-1.5 py-0.2 rounded-full font-bold flex items-center gap-1",
+                    selectedSemester.toUpperCase() === semCode 
+                      ? "bg-emerald-400 text-[#001A4B]" 
+                      : "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+                  )}>
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> En cours
+                  </span>
+                )}
                 <span className={cn(
                   "text-[10px] px-1.5 py-0.2 rounded-full font-bold",
                   selectedSemester.toUpperCase() === semCode ? "bg-white/20 text-white" : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
@@ -605,6 +805,52 @@ export default function StudentGrades() {
             );
           })}
         </div>
+
+        {/* Contextual Archive Banner when an archived semester is selected */}
+        {activeSemSummary?.is_archived && (
+          <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-[#001A4B] text-white rounded-2xl p-4 sm:p-5 border border-slate-700/80 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="flex items-start sm:items-center gap-3.5">
+              <div className="w-11 h-11 rounded-2xl bg-white/10 flex items-center justify-center shrink-0 border border-white/10">
+                <Archive className="w-5 h-5 text-amber-400" />
+              </div>
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <h4 className="font-black text-sm text-white">
+                    Archives Académiques — {activeSemSummary.semester} ({activeSemSummary.academic_year})
+                  </h4>
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+                    <ShieldCheck className="w-3 h-3 text-emerald-400" /> PV Clôturé & Délibéré
+                  </span>
+                </div>
+                <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                  Semestre officiellement validé lors de la session de délibération ENCG (Réf. <span className="font-mono text-amber-300">{activeSemSummary.pv_reference}</span>). 
+                  Moyenne semestrielle : <span className="font-bold text-white">{Number(activeSemSummary.average).toFixed(2)}/20 ({activeSemSummary.mention})</span> • 30 crédits ECTS capitalisés.
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => {
+                const tid = toast.loading(`Génération du relevé certifié pour ${activeSemSummary.semester}...`);
+                api.get(`/student-portal/transcript/pdf?semester=${activeSemSummary.semester}`, { responseType: 'blob' })
+                  .then(res => {
+                    const url = window.URL.createObjectURL(new Blob([res.data]));
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.setAttribute('download', `Releve_Notes_${activeSemSummary.semester}_ENCG_Fes.pdf`);
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove();
+                    toast.success(`Relevé officiel ${activeSemSummary.semester} téléchargé !`, { id: tid });
+                  })
+                  .catch(() => toast.error('Erreur lors du téléchargement du relevé.', { id: tid }));
+              }}
+              className="shrink-0 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 text-xs font-black flex items-center gap-2 transition-all cursor-pointer shadow-sm active:scale-95"
+            >
+              <Download className="w-4 h-4 text-amber-300" /> Relevé Officiel {activeSemSummary.semester} (PDF)
+            </button>
+          </div>
+        )}
 
         {/* ── Table Container ── */}
         <div className="overflow-x-auto rounded-2xl border border-slate-200/80 dark:border-slate-800">
@@ -641,13 +887,22 @@ export default function StudentGrades() {
                       <div className="font-black text-slate-900 dark:text-white text-sm">
                         {cleanMojibake(grade.module_name || grade.module?.name) || `Module ${idx + 1}`}
                       </div>
-                      <div className="flex items-center gap-2 mt-1">
+                      <div className="flex flex-wrap items-center gap-1.5 mt-1">
                         <span className="text-[10px] font-mono font-bold text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">
                           {grade.module_code || grade.module?.code || `M-${idx + 101}`}
                         </span>
                         <span className="text-[10px] font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">
                           {grade.semester_number || grade.semester || 'S5'}
                         </span>
+                        {grade.is_archived ? (
+                          <span className="text-[9px] font-black text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 px-1.5 py-0.2 rounded-md flex items-center gap-1">
+                            <Archive className="w-2.5 h-2.5" /> {grade.academic_year || 'Archivé'}
+                          </span>
+                        ) : (
+                          <span className="text-[9px] font-black text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/40 px-1.5 py-0.2 rounded-md flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> En cours
+                          </span>
+                        )}
                       </div>
                     </td>
 
@@ -727,16 +982,25 @@ export default function StudentGrades() {
 
                     {/* Recours / Réclamation 48h */}
                     <td className="py-3.5 pr-4 pl-3 text-right">
-                      <button
-                        onClick={() => {
-                          setSelectedModuleForAppeal(grade);
-                          setAppealModalOpen(true);
-                        }}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30 text-[11px] font-black transition-all cursor-pointer active:scale-95 shadow-2xs"
-                        title="Déposer un recours pour vérification matérielle de la note sous 48h"
-                      >
-                        <Scale className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" /> Recours 48h
-                      </button>
+                      {grade.is_archived ? (
+                        <span 
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700/60 text-[11px] font-bold"
+                          title="Semestre archivé : PV de délibération officiel scellé, aucun recours possible"
+                        >
+                          <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" /> PV Clôturé
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            setSelectedModuleForAppeal(grade);
+                            setAppealModalOpen(true);
+                          }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30 text-[11px] font-black transition-all cursor-pointer active:scale-95 shadow-2xs"
+                          title="Déposer un recours pour vérification matérielle de la note sous 48h"
+                        >
+                          <Scale className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" /> Recours 48h
+                        </button>
+                      )}
                     </td>
                   </tr>
                 );
@@ -745,7 +1009,7 @@ export default function StudentGrades() {
               {/* Empty state when no modules match filters */}
               {(!filteredGrades || filteredGrades.length === 0) && (
                 <tr>
-                  <td colSpan={7} className="py-12">
+                  <td colSpan={8} className="py-12">
                     <EmptyState
                       icon={AlertCircle}
                       title="Aucun module ne correspond à vos critères"
