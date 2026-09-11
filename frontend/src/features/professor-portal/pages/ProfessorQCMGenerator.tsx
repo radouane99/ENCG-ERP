@@ -85,20 +85,7 @@ export default function ProfessorQCMGenerator() {
   });
 
   const handleStartGeneration = () => {
-    setProgress(0);
     setStep('generating');
-    
-    // Simulate animated progress bar while API responds
-    const interval = setInterval(() => {
-      setProgress(p => {
-        if (p >= 90) {
-          clearInterval(interval);
-          return 90;
-        }
-        return p + 10;
-      });
-    }, 200);
-
     generateMutation.mutate();
   };
 

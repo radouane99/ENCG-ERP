@@ -1,8 +1,7 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { useTranslation } from 'react-i18next'
 import {
-  Bell, AlertTriangle, CheckCircle2, Clock, Users, BookOpen, Mail, FileText,
-  Sparkles, Loader2, RefreshCw, ChevronRight, XCircle, TrendingDown, Zap, Eye
+  Bell, AlertTriangle, CheckCircle2, Sparkles, Loader2, RefreshCw, XCircle
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import api from '@shared/lib/api'
