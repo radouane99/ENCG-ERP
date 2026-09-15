@@ -100,9 +100,10 @@ class AbsenceJustificationController extends Controller
                     'name' => $stdName,
                     'first_name' => $std?->first_name,
                     'last_name' => $std?->last_name,
+                    'name_ar' => $user?->name_ar ?? $std?->name_ar ?? null,
                     'student_number' => $std?->student_number,
                     'cne' => $std?->cne,
-                    'cin' => $std?->cin,
+                    'cin' => $user?->cin ?? $std?->cin,
                     'filiere' => $std?->registrations?->first()?->filiere?->name,
                 ],
                 'attendance' => [
