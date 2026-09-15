@@ -61,4 +61,9 @@ class Filiere extends Model
     {
         return $this->hasMany(StudentPathway::class);
     }
+
+    public function studentRegistrations(): HasMany
+    {
+        return $this->hasMany(StudentRegistration::class);
+    }
 }

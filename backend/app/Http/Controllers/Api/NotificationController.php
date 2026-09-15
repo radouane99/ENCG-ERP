@@ -283,7 +283,7 @@ class NotificationController extends Controller
             'id' => $f->id,
             'code' => $f->code,
             'name' => $f->name,
-            'students_count' => $f->student_registrations_count,
+            'students_count' => $f->student_registrations_count ?? 0,
         ]);
 
         $groups = Group::with('filiere')->withCount('studentRegistrations')->get()->map(fn ($g) => [
@@ -291,14 +291,14 @@ class NotificationController extends Controller
             'name' => $g->name,
             'filiere_id' => $g->filiere_id,
             'filiere_code' => $g->filiere?->code ?? '',
-            'students_count' => $g->student_registrations_count,
+            'students_count' => $g->student_registrations_count ?? 0,
         ]);
 
         $departments = Department::withCount('professors')->get()->map(fn ($d) => [
             'id' => $d->id,
             'code' => $d->code,
             'name' => $d->name,
-            'professors_count' => $d->professors_count,
+            'professors_count' => $d->professors_count ?? 0,
         ]);
 
         $recentLogs = NotificationLog::latest()->take(15)->get()->map(fn ($log) => [
