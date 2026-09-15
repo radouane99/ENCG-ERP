@@ -61,7 +61,10 @@ api.interceptors.response.use(
 
     if (status >= 500) {
       if (!(error.config as any)?.suppressToast) {
-        toast.error(import.meta.env.DEV ? (message || 'Erreur serveur.') : 'Erreur serveur. Veuillez réessayer.')
+        toast.error(
+          import.meta.env.DEV ? (message || 'Erreur serveur.') : 'Erreur serveur. Veuillez réessayer.',
+          { id: 'server-error-toast' }
+        )
       }
       return Promise.reject(error)
     }

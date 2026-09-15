@@ -29,6 +29,7 @@ dev-dist/
 *.sql
 *.sql.gz
 !docker/postgres/init.sql
+!scripts/*.sql
 
 # Log files and debug dumps
 *.log

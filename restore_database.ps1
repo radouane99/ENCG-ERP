@@ -36,7 +36,7 @@ Remove-Item $TmpRestore -ErrorAction SilentlyContinue
 
 # 3. Reinitialiser le schema et restaurer le dump
 Write-Host "4. Nettoyage du schema public et restauration..." -ForegroundColor Yellow
-$resetSql = "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'encg_erp' AND pid != pg_backend_pid(); DROP SCHEMA public CASCADE; CREATE SCHEMA public; GRANT ALL ON SCHEMA public TO encg; GRANT ALL ON SCHEMA public TO public;"
+$resetSql = "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'encg_erp' AND pid != pg_backend_pid(); DROP SCHEMA public CASCADE; CREATE SCHEMA public; GRANT ALL ON SCHEMA public TO encg; GRANT ALL ON SCHEMA public TO public; CREATE EXTENSION IF NOT EXISTS ""uuid-ossp""; CREATE EXTENSION IF NOT EXISTS ""pg_trgm""; CREATE EXTENSION IF NOT EXISTS ""unaccent"";"
 docker exec encg_postgres psql -U encg -d encg_erp -c $resetSql
 docker exec encg_postgres psql -U encg -d encg_erp -f /tmp/restore.sql
 

@@ -1,10 +1,11 @@
 <?php
 
+use Illuminate\Contracts\Console\Kernel;
+
 require __DIR__.'/vendor/autoload.php';
 $app = require_once __DIR__.'/bootstrap/app.php';
 $app->make(Kernel::class)->bootstrap();
 
-use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Support\Facades\DB;
 
 echo "Starting complete database encoding fix...\n";
