@@ -32,20 +32,32 @@ try {
 Write-Host "3. Transfert vers le conteneur Docker (encg_postgres)..." -ForegroundColor Yellow
 docker cp $TmpRestore encg_postgres:/tmp/restore.sql
 docker cp $FixPksFile encg_postgres:/tmp/fix_pks.sql
+$EncodingFile = "$Workspace/scripts/fix_academic_encoding.sql"
+if (Test-Path $EncodingFile) {
+    docker cp $EncodingFile encg_postgres:/tmp/fix_academic_encoding.sql
+}
 Remove-Item $TmpRestore -ErrorAction SilentlyContinue
 
 # 3. Reinitialiser le schema et restaurer le dump
 Write-Host "4. Nettoyage du schema public et restauration..." -ForegroundColor Yellow
 $resetSql = "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'encg_erp' AND pid != pg_backend_pid(); DROP SCHEMA public CASCADE; CREATE SCHEMA public; GRANT ALL ON SCHEMA public TO encg; GRANT ALL ON SCHEMA public TO public; CREATE EXTENSION IF NOT EXISTS ""uuid-ossp""; CREATE EXTENSION IF NOT EXISTS ""pg_trgm""; CREATE EXTENSION IF NOT EXISTS ""unaccent"";"
 docker exec encg_postgres psql -U encg -d encg_erp -c $resetSql
-docker exec encg_postgres psql -U encg -d encg_erp -f /tmp/restore.sql
+docker exec encg_postgres sh -c "(echo 'SET session_replication_role = replica;' && cat /tmp/restore.sql && echo 'SET session_replication_role = origin;') | psql -U encg -d encg_erp"
 
-# 4. Appliquer les Primary Keys et Contraintes
-Write-Host "5. Application des Primary Keys et contraintes..." -ForegroundColor Yellow
-docker exec encg_postgres psql -U encg -d encg_erp -f /tmp/fix_pks.sql
+# 4. Appliquer les Primary Keys et Contraintes (si fichier present)
+if (Test-Path $FixPksFile) {
+    Write-Host "5. Application des Primary Keys et contraintes..." -ForegroundColor Yellow
+    docker exec encg_postgres psql -U encg -d encg_erp -f /tmp/fix_pks.sql
+}
 
-# 5. Executer les migrations recentes
-Write-Host "6. Synchronisation des Migrations Laravel..." -ForegroundColor Yellow
+# 5. Appliquer l'encodage UTF-8 et Noms Arabes
+if (Test-Path $EncodingFile) {
+    Write-Host "6. Application des noms arabes et encodage UTF-8..." -ForegroundColor Yellow
+    docker exec encg_postgres psql -U encg -d encg_erp -f /tmp/fix_academic_encoding.sql
+}
+
+# 6. Executer les migrations recentes
+Write-Host "7. Synchronisation des Migrations Laravel..." -ForegroundColor Yellow
 docker exec encg_backend php artisan migrate --force
 
 # 6. Nettoyer les caches Laravel et redemarrer la Queue

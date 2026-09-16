@@ -46,18 +46,20 @@ class EnsureDemoUsersSeeder extends Seeder
 
         // 1. Admin Accounts
         $admins = [
-            'admin@encg-fes.ma' => 'Directeur Général (Admin)',
-            'superadmin@encg-fes.ma' => 'Super Administrateur',
-            'admin@encg.ma' => 'Admin Principal',
-            'scolarite@encg.ma' => 'Scolarité Agent',
-            'direction@encg.ma' => 'Direction Adjointe',
+            'admin@encg-fes.ma' => ['name' => 'Directeur Général (Admin)', 'name_ar' => 'المدير العام (مشرف)'],
+            'superadmin@encg-fes.ma' => ['name' => 'Super Administrateur', 'name_ar' => 'المشرف العام'],
+            'admin@encg.ma' => ['name' => 'Admin Principal', 'name_ar' => 'المشرف الرئيسي'],
+            'scolarite@encg.ma' => ['name' => 'Scolarité Agent', 'name_ar' => 'مصلحة الشؤون الطلابية'],
+            'direction@encg.ma' => ['name' => 'Direction Adjointe', 'name_ar' => 'إدارة المؤسسة'],
         ];
 
-        foreach ($admins as $email => $name) {
+        foreach ($admins as $email => $data) {
+            $name = $data['name'];
             $user = User::updateOrCreate(
                 ['email' => $email],
                 [
                     'name' => $name,
+                    'name_ar' => $data['name_ar'],
                     'first_name' => explode(' ', $name)[0],
                     'last_name' => explode(' ', $name)[1] ?? 'Admin',
                     'password' => $password,
@@ -71,16 +73,18 @@ class EnsureDemoUsersSeeder extends Seeder
 
         // 2. Professor Accounts
         $professors = [
-            'prof@encg-fes.ma' => 'Pr. Mohammed El Amrani',
-            'prof@encg.ma' => 'Pr. Karim Alami',
-            'fatima.bensouda@encg-fes.ma' => 'Pr. Fatima Bensouda',
+            'prof@encg-fes.ma' => ['name' => 'Pr. Mohammed El Amrani', 'name_ar' => 'د. محمد العمراني'],
+            'prof@encg.ma' => ['name' => 'Pr. Karim Alami', 'name_ar' => 'د. كريم العلمي'],
+            'fatima.bensouda@encg-fes.ma' => ['name' => 'Pr. Fatima Bensouda', 'name_ar' => 'د. فاطمة بنسودة'],
         ];
 
-        foreach ($professors as $email => $name) {
+        foreach ($professors as $email => $pData) {
+            $name = $pData['name'];
             $user = User::updateOrCreate(
                 ['email' => $email],
                 [
                     'name' => $name,
+                    'name_ar' => $pData['name_ar'],
                     'first_name' => explode(' ', $name)[1] ?? 'Prof',
                     'last_name' => explode(' ', $name)[2] ?? 'ENCG',
                     'password' => $password,
@@ -107,9 +111,9 @@ class EnsureDemoUsersSeeder extends Seeder
 
         // 3. Student Accounts
         $students = [
-            'student@encg-fes.ma' => ['name' => 'Yassine Bennani', 'cne' => 'N130094821', 'num' => '20240001'],
-            'student@encg.ma' => ['name' => 'Anas Mansouri', 'cne' => 'N130094822', 'num' => '20240002'],
-            'etudiant@encg.ma' => ['name' => 'Salma Tazi', 'cne' => 'N130094823', 'num' => '20240003'],
+            'student@encg-fes.ma' => ['name' => 'Yassine Bennani', 'name_ar' => 'ياسين بناني', 'first_ar' => 'ياسين', 'last_ar' => 'بناني', 'cne' => 'N130094821', 'num' => '20240001'],
+            'student@encg.ma' => ['name' => 'Anas Mansouri', 'name_ar' => 'أنس المنصوري', 'first_ar' => 'أنس', 'last_ar' => 'المنصوري', 'cne' => 'N130094822', 'num' => '20240002'],
+            'etudiant@encg.ma' => ['name' => 'Salma Tazi', 'name_ar' => 'سلمى التازي', 'first_ar' => 'سلمى', 'last_ar' => 'التازي', 'cne' => 'N130094823', 'num' => '20240003'],
         ];
 
         foreach ($students as $email => $data) {
@@ -118,6 +122,7 @@ class EnsureDemoUsersSeeder extends Seeder
                 ['email' => $email],
                 [
                     'name' => $name,
+                    'name_ar' => $data['name_ar'],
                     'first_name' => explode(' ', $name)[0],
                     'last_name' => explode(' ', $name)[1] ?? 'Étudiant',
                     'password' => $password,
@@ -133,24 +138,21 @@ class EnsureDemoUsersSeeder extends Seeder
                 ->orWhere('user_id', $user->id)
                 ->first();
 
+            $studentPayload = [
+                'user_id' => $user->id,
+                'institution_id' => $institution?->id,
+                'cne' => $data['cne'],
+                'student_number' => $data['num'],
+                'first_name_ar' => $data['first_ar'],
+                'last_name_ar' => $data['last_ar'],
+                'gender' => 'male',
+                'status' => 'active',
+            ];
+
             if ($existingStudent) {
-                $existingStudent->update([
-                    'user_id' => $user->id,
-                    'institution_id' => $institution?->id,
-                    'cne' => $data['cne'],
-                    'student_number' => $data['num'],
-                    'gender' => 'male',
-                    'status' => 'active',
-                ]);
+                $existingStudent->update($studentPayload);
             } else {
-                Student::create([
-                    'user_id' => $user->id,
-                    'institution_id' => $institution?->id,
-                    'cne' => $data['cne'],
-                    'student_number' => $data['num'],
-                    'gender' => 'male',
-                    'status' => 'active',
-                ]);
+                Student::create($studentPayload);
             }
         }
     }

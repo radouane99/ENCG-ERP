@@ -393,21 +393,21 @@ class EncgFesSeeder extends Seeder
     private function seedTCModules(Institution $institution, Filiere $filiere): void
     {
         $modules = [
-            ['name' => 'Mathématiques pour la Gestion', 'code' => 'TC-S1-M01', 'semester' => 1, 'coeff' => 3],
-            ['name' => 'Comptabilité Générale I', 'code' => 'TC-S1-M02', 'semester' => 1, 'coeff' => 3],
-            ['name' => 'Économie Générale I', 'code' => 'TC-S1-M03', 'semester' => 1, 'coeff' => 2],
-            ['name' => 'Langue Anglaise I', 'code' => 'TC-S1-M04', 'semester' => 1, 'coeff' => 1],
-            ['name' => 'Management de Base', 'code' => 'TC-S1-M05', 'semester' => 1, 'coeff' => 2],
-            ['name' => 'Informatique de Gestion I', 'code' => 'TC-S1-M06', 'semester' => 1, 'coeff' => 2],
-            ['name' => 'Soft Skills I', 'code' => 'TC-S1-M07', 'semester' => 1, 'coeff' => 1],
+            ['name' => 'Mathématiques pour la Gestion', 'name_ar' => 'الرياضيات للتسيير', 'code' => 'TC-S1-M01', 'semester' => 1, 'coeff' => 3],
+            ['name' => 'Comptabilité Générale I', 'name_ar' => 'المحاسبة العامة 1', 'code' => 'TC-S1-M02', 'semester' => 1, 'coeff' => 3],
+            ['name' => 'Économie Générale I', 'name_ar' => 'الاقتصاد العام 1', 'code' => 'TC-S1-M03', 'semester' => 1, 'coeff' => 2],
+            ['name' => 'Langue Anglaise I', 'name_ar' => 'اللغة الإنجليزية 1', 'code' => 'TC-S1-M04', 'semester' => 1, 'coeff' => 1],
+            ['name' => 'Management de Base', 'name_ar' => 'أساسيات التدبير', 'code' => 'TC-S1-M05', 'semester' => 1, 'coeff' => 2],
+            ['name' => 'Informatique de Gestion I', 'name_ar' => 'إعلاميات التسيير 1', 'code' => 'TC-S1-M06', 'semester' => 1, 'coeff' => 2],
+            ['name' => 'Soft Skills I', 'name_ar' => 'المهارات الذاتية 1', 'code' => 'TC-S1-M07', 'semester' => 1, 'coeff' => 1],
 
-            ['name' => 'Statistiques et Probabilités', 'code' => 'TC-S2-M01', 'semester' => 2, 'coeff' => 3],
-            ['name' => 'Comptabilité Générale II', 'code' => 'TC-S2-M02', 'semester' => 2, 'coeff' => 3],
-            ['name' => 'Économie Générale II', 'code' => 'TC-S2-M03', 'semester' => 2, 'coeff' => 2],
-            ['name' => 'Langue Anglaise II', 'code' => 'TC-S2-M04', 'semester' => 2, 'coeff' => 1],
-            ['name' => 'Marketing de Base', 'code' => 'TC-S2-M05', 'semester' => 2, 'coeff' => 2],
-            ['name' => 'Informatique de Gestion II', 'code' => 'TC-S2-M06', 'semester' => 2, 'coeff' => 2],
-            ['name' => 'Soft Skills II', 'code' => 'TC-S2-M07', 'semester' => 2, 'coeff' => 1],
+            ['name' => 'Statistiques et Probabilités', 'name_ar' => 'الإحصاء والاحتمالات', 'code' => 'TC-S2-M01', 'semester' => 2, 'coeff' => 3],
+            ['name' => 'Comptabilité Générale II', 'name_ar' => 'المحاسبة العامة 2', 'code' => 'TC-S2-M02', 'semester' => 2, 'coeff' => 3],
+            ['name' => 'Économie Générale II', 'name_ar' => 'الاقتصاد العام 2', 'code' => 'TC-S2-M03', 'semester' => 2, 'coeff' => 2],
+            ['name' => 'Langue Anglaise II', 'name_ar' => 'اللغة الإنجليزية 2', 'code' => 'TC-S2-M04', 'semester' => 2, 'coeff' => 1],
+            ['name' => 'Marketing de Base', 'name_ar' => 'أساسيات التسويق', 'code' => 'TC-S2-M05', 'semester' => 2, 'coeff' => 2],
+            ['name' => 'Informatique de Gestion II', 'name_ar' => 'إعلاميات التسيير 2', 'code' => 'TC-S2-M06', 'semester' => 2, 'coeff' => 2],
+            ['name' => 'Soft Skills II', 'name_ar' => 'المهارات الذاتية 2', 'code' => 'TC-S2-M07', 'semester' => 2, 'coeff' => 1],
         ];
 
         foreach ($modules as $m) {
@@ -415,6 +415,7 @@ class EncgFesSeeder extends Seeder
                 'institution_id' => $institution->id,
                 'filiere_id' => $filiere->id,
                 'name' => $m['name'],
+                'name_ar' => $m['name_ar'],
                 'code' => $m['code'],
                 'semester_number' => $m['semester'],
                 'coefficient' => $m['coeff'],
@@ -426,13 +427,13 @@ class EncgFesSeeder extends Seeder
     private function seedGfcModules(Institution $institution, Filiere $filiere): void
     {
         $modules = [
-            ['name' => 'Comptabilité Approfondie', 'code' => 'GFC-S5-M01', 'semester' => 5, 'coeff' => 3],
-            ['name' => 'Analyse Financière', 'code' => 'GFC-S5-M02', 'semester' => 5, 'coeff' => 3],
-            ['name' => 'Finance d\'Entreprise', 'code' => 'GFC-S5-M03', 'semester' => 5, 'coeff' => 3],
-            ['name' => 'Fiscalité des Entreprises', 'code' => 'GFC-S5-M04', 'semester' => 5, 'coeff' => 2],
-            ['name' => 'Droit des Sociétés', 'code' => 'GFC-S5-M05', 'semester' => 5, 'coeff' => 2],
-            ['name' => 'Management Stratégique', 'code' => 'GFC-S5-M06', 'semester' => 5, 'coeff' => 2],
-            ['name' => 'Anglais des Affaires', 'code' => 'GFC-S5-M07', 'semester' => 5, 'coeff' => 1],
+            ['name' => 'Comptabilité Approfondie', 'name_ar' => 'المحاسبة المعمقة', 'code' => 'GFC-S5-M01', 'semester' => 5, 'coeff' => 3],
+            ['name' => 'Analyse Financière', 'name_ar' => 'التحليل المالي', 'code' => 'GFC-S5-M02', 'semester' => 5, 'coeff' => 3],
+            ['name' => 'Finance d\'Entreprise', 'name_ar' => 'مالية المقاولة', 'code' => 'GFC-S5-M03', 'semester' => 5, 'coeff' => 3],
+            ['name' => 'Fiscalité des Entreprises', 'name_ar' => 'جبايات المقاولات', 'code' => 'GFC-S5-M04', 'semester' => 5, 'coeff' => 2],
+            ['name' => 'Droit des Sociétés', 'name_ar' => 'قانون الشركات', 'code' => 'GFC-S5-M05', 'semester' => 5, 'coeff' => 2],
+            ['name' => 'Management Stratégique', 'name_ar' => 'التدبير الاستراتيجي', 'code' => 'GFC-S5-M06', 'semester' => 5, 'coeff' => 2],
+            ['name' => 'Anglais des Affaires', 'name_ar' => 'إنجليزية الأعمال', 'code' => 'GFC-S5-M07', 'semester' => 5, 'coeff' => 1],
         ];
 
         foreach ($modules as $m) {
@@ -440,6 +441,7 @@ class EncgFesSeeder extends Seeder
                 'institution_id' => $institution->id,
                 'filiere_id' => $filiere->id,
                 'name' => $m['name'],
+                'name_ar' => $m['name_ar'],
                 'code' => $m['code'],
                 'semester_number' => $m['semester'],
                 'coefficient' => $m['coeff'],
@@ -451,13 +453,13 @@ class EncgFesSeeder extends Seeder
     private function seedMcmModules(Institution $institution, Filiere $filiere): void
     {
         $modules = [
-            ['name' => 'Comportement du Consommateur', 'code' => 'MCM-S5-M01', 'semester' => 5, 'coeff' => 3],
-            ['name' => 'Marketing Stratégique', 'code' => 'MCM-S5-M02', 'semester' => 5, 'coeff' => 3],
-            ['name' => 'Études de Marché', 'code' => 'MCM-S5-M03', 'semester' => 5, 'coeff' => 3],
-            ['name' => 'Communication Commerciale', 'code' => 'MCM-S5-M04', 'semester' => 5, 'coeff' => 2],
-            ['name' => 'Management de la Force de Vente', 'code' => 'MCM-S5-M05', 'semester' => 5, 'coeff' => 2],
-            ['name' => 'Droit Commercial', 'code' => 'MCM-S5-M06', 'semester' => 5, 'coeff' => 2],
-            ['name' => 'Anglais du Marketing', 'code' => 'MCM-S5-M07', 'semester' => 5, 'coeff' => 1],
+            ['name' => 'Comportement du Consommateur', 'name_ar' => 'سلوك المستهلك', 'code' => 'MCM-S5-M01', 'semester' => 5, 'coeff' => 3],
+            ['name' => 'Marketing Stratégique', 'name_ar' => 'التسويق الاستراتيجي', 'code' => 'MCM-S5-M02', 'semester' => 5, 'coeff' => 3],
+            ['name' => 'Études de Marché', 'name_ar' => 'دراسات السوق', 'code' => 'MCM-S5-M03', 'semester' => 5, 'coeff' => 3],
+            ['name' => 'Communication Commerciale', 'name_ar' => 'التواصل التجاري', 'code' => 'MCM-S5-M04', 'semester' => 5, 'coeff' => 2],
+            ['name' => 'Management de la Force de Vente', 'name_ar' => 'إدارة فريق المبيعات', 'code' => 'MCM-S5-M05', 'semester' => 5, 'coeff' => 2],
+            ['name' => 'Droit Commercial', 'name_ar' => 'القانون التجاري', 'code' => 'MCM-S5-M06', 'semester' => 5, 'coeff' => 2],
+            ['name' => 'Anglais du Marketing', 'name_ar' => 'إنجليزية التسويق', 'code' => 'MCM-S5-M07', 'semester' => 5, 'coeff' => 1],
         ];
 
         foreach ($modules as $m) {
@@ -465,6 +467,7 @@ class EncgFesSeeder extends Seeder
                 'institution_id' => $institution->id,
                 'filiere_id' => $filiere->id,
                 'name' => $m['name'],
+                'name_ar' => $m['name_ar'],
                 'code' => $m['code'],
                 'semester_number' => $m['semester'],
                 'coefficient' => $m['coeff'],
@@ -481,6 +484,7 @@ class EncgFesSeeder extends Seeder
         $admin = User::create([
             'institution_id' => $institution->id,
             'name' => 'Radouane El Bahi',
+            'name_ar' => 'رضوان الباهي',
             'first_name' => 'Radouane',
             'last_name' => 'El Bahi',
             'email' => 'admin@encg.ma',
@@ -492,6 +496,7 @@ class EncgFesSeeder extends Seeder
         $scolarite = User::create([
             'institution_id' => $institution->id,
             'name' => 'Fatim-Zahra Alami',
+            'name_ar' => 'فاطمة الزهراء العلمي',
             'first_name' => 'Fatim-Zahra',
             'last_name' => 'Alami',
             'email' => 'scolarite@encg.ma',
@@ -502,11 +507,11 @@ class EncgFesSeeder extends Seeder
 
         // Moroccan Professors
         $professorsData = [
-            ['first' => 'Abdelhak', 'last' => 'El Amrani', 'email' => 'prof@encg.ma', 'dept' => 'SG', 'spec' => 'Finance'],
-            ['first' => 'Amina', 'last' => 'Chraibi', 'email' => 'chraibi.amina@encg-fes.ma', 'dept' => 'SG', 'spec' => 'Management'],
-            ['first' => 'Tarik', 'last' => 'Meziane', 'email' => 'meziane.tarik@encg-fes.ma', 'dept' => 'DA', 'spec' => 'Droit des Affaires'],
-            ['first' => 'Bouchra', 'last' => 'Bennani', 'email' => 'bennani.bouchra@encg-fes.ma', 'dept' => 'LC', 'spec' => 'Communication'],
-            ['first' => 'Mohamed', 'last' => 'Benjelloun', 'email' => 'benjelloun.mohamed@encg-fes.ma', 'dept' => 'IG', 'spec' => 'Informatique de Gestion'],
+            ['first' => 'Abdelhak', 'last' => 'El Amrani', 'name_ar' => 'د. عبد الحق العمراني', 'email' => 'prof@encg.ma', 'dept' => 'SG', 'spec' => 'Finance'],
+            ['first' => 'Amina', 'last' => 'Chraibi', 'name_ar' => 'د. أمينة الشرايبي', 'email' => 'chraibi.amina@encg-fes.ma', 'dept' => 'SG', 'spec' => 'Management'],
+            ['first' => 'Tarik', 'last' => 'Meziane', 'name_ar' => 'د. طارق مزيان', 'email' => 'meziane.tarik@encg-fes.ma', 'dept' => 'DA', 'spec' => 'Droit des Affaires'],
+            ['first' => 'Bouchra', 'last' => 'Bennani', 'name_ar' => 'د. بشرى بناني', 'email' => 'bennani.bouchra@encg-fes.ma', 'dept' => 'LC', 'spec' => 'Communication'],
+            ['first' => 'Mohamed', 'last' => 'Benjelloun', 'name_ar' => 'د. محمد بنجلون', 'email' => 'benjelloun.mohamed@encg-fes.ma', 'dept' => 'IG', 'spec' => 'Informatique de Gestion'],
         ];
 
         $profModels = [];
@@ -514,6 +519,7 @@ class EncgFesSeeder extends Seeder
             $user = User::create([
                 'institution_id' => $institution->id,
                 'name' => "{$pData['first']} {$pData['last']}",
+                'name_ar' => $pData['name_ar'],
                 'first_name' => $pData['first'],
                 'last_name' => $pData['last'],
                 'email' => $pData['email'],
@@ -665,6 +671,7 @@ class EncgFesSeeder extends Seeder
         $studentUser = User::create([
             'institution_id' => $institution->id,
             'name' => 'Youssef El Mansouri',
+            'name_ar' => 'يوسف المنصوري',
             'first_name' => 'Youssef',
             'last_name' => 'El Mansouri',
             'email' => 'student@encg.ma',
@@ -1096,6 +1103,7 @@ class EncgFesSeeder extends Seeder
                     $u = User::create([
                         'institution_id' => $institution->id,
                         'name' => "{$firstName} {$lastName}",
+                        'name_ar' => "{$nameData['first_ar']} {$nameData['last_ar']}",
                         'first_name' => $firstName,
                         'last_name' => $lastName,
                         'email' => $email,
