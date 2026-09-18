@@ -1825,7 +1825,9 @@ class PdfExportController extends Controller
         $firstNameFr = $user?->first_name ?? ($user ? explode(' ', $user->name)[0] : 'Étudiant');
         $lastNameFr = $user?->last_name ?? ($user ? (explode(' ', $user->name)[1] ?? '') : '');
         $fullNameFr = trim(($firstNameFr ?: ($user?->name ?? 'Étudiant')) . ' ' . $lastNameFr);
-        $fullNameAr = trim(($student?->first_name_ar ?? '') . ' ' . ($student?->last_name_ar ?? ''));
+        
+        $rawAr = trim(($student?->first_name_ar ?? '') . ' ' . ($student?->last_name_ar ?? ''));
+        $fullNameAr = !empty($rawAr) ? \App\Helpers\ArabicGlyphReshaper::reshape($rawAr) : '';
 
         $sealHash = strtoupper(hash('sha256', "CONVOCATION-DISCIPLINE-{$incident->id}-{$incident->student_id}-ENCG"));
         $verifyUrl = url("/verify-discipline?id={$incident->id}&hash=" . substr($sealHash, 0, 16));
@@ -1836,6 +1838,16 @@ class PdfExportController extends Controller
             $qrBase64 = 'data:image/svg+xml;base64,'.base64_encode((string) $raw);
         } catch (\Throwable $e) {}
 
+        $examDateRaw = $incident->exam?->exam_date ?? $incident->created_at;
+        $examDateFormatted = $examDateRaw ? \Carbon\Carbon::parse($examDateRaw)->format('d/m/Y') : date('d/m/Y');
+
+        $hearingRaw = $incident->hearing_date ?: '';
+        if (preg_match('/^(\d{4})-(\d{2})-(\d{2})(.*)$/', $hearingRaw, $m)) {
+            $formattedHearing = $m[3] . '/' . $m[2] . '/' . $m[1] . $m[4];
+        } else {
+            $formattedHearing = $hearingRaw ?: 'Date à préciser';
+        }
+
         $pdf = $this->getPdfInstance('pdf.convocation_discipline', [
             'incident' => $incident,
             'student' => $student,
@@ -1844,26 +1856,31 @@ class PdfExportController extends Controller
             'module' => $incident->exam?->module,
             'fullNameFr' => $fullNameFr,
             'fullNameAr' => $fullNameAr,
+            'arKingdom' => \App\Helpers\ArabicGlyphReshaper::reshape('المملكة المغربية'),
+            'arUniv' => \App\Helpers\ArabicGlyphReshaper::reshape('جامعة سيدي محمد بن عبد الله - فاس'),
+            'arSchool' => \App\Helpers\ArabicGlyphReshaper::reshape('المدرسة الوطنية للتجارة والتسيير بفاس'),
+            'arDiscipline' => \App\Helpers\ArabicGlyphReshaper::reshape('مجلس التأديب'),
+            'arDocTitle' => \App\Helpers\ArabicGlyphReshaper::reshape('استدعاء للمثول أمام مجلس التأديب'),
             'cne' => $student?->cne ?? 'N/A',
             'filiere' => $incident->exam?->module?->filiere?->name ?? 'Tronc Commun ENCG',
             'moduleName' => $incident->exam?->module?->name ?? 'Épreuve Semestrielle',
-            'examDate' => $incident->exam?->exam_date ?? $incident->created_at?->format('d/m/Y'),
+            'examDate' => $examDateFormatted,
             'typeLabel' => match($incident->type) {
-                'fraude_antiseche', 'antiseche' => 'Fraude Antisèche / Documents',
-                'fraude_smartphone', 'smartphone' => 'Usage Smartphone / IA',
-                'usurpation' => 'Usurpation d\'Identité',
-                'perturbation' => 'Perturbation & Refus d\'Obtempérer',
-                'plagiat' => 'Plagiat Académique',
+                'fraude_antiseche', 'antiseche' => 'Fraude Antisèche / Documents non autorisés',
+                'fraude_smartphone', 'smartphone' => 'Usage Smartphone / IA générative',
+                'usurpation' => 'Usurpation d\'Identité lors de l\'épreuve',
+                'perturbation' => 'Perturbation grave du déroulement de l\'épreuve',
+                'plagiat' => 'Plagiat Académique avéré',
                 'suspicion_fraude' => 'Suspicion de Fraude',
                 default => ucfirst($incident->type),
             },
-            'hearingDate' => $incident->hearing_date ?: 'Date à préciser',
+            'hearingDate' => $formattedHearing,
             'hearingRoom' => $incident->hearing_room ?: 'Salle des Actes — ENCG Fès',
             'sealHash' => $sealHash,
             'verifyUrl' => $verifyUrl,
             'qrBase64' => $qrBase64,
-            'directorSignature' => $this->generateDefaultProfSignature("LE DIRECTEUR DE L'ENCG FÈS"),
-            'secretaireSignature' => $this->generateDefaultProfSignature("LE SECRÉTAIRE GÉNÉRAL"),
+            'directorSignature' => $this->generateDirectorOfficialSeal(),
+            'secretaireSignature' => $this->generateSecretaryVisaStamp(),
         ])->setPaper('a4', 'portrait');
 
         $safeName = preg_replace('/[^A-Za-z0-9_]/', '_', $fullNameFr);
@@ -1879,7 +1896,9 @@ class PdfExportController extends Controller
         $firstNameFr = $user?->first_name ?? ($user ? explode(' ', $user->name)[0] : 'Étudiant');
         $lastNameFr = $user?->last_name ?? ($user ? (explode(' ', $user->name)[1] ?? '') : '');
         $fullNameFr = trim(($firstNameFr ?: ($user?->name ?? 'Étudiant')) . ' ' . $lastNameFr);
-        $fullNameAr = trim(($student?->first_name_ar ?? '') . ' ' . ($student?->last_name_ar ?? ''));
+        
+        $rawAr = trim(($student?->first_name_ar ?? '') . ' ' . ($student?->last_name_ar ?? ''));
+        $fullNameAr = !empty($rawAr) ? \App\Helpers\ArabicGlyphReshaper::reshape($rawAr) : '';
 
         $sealHash = strtoupper(hash('sha256', "DECISION-DISCIPLINE-{$incident->id}-{$incident->student_id}-ENCG"));
         $verifyUrl = url("/verify-discipline-pv?id={$incident->id}&hash=" . substr($sealHash, 0, 16));
@@ -1890,6 +1909,9 @@ class PdfExportController extends Controller
             $qrBase64 = 'data:image/svg+xml;base64,'.base64_encode((string) $raw);
         } catch (\Throwable $e) {}
 
+        $examDateRaw = $incident->exam?->exam_date ?? $incident->created_at;
+        $examDateFormatted = $examDateRaw ? \Carbon\Carbon::parse($examDateRaw)->format('d/m/Y') : date('d/m/Y');
+
         $pdf = $this->getPdfInstance('pdf.decision_discipline', [
             'incident' => $incident,
             'student' => $student,
@@ -1898,24 +1920,29 @@ class PdfExportController extends Controller
             'module' => $incident->exam?->module,
             'fullNameFr' => $fullNameFr,
             'fullNameAr' => $fullNameAr,
+            'arKingdom' => \App\Helpers\ArabicGlyphReshaper::reshape('المملكة المغربية'),
+            'arUniv' => \App\Helpers\ArabicGlyphReshaper::reshape('جامعة سيدي محمد بن عبد الله - فاس'),
+            'arSchool' => \App\Helpers\ArabicGlyphReshaper::reshape('المدرسة الوطنية للتجارة والتسيير بفاس'),
+            'arDiscipline' => \App\Helpers\ArabicGlyphReshaper::reshape('مجلس التأديب'),
+            'arDocTitle' => \App\Helpers\ArabicGlyphReshaper::reshape('محضر مداولات وقرار مجلس التأديب'),
             'cne' => $student?->cne ?? 'N/A',
             'filiere' => $incident->exam?->module?->filiere?->name ?? 'Tronc Commun ENCG',
             'moduleName' => $incident->exam?->module?->name ?? 'Épreuve Semestrielle',
-            'examDate' => $incident->exam?->exam_date ?? $incident->created_at?->format('d/m/Y'),
+            'examDate' => $examDateFormatted,
             'typeLabel' => match($incident->type) {
-                'fraude_antiseche', 'antiseche' => 'Fraude Antisèche / Documents',
-                'fraude_smartphone', 'smartphone' => 'Usage Smartphone / IA',
-                'usurpation' => 'Usurpation d\'Identité',
-                'perturbation' => 'Perturbation & Refus d\'Obtempérer',
-                'plagiat' => 'Plagiat Académique',
+                'fraude_antiseche', 'antiseche' => 'Fraude Antisèche / Documents non autorisés',
+                'fraude_smartphone', 'smartphone' => 'Usage Smartphone / IA générative',
+                'usurpation' => 'Usurpation d\'Identité lors de l\'épreuve',
+                'perturbation' => 'Perturbation grave du déroulement de l\'épreuve',
+                'plagiat' => 'Plagiat Académique avéré',
                 'suspicion_fraude' => 'Suspicion de Fraude',
                 default => ucfirst($incident->type),
             },
             'sealHash' => $sealHash,
             'verifyUrl' => $verifyUrl,
             'qrBase64' => $qrBase64,
-            'directorSignature' => $this->generateDefaultProfSignature("LE DIRECTEUR DE L'ENCG FÈS"),
-            'secretaireSignature' => $this->generateDefaultProfSignature("LE SECRÉTAIRE GÉNÉRAL"),
+            'directorSignature' => $this->generateDirectorOfficialSeal(),
+            'secretaireSignature' => $this->generateSecretaryVisaStamp(),
         ])->setPaper('a4', 'portrait');
 
         $safeName = preg_replace('/[^A-Za-z0-9_]/', '_', $fullNameFr);
@@ -1930,8 +1957,8 @@ class PdfExportController extends Controller
 
         $logoBase64 = $this->resolveLogoBase64();
         $batchSealHash = strtoupper(hash('sha256', "BATCH-CONVOCATIONS-ENCG-" . now()->format('Ymd')));
-        $directorSignature = $this->generateDefaultProfSignature("LE DIRECTEUR DE L'ENCG FÈS");
-        $secretaireSignature = $this->generateDefaultProfSignature("LE SECRÉTAIRE GÉNÉRAL");
+        $directorSignature = $this->generateDirectorOfficialSeal();
+        $secretaireSignature = $this->generateSecretaryVisaStamp();
 
         $items = $incidents->map(function ($inc) {
             $student = $inc->student;
@@ -1939,7 +1966,9 @@ class PdfExportController extends Controller
             $firstNameFr = $user?->first_name ?? ($user ? explode(' ', $user->name)[0] : 'Étudiant');
             $lastNameFr = $user?->last_name ?? ($user ? (explode(' ', $user->name)[1] ?? '') : '');
             $fullNameFr = trim(($firstNameFr ?: ($user?->name ?? 'Étudiant')) . ' ' . $lastNameFr);
-            $fullNameAr = trim(($student?->first_name_ar ?? '') . ' ' . ($student?->last_name_ar ?? ''));
+            
+            $rawAr = trim(($student?->first_name_ar ?? '') . ' ' . ($student?->last_name_ar ?? ''));
+            $fullNameAr = !empty($rawAr) ? \App\Helpers\ArabicGlyphReshaper::reshape($rawAr) : '';
 
             $sealHash = strtoupper(hash('sha256', "CONVOCATION-DISCIPLINE-{$inc->id}-{$inc->student_id}-ENCG"));
             $verifyUrl = url("/verify-discipline?id={$inc->id}&hash=" . substr($sealHash, 0, 16));
@@ -1950,6 +1979,16 @@ class PdfExportController extends Controller
                 $qrBase64 = 'data:image/svg+xml;base64,'.base64_encode((string) $raw);
             } catch (\Throwable $e) {}
 
+            $examDateRaw = $inc->exam?->exam_date ?? $inc->created_at;
+            $examDateFormatted = $examDateRaw ? \Carbon\Carbon::parse($examDateRaw)->format('d/m/Y') : date('d/m/Y');
+
+            $hearingRaw = $inc->hearing_date ?: '';
+            if (preg_match('/^(\d{4})-(\d{2})-(\d{2})(.*)$/', $hearingRaw, $m)) {
+                $formattedHearing = $m[3] . '/' . $m[2] . '/' . $m[1] . $m[4];
+            } else {
+                $formattedHearing = $hearingRaw ?: 'Date à préciser';
+            }
+
             return [
                 'incident' => $inc,
                 'student' => $student,
@@ -1958,10 +1997,10 @@ class PdfExportController extends Controller
                 'cne' => $student?->cne ?? 'N/A',
                 'filiere' => $inc->exam?->module?->filiere?->name ?? 'Tronc Commun ENCG',
                 'module' => $inc->exam?->module?->name ?? 'Épreuve Semestrielle',
-                'examDate' => $inc->exam?->exam_date ?? $inc->created_at?->format('d/m/Y'),
+                'examDate' => $examDateFormatted,
                 'type' => $inc->type,
                 'typeLabel' => match($inc->type) {
-                    'fraude_antiseche', 'antiseche' => 'Fraude Antisèche / Documents',
+                    'fraude_antiseche', 'antiseche' => 'Fraude Antisèche / Documents non autorisés',
                     'fraude_smartphone', 'smartphone' => 'Usage Smartphone / IA',
                     'usurpation' => 'Usurpation d\'Identité',
                     'perturbation' => 'Perturbation d\'Épreuve',
@@ -1970,7 +2009,7 @@ class PdfExportController extends Controller
                 },
                 'description' => $inc->description,
                 'confiscated' => $inc->confiscated_items,
-                'hearingDate' => $inc->hearing_date ?: 'Date à préciser',
+                'hearingDate' => $formattedHearing,
                 'hearingRoom' => $inc->hearing_room ?: 'Salle des Actes — ENCG Fès',
                 'sealHash' => $sealHash,
                 'qrBase64' => $qrBase64,
@@ -1984,9 +2023,52 @@ class PdfExportController extends Controller
             'directorSignature' => $directorSignature,
             'secretaireSignature' => $secretaireSignature,
             'generatedAt' => now()->format('d/m/Y à H:i'),
+            'arKingdom' => \App\Helpers\ArabicGlyphReshaper::reshape('المملكة المغربية'),
+            'arUniv' => \App\Helpers\ArabicGlyphReshaper::reshape('جامعة سيدي محمد بن عبد الله - فاس'),
+            'arSchool' => \App\Helpers\ArabicGlyphReshaper::reshape('المدرسة الوطنية للتجارة والتسيير بفاس'),
+            'arDiscipline' => \App\Helpers\ArabicGlyphReshaper::reshape('مجلس التأديب'),
+            'arDocTitle' => \App\Helpers\ArabicGlyphReshaper::reshape('استدعاء للمثول أمام مجلس التأديب'),
+            'arBatchTitle' => \App\Helpers\ArabicGlyphReshaper::reshape('جدول إرسال وتبليغ الاستدعاءات التأديبية الرسمية'),
         ])->setPaper('a4', 'portrait');
 
         return $pdf->stream("Lot_Convocations_Conseil_Discipline_ENCG_Fes.pdf");
+    }
+
+    private function generateDirectorOfficialSeal(): string
+    {
+        // Cachet rond officiel de l'ENCG Fès (encre bleu nuit / bordeaux) + Signature manuscrite fluide
+        $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="180" height="70" viewBox="0 0 180 70">
+            <g transform="translate(100, 35) rotate(-4)">
+                <circle cx="0" cy="0" r="28" fill="none" stroke="#1e3a8a" stroke-width="1.8" opacity="0.85"/>
+                <circle cx="0" cy="0" r="24.5" fill="none" stroke="#1e3a8a" stroke-width="0.8" stroke-dasharray="2,2" opacity="0.75"/>
+                <circle cx="0" cy="0" r="15" fill="none" stroke="#1e3a8a" stroke-width="0.7" opacity="0.7"/>
+                <text x="0" y="-17" font-family="DejaVu Sans, Arial, sans-serif" font-size="4" font-weight="bold" fill="#1e3a8a" text-anchor="middle" opacity="0.9">ROYAUME DU MAROC</text>
+                <text x="0" y="-4" font-family="DejaVu Sans, Arial, sans-serif" font-size="5" font-weight="bold" fill="#1e3a8a" text-anchor="middle" opacity="0.95">ENCG FÈS</text>
+                <text x="0" y="3" font-family="DejaVu Sans, Arial, sans-serif" font-size="4" font-weight="bold" fill="#1e3a8a" text-anchor="middle" opacity="0.9">★ DIRECTION ★</text>
+                <text x="0" y="9" font-family="DejaVu Sans, Arial, sans-serif" font-size="3.8" fill="#1e3a8a" text-anchor="middle" opacity="0.8">FÈS</text>
+                <text x="0" y="21" font-family="DejaVu Sans, Arial, sans-serif" font-size="3.8" font-weight="bold" fill="#1e3a8a" text-anchor="middle" opacity="0.85">USMBA</text>
+            </g>
+            <path d="M 18 42 Q 32 14 48 30 T 72 20 Q 94 40 114 16 T 138 28 Q 152 22 165 26 M 25 48 Q 78 52 142 44" fill="none" stroke="#0f172a" stroke-width="2.2" stroke-linecap="round"/>
+        </svg>';
+
+        return 'data:image/svg+xml;base64,'.base64_encode($svg);
+    }
+
+    private function generateSecretaryVisaStamp(): string
+    {
+        // Tampon administratif du Secrétariat Général + Signature
+        $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="180" height="70" viewBox="0 0 180 70">
+            <g transform="translate(15, 6) rotate(1.5)">
+                <rect x="0" y="0" width="85" height="34" rx="3" fill="none" stroke="#334155" stroke-width="1.2" stroke-dasharray="3,1.5" opacity="0.85"/>
+                <text x="42.5" y="8" font-family="DejaVu Sans, Arial, sans-serif" font-size="4" font-weight="bold" fill="#334155" text-anchor="middle" opacity="0.9">UNIVERSITÉ SIDI MOHAMED BEN ABDELLAH</text>
+                <text x="42.5" y="16" font-family="DejaVu Sans, Arial, sans-serif" font-size="4.8" font-weight="bold" fill="#1e293b" text-anchor="middle" opacity="0.95">SECRÉTARIAT GÉNÉRAL</text>
+                <text x="42.5" y="24" font-family="DejaVu Sans, Arial, sans-serif" font-size="4.2" font-weight="bold" fill="#0369a1" text-anchor="middle">VISA &amp; ENREGISTREMENT</text>
+                <text x="42.5" y="30" font-family="DejaVu Sans, Arial, sans-serif" font-size="3.6" fill="#64748b" text-anchor="middle">REGISTRE DISCIPLINAIRE</text>
+            </g>
+            <path d="M 40 46 Q 60 18 80 34 T 106 24 Q 126 44 146 20 T 165 32 M 50 52 Q 98 56 155 48" fill="none" stroke="#1e293b" stroke-width="2.2" stroke-linecap="round"/>
+        </svg>';
+
+        return 'data:image/svg+xml;base64,'.base64_encode($svg);
     }
 
     private function generateDefaultProfSignature(string $name): string

@@ -77,17 +77,18 @@ class ArabicGlyphReshaper
 
         // Split text into words and non-Arabic tokens
         $tokens = preg_split('/(\s+|[^\p{Arabic}\p{M}]+)/u', $text, -1, PREG_SPLIT_DELIM_CAPTURE);
-        $result = '';
+        $result = [];
 
         foreach ($tokens as $token) {
             if (preg_match('/\p{Arabic}/u', $token)) {
-                $result .= self::reshapeWord($token);
+                $result[] = self::reshapeWord($token);
             } else {
-                $result .= $token;
+                $result[] = $token;
             }
         }
 
-        return $result;
+        // Reverse tokens order so DomPDF (LTR font engine) renders words in authentic RTL reading order
+        return implode('', array_reverse($result));
     }
 
     /**
@@ -144,7 +145,8 @@ class ArabicGlyphReshaper
             $reshaped[] = self::$glyphMap[$curr][$formIndex];
         }
 
-        return self::codepointsToUtf8($reshaped);
+        // Reverse reshaped codepoints so DomPDF LTR font engine renders Arabic glyphs in natural RTL order
+        return self::codepointsToUtf8(array_reverse($reshaped));
     }
 
     private static function getLamAlef(int $alefCode, ?int $prevCode): ?int
