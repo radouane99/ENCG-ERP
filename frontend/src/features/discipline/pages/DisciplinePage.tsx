@@ -291,10 +291,27 @@ export default function DisciplinePage(): React.ReactElement {
     }
   }
 
-  // Helper to open PDF in a new tab
-  const handleOpenPdfTab = (type: 'convocation' | 'decision', id: number) => {
-    const url = `/api/discipline/${id}/${type === 'convocation' ? 'convocation-pdf' : 'decision-pdf'}`
-    window.open(url, '_blank')
+  // Helper to open PDF in a new tab safely using authenticated blob
+  const handleOpenPdfTab = async (type: 'convocation' | 'decision', id: number) => {
+    if (pdfBlobUrl && selectedCase?.id === id && (
+      (type === 'convocation' && printDocumentType === 'convocation') ||
+      (type === 'decision' && printDocumentType === 'pv_decision')
+    )) {
+      window.open(pdfBlobUrl, '_blank')
+      return
+    }
+
+    const toastId = toast.loading('Chargement du PDF...')
+    try {
+      const endpoint = `/discipline/${id}/${type === 'convocation' ? 'convocation-pdf' : 'decision-pdf'}`
+      const res = await api.get(endpoint, { responseType: 'blob' })
+      const blob = new Blob([res.data], { type: 'application/pdf' })
+      const url = window.URL.createObjectURL(blob)
+      toast.dismiss(toastId)
+      window.open(url, '_blank')
+    } catch {
+      toast.error('Erreur lors de l\'ouverture du document PDF.', { id: toastId })
+    }
   }
 
   const resetCreateForm = () => {
