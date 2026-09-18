@@ -613,12 +613,19 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|super_admin|instituti
     Route::post('/discipline/{id}/decide', [ExamIncidentController::class, 'decide']);
     Route::delete('/discipline/{id}', [ExamIncidentController::class, 'destroy']);
 
+    Route::get('/discipline/batch-pdf', [PdfExportController::class, 'batchDisciplinePdf']);
+    Route::get('/discipline/{id}/convocation-pdf', [PdfExportController::class, 'convocationDisciplinePdf']);
+    Route::get('/discipline/{id}/decision-pdf', [PdfExportController::class, 'decisionDisciplinePdf']);
+
     // Admin prefix alias for discipline
     Route::prefix('admin/discipline')->group(function () {
         Route::get('/', [ExamIncidentController::class, 'index']);
         Route::post('/', [ExamIncidentController::class, 'store']);
         Route::get('/students-list', [ExamIncidentController::class, 'studentsList']);
         Route::post('/seed-samples', [ExamIncidentController::class, 'seedSamples']);
+        Route::get('/batch-pdf', [PdfExportController::class, 'batchDisciplinePdf']);
+        Route::get('/{id}/convocation-pdf', [PdfExportController::class, 'convocationDisciplinePdf']);
+        Route::get('/{id}/decision-pdf', [PdfExportController::class, 'decisionDisciplinePdf']);
         Route::post('/{id}/convoke', [ExamIncidentController::class, 'convoke']);
         Route::post('/{id}/decide', [ExamIncidentController::class, 'decide']);
         Route::delete('/{id}', [ExamIncidentController::class, 'destroy']);

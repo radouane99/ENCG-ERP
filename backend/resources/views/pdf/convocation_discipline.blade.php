@@ -1,275 +1,411 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <title>Convocation au Conseil de Discipline - ENCG Fès</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <title>Convocation au Conseil de Discipline — {{ $fullNameFr ?? ($student->last_name ?? '') }}</title>
     <style>
         @page {
             size: A4 portrait;
-            margin: 12mm 15mm 12mm 15mm;
+            margin: 8mm 10mm 8mm 10mm;
+        }
+        * {
+            box-sizing: border-box;
         }
         body {
-            font-family: Arial, sans-serif;
-            font-size: 10.5pt;
-            color: #1e293b;
-            line-height: 1.4;
+            font-family: 'DejaVu Sans', 'Helvetica Neue', Arial, sans-serif;
+            color: #0f172a;
             margin: 0;
             padding: 0;
+            font-size: 8pt;
+            line-height: 1.35;
+            background: #ffffff;
         }
+        .page-container {
+            border: 2px solid #4a1010;
+            padding: 10px 14px 8px 14px;
+            background: #ffffff;
+            position: relative;
+            min-height: 275mm;
+            max-height: 275mm;
+        }
+
+        /* En-tête officiel ENCG Fès & Royaume du Maroc */
         .header-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 15px;
-            border-bottom: 2px solid #0f2863;
-            padding-bottom: 8px;
+            table-layout: fixed;
+            margin-bottom: 4px;
         }
         .header-table td {
             vertical-align: middle;
+            border: none;
+            padding: 0;
         }
-        .logo-img {
-            max-height: 65px;
-            width: auto;
+        .gold-divider {
+            height: 2px;
+            background: #c9a227;
+            margin: 4px 0 6px 0;
         }
-        .header-title {
-            text-align: center;
-        }
-        .header-title h1 {
-            font-size: 11pt;
-            font-weight: bold;
-            color: #0f2863;
-            margin: 0;
-            text-transform: uppercase;
-        }
-        .header-title h2 {
-            font-size: 12pt;
-            font-weight: bold;
-            color: #1e3a8a;
-            margin: 2px 0 0 0;
-        }
-        .header-title p {
-            font-size: 8.5pt;
-            color: #64748b;
-            margin: 1px 0 0 0;
-        }
-        .doc-title-box {
-            background-color: #0f2863;
-            color: #ffffff;
-            text-align: center;
-            padding: 8px;
-            border-radius: 6px;
-            margin-bottom: 18px;
-        }
-        .doc-title-box h3 {
-            margin: 0;
-            font-size: 13pt;
-            font-weight: bold;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-        .ref-no {
-            font-size: 8.5pt;
-            color: #e2e8f0;
-            margin-top: 3px;
-        }
-        .section-box {
-            border: 1px solid #cbd5e1;
-            border-radius: 6px;
-            padding: 12px;
-            margin-bottom: 15px;
-            background-color: #f8fafc;
-        }
-        .section-title {
-            font-size: 10pt;
-            font-weight: bold;
-            color: #0f2863;
-            text-transform: uppercase;
-            border-bottom: 1px solid #cbd5e1;
-            padding-bottom: 4px;
+
+        /* Titre Officiel */
+        .title-table {
+            width: 100%;
+            border-collapse: collapse;
             margin-bottom: 8px;
         }
-        .info-table {
+        .title-cell {
+            background-color: #4a1010;
+            color: #ffffff;
+            text-align: center;
+            padding: 6px 8px;
+            border-radius: 3px;
+        }
+        .title-cell h1 {
+            font-size: 11pt;
+            font-weight: 900;
+            letter-spacing: 0.8px;
+            color: #ffffff;
+            text-transform: uppercase;
+            margin: 0;
+            line-height: 1.2;
+        }
+        .title-cell .sub {
+            font-size: 7pt;
+            font-weight: bold;
+            color: #fde047;
+            margin-top: 2px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Dossier Candidat (Bento Grid) */
+        .dossier-table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+            margin-bottom: 8px;
+        }
+        .dossier-cell {
+            border: 1px solid #cbd5e1;
+            padding: 4px 8px;
+            background: #f8fafc;
+            vertical-align: top;
+        }
+        .tile-label {
+            font-size: 5.8pt;
+            font-weight: 800;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            display: block;
+            margin-bottom: 1px;
+        }
+        .tile-value {
+            font-size: 8.5pt;
+            font-weight: 900;
+            color: #0f172a;
+        }
+
+        /* Encadré Infraction & Faits */
+        .incident-box {
+            border: 1.5px solid #cbd5e1;
+            background-color: #ffffff;
+            border-radius: 4px;
+            padding: 8px 10px;
+            margin-bottom: 8px;
+        }
+        .incident-header {
+            font-size: 7.5pt;
+            font-weight: 900;
+            color: #4a1010;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 3px;
+            margin-bottom: 5px;
+        }
+        .incident-table {
             width: 100%;
             border-collapse: collapse;
         }
-        .info-table td {
-            padding: 4px 6px;
-            font-size: 9.5pt;
+        .incident-table td {
+            padding: 2.5px 4px;
+            font-size: 7.5pt;
+            vertical-align: top;
         }
-        .info-label {
+        .incident-lbl {
+            width: 25%;
             font-weight: bold;
             color: #475569;
-            width: 32%;
         }
-        .info-val {
+        .incident-val {
+            width: 75%;
+            font-weight: 600;
             color: #0f172a;
-            font-weight: bold;
         }
-        .hearing-card {
-            border: 2px solid #b91c1c;
+
+        /* Encadré Audience & Convocation */
+        .hearing-box {
+            border: 2px solid #991b1b;
             background-color: #fef2f2;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 15px;
+            border-radius: 6px;
+            padding: 8px 12px;
+            margin-bottom: 8px;
             text-align: center;
         }
-        .hearing-card h4 {
-            margin: 0 0 6px 0;
+        .hearing-title {
+            font-size: 8.5pt;
+            font-weight: 900;
             color: #991b1b;
-            font-size: 11pt;
             text-transform: uppercase;
+            letter-spacing: 0.6px;
+            margin-bottom: 3px;
         }
         .hearing-details {
-            font-size: 11pt;
-            font-weight: bold;
-            color: #7f1d1d;
-        }
-        .body-text {
             font-size: 9.5pt;
+            font-weight: 900;
+            color: #450a0a;
+            line-height: 1.3;
+        }
+
+        /* Texte Légal et Dispositions */
+        .legal-block {
+            font-size: 6.8pt;
+            color: #334155;
+            line-height: 1.35;
             text-align: justify;
-            margin-bottom: 15px;
+            margin-bottom: 8px;
+            padding: 5px 8px;
+            background-color: #f1f5f9;
+            border-left: 3px solid #4a1010;
         }
-        .legal-notice {
-            font-size: 8.5pt;
-            color: #64748b;
-            font-style: italic;
-            border-left: 3px solid #0f2863;
-            padding-left: 8px;
-            margin-bottom: 20px;
-        }
+
+        /* Signatures */
         .signatures-table {
             width: 100%;
-            margin-top: 25px;
             border-collapse: collapse;
+            margin-top: 6px;
         }
         .signatures-table td {
             width: 50%;
             text-align: center;
             vertical-align: top;
+            padding: 0 10px;
         }
-        .sign-title {
-            font-weight: bold;
-            font-size: 9.5pt;
-            color: #0f2863;
-            margin-bottom: 45px;
-            text-transform: uppercase;
-        }
-        .seal-box {
+        .sign-role {
             font-size: 7.5pt;
-            font-family: monospace;
-            color: #94a3b8;
-            margin-top: 15px;
-            text-align: center;
+            font-weight: 900;
+            color: #4a1010;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+        .sign-sub {
+            font-size: 6pt;
+            color: #64748b;
+            margin-bottom: 4px;
+        }
+        .signature-img {
+            max-height: 44px;
+            margin: 2px auto;
+            display: block;
+        }
+
+        /* Pied de page & Sceau */
+        .footer-seal-table {
+            width: 100%;
+            border-collapse: collapse;
             border-top: 1px dashed #cbd5e1;
-            padding-top: 6px;
+            padding-top: 4px;
+            margin-top: 6px;
+        }
+        .footer-seal-table td {
+            vertical-align: middle;
+        }
+        .hash-code {
+            font-family: monospace;
+            font-size: 6pt;
+            color: #64748b;
+            line-height: 1.25;
         }
     </style>
 </head>
 <body>
 
-    <!-- Header -->
+<div class="page-container">
+
+    <!-- En-tête Officiel -->
     <table class="header-table">
         <tr>
-            <td style="width: 25%;">
+            <td style="width: 25%; text-align: left;">
                 @if(!empty($logoBase64))
-                    <img src="{{ $logoBase64 }}" class="logo-img" alt="Logo ENCG">
+                    <img src="{{ $logoBase64 }}" style="max-height: 54px; max-width: 100%; width: auto;" alt="Logo ENCG Fès">
                 @else
-                    <strong style="color:#0f2863;">ENCG FÈS</strong>
+                    <strong style="color:#4a1010; font-size: 11pt;">ENCG FÈS</strong>
                 @endif
             </td>
-            <td class="header-title" style="width: 50%;">
-                <h1>Royaume du Maroc</h1>
-                <p>Université Sidi Mohamed Ben Abdellah de Fès</p>
-                <h2>École Nationale de Commerce et de Gestion</h2>
+            <td style="width: 50%; text-align: center;">
+                <div style="font-size: 8.5pt; font-weight: 900; color: #4a1010; text-transform: uppercase; letter-spacing: 0.8px;">
+                    ROYAUME DU MAROC
+                </div>
+                <div style="font-size: 6.8pt; color: #475569; margin: 1px 0;">
+                    Université Sidi Mohamed Ben Abdellah de Fès
+                </div>
+                <div style="font-size: 7.8pt; font-weight: 900; color: #002147; text-transform: uppercase;">
+                    ÉCOLE NATIONALE DE COMMERCE ET DE GESTION
+                </div>
+                <div style="font-size: 6.2pt; font-weight: bold; color: #854d0e; text-transform: uppercase; letter-spacing: 0.6px; margin-top: 1px;">
+                    Instance Juridictionnelle du Conseil de Discipline
+                </div>
             </td>
             <td style="width: 25%; text-align: right;">
-                @if(!empty($qrBase64))
-                    <img src="{{ $qrBase64 }}" style="height: 55px; width: 55px;" alt="QR Code">
-                @endif
+                <div style="font-size: 6.5pt; color: #64748b; font-family: monospace;">
+                    <strong>RÉFÉRENCE :</strong><br>
+                    ENCG/CD-2026/{{ str_pad($incident->id ?? 1, 4, '0', STR_PAD_LEFT) }}<br>
+                    Date : {{ date('d/m/Y') }}
+                </div>
             </td>
         </tr>
     </table>
 
-    <!-- Title -->
-    <div class="doc-title-box">
-        <h3>Convocation Officielle au Conseil de Discipline</h3>
-        <div class="ref-no">Dossier Disciplinaire N° CD-2026/{{ str_pad($incident->id ?? 1, 4, '0', STR_PAD_LEFT) }} — Session d'Examen</div>
-    </div>
+    <div class="gold-divider"></div>
 
-    <!-- Student Info -->
-    <div class="section-box">
-        <div class="section-title">Identité du Candidat Convoqué</div>
-        <table class="info-table">
+    <!-- Titre Officiel -->
+    <table class="title-table">
+        <tr>
+            <td class="title-cell">
+                <h1>CONVOCATION DEVANT LE CONSEIL DE DISCIPLINE</h1>
+                <div class="sub">Audition Contradictoire — Application de la Loi 01-00 (Article 24)</div>
+            </td>
+        </tr>
+    </table>
+
+    <!-- Informations du Candidat Convoqué -->
+    <table class="dossier-table">
+        <tr>
+            <td class="dossier-cell" style="width: 50%;">
+                <span class="tile-label">Nom et Prénom du Candidat</span>
+                <span class="tile-value">{{ strtoupper($fullNameFr ?? ($student->last_name ?? '')) }}</span>
+                @if(!empty($fullNameAr))
+                    <span style="font-size: 8.5pt; color: #854d0e; font-weight: bold; margin-left: 6px;">({{ $fullNameAr }})</span>
+                @endif
+            </td>
+            <td class="dossier-cell" style="width: 25%;">
+                <span class="tile-label">Code National / Massar</span>
+                <span class="tile-value" style="font-family: monospace;">{{ $cne ?? ($student->cne ?? 'N/A') }}</span>
+            </td>
+            <td class="dossier-cell" style="width: 25%;">
+                <span class="tile-label">Année Académique</span>
+                <span class="tile-value">2025 / 2026</span>
+            </td>
+        </tr>
+        <tr>
+            <td class="dossier-cell" colspan="2">
+                <span class="tile-label">Filière / Cycle de Formation</span>
+                <span class="tile-value" style="font-size: 8pt; color: #4a1010;">{{ $filiere ?? ($module->filiere->name ?? 'Tronc Commun ENCG') }}</span>
+            </td>
+            <td class="dossier-cell">
+                <span class="tile-label">Statut Administratif</span>
+                <span class="tile-value" style="color: #b91c1c; font-size: 7.5pt;">Inscrit / Convoqué</span>
+            </td>
+        </tr>
+    </table>
+
+    <!-- Motif et Circonstances de l'Infraction -->
+    <div class="incident-box">
+        <div class="incident-header">1. Constatations Préliminaires & Griefs Retenus</div>
+        <table class="incident-table">
             <tr>
-                <td class="info-label">Nom & Prénom :</td>
-                <td class="info-val">{{ strtoupper($student->last_name ?? $user->name ?? '') }} {{ ucfirst($student->first_name ?? '') }}</td>
-                <td class="info-label">Code Apogée / CNE :</td>
-                <td class="info-val">{{ $student->cne ?? $student->student_number ?? 'N/A' }}</td>
+                <td class="incident-lbl">Épreuve / Module :</td>
+                <td class="incident-val" style="font-size: 8.2pt; color: #4a1010;">
+                    <strong>{{ $moduleName ?? ($module->name ?? 'Épreuve Semestrielle') }}</strong>
+                    <span style="font-size: 7pt; color: #64748b;">(Date : {{ $examDate ?? ($incident->created_at?->format('d/m/Y') ?? date('d/m/Y')) }})</span>
+                </td>
             </tr>
             <tr>
-                <td class="info-label">Filière / Spécialité :</td>
-                <td class="info-val">{{ $module->filiere->name ?? 'ENCG Grande École' }}</td>
-                <td class="info-label">Année Académique :</td>
-                <td class="info-val">2025 / 2026</td>
+                <td class="incident-lbl">Nature de l'Infraction :</td>
+                <td class="incident-val" style="color: #991b1b; font-weight: 900;">
+                    {{ $typeLabel ?? ($incident->type_label ?? ($incident->type === 'fraude' ? 'Fraude flagrante à l\'examen' : ucfirst($incident->type))) }}
+                </td>
             </tr>
+            <tr>
+                <td class="incident-lbl">Circonstances des Faits :</td>
+                <td class="incident-val" style="text-align: justify;">
+                    {{ $incident->description ?? 'Faits dûment constatés et consignés par les surveillants au Procès-Verbal officiel de surveillance de la salle d\'examen.' }}
+                </td>
+            </tr>
+            @if(!empty($incident->confiscated_items))
+            <tr>
+                <td class="incident-lbl">Éléments Matériels Saisis :</td>
+                <td class="incident-val" style="color: #854d0e; font-weight: bold;">
+                    📦 {{ $incident->confiscated_items }} (Placés sous scellé au secrétariat de séance)
+                </td>
+            </tr>
+            @endif
         </table>
     </div>
 
-    <!-- Incident Info -->
-    <div class="section-box" style="background-color: #fff font-size: 9pt;">
-        <div class="section-title">Motif du Signalement (Incident d'Examen)</div>
-        <table class="info-table">
-            <tr>
-                <td class="info-label">Module Concerné :</td>
-                <td class="info-val">{{ $module->name ?? 'Examen Officiel' }} ({{ $module->code ?? 'MOD' }})</td>
-            </tr>
-            <tr>
-                <td class="info-label">Nature de la Fraude :</td>
-                <td class="info-val" style="color: #b91c1c;">{{ $incident->type === 'fraude' ? 'FRAUDE CONSTATÉE LORS DE L\'ÉPREUVE' : ucfirst($incident->type) }}</td>
-            </tr>
-            <tr>
-                <td class="info-label">Description / Pièces :</td>
-                <td class="info-val" style="font-weight: normal;">{{ $incident->description ?? 'Incident consigné au Procès-Verbal de Surveillance' }} {{ $incident->confiscated_items ? " (Saisie : {$incident->confiscated_items})" : '' }}</td>
-            </tr>
-        </table>
-    </div>
-
-    <!-- Hearing Appointment Box -->
-    <div class="hearing-card">
-        <h4>Date & Lieu de Comparution Obligatoire</h4>
+    <!-- Convocation Obligatoire -->
+    <div class="hearing-box">
+        <div class="hearing-title">2. Date, Heure et Lieu de Comparution Obligatoire</div>
         <div class="hearing-details">
-            Date : {{ $incident->hearing_date ?? date('d/m/Y à 10h00') }}<br>
-            Lieu : {{ $incident->hearing_room ?? 'Salle des Actes — Présidence ENCG Fès' }}
+            📅 Séance du : <u>{{ $hearingDate ?? ($incident->hearing_date ?? date('d/m/Y à 10h00')) }}</u><br>
+            📍 Lieu de réunion : <u>{{ $hearingRoom ?? ($incident->hearing_room ?? 'Salle des Actes — ENCG Fès') }}</u>
         </div>
     </div>
 
-    <!-- Legal Text -->
-    <div class="body-text">
-        Vous êtes convoqué(e) à comparaître devant les membres du <strong>Conseil de Discipline de l'ENCG Fès</strong> afin d'être entendu(e) au sujet des faits qui vous sont reprochés. Vous avez la possibilité de présenter vos observations écrites ou orales et de consulter les pièces de votre dossier auprès du Secrétariat de la Direction.
+    <!-- Dispositions Procédurales et Droits de la Défense -->
+    <div class="legal-block">
+        <strong>DROITS DU CANDIDAT & DISPOSITIONS PROCÉDURALES :</strong><br>
+        En application de la <strong>Loi n° 01-00 portant organisation de l'enseignement supérieur</strong> et du règlement intérieur des études de l'ENCG Fès, vous êtes tenu(e) de vous présenter en personne aux date et heure indiquées. Il vous est loisible de consulter préalablement les pièces de votre dossier au Secrétariat de la Direction et de vous faire assister par un représentant étudiant de l'établissement.
+        <br>
+        <strong>Avertissement :</strong> En cas de non-comparution sans motif légitime dûment justifié au préalable, le Conseil de Discipline passera outre et délibérera valablement en votre absence.
     </div>
 
-    <div class="legal-notice">
-        NB : En application du Règlement Intérieur de l'ENCG Fès et des directives du MESRSFC, la non-comparution non justifiée ne fait pas obstacle au déroulement de la délibération disciplinaire et aux sanctions statutaires applicables.
-    </div>
-
-    <!-- Signatures -->
+    <!-- Signatures Officielles -->
     <table class="signatures-table">
         <tr>
             <td>
-                <div class="sign-title">Le Président du Conseil de Discipline</div>
-                <div style="font-size: 8.5pt; color: #64748b;">(Signature et Cachet Officiel)</div>
+                <div class="sign-role">Le Secrétaire Général</div>
+                <div class="sign-sub">ENCG Fès</div>
+                @if(!empty($secretaireSignature))
+                    <img src="{{ $secretaireSignature }}" class="signature-img" alt="Signature SG">
+                @else
+                    <div style="height: 44px;"></div>
+                @endif
+                <div style="font-size: 6.5pt; font-weight: bold; color: #475569;">Signé & Enregistré au Registre</div>
             </td>
             <td>
-                <div class="sign-title">Le Directeur de l'ENCG Fès</div>
-                <div style="font-size: 8.5pt; color: #64748b;">(Signature et Empreinte Institutionnelle)</div>
+                <div class="sign-role">Le Directeur de l'ENCG Fès</div>
+                <div class="sign-sub">Président du Conseil de Discipline</div>
+                @if(!empty($directorSignature))
+                    <img src="{{ $directorSignature }}" class="signature-img" alt="Signature Directeur">
+                @else
+                    <div style="height: 44px;"></div>
+                @endif
+                <div style="font-size: 6.5pt; font-weight: bold; color: #475569;">(Cachet & Signature Institutionnels)</div>
             </td>
         </tr>
     </table>
 
-    <!-- Cryptographic Seal -->
-    <div class="seal-box">
-        EMPREINTE CRYPTOGRAPHIQUE SHA-256 : {{ $sealHash ?? 'ENCG-DISCIPLINE-SEAL' }}<br>
-        Document institutionnel officiel généré par le Système ERP ENCG Fès — {{ date('d/m/Y H:i:s') }}
-    </div>
+    <!-- Sceau Cryptographique et Validation QR -->
+    <table class="footer-seal-table">
+        <tr>
+            <td style="width: 14%; text-align: left;">
+                @if(!empty($qrBase64))
+                    <img src="{{ $qrBase64 }}" style="height: 48px; width: 48px;" alt="QR Authentification">
+                @endif
+            </td>
+            <td style="width: 86%; text-align: left; padding-left: 6px;">
+                <div class="hash-code">
+                    <strong>EMPREINTE CRYPTOGRAPHIQUE DE SÉCURITÉ (SHA-256) :</strong><br>
+                    {{ $sealHash ?? 'ENCG-FES-CD-'.strtoupper(hash('sha256', 'DISCIPLINE-'.$incident->id)) }}<br>
+                    Document officiel certifié délivré par le Système Numérique Centralisé ENCG ERP. Toute altération est passible de sanctions pénales.
+                </div>
+            </td>
+        </tr>
+    </table>
+
+</div>
 
 </body>
 </html>

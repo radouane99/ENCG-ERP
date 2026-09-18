@@ -1820,32 +1820,173 @@ class PdfExportController extends Controller
     {
         $incident = ExamIncident::with(['exam.module.filiere', 'student.user'])->findOrFail($incidentId);
 
+        $student = $incident->student;
+        $user = $student?->user;
+        $firstNameFr = $user?->first_name ?? ($user ? explode(' ', $user->name)[0] : 'Étudiant');
+        $lastNameFr = $user?->last_name ?? ($user ? (explode(' ', $user->name)[1] ?? '') : '');
+        $fullNameFr = trim(($firstNameFr ?: ($user?->name ?? 'Étudiant')) . ' ' . $lastNameFr);
+        $fullNameAr = trim(($student?->first_name_ar ?? '') . ' ' . ($student?->last_name_ar ?? ''));
+
+        $sealHash = strtoupper(hash('sha256', "CONVOCATION-DISCIPLINE-{$incident->id}-{$incident->student_id}-ENCG"));
+        $verifyUrl = url("/verify-discipline?id={$incident->id}&hash=" . substr($sealHash, 0, 16));
+
+        $qrBase64 = '';
+        try {
+            $raw = QrCode::format('svg')->size(140)->margin(0)->generate($verifyUrl);
+            $qrBase64 = 'data:image/svg+xml;base64,'.base64_encode((string) $raw);
+        } catch (\Throwable $e) {}
+
         $pdf = $this->getPdfInstance('pdf.convocation_discipline', [
             'incident' => $incident,
-            'student' => $incident->student,
-            'user' => $incident->student?->user,
+            'student' => $student,
+            'user' => $user,
             'exam' => $incident->exam,
             'module' => $incident->exam?->module,
-            'sealHash' => strtoupper(hash('sha256', "CONVOCATION-DISCIPLINE-{$incident->id}-{$incident->student_id}-ENCG")),
+            'fullNameFr' => $fullNameFr,
+            'fullNameAr' => $fullNameAr,
+            'cne' => $student?->cne ?? 'N/A',
+            'filiere' => $incident->exam?->module?->filiere?->name ?? 'Tronc Commun ENCG',
+            'moduleName' => $incident->exam?->module?->name ?? 'Épreuve Semestrielle',
+            'examDate' => $incident->exam?->exam_date ?? $incident->created_at?->format('d/m/Y'),
+            'typeLabel' => match($incident->type) {
+                'fraude_antiseche', 'antiseche' => 'Fraude Antisèche / Documents',
+                'fraude_smartphone', 'smartphone' => 'Usage Smartphone / IA',
+                'usurpation' => 'Usurpation d\'Identité',
+                'perturbation' => 'Perturbation & Refus d\'Obtempérer',
+                'plagiat' => 'Plagiat Académique',
+                'suspicion_fraude' => 'Suspicion de Fraude',
+                default => ucfirst($incident->type),
+            },
+            'hearingDate' => $incident->hearing_date ?: 'Date à préciser',
+            'hearingRoom' => $incident->hearing_room ?: 'Salle des Actes — ENCG Fès',
+            'sealHash' => $sealHash,
+            'verifyUrl' => $verifyUrl,
+            'qrBase64' => $qrBase64,
+            'directorSignature' => $this->generateDefaultProfSignature("LE DIRECTEUR DE L'ENCG FÈS"),
+            'secretaireSignature' => $this->generateDefaultProfSignature("LE SECRÉTAIRE GÉNÉRAL"),
         ])->setPaper('a4', 'portrait');
 
-        return $pdf->stream("Convocation_Conseil_Discipline_{$incident->student->last_name}_{$incidentId}.pdf");
+        $safeName = preg_replace('/[^A-Za-z0-9_]/', '_', $fullNameFr);
+        return $pdf->stream("Convocation_Conseil_Discipline_{$safeName}_{$incidentId}.pdf");
     }
 
     public function decisionDisciplinePdf(int $incidentId)
     {
         $incident = ExamIncident::with(['exam.module.filiere', 'student.user'])->findOrFail($incidentId);
 
+        $student = $incident->student;
+        $user = $student?->user;
+        $firstNameFr = $user?->first_name ?? ($user ? explode(' ', $user->name)[0] : 'Étudiant');
+        $lastNameFr = $user?->last_name ?? ($user ? (explode(' ', $user->name)[1] ?? '') : '');
+        $fullNameFr = trim(($firstNameFr ?: ($user?->name ?? 'Étudiant')) . ' ' . $lastNameFr);
+        $fullNameAr = trim(($student?->first_name_ar ?? '') . ' ' . ($student?->last_name_ar ?? ''));
+
+        $sealHash = strtoupper(hash('sha256', "DECISION-DISCIPLINE-{$incident->id}-{$incident->student_id}-ENCG"));
+        $verifyUrl = url("/verify-discipline-pv?id={$incident->id}&hash=" . substr($sealHash, 0, 16));
+
+        $qrBase64 = '';
+        try {
+            $raw = QrCode::format('svg')->size(140)->margin(0)->generate($verifyUrl);
+            $qrBase64 = 'data:image/svg+xml;base64,'.base64_encode((string) $raw);
+        } catch (\Throwable $e) {}
+
         $pdf = $this->getPdfInstance('pdf.decision_discipline', [
             'incident' => $incident,
-            'student' => $incident->student,
-            'user' => $incident->student?->user,
+            'student' => $student,
+            'user' => $user,
             'exam' => $incident->exam,
             'module' => $incident->exam?->module,
-            'sealHash' => strtoupper(hash('sha256', "DECISION-DISCIPLINE-{$incident->id}-{$incident->student_id}")),
+            'fullNameFr' => $fullNameFr,
+            'fullNameAr' => $fullNameAr,
+            'cne' => $student?->cne ?? 'N/A',
+            'filiere' => $incident->exam?->module?->filiere?->name ?? 'Tronc Commun ENCG',
+            'moduleName' => $incident->exam?->module?->name ?? 'Épreuve Semestrielle',
+            'examDate' => $incident->exam?->exam_date ?? $incident->created_at?->format('d/m/Y'),
+            'typeLabel' => match($incident->type) {
+                'fraude_antiseche', 'antiseche' => 'Fraude Antisèche / Documents',
+                'fraude_smartphone', 'smartphone' => 'Usage Smartphone / IA',
+                'usurpation' => 'Usurpation d\'Identité',
+                'perturbation' => 'Perturbation & Refus d\'Obtempérer',
+                'plagiat' => 'Plagiat Académique',
+                'suspicion_fraude' => 'Suspicion de Fraude',
+                default => ucfirst($incident->type),
+            },
+            'sealHash' => $sealHash,
+            'verifyUrl' => $verifyUrl,
+            'qrBase64' => $qrBase64,
+            'directorSignature' => $this->generateDefaultProfSignature("LE DIRECTEUR DE L'ENCG FÈS"),
+            'secretaireSignature' => $this->generateDefaultProfSignature("LE SECRÉTAIRE GÉNÉRAL"),
         ])->setPaper('a4', 'portrait');
 
-        return $pdf->stream("Decision_Conseil_Discipline_{$incident->student->last_name}_{$incidentId}.pdf");
+        $safeName = preg_replace('/[^A-Za-z0-9_]/', '_', $fullNameFr);
+        return $pdf->stream("PV_Decision_Conseil_Discipline_{$safeName}_{$incidentId}.pdf");
+    }
+
+    public function batchDisciplinePdf(Request $request)
+    {
+        $incidents = ExamIncident::with(['exam.module.filiere', 'student.user'])
+            ->latest()
+            ->get();
+
+        $logoBase64 = $this->resolveLogoBase64();
+        $batchSealHash = strtoupper(hash('sha256', "BATCH-CONVOCATIONS-ENCG-" . now()->format('Ymd')));
+        $directorSignature = $this->generateDefaultProfSignature("LE DIRECTEUR DE L'ENCG FÈS");
+        $secretaireSignature = $this->generateDefaultProfSignature("LE SECRÉTAIRE GÉNÉRAL");
+
+        $items = $incidents->map(function ($inc) {
+            $student = $inc->student;
+            $user = $student?->user;
+            $firstNameFr = $user?->first_name ?? ($user ? explode(' ', $user->name)[0] : 'Étudiant');
+            $lastNameFr = $user?->last_name ?? ($user ? (explode(' ', $user->name)[1] ?? '') : '');
+            $fullNameFr = trim(($firstNameFr ?: ($user?->name ?? 'Étudiant')) . ' ' . $lastNameFr);
+            $fullNameAr = trim(($student?->first_name_ar ?? '') . ' ' . ($student?->last_name_ar ?? ''));
+
+            $sealHash = strtoupper(hash('sha256', "CONVOCATION-DISCIPLINE-{$inc->id}-{$inc->student_id}-ENCG"));
+            $verifyUrl = url("/verify-discipline?id={$inc->id}&hash=" . substr($sealHash, 0, 16));
+
+            $qrBase64 = '';
+            try {
+                $raw = QrCode::format('svg')->size(120)->margin(0)->generate($verifyUrl);
+                $qrBase64 = 'data:image/svg+xml;base64,'.base64_encode((string) $raw);
+            } catch (\Throwable $e) {}
+
+            return [
+                'incident' => $inc,
+                'student' => $student,
+                'fullNameFr' => $fullNameFr,
+                'fullNameAr' => $fullNameAr,
+                'cne' => $student?->cne ?? 'N/A',
+                'filiere' => $inc->exam?->module?->filiere?->name ?? 'Tronc Commun ENCG',
+                'module' => $inc->exam?->module?->name ?? 'Épreuve Semestrielle',
+                'examDate' => $inc->exam?->exam_date ?? $inc->created_at?->format('d/m/Y'),
+                'type' => $inc->type,
+                'typeLabel' => match($inc->type) {
+                    'fraude_antiseche', 'antiseche' => 'Fraude Antisèche / Documents',
+                    'fraude_smartphone', 'smartphone' => 'Usage Smartphone / IA',
+                    'usurpation' => 'Usurpation d\'Identité',
+                    'perturbation' => 'Perturbation d\'Épreuve',
+                    'plagiat' => 'Plagiat Académique',
+                    default => ucfirst($inc->type),
+                },
+                'description' => $inc->description,
+                'confiscated' => $inc->confiscated_items,
+                'hearingDate' => $inc->hearing_date ?: 'Date à préciser',
+                'hearingRoom' => $inc->hearing_room ?: 'Salle des Actes — ENCG Fès',
+                'sealHash' => $sealHash,
+                'qrBase64' => $qrBase64,
+            ];
+        });
+
+        $pdf = Pdf::loadView('pdf.batch_discipline', [
+            'items' => $items,
+            'logoBase64' => $logoBase64,
+            'batchSealHash' => $batchSealHash,
+            'directorSignature' => $directorSignature,
+            'secretaireSignature' => $secretaireSignature,
+            'generatedAt' => now()->format('d/m/Y à H:i'),
+        ])->setPaper('a4', 'portrait');
+
+        return $pdf->stream("Lot_Convocations_Conseil_Discipline_ENCG_Fes.pdf");
     }
 
     private function generateDefaultProfSignature(string $name): string
