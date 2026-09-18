@@ -15,7 +15,8 @@ class ExamIncident extends Model
     protected $fillable = [
         'exam_id', 'student_id', 'reported_by', 'type',
         'description', 'confiscated_items', 'status', 'hearing_date',
-        'hearing_room', 'decision', 'sanction_scope',
+        'hearing_room', 'decision', 'sanction_scope', 'hearing_notes',
+        'attachment_path',
     ];
 
     public function exam(): BelongsTo

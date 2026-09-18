@@ -606,8 +606,23 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|super_admin|instituti
 
     // Discipline Council Routes
     Route::get('/discipline', [ExamIncidentController::class, 'index']);
+    Route::post('/discipline', [ExamIncidentController::class, 'store']);
+    Route::get('/discipline/students-list', [ExamIncidentController::class, 'studentsList']);
+    Route::post('/discipline/seed-samples', [ExamIncidentController::class, 'seedSamples']);
     Route::post('/discipline/{id}/convoke', [ExamIncidentController::class, 'convoke']);
     Route::post('/discipline/{id}/decide', [ExamIncidentController::class, 'decide']);
+    Route::delete('/discipline/{id}', [ExamIncidentController::class, 'destroy']);
+
+    // Admin prefix alias for discipline
+    Route::prefix('admin/discipline')->group(function () {
+        Route::get('/', [ExamIncidentController::class, 'index']);
+        Route::post('/', [ExamIncidentController::class, 'store']);
+        Route::get('/students-list', [ExamIncidentController::class, 'studentsList']);
+        Route::post('/seed-samples', [ExamIncidentController::class, 'seedSamples']);
+        Route::post('/{id}/convoke', [ExamIncidentController::class, 'convoke']);
+        Route::post('/{id}/decide', [ExamIncidentController::class, 'decide']);
+        Route::delete('/{id}', [ExamIncidentController::class, 'destroy']);
+    });
 
     // Exam Analytics & Cartography Route
     Route::get('/exam-analytics', [ExamIncidentController::class, 'examAnalytics']);
