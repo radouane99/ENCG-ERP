@@ -199,14 +199,38 @@ class AdminInternshipController extends Controller
         $encadrantName = $soutenance->supervisor?->user ? 'Pr. ' . ($soutenance->supervisor->user->last_name ?? $soutenance->supervisor->user->name) : 'Pr. Benali';
         $rapporteurName = $soutenance->examiner?->user ? 'Pr. ' . ($soutenance->examiner->user->last_name ?? $soutenance->examiner->user->name) : 'Pr. Tazi';
 
-        $logoPath = public_path('logo-encg.png');
-        $resolvedLogoSrc = file_exists($logoPath) ? $logoPath : null;
+        $logoBase64 = null;
+        foreach (['logo-encg.png', 'images/encg_logo.png', 'images/logo-encg.png', 'images/logo.png'] as $candidate) {
+            $path = public_path($candidate);
+            if (file_exists($path)) {
+                $mime = str_ends_with($candidate, '.png') ? 'image/png' : 'image/jpeg';
+                $logoBase64 = "data:{$mime};base64," . base64_encode((string) file_get_contents($path));
+                break;
+            }
+        }
+
+        // Arabic text reshaping using official helper for DomPDF
+        $arKingdom = \App\Helpers\ArabicGlyphReshaper::reshape('المملكة المغربية');
+        $arUniv = \App\Helpers\ArabicGlyphReshaper::reshape('جامعة سيدي محمد بن عبد الله - فاس');
+        $arSchool = \App\Helpers\ArabicGlyphReshaper::reshape('المدرسة الوطنية للتجارة والتسيير بفاس');
+        $arTitle = \App\Helpers\ArabicGlyphReshaper::reshape('إشعار ومقرر الحضور لمناقشة مشروع نهاية الدراسة');
+        $arDegree = \App\Helpers\ArabicGlyphReshaper::reshape('دبلوم المدرسة الوطنية للتجارة والتسيير (درجة ماستر • 5+كاب)');
+        $arDepartment = \App\Helpers\ArabicGlyphReshaper::reshape('مديرية الشؤون البيداغوجية والامتحانات');
+        $arJuryTitle = \App\Helpers\ArabicGlyphReshaper::reshape('لجنة تقييم ومناقشة مشاريع التخرج');
+
+        $studentNameAr = null;
+        if (!empty($student?->first_name_ar) || !empty($student?->last_name_ar)) {
+            $rawAr = trim(($student->last_name_ar ?? '') . ' ' . ($student->first_name_ar ?? ''));
+            if (!empty($rawAr)) {
+                $studentNameAr = \App\Helpers\ArabicGlyphReshaper::reshape($rawAr);
+            }
+        }
 
         $verifyUrl = config('app.url', 'https://encg-fes.ac.ma') . "/verify/soutenance/{$soutenance->id}";
         $qrCodeBase64 = null;
         if (class_exists(\SimpleSoftwareIO\QrCode\Facades\QrCode::class)) {
             try {
-                $qrSvg = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')->size(100)->margin(0)->generate($verifyUrl);
+                $qrSvg = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')->size(120)->margin(0)->generate($verifyUrl);
                 $qrCodeBase64 = 'data:image/svg+xml;base64,' . base64_encode($qrSvg);
             } catch (\Throwable $e) {
                 // Fallback gracefully
@@ -216,6 +240,7 @@ class AdminInternshipController extends Controller
         $data = [
             'soutenanceId' => $soutenance->id,
             'studentName' => $studentName,
+            'studentNameAr' => $studentNameAr,
             'filiereName' => $filiereName,
             'topic' => $soutenance->finalProject?->title ?? $soutenance->internship?->company_name ?? 'Projet de Fin d\'Études',
             'dateFormatted' => $dateFormatted,
@@ -228,8 +253,17 @@ class AdminInternshipController extends Controller
             'academicYear' => '2025 - 2026',
             'cne' => $student?->cne ?? ('N138094' . str_pad((string)$soutenance->id, 3, '0', STR_PAD_LEFT)),
             'cin' => $student?->cin ?? ($user?->cin ?? ('CD' . (600000 + $soutenance->id * 31))),
-            'resolvedLogoSrc' => $resolvedLogoSrc,
+            'logoBase64' => $logoBase64,
+            'resolvedLogoSrc' => $logoBase64,
             'qrCodeBase64' => $qrCodeBase64,
+            'verifyUrl' => $verifyUrl,
+            'arKingdom' => $arKingdom,
+            'arUniv' => $arUniv,
+            'arSchool' => $arSchool,
+            'arTitle' => $arTitle,
+            'arDegree' => $arDegree,
+            'arDepartment' => $arDepartment,
+            'arJuryTitle' => $arJuryTitle,
         ];
 
         $pdf = Pdf::loadView('pdf.convocation_soutenance_pfe', $data)

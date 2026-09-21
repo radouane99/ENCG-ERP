@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class Filiere extends Model
 {
@@ -65,5 +66,17 @@ class Filiere extends Model
     public function studentRegistrations(): HasMany
     {
         return $this->hasMany(StudentRegistration::class);
+    }
+
+    public function students(): HasManyThrough
+    {
+        return $this->hasManyThrough(
+            Student::class,
+            StudentPathway::class,
+            'filiere_id',
+            'id',
+            'id',
+            'student_id'
+        );
     }
 }

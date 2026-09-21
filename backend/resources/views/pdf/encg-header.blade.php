@@ -14,6 +14,11 @@
             }
         }
     }
+
+    if ($resolvedLogoSrc && !str_starts_with($resolvedLogoSrc, 'data:') && file_exists($resolvedLogoSrc)) {
+        $mime = str_ends_with($resolvedLogoSrc, '.png') ? 'image/png' : 'image/jpeg';
+        $resolvedLogoSrc = "data:{$mime};base64," . base64_encode((string) file_get_contents($resolvedLogoSrc));
+    }
 @endphp
 
 <table class="encg-official-header" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;border-bottom:{{ !empty($compact) ? '1px' : '1.5px' }} solid #1a3a5c;padding-bottom:{{ !empty($compact) ? '2px' : '5px' }};margin-bottom:{{ !empty($compact) ? '2px' : '6px' }};">

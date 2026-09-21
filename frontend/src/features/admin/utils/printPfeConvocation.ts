@@ -608,11 +608,13 @@ export function generatePfeConvocationHtml(data: SoutenanceConvocationData): str
               <img src="/logo-encg.png" alt="Logo ENCG Fès — USMBA" onerror="this.onerror=null; this.src='https://encg-fes.ac.ma/wp-content/uploads/2021/03/logo-encg.png';">
             </td>
             <td class="header-center">
-              <div class="ar-kingdom">المملكة المغربية</div>
               <div class="fr-kingdom">ROYAUME DU MAROC</div>
+              <div class="ar-kingdom">المملكة المغربية</div>
               <div class="fr-univ">Université Sidi Mohamed Ben Abdellah de Fès</div>
-              <div class="ar-school">المدرسة الوطنية للتجارة والتسيير بفاس</div>
+              <div class="ar-univ" style="font-size: 7.2pt; font-weight: bold; color: #1e293b;">جامعة سيدي محمد بن عبد الله - فاس</div>
               <div class="fr-school">ÉCOLE NATIONALE DE COMMERCE ET DE GESTION DE FÈS</div>
+              <div class="ar-school">المدرسة الوطنية للتجارة والتسيير بفاس</div>
+              <div class="fr-dept" style="font-size: 5.8pt; font-weight: bold; color: #c9a227; text-transform: uppercase; margin-top: 1px;">DIRECTION DES AFFAIRES PÉDAGOGIQUES &amp; DE LA SCOLARITÉ</div>
             </td>
             <td class="header-ref">
               <div class="ref-card">
