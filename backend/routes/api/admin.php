@@ -325,6 +325,7 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|super_admin|instituti
         Route::post('/soutenances', [AdminInternshipController::class, 'scheduleSoutenance']);
     });
     Route::get('/soutenances', [AdminInternshipController::class, 'getSoutenancesList']);
+    Route::get('/soutenances/{id}/convocation-pdf', [AdminInternshipController::class, 'downloadConvocationPdf']);
 
     // Complaints
     Route::apiResource('complaints', ComplaintController::class)->except(['destroy']);
@@ -974,6 +975,8 @@ Route::middleware(['auth:sanctum', $staffRoles])->group(function () {
                 ->leftJoin('students', $table.'.student_id', '=', 'students.id')
                 ->leftJoin('users as su', 'students.user_id', '=', 'su.id')
                 ->leftJoin('users as prof', $table.'.supervisor_id', '=', 'prof.id')
+                ->leftJoin('professors as prf', $table.'.supervisor_id', '=', 'prf.id')
+                ->leftJoin('users as prof_user', 'prf.user_id', '=', 'prof_user.id')
                 ->select(
                     $table.'.id',
                     $table.'.title',
@@ -981,7 +984,7 @@ Route::middleware(['auth:sanctum', $staffRoles])->group(function () {
                     $table.'.created_at',
                     $table.'.soutenance_date',
                     'su.name as student_name',
-                    'prof.name as supervisor_name'
+                    DB::raw('COALESCE(prof.name, prof_user.name) as supervisor_name')
                 )
                 ->orderBy($table.'.created_at', 'desc')
                 ->get();
@@ -990,8 +993,8 @@ Route::middleware(['auth:sanctum', $staffRoles])->group(function () {
                 'soumis' => $allPfe->whereIn('status', ['submitted', 'pending', 'soumis'])->values(),
                 'en_revue' => $allPfe->whereIn('status', ['under_review', 'en_revue', 'reviewing'])->values(),
                 'valide' => $allPfe->whereIn('status', ['validated', 'approved', 'valide'])->values(),
-                'encadreur_affecte' => $allPfe->where('supervisor_name', '!=', null)->whereIn('status', ['assigned', 'in_progress', 'encadre'])->values(),
-                'soutenance' => $allPfe->whereNotNull('soutenance_date')->whereIn('status', ['completed', 'soutenu'])->values(),
+                'encadreur_affecte' => $allPfe->whereIn('status', ['assigned', 'in_progress', 'encadre'])->values(),
+                'soutenance' => $allPfe->whereIn('status', ['completed', 'soutenu'])->values(),
             ];
 
             return response()->json([

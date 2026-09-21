@@ -16,8 +16,14 @@ class Soutenance extends Model
     {
         return [
             'date_time' => 'datetime',
+            'scheduled_at' => 'datetime',
             'grade' => 'decimal:2',
         ];
+    }
+
+    public function finalProject(): BelongsTo
+    {
+        return $this->belongsTo(FinalProject::class);
     }
 
     public function internship(): BelongsTo
@@ -38,5 +44,10 @@ class Soutenance extends Model
     public function examiner(): BelongsTo
     {
         return $this->belongsTo(Professor::class, 'examiner_id');
+    }
+
+    public function supervisor(): BelongsTo
+    {
+        return $this->belongsTo(Professor::class, 'supervisor_id');
     }
 }

@@ -7,6 +7,15 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
+Artisan::command('pfe:seed', function () {
+    require_once database_path('seeders/PfeAndSoutenanceSeeder.php');
+    $seeder = new \Database\Seeders\PfeAndSoutenanceSeeder();
+    $seeder->setCommand($this);
+    $seeder->run();
+    $this->info('PFE & Soutenances seeded successfully!');
+})->purpose('Seed PFE Workflow projects and jury defense schedules');
+
+
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schedule;
 

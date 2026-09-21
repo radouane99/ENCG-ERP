@@ -4,6 +4,7 @@ import { GraduationCap, CalendarDays, Users, CheckCircle2, Clock, MapPin, Search
 import { cn } from '@shared/lib/utils';
 import api from '@shared/lib/api';
 import { toast } from 'sonner';
+import { printPfeConvocation } from '../utils/printPfeConvocation';
 
 export default function AdminJuryPFE() {
   const { t, i18n } = useTranslation(['admin', 'common']);
@@ -54,53 +55,7 @@ export default function AdminJuryPFE() {
   };
 
   const handlePrintJuryConvocation = (s: any) => {
-    const win = window.open('', '_blank');
-    if (!win) return;
-    win.document.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Convocation de Jury PFE - ${s.student}</title>
-          <style>
-            body { font-family: 'Segoe UI', Arial, sans-serif; padding: 40px; color: #0f2863; max-width: 800px; margin: 0 auto; }
-            .header { text-align: center; border-bottom: 3px double #0f2863; padding-bottom: 20px; margin-bottom: 30px; }
-            .title { font-size: 18px; font-weight: 900; color: #0f2863; text-transform: uppercase; margin-top: 10px; }
-            .box { background: #f8fafc; border: 2px solid #cbd5e1; border-radius: 20px; padding: 25px; margin: 20px 0; }
-            .row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 13px; }
-            .lbl { font-weight: bold; color: #64748b; }
-            .val { font-weight: 900; color: #0f2863; }
-            .footer { margin-top: 50px; display: flex; justify-content: space-between; font-size: 11px; font-weight: bold; }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <div style="font-size: 16px; font-weight: 900;">ROYAUME DU MAROC — ENCG FÈS</div>
-            <div style="font-size: 11px; color: #64748b; font-weight: 800;">COMMISSION D'ÉVALUATION DES SOUTENANCES DE FIN D'ÉTUDES</div>
-            <div class="title">CONVOCATION OFFICIELLE DE MEMBRE DU JURY PFE</div>
-          </div>
-
-          <div class="box">
-            <div class="row"><span class="lbl">Candidat Stagiaire :</span><span class="val">${s.student}</span></div>
-            <div class="row"><span class="lbl">Sujet du Mémoire :</span><span class="val">"${s.topic}"</span></div>
-            <div class="row"><span class="lbl">Date & Horaires :</span><span class="val" style="color: #2563eb;">${s.date} à ${s.time}</span></div>
-            <div class="row"><span class="lbl">Lieu / Salle :</span><span class="val">${s.room}</span></div>
-          </div>
-
-          <div class="box" style="background: #eff6ff; border-color: #93c5fd;">
-            <div class="row"><span class="lbl">Président du Jury :</span><span class="val">${s.president}</span></div>
-            <div class="row"><span class="lbl">Encadrant Pédagogique :</span><span class="val">${s.encadrant}</span></div>
-            <div class="row"><span class="lbl">Professeur Rapporteur :</span><span class="val">${s.rapporteur}</span></div>
-          </div>
-
-          <div class="footer">
-            <div>Le Secrétariat des Jurys</div>
-            <div>Le Directeur des Études ENCG Fès</div>
-          </div>
-          <script>window.print();</script>
-        </body>
-      </html>
-    `);
-    win.document.close();
+    printPfeConvocation(s);
     toast.success(`Convocation de Jury générée pour ${s.student} !`);
   };
 

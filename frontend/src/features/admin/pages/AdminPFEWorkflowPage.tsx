@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import {
   GraduationCap, Loader2, Sparkles, ChevronRight, User, UserCheck,
   Clock, Calendar, Search, Kanban,
-  Award, MapPin, Printer, Check, Users
+  Award, MapPin, Printer, Check, Users, FileDown
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@shared/lib/api';
 import { cn } from '@shared/lib/utils';
 import { toast } from 'sonner';
+import { printPfeConvocation } from '../utils/printPfeConvocation';
 
 const STAGES = [
   { key: 'soumis', label: 'Soumis', icon: '📥', color: 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700', dot: 'bg-slate-400', nextStatus: 'under_review', nextLabel: '→ Passer en revue' },
@@ -87,60 +88,17 @@ export default function AdminPFEWorkflowPage() {
   };
 
   const handlePrintJuryConvocation = (s: any) => {
-    const win = window.open('', '_blank');
-    if (!win) return;
-    win.document.write(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Convocation de Soutenance PFE - ${s.student}</title>
-        <style>
-          body { font-family: 'Segoe UI', Arial, sans-serif; padding: 40px; color: #1e293b; }
-          .header { text-align: center; border-bottom: 2px solid #001A4B; padding-bottom: 20px; margin-bottom: 30px; }
-          .title { font-size: 22px; font-weight: 900; color: #001A4B; margin: 10px 0; }
-          .box { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 12px; padding: 20px; margin: 20px 0; }
-          .row { display: flex; justify-content: space-between; margin-bottom: 12px; }
-          .label { font-weight: bold; color: #64748b; }
-          .val { font-weight: 800; color: #0f172a; }
-          .jury { margin-top: 30px; }
-          .footer { margin-top: 50px; text-align: right; }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <h3 style="margin:0;">ROYAUME DU MAROC — UNIVERSITÉ SIDI MOHAMED BEN ABDELLAH</h3>
-          <p style="margin:4px 0; color:#64748b;">ÉCOLE NATIONALE DE COMMERCE ET DE GESTION DE FÈS</p>
-          <div class="title">CONVOCATION OFFICIELLE DE SOUTENANCE PFE</div>
-        </div>
+    printPfeConvocation(s);
+    toast.success(`Convocation officielle de soutenance générée pour ${s.student} !`);
+  };
 
-        <p>Il est porté à la connaissance des membres du jury que la soutenance du Projet de Fin d'Études aura lieu selon les modalités ci-après :</p>
-
-        <div class="box">
-          <div class="row"><span class="label">Étudiant(e) Candidat(e) :</span> <span class="val">${s.student}</span></div>
-          <div class="row"><span class="label">Sujet du PFE :</span> <span class="val">${s.topic}</span></div>
-          <div class="row"><span class="label">Filière / Spécialité :</span> <span class="val">${s.filiere || 'Management & Commerce'}</span></div>
-          <div class="row"><span class="label">Date & Heure :</span> <span class="val">${s.date} à ${s.time}</span></div>
-          <div class="row"><span class="label">Lieu / Salle :</span> <span class="val">${s.room}</span></div>
-        </div>
-
-        <div class="jury">
-          <h4>COMPOSITION DU JURY D'ÉVALUATION</h4>
-          <ul>
-            <li><strong>Président du Jury :</strong> ${s.president}</li>
-            <li><strong>Encadrant Pédagogique :</strong> ${s.encadrant}</li>
-            <li><strong>Examinateur / Rapporteur :</strong> ${s.rapporteur}</li>
-          </ul>
-        </div>
-
-        <div class="footer">
-          <p>Fait à Fès, le ${new Date().toLocaleDateString('fr-FR')}</p>
-          <p style="margin-top:40px;"><strong>Le Directeur de l'ENCG Fès</strong></p>
-        </div>
-      </body>
-      </html>
-    `);
-    win.document.close();
-    win.print();
+  const handleDownloadPdf = (s: any) => {
+    if (s.id) {
+      window.open(`/api/soutenances/${s.id}/convocation-pdf`, '_blank');
+      toast.success(`Téléchargement du PDF officiel de convocation pour ${s.student}...`);
+    } else {
+      handlePrintJuryConvocation(s);
+    }
   };
 
   const stages = pfeData?.stages ?? {};
@@ -396,10 +354,19 @@ export default function AdminPFEWorkflowPage() {
                 <div className="flex items-center gap-2 pt-2">
                   <button
                     onClick={() => handlePrintJuryConvocation(s)}
-                    className="flex-1 py-2.5 bg-muted hover:bg-muted/80 text-foreground font-black text-xs rounded-xl flex items-center justify-center gap-2 border border-border cursor-pointer transition-colors"
+                    className="flex-1 py-2.5 bg-[#002147] hover:bg-[#00152e] text-white font-black text-xs rounded-xl flex items-center justify-center gap-2 shadow-sm cursor-pointer transition-all active:scale-95"
+                    title="Imprimer la convocation officielle sur A4"
                   >
-                    <Printer className="w-3.5 h-3.5" />
-                    <span>Imprimer Convocation</span>
+                    <Printer className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Convocation Officielle</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleDownloadPdf(s)}
+                    className="p-2.5 bg-muted hover:bg-muted/80 text-foreground font-bold text-xs rounded-xl flex items-center justify-center border border-border cursor-pointer transition-colors"
+                    title="Télécharger le PDF officiel"
+                  >
+                    <FileDown className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                   </button>
 
                   <button
@@ -407,10 +374,11 @@ export default function AdminPFEWorkflowPage() {
                       setSelectedPvModal(s);
                       setActiveTab('evaluation');
                     }}
-                    className="py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-colors shadow-sm"
+                    className="py-2.5 px-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-colors shadow-sm"
+                    title="Saisir la note et le PV"
                   >
                     <Award className="w-3.5 h-3.5" />
-                    <span>Évaluer & PV</span>
+                    <span>Évaluer</span>
                   </button>
                 </div>
               </div>
