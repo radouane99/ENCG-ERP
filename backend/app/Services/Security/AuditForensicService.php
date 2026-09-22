@@ -15,7 +15,7 @@ class AuditForensicService
      */
     public function getLogs(array $filters = [], int $perPage = 50): LengthAwarePaginator
     {
-        $query = AuditLog::with('user:id,name,first_name,last_name,email,role')
+        $query = AuditLog::with(['user:id,name,first_name,last_name,email', 'user.roles:id,name'])
             ->latest('id');
 
         if (! empty($filters['search'])) {

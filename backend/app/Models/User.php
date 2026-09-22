@@ -94,6 +94,14 @@ class User extends Authenticatable implements HasMedia
     }
 
     /**
+     * Get the primary role name for the user.
+     */
+    public function getRoleAttribute(): ?string
+    {
+        return $this->roles?->first()?->name;
+    }
+
+    /**
      * Create a user while allowing guarded account flags (activation, password rotation).
      */
     public static function provision(array $attributes): static
