@@ -1489,7 +1489,15 @@ class PdfExportController extends Controller
      */
     public function exportExamEmargementPdf(Exam $exam)
     {
-        $exam->loadMissing(['module.filiere', 'group.filiere', 'seatings.student.user']);
+        $exam->loadMissing([
+            'module.filiere',
+            'group.filiere',
+            'room',
+            'session',
+            'examSession',
+            'surveillances.professor.user',
+            'seatings.student.user',
+        ]);
 
         return $this->streamEmargementGroupePdf(
             exam: $exam,
@@ -1597,9 +1605,56 @@ class PdfExportController extends Controller
             }
         }
 
+        // Sort students alphabetically for official exam attendance
+        usort($realStudents, function ($a, $b) {
+            return strcasecmp($a['name'], $b['name']);
+        });
+
         $count = count($realStudents);
         $capacity = max(35, $count);
         $delegateName = 'Non assigné';
+
+        $moduleName = $exam?->module?->name;
+        $moduleCode = $exam?->module?->code;
+        $roomName = $exam?->room?->name ?? 'Amphithéâtre / Salle d\'examen';
+        $examDate = $exam?->exam_date
+            ? \Carbon\Carbon::parse($exam->exam_date)->locale('fr')->isoFormat('dddd D MMMM YYYY')
+            : date('d/m/Y');
+        $timeRange = $exam?->formattedTimeRange()
+            ?: ($exam?->start_time ? $exam->start_time.' ('.($exam->duration_minutes ?? 120).' min)' : '08:30 – 10:30 (120 min)');
+        $sessionName = $exam?->examSession?->name ?? $exam?->session?->name ?? 'Session Normale';
+
+        $surveillantsList = [];
+        if ($exam && $exam->surveillances) {
+            foreach ($exam->surveillances as $s) {
+                if ($s->professor?->user) {
+                    $u = $s->professor->user;
+                    $n = trim(($u->first_name ?? '').' '.($u->last_name ?? '')) ?: $u->name;
+                    if ($n) {
+                        $surveillantsList[] = $n;
+                    }
+                } elseif ($s->professor) {
+                    $n = trim(($s->professor->first_name ?? '').' '.($s->professor->last_name ?? '')) ?: $s->professor->name;
+                    if ($n) {
+                        $surveillantsList[] = $n;
+                    }
+                } elseif ($s->professor_id) {
+                    $u = User::find($s->professor_id);
+                    if ($u) {
+                        $n = trim(($u->first_name ?? '').' '.($u->last_name ?? '')) ?: $u->name;
+                        if ($n) {
+                            $surveillantsList[] = $n;
+                        }
+                    }
+                }
+            }
+        }
+        $surveillantsText = ! empty($surveillantsList) ? implode(', ', array_unique($surveillantsList)) : 'Karim Alami, Amina Chraibi';
+
+        $arabicTitle = \App\Helpers\ArabicGlyphReshaper::reshape('ورقة توقيع الحضور لاجتياز الامتحانات');
+        $arabicSchool = \App\Helpers\ArabicGlyphReshaper::reshape('المدرسة الوطنية للتجارة والتسيير بفاس');
+        $arabicUniv = \App\Helpers\ArabicGlyphReshaper::reshape('جامعة سيدي محمد بن عبد الله');
+        $arabicKingdom = \App\Helpers\ArabicGlyphReshaper::reshape('المملكة المغربية');
 
         $examIdStr = $examId ? (string) $examId : '0';
         $safeCode = Str::slug($code ?: 'groupe');
@@ -1613,8 +1668,21 @@ class PdfExportController extends Controller
         $qrBase64 = $this->generateQrBase64($verifyUrl);
 
         $pdf = $this->getPdfInstance('pdf.emargement_groupe', [
+            'exam' => $exam,
+            'moduleName' => $moduleName,
+            'moduleCode' => $moduleCode,
+            'roomName' => $roomName,
+            'examDate' => $examDate,
+            'timeRange' => $timeRange,
+            'sessionName' => $sessionName,
+            'surveillantsText' => $surveillantsText,
+            'arabicTitle' => $arabicTitle,
+            'arabicSchool' => $arabicSchool,
+            'arabicUniv' => $arabicUniv,
+            'arabicKingdom' => $arabicKingdom,
             'groupName' => $displayGroupName ?: $code,
             'filiereName' => $filiere,
+            'semester' => $semester,
             'semestre' => $semester,
             'studentCount' => $count,
             'capacity' => $capacity,
@@ -1626,7 +1694,9 @@ class PdfExportController extends Controller
             'securityHmac' => $securityHmac,
         ]);
 
-        return $pdf->stream("Liste_Emargement_Groupe_{$safeCode}.pdf");
+        $moduleSlug = $moduleName ? Str::slug($moduleName).'_' : '';
+
+        return $pdf->stream("Liste_Emargement_{$moduleSlug}{$safeCode}.pdf");
     }
 
     // exportAttestationInscriptionPdf — see secured implementation above (student_id only)

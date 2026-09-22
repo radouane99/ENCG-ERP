@@ -773,11 +773,11 @@ classDiagram
 | **3** | **👨‍🏫 Corps Professoral & Vacations** | Gestion PES/PH/PA, contrats de vacation avec calcul des heures et décompte 45h/module. |
 | **4** | **🏛️ Smart Campus & Hub des Salles** | Matrice d'occupation en direct, Smart Finder de rattrapage, panneaux de porte PDF A4 et iCal. |
 | **5** | **🗓️ Générateur d'Emplois du Temps (CSP IA)** | Résolution par contraintes (MRV-Degree-LCV) avec zéro conflit prof/salle/groupe. |
-| **6** | **📝 Planification des Examens & Surveillance** | Répartition spatiale anti-fraude (1 place/2), affectation équitable tripartite (Permanents, Vacataires, Doctorants), convocations QR, confirmation bi-canal de présence (Email/Plateforme), émargement PV numérique et PVs d'incidents. |
+| **6** | **📝 Planification des Examens & Surveillance** | Répartition spatiale anti-fraude (1 place/2), affectation équitable tripartite (Permanents, Vacataires, Doctorants), convocations QR, confirmation bi-canal de présence (Email/Plateforme), feuille d'émargement officielle bilingue A4 triée par ordre alphabétique, émargement PV numérique et PVs d'incidents. |
 | **7** | **📊 Saisie des Notes & Verrouillage Optimiste** | Double saisie CC/Exam, gestion de concurrence (`version`), application du max au rattrapage. |
 | **8** | **📇 Cartes Étudiant PVC Smart Card** | Format ISO/IEC 7810 ID-1 (CR80) avec puce NFC, Code 128 et QR Token crypté. |
 | **9** | **📱 Assiduité, Émargement & Synergie Cahier de Texte** | Émargement 12 séances avec synchronisation automatique vers le Cahier de Texte (`sync_to_textbook`), détection IA de décrochage (Art. 14 ENCG Fès), et index composites haute performance (> 50 000 pointages). |
-| **10** | **💼 Stages, PFE & Soutenances** | Conventions tripartites, jurys de soutenance et workflow d'évaluation numérique. |
+| **10** | **💼 Stages, PFE & Soutenances** | Conventions tripartites, convocation officielle individuelle A4 bilingue (étudiant + jury quadripartite avec QR code vérifiable), jurys de soutenance et workflow d'évaluation numérique. |
 | **11** | **📜 Guichet Numérique & Grand Diplôme** | Attestations PDF signées instantanément et Grand Diplôme National Bac+5 A4 Paysage. |
 | **12** | **🔬 Études Doctorales CEDOC** | Suivi des 200h de formations doctorales et validation des thèses. |
 | **13** | **📚 Médiathèque & Prêts Koha LMS** | Gestion des emprunts d'ouvrages et alertes automatiques de retards. |
@@ -1028,6 +1028,50 @@ L'écosystème ENCG-ERP intègre une séparation juridique et administrative rig
     7. Certification du supplément (Date, Cachet officiel du Directeur, Sceau cryptographique SHA-256).
     8. Information sur le système national d'enseignement supérieur marocain (Architecture LMD).
   - Modèle Blade officiel [diploma_supplement.blade.php](file:///c:/Users/najlae/Desktop/ENCG-ERP-V1/backend/resources/views/pdf/diploma_supplement.blade.php) téléchargeable en 1 clic par les étudiants diplômés depuis `/student/grades`.
+
+---
+
+### 11.8 📊 Rapport Annuel Ministériel MESRSFC Certifié Conforme (Audit Statistique National)
+* **Standard d'Audit Statistique du Ministère (MESRSFC / USMBA)** :
+  - Remplacement de l'impression écran navigateur (`window.print()`) par un moteur d'export PDF institutionnel ultra-haute fidélité ([`rapport_ministere_mesrsfc.blade.php`](file:///c:/Users/RADOUANE/Desktop/ENCG-ERP-V1/backend/resources/views/pdf/rapport_ministere_mesrsfc.blade.php), [`AdminMinistryReportController.php`](file:///c:/Users/RADOUANE/Desktop/ENCG-ERP-V1/backend/app/Http/Controllers/Api/Admin/AdminMinistryReportController.php)).
+  - **Strict Single-Page Fit (1 page A4 Portrait)** : Conception condensée et élégante sans aucun débordement de page orpheline.
+* **4 Piliers d'Indicateurs Pédagogiques & Managériaux Consolidés** :
+  1. **Effectifs & Démographie Étudiante** : Total des inscrits, répartition par genre (taux de féminisation calculé), ventilation par filière d'excellence (Tronc Commun, GFC, MCM, CI, ACG, MSI).
+  2. **Indicateurs Pédagogiques & Encadrement** : Taux global de réussite académique, taux d'abandon, taux d'assiduité global aux séances, et ratio d'encadrement étudiant/enseignant-chercheur (intégrant permanents et vacataires via Spatie Permission `role:professor`).
+  3. **Insertion & Professionnalisation** : Volume des Projets de Fin d'Études (PFE) validés, soutenances programmées et conventions de stage tripartites actives.
+  4. **Performance du Guichet Scolarité (SLA)** : Volume de requêtes administratives traitées, délai moyen de délivrance (SLA en heures) et taux de satisfaction usager.
+* **Intégrité Numérique & Conformité Réglementaire** :
+  - Sceau cryptographique SHA-256 (`$sealHash`) unique dérivé de l'empreinte des métadonnées de l'audit.
+  - QR Code vectoriel de vérification instantanée de conformité documentaire.
+  - Double cachet officiel bilingue USMBA / ENCG Fès avec visa de la Direction.
+
+---
+
+### 11.9 📝 Feuille d'Émargement Officielle A4 & Architecture Anti-PopUp Blocker
+* **Feuille d'Émargement Bilingue & Procès-Verbal de Présence aux Épreuves** :
+  - Modèle officiel d'examen conforme aux protocoles des examens universitaires nationaux ([`emargement_groupe.blade.php`](file:///c:/Users/RADOUANE/Desktop/ENCG-ERP-V1/backend/resources/views/pdf/emargement_groupe.blade.php), [`PdfExportController.php`](file:///c:/Users/RADOUANE/Desktop/ENCG-ERP-V1/backend/app/Http/Controllers/Api/PdfExportController.php)).
+  - Titre institutionnel bilingue avec typographie arabe reshaped : `ورقة توقيع الحضور لاجتياز الامتحانات` / `LISTE D'ÉMARGEMENT ET DE PRÉSENCE AUX ÉPREUVES`.
+  - **Cartouche d'Épreuve Exhaustif** : Module & code canonique, date, créneau horaire, salle/amphithéâtre, groupe/section, surveillants de salle affectés et effectif convoqué certifié.
+  - **Tri Alphabétique Officiel des Candidats** : Ordonnancement strict `last_name ASC, first_name ASC` avec CNE/Massar monospace, CIN, Nom complet en majuscules et case haute de 40px avec pointillé pour signature manuscrite.
+  - **Double Volet de Validation** : Décompte des copies remises et absents par la Surveillance de Salle d'un côté, et visa officiel de l'Administration des Examens de l'autre.
+  - **Sécurité Anti-Fraude (Loi 53-05)** : QR code SVG/Base64 scannable pointant vers `/verify/document/EMG-...` scellé par HMAC-SHA256.
+* **Architecture Frontend Anti-PopUp Blocker ([`documentAccess.ts`](file:///c:/Users/RADOUANE/Desktop/ENCG-ERP-V1/frontend/src/shared/lib/documentAccess.ts))** :
+  - **Problème résolu** : Blocage silencieux par Chromium (Chrome, Brave, Edge) de `window.open()` après un appel `await` asynchrone (l'utilisateur voyait le toast de succès mais aucun document ne s'ouvrait).
+  - **Solution synchrone immédiate** : `createPendingPdfWindow()` instancie immédiatement l'onglet dans la pile d'événements du clic utilisateur avec un loader institutionnel élégant (`Génération du Document Officiel en cours...`), puis injecte le blob URL dès réception de l'API.
+  - **Fallback automatique par téléchargement** : Déclenchement automatique d'un `<a download>` invisible si l'ouverture de popup est strictement prohibée par la configuration du navigateur.
+
+---
+
+### 11.10 🎓 Convocations Officielles Bilingues aux Soutenances PFE & Jurys Quadripartites
+* **Standardisation Documentaire des Délibérations PFE (Bac+5)** :
+  - Modèle officiel d'invitation et convocation officielle téléchargeable en 1 clic ([`convocation_soutenance_pfe.blade.php`](file:///c:/Users/RADOUANE/Desktop/ENCG-ERP-V1/backend/resources/views/pdf/convocation_soutenance_pfe.blade.php), [`AdminInternshipController.php`](file:///c:/Users/RADOUANE/Desktop/ENCG-ERP-V1/backend/app/Http/Controllers/Api/Admin/AdminInternshipController.php)).
+  - En-tête bilingue FR/AR : `استدعاء رسمي لمناقشة مشروع نهاية الدراسة` / `CONVOCATION OFFICIELLE À LA SOUTENANCE DU PROJET DE FIN D'ÉTUDES (PFE)`.
+* **Spécifications Académiques & Rigueur Pédagogique** :
+  - **Dossier Candidat & Thématique** : Nom, Prénom, CNE/Massar, CIN, Filière de spécialité (GFC, MCM, ACG, CI...), thème officiel du PFE et organisme d'accueil (entreprise/cabinet).
+  - **Programmation Logistique** : Date, horaire précis de passage, salle de soutenance réservée.
+  - **Jury Quadripartite Officiel** : Président du Jury (Professeur PES), Encadrant Pédagogique (Enseignant-chercheur ENCG), Encadrant Professionnel (Tuteur entreprise) et Suffragant / Rapporteur externe.
+  - **Protocole Réglementaire de Soutenance** : Durée stricte de 45 minutes (20 min d'exposé, 20 min d'échanges, 5 min de délibération à huis clos), exigences vestimentaires et support multimédia obligatoire.
+  - **Scellement & Traçabilité** : QR Code d'authentification publique et sceau de la Direction des Études. Format A4 strictement 1 page (Single-Page Fit).
 
 ---
 

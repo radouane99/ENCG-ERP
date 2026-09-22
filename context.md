@@ -3045,3 +3045,106 @@ L'ERP applique une étanchéité absolue entre les deux régimes d'enseignement,
     > *« En tant qu'enseignant vacataire, vous ne pouvez pas demander d'attestation de travail ou de salaire réservée aux fonctionnaires titulaires. Veuillez solliciter une Attestation d'Heures de Vacation ou un Bordereau de Vacation. »*
   - Inversement, un professeur permanent ne peut pas solliciter de bordereau d'heures de vacation.
 - **Sécurité & Traçabilité :** Toute tentative non autorisée est tracée dans les logs de sécurité forensiques avec l'ID utilisateur, l'adresse IP et le timestamp.
+
+---
+
+### 21.22 📜 Système Centralisé d'Édition Sécurisée des Documents PDF & Architecture Anti-PopUp Blocker
+
+#### A. Problématique du Blocage Silencieux des Popups dans les Navigateurs Modernes
+- Dans les navigateurs modernes basés sur Chromium (Google Chrome, Brave, Microsoft Edge) et Safari, toute invocation de `window.open(url, '_blank')` exécutée de manière asynchrone (après un `await api.get(...)` de génération PDF serveur) est automatiquement classée comme **popup non sollicitée** et bloquée silencieusement sans lever d'exception JavaScript.
+- L'utilisateur recevait une notification de succès (`toast.success`) sans qu'aucun document n'apparaisse à l'écran.
+
+#### B. Solution d'Ouverture Synchrone & Fallback Universel ([`documentAccess.ts`](file:///c:/Users/RADOUANE/Desktop/ENCG-ERP-V1/frontend/src/shared/lib/documentAccess.ts))
+- **Ouverture Synchrone Immédiate (`createPendingPdfWindow`)** : Dès le clic de l'utilisateur, un nouvel onglet est instancié immédiatement dans la même pile d'exécution synchrone de l'événement utilisateur.
+- **Écran de Chargement Institutionnel Épuré** : L'onglet affiche instantanément une interface de chargement aux couleurs de l'ENCG Fès (`Génération du Document Officiel en cours...`, spinner d'attente, typographie institutionnelle).
+- **Redirection Dynamique du Flux** : Dès que l'API Laravel retourne le flux binaire `application/pdf`, l'URL de l'objet blob (`URL.createObjectURL(blob)`) est assignée à `targetWindow.location.href`, affichant le visualiseur PDF natif du navigateur.
+- **Fallback Automatique par Téléchargement (`link.download`)** : Si les popups sont désactivées de force dans les paramètres de sécurité du navigateur, le système simule automatiquement un clic sur une balise ancre invisible pour télécharger directement le fichier sur le poste de l'utilisateur.
+
+#### C. Moteur de Rendu DomPDF & Normalisation Arabe ([`ArabicGlyphReshaper.php`](file:///c:/Users/RADOUANE/Desktop/ENCG-ERP-V1/backend/app/Helpers/ArabicGlyphReshaper.php))
+- **Support Bidirectionnel & Connexion des Lettres Arabes** : DomPDF ne disposant pas du moteur HarfBuzz pour le rendu natif de l'écriture arabe liée, l'ERP intègre un convertisseur bidirectionnel autonome [`ArabicGlyphReshaper.php`](file:///c:/Users/RADOUANE/Desktop/ENCG-ERP-V1/backend/app/Helpers/ArabicGlyphReshaper.php).
+- Il projette les caractères arabes vers les formes de présentation Unicode B (`0xFE80`–`0xFEFC`), connecte les lettres selon leur contexte (isolée, initiale, médiane, finale) et inverse visuellement l'ordre des caractères pour un affichage parfait de droite à gauche dans la police `DejaVu Sans`.
+- **Embarquement Automatique des Logos en Base64** : Les chemins de fichiers locaux vers les images (`/var/www/html/public/logo-encg.png`) échouant parfois sous Docker en raison des restrictions chroot de DomPDF, le composant d'en-tête [`encg-header.blade.php`](file:///c:/Users/RADOUANE/Desktop/ENCG-ERP-V1/backend/resources/views/pdf/encg-header.blade.php) convertit systématiquement les logos officiels en URI Data Base64 (`data:image/png;base64,...`) garantissant un affichage 100% sans faille.
+
+---
+
+### 21.23 📝 Planification des Examens : Feuille d'Émargement Officielle A4 et Procès-Verbal de Salle
+
+#### A. Architecture & Normes Académiques ([`emargement_groupe.blade.php`](file:///c:/Users/RADOUANE/Desktop/ENCG-ERP-V1/backend/resources/views/pdf/emargement_groupe.blade.php), [`PdfExportController.php`](file:///c:/Users/RADOUANE/Desktop/ENCG-ERP-V1/backend/app/Http/Controllers/Api/PdfExportController.php))
+- **Endpoint Sécurisé** : `/api/v1/admin/exams/{exam}/emargement-pdf` (aucun PII dans la query-string, authentifié via token Sanctum et cookie `encg_auth_token`).
+- **En-tête Bilingue Officiel** : Armoiries du Royaume du Maroc, Ministère de l'Enseignement Supérieur, Université Sidi Mohamed Ben Abdellah, ENCG Fès et titre bilingue :
+  - Français : `LISTE D'ÉMARGEMENT ET DE PRÉSENCE AUX ÉPREUVES`
+  - Arabe reshaped : `ورقة توقيع الحضور لاجتياز الامتحانات`
+- **Cartouche d'Épreuve Exhaustif** :
+  - Épreuve / Module et code officiel (ex: *Mathématiques pour la Gestion — TC-S1-M01*).
+  - Date & Créneau horaire (ex: *Lundi 7 septembre 2026 • 08:30 – 10:30*).
+  - Filière & Semestre (ex: *Tronc Commun ENCG — S1*).
+  - Lieu & Salle d'examen (ex: *Amphithéâtre B*).
+  - Groupe / Section & Session (ex: *TC-S2-G1 • Session Normale Automne*).
+  - Surveillants affectés (ex: *Pr. Karim Alami, Pr. Amina Chraibi*).
+  - Effectif convoqué certifié (ex: *24 Candidats • Cohorte Validée*).
+
+#### B. Table des Candidats & Tri Alphabétique
+- **Tri Alphabétique Strict** : Liste triée obligatoirement par nom de famille puis prénom (`last_name ASC, first_name ASC`).
+- **Colonnes Normalisées** :
+  - `N°` : Numérotation continue des candidats.
+  - `CNE / Massar` : Identifiant national étudiant en police monospace.
+  - `CIN` : Carte d'identité nationale.
+  - `Nom & Prénom du Candidat` : En gras, avec nom de famille en majuscules.
+  - `Émargement / Signature` : Case haute de 40px avec ligne en pointillé pour la signature manuscrite du candidat.
+
+#### C. Double Bloc de Validation & Sécurité Anti-Fraude
+- **QR Code Sécurisé** : Génération d'un QR code vectoriel SVG/Base64 pointant vers `/verify/document/EMG-...` encodant un hash HMAC-SHA256 pour vérifier l'authenticité numérique de la liste conformément à la Loi 53-05.
+- **Volet Surveillance de Salle** : Zone réservée aux surveillants de salle précisant le décompte réel des copies remises, le nombre d'absents constatés et leurs émargements.
+- **Volet Administration des Examens** : Mention officielle *« Pour le Directeur et par délégation — Administration des Examens »* avec date d'émission, visa et emplacement pour cachet humide.
+
+---
+
+### 21.24 📊 Rapport Annuel Ministériel MESRSFC (Audit & Statistiques Pédagogiques Certifiées)
+
+#### A. Remplacement de l'Impression Écran par un Export PDF Certifié
+- Remplacement du bouton d'impression navigateur brut (`window.print()`) de la page `/admin/ministry-report` par un appel direct au générateur PDF institutionnel ([`AdminMinistryReportController.php`](file:///c:/Users/RADOUANE/Desktop/ENCG-ERP-V1/backend/app/Http/Controllers/Api/Admin/AdminMinistryReportController.php), [`rapport_ministere_mesrsfc.blade.php`](file:///c:/Users/RADOUANE/Desktop/ENCG-ERP-V1/backend/resources/views/pdf/rapport_ministere_mesrsfc.blade.php)).
+- **Strict Single-Page Fit (1 de 1)** : Document A4 Portrait ultra-optimisé tenant intégralement sur une seule page sans page 2 orpheline.
+
+#### B. Métriques & Indicateurs d'Audit Consolidés
+1. **Effectifs Étudiants & Mixité** :
+   - Effectif total inscrit, ventilation par genre (Hommes / Femmes), taux de féminisation calculé.
+   - Ventilation détaillée par filière (Tronc Commun, GFC, MCM, CI, ACG, MSI).
+2. **Indicateurs Pédagogiques & Encadrement** :
+   - Taux de réussite global aux examens et taux d'abandon calculé.
+   - Ratio d'encadrement pédagogique (étudiants par enseignant-chercheur, permanents et vacataires résolus via Spatie Permission `role:professor`).
+   - Taux global d'assiduité aux séances d'enseignement.
+3. **PFE, Insertion & Stages Professionnels** :
+   - Projets de Fin d'Études validés, soutenances programmées et conventions de stage actives.
+4. **Performance Administrative & Guichet Unique (SLA)** :
+   - Volume de demandes d'attestations et documents administratifs traitées, temps moyen de réponse scolarité (SLA) et taux de satisfaction des usagers.
+5. **Authentification & Certification d'Intégrité** :
+   - Sceau cryptographique SHA-256 (`$sealHash`) dérivé des métadonnées officielles.
+   - QR Code de vérification d'audit scannable en direct.
+   - Cachet circulaire officiel bilingue USMBA / ENCG Fès.
+
+---
+
+### 21.25 🎓 PFE & Soutenances : Convocation Officielle Bilingue Individuelle & Membres de Jury
+
+#### A. Normalisation Documentaire ([`convocation_soutenance_pfe.blade.php`](file:///c:/Users/RADOUANE/Desktop/ENCG-ERP-V1/backend/resources/views/pdf/convocation_soutenance_pfe.blade.php), [`AdminInternshipController.php`](file:///c:/Users/RADOUANE/Desktop/ENCG-ERP-V1/backend/app/Http/Controllers/Api/Admin/AdminInternshipController.php))
+- **Génération Dématérialisée** : `/api/soutenances/{id}/convocation-pdf`.
+- **En-tête & Titre Bilingue Officiel** :
+  - Français : `CONVOCATION OFFICIELLE À LA SOUTENANCE DU PROJET DE FIN D'ÉTUDES (PFE)`
+  - Arabe reshaped : `استدعاء رسمي لمناقشة مشروع نهاية الدراسة`
+- **Cartouche Candidat & Thématique de Recherche** :
+  - Identité complète du candidat, CNE / Massar, CIN, Filière d'excellence (Master / Diplôme ENCG Bac+5).
+  - Intitulé officiel du PFE et organisme d'accueil / entreprise marocaine ou multinationale.
+- **Détails de Programmation de la Soutenance** :
+  - Date officielle, heure de passage, salle de soutenance assignée.
+- **Composition Quadripartite Officielle du Jury** :
+  - Président du Jury (Professeur de l'Enseignement Supérieur).
+  - Encadrant Pédagogique (Enseignant-Chercheur ENCG).
+  - Encadrant Professionnel (Représentant de l'Entreprise).
+  - Suffragant / Rapporteur externe.
+- **Consignes Réglementaires & Déroulement de la Soutenance** :
+  - Durée totale : 45 minutes (20 min d'exposé, 20 min de questions du jury, 5 min de délibération à huis clos).
+  - Présentation obligatoire sous diaporama (PowerPoint / PDF) et tenue formelle requise.
+- **Vérification Numérique & Sécurité** :
+  - QR code cryptographique certifié scannable redirigeant vers le portail public de vérification.
+  - Sceau d'approbation de la Direction Pédagogique et visa de convocation.
+  - Strict Single-Page Fit (1 de 1) pour un archivage papier et numérique immédiat.

@@ -896,6 +896,7 @@ Route::middleware(['auth:sanctum', $staffRoles])->group(function () {
     // Rapport Ministère MESRSFC
     // ──────────────────────────────────────────────────────────────────────────────
     Route::get('/admin/ministry-report', [AdminMinistryReportController::class, 'getReport']);
+    Route::get('/admin/ministry-report/pdf', [AdminMinistryReportController::class, 'exportPdf']);
 
     // ──────────────────────────────────────────────────────────────────────────────
     // Calendrier Académique

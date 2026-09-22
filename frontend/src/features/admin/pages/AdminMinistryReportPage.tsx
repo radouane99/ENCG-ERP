@@ -19,13 +19,9 @@ export default function AdminMinistryReportPage() {
     }
   })
 
-  const handleExportPDF = async () => {
-    setIsExporting(true)
-    await new Promise(r => setTimeout(r, 800))
-    // Trigger browser print for PDF export
-    window.print()
-    setIsExporting(false)
-    toast.success('Rapport MESRSFC prêt à l\'impression / export PDF !')
+  const handleExportPDF = () => {
+    window.open('/api/admin/ministry-report/pdf', '_blank')
+    toast.success('Rapport officiel MESRSFC en cours de téléchargement...')
   }
 
   const handleExportCSV = () => {
