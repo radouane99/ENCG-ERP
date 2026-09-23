@@ -166,7 +166,7 @@ class ExamPlanningController extends Controller
     public function autoGenerateBatch(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'filiere_id' => 'required|integer',
+            'filiere_id' => 'nullable|integer',
             'session_id' => 'nullable|integer',
             'exam_session_id' => 'nullable|integer',
             'semester_number' => 'nullable|integer',
@@ -184,8 +184,10 @@ class ExamPlanningController extends Controller
             return response()->json(['success' => false, 'message' => "Session d'examen obligatoire."], 422);
         }
 
+        $filiereId = ! empty($validated['filiere_id']) ? (int) $validated['filiere_id'] : null;
+
         $result = $this->engine->autoGenerateIntelligentBatch(
-            $validated['filiere_id'],
+            $filiereId,
             $sessionId,
             $validated['semester_number'] ?? null,
             $validated['modules_per_day'] ?? 1,

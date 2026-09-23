@@ -152,10 +152,10 @@ class ExamPlanningEngine
     }
 
     /**
-     * Génération automatique intelligente des examens.
+     * Génération automatique intelligente des examens (pour une filière ou toutes les filières).
      */
     public function autoGenerateIntelligentBatch(
-        int $filiereId,
+        ?int $filiereId,
         int $sessionId,
         ?int $semesterNumber = null,
         int $modulesPerDay = 1,
@@ -172,19 +172,18 @@ class ExamPlanningEngine
                 ->sortBy(fn ($m) => array_search($m->id, $customModuleIds))
                 ->values();
         } else {
-            $modules = Module::where('filiere_id', $filiereId)
+            $modules = Module::when($filiereId, fn ($q) => $q->where('filiere_id', $filiereId))
                 ->when($semesterNumber, fn ($q) => $q->where('semester_number', $semesterNumber), fn ($q) => $q->whereRaw($isAutomne ? 'semester_number % 2 != 0' : 'semester_number % 2 = 0'))
+                ->orderBy('filiere_id')
+                ->orderBy('semester_number')
+                ->orderBy('id')
                 ->get();
         }
 
         $rooms = Room::orderBy('capacity')->get();
-        $groups = Group::where('filiere_id', $filiereId)->get();
 
         if ($modules->isEmpty()) {
-            throw new Exception('Aucun module trouvé.');
-        }
-        if ($groups->isEmpty()) {
-            throw new Exception('Aucun groupe trouvé.');
+            throw new Exception('Aucun module trouvé pour les critères sélectionnés.');
         }
         if ($rooms->isEmpty()) {
             throw new Exception('Aucune salle disponible.');
@@ -201,11 +200,15 @@ class ExamPlanningEngine
         }
 
         return DB::transaction(function () use (
-            $filiereId, $sessionId, $session, $modules, $rooms, $groups, $currentDate, $modulesPerDay, $daySlotMode
+            $filiereId, $sessionId, $session, $modules, $rooms, $currentDate, $modulesPerDay, $daySlotMode
         ) {
-            // Supprimer les examens existants pour cette session et filière
-            $moduleIds = Module::where('filiere_id', $filiereId)->pluck('id');
-            $existingExamIds = Exam::where('exam_session_id', $sessionId)->whereIn('module_id', $moduleIds)->pluck('id');
+            // Supprimer les examens existants pour cette session et filière(s)
+            if ($filiereId) {
+                $moduleIds = Module::where('filiere_id', $filiereId)->pluck('id');
+                $existingExamIds = Exam::where('exam_session_id', $sessionId)->whereIn('module_id', $moduleIds)->pluck('id');
+            } else {
+                $existingExamIds = Exam::where('exam_session_id', $sessionId)->pluck('id');
+            }
 
             ExamSeating::whereIn('exam_id', $existingExamIds)->delete();
             ExamSurveillance::whereIn('exam_id', $existingExamIds)->delete();
@@ -234,78 +237,159 @@ class ExamPlanningEngine
             }
 
             $examsCreated = 0;
-            $moduleIndexInDay = 0;
-            $defaultGroupId = $groups->first()->id;
             $allCreatedExams = [];
+            $bookedRoomsBySlot = []; // [$dateStr][$startTime][] = room_id
 
-            foreach ($modules as $module) {
-                $semNum = $module->semester_number ?? 1;
+            // Grouper les modules par filière pour les planifier en parallèle sans chevauchement
+            $modulesByFiliere = $modules->groupBy('filiere_id');
+            $modulePointers = [];
+            foreach ($modulesByFiliere as $fid => $fMods) {
+                $modulePointers[$fid] = 0;
+            }
 
-                $startTime = match (true) {
-                    $modulesPerDay >= 2 && $daySlotMode === 'pm' && $moduleIndexInDay === 0 => '14:30:00',
-                    $modulesPerDay >= 2 && $daySlotMode === 'pm' => ExamSlotCatalog::afternoonSecondStart().':00',
-                    $modulesPerDay >= 2 && $daySlotMode === 'split' && $moduleIndexInDay === 0 => '08:30:00',
-                    $modulesPerDay >= 2 && $daySlotMode === 'split' => '14:30:00',
-                    $modulesPerDay >= 2 && $moduleIndexInDay === 0 => '08:30:00',
-                    $modulesPerDay >= 2 => ExamSlotCatalog::morningSecondStart().':00',
-                    default => ($semNum % 2 !== 0) ? '08:30:00' : '14:30:00',
-                };
+            $hasRemainingModules = true;
+            $safetyLoopLimit = 120;
+            $loopCount = 0;
 
-                $slot = ExamSlotCatalog::resolve($startTime);
+            while ($hasRemainingModules && $loopCount < $safetyLoopLimit) {
+                $loopCount++;
                 $dateStr = $currentDate->format('Y-m-d');
+                $scheduledSomethingToday = false;
 
-                $students = StudentRegistration::whereHas('group', fn ($q) => $q->where('filiere_id', $filiereId))
-                    ->where('academic_year_id', $session->academic_year_id)
-                    ->pluck('student_id');
+                foreach ($modulesByFiliere as $fid => $fMods) {
+                    $ptr = $modulePointers[$fid];
+                    $totalFMods = $fMods->count();
 
-                $studentCount = $students->count() ?: 24;
-                $unassignedCount = $studentCount;
-                $studentsList = $students->toArray();
-                $availableRooms = clone $rooms;
+                    for ($mIdx = 0; $mIdx < $modulesPerDay; $mIdx++) {
+                        $currIdx = $ptr + $mIdx;
+                        if ($currIdx >= $totalFMods) {
+                            break;
+                        }
 
-                while ($unassignedCount > 0 && $availableRooms->isNotEmpty()) {
-                    $assignedRoom = $availableRooms->first(fn ($r) => floor($r->capacity / 2) >= $unassignedCount)
-                        ?? $availableRooms->pop();
+                        $module = $fMods[$currIdx];
+                        $semNum = $module->semester_number ?? 1;
 
-                    $examCapacity = floor($assignedRoom->capacity / 2);
-                    $studentsForThisRoom = array_splice($studentsList, 0, $examCapacity);
-                    $unassignedCount -= count($studentsForThisRoom);
+                        $preferredTime = match (true) {
+                            $modulesPerDay >= 2 && $daySlotMode === 'pm' && $mIdx === 0 => '14:30:00',
+                            $modulesPerDay >= 2 && $daySlotMode === 'pm' => ExamSlotCatalog::afternoonSecondStart().':00',
+                            $modulesPerDay >= 2 && $daySlotMode === 'split' && $mIdx === 0 => '08:30:00',
+                            $modulesPerDay >= 2 && $daySlotMode === 'split' => '14:30:00',
+                            $modulesPerDay >= 2 && $mIdx === 0 => '08:30:00',
+                            $modulesPerDay >= 2 => ExamSlotCatalog::morningSecondStart().':00',
+                            default => ($semNum % 2 !== 0) ? '08:30:00' : '14:30:00',
+                        };
 
-                    $exam = Exam::create([
-                        'module_id' => $module->id,
-                        'group_id' => $defaultGroupId,
-                        'exam_session_id' => $sessionId,
-                        'room_id' => $assignedRoom->id,
-                        'exam_date' => $dateStr,
-                        'start_time' => $startTime,
-                        'duration_minutes' => $slot['duration'],
-                        'type' => 'final',
-                    ]);
-                    $examsCreated++;
-                    $allCreatedExams[] = $exam;
+                        $allCandidateSlots = array_values(array_unique([
+                            $preferredTime,
+                            '08:30:00',
+                            '10:45:00',
+                            '14:30:00',
+                            '16:45:00',
+                        ]));
 
-                    $seatings = [];
-                    $seatNum = 1;
-                    foreach ($studentsForThisRoom as $sid) {
-                        $seatings[] = [
-                            'exam_id' => $exam->id,
-                            'student_id' => $sid,
-                            'room_id' => $assignedRoom->id,
-                            'seat_number' => $seatNum++,
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ];
-                    }
+                        $students = StudentRegistration::whereHas('group', fn ($q) => $q->where('filiere_id', $module->filiere_id))
+                            ->where('academic_year_id', $session->academic_year_id)
+                            ->pluck('student_id');
 
-                    if (! empty($seatings)) {
-                        ExamSeating::insert($seatings);
+                        $studentCount = $students->count() ?: 24;
+
+                        // Trouver le créneau où les salles libres peuvent contenir les étudiants
+                        $chosenSlot = null;
+                        $chosenAvailableRooms = null;
+
+                        foreach ($allCandidateSlots as $slotCand) {
+                            $bookedInSlot = $bookedRoomsBySlot[$dateStr][$slotCand] ?? [];
+                            $freeRooms = $rooms->filter(fn ($r) => ! in_array($r->id, $bookedInSlot))->values();
+                            $totalCap = $freeRooms->sum(fn ($r) => floor($r->capacity / 2));
+
+                            if ($totalCap >= $studentCount) {
+                                $chosenSlot = $slotCand;
+                                $chosenAvailableRooms = $freeRooms;
+                                break;
+                            }
+                        }
+
+                        if (! $chosenSlot) {
+                            $bestSlot = $allCandidateSlots[0];
+                            $bestCap = -1;
+                            $bestRooms = collect();
+                            foreach ($allCandidateSlots as $slotCand) {
+                                $bookedInSlot = $bookedRoomsBySlot[$dateStr][$slotCand] ?? [];
+                                $freeRooms = $rooms->filter(fn ($r) => ! in_array($r->id, $bookedInSlot))->values();
+                                $cap = $freeRooms->sum(fn ($r) => floor($r->capacity / 2));
+                                if ($cap > $bestCap) {
+                                    $bestCap = $cap;
+                                    $bestSlot = $slotCand;
+                                    $bestRooms = $freeRooms;
+                                }
+                            }
+                            $chosenSlot = $bestSlot;
+                            $chosenAvailableRooms = $bestRooms->isNotEmpty() ? $bestRooms : clone $rooms;
+                        }
+
+                        $slotInfo = ExamSlotCatalog::resolve($chosenSlot);
+                        $unassignedCount = $studentCount;
+                        $studentsList = $students->toArray();
+                        $availableRooms = clone $chosenAvailableRooms;
+                        $filiereGroup = Group::where('filiere_id', $module->filiere_id)->first() ?? Group::first();
+                        $defaultGroupId = $filiereGroup?->id ?? 1;
+
+                        while ($unassignedCount > 0 && $availableRooms->isNotEmpty()) {
+                            $assignedRoom = $availableRooms->first(fn ($r) => floor($r->capacity / 2) >= $unassignedCount)
+                                ?? $availableRooms->pop();
+
+                            $bookedRoomsBySlot[$dateStr][$chosenSlot][] = $assignedRoom->id;
+                            $availableRooms = $availableRooms->filter(fn ($r) => $r->id !== $assignedRoom->id)->values();
+
+                            $examCapacity = floor($assignedRoom->capacity / 2);
+                            $studentsForThisRoom = array_splice($studentsList, 0, $examCapacity);
+                            $unassignedCount -= count($studentsForThisRoom);
+
+                            $exam = Exam::create([
+                                'module_id' => $module->id,
+                                'group_id' => $defaultGroupId,
+                                'exam_session_id' => $sessionId,
+                                'room_id' => $assignedRoom->id,
+                                'exam_date' => $dateStr,
+                                'start_time' => $chosenSlot,
+                                'duration_minutes' => $slotInfo['duration'] ?? 120,
+                                'type' => 'final',
+                            ]);
+                            $examsCreated++;
+                            $allCreatedExams[] = $exam;
+
+                            $seatings = [];
+                            $seatNum = 1;
+                            foreach ($studentsForThisRoom as $sid) {
+                                $seatings[] = [
+                                    'exam_id' => $exam->id,
+                                    'student_id' => $sid,
+                                    'room_id' => $assignedRoom->id,
+                                    'seat_number' => $seatNum++,
+                                    'created_at' => now(),
+                                    'updated_at' => now(),
+                                ];
+                            }
+
+                            if (! empty($seatings)) {
+                                ExamSeating::insert($seatings);
+                            }
+                        }
+
+                        $modulePointers[$fid]++;
+                        $scheduledSomethingToday = true;
                     }
                 }
 
-                // Progression des dates : passer au jour suivant une fois modulesPerDay atteint
-                $moduleIndexInDay++;
-                if ($moduleIndexInDay >= $modulesPerDay) {
-                    $moduleIndexInDay = 0;
+                $hasRemainingModules = false;
+                foreach ($modulesByFiliere as $fid => $fMods) {
+                    if ($modulePointers[$fid] < $fMods->count()) {
+                        $hasRemainingModules = true;
+                        break;
+                    }
+                }
+
+                if ($scheduledSomethingToday || $hasRemainingModules) {
                     $currentDate->addDay();
                     while ($currentDate->isSunday()) {
                         $currentDate->addDay();
@@ -531,9 +615,12 @@ class ExamPlanningEngine
                 }
             }
 
+            $targetDesc = $filiereId ? 'la filière sélectionnée' : 'toutes les filières académiques';
+
             return [
                 'success' => true,
-                'message' => "{$examsCreated} examens générés avec succès sans aucun conflit de surveillance.",
+                'message' => "{$examsCreated} examens générés avec succès pour {$targetDesc} sans aucun conflit de salle ou de surveillance.",
+                'created_count' => $examsCreated,
             ];
         });
     }

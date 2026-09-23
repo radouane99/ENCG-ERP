@@ -283,8 +283,8 @@ export default function AdminExamsPage() {
 
   // Custom Generator Modal handlers
   const openCustomGenModal = () => {
-    if (!selectedSessionId || !selectedFiliereId) {
-      toast.error("Veuillez sélectionner une filière et une session d'abord dans les filtres.")
+    if (!selectedSessionId) {
+      toast.error("Veuillez sélectionner une session d'examen d'abord dans les filtres.")
       return
     }
 
@@ -296,7 +296,7 @@ export default function AdminExamsPage() {
     }
 
     const filtered = (modules || []).filter((m: any) => {
-      if (m.filiere_id !== Number(selectedFiliereId)) return false
+      if (selectedFiliereId && m.filiere_id !== Number(selectedFiliereId)) return false
       if (selectedSemesterNum && m.semester_number !== Number(selectedSemesterNum)) return false
       return true
     })
@@ -343,7 +343,7 @@ export default function AdminExamsPage() {
 
       const orderedSelectedModules = orderedModuleList.filter(m => selectedModuleIds.has(m.id))
       const res = await api.post('/exam-planning/custom-generate', {
-        filiere_id: Number(selectedFiliereId),
+        filiere_id: selectedFiliereId ? Number(selectedFiliereId) : null,
         exam_session_id: Number(selectedSessionId),
         semester_number: selectedSemesterNum ? Number(selectedSemesterNum) : null,
         start_date: customStartDate,
@@ -365,16 +365,24 @@ export default function AdminExamsPage() {
   }
 
   const handleAutoGenerateExams = async () => {
-    if (!selectedSessionId || !selectedFiliereId) {
-      toast.error("Veuillez sélectionner une filière et une session d'abord.")
+    if (!selectedSessionId) {
+      toast.error("Veuillez sélectionner une session d'examen d'abord.")
       return
     }
 
+    const isAllFilieres = !selectedFiliereId
+    const filiereObj = filieres?.find((f: any) => f.id === Number(selectedFiliereId))
+    const targetLabel = isAllFilieres ? "TOUTES les filières" : (filiereObj?.name || filiereObj?.code || "la filière")
+
     try {
       setIsAutoGenerating(true)
-      const toastId = toast.loading("Calcul anti-chevauchement & génération automatique des examens...")
+      const toastId = toast.loading(
+        isAllFilieres
+          ? "Calcul anti-chevauchement & génération automatique pour TOUTES les filières..."
+          : `Calcul anti-chevauchement & génération automatique (${targetLabel})...`
+      )
       const res = await api.post('/exam-planning/auto-generate', {
-        filiere_id: Number(selectedFiliereId),
+        filiere_id: selectedFiliereId ? Number(selectedFiliereId) : null,
         exam_session_id: Number(selectedSessionId),
         semester_number: selectedSemesterNum ? Number(selectedSemesterNum) : null
       })
@@ -666,10 +674,10 @@ export default function AdminExamsPage() {
               onClick={handleAutoGenerateExams}
               disabled={isAutoGenerating}
               className="px-4 py-2.5 bg-gradient-to-r from-[#0f2863] to-[#1e40af] hover:from-[#16357d] hover:to-[#2563eb] text-white font-black rounded-2xl text-xs uppercase tracking-wider transition-all shadow-md hover:shadow-indigo-500/20 flex items-center gap-2 cursor-pointer disabled:opacity-50 active:scale-95 border border-indigo-400/20"
-              title="Générer automatiquement les dates et les salles avec algorithme anti-chevauchement"
+              title={selectedFiliereId ? "Générer automatiquement les examens de cette filière avec algorithme anti-chevauchement" : "Générer automatiquement les examens de TOUTES les filières en un seul clic"}
             >
               {isAutoGenerating ? <Loader2 className="w-4 h-4 animate-spin text-amber-300" /> : <Zap className="w-4 h-4 text-amber-300" />}
-              <span>Auto-Générer IA</span>
+              <span>{selectedFiliereId ? "Auto-Générer IA" : "Auto-Générer Tout (IA)"}</span>
             </button>
 
             {/* Sur Mesure */}
@@ -1041,7 +1049,12 @@ export default function AdminExamsPage() {
                             {idx + 1}
                           </span>
                           <span className="font-bold text-slate-800 dark:text-slate-200 truncate">{cleanUtf8Text(mod.name)}</span>
-                          <span className="text-[9px] font-bold text-slate-400 bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded">
+                          {(mod.filiere?.code || filieres?.find((f: any) => f.id === mod.filiere_id)?.code) && (
+                            <span className="text-[9px] font-black text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/50 border border-indigo-200 dark:border-indigo-800 px-1.5 py-0.5 rounded uppercase shrink-0">
+                              {mod.filiere?.code || filieres?.find((f: any) => f.id === mod.filiere_id)?.code}
+                            </span>
+                          )}
+                          <span className="text-[9px] font-bold text-slate-400 bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded shrink-0">
                             S{mod.semester_number || 1}
                           </span>
                         </div>
