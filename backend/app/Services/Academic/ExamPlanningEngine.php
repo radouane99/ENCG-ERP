@@ -158,7 +158,7 @@ class ExamPlanningEngine
         ?int $filiereId,
         int $sessionId,
         ?int $semesterNumber = null,
-        int $modulesPerDay = 1,
+        int $modulesPerDay = 2,
         string $daySlotMode = 'matin',
         ?array $customModuleIds = null,
         ?string $customStartDate = null
@@ -247,6 +247,34 @@ class ExamPlanningEngine
                 $modulePointers[$fid] = 0;
             }
 
+            // Répartition équilibrée des filières entre Matin (08:30) et Soir/Après-midi (14:30)
+            // afin de répartir la charge des salles (ex: 6 filières -> 3 matin et 3 soir)
+            $filierePeriod = []; // [$fid => 'matin' | 'soir']
+            $filiereStudentCounts = [];
+            foreach ($modulesByFiliere as $fid => $fMods) {
+                $count = StudentRegistration::whereHas('group', fn ($q) => $q->where('filiere_id', $fid))
+                    ->where('academic_year_id', $session->academic_year_id)
+                    ->count();
+                $filiereStudentCounts[$fid] = $count > 0 ? $count : 24;
+            }
+
+            // Trier les filières par effectif décroissant pour alterner (ex: grande filière le matin, grande filière le soir)
+            $sortedFiliereIds = array_keys($filiereStudentCounts);
+            usort($sortedFiliereIds, fn ($a, $b) => $filiereStudentCounts[$b] <=> $filiereStudentCounts[$a]);
+
+            $shouldBalance = ($daySlotMode === 'balanced') || ($daySlotMode === 'matin' && count($sortedFiliereIds) > 1) || empty($filiereId);
+
+            foreach ($sortedFiliereIds as $fIdx => $fid) {
+                if ($daySlotMode === 'pm') {
+                    $filierePeriod[$fid] = 'soir';
+                } elseif ($shouldBalance) {
+                    // Équilibrage 50% matin / 50% soir (ex: 6 filières -> 3 matin, 3 soir)
+                    $filierePeriod[$fid] = ($fIdx % 2 === 0) ? 'matin' : 'soir';
+                } else {
+                    $filierePeriod[$fid] = 'matin';
+                }
+            }
+
             $hasRemainingModules = true;
             $safetyLoopLimit = 120;
             $loopCount = 0;
@@ -268,24 +296,30 @@ class ExamPlanningEngine
 
                         $module = $fMods[$currIdx];
                         $semNum = $module->semester_number ?? 1;
+                        $period = $filierePeriod[$module->filiere_id] ?? 'matin';
 
-                        $preferredTime = match (true) {
-                            $modulesPerDay >= 2 && $daySlotMode === 'pm' && $mIdx === 0 => '14:30:00',
-                            $modulesPerDay >= 2 && $daySlotMode === 'pm' => ExamSlotCatalog::afternoonSecondStart().':00',
-                            $modulesPerDay >= 2 && $daySlotMode === 'split' && $mIdx === 0 => '08:30:00',
-                            $modulesPerDay >= 2 && $daySlotMode === 'split' => '14:30:00',
-                            $modulesPerDay >= 2 && $mIdx === 0 => '08:30:00',
-                            $modulesPerDay >= 2 => ExamSlotCatalog::morningSecondStart().':00',
-                            default => ($semNum % 2 !== 0) ? '08:30:00' : '14:30:00',
-                        };
-
-                        $allCandidateSlots = array_values(array_unique([
-                            $preferredTime,
-                            '08:30:00',
-                            '10:45:00',
-                            '14:30:00',
-                            '16:45:00',
-                        ]));
+                        if ($daySlotMode === 'split' && $modulesPerDay >= 2) {
+                            $preferredTime = ($mIdx === 0) ? '08:30:00' : '14:30:00';
+                            $allCandidateSlots = ($mIdx === 0)
+                                ? ['08:30:00', '10:45:00', '14:30:00', '16:45:00']
+                                : ['14:30:00', '16:45:00', '10:45:00', '08:30:00'];
+                        } elseif ($period === 'soir') {
+                            if ($modulesPerDay >= 2 && $mIdx > 0) {
+                                $preferredTime = '16:45:00';
+                                $allCandidateSlots = ['16:45:00', '14:30:00', '10:45:00', '08:30:00'];
+                            } else {
+                                $preferredTime = '14:30:00';
+                                $allCandidateSlots = ['14:30:00', '16:45:00', '08:30:00', '10:45:00'];
+                            }
+                        } else {
+                            if ($modulesPerDay >= 2 && $mIdx > 0) {
+                                $preferredTime = '10:45:00';
+                                $allCandidateSlots = ['10:45:00', '08:30:00', '14:30:00', '16:45:00'];
+                            } else {
+                                $preferredTime = '08:30:00';
+                                $allCandidateSlots = ['08:30:00', '10:45:00', '14:30:00', '16:45:00'];
+                            }
+                        }
 
                         $students = StudentRegistration::whereHas('group', fn ($q) => $q->where('filiere_id', $module->filiere_id))
                             ->where('academic_year_id', $session->academic_year_id)
@@ -616,10 +650,13 @@ class ExamPlanningEngine
             }
 
             $targetDesc = $filiereId ? 'la filière sélectionnée' : 'toutes les filières académiques';
+            $balanceNote = ($daySlotMode === 'balanced' || count($modulesByFiliere) > 1)
+                ? ' (répartition équilibrée Matin / Soir)'
+                : '';
 
             return [
                 'success' => true,
-                'message' => "{$examsCreated} examens générés avec succès pour {$targetDesc} sans aucun conflit de salle ou de surveillance.",
+                'message' => "{$examsCreated} examens générés avec succès pour {$targetDesc}{$balanceNote} sans aucun conflit de salle ou de surveillance.",
                 'created_count' => $examsCreated,
             ];
         });

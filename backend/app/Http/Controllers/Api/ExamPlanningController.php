@@ -171,7 +171,7 @@ class ExamPlanningController extends Controller
             'exam_session_id' => 'nullable|integer',
             'semester_number' => 'nullable|integer',
             'modules_per_day' => 'nullable|integer|in:1,2,3',
-            'day_slot_mode' => 'nullable|string|in:matin,pm,split',
+            'day_slot_mode' => 'nullable|string|in:matin,pm,split,balanced',
             'module_ids' => 'nullable|array',
             'module_ids.*' => 'integer',
             'ordered_module_ids' => 'nullable|array',
@@ -190,8 +190,8 @@ class ExamPlanningController extends Controller
             $filiereId,
             $sessionId,
             $validated['semester_number'] ?? null,
-            $validated['modules_per_day'] ?? 1,
-            $validated['day_slot_mode'] ?? 'matin',
+            $validated['modules_per_day'] ?? 2,
+            $validated['day_slot_mode'] ?? ($filiereId ? 'matin' : 'balanced'),
             $validated['module_ids'] ?? $validated['ordered_module_ids'] ?? null,
             $validated['start_date'] ?? null
         );

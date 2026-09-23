@@ -103,7 +103,7 @@ export default function AdminExamsPage() {
   // Custom planning modal state
   const [showCustomGenModal, setShowCustomGenModal] = useState(false)
   const [modulesPerDay, setModulesPerDay] = useState<number>(2)
-  const [daySlotMode, setDaySlotMode] = useState<'matin' | 'pm' | 'split'>('matin')
+  const [daySlotMode, setDaySlotMode] = useState<'matin' | 'pm' | 'split' | 'balanced'>('balanced')
   const [customStartDate, setCustomStartDate] = useState<string>('')
   const [orderedModuleList, setOrderedModuleList] = useState<any[]>([])
   const [selectedModuleIds, setSelectedModuleIds] = useState<Set<number>>(new Set())
@@ -303,6 +303,7 @@ export default function AdminExamsPage() {
 
     setOrderedModuleList(filtered)
     setSelectedModuleIds(new Set(filtered.map((m: any) => m.id)))
+    setDaySlotMode(!selectedFiliereId ? 'balanced' : 'matin')
     setShowCustomGenModal(true)
   }
 
@@ -378,13 +379,15 @@ export default function AdminExamsPage() {
       setIsAutoGenerating(true)
       const toastId = toast.loading(
         isAllFilieres
-          ? "Calcul anti-chevauchement & génération automatique pour TOUTES les filières..."
+          ? "Équilibrage des filières (Matin / Soir) & génération sans conflits pour TOUTES les filières..."
           : `Calcul anti-chevauchement & génération automatique (${targetLabel})...`
       )
       const res = await api.post('/exam-planning/auto-generate', {
         filiere_id: selectedFiliereId ? Number(selectedFiliereId) : null,
         exam_session_id: Number(selectedSessionId),
-        semester_number: selectedSemesterNum ? Number(selectedSemesterNum) : null
+        semester_number: selectedSemesterNum ? Number(selectedSemesterNum) : null,
+        modules_per_day: 2,
+        day_slot_mode: isAllFilieres ? 'balanced' : 'matin'
       })
 
       toast.dismiss(toastId)
@@ -980,10 +983,11 @@ export default function AdminExamsPage() {
 
               <div>
                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1.5">Créneaux horaires par défaut</label>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {[
-                    { id: 'matin', label: 'Matinée (08:30 & 10:30)' },
-                    { id: 'pm', label: 'Après-midi (14:30 & 16:30)' },
+                    { id: 'balanced', label: '⚖️ Équilibré (Matin / Soir)' },
+                    { id: 'matin', label: 'Matinée (08:30 & 10:45)' },
+                    { id: 'pm', label: 'Après-midi (14:30 & 16:45)' },
                     { id: 'split', label: 'Matin & Soir (08:30 / 14:30)' }
                   ].map(slot => (
                     <button
