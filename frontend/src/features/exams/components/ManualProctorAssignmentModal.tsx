@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react'
+import { createPortal } from 'react-dom'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import {
   X,
@@ -84,6 +85,16 @@ export default function ManualProctorAssignmentModal({
       setAssignments(initial)
     }
   }, [exams])
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        onClose()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, onClose])
 
   // Map for quick proctor lookup
   const proctorsMap = useMemo(() => {
@@ -439,18 +450,18 @@ export default function ManualProctorAssignmentModal({
 
   if (!isOpen) return null
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 bg-slate-950/75 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-[1560px] h-[94vh] flex flex-col overflow-hidden ring-1 ring-slate-900/10">
+  return createPortal(
+    <div className="fixed inset-0 z-[99999] flex flex-col w-screen h-screen bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200 overflow-hidden">
+      <div className="w-full h-full flex flex-col bg-white dark:bg-slate-900 overflow-hidden">
         {/* MODAL HEADER */}
-        <div className="px-6 py-4.5 border-b border-slate-100 dark:border-slate-800/80 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0">
+        <div className="px-6 py-3.5 border-b border-slate-200/80 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0 shadow-xs z-10">
           <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-500 text-white flex items-center justify-center shadow-lg shadow-amber-500/25 shrink-0">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-500 text-white flex items-center justify-center shadow-lg shadow-amber-500/25 shrink-0">
               <Shield className="w-5 h-5 stroke-[2.2]" />
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">
+                <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white tracking-tight">
                   Affectation Manuelle & Sur-Mesure des Surveillants
                 </h2>
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-800 shadow-xs">
@@ -466,7 +477,7 @@ export default function ManualProctorAssignmentModal({
 
           {/* Quick Header Badges & Actions */}
           <div className="flex items-center flex-wrap gap-2.5">
-            <div className="flex items-center gap-2 bg-slate-100/70 dark:bg-slate-800/70 border border-slate-200/80 dark:border-slate-700 px-3.5 py-1.5 rounded-2xl shadow-2xs">
+            <div className="flex items-center gap-2 bg-slate-100/70 dark:bg-slate-800/70 border border-slate-200/80 dark:border-slate-700 px-3 py-1.5 rounded-xl shadow-2xs">
               <Activity className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
               <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Couverture :</span>
               <span className="text-xs font-black text-slate-900 dark:text-white">
@@ -503,7 +514,8 @@ export default function ManualProctorAssignmentModal({
             <button
               onClick={onClose}
               type="button"
-              className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-white rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-white rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer border border-slate-200/60 dark:border-slate-700 shadow-2xs"
+              title="Fermer (Échap)"
             >
               <X className="w-5 h-5" />
             </button>
@@ -835,8 +847,8 @@ export default function ManualProctorAssignmentModal({
             </div>
           </div>
 
-          {/* RIGHT SIDEBAR: PROCTORS WORKLOAD & QUOTAS PANEL (32%) */}
-          <div className="w-full lg:w-[460px] flex flex-col bg-white dark:bg-slate-900 overflow-hidden shrink-0 border-t lg:border-t-0">
+          {/* RIGHT SIDEBAR: PROCTORS WORKLOAD & QUOTAS PANEL */}
+          <div className="w-full lg:w-[420px] xl:w-[460px] flex flex-col bg-white dark:bg-slate-900 overflow-hidden shrink-0 border-t lg:border-t-0 shadow-xs">
             <div className="p-4 border-b border-slate-200/80 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/80">
               <div className="flex items-center justify-between mb-1.5">
                 <h3 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
@@ -981,7 +993,7 @@ export default function ManualProctorAssignmentModal({
         </div>
 
         {/* MODAL FOOTER */}
-        <div className="p-4 sm:px-8 border-t border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
+        <div className="px-6 py-3.5 border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0 shadow-lg z-10">
           <div className="flex items-center gap-3 text-xs text-slate-500">
             <span>
               Total surveillances attribuées :{' '}
@@ -1004,7 +1016,7 @@ export default function ManualProctorAssignmentModal({
             <button
               onClick={onClose}
               type="button"
-              className="flex-1 sm:flex-none px-4 py-2.5 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all cursor-pointer"
+              className="flex-1 sm:flex-none px-4 py-2.5 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all cursor-pointer border border-slate-200/60 dark:border-slate-700"
             >
               Annuler
             </button>
@@ -1025,6 +1037,7 @@ export default function ManualProctorAssignmentModal({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
