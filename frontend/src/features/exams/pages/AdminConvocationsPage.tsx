@@ -452,6 +452,11 @@ export default function AdminConvocationsPage() {
     )
   }, [surveillants])
 
+  const totalStudentsCount = stats?.students?.total ?? groupedStudents.length ?? 0
+  const generatedStudentsCount = stats?.students?.generated ?? (groupedStudents.some((s: any) => s.has_qr) ? groupedStudents.length : totalStudentsCount)
+  const sentStudentsCount = stats?.students?.sent ?? groupedStudents.filter((s: any) => s.any_sent).length ?? 0
+  const totalSurveillantsCount = stats?.surveillants?.total ?? groupedSurveillants.length ?? 0
+
   const filteredStudents = useMemo(() => {
     return groupedStudents.filter((s: any) => {
       const matchSearch =
@@ -673,7 +678,9 @@ export default function AdminConvocationsPage() {
 
             <div className="relative z-10 pt-4 mt-4 border-t border-white/15 flex items-center justify-between text-xs">
               <span className="text-blue-200 font-bold">Cohorte active :</span>
-              <span className="font-black text-amber-300 bg-white/10 px-2.5 py-1 rounded-lg">24 Étudiants (G1 + G2)</span>
+              <span className="font-black text-amber-300 bg-white/10 px-2.5 py-1 rounded-lg">
+                {totalStudentsCount} Étudiants convoqués
+              </span>
             </div>
           </div>
         </div>
@@ -686,15 +693,15 @@ export default function AdminConvocationsPage() {
               {[
                 {
                   label: 'Étudiants Inscrits',
-                  value: stats?.students?.total || 24,
+                  value: totalStudentsCount,
                   badge: 'Cohorte Active',
-                  sub: '24 étudiants convoqués',
+                  sub: `${totalStudentsCount} étudiants convoqués`,
                   icon: Users,
                   color: 'text-[#0f2863] dark:text-blue-400 bg-blue-50/80 dark:bg-blue-950/60',
                 },
                 {
                   label: 'Convocations Officielles A4',
-                  value: stats?.students?.generated || stats?.students?.total || 24,
+                  value: generatedStudentsCount,
                   badge: '100% Prêtes',
                   sub: '1 convocation par étudiant',
                   icon: FileText,
@@ -702,15 +709,17 @@ export default function AdminConvocationsPage() {
                 },
                 {
                   label: 'Emails Diffusés',
-                  value: stats?.students?.sent || 0,
-                  badge: stats?.students?.sent ? 'Délivré' : 'Prêt pour diffusion',
-                  sub: 'Notification des 24 étudiants',
+                  value: sentStudentsCount,
+                  badge: sentStudentsCount > 0 ? `${sentStudentsCount} Délivré(s)` : 'Prêt pour diffusion',
+                  sub: sentStudentsCount > 0
+                    ? `${sentStudentsCount} sur ${totalStudentsCount} notifiés`
+                    : `Notification des ${totalStudentsCount} étudiants`,
                   icon: Mail,
                   color: 'text-emerald-600 dark:text-emerald-400 bg-emerald-50/80 dark:bg-emerald-950/60',
                 },
                 {
                   label: 'Surveillants Affectés',
-                  value: stats?.surveillants?.total || 5,
+                  value: totalSurveillantsCount,
                   badge: stats?.surveillants?.confirmed ? `${stats.surveillants.confirmed} Confirmé(s)` : 'Professeurs',
                   sub: stats?.surveillants?.confirmed ? `${stats.surveillants.confirmed} confirmation(s) reçue(s)` : "Assignés aux salles d'examen",
                   icon: Shield,
@@ -775,7 +784,7 @@ export default function AdminConvocationsPage() {
                     className="w-full bg-[#0f2863] hover:bg-[#153a8a] text-white py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-md shadow-blue-950/20 cursor-pointer disabled:opacity-60 hover:scale-[1.01] active:scale-[0.99]"
                   >
                     {generateMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4 text-amber-300" />}
-                    <span>Générer Convocations (24)</span>
+                    <span>Générer Convocations ({totalStudentsCount})</span>
                   </button>
                 </div>
 

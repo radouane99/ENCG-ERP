@@ -410,7 +410,7 @@ class ConvocationController extends Controller
     /**
      * Confirmation officielle de présence et accusé de réception par le surveillant.
      */
-    public function confirmSurveillance(Request $request, mixed $id): JsonResponse
+    public function confirmSurveillance(Request $request, mixed $id = null): JsonResponse
     {
         $user = $request->user();
         $now = now();
@@ -506,7 +506,7 @@ class ConvocationController extends Controller
     /**
      * Signature électronique officielle du PV d'examen par le surveillant.
      */
-    public function signExamPv(Request $request, mixed $id): JsonResponse
+    public function signExamPv(Request $request, mixed $id = null): JsonResponse
     {
         $user = $request->user();
         $signatureData = $request->input('signature_data');

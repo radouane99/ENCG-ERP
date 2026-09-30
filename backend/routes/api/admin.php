@@ -1152,6 +1152,14 @@ Route::middleware(['auth:sanctum', $staffRoles])->group(function () {
     Route::get('/admin/tafem/ministry-list', [AdmissionController::class, 'getMinistryTafemList']);
     Route::post('/admin/tafem/verify-physical-dossier', [AdmissionController::class, 'verifyPhysicalDossier']);
 
+    Route::get('/admin/tafem/stats', [AdmissionController::class, 'getTafemStats']);
+    Route::get('/admin/admissions/tafem-stats', [AdmissionController::class, 'getTafemStats']);
+    Route::get('/admissions/tafem-stats', [AdmissionController::class, 'getTafemStats']);
+    Route::post('/admin/tafem/auto-repartition', [AdmissionController::class, 'runAutoRepartition']);
+    Route::post('/admin/tafem/promote-waiting-list', [AdmissionController::class, 'promoteWaitingList']);
+    Route::get('/admin/tafem/export-deliberation-pdf', [PdfExportController::class, 'exportTafemDeliberationPdf']);
+    Route::get('/v1/tafem/export-deliberation-pdf', [PdfExportController::class, 'exportTafemDeliberationPdf']);
+
     Route::get('/admin/tafem/scan-envelope/{token}', [AdmissionController::class, 'scanEnvelopeQrCode']);
     Route::get('/admin/tafem/enrollment-stats', [AdmissionController::class, 'getEnrollmentStats']);
     Route::get('/admin/tafem/security-daily-list', [AdmissionController::class, 'getSecurityDailyList']);
