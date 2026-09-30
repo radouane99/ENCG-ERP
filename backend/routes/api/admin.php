@@ -314,6 +314,7 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|super_admin|instituti
     Route::apiResource('attendances', AttendanceController::class)->only(['index', 'destroy']);
 
     // Clubs
+    Route::get('clubs/{id}/agrement-pdf', [ClubController::class, 'downloadAgrementPdf']);
     Route::apiResource('clubs', ClubController::class)->except(['destroy']);
 
     // Internships
