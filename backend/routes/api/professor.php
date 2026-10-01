@@ -75,6 +75,7 @@ Route::middleware(['auth:sanctum', 'role:professor|vacataire|department-head|fil
 
     // Attendance Module
     Route::prefix('professor/attendance')->group(function () {
+        Route::get('/context', [ProfessorAttendanceController::class, 'getAttendanceContext']);
         Route::get('/students', [ProfessorAttendanceController::class, 'getStudents']);
         Route::post('/start', [ProfessorAttendanceController::class, 'startSession']);
         Route::post('/save', [ProfessorAttendanceController::class, 'save']);

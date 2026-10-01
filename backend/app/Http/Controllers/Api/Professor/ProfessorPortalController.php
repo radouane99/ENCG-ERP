@@ -1338,10 +1338,11 @@ class ProfessorPortalController extends Controller
 
         $dbSchedules = $schedulesQuery->get();
 
-        // 2. Récupérer les modules assignés via ModuleProfessor également
+        // 2. Récupérer les modules assignés via le pivot officiel module_professor
         $mpModuleIds = [];
         if ($profId) {
-            $mpModuleIds = ModuleProfessor::where('professor_id', $profId)
+            $mpModuleIds = DB::table('module_professor')
+                ->where('professor_id', $profId)
                 ->pluck('module_id')
                 ->filter()
                 ->unique()
@@ -1352,17 +1353,12 @@ class ProfessorPortalController extends Controller
         $scheduleModuleIds = $dbSchedules->pluck('module_id')->filter()->unique()->toArray();
         $allAssignedModuleIds = array_values(array_unique(array_merge($scheduleModuleIds, $mpModuleIds)));
 
-        // Charger les modules complets
-        $assignedModules = Module::with('filiere')
-            ->whereIn('id', $allAssignedModuleIds)
-            ->get();
+        // Charger STRICTEMENT les modules réellement affectés à cet enseignant (aucun mock/fallback)
+        $assignedModules = !empty($allAssignedModuleIds)
+            ? Module::with('filiere')->whereIn('id', $allAssignedModuleIds)->get()
+            : collect();
 
-        // Si aucun module assigné dans la base pour cet enseignant, charger les modules par défaut pour éviter un blocage
-        if ($assignedModules->isEmpty()) {
-            $assignedModules = Module::with('filiere')->take(4)->get();
-        }
-
-        // Construire la liste des séances d'emploi du temps assignées
+        // Construire la liste des séances d'emploi du temps assignées (strictement réelles)
         $assignedSchedules = $dbSchedules->map(function ($s) {
             $startTime = $s->start_time ? substr($s->start_time, 0, 5) : '08:30';
             $endTime = $s->end_time ? substr($s->end_time, 0, 5) : '10:30';
@@ -1390,40 +1386,6 @@ class ProfessorPortalController extends Controller
                 'display_label' => ($s->day_of_week ? ucfirst($s->day_of_week).' ' : '')."{$startTime}-{$endTime} • ".($s->module?->name ?? 'Module')." (".strtoupper($s->session_type ?? 'CM')." - ".($s->group?->name ?? 'Section').")",
             ];
         });
-
-        // Si l'enseignant n'a pas encore de schedules dans la base, synthétiser des créneaux réalistes basés sur ses modules
-        if ($assignedSchedules->isEmpty() && $assignedModules->isNotEmpty()) {
-            $days = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi'];
-            $slots = [
-                ['08:30', '10:30', 'CM', 'Section 1 (Amphi 1)', 'Amphi 1'],
-                ['10:45', '12:45', 'TD', 'Sous-Groupe G1.1 (Salle 4)', 'Salle 4'],
-                ['14:00', '16:00', 'TD', 'Sous-Groupe G1.2 (Salle 4)', 'Salle 4'],
-                ['16:15', '18:15', 'CM', 'Section 2 (Amphi 2)', 'Amphi 2'],
-            ];
-
-            $synthetic = collect();
-            foreach ($assignedModules as $idx => $mod) {
-                $slot = $slots[$idx % count($slots)];
-                $day = $days[$idx % count($days)];
-                $synthetic->push([
-                    'id' => 1000 + $mod->id,
-                    'module_id' => $mod->id,
-                    'module_name' => $mod->name,
-                    'module_code' => $mod->code ?? 'MOD',
-                    'filiere_code' => $mod->filiere?->code ?? 'ENCG',
-                    'group_id' => null,
-                    'group_name' => $slot[3],
-                    'room_name' => $slot[4],
-                    'day_of_week' => $day,
-                    'start_time' => $slot[0],
-                    'end_time' => $slot[1],
-                    'session_type' => $slot[2],
-                    'duration_hours' => 2.0,
-                    'display_label' => "{$day} {$slot[0]}-{$slot[1]} • {$mod->name} ({$slot[2]} - {$slot[3]})",
-                ]);
-            }
-            $assignedSchedules = $synthetic;
-        }
 
         // Calcul du résumé du syllabus par module assigné
         $modulesSummary = [];

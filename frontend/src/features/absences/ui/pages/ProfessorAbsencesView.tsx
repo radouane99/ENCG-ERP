@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Users, Check, Clock, QrCode, Sparkles, Mic, MicOff, 
   Search, Play, BookOpen, Layers,
-  CalendarDays, Zap, CheckSquare
+  CalendarDays, Zap, CheckSquare, AlertCircle
 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import api from '@/shared/lib/api';
@@ -23,127 +23,31 @@ interface StudentItem {
 
 interface TimetableSession {
   id: string;
-  day: 'Lundi' | 'Mardi' | 'Mercredi' | 'Jeudi' | 'Vendredi' | 'Samedi';
+  day: string;
   timeSlot: string;
+  filiereId?: number | string;
   filiereCode: string;
   filiereName: string;
+  groupId?: number | string;
   groupName: string;
+  moduleId?: number | string;
   moduleCode: string;
   moduleName: string;
   roomName: string;
-  sessionType: 'Cours Magistral (CM)' | 'Travaux Dirigés (TD)' | 'Travaux Pratiques (TP)';
+  sessionType: string;
   isToday?: boolean;
 }
-
-// ── Weekly Sessions Pre-configuration (Professor & Filière Schedule) ───────
-const WEEKLY_SCHEDULE: TimetableSession[] = [
-  {
-    id: 's1',
-    day: 'Lundi',
-    timeSlot: '08:30 - 10:30',
-    filiereCode: 'TC',
-    filiereName: 'Tronc Commun ENCG (TC)',
-    groupName: 'TC-S1-G1',
-    moduleCode: 'TC-S1-M02',
-    moduleName: 'Comptabilité Générale I',
-    roomName: 'Amphi 1',
-    sessionType: 'Cours Magistral (CM)',
-  },
-  {
-    id: 's2',
-    day: 'Lundi',
-    timeSlot: '10:45 - 12:45',
-    filiereCode: 'TC',
-    filiereName: 'Tronc Commun ENCG (TC)',
-    groupName: 'TC-S1-G2',
-    moduleCode: 'TC-S1-M01',
-    moduleName: 'Mathématiques pour la Gestion',
-    roomName: 'Salle 4',
-    sessionType: 'Travaux Dirigés (TD)',
-  },
-  {
-    id: 's3',
-    day: 'Mardi',
-    timeSlot: '08:30 - 10:30',
-    filiereCode: 'GFC',
-    filiereName: 'Gestion Financière et Comptable (GFC)',
-    groupName: 'GFC-S5-G1',
-    moduleCode: 'GFC-S5-M01',
-    moduleName: 'Finance d\'Entreprise Approfondie',
-    roomName: 'Amphi 2',
-    sessionType: 'Cours Magistral (CM)',
-  },
-  {
-    id: 's4',
-    day: 'Mardi',
-    timeSlot: '14:30 - 16:30',
-    filiereCode: 'GFC',
-    filiereName: 'Gestion Financière et Comptable (GFC)',
-    groupName: 'GFC-S5-G2',
-    moduleCode: 'GFC-S5-M02',
-    moduleName: 'Audit Financier & Comptable',
-    roomName: 'Salle 8',
-    sessionType: 'Travaux Dirigés (TD)',
-  },
-  {
-    id: 's5',
-    day: 'Mercredi',
-    timeSlot: '10:45 - 12:45',
-    filiereCode: 'TC',
-    filiereName: 'Tronc Commun ENCG (TC)',
-    groupName: 'TC-S2-G1',
-    moduleCode: 'TC-S2-M03',
-    moduleName: 'Économie Générale II',
-    roomName: 'Amphi 2',
-    sessionType: 'Cours Magistral (CM)',
-  },
-  {
-    id: 's6',
-    day: 'Jeudi',
-    timeSlot: '08:30 - 10:30',
-    filiereCode: 'GFC',
-    filiereName: 'Gestion Financière et Comptable (GFC)',
-    groupName: 'GFC-S6-G1',
-    moduleCode: 'GFC-S6-M02',
-    moduleName: 'Contrôle de Gestion & Pilotage',
-    roomName: 'Amphi 3',
-    sessionType: 'Cours Magistral (CM)',
-  },
-  {
-    id: 's7',
-    day: 'Vendredi',
-    timeSlot: '14:30 - 16:30',
-    filiereCode: 'MAC',
-    filiereName: 'Marketing et Action Commerciale (MAC)',
-    groupName: 'MAC-S5-G1',
-    moduleCode: 'MAC-S5-M02',
-    moduleName: 'Marketing Stratégique',
-    roomName: 'Salle 12',
-    sessionType: 'Travaux Dirigés (TD)',
-  },
-  {
-    id: 's8',
-    day: 'Samedi',
-    timeSlot: '09:00 - 12:00',
-    filiereCode: 'GFC',
-    filiereName: 'Gestion Financière et Comptable (GFC)',
-    groupName: 'GFC-S5-G1',
-    moduleCode: 'GFC-S5-M03',
-    moduleName: 'Fiscalité des Entreprises & Séminaire',
-    roomName: 'Amphi 2',
-    sessionType: 'Travaux Pratiques (TP)',
-  },
-];
 
 export default function ProfessorAbsencesView() {
   const { user } = useAuthStore();
   const u = user as any;
   const currentProfName = u ? `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.name || '' : '';
 
-  // Selection state
+  // Selection state (Strictly Professor's Assigned Modules & Filieres)
   const [filieres, setFilieres] = useState<any[]>([]);
   const [groupes, setGroupes] = useState<any[]>([]);
   const [modules, setModules] = useState<any[]>([]);
+  const [schedules, setSchedules] = useState<TimetableSession[]>([]);
 
   const [selectedFiliere, setSelectedFiliere] = useState('');
   const [selectedGroupe, setSelectedGroupe] = useState('');
@@ -172,44 +76,50 @@ export default function ProfessorAbsencesView() {
   const [loading, setLoading] = useState(false);
   const [savingAttendance, setSavingAttendance] = useState(false);
 
-  // Mock initial student list (or fetched from real API)
+  // Student list
   const [students, setStudents] = useState<StudentItem[]>([]);
 
-  // Load Real Filieres & Modules
+  // ── Load Strictly Professor's Assigned Context (Modules, Timetable Schedules & Filieres) ──
   useEffect(() => {
-    api.get('/filieres').then((res) => {
-      const list = res.data.data || res.data || [];
-      setFilieres(list);
-      if (list.length > 0) {
-        setSelectedFiliere(list[0].id.toString());
-      }
-    }).catch(console.error);
+    setLoading(true);
+    api.get('/professor/attendance/context')
+      .then((res) => {
+        const d = res.data?.data;
+        if (d) {
+          const profModules = d.modules || [];
+          const profSchedules = d.schedules || [];
+          const profFilieres = d.filieres || [];
 
-    api.get('/modules').then((res) => {
-      const list = res.data.data || res.data || [];
-      setModules(list);
-    }).catch(console.error);
+          setModules(profModules);
+          setSchedules(profSchedules);
+          setFilieres(profFilieres);
+
+          if (profFilieres.length > 0) {
+            setSelectedFiliere('all');
+          } else {
+            setSelectedFiliere('');
+          }
+
+          if (profModules.length > 0) {
+            setSelectedModule(profModules[0].id.toString());
+          } else {
+            setSelectedModule('');
+          }
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to load attendance context:', err);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, []);
 
-  // 🔍 Filter Modules strictly according to the selected Filière
+  // Filter Modules strictly according to the selected Filière (among assigned modules)
   const filteredModules = useMemo(() => {
-    if (!selectedFiliere) return modules;
-    const filiereObj = filieres.find(f => f.id?.toString() === selectedFiliere.toString());
-    const fCode = filiereObj?.code?.toUpperCase() || '';
-
-    const list = modules.filter((m: any) => {
-      if (m.filiere_id && m.filiere_id.toString() === selectedFiliere.toString()) return true;
-      if (m.filiere?.id && m.filiere.id.toString() === selectedFiliere.toString()) return true;
-      if (fCode) {
-        if (fCode === 'TC' && m.code?.toUpperCase().startsWith('TC-')) return true;
-        if (fCode === 'GFC' && m.code?.toUpperCase().startsWith('GFC-')) return true;
-        if (fCode === 'MAC' && (m.code?.toUpperCase().startsWith('MAC-') || m.code?.toUpperCase().startsWith('MCM-'))) return true;
-      }
-      return false;
-    });
-
-    return list.length > 0 ? list : modules;
-  }, [modules, selectedFiliere, filieres]);
+    if (!selectedFiliere || selectedFiliere === 'all') return modules;
+    return modules.filter((m: any) => m.filiere_id?.toString() === selectedFiliere.toString());
+  }, [modules, selectedFiliere]);
 
   // Auto-select first matching module when filiere changes
   useEffect(() => {
@@ -218,6 +128,8 @@ export default function ProfessorAbsencesView() {
       if (!exists) {
         setSelectedModule(filteredModules[0].id.toString());
       }
+    } else {
+      setSelectedModule('');
     }
   }, [filteredModules, selectedModule]);
 
@@ -261,21 +173,18 @@ export default function ProfessorAbsencesView() {
   const handleSelectSessionFromSchedule = (session: TimetableSession, startDirectly: boolean = false) => {
     setSelectedSessionId(session.id);
 
-    // 1. Find and set filiere
-    const matchedFiliere = filieres.find(f => f.code?.toUpperCase() === session.filiereCode.toUpperCase() || f.name?.includes(session.filiereCode));
-    if (matchedFiliere) {
-      setSelectedFiliere(matchedFiliere.id.toString());
+    if (session.filiereId) {
+      setSelectedFiliere(session.filiereId.toString());
+    }
+    if (session.groupId) {
+      setSelectedGroupe(session.groupId.toString());
+    }
+    if (session.moduleId) {
+      setSelectedModule(session.moduleId.toString());
     }
 
-    // 2. Set room and session type
-    setRoomName(session.roomName);
-    setSessionType(session.sessionType);
-
-    // 3. Find and set module
-    const matchedModule = modules.find(m => m.code?.toUpperCase() === session.moduleCode.toUpperCase() || m.name?.includes(session.moduleName));
-    if (matchedModule) {
-      setSelectedModule(matchedModule.id.toString());
-    }
+    setRoomName(session.roomName || 'Salle');
+    setSessionType(session.sessionType || 'Cours Magistral (CM)');
 
     toast.success(`📅 Séance sélectionnée : ${session.moduleName}`, {
       description: `${session.day} · ${session.timeSlot} (${session.groupName} - ${session.roomName})`
@@ -463,20 +372,13 @@ export default function ProfessorAbsencesView() {
     );
   }, [students, searchQuery]);
 
-  // Schedule filtering by Filiere AND by Day
+  // Schedule filtering by Filiere AND by Day (Strictly Real Assigned Schedules)
   const filteredSchedule = useMemo(() => {
-    let list = WEEKLY_SCHEDULE;
+    let list = schedules;
 
     // Filter by selected filiere
     if (selectedFiliere && selectedFiliere !== 'all') {
-      const filiereObj = filieres.find(f => f.id?.toString() === selectedFiliere.toString());
-      const fCode = filiereObj?.code?.toUpperCase() || '';
-      const matched = list.filter(s => {
-        if (s.filiereCode?.toUpperCase() === fCode) return true;
-        if (filiereObj?.name && s.filiereName?.toLowerCase().includes(filiereObj.name.toLowerCase())) return true;
-        return false;
-      });
-      if (matched.length > 0) list = matched;
+      list = list.filter(s => s.filiereId && s.filiereId.toString() === selectedFiliere.toString());
     }
 
     // Filter by day
@@ -485,7 +387,7 @@ export default function ProfessorAbsencesView() {
     }
 
     return list;
-  }, [selectedDayFilter, selectedFiliere, filieres]);
+  }, [schedules, selectedDayFilter, selectedFiliere]);
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto font-sans animate-in fade-in">
@@ -524,8 +426,9 @@ export default function ProfessorAbsencesView() {
             ) : (
               <button
                 onClick={handleStartSession}
-                disabled={loading}
-                className="px-6 py-3.5 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-xl transition-all flex items-center gap-2 cursor-pointer active:scale-95"
+                disabled={loading || !selectedModule || modules.length === 0}
+                className="px-6 py-3.5 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 disabled:opacity-40 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-xl transition-all flex items-center gap-2 cursor-pointer active:scale-95"
+                title={modules.length === 0 ? "Aucun module affecté" : "Démarrer la session d'appel"}
               >
                 <Play className="w-4 h-4 text-amber-300" /> Démarrer l'Appel Immédiat
               </button>
@@ -533,6 +436,23 @@ export default function ProfessorAbsencesView() {
           </div>
         </div>
       </div>
+
+      {/* ── Avis Pédagogique d'Affectation ── */}
+      {!loading && modules.length === 0 && schedules.length === 0 && (
+        <div className="bg-amber-50/90 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 rounded-3xl p-5 sm:p-6 flex items-start gap-4 shadow-xs">
+          <div className="p-3 bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 rounded-2xl shrink-0">
+            <AlertCircle size={22} />
+          </div>
+          <div className="space-y-1">
+            <h3 className="text-sm font-black text-amber-900 dark:text-amber-200">
+              Aucun module ni créneau d'emploi du temps n'est actuellement affecté à votre profil enseignant
+            </h3>
+            <p className="text-xs text-amber-800/80 dark:text-amber-300/80 leading-relaxed font-medium">
+              Votre compte enseignant est bien connecté mais aucune matière ne vous a encore été attribuée dans le système académique pour ce semestre. La prise d'appel, l'émargement QR Code et les feuilles de présence seront opérationnels dès l'affectation officielle de vos cours par l'administration pédagogique.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* ── 2. ÉTAPE 1 : SÉLECTION DE LA FILIÈRE (TOP COCKPIT) ── */}
       {!isSessionActive && (
@@ -554,49 +474,62 @@ export default function ProfessorAbsencesView() {
             </div>
 
             {/* Quick Filiere Dropdown */}
-            <div className="w-full sm:w-72">
-              <select
-                value={selectedFiliere}
-                onChange={(e) => setSelectedFiliere(e.target.value)}
-                className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-[#0f2863] dark:text-white outline-none cursor-pointer"
-              >
-                <option value="all">🌐 Toutes les Filières (Vue Globale)</option>
-                {filieres.map((f: any) => (
-                  <option key={f.id} value={f.id}>{f.name} ({f.code})</option>
-                ))}
-              </select>
-            </div>
+            {filieres.length > 0 ? (
+              <div className="w-full sm:w-72">
+                <select
+                  value={selectedFiliere}
+                  onChange={(e) => setSelectedFiliere(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-[#0f2863] dark:text-white outline-none cursor-pointer"
+                >
+                  <option value="all">🌐 Toutes vos Filières Affectées</option>
+                  {filieres.map((f: any) => (
+                    <option key={f.id} value={f.id}>{f.name} ({f.code})</option>
+                  ))}
+                </select>
+              </div>
+            ) : (
+              <span className="text-xs text-amber-600 dark:text-amber-400 font-bold bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 rounded-xl">
+                0 filière affectée
+              </span>
+            )}
           </div>
 
           {/* Quick Filiere Pill Badges */}
-          <div className="flex items-center gap-2 flex-wrap pt-1">
-            <button
-              onClick={() => setSelectedFiliere('all')}
-              className={cn(
-                "px-3.5 py-2 rounded-xl text-xs font-black transition-all cursor-pointer border",
-                selectedFiliere === 'all'
-                  ? "bg-[#0f2863] text-white border-[#0f2863] shadow-sm"
-                  : "bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100"
-              )}
-            >
-              🌐 Toutes les Filières
-            </button>
-            {filieres.map((f: any) => (
+          {filieres.length > 0 ? (
+            <div className="flex items-center gap-2 flex-wrap pt-1">
               <button
-                key={f.id}
-                onClick={() => setSelectedFiliere(f.id.toString())}
+                onClick={() => setSelectedFiliere('all')}
                 className={cn(
-                  "px-3.5 py-2 rounded-xl text-xs font-black transition-all cursor-pointer border flex items-center gap-1.5",
-                  selectedFiliere === f.id.toString()
-                    ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
-                    : "bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:border-indigo-400"
+                  "px-3.5 py-2 rounded-xl text-xs font-black transition-all cursor-pointer border",
+                  selectedFiliere === 'all'
+                    ? "bg-[#0f2863] text-white border-[#0f2863] shadow-sm"
+                    : "bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100"
                 )}
               >
-                <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-white/20">{f.code}</span>
-                <span>{f.name}</span>
+                🌐 Toutes vos Filières
               </button>
-            ))}
-          </div>
+              {filieres.map((f: any) => (
+                <button
+                  key={f.id}
+                  onClick={() => setSelectedFiliere(f.id.toString())}
+                  className={cn(
+                    "px-3.5 py-2 rounded-xl text-xs font-black transition-all cursor-pointer border flex items-center gap-1.5",
+                    selectedFiliere === f.id.toString()
+                      ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
+                      : "bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:border-indigo-400"
+                  )}
+                >
+                  <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-white/20">{f.code}</span>
+                  <span>{f.name}</span>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-amber-800 dark:text-amber-300 text-xs flex items-center gap-2.5">
+              <Clock className="w-4 h-4 text-amber-500 shrink-0" />
+              <span>Aucune filière n'est reliée à vos modules pour le semestre en cours.</span>
+            </div>
+          )}
         </div>
       )}
 
@@ -752,9 +685,13 @@ export default function ProfessorAbsencesView() {
                 onChange={(e) => setSelectedModule(e.target.value)}
                 className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-[#0f2863] dark:text-white focus:outline-none focus:border-indigo-500 transition-colors cursor-pointer"
               >
-                {filteredModules.map((m: any) => (
-                  <option key={m.id} value={m.id}>{m.name} ({m.code})</option>
-                ))}
+                {filteredModules.length > 0 ? (
+                  filteredModules.map((m: any) => (
+                    <option key={m.id} value={m.id}>{m.name} ({m.code})</option>
+                  ))
+                ) : (
+                  <option value="">Aucun module affecté</option>
+                )}
               </select>
             </div>
 

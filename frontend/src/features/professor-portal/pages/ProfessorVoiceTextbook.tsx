@@ -28,7 +28,10 @@ import {
   Users,
   MapPin,
   Check,
-  Compass
+  Compass,
+  PenTool,
+  Eraser,
+  X
 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -107,6 +110,307 @@ const SAMPLE_TEMPLATES = [
   }
 ];
 
+// ══════════════════════════════════════════════════════════════════════════════
+// ── TACTILE SIGNATURE PAD MODAL (FINGER / STYLUS / MOUSE) ────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+interface TactileSignatureModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: (dataUrl: string) => void;
+  onClearSaved: () => void;
+  currentSignature: string | null;
+  professorName: string;
+}
+
+function TactileSignatureModal({
+  isOpen,
+  onClose,
+  onSave,
+  onClearSaved,
+  currentSignature,
+  professorName,
+}: TactileSignatureModalProps) {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const isDrawing = useRef(false);
+  const [hasDrawn, setHasDrawn] = useState(false);
+  const [inkColor, setInkColor] = useState('#001A4B'); // Royal Navy ENCG
+  const [penThickness, setPenThickness] = useState(2.5);
+
+  const initCanvas = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.scale(dpr, dpr);
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.strokeStyle = inkColor;
+      ctx.lineWidth = penThickness;
+    }
+  };
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setHasDrawn(false);
+    const timer = setTimeout(() => {
+      initCanvas();
+    }, 120);
+    return () => clearTimeout(timer);
+  }, [isOpen]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.strokeStyle = inkColor;
+      ctx.lineWidth = penThickness;
+    }
+  }, [inkColor, penThickness]);
+
+  const getCoordinates = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+    const rect = canvas.getBoundingClientRect();
+    if ('touches' in e && e.touches.length > 0) {
+      return {
+        x: e.touches[0].clientX - rect.left,
+        y: e.touches[0].clientY - rect.top,
+      };
+    } else if ('clientX' in e) {
+      return {
+        x: (e as React.MouseEvent).clientX - rect.left,
+        y: (e as React.MouseEvent).clientY - rect.top,
+      };
+    }
+    return { x: 0, y: 0 };
+  };
+
+  const handlePointerDown = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    isDrawing.current = true;
+    const { x, y } = getCoordinates(e);
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+  };
+
+  const handlePointerMove = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    if (!isDrawing.current) return;
+    if ('touches' in e) {
+      e.stopPropagation();
+    }
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    const { x, y } = getCoordinates(e);
+    ctx.lineTo(x, y);
+    ctx.stroke();
+    setHasDrawn(true);
+  };
+
+  const handlePointerUp = () => {
+    if (isDrawing.current) {
+      isDrawing.current = false;
+      const canvas = canvasRef.current;
+      if (canvas) {
+        const ctx = canvas.getContext('2d');
+        if (ctx) ctx.closePath();
+      }
+    }
+  };
+
+  const handleClearCanvas = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    setHasDrawn(false);
+  };
+
+  const handleConfirm = () => {
+    const canvas = canvasRef.current;
+    if (!canvas || !hasDrawn) {
+      toast.error('Veuillez tracer votre signature avant de confirmer.');
+      return;
+    }
+    const dataUrl = canvas.toDataURL('image/png');
+    onSave(dataUrl);
+    toast.success('✍️ Signature tactile enregistrée et mémorisée avec succès !');
+    onClose();
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200">
+      <div 
+        className="bg-card border border-border rounded-2xl sm:rounded-3xl shadow-2xl w-full max-w-xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="bg-gradient-to-r from-[#000E29] via-[#001A4B] to-[#0A2558] p-4 sm:p-5 text-white flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-amber-400/20 border border-amber-400/30 flex items-center justify-center text-amber-300">
+              <PenTool className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-sm sm:text-base font-black uppercase tracking-wider text-white">
+                Émargement Tactile de l'Enseignant
+              </h3>
+              <p className="text-[11px] text-indigo-200 font-medium">
+                {professorName} • Norme ENCG Fès &amp; Loi 53-05
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white cursor-pointer transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Modal Body */}
+        <div className="p-4 sm:p-5 space-y-3.5 bg-background">
+          {/* Instructions & Tools */}
+          <div className="flex flex-wrap items-center justify-between gap-2.5 pb-2 border-b border-border text-xs">
+            {/* Color Palette */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] font-bold text-muted-foreground uppercase">Encre :</span>
+              {[
+                { color: '#001A4B', label: 'Bleu Royal ENCG' },
+                { color: '#0f172a', label: 'Noir Administratif' },
+                { color: '#1e40af', label: 'Bleu Nuit' },
+              ].map(c => (
+                <button
+                  key={c.color}
+                  onClick={() => setInkColor(c.color)}
+                  className={cn(
+                    "w-6 h-6 rounded-full border-2 transition-transform cursor-pointer",
+                    inkColor === c.color ? "scale-110 border-amber-400 ring-2 ring-amber-400/30" : "border-transparent opacity-75 hover:opacity-100"
+                  )}
+                  style={{ backgroundColor: c.color }}
+                  title={c.label}
+                />
+              ))}
+            </div>
+
+            {/* Pen Thickness */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] font-bold text-muted-foreground uppercase">Épaisseur :</span>
+              {[
+                { width: 1.8, label: 'Fin' },
+                { width: 2.5, label: 'Moyen' },
+                { width: 3.5, label: 'Épais' },
+              ].map(w => (
+                <button
+                  key={w.width}
+                  onClick={() => setPenThickness(w.width)}
+                  className={cn(
+                    "px-2 py-0.5 rounded-md text-[10px] font-bold border transition-colors cursor-pointer",
+                    penThickness === w.width 
+                      ? "bg-primary text-primary-foreground border-primary" 
+                      : "bg-muted text-muted-foreground border-border hover:text-foreground"
+                  )}
+                >
+                  {w.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Clear Button */}
+            <button
+              onClick={handleClearCanvas}
+              className="px-2.5 py-1 rounded-lg bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/60 text-[11px] font-bold flex items-center gap-1 hover:bg-rose-100 cursor-pointer ml-auto"
+            >
+              <Eraser className="w-3.5 h-3.5" />
+              <span>Effacer</span>
+            </button>
+          </div>
+
+          {/* Canvas Box */}
+          <div className="relative rounded-2xl border-2 border-dashed border-indigo-300 dark:border-indigo-800 bg-white overflow-hidden shadow-inner select-none h-48 sm:h-56 touch-none">
+            {/* Background Guideline and Watermark */}
+            <div className="absolute inset-0 pointer-events-none flex flex-col justify-end p-4">
+              <div className="border-b border-indigo-200 dark:border-indigo-100 border-dashed pb-1 flex items-center justify-between text-indigo-300 text-[10px] font-mono">
+                <span>✕ Ligne de signature</span>
+                <span>Signez ici au doigt, stylet ou à la souris</span>
+              </div>
+            </div>
+
+            {/* Canvas */}
+            <canvas
+              ref={canvasRef}
+              className="w-full h-full cursor-crosshair relative z-10 touch-none block"
+              onMouseDown={handlePointerDown}
+              onMouseMove={handlePointerMove}
+              onMouseUp={handlePointerUp}
+              onMouseLeave={handlePointerUp}
+              onTouchStart={handlePointerDown}
+              onTouchMove={handlePointerMove}
+              onTouchEnd={handlePointerUp}
+            />
+          </div>
+
+          {/* Existing Saved Signature Indicator */}
+          {currentSignature && (
+            <div className="p-2.5 rounded-xl bg-muted/50 border border-border flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span className="text-[11px] font-medium text-foreground">
+                  Une signature tactile est déjà enregistrée. Tracer à nouveau la remplacera.
+                </span>
+              </div>
+              <button
+                onClick={() => {
+                  onClearSaved();
+                  handleClearCanvas();
+                }}
+                className="text-[10px] font-bold text-rose-600 hover:underline shrink-0 ml-2 cursor-pointer"
+              >
+                Supprimer
+              </button>
+            </div>
+          )}
+
+          <p className="text-[11px] text-muted-foreground text-center">
+            💡 <em>Votre signature manuscrite sera apposée directement dans le cadre « L'Enseignant Responsable » de votre Fiche de Séance A4 et sur vos attestations de service fait.</em>
+          </p>
+        </div>
+
+        {/* Modal Footer */}
+        <div className="p-4 bg-muted/30 border-t border-border flex items-center justify-between gap-3">
+          <button
+            onClick={onClose}
+            className="px-4 py-2.5 rounded-xl bg-muted hover:bg-muted/80 text-foreground text-xs font-bold transition-colors cursor-pointer"
+          >
+            Annuler
+          </button>
+
+          <button
+            onClick={handleConfirm}
+            disabled={!hasDrawn}
+            className="px-5 py-2.5 bg-gradient-to-r from-[#001A4B] to-[#0A2558] hover:opacity-95 disabled:opacity-40 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-lg flex items-center gap-1.5 transition-all cursor-pointer active:scale-95"
+          >
+            <Check className="w-4 h-4 text-amber-300" />
+            <span>Valider &amp; Mémoriser l'Émargement</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
 export default function ProfessorVoiceTextbook() {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
@@ -142,6 +446,35 @@ export default function ProfessorVoiceTextbook() {
   const [historySearch, setHistorySearch] = useState('');
   const [historyTypeFilter, setHistoryTypeFilter] = useState('ALL');
   const [expandedSessionId, setExpandedSessionId] = useState<number | null>(null);
+
+  // ── Tactile Handwritten Signature State ──
+  const [isSignatureModalOpen, setIsSignatureModalOpen] = useState(false);
+  const [professorSignature, setProfessorSignature] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem('encg_prof_signature_data') || null;
+    } catch {
+      return null;
+    }
+  });
+
+  const handleSaveSignature = (sigDataUrl: string) => {
+    setProfessorSignature(sigDataUrl);
+    try {
+      localStorage.setItem('encg_prof_signature_data', sigDataUrl);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleClearSignature = () => {
+    setProfessorSignature(null);
+    try {
+      localStorage.removeItem('encg_prof_signature_data');
+    } catch (e) {
+      console.error(e);
+    }
+    toast.info('Signature tactile réinitialisée.');
+  };
 
   const recognitionRef = useRef<any>(null);
   const timerRef = useRef<any>(null);
@@ -259,14 +592,7 @@ export default function ProfessorVoiceTextbook() {
   const assignedSchedules: AssignedSchedule[] = textbookData?.assigned_schedules || [];
   const modulesSummary: any[] = textbookData?.modules_summary || [];
 
-  // Default fallback modules if database is totally empty
-  const defaultModules: ModuleItem[] = [
-    { id: 1, name: 'Diagnostic Financier & Analyse de la Valeur', code: 'M-GFC-601', filiere: { name: 'S6 GFC', code: 'GFC' } },
-    { id: 2, name: 'Comptabilité Approfondie & Normes IFRS', code: 'M-GES-402', filiere: { name: 'S4 Gestion', code: 'GEST' } },
-    { id: 3, name: 'Audit Financier & Contrôle Interne', code: 'M-ACG-803', filiere: { name: 'S8 Master ACG', code: 'ACG' } },
-  ];
-
-  // Strictly filter to professor's assigned modules
+  // Strictly filter to professor's assigned modules (no fake mock fallbacks!)
   const assignedModulesList: ModuleItem[] = useMemo(() => {
     if (modulesSummary.length > 0) {
       return modulesSummary.map(m => ({
@@ -276,13 +602,17 @@ export default function ProfessorVoiceTextbook() {
         filiere: { name: m.filiere, code: m.filiere_code || 'ENCG' }
       }));
     }
-    return defaultModules;
+    return [];
   }, [modulesSummary]);
 
   // Set default selected module if not yet set
   useEffect(() => {
-    if (assignedModulesList.length > 0 && !selectedModule) {
-      setSelectedModule(String(assignedModulesList[0].id));
+    if (assignedModulesList.length > 0) {
+      if (!selectedModule || !assignedModulesList.some(m => String(m.id) === selectedModule)) {
+        setSelectedModule(String(assignedModulesList[0].id));
+      }
+    } else {
+      setSelectedModule('');
     }
   }, [assignedModulesList, selectedModule]);
 
@@ -476,6 +806,10 @@ export default function ProfessorVoiceTextbook() {
   };
 
   const handleDownloadServiceFait = () => {
+    if (!selectedModule) {
+      toast.error('Aucun module sélectionné ou affecté pour générer l’attestation de service fait.');
+      return;
+    }
     openAuthenticatedUrl(`/api/professor-portal/service-fait/${selectedModule}/pdf`);
     toast.success('📄 Génération de l’Attestation Officielle de Service Fait Pédagogique (PDF)...');
   };
@@ -483,10 +817,10 @@ export default function ProfessorVoiceTextbook() {
   // ── Print Session Sheet (Certified Official Moroccan Academic Document) ──
   const handlePrintSessionSheet = () => {
     const dataToPrint = structuredData || SPECIMEN_SAMPLE;
-    const currentModName = activeModuleItem?.name || 'Diagnostic Financier & Analyse de la Valeur';
-    const currentModCode = activeModuleItem?.code || 'M-GFC-601';
-    const filiereName = activeModuleItem?.filiere?.name || 'Gestion Financière et Comptable';
-    const filiereCode = activeModuleItem?.filiere?.code || 'GFC';
+    const currentModName = activeModuleItem?.name || 'Aucun module affecté (Spécimen)';
+    const currentModCode = activeModuleItem?.code || 'S/O';
+    const filiereName = activeModuleItem?.filiere?.name || 'Département Sciences de Gestion';
+    const filiereCode = activeModuleItem?.filiere?.code || 'ENCG';
     const refCode = `ENCG-CT-2026-${filiereCode}-${Math.floor(1000 + Math.random() * 9000)}`;
     const logoUrl = `${window.location.origin}/logo-encg.png`;
     const verifyUrl = `${window.location.origin}/verify/${refCode}`;
@@ -869,16 +1203,31 @@ export default function ProfessorVoiceTextbook() {
                 <td class="sig-card">
                   <div class="sig-title">L'Enseignant Responsable</div>
                   <div class="sig-caption">« Déclare sur l'honneur le déroulement effectif »</div>
-                  <div style="font-size: 7.2pt; font-weight: 900; color: #001A4B; text-align: center; margin-top: 3px;">
+                  <div style="font-size: 7.2pt; font-weight: 900; color: #001A4B; text-align: center; margin-top: 2px;">
                     ${professorFullName}
                   </div>
-                  <!-- Calligraphic Official Signature SVG -->
-                  <div style="text-align: center; margin: 3px 0 1px 0; height: 32px;">
-                    <svg width="95" height="30" viewBox="0 0 120 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M10,24 C18,10 26,4 34,4 C40,4 36,24 42,26 C48,28 54,14 60,10 C66,4 72,20 78,18 C84,16 98,8 108,14" stroke="#059669" stroke-width="2.2" stroke-linecap="round"/>
-                    </svg>
-                  </div>
-                  <div style="font-size: 5.5pt; color: #94a3b8; text-align: center;">Émargé électroniquement le ${sessionDate}</div>
+                  
+                  ${professorSignature ? `
+                    <!-- Handwritten Tactile Signature -->
+                    <div style="text-align: center; margin: 1px 0; height: 35px; display: flex; align-items: center; justify-content: center;">
+                      <img 
+                        src="${professorSignature}" 
+                        alt="Signature Manuelle" 
+                        style="max-height: 35px; max-width: 140px; object-fit: contain;" 
+                      />
+                    </div>
+                    <div style="font-size: 5.2pt; color: #047857; font-weight: 800; text-align: center;">
+                      ✓ Émargement Manuel Tactile — ${sessionDate}
+                    </div>
+                  ` : `
+                    <!-- Calligraphic Fallback Signature -->
+                    <div style="text-align: center; margin: 3px 0 1px 0; height: 32px;">
+                      <svg width="95" height="30" viewBox="0 0 120 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M10,24 C18,10 26,4 34,4 C40,4 36,24 42,26 C48,28 54,14 60,10 C66,4 72,20 78,18 C84,16 98,8 108,14" stroke="#001A4B" stroke-width="2.2" stroke-linecap="round"/>
+                      </svg>
+                    </div>
+                    <div style="font-size: 5.2pt; color: #94a3b8; text-align: center;">Émargé électroniquement le ${sessionDate}</div>
+                  `}
                 </td>
 
                 <!-- Col 2: Chef de Département -->
@@ -1018,9 +1367,11 @@ export default function ProfessorVoiceTextbook() {
                   <span className="inline-flex items-center gap-1.5 bg-indigo-500/25 text-indigo-200 border border-indigo-400/30 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider">
                     <Sparkles className="w-3 h-3 text-amber-300 animate-pulse" /> IA Vocale Synchrone • Gemini 1.5 Pro
                   </span>
-                  <span className="text-[11px] font-bold text-amber-400 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-md">
-                    {activeModuleItem?.code || 'ENCG-MOD'}
-                  </span>
+                  {activeModuleItem?.code && (
+                    <span className="text-[11px] font-bold text-amber-400 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-md">
+                      {activeModuleItem.code}
+                    </span>
+                  )}
                   <span className="text-[10px] bg-white/10 text-slate-200 px-2 py-0.5 rounded-md">
                     {assignedModulesList.length} Module(s) Affecté(s)
                   </span>
@@ -1033,6 +1384,20 @@ export default function ProfessorVoiceTextbook() {
 
             {/* Quick Action Buttons */}
             <div className="flex flex-wrap items-center gap-2 self-start lg:self-auto shrink-0">
+              <button
+                onClick={() => setIsSignatureModalOpen(true)}
+                className={cn(
+                  "px-3.5 py-2 rounded-xl text-xs font-bold tracking-wide flex items-center gap-1.5 cursor-pointer transition-all active:scale-95 border",
+                  professorSignature 
+                    ? "bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border-emerald-400/40" 
+                    : "bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border-amber-400/40"
+                )}
+                title="Définir ou modifier votre signature tactile manuscrite"
+              >
+                <PenTool className="w-3.5 h-3.5" />
+                <span>{professorSignature ? '✍️ Signature Tactile Active ✓' : '✍️ Signature Tactile'}</span>
+              </button>
+
               <button
                 onClick={handleLoadDemo}
                 className="px-3.5 py-2 bg-white/10 hover:bg-white/15 text-white border border-white/20 rounded-xl text-xs font-bold tracking-wide flex items-center gap-1.5 cursor-pointer transition-all active:scale-95"
@@ -1057,7 +1422,7 @@ export default function ProfessorVoiceTextbook() {
             <div className="flex items-center gap-2 font-bold text-slate-200">
               <BookOpen className="w-3.5 h-3.5 text-indigo-300" />
               <span className="text-white font-black truncate max-w-[280px] sm:max-w-md">
-                {activeModuleItem?.name}
+                {activeModuleItem ? activeModuleItem.name : "Aucun module affecté à votre compte"}
               </span>
               {activeModuleItem?.filiere?.code && (
                 <span className="text-[10px] bg-indigo-900/60 text-indigo-300 px-1.5 py-0.5 rounded font-mono">
@@ -1070,16 +1435,16 @@ export default function ProfessorVoiceTextbook() {
             <div className="flex flex-wrap items-center gap-3">
               <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-1 rounded-xl">
                 <span className="text-[11px] font-bold text-indigo-200">
-                  Volume : <strong className="text-white font-mono">{currentSummary.logged_hours || 0}h</strong> / {currentSummary.target_hours || 36}h
+                  Volume : <strong className="text-white font-mono">{activeModuleItem ? currentSummary.logged_hours || 0 : 0}h</strong> / {activeModuleItem ? currentSummary.target_hours || 36 : 0}h
                 </span>
                 <div className="w-24 bg-white/20 h-2 rounded-full overflow-hidden">
                   <div 
                     className="bg-gradient-to-r from-amber-400 to-emerald-400 h-full rounded-full transition-all duration-500"
-                    style={{ width: `${Math.max(4, Math.min(100, currentSummary.progress_percentage || 0))}%` }}
+                    style={{ width: `${activeModuleItem ? Math.max(0, Math.min(100, currentSummary.progress_percentage || 0)) : 0}%` }}
                   />
                 </div>
                 <span className="font-mono text-[11px] font-black text-amber-300">
-                  {currentSummary.progress_percentage || 0}%
+                  {activeModuleItem ? currentSummary.progress_percentage || 0 : 0}%
                 </span>
               </div>
 
@@ -1201,22 +1566,31 @@ export default function ProfessorVoiceTextbook() {
             </div>
 
             {/* Module Selector (Strictly Professor's Assigned Modules) */}
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <div className="flex items-center justify-between text-[11px] font-black uppercase text-muted-foreground">
                 <span>Élément de Module Dispensé</span>
-                <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold lowercase">
+                <span className="text-[10px] text-muted-foreground font-bold lowercase">
                   ({assignedModulesList.length} module(s) affecté(s))
                 </span>
               </div>
-              <CustomSelect
-                value={selectedModule}
-                onChange={v => {
-                  setSelectedModule(String(v));
-                  setSelectedScheduleId(null);
-                }}
-                options={moduleSelectOptions}
-                className="w-full"
-              />
+              {assignedModulesList.length > 0 ? (
+                <CustomSelect
+                  value={selectedModule}
+                  onChange={v => {
+                    setSelectedModule(String(v));
+                    setSelectedScheduleId(null);
+                  }}
+                  options={moduleSelectOptions}
+                  className="w-full"
+                />
+              ) : (
+                <div className="p-3 bg-amber-500/10 border border-amber-500/25 rounded-xl text-amber-800 dark:text-amber-300 text-xs flex items-center gap-2.5">
+                  <Clock className="w-4 h-4 shrink-0 text-amber-500" />
+                  <span className="font-medium">
+                    Aucun élément de module ne vous est affecté pour le semestre en cours. Veuillez contacter l'Administration / Chef de Département.
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Type & Duration Inline Grid */}
@@ -1708,12 +2082,64 @@ export default function ProfessorVoiceTextbook() {
 
           </div>
 
+          {/* Tactile Signature Preview & Quick Action Bar */}
+          <div className="p-3 rounded-xl bg-muted/40 border border-border flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+                <PenTool className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-black uppercase text-foreground">Émargement de l'Enseignant</span>
+                  {professorSignature ? (
+                    <span className="text-[9px] font-black bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full flex items-center gap-1">
+                      <Check className="w-3 h-3 text-emerald-600" /> Signé Tactilement
+                    </span>
+                  ) : (
+                    <span className="text-[9px] font-bold bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full">
+                      Non Signé Manuellement
+                    </span>
+                  )}
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-0.5">
+                  {professorSignature 
+                    ? 'Signature tactile enregistrée. Elle apparaîtra sur la fiche A4 imprimée.' 
+                    : 'Signez avec votre doigt, stylet ou souris pour apposer votre paraphe officiel.'}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              {professorSignature && (
+                <div className="hidden sm:block h-8 w-20 bg-white rounded border border-border p-0.5 shadow-sm overflow-hidden">
+                  <img src={professorSignature} alt="Signature" className="h-full w-full object-contain" />
+                </div>
+              )}
+              <button
+                onClick={() => setIsSignatureModalOpen(true)}
+                className="px-3 py-1.5 rounded-xl bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-1 cursor-pointer transition-all active:scale-95 shadow-sm"
+              >
+                <PenTool className="w-3.5 h-3.5 text-amber-300" />
+                <span>{professorSignature ? 'Modifier' : 'Signer (Tactile)'}</span>
+              </button>
+            </div>
+          </div>
+
           {/* Publication and Print Bar */}
-          <div className="pt-3 border-t border-border">
+          <div className="pt-2 flex items-center gap-2">
+            <button
+              onClick={handlePrintSessionSheet}
+              className="py-3 px-4 bg-muted hover:bg-muted/80 text-foreground border border-border rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 shrink-0"
+              title="Aperçu avant impression de la Fiche Pédagogique A4"
+            >
+              <Printer className="w-4 h-4 text-primary" />
+              <span>Imprimer A4</span>
+            </button>
+
             <button
               onClick={handleSaveToTextbook}
-              disabled={!structuredData || saveMutation.isPending}
-              className="w-full py-3 bg-gradient-to-r from-[#001A4B] via-[#0A2558] to-[#113A7A] hover:opacity-95 disabled:opacity-40 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+              disabled={!selectedModule || !structuredData || saveMutation.isPending}
+              className="flex-1 py-3 bg-gradient-to-r from-[#001A4B] via-[#0A2558] to-[#113A7A] hover:opacity-95 disabled:opacity-40 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
             >
               {saveMutation.isPending ? (
                 <Loader2 className="w-4 h-4 animate-spin text-amber-300" />
@@ -1721,7 +2147,7 @@ export default function ProfessorVoiceTextbook() {
                 <Save className="w-4 h-4 text-amber-300" />
               )}
               <span>
-                {saveMutation.isPending ? "Consignation en cours..." : "Publier dans le Cahier de Texte & Valider Service Fait"}
+                {saveMutation.isPending ? "Consignation en cours..." : !selectedModule ? "Aucun Module Affecté" : "Publier & Valider Service Fait"}
               </span>
             </button>
           </div>
@@ -1900,6 +2326,16 @@ export default function ProfessorVoiceTextbook() {
         )}
 
       </div>
+
+      {/* ── TACTILE SIGNATURE PAD MODAL ── */}
+      <TactileSignatureModal
+        isOpen={isSignatureModalOpen}
+        onClose={() => setIsSignatureModalOpen(false)}
+        onSave={handleSaveSignature}
+        onClearSaved={handleClearSignature}
+        currentSignature={professorSignature}
+        professorName={professorFullName}
+      />
 
     </div>
   );

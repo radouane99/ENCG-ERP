@@ -9,17 +9,122 @@ use App\Models\AcademicYear;
 use App\Models\Attendance;
 use App\Models\AttendanceSession;
 use App\Models\Filiere;
+use App\Models\Module;
+use App\Models\Schedule;
 use App\Models\Student;
 use App\Models\StudentRegistration;
 use App\Services\Academic\AttendanceService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ProfessorAttendanceController extends Controller
 {
     public function __construct(
         private AttendanceService $attendanceService
     ) {}
+
+    /**
+     * Récupérer le contexte officiel d'assiduité du professeur connecté :
+     * ses modules réellement affectés, ses créneaux d'emploi du temps réels et ses filières.
+     */
+    public function getAttendanceContext(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        if (! $user) {
+            return response()->json(['success' => false, 'message' => 'Non authentifié.'], 401);
+        }
+
+        $profId = $user->professor?->id;
+        $userId = $user->id;
+
+        // 1. Récupérer les séances officielles assignées à l'enseignant (Schedules)
+        $schedulesQuery = Schedule::with(['module.filiere', 'group', 'room'])
+            ->where(function ($q) use ($profId, $userId) {
+                if ($profId) {
+                    $q->where('professor_id', $profId);
+                }
+                $q->orWhere('professor_id', $userId);
+            });
+
+        $dbSchedules = $schedulesQuery->get();
+
+        // 2. Récupérer les modules assignés via le pivot officiel module_professor
+        $mpModuleIds = [];
+        if ($profId) {
+            $mpModuleIds = DB::table('module_professor')
+                ->where('professor_id', $profId)
+                ->pluck('module_id')
+                ->filter()
+                ->unique()
+                ->toArray();
+        }
+
+        $scheduleModuleIds = $dbSchedules->pluck('module_id')->filter()->unique()->toArray();
+        $allAssignedModuleIds = array_values(array_unique(array_merge($scheduleModuleIds, $mpModuleIds)));
+
+        // Modules complets strictement affectés
+        $assignedModules = ! empty($allAssignedModuleIds)
+            ? Module::with('filiere')->whereIn('id', $allAssignedModuleIds)->get()
+            : collect();
+
+        // Filières distinctes strictement issues des modules affectés
+        $filieres = $assignedModules->pluck('filiere')
+            ->filter()
+            ->unique('id')
+            ->values()
+            ->map(fn ($f) => [
+                'id' => $f->id,
+                'name' => $f->name,
+                'code' => $f->code,
+            ]);
+
+        // Créneaux horaires réels de l'emploi du temps
+        $assignedSchedules = $dbSchedules->map(function ($s) {
+            $startTime = $s->start_time ? substr($s->start_time, 0, 5) : '08:30';
+            $endTime = $s->end_time ? substr($s->end_time, 0, 5) : '10:30';
+
+            $rawType = strtoupper($s->session_type ?? 'CM');
+            $sessionTypeLabel = match ($rawType) {
+                'TD' => 'Travaux Dirigés (TD)',
+                'TP' => 'Travaux Pratiques (TP)',
+                default => 'Cours Magistral (CM)',
+            };
+
+            return [
+                'id' => (string) $s->id,
+                'day' => ucfirst($s->day_of_week ?? 'Lundi'),
+                'timeSlot' => "{$startTime} - {$endTime}",
+                'filiereId' => $s->module?->filiere_id,
+                'filiereCode' => $s->module?->filiere?->code ?? 'ENCG',
+                'filiereName' => $s->module?->filiere?->name ?? 'Filière',
+                'groupId' => $s->group_id,
+                'groupName' => $s->group?->name ?? 'Section / Amphi',
+                'moduleId' => $s->module_id,
+                'moduleCode' => $s->module?->code ?? 'MOD',
+                'moduleName' => $s->module?->name ?? 'Module',
+                'roomName' => $s->room?->name ?? 'Salle',
+                'sessionType' => $sessionTypeLabel,
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'modules' => $assignedModules->map(fn ($m) => [
+                    'id' => $m->id,
+                    'name' => $m->name,
+                    'code' => $m->code,
+                    'filiere_id' => $m->filiere_id,
+                    'filiere_name' => $m->filiere?->name,
+                    'filiere_code' => $m->filiere?->code,
+                ]),
+                'schedules' => $assignedSchedules,
+                'filieres' => $filieres,
+                'has_assignments' => $assignedModules->isNotEmpty() || $assignedSchedules->isNotEmpty(),
+            ],
+        ]);
+    }
 
     /**
      * Récupérer la liste exacte des étudiants selon la filière, l'année et le groupe (G1, G2 ou Tous les groupes).
