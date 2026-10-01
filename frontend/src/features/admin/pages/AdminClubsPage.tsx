@@ -1,13 +1,14 @@
 import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { Tent, Search, Sparkles, Printer, Check } from 'lucide-react'
+import { Tent, Search, Sparkles, Printer, Check, Download, ShieldCheck } from 'lucide-react'
 import api from '@shared/lib/api'
 import { cn } from '@shared/lib/utils'
 import { Button } from '@shared/components/ui/Button'
 import { Badge } from '@shared/components/ui/Badge'
 import { Input } from '@shared/components/ui/Input'
 import { toast } from 'sonner'
+import { generateClubAgrementHtml } from '../utils/clubDocumentGenerator'
 
 export default function AdminClubsPage() {
   const { t, i18n } = useTranslation('common')
@@ -43,51 +44,37 @@ export default function AdminClubsPage() {
 
   const handlePrintAgrement = (club: any) => {
     const win = window.open('', '_blank')
-    if (!win) return
-    win.document.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Attestation d'Agrément Officiel - ${club.name}</title>
-          <style>
-            body { font-family: 'Segoe UI', Arial, sans-serif; padding: 40px; color: #0f2863; max-width: 800px; margin: 0 auto; }
-            .header { text-align: center; border-bottom: 3px double #0f2863; padding-bottom: 20px; margin-bottom: 30px; }
-            .title { font-size: 20px; font-weight: 900; color: #0f2863; text-transform: uppercase; margin-top: 10px; }
-            .box { background: #f8fafc; border: 2px solid #cbd5e1; border-radius: 20px; padding: 25px; margin: 20px 0; }
-            .row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 14px; }
-            .lbl { font-weight: bold; color: #64748b; }
-            .val { font-weight: 900; color: #0f2863; }
-            .footer { margin-top: 50px; display: flex; justify-content: space-between; font-size: 12px; font-weight: bold; }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <div style="font-size: 16px; font-weight: 900;">ROYAUME DU MAROC — ENCG FÈS</div>
-            <div style="font-size: 11px; color: #64748b; font-weight: 800;">DIRECTION DES AFFAIRES ÉTUDIANTES & VIE ASSOCIATIVE</div>
-            <div class="title">ATTESTATION OFFICIELLE D'AGRÉMENT DU CLUB</div>
-          </div>
-
-          <div class="box">
-            <div class="row"><span class="lbl">Nom de l'Association / Club :</span><span class="val">${club.name}</span></div>
-            <div class="row"><span class="lbl">Président du Club :</span><span class="val" style="color: #2563eb;">${club.president ? `${club.president.first_name} ${club.president.last_name}` : 'Bureau des Étudiants (BDE)'}</span></div>
-            <div class="row"><span class="lbl">Budget Alloué Annuel :</span><span class="val" style="color: #16a34a;">${club.budget || '15,000'} DH</span></div>
-            <div class="row"><span class="lbl">Statut d'Agrément :</span><span class="val" style="color: #16a34a;">AGRÉMENT OFFICIEL ACCORDÉ</span></div>
-          </div>
-
-          <p style="font-size: 12px; color: #475569; leading-height: 1.6;">
-            Cette attestation certifie que le club est légalement reconnu par la Direction de l'ENCG Fès pour mener des activités culturelles, scientifiques et sportives sur le campus.
-          </p>
-
-          <div class="footer">
-            <div>Le Président du Bureau des Étudiants</div>
-            <div>Le Directeur des Affaires Étudiantes</div>
-          </div>
-          <script>window.print();</script>
-        </body>
-      </html>
-    `)
+    if (!win) {
+      toast.error('Veuillez autoriser les fenêtres pop-up pour afficher le document')
+      return
+    }
+    const html = generateClubAgrementHtml(club)
+    win.document.open()
+    win.document.write(html)
     win.document.close()
-    toast.success('Attestation d\'agrément officielle imprimée !')
+    setTimeout(() => {
+      win.focus()
+      win.print()
+    }, 400)
+    toast.success('Attestation d\'agrément officielle générée !')
+  }
+
+  const handleDownloadAgrementPdf = async (club: any) => {
+    try {
+      toast.info('Génération du PDF officiel en cours...')
+      const res = await api.get(`/clubs/${club.id}/agrement-pdf`, { responseType: 'blob' })
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `Attestation_Agrement_${(club.name || 'Club').replace(/\s+/g, '_')}_2026.pdf`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+      toast.success('Téléchargement du PDF officiel réussi !')
+    } catch {
+      handlePrintAgrement(club)
+    }
   }
 
   const displayedList = clubs || []
@@ -234,9 +221,17 @@ export default function AdminClubsPage() {
                   <div className="pt-2 flex items-center justify-between gap-2">
                     <button
                       onClick={() => handlePrintAgrement(club)}
-                      className="w-full py-2 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 text-blue-600 dark:text-blue-400 font-black text-xs rounded-xl transition-all border border-blue-200 cursor-pointer shadow-xs flex items-center justify-center gap-1.5"
+                      title="Imprimer ou Aperçu Officiel"
+                      className="flex-1 py-2 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 text-blue-600 dark:text-blue-400 font-black text-xs rounded-xl transition-all border border-blue-200 cursor-pointer shadow-xs flex items-center justify-center gap-1.5"
                     >
-                      <Printer className="w-3.5 h-3.5" /> Agrément PDF
+                      <ShieldCheck className="w-3.5 h-3.5" /> Agrément PDF
+                    </button>
+                    <button
+                      onClick={() => handleDownloadAgrementPdf(club)}
+                      title="Télécharger le fichier PDF officiel"
+                      className="p-2 bg-slate-100 dark:bg-slate-800 hover:bg-blue-600 hover:text-white text-slate-700 dark:text-slate-300 rounded-xl transition-all border border-slate-200 dark:border-slate-700 cursor-pointer shadow-xs"
+                    >
+                      <Download className="w-3.5 h-3.5" />
                     </button>
                     {club.status === 'pending' && (
                       <button

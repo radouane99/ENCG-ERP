@@ -41,6 +41,19 @@ class ClubController extends Controller
 
         $presidentName = $club->president_name ?? 'Président du Bureau Exécutif';
 
+        $verifyUrl = $club->verification_url;
+        $qrBase64 = '';
+        if (class_exists(\SimpleSoftwareIO\QrCode\Facades\QrCode::class)) {
+            try {
+                $qrSvg = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')->size(120)->margin(0)->generate($verifyUrl);
+                $qrBase64 = 'data:image/svg+xml;base64,' . base64_encode($qrSvg);
+            } catch (\Throwable) {
+                $qrBase64 = 'https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=' . urlencode($verifyUrl);
+            }
+        } else {
+            $qrBase64 = 'https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=' . urlencode($verifyUrl);
+        }
+
         $data = [
             'club' => $club,
             'academicYear' => $academicYear,
@@ -49,7 +62,8 @@ class ClubController extends Controller
             'membersCount' => $club->members()->count() ?: 30,
             'budget' => '15 000',
             'dateIssued' => now()->format('d/m/Y'),
-            'qrBase64' => '',
+            'verifyUrl' => $verifyUrl,
+            'qrBase64' => $qrBase64,
         ];
 
         $pdf = Pdf::loadView('pdf.attestation_agrement_club', $data)

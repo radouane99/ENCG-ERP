@@ -23,6 +23,12 @@ export function generateClubAgrementHtml(club: any): string {
   const budget = club.budget || '15 000'
   const category = club.category || 'Pôle Entrepreneuriat & Management'
 
+  // Encrypted Verification Token & Scannable QR Code URL
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://encg-fes.ac.ma'
+  const verifyToken = club.encrypted_verify_token || (club.id ? `AGR-ENCG-${currentYear}-${String(club.id).padStart(4, '0')}` : clubRef)
+  const verifyUrl = club.verification_url || `${baseUrl}/verify-document/${verifyToken}`
+  const qrCodeImgSrc = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&margin=1&data=${encodeURIComponent(verifyUrl)}`
+
   return `<!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -547,23 +553,9 @@ export function generateClubAgrementHtml(club: any): string {
     <div class="legal-footer">
       <table class="footer-table">
         <tr>
-          <td style="width: 44px; vertical-align: middle;">
-            <!-- Clean SVG QR code representation -->
-            <svg width="38" height="38" viewBox="0 0 100 100" style="border: 1px solid #cbd5e1; padding: 1px; background: #ffffff; border-radius: 2px;">
-              <rect x="0" y="0" width="100" height="100" fill="white"/>
-              <path d="M10,10 h30 v30 h-30 z M15,15 v20 h20 v-20 z M20,20 h10 v10 h-10 z" fill="#002e5b"/>
-              <path d="M60,10 h30 v30 h-30 z M65,15 v20 h20 v-20 z M70,20 h10 v10 h-10 z" fill="#002e5b"/>
-              <path d="M10,60 h30 v30 h-30 z M15,65 v20 h20 v-20 z M20,70 h10 v10 h-10 z" fill="#002e5b"/>
-              <rect x="50" y="10" width="5" height="15" fill="#002e5b"/>
-              <rect x="45" y="30" width="10" height="5" fill="#002e5b"/>
-              <rect x="10" y="45" width="20" height="5" fill="#002e5b"/>
-              <rect x="45" y="45" width="10" height="10" fill="#002e5b"/>
-              <rect x="60" y="50" width="15" height="5" fill="#002e5b"/>
-              <rect x="80" y="50" width="10" height="10" fill="#002e5b"/>
-              <rect x="50" y="65" width="10" height="25" fill="#002e5b"/>
-              <rect x="65" y="70" width="25" height="5" fill="#002e5b"/>
-              <rect x="70" y="80" width="20" height="10" fill="#002e5b"/>
-            </svg>
+          <td style="width: 48px; vertical-align: middle;">
+            <!-- Real Scannable High-Security QR Code -->
+            <img src="${qrCodeImgSrc}" alt="QR Code Sécurité" style="width: 40px; height: 40px; display: block; border: 1px solid #cbd5e1; padding: 1px; background: #ffffff; border-radius: 2px;" />
           </td>
           <td style="vertical-align: middle; padding-left: 6px;">
             <strong style="color: #002e5b; font-size: 6.5pt; text-transform: uppercase;">
@@ -571,7 +563,7 @@ export function generateClubAgrementHtml(club: any): string {
             </strong><br>
             <span style="color: #64748b; line-height: 1.15;">
               Document certifié conforme aux dispositions du décret N° 2-15-260 et de la loi 53-05 sur l'échange électronique des données juridiques.<br>
-              <strong>Authentification :</strong> ${clubRef} • ${shaHash}
+              <strong>Authentification Sécurisée :</strong> ${clubRef} • <strong>Jeton Crypté :</strong> <span style="font-family: monospace; font-size: 5.5pt; color: #002e5b;">${verifyToken.length > 28 ? verifyToken.slice(0, 24) + '...' : verifyToken}</span>
             </span>
           </td>
           <td style="width: 150px; text-align: right; vertical-align: middle;">
@@ -583,7 +575,7 @@ export function generateClubAgrementHtml(club: any): string {
       </table>
 
       <div class="footer-bottom">
-        École Nationale de Commerce et de Gestion de Fès — Route d'Imouzzer, B.P. 1255, Fès - Maroc | Tél: +212 5 35 64 49 20 | https://encg-fes.ac.ma
+        École Nationale de Commerce et de Gestion de Fès — Route d'Imouzzer, B.P. 1255, Fès - Maroc | Tél: +212 5 35 64 49 20 | URL : ${verifyUrl}
       </div>
     </div>
   </div>

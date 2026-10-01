@@ -3,11 +3,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   Tent, Search, Sparkles,
   DollarSign, Check, X, Calendar, BarChart2,
-  ShieldCheck, Send
+  ShieldCheck, Send, Download
 } from 'lucide-react'
 import api from '@shared/lib/api'
 import { cn } from '@shared/lib/utils'
 import { toast } from 'sonner'
+import { generateClubAgrementHtml, generateClubImpactReportHtml } from '../utils/clubDocumentGenerator'
 
 export default function AdminClubsPage() {
   const queryClient = useQueryClient()
@@ -57,59 +58,54 @@ export default function AdminClubsPage() {
   // ── PDF generators ────────────────────────────────────────────────────────
   const handlePrintAgrement = (club: any) => {
     const win = window.open('', '_blank')
-    if (!win) return
-    const president = getClubPresident(club)
-    win.document.write(`<!DOCTYPE html><html><head><title>Attestation d'Agrement - ${club.name}</title>
-      <style>body{font-family:'Segoe UI',Arial,sans-serif;padding:40px;color:#0f2863;max-width:800px;margin:0 auto}
-      .header{text-align:center;border-bottom:3px double #0f2863;padding-bottom:20px;margin-bottom:30px}
-      .title{font-size:20px;font-weight:900;color:#0f2863;text-transform:uppercase;margin-top:10px}
-      .box{background:#f8fafc;border:2px solid #cbd5e1;border-radius:20px;padding:25px;margin:20px 0}
-      .row{display:flex;justify-content:space-between;margin-bottom:12px;font-size:14px}
-      .lbl{font-weight:bold;color:#64748b}.val{font-weight:900;color:#0f2863}
-      .footer{margin-top:50px;display:flex;justify-content:space-between;font-size:12px;font-weight:bold}</style>
-      </head><body>
-      <div class="header"><div style="font-size:16px;font-weight:900">ROYAUME DU MAROC - ENCG FES</div>
-      <div style="font-size:11px;color:#64748b;font-weight:800">DIRECTION DES AFFAIRES ETUDIANTES &amp; VIE ASSOCIATIVE</div>
-      <div class="title">ATTESTATION OFFICIELLE D'AGREMENT DU CLUB</div></div>
-      <div class="box">
-      <div class="row"><span class="lbl">Nom du Club :</span><span class="val">${club.name}</span></div>
-      <div class="row"><span class="lbl">President :</span><span class="val" style="color:#2563eb">${president}</span></div>
-      <div class="row"><span class="lbl">Membres Actifs :</span><span class="val">${club.members_count || club.members?.length || 30} Membres</span></div>
-      <div class="row"><span class="lbl">Categorie :</span><span class="val">${club.category || 'Associatif'}</span></div>
-      <div class="row"><span class="lbl">Statut d'Agrement :</span><span class="val" style="color:#16a34a">AGREMENT OFFICIEL ACCORDE</span></div>
-      </div>
-      <p style="font-size:12px;color:#475569">Cette attestation certifie que le club est legalement reconnu par la Direction de l'ENCG Fes pour mener des activites culturelles, scientifiques et sportives sur le campus.</p>
-      <div class="footer"><div>Le President du Club</div><div>Le Directeur des Affaires Etudiantes</div><div>Le Directeur de l'ENCG Fes</div></div>
-      <script>window.print();</script></body></html>`)
+    if (!win) {
+      toast.error('Veuillez autoriser les fenêtres pop-up pour afficher le document')
+      return
+    }
+    const html = generateClubAgrementHtml(club)
+    win.document.open()
+    win.document.write(html)
     win.document.close()
-    toast.success('Attestation d\'agrement officielle generee !')
+    setTimeout(() => {
+      win.focus()
+      win.print()
+    }, 400)
+    toast.success('Attestation d\'agrément officielle générée !')
+  }
+
+  const handleDownloadAgrementPdf = async (club: any) => {
+    try {
+      toast.info('Génération du PDF officiel en cours...')
+      const res = await api.get(`/clubs/${club.id}/agrement-pdf`, { responseType: 'blob' })
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `Attestation_Agrement_${(club.name || 'Club').replace(/\s+/g, '_')}_2026.pdf`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+      toast.success('Téléchargement du PDF officiel réussi !')
+    } catch {
+      handlePrintAgrement(club)
+    }
   }
 
   const handlePrintRapportImpact = (club: any) => {
     const win = window.open('', '_blank')
-    if (!win) return
-    const membersCount = club.members_count || club.members?.length || 48
-    win.document.write(`<!DOCTYPE html><html><head><title>Rapport d'Impact - ${club.name}</title>
-      <style>body{font-family:'Segoe UI',Arial,sans-serif;padding:40px;color:#0f2863;max-width:800px;margin:0 auto}
-      .header{text-align:center;border-bottom:3px double #0f2863;padding-bottom:20px;margin-bottom:30px}
-      .title{font-size:20px;font-weight:900;text-transform:uppercase;margin-top:10px}
-      .kpi{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin:20px 0}
-      .kpi-card{background:#f0f9ff;border:2px solid #bae6fd;border-radius:16px;padding:20px;text-align:center}
-      .kpi-val{font-size:28px;font-weight:900;color:#0f2863}.kpi-lbl{font-size:11px;font-weight:bold;color:#64748b;text-transform:uppercase}
-      .footer{margin-top:50px;display:flex;justify-content:space-between;font-size:12px;font-weight:bold}</style>
-      </head><body>
-      <div class="header"><div style="font-size:16px;font-weight:900">ROYAUME DU MAROC - ENCG FES</div>
-      <div class="title">RAPPORT ANNUEL D'IMPACT - ${club.name.toUpperCase()}</div>
-      <div style="font-size:11px;color:#64748b">Annee Universitaire 2025-2026</div></div>
-      <div class="kpi">
-        <div class="kpi-card"><div class="kpi-val">${membersCount}</div><div class="kpi-lbl">Membres Actifs</div></div>
-        <div class="kpi-card"><div class="kpi-val">${club.events || 12}</div><div class="kpi-lbl">Evenements Organises</div></div>
-        <div class="kpi-card"><div class="kpi-val">94%</div><div class="kpi-lbl">Taux Satisfaction</div></div>
-      </div>
-      <div class="footer"><div>Le President du Club</div><div>Le Directeur des Affaires Etudiantes</div></div>
-      <script>window.print();</script></body></html>`)
+    if (!win) {
+      toast.error('Veuillez autoriser les fenêtres pop-up pour afficher le document')
+      return
+    }
+    const html = generateClubImpactReportHtml(club)
+    win.document.open()
+    win.document.write(html)
     win.document.close()
-    toast.success('Rapport d\'impact annuel genere !')
+    setTimeout(() => {
+      win.focus()
+      win.print()
+    }, 400)
+    toast.success('Rapport d\'impact annuel généré !')
   }
 
   const handleSubmitBudget = (e: React.FormEvent) => {
@@ -294,13 +290,21 @@ export default function AdminClubsPage() {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => handlePrintAgrement(club)}
-                    className="flex-1 py-2 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 text-blue-600 dark:text-blue-400 font-black text-xs rounded-xl transition-all border border-blue-200 cursor-pointer flex items-center justify-center gap-1"
+                    title="Imprimer ou Aperçu de l'Attestation Officielle"
+                    className="flex-1 py-2 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 text-blue-600 dark:text-blue-400 font-black text-xs rounded-xl transition-all border border-blue-200 cursor-pointer flex items-center justify-center gap-1 shadow-sm"
                   >
                     <ShieldCheck className="w-3.5 h-3.5" /> Agrément PDF
                   </button>
                   <button
+                    onClick={() => handleDownloadAgrementPdf(club)}
+                    title="Télécharger le fichier PDF certifié"
+                    className="p-2 bg-slate-100 dark:bg-slate-800 hover:bg-blue-600 hover:text-white text-slate-700 dark:text-slate-300 rounded-xl transition-all border border-slate-200 dark:border-slate-700 cursor-pointer"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                  </button>
+                  <button
                     onClick={() => handlePrintRapportImpact(club)}
-                    className="flex-1 py-2 bg-purple-50 dark:bg-purple-950/60 hover:bg-purple-100 text-purple-600 dark:text-purple-400 font-black text-xs rounded-xl transition-all border border-purple-200 cursor-pointer flex items-center justify-center gap-1"
+                    className="flex-1 py-2 bg-purple-50 dark:bg-purple-950/60 hover:bg-purple-100 text-purple-600 dark:text-purple-400 font-black text-xs rounded-xl transition-all border border-purple-200 cursor-pointer flex items-center justify-center gap-1 shadow-sm"
                   >
                     <BarChart2 className="w-3.5 h-3.5" /> Rapport Impact
                   </button>

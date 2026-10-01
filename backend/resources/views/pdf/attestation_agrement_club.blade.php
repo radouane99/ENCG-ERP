@@ -451,13 +451,11 @@
     <div class="integrated-footer">
         <table class="footer-meta-table">
             <tr>
-                <td style="width: 45px; vertical-align: middle;">
+                <td style="width: 48px; vertical-align: middle;">
                     @if(!empty($qrBase64))
-                        <img src="{{ $qrBase64 }}" alt="QR Code Sécurité" style="width: 38px; height: 38px; display: block; border: 1px solid #cbd5e1; padding: 1px; background: #ffffff; border-radius: 2px;">
+                        <img src="{{ $qrBase64 }}" alt="QR Code Sécurité" style="width: 40px; height: 40px; display: block; border: 1px solid #cbd5e1; padding: 1px; background: #ffffff; border-radius: 2px;">
                     @else
-                        <div style="width: 38px; height: 38px; border: 1px solid #cbd5e1; background: #ffffff; text-align: center; line-height: 38px; font-size: 5pt; color: #94a3b8; font-weight: bold;">
-                            QR CODE
-                        </div>
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&margin=1&data={{ urlencode($verifyUrl ?? ($club->verification_url ?? 'https://encg-fes.ac.ma')) }}" alt="QR Code Sécurité" style="width: 40px; height: 40px; display: block; border: 1px solid #cbd5e1; padding: 1px; background: #ffffff; border-radius: 2px;">
                     @endif
                 </td>
                 <td style="vertical-align: middle; padding-left: 6px;">
@@ -466,7 +464,7 @@
                     </strong><br>
                     <span style="color: #64748b; line-height: 1.15;">
                         Document certifié conforme aux dispositions du décret N° 2-15-260 et de la loi 53-05 sur l'échange électronique des données juridiques.<br>
-                        <strong>Authentification :</strong> {{ $agrementRef ?? ('AGR-ENCG-' . date('Y')) }} • SHA256-{{ strtoupper(substr(md5(($agrementRef ?? 'AGR') . date('Ymd')), 0, 12)) }}
+                        <strong>Authentification Sécurisée :</strong> {{ $agrementRef ?? ('AGR-ENCG-' . date('Y')) }} • <strong>Jeton Crypté :</strong> <span style="font-family: monospace; font-size: 5.2pt; color: #002e5b;">{{ substr($club->encrypted_verify_token ?? 'ENC', 0, 24) }}...</span>
                     </span>
                 </td>
                 <td style="width: 140px; text-align: right; vertical-align: middle;">
@@ -478,7 +476,7 @@
         </table>
 
         <div class="footer-bottom-line">
-            École Nationale de Commerce et de Gestion de Fès — Route d'Imouzzer, B.P. 1255, Fès - Maroc | Tél: +212 5 35 64 49 20 | https://encg-fes.ac.ma
+            École Nationale de Commerce et de Gestion de Fès — Route d'Imouzzer, B.P. 1255, Fès - Maroc | Tél: +212 5 35 64 49 20 | URL : {{ $verifyUrl ?? ($club->verification_url ?? 'https://encg-fes.ac.ma') }}
         </div>
     </div>
 @endsection
