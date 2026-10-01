@@ -572,69 +572,87 @@ export default function ProfessorAbsencesView() {
           </div>
 
           {/* Sessions Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">
-            {filteredSchedule.map((session) => {
-              const DAYS_FR = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
-              const currentDayName = DAYS_FR[new Date().getDay()];
-              const isSessionToday = session.day.toLowerCase() === currentDayName.toLowerCase();
-              const isSelected = selectedSessionId === session.id;
+          {filteredSchedule.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">
+              {filteredSchedule.map((session) => {
+                const DAYS_FR = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+                const currentDayName = DAYS_FR[new Date().getDay()];
+                const isSessionToday = session.day.toLowerCase() === currentDayName.toLowerCase();
+                const isSelected = selectedSessionId === session.id;
 
-              return (
-                <div
-                  key={session.id}
-                  onClick={() => handleSelectSessionFromSchedule(session, false)}
-                  className={cn(
-                    "p-4 rounded-2xl border transition-all duration-200 cursor-pointer flex flex-col justify-between space-y-3 group hover:-translate-y-0.5",
-                    isSelected
-                      ? "bg-indigo-50/80 dark:bg-indigo-950/40 border-indigo-500 ring-2 ring-indigo-500/20 shadow-md"
-                      : isSessionToday
-                        ? "bg-emerald-50/40 dark:bg-emerald-950/20 border-emerald-300 dark:border-emerald-800 hover:border-emerald-500 shadow-xs"
-                        : "bg-slate-50/70 dark:bg-slate-800/40 border-slate-200/80 dark:border-slate-700/60 hover:border-indigo-300"
-                  )}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="flex items-center gap-1.5 text-xs font-black text-slate-700 dark:text-slate-200">
-                      <Clock size={14} className="text-indigo-500" />
-                      {session.day} · {session.timeSlot}
-                    </span>
-                    {isSessionToday && (
-                      <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-emerald-500 text-white uppercase tracking-wider animate-pulse">
-                        Aujourd'hui
-                      </span>
+                return (
+                  <div
+                    key={session.id}
+                    onClick={() => handleSelectSessionFromSchedule(session, false)}
+                    className={cn(
+                      "p-4 rounded-2xl border transition-all duration-200 cursor-pointer flex flex-col justify-between space-y-3 group hover:-translate-y-0.5",
+                      isSelected
+                        ? "bg-indigo-50/80 dark:bg-indigo-950/40 border-indigo-500 ring-2 ring-indigo-500/20 shadow-md"
+                        : isSessionToday
+                          ? "bg-emerald-50/40 dark:bg-emerald-950/20 border-emerald-300 dark:border-emerald-800 hover:border-emerald-500 shadow-xs"
+                          : "bg-slate-50/70 dark:bg-slate-800/40 border-slate-200/80 dark:border-slate-700/60 hover:border-indigo-300"
                     )}
-                  </div>
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="flex items-center gap-1.5 text-xs font-black text-slate-700 dark:text-slate-200">
+                        <Clock size={14} className="text-indigo-500" />
+                        {session.day} · {session.timeSlot}
+                      </span>
+                      {isSessionToday && (
+                        <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-emerald-500 text-white uppercase tracking-wider animate-pulse">
+                          Aujourd'hui
+                        </span>
+                      )}
+                    </div>
 
-                  <div>
-                    <h4 className="font-black text-sm text-slate-900 dark:text-white leading-snug group-hover:text-indigo-600 transition-colors">
-                      {session.moduleName}
-                    </h4>
-                    <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                      <span className="px-2 py-0.5 text-[10px] font-mono font-black rounded-md bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300">
-                        {session.groupName}
-                      </span>
-                      <span className="text-xs text-slate-500 font-bold">
-                        📍 {session.roomName}
-                      </span>
+                    <div>
+                      <h4 className="font-black text-sm text-slate-900 dark:text-white leading-snug group-hover:text-indigo-600 transition-colors">
+                        {session.moduleName}
+                      </h4>
+                      <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                        <span className="px-2 py-0.5 text-[10px] font-mono font-black rounded-md bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300">
+                          {session.groupName}
+                        </span>
+                        <span className="text-xs text-slate-500 font-bold">
+                          📍 {session.roomName}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="pt-2 border-t border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{session.sessionType}</span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSelectSessionFromSchedule(session, true);
+                        }}
+                        className="px-3 py-1 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-black flex items-center gap-1 shadow-xs cursor-pointer transition-all active:scale-95"
+                      >
+                        <Zap size={12} className="text-amber-300" />
+                        <span>Faire l'Appel</span>
+                      </button>
                     </div>
                   </div>
-
-                  <div className="pt-2 border-t border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{session.sessionType}</span>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleSelectSessionFromSchedule(session, true);
-                      }}
-                      className="px-3 py-1 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-black flex items-center gap-1 shadow-xs cursor-pointer transition-all active:scale-95"
-                    >
-                      <Zap size={12} className="text-amber-300" />
-                      <span>Faire l'Appel</span>
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="py-10 px-6 text-center bg-slate-50/60 dark:bg-slate-800/30 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 space-y-2.5">
+              <div className="w-12 h-12 mx-auto rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-500 flex items-center justify-center">
+                <Clock size={22} />
+              </div>
+              <h4 className="text-sm font-black text-slate-800 dark:text-slate-200">
+                {schedules.length === 0
+                  ? "Aucune séance programmée dans votre emploi du temps officiel"
+                  : `Aucune séance trouvée pour ${selectedDayFilter === 'all' ? 'cette sélection' : selectedDayFilter}`}
+              </h4>
+              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+                {schedules.length === 0
+                  ? "Vous n'avez aucun créneau de cours planifié dans le système pour le moment."
+                  : "Sélectionnez un autre jour ou changez de filière pour afficher vos cours programmés."}
+              </p>
+            </div>
+          )}
         </div>
       )}
 
@@ -655,11 +673,19 @@ export default function ProfessorAbsencesView() {
               <select 
                 value={selectedFiliere}
                 onChange={(e) => setSelectedFiliere(e.target.value)}
-                className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-[#0f2863] dark:text-white focus:outline-none focus:border-indigo-500 transition-colors cursor-pointer"
+                disabled={filieres.length === 0}
+                className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-[#0f2863] dark:text-white focus:outline-none focus:border-indigo-500 transition-colors cursor-pointer disabled:opacity-50"
               >
-                {filieres.map((f: any) => (
-                  <option key={f.id} value={f.id}>{f.name} ({f.code})</option>
-                ))}
+                {filieres.length > 0 ? (
+                  <>
+                    <option value="all">Toutes vos filières</option>
+                    {filieres.map((f: any) => (
+                      <option key={f.id} value={f.id}>{f.name} ({f.code})</option>
+                    ))}
+                  </>
+                ) : (
+                  <option value="">Aucune filière affectée</option>
+                )}
               </select>
             </div>
 
@@ -669,11 +695,16 @@ export default function ProfessorAbsencesView() {
               <select 
                 value={selectedGroupe}
                 onChange={(e) => setSelectedGroupe(e.target.value)}
-                className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-[#0f2863] dark:text-white focus:outline-none focus:border-indigo-500 transition-colors cursor-pointer"
+                disabled={groupes.length === 0}
+                className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-[#0f2863] dark:text-white focus:outline-none focus:border-indigo-500 transition-colors cursor-pointer disabled:opacity-50"
               >
-                {groupes.map((g: any) => (
-                  <option key={g.id} value={g.id}>{g.name}</option>
-                ))}
+                {groupes.length > 0 ? (
+                  groupes.map((g: any) => (
+                    <option key={g.id} value={g.id}>{g.name}</option>
+                  ))
+                ) : (
+                  <option value="">Aucun groupe disponible</option>
+                )}
               </select>
             </div>
 
@@ -683,7 +714,8 @@ export default function ProfessorAbsencesView() {
               <select 
                 value={selectedModule}
                 onChange={(e) => setSelectedModule(e.target.value)}
-                className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-[#0f2863] dark:text-white focus:outline-none focus:border-indigo-500 transition-colors cursor-pointer"
+                disabled={filteredModules.length === 0}
+                className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-[#0f2863] dark:text-white focus:outline-none focus:border-indigo-500 transition-colors cursor-pointer disabled:opacity-50"
               >
                 {filteredModules.length > 0 ? (
                   filteredModules.map((m: any) => (
