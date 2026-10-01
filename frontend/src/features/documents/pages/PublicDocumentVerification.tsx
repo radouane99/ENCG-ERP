@@ -54,6 +54,12 @@ export default function PublicDocumentVerification() {
   }
 
   const isEncrypted = token?.startsWith('ENC-') || result?.is_encrypted;
+  const isRoom = Boolean(
+    token?.startsWith('ROOM-') ||
+    token?.startsWith('SALLE-') ||
+    result?.document_type?.includes('Affiche de Porte') ||
+    result?.document_type?.includes('Espace Pédagogique')
+  );
 
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 py-12 font-sans">
@@ -106,14 +112,18 @@ export default function PublicDocumentVerification() {
                 </div>
 
                 <div className="flex justify-between items-center pb-2.5 border-b border-slate-200 dark:border-slate-700">
-                  <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Titulaire / Bénéficiaire</span>
+                  <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">
+                    {isRoom ? "Espace Pédagogique" : "Titulaire / Bénéficiaire"}
+                  </span>
                   <span className="font-bold text-slate-800 dark:text-white text-right">
                     {result.beneficiary || result.student_name || result.club_name}
                   </span>
                 </div>
 
                 <div className="flex justify-between items-center pb-2.5 border-b border-slate-200 dark:border-slate-700">
-                  <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Numéro d'Enregistrement</span>
+                  <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">
+                    {isRoom ? "Code Repère / Salle" : "Numéro d'Enregistrement"}
+                  </span>
                   <span className="font-mono font-bold text-slate-800 dark:text-slate-200">
                     {result.student_number || result.cne || result.tracking_code}
                   </span>
@@ -121,22 +131,39 @@ export default function PublicDocumentVerification() {
 
                 {(result.filiere || result.category) && (
                   <div className="flex justify-between items-center pb-2.5 border-b border-slate-200 dark:border-slate-700">
-                    <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Pôle / Domaine</span>
+                    <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">
+                      {isRoom ? "Capacités d'Accueil" : "Pôle / Domaine"}
+                    </span>
                     <span className="font-medium text-slate-700 dark:text-slate-300 text-right">
-                      {result.filiere || result.category}
+                      {result.filiere}
+                    </span>
+                  </div>
+                )}
+
+                {isRoom && result.category && (
+                  <div className="flex justify-between items-center pb-2.5 border-b border-slate-200 dark:border-slate-700">
+                    <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">
+                      Équipements &amp; Réseau
+                    </span>
+                    <span className="font-medium text-slate-700 dark:text-slate-300 text-right text-[11px]">
+                      {result.category}
                     </span>
                   </div>
                 )}
 
                 <div className="flex justify-between items-center pb-2.5 border-b border-slate-200 dark:border-slate-700">
-                  <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Date d'Émission / Octroi</span>
+                  <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">
+                    {isRoom ? "Date de Certification" : "Date d'Émission / Octroi"}
+                  </span>
                   <span className="font-bold text-slate-800 dark:text-slate-200">
                     {result.issued_at}
                   </span>
                 </div>
 
                 <div className="flex justify-between items-center pb-2.5 border-b border-slate-200 dark:border-slate-700">
-                  <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Statut Juridique</span>
+                  <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">
+                    {isRoom ? "Homologation Sécurité" : "Statut Juridique"}
+                  </span>
                   <span className="font-bold text-emerald-600 dark:text-emerald-400 text-right">
                     {result.status || 'Homologué & Conforme (Loi 53-05)'}
                   </span>

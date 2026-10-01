@@ -12,6 +12,7 @@ use App\Models\Module;
 use App\Models\ModulePvSignature;
 use App\Models\Professor;
 use App\Models\ProfessorDocumentRequest;
+use App\Models\Room;
 use App\Models\Student;
 use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Http\JsonResponse;
@@ -48,6 +49,11 @@ class PublicVerificationController extends Controller
         // 1.c Convocation officielle aux examens (Token CONV-)
         if (str_starts_with($documentId, 'CONV-')) {
             return $this->verifyConvocationDocument($request, $documentId);
+        }
+
+        // 1.d Affiche de Porte & Espace Pédagogique (Token ROOM- ou SALLE-)
+        if (str_starts_with($documentId, 'ROOM-') || str_starts_with($documentId, 'SALLE-')) {
+            return $this->verifyRoomDocument($request, $documentId);
         }
 
         // 2. Document étudiant généré (GeneratedDocument)
@@ -735,6 +741,90 @@ class PublicVerificationController extends Controller
                 'is_encrypted' => str_starts_with($trackingCode, 'ENC-'),
                 'security_hash' => hash('sha256', "encg-club-{$club->id}-{$ref}"),
                 'hash' => 'SHA256-' . strtoupper(substr(hash('sha256', "encg-club-{$club->id}-{$ref}"), 0, 16)),
+                'institution' => 'École Nationale de Commerce et de Gestion de Fès (USMBA)',
+                'academic_year' => date('Y') . '-' . (date('Y') + 1),
+            ],
+        ]);
+    }
+
+    /**
+     * Vérifier l'authenticité d'une Affiche de Porte ou Fiche de Salle Pédagogique.
+     */
+    private function verifyRoomDocument(Request $request, string $documentId): JsonResponse
+    {
+        $clean = str_replace(['ROOM-', 'SALLE-'], '', $documentId);
+        $room = Room::where('code', $clean)
+            ->orWhere('id', is_numeric($clean) ? (int) $clean : 0)
+            ->orWhere('code', $documentId)
+            ->first();
+
+        if (! $room) {
+            return response()->json([
+                'success' => false,
+                'is_valid' => false,
+                'message' => 'Espace pédagogique ou salle introuvable dans le parc immobilier de l\'ENCG Fès.',
+            ], 404);
+        }
+
+        return $this->returnVerifiedRoomResponse($request, $room, $documentId);
+    }
+
+    /**
+     * Formater la réponse officielle de vérification d'un espace pédagogique.
+     */
+    private function returnVerifiedRoomResponse(Request $request, Room $room, string $trackingCode): JsonResponse
+    {
+        $typeLabels = [
+            'amphitheatre' => 'Amphithéâtre de Cours Magistraux',
+            'amphitheater' => 'Amphithéâtre de Cours Magistraux',
+            'classroom' => 'Salle d\'Enseignement & TD',
+            'lab' => 'Laboratoire Informatique & TP',
+            'seminar' => 'Salle de Séminaire & Master',
+            'admin' => 'Bureau Administratif',
+        ];
+        $typeLabel = $typeLabels[$room->type] ?? 'Espace Pédagogique';
+
+        try {
+            activity()
+                ->event('verified')
+                ->withProperties([
+                    'ip' => $request->ip(),
+                    'user_agent' => $request->userAgent(),
+                    'room_id' => $room->id,
+                    'code' => $room->code,
+                ])
+                ->log('Affiche de porte de salle vérifiée via portail public');
+        } catch (\Throwable) {
+        }
+
+        $equipments = [];
+        if ($room->has_projector) {
+            $equipments[] = 'Vidéoprojecteur Laser HD';
+        }
+        if ($room->has_ac) {
+            $equipments[] = 'Climatisation Inverter';
+        }
+        $equipments[] = 'Wi-Fi Eduroam';
+        $equipmentsDesc = implode(' • ', $equipments);
+        $examCap = $room->exam_capacity ?: (int) floor($room->capacity / 2);
+
+        return response()->json([
+            'success' => true,
+            'is_valid' => true,
+            'data' => [
+                'document_type' => "Affiche de Porte & Fiche Technique — {$typeLabel}",
+                'student_name' => $room->name,
+                'beneficiary' => "Espace Pédagogique : {$room->name} ({$typeLabel})",
+                'student_number' => "CODE : {$room->code}",
+                'cne' => $room->code,
+                'filiere' => "Capacité : {$room->capacity} pl. (Cours/TD) · {$examCap} pl. (Examens)",
+                'category' => $equipmentsDesc,
+                'issued_at' => now()->format('d/m/Y'),
+                'status' => $room->is_available ? 'Espace Homologué, Opérationnel & Conforme' : 'En Maintenance Technique',
+                'tracking_code' => $trackingCode,
+                'is_encrypted' => str_starts_with($trackingCode, 'ENC-'),
+                'security_hash' => hash('sha256', "encg-room-{$room->id}-{$room->code}"),
+                'hash' => 'SHA256-' . strtoupper(substr(hash('sha256', "encg-room-{$room->id}-{$room->code}"), 0, 16)),
                 'institution' => 'École Nationale de Commerce et de Gestion de Fès (USMBA)',
                 'academic_year' => date('Y') . '-' . (date('Y') + 1),
             ],
