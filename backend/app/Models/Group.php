@@ -37,6 +37,16 @@ class Group extends Model
             ->withPivot(['academic_year_id', 'current_semester', 'is_current']);
     }
 
+    public function pathways(): HasMany
+    {
+        return $this->hasMany(StudentPathway::class);
+    }
+
+    public function studentPathways(): HasMany
+    {
+        return $this->hasMany(StudentPathway::class);
+    }
+
     public function speciality(): BelongsTo
     {
         return $this->belongsTo(Speciality::class);

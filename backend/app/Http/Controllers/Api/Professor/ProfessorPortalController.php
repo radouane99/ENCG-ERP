@@ -1780,35 +1780,63 @@ class ProfessorPortalController extends Controller
                 }
 
                 if ($profId) {
-                    $mpGroups = ModuleProfessor::where('professor_id', $profId)
-                        ->whereNotNull('group_id')
-                        ->pluck('module_id', 'group_id')
-                        ->toArray();
-                    foreach ($mpGroups as $gId => $mId) {
-                        $groupIds[] = (int) $gId;
-                        if ($mId && empty($modulesAssigned[$gId])) {
-                            $modulesAssigned[$gId] = (int) $mId;
+                    $mpRows = DB::table('module_professor')
+                        ->where('professor_id', $profId)
+                        ->get();
+
+                    foreach ($mpRows as $mp) {
+                        if ($mp->group_id) {
+                            $gId = (int) $mp->group_id;
+                            $groupIds[] = $gId;
+                            if ($mp->module_id && empty($modulesAssigned[$gId])) {
+                                $modulesAssigned[$gId] = (int) $mp->module_id;
+                            }
+                        } elseif ($mp->module_id) {
+                            $mod = Module::find($mp->module_id);
+                            if ($mod && $mod->filiere_id) {
+                                $fGroupIds = Group::where('filiere_id', $mod->filiere_id)
+                                    ->when($mod->semester_number, fn ($q, $sem) => $q->where('semester_number', $sem))
+                                    ->pluck('id');
+                                foreach ($fGroupIds as $fgId) {
+                                    $groupIds[] = (int) $fgId;
+                                    if (empty($modulesAssigned[$fgId])) {
+                                        $modulesAssigned[$fgId] = (int) $mod->id;
+                                    }
+                                }
+                            }
                         }
                     }
                 }
             }
 
-            $groupIds = array_unique($groupIds);
+            $groupIds = array_values(array_unique($groupIds));
 
-            // Si aucun groupe n'est encore explicitement assigné dans le planning, on propose les groupes actifs
+            // Si aucun groupe n'est assigné à l'enseignant dans le planning ou les modules
             if (empty($groupIds)) {
-                $groupsQuery = Group::with(['filiere', 'academicYear'])
-                    ->whereHas('pathways', fn ($p) => $p->where('is_current', true))
-                    ->orderBy('filiere_id')
-                    ->orderBy('semester_number')
-                    ->orderBy('name');
-            } else {
-                $groupsQuery = Group::with(['filiere', 'academicYear'])
-                    ->whereIn('id', $groupIds)
-                    ->orderBy('name');
+                $statusLabel = 'Professeur Titulaire (Permanent)';
+                if (($prof?->contract_type === 'vacataire') || ($user && $user->hasRole('vacataire'))) {
+                    $statusLabel = 'Enseignant Vacataire';
+                }
+                if (str_contains(strtolower($prof?->specialty ?? ''), 'doctorant') || str_contains(strtolower($prof?->grade ?? ''), 'doctorant')) {
+                    $statusLabel = 'Doctorant Moniteur / Vacataire';
+                }
+
+                return [
+                    'modules' => [],
+                    'groups' => [],
+                    'professor' => [
+                        'id' => $profId,
+                        'name' => trim(($user->first_name ?? '').' '.($user->last_name ?? '')) ?: ($user->name ?? 'Enseignant'),
+                        'status' => $statusLabel,
+                        'email' => $user?->email,
+                    ],
+                ];
             }
 
-            $groups = $groupsQuery->get();
+            $groups = Group::with(['filiere', 'academicYear'])
+                ->whereIn('id', $groupIds)
+                ->orderBy('name')
+                ->get();
 
             $groupList = $groups->map(function ($g) use ($modulesAssigned) {
                 // Détection sous-groupes TD (ex: G1 -> G1.1, G1.2)
