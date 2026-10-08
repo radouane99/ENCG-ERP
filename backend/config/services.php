@@ -55,6 +55,10 @@ return [
         'key' => env('GEMINI_API_KEY', ''),
     ],
 
+    'ai' => [
+        'driver' => (env('APP_ENV') === 'testing' || env('AI_DRIVER') === 'stub') ? 'stub' : env('AI_DRIVER', 'gemini'),
+    ],
+
     'sentry' => [
         'dsn' => env('SENTRY_LARAVEL_DSN', env('SENTRY_DSN')),
         'environment' => env('SENTRY_ENVIRONMENT', env('APP_ENV', 'production')),

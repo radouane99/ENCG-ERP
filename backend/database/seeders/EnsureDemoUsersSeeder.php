@@ -155,5 +155,12 @@ class EnsureDemoUsersSeeder extends Seeder
                 Student::create($studentPayload);
             }
         }
+
+        // 4. Guarantee all professors in database have professor role
+        foreach (Professor::with('user')->get() as $p) {
+            if ($p->user && ! $p->user->hasRole('professor')) {
+                $p->user->assignRole('professor');
+            }
+        }
     }
 }

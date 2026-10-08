@@ -116,28 +116,31 @@ class AiTimetableSchedulerService
         $profDailySessions = [];
         $profDailyShift = []; // [profId][day] = 'morning' | 'afternoon'
 
-        // Charger les indisponibilités existantes de la BDD pour éviter tout clash
-        $existingSchedules = DB::table('schedules')
-            ->where('academic_year_id', $academicYearId)
-            ->where('is_active', true)
-            ->get();
+        // Charger les indisponibilités existantes de la BDD pour éviter tout clash (sauf si ignore_existing est actif)
+        $ignoreExisting = $options['ignore_existing'] ?? false;
+        if (! $ignoreExisting) {
+            $existingSchedules = DB::table('schedules')
+                ->where('academic_year_id', $academicYearId)
+                ->where('is_active', true)
+                ->get();
 
-        foreach ($existingSchedules as $s) {
-            $day = (int) $s->day_of_week;
-            $slotIndex = $this->timeToSlotIndex($s->start_time);
-            if ($slotIndex !== null) {
-                if ($s->room_id) {
-                    $occupiedSlots['rooms'][$s->room_id][$day][$slotIndex] = true;
-                }
-                if ($s->professor_id) {
-                    $occupiedSlots['professors'][$s->professor_id][$day][$slotIndex] = true;
-                    $profDailySessions[$s->professor_id][$day] = ($profDailySessions[$s->professor_id][$day] ?? 0) + 1;
-                    $isMorn = ($slotIndex === 1 || $slotIndex === 2);
-                    $profDailyShift[$s->professor_id][$day] = $isMorn ? 'morning' : 'afternoon';
-                }
-                if ($s->group_id) {
-                    $occupiedSlots['groups'][$s->group_id][$day][$slotIndex] = true;
-                    $groupDailySessions[$s->group_id][$day] = ($groupDailySessions[$s->group_id][$day] ?? 0) + 1;
+            foreach ($existingSchedules as $s) {
+                $day = (int) $s->day_of_week;
+                $slotIndex = $this->timeToSlotIndex($s->start_time);
+                if ($slotIndex !== null) {
+                    if ($s->room_id) {
+                        $occupiedSlots['rooms'][$s->room_id][$day][$slotIndex] = true;
+                    }
+                    if ($s->professor_id) {
+                        $occupiedSlots['professors'][$s->professor_id][$day][$slotIndex] = true;
+                        $profDailySessions[$s->professor_id][$day] = ($profDailySessions[$s->professor_id][$day] ?? 0) + 1;
+                        $isMorn = ($slotIndex === 1 || $slotIndex === 2);
+                        $profDailyShift[$s->professor_id][$day] = $isMorn ? 'morning' : 'afternoon';
+                    }
+                    if ($s->group_id) {
+                        $occupiedSlots['groups'][$s->group_id][$day][$slotIndex] = true;
+                        $groupDailySessions[$s->group_id][$day] = ($groupDailySessions[$s->group_id][$day] ?? 0) + 1;
+                    }
                 }
             }
         }
@@ -930,11 +933,6 @@ class AiTimetableSchedulerService
      */
     protected function ensureCampusRooms(): void
     {
-        // Ne jamais injecter de salles statiques si des salles existent déjà dans la base de données
-        if (Room::exists()) {
-            return;
-        }
-
         $institutionId = Institution::first()?->id ?? null;
         $campusId = Campus::first()?->id ?? null;
 

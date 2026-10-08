@@ -308,8 +308,10 @@ export default function Sidebar({ onClose }: SidebarProps) {
       )}
 
       {/* Header Logo */}
-      <div className="flex items-center justify-center px-5 py-4 border-b border-sidebar-border bg-gradient-to-b from-white/[0.03] to-transparent shrink-0">
-        <img src="/logo-encg.png" alt="ENCG Fès" className="h-10 object-contain drop-shadow-md" />
+      <div className="flex items-center justify-center px-4 py-3 border-b border-sidebar-border bg-gradient-to-b from-white/[0.03] to-transparent shrink-0">
+        <div className="w-full bg-white rounded-xl px-3 py-1.5 shadow-sm border border-white/20 flex items-center justify-center transition-transform hover:scale-[1.01]">
+          <img src="/logo-encg.png" alt="ENCG Fès" className="h-9 w-auto max-w-full object-contain" />
+        </div>
       </div>
 
       {/* Dynamic Route Search Bar */}

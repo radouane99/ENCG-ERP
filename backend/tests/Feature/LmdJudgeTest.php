@@ -54,12 +54,17 @@ it('falls back when a fake Gemini HTTP call fails', function () {
     Http::fake([
         'generativelanguage.googleapis.com/*' => Http::response(['error' => true], 500),
     ]);
+    $origKey = config('services.gemini.key');
     config(['services.gemini.key' => 'test-key']);
 
-    $copy = (new GroundedAiService(new GeminiAiDriver))->explain(['verdict' => 'NV'], 'lmd_judge');
+    try {
+        $copy = (new GroundedAiService(new GeminiAiDriver))->explain(['verdict' => 'NV'], 'lmd_judge');
 
-    expect($copy['text_fr'])->not->toContain('Validé')
-        ->and(str_contains(strtolower($copy['text_fr']), 'nv') || str_contains($copy['text_fr'], 'NV'))->toBeTrue();
+        expect($copy['text_fr'])->not->toContain('Validé')
+            ->and(str_contains(strtolower($copy['text_fr']), 'nv') || str_contains($copy['text_fr'], 'NV'))->toBeTrue();
+    } finally {
+        config(['services.gemini.key' => $origKey]);
+    }
 });
 
 it('explains NV from precomputed facts without inventing Validé', function () {

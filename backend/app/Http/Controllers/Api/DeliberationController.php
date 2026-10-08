@@ -404,14 +404,18 @@ class DeliberationController extends Controller
             $yearLevel = (int) $request->query('year_level', 1);
             $semesterNum = (int) $request->query('semester_number', 1);
 
-            $filiere = Filiere::find($filiereId) ?? (object) ['name' => 'Tronc Commun ENCG', 'code' => 'ENCG'];
-            $academicYear = $academicYearId
-                ? AcademicYear::find($academicYearId)
-                : (AcademicYear::where('is_current', true)->first()
-                    ?? AcademicYear::orderByDesc('id')->first()
-                    ?? (object) ['name' => date('Y').'/'.(date('Y') + 1), 'id' => 1]);
-
-            $academicYearId = $academicYear->id ?? 1;
+            $filiere = Filiere::find($filiereId);
+            if (! $filiere) {
+                $filiere = Filiere::first();
+                $filiereId = $filiere ? $filiere->id : $filiereId;
+            }
+            $requestedYearId = (int) $request->query('academic_year_id', 0);
+            $academicYearId = $this->resolveAcademicYearId($requestedYearId);
+            $academicYear = AcademicYear::find($academicYearId);
+            if (! $academicYear) {
+                $academicYear = AcademicYear::first();
+                $academicYearId = $academicYear ? $academicYear->id : $academicYearId;
+            }
 
             $logoPath = public_path('logo-encg.png');
             $logoBase64 = file_exists($logoPath)
@@ -499,14 +503,22 @@ class DeliberationController extends Controller
     {
         $delib = Deliberation::with(['semester', 'filiere', 'academicYear'])->find($id);
         $type = $request->query('type', 'semestriel');
-        $filiereId = $request->query('filiere_id', $delib?->filiere_id ?? 1);
-        $academicYearId = $request->query('academic_year_id', $delib?->academic_year_id ?? 1);
-        $semesterNum = $request->query('semester_number', $delib?->semester?->semester_number ?? 1);
-
-        $juries = $this->deliberationService->autoComposeJury($filiereId, $academicYearId, $type === 'semestriel' ? $semesterNum : null, $type);
+        $filiereId = (int) $request->query('filiere_id', $delib?->filiere_id ?? 1);
+        $academicYearId = $this->resolveAcademicYearId($request->query('academic_year_id', $delib?->academic_year_id));
+        $semesterNum = (int) $request->query('semester_number', $delib?->semester?->semester_number ?? 1);
 
         $filiere = Filiere::find($filiereId);
+        if (! $filiere) {
+            $filiere = Filiere::first();
+            $filiereId = $filiere ? $filiere->id : $filiereId;
+        }
         $academicYear = AcademicYear::find($academicYearId);
+        if (! $academicYear) {
+            $academicYear = AcademicYear::first();
+            $academicYearId = $academicYear ? $academicYear->id : $academicYearId;
+        }
+
+        $juries = $this->deliberationService->autoComposeJury($filiereId, $academicYearId, $type === 'semestriel' ? $semesterNum : null, $type);
 
         if ($type === 'annuel') {
             $matrix = $this->deliberationService->calculateAnnualCompensation($filiereId, $academicYearId);
@@ -540,7 +552,7 @@ class DeliberationController extends Controller
     public function getJuryStatus(Request $request): JsonResponse
     {
         $filiereId = (int) $request->query('filiere_id', 1);
-        $academicYearId = (int) $request->query('academic_year_id', 1);
+        $academicYearId = $this->resolveAcademicYearId($request->query('academic_year_id'));
         $semesterNum = (int) $request->query('semester_number', 1);
         $type = $request->query('type', 'semestriel');
 
@@ -597,7 +609,7 @@ class DeliberationController extends Controller
     public function getAnnualCompensation(Request $request): JsonResponse
     {
         $filiereId = (int) $request->query('filiere_id', 1);
-        $academicYearId = (int) $request->query('academic_year_id', 1);
+        $academicYearId = $this->resolveAcademicYearId($request->query('academic_year_id'));
         $yearLevel = (int) $request->query('year_level', 1);
 
         $results = $this->deliberationService->calculateAnnualCompensation($filiereId, $academicYearId, $yearLevel);
@@ -652,5 +664,20 @@ class DeliberationController extends Controller
         app(DeliberationSealService::class)->approveReopen($requestId, $request->user());
 
         return response()->json(['success' => true]);
+    }
+
+    /**
+     * Résoudre un ID d'année académique valide ou utiliser l'année active par défaut.
+     */
+    private function resolveAcademicYearId(int|string|null $requestedId): int
+    {
+        $id = (int) $requestedId;
+        if ($id > 0 && AcademicYear::where('id', $id)->exists()) {
+            return $id;
+        }
+
+        return (int) (AcademicYear::where('is_current', true)->value('id')
+            ?? AcademicYear::orderByDesc('id')->value('id')
+            ?? 1);
     }
 }

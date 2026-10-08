@@ -24,8 +24,8 @@ class GeminiApiService
 
     public function __construct()
     {
-        $this->geminiApiKey = config('services.gemini.key') ?: env('GEMINI_API_KEY', '');
-        $this->groqApiKey = config('services.groq.key') ?: (config('services.groq.api_key') ?: env('GROQ_API_KEY', ''));
+        $this->geminiApiKey = (string) (config('services.gemini.key') ?? env('GEMINI_API_KEY', ''));
+        $this->groqApiKey = (string) (config('services.groq.key') ?? config('services.groq.api_key') ?? env('GROQ_API_KEY', ''));
         Log::info('[GeminiApiService] AI Drivers initialized - Gemini: '.(! empty($this->geminiApiKey) ? 'configured' : 'empty').', Groq: '.(! empty($this->groqApiKey) ? 'configured' : 'empty'));
     }
 

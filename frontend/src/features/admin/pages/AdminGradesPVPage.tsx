@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react'
+import React, { useEffect, useState, useRef, useMemo } from 'react'
 
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, Printer, Save, CheckCircle2, AlertCircle, RefreshCw, ShieldCheck, Lock, Download, FileText, Layers, Sparkles, GraduationCap, Calendar, BookOpen, Users, ChevronDown, Check, Eye, Zap, FileSpreadsheet, Mail, Archive, History, X, TrendingUp, Trophy, BarChart2, Filter, Search, Send, Package, ClipboardList, Star, Link2, Calculator } from 'lucide-react'
@@ -227,6 +227,18 @@ export default function AdminGradesPVPage() {
   const [activeJurySigningId, setActiveJurySigningId] = useState<number | null>(null)
   const [showAiAnalysis, setShowAiAnalysis] = useState(false)
 
+  // Dynamic current academic year
+  const { data: academicYearsData = [] } = useQuery({
+    queryKey: ['academic-years-for-pv'],
+    queryFn: () => api.get('/academic-years').then(r => r.data?.data || r.data || []),
+  })
+
+  const currentAcademicYearId = useMemo(() => {
+    const yearsList = Array.isArray(academicYearsData) ? academicYearsData : []
+    const current = yearsList.find((y: any) => y.is_current)
+    return current?.id || yearsList[0]?.id || 3
+  }, [academicYearsData])
+
   const fetchJury = async () => {
     if (!selectedFiliere) return
     setLoadingJury(true)
@@ -234,7 +246,7 @@ export default function AdminGradesPVPage() {
       const res = await api.get('/academic/deliberations/jury-status', {
         params: {
           filiere_id: selectedFiliere,
-          academic_year_id: 1,
+          academic_year_id: currentAcademicYearId,
           semester_number: selectedSemester || 1,
           type: pvType
         }
@@ -266,7 +278,7 @@ export default function AdminGradesPVPage() {
     const targetFiliereId = selectedFiliere || pvData?.module?.filiere_id || filieres[0]?.id || 1
     try {
       const res = await api.get('/academic/deliberations/annual-compensation', {
-        params: { filiere_id: targetFiliereId, academic_year_id: 1, year_level: selectedYearLevel || 1 }
+        params: { filiere_id: targetFiliereId, academic_year_id: currentAcademicYearId, year_level: selectedYearLevel || 1 }
       })
       setAnnualCompensationData(res.data.data || res.data || [])
     } catch (err) {
@@ -279,7 +291,7 @@ export default function AdminGradesPVPage() {
     if (pvType === 'annuel') {
       fetchAnnualCompensation()
     }
-  }, [selectedFiliere, selectedSemester, selectedYearLevel, pvType, pvData])
+  }, [selectedFiliere, selectedSemester, selectedYearLevel, pvType, pvData, currentAcademicYearId])
 
   // Fetch full 7-module semester PV matrix
   const { data: semesterPvData, isLoading: isLoadingSemesterPV } = useQuery({
@@ -671,7 +683,7 @@ export default function AdminGradesPVPage() {
           group_id: viewAllGroups ? 'all' : (groupId || 'all'),
           session: session,
           semester: semesterVal,
-          academic_year_id: 1
+          academic_year_id: currentAcademicYearId
         },
         responseType: 'blob'
       })
@@ -885,6 +897,7 @@ export default function AdminGradesPVPage() {
       const response = await api.post('/deliberations/export-pv-pdf', {
         type: pvType || 'semestriel',
         filiere_id: selectedFiliere || 1,
+        academic_year_id: currentAcademicYearId,
         semester_number: selectedSemester || 1,
         session: 'normale',
         signed: signatureDone ? 'true' : 'false',

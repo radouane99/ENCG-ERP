@@ -192,6 +192,7 @@ class DeliberationService
      */
     public function getSemesterPVWithReservistes(int $filiereId, int $academicYearId, int $semesterNumber): array
     {
+        $academicYearId = $this->resolveValidAcademicYearId($academicYearId);
         $modules = Module::with('assessments')->where('filiere_id', $filiereId)->where('semester_number', $semesterNumber)->get();
         $moduleIds = $modules->pluck('id')->toArray();
 
@@ -208,7 +209,11 @@ class DeliberationService
 
         $allStudentIds = array_unique(array_merge($regularStudentIds, $reservisteStudentIds));
 
-        $students = Student::with('user')->whereIn('id', $allStudentIds)->orderBy('last_name')->get();
+        $students = Student::with('user')
+            ->whereIn('id', $allStudentIds)
+            ->get()
+            ->sortBy(fn ($s) => mb_strtoupper($s->user?->last_name ?? $s->last_name ?? ''))
+            ->values();
 
         $historical = ModuleValidation::whereIn('module_id', $moduleIds)->whereIn('student_id', $allStudentIds)->get()->keyBy(fn ($v) => $v->student_id.'_'.$v->module_id);
         $currentGrades = Grade::with('assessment')->whereIn('student_id', $allStudentIds)
@@ -278,6 +283,8 @@ class DeliberationService
      */
     public function autoComposeJury(int $filiereId, int $academicYearId, ?int $semesterNumber = null, string $type = 'semestriel'): array
     {
+        $academicYearId = $this->resolveValidAcademicYearId($academicYearId);
+
         $modules = Module::with('assessments')
             ->where('filiere_id', $filiereId)
             ->when($type === 'semestriel' && $semesterNumber, fn ($q) => $q->where('semester_number', $semesterNumber))
@@ -418,6 +425,7 @@ class DeliberationService
      */
     public function calculateAnnualCompensation(int $filiereId, int $academicYearId, ?int $yearLevel = 1): array
     {
+        $academicYearId = $this->resolveValidAcademicYearId($academicYearId);
         $yearLevel = $yearLevel ?: 1;
         $oddSemNumber = ($yearLevel * 2) - 1;  // e.g. 1, 3, 5, 7, 9
         $evenSemNumber = $yearLevel * 2;       // e.g. 2, 4, 6, 8, 10
@@ -759,5 +767,19 @@ class DeliberationService
         }
 
         return $score;
+    }
+
+    /**
+     * Résoudre un ID d'année académique valide ou basculer sur l'année active par défaut.
+     */
+    private function resolveValidAcademicYearId(?int $academicYearId): int
+    {
+        if ($academicYearId && AcademicYear::where('id', $academicYearId)->exists()) {
+            return $academicYearId;
+        }
+
+        return (int) (AcademicYear::where('is_current', true)->value('id')
+            ?? AcademicYear::orderByDesc('id')->value('id')
+            ?? 1);
     }
 }

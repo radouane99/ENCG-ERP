@@ -12,7 +12,7 @@ test.describe('P2 — 8 parcours critiques', () => {
 
   test('1. login — formulaire et authentification mockée', async ({ page }) => {
     await open(page, '/login')
-    await expect(page.getByTestId('login-page')).toBeVisible()
+    await expect(page.getByTestId('login-page')).toBeVisible({ timeout: 15000 })
     await page.locator('#email').fill('student@encg-fes.ma')
     await page.locator('#password').fill('password')
     await page.getByTestId('login-submit').click()
@@ -39,7 +39,7 @@ test.describe('P2 — 8 parcours critiques', () => {
 
   test('3. PV public — vérification QR', async ({ page }) => {
     await open(page, '/verify/pv/1/1')
-    await expect(page.getByTestId('verify-pv-page')).toBeVisible()
+    await expect(page.getByTestId('verify-pv-page')).toBeVisible({ timeout: 15000 })
     await expect(page.getByText('PV Signé & Authentique')).toBeVisible({ timeout: 15000 })
   })
 

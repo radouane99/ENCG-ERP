@@ -57,6 +57,10 @@ RUN pecl install xdebug \
     && docker-php-ext-enable xdebug \
     && echo "xdebug.mode=off" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
 
+# ── PCOV (fast code coverage) ─────────────────────────────────
+RUN pecl install pcov \
+    && docker-php-ext-enable pcov
+
 # ── Composer 2 ───────────────────────────────────────────────
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 

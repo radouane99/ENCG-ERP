@@ -24,27 +24,6 @@ class LmsCourseController extends Controller
     {
         $user = $request->user();
 
-        $query = Module::with(['filiere.department']);
-
-        if ($user?->student) {
-            $filiereIds = $user->student->registrations()->pluck('filiere_id')->unique()->filter();
-            if ($filiereIds->isNotEmpty()) {
-                $query->whereIn('filiere_id', $filiereIds);
-            }
-        } elseif ($user?->professor) {
-            $moduleIds = ModuleProfessor::where('professor_id', $user->professor->id)->pluck('module_id');
-            if ($moduleIds->isNotEmpty()) {
-                $query->whereIn('id', $moduleIds);
-            }
-        }
-
-        $modules = $query->take(20)->get();
-
-        // Fallback si aucun module spécifique lié
-        if ($modules->isEmpty()) {
-            $modules = Module::with(['filiere.department'])->latest()->take(15)->get();
-        }
-
         $colors = [
             'from-indigo-600 via-purple-600 to-pink-600',
             'from-blue-600 via-indigo-600 to-cyan-600',
@@ -53,6 +32,133 @@ class LmsCourseController extends Controller
             'from-rose-600 via-pink-600 to-purple-600',
             'from-violet-600 via-indigo-600 to-blue-600',
         ];
+
+        // 1. CAS PROFESSEUR : Strictement ses propres modules assignés
+        if ($user?->professor) {
+            $profId = $user->professor->id;
+
+            // Récupérer les modules assignés via ModuleProfessor
+            $assignments = ModuleProfessor::where('professor_id', $profId)
+                ->with(['module.filiere.department', 'group'])
+                ->get();
+
+            if ($assignments->isNotEmpty()) {
+                $classes = $assignments->map(function ($assignment, $index) use ($colors, $user) {
+                    $module = $assignment->module;
+                    if (! $module) {
+                        return null;
+                    }
+
+                    $pubs = LearningMaterial::where('module_id', $module->id)->where('type', '!=', 'document')->count();
+                    $supports = LearningMaterial::where('module_id', $module->id)->where('type', 'document')->count();
+
+                    $groupLabel = $assignment->group?->name
+                        ? ($module->filiere?->code ? "{$module->filiere->code} • {$assignment->group->name}" : $assignment->group->name)
+                        : ($module->filiere?->name ?? 'TRONC COMMUN ENCG');
+
+                    return [
+                        'id' => $module->id,
+                        'title' => $module->name,
+                        'code' => $module->code ?? "MOD-{$module->id}",
+                        'group' => $groupLabel,
+                        'color' => $colors[$index % count($colors)],
+                        'teacher' => $user->name, // Le professeur connecté est TOUJOURS le responsable affiché sur son propre espace
+                        'pubs' => $pubs,
+                        'supports' => $supports,
+                    ];
+                })->filter()->values();
+
+                return response()->json([
+                    'success' => true,
+                    'data' => $classes,
+                ]);
+            }
+
+            // Fallback via Schedule s'il n'y a pas d'entrée dans module_professor
+            $scheduleModuleIds = \App\Models\Schedule::where(function ($q) use ($user, $profId) {
+                $q->where('professor_id', $profId)->orWhere('professor_id', $user->id);
+            })->pluck('module_id')->unique()->filter();
+
+            if ($scheduleModuleIds->isNotEmpty()) {
+                $modules = Module::with(['filiere.department'])->whereIn('id', $scheduleModuleIds)->get();
+                $classes = $modules->map(function ($module, $index) use ($colors, $user) {
+                    $pubs = LearningMaterial::where('module_id', $module->id)->where('type', '!=', 'document')->count();
+                    $supports = LearningMaterial::where('module_id', $module->id)->where('type', 'document')->count();
+
+                    return [
+                        'id' => $module->id,
+                        'title' => $module->name,
+                        'code' => $module->code ?? "MOD-{$module->id}",
+                        'group' => $module->filiere?->name ?? 'TRONC COMMUN ENCG',
+                        'color' => $colors[$index % count($colors)],
+                        'teacher' => $user->name,
+                        'pubs' => $pubs,
+                        'supports' => $supports,
+                    ];
+                });
+
+                return response()->json([
+                    'success' => true,
+                    'data' => $classes,
+                ]);
+            }
+
+            // Si aucune affectation pour ce professeur, retourner vide (ne JAMAIS afficher les modules d'autres profs !)
+            return response()->json([
+                'success' => true,
+                'data' => [],
+            ]);
+        }
+
+        // 2. CAS ÉTUDIANT : Uniquement les modules de son cursus/semestre actif
+        if ($user?->student) {
+            $student = $user->student;
+            $currentPathway = $student->pathways()->where('is_current', true)->first();
+            $filiereId = $currentPathway?->filiere_id ?? $student->registrations()->latest()->value('filiere_id');
+            $semesterNumber = $currentPathway?->semester_number;
+            $groupId = $currentPathway?->group_id;
+
+            $query = Module::with(['filiere.department']);
+            if ($filiereId) {
+                $query->where('filiere_id', $filiereId);
+            }
+            if ($semesterNumber) {
+                $query->where('semester_number', $semesterNumber);
+            }
+
+            $modules = $query->take(20)->get();
+
+            $classes = $modules->map(function ($module, $index) use ($colors, $groupId) {
+                $pubs = LearningMaterial::where('module_id', $module->id)->where('type', '!=', 'document')->count();
+                $supports = LearningMaterial::where('module_id', $module->id)->where('type', 'document')->count();
+
+                // Trouver l'enseignant affecté au groupe de cet étudiant
+                $groupProf = $groupId
+                    ? ModuleProfessor::where('module_id', $module->id)->where('group_id', $groupId)->with('professor.user')->first()
+                    : null;
+                $generalProf = $groupProf ?: ModuleProfessor::where('module_id', $module->id)->with('professor.user')->first();
+                $teacherName = $generalProf?->professor?->user?->name ?? 'Pr. Enseignant ENCG Fès';
+
+                return [
+                    'id' => $module->id,
+                    'title' => $module->name,
+                    'code' => $module->code ?? "MOD-{$module->id}",
+                    'group' => $module->filiere?->name ?? 'TRONC COMMUN ENCG',
+                    'color' => $colors[$index % count($colors)],
+                    'teacher' => $teacherName,
+                    'pubs' => $pubs,
+                    'supports' => $supports,
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'data' => $classes,
+            ]);
+        }
+
+        // 3. CAS ADMIN / SCOLARITÉ : Vue globale
+        $modules = Module::with(['filiere.department'])->latest()->take(20)->get();
 
         $classes = $modules->map(function ($module, $index) use ($colors) {
             $pubs = LearningMaterial::where('module_id', $module->id)->where('type', '!=', 'document')->count();
@@ -169,8 +275,23 @@ class LmsCourseController extends Controller
                 ];
             });
 
+        // Résolution personnalisée du nom de l'enseignant
         $profAssigned = ModuleProfessor::where('module_id', $module->id)->with('professor.user')->first();
-        $teacherName = $profAssigned?->professor?->user?->name ?? 'Pr. Enseignant ENCG Fès';
+        if ($user?->professor) {
+            $isAssigned = ModuleProfessor::where('module_id', $module->id)->where('professor_id', $user->professor->id)->exists()
+                || \App\Models\Schedule::where('module_id', $module->id)->where(function ($q) use ($user) {
+                    $q->where('professor_id', $user->professor->id)->orWhere('professor_id', $user->id);
+                })->exists();
+            $teacherName = $isAssigned ? $user->name : ($profAssigned?->professor?->user?->name ?? $user->name);
+        } elseif ($user?->student) {
+            $studentGroupId = $user->student->pathways()->where('is_current', true)->value('group_id');
+            $groupProf = $studentGroupId
+                ? ModuleProfessor::where('module_id', $module->id)->where('group_id', $studentGroupId)->with('professor.user')->first()
+                : null;
+            $teacherName = $groupProf?->professor?->user?->name ?? ($profAssigned?->professor?->user?->name ?? 'Pr. Enseignant ENCG Fès');
+        } else {
+            $teacherName = $profAssigned?->professor?->user?->name ?? 'Pr. Enseignant ENCG Fès';
+        }
 
         return response()->json([
             'success' => true,

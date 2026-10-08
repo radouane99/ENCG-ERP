@@ -315,7 +315,7 @@ class DashboardAnalyticsService
                         ->whereIn('assessment_id', $assessmentIds)
                         ->whereNull('value')
                         ->count();
-                    if ($pendingGrades === 0) {
+                    if ($pendingGrades === 0 && Schema::hasColumn('assessments', 'status')) {
                         $pendingGrades = (int) DB::table('assessments')
                             ->whereIn('id', $assessmentIds)
                             ->where('status', 'draft')

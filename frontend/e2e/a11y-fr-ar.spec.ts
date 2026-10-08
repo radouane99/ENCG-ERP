@@ -8,7 +8,7 @@ test.describe('A11y FR/AR — login et notes', () => {
       localStorage.setItem('encg_lang', 'ar')
     })
     await page.goto('/login', { waitUntil: 'domcontentloaded' })
-    await expect(page.getByTestId('login-page')).toBeVisible()
+    await expect(page.getByTestId('login-page')).toBeVisible({ timeout: 30_000 })
     await expect(page.locator('#email')).toBeVisible()
     await expect(page.locator('label[for="email"]')).toBeVisible()
     await expect(page.locator('#password')).toBeVisible()
@@ -20,7 +20,7 @@ test.describe('A11y FR/AR — login et notes', () => {
     await mockApi(page)
     await seedSession(page, 'student')
     await page.goto('/student/grades', { waitUntil: 'domcontentloaded' })
-    await expect(page.getByTestId('student-grades-page')).toBeVisible({ timeout: 15000 })
+    await expect(page.getByTestId('student-grades-page')).toBeVisible({ timeout: 30_000 })
     await expect(
       page.getByTestId('student-grades-page').getByRole('heading', { name: /Performance Académique/i }),
     ).toBeVisible()

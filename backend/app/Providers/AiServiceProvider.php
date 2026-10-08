@@ -12,7 +12,16 @@ class AiServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(AiDriverInterface::class, function ($app) {
-            $driver = env('AI_DRIVER');
+            $isTesting = $app->environment('testing') || $app->runningUnitTests();
+
+            if ($isTesting) {
+                $driver = config('services.ai.driver');
+                if (empty($driver) || ($driver === 'gemini' && ! config('services.gemini.key'))) {
+                    $driver = 'stub';
+                }
+            } else {
+                $driver = config('services.ai.driver') ?? env('AI_DRIVER', 'gemini');
+            }
 
             if (empty($driver)) {
                 if ($app->environment('production')) {

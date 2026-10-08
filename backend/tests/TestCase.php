@@ -16,9 +16,36 @@ abstract class TestCase extends BaseTestCase
 {
     protected bool $seed = false;
 
+    public function createApplication()
+    {
+        putenv('APP_ENV=testing');
+        $_ENV['APP_ENV'] = 'testing';
+        $_SERVER['APP_ENV'] = 'testing';
+        putenv('DB_CONNECTION=sqlite');
+        $_ENV['DB_CONNECTION'] = 'sqlite';
+        $_SERVER['DB_CONNECTION'] = 'sqlite';
+        putenv('DB_DATABASE=:memory:');
+        $_ENV['DB_DATABASE'] = ':memory:';
+        $_SERVER['DB_DATABASE'] = ':memory:';
+        putenv('AI_DRIVER=stub');
+        $_ENV['AI_DRIVER'] = 'stub';
+        $_SERVER['AI_DRIVER'] = 'stub';
+
+        $app = parent::createApplication();
+        $app['env'] = 'testing';
+
+        return $app;
+    }
+
     protected function setUp(): void
     {
         parent::setUp();
+
+        config([
+            'database.default' => 'sqlite',
+            'database.connections.sqlite.database' => ':memory:',
+            'services.ai.driver' => 'stub',
+        ]);
 
         $this->ensureInstitution();
     }

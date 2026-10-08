@@ -206,33 +206,35 @@ class EncgFesSeeder extends Seeder
         DB::table('departments')->delete();
         DB::table('campuses')->delete();
         DB::table('academic_years')->delete();
-        DB::table('institutions')->delete();
     }
 
     private function seedInstitution(): Institution
     {
-        return Institution::create([
-            'name' => 'École Nationale de Commerce et de Gestion de Fès',
-            'name_ar' => 'المدرسة الوطنية للتجارة والتسيير بفاس',
-            'code' => 'ENCG-FES',
-            'slug' => 'encg-fes',
-            'type' => 'grande_ecole',
-            'address' => 'Route d\'Imouzzer, B.P. 1255',
-            'city' => 'Fès',
-            'phone' => '+212 5 35 64 49 20',
-            'email' => 'contact@encg-fes.ma',
-            'website' => 'https://www.encg-fes.ac.ma',
-            'rector_name' => 'Prof. Hassan OULIDI',
-            'director_name' => 'Prof. Hassan OULIDI',
-            'is_active' => true,
-            'settings' => [
-                'academic_system' => 'semester',
-                'grading_system' => '20',
-                'passing_grade' => 10,
-                'compensation' => true,
-                'rattrapage' => true,
-            ],
-        ]);
+        return Institution::updateOrCreate(
+            ['id' => 1],
+            [
+                'name' => 'École Nationale de Commerce et de Gestion de Fès',
+                'name_ar' => 'المدرسة الوطنية للتجارة والتسيير بفاس',
+                'code' => 'ENCG-FES',
+                'slug' => 'encg-fes',
+                'type' => 'grande_ecole',
+                'address' => 'Route d\'Imouzzer, B.P. 1255',
+                'city' => 'Fès',
+                'phone' => '+212 5 35 64 49 20',
+                'email' => 'contact@encg-fes.ma',
+                'website' => 'https://www.encg-fes.ac.ma',
+                'rector_name' => 'Prof. Hassan OULIDI',
+                'director_name' => 'Prof. Hassan OULIDI',
+                'is_active' => true,
+                'settings' => [
+                    'academic_system' => 'semester',
+                    'grading_system' => '20',
+                    'passing_grade' => 10,
+                    'compensation' => true,
+                    'rattrapage' => true,
+                ],
+            ]
+        );
     }
 
     private function seedCampus(Institution $institution): Campus
@@ -596,34 +598,34 @@ class EncgFesSeeder extends Seeder
                 ->toArray();
         };
 
-        // Assign one professor per module (round-robin), one row per (module, professor, group)
-        // The unique constraint is (module_id, professor_id), so each module gets exactly one professor
-        foreach ($allModules as $idx => $mod) {
-            $prof = $professors[$idx % $profCount];
-            $groupIds = $getGroupsForModule($mod->id, $mod->filiere_id);
+        // Index professors by specialty
+        $profFinance    = $professors[0] ?? null;
+        $profManagement = $professors[1] ?? null;
+        $profDroit      = $professors[2] ?? null;
+        $profLangues    = $professors[3] ?? null;
+        $profInfo       = $professors[4] ?? null;
 
-            if (empty($groupIds)) {
-                // Insert without group_id if no groups found
-                DB::table('module_professor')->insertOrIgnore([
-                    'module_id' => $mod->id,
-                    'academic_year_id' => $academicYear->id,
-                    'group_id' => null,
-                    'professor_id' => $prof->id,
-                    'professor_type' => 'App\Models\Professor',
-                    'session_type' => 'cm',
-                    'assigned_hours' => 36,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
+        foreach ($allModules as $mod) {
+            $name = mb_strtolower($mod->name);
 
-                continue;
+            if (str_contains($name, 'droit') || str_contains($name, 'juridique') || str_contains($name, 'législation') || str_contains($name, 'contrat')) {
+                $prof = $profDroit ?: $professors[0];
+            } elseif (str_contains($name, 'informatique') || str_contains($name, 'système') || str_contains($name, 'bureautique') || str_contains($name, 'numérique') || str_contains($name, 'algorith')) {
+                $prof = $profInfo ?: $professors[0];
+            } elseif (str_contains($name, 'anglais') || str_contains($name, 'français') || str_contains($name, 'langue') || str_contains($name, 'communication') || str_contains($name, 'soft skills') || str_contains($name, 'expression')) {
+                $prof = $profLangues ?: $professors[0];
+            } elseif (str_contains($name, 'comptab') || str_contains($name, 'finance') || str_contains($name, 'math') || str_contains($name, 'fiscal') || str_contains($name, 'audit') || str_contains($name, 'budget') || str_contains($name, 'statistique')) {
+                $prof = $profFinance ?: $professors[0];
+            } else {
+                $prof = $profManagement ?: $professors[0];
             }
 
-            // Insert one row using the first group (one professor per module per constraint)
+            $groupIds = $getGroupsForModule($mod->id, $mod->filiere_id);
+
             DB::table('module_professor')->insertOrIgnore([
                 'module_id' => $mod->id,
                 'academic_year_id' => $academicYear->id,
-                'group_id' => $groupIds[0],
+                'group_id' => $groupIds[0] ?? null,
                 'professor_id' => $prof->id,
                 'professor_type' => 'App\Models\Professor',
                 'session_type' => 'cm',
@@ -631,25 +633,6 @@ class EncgFesSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
-
-            // For second group (if exists), ensure a different professor is assigned
-            if (isset($groupIds[1])) {
-                $altProf = $professors[($idx + 1) % $profCount];
-                // Only if altProf differs from prof (avoids duplicate module_id+professor_id)
-                if ($altProf->id !== $prof->id) {
-                    DB::table('module_professor')->insertOrIgnore([
-                        'module_id' => $mod->id,
-                        'academic_year_id' => $academicYear->id,
-                        'group_id' => $groupIds[1],
-                        'professor_id' => $altProf->id,
-                        'professor_type' => 'App\Models\Professor',
-                        'session_type' => 'td',
-                        'assigned_hours' => 18,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
-                }
-            }
         }
     }
 

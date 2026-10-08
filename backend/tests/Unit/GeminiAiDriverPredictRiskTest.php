@@ -1,12 +1,18 @@
 <?php
 
 use App\Domain\AI\Services\GeminiAiDriver;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 uses(TestCase::class);
 
 it('returns unknown risk with zero confidence when the AI response is not JSON', function () {
-    config(['services.gemini.key' => '']);
+    Http::fake();
+    config([
+        'services.gemini.key' => '',
+        'services.groq.key' => '',
+        'services.groq.api_key' => '',
+    ]);
 
     $prediction = (new GeminiAiDriver)->predictRisk([
         'absence_rate' => 45,

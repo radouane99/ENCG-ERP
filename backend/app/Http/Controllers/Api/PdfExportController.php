@@ -1122,7 +1122,9 @@ class PdfExportController extends Controller
         $isSigned = $request->input('signed', $request->query('signed')) === 'true';
 
         $filiere = Filiere::find($filiereId) ?? (object) ['name' => 'Tronc Commun ENCG', 'code' => 'ENCG'];
-        $academicYear = AcademicYear::where('is_current', true)->first() ?? (object) ['name' => '2026/2027', 'id' => 1];
+        $academicYear = AcademicYear::where('is_current', true)->first()
+            ?? AcademicYear::orderByDesc('id')->first()
+            ?? (object) ['name' => '2026/2027', 'id' => 1];
 
         if ($type === 'annuel') {
             $yearLevel = (int) $request->input('year_level', $request->query('year_level', 1));

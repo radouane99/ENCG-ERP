@@ -122,12 +122,12 @@ class GroundedAiService
      */
     private function parseBilingual(?string $raw, array $fallback): array
     {
-        if (! is_string($raw) || trim($raw) === '' || str_contains($raw, 'Local stub AI')) {
+        if (! is_string($raw) || trim($raw) === '' || str_contains($raw, 'Local stub AI') || str_contains($raw, 'Gemini AI response')) {
             return $fallback;
         }
 
-        $fr = $fallback['text_fr'];
-        $ar = $fallback['text_ar'];
+        $fr = null;
+        $ar = null;
         if (preg_match('/FR:\s*(.+?)(?:AR:|$)/is', $raw, $m)) {
             $fr = trim($m[1]);
         }
@@ -135,7 +135,15 @@ class GroundedAiService
             $ar = trim($m[1]);
         }
 
-        return ['text_fr' => $fr, 'text_ar' => $ar, 'source' => 'driver'];
+        if ($fr === null && $ar === null) {
+            return $fallback;
+        }
+
+        return [
+            'text_fr' => $fr ?? $fallback['text_fr'],
+            'text_ar' => $ar ?? $fallback['text_ar'],
+            'source' => 'driver',
+        ];
     }
 
     /**
