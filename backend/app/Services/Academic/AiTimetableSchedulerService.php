@@ -149,9 +149,20 @@ class AiTimetableSchedulerService
         $profCycleIndex = 0;
         $totalCoursesScheduled = 0;
 
-        foreach ($groups as $group) {
-            $groupSem = (int) ($group->semester_number ?? 0);
-            $groupFiliereId = $group->filiere_id;
+        // Grouper les groupes par cohorte (Filière x Semestre)
+        // Règle ENCG Fès (Option B Amphithéâtre) :
+        // Pour les Cours Magistraux (CM), toute la section (G1 + G2) est réunie dans un Amphithéâtre
+        // sous la direction d'UN SEUL professeur titulaire pour l'ensemble du module.
+        // Pour les Travaux Dirigés (TD/TP), les sous-groupes sont séparés en salles de cours / labos.
+        $cohorts = $groups->groupBy(function ($g) {
+            return ($g->filiere_id ?? 0).'_'.($g->semester_number ?? 0);
+        });
+
+        foreach ($cohorts as $cohortKey => $cohortGroups) {
+            $cohortGroups = $cohortGroups->values();
+            $leadGroup = $cohortGroups->first();
+            $groupSem = (int) ($leadGroup->semester_number ?? 0);
+            $groupFiliereId = $leadGroup->filiere_id;
 
             $groupModules = $modules->filter(function ($m) use ($groupFiliereId, $groupSem) {
                 $filiereMatch = ! $m->filiere_id || $m->filiere_id == $groupFiliereId;
@@ -164,6 +175,12 @@ class AiTimetableSchedulerService
                 $groupModules = $modules->filter(fn ($m) => ! $m->filiere_id || $m->filiere_id == $groupFiliereId);
             }
 
+            // Effectif total inscrit dans cette filière (student_pathways) pour le CM en amphi
+            $totalFiliereStudents = (int) DB::table('student_pathways')
+                ->where('filiere_id', $groupFiliereId)
+                ->where('is_current', true)
+                ->count();
+
             foreach ($groupModules as $module) {
                 $courses = $this->getModuleSessions($module);
 
@@ -173,260 +190,389 @@ class AiTimetableSchedulerService
                     $isTD = ($cType === 'td');
                     $isTP = ($cType === 'tp');
 
-                    // Effectif réel calculé dynamiquement depuis la base de données :
-                    // 1. Nombre réel d'étudiants inscrits dans cette filière (student_pathways)
-                    $totalFiliereStudents = (int) DB::table('student_pathways')
-                        ->where('filiere_id', $group->filiere_id)
-                        ->where('is_current', true)
-                        ->count();
-
-                    // 2. Nombre réel par sous-groupe (soit par group_id, soit la moitié de la filière pour G1/G2)
-                    $realGroupStudents = (int) DB::table('student_pathways')
-                        ->where('group_id', $group->id)
-                        ->where('is_current', true)
-                        ->count();
-
-                    if ($realGroupStudents === 0 && $totalFiliereStudents > 0) {
-                        $realGroupStudents = (int) ceil($totalFiliereStudents / 2);
-                    }
-
                     if ($isCM) {
+                        // =========================================================================
+                        // OPTION B (Amphithéâtre) :
+                        // Toute la section (G1 + G2 réunis) assiste au CM dans un Amphithéâtre
+                        // avec UN SEUL enseignant titulaire pour tout le module.
+                        // =========================================================================
+
                         $natureLabel = 'Cours Magistral (Section)';
                         $natureBadge = 'CM SECTION';
-                        $studentsCount = $totalFiliereStudents > 0 ? $totalFiliereStudents : ($realGroupStudents > 0 ? $realGroupStudents : 0);
-                    } elseif ($isTD) {
-                        $natureLabel = 'Travaux Dirigés (Sous-groupe)';
-                        $natureBadge = 'TD GROUPE';
-                        $studentsCount = $realGroupStudents;
-                    } else {
-                        $natureLabel = 'TP Informatique (Labo PC)';
-                        $natureBadge = 'TP MACHINE';
-                        $studentsCount = $realGroupStudents;
-                    }
+                        $studentsCount = $totalFiliereStudents > 0 ? $totalFiliereStudents : 75;
 
-                    // Chercher l'enseignant réellement affecté dans module_professor
-                    $assignedProfId = DB::table('module_professor')
-                        ->where('module_id', $module->id)
-                        ->where(function ($q) use ($group) {
-                            $q->where('group_id', $group->id)->orWhereNull('group_id');
-                        })
-                        ->value('professor_id');
+                        // Chercher l'enseignant titulaire du module dans module_professor
+                        $assignedProfId = DB::table('module_professor')
+                            ->where('module_id', $module->id)
+                            ->value('professor_id');
 
-                    $assignedProf = $assignedProfId ? $professors->firstWhere('id', $assignedProfId) : null;
-                    if (! $assignedProf && $professors->isNotEmpty()) {
-                        // VÉRIFICATION DÉDIÉE PAR FILIÈRE :
-                        // Si des professeurs dédiés sont configurés pour cette filière, les choisir en priorité absolue
-                        $filiereId = (int) ($group->filiere_id ?? $module->filiere_id ?? 0);
-                        $filiereCode = strtoupper(trim((string) ($group->filiere?->code ?? $module->filiere?->code ?? '')));
-                        $dedicatedProfList = $options['dedicated_professors'][$filiereCode]
-                            ?? $options['dedicated_professors'][$filiereId]
-                            ?? $options['dedicated_professors'][(string) $filiereId]
-                            ?? [];
+                        $assignedProf = $assignedProfId ? $professors->firstWhere('id', $assignedProfId) : null;
+                        if (! $assignedProf && $professors->isNotEmpty()) {
+                            $nameLower = mb_strtolower($module->name);
+                            $filiereId = (int) ($leadGroup->filiere_id ?? $module->filiere_id ?? 0);
+                            $filiereCode = strtoupper(trim((string) ($leadGroup->filiere?->code ?? $module->filiere?->code ?? '')));
+                            $dedicatedProfList = $options['dedicated_professors'][$filiereCode]
+                                ?? $options['dedicated_professors'][$filiereId]
+                                ?? $options['dedicated_professors'][(string) $filiereId]
+                                ?? [];
 
-                        if (! empty($dedicatedProfList)) {
-                            $candidateProfs = $professors->filter(function ($p) use ($dedicatedProfList) {
-                                $pFullName = trim(($p->user?->first_name ?? '').' '.($p->user?->last_name ?? ''));
-                                $pUserName = $p->user?->name ?? '';
+                            if (! empty($dedicatedProfList)) {
+                                $candidateProfs = $professors->filter(function ($p) use ($dedicatedProfList) {
+                                    $pFullName = trim(($p->user?->first_name ?? '').' '.($p->user?->last_name ?? ''));
+                                    $pUserName = $p->user?->name ?? '';
 
-                                return in_array($pFullName, $dedicatedProfList, true)
-                                    || in_array($pUserName, $dedicatedProfList, true)
-                                    || in_array((string) $p->id, $dedicatedProfList, true)
-                                    || in_array($p->id, $dedicatedProfList, true);
-                            });
-
-                            if ($candidateProfs->isNotEmpty()) {
-                                // Trier selon l'affinité pédagogique (spécialité de l'enseignant vs intitulé du module)
-                                $sortedCandidates = $candidateProfs->sortByDesc(function ($p) use ($nameLower) {
-                                    $specLower = mb_strtolower($p->specialty ?? $p->department?->name ?? '');
-                                    $score = 0;
-                                    if (str_contains($nameLower, 'financ') && str_contains($specLower, 'financ')) {
-                                        $score += 20;
-                                    }
-                                    if (str_contains($nameLower, 'comptab') && str_contains($specLower, 'comptab')) {
-                                        $score += 20;
-                                    }
-                                    if (str_contains($nameLower, 'droit') && str_contains($specLower, 'droit')) {
-                                        $score += 20;
-                                    }
-                                    if (str_contains($nameLower, 'market') && (str_contains($specLower, 'market') || str_contains($specLower, 'gestion'))) {
-                                        $score += 20;
-                                    }
-                                    if (str_contains($nameLower, 'manag') && str_contains($specLower, 'manag')) {
-                                        $score += 20;
-                                    }
-                                    if (str_contains($nameLower, 'info') && str_contains($specLower, 'info')) {
-                                        $score += 20;
-                                    }
-                                    if ((str_contains($nameLower, 'lang') || str_contains($nameLower, 'anglais') || str_contains($nameLower, 'franc') || str_contains($nameLower, 'soft') || str_contains($nameLower, 'commun')) && (str_contains($specLower, 'commun') || str_contains($specLower, 'lang'))) {
-                                        $score += 20;
-                                    }
-
-                                    return $score;
+                                    return in_array($pFullName, $dedicatedProfList, true)
+                                        || in_array($pUserName, $dedicatedProfList, true)
+                                        || in_array((string) $p->id, $dedicatedProfList, true)
+                                        || in_array($p->id, $dedicatedProfList, true);
                                 });
 
-                                $assignedProf = $sortedCandidates->values()->get(($profCycleIndex++) % $sortedCandidates->count());
+                                if ($candidateProfs->isNotEmpty()) {
+                                    $sortedCandidates = $candidateProfs->sortByDesc(function ($p) use ($nameLower) {
+                                        $specLower = mb_strtolower($p->specialty ?? $p->department?->name ?? '');
+                                        $score = 0;
+                                        if (str_contains($nameLower, 'financ') && str_contains($specLower, 'financ')) $score += 20;
+                                        if (str_contains($nameLower, 'comptab') && str_contains($specLower, 'comptab')) $score += 20;
+                                        if (str_contains($nameLower, 'droit') && str_contains($specLower, 'droit')) $score += 20;
+                                        if (str_contains($nameLower, 'market') && (str_contains($specLower, 'market') || str_contains($specLower, 'gestion'))) $score += 20;
+                                        if (str_contains($nameLower, 'manag') && str_contains($specLower, 'manag')) $score += 20;
+                                        if (str_contains($nameLower, 'info') && str_contains($specLower, 'info')) $score += 20;
+                                        if ((str_contains($nameLower, 'lang') || str_contains($nameLower, 'anglais') || str_contains($nameLower, 'franc') || str_contains($nameLower, 'soft') || str_contains($nameLower, 'commun')) && (str_contains($specLower, 'commun') || str_contains($specLower, 'lang'))) $score += 20;
+                                        return $score;
+                                    });
+                                    $assignedProf = $sortedCandidates->values()->get(($profCycleIndex++) % $sortedCandidates->count());
+                                }
+                            }
+
+                            if (! $assignedProf) {
+                                $assignedProf = $professors->get(($profCycleIndex++) % $professors->count());
                             }
                         }
 
-                        if (! $assignedProf) {
-                            $assignedProf = $professors->get(($profCycleIndex++) % $professors->count());
-                        }
-                    }
-
-                    $profId = $assignedProf ? $assignedProf->id : 1;
-                    $rawProfName = $assignedProf && $assignedProf->user
-                        ? trim(($assignedProf->user->first_name ?? '').' '.($assignedProf->user->last_name ?? ''))
-                        : ($assignedProf?->user?->name ?? 'Enseignant Chercheur');
-
-                    // Règle d'appellation institutionnelle ENCG Fès :
-                    // CM -> Pr. [Nom] (Professeur permanent titulaire)
-                    // TD -> [Nom] (TD) (Intervenant / Chargé de TD)
-                    if ($isCM) {
+                        $profId = $assignedProf ? $assignedProf->id : 1;
+                        $rawProfName = $assignedProf && $assignedProf->user
+                            ? trim(($assignedProf->user->first_name ?? '').' '.($assignedProf->user->last_name ?? ''))
+                            : ($assignedProf?->user?->name ?? 'Enseignant Chercheur');
                         $profName = str_starts_with($rawProfName, 'Pr.') ? $rawProfName : "Pr. {$rawProfName}";
-                    } elseif ($isTD) {
-                        $cleanName = preg_replace('/^Pr\.\s*/i', '', $rawProfName);
-                        $profName = str_ends_with($cleanName, '(TD)') ? $cleanName : "{$cleanName} (TD)";
-                    } else {
-                        $profName = str_starts_with($rawProfName, 'Pr.') ? $rawProfName : "Pr. {$rawProfName}";
-                    }
 
-                    // Salles classées par pertinence pédagogique et affectation de salles dédiées par filière
-                    $rankedRooms = $this->rankRoomsForModule($rooms, $module, $course, $group, $options['dedicated_rooms'] ?? []);
+                        // Salles : Pour le CM, priorité absolue aux Amphithéâtres (Amphi A, Amphi B)
+                        $rankedRooms = $this->rankRoomsForModule($rooms, $module, $course, $leadGroup, $options['dedicated_rooms'] ?? []);
 
-                    // Chercher le meilleur créneau libre sans aucun conflit avec équilibrage hebdomadaire (Lundi à Vendredi)
-                    $allocated = false;
-
-                    // Classer les jours par ordre de charge croissante pour ce groupe afin d'étaler équitablement sur Lundi, Mardi, Mercredi, Jeudi, Vendredi
-                    $availableDays = [1, 2, 3, 4, 5];
-                    if (! $avoidSaturdayAfternoon) {
-                        $availableDays[] = 6;
-                    }
-
-                    // Trier les jours : privilégier les jours les moins chargés pour ce groupe
-                    usort($availableDays, function ($d1, $d2) use ($group, $groupDailySessions) {
-                        $c1 = $groupDailySessions[$group->id][$d1] ?? 0;
-                        $c2 = $groupDailySessions[$group->id][$d2] ?? 0;
-                        if ($c1 === $c2) {
-                            return $d1 <=> $d2;
+                        $allocated = false;
+                        $availableDays = [1, 2, 3, 4, 5];
+                        if (! $avoidSaturdayAfternoon) {
+                            $availableDays[] = 6;
                         }
 
-                        return $c1 <=> $c2;
-                    });
-
-                    // 1ère passe : Max 2 cours par jour par groupe (Équilibre pédagogique idéal)
-                    // 2ème passe : Jusqu'à 3 ou 4 cours si nécessaire
-                    foreach ([2, 3, 4] as $maxDailyLimit) {
-                        if ($allocated) {
-                            break;
-                        }
-
-                        foreach ($availableDays as $day) {
-                            if ($allocated) {
-                                break;
+                        // Trier les jours par charge minimale pour la cohorte
+                        usort($availableDays, function ($d1, $d2) use ($cohortGroups, $groupDailySessions) {
+                            $c1 = 0;
+                            $c2 = 0;
+                            foreach ($cohortGroups as $cg) {
+                                $c1 += $groupDailySessions[$cg->id][$d1] ?? 0;
+                                $c2 += $groupDailySessions[$cg->id][$d2] ?? 0;
                             }
+                            if ($c1 === $c2) return $d1 <=> $d2;
+                            return $c1 <=> $c2;
+                        });
 
-                            // Si le groupe a déjà atteint la limite du jour pour cette passe, passer au jour suivant
-                            if (($groupDailySessions[$group->id][$day] ?? 0) >= $maxDailyLimit) {
-                                continue;
-                            }
+                        foreach ([2, 3, 4] as $maxDailyLimit) {
+                            if ($allocated) break;
 
-                            // Plages horaires selon contraintes
-                            $slotsRange = ($day === 6 && $avoidSaturdayAfternoon) ? [1, 2] : ($preferMorningLectures ? [1, 2, 3, 4] : [3, 4, 1, 2]);
+                            foreach ($availableDays as $day) {
+                                if ($allocated) break;
 
-                            foreach ($slotsRange as $slotNum) {
-                                $slotInfo = self::TIME_SLOTS[$slotNum - 1];
-
-                                // Vérifier si le groupe est libre
-                                if (! empty($occupiedSlots['groups'][$group->id][$day][$slotNum])) {
-                                    continue;
-                                }
-
-                                // Vérifier si le professeur est libre
-                                if (! empty($occupiedSlots['professors'][$profId][$day][$slotNum])) {
-                                    continue;
-                                }
-
-                                // CONTRAINTE STRICTE ENCG : Un enseignant enseigne SOIT le matin (slots 1,2) SOIT l'après-midi (slots 3,4) sur une même journée.
-                                // Interdiction formelle d'enseigner matin ET après-midi le même jour !
-                                $isCurrentSlotMorning = in_array($slotNum, [1, 2], true);
-                                $isCurrentSlotAfternoon = in_array($slotNum, [3, 4], true);
-                                $currentProfShift = $profDailyShift[$profId][$day] ?? null;
-
-                                if ($currentProfShift === 'morning' && $isCurrentSlotAfternoon) {
-                                    continue; // L'enseignant a déjà cours le matin ce jour-là, interdiction l'après-midi !
-                                }
-                                if ($currentProfShift === 'afternoon' && $isCurrentSlotMorning) {
-                                    continue; // L'enseignant a déjà cours l'après-midi ce jour-là, interdiction le matin !
-                                }
-                                if (($profDailySessions[$profId][$day] ?? 0) >= 2) {
-                                    continue; // Max 2 séances par jour par enseignant (une seule demi-journée)
-                                }
-
-                                // Trouver la salle la plus adaptée disponible
-                                $suitableRoom = null;
-                                foreach ($rankedRooms as $room) {
-                                    if (empty($occupiedSlots['rooms'][$room->id][$day][$slotNum])) {
-                                        $suitableRoom = $room;
+                                // Vérifier que TOUS les groupes de la cohorte n'ont pas dépassé la limite du jour
+                                $dayExceeded = false;
+                                foreach ($cohortGroups as $cg) {
+                                    if (($groupDailySessions[$cg->id][$day] ?? 0) >= $maxDailyLimit) {
+                                        $dayExceeded = true;
                                         break;
                                     }
                                 }
+                                if ($dayExceeded) continue;
 
-                                if ($suitableRoom) {
-                                    // Réserver le créneau (Zéro conflit garanti)
-                                    $occupiedSlots['rooms'][$suitableRoom->id][$day][$slotNum] = true;
-                                    $occupiedSlots['professors'][$profId][$day][$slotNum] = true;
-                                    $occupiedSlots['groups'][$group->id][$day][$slotNum] = true;
+                                $slotsRange = ($day === 6 && $avoidSaturdayAfternoon) ? [1, 2] : ($preferMorningLectures ? [1, 2, 3, 4] : [3, 4, 1, 2]);
 
-                                    $groupDailySessions[$group->id][$day] = ($groupDailySessions[$group->id][$day] ?? 0) + 1;
-                                    $profDailySessions[$profId][$day] = ($profDailySessions[$profId][$day] ?? 0) + 1;
-                                    $profDailyShift[$profId][$day] = $isCurrentSlotMorning ? 'morning' : 'afternoon';
+                                foreach ($slotsRange as $slotNum) {
+                                    $slotInfo = self::TIME_SLOTS[$slotNum - 1];
 
-                                    $rType = strtolower($suitableRoom->type ?? 'classroom');
-                                    $roomTypeLabel = ($rType === 'lab') ? 'Labo Informatique (PC)' : (($rType === 'amphitheater' || $rType === 'amphi') ? 'Amphithéâtre' : 'Salle de TD');
+                                    // 1. Vérifier que TOUS les groupes de la cohorte sont libres à ce créneau
+                                    $groupsFree = true;
+                                    foreach ($cohortGroups as $cg) {
+                                        if (! empty($occupiedSlots['groups'][$cg->id][$day][$slotNum])) {
+                                            $groupsFree = false;
+                                            break;
+                                        }
+                                    }
+                                    if (! $groupsFree) continue;
 
-                                    $scheduledItems[] = [
-                                        'temp_id' => 'GEN_'.$sessionCounter++,
-                                        'day_of_week' => $day,
-                                        'day_name' => self::DAYS[$day],
-                                        'slot_number' => $slotNum,
-                                        'start_time' => $slotInfo['start'],
-                                        'end_time' => $slotInfo['end'],
-                                        'slot_label' => $slotInfo['label'],
-                                        'module_id' => $module->id,
-                                        'module_name' => $module->name,
-                                        'course_id' => $course->id ?? $module->id,
-                                        'course_name' => $course->name ?? $module->name,
-                                        'group_id' => $group->id,
-                                        'group_name' => $group->name,
-                                        'filiere_code' => $group->filiere?->code ?? $module->filiere?->code ?? 'TC',
-                                        'professor_id' => $profId,
-                                        'professor_name' => $profName,
-                                        'room_id' => $suitableRoom->id,
-                                        'room_name' => $suitableRoom->name,
-                                        'room_type' => $suitableRoom->type,
-                                        'room_type_label' => $roomTypeLabel,
-                                        'students_count' => $studentsCount,
-                                        'session_nature' => $natureLabel,
-                                        'session_badge' => $natureBadge,
-                                        'is_group_format' => $isTD || $isTP,
-                                        'session_format' => $isCM ? 'cm' : ($isTD ? 'td' : 'tp'),
-                                        'status' => 'OPTIMIZED_ZERO_CONFLICT',
-                                    ];
+                                    // 2. Vérifier que le professeur est libre
+                                    if (! empty($occupiedSlots['professors'][$profId][$day][$slotNum])) continue;
 
-                                    $totalCoursesScheduled++;
-                                    $allocated = true;
-                                    break;
+                                    // Contrainte de demi-journée (shift) pour le professeur
+                                    $isCurrentSlotMorning = in_array($slotNum, [1, 2], true);
+                                    $isCurrentSlotAfternoon = in_array($slotNum, [3, 4], true);
+                                    $currentProfShift = $profDailyShift[$profId][$day] ?? null;
+
+                                    if ($currentProfShift === 'morning' && $isCurrentSlotAfternoon) continue;
+                                    if ($currentProfShift === 'afternoon' && $isCurrentSlotMorning) continue;
+                                    if (($profDailySessions[$profId][$day] ?? 0) >= 2) continue;
+
+                                    // 3. Trouver la salle (Amphithéâtre libre)
+                                    $suitableRoom = null;
+                                    foreach ($rankedRooms as $room) {
+                                        if (empty($occupiedSlots['rooms'][$room->id][$day][$slotNum])) {
+                                            $suitableRoom = $room;
+                                            break;
+                                        }
+                                    }
+
+                                    if ($suitableRoom) {
+                                        // Réserver le créneau pour la salle et le prof
+                                        $occupiedSlots['rooms'][$suitableRoom->id][$day][$slotNum] = true;
+                                        $occupiedSlots['professors'][$profId][$day][$slotNum] = true;
+                                        $profDailySessions[$profId][$day] = ($profDailySessions[$profId][$day] ?? 0) + 1;
+                                        $profDailyShift[$profId][$day] = $isCurrentSlotMorning ? 'morning' : 'afternoon';
+
+                                        $rType = strtolower($suitableRoom->type ?? 'classroom');
+                                        $roomTypeLabel = ($rType === 'amphitheater' || $rType === 'amphi') ? 'Amphithéâtre' : 'Salle de cours';
+
+                                        // Réserver et enregistrer pour CHAQUE groupe de la cohorte (G1 + G2 réunis en Amphi)
+                                        foreach ($cohortGroups as $cg) {
+                                            $occupiedSlots['groups'][$cg->id][$day][$slotNum] = true;
+                                            $groupDailySessions[$cg->id][$day] = ($groupDailySessions[$cg->id][$day] ?? 0) + 1;
+
+                                            $scheduledItems[] = [
+                                                'temp_id' => 'GEN_'.$sessionCounter++,
+                                                'day_of_week' => $day,
+                                                'day_name' => self::DAYS[$day],
+                                                'slot_number' => $slotNum,
+                                                'start_time' => $slotInfo['start'],
+                                                'end_time' => $slotInfo['end'],
+                                                'slot_label' => $slotInfo['label'],
+                                                'module_id' => $module->id,
+                                                'module_name' => $module->name,
+                                                'course_id' => $course->id ?? $module->id,
+                                                'course_name' => $course->name ?? $module->name,
+                                                'group_id' => $cg->id,
+                                                'group_name' => $cg->name,
+                                                'filiere_code' => $cg->filiere?->code ?? $module->filiere?->code ?? 'TC',
+                                                'professor_id' => $profId,
+                                                'professor_name' => $profName,
+                                                'room_id' => $suitableRoom->id,
+                                                'room_name' => $suitableRoom->name,
+                                                'room_type' => $suitableRoom->type,
+                                                'room_type_label' => $roomTypeLabel,
+                                                'students_count' => $studentsCount,
+                                                'session_nature' => $natureLabel,
+                                                'session_badge' => $natureBadge,
+                                                'is_group_format' => false,
+                                                'session_format' => 'cm',
+                                                'status' => 'OPTIMIZED_ZERO_CONFLICT',
+                                            ];
+                                        }
+
+                                        $totalCoursesScheduled++;
+                                        $allocated = true;
+                                        break;
+                                    }
                                 }
                             }
                         }
-                    }
 
-                    if (! $allocated) {
-                        $conflictsDetected[] = [
-                            'module' => $module->name,
-                            'group' => $group->name,
-                            'reason' => 'Saturations des créneaux hebdomadaires. Veuillez augmenter les salles ou libérer des plages horaires.',
-                        ];
+                        if (! $allocated) {
+                            $conflictsDetected[] = [
+                                'module' => $module->name,
+                                'group' => $cohortGroups->pluck('name')->implode(' + '),
+                                'reason' => 'Saturation des créneaux en Amphithéâtre pour le CM de section.',
+                            ];
+                        }
+                    } else {
+                        // =========================================================================
+                        // SÉANCE TD / TP : Chaque sous-groupe / groupe a sa propre séance en salle
+                        // =========================================================================
+                        foreach ($cohortGroups as $group) {
+                            $realGroupStudents = (int) DB::table('student_pathways')
+                                ->where('group_id', $group->id)
+                                ->where('is_current', true)
+                                ->count();
+                            if ($realGroupStudents === 0 && $totalFiliereStudents > 0) {
+                                $realGroupStudents = (int) ceil($totalFiliereStudents / 2);
+                            }
+
+                            $natureLabel = $isTD ? 'Travaux Dirigés (Sous-groupe)' : 'TP Informatique (Labo PC)';
+                            $natureBadge = $isTD ? 'TD GROUPE' : 'TP MACHINE';
+                            $studentsCount = $realGroupStudents;
+
+                            $assignedProfId = DB::table('module_professor')
+                                ->where('module_id', $module->id)
+                                ->where(function ($q) use ($group) {
+                                    $q->where('group_id', $group->id)->orWhereNull('group_id');
+                                })
+                                ->value('professor_id');
+
+                            $assignedProf = $assignedProfId ? $professors->firstWhere('id', $assignedProfId) : null;
+                            if (! $assignedProf && $professors->isNotEmpty()) {
+                                $nameLower = mb_strtolower($module->name);
+                                $filiereId = (int) ($group->filiere_id ?? $module->filiere_id ?? 0);
+                                $filiereCode = strtoupper(trim((string) ($group->filiere?->code ?? $module->filiere?->code ?? '')));
+                                $dedicatedProfList = $options['dedicated_professors'][$filiereCode]
+                                    ?? $options['dedicated_professors'][$filiereId]
+                                    ?? $options['dedicated_professors'][(string) $filiereId]
+                                    ?? [];
+
+                                if (! empty($dedicatedProfList)) {
+                                    $candidateProfs = $professors->filter(function ($p) use ($dedicatedProfList) {
+                                        $pFullName = trim(($p->user?->first_name ?? '').' '.($p->user?->last_name ?? ''));
+                                        $pUserName = $p->user?->name ?? '';
+
+                                        return in_array($pFullName, $dedicatedProfList, true)
+                                            || in_array($pUserName, $dedicatedProfList, true)
+                                            || in_array((string) $p->id, $dedicatedProfList, true)
+                                            || in_array($p->id, $dedicatedProfList, true);
+                                    });
+
+                                    if ($candidateProfs->isNotEmpty()) {
+                                        $sortedCandidates = $candidateProfs->sortByDesc(function ($p) use ($nameLower) {
+                                            $specLower = mb_strtolower($p->specialty ?? $p->department?->name ?? '');
+                                            $score = 0;
+                                            if (str_contains($nameLower, 'financ') && str_contains($specLower, 'financ')) $score += 20;
+                                            if (str_contains($nameLower, 'comptab') && str_contains($specLower, 'comptab')) $score += 20;
+                                            if (str_contains($nameLower, 'droit') && str_contains($specLower, 'droit')) $score += 20;
+                                            if (str_contains($nameLower, 'market') && (str_contains($specLower, 'market') || str_contains($specLower, 'gestion'))) $score += 20;
+                                            if (str_contains($nameLower, 'manag') && str_contains($specLower, 'manag')) $score += 20;
+                                            if (str_contains($nameLower, 'info') && str_contains($specLower, 'info')) $score += 20;
+                                            if ((str_contains($nameLower, 'lang') || str_contains($nameLower, 'anglais') || str_contains($nameLower, 'franc') || str_contains($nameLower, 'soft') || str_contains($nameLower, 'commun')) && (str_contains($specLower, 'commun') || str_contains($specLower, 'lang'))) $score += 20;
+                                            return $score;
+                                        });
+                                        $assignedProf = $sortedCandidates->values()->get(($profCycleIndex++) % $sortedCandidates->count());
+                                    }
+                                }
+
+                                if (! $assignedProf) {
+                                    $assignedProf = $professors->get(($profCycleIndex++) % $professors->count());
+                                }
+                            }
+
+                            $profId = $assignedProf ? $assignedProf->id : 1;
+                            $rawProfName = $assignedProf && $assignedProf->user
+                                ? trim(($assignedProf->user->first_name ?? '').' '.($assignedProf->user->last_name ?? ''))
+                                : ($assignedProf?->user?->name ?? 'Enseignant Chercheur');
+
+                            if ($isTD) {
+                                $cleanName = preg_replace('/^Pr\.\s*/i', '', $rawProfName);
+                                $profName = str_ends_with($cleanName, '(TD)') ? $cleanName : "{$cleanName} (TD)";
+                            } else {
+                                $profName = str_starts_with($rawProfName, 'Pr.') ? $rawProfName : "Pr. {$rawProfName}";
+                            }
+
+                            $rankedRooms = $this->rankRoomsForModule($rooms, $module, $course, $group, $options['dedicated_rooms'] ?? []);
+
+                            $allocated = false;
+                            $availableDays = [1, 2, 3, 4, 5];
+                            if (! $avoidSaturdayAfternoon) {
+                                $availableDays[] = 6;
+                            }
+
+                            usort($availableDays, function ($d1, $d2) use ($group, $groupDailySessions) {
+                                $c1 = $groupDailySessions[$group->id][$d1] ?? 0;
+                                $c2 = $groupDailySessions[$group->id][$d2] ?? 0;
+                                if ($c1 === $c2) return $d1 <=> $d2;
+                                return $c1 <=> $c2;
+                            });
+
+                            foreach ([2, 3, 4] as $maxDailyLimit) {
+                                if ($allocated) break;
+
+                                foreach ($availableDays as $day) {
+                                    if ($allocated) break;
+
+                                    if (($groupDailySessions[$group->id][$day] ?? 0) >= $maxDailyLimit) {
+                                        continue;
+                                    }
+
+                                    $slotsRange = ($day === 6 && $avoidSaturdayAfternoon) ? [1, 2] : ($preferMorningLectures ? [1, 2, 3, 4] : [3, 4, 1, 2]);
+
+                                    foreach ($slotsRange as $slotNum) {
+                                        $slotInfo = self::TIME_SLOTS[$slotNum - 1];
+
+                                        if (! empty($occupiedSlots['groups'][$group->id][$day][$slotNum])) continue;
+                                        if (! empty($occupiedSlots['professors'][$profId][$day][$slotNum])) continue;
+
+                                        $isCurrentSlotMorning = in_array($slotNum, [1, 2], true);
+                                        $isCurrentSlotAfternoon = in_array($slotNum, [3, 4], true);
+                                        $currentProfShift = $profDailyShift[$profId][$day] ?? null;
+
+                                        if ($currentProfShift === 'morning' && $isCurrentSlotAfternoon) continue;
+                                        if ($currentProfShift === 'afternoon' && $isCurrentSlotMorning) continue;
+                                        if (($profDailySessions[$profId][$day] ?? 0) >= 2) continue;
+
+                                        $suitableRoom = null;
+                                        foreach ($rankedRooms as $room) {
+                                            if (empty($occupiedSlots['rooms'][$room->id][$day][$slotNum])) {
+                                                $suitableRoom = $room;
+                                                break;
+                                            }
+                                        }
+
+                                        if ($suitableRoom) {
+                                            $occupiedSlots['rooms'][$suitableRoom->id][$day][$slotNum] = true;
+                                            $occupiedSlots['professors'][$profId][$day][$slotNum] = true;
+                                            $occupiedSlots['groups'][$group->id][$day][$slotNum] = true;
+
+                                            $groupDailySessions[$group->id][$day] = ($groupDailySessions[$group->id][$day] ?? 0) + 1;
+                                            $profDailySessions[$profId][$day] = ($profDailySessions[$profId][$day] ?? 0) + 1;
+                                            $profDailyShift[$profId][$day] = $isCurrentSlotMorning ? 'morning' : 'afternoon';
+
+                                            $rType = strtolower($suitableRoom->type ?? 'classroom');
+                                            $roomTypeLabel = ($rType === 'lab') ? 'Labo Informatique (PC)' : 'Salle de TD';
+
+                                            $scheduledItems[] = [
+                                                'temp_id' => 'GEN_'.$sessionCounter++,
+                                                'day_of_week' => $day,
+                                                'day_name' => self::DAYS[$day],
+                                                'slot_number' => $slotNum,
+                                                'start_time' => $slotInfo['start'],
+                                                'end_time' => $slotInfo['end'],
+                                                'slot_label' => $slotInfo['label'],
+                                                'module_id' => $module->id,
+                                                'module_name' => $module->name,
+                                                'course_id' => $course->id ?? $module->id,
+                                                'course_name' => $course->name ?? $module->name,
+                                                'group_id' => $group->id,
+                                                'group_name' => $group->name,
+                                                'filiere_code' => $group->filiere?->code ?? $module->filiere?->code ?? 'TC',
+                                                'professor_id' => $profId,
+                                                'professor_name' => $profName,
+                                                'room_id' => $suitableRoom->id,
+                                                'room_name' => $suitableRoom->name,
+                                                'room_type' => $suitableRoom->type,
+                                                'room_type_label' => $roomTypeLabel,
+                                                'students_count' => $studentsCount,
+                                                'session_nature' => $natureLabel,
+                                                'session_badge' => $natureBadge,
+                                                'is_group_format' => true,
+                                                'session_format' => $isTD ? 'td' : 'tp',
+                                                'status' => 'OPTIMIZED_ZERO_CONFLICT',
+                                            ];
+
+                                            $totalCoursesScheduled++;
+                                            $allocated = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+
+                            if (! $allocated) {
+                                $conflictsDetected[] = [
+                                    'module' => $module->name,
+                                    'group' => $group->name,
+                                    'reason' => 'Saturation des créneaux en salle pour le TD.',
+                                ];
+                            }
+                        }
                     }
                 }
             }
@@ -487,7 +633,12 @@ class AiTimetableSchedulerService
             if ($s->room_id) {
                 if (isset($seenRooms[$key][$s->room_id])) {
                     $other = $seenRooms[$key][$s->room_id];
-                    $conflicts[] = [
+                    $isSharedCm = ((int) $s->module_id === (int) $other->module_id)
+                        && ((int) $s->professor_id === (int) $other->professor_id)
+                        && strtolower($s->session_type ?? '') === 'cm';
+
+                    if (! $isSharedCm) {
+                        $conflicts[] = [
                         'type' => 'ROOM_COLLISION',
                         'type_label' => 'Collision de Salle',
                         'schedule_id' => $s->id,
@@ -504,6 +655,7 @@ class AiTimetableSchedulerService
                         'description' => "La salle '{$s->room_name}' est réservée en même temps pour '{$s->module_name}' et '{$other->module_name}'.",
                         'severity' => 'CRITICAL',
                     ];
+                    }
                 } else {
                     $seenRooms[$key][$s->room_id] = $s;
                 }
@@ -513,23 +665,30 @@ class AiTimetableSchedulerService
             if ($s->professor_id) {
                 if (isset($seenProfs[$key][$s->professor_id])) {
                     $otherProf = $seenProfs[$key][$s->professor_id];
-                    $conflicts[] = [
-                        'type' => 'PROFESSOR_OVERLAP',
-                        'type_label' => 'Chevauchement Enseignant',
-                        'schedule_id' => $s->id,
-                        'conflicting_schedule_id' => $otherProf->id,
-                        'day_of_week' => $s->day_of_week,
-                        'day_name' => $dayName,
-                        'start_time' => $startTime,
-                        'end_time' => $endTime,
-                        'room_name' => $s->room_name ?: "Salle #{$s->room_id}",
-                        'professor_name' => $s->professor_name,
-                        'module_name' => $s->module_name ?: "Module #{$s->module_id}",
-                        'group_name' => $s->group_name ?: "Groupe #{$s->group_id}",
-                        'reason' => "L'enseignant {$s->professor_name} est planifié sur deux cours simultanés.",
-                        'description' => "Double cours simultané pour {$s->professor_name} entre '{$s->module_name}' et '{$otherProf->module_name}'.",
-                        'severity' => 'HIGH',
-                    ];
+                    // Option B (Amphithéâtre) : S'il s'agit du même module partagé avec la section entière (G1 + G2 en amphi), ce n'est PAS un chevauchement !
+                    $isSharedCm = ((int) $s->module_id === (int) $otherProf->module_id)
+                        && ((int) $s->room_id === (int) $otherProf->room_id)
+                        && strtolower($s->session_type ?? '') === 'cm';
+
+                    if (! $isSharedCm) {
+                        $conflicts[] = [
+                            'type' => 'PROFESSOR_OVERLAP',
+                            'type_label' => 'Chevauchement Enseignant',
+                            'schedule_id' => $s->id,
+                            'conflicting_schedule_id' => $otherProf->id,
+                            'day_of_week' => $s->day_of_week,
+                            'day_name' => $dayName,
+                            'start_time' => $startTime,
+                            'end_time' => $endTime,
+                            'room_name' => $s->room_name ?: "Salle #{$s->room_id}",
+                            'professor_name' => $s->professor_name,
+                            'module_name' => $s->module_name ?: "Module #{$s->module_id}",
+                            'group_name' => $s->group_name ?: "Groupe #{$s->group_id}",
+                            'reason' => "L'enseignant {$s->professor_name} est planifié sur deux cours simultanés.",
+                            'description' => "Double cours simultané pour {$s->professor_name} entre '{$s->module_name}' et '{$otherProf->module_name}'.",
+                            'severity' => 'HIGH',
+                        ];
+                    }
                 } else {
                     $seenProfs[$key][$s->professor_id] = $s;
                 }

@@ -465,39 +465,31 @@ class ProfessorAssignmentController extends Controller
                 return $score;
             };
 
-            // Construire la liste de toutes les charges à pourvoir (Module x Groupes)
+            // Construire la liste de toutes les charges à pourvoir
+            // Règle ENCG (Option B Amphithéâtre) :
+            // Pour chaque module, le CM est assuré par UN SEUL professeur titulaire pour toute la section (G1 + G2 réunis en Amphi).
+            // On affecte donc 1 charge par Module, qui s'applique à tous les groupes de la filière.
             $chargeSlots = [];
             foreach ($modules as $mod) {
                 $modGroups = $groups->where('filiere_id', $mod->filiere_id)->values();
-                if ($modGroups->isEmpty()) {
-                    $chargeSlots[] = [
-                        'module' => $mod,
-                        'group' => null,
-                        'hours' => 36,
-                        'type' => 'cm',
-                    ];
-                } else {
-                    foreach ($modGroups as $grp) {
-                        $chargeSlots[] = [
-                            'module' => $mod,
-                            'group' => $grp,
-                            'hours' => 36,
-                            'type' => 'cm',
-                        ];
-                    }
-                }
+                $chargeSlots[] = [
+                    'module' => $mod,
+                    'groups' => $modGroups,
+                    'hours' => 36,
+                    'type' => 'cm',
+                ];
             }
 
             $totalSlots = count($chargeSlots);
             $totalProfs = count($professors);
-            // Plafond strict par enseignant : pour 56 cours / 18 profs = max 4 cours (16h), idéal 3 cours (12h)
+            // Plafond strict par enseignant
             $maxPerProf = (int) ceil($totalSlots / max(1, $totalProfs));
             $targetPerProf = (int) floor($totalSlots / max(1, $totalProfs));
 
             // PASSE 1 : Affectation par Spécialité et Département avec limite stricte (maxPerProf)
             foreach ($chargeSlots as $slotIndex => $slot) {
                 $mod = $slot['module'];
-                $grp = $slot['group'];
+                $modGroups = $slot['groups'];
                 $modName = $mod->name;
                 $modCode = $mod->code ?? '';
                 $modFiliere = $mod->filiere?->name ?? '';
@@ -561,7 +553,7 @@ class ProfessorAssignmentController extends Controller
                 ModuleProfessor::create([
                     'academic_year_id' => $currentYear->id,
                     'module_id' => $mod->id,
-                    'group_id' => $grp?->id,
+                    'group_id' => null, // Section entière (G1 + G2 réunis en Amphi)
                     'professor_id' => $chosenProfId,
                     'professor_type' => 'App\\Models\\Professor',
                     'session_type' => $slot['type'],
@@ -574,14 +566,12 @@ class ProfessorAssignmentController extends Controller
             }
 
             // PASSE 2 : ÉQUILIBRAGE PARFAIT MIN-MAX (Rebalancing Loop)
-            // S'assurer que TOUS les 18 enseignants ont exactement 3 ou 4 cours (écart max <= 1)
+            // S'assurer que les enseignants ont une charge équilibrée tout en préservant l'unité du module
             for ($iter = 0; $iter < 30; $iter++) {
-                // Trouver le prof avec la charge la plus basse et le prof avec la charge la plus haute
                 $minLoad = min(array_column($profLoads, 'assigned_count'));
                 $maxLoad = max(array_column($profLoads, 'assigned_count'));
 
                 if (($maxLoad - $minLoad) <= 1) {
-                    // Équilibre parfait atteint ! (tous à 3 ou 4 cours)
                     break;
                 }
 
@@ -611,7 +601,10 @@ class ProfessorAssignmentController extends Controller
 
                 if ($transferable) {
                     $modId = $transferable->module_id;
-                    $transferable->update(['professor_id' => $underloadedProfId]);
+                    // Mettre à jour tous les groupes de ce module vers le nouveau prof pour préserver l'unité CM
+                    ModuleProfessor::where('academic_year_id', $currentYear->id)
+                        ->where('module_id', $modId)
+                        ->update(['professor_id' => $underloadedProfId]);
 
                     $assignedProfessorsByModule[$modId] = array_values(array_diff($assignedProfessorsByModule[$modId] ?? [], [$overloadedProfId]));
                     $assignedProfessorsByModule[$modId][] = $underloadedProfId;

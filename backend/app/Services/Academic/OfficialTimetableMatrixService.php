@@ -144,14 +144,17 @@ class OfficialTimetableMatrixService
             }
 
             // ---- Créneau horaire ----
-            // CM : Affichage au niveau Section (ex: « G1: 08h30-10h15 »)
+            // CM : Affichage au niveau Section (ex: « G1 + G2: 08h30-10h15 »)
             // TD / TP : Affichage obligatoire au niveau Sous-Groupe ENCG (ex: « G1.1: 08h30-10h15 » ou « G1.2 », « G2.1 », « G2.2 »)
             $day = (int) $session->day_of_week;
+            $timeRange = $this->frenchRange($session->start_time, $session->end_time);
             $groupLabel = $this->formatSessionGroupLabel($session, $sessionType, $groupSubCounter);
-            $slot = $groupLabel.': '.$this->frenchRange($session->start_time, $session->end_time);
 
-            if (! in_array($slot, $rowsByKey[$key]['days'][$day], true)) {
-                $rowsByKey[$key]['days'][$day][] = $slot;
+            if (! isset($rowsByKey[$key]['raw_slots'][$day][$timeRange])) {
+                $rowsByKey[$key]['raw_slots'][$day][$timeRange] = [];
+            }
+            if (! in_array($groupLabel, $rowsByKey[$key]['raw_slots'][$day][$timeRange], true)) {
+                $rowsByKey[$key]['raw_slots'][$day][$timeRange][] = $groupLabel;
             }
 
             // ---- Salle ----
@@ -170,6 +173,32 @@ class OfficialTimetableMatrixService
                 }
             }
         }
+
+        // Finaliser l'affichage des créneaux par jour (avec fusion G1 + G2 pour les CM en Amphi)
+        foreach ($rowsByKey as $k => &$rData) {
+            foreach ($rData['raw_slots'] ?? [] as $d => $rangeMap) {
+                foreach ($rangeMap as $tRange => $grpLabels) {
+                    sort($grpLabels);
+                    if ($rData['session_type'] === 'cm' && count($grpLabels) > 1) {
+                        // Option B (Amphithéâtre) : Regrouper G1 + G2 réunis en Amphi
+                        $combined = implode(' + ', $grpLabels);
+                        $slot = $combined.': '.$tRange;
+                        if (! in_array($slot, $rData['days'][$d], true)) {
+                            $rData['days'][$d][] = $slot;
+                        }
+                    } else {
+                        foreach ($grpLabels as $gLbl) {
+                            $slot = $gLbl.': '.$tRange;
+                            if (! in_array($slot, $rData['days'][$d], true)) {
+                                $rData['days'][$d][] = $slot;
+                            }
+                        }
+                    }
+                }
+            }
+            unset($rData['raw_slots']);
+        }
+        unset($rData);
 
         // ---- Tri des lignes ----
         $rows = array_values($rowsByKey);
