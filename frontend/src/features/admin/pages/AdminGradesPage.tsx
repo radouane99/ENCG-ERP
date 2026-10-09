@@ -22,6 +22,7 @@ import { toast } from 'sonner'
 import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
 import { Spinner } from '@shared/components/ui/Spinner'
+import { useAuthStore } from '@stores/authStore'
 
 // Custom Modern Popover Select Component
 interface CustomSelectOption {
@@ -130,6 +131,11 @@ export default function AdminGradesPage() {
   const { i18n } = useTranslation(['admin', 'common'])
   const isRtl = i18n.language === 'ar'
   
+  const { user, hasAnyRole } = useAuthStore()
+  const isProfessorRole = hasAnyRole(['professor', 'vacataire']) || (user as any)?.role === 'professor' || (user as any)?.role === 'vacataire'
+  const isAdminRole = hasAnyRole(['admin', 'super-admin']) || (user as any)?.role === 'admin' || (user as any)?.role === 'super-admin'
+  const isTeacherOnly = isProfessorRole && !isAdminRole
+
   const [filiere, setFiliere] = useState('')
   const [semestre, setSemestre] = useState('')
   const [groupe, setGroupe] = useState('')
@@ -139,6 +145,24 @@ export default function AdminGradesPage() {
   const [groupes, setGroupes] = useState<any[]>([])
   const [modules, setModules] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
+
+  const [myModules, setMyModules] = useState<any[]>([])
+  const [loadingMyModules, setLoadingMyModules] = useState(true)
+  const [showAdminCohortSelector, setShowAdminCohortSelector] = useState(!isTeacherOnly)
+
+  useEffect(() => {
+    setLoadingMyModules(true)
+    api.get('/grades/my-modules')
+      .then(r => {
+        const mods = r.data.modules || r.data.data?.modules || []
+        setMyModules(mods)
+        if (mods.length === 0 && !isTeacherOnly) {
+          setShowAdminCohortSelector(true)
+        }
+      })
+      .catch(console.error)
+      .finally(() => setLoadingMyModules(false))
+  }, [isTeacherOnly])
 
   useEffect(() => {
     api.get('/filieres').then(r => {
@@ -234,21 +258,58 @@ export default function AdminGradesPage() {
             </div>
             <div>
               <div className="inline-flex items-center gap-2 bg-blue-400/20 text-blue-200 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-2 border border-blue-400/30">
-                <ShieldCheck className="w-4 h-4 text-emerald-400" /> Système APOGÉE ENCG Maroc
+                <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                {isTeacherOnly ? 'Espace Enseignant Certifié • ENCG Fès' : 'Système APOGÉE ENCG Maroc'}
               </div>
               <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight">
-                {isRtl ? 'المركز الإداري لتدقيق وإدخال النقاط' : 'Console de Gestion & Saisie des Notes'}
+                {isTeacherOnly 
+                  ? (isRtl ? 'المركز الرسمي لإدخال النقاط • وحداتي' : 'Saisie des Notes • Mes Modules')
+                  : (isRtl ? 'المركز الإداري لتدقيق وإدخال النقاط' : 'Console de Gestion & Saisie des Notes')
+                }
               </h1>
               <p className="text-blue-100/90 text-sm max-w-2xl font-medium mt-1">
-                {isRtl ? 'حدد الشعبة، الدورة والوحدة للوصول المباشر لسجل النقاط الرسمي ومحاضر المداولات.' : 'Sélectionnez la filière, le semestre puis le module pour ouvrir le registre officiel des notes et générer les PVs.'}
+                {isTeacherOnly
+                  ? `Bienvenue Pr. ${user?.name || 'Enseignant'}. Cliquez directement sur l'un de vos modules ci-dessous pour ouvrir la grille de saisie sans recherche manuelle.`
+                  : (isRtl ? 'حدد الشعبة، الدورة والوحدة للوصول المباشر لسجل النقاط الرسمي ومحاضر المداولات.' : 'Sélectionnez la filière, le semestre puis le module pour ouvrir le registre officiel des notes et générer les PVs.')
+                }
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex flex-wrap items-center gap-3 shrink-0">
+            {/* Session Type Switcher */}
+            <div className="flex items-center gap-1.5 p-1.5 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20">
+              <button
+                type="button"
+                onClick={() => setSelectedSession('normale')}
+                className={cn(
+                  "px-3.5 py-2 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 uppercase tracking-wider",
+                  selectedSession === 'normale'
+                    ? "bg-white text-[#0f2863] shadow-md"
+                    : "text-blue-200 hover:text-white"
+                )}
+              >
+                <Zap className="w-3.5 h-3.5 text-amber-500" />
+                Ordinaire
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedSession('rattrapage')}
+                className={cn(
+                  "px-3.5 py-2 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 uppercase tracking-wider",
+                  selectedSession === 'rattrapage'
+                    ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md"
+                    : "text-blue-200 hover:text-white"
+                )}
+              >
+                <Sparkles className="w-3.5 h-3.5 text-amber-200" />
+                Rattrapage
+              </button>
+            </div>
+
             <button 
               onClick={() => navigate('/admin/grades/pv')}
-              className="flex items-center gap-2 px-5 py-3.5 bg-white/10 hover:bg-white/20 text-white rounded-2xl font-black text-xs uppercase tracking-wider backdrop-blur-md border border-white/20 transition-all cursor-pointer shadow-lg active:scale-95"
+              className="flex items-center gap-2 px-5 py-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl font-black text-xs uppercase tracking-wider backdrop-blur-md border border-white/20 transition-all cursor-pointer shadow-lg active:scale-95"
             >
               <FileText className="w-4 h-4 text-amber-300" /> Consulter les PVs
             </button>
@@ -256,7 +317,8 @@ export default function AdminGradesPage() {
         </div>
       </div>
 
-      {/* Analytics KPI Row */}
+      {/* Analytics KPI Row (Admin Only) */}
+      {!isTeacherOnly && (
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2rem] p-6 shadow-md flex items-center justify-between">
           <div>
@@ -312,9 +374,10 @@ export default function AdminGradesPage() {
           </div>
         </div>
       </div>
+      )}
 
-      {/* Professor Grade Progress & Reminder Widget */}
-      {progressSummary && (
+      {/* Professor Grade Progress & Reminder Widget (Admin Only) */}
+      {!isTeacherOnly && progressSummary && (
         <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white rounded-[2.5rem] p-8 shadow-xl border border-blue-800/40 relative overflow-hidden">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div className="space-y-1">
@@ -370,32 +433,255 @@ export default function AdminGradesPage() {
         </div>
       )}
 
-      {/* Quick Filière Chips Selection Bar */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2rem] p-6 shadow-md space-y-3">
-        <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-indigo-600" /> Raccourcis Rapides Filières ENCG
-        </h4>
-        <div className="flex flex-wrap items-center gap-2.5">
-          {filieres.map(f => (
-            <button
-              key={f.id}
-              onClick={() => setFiliere(String(f.id))}
-              className={cn(
-                "px-4 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer border flex items-center gap-2 shadow-xs",
-                String(filiere) === String(f.id)
-                  ? "bg-[#0f2863] text-white border-[#0f2863] shadow-md scale-105"
-                  : "bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100"
-              )}
-            >
-              <Building2 className="w-3.5 h-3.5 text-indigo-400" />
-              {f.code || f.name}
-            </button>
-          ))}
+      {/* VOS MODULES AFFECTÉS — SAISIE DIRECTE 1-CLIC */}
+      <div className="bg-gradient-to-br from-white via-indigo-50/20 to-slate-50 dark:from-slate-900 dark:via-slate-850 dark:to-slate-900 border-2 border-indigo-200/90 dark:border-indigo-900/60 rounded-[2.5rem] p-6 md:p-10 shadow-xl space-y-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-indigo-100 dark:border-indigo-900/40 pb-5">
+          <div className="space-y-1">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 bg-indigo-100 dark:bg-indigo-900/60 text-indigo-900 dark:text-indigo-200 rounded-full text-[10px] font-black uppercase tracking-wider">
+              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+              {isTeacherOnly ? `Affectations Officielles • Pr. ${user?.name || 'Enseignant'}` : 'Accès Direct Enseignant'}
+            </div>
+            <h2 className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-3">
+              <BookOpen className="w-6 h-6 text-indigo-600" />
+              Mes Modules Affectés (Saisie Directe)
+            </h2>
+            <p className="text-xs text-slate-500 font-medium">
+              Cliquez directement sur n'importe quel module ci-dessous pour ouvrir la grille de saisie sans aucune recherche.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800/80 px-4 py-2 rounded-2xl border border-slate-200 dark:border-slate-700">
+            <span>Session active :</span>
+            <span className={cn(
+              "font-black uppercase tracking-wider px-2 py-0.5 rounded-lg text-[11px]",
+              selectedSession === 'rattrapage' ? "bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300" : "bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300"
+            )}>
+              {selectedSession === 'rattrapage' ? '🔥 Rattrapage' : '⚡ Ordinaire'}
+            </span>
+          </div>
         </div>
+
+        {/* Modules Cards Grid */}
+        {loadingMyModules ? (
+          <div className="py-12 flex flex-col items-center justify-center gap-3">
+            <Spinner size="lg" />
+            <span className="text-xs font-bold text-slate-400">Chargement de vos modules affectés...</span>
+          </div>
+        ) : myModules.length === 0 ? (
+          <div className="p-8 text-center bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 space-y-3">
+            <BookOpen className="w-12 h-12 text-slate-300 mx-auto" />
+            <h4 className="text-sm font-black text-slate-700 dark:text-slate-300">Aucun module directement affecté à votre profil</h4>
+            <p className="text-xs text-slate-400 max-w-md mx-auto">
+              Si vous êtes enseignant sur un module et qu'il n'apparaît pas ici, vous pouvez utiliser le sélecteur ci-dessous ou contacter le service des emplois du temps.
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowAdminCohortSelector(true)}
+              className="mt-2 px-4 py-2 bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-300 rounded-xl text-xs font-bold hover:bg-indigo-100 transition-colors"
+            >
+              🔍 Ouvrir le sélecteur d'établissement
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {myModules.map((m: any) => {
+              const editUrl = `/admin/grades/edit?filiere_id=${m.filiere_id}&semester=${m.semester}&module_id=${m.id}&session=${selectedSession}`
+              const pvUrl = `/admin/grades/pv?session=${selectedSession}&filiere_id=${m.filiere_id}&semester=${m.semester}&module_id=${m.id}`
+
+              return (
+                <div
+                  key={m.id}
+                  onClick={() => navigate(editUrl)}
+                  className="group relative bg-white dark:bg-slate-800/90 border-2 border-slate-200/90 hover:border-indigo-600 dark:border-slate-700 dark:hover:border-indigo-400 rounded-3xl p-6 shadow-sm hover:shadow-2xl transition-all duration-300 flex flex-col justify-between space-y-4 hover:-translate-y-1.5 cursor-pointer ring-0 hover:ring-4 hover:ring-indigo-500/10"
+                >
+                  <div className="space-y-3">
+                    {/* Top Row: Filiere + Types */}
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="px-3 py-1 bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 border border-indigo-200/70 dark:border-indigo-800 rounded-full text-[10px] font-black uppercase tracking-wider">
+                        {m.filiere_code} • S{m.semester}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        {m.types?.map((t: string) => (
+                          <span key={t} className="px-2 py-0.5 bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 font-mono text-[9px] font-black rounded-md">
+                            {t}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Module Title */}
+                    <div>
+                      <span className="font-mono text-[11px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
+                        {m.code}
+                      </span>
+                      <h3 className="text-base font-black text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-2 mt-0.5">
+                        {m.name}
+                      </h3>
+                      <p className="text-[11px] text-slate-500 font-medium line-clamp-1 mt-0.5">
+                        {m.filiere_name}
+                      </p>
+                    </div>
+
+                    {/* Schedule & Groups Details */}
+                    <div className="space-y-1.5 pt-2 border-t border-slate-100 dark:border-slate-700 text-xs">
+                      <div className="flex items-center justify-between text-[11px]">
+                        <span className="text-slate-400 font-medium">Groupes :</span>
+                        <span className="font-bold text-slate-700 dark:text-slate-200 truncate max-w-[170px]">
+                          {m.groups?.join(', ') || 'Section Amphi'}
+                        </span>
+                      </div>
+                      {m.schedules_summary && (
+                        <div className="flex items-center justify-between text-[11px]">
+                          <span className="text-slate-400 font-medium">Séances :</span>
+                          <span className="font-bold text-indigo-600 dark:text-indigo-400 truncate max-w-[170px]" title={m.schedules_summary}>
+                            {m.schedules_summary}
+                          </span>
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between text-[11px]">
+                        <span className="text-slate-400 font-medium">Étudiants :</span>
+                        <span className="font-black text-slate-900 dark:text-white">
+                          {m.students_count} inscrits
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Progress Bar & Signature */}
+                    <div className="pt-2 border-t border-slate-100 dark:border-slate-700 space-y-1.5">
+                      <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-wider">
+                        <span className="text-slate-400">Complétude des notes</span>
+                        <span className={cn(
+                          m.completion_rate === 100 ? "text-emerald-600" : m.completion_rate > 0 ? "text-amber-500" : "text-slate-400"
+                        )}>
+                          {m.completion_rate}%
+                        </span>
+                      </div>
+                      <div className="w-full bg-slate-100 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
+                        <div 
+                          className={cn(
+                            "h-full rounded-full transition-all duration-700",
+                            m.completion_rate === 100 
+                              ? "bg-emerald-500" 
+                              : m.completion_rate > 0 
+                                ? "bg-amber-500" 
+                                : "bg-slate-300 dark:bg-slate-600"
+                          )}
+                          style={{ width: `${m.completion_rate}%` }}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between text-[10px] pt-1">
+                        <span className="text-slate-400">Statut PV :</span>
+                        <span className={cn(
+                          "font-bold",
+                          m.is_signed ? "text-emerald-600 dark:text-emerald-400" : "text-slate-400"
+                        )}>
+                          {m.is_signed ? `🛡️ Signé (${m.signed_by || 'Validé'})` : '⏳ En attente'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="pt-3 border-t border-slate-100 dark:border-slate-700 flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        navigate(editUrl)
+                      }}
+                      className={cn(
+                        "flex-1 py-3 px-4 text-white rounded-2xl text-xs font-black uppercase tracking-wider shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95",
+                        selectedSession === 'rattrapage'
+                          ? "bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700"
+                          : "bg-gradient-to-r from-[#0f2863] to-[#1e40af] hover:from-[#15347d] hover:to-[#254cb6]"
+                      )}
+                    >
+                      <Edit3 className="w-3.5 h-3.5 text-amber-300" />
+                      {selectedSession === 'rattrapage' ? 'Saisir Rattrapage' : 'Saisir les Notes'}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        navigate(pvUrl)
+                      }}
+                      className="p-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-2xl transition-all cursor-pointer shadow-xs shrink-0"
+                      title="Consulter le PV de ce module"
+                    >
+                      <FileText className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
       </div>
 
-      {/* Main 4-Step Selector Panel */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-8 md:p-12 shadow-xl space-y-8 relative">
+      {/* Professor Collapsible Accordion Drawer for Global Cohort Selector */}
+      {isTeacherOnly ? (
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div>
+            <h4 className="text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-indigo-500" />
+              Mode Recherche Libre & Autres Filières (Optionnel)
+            </h4>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Accédez au sélecteur global si vous souhaitez parcourir les modules d'une autre filière de l'établissement.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowAdminCohortSelector(prev => !prev)}
+            className="px-4 py-2.5 rounded-xl text-xs font-bold border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 text-slate-700 dark:text-slate-200 transition-all flex items-center gap-2 cursor-pointer shadow-xs shrink-0"
+          >
+            <span>{showAdminCohortSelector ? "Masquer le Sélecteur 4 Étapes" : "🔍 Ouvrir le Sélecteur Global (4 Étapes)"}</span>
+            <ChevronDown className={cn("w-4 h-4 transition-transform duration-200", showAdminCohortSelector && "rotate-180")} />
+          </button>
+        </div>
+      ) : (
+        /* Quick Filière Chips Selection Bar (Admin Only) */
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2rem] p-6 shadow-md space-y-3">
+          <div className="flex items-center justify-between">
+            <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-indigo-600" /> Raccourcis Rapides Filières ENCG
+            </h4>
+            <button
+              type="button"
+              onClick={() => setShowAdminCohortSelector(prev => !prev)}
+              className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 cursor-pointer"
+            >
+              <span>{showAdminCohortSelector ? "Masquer le Sélecteur 4 Étapes" : "Afficher le Sélecteur 4 Étapes"}</span>
+              <ChevronDown className={cn("w-4 h-4 transition-transform duration-200", showAdminCohortSelector && "rotate-180")} />
+            </button>
+          </div>
+          <div className="flex flex-wrap items-center gap-2.5">
+            {filieres.map(f => (
+              <button
+                key={f.id}
+                onClick={() => {
+                  setFiliere(String(f.id))
+                  setShowAdminCohortSelector(true)
+                }}
+                className={cn(
+                  "px-4 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer border flex items-center gap-2 shadow-xs",
+                  String(filiere) === String(f.id)
+                    ? "bg-[#0f2863] text-white border-[#0f2863] shadow-md scale-105"
+                    : "bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100"
+                )}
+              >
+                <Building2 className="w-3.5 h-3.5 text-indigo-400" />
+                {f.code || f.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Main 4-Step Selector Panel (Collapsible) */}
+      {showAdminCohortSelector && (
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-8 md:p-12 shadow-xl space-y-8 relative animate-in fade-in duration-200">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-6 gap-4">
           <div>
             <h2 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-3">
@@ -634,6 +920,7 @@ export default function AdminGradesPage() {
         )}
 
       </div>
+      )}
     </div>
   )
 }

@@ -319,9 +319,14 @@ class AiTimetableSchedulerService
                                     if ($currentProfShift === 'afternoon' && $isCurrentSlotMorning) continue;
                                     if (($profDailySessions[$profId][$day] ?? 0) >= 2) continue;
 
-                                    // 3. Trouver la salle (Amphithéâtre libre)
+                                    // 3. Trouver la salle (Amphithéâtre libre strictement pour le CM)
                                     $suitableRoom = null;
                                     foreach ($rankedRooms as $room) {
+                                        $rType = strtolower($room->type ?? 'classroom');
+                                        $isAmphi = ($rType === 'amphitheater' || $rType === 'amphi' || str_contains(strtolower($room->name), 'amphi'));
+                                        if (! $isAmphi) {
+                                            continue; // CM Option B : STRICTEMENT en Amphithéâtre
+                                        }
                                         if (empty($occupiedSlots['rooms'][$room->id][$day][$slotNum])) {
                                             $suitableRoom = $room;
                                             break;
@@ -510,6 +515,11 @@ class AiTimetableSchedulerService
 
                                         $suitableRoom = null;
                                         foreach ($rankedRooms as $room) {
+                                            $rType = strtolower($room->type ?? 'classroom');
+                                            $isAmphi = ($rType === 'amphitheater' || $rType === 'amphi' || str_contains(strtolower($room->name), 'amphi'));
+                                            if ($isAmphi) {
+                                                continue; // Les TD et TP sont exclusivement en salles de classe ou labos
+                                            }
                                             if (empty($occupiedSlots['rooms'][$room->id][$day][$slotNum])) {
                                                 $suitableRoom = $room;
                                                 break;

@@ -818,10 +818,6 @@ class GradeController extends Controller
     {
         $this->authorize('create', Grade::class);
 
-        $request->validate([
-            'file' => 'required|file|mimes:xlsx,xls,csv|max:5120',
-        ]);
-
         $moduleModel = Module::findOrFail($module);
         $import = new GradesImport($moduleModel);
         Excel::import($import, $request->file('file'));
@@ -831,6 +827,163 @@ class GradeController extends Controller
             'message' => $import->imported.' note(s) importée(s).',
             'imported' => $import->imported,
             'warnings' => $import->warnings,
+        ]);
+    }
+
+    /**
+     * Récupère la liste directe des modules affectés à l'enseignant connecté
+     * pour saisie immédiate des notes (1-click direct access).
+     */
+    public function getMyAssignedModules(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        if (! $user) {
+            return response()->json(['success' => false, 'modules' => []], 401);
+        }
+
+        // Identifier le profil professeur
+        $prof = $user->professor;
+        if (! $prof) {
+            $prof = \App\Models\Professor::where('user_id', $user->id)
+                ->orWhere('email', $user->email)
+                ->first();
+        }
+
+        $profIds = array_filter(array_unique([
+            $prof?->id,
+            $user->id,
+        ]));
+
+        if (empty($profIds)) {
+            return response()->json([
+                'success' => true,
+                'is_professor' => false,
+                'professor_name' => $user->name,
+                'modules' => [],
+            ]);
+        }
+
+        // 1. Modules via ModuleProfessor
+        $moduleIdsFromAssignment = \App\Models\ModuleProfessor::whereIn('professor_id', $profIds)
+            ->pluck('module_id')
+            ->toArray();
+
+        // 2. Modules via Schedule
+        $moduleIdsFromSchedule = \App\Models\Schedule::whereIn('professor_id', $profIds)
+            ->where('is_active', true)
+            ->pluck('module_id')
+            ->toArray();
+
+        $allModuleIds = array_unique(array_filter(array_merge($moduleIdsFromAssignment, $moduleIdsFromSchedule)));
+
+        if (empty($allModuleIds)) {
+            return response()->json([
+                'success' => true,
+                'is_professor' => $user->hasAnyRole(['professor', 'vacataire']),
+                'professor_name' => $user->name,
+                'modules' => [],
+            ]);
+        }
+
+        $modules = Module::with(['filiere', 'assessments.grades'])
+            ->whereIn('id', $allModuleIds)
+            ->orderBy('semester_number')
+            ->orderBy('code')
+            ->get();
+
+        $currYear = AcademicYear::where('is_current', true)->first();
+        $currYearId = $currYear?->id ?? 3;
+
+        $result = $modules->map(function ($mod) use ($profIds, $currYearId) {
+            // Types d'intervention (CM, TD, TP)
+            $mpTypes = \App\Models\ModuleProfessor::where('module_id', $mod->id)
+                ->whereIn('professor_id', $profIds)
+                ->pluck('session_type')
+                ->map(fn($t) => strtoupper($t))
+                ->toArray();
+            $schTypes = \App\Models\Schedule::where('module_id', $mod->id)
+                ->whereIn('professor_id', $profIds)
+                ->where('is_active', true)
+                ->pluck('session_type')
+                ->map(fn($t) => strtoupper($t))
+                ->toArray();
+            $types = array_values(array_unique(array_merge($mpTypes, $schTypes)));
+            if (empty($types)) $types = ['CM'];
+
+            // Groupes et créneaux
+            $schedules = \App\Models\Schedule::with(['group', 'room'])
+                ->where('module_id', $mod->id)
+                ->whereIn('professor_id', $profIds)
+                ->where('is_active', true)
+                ->get();
+
+            $groupsList = $schedules->map(fn($s) => $s->group?->name)->filter()->unique()->values()->toArray();
+            if (empty($groupsList)) {
+                $groupsList = ['Section Amphi'];
+            }
+
+            $scheduleSummaries = $schedules->map(function($s) {
+                $dayNames = [1 => 'Lundi', 2 => 'Mardi', 3 => 'Mercredi', 4 => 'Jeudi', 5 => 'Vendredi', 6 => 'Samedi'];
+                $day = $dayNames[$s->day_of_week] ?? "J{$s->day_of_week}";
+                $time = substr($s->start_time, 0, 5) . '–' . substr($s->end_time, 0, 5);
+                $room = $s->room?->name ?? 'Salle';
+                return "{$day} {$time} ({$room})";
+            })->unique()->values()->toArray();
+
+            // Total étudiants inscrits
+            $studentsCount = $this->gradeService->getRegisteredStudents($mod)->count();
+
+            // Évaluations (Exam, CC, Rattrapage)
+            $examAssessment = $mod->assessments->firstWhere(fn($a) => in_array(strtolower($a->type), ['examen', 'exam']));
+            $ccAssessment = $mod->assessments->firstWhere(fn($a) => in_array(strtolower($a->type), ['cc', 'controle_continu']));
+            $ratAssessment = $mod->assessments->firstWhere(fn($a) => strtolower($a->type) === 'rattrapage');
+
+            $gradesEnteredCount = 0;
+            if ($examAssessment) {
+                $gradesEnteredCount = $examAssessment->grades()->where(function($q) {
+                    $q->whereNotNull('value')->orWhere('absent', true);
+                })->count();
+            } elseif ($mod->assessments->isNotEmpty()) {
+                $gradesEnteredCount = $mod->assessments->first()->grades()->where(function($q) {
+                    $q->whereNotNull('value')->orWhere('absent', true);
+                })->count();
+            }
+
+            $completionRate = ($studentsCount > 0 && $gradesEnteredCount > 0)
+                ? min(100, (int) round(($gradesEnteredCount / $studentsCount) * 100))
+                : 0;
+
+            // Signature PV
+            $sigRecord = ModulePvSignature::where('module_id', $mod->id)
+                ->with('signer')->latest()->first();
+
+            return [
+                'id' => $mod->id,
+                'code' => $mod->code,
+                'name' => $mod->name,
+                'filiere_id' => $mod->filiere_id,
+                'filiere_code' => $mod->filiere?->code ?? 'ENCG',
+                'filiere_name' => $mod->filiere?->name ?? 'Filière ENCG',
+                'semester' => $mod->semester_number,
+                'types' => $types,
+                'groups' => $groupsList,
+                'schedules_summary' => implode(' • ', array_slice($scheduleSummaries, 0, 3)),
+                'students_count' => $studentsCount,
+                'grades_entered_count' => $gradesEnteredCount,
+                'completion_rate' => $completionRate,
+                'is_signed' => (bool) $sigRecord,
+                'signed_by' => $sigRecord?->signer?->name,
+                'has_cc' => (bool) $ccAssessment,
+                'has_exam' => (bool) $examAssessment,
+                'has_rattrapage' => (bool) $ratAssessment,
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'is_professor' => true,
+            'professor_name' => $prof?->user?->name ?? $user->name,
+            'modules' => $result,
         ]);
     }
 }

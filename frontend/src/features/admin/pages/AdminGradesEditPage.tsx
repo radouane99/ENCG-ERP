@@ -120,12 +120,26 @@ export default function AdminGradesEditPage() {
     }
   }
 
-  // Select the first assessment by default if available
+  // Select the appropriate assessment by default if available
   useEffect(() => {
     if (assessmentsData && assessmentsData.length > 0 && !selectedAssessmentId) {
+      const sessionParam = searchParams.get('session')
+      if (sessionParam === 'rattrapage') {
+        const rat = assessmentsData.find((a: any) => (a.type || '').toLowerCase().includes('rattrapage'))
+        if (rat) {
+          setSelectedAssessmentId(rat.id)
+          return
+        }
+      } else {
+        const nonRat = assessmentsData.find((a: any) => !(a.type || '').toLowerCase().includes('rattrapage'))
+        if (nonRat) {
+          setSelectedAssessmentId(nonRat.id)
+          return
+        }
+      }
       setSelectedAssessmentId(assessmentsData[0].id)
     }
-  }, [assessmentsData, selectedAssessmentId])
+  }, [assessmentsData, selectedAssessmentId, searchParams])
 
   // Initialize local state when students are loaded
   useEffect(() => {

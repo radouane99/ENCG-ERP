@@ -343,6 +343,7 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|super_admin|instituti
 
     // Grades & Deliberation
     Route::prefix('grades')->group(function () {
+        Route::get('/my-modules', [GradeController::class, 'getMyAssignedModules']);
         Route::post('/batch', [GradeController::class, 'storeBatch']);
         Route::post('/validate', [GradeController::class, 'validateGrades']);
     });
