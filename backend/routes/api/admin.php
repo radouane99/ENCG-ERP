@@ -356,6 +356,8 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|super_admin|instituti
     Route::get('modules/{module}/pv/export-rattrapage-pdf', [PdfExportController::class, 'exportRattrapage_PvPdf']); // #3
     Route::post('modules/{module}/pv/sign', [GradeController::class, 'signModulePv']);
     Route::post('modules/{module}/sign-pv', [GradeController::class, 'signModulePv']);
+    Route::post('modules/{module}/pv/unlock', [GradeController::class, 'unlockModulePv']);
+    Route::post('modules/{module}/unlock-pv', [GradeController::class, 'unlockModulePv']);
     Route::post('modules/{module}/generate-rattrapage-eligibilities', [GradeController::class, 'generateRattrapageEligibilities']); // Manual trigger
     Route::get('modules/{module}/export-grades', [GradeController::class, 'exportGradesTemplate']);
     Route::post('modules/{module}/import-grades', [GradeController::class, 'importGrades']);

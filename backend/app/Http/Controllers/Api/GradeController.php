@@ -285,6 +285,11 @@ class GradeController extends Controller
         $user = $request->user();
         $session = $validated['session'] ?? 'normale';
         $groupId = $validated['group_id'] ?? null;
+        if ($groupId === 'all' || $groupId === '' || $groupId === 'undefined' || ! is_numeric($groupId)) {
+            $groupId = null;
+        } else {
+            $groupId = (int) $groupId;
+        }
 
         $digitalSeal = hash('sha256', "module:{$moduleId}|session:{$session}|signer:{$user->id}|ts:".now()->timestamp);
 
@@ -342,6 +347,51 @@ class GradeController extends Controller
         ]);
     }
 
+    /**
+     * Déverrouille le PV du module et supprime la signature électronique (pour réouverture de la saisie).
+     */
+    public function unlockModulePv(Request $request, int $moduleId): JsonResponse
+    {
+        $this->authorize('create', Grade::class);
+
+        $module = Module::findOrFail($moduleId);
+        $user = $request->user();
+        $session = $request->input('session', 'normale');
+
+        $query = ModulePvSignature::where('module_id', $moduleId);
+        if ($session && $session !== 'all') {
+            $query->where('session', $session);
+        }
+        $deleted = $query->delete();
+
+        if (class_exists(AuditLog::class)) {
+            AuditLog::record([
+                'user_id' => $user->id,
+                'user_name' => $user->name ?? $user->email,
+                'user_email' => $user->email,
+                'user_role' => $user->role ?? ($user->roles?->first()?->name ?? 'Administrateur'),
+                'action' => 'Déverrouillage PV Module',
+                'action_type' => 'PV_UNLOCK',
+                'description' => "Le PV ({$session}) du module '{$module->name}' ({$module->code}) a été déverrouillé par {$user->name}",
+                'method' => 'POST',
+                'url' => $request->fullUrl(),
+                'ip_address' => $request->ip() ?: '127.0.0.1',
+                'severity' => 'warning',
+                'payload' => [
+                    'module_id' => $moduleId,
+                    'module_name' => $module->name,
+                    'session' => $session,
+                ],
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Le PV a été déverrouillé avec succès. La saisie des notes d\'examen est à nouveau ouverte.',
+            'deleted' => $deleted,
+        ]);
+    }
+
     // ─── MÉTHODES COURTES ─────────────────────────────────────
 
     public function generateRattrapageEligibilities(Request $request, int $moduleId): JsonResponse
@@ -371,21 +421,44 @@ class GradeController extends Controller
 
         $module = Module::findOrFail($moduleId);
 
-        $logs = Activity::where(function ($query) use ($module) {
-            $query->where('description', 'like', "%{$module->code}%")
-                ->orWhere('description', 'like', "%{$module->name}%");
-        })
-            ->latest()
-            ->take(30)
-            ->get()
-            ->map(fn ($log) => [
-                'id' => $log->id,
-                'description' => $log->description,
-                'causer_name' => $log->causer?->name ?? 'Système',
-                'created_at' => $log->created_at->toIso8601String(),
-            ]);
+        $logs = collect();
 
-        return response()->json(['success' => true, 'data' => $logs]);
+        if (class_exists(AuditLog::class)) {
+            $logs = AuditLog::where(function ($query) use ($module) {
+                $query->where('description', 'like', "%{$module->code}%")
+                    ->orWhere('description', 'like', "%{$module->name}%")
+                    ->orWhere('payload->module_id', $module->id);
+            })
+                ->latest('id')
+                ->take(50)
+                ->get()
+                ->map(fn ($log) => [
+                    'id' => $log->id,
+                    'description' => $log->description ?: ($log->action ?? 'Opération sur les notes'),
+                    'causer_name' => $log->user_name ?: ($log->user?->name ?? 'Système'),
+                    'created_at' => $log->created_at?->toIso8601String() ?? now()->toIso8601String(),
+                ]);
+        }
+
+        // Fallback to Spatie if exists
+        if ($logs->isEmpty() && class_exists('Spatie\Activitylog\Models\Activity')) {
+            $activityClass = 'Spatie\Activitylog\Models\Activity';
+            $logs = $activityClass::where(function ($query) use ($module) {
+                $query->where('description', 'like', "%{$module->code}%")
+                    ->orWhere('description', 'like', "%{$module->name}%");
+            })
+                ->latest('id')
+                ->take(50)
+                ->get()
+                ->map(fn ($log) => [
+                    'id' => $log->id,
+                    'description' => $log->description,
+                    'causer_name' => $log->causer?->name ?? 'Système',
+                    'created_at' => $log->created_at?->toIso8601String() ?? now()->toIso8601String(),
+                ]);
+        }
+
+        return response()->json(['success' => true, 'data' => $logs->values()]);
     }
 
     public function sendTranscriptEmail(Request $request, int $studentId): JsonResponse
@@ -806,11 +879,19 @@ class GradeController extends Controller
             $groupId = null;
         }
 
+        $assessmentId = $request->query('assessment_id');
+        $assessment = null;
+        if ($assessmentId && is_numeric($assessmentId)) {
+            $assessment = Assessment::where('module_id', $moduleModel->id)->find((int) $assessmentId);
+        }
+
         $students = $this->gradeService->getRegisteredStudents($moduleModel, $groupId);
 
+        $fileName = 'canevas_notes_'.$moduleModel->code.($assessment ? '_'.$assessment->type : '').'.xlsx';
+
         return Excel::download(
-            new GradesExport($moduleModel, $students),
-            'canevas_notes_'.$moduleModel->code.'.xlsx'
+            new GradesExport($moduleModel, $students, $assessment),
+            $fileName
         );
     }
 
@@ -819,7 +900,10 @@ class GradeController extends Controller
         $this->authorize('create', Grade::class);
 
         $moduleModel = Module::findOrFail($module);
-        $import = new GradesImport($moduleModel);
+        $assessmentId = $request->input('assessment_id');
+        $targetAssessmentId = ($assessmentId && is_numeric($assessmentId)) ? (int) $assessmentId : null;
+
+        $import = new GradesImport($moduleModel, $targetAssessmentId);
         Excel::import($import, $request->file('file'));
 
         return response()->json([

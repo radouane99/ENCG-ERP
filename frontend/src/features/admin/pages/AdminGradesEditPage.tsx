@@ -32,7 +32,7 @@ export default function AdminGradesEditPage() {
   // Query audit logs
   const { data: auditLogs, isLoading: isLoadingLogs } = useQuery({
     queryKey: ['module-audit-logs', moduleId],
-    queryFn: () => api.get(`/modules/${moduleId}/audit-logs`).then(res => res.data),
+    queryFn: () => api.get(`/modules/${moduleId}/audit-logs`).then(res => res.data?.data || (Array.isArray(res.data) ? res.data : [])),
     enabled: !!moduleId && showAuditLogsDrawer,
   })
 
@@ -199,7 +199,10 @@ export default function AdminGradesEditPage() {
       const fileName = `Canevas_Notes_${moduleCode}_${cleanModuleName}_${assessmentType}.xlsx`
 
       const response = await api.get(`/modules/${moduleId}/export-grades`, {
-        params: { group_id: viewAllGroups ? 'all' : searchParams.get('group_id') },
+        params: { 
+          group_id: viewAllGroups ? 'all' : searchParams.get('group_id'),
+          assessment_id: selectedAssessmentId || undefined
+        },
         responseType: 'blob'
       })
       const url = window.URL.createObjectURL(new Blob([response.data]))
@@ -221,6 +224,9 @@ export default function AdminGradesEditPage() {
 
     const formData = new FormData()
     formData.append('file', file)
+    if (selectedAssessmentId) {
+      formData.append('assessment_id', String(selectedAssessmentId))
+    }
 
     const toastId = toast.loading(isRtl ? 'جاري استيراد النقاط...' : 'Importation des notes en cours...')
     try {
@@ -232,16 +238,25 @@ export default function AdminGradesEditPage() {
       toast.dismiss(toastId)
       toast.success(res.data.message || "Notes importées avec succès !")
       if (res.data.warnings && res.data.warnings.length > 0) {
-        res.data.warnings.forEach((warn: string) => {
-          toast.warning(warn, { duration: 6000 })
-        })
+        if (res.data.warnings.length <= 3) {
+          res.data.warnings.forEach((warn: string) => {
+            toast.warning(warn, { duration: 5000 })
+          })
+        } else {
+          toast.warning(isRtl ? `${res.data.warnings.length} تنبيهات أثناء الاستيراد` : `${res.data.warnings.length} avertissements lors de l'import (ex: ${res.data.warnings[0]})`, { duration: 6000 })
+        }
       }
-      queryClient.invalidateQueries({ queryKey: ['grades', selectedAssessmentId] })
+      queryClient.invalidateQueries({ queryKey: ['grades'] })
+      queryClient.invalidateQueries({ queryKey: ['module-pv', moduleId] })
     } catch (err: any) {
       toast.dismiss(toastId)
       toast.error(err.response?.data?.message || "Erreur lors de l'importation du fichier Excel.")
       if (err.response?.data?.details) {
         toast.error(err.response.data.details, { duration: 6000 })
+      }
+    } finally {
+      if (e.target) {
+        e.target.value = ''
       }
     }
   }
@@ -297,6 +312,20 @@ export default function AdminGradesEditPage() {
 
   if (!moduleId) {
     return <div className="p-8 text-center text-red-500">Erreur : module_id manquant.</div>
+  }
+
+  const handleUnlockPv = async () => {
+    if (!window.confirm(isRtl ? 'هل تريد فتح المحضر وإعادة تفعيل إدخال النقط؟' : 'Voulez-vous déverrouiller le PV et réautoriser la saisie des notes ?')) {
+      return
+    }
+    try {
+      const res = await api.post(`/modules/${moduleId}/unlock-pv`, { session: 'normale' })
+      toast.success(res.data.message || 'PV déverrouillé avec succès !')
+      queryClient.invalidateQueries({ queryKey: ['grades'] })
+      queryClient.invalidateQueries({ queryKey: ['module-pv', moduleId] })
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Erreur lors du déverrouillage du PV')
+    }
   }
 
   return (
@@ -358,12 +387,24 @@ export default function AdminGradesEditPage() {
               </p>
             </div>
           </div>
-          <span className={cn(
-            "px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider shrink-0 shadow-xs text-white",
-            isExamAssessment ? "bg-amber-700" : "bg-emerald-700"
-          )}>
-            {isExamAssessment ? 'Examen Verrouillé' : 'CC Ouvert (Modifications Autorisées)'}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className={cn(
+              "px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider shrink-0 shadow-xs text-white",
+              isExamAssessment ? "bg-amber-700" : "bg-emerald-700"
+            )}>
+              {isExamAssessment ? 'Examen Verrouillé' : 'CC Ouvert (Modifications Autorisées)'}
+            </span>
+            {isModulePvSigned && (
+              <button
+                type="button"
+                onClick={handleUnlockPv}
+                className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold px-3 py-1.5 rounded-xl shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+                title={isRtl ? 'إلغاء قفل المحضر وإعادة فتح إدخال النقط' : 'Déverrouiller le PV pour réautoriser la saisie des notes'}
+              >
+                🔓 {isRtl ? 'إلغاء القفل' : 'Déverrouiller'}
+              </button>
+            )}
+          </div>
         </div>
       )}
 

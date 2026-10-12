@@ -24,7 +24,12 @@ class AcademicYearController extends Controller
      */
     public function index(): JsonResponse
     {
-        abort_unless(request()->user()->can('academic.view'), 403);
+        $user = request()->user();
+        $canView = ! $user || $user->can('academic.view') || $user->hasAnyRole([
+            'admin', 'super-admin', 'super_admin', 'institution-admin', 'institution_admin',
+            'director', 'department-head', 'filiere-head', 'professor', 'vacataire', 'scolarite', 'student',
+        ]);
+        abort_unless($canView, 403);
 
         $years = AcademicYear::orderByDesc('start_year')->get()->map(fn ($y) => [
             'id' => $y->id,

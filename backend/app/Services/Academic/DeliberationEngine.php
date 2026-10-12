@@ -64,7 +64,7 @@ class DeliberationEngine
             $weightedSum += ($value * $weightFraction);
             $totalWeight += $weightFraction;
 
-            if (in_array(strtolower($assessment->type), ['exam', 'examen', 'cc2']) && LmdRules::isEliminatory($value)) {
+            if (in_array(strtolower($assessment->type), ['exam', 'examen']) && LmdRules::isEliminatory($value)) {
                 $hasEliminatory = true;
             }
         }
