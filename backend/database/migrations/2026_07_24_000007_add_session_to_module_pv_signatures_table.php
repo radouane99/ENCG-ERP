@@ -9,8 +9,10 @@ return new class extends Migration
 {
     public function up(): void
     {
-        DB::statement('ALTER TABLE module_pv_signatures DROP CONSTRAINT IF EXISTS module_group_year_signature_unique;');
-        DB::statement('ALTER TABLE module_pv_signatures DROP CONSTRAINT IF EXISTS module_group_year_session_sig_unique;');
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement('ALTER TABLE module_pv_signatures DROP CONSTRAINT IF EXISTS module_group_year_signature_unique;');
+            DB::statement('ALTER TABLE module_pv_signatures DROP CONSTRAINT IF EXISTS module_group_year_session_sig_unique;');
+        }
 
         if (! Schema::hasColumn('module_pv_signatures', 'session')) {
             Schema::table('module_pv_signatures', function (Blueprint $table) {
@@ -28,7 +30,9 @@ return new class extends Migration
 
     public function down(): void
     {
-        DB::statement('ALTER TABLE module_pv_signatures DROP CONSTRAINT IF EXISTS module_group_year_session_sig_unique;');
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement('ALTER TABLE module_pv_signatures DROP CONSTRAINT IF EXISTS module_group_year_session_sig_unique;');
+        }
         if (Schema::hasColumn('module_pv_signatures', 'session')) {
             Schema::table('module_pv_signatures', function (Blueprint $table) {
                 $table->dropColumn('session');

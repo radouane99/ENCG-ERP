@@ -163,5 +163,6 @@ $studentPortalRoutes = function () {
 
 Route::middleware(['auth:sanctum', 'role:student'])->prefix('v1/student-portal')->group($studentPortalRoutes);
 Route::middleware(['auth:sanctum', 'role:student'])->prefix('student-portal')->group($studentPortalRoutes);
-Route::middleware(['auth:sanctum'])->prefix('v1/student')->group($studentPortalRoutes);
-Route::middleware(['auth:sanctum'])->prefix('student')->group($studentPortalRoutes);
+Route::middleware(['auth:sanctum', 'role:student'])->prefix('v1/student')->group($studentPortalRoutes);
+Route::middleware(['auth:sanctum', 'role:student'])->prefix('student')->group($studentPortalRoutes);
+

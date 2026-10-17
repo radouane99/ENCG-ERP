@@ -9,10 +9,15 @@ return new class extends Migration
 {
     public function up(): void
     {
-        DB::statement('DROP TABLE IF EXISTS student_specialty_wishes CASCADE');
-        DB::statement('DROP TABLE IF EXISTS filiere_quotas CASCADE');
-        DB::statement('DROP SEQUENCE IF EXISTS filiere_quotas_id_seq CASCADE');
-        DB::statement('DROP SEQUENCE IF EXISTS student_specialty_wishes_id_seq CASCADE');
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement('DROP TABLE IF EXISTS student_specialty_wishes CASCADE');
+            DB::statement('DROP TABLE IF EXISTS filiere_quotas CASCADE');
+            DB::statement('DROP SEQUENCE IF EXISTS filiere_quotas_id_seq CASCADE');
+            DB::statement('DROP SEQUENCE IF EXISTS student_specialty_wishes_id_seq CASCADE');
+        } else {
+            Schema::dropIfExists('student_specialty_wishes');
+            Schema::dropIfExists('filiere_quotas');
+        }
 
         if (! Schema::hasTable('filiere_quotas')) {
             Schema::create('filiere_quotas', function (Blueprint $table) {

@@ -574,6 +574,39 @@ class AppServiceProvider extends ServiceProvider
                 return preg_match('/^[a-zA-ZÀ-ÿ\s\-\']+$/', $value) && strlen($value) >= 2;
             });
         }
+
+        // Macros pour recherches insensibles à la casse (PostgreSQL ilike / SQLite & MySQL like)
+        \Illuminate\Database\Eloquent\Builder::macro('whereILike', function ($column, $value) {
+            /** @var \Illuminate\Database\Eloquent\Builder $this */
+            $driver = $this->getConnection()->getDriverName();
+            $operator = ($driver === 'pgsql') ? 'ilike' : 'like';
+
+            return $this->where($column, $operator, $value);
+        });
+
+        \Illuminate\Database\Eloquent\Builder::macro('orWhereILike', function ($column, $value) {
+            /** @var \Illuminate\Database\Eloquent\Builder $this */
+            $driver = $this->getConnection()->getDriverName();
+            $operator = ($driver === 'pgsql') ? 'ilike' : 'like';
+
+            return $this->orWhere($column, $operator, $value);
+        });
+
+        \Illuminate\Database\Query\Builder::macro('whereILike', function ($column, $value) {
+            /** @var \Illuminate\Database\Query\Builder $this */
+            $driver = $this->getConnection()->getDriverName();
+            $operator = ($driver === 'pgsql') ? 'ilike' : 'like';
+
+            return $this->where($column, $operator, $value);
+        });
+
+        \Illuminate\Database\Query\Builder::macro('orWhereILike', function ($column, $value) {
+            /** @var \Illuminate\Database\Query\Builder $this */
+            $driver = $this->getConnection()->getDriverName();
+            $operator = ($driver === 'pgsql') ? 'ilike' : 'like';
+
+            return $this->orWhere($column, $operator, $value);
+        });
     }
 
     /**

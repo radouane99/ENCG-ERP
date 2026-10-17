@@ -53,10 +53,12 @@ class InternshipController extends Controller
         } catch (\InvalidArgumentException $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 400);
         } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Erreur mise à jour stage: '.$e->getMessage(), ['exception' => $e]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Erreur lors de la mise à jour du stage.',
-                'error' => $e->getMessage(),
+                'error' => config('app.debug') ? $e->getMessage() : null,
             ], 500);
         }
     }

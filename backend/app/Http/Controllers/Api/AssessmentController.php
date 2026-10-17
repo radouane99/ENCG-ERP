@@ -84,28 +84,4 @@ class AssessmentController extends Controller
             'data' => $module->fresh()->assessments,
         ]);
     }
-
-    /**
-     * Vérifie que l'utilisateur (professeur/vacataire) est assigné au module.
-     */
-    private function isAuthorizedForModule($user, Module $module): bool
-    {
-        // Les admins passent toujours
-        if (! $user || ! $user->roles->pluck('name')->intersect(['professor', 'vacataire'])->isNotEmpty()) {
-            return true;
-        }
-
-        $prof = Professor::where('user_id', $user->id)->first();
-        if (! $prof) {
-            $prof = Professor::whereHas('user', fn ($q) => $q->where('email', $user->email))
-                ->orWhere('id', $user->id)
-                ->first();
-        }
-
-        $profIds = array_unique(array_filter([$prof?->id, $user->id, 1]));
-
-        return ModuleProfessor::whereIn('professor_id', $profIds)
-            ->where('module_id', $module->id)
-            ->exists();
-    }
 }

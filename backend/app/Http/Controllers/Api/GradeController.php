@@ -477,7 +477,12 @@ class GradeController extends Controller
 
             return response()->json(['success' => true, 'message' => 'Email envoyé.']);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            \Illuminate\Support\Facades\Log::error('Erreur envoi relevé de notes: '.$e->getMessage(), ['exception' => $e]);
+
+            return response()->json([
+                'success' => false,
+                'message' => config('app.debug') ? $e->getMessage() : 'Erreur lors de l\'envoi du relevé de notes par email.',
+            ], 500);
         }
     }
 
@@ -928,9 +933,7 @@ class GradeController extends Controller
         // Identifier le profil professeur
         $prof = $user->professor;
         if (! $prof) {
-            $prof = \App\Models\Professor::where('user_id', $user->id)
-                ->orWhere('email', $user->email)
-                ->first();
+            $prof = \App\Models\Professor::where('user_id', $user->id)->first();
         }
 
         $profIds = array_filter(array_unique([

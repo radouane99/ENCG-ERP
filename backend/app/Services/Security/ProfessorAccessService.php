@@ -21,34 +21,30 @@ class ProfessorAccessService
             return collect();
         }
 
-        // Les administrateurs et directeurs ont accès à tous les modules
+        // Administrators and directors have access to all modules
         if ($user->hasAnyRole(['super-admin', 'super_admin', 'institution-admin', 'institution_admin', 'director'])) {
             return Module::pluck('id');
         }
 
-        $prof = Professor::where('user_id', $user->id)->first();
-        if (! $prof) {
-            $userName = trim($user->name ?? '');
-            $prof = Professor::whereHas('user', fn ($q) => $q->where('email', $user->email)->orWhere('name', 'LIKE', "%{$userName}%"))
-                ->orWhere('id', $user->id)
-                ->first();
+        // Strict binding: user.id → professor.user_id (no fallback)
+        $professor = $user->professor;
+        if (! $professor) {
+            return collect();
         }
 
-        $profIds = array_unique(array_filter([$prof?->id, $user->id, 1]));
-
         $assignedModuleIds = DB::table('module_professor')
-            ->whereIn('professor_id', $profIds)
+            ->where('professor_id', $professor->id)
             ->pluck('module_id');
 
         $today = now()->format('Y-m-d');
         $substituteModuleIds = DB::table('professor_substitutions')
-            ->whereIn('substitute_professor_id', $profIds)
+            ->where('substitute_professor_id', $professor->id)
             ->where('status', 'active')
             ->where('start_date', '<=', $today)
             ->where('end_date', '>=', $today)
             ->pluck('module_id');
 
-        return $assignedModuleIds->merge($substituteModuleIds)->unique()->filter();
+        return $assignedModuleIds->merge($substituteModuleIds)->unique();
     }
 
     /**

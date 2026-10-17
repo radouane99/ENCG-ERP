@@ -84,8 +84,13 @@ return new class extends Migration
         }
 
         // Drop old tables with CASCADE to handle PostgreSQL foreign key dependencies
-        DB::statement('DROP TABLE IF EXISTS "internships" CASCADE');
-        DB::statement('DROP TABLE IF EXISTS "final_projects" CASCADE');
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement('DROP TABLE IF EXISTS "internships" CASCADE');
+            DB::statement('DROP TABLE IF EXISTS "final_projects" CASCADE');
+        } else {
+            Schema::dropIfExists('internships');
+            Schema::dropIfExists('final_projects');
+        }
     }
 
     public function down(): void

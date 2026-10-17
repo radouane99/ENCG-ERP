@@ -207,7 +207,7 @@ export default function DisciplinePage(): React.ReactElement {
       return api.post('/discipline/seed-samples')
     },
     onSuccess: () => {
-      toast.success('✨ 5 dossiers disciplinaires types réinitialisés avec succès !')
+      toast.success('✨ Dossiers disciplinaires de démonstration générés !')
       queryClient.invalidateQueries({ queryKey: ['discipline-cases'] })
     },
     onError: (err: any) => {
@@ -498,19 +498,21 @@ export default function DisciplinePage(): React.ReactElement {
               <span className="hidden sm:inline">Actualiser</span>
             </button>
 
-            <button
-              type="button"
-              onClick={() => {
-                if (confirm('Voulez-vous réinitialiser les 5 dossiers disciplinaires de démonstration ENCG Fès ?')) {
-                  seedSamplesMutation.mutate()
-                }
-              }}
-              disabled={seedSamplesMutation.isPending}
-              className="p-2.5 bg-white/5 hover:bg-white/15 text-rose-200 hover:text-white rounded-xl text-xs font-bold transition-all border border-white/10 cursor-pointer"
-              title="Réinitialiser avec 5 dossiers types ENCG Fès"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-            </button>
+            {import.meta.env.DEV && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (confirm('Générer des dossiers disciplinaires de démonstration (dev uniquement) ?')) {
+                    seedSamplesMutation.mutate()
+                  }
+                }}
+                disabled={seedSamplesMutation.isPending}
+                className="p-2.5 bg-white/5 hover:bg-white/15 text-rose-200 hover:text-white rounded-xl text-xs font-bold transition-all border border-white/10 cursor-pointer"
+                title="Générer des dossiers de démonstration (dev)"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
         </div>
 
@@ -666,13 +668,15 @@ export default function DisciplinePage(): React.ReactElement {
               >
                 <Plus className="w-4 h-4 me-1.5" /> Nouveau Dossier
               </Button>
-              <Button
-                variant="outline"
-                onClick={() => seedSamplesMutation.mutate()}
-                className="text-xs rounded-xl font-bold"
-              >
-                <Sparkles className="w-3.5 h-3.5 me-1.5 text-amber-500" /> Charger 5 cas types
-              </Button>
+              {import.meta.env.DEV && (
+                <Button
+                  variant="outline"
+                  onClick={() => seedSamplesMutation.mutate()}
+                  className="text-xs rounded-xl font-bold"
+                >
+                  <Sparkles className="w-3.5 h-3.5 me-1.5 text-amber-500" /> Charger des cas de démo
+                </Button>
+              )}
             </div>
           </div>
         ) : (

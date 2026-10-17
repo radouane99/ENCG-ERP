@@ -125,6 +125,11 @@ class GroupController extends Controller
      */
     public function destroy(int $id): JsonResponse
     {
+        $user = request()->user();
+        if (! $user || ! $user->hasAnyRole(['admin', 'super-admin', 'super_admin', 'institution-admin', 'institution_admin'])) {
+            abort(403, 'Action réservée aux administrateurs de l\'institution.');
+        }
+
         $group = Group::findOrFail($id);
 
         DB::transaction(function () use ($group) {
@@ -182,6 +187,11 @@ class GroupController extends Controller
      */
     public function assignDelegate(Request $request, int $id): JsonResponse
     {
+        $user = $request->user();
+        if (! $user || ! $user->hasAnyRole(['admin', 'super-admin', 'super_admin', 'director', 'pedagogy_officer', 'department-head', 'filiere-head'])) {
+            abort(403, 'Non autorisé à désigner un délégué.');
+        }
+
         $group = Group::findOrFail($id);
 
         $group->update([
@@ -201,6 +211,11 @@ class GroupController extends Controller
      */
     public function dispatchStudentsToGroups(Request $request): JsonResponse
     {
+        $user = $request->user();
+        if (! $user || ! $user->hasAnyRole(['admin', 'super-admin', 'super_admin', 'director', 'pedagogy_officer', 'department-head', 'filiere-head'])) {
+            abort(403, 'Non autorisé à répartir les étudiants dans les groupes.');
+        }
+
         $filiereId = $request->input('filiere_id');
         if (! $filiereId) {
             return response()->json(['success' => false, 'message' => 'Filière requise.'], 422);
@@ -239,6 +254,11 @@ class GroupController extends Controller
      */
     public function dispatchSubGroups(Request $request, StudentSubGroupDispatcherService $dispatcher): JsonResponse
     {
+        $user = $request->user();
+        if (! $user || ! $user->hasAnyRole(['admin', 'super-admin', 'super_admin', 'director', 'pedagogy_officer', 'department-head', 'filiere-head'])) {
+            abort(403, 'Non autorisé à exécuter le découpage des sous-groupes TD.');
+        }
+
         $groupId = $request->input('group_id');
         if ($groupId) {
             $group = Group::findOrFail($groupId);

@@ -170,9 +170,13 @@ class ReservisteController extends Controller
                 'cne' => $student->cne ?? $student->student_number,
             ], $debtModules));
 
-            return response()->json(['success' => true, 'message' => 'Email envoyé.']);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            \Illuminate\Support\Facades\Log::error('Échec envoi email réserviste: '.$e->getMessage(), ['exception' => $e]);
+
+            return response()->json([
+                'success' => false,
+                'message' => config('app.debug') ? $e->getMessage() : 'Erreur lors de l\'envoi de l\'email au réserviste.',
+            ], 500);
         }
     }
 

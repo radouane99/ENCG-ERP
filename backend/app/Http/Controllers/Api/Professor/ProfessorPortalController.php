@@ -913,15 +913,19 @@ class ProfessorPortalController extends Controller
         try {
             $profFullName = 'Pr. '.strtoupper($user->last_name ?? '').' '.ucfirst($user->first_name ?? '');
 
-            // Find all admin / SG / Scolarité users
-            $admins = User::where(function ($query) {
-                $query->whereHas('roles', function ($q) {
-                    $q->whereIn('name', ['admin', 'super-admin', 'secretaire-general', 'service-scolarite', 'rh', 'direction']);
-                })->orWhere('email', 'like', '%admin%');
-            })->get();
+            // Destinataires déterminés UNIQUEMENT par rôle (aucun fallback email/aléatoire).
+            $admins = User::where('is_active', true)
+                ->where('id', '!=', $user->id)
+                ->whereHas('roles', function ($q) {
+                    $q->whereIn('name', [
+                        'admin', 'super-admin', 'institution-admin', 'director', 'hr-officer',
+                        'secretaire-general', 'service-scolarite', 'rh', 'direction',
+                    ]);
+                })
+                ->get();
 
             if ($admins->isEmpty()) {
-                $admins = User::where('is_active', true)->where('id', '!=', $user->id)->take(5)->get();
+                Log::warning("Demande enseignant {$trackingCode} : aucun destinataire administratif trouvé.");
             }
 
             foreach ($admins as $adminUser) {

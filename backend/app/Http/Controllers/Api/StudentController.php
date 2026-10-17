@@ -82,9 +82,11 @@ class StudentController extends Controller
                 'data' => new StudentResource($student->load(['latestPathway.filiere', 'user'])),
             ], 201);
         } catch (\Exception $e) {
+            Log::error('Erreur lors de la création de l\'étudiant: '.$e->getMessage(), ['exception' => $e]);
+
             return response()->json([
                 'message' => 'Erreur lors de la création de l\'étudiant.',
-                'error' => $e->getMessage(),
+                'error' => config('app.debug') ? $e->getMessage() : null,
             ], 500);
         }
     }
@@ -116,9 +118,11 @@ class StudentController extends Controller
                 'data' => new StudentResource($updated->load(['latestPathway.filiere', 'user'])),
             ]);
         } catch (\Exception $e) {
+            Log::error('Erreur lors de la mise à jour de l\'étudiant: '.$e->getMessage(), ['exception' => $e]);
+
             return response()->json([
                 'message' => 'Erreur lors de la mise à jour de l\'étudiant.',
-                'error' => $e->getMessage(),
+                'error' => config('app.debug') ? $e->getMessage() : null,
             ], 500);
         }
     }
@@ -135,9 +139,11 @@ class StudentController extends Controller
 
             return response()->json(['message' => 'Étudiant supprimé avec succès.']);
         } catch (\Exception $e) {
+            Log::error('Erreur lors de la suppression de l\'étudiant: '.$e->getMessage(), ['exception' => $e]);
+
             return response()->json([
                 'message' => 'Erreur lors de la suppression de l\'étudiant.',
-                'error' => $e->getMessage(),
+                'error' => config('app.debug') ? $e->getMessage() : null,
             ], 500);
         }
     }

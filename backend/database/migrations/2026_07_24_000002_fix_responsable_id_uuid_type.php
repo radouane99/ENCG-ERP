@@ -10,8 +10,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        DB::statement('ALTER TABLE filieres DROP COLUMN IF EXISTS responsable_id CASCADE;');
-        DB::statement('ALTER TABLE filieres ADD COLUMN responsable_id BIGINT NULL REFERENCES users(id) ON DELETE SET NULL;');
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement('ALTER TABLE filieres DROP COLUMN IF EXISTS responsable_id CASCADE;');
+            DB::statement('ALTER TABLE filieres ADD COLUMN responsable_id BIGINT NULL REFERENCES users(id) ON DELETE SET NULL;');
+        }
     }
 
     /**
@@ -19,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::statement('ALTER TABLE filieres DROP COLUMN IF EXISTS responsable_id CASCADE;');
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement('ALTER TABLE filieres DROP COLUMN IF EXISTS responsable_id CASCADE;');
+        }
     }
 };

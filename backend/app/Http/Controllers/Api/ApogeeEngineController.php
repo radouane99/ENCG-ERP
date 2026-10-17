@@ -31,6 +31,11 @@ class ApogeeEngineController extends Controller
      */
     public function exportApogeeCsv(Request $request)
     {
+        $user = $request->user();
+        if (! $user || (! $user->can('reports.export') && ! $user->hasAnyRole(['admin', 'super-admin', 'super_admin', 'director', 'pedagogy_officer', 'institution-admin', 'institution_admin']))) {
+            abort(403, 'Non autorisé à exporter les données APOGEE.');
+        }
+
         $filiereId = $request->query('filiere_id') ? (int) $request->query('filiere_id') : null;
         $semesterId = $request->query('semester_id') ? (int) $request->query('semester_id') : null;
         $academicYearId = $request->query('academic_year_id') ? (int) $request->query('academic_year_id') : null;
@@ -58,6 +63,11 @@ class ApogeeEngineController extends Controller
      */
     public function getApogeePreview(Request $request): JsonResponse
     {
+        $user = $request->user();
+        if (! $user || (! $user->can('reports.view') && ! $user->hasAnyRole(['admin', 'super-admin', 'super_admin', 'director', 'pedagogy_officer', 'institution-admin', 'institution_admin']))) {
+            abort(403, 'Non autorisé à consulter les données APOGEE.');
+        }
+
         $filiereId = $request->query('filiere_id') ? (int) $request->query('filiere_id') : null;
         $semesterId = $request->query('semester_id') ? (int) $request->query('semester_id') : null;
         $academicYearId = $request->query('academic_year_id') ? (int) $request->query('academic_year_id') : null;

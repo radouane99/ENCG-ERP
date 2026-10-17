@@ -71,7 +71,11 @@ return new class extends Migration
             }
             // Drop old table
             // Drop old table (CASCADE required for PostgreSQL foreign key dependencies)
-            DB::statement('DROP TABLE IF EXISTS "attendance_records" CASCADE');
+            if (DB::getDriverName() === 'pgsql') {
+                DB::statement('DROP TABLE IF EXISTS "attendance_records" CASCADE');
+            } else {
+                Schema::dropIfExists('attendance_records');
+            }
         }
 
         // 2. Professor Availabilities
@@ -126,7 +130,11 @@ return new class extends Migration
                     ]);
                 }
             }
-            DB::statement('DROP TABLE IF EXISTS "professor_availability" CASCADE');
+            if (DB::getDriverName() === 'pgsql') {
+                DB::statement('DROP TABLE IF EXISTS "professor_availability" CASCADE');
+            } else {
+                Schema::dropIfExists('professor_availability');
+            }
         }
     }
 

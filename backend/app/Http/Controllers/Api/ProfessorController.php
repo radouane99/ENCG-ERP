@@ -13,6 +13,7 @@ use App\Models\Professor;
 use App\Services\HR\ProfessorService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class ProfessorController extends Controller
 {
@@ -51,10 +52,12 @@ class ProfessorController extends Controller
                 'data' => new ProfessorResource($professor->load(['department', 'user'])),
             ], 201);
         } catch (\Exception $e) {
+            Log::error('Erreur lors de la création du professeur: '.$e->getMessage(), ['exception' => $e]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Erreur lors de la création du professeur.',
-                'error' => $e->getMessage(),
+                'error' => config('app.debug') ? $e->getMessage() : null,
             ], 500);
         }
     }
@@ -86,10 +89,12 @@ class ProfessorController extends Controller
                 'data' => new ProfessorResource($updated->load(['department', 'user'])),
             ]);
         } catch (\Exception $e) {
+            Log::error('Erreur lors de la mise à jour du professeur: '.$e->getMessage(), ['exception' => $e]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Erreur lors de la mise à jour du professeur.',
-                'error' => $e->getMessage(),
+                'error' => config('app.debug') ? $e->getMessage() : null,
             ], 500);
         }
     }
@@ -109,10 +114,12 @@ class ProfessorController extends Controller
                 'message' => 'Professeur supprimé avec succès.',
             ]);
         } catch (\Exception $e) {
+            Log::error('Erreur lors de la suppression du professeur: '.$e->getMessage(), ['exception' => $e]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Erreur lors de la suppression du professeur.',
-                'error' => $e->getMessage(),
+                'error' => config('app.debug') ? $e->getMessage() : null,
             ], 500);
         }
     }

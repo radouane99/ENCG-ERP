@@ -15,8 +15,13 @@ class InstitutionSettingsController extends Controller
     /**
      * Récupérer la configuration globale de l'institution et de l'ERP.
      */
-    public function getSettings(): JsonResponse
+    public function getSettings(Request $request): JsonResponse
     {
+        $user = $request->user();
+        if ($user && ! $user->can('system.settings') && ! $user->hasAnyRole(['admin', 'super-admin', 'super_admin', 'institution-admin', 'institution_admin', 'director'])) {
+            abort(403, 'Accès non autorisé aux paramètres de l\'institution.');
+        }
+
         $institution = Institution::first();
 
         if (! $institution) {
@@ -129,6 +134,11 @@ class InstitutionSettingsController extends Controller
      */
     public function updateSettings(Request $request): JsonResponse
     {
+        $user = $request->user();
+        if (! $user || (! $user->can('system.settings') && ! $user->hasAnyRole(['admin', 'super-admin', 'super_admin', 'institution-admin', 'institution_admin', 'director']))) {
+            abort(403, 'Accès non autorisé aux paramètres de l\'institution.');
+        }
+
         $validated = $request->validate([
             'institutionName' => 'sometimes|string|max:255',
             'universityName' => 'sometimes|string|max:255',
@@ -250,6 +260,10 @@ class InstitutionSettingsController extends Controller
     public function testResendEmail(Request $request): JsonResponse
     {
         $user = $request->user();
+        if (! $user || (! $user->can('system.settings') && ! $user->hasAnyRole(['admin', 'super-admin', 'super_admin']))) {
+            abort(403, 'Accès non autorisé au test email système.');
+        }
+
         $targetEmail = $request->input('email', $user?->email ?? 'admin@encg-fes.ma');
 
         return response()->json([

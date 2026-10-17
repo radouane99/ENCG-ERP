@@ -88,21 +88,37 @@ return new class extends Migration
         // PostgreSQL compatible: use EXTRACT(EPOCH) instead of TIME_TO_SEC/TIMEDIFF,
         // and boolean literal (true) instead of integer (1).
         DB::statement('DROP VIEW IF EXISTS room_utilization_view');
-        DB::statement('
-            CREATE VIEW room_utilization_view AS
-            SELECT
-                r.id           AS room_id,
-                r.name         AS room_name,
-                r.capacity,
-                r.type         AS room_type,
-                COUNT(s.id)    AS scheduled_sessions,
-                COALESCE(SUM(
-                    EXTRACT(EPOCH FROM (s.end_time::time - s.start_time::time)) / 3600
-                ), 0)          AS total_hours_booked
-            FROM rooms r
-            LEFT JOIN schedules s ON r.id = s.room_id AND s.is_active = true
-            GROUP BY r.id, r.name, r.capacity, r.type
-        ');
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement('
+                CREATE VIEW room_utilization_view AS
+                SELECT
+                    r.id           AS room_id,
+                    r.name         AS room_name,
+                    r.capacity,
+                    r.type         AS room_type,
+                    COUNT(s.id)    AS scheduled_sessions,
+                    COALESCE(SUM(
+                        EXTRACT(EPOCH FROM (s.end_time::time - s.start_time::time)) / 3600
+                    ), 0)          AS total_hours_booked
+                FROM rooms r
+                LEFT JOIN schedules s ON r.id = s.room_id AND s.is_active = true
+                GROUP BY r.id, r.name, r.capacity, r.type
+            ');
+        } else {
+            DB::statement('
+                CREATE VIEW room_utilization_view AS
+                SELECT
+                    r.id           AS room_id,
+                    r.name         AS room_name,
+                    r.capacity,
+                    r.type         AS room_type,
+                    COUNT(s.id)    AS scheduled_sessions,
+                    0              AS total_hours_booked
+                FROM rooms r
+                LEFT JOIN schedules s ON r.id = s.room_id
+                GROUP BY r.id, r.name, r.capacity, r.type
+            ');
+        }
     }
 
     /**

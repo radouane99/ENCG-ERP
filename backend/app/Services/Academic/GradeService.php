@@ -146,21 +146,15 @@ class GradeService
      */
     public function isProfessorAssignedToModule(int $userId, int $moduleId): bool
     {
+        // Liaison stricte users.id → professors.user_id (aucun fallback email/id).
         $prof = Professor::where('user_id', $userId)->first();
         if (! $prof) {
-            $user = User::find($userId);
-            if ($user) {
-                $prof = Professor::whereHas('user', fn ($q) => $q->where('email', $user->email))
-                    ->orWhere('id', $userId)
-                    ->first();
-            }
+            return false;
         }
 
-        $profIds = array_unique(array_filter([$prof?->id, $userId, 1]));
-
-        return ModuleProfessor::whereIn('professor_id', $profIds)
+        return ModuleProfessor::where('professor_id', $prof->id)
             ->where('module_id', $moduleId)
-            ->exists() || Module::where('id', $moduleId)->whereIn('professor_id', $profIds)->exists();
+            ->exists();
     }
 
     /**

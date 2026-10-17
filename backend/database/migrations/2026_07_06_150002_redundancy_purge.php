@@ -8,26 +8,24 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // PostgreSQL requires CASCADE to drop tables with dependent foreign keys.
-        // Schema::disableForeignKeyConstraints() does NOT work reliably with pgsql.
-        DB::statement('DROP TABLE IF EXISTS "two_factor_auth" CASCADE');
-        DB::statement('DROP TABLE IF EXISTS "alumni" CASCADE');
-        DB::statement('DROP TABLE IF EXISTS "audit_logs" CASCADE');
-        DB::statement('DROP TABLE IF EXISTS "user_devices" CASCADE');
-        DB::statement('DROP TABLE IF EXISTS "complaints" CASCADE');
-        DB::statement('DROP TABLE IF EXISTS "contact_submissions" CASCADE');
-        DB::statement('DROP TABLE IF EXISTS "student_documents" CASCADE');
-        DB::statement('DROP TABLE IF EXISTS "application_documents" CASCADE');
-        // EXAMINATIONS KEPT ALIVE
-        DB::statement('DROP TABLE IF EXISTS "assignments" CASCADE');
-        DB::statement('DROP TABLE IF EXISTS "quizzes" CASCADE');
-        DB::statement('DROP TABLE IF EXISTS "assignment_submissions" CASCADE');
-        DB::statement('DROP TABLE IF EXISTS "quiz_attempts" CASCADE');
-        DB::statement('DROP TABLE IF EXISTS "schedule_change_requests" CASCADE');
-        DB::statement('DROP TABLE IF EXISTS "compensation_results" CASCADE');
-        DB::statement('DROP TABLE IF EXISTS "resit_eligibilities" CASCADE');
-        DB::statement('DROP TABLE IF EXISTS "ai_conversations" CASCADE');
-        DB::statement('DROP TABLE IF EXISTS "ai_generated_content" CASCADE');
+        $tables = [
+            'two_factor_auth', 'alumni', 'audit_logs', 'user_devices',
+            'complaints', 'contact_submissions', 'student_documents',
+            'application_documents', 'assignments', 'quizzes',
+            'assignment_submissions', 'quiz_attempts', 'schedule_change_requests',
+            'compensation_results', 'resit_eligibilities', 'ai_conversations',
+            'ai_generated_content',
+        ];
+
+        if (DB::getDriverName() === 'pgsql') {
+            foreach ($tables as $table) {
+                DB::statement("DROP TABLE IF EXISTS \"{$table}\" CASCADE");
+            }
+        } else {
+            foreach ($tables as $table) {
+                Schema::dropIfExists($table);
+            }
+        }
     }
 
     public function down(): void

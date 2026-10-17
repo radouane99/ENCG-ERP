@@ -12,12 +12,18 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // PostgreSQL requires CASCADE — Schema::disableForeignKeyConstraints() is unreliable on pgsql
         // 1. REMOVE LEGACY TABLES
-        DB::statement('DROP TABLE IF EXISTS "project_supervisors" CASCADE');
-        DB::statement('DROP TABLE IF EXISTS "soutenances" CASCADE');
-        DB::statement('DROP TABLE IF EXISTS "final_projects" CASCADE');
-        DB::statement('DROP TABLE IF EXISTS "internships" CASCADE');
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement('DROP TABLE IF EXISTS "project_supervisors" CASCADE');
+            DB::statement('DROP TABLE IF EXISTS "soutenances" CASCADE');
+            DB::statement('DROP TABLE IF EXISTS "final_projects" CASCADE');
+            DB::statement('DROP TABLE IF EXISTS "internships" CASCADE');
+        } else {
+            Schema::dropIfExists('project_supervisors');
+            Schema::dropIfExists('soutenances');
+            Schema::dropIfExists('final_projects');
+            Schema::dropIfExists('internships');
+        }
 
         // 2. DATA CONSISTENCY CHECK
         // 'document_requests' uses 'student_id' as a foreign key pointing to 'students.id'.

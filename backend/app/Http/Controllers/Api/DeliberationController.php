@@ -300,6 +300,8 @@ class DeliberationController extends Controller
      */
     public function applyRachat(Request $request, int $id = 0): JsonResponse
     {
+        $this->authorize('create', Deliberation::class);
+
         if ($id) {
             app(DeliberationSealService::class)->assertNotSealed(Deliberation::findOrFail($id));
         }

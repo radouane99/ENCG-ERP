@@ -92,13 +92,23 @@ return new class extends Migration
                     ");
                 }
             }
-            DB::statement('DROP TABLE IF EXISTS "alumni_surveys" CASCADE');
+            if (DB::getDriverName() === 'pgsql') {
+                DB::statement('DROP TABLE IF EXISTS "alumni_surveys" CASCADE');
+            } else {
+                Schema::dropIfExists('alumni_surveys');
+            }
         }
 
         // C. telescope_* tables
-        DB::statement('DROP TABLE IF EXISTS "telescope_entries_tags" CASCADE');
-        DB::statement('DROP TABLE IF EXISTS "telescope_entries" CASCADE');
-        DB::statement('DROP TABLE IF EXISTS "telescope_monitoring" CASCADE');
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement('DROP TABLE IF EXISTS "telescope_entries_tags" CASCADE');
+            DB::statement('DROP TABLE IF EXISTS "telescope_entries" CASCADE');
+            DB::statement('DROP TABLE IF EXISTS "telescope_monitoring" CASCADE');
+        } else {
+            Schema::dropIfExists('telescope_entries_tags');
+            Schema::dropIfExists('telescope_entries');
+            Schema::dropIfExists('telescope_monitoring');
+        }
 
         // 3. INDEX OPTIMIZATION
 

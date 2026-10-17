@@ -9,10 +9,15 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // PostgreSQL requires CASCADE — Schema::disableForeignKeyConstraints() is unreliable on pgsql
-        DB::statement('DROP TABLE IF EXISTS "grade_appeals" CASCADE');
-        DB::statement('DROP TABLE IF EXISTS "grades" CASCADE');
-        DB::statement('DROP TABLE IF EXISTS "grade_components" CASCADE');
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement('DROP TABLE IF EXISTS "grade_appeals" CASCADE');
+            DB::statement('DROP TABLE IF EXISTS "grades" CASCADE');
+            DB::statement('DROP TABLE IF EXISTS "grade_components" CASCADE');
+        } else {
+            Schema::dropIfExists('grade_appeals');
+            Schema::dropIfExists('grades');
+            Schema::dropIfExists('grade_components');
+        }
 
         Schema::create('assessments', function (Blueprint $table) {
             $table->id();

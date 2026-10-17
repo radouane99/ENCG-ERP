@@ -9,10 +9,15 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // PostgreSQL requires CASCADE — Schema::disableForeignKeyConstraints() is unreliable on pgsql
-        DB::statement('DROP TABLE IF EXISTS "generated_documents" CASCADE');
-        DB::statement('DROP TABLE IF EXISTS "document_requests" CASCADE');
-        DB::statement('DROP TABLE IF EXISTS "document_templates" CASCADE');
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement('DROP TABLE IF EXISTS "generated_documents" CASCADE');
+            DB::statement('DROP TABLE IF EXISTS "document_requests" CASCADE');
+            DB::statement('DROP TABLE IF EXISTS "document_templates" CASCADE');
+        } else {
+            Schema::dropIfExists('generated_documents');
+            Schema::dropIfExists('document_requests');
+            Schema::dropIfExists('document_templates');
+        }
 
         Schema::create('document_types', function (Blueprint $table) {
             $table->id();
@@ -38,7 +43,12 @@ return new class extends Migration
 
     public function down(): void
     {
-        DB::statement('DROP TABLE IF EXISTS "document_requests" CASCADE');
-        DB::statement('DROP TABLE IF EXISTS "document_types" CASCADE');
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement('DROP TABLE IF EXISTS "document_requests" CASCADE');
+            DB::statement('DROP TABLE IF EXISTS "document_types" CASCADE');
+        } else {
+            Schema::dropIfExists('document_requests');
+            Schema::dropIfExists('document_types');
+        }
     }
 };

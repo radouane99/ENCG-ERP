@@ -27,9 +27,9 @@ class SearchController extends Controller
         // 1. Utilisateurs
         $users = User::with('roles')
             ->where(function ($q) use ($query) {
-                $q->where('first_name', 'like', "%{$query}%")
-                    ->orWhere('last_name', 'like', "%{$query}%")
-                    ->orWhere('email', 'like', "%{$query}%");
+                $q->whereILike('first_name', "%{$query}%")
+                    ->orWhereILike('last_name', "%{$query}%")
+                    ->orWhereILike('email', "%{$query}%");
             })
             ->take(5)
             ->get();
@@ -46,7 +46,7 @@ class SearchController extends Controller
         }
 
         // 2. Modules
-        Module::where('name', 'like', "%{$query}%")
+        Module::whereILike('name', "%{$query}%")
             ->take(5)
             ->get()
             ->each(function ($mod) use (&$results) {
@@ -60,7 +60,7 @@ class SearchController extends Controller
             });
 
         // 3. Salles
-        Room::where('name', 'like', "%{$query}%")
+        Room::whereILike('name', "%{$query}%")
             ->take(5)
             ->get()
             ->each(function ($room) use (&$results) {

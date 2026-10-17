@@ -24,7 +24,14 @@ class AdminAnalyticsService
             ->map(fn ($item) => ['name' => ucfirst($item->status), 'value' => (int) $item->count])
             ->toArray();
 
-        $monthlyTrend = DocumentRequest::selectRaw("DATE_FORMAT(COALESCE(requested_at, created_at), '%Y-%m') as month, count(*) as count")
+        $dateExpr = 'COALESCE(requested_at, created_at)';
+        $monthExpr = match (DocumentRequest::query()->getConnection()->getDriverName()) {
+            'pgsql' => "to_char({$dateExpr}, 'YYYY-MM')",
+            'sqlite' => "strftime('%Y-%m', {$dateExpr})",
+            default => "DATE_FORMAT({$dateExpr}, '%Y-%m')",
+        };
+
+        $monthlyTrend = DocumentRequest::selectRaw("{$monthExpr} as month, count(*) as count")
             ->whereNotNull('requested_at')
             ->groupBy('month')
             ->orderBy('month')

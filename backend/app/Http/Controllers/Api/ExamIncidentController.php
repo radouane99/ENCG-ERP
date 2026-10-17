@@ -25,11 +25,8 @@ class ExamIncidentController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        // Auto-seed realistic sample cases if empty so the dashboard is immediately operational
-        if (ExamIncident::count() === 0) {
-            $this->seedRealisticSamples();
-        }
-
+        // Aucune donnée fictive n'est générée ici : les dossiers disciplinaires
+        // concernent des étudiants réels et ont une portée légale.
         $query = ExamIncident::with(['exam.module.filiere', 'exam.examSession', 'student.user', 'reporter']);
 
         if ($request->filled('session_id')) {
@@ -305,16 +302,23 @@ class ExamIncidentController extends Controller
     }
 
     /**
-     * Réinitialiser les dossiers de démonstration.
+     * Générer des dossiers de démonstration (environnement local uniquement).
+     * Ne supprime jamais les dossiers existants.
      */
     public function seedSamples(): JsonResponse
     {
-        ExamIncident::truncate();
+        if (! app()->environment('local')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'La génération de dossiers de démonstration est désactivée hors environnement de développement.',
+            ], 403);
+        }
+
         $this->seedRealisticSamples();
 
         return response()->json([
             'success' => true,
-            'message' => '5 dossiers disciplinaires types ont été générés.',
+            'message' => 'Dossiers disciplinaires de démonstration générés.',
         ]);
     }
 

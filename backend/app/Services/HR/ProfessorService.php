@@ -18,20 +18,15 @@ class ProfessorService
         $query = Professor::with(['department', 'user']);
 
         if (! empty($filters['search'])) {
-            $s = $filters['search'];
+            $s = '%'.mb_strtolower($filters['search']).'%';
             $query->where(function ($q) use ($s) {
-                $q->where('first_name', 'like', "%$s%")
-                    ->orWhere('last_name', 'like', "%$s%")
-                    ->orWhere('email', 'like', "%$s%")
-                    ->orWhere('employee_number', 'like', "%$s%")
+                $q->whereRaw('LOWER(employee_number) LIKE ?', [$s])
                     ->orWhereHas('user', function ($uq) use ($s) {
-                        if (DB::connection()->getDriverName() === 'sqlite') {
-                            $uq->where('first_name', 'like', "%$s%")
-                                ->orWhere('last_name', 'like', "%$s%")
-                                ->orWhere('email', 'like', "%$s%");
-                        } else {
-                            $uq->whereRaw('MATCH(first_name, last_name, email) AGAINST (? IN BOOLEAN MODE)', [$s.'*']);
-                        }
+                        $uq->whereRaw('LOWER(first_name) LIKE ?', [$s])
+                            ->orWhereRaw('LOWER(last_name) LIKE ?', [$s])
+                            ->orWhereRaw('LOWER(name) LIKE ?', [$s])
+                            ->orWhereRaw('LOWER(email) LIKE ?', [$s])
+                            ->orWhereRaw('LOWER(cin) LIKE ?', [$s]);
                     });
             });
         }
