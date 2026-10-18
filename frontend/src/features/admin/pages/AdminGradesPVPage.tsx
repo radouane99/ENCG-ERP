@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react'
 
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, Printer, Save, CheckCircle2, AlertCircle, RefreshCw, ShieldCheck, Lock, Download, FileText, Layers, Sparkles, GraduationCap, Calendar, BookOpen, Users, ChevronDown, Check, Eye, Zap, FileSpreadsheet, Mail, Archive, History, X, TrendingUp, Trophy, BarChart2, Filter, Search, Send, Package, ClipboardList, Star, Link2, Calculator, Clock } from 'lucide-react'
+import { ArrowLeft, Printer, Save, CheckCircle2, AlertCircle, RefreshCw, ShieldCheck, Lock, Download, FileText, Layers, Sparkles, GraduationCap, Calendar, BookOpen, Users, ChevronDown, ChevronUp, Check, Eye, Zap, FileSpreadsheet, Mail, Archive, History, X, TrendingUp, Trophy, BarChart2, Filter, Search, Send, Package, ClipboardList, Star, Link2, Calculator, Clock, AlertTriangle, ShieldAlert, Maximize2, Minimize2, SlidersHorizontal, Table } from 'lucide-react'
 
 
 
@@ -21,6 +21,7 @@ import { PieChart, Pie, Cell, BarChart as ReBarChart, Bar, XAxis, YAxis, Tooltip
 import { PvFilterBar } from '../components/PvFilterBar'
 import { SignaturePad } from '../components/SignaturePad'
 import { QRCodeSVG } from 'qrcode.react'
+import { useAuthStore } from '@stores/authStore'
 
 export default function AdminGradesPVPage() {
 
@@ -42,13 +43,46 @@ export default function AdminGradesPVPage() {
   const [selectedModule, setSelectedModule] = useState(moduleId && moduleId !== 'null' ? moduleId : '')
   const [matrixSearchQuery, setMatrixSearchQuery] = useState('')
   const [matrixDecisionFilter, setMatrixDecisionFilter] = useState<'all' | 'V' | 'VAR' | 'RAT' | 'NV'>('all')
+  const [isFullscreenTable, setIsFullscreenTable] = useState(false)
+  const [matrixViewMode, setMatrixViewMode] = useState<'compact' | 'detailed'>('compact')
   const [selectedRachatStudent, setSelectedRachatStudent] = useState<any>(null)
   const [showSignatureModal, setShowSignatureModal] = useState(false)
-  const [signatureRole, setSignatureRole] = useState('Chef de Filière')
+
+  // RBAC Segregation: Pure professors only have access to their assigned modules
+  const { user, hasAnyRole } = useAuthStore()
+  const isPureProfessor = useMemo(() => {
+    const isTeacher = hasAnyRole(['professor', 'vacataire'])
+    const isAdminOrHead = hasAnyRole([
+      'super-admin',
+      'super_admin',
+      'admin',
+      'institution-admin',
+      'institution_admin',
+      'director',
+      'department-head',
+      'filiere-head',
+      'scolarite',
+    ])
+    return isTeacher && !isAdminOrHead
+  }, [hasAnyRole])
+
+  // Fetch teacher's directly assigned modules
+  const { data: myAssignedModulesData = [], isLoading: isLoadingMyModules } = useQuery({
+    queryKey: ['my-assigned-modules-for-pv', user?.id],
+    queryFn: () => api.get('/grades/my-modules').then(r => r.data?.modules || []),
+    enabled: isPureProfessor,
+  })
+
+  const myModulesList = useMemo(() => {
+    return Array.isArray(myAssignedModulesData) ? myAssignedModulesData : []
+  }, [myAssignedModulesData])
+
+  const [signatureRole, setSignatureRole] = useState(isPureProfessor ? 'Professeur de Module' : 'Chef de Filière')
   const [signatureDone, setSignatureDone] = useState(false)
   const [signatureDetails, setSignatureDetails] = useState<any>(null)
   const [signatureDataUrl, setSignatureDataUrl] = useState<string>('')
   const [isSigning, setIsSigning] = useState(false)
+  const [showAnalytics, setShowAnalytics] = useState(false)
 
   const [rachatReason, setRachatReason] = useState('Rachat accordé par le Jury de Délibération')
 
@@ -163,16 +197,63 @@ export default function AdminGradesPVPage() {
   const [isExportingPdf, setIsExportingPdf] = useState(false)
 
 
-  // Jury & Dual PV State
+  // Jury & Dual PV State: Pure professors are strictly restricted to 'module'
   const [pvType, setPvType] = useState<'module' | 'semestriel' | 'annuel'>(
-    moduleId ? 'module' : 'semestriel'
+    isPureProfessor || moduleId ? 'module' : 'semestriel'
   )
+
+  // Force module mode for pure professors
+  useEffect(() => {
+    if (isPureProfessor && pvType !== 'module') {
+      setPvType('module')
+    }
+  }, [isPureProfessor, pvType])
+
+  // Pure Professor: Auto-select their first assigned module if not already set
+  useEffect(() => {
+    if (isPureProfessor && !moduleId && myModulesList.length > 0) {
+      const first = myModulesList[0]
+      if (first?.id) {
+        setSelectedModule(String(first.id))
+        if (first.filiere_id) setSelectedFiliere(String(first.filiere_id))
+        if (first.semester_number) setSelectedSemester(String(first.semester_number))
+        navigate(`/admin/grades/pv?module_id=${first.id}&filiere_id=${first.filiere_id || selectedFiliere || ''}&semester=${first.semester_number || selectedSemester || ''}`, { replace: true })
+      }
+    }
+  }, [isPureProfessor, moduleId, myModulesList, navigate, selectedFiliere, selectedSemester])
+
+  // Security guard: Check if pure professor is attempting to access a module not assigned to them
+  const isUnauthorizedForThisModule = useMemo(() => {
+    if (!isPureProfessor || !moduleId || myModulesList.length === 0) return false
+    return !myModulesList.some((m: any) => String(m.id) === String(moduleId))
+  }, [isPureProfessor, moduleId, myModulesList])
+
+  const displayedModules = useMemo(() => {
+    if (isPureProfessor) {
+      return myModulesList.map((m: any) => ({
+        id: m.id,
+        name: m.name,
+        code: m.code,
+        filiere_id: m.filiere_id,
+        semester_number: m.semester_number,
+      }))
+    }
+    return modules
+  }, [isPureProfessor, myModulesList, modules])
+
+  const displayedFilieres = useMemo(() => {
+    if (!isPureProfessor || myModulesList.length === 0) return filieres
+    const myFiliereIds = new Set(myModulesList.map((m: any) => String(m.filiere_id)))
+    const filtered = filieres.filter((f: any) => myFiliereIds.has(String(f.id)))
+    return filtered.length > 0 ? filtered : filieres
+  }, [isPureProfessor, myModulesList, filieres])
+
   const [selectedYearLevel, setSelectedYearLevel] = useState<number>(1)
   const [juryStatus, setJuryStatus] = useState<any>(null)
   const [loadingJury, setLoadingJury] = useState(false)
   const [annualCompensationData, setAnnualCompensationData] = useState<any[]>([])
   const [activeJurySigningId, setActiveJurySigningId] = useState<number | null>(null)
-  const [showAiAnalysis, setShowAiAnalysis] = useState(false)
+  const [showAiAnalysis, setShowAiAnalysis] = useState(true)
 
   // Dynamic current academic year
   const { data: academicYearsData = [] } = useQuery({
@@ -973,66 +1054,76 @@ export default function AdminGradesPVPage() {
           </div>
           <div>
             <div className="inline-flex items-center gap-1.5 bg-blue-500/20 text-blue-200 px-3.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest mb-1.5 border border-blue-400/30">
-              <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Jury Officiel & Délibérations ENCG Fès
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" /> {isPureProfessor ? 'Espace Enseignant • ENCG Fès' : 'Jury Officiel & Délibérations ENCG Fès'}
             </div>
             <h1 className="text-xl md:text-3xl font-black text-white tracking-tight leading-tight">
               {isRtl ? 'محاضر النقاط الرسمية' : 'Procès-Verbaux de Notes Officiels'}
             </h1>
             <p className="text-blue-100/80 text-xs md:text-sm font-medium mt-0.5">
-              {isRtl ? 'اختر نوع المحضر والشعبة للدورة الدراسية.' : 'Sélectionnez le type de PV (Module, Semestriel ou Annuel Global) et la filière pour générer les procès-verbaux officiels.'}
+              {isPureProfessor 
+                ? 'Consultez, délibérez et signez numériquement les procès-verbaux de vos modules d\'enseignement affectés.' 
+                : (isRtl ? 'اخther نوع المحضر والشعبة للدورة الدراسية.' : 'Sélectionnez le type de PV (Module, Semestriel ou Annuel Global) et la filière pour générer les procès-verbaux officiels.')}
             </p>
           </div>
         </div>
 
         {/* Row 2: Navigation & Actions Bar */}
         <div className="relative z-10 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 pt-3 border-t border-white/10">
-          {/* Segmented Mode Selector */}
-          <div className="inline-flex p-1 bg-black/25 backdrop-blur-md rounded-2xl border border-white/10 gap-1 flex-wrap">
-            <button
-              type="button"
-              onClick={() => setPvType('module')}
-              className={cn(
-                "px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-2 uppercase tracking-wider",
-                pvType === 'module' 
-                  ? "bg-white text-[#0f2863] shadow-md" 
-                  : "text-blue-100 hover:text-white hover:bg-white/10"
-              )}
-            >
-              <BookOpen className="w-3.5 h-3.5 text-amber-400" />
-              PV Module
-            </button>
+          {!isPureProfessor ? (
+            /* Segmented Mode Selector for Administration only */
+            <div className="inline-flex p-1 bg-black/25 backdrop-blur-md rounded-2xl border border-white/10 gap-1 flex-wrap">
+              <button
+                type="button"
+                onClick={() => setPvType('module')}
+                className={cn(
+                  "px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-2 uppercase tracking-wider",
+                  pvType === 'module' 
+                    ? "bg-white text-[#0f2863] shadow-md" 
+                    : "text-blue-100 hover:text-white hover:bg-white/10"
+                )}
+              >
+                <BookOpen className="w-3.5 h-3.5 text-amber-400" />
+                PV Module
+              </button>
 
-            <button
-              type="button"
-              onClick={() => setPvType('semestriel')}
-              className={cn(
-                "px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-2 uppercase tracking-wider",
-                pvType === 'semestriel' 
-                  ? "bg-white text-[#0f2863] shadow-md" 
-                  : "text-blue-100 hover:text-white hover:bg-white/10"
-              )}
-            >
-              <Layers className="w-3.5 h-3.5 text-amber-400" />
-              PV Semestriel (7 Modules)
-            </button>
+              <button
+                type="button"
+                onClick={() => setPvType('semestriel')}
+                className={cn(
+                  "px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-2 uppercase tracking-wider",
+                  pvType === 'semestriel' 
+                    ? "bg-white text-[#0f2863] shadow-md" 
+                    : "text-blue-100 hover:text-white hover:bg-white/10"
+                )}
+              >
+                <Layers className="w-3.5 h-3.5 text-amber-400" />
+                PV Semestriel (7 Modules)
+              </button>
 
-            <button
-              type="button"
-              onClick={() => setPvType('annuel')}
-              className={cn(
-                "px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-2 uppercase tracking-wider",
-                pvType === 'annuel' 
-                  ? "bg-white text-[#0f2863] shadow-md" 
-                  : "text-blue-100 hover:text-white hover:bg-white/10"
-              )}
-            >
-              <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
-              PV Annuel Global (14 Modules)
-            </button>
-          </div>
+              <button
+                type="button"
+                onClick={() => setPvType('annuel')}
+                className={cn(
+                  "px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-2 uppercase tracking-wider",
+                  pvType === 'annuel' 
+                    ? "bg-white text-[#0f2863] shadow-md" 
+                    : "text-blue-100 hover:text-white hover:bg-white/10"
+                )}
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+                PV Annuel Global (14 Modules)
+              </button>
+            </div>
+          ) : (
+            /* Dedicated status badge for pure professors */
+            <div className="flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-md rounded-xl border border-white/15 text-white text-xs font-bold">
+              <BookOpen className="w-4 h-4 text-amber-400" />
+              <span>Procès-Verbal de Module • Vos Enseignements Affectés</span>
+            </div>
+          )}
 
-          {/* Right actions: Shown when in semestriel or annuel modes */}
-          {pvType !== 'module' && (
+          {/* Right actions: Shown when in semestriel or annuel modes for admin only */}
+          {!isPureProfessor && pvType !== 'module' && (
             <div className="flex items-center gap-2.5 flex-wrap">
               <button
                 type="button"
@@ -1063,14 +1154,23 @@ export default function AdminGradesPVPage() {
         selectedSemester={selectedSemester}
         selectedGroup={selectedGroup}
         moduleId={moduleId}
-        filieres={filieres}
-        modules={modules}
+        filieres={displayedFilieres}
+        modules={displayedModules}
         groupes={groupes}
         onFiliereChange={setSelectedFiliere}
         onSemesterChange={setSelectedSemester}
         onModuleChange={(val) => {
           if (val) {
             setPvType('module')
+            if (isPureProfessor) {
+              const found = myModulesList.find((m: any) => String(m.id) === String(val))
+              if (found) {
+                if (found.filiere_id) setSelectedFiliere(String(found.filiere_id))
+                if (found.semester_number) setSelectedSemester(String(found.semester_number))
+                navigate(`/admin/grades/pv?module_id=${val}&filiere_id=${found.filiere_id || selectedFiliere || ''}&semester=${found.semester_number || selectedSemester || ''}`)
+                return
+              }
+            }
             navigate(`/admin/grades/pv?module_id=${val}${selectedGroup ? `&group_id=${selectedGroup}` : ''}`)
           }
         }}
@@ -1083,6 +1183,65 @@ export default function AdminGradesPVPage() {
       />
     </div>
   )
+
+  // Pure Professor States & Security Guard
+  if (isPureProfessor) {
+    if (isLoadingMyModules) {
+      return (
+        <div className="p-6 max-w-7xl mx-auto space-y-6">
+          {renderSelectorBar()}
+          <div className="flex h-[40vh] items-center justify-center">
+            <Spinner size="lg" />
+          </div>
+        </div>
+      )
+    }
+
+    if (myModulesList.length === 0) {
+      return (
+        <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
+          {renderSelectorBar()}
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-10 text-center max-w-xl mx-auto shadow-sm space-y-4">
+            <div className="w-16 h-16 rounded-2xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 flex items-center justify-center text-3xl mx-auto">
+              📚
+            </div>
+            <h3 className="text-lg font-black text-slate-900 dark:text-white">Aucun Module Affecté</h3>
+            <p className="text-xs text-slate-500 font-medium">
+              Aucun module d’enseignement ne vous est actuellement attribué pour cette année universitaire. Veuillez vous adresser à la Scolarité ou au Chef de Département pour l’affectation de vos modules.
+            </p>
+          </div>
+        </div>
+      )
+    }
+
+    if (isUnauthorizedForThisModule) {
+      return (
+        <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
+          {renderSelectorBar()}
+          <div className="bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/60 rounded-3xl p-10 text-center max-w-xl mx-auto shadow-sm space-y-4">
+            <div className="w-16 h-16 rounded-2xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 flex items-center justify-center text-3xl mx-auto font-black">
+              ⛔
+            </div>
+            <h3 className="text-lg font-black text-slate-900 dark:text-white">Accès Restreint au Procès-Verbal</h3>
+            <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">
+              Vous n’êtes pas affecté(e) à ce module. Conformément aux règles pédagogiques de l'ENCG, chaque enseignant n'a accès qu'aux procès-verbaux de ses propres modules. La consultation générale ou inter-modules est réservée à l’Administration.
+            </p>
+            {myModulesList.length > 0 && (
+              <Button
+                onClick={() => {
+                  const first = myModulesList[0]
+                  navigate(`/admin/grades/pv?module_id=${first.id}&filiere_id=${first.filiere_id || ''}&semester=${first.semester_number || ''}`)
+                }}
+                className="bg-[#0f2863] text-white hover:bg-blue-900 rounded-xl text-xs font-bold px-5 py-2.5 shadow-md"
+              >
+                Accéder à mon module ({myModulesList[0].name || myModulesList[0].code})
+              </Button>
+            )}
+          </div>
+        </div>
+      )
+    }
+  }
 
 
 
@@ -1104,173 +1263,242 @@ export default function AdminGradesPVPage() {
 
           {renderSelectorBar()}
 
-          {/* Header Hero Banner */}
-          <div className="bg-gradient-to-r from-[#0f2863] via-[#1e40af] to-[#3b82f6] text-white p-8 rounded-[2.5rem] shadow-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
-            <div className="space-y-2 z-10">
-              <div className="flex items-center gap-2">
-                <span className="px-3 py-1 bg-white/10 backdrop-blur-md rounded-full text-[10px] font-black uppercase tracking-widest text-amber-300 border border-white/20">
-                  Procès-Verbal Semestriel Officiel ({semesterPvData.modules?.length || 7} Modules)
+          {/* Executive Control Header: Replaces the electric blue banner with a sleek, unified card */}
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200/90 dark:border-slate-800 shadow-sm space-y-5 print:hidden">
+            {/* Top Row: Semester Identity + Juridical Signature & Lock Actions */}
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-5 border-b border-slate-100 dark:border-slate-800">
+              {/* Left Identity */}
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="px-2.5 py-0.5 bg-[#0f2863]/10 text-[#0f2863] dark:bg-blue-900/40 dark:text-blue-300 font-extrabold text-[10px] rounded-lg border border-[#0f2863]/20 uppercase tracking-wider">
+                    {semesterPvData.filiere?.name || 'Tronc Commun ENCG'}
+                  </span>
+                  <span className="px-2.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-extrabold text-[10px] rounded-lg border border-slate-200 dark:border-slate-700 uppercase tracking-wider">
+                    Semestre {semesterPvData.semester || selectedSemester} • {semesterPvData.modules?.length || 7} Modules
+                  </span>
+                  <span className="px-2.5 py-0.5 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 font-extrabold text-[10px] rounded-lg border border-emerald-200 dark:border-emerald-800 uppercase tracking-wider">
+                    Session {session === 'normale' ? 'Ordinaire (Normale)' : 'de Rattrapage'}
+                  </span>
+                </div>
+
+                <h2 className="text-xl md:text-2xl font-black text-[#0f2863] dark:text-white tracking-tight">
+                  Procès-Verbal Semestriel Consolidé
+                </h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium max-w-2xl">
+                  Matrice officielle de délibération des {semesterPvData.modules?.length || 7} modules avec calcul automatique des compensations (≥ 10/20) et éliminations APOGEE.
+                </p>
+              </div>
+
+              {/* Right: Signature Badge + Sign Button + Lock Button */}
+              <div className="flex items-center gap-2.5 flex-wrap self-stretch sm:self-end lg:self-center shrink-0">
+                {signatureDone ? (
+                  <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 px-3 py-2 rounded-xl text-xs font-bold text-emerald-800 dark:text-emerald-300 shadow-xs">
+                    <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <div className="flex flex-col leading-tight">
+                      <span className="font-extrabold text-[11px]">PV Semestriel Signé</span>
+                      <span className="text-[9px] text-emerald-600/90 font-mono">Scellé SHA-256</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 px-3 py-2 rounded-xl text-xs font-bold text-amber-800 dark:text-amber-300 shadow-xs">
+                    <Clock className="w-4 h-4 text-amber-600 shrink-0" />
+                    <span className="text-[11px]">En attente de signature</span>
+                  </div>
+                )}
+
+                <Button
+                  onClick={() => setShowSignatureModal(true)}
+                  className="bg-[#0f2863] hover:bg-[#1a387e] text-white rounded-xl text-xs font-bold px-4 py-2.5 shadow-sm transition-all flex items-center gap-1.5"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5 text-amber-300" />
+                  <span>{signatureDone ? 'Re-signer (Jury)' : 'Signer le PV (Jury)'}</span>
+                </Button>
+
+                <Button
+                  variant="outline"
+                  onClick={() => pvLocked ? toast.info('Ce PV est déjà verrouillé définitivement.') : setShowLockModal(true)}
+                  disabled={pvLocked}
+                  className={cn(
+                    "rounded-xl text-xs font-bold px-3.5 py-2.5 transition-all flex items-center gap-1.5",
+                    pvLocked
+                      ? "border-slate-200 bg-slate-100 text-slate-400 cursor-not-allowed"
+                      : "border-rose-200 text-rose-700 hover:bg-rose-50 hover:border-rose-300 dark:border-rose-900 dark:text-rose-400"
+                  )}
+                >
+                  <Lock className="w-3.5 h-3.5" />
+                  <span>{pvLocked ? 'Verrouillé' : 'Sceller & Verrouiller'}</span>
+                </Button>
+              </div>
+            </div>
+
+            {/* Middle Row: Primary Official Exports & Transmissions */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                  Exports & Transmissions Officielles
                 </span>
-                <span className="px-3 py-1 bg-emerald-500/20 backdrop-blur-md rounded-full text-[10px] font-black uppercase tracking-widest text-emerald-300 border border-emerald-400/30">
-                  Session {session === 'normale' ? 'Ordinaire (Normale)' : 'de Rattrapage'}
+                <span className="text-[10px] text-slate-400 font-medium">
+                  {semesterPvData.students?.length || 0} étudiants inscrits
                 </span>
               </div>
-              <h2 className="text-2xl md:text-3xl font-black tracking-tight text-white">
-                {semesterPvData.filiere?.name || 'Tronc Commun ENCG'} — Semestre {semesterPvData.semester || selectedSemester}
-              </h2>
-              <p className="text-xs text-blue-100 font-medium">
-                Matrice consolidée des {semesterPvData.modules?.length || 7} modules avec calcul automatique des compensations (≥ 10/20) et éliminations APOGEE.
-              </p>
+
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* Aperçu PDF */}
+                <Button
+                  variant="outline"
+                  onClick={() => handleExportPdf(true)}
+                  className="rounded-xl border-slate-200 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 text-xs font-bold px-3.5 py-2 shadow-xs flex items-center gap-1.5"
+                >
+                  <Eye className="w-3.5 h-3.5 text-slate-500" />
+                  <span>Aperçu PDF (Voir)</span>
+                </Button>
+
+                {/* Télécharger PDF Officiel */}
+                <Button
+                  onClick={() => handleExportPdf(false)}
+                  className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-black rounded-xl text-xs px-4 py-2 shadow-xs transition-all flex items-center gap-1.5"
+                >
+                  <Download className="w-3.5 h-3.5 text-slate-950" />
+                  <span>Télécharger PDF Officiel</span>
+                </Button>
+
+                {/* Exporter Excel */}
+                <Button
+                  variant="outline"
+                  onClick={handleExportExcel}
+                  className="rounded-xl border-emerald-200 text-emerald-800 bg-emerald-50/70 hover:bg-emerald-100/70 dark:bg-emerald-950/30 dark:border-emerald-800 dark:text-emerald-300 text-xs font-bold px-3.5 py-2 shadow-xs flex items-center gap-1.5"
+                >
+                  <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                  <span>Exporter Excel (.xlsx)</span>
+                </Button>
+
+                {/* Pack PV ZIP */}
+                <Button
+                  variant="outline"
+                  onClick={handleDownloadZipBundle}
+                  disabled={isExportingZip}
+                  className="rounded-xl border-indigo-200 text-indigo-800 bg-indigo-50/70 hover:bg-indigo-100/70 dark:bg-indigo-950/30 dark:border-indigo-800 dark:text-indigo-300 text-xs font-bold px-3.5 py-2 shadow-xs flex items-center gap-1.5"
+                >
+                  {isExportingZip ? <Spinner className="w-3.5 h-3.5 text-indigo-600" /> : <Archive className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />}
+                  <span>Pack PV (ZIP)</span>
+                </Button>
+
+                {/* Diffusion Email */}
+                <Button
+                  variant="outline"
+                  onClick={handleBroadcastTranscripts}
+                  disabled={isSendingBulk}
+                  className="rounded-xl border-blue-200 text-blue-800 bg-blue-50/70 hover:bg-blue-100/70 dark:bg-blue-950/30 dark:border-blue-800 dark:text-blue-300 text-xs font-bold px-3.5 py-2 shadow-xs flex items-center gap-1.5"
+                >
+                  {isSendingBulk ? <Spinner className="w-3.5 h-3.5 text-blue-600" /> : <Mail className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />}
+                  <span>Diffusion Email</span>
+                </Button>
+
+                {/* Attestations en Lot */}
+                <Button
+                  variant="outline"
+                  onClick={() => setShowAttestationModal(true)}
+                  className="rounded-xl border-teal-200 text-teal-800 bg-teal-50/70 hover:bg-teal-100/70 dark:bg-teal-950/30 dark:border-teal-800 dark:text-teal-300 text-xs font-bold px-3.5 py-2 shadow-xs flex items-center gap-1.5"
+                >
+                  <Trophy className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+                  <span>Attestations (Lot)</span>
+                </Button>
+              </div>
             </div>
 
-            {/* Action buttons */}
-            <div className="flex flex-wrap items-center gap-2 z-10">
-              <button
-                type="button"
-                onClick={() => handleExportPdf(true)}
-                className="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-xl text-xs font-black backdrop-blur-md transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
-              >
-                <Eye className="w-4 h-4 text-amber-300" /> Aperçu PDF (Voir)
-              </button>
+            {/* Bottom Row: Decision Support & Pedagogical Tools Toolbar */}
+            <div className="bg-slate-50 dark:bg-slate-800/40 p-2.5 rounded-2xl border border-slate-200/70 dark:border-slate-800 flex items-center justify-between flex-wrap gap-2 text-xs">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase px-1.5">
+                  Outils d'Aide :
+                </span>
 
-              <button
-                type="button"
-                onClick={() => handleExportPdf(false)}
-                className="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-md hover:scale-105 transition-all cursor-pointer flex items-center gap-1.5"
-              >
-                <Download className="w-4 h-4" /> Télécharger PDF Officiel
-              </button>
+                {/* Stats Promo Toggle */}
+                <Button
+                  variant="ghost"
+                  onClick={() => setShowStatsDashboard(v => !v)}
+                  className={cn(
+                    "rounded-xl text-xs font-semibold px-2.5 py-1.5 h-auto transition-all flex items-center gap-1.5",
+                    showStatsDashboard
+                      ? "bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:text-slate-300"
+                  )}
+                >
+                  <BarChart2 className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+                  <span>Stats Promo</span>
+                </Button>
 
-              <button
-                type="button"
-                onClick={handleExportExcel}
-                className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-md hover:scale-105 transition-all cursor-pointer flex items-center gap-1.5"
-              >
-                <FileSpreadsheet className="w-4 h-4 text-emerald-200" /> Exporter Excel (.xlsx)
-              </button>
+                {/* Simulateur What-If */}
+                <Button
+                  variant="ghost"
+                  onClick={() => setShowSimulatorModal(true)}
+                  className="rounded-xl text-xs font-semibold px-2.5 py-1.5 h-auto text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:text-slate-300 transition-all flex items-center gap-1.5"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                  <span>Simulateur What-If</span>
+                </Button>
 
-              <button
-                type="button"
-                onClick={handleBroadcastTranscripts}
-                disabled={isSendingBulk}
-                className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-md hover:scale-105 transition-all cursor-pointer flex items-center gap-1.5"
-              >
-                {isSendingBulk ? <Spinner className="w-4 h-4 text-white" /> : <Mail className="w-4 h-4 text-blue-200" />} Diffusion Email
-              </button>
+                {/* Journal d'Audit */}
+                <Button
+                  variant="ghost"
+                  onClick={() => setShowAuditModal(true)}
+                  className="rounded-xl text-xs font-semibold px-2.5 py-1.5 h-auto text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:text-slate-300 transition-all flex items-center gap-1.5"
+                >
+                  <History className="w-3.5 h-3.5 text-slate-500" />
+                  <span>Journal d'Audit</span>
+                </Button>
 
-              <button
-                type="button"
-                onClick={handleDownloadZipBundle}
-                disabled={isExportingZip}
-                className="px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-md hover:scale-105 transition-all cursor-pointer flex items-center gap-1.5"
-              >
-                {isExportingZip ? <Spinner className="w-4 h-4 text-white" /> : <Archive className="w-4 h-4 text-purple-200" />} Pack PV Complet (ZIP)
-              </button>
+                {/* Comparer Groupes */}
+                <Button
+                  variant="ghost"
+                  onClick={() => setShowGroupCompareModal(true)}
+                  className="rounded-xl text-xs font-semibold px-2.5 py-1.5 h-auto text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:text-slate-300 transition-all flex items-center gap-1.5"
+                >
+                  <Layers className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
+                  <span>Comparer Groupes</span>
+                </Button>
 
-              <button
-                type="button"
-                onClick={() => setShowAuditModal(true)}
-                className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5"
-              >
-                <History className="w-4 h-4 text-amber-400" /> Journal d'Audit
-              </button>
+                {/* Export Word */}
+                <Button
+                  variant="ghost"
+                  onClick={handleExportDocx}
+                  className="rounded-xl text-xs font-semibold px-2.5 py-1.5 h-auto text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:text-slate-300 transition-all flex items-center gap-1.5"
+                >
+                  <FileText className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                  <span>Export Word (.docx)</span>
+                </Button>
 
-              <button
-                type="button"
-                onClick={() => setShowStatsDashboard(v => !v)}
-                className={cn("px-4 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 border", showStatsDashboard ? "bg-violet-600 text-white border-violet-600" : "bg-white/10 text-white border-white/20 hover:bg-white/20")}
-              >
-                <BarChart2 className="w-4 h-4 text-violet-200" /> Stats Promo
-              </button>
+                {/* Lien Sécurisé */}
+                <Button
+                  variant="ghost"
+                  onClick={handleGenerateShareLink}
+                  className="rounded-xl text-xs font-semibold px-2.5 py-1.5 h-auto text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:text-slate-300 transition-all flex items-center gap-1.5"
+                >
+                  <Link2 className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
+                  <span>Lien Sécurisé</span>
+                </Button>
 
-              <button
-                type="button"
-                onClick={() => setShowAttestationModal(true)}
-                className="px-4 py-2.5 bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-md hover:scale-105 transition-all cursor-pointer flex items-center gap-1.5"
-              >
-                <Trophy className="w-4 h-4 text-yellow-200" /> Attestations (Lot)
-              </button>
+                {/* Planifier Séance */}
+                <Button
+                  variant="ghost"
+                  onClick={() => setShowSchedulerModal(true)}
+                  className="rounded-xl text-xs font-semibold px-2.5 py-1.5 h-auto text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:text-slate-300 transition-all flex items-center gap-1.5"
+                >
+                  <Calendar className="w-3.5 h-3.5 text-orange-500" />
+                  <span>Planifier Séance</span>
+                </Button>
+              </div>
 
-              <button
-                type="button"
-                onClick={() => setShowSchedulerModal(true)}
-                className="px-4 py-2.5 bg-gradient-to-r from-orange-500 to-rose-500 hover:from-orange-600 hover:to-rose-600 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-md hover:scale-105 transition-all cursor-pointer flex items-center gap-1.5"
-              >
-                <Calendar className="w-4 h-4 text-orange-100" /> Planifier Séance
-              </button>
-
-              <button
-                type="button"
-                onClick={handleExportDocx}
-                className="px-4 py-2.5 bg-blue-700 hover:bg-blue-800 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-md hover:scale-105 transition-all cursor-pointer flex items-center gap-1.5"
-              >
-                <FileText className="w-4 h-4 text-blue-200" /> Export Word (.docx)
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setShowSimulatorModal(true)}
-                className="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-md hover:scale-105 transition-all cursor-pointer flex items-center gap-1.5"
-              >
-                <Sparkles className="w-4 h-4 text-amber-100" /> Simulateur "What-If"
-              </button>
-
-              <button
-                type="button"
-                onClick={handleGenerateShareLink}
-                className="px-4 py-2.5 bg-sky-600 hover:bg-sky-700 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-md hover:scale-105 transition-all cursor-pointer flex items-center gap-1.5"
-              >
-                <Link2 className="w-4 h-4 text-sky-200" /> Lien Partage Sécurisé
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setShowGroupCompareModal(true)}
-                className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5"
-              >
-                <Layers className="w-4 h-4 text-cyan-400" /> Comparer Groupes
-              </button>
-
-              <button
-                type="button"
+              {/* Right: Imprimer */}
+              <Button
+                variant="ghost"
                 onClick={() => window.print()}
-                className="px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-white border border-slate-600 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5"
+                className="rounded-xl text-xs font-semibold px-3 py-1.5 h-auto text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:text-slate-300 transition-all flex items-center gap-1.5 ml-auto"
               >
-                <Printer className="w-4 h-4 text-slate-300" /> Imprimer
-              </button>
-
-
-              <button
-                type="button"
-                onClick={() => setShowSignatureModal(true)}
-                className={cn(
-                  "px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider shadow-xl hover:scale-105 transition-all cursor-pointer flex items-center gap-1.5",
-                  signatureDone
-                    ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white"
-                    : "bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white"
-                )}
-              >
-                <ShieldCheck className="w-4 h-4 text-emerald-300" />
-                {signatureDone ? '✓ PV Signé & Scellé (SHA-256)' : '✍️ Signer le PV (Jury)'}
-              </button>
-
-              {/* 🔒 Lock PV Button */}
-              <button
-                type="button"
-                onClick={() => pvLocked ? toast.info('Ce PV est déjà verrouillé définitivement.') : setShowLockModal(true)}
-                className={cn(
-                  "px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider shadow-xl hover:scale-105 transition-all cursor-pointer flex items-center gap-2",
-                  pvLocked
-                    ? "bg-gradient-to-r from-red-900 to-red-800 text-red-200 cursor-not-allowed opacity-80"
-                    : "bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-700 hover:to-rose-800 text-white"
-                )}
-              >
-                <Lock className="w-4 h-4" />
-                {pvLocked ? '🔒 PV Verrouillé (Définitif)' : '🔒 Sceller & Verrouiller le PV'}
-              </button>
+                <Printer className="w-3.5 h-3.5 text-slate-500" />
+                <span>Imprimer</span>
+              </Button>
             </div>
-
-
           </div>
 
           {/* 🔒 PV LOCK BANNER — shown when PV is officially sealed */}
@@ -1495,27 +1723,24 @@ export default function AdminGradesPVPage() {
             if (borderlineStudents.length === 0 && failingModules.length === 0) return null
             return (
               <div className="space-y-2">
-                {borderlineStudents.length > 0 && (
-                  <div className="flex items-center gap-3 p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-700/50 rounded-2xl text-xs animate-in slide-in-from-left-2">
-                    <div className="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 text-base">⚡</div>
-                    <div className="flex-1">
-                      <div className="font-black text-amber-800 dark:text-amber-300">
-                        {borderlineStudents.length} étudiant(s) avec moyenne entre 9.50–9.99 — Éligibles au rachat jury !
-                      </div>
-                      <div className="text-amber-600/80 dark:text-amber-400/80 mt-0.5">
-                        {borderlineStudents.slice(0, 3).map((s: any) => `${s.last_name} ${s.first_name} (${parseFloat(s.moyenne_semestrielle).toFixed(2)})`).join(' • ')}
-                        {borderlineStudents.length > 3 && ` + ${borderlineStudents.length - 3} autres`}
-                      </div>
-                    </div>
-                  </div>
-                )}
                 {failingModules.length > 0 && (
-                  <div className="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-700/50 rounded-2xl text-xs animate-in slide-in-from-left-2">
-                    <div className="w-8 h-8 rounded-xl bg-red-500 text-white flex items-center justify-center shrink-0 text-base">⚠️</div>
-                    <div>
-                      <div className="font-black text-red-800 dark:text-red-300">Anomalie détectée : {failingModules.length} module(s) avec taux d'échec &gt; 35% — Vérification jury recommandée</div>
-                      <div className="text-red-600/80 dark:text-red-400/80 mt-0.5">Module(s) : {failingModules.slice(0, 3).map((m: any) => m.code || m.name).join(', ')}</div>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-rose-50/80 dark:bg-rose-950/20 border border-rose-200/90 dark:border-rose-900/40 rounded-2xl text-xs animate-in slide-in-from-left-2 shadow-2xs">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-rose-100 dark:bg-rose-900/50 text-rose-700 dark:text-rose-300 flex items-center justify-center shrink-0">
+                        <AlertTriangle className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <div className="font-extrabold text-rose-900 dark:text-rose-200 text-xs">
+                          Anomalie Pédagogique Détectée — {failingModules.length} module(s) avec taux d'échec &gt; 35%
+                        </div>
+                        <div className="text-rose-700/80 dark:text-rose-300/80 mt-0.5 text-[11px] font-medium">
+                          Vérification jury recommandée • Module(s) : {failingModules.map((m: any) => m.code || m.name).join(', ')}
+                        </div>
+                      </div>
                     </div>
+                    <span className="px-3 py-1 bg-rose-200/60 dark:bg-rose-900/60 text-rose-900 dark:text-rose-200 font-bold text-[10px] uppercase tracking-wider rounded-lg shrink-0 self-start sm:self-center">
+                      Vérification Requise
+                    </span>
                   </div>
                 )}
               </div>
@@ -1549,186 +1774,339 @@ export default function AdminGradesPVPage() {
             const fraudBlockedCandidates = studentsList.filter((s: any) => checkFraud(s))
 
             return (
-              <div className="bg-gradient-to-r from-indigo-900 via-slate-900 to-purple-950 text-white rounded-3xl p-6 md:p-8 shadow-2xl border border-indigo-500/30 space-y-6 relative overflow-hidden">
-                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-indigo-800/50 pb-5">
+              <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200/90 dark:border-slate-800 shadow-sm space-y-5">
+                {/* Header Row: Title + Status Pills + Toggle */}
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-400 to-indigo-500 flex items-center justify-center shadow-lg animate-pulse">
-                      <Sparkles className="w-6 h-6 text-white" />
+                    <div className="w-10 h-10 rounded-2xl bg-[#0f2863]/10 dark:bg-blue-900/30 text-[#0f2863] dark:text-blue-300 flex items-center justify-center shadow-xs shrink-0">
+                      <Sparkles className="w-5 h-5" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-black tracking-tight text-white flex items-center gap-2">
-                        Assistant IA de Délibération — Analyse Prédictive du Jury
-                      </h3>
-                      <p className="text-xs text-indigo-200">
-                        Analyse intelligente des notes, détection des candidats au rachat et propositions automatiques pour le Chef de Filière et le Président du Jury.
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="text-base md:text-lg font-black tracking-tight text-[#0f2863] dark:text-white">
+                          Assistant IA de Délibération
+                        </h3>
+                        <span className="px-2 py-0.5 bg-[#0f2863]/10 text-[#0f2863] dark:bg-blue-900/40 dark:text-blue-300 rounded-md text-[10px] font-black uppercase tracking-wider">
+                          Analyse Prédictive
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                        Détection automatique des candidats au rachat jury (9.50–9.99), blocages éliminatoires et exclusions réglementaires.
                       </p>
                     </div>
                   </div>
 
-                  <span className="px-3 py-1 bg-amber-400/20 text-amber-300 border border-amber-400/40 rounded-full text-[10px] font-black uppercase tracking-widest shrink-0">
-                    Accès Privilégié : Admin, Chef de Filière & Département
-                  </span>
+                  <div className="flex items-center gap-2.5 flex-wrap self-stretch sm:self-end lg:self-center shrink-0">
+                    <span className="px-2.5 py-1 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 text-xs font-bold rounded-xl">
+                      {rachatCandidates.length} Rachat
+                    </span>
+                    <span className="px-2.5 py-1 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-300 text-xs font-bold rounded-xl">
+                      {eliminatoireBlockers.length} Note &lt; 6
+                    </span>
+                    <span className="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-xl">
+                      {fraudBlockedCandidates.length} Fraude
+                    </span>
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowAiAnalysis(v => !v)}
+                      className="rounded-xl text-xs font-bold gap-1.5 h-8 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                    >
+                      {showAiAnalysis ? (
+                        <>
+                          <ChevronUp className="w-3.5 h-3.5" />
+                          <span>Masquer</span>
+                        </>
+                      ) : (
+                        <>
+                          <ChevronDown className="w-3.5 h-3.5" />
+                          <span>Afficher Détails</span>
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {/* Candidates for Rachat */}
-                  <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h4 className="text-xs font-black uppercase tracking-wider text-amber-300 flex items-center gap-2">
-                        🎯 Candidats Suggérés pour Rachat Jury ({rachatCandidates.length})
-                      </h4>
-                      <span className="text-[10px] text-slate-400">Seuil: 9.50 – 9.99/20</span>
-                    </div>
+                {/* 3 Categories Grid (Shown when expanded) */}
+                {showAiAnalysis && (
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 animate-in fade-in duration-300">
+                    {/* Category 1: Candidates for Rachat */}
+                    <div className="bg-amber-50/40 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-800/40 rounded-2xl p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-xs font-black uppercase tracking-wider text-amber-900 dark:text-amber-300 flex items-center gap-1.5">
+                          <Sparkles className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                          <span>Candidats au Rachat ({rachatCandidates.length})</span>
+                        </h4>
+                        <span className="text-[10px] text-amber-700/80 dark:text-amber-400/80 font-bold bg-amber-100/60 dark:bg-amber-900/40 px-2 py-0.5 rounded-md">
+                          9.50 – 9.99/20
+                        </span>
+                      </div>
 
-                    {rachatCandidates.length === 0 ? (
-                      <p className="text-xs text-slate-400 italic">Aucun étudiant n'est dans la zone de rachat (9.50 - 9.99) pour ce semestre.</p>
-                    ) : (
-                      <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-                        {rachatCandidates.map((s: any) => {
-                          const needed = (10.00 - Number(s.moyenne_semestrielle)).toFixed(2)
-                          return (
-                            <div key={s.student_id} className="p-3 bg-white/10 rounded-xl flex items-center justify-between text-xs border border-white/10">
-                              <div>
-                                <div className="font-black text-white">{s.last_name?.toUpperCase()} {s.first_name}</div>
-                                <div className="text-[10px] text-slate-300">Code: {s.apogee} | Moyenne: <span className="font-mono text-amber-300 font-bold">{Number(s.moyenne_semestrielle).toFixed(2)}/20</span></div>
-                              </div>
-
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setSelectedRachatStudent({
-                                    student_id: s.student_id,
-                                    name: `${s.last_name?.toUpperCase()} ${s.first_name}`,
-                                    apogee: s.apogee,
-                                    current_note: Number(s.moyenne_semestrielle).toFixed(2),
-                                    needed_points: needed,
-                                  })
-                                }}
-                                className="px-3 py-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-xl text-[10px] font-black uppercase tracking-wider shadow-md hover:scale-105 transition-all cursor-pointer flex items-center gap-1.5"
+                      {rachatCandidates.length === 0 ? (
+                        <p className="text-xs text-slate-400 dark:text-slate-500 italic p-3 bg-white/60 dark:bg-slate-800/60 rounded-xl border border-dashed border-amber-200/60 dark:border-amber-900/40 text-center">
+                          Aucun étudiant n'est dans la zone de rachat (9.50 - 9.99) pour ce semestre.
+                        </p>
+                      ) : (
+                        <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                          {rachatCandidates.map((s: any) => {
+                            const needed = (10.00 - Number(s.moyenne_semestrielle)).toFixed(2)
+                            return (
+                              <div
+                                key={s.student_id}
+                                className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-amber-200/70 dark:border-slate-700 shadow-2xs flex items-center justify-between gap-2"
                               >
-                                <Sparkles className="w-3 h-3 text-amber-200" />
-                                +{needed} pt pour Valider (V)
-                              </button>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    )}
-                  </div>
+                                <div className="space-y-0.5">
+                                  <div className="font-extrabold text-slate-900 dark:text-white text-xs">
+                                    {s.last_name?.toUpperCase()} {s.first_name}
+                                  </div>
+                                  <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                                    Apogée: {s.apogee} • Moyenne: <span className="font-mono text-amber-700 dark:text-amber-300 font-bold">{Number(s.moyenne_semestrielle).toFixed(2)}/20</span>
+                                  </div>
+                                </div>
 
-                  {/* Eliminatoire Blockers */}
-                  <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h4 className="text-xs font-black uppercase tracking-wider text-amber-200 flex items-center gap-2">
-                        ⚠️ Bloqués par Note Éliminatoire ({eliminatoireBlockers.length})
-                      </h4>
-                      <span className="text-[10px] text-slate-400">Moyenne ≥10 mais Module &lt;6</span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedRachatStudent({
+                                      student_id: s.student_id,
+                                      name: `${s.last_name?.toUpperCase()} ${s.first_name}`,
+                                      apogee: s.apogee,
+                                      current_note: Number(s.moyenne_semestrielle).toFixed(2),
+                                      needed_points: needed,
+                                    })
+                                  }}
+                                  className="px-2.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black rounded-lg text-[10px] uppercase tracking-wider shadow-2xs hover:scale-105 transition-all cursor-pointer flex items-center gap-1 shrink-0"
+                                >
+                                  <Sparkles className="w-3 h-3 text-slate-950" />
+                                  <span>+{needed} pt pour Valider</span>
+                                </button>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      )}
                     </div>
 
-                    {eliminatoireBlockers.length === 0 ? (
-                      <p className="text-xs text-slate-400 italic">Aucun étudiant n'est bloqué par une note éliminatoire avec une moyenne ≥10.</p>
-                    ) : (
-                      <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-                        {eliminatoireBlockers.map((s: any) => (
-                          <div key={s.student_id} className="p-3 bg-white/10 rounded-xl flex items-center justify-between text-xs border border-white/10">
-                            <div>
-                              <div className="font-black text-white">{s.last_name?.toUpperCase()} {s.first_name}</div>
-                              <div className="text-[10px] text-slate-300">Moyenne Semestrielle: <span className="font-mono text-emerald-300 font-bold">{Number(s.moyenne_semestrielle).toFixed(2)}/20</span></div>
-                            </div>
-                             <span className="px-2.5 py-1 bg-red-500/30 text-red-200 border border-red-400/40 rounded-lg text-[10px] font-black">
-                              {s.has_eliminatoire ? "Note < 6.00 Éliminatoire" : "> 2 Modules < 10"}
-                             </span>
-                          </div>
-                        ))}
+                    {/* Category 2: Eliminatoire Blockers */}
+                    <div className="bg-rose-50/40 dark:bg-rose-950/20 border border-rose-200/80 dark:border-rose-800/40 rounded-2xl p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-xs font-black uppercase tracking-wider text-rose-900 dark:text-rose-300 flex items-center gap-1.5">
+                          <AlertCircle className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
+                          <span>Bloqués Note Éliminatoire ({eliminatoireBlockers.length})</span>
+                        </h4>
+                        <span className="text-[10px] text-rose-700/80 dark:text-rose-400/80 font-bold bg-rose-100/60 dark:bg-rose-900/40 px-2 py-0.5 rounded-md">
+                          Moyenne ≥ 10 mais Note &lt; 6
+                        </span>
                       </div>
-                    )}
-                  </div>
 
-                  {/* Fraud Exclusion Category */}
-                  <div className="bg-rose-950/40 border border-rose-500/40 rounded-2xl p-5 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h4 className="text-xs font-black uppercase tracking-wider text-rose-300 flex items-center gap-2">
-                        🚫 Exclus du Rachat (Discipline & Fraude) ({fraudBlockedCandidates.length})
-                      </h4>
-                      <span className="text-[10px] text-rose-400 font-bold">Règle ENCG</span>
+                      {eliminatoireBlockers.length === 0 ? (
+                        <p className="text-xs text-slate-400 dark:text-slate-500 italic p-3 bg-white/60 dark:bg-slate-800/60 rounded-xl border border-dashed border-rose-200/60 dark:border-rose-900/40 text-center">
+                          Aucun étudiant n'est bloqué par une note éliminatoire avec une moyenne ≥10.
+                        </p>
+                      ) : (
+                        <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                          {eliminatoireBlockers.map((s: any) => (
+                            <div
+                              key={s.student_id}
+                              className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-rose-200/70 dark:border-slate-700 shadow-2xs flex items-center justify-between gap-2"
+                            >
+                              <div className="space-y-0.5">
+                                <div className="font-extrabold text-slate-900 dark:text-white text-xs">
+                                  {s.last_name?.toUpperCase()} {s.first_name}
+                                </div>
+                                <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                                  Moyenne: <span className="font-mono text-emerald-700 dark:text-emerald-400 font-bold">{Number(s.moyenne_semestrielle).toFixed(2)}/20</span>
+                                </div>
+                              </div>
+                              <span className="px-2.5 py-1 bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60 rounded-lg text-[10px] font-bold shrink-0">
+                                {s.has_eliminatoire ? "Note < 6.00 Éliminatoire" : "> 2 Modules < 10"}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
 
-                    {fraudBlockedCandidates.length === 0 ? (
-                      <p className="text-xs text-slate-400 italic">Aucun dossier de fraude dans cette promotion.</p>
-                    ) : (
-                      <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-                        {fraudBlockedCandidates.map((s: any) => (
-                          <div key={s.student_id} className="p-3 bg-rose-900/30 rounded-xl flex items-center justify-between text-xs border border-rose-500/30">
-                            <div>
-                              <div className="font-black text-white">{s.last_name?.toUpperCase()} {s.first_name}</div>
-                              <div className="text-[10px] text-rose-300 font-mono font-bold">Décision: 🚨 FRAUDE (0.00)</div>
-                            </div>
-                            <span className="px-2.5 py-1 bg-rose-700 text-white rounded-lg text-[9px] font-black uppercase tracking-wider shadow-sm animate-pulse">
-                              Inéligible Rachat
-                            </span>
-                          </div>
-                        ))}
+                    {/* Category 3: Fraud Exclusion */}
+                    <div className="bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700 rounded-2xl p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                          <ShieldAlert className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
+                          <span>Exclus du Rachat ({fraudBlockedCandidates.length})</span>
+                        </h4>
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold bg-slate-200/60 dark:bg-slate-700 px-2 py-0.5 rounded-md">
+                          Discipline & Fraude
+                        </span>
                       </div>
-                    )}
-                  </div>
 
-                </div>
+                      {fraudBlockedCandidates.length === 0 ? (
+                        <p className="text-xs text-slate-400 dark:text-slate-500 italic p-3 bg-white/60 dark:bg-slate-800/60 rounded-xl border border-dashed border-slate-200 dark:border-slate-700 text-center">
+                          Aucun dossier disciplinaire ou de fraude dans cette promotion.
+                        </p>
+                      ) : (
+                        <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                          {fraudBlockedCandidates.map((s: any) => (
+                            <div
+                              key={s.student_id}
+                              className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xs flex items-center justify-between gap-2"
+                            >
+                              <div className="space-y-0.5">
+                                <div className="font-extrabold text-slate-900 dark:text-white text-xs">
+                                  {s.last_name?.toUpperCase()} {s.first_name}
+                                </div>
+                                <div className="text-[10px] text-rose-600 dark:text-rose-400 font-bold">
+                                  Dossier: FRAUDE (Note 0.00)
+                                </div>
+                              </div>
+                              <span className="px-2.5 py-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600 rounded-lg text-[9px] font-black uppercase tracking-wider shrink-0">
+                                Inéligible Rachat
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             )
           })()}
 
 
           {/* GRAND MATRIX TABLE FOR ALL 7 MODULES */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden shadow-2xl space-y-0">
+          <div className={cn(
+            "bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-3xl overflow-hidden shadow-sm space-y-0 transition-all",
+            isFullscreenTable && "fixed inset-0 z-50 rounded-none border-0 p-4 md:p-6 flex flex-col h-screen w-screen bg-white dark:bg-slate-950 overflow-hidden"
+          )}>
             
-            {/* Header Toolbar: Search & Decision Filters */}
-            <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 bg-slate-50/50 dark:bg-slate-850">
-              <div>
-                <h3 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-amber-500" />
-                  Matrice Globale des 7 Modules (Compensation Semestrielle)
-                </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Moyenne Semestrielle = Somme des 7 modules / 7. Max 2 modules &lt; 10/20 pour compensation (Code VPC).
+            {/* Header Toolbar: Search & Filters + View Switcher + Fullscreen */}
+            <div className="p-4 md:p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-4 bg-slate-50/70 dark:bg-slate-850 shrink-0">
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="text-base font-black text-[#0f2863] dark:text-white flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-amber-500" />
+                    Matrice Globale des {semesterPvData.modules?.length || 7} Modules
+                  </h3>
+                  <span className="px-2 py-0.5 bg-[#0f2863]/10 text-[#0f2863] dark:bg-blue-900/40 dark:text-blue-300 rounded-md text-[10px] font-black uppercase">
+                    Compensation APOGEE
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Moyenne semestrielle ≥ 10/20 • Max 2 modules &lt; 10/20 pour compensation (Code VPC) • Note éliminatoire &lt; 6.00/20.
                 </p>
               </div>
 
               {/* Search & Filter Controls */}
-              <div className="flex flex-wrap items-center gap-3">
-                <input
-                  type="text"
-                  placeholder="🔍 Rechercher par nom, Apogée, CNE..."
-                  value={matrixSearchQuery}
-                  onChange={(e) => setMatrixSearchQuery(e.target.value)}
-                  className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 w-full sm:w-64"
-                />
+              <div className="flex flex-wrap items-center gap-2.5">
+                <div className="relative w-full sm:w-56">
+                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    placeholder="Rechercher nom, Apogée, CIN..."
+                    value={matrixSearchQuery}
+                    onChange={(e) => setMatrixSearchQuery(e.target.value)}
+                    className="pl-8.5 pr-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-[#0f2863] w-full"
+                  />
+                </div>
 
+                {/* Filter Tabs */}
                 <div className="flex items-center gap-1 bg-white dark:bg-slate-800 p-1 border border-slate-200 dark:border-slate-700 rounded-xl text-xs">
                   <button
                     onClick={() => setMatrixDecisionFilter('all')}
-                    className={cn("px-3 py-1.5 rounded-lg font-black transition-all cursor-pointer", matrixDecisionFilter === 'all' ? "bg-indigo-600 text-white shadow-xs" : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700")}
+                    className={cn(
+                      "px-2.5 py-1 rounded-lg font-extrabold text-[11px] transition-all cursor-pointer",
+                      matrixDecisionFilter === 'all'
+                        ? "bg-[#0f2863] text-white shadow-xs"
+                        : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
+                    )}
                   >
                     Tous ({semesterPvData.students?.length || 0})
                   </button>
                   <button
                     onClick={() => setMatrixDecisionFilter('V')}
-                    className={cn("px-3 py-1.5 rounded-lg font-black transition-all cursor-pointer", matrixDecisionFilter === 'V' ? "bg-emerald-600 text-white shadow-xs" : "text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30")}
+                    className={cn(
+                      "px-2.5 py-1 rounded-lg font-extrabold text-[11px] transition-all cursor-pointer",
+                      matrixDecisionFilter === 'V'
+                        ? "bg-emerald-600 text-white shadow-xs"
+                        : "text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                    )}
                   >
-                    Validés (V/VAR)
+                    Validés
                   </button>
                   <button
                     onClick={() => setMatrixDecisionFilter('RAT')}
-                    className={cn("px-3 py-1.5 rounded-lg font-black transition-all cursor-pointer", matrixDecisionFilter === 'RAT' ? "bg-amber-600 text-white shadow-xs" : "text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30")}
+                    className={cn(
+                      "px-2.5 py-1 rounded-lg font-extrabold text-[11px] transition-all cursor-pointer",
+                      matrixDecisionFilter === 'RAT'
+                        ? "bg-amber-600 text-white shadow-xs"
+                        : "text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30"
+                    )}
                   >
                     Rattrapage
                   </button>
                   <button
                     onClick={() => setMatrixDecisionFilter('NV')}
-                    className={cn("px-3 py-1.5 rounded-lg font-black transition-all cursor-pointer", matrixDecisionFilter === 'NV' ? "bg-red-600 text-white shadow-xs" : "text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30")}
+                    className={cn(
+                      "px-2.5 py-1 rounded-lg font-extrabold text-[11px] transition-all cursor-pointer",
+                      matrixDecisionFilter === 'NV'
+                        ? "bg-rose-600 text-white shadow-xs"
+                        : "text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30"
+                    )}
                   >
                     Éliminés
                   </button>
                 </div>
+
+                {/* Mode Switcher: Compact vs Detailed */}
+                <div className="flex items-center gap-1 bg-white dark:bg-slate-800 p-1 border border-slate-200 dark:border-slate-700 rounded-xl text-xs">
+                  <button
+                    onClick={() => setMatrixViewMode('compact')}
+                    title="Affichage compact : 1 colonne par module avec note et décision (Recommandé)"
+                    className={cn(
+                      "px-2.5 py-1 rounded-lg font-extrabold text-[11px] transition-all cursor-pointer flex items-center gap-1",
+                      matrixViewMode === 'compact'
+                        ? "bg-[#0f2863] text-white shadow-xs"
+                        : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
+                    )}
+                  >
+                    <Table className="w-3.5 h-3.5" />
+                    <span>Compact</span>
+                  </button>
+                  <button
+                    onClick={() => setMatrixViewMode('detailed')}
+                    title="Affichage détaillé : 3 sous-colonnes (Note, Décision, Année) par module"
+                    className={cn(
+                      "px-2.5 py-1 rounded-lg font-extrabold text-[11px] transition-all cursor-pointer flex items-center gap-1",
+                      matrixViewMode === 'detailed'
+                        ? "bg-[#0f2863] text-white shadow-xs"
+                        : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
+                    )}
+                  >
+                    <SlidersHorizontal className="w-3.5 h-3.5" />
+                    <span>Détaillé</span>
+                  </button>
+                </div>
+
+                {/* Fullscreen Button */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsFullscreenTable(v => !v)}
+                  className="rounded-xl font-bold text-xs gap-1.5 h-8 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                >
+                  {isFullscreenTable ? (
+                    <>
+                      <Minimize2 className="w-3.5 h-3.5 text-[#0f2863]" />
+                      <span>Réduire</span>
+                    </>
+                  ) : (
+                    <>
+                      <Maximize2 className="w-3.5 h-3.5 text-[#0f2863]" />
+                      <span>Plein Écran</span>
+                    </>
+                  )}
+                </Button>
               </div>
             </div>
 
@@ -1738,7 +2116,8 @@ export default function AdminGradesPVPage() {
                 const matchesSearch = !matrixSearchQuery || 
                   s.last_name?.toLowerCase().includes(matrixSearchQuery.toLowerCase()) ||
                   s.first_name?.toLowerCase().includes(matrixSearchQuery.toLowerCase()) ||
-                  String(s.apogee).includes(matrixSearchQuery)
+                  String(s.apogee).includes(matrixSearchQuery) ||
+                  (s.cin && String(s.cin).toLowerCase().includes(matrixSearchQuery.toLowerCase()))
 
                 if (!matchesSearch) return false
 
@@ -1751,167 +2130,279 @@ export default function AdminGradesPVPage() {
               })
 
               return (
-                <div className="overflow-x-auto rounded-3xl border-4 border-slate-900 dark:border-slate-800 shadow-2xl bg-white dark:bg-slate-900">
-                  <table className="w-full text-xs text-left border-collapse border-2 border-slate-900">
+                <div className={cn(
+                  "overflow-x-auto bg-white dark:bg-slate-900",
+                  isFullscreenTable ? "flex-1 overflow-y-auto" : "max-h-[680px] overflow-y-auto"
+                )}>
+                  <table className="w-full text-xs text-left border-collapse">
                     <thead>
-                      <tr className="bg-[#081638] text-white border-b-4 border-slate-900">
-                        <th rowSpan={2} className="py-3.5 px-4 font-black uppercase tracking-wider border-r-2 border-slate-900 border-b-2 sticky left-0 bg-[#081638] z-30 shadow-md min-w-[100px]">Code Apogée</th>
-                        <th rowSpan={2} className="py-3.5 px-3 font-black uppercase tracking-wider border-r-2 border-slate-900 border-b-2 sticky left-[100px] bg-[#050e26] text-amber-300 z-30 shadow-md min-w-[80px]">CIN</th>
-                        <th rowSpan={2} className="py-3.5 px-4 font-black uppercase tracking-wider border-r-4 border-slate-900 border-b-2 sticky left-[180px] bg-[#081638] z-30 shadow-md min-w-[190px]">Nom & Prénom</th>
+                      <tr className="bg-[#0f2863] text-white">
+                        <th
+                          rowSpan={matrixViewMode === 'detailed' ? 2 : 1}
+                          className="py-3 px-3 font-black uppercase tracking-wider sticky left-0 z-30 bg-[#0f2863] text-white border-r border-slate-700/80 min-w-[95px] text-center"
+                        >
+                          Apogée
+                        </th>
+                        <th
+                          rowSpan={matrixViewMode === 'detailed' ? 2 : 1}
+                          className="py-3 px-3 font-black uppercase tracking-wider sticky left-[95px] z-30 bg-[#0f2863] text-amber-200 border-r border-slate-700/80 min-w-[85px] text-center"
+                        >
+                          CIN
+                        </th>
+                        <th
+                          rowSpan={matrixViewMode === 'detailed' ? 2 : 1}
+                          className="py-3 px-4 font-black uppercase tracking-wider sticky left-[180px] z-30 bg-[#0f2863] text-white border-r-2 border-slate-300 dark:border-slate-700 shadow-[4px_0_8px_-2px_rgba(0,0,0,0.08)] min-w-[190px]"
+                        >
+                          Nom & Prénom
+                        </th>
                         
-                        {/* 7 Modules Group Headers */}
+                        {/* 7 Modules Headers */}
                         {semesterPvData.modules?.map((m: any, idx: number) => (
-                          <th key={m.id} colSpan={3} className="py-3 px-2 font-black text-center border-r-2 border-slate-900 border-b-2 bg-[#102454]">
-                            <div className="text-xs text-amber-300 font-extrabold uppercase tracking-wider">M0{idx+1} — {m.name}</div>
-                            <div className="font-mono text-[9.5px] text-blue-200 font-bold">({m.code || `MOD-${m.id}`})</div>
+                          <th
+                            key={m.id}
+                            colSpan={matrixViewMode === 'detailed' ? 3 : 1}
+                            className="py-3 px-2 font-bold text-center border-r border-slate-700/80 bg-[#0f2863] text-white min-w-[95px]"
+                          >
+                            <div className="text-[11px] font-black uppercase tracking-tight text-white line-clamp-1" title={m.name}>
+                              M0{idx+1} • {m.name}
+                            </div>
+                            <div className="font-mono text-[9px] text-blue-200/90 font-medium">
+                              {m.code || `MOD-${m.id}`}
+                            </div>
                           </th>
                         ))}
 
-                        <th rowSpan={2} className="py-3.5 px-4 font-black text-center bg-indigo-950 text-amber-300 border-r-2 border-slate-900 border-b-2 min-w-[110px]">Moyenne</th>
-                        <th rowSpan={2} className="py-3.5 px-4 font-black text-center bg-indigo-900 text-white border-r-2 border-slate-900 border-b-2 min-w-[70px]">Crédits</th>
-                        <th rowSpan={2} className="py-3.5 px-4 font-black text-center bg-[#081638] text-white border-b-2 border-slate-900 min-w-[130px]">Décision</th>
+                        <th
+                          rowSpan={matrixViewMode === 'detailed' ? 2 : 1}
+                          className="py-3 px-3 font-black text-center bg-[#0a1c47] text-amber-300 border-r border-slate-700 min-w-[90px]"
+                        >
+                          Moyenne
+                        </th>
+                        <th
+                          rowSpan={matrixViewMode === 'detailed' ? 2 : 1}
+                          className="py-3 px-2 font-black text-center bg-[#0a1c47] text-white border-r border-slate-700 min-w-[70px]"
+                        >
+                          Crédits
+                        </th>
+                        <th
+                          rowSpan={matrixViewMode === 'detailed' ? 2 : 1}
+                          className="py-3 px-4 font-black text-center bg-[#0a1c47] text-white min-w-[130px]"
+                        >
+                          Décision
+                        </th>
                       </tr>
-                      <tr className="bg-[#122a63] text-blue-100 border-b-4 border-slate-900">
-                        {/* 3 Sub-columns per module: Note module, Decision, Année université */}
-                        {semesterPvData.modules?.map((m: any) => (
-                          <React.Fragment key={`sub-${m.id}`}>
-                            <th className="py-2 px-2 font-black text-[10px] text-center bg-[#122a63] border-r border-slate-800 text-amber-200 min-w-[55px]">Note</th>
-                            <th className="py-2 px-2 font-black text-[10px] text-center bg-[#122a63] border-r border-slate-800 text-amber-200 min-w-[55px]">Décision</th>
-                            <th className="py-2 px-2 font-black text-[10px] text-center bg-[#122a63] border-r-2 border-slate-900 text-amber-200 min-w-[75px]">Année</th>
-                          </React.Fragment>
-                        ))}
-                      </tr>
+
+                      {/* Sub-header row (Only in Detailed Mode) */}
+                      {matrixViewMode === 'detailed' && (
+                        <tr className="bg-[#153478] text-blue-100 border-b border-slate-700">
+                          {semesterPvData.modules?.map((m: any) => (
+                            <React.Fragment key={`sub-${m.id}`}>
+                              <th className="py-1.5 px-2 font-extrabold text-[10px] text-center bg-[#153478] border-r border-slate-700 text-amber-200 min-w-[50px]">
+                                Note
+                              </th>
+                              <th className="py-1.5 px-2 font-extrabold text-[10px] text-center bg-[#153478] border-r border-slate-700 text-amber-200 min-w-[50px]">
+                                Déc.
+                              </th>
+                              <th className="py-1.5 px-2 font-extrabold text-[10px] text-center bg-[#153478] border-r-2 border-slate-700 text-amber-200 min-w-[65px]">
+                                Année
+                              </th>
+                            </React.Fragment>
+                          ))}
+                        </tr>
+                      )}
                     </thead>
 
-                    <tbody className="divide-y-2 divide-slate-900 font-bold border-b-2 border-slate-900">
-                      {filteredStudents.map((s: any, sIdx: number) => {
-                        const studentExpandedSanction = (allExamIncidents || []).find((inc: any) => {
-                          const incScope = inc.sanction_scope;
-                          if (incScope !== 'semestre' && incScope !== 'annee') return false;
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                      {filteredStudents.length === 0 ? (
+                        <tr>
+                          <td
+                            colSpan={(semesterPvData.modules?.length || 7) * (matrixViewMode === 'detailed' ? 3 : 1) + 6}
+                            className="py-12 text-center text-slate-400 dark:text-slate-500 italic text-xs"
+                          >
+                            Aucun étudiant ne correspond aux critères de recherche ou de filtre.
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredStudents.map((s: any, sIdx: number) => {
+                          const studentExpandedSanction = (allExamIncidents || []).find((inc: any) => {
+                            const incScope = inc.sanction_scope;
+                            if (incScope !== 'semestre' && incScope !== 'annee') return false;
 
-                          const incStudentId = inc.student_id || inc.student?.id;
-                          const incCne = inc.cne || inc.student?.cne;
-                          const incName = (inc.student_name || inc.student?.first_name || inc.student?.last_name || '').toLowerCase();
-                          const fullName = `${s.last_name || ''} ${s.first_name || ''}`.toLowerCase();
+                            const incStudentId = inc.student_id || inc.student?.id;
+                            const incCne = inc.cne || inc.student?.cne;
+                            const incName = (inc.student_name || inc.student?.first_name || inc.student?.last_name || '').toLowerCase();
+                            const fullName = `${s.last_name || ''} ${s.first_name || ''}`.toLowerCase();
+
+                            return (
+                              (incStudentId && String(incStudentId) === String(s.student_id)) ||
+                              (incCne && String(incCne) === String(s.cne)) ||
+                              (incName && incName.length > 2 && fullName.includes(incName))
+                            );
+                          });
+
+                          const hasStudentFraud = s.has_fraud || s.decision_global === 'FRAUDE' || !!studentExpandedSanction;
+                          const isEven = sIdx % 2 === 0
+                          const rowOpaqueBg = isEven ? '!bg-white dark:!bg-slate-900' : '!bg-slate-50 dark:!bg-slate-800'
+                          const rowHoverBg = 'hover:bg-blue-50/50 dark:hover:bg-slate-800/80'
 
                           return (
-                            (incStudentId && String(incStudentId) === String(s.student_id)) ||
-                            (incCne && String(incCne) === String(s.cne)) ||
-                            (incName && incName.length > 2 && fullName.includes(incName))
-                          );
-                        });
-
-                        const hasStudentFraud = s.has_fraud || s.decision_global === 'FRAUDE' || !!studentExpandedSanction;
-                        const rowBgClass = sIdx % 2 === 0 ? 'bg-white dark:bg-slate-900' : 'bg-slate-50/70 dark:bg-slate-850'
-
-                        return (
-                          <tr key={s.student_id} className={cn("transition-colors hover:bg-amber-50/70 dark:hover:bg-slate-800/80 border-b-2 border-slate-900", rowBgClass)}>
-                            <td className={cn("py-3 px-4 font-mono font-bold text-slate-900 dark:text-slate-100 border-r-2 border-b-2 border-slate-900 sticky left-0 z-20 shadow-xs", rowBgClass)}>
-                              {s.apogee}
-                            </td>
-                            <td className={cn("py-3 px-3 font-mono font-black text-indigo-950 dark:text-indigo-300 border-r-2 border-b-2 border-slate-900 sticky left-[100px] z-20 shadow-xs", rowBgClass)}>
-                              {s.cin || '-'}
-                            </td>
-                            <td className={cn("py-3 px-4 font-black text-slate-950 dark:text-white border-r-4 border-b-2 border-slate-950 sticky left-[180px] z-20 whitespace-nowrap shadow-sm", rowBgClass)}>
-                              {s.last_name?.toUpperCase()} {s.first_name}
-                              {hasStudentFraud && (
-                                <span className="ml-2 px-2 py-0.5 bg-rose-950 text-rose-100 rounded-md font-black text-[9px] uppercase border border-rose-500 shadow-xs">
-                                  🚨 FRAUDE
-                                </span>
-                              )}
-                            </td>
-
-                            {/* 7 Modules 3 Sub-columns data */}
-                            {semesterPvData.modules?.map((m: any) => {
-                              const mInfo = s.module_grades?.[m.id]
-                              const note = mInfo?.note
-                              const dec = mInfo?.decision
-                              const isFraud = mInfo?.is_fraud || dec === 'FRAUDE' || (hasStudentFraud && (mInfo?.is_fraud || !!studentExpandedSanction))
-
-                              const noteStyle = 
-                                isFraud ? 'bg-rose-100 dark:bg-rose-950/80 text-rose-950 font-black' :
-                                note === null || note === undefined ? '' :
-                                note >= 10.00 ? 'text-slate-950 dark:text-white font-extrabold' :
-                                note >= 5.00 ? 'bg-amber-100/70 dark:bg-amber-950/50 text-amber-950 font-extrabold' :
-                                'bg-rose-100/90 dark:bg-rose-950/70 text-rose-950 font-extrabold'
-
-                              return (
-                                <React.Fragment key={m.id}>
-                                  <td className={cn("py-2.5 px-2 text-center border-r border-b-2 border-slate-900 font-mono text-xs font-black", noteStyle)}>
-                                    {isFraud ? '0.00' : (note !== null && note !== undefined ? Number(note).toFixed(2) : '–')}
-                                  </td>
-                                  <td className="py-2.5 px-1.5 text-center border-r border-b-2 border-slate-900">
-                                    <span className={cn(
-                                      "text-[8.5px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider border-2 border-slate-950 shadow-xs",
-                                      isFraud ? "bg-rose-950 text-white animate-pulse" :
-                                      dec === 'V' ? "bg-emerald-600 text-white" :
-                                      dec === 'VAR' ? "bg-sky-600 text-white" :
-                                      dec === 'VPC' || dec === 'VC' ? "bg-indigo-600 text-white" :
-                                      "bg-rose-600 text-white"
-                                    )}>
-                                      {isFraud ? '🚨 FRAUDE' : (dec || 'NV')}
-                                    </span>
-                                  </td>
-                                  <td className="py-2.5 px-1.5 text-center border-r-2 border-b-2 border-slate-900">
-                                    <span className={cn(
-                                      "text-[8.5px] px-1.5 py-0.5 rounded-md font-mono font-bold whitespace-nowrap border-2 border-slate-950",
-                                      mInfo?.is_historical 
-                                        ? "bg-purple-200 text-purple-950 font-black" 
-                                        : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
-                                    )}>
-                                      {mInfo?.is_historical ? `🏛️ ${mInfo?.validation_year || '25-26'}` : (mInfo?.validation_year || '26-27')}
-                                    </span>
-                                  </td>
-                                </React.Fragment>
-                              )
-                            })}
-
-                            {/* Moyenne Semestrielle Cell */}
-                            <td className="py-3.5 px-4 text-center border-r-2 border-b-2 border-slate-900 font-mono font-black text-sm bg-indigo-100/90 dark:bg-indigo-950/60 text-indigo-950 dark:text-indigo-200">
-                              {hasStudentFraud ? (
-                                <span className="px-3 py-1 rounded-xl text-xs font-black inline-block shadow-xs font-mono bg-rose-950 text-white border-2 border-slate-950">
-                                  0.00 (FRAUDE)
-                                </span>
-                              ) : (
-                                s.moyenne_semestrielle !== null ? (
-                                  <span className="font-mono font-black text-sm text-indigo-950 dark:text-indigo-200">
-                                    {Number(s.moyenne_semestrielle).toFixed(2)}
-                                  </span>
-                                ) : '–'
-                              )}
-                            </td>
-
-                            {/* Credits Cell */}
-                            <td className="py-3.5 px-4 text-center border-r border-slate-200 dark:border-slate-800 font-black text-xs">
-                              <span className="px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg text-slate-700 dark:text-slate-300 font-mono font-bold">
-                                {hasStudentFraud ? '0' : s.credits}/{semesterPvData.modules?.length || 7}
-                              </span>
-                            </td>
-
-                            {/* Décision Semestrielle Cell */}
-                            <td className="py-3.5 px-4 text-center">
-                              <span className={cn(
-                                "px-3.5 py-1.5 rounded-full text-xs font-black uppercase tracking-wider shadow-sm border inline-block",
-                                hasStudentFraud ? "bg-rose-600 text-white border-rose-700 font-black animate-pulse shadow-md" :
-                                s.decision_global === 'V' ? "bg-emerald-100 text-emerald-900 border-emerald-300 dark:bg-emerald-900/50 dark:text-emerald-200" :
-                                s.decision_global === 'VAR' ? "bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-900/50 dark:text-amber-200" :
-                                s.decision_global === 'RAT' ? "bg-orange-100 text-orange-900 border-orange-300 dark:bg-orange-900/50 dark:text-orange-200" :
-                                "bg-red-100 text-red-900 border-red-300 dark:bg-red-900/50 dark:text-red-200"
+                            <tr key={s.student_id} className={cn("transition-colors", rowOpaqueBg, rowHoverBg)}>
+                              {/* Apogee: 100% Solid background to completely prevent bleed-through */}
+                              <td className={cn(
+                                "py-2.5 px-3 font-mono font-bold text-xs text-slate-800 dark:text-slate-200 border-r border-b border-slate-200 dark:border-slate-800 sticky left-0 z-20 text-center shadow-xs",
+                                rowOpaqueBg
                               )}>
-                                {hasStudentFraud ? '🚨 CONSEIL DISCIPLINE (0/20)' :
-                                 s.decision_global === 'V' ? 'Validé (V)' :
-                                 s.decision_global === 'VAR' ? 'Validé Ratt. (VAR)' :
-                                 s.decision_global === 'RAT' ? 'Rattrapage (RAT)' :
-                                 'Non Validé (NV)'}
-                              </span>
-                            </td>
-                          </tr>
-                        )
-                      })}
+                                {s.apogee}
+                              </td>
+
+                              {/* CIN: Dedicated column */}
+                              <td className={cn(
+                                "py-2.5 px-3 font-mono font-bold text-xs text-indigo-950 dark:text-indigo-200 border-r border-b border-slate-200 dark:border-slate-800 sticky left-[95px] z-20 text-center shadow-xs",
+                                rowOpaqueBg
+                              )}>
+                                {s.cin || '–'}
+                              </td>
+
+                              {/* Student Name: 100% Solid background, clear distinction */}
+                              <td className={cn(
+                                "py-2 px-4 border-r-2 border-b border-slate-300 dark:border-slate-700 sticky left-[180px] z-20 whitespace-nowrap shadow-[4px_0_8px_-2px_rgba(0,0,0,0.08)]",
+                                rowOpaqueBg
+                              )}>
+                                <span className="font-extrabold text-xs text-slate-900 dark:text-white flex items-center gap-1.5">
+                                  {s.last_name?.toUpperCase()} {s.first_name}
+                                  {hasStudentFraud && (
+                                    <span className="px-1.5 py-0.5 bg-rose-600 text-white rounded text-[9px] font-black uppercase">
+                                      FRAUDE
+                                    </span>
+                                  )}
+                                </span>
+                              </td>
+
+                              {/* 7 Modules Data */}
+                              {semesterPvData.modules?.map((m: any) => {
+                                const mInfo = s.module_grades?.[m.id]
+                                const note = mInfo?.note
+                                const dec = mInfo?.decision
+                                const isFraud = mInfo?.is_fraud || dec === 'FRAUDE' || (hasStudentFraud && (mInfo?.is_fraud || !!studentExpandedSanction))
+
+                                const noteColor = 
+                                  isFraud ? 'text-rose-700 dark:text-rose-400 font-black' :
+                                  note === null || note === undefined ? 'text-slate-400' :
+                                  note >= 10.00 ? 'text-slate-900 dark:text-slate-100 font-extrabold' :
+                                  note >= 6.00 ? 'text-amber-700 dark:text-amber-400 font-bold' :
+                                  'text-rose-700 dark:text-rose-400 font-bold'
+
+                                const noteBg =
+                                  isFraud ? 'bg-rose-50/70 dark:bg-rose-950/30' :
+                                  note !== null && note !== undefined && note < 6.00 ? 'bg-rose-50/50 dark:bg-rose-950/20' :
+                                  ''
+
+                                const decBadgeClass =
+                                  isFraud ? "bg-rose-600 text-white border-rose-700" :
+                                  dec === 'V' ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800" :
+                                  dec === 'VAR' ? "bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800" :
+                                  dec === 'VPC' || dec === 'VC' ? "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800" :
+                                  "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800"
+
+                                if (matrixViewMode === 'compact') {
+                                  return (
+                                    <td
+                                      key={m.id}
+                                      className={cn("py-2 px-1.5 text-center border-r border-b border-slate-200 dark:border-slate-800", noteBg)}
+                                    >
+                                      <div className="flex flex-col items-center justify-center gap-0.5">
+                                        <span className={cn("font-mono text-xs font-black", noteColor)}>
+                                          {isFraud ? '0.00' : (note !== null && note !== undefined ? Number(note).toFixed(2) : '–')}
+                                        </span>
+                                        <div className="flex items-center gap-1">
+                                          <span className={cn("text-[9px] px-1.5 py-0.2 rounded font-black uppercase tracking-wider border", decBadgeClass)}>
+                                            {isFraud ? 'FRAUDE' : (dec || 'NV')}
+                                          </span>
+                                          {mInfo?.is_historical && (
+                                            <span
+                                              className="text-[8px] font-mono px-1 py-0.2 bg-purple-100 text-purple-900 dark:bg-purple-950 dark:text-purple-300 rounded font-bold"
+                                              title={`Validé en ${mInfo?.validation_year}`}
+                                            >
+                                              {mInfo?.validation_year ? mInfo.validation_year.slice(-2) : 'Ant.'}
+                                            </span>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </td>
+                                  )
+                                }
+
+                                // Detailed Mode (3 Columns per Module)
+                                return (
+                                  <React.Fragment key={m.id}>
+                                    <td className={cn("py-2 px-2 text-center border-r border-b border-slate-200 dark:border-slate-800 font-mono text-xs font-black", noteColor, noteBg)}>
+                                      {isFraud ? '0.00' : (note !== null && note !== undefined ? Number(note).toFixed(2) : '–')}
+                                    </td>
+                                    <td className="py-2 px-1.5 text-center border-r border-b border-slate-200 dark:border-slate-800">
+                                      <span className={cn("text-[9px] px-1.5 py-0.5 rounded font-black uppercase tracking-wider border", decBadgeClass)}>
+                                        {isFraud ? 'FRAUDE' : (dec || 'NV')}
+                                      </span>
+                                    </td>
+                                    <td className="py-2 px-1.5 text-center border-r-2 border-b border-slate-200 dark:border-slate-800">
+                                      <span className={cn(
+                                        "text-[9px] px-1.5 py-0.5 rounded font-mono font-medium whitespace-nowrap",
+                                        mInfo?.is_historical
+                                          ? "bg-purple-100 text-purple-900 font-bold dark:bg-purple-950 dark:text-purple-300"
+                                          : "text-slate-500 dark:text-slate-400"
+                                      )}>
+                                        {mInfo?.is_historical ? `🏛️ ${mInfo?.validation_year || '25-26'}` : (mInfo?.validation_year || '26-27')}
+                                      </span>
+                                    </td>
+                                  </React.Fragment>
+                                )
+                              })}
+
+                              {/* Moyenne Semestrielle Cell */}
+                              <td className="py-2.5 px-3 text-center border-r border-b border-slate-200 dark:border-slate-800 font-mono font-black text-sm bg-blue-50/40 dark:bg-blue-950/20 text-[#0f2863] dark:text-blue-300">
+                                {hasStudentFraud ? (
+                                  <span className="px-2 py-0.5 rounded-lg text-xs font-black font-mono bg-rose-600 text-white">
+                                    0.00
+                                  </span>
+                                ) : (
+                                  s.moyenne_semestrielle !== null ? (
+                                    <span className="font-mono font-black text-sm">
+                                      {Number(s.moyenne_semestrielle).toFixed(2)}
+                                    </span>
+                                  ) : '–'
+                                )}
+                              </td>
+
+                              {/* Credits Cell */}
+                              <td className="py-2.5 px-2 text-center border-r border-b border-slate-200 dark:border-slate-800 font-bold text-xs">
+                                <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded-md text-slate-700 dark:text-slate-300 font-mono font-bold">
+                                  {hasStudentFraud ? '0' : s.credits}/{semesterPvData.modules?.length || 7}
+                                </span>
+                              </td>
+
+                              {/* Décision Semestrielle Cell */}
+                              <td className="py-2.5 px-3 text-center border-b border-slate-200 dark:border-slate-800">
+                                <span className={cn(
+                                  "px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider border inline-block",
+                                  hasStudentFraud ? "bg-rose-600 text-white border-rose-700 shadow-xs" :
+                                  s.decision_global === 'V' ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800" :
+                                  s.decision_global === 'VAR' ? "bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800" :
+                                  s.decision_global === 'RAT' ? "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800" :
+                                  "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800"
+                                )}>
+                                  {hasStudentFraud ? '🚨 FRAUDE (0/20)' :
+                                   s.decision_global === 'V' ? 'Validé (V)' :
+                                   s.decision_global === 'VAR' ? 'Validé Ratt. (VAR)' :
+                                   s.decision_global === 'RAT' ? 'Rattrapage (RAT)' :
+                                   'Non Validé (NV)'}
+                                </span>
+                              </td>
+                            </tr>
+                          )
+                        })
+                      )}
                     </tbody>
                   </table>
                 </div>
-
               )
             })()}
           </div>
@@ -3244,6 +3735,23 @@ export default function AdminGradesPVPage() {
               <Mail className="w-3.5 h-3.5 text-indigo-200" />
               <span>Diffusion Email</span>
             </Button>
+
+            {/* Toggle Statistiques & IA */}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowAnalytics((prev) => !prev)}
+              className={cn(
+                "rounded-xl flex items-center gap-1.5 text-xs font-bold transition-all px-3.5 py-2",
+                showAnalytics
+                  ? "bg-purple-100/90 text-purple-800 border-purple-300 dark:bg-purple-950/60 dark:text-purple-300 dark:border-purple-800 shadow-xs"
+                  : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-300"
+              )}
+            >
+              <BarChart2 className={cn("w-3.5 h-3.5", showAnalytics ? "text-purple-600 dark:text-purple-400" : "text-slate-500")} />
+              <span>{showAnalytics ? "Masquer Stats & IA" : "Statistiques & IA"}</span>
+              <ChevronDown className={cn("w-3.5 h-3.5 transition-transform duration-200", showAnalytics && "rotate-180")} />
+            </Button>
           </div>
 
           {/* Right Action: Refresh */}
@@ -3259,172 +3767,272 @@ export default function AdminGradesPVPage() {
         </div>
       </div>
 
-      {/* Gemini AI Grade Audit Copilot */}
-      {aiAuditData && (
-        <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 text-white p-6 rounded-3xl shadow-xl border border-indigo-500/30 space-y-4 print:hidden">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-indigo-500/20 text-indigo-400 border border-indigo-400/30 flex items-center justify-center font-black text-xl shrink-0">
-                🧠
-              </div>
-              <div>
-                <h4 className="text-sm font-black text-white uppercase tracking-wider">Copilote IA Délibération & Audit Boursier</h4>
-                <p className="text-xs text-indigo-200/80 font-medium">Analyse statistique de la promotion et recommandations pédagogiques pour le jury.</p>
-              </div>
+      {/* Collapsed Bar: Shown when statistics & IA are hidden to keep page uncluttered */}
+      {!showAnalytics && (
+        <div
+          onClick={() => setShowAnalytics(true)}
+          className="cursor-pointer bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-purple-300 dark:hover:border-purple-800 rounded-2xl px-4 py-3 flex items-center justify-between transition-all shadow-xs group print:hidden hover:shadow-sm"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950/50 border border-purple-200/60 dark:border-purple-800/60 text-purple-700 dark:text-purple-300 flex items-center justify-center font-bold text-sm shrink-0">
+              📊
             </div>
-
-            <span className={cn(
-              "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border shrink-0",
-              aiAuditData.anomalies_detected ? "bg-rose-500/20 text-rose-300 border-rose-500/30 animate-pulse" : "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
-            )}>
-              {aiAuditData.anomalies_detected ? '⚠️ Alerte Anomalie Détectée' : '✓ Distribution Conforme'}
-            </span>
+            <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
+              <span className="font-bold text-xs sm:text-sm text-slate-800 dark:text-white flex items-center gap-1.5">
+                Statistiques Promo & Copilote IA
+              </span>
+              <span className="text-slate-300 dark:text-slate-700 hidden sm:inline">•</span>
+              <span className="text-xs text-slate-600 dark:text-slate-400 font-medium">
+                Moyenne : <strong className="text-blue-700 dark:text-blue-400 font-black">{avgGrade}</strong>/20
+              </span>
+              <span className="text-slate-300 dark:text-slate-700 hidden sm:inline">•</span>
+              <span className="text-xs text-slate-600 dark:text-slate-400 font-medium">
+                Réussite : <strong className="text-emerald-700 dark:text-emerald-400 font-black">{passRate}%</strong> ({valCount}/{totalStudents})
+              </span>
+              {aiAuditData && (
+                <span className={cn(
+                  "text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border",
+                  aiAuditData.anomalies_detected 
+                    ? "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800" 
+                    : "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800"
+                )}>
+                  {aiAuditData.anomalies_detected ? '⚠️ Anomalie IA' : '✨ IA Conforme'}
+                </span>
+              )}
+            </div>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-white/10">
-            {aiAuditData.insights?.map((ins: string, idx: number) => (
-              <div key={idx} className="bg-white/5 backdrop-blur-sm p-3 rounded-2xl border border-white/10 text-xs font-medium text-blue-100 flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
-                {ins}
-              </div>
-            ))}
+          <div className="flex items-center gap-1.5 text-purple-700 dark:text-purple-400 font-bold text-xs group-hover:translate-x-0.5 transition-transform shrink-0">
+            <span>Afficher statistiques & graphiques</span>
+            <ChevronDown className="w-4 h-4" />
           </div>
         </div>
       )}
 
-      {/* Analytics Dashboard (Jury Analytics) */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 print:hidden animate-in fade-in duration-300">
-        <div className="bg-gradient-to-br from-white to-blue-50/50 border border-blue-100 p-5 rounded-2xl shadow-xs flex flex-col justify-between hover:shadow-md transition-all">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Moyenne Générale</span>
-            <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+      {/* Expanded Analytics & AI Section (only visible when toggled) */}
+      {showAnalytics && (
+        <div className="space-y-4 print:hidden animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="flex items-center justify-between px-1">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+                <BarChart2 className="w-4 h-4 text-purple-600" />
+                Tableau de Bord Statistique & Copilote IA
+              </span>
+              <span className="text-[10px] font-semibold text-slate-400">({session === 'normale' ? 'Session Ordinaire' : session === 'rattrapage' ? 'Session Rattrapage' : 'Bilan Global'})</span>
+            </div>
+            <button
+              onClick={() => setShowAnalytics(false)}
+              className="text-xs font-bold text-slate-500 hover:text-purple-700 dark:hover:text-purple-400 flex items-center gap-1 transition-colors"
+            >
+              <span>Masquer l'analyse</span>
+              <ChevronDown className="w-3.5 h-3.5 rotate-180" />
+            </button>
           </div>
-          <span className="text-3xl font-black text-[#0f2863] mt-2">{avgGrade} <span className="text-xs text-slate-400 font-normal">/20</span></span>
-          <span className="text-[10px] text-slate-500 mt-1 font-semibold truncate">
-            {session === 'normale' ? 'Session Ordinaire' : session === 'rattrapage' ? 'Session Rattrapage' : 'Bilan Global'}
-          </span>
-        </div>
 
-        <div className="bg-gradient-to-br from-white to-violet-50/50 border border-violet-100 p-5 rounded-2xl shadow-xs flex flex-col justify-between hover:shadow-md transition-all">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Médiane</span>
-            <span className="w-2 h-2 rounded-full bg-violet-500"></span>
-          </div>
-          <span className="text-3xl font-black text-violet-600 mt-2">{medianGrade} <span className="text-xs text-slate-400 font-normal">/20</span></span>
-          <span className="text-[10px] text-slate-500 mt-1 font-semibold">Note médiane de la promo</span>
-        </div>
-
-        <div className="bg-gradient-to-br from-white to-emerald-50/50 border border-emerald-100 p-5 rounded-2xl shadow-xs flex flex-col justify-between hover:shadow-md transition-all">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Taux de Réussite</span>
-            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-          </div>
-          <span className="text-3xl font-black text-emerald-600 mt-2">{passRate}%</span>
-          <span className="text-[10px] text-emerald-700 mt-1 font-bold">{valCount} validés sur {totalStudents}</span>
-        </div>
-
-        <div className="bg-gradient-to-br from-white to-amber-50/50 border border-amber-100 p-5 rounded-2xl shadow-xs flex flex-col justify-between hover:shadow-md transition-all">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Élèves au Rattrapage</span>
-            <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-          </div>
-          <span className="text-3xl font-black text-amber-500 mt-2">{ratCount}</span>
-          <span className="text-[10px] text-amber-700 mt-1 font-bold">{totalStudents > 0 ? ((ratCount / totalStudents) * 100).toFixed(1) : 0}% de la promotion</span>
-        </div>
-
-        <div className="bg-gradient-to-br from-white to-rose-50/50 border border-rose-100 p-5 rounded-2xl shadow-xs flex flex-col justify-between hover:shadow-md transition-all">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Non Validés (Exclus)</span>
-            <span className="w-2 h-2 rounded-full bg-red-500"></span>
-          </div>
-          <span className="text-3xl font-black text-red-500 mt-2">{nvCount}</span>
-          <span className="text-[10px] text-red-700 mt-1 font-bold">{totalStudents > 0 ? ((nvCount / totalStudents) * 100).toFixed(1) : 0}% éliminés</span>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 print:hidden">
-        {/* Decisions breakdown */}
-        <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm flex flex-col justify-between h-[300px]">
-          <div>
-            <h3 className="text-sm font-bold text-[#0f2863] uppercase tracking-wider">Statut des Décisions</h3>
-            <p className="text-[11px] text-slate-500 font-medium">Répartition des réussites et échecs ({session === 'normale' ? 'S. Ordinaire' : session === 'rattrapage' ? 'S. Rattrapage' : 'Bilan Global'})</p>
-          </div>
-          <div className="h-[180px] w-full relative flex items-center justify-center">
-            {pieData.length === 0 ? (
-              <div className="text-slate-400 text-xs italic">Aucune donnée</div>
-            ) : (
-              <>
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={pieData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={50}
-                      outerRadius={70}
-                      paddingAngle={4}
-                      dataKey="value"
-                    >
-                      {pieData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={(value) => [`${value} étudiants`]} />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="absolute flex flex-col items-center pointer-events-none">
-                  <span className="text-2xl font-black text-slate-800 dark:text-white">{passRate}%</span>
-                  <span className="text-[9px] font-bold text-slate-400 tracking-wider">RÉUSSITE</span>
+          {/* Gemini AI Grade Audit Copilot */}
+          {aiAuditData && (
+            <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 text-white p-5 rounded-2xl shadow-lg border border-indigo-500/30 space-y-3">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-indigo-500/20 text-indigo-300 border border-indigo-400/30 flex items-center justify-center font-black text-lg shrink-0">
+                    🧠
+                  </div>
+                  <div>
+                    <h4 className="text-xs sm:text-sm font-black text-white uppercase tracking-wider flex items-center gap-2">
+                      <span>Copilote IA Délibération & Audit Académique</span>
+                    </h4>
+                    <p className="text-[11px] text-indigo-200/80 font-medium">Analyse statistique de la promotion et conformité aux règles pédagogiques.</p>
+                  </div>
                 </div>
-              </>
-            )}
+
+                <span className={cn(
+                  "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border shrink-0 flex items-center gap-1.5",
+                  aiAuditData.anomalies_detected 
+                    ? "bg-rose-500/20 text-rose-300 border-rose-500/30 animate-pulse" 
+                    : "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
+                )}>
+                  <span className={cn("w-1.5 h-1.5 rounded-full", aiAuditData.anomalies_detected ? "bg-rose-400" : "bg-emerald-400")} />
+                  {aiAuditData.anomalies_detected ? 'Alerte Anomalie Détectée' : 'Distribution Conforme'}
+                </span>
+              </div>
+
+              {aiAuditData.insights && aiAuditData.insights.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 pt-2 border-t border-white/10">
+                  {aiAuditData.insights.map((ins: string, idx: number) => (
+                    <div key={idx} className="bg-white/5 backdrop-blur-sm px-3.5 py-2 rounded-xl border border-white/10 text-xs font-medium text-blue-100 flex items-center gap-2">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-300 shrink-0" />
+                      <span>{ins}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Analytics Dashboard (Jury Analytics 5 KPI Cards) */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
+            {/* Card 1: Moyenne */}
+            <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-4 rounded-2xl shadow-xs flex flex-col justify-between hover:-translate-y-0.5 hover:shadow-md transition-all relative overflow-hidden group">
+              <div className="absolute top-0 left-0 right-0 h-1 bg-blue-600 rounded-t-2xl" />
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Moyenne Générale</span>
+                <span className="w-2 h-2 rounded-full bg-blue-500" />
+              </div>
+              <div className="mt-2.5 mb-1">
+                <span className="text-2xl lg:text-3xl font-black text-[#0f2863] dark:text-blue-300 tracking-tight">{avgGrade}</span>
+                <span className="text-xs text-slate-400 font-semibold ms-1">/20</span>
+              </div>
+              <span className="text-[10px] text-blue-700 dark:text-blue-400 font-bold truncate">
+                {session === 'normale' ? 'Session Ordinaire' : session === 'rattrapage' ? 'Session Rattrapage' : 'Bilan Global'}
+              </span>
+            </div>
+
+            {/* Card 2: Médiane */}
+            <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-4 rounded-2xl shadow-xs flex flex-col justify-between hover:-translate-y-0.5 hover:shadow-md transition-all relative overflow-hidden group">
+              <div className="absolute top-0 left-0 right-0 h-1 bg-violet-600 rounded-t-2xl" />
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Médiane Promo</span>
+                <span className="w-2 h-2 rounded-full bg-violet-500" />
+              </div>
+              <div className="mt-2.5 mb-1">
+                <span className="text-2xl lg:text-3xl font-black text-violet-600 dark:text-violet-400 tracking-tight">{medianGrade}</span>
+                <span className="text-xs text-slate-400 font-semibold ms-1">/20</span>
+              </div>
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">Note médiane de la promo</span>
+            </div>
+
+            {/* Card 3: Taux de Réussite */}
+            <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-4 rounded-2xl shadow-xs flex flex-col justify-between hover:-translate-y-0.5 hover:shadow-md transition-all relative overflow-hidden group">
+              <div className="absolute top-0 left-0 right-0 h-1 bg-emerald-600 rounded-t-2xl" />
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Taux de Réussite</span>
+                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+              </div>
+              <div className="mt-2.5 mb-1">
+                <span className="text-2xl lg:text-3xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">{passRate}%</span>
+              </div>
+              <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold">{valCount} validés sur {totalStudents}</span>
+            </div>
+
+            {/* Card 4: Rattrapage */}
+            <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-4 rounded-2xl shadow-xs flex flex-col justify-between hover:-translate-y-0.5 hover:shadow-md transition-all relative overflow-hidden group">
+              <div className="absolute top-0 left-0 right-0 h-1 bg-amber-500 rounded-t-2xl" />
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Au Rattrapage</span>
+                <span className="w-2 h-2 rounded-full bg-amber-500" />
+              </div>
+              <div className="mt-2.5 mb-1">
+                <span className="text-2xl lg:text-3xl font-black text-amber-500 tracking-tight">{ratCount}</span>
+              </div>
+              <span className="text-[10px] text-amber-700 dark:text-amber-400 font-bold">{totalStudents > 0 ? ((ratCount / totalStudents) * 100).toFixed(1) : 0}% de la promotion</span>
+            </div>
+
+            {/* Card 5: Non Validés */}
+            <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-4 rounded-2xl shadow-xs flex flex-col justify-between hover:-translate-y-0.5 hover:shadow-md transition-all relative overflow-hidden group col-span-2 sm:col-span-1">
+              <div className="absolute top-0 left-0 right-0 h-1 bg-rose-500 rounded-t-2xl" />
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Non Validés (Exclus)</span>
+                <span className="w-2 h-2 rounded-full bg-rose-500" />
+              </div>
+              <div className="mt-2.5 mb-1">
+                <span className="text-2xl lg:text-3xl font-black text-rose-500 tracking-tight">{nvCount}</span>
+              </div>
+              <span className="text-[10px] text-rose-700 dark:text-rose-400 font-bold">{totalStudents > 0 ? ((nvCount / totalStudents) * 100).toFixed(1) : 0}% éliminés (&lt; 6.00)</span>
+            </div>
           </div>
-          <div className="flex justify-center gap-4 text-[10px] font-bold text-slate-600">
-            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Validés ({valCount})</span>
-            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Rattrapage ({ratCount})</span>
-            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-red-500"></span> Éliminés ({nvCount})</span>
+
+          {/* Charts Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {/* Decisions breakdown */}
+            <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-xs flex flex-col justify-between h-[280px]">
+              <div>
+                <h3 className="text-xs font-black text-[#0f2863] dark:text-blue-300 uppercase tracking-wider flex items-center gap-1.5">
+                  <span>Statut des Décisions</span>
+                </h3>
+                <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Répartition des réussites et échecs ({session === 'normale' ? 'S. Ordinaire' : session === 'rattrapage' ? 'S. Rattrapage' : 'Bilan Global'})</p>
+              </div>
+              <div className="h-[160px] w-full relative flex items-center justify-center">
+                {pieData.length === 0 ? (
+                  <div className="text-slate-400 text-xs italic">Aucune donnée</div>
+                ) : (
+                  <>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={pieData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={48}
+                          outerRadius={68}
+                          paddingAngle={3}
+                          dataKey="value"
+                        >
+                          {pieData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip formatter={(value) => [`${value} étudiants`, 'Nombre']} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div className="absolute flex flex-col items-center pointer-events-none">
+                      <span className="text-xl font-black text-slate-800 dark:text-white">{passRate}%</span>
+                      <span className="text-[8px] font-black text-slate-400 tracking-widest uppercase">RÉUSSITE</span>
+                    </div>
+                  </>
+                )}
+              </div>
+              <div className="flex justify-center gap-3 text-[10px] font-bold text-slate-600 dark:text-slate-300 pt-1 border-t border-slate-100 dark:border-slate-800">
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500" /> Validés ({valCount})</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500" /> Rattrapage ({ratCount})</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-rose-500" /> Éliminés ({nvCount})</span>
+              </div>
+            </div>
+
+            {/* Gauss Distribution curve */}
+            <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-xs col-span-1 lg:col-span-2 flex flex-col justify-between h-[280px]">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-xs font-black text-[#0f2863] dark:text-blue-300 uppercase tracking-wider">Distribution des Moyennes</h3>
+                  <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Nombre d'étudiants par tranche de note (Courbe de Gauss - {session === 'normale' ? 'S. Ordinaire' : session === 'rattrapage' ? 'S. Rattrapage' : 'Bilan Global'})</p>
+                </div>
+                <span className="text-[10px] font-bold text-slate-400 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg">
+                  10 tranches
+                </span>
+              </div>
+              <div className="h-[180px] w-full pt-2">
+                <ResponsiveContainer width="100%" height="100%">
+                  <ReBarChart data={barData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+                    <XAxis dataKey="range" tick={{ fontSize: 9, fontWeight: 700 }} stroke="#94a3b8" />
+                    <YAxis tick={{ fontSize: 9, fontWeight: 700 }} stroke="#94a3b8" allowDecimals={false} />
+                    <Tooltip formatter={(value) => [`${value} étudiants`, 'Effectif']} cursor={{ fill: 'rgba(15, 40, 99, 0.04)' }} />
+                    <Bar dataKey="count" fill="#0f2863" radius={[6, 6, 0, 0]} />
+                  </ReBarChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="text-[9px] text-slate-400 text-right font-medium">
+                Distribution temps réel synchronisée avec les notes saisies
+              </div>
+            </div>
           </div>
         </div>
+      )}
 
-        {/* Gauss Distribution curve */}
-        <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm col-span-2 flex flex-col justify-between h-[300px]">
-          <div>
-            <h3 className="text-sm font-bold text-[#0f2863] uppercase tracking-wider">Distribution des Moyennes</h3>
-            <p className="text-[11px] text-slate-500 font-medium">Nombre d'étudiants par tranche de note (Courbe de Gauss - {session === 'normale' ? 'S. Ordinaire' : session === 'rattrapage' ? 'S. Rattrapage' : 'Bilan Global'})</p>
-          </div>
-          <div className="h-[200px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <ReBarChart data={barData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
-                <XAxis dataKey="range" tick={{ fontSize: 10, fontWeight: 'bold' }} stroke="#94a3b8" />
-                <YAxis tick={{ fontSize: 10, fontWeight: 'bold' }} stroke="#94a3b8" allowDecimals={false} />
-                <Tooltip formatter={(value) => [`${value} étudiants`, 'Effectif']} cursor={{ fill: 'rgba(15, 40, 99, 0.04)' }} />
-                <Bar dataKey="count" fill="#0f2863" radius={[8, 8, 0, 0]} />
-              </ReBarChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="text-[10px] text-slate-400 text-right font-medium">
-            Distribution sur 10 tranches — mise à jour en temps réel
-          </div>
-        </div>
-      </div>
-
-      {/* Tabs and Toggles selector: Hidden during print */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 print:hidden">
-        {/* Session Tabs */}
-        <div className="flex flex-wrap gap-2 p-1.5 bg-slate-100 rounded-2xl w-fit">
+      {/* Session Navigation & Scope Toolbar: Hidden during print */}
+      <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-3 bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-xs print:hidden">
+        {/* Left: Session Tabs */}
+        <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl overflow-x-auto">
           <button
             onClick={() => { setSession('normale'); setSignatureDataUrl(''); }}
             className={cn(
-              "px-5 py-2.5 rounded-xl text-xs font-bold transition-all uppercase tracking-wider flex items-center gap-2",
+              "px-3.5 py-2 rounded-lg text-xs font-bold transition-all uppercase tracking-wider flex items-center gap-2 whitespace-nowrap shrink-0",
               session === 'normale'
-                ? "bg-[#0f2863] text-white shadow-sm"
-                : "text-slate-600 hover:bg-slate-200"
+                ? "bg-[#0f2863] text-white shadow-xs"
+                : "text-slate-600 dark:text-slate-300 hover:text-slate-900 hover:bg-slate-200/60"
             )}
           >
             <span>Session Ordinaire (Normale)</span>
             {pvData?.signatures?.normale ? (
               <span className={cn(
-                "px-2 py-0.5 rounded-full text-[9px] font-extrabold tracking-normal normal-case flex items-center gap-1",
+                "px-2 py-0.5 rounded-full text-[9px] font-black tracking-normal normal-case flex items-center gap-1",
                 session === 'normale' ? "bg-emerald-500 text-white" : "bg-emerald-100 text-emerald-800"
               )}>
                 ✓ Signé
@@ -3438,19 +4046,20 @@ export default function AdminGradesPVPage() {
               </span>
             )}
           </button>
+
           <button
             onClick={() => { setSession('rattrapage'); setSignatureDataUrl(''); }}
             className={cn(
-              "px-5 py-2.5 rounded-xl text-xs font-bold transition-all uppercase tracking-wider flex items-center gap-2",
+              "px-3.5 py-2 rounded-lg text-xs font-bold transition-all uppercase tracking-wider flex items-center gap-2 whitespace-nowrap shrink-0",
               session === 'rattrapage'
-                ? "bg-amber-600 text-white shadow-sm"
-                : "text-slate-600 hover:bg-slate-200"
+                ? "bg-amber-600 text-white shadow-xs"
+                : "text-slate-600 dark:text-slate-300 hover:text-slate-900 hover:bg-slate-200/60"
             )}
           >
             <span>Session de Rattrapage</span>
             {pvData?.signatures?.rattrapage ? (
               <span className={cn(
-                "px-2 py-0.5 rounded-full text-[9px] font-extrabold tracking-normal normal-case flex items-center gap-1",
+                "px-2 py-0.5 rounded-full text-[9px] font-black tracking-normal normal-case flex items-center gap-1",
                 session === 'rattrapage' ? "bg-emerald-500 text-white" : "bg-emerald-100 text-emerald-800"
               )}>
                 ✓ Signé
@@ -3464,19 +4073,20 @@ export default function AdminGradesPVPage() {
               </span>
             )}
           </button>
+
           <button
             onClick={() => { setSession('totale'); setSignatureDataUrl(''); }}
             className={cn(
-              "px-5 py-2.5 rounded-xl text-xs font-bold transition-all uppercase tracking-wider flex items-center gap-2",
+              "px-3.5 py-2 rounded-lg text-xs font-bold transition-all uppercase tracking-wider flex items-center gap-2 whitespace-nowrap shrink-0",
               session === 'totale'
-                ? "bg-indigo-600 text-white shadow-sm"
-                : "text-slate-600 hover:bg-slate-200"
+                ? "bg-indigo-600 text-white shadow-xs"
+                : "text-slate-600 dark:text-slate-300 hover:text-slate-900 hover:bg-slate-200/60"
             )}
           >
             <span>Vue Totale (S.O + S.R)</span>
             {pvData?.signatures?.totale ? (
               <span className={cn(
-                "px-2 py-0.5 rounded-full text-[9px] font-extrabold tracking-normal normal-case flex items-center gap-1",
+                "px-2 py-0.5 rounded-full text-[9px] font-black tracking-normal normal-case flex items-center gap-1",
                 session === 'totale' ? "bg-emerald-500 text-white" : "bg-emerald-100 text-emerald-800"
               )}>
                 ✓ Signé
@@ -3492,28 +4102,31 @@ export default function AdminGradesPVPage() {
           </button>
         </div>
 
-        {/* View Scope Toggle */}
-        <div className="flex items-center gap-3 bg-slate-50 p-2 rounded-2xl border border-slate-200">
-          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider ps-2">Périmètre :</span>
-          <div className="flex gap-1 bg-slate-200/50 p-1 rounded-xl">
+        {/* Right: View Scope Toggle */}
+        <div className="flex items-center gap-2.5 px-2 self-end lg:self-center shrink-0">
+          <span className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap flex items-center gap-1.5">
+            <Users className="w-3.5 h-3.5 text-indigo-500" />
+            Périmètre :
+          </span>
+          <div className="flex gap-1 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl">
             <button
               onClick={() => setViewAllGroups(false)}
               className={cn(
-                "px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all",
+                "px-3.5 py-1.5 rounded-lg text-xs font-bold uppercase transition-all whitespace-nowrap",
                 !viewAllGroups
-                  ? "bg-[#0f2863] text-white shadow-sm"
-                  : "text-slate-600 hover:text-slate-800"
+                  ? "bg-[#0f2863] text-white shadow-xs"
+                  : "text-slate-600 dark:text-slate-300 hover:text-slate-900"
               )}
             >
-              Ce Groupe
+              {groupId && groupId !== 'all' ? `Groupe ${groupId}` : 'Ce Groupe'}
             </button>
             <button
               onClick={() => setViewAllGroups(true)}
               className={cn(
-                "px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all",
+                "px-3.5 py-1.5 rounded-lg text-xs font-bold uppercase transition-all whitespace-nowrap",
                 viewAllGroups
-                  ? "bg-[#0f2863] text-white shadow-sm"
-                  : "text-slate-600 hover:text-slate-800"
+                  ? "bg-[#0f2863] text-white shadow-xs"
+                  : "text-slate-600 dark:text-slate-300 hover:text-slate-900"
               )}
             >
               Module Complet

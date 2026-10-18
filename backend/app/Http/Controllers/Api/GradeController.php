@@ -165,6 +165,19 @@ class GradeController extends Controller
     {
         $this->authorize('viewAny', Grade::class);
 
+        // 🛡️ RBAC : Un enseignant ne peut consulter que le PV de ses propres modules
+        $user = $request->user();
+        if ($user && $user->hasAnyRole(['professor', 'vacataire']) && 
+            ! $user->hasAnyRole(['super-admin', 'super_admin', 'admin', 'institution-admin', 'institution_admin', 'director', 'department-head', 'filiere-head'])) {
+            $authorizedModuleIds = app(\App\Services\Security\ProfessorAccessService::class)->getAuthorizedModuleIds($user);
+            if (! $authorizedModuleIds->contains($moduleId)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Accès restreint : Vous n’êtes affecté(e) qu’à vos propres modules d’enseignement. Le PV de ce module est réservé à son responsable ou à l’administration.',
+                ], 403);
+            }
+        }
+
         $module = Module::with('assessments')->findOrFail($moduleId);
         $groupId = $request->query('group_id');
         $session = $request->query('session', 'normale');
@@ -333,6 +346,19 @@ class GradeController extends Controller
 
         $module = Module::with('assessments')->findOrFail($moduleId);
         $user = $request->user();
+
+        // 🛡️ RBAC : Un enseignant ne peut signer que les PV de ses propres modules
+        if ($user && $user->hasAnyRole(['professor', 'vacataire']) && 
+            ! $user->hasAnyRole(['super-admin', 'super_admin', 'admin', 'institution-admin', 'institution_admin', 'director', 'department-head', 'filiere-head'])) {
+            $authorizedModuleIds = app(\App\Services\Security\ProfessorAccessService::class)->getAuthorizedModuleIds($user);
+            if (! $authorizedModuleIds->contains($moduleId)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Accès refusé : Vous ne pouvez signer que le PV d’un module qui vous est assigné.',
+                ], 403);
+            }
+        }
+
         $session = $validated['session'] ?? 'normale';
         if ($session === 'complet') {
             $session = 'totale';
@@ -741,6 +767,16 @@ class GradeController extends Controller
     {
         $this->authorize('viewAny', Grade::class);
 
+        // 🛡️ RBAC : Le PV Semestriel consolidé est réservé à l'Administration et au Jury de Délibération
+        $user = $request->user();
+        if ($user && $user->hasAnyRole(['professor', 'vacataire']) && 
+            ! $user->hasAnyRole(['super-admin', 'super_admin', 'admin', 'institution-admin', 'institution_admin', 'director', 'department-head', 'filiere-head'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Accès restreint : La consultation du PV Semestriel consolidé (7 modules) est strictement réservée à l’Administration et au Jury de Délibération.',
+            ], 403);
+        }
+
         $filiereId = intval($request->query('filiere_id', 1));
         $semester = intval($request->query('semester', 1));
         $groupId = $request->query('group_id');
@@ -924,6 +960,8 @@ class GradeController extends Controller
                 'student_id' => $student->id,
                 'student_number' => $student->student_number,
                 'apogee' => $student->cne_cme ?? $student->student_number,
+                'cin' => $student->cin ?? $student->user?->cin ?? null,
+                'cne' => $student->cne ?? $student->cne_cme ?? null,
                 'first_name' => $student->first_name,
                 'last_name' => $student->last_name,
                 'module_grades' => $moduleGrades,

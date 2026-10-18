@@ -26,25 +26,34 @@ class ProfessorAccessService
             return Module::pluck('id');
         }
 
-        // Strict binding: user.id → professor.user_id (no fallback)
+        // Strict binding: user.id → professor.user_id
         $professor = $user->professor;
+        if (! $professor) {
+            $professor = Professor::where('user_id', $user->id)->first();
+        }
         if (! $professor) {
             return collect();
         }
 
+        $profIds = array_filter(array_unique([$professor->id, $user->id]));
+
         $assignedModuleIds = DB::table('module_professor')
-            ->where('professor_id', $professor->id)
+            ->whereIn('professor_id', $profIds)
+            ->pluck('module_id');
+
+        $scheduleModuleIds = DB::table('schedules')
+            ->whereIn('professor_id', $profIds)
             ->pluck('module_id');
 
         $today = now()->format('Y-m-d');
         $substituteModuleIds = DB::table('professor_substitutions')
-            ->where('substitute_professor_id', $professor->id)
+            ->whereIn('substitute_professor_id', $profIds)
             ->where('status', 'active')
             ->where('start_date', '<=', $today)
             ->where('end_date', '>=', $today)
             ->pluck('module_id');
 
-        return $assignedModuleIds->merge($substituteModuleIds)->unique();
+        return $assignedModuleIds->merge($scheduleModuleIds)->merge($substituteModuleIds)->unique()->filter()->values();
     }
 
     /**

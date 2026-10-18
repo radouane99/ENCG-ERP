@@ -903,6 +903,16 @@ class PdfExportController extends Controller
 
         $module = Module::with(['assessments', 'filiere'])->findOrFail($moduleId);
 
+        // 🛡️ RBAC : Un enseignant ne peut exporter que ses propres modules
+        $user = $request->user();
+        if ($user && $user->hasAnyRole(['professor', 'vacataire']) && 
+            ! $user->hasAnyRole(['super-admin', 'super_admin', 'admin', 'institution-admin', 'institution_admin', 'director', 'department-head', 'filiere-head'])) {
+            $authorizedModuleIds = app(\App\Services\Security\ProfessorAccessService::class)->getAuthorizedModuleIds($user);
+            if (! $authorizedModuleIds->contains($moduleId)) {
+                abort(403, 'Accès non autorisé : Vous n’êtes pas affecté(e) à ce module.');
+            }
+        }
+
         $query = StudentRegistration::query();
         if ($groupId && ! in_array($groupId, ['all', 'null', 'undefined', ''], true)) {
             $query->where('group_id', (int) $groupId);
@@ -1097,6 +1107,16 @@ class PdfExportController extends Controller
     public function exportRattrapage_PvPdf(Request $request, int $moduleId)
     {
         $module = Module::with(['assessments', 'filiere'])->findOrFail($moduleId);
+
+        // 🛡️ RBAC : Un enseignant ne peut exporter que ses propres modules
+        $user = $request->user();
+        if ($user && $user->hasAnyRole(['professor', 'vacataire']) && 
+            ! $user->hasAnyRole(['super-admin', 'super_admin', 'admin', 'institution-admin', 'institution_admin', 'director', 'department-head', 'filiere-head'])) {
+            $authorizedModuleIds = app(\App\Services\Security\ProfessorAccessService::class)->getAuthorizedModuleIds($user);
+            if (! $authorizedModuleIds->contains($moduleId)) {
+                abort(403, 'Accès non autorisé : Vous n’êtes pas affecté(e) à ce module.');
+            }
+        }
 
         $accorded = ResitEligibility::where('module_id', $moduleId)
             ->where('status', 'Accordé')
