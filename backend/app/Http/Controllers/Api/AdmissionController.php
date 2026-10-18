@@ -306,11 +306,11 @@ class AdmissionController extends Controller
         if (! empty($search)) {
             $query->where(function ($q) use ($search) {
                 $q->where('cne', 'like', "%{$search}%")
-                  ->orWhere('cin', 'like', "%{$search}%")
-                  ->orWhereHas('user', function ($uq) use ($search) {
-                      $uq->where('name', 'like', "%{$search}%")
-                         ->orWhere('email', 'like', "%{$search}%");
-                  });
+                    ->orWhere('cin', 'like', "%{$search}%")
+                    ->orWhereHas('user', function ($uq) use ($search) {
+                        $uq->where('name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -349,14 +349,14 @@ class AdmissionController extends Controller
                 'rank' => $idx + 1,
                 'list_type' => $listType,
                 'name' => $student->user->name ?? 'CANDIDAT TAFEM',
-                'cne' => $student->cne ?? ('N13000' . str_pad((string) $student->id, 4, '0', STR_PAD_LEFT)),
-                'cin' => $student->cin ?? ($student->user?->cin ?? ('CD' . (720000 + $student->id))),
+                'cne' => $student->cne ?? ('N13000'.str_pad((string) $student->id, 4, '0', STR_PAD_LEFT)),
+                'cin' => $student->cin ?? ($student->user?->cin ?? ('CD'.(720000 + $student->id))),
                 'tafem_score' => number_format($score, 2),
                 'apogee_code' => $student->student_number ?? 'En attente',
                 'physical_dossier_status' => $isConforme ? 'DOSSIER_CONFORME' : 'EN_ATTENTE_DEPOT',
                 'physical_documents' => $docs,
-                'phone' => $student->phone ?? ($student->user?->phone ?? '0661' . rand(100000, 999999)),
-                'email' => $student->user?->email ?? ($student->cne ? strtolower($student->cne) . '@candidat.tafem.ma' : 'candidat@encg-fes.ac.ma'),
+                'phone' => $student->phone ?? ($student->user?->phone ?? '0661'.rand(100000, 999999)),
+                'email' => $student->user?->email ?? ($student->cne ? strtolower($student->cne).'@candidat.tafem.ma' : 'candidat@encg-fes.ac.ma'),
                 'filiere' => 'Tronc Commun (Gestion/Commerce)',
                 'high_school' => $student->high_school ?? 'Lycée Moulay Idriss',
                 'bac_serie' => $student->bac_serie ?? 'Sciences Économiques & Gestion',

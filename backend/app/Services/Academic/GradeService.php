@@ -14,7 +14,6 @@ use App\Models\ModulePvSignature;
 use App\Models\Professor;
 use App\Models\ResitEligibility;
 use App\Models\Student;
-use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
 class GradeService

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Enums\InternshipStatus;
+use App\Helpers\ArabicGlyphReshaper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Internship\ScheduleSoutenanceRequest;
 use App\Http\Requests\Internship\ValidateInternshipRequest;
@@ -13,6 +14,7 @@ use App\Services\Academic\SoutenanceService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class AdminInternshipController extends Controller
 {
@@ -76,19 +78,19 @@ class AdminInternshipController extends Controller
 
             $dateObj = $s->scheduled_at ?? $s->date_time;
             $dateFormatted = $dateObj ? $dateObj->translatedFormat('d F Y') : '28 Juin 2026';
-            $timeFormatted = $dateObj ? $dateObj->format('H:i') . ' - ' . $dateObj->copy()->addMinutes(90)->format('H:i') : '09:00 - 10:30';
+            $timeFormatted = $dateObj ? $dateObj->format('H:i').' - '.$dateObj->copy()->addMinutes(90)->format('H:i') : '09:00 - 10:30';
 
             return [
                 'id' => $s->id,
-                'student' => $user ? trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? ($user->name ?? ''))) : 'Étudiant ENCG',
+                'student' => $user ? trim(($user->first_name ?? '').' '.($user->last_name ?? ($user->name ?? ''))) : 'Étudiant ENCG',
                 'filiere' => $filiere,
                 'topic' => $s->finalProject?->title ?? $s->internship?->company_name ?? 'Projet de Fin d\'Études',
                 'date' => $dateFormatted,
                 'time' => $timeFormatted,
                 'room' => $s->room?->name ?? 'Amphi Al Khwarizmi',
-                'president' => $s->president?->user ? 'Dr. ' . ($s->president->user->last_name ?? $s->president->user->name) : 'Dr. El Fassi',
-                'encadrant' => $s->supervisor?->user ? 'Dr. ' . ($s->supervisor->user->last_name ?? $s->supervisor->user->name) : 'Dr. Benali',
-                'rapporteur' => $s->examiner?->user ? 'Dr. ' . ($s->examiner->user->last_name ?? $s->examiner->user->name) : 'Dr. Tazi',
+                'president' => $s->president?->user ? 'Dr. '.($s->president->user->last_name ?? $s->president->user->name) : 'Dr. El Fassi',
+                'encadrant' => $s->supervisor?->user ? 'Dr. '.($s->supervisor->user->last_name ?? $s->supervisor->user->name) : 'Dr. Benali',
+                'rapporteur' => $s->examiner?->user ? 'Dr. '.($s->examiner->user->last_name ?? $s->examiner->user->name) : 'Dr. Tazi',
                 'status' => strtoupper($s->status ?? 'SCHEDULED'),
                 'score' => (float) ($s->grade ?? 16.5),
                 'mention' => $s->mention ?? 'Très Honorable',
@@ -183,7 +185,7 @@ class AdminInternshipController extends Controller
 
         $student = $soutenance->finalProject?->student ?? $soutenance->internship?->student;
         $user = $student?->user;
-        $studentName = $user ? trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? ($user->name ?? ''))) : 'Étudiant ENCG';
+        $studentName = $user ? trim(($user->first_name ?? '').' '.($user->last_name ?? ($user->name ?? ''))) : 'Étudiant ENCG';
 
         $filiereName = null;
         if ($student && $student->relationLoaded('pathways')) {
@@ -193,45 +195,45 @@ class AdminInternshipController extends Controller
 
         $dateObj = $soutenance->scheduled_at ?? $soutenance->date_time;
         $dateFormatted = $dateObj ? $dateObj->translatedFormat('d F Y') : '28 Juin 2026';
-        $timeFormatted = $dateObj ? $dateObj->format('H:i') . ' - ' . $dateObj->copy()->addMinutes(90)->format('H:i') : '09:00 - 10:30';
+        $timeFormatted = $dateObj ? $dateObj->format('H:i').' - '.$dateObj->copy()->addMinutes(90)->format('H:i') : '09:00 - 10:30';
 
-        $presidentName = $soutenance->president?->user ? 'Pr. ' . ($soutenance->president->user->last_name ?? $soutenance->president->user->name) : 'Pr. El Fassi';
-        $encadrantName = $soutenance->supervisor?->user ? 'Pr. ' . ($soutenance->supervisor->user->last_name ?? $soutenance->supervisor->user->name) : 'Pr. Benali';
-        $rapporteurName = $soutenance->examiner?->user ? 'Pr. ' . ($soutenance->examiner->user->last_name ?? $soutenance->examiner->user->name) : 'Pr. Tazi';
+        $presidentName = $soutenance->president?->user ? 'Pr. '.($soutenance->president->user->last_name ?? $soutenance->president->user->name) : 'Pr. El Fassi';
+        $encadrantName = $soutenance->supervisor?->user ? 'Pr. '.($soutenance->supervisor->user->last_name ?? $soutenance->supervisor->user->name) : 'Pr. Benali';
+        $rapporteurName = $soutenance->examiner?->user ? 'Pr. '.($soutenance->examiner->user->last_name ?? $soutenance->examiner->user->name) : 'Pr. Tazi';
 
         $logoBase64 = null;
         foreach (['logo-encg.png', 'images/encg_logo.png', 'images/logo-encg.png', 'images/logo.png'] as $candidate) {
             $path = public_path($candidate);
             if (file_exists($path)) {
                 $mime = str_ends_with($candidate, '.png') ? 'image/png' : 'image/jpeg';
-                $logoBase64 = "data:{$mime};base64," . base64_encode((string) file_get_contents($path));
+                $logoBase64 = "data:{$mime};base64,".base64_encode((string) file_get_contents($path));
                 break;
             }
         }
 
         // Arabic text reshaping using official helper for DomPDF
-        $arKingdom = \App\Helpers\ArabicGlyphReshaper::reshape('المملكة المغربية');
-        $arUniv = \App\Helpers\ArabicGlyphReshaper::reshape('جامعة سيدي محمد بن عبد الله - فاس');
-        $arSchool = \App\Helpers\ArabicGlyphReshaper::reshape('المدرسة الوطنية للتجارة والتسيير بفاس');
-        $arTitle = \App\Helpers\ArabicGlyphReshaper::reshape('إشعار ومقرر الحضور لمناقشة مشروع نهاية الدراسة');
-        $arDegree = \App\Helpers\ArabicGlyphReshaper::reshape('دبلوم المدرسة الوطنية للتجارة والتسيير (درجة ماستر • 5+كاب)');
-        $arDepartment = \App\Helpers\ArabicGlyphReshaper::reshape('مديرية الشؤون البيداغوجية والامتحانات');
-        $arJuryTitle = \App\Helpers\ArabicGlyphReshaper::reshape('لجنة تقييم ومناقشة مشاريع التخرج');
+        $arKingdom = ArabicGlyphReshaper::reshape('المملكة المغربية');
+        $arUniv = ArabicGlyphReshaper::reshape('جامعة سيدي محمد بن عبد الله - فاس');
+        $arSchool = ArabicGlyphReshaper::reshape('المدرسة الوطنية للتجارة والتسيير بفاس');
+        $arTitle = ArabicGlyphReshaper::reshape('إشعار ومقرر الحضور لمناقشة مشروع نهاية الدراسة');
+        $arDegree = ArabicGlyphReshaper::reshape('دبلوم المدرسة الوطنية للتجارة والتسيير (درجة ماستر • 5+كاب)');
+        $arDepartment = ArabicGlyphReshaper::reshape('مديرية الشؤون البيداغوجية والامتحانات');
+        $arJuryTitle = ArabicGlyphReshaper::reshape('لجنة تقييم ومناقشة مشاريع التخرج');
 
         $studentNameAr = null;
-        if (!empty($student?->first_name_ar) || !empty($student?->last_name_ar)) {
-            $rawAr = trim(($student->last_name_ar ?? '') . ' ' . ($student->first_name_ar ?? ''));
-            if (!empty($rawAr)) {
-                $studentNameAr = \App\Helpers\ArabicGlyphReshaper::reshape($rawAr);
+        if (! empty($student?->first_name_ar) || ! empty($student?->last_name_ar)) {
+            $rawAr = trim(($student->last_name_ar ?? '').' '.($student->first_name_ar ?? ''));
+            if (! empty($rawAr)) {
+                $studentNameAr = ArabicGlyphReshaper::reshape($rawAr);
             }
         }
 
-        $verifyUrl = config('app.url', 'https://encg-fes.ac.ma') . "/verify/soutenance/{$soutenance->id}";
+        $verifyUrl = config('app.url', 'https://encg-fes.ac.ma')."/verify/soutenance/{$soutenance->id}";
         $qrCodeBase64 = null;
-        if (class_exists(\SimpleSoftwareIO\QrCode\Facades\QrCode::class)) {
+        if (class_exists(QrCode::class)) {
             try {
-                $qrSvg = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')->size(120)->margin(0)->generate($verifyUrl);
-                $qrCodeBase64 = 'data:image/svg+xml;base64,' . base64_encode($qrSvg);
+                $qrSvg = QrCode::format('svg')->size(120)->margin(0)->generate($verifyUrl);
+                $qrCodeBase64 = 'data:image/svg+xml;base64,'.base64_encode($qrSvg);
             } catch (\Throwable $e) {
                 // Fallback gracefully
             }
@@ -249,10 +251,10 @@ class AdminInternshipController extends Controller
             'presidentName' => $presidentName,
             'encadrantName' => $encadrantName,
             'rapporteurName' => $rapporteurName,
-            'refNumber' => 'ENCG-FÈS/DP-SCOL/PFE-2026/N° ' . str_pad((string)$soutenance->id, 4, '0', STR_PAD_LEFT),
+            'refNumber' => 'ENCG-FÈS/DP-SCOL/PFE-2026/N° '.str_pad((string) $soutenance->id, 4, '0', STR_PAD_LEFT),
             'academicYear' => '2025 - 2026',
-            'cne' => $student?->cne ?? ('N138094' . str_pad((string)$soutenance->id, 3, '0', STR_PAD_LEFT)),
-            'cin' => $student?->cin ?? ($user?->cin ?? ('CD' . (600000 + $soutenance->id * 31))),
+            'cne' => $student?->cne ?? ('N138094'.str_pad((string) $soutenance->id, 3, '0', STR_PAD_LEFT)),
+            'cin' => $student?->cin ?? ($user?->cin ?? ('CD'.(600000 + $soutenance->id * 31))),
             'logoBase64' => $logoBase64,
             'resolvedLogoSrc' => $logoBase64,
             'qrCodeBase64' => $qrCodeBase64,

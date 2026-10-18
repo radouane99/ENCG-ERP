@@ -14,8 +14,11 @@ use App\Models\AuditLog;
 use App\Models\Filiere;
 use App\Models\Grade;
 use App\Models\Module;
+use App\Models\ModuleProfessor;
 use App\Models\ModulePvSignature;
 use App\Models\ModuleValidation;
+use App\Models\Professor;
+use App\Models\Schedule;
 use App\Models\Student;
 use App\Models\StudentRegistration;
 use App\Services\Academic\AcademicWindowGuard;
@@ -477,7 +480,7 @@ class GradeController extends Controller
 
             return response()->json(['success' => true, 'message' => 'Email envoyé.']);
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Erreur envoi relevé de notes: '.$e->getMessage(), ['exception' => $e]);
+            Log::error('Erreur envoi relevé de notes: '.$e->getMessage(), ['exception' => $e]);
 
             return response()->json([
                 'success' => false,
@@ -933,7 +936,7 @@ class GradeController extends Controller
         // Identifier le profil professeur
         $prof = $user->professor;
         if (! $prof) {
-            $prof = \App\Models\Professor::where('user_id', $user->id)->first();
+            $prof = Professor::where('user_id', $user->id)->first();
         }
 
         $profIds = array_filter(array_unique([
@@ -951,12 +954,12 @@ class GradeController extends Controller
         }
 
         // 1. Modules via ModuleProfessor
-        $moduleIdsFromAssignment = \App\Models\ModuleProfessor::whereIn('professor_id', $profIds)
+        $moduleIdsFromAssignment = ModuleProfessor::whereIn('professor_id', $profIds)
             ->pluck('module_id')
             ->toArray();
 
         // 2. Modules via Schedule
-        $moduleIdsFromSchedule = \App\Models\Schedule::whereIn('professor_id', $profIds)
+        $moduleIdsFromSchedule = Schedule::whereIn('professor_id', $profIds)
             ->where('is_active', true)
             ->pluck('module_id')
             ->toArray();
@@ -981,39 +984,42 @@ class GradeController extends Controller
         $currYear = AcademicYear::where('is_current', true)->first();
         $currYearId = $currYear?->id ?? 3;
 
-        $result = $modules->map(function ($mod) use ($profIds, $currYearId) {
+        $result = $modules->map(function ($mod) use ($profIds) {
             // Types d'intervention (CM, TD, TP)
-            $mpTypes = \App\Models\ModuleProfessor::where('module_id', $mod->id)
+            $mpTypes = ModuleProfessor::where('module_id', $mod->id)
                 ->whereIn('professor_id', $profIds)
                 ->pluck('session_type')
-                ->map(fn($t) => strtoupper($t))
+                ->map(fn ($t) => strtoupper($t))
                 ->toArray();
-            $schTypes = \App\Models\Schedule::where('module_id', $mod->id)
+            $schTypes = Schedule::where('module_id', $mod->id)
                 ->whereIn('professor_id', $profIds)
                 ->where('is_active', true)
                 ->pluck('session_type')
-                ->map(fn($t) => strtoupper($t))
+                ->map(fn ($t) => strtoupper($t))
                 ->toArray();
             $types = array_values(array_unique(array_merge($mpTypes, $schTypes)));
-            if (empty($types)) $types = ['CM'];
+            if (empty($types)) {
+                $types = ['CM'];
+            }
 
             // Groupes et créneaux
-            $schedules = \App\Models\Schedule::with(['group', 'room'])
+            $schedules = Schedule::with(['group', 'room'])
                 ->where('module_id', $mod->id)
                 ->whereIn('professor_id', $profIds)
                 ->where('is_active', true)
                 ->get();
 
-            $groupsList = $schedules->map(fn($s) => $s->group?->name)->filter()->unique()->values()->toArray();
+            $groupsList = $schedules->map(fn ($s) => $s->group?->name)->filter()->unique()->values()->toArray();
             if (empty($groupsList)) {
                 $groupsList = ['Section Amphi'];
             }
 
-            $scheduleSummaries = $schedules->map(function($s) {
+            $scheduleSummaries = $schedules->map(function ($s) {
                 $dayNames = [1 => 'Lundi', 2 => 'Mardi', 3 => 'Mercredi', 4 => 'Jeudi', 5 => 'Vendredi', 6 => 'Samedi'];
                 $day = $dayNames[$s->day_of_week] ?? "J{$s->day_of_week}";
-                $time = substr($s->start_time, 0, 5) . '–' . substr($s->end_time, 0, 5);
+                $time = substr($s->start_time, 0, 5).'–'.substr($s->end_time, 0, 5);
                 $room = $s->room?->name ?? 'Salle';
+
                 return "{$day} {$time} ({$room})";
             })->unique()->values()->toArray();
 
@@ -1021,17 +1027,17 @@ class GradeController extends Controller
             $studentsCount = $this->gradeService->getRegisteredStudents($mod)->count();
 
             // Évaluations (Exam, CC, Rattrapage)
-            $examAssessment = $mod->assessments->firstWhere(fn($a) => in_array(strtolower($a->type), ['examen', 'exam']));
-            $ccAssessment = $mod->assessments->firstWhere(fn($a) => in_array(strtolower($a->type), ['cc', 'controle_continu']));
-            $ratAssessment = $mod->assessments->firstWhere(fn($a) => strtolower($a->type) === 'rattrapage');
+            $examAssessment = $mod->assessments->firstWhere(fn ($a) => in_array(strtolower($a->type), ['examen', 'exam']));
+            $ccAssessment = $mod->assessments->firstWhere(fn ($a) => in_array(strtolower($a->type), ['cc', 'controle_continu']));
+            $ratAssessment = $mod->assessments->firstWhere(fn ($a) => strtolower($a->type) === 'rattrapage');
 
             $gradesEnteredCount = 0;
             if ($examAssessment) {
-                $gradesEnteredCount = $examAssessment->grades()->where(function($q) {
+                $gradesEnteredCount = $examAssessment->grades()->where(function ($q) {
                     $q->whereNotNull('value')->orWhere('absent', true);
                 })->count();
             } elseif ($mod->assessments->isNotEmpty()) {
-                $gradesEnteredCount = $mod->assessments->first()->grades()->where(function($q) {
+                $gradesEnteredCount = $mod->assessments->first()->grades()->where(function ($q) {
                     $q->whereNotNull('value')->orWhere('absent', true);
                 })->count();
             }

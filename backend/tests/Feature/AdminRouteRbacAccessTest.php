@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Models\AcademicYear;
+use App\Models\Filiere;
 use App\Models\Group;
 use App\Models\Institution;
 use App\Models\User;
@@ -61,8 +63,8 @@ it('forbids a vacataire from dispatching students or subgroups', function () {
 
 it('forbids a vacataire from deleting an academic group', function () {
     $vacataire = createRoleUser('vacataire');
-    $filiere = \App\Models\Filiere::factory()->create();
-    $year = \App\Models\AcademicYear::factory()->create();
+    $filiere = Filiere::factory()->create();
+    $year = AcademicYear::factory()->create();
     $group = Group::create([
         'name' => 'Groupe Test RBAC',
         'filiere_id' => $filiere->id,

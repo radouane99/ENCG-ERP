@@ -2,7 +2,6 @@
 
 namespace App\Imports;
 
-use App\Domain\Deliberation\LmdRules;
 use App\Models\Assessment;
 use App\Models\Grade;
 use App\Models\Module;
@@ -46,12 +45,14 @@ class GradesImport implements ToCollection, WithHeadingRow
             if (! $student) {
                 $identifier = $cne ?: $apogee;
                 $this->warnings[] = "Étudiant introuvable (CNE/Apogée) : {$identifier}";
+
                 continue;
             }
 
             $assessment = $this->resolveAssessment($row->toArray(), $moduleAssessments);
             if (! $assessment) {
                 $this->warnings[] = "Évaluation non déterminée pour {$student->last_name} {$student->first_name}";
+
                 continue;
             }
 
@@ -87,6 +88,7 @@ class GradesImport implements ToCollection, WithHeadingRow
                     $value = (float) $normalizedNote;
                 } else {
                     $this->warnings[] = "Valeur de note invalide '{$rawNote}' pour {$student->last_name} {$student->first_name}";
+
                     continue;
                 }
             }
@@ -98,6 +100,7 @@ class GradesImport implements ToCollection, WithHeadingRow
 
             if ($value !== null && ($value < 0 || $value > 20)) {
                 $this->warnings[] = "Note hors barème (0-20) pour {$student->last_name} {$student->first_name} : {$value}";
+
                 continue;
             }
 

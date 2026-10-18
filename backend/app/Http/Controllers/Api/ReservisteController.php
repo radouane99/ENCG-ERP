@@ -12,6 +12,7 @@ use App\Models\StudentModuleRetake;
 use App\Models\StudentRegistration;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 class ReservisteController extends Controller
@@ -171,7 +172,7 @@ class ReservisteController extends Controller
             ], $debtModules));
 
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Échec envoi email réserviste: '.$e->getMessage(), ['exception' => $e]);
+            Log::error('Échec envoi email réserviste: '.$e->getMessage(), ['exception' => $e]);
 
             return response()->json([
                 'success' => false,

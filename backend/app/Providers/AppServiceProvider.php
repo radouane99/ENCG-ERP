@@ -36,6 +36,7 @@ use Barryvdh\LaravelIdeHelper\IdeHelperServiceProvider;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -576,16 +577,16 @@ class AppServiceProvider extends ServiceProvider
         }
 
         // Macros pour recherches insensibles à la casse (PostgreSQL ilike / SQLite & MySQL like)
-        \Illuminate\Database\Eloquent\Builder::macro('whereILike', function ($column, $value) {
-            /** @var \Illuminate\Database\Eloquent\Builder $this */
+        Builder::macro('whereILike', function ($column, $value) {
+            /** @var Builder $this */
             $driver = $this->getConnection()->getDriverName();
             $operator = ($driver === 'pgsql') ? 'ilike' : 'like';
 
             return $this->where($column, $operator, $value);
         });
 
-        \Illuminate\Database\Eloquent\Builder::macro('orWhereILike', function ($column, $value) {
-            /** @var \Illuminate\Database\Eloquent\Builder $this */
+        Builder::macro('orWhereILike', function ($column, $value) {
+            /** @var Builder $this */
             $driver = $this->getConnection()->getDriverName();
             $operator = ($driver === 'pgsql') ? 'ilike' : 'like';
 

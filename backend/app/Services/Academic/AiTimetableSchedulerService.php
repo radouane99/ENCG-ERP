@@ -231,13 +231,28 @@ class AiTimetableSchedulerService
                                     $sortedCandidates = $candidateProfs->sortByDesc(function ($p) use ($nameLower) {
                                         $specLower = mb_strtolower($p->specialty ?? $p->department?->name ?? '');
                                         $score = 0;
-                                        if (str_contains($nameLower, 'financ') && str_contains($specLower, 'financ')) $score += 20;
-                                        if (str_contains($nameLower, 'comptab') && str_contains($specLower, 'comptab')) $score += 20;
-                                        if (str_contains($nameLower, 'droit') && str_contains($specLower, 'droit')) $score += 20;
-                                        if (str_contains($nameLower, 'market') && (str_contains($specLower, 'market') || str_contains($specLower, 'gestion'))) $score += 20;
-                                        if (str_contains($nameLower, 'manag') && str_contains($specLower, 'manag')) $score += 20;
-                                        if (str_contains($nameLower, 'info') && str_contains($specLower, 'info')) $score += 20;
-                                        if ((str_contains($nameLower, 'lang') || str_contains($nameLower, 'anglais') || str_contains($nameLower, 'franc') || str_contains($nameLower, 'soft') || str_contains($nameLower, 'commun')) && (str_contains($specLower, 'commun') || str_contains($specLower, 'lang'))) $score += 20;
+                                        if (str_contains($nameLower, 'financ') && str_contains($specLower, 'financ')) {
+                                            $score += 20;
+                                        }
+                                        if (str_contains($nameLower, 'comptab') && str_contains($specLower, 'comptab')) {
+                                            $score += 20;
+                                        }
+                                        if (str_contains($nameLower, 'droit') && str_contains($specLower, 'droit')) {
+                                            $score += 20;
+                                        }
+                                        if (str_contains($nameLower, 'market') && (str_contains($specLower, 'market') || str_contains($specLower, 'gestion'))) {
+                                            $score += 20;
+                                        }
+                                        if (str_contains($nameLower, 'manag') && str_contains($specLower, 'manag')) {
+                                            $score += 20;
+                                        }
+                                        if (str_contains($nameLower, 'info') && str_contains($specLower, 'info')) {
+                                            $score += 20;
+                                        }
+                                        if ((str_contains($nameLower, 'lang') || str_contains($nameLower, 'anglais') || str_contains($nameLower, 'franc') || str_contains($nameLower, 'soft') || str_contains($nameLower, 'commun')) && (str_contains($specLower, 'commun') || str_contains($specLower, 'lang'))) {
+                                            $score += 20;
+                                        }
+
                                         return $score;
                                     });
                                     $assignedProf = $sortedCandidates->values()->get(($profCycleIndex++) % $sortedCandidates->count());
@@ -272,15 +287,22 @@ class AiTimetableSchedulerService
                                 $c1 += $groupDailySessions[$cg->id][$d1] ?? 0;
                                 $c2 += $groupDailySessions[$cg->id][$d2] ?? 0;
                             }
-                            if ($c1 === $c2) return $d1 <=> $d2;
+                            if ($c1 === $c2) {
+                                return $d1 <=> $d2;
+                            }
+
                             return $c1 <=> $c2;
                         });
 
                         foreach ([2, 3, 4] as $maxDailyLimit) {
-                            if ($allocated) break;
+                            if ($allocated) {
+                                break;
+                            }
 
                             foreach ($availableDays as $day) {
-                                if ($allocated) break;
+                                if ($allocated) {
+                                    break;
+                                }
 
                                 // Vérifier que TOUS les groupes de la cohorte n'ont pas dépassé la limite du jour
                                 $dayExceeded = false;
@@ -290,7 +312,9 @@ class AiTimetableSchedulerService
                                         break;
                                     }
                                 }
-                                if ($dayExceeded) continue;
+                                if ($dayExceeded) {
+                                    continue;
+                                }
 
                                 $slotsRange = ($day === 6 && $avoidSaturdayAfternoon) ? [1, 2] : ($preferMorningLectures ? [1, 2, 3, 4] : [3, 4, 1, 2]);
 
@@ -305,19 +329,29 @@ class AiTimetableSchedulerService
                                             break;
                                         }
                                     }
-                                    if (! $groupsFree) continue;
+                                    if (! $groupsFree) {
+                                        continue;
+                                    }
 
                                     // 2. Vérifier que le professeur est libre
-                                    if (! empty($occupiedSlots['professors'][$profId][$day][$slotNum])) continue;
+                                    if (! empty($occupiedSlots['professors'][$profId][$day][$slotNum])) {
+                                        continue;
+                                    }
 
                                     // Contrainte de demi-journée (shift) pour le professeur
                                     $isCurrentSlotMorning = in_array($slotNum, [1, 2], true);
                                     $isCurrentSlotAfternoon = in_array($slotNum, [3, 4], true);
                                     $currentProfShift = $profDailyShift[$profId][$day] ?? null;
 
-                                    if ($currentProfShift === 'morning' && $isCurrentSlotAfternoon) continue;
-                                    if ($currentProfShift === 'afternoon' && $isCurrentSlotMorning) continue;
-                                    if (($profDailySessions[$profId][$day] ?? 0) >= 2) continue;
+                                    if ($currentProfShift === 'morning' && $isCurrentSlotAfternoon) {
+                                        continue;
+                                    }
+                                    if ($currentProfShift === 'afternoon' && $isCurrentSlotMorning) {
+                                        continue;
+                                    }
+                                    if (($profDailySessions[$profId][$day] ?? 0) >= 2) {
+                                        continue;
+                                    }
 
                                     // 3. Trouver la salle (Amphithéâtre libre strictement pour le CM)
                                     $suitableRoom = null;
@@ -442,13 +476,28 @@ class AiTimetableSchedulerService
                                         $sortedCandidates = $candidateProfs->sortByDesc(function ($p) use ($nameLower) {
                                             $specLower = mb_strtolower($p->specialty ?? $p->department?->name ?? '');
                                             $score = 0;
-                                            if (str_contains($nameLower, 'financ') && str_contains($specLower, 'financ')) $score += 20;
-                                            if (str_contains($nameLower, 'comptab') && str_contains($specLower, 'comptab')) $score += 20;
-                                            if (str_contains($nameLower, 'droit') && str_contains($specLower, 'droit')) $score += 20;
-                                            if (str_contains($nameLower, 'market') && (str_contains($specLower, 'market') || str_contains($specLower, 'gestion'))) $score += 20;
-                                            if (str_contains($nameLower, 'manag') && str_contains($specLower, 'manag')) $score += 20;
-                                            if (str_contains($nameLower, 'info') && str_contains($specLower, 'info')) $score += 20;
-                                            if ((str_contains($nameLower, 'lang') || str_contains($nameLower, 'anglais') || str_contains($nameLower, 'franc') || str_contains($nameLower, 'soft') || str_contains($nameLower, 'commun')) && (str_contains($specLower, 'commun') || str_contains($specLower, 'lang'))) $score += 20;
+                                            if (str_contains($nameLower, 'financ') && str_contains($specLower, 'financ')) {
+                                                $score += 20;
+                                            }
+                                            if (str_contains($nameLower, 'comptab') && str_contains($specLower, 'comptab')) {
+                                                $score += 20;
+                                            }
+                                            if (str_contains($nameLower, 'droit') && str_contains($specLower, 'droit')) {
+                                                $score += 20;
+                                            }
+                                            if (str_contains($nameLower, 'market') && (str_contains($specLower, 'market') || str_contains($specLower, 'gestion'))) {
+                                                $score += 20;
+                                            }
+                                            if (str_contains($nameLower, 'manag') && str_contains($specLower, 'manag')) {
+                                                $score += 20;
+                                            }
+                                            if (str_contains($nameLower, 'info') && str_contains($specLower, 'info')) {
+                                                $score += 20;
+                                            }
+                                            if ((str_contains($nameLower, 'lang') || str_contains($nameLower, 'anglais') || str_contains($nameLower, 'franc') || str_contains($nameLower, 'soft') || str_contains($nameLower, 'commun')) && (str_contains($specLower, 'commun') || str_contains($specLower, 'lang'))) {
+                                                $score += 20;
+                                            }
+
                                             return $score;
                                         });
                                         $assignedProf = $sortedCandidates->values()->get(($profCycleIndex++) % $sortedCandidates->count());
@@ -483,15 +532,22 @@ class AiTimetableSchedulerService
                             usort($availableDays, function ($d1, $d2) use ($group, $groupDailySessions) {
                                 $c1 = $groupDailySessions[$group->id][$d1] ?? 0;
                                 $c2 = $groupDailySessions[$group->id][$d2] ?? 0;
-                                if ($c1 === $c2) return $d1 <=> $d2;
+                                if ($c1 === $c2) {
+                                    return $d1 <=> $d2;
+                                }
+
                                 return $c1 <=> $c2;
                             });
 
                             foreach ([2, 3, 4] as $maxDailyLimit) {
-                                if ($allocated) break;
+                                if ($allocated) {
+                                    break;
+                                }
 
                                 foreach ($availableDays as $day) {
-                                    if ($allocated) break;
+                                    if ($allocated) {
+                                        break;
+                                    }
 
                                     if (($groupDailySessions[$group->id][$day] ?? 0) >= $maxDailyLimit) {
                                         continue;
@@ -502,16 +558,26 @@ class AiTimetableSchedulerService
                                     foreach ($slotsRange as $slotNum) {
                                         $slotInfo = self::TIME_SLOTS[$slotNum - 1];
 
-                                        if (! empty($occupiedSlots['groups'][$group->id][$day][$slotNum])) continue;
-                                        if (! empty($occupiedSlots['professors'][$profId][$day][$slotNum])) continue;
+                                        if (! empty($occupiedSlots['groups'][$group->id][$day][$slotNum])) {
+                                            continue;
+                                        }
+                                        if (! empty($occupiedSlots['professors'][$profId][$day][$slotNum])) {
+                                            continue;
+                                        }
 
                                         $isCurrentSlotMorning = in_array($slotNum, [1, 2], true);
                                         $isCurrentSlotAfternoon = in_array($slotNum, [3, 4], true);
                                         $currentProfShift = $profDailyShift[$profId][$day] ?? null;
 
-                                        if ($currentProfShift === 'morning' && $isCurrentSlotAfternoon) continue;
-                                        if ($currentProfShift === 'afternoon' && $isCurrentSlotMorning) continue;
-                                        if (($profDailySessions[$profId][$day] ?? 0) >= 2) continue;
+                                        if ($currentProfShift === 'morning' && $isCurrentSlotAfternoon) {
+                                            continue;
+                                        }
+                                        if ($currentProfShift === 'afternoon' && $isCurrentSlotMorning) {
+                                            continue;
+                                        }
+                                        if (($profDailySessions[$profId][$day] ?? 0) >= 2) {
+                                            continue;
+                                        }
 
                                         $suitableRoom = null;
                                         foreach ($rankedRooms as $room) {
@@ -649,22 +715,22 @@ class AiTimetableSchedulerService
 
                     if (! $isSharedCm) {
                         $conflicts[] = [
-                        'type' => 'ROOM_COLLISION',
-                        'type_label' => 'Collision de Salle',
-                        'schedule_id' => $s->id,
-                        'conflicting_schedule_id' => $other->id,
-                        'day_of_week' => $s->day_of_week,
-                        'day_name' => $dayName,
-                        'start_time' => $startTime,
-                        'end_time' => $endTime,
-                        'room_name' => $s->room_name ?: "Salle #{$s->room_id}",
-                        'professor_name' => $s->professor_name,
-                        'module_name' => $s->module_name ?: "Module #{$s->module_id}",
-                        'group_name' => $s->group_name ?: "Groupe #{$s->group_id}",
-                        'reason' => "Double réservation pour la salle '{$s->room_name}' (occupée simultanément par {$s->group_name} et {$other->group_name}).",
-                        'description' => "La salle '{$s->room_name}' est réservée en même temps pour '{$s->module_name}' et '{$other->module_name}'.",
-                        'severity' => 'CRITICAL',
-                    ];
+                            'type' => 'ROOM_COLLISION',
+                            'type_label' => 'Collision de Salle',
+                            'schedule_id' => $s->id,
+                            'conflicting_schedule_id' => $other->id,
+                            'day_of_week' => $s->day_of_week,
+                            'day_name' => $dayName,
+                            'start_time' => $startTime,
+                            'end_time' => $endTime,
+                            'room_name' => $s->room_name ?: "Salle #{$s->room_id}",
+                            'professor_name' => $s->professor_name,
+                            'module_name' => $s->module_name ?: "Module #{$s->module_id}",
+                            'group_name' => $s->group_name ?: "Groupe #{$s->group_id}",
+                            'reason' => "Double réservation pour la salle '{$s->room_name}' (occupée simultanément par {$s->group_name} et {$other->group_name}).",
+                            'description' => "La salle '{$s->room_name}' est réservée en même temps pour '{$s->module_name}' et '{$other->module_name}'.",
+                            'severity' => 'CRITICAL',
+                        ];
                     }
                 } else {
                     $seenRooms[$key][$s->room_id] = $s;

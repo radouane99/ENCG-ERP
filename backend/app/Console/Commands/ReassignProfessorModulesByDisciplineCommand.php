@@ -5,8 +5,6 @@ namespace App\Console\Commands;
 use App\Models\AcademicYear;
 use App\Models\Group;
 use App\Models\Module;
-use App\Models\ModuleProfessor;
-use App\Models\Professor;
 use App\Models\User;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -14,32 +12,35 @@ use Illuminate\Support\Facades\DB;
 class ReassignProfessorModulesByDisciplineCommand extends Command
 {
     protected $signature = 'encg:reassign-prof-modules';
+
     protected $description = 'Reassign modules to professors according to their academic department and specialty';
 
     public function handle(): int
     {
-        $this->info("=== Réaffectation Pédagogique des Modules par Spécialité ===");
+        $this->info('=== Réaffectation Pédagogique des Modules par Spécialité ===');
 
         $academicYear = AcademicYear::where('is_current', true)->first() ?? AcademicYear::first();
-        if (!$academicYear) {
-            $this->error("Aucune année académique trouvée.");
+        if (! $academicYear) {
+            $this->error('Aucune année académique trouvée.');
+
             return 1;
         }
 
         // 1. Récupération des professeurs principaux
         $profManagement = User::where('email', 'chraibi.amina@encg-fes.ma')->first()?->professor; // Management, Marketing
-        $profFinance    = User::where('email', 'prof@encg.ma')->first()?->professor;             // Finance, Comptabilité, Maths
-        $profDroit      = User::where('email', 'meziane.tarik@encg-fes.ma')->first()?->professor;  // Droit
-        $profLangues    = User::where('email', 'bennani.bouchra@encg-fes.ma')->first()?->professor;// Langues, Com, Soft Skills
-        $profInfo       = User::where('email', 'benjelloun.mohamed@encg-fes.ma')->first()?->professor; // Info, SI
+        $profFinance = User::where('email', 'prof@encg.ma')->first()?->professor;             // Finance, Comptabilité, Maths
+        $profDroit = User::where('email', 'meziane.tarik@encg-fes.ma')->first()?->professor;  // Droit
+        $profLangues = User::where('email', 'bennani.bouchra@encg-fes.ma')->first()?->professor; // Langues, Com, Soft Skills
+        $profInfo = User::where('email', 'benjelloun.mohamed@encg-fes.ma')->first()?->professor; // Info, SI
 
-        if (!$profManagement || !$profFinance || !$profDroit || !$profLangues || !$profInfo) {
+        if (! $profManagement || ! $profFinance || ! $profDroit || ! $profLangues || ! $profInfo) {
             $this->error("Un des professeurs clés n'a pas été trouvé.");
+
             return 1;
         }
 
         $allModules = Module::all();
-        $this->info("Nombre total de modules à affecter : " . $allModules->count());
+        $this->info('Nombre total de modules à affecter : '.$allModules->count());
 
         DB::transaction(function () use ($allModules, $academicYear, $profManagement, $profFinance, $profDroit, $profLangues, $profInfo) {
             // Nettoyer les affectations existantes
@@ -126,7 +127,8 @@ class ReassignProfessorModulesByDisciplineCommand extends Command
             }
         });
 
-        $this->info("✅ Réaffectation terminée avec succès ! Chaque professeur a désormais strictement ses propres modules.");
+        $this->info('✅ Réaffectation terminée avec succès ! Chaque professeur a désormais strictement ses propres modules.');
+
         return 0;
     }
 }

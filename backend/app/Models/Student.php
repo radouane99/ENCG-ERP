@@ -1,7 +1,18 @@
 <?php
 
 namespace App\Models;
-
+/**
+ * @property string|null $cne
+ * @property string|null $father_phone
+ * @property string|null $parent_phone
+ * @property string|null $exam_date
+ * @property string|null $first_name
+ * @property string|null $last_name
+ * @property string|null $name
+ * @property string|null $email
+ * @property string|null $phone
+ * @property string|null $cin
+ */
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;

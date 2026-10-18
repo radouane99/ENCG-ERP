@@ -10,6 +10,7 @@ use App\Models\Internship;
 use App\Services\Academic\CareerService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class InternshipController extends Controller
 {
@@ -53,7 +54,7 @@ class InternshipController extends Controller
         } catch (\InvalidArgumentException $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 400);
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Erreur mise à jour stage: '.$e->getMessage(), ['exception' => $e]);
+            Log::error('Erreur mise à jour stage: '.$e->getMessage(), ['exception' => $e]);
 
             return response()->json([
                 'success' => false,

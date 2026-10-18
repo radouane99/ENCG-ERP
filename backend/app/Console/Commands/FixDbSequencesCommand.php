@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 class FixDbSequencesCommand extends Command
 {
     protected $signature = 'encg:fix-sequences';
+
     protected $description = 'Sync all PostgreSQL sequences with MAX(id) in all tables';
 
     public function handle(): int
@@ -15,6 +16,7 @@ class FixDbSequencesCommand extends Command
         $driver = DB::getDriverName();
         if ($driver !== 'pgsql') {
             $this->info("Database driver is {$driver}. Sequence sync is only needed for PostgreSQL.");
+
             return 0;
         }
 
@@ -42,11 +44,12 @@ class FixDbSequencesCommand extends Command
                 DB::statement("SELECT setval('{$sequence}', {$maxId}, true)");
                 $this->line("Synced sequence <info>{$sequence}</info> for table <info>{$table}</info> -> {$maxId}");
             } catch (\Throwable $e) {
-                $this->warn("Skipped {$sequence}: " . $e->getMessage());
+                $this->warn("Skipped {$sequence}: ".$e->getMessage());
             }
         }
 
         $this->info('✅ All PostgreSQL sequences are now synchronized!');
+
         return 0;
     }
 }

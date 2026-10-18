@@ -304,10 +304,10 @@
                         {{ ($seating->seat_number && !str_contains($seating->seat_number, '125')) ? $seating->seat_number : ('N° ' . str_pad($idx + 1, 2, '0', STR_PAD_LEFT)) }}
                     </td>
                     <td class="text-center font-mono font-bold" style="color: #475569;">
-                        {{ $seating->cne ?: ($seating->student?->cne ?? '—') }}
+                        {{ $seating->cne ?: ($seating->student ?? '—') }}
                     </td>
                     <td class="text-left" style="font-weight: bold; color: #0f172a; padding-left: 6px;">
-                        {{ $seating->student_name ?: ($seating->student?->user?->name ?? '—') }}
+                        {{ $seating->student_name ?: ($seating->student?->user ?? '—') }}
                     </td>
 
                     @if($mode === 'emargement')
@@ -349,8 +349,8 @@
                         </tr>
                         @foreach($incidents as $inc)
                         <tr>
-                            <td style="padding: 2px 4px; border: 1px solid #fca5a5; font-weight: bold;">{{ $inc->cne ?? ($inc->student?->cne ?? '—') }}</td>
-                            <td style="padding: 2px 4px; border: 1px solid #fca5a5; font-weight: bold;">{{ $inc->student_name ?? ($inc->student?->user?->name ?? '—') }}</td>
+                            <td style="padding: 2px 4px; border: 1px solid #fca5a5; font-weight: bold;">{{ $inc->cne ?? ($inc->student ?? '—') }}</td>
+                            <td style="padding: 2px 4px; border: 1px solid #fca5a5; font-weight: bold;">{{ $inc->student_name ?? ($inc->student?->user ?? '—') }}</td>
                             <td style="padding: 2px 4px; border: 1px solid #fca5a5; color: #b91c1c; font-weight: bold;">{{ strtoupper($inc->type ?? 'FRAUDE') }}</td>
                             <td style="padding: 2px 4px; border: 1px solid #fca5a5;">{{ $inc->confiscated_items ?: ($inc->description ?: '—') }}</td>
                         </tr>

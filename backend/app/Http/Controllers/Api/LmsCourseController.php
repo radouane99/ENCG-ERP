@@ -11,6 +11,7 @@ use App\Models\Message;
 use App\Models\Module;
 use App\Models\ModuleProfessor;
 use App\Models\Professor;
+use App\Models\Schedule;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -75,7 +76,7 @@ class LmsCourseController extends Controller
             }
 
             // Fallback via Schedule s'il n'y a pas d'entrée dans module_professor
-            $scheduleModuleIds = \App\Models\Schedule::where(function ($q) use ($user, $profId) {
+            $scheduleModuleIds = Schedule::where(function ($q) use ($user, $profId) {
                 $q->where('professor_id', $profId)->orWhere('professor_id', $user->id);
             })->pluck('module_id')->unique()->filter();
 
@@ -279,7 +280,7 @@ class LmsCourseController extends Controller
         $profAssigned = ModuleProfessor::where('module_id', $module->id)->with('professor.user')->first();
         if ($user?->professor) {
             $isAssigned = ModuleProfessor::where('module_id', $module->id)->where('professor_id', $user->professor->id)->exists()
-                || \App\Models\Schedule::where('module_id', $module->id)->where(function ($q) use ($user) {
+                || Schedule::where('module_id', $module->id)->where(function ($q) use ($user) {
                     $q->where('professor_id', $user->professor->id)->orWhere('professor_id', $user->id);
                 })->exists();
             $teacherName = $isAssigned ? $user->name : ($profAssigned?->professor?->user?->name ?? $user->name);

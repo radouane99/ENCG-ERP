@@ -203,7 +203,7 @@
     <tr>
         <td class="label">Filière / Spécialité :</td>
         <td class="val" style="color: #002e5b; font-weight: 900;">
-            {{ $filiereName ?? ($student->latestPathway?->filiere?->name ?? 'DEUX ANNÉES PRÉPARATOIRES (TRONC COMMUN)') }}
+            {{ $filiereName ?? ($student->latestPathway?->filiere ?? 'DEUX ANNÉES PRÉPARATOIRES (TRONC COMMUN)') }}
         </td>
     </tr>
     <tr>

@@ -297,7 +297,7 @@
                     {{ $exam->module->name ?? 'Examen' }}
                 </div>
                 <div class="meta-sub">
-                    <strong>Filiere :</strong> {{ $exam->module?->filiere?->name ?? 'Tronc Commun ENCG' }}
+                    <strong>Filiere :</strong> {{ $exam->module?->filiere ?? 'Tronc Commun ENCG' }}
                     @if($exam->group)
                         - <strong>Groupe :</strong> {{ $exam->group->name }}
                     @endif
@@ -350,19 +350,19 @@
             @forelse($seatings as $seating)
                 @php
                     $sStudent = is_array($seating) ? null : ($seating->student ?? null);
-                    $sUser = $sStudent?->user ?? null;
+                    $sUser = $sStudent ?? null;
                     
                     $lastName = is_array($seating)
                         ? ($seating['last_name'] ?? '')
-                        : ($sUser?->last_name ?? $sStudent?->last_name ?? '');
+                        : ($sUser ?? $sStudent ?? '');
                     
                     $firstName = is_array($seating)
                         ? ($seating['first_name'] ?? '')
-                        : ($sUser?->first_name ?? $sStudent?->first_name ?? '');
+                        : ($sUser ?? $sStudent ?? '');
                     
                     $cne = is_array($seating)
                         ? ($seating['cne'] ?? $seating['massar'] ?? '—')
-                        : ($sStudent?->cne ?? $sStudent?->massar_code ?? $sStudent?->student_number ?? '—');
+                        : ($sStudent ?? $sStudent ?? $sStudent ?? '—');
                     
                     $seatNum = is_array($seating)
                         ? ($seating['seat_number'] ?? $loop->iteration)
@@ -371,7 +371,7 @@
                     $hasName = !empty($lastName) || !empty($firstName);
                     $fullDisplayName = is_array($seating) 
                         ? ($seating['full_name'] ?? $seating['name'] ?? null)
-                        : ($sUser?->name ?? null);
+                        : ($sUser ?? null);
                 @endphp
                 <tr>
                     <td style="text-align: center;">

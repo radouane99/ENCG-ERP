@@ -3,16 +3,12 @@
 namespace App\Console\Commands;
 
 use App\Models\AcademicYear;
-use App\Models\Filiere;
 use App\Models\Group;
 use App\Models\Institution;
-use App\Models\Module;
-use App\Models\ModuleProfessor;
 use App\Models\Professor;
 use App\Models\Room;
 use App\Models\Schedule;
 use App\Models\Semester;
-use App\Models\User;
 use App\Services\Academic\AiTimetableSchedulerService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -20,6 +16,7 @@ use Illuminate\Support\Facades\DB;
 class FixTimetableSchedulesCommand extends Command
 {
     protected $signature = 'encg:fix-timetable {--dry-run : Exécuter sans modifier la base}';
+
     protected $description = 'Génère un emploi du temps officiel ENCG Fès sans aucun conflit, conforme aux disciplines et règles pédagogiques';
 
     public function handle(): int
@@ -37,8 +34,9 @@ class FixTimetableSchedulesCommand extends Command
         $institutionId = $institution?->id ?? 1;
 
         $academicYear = AcademicYear::where('is_current', true)->first() ?? AcademicYear::first();
-        if (!$academicYear) {
+        if (! $academicYear) {
             $this->error('❌ Aucune année académique trouvée.');
+
             return Command::FAILURE;
         }
 
@@ -63,7 +61,7 @@ class FixTimetableSchedulesCommand extends Command
         $rooms = Room::all();
         $this->line("Nombre de salles disponibles : {$rooms->count()}");
         $amphis = $rooms->filter(fn ($r) => str_contains(mb_strtolower($r->type ?? ''), 'amphi') || str_contains(mb_strtolower($r->name), 'amphi'));
-        $labos  = $rooms->filter(fn ($r) => str_contains(mb_strtolower($r->type ?? ''), 'lab') || str_contains(mb_strtolower($r->name), 'informatique'));
+        $labos = $rooms->filter(fn ($r) => str_contains(mb_strtolower($r->type ?? ''), 'lab') || str_contains(mb_strtolower($r->name), 'informatique'));
         $salles = $rooms->reject(fn ($r) => $amphis->contains('id', $r->id) || $labos->contains('id', $r->id));
 
         $this->line("  - Amphithéâtres : {$amphis->count()} ({$amphis->pluck('name')->implode(', ')})");
@@ -82,7 +80,7 @@ class FixTimetableSchedulesCommand extends Command
         if (empty($semesterNumbers)) {
             $semesterNumbers = [1, 2, 5];
         }
-        $this->line("Semestres ciblés : " . implode(', ', $semesterNumbers));
+        $this->line('Semestres ciblés : '.implode(', ', $semesterNumbers));
 
         // Options de génération
         $options = [
@@ -92,7 +90,7 @@ class FixTimetableSchedulesCommand extends Command
         ];
 
         $this->newLine();
-        $this->info("--- Génération Globale Coordonnée pour Tous les Groupes & Semestres ---");
+        $this->info('--- Génération Globale Coordonnée pour Tous les Groupes & Semestres ---');
         $genResult = $schedulerService->generateSchedule($academicYear->id, 'all', $options);
         $this->line("Séances générées : {$genResult['total_scheduled_sessions']}");
         $this->line("Conflits détectés : {$genResult['conflicts_count']}");
@@ -106,15 +104,16 @@ class FixTimetableSchedulesCommand extends Command
         $allGeneratedSessions = $genResult['scheduled_items'];
 
         $this->newLine();
-        $this->info("Total séances générées sans conflit : " . count($allGeneratedSessions));
+        $this->info('Total séances générées sans conflit : '.count($allGeneratedSessions));
 
         if (count($allGeneratedSessions) === 0) {
-            $this->error("❌ Aucune séance générée ! Vérifier les groupes et modules.");
+            $this->error('❌ Aucune séance générée ! Vérifier les groupes et modules.');
+
             return Command::FAILURE;
         }
 
         // 4. Si ce n'est pas un dry-run, insérer dans la table schedules
-        if (!$isDryRun) {
+        if (! $isDryRun) {
             DB::transaction(function () use ($allGeneratedSessions, $institutionId, $academicYear) {
                 // Vider les anciennes sessions corrompues
                 $deletedCount = Schedule::count();
@@ -128,7 +127,7 @@ class FixTimetableSchedulesCommand extends Command
                 $inserted = 0;
                 foreach ($allGeneratedSessions as $item) {
                     $groupSemesterNum = null;
-                    if (!empty($item['group_id'])) {
+                    if (! empty($item['group_id'])) {
                         $groupSemesterNum = DB::table('groups')->where('id', $item['group_id'])->value('semester_number');
                     }
 

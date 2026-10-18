@@ -2,6 +2,10 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Attendance;
+use App\Models\Grade;
+use App\Models\Schedule;
+use App\Models\StudentRegistration;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -9,19 +13,24 @@ use Illuminate\Support\Facades\Schema;
 class DeepDatabaseScanCommand extends Command
 {
     protected $signature = 'encg:deep-scan {--fix : Automatically apply safe fixes for identified anomalies}';
+
     protected $description = 'Exhaustive Deep Scan of all database tables, relationships, constraints, and business logic';
 
     private int $totalChecks = 0;
+
     private array $criticalErrors = [];
+
     private array $warnings = [];
+
     private array $successes = [];
+
     private array $fixesApplied = [];
 
     public function handle(): int
     {
         $this->info('================================================================================');
         $this->info('      🔬 ENCG ERP — SCAN PROFOND ET DIAGNOSTIC DE LA BASE DE DONNÉES           ');
-        $this->info('      Date : ' . now()->toDateTimeString() . ' | PostgreSQL : 16                ');
+        $this->info('      Date : '.now()->toDateTimeString().' | PostgreSQL : 16                ');
         $this->info('================================================================================');
 
         $shouldFix = $this->option('fix');
@@ -83,8 +92,8 @@ class DeepDatabaseScanCommand extends Command
         }
 
         if ($orphanTotal === 0) {
-            $this->successes[] = "Toutes les " . count($fks) . " relations formelles sont 100% intègres (0 orphelin).";
-            $this->line("   ✓ 274/274 relations FK formelles vérifiées : 0 orphelin.");
+            $this->successes[] = 'Toutes les '.count($fks).' relations formelles sont 100% intègres (0 orphelin).';
+            $this->line('   ✓ 274/274 relations FK formelles vérifiées : 0 orphelin.');
         } else {
             $this->error("   ❌ {$orphanTotal} relations FK contiennent des orphelins !");
         }
@@ -115,8 +124,12 @@ class DeepDatabaseScanCommand extends Command
 
         $implicitOrphans = 0;
         foreach ($implicitChecks as [$table, $col, $pTable, $pCol]) {
-            if (!Schema::hasTable($table) || !Schema::hasTable($pTable)) continue;
-            if (!Schema::hasColumn($table, $col) || !Schema::hasColumn($pTable, $pCol)) continue;
+            if (! Schema::hasTable($table) || ! Schema::hasTable($pTable)) {
+                continue;
+            }
+            if (! Schema::hasColumn($table, $col) || ! Schema::hasColumn($pTable, $pCol)) {
+                continue;
+            }
 
             $this->totalChecks++;
             $orphans = DB::table($table)
@@ -136,8 +149,8 @@ class DeepDatabaseScanCommand extends Command
         }
 
         if ($implicitOrphans === 0) {
-            $this->successes[] = "Toutes les relations implicites documentées sont 100% valides.";
-            $this->line("   ✓ Toutes les relations implicites *_id testées sont saines (0 orphelin).");
+            $this->successes[] = 'Toutes les relations implicites documentées sont 100% valides.';
+            $this->line('   ✓ Toutes les relations implicites *_id testées sont saines (0 orphelin).');
         }
     }
 
@@ -172,8 +185,8 @@ class DeepDatabaseScanCommand extends Command
         }
 
         if ($divergentCount === 0) {
-            $this->successes[] = "100% des tables avec institution_id (" . count($tablesWithInst) . " tables) sont rigoureusement unifiées à ID 1.";
-            $this->line("   ✓ 100% des tables (" . count($tablesWithInst) . ") sont alignées sur institution_id = 1.");
+            $this->successes[] = '100% des tables avec institution_id ('.count($tablesWithInst).' tables) sont rigoureusement unifiées à ID 1.';
+            $this->line('   ✓ 100% des tables ('.count($tablesWithInst).') sont alignées sur institution_id = 1.');
         }
     }
 
@@ -204,7 +217,7 @@ class DeepDatabaseScanCommand extends Command
             $this->criticalErrors[] = $msg;
             $this->error("   ❌ {$msg}");
         } else {
-            $this->line("   ✓ Tous les semestres ont des numéros officiels conformes [1..10].");
+            $this->line('   ✓ Tous les semestres ont des numéros officiels conformes [1..10].');
         }
 
         // 3. Modules sans filière
@@ -215,7 +228,7 @@ class DeepDatabaseScanCommand extends Command
             $this->criticalErrors[] = $msg;
             $this->error("   ❌ {$msg}");
         } else {
-            $this->line("   ✓ Tous les modules appartiennent à une filière valide.");
+            $this->line('   ✓ Tous les modules appartiennent à une filière valide.');
         }
 
         // 4. Modules avec coefficient nul ou négatif
@@ -226,7 +239,7 @@ class DeepDatabaseScanCommand extends Command
             $this->warnings[] = $msg;
             $this->warn("   ⚠️ {$msg}");
         } else {
-            $this->line("   ✓ Tous les modules ont des coefficients académiques positifs.");
+            $this->line('   ✓ Tous les modules ont des coefficients académiques positifs.');
         }
     }
 
@@ -248,7 +261,7 @@ class DeepDatabaseScanCommand extends Command
             $this->criticalErrors[] = $msg;
             $this->error("   ❌ {$msg}");
         } else {
-            $this->line("   ✓ Tous les étudiants possèdent un compte utilisateur relié.");
+            $this->line('   ✓ Tous les étudiants possèdent un compte utilisateur relié.');
         }
 
         // 2. CNE et CIN vides
@@ -262,7 +275,7 @@ class DeepDatabaseScanCommand extends Command
             $this->warnings[] = $msg;
             $this->warn("   ⚠️ {$msg}");
         } else {
-            $this->line("   ✓ 100% des étudiants ont un code CNE/Massar renseigné.");
+            $this->line('   ✓ 100% des étudiants ont un code CNE/Massar renseigné.');
         }
 
         // 3. Doublons de parcours actif
@@ -295,7 +308,7 @@ class DeepDatabaseScanCommand extends Command
             $this->warnings[] = $msg;
             $this->warn("   ⚠️ {$msg}");
         } else {
-            $this->line("   ✓ 100% des étudiants actifs ont leur sous-groupe TD officiel assigné.");
+            $this->line('   ✓ 100% des étudiants actifs ont leur sous-groupe TD officiel assigné.');
         }
     }
 
@@ -319,7 +332,7 @@ class DeepDatabaseScanCommand extends Command
             $this->criticalErrors[] = $msg;
             $this->error("   ❌ {$msg}");
         } else {
-            $this->line("   ✓ Toutes les notes sont rigoureusement dans le barème légal [0.00, 20.00].");
+            $this->line('   ✓ Toutes les notes sont rigoureusement dans le barème légal [0.00, 20.00].');
         }
 
         // 2. Doublons de notes (même étudiant + même évaluation)
@@ -335,7 +348,7 @@ class DeepDatabaseScanCommand extends Command
             $this->criticalErrors[] = $msg;
             $this->error("   ❌ {$msg}");
         } else {
-            $this->line("   ✓ Aucun doublon de note par évaluation.");
+            $this->line('   ✓ Aucun doublon de note par évaluation.');
         }
 
         // 3. Somme des pondérations des évaluations par module (hors Rattrapage qui est une session de substitution à 100%)
@@ -352,7 +365,7 @@ class DeepDatabaseScanCommand extends Command
             $this->warnings[] = $msg;
             $this->warn("   ⚠️ {$msg}");
         } else {
-            $this->line("   ✓ Tous les modules évalués totalisent exactement 100% de pondération.");
+            $this->line('   ✓ Tous les modules évalués totalisent exactement 100% de pondération.');
         }
     }
 
@@ -365,7 +378,7 @@ class DeepDatabaseScanCommand extends Command
 
         // 1. Conflits Professeur
         $this->totalChecks++;
-        $profClashes = DB::select("
+        $profClashes = DB::select('
             SELECT s1.id AS s1_id, s2.id AS s2_id, s1.professor_id, s1.day_of_week
             FROM schedules s1
             JOIN schedules s2 ON s1.professor_id = s2.professor_id
@@ -374,19 +387,19 @@ class DeepDatabaseScanCommand extends Command
                 AND s1.academic_year_id = s2.academic_year_id
                 AND s1.semester_id = s2.semester_id
                 AND (s1.start_time < s2.end_time AND s1.end_time > s2.start_time)
-        ");
+        ');
 
         if (count($profClashes) > 0) {
-            $msg = "schedules: " . count($profClashes) . " conflit(s) d'horaires enseignant (double-réservation)!";
+            $msg = 'schedules: '.count($profClashes)." conflit(s) d'horaires enseignant (double-réservation)!";
             $this->criticalErrors[] = $msg;
             $this->error("   ❌ {$msg}");
         } else {
-            $this->line("   ✓ 0 conflit enseignant (aucun professeur en double-réservation).");
+            $this->line('   ✓ 0 conflit enseignant (aucun professeur en double-réservation).');
         }
 
         // 2. Conflits Salle
         $this->totalChecks++;
-        $roomClashes = DB::select("
+        $roomClashes = DB::select('
             SELECT s1.id AS s1_id, s2.id AS s2_id, s1.room_id, s1.day_of_week
             FROM schedules s1
             JOIN schedules s2 ON s1.room_id = s2.room_id
@@ -394,19 +407,19 @@ class DeepDatabaseScanCommand extends Command
                 AND s1.id < s2.id
                 AND s1.academic_year_id = s2.academic_year_id
                 AND (s1.start_time < s2.end_time AND s1.end_time > s2.start_time)
-        ");
+        ');
 
         if (count($roomClashes) > 0) {
-            $msg = "schedules: " . count($roomClashes) . " conflit(s) de salle (deux cours en même temps)!";
+            $msg = 'schedules: '.count($roomClashes).' conflit(s) de salle (deux cours en même temps)!';
             $this->criticalErrors[] = $msg;
             $this->error("   ❌ {$msg}");
         } else {
-            $this->line("   ✓ 0 conflit de salle (toutes les salles ont une occupation exclusive).");
+            $this->line('   ✓ 0 conflit de salle (toutes les salles ont une occupation exclusive).');
         }
 
         // 3. Conflits Groupe
         $this->totalChecks++;
-        $groupClashes = DB::select("
+        $groupClashes = DB::select('
             SELECT s1.id AS s1_id, s2.id AS s2_id, s1.group_id, s1.day_of_week
             FROM schedules s1
             JOIN schedules s2 ON s1.group_id = s2.group_id
@@ -415,10 +428,10 @@ class DeepDatabaseScanCommand extends Command
                 AND s1.academic_year_id = s2.academic_year_id
                 AND s1.group_id IS NOT NULL
                 AND (s1.start_time < s2.end_time AND s1.end_time > s2.start_time)
-        ");
+        ');
 
         if (count($groupClashes) > 0) {
-            $msg = "schedules: " . count($groupClashes) . " conflit(s) de groupe!";
+            $msg = 'schedules: '.count($groupClashes).' conflit(s) de groupe!';
             $this->criticalErrors[] = $msg;
             $this->error("   ❌ {$msg}");
         } else {
@@ -445,7 +458,7 @@ class DeepDatabaseScanCommand extends Command
             $this->criticalErrors[] = $msg;
             $this->error("   ❌ {$msg}");
         } else {
-            $this->line("   ✓ Toutes les assignations de rôles pointent vers des rôles existants.");
+            $this->line('   ✓ Toutes les assignations de rôles pointent vers des rôles existants.');
         }
 
         // 2. role_has_permissions orphelins
@@ -460,7 +473,7 @@ class DeepDatabaseScanCommand extends Command
             $this->criticalErrors[] = $msg;
             $this->error("   ❌ {$msg}");
         } else {
-            $this->line("   ✓ Toutes les permissions sont reliées à des rôles valides.");
+            $this->line('   ✓ Toutes les permissions sont reliées à des rôles valides.');
         }
 
         // 3. Users sans aucun rôle
@@ -476,7 +489,7 @@ class DeepDatabaseScanCommand extends Command
             $this->warnings[] = "users: {$usersNoRole} utilisateur(s) sans rôle attribué.";
             $this->warn("   ⚠️ {$usersNoRole} utilisateurs sans rôle attribué.");
         } else {
-            $this->line("   ✓ Tous les utilisateurs ont au moins un rôle attribué.");
+            $this->line('   ✓ Tous les utilisateurs ont au moins un rôle attribué.');
         }
     }
 
@@ -488,16 +501,16 @@ class DeepDatabaseScanCommand extends Command
         $this->line("\n[9/10] 🔒 Scan de Conformité Optimistic Locking (Règle 1 AGENTS.md)...");
 
         $models = [
-            \App\Models\Attendance::class => 'attendances',
-            \App\Models\Grade::class => 'grades',
-            \App\Models\Schedule::class => 'schedules',
-            \App\Models\StudentRegistration::class => 'student_registrations',
+            Attendance::class => 'attendances',
+            Grade::class => 'grades',
+            Schedule::class => 'schedules',
+            StudentRegistration::class => 'student_registrations',
         ];
 
         $missingVersion = 0;
         foreach ($models as $modelClass => $table) {
             $this->totalChecks++;
-            if (!Schema::hasColumn($table, 'version')) {
+            if (! Schema::hasColumn($table, 'version')) {
                 $msg = "Table '{$table}' utilise OptimisticLocking mais manque la colonne 'version'!";
                 $this->criticalErrors[] = $msg;
                 $this->error("   ❌ {$msg}");
@@ -541,7 +554,7 @@ class DeepDatabaseScanCommand extends Command
             $this->warnings[] = "{$count} colonne(s) de clé étrangère n'ont pas d'index dédié (optimisation recommandée pour de très gros volumes).";
             $this->warn("   ℹ️ {$count} clés étrangères sans index dédié (normal pour petites tables de paramétrage).");
         } else {
-            $this->line("   ✓ 100% des clés étrangères sont indexées.");
+            $this->line('   ✓ 100% des clés étrangères sont indexées.');
         }
     }
 
@@ -551,29 +564,29 @@ class DeepDatabaseScanCommand extends Command
     private function renderSummary(): void
     {
         $this->line("\n================================================================================");
-        $this->info("                       RÉSUMÉ DU SCAN DE SANTÉ DE LA BASE                      ");
-        $this->line("================================================================================");
+        $this->info('                       RÉSUMÉ DU SCAN DE SANTÉ DE LA BASE                      ');
+        $this->line('================================================================================');
 
         $this->line("  • Total des vérifications exécutées  : <info>{$this->totalChecks}</info>");
-        $this->line("  • Erreurs Critiques / Conflits       : " . (empty($this->criticalErrors) ? '<info>0 (AUCUNE)</info>' : '<error>' . count($this->criticalErrors) . ' ERREUR(S)</error>'));
-        $this->line("  • Avertissements / Optimisations     : " . (empty($this->warnings) ? '<info>0</info>' : '<comment>' . count($this->warnings) . '</comment>'));
-        $this->line("  • Statut Global                      : " . (empty($this->criticalErrors) ? '<info>EXCELLENT (100% OPÉRATIONNEL)</info>' : '<error>ATTENTION REQUISE</error>'));
+        $this->line('  • Erreurs Critiques / Conflits       : '.(empty($this->criticalErrors) ? '<info>0 (AUCUNE)</info>' : '<error>'.count($this->criticalErrors).' ERREUR(S)</error>'));
+        $this->line('  • Avertissements / Optimisations     : '.(empty($this->warnings) ? '<info>0</info>' : '<comment>'.count($this->warnings).'</comment>'));
+        $this->line('  • Statut Global                      : '.(empty($this->criticalErrors) ? '<info>EXCELLENT (100% OPÉRATIONNEL)</info>' : '<error>ATTENTION REQUISE</error>'));
         $this->line("================================================================================\n");
 
-        if (!empty($this->criticalErrors)) {
-            $this->error("DÉTAIL DES ERREURS CRITIQUES :");
+        if (! empty($this->criticalErrors)) {
+            $this->error('DÉTAIL DES ERREURS CRITIQUES :');
             foreach ($this->criticalErrors as $i => $err) {
-                $this->error("  " . ($i + 1) . ". {$err}");
+                $this->error('  '.($i + 1).". {$err}");
             }
-            $this->line("");
+            $this->line('');
         }
 
-        if (!empty($this->warnings)) {
-            $this->comment("DÉTAIL DES AVERTISSEMENTS & RECOMMANDATIONS :");
+        if (! empty($this->warnings)) {
+            $this->comment('DÉTAIL DES AVERTISSEMENTS & RECOMMANDATIONS :');
             foreach ($this->warnings as $i => $warn) {
-                $this->comment("  " . ($i + 1) . ". {$warn}");
+                $this->comment('  '.($i + 1).". {$warn}");
             }
-            $this->line("");
+            $this->line('');
         }
     }
 }

@@ -690,13 +690,13 @@ class PublicVerificationController extends Controller
         string $agrementRef = '',
         string $dateIssued = ''
     ): JsonResponse {
-        $ref = $agrementRef ?: ('AGR-ENCG-' . date('Y') . '-' . str_pad($club->id, 4, '0', STR_PAD_LEFT));
+        $ref = $agrementRef ?: ('AGR-ENCG-'.date('Y').'-'.str_pad($club->id, 4, '0', STR_PAD_LEFT));
         $presidentName = $club->president_name;
         if (! $presidentName && $club->members) {
             $presMember = $club->members->firstWhere('role', 'president') ?? $club->members->first();
             if ($presMember && $presMember->user) {
                 $u = $presMember->user;
-                $presidentName = strtoupper($u->last_name) . ' ' . $u->first_name;
+                $presidentName = strtoupper($u->last_name).' '.$u->first_name;
             }
         }
         $presidentName = $presidentName ?: 'Président du Bureau Exécutif';
@@ -717,7 +717,7 @@ class PublicVerificationController extends Controller
 
         $formattedDate = now()->format('d/m/Y');
         if ($dateIssued && strlen($dateIssued) === 8) {
-            $formattedDate = substr($dateIssued, 6, 2) . '/' . substr($dateIssued, 4, 2) . '/' . substr($dateIssued, 0, 4);
+            $formattedDate = substr($dateIssued, 6, 2).'/'.substr($dateIssued, 4, 2).'/'.substr($dateIssued, 0, 4);
         }
 
         return response()->json([
@@ -740,9 +740,9 @@ class PublicVerificationController extends Controller
                 'tracking_code' => $trackingCode,
                 'is_encrypted' => str_starts_with($trackingCode, 'ENC-'),
                 'security_hash' => hash('sha256', "encg-club-{$club->id}-{$ref}"),
-                'hash' => 'SHA256-' . strtoupper(substr(hash('sha256', "encg-club-{$club->id}-{$ref}"), 0, 16)),
+                'hash' => 'SHA256-'.strtoupper(substr(hash('sha256', "encg-club-{$club->id}-{$ref}"), 0, 16)),
                 'institution' => 'École Nationale de Commerce et de Gestion de Fès (USMBA)',
-                'academic_year' => date('Y') . '-' . (date('Y') + 1),
+                'academic_year' => date('Y').'-'.(date('Y') + 1),
             ],
         ]);
     }
@@ -824,9 +824,9 @@ class PublicVerificationController extends Controller
                 'tracking_code' => $trackingCode,
                 'is_encrypted' => str_starts_with($trackingCode, 'ENC-'),
                 'security_hash' => hash('sha256', "encg-room-{$room->id}-{$room->code}"),
-                'hash' => 'SHA256-' . strtoupper(substr(hash('sha256', "encg-room-{$room->id}-{$room->code}"), 0, 16)),
+                'hash' => 'SHA256-'.strtoupper(substr(hash('sha256', "encg-room-{$room->id}-{$room->code}"), 0, 16)),
                 'institution' => 'École Nationale de Commerce et de Gestion de Fès (USMBA)',
-                'academic_year' => date('Y') . '-' . (date('Y') + 1),
+                'academic_year' => date('Y').'-'.(date('Y') + 1),
             ],
         ]);
     }

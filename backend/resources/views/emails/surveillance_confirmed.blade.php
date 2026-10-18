@@ -209,9 +209,9 @@
 </head>
 <body>
 @php
-    $profUser = $surveillance->professor?->user ?? $surveillance->professor;
-    $profName = $profUser?->name ?? 'Enseignant';
-    $sessionName = $surveillance->exam?->examSession?->name ?? 'Session d\'Examens Universitaires';
+    $profUser = $surveillance->professor ?? $surveillance->professor;
+    $profName = $profUser ?? 'Enseignant';
+    $sessionName = $surveillance->exam?->examSession ?? 'Session d\'Examens Universitaires';
     $academicYear = '2025 — 2026';
     $seances = $allSurveillances ?? collect([$surveillance]);
 @endphp
@@ -285,10 +285,10 @@
                             <span style="font-size:11px;color:#64748b;font-weight:500;">⏰ {{ $timeStr }}</span>
                         </td>
                         <td style="font-weight:700;color:#0f172a;">
-                            {{ $s->exam?->module?->name ?? 'Épreuve Académique' }}
+                            {{ $s->exam?->module ?? 'Épreuve Académique' }}
                         </td>
                         <td style="font-weight:700;color:#0f2863;">
-                            {{ $s->room?->name ?? ($s->exam?->room?->name ?? 'Amphithéâtre B') }}
+                            {{ $s->room ?? ($s->exam?->room ?? 'Amphithéâtre B') }}
                         </td>
                         <td style="text-align:center;">
                             @if($isPrincipal)

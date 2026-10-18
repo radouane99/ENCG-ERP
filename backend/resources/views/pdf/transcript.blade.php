@@ -93,7 +93,7 @@
       <td style="width:45%;">
         <div class="info-label">Étudiant(e)</div>
         <div class="info-value">{{ strtoupper($student->user->last_name ?? '') }} {{ ucfirst($student->user->first_name ?? '') }}</div>
-        <div class="info-filiere">{{ $filiere?->name ?? 'Filière non définie' }} — CNE : {{ $student->cne_cme ?? $student->student_number ?? '—' }}</div>
+        <div class="info-filiere">{{ $filiere ?? 'Filière non définie' }} — CNE : {{ $student->cne_cme ?? $student->student_number ?? '—' }}</div>
       </td>
       <td style="width:20%;">
         <div class="info-label">N° Apogée</div>
@@ -105,7 +105,7 @@
       </td>
       <td style="width:20%; text-align:center;">
         <div class="year-badge">
-          <div class="year">{{ $academic_year?->name ?? date('Y') }}</div>
+          <div class="year">{{ $academic_year ?? date('Y') }}</div>
           <div class="year-label">Année académique</div>
         </div>
       </td>

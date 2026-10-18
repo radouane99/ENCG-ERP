@@ -13,6 +13,7 @@ use App\Models\FinalProject;
 use App\Models\Grade;
 use App\Models\Module;
 use App\Models\Student;
+use App\Models\User;
 use App\Services\Academic\ExamCourseAttendanceService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
@@ -46,10 +47,10 @@ class ExamIncidentController extends Controller
 
             $firstNameFr = $user?->first_name ?? ($user ? explode(' ', $user->name)[0] : 'Étudiant');
             $lastNameFr = $user?->last_name ?? ($user ? (explode(' ', $user->name)[1] ?? '') : '');
-            $fullNameFr = trim(($firstNameFr ?: ($user?->name ?? 'Étudiant')) . ' ' . $lastNameFr);
+            $fullNameFr = trim(($firstNameFr ?: ($user?->name ?? 'Étudiant')).' '.$lastNameFr);
             $firstNameAr = $student?->first_name_ar ?? '';
             $lastNameAr = $student?->last_name_ar ?? '';
-            $fullNameAr = trim($firstNameAr . ' ' . $lastNameAr);
+            $fullNameAr = trim($firstNameAr.' '.$lastNameAr);
             $cneVal = $student?->cne ?? 'N/A';
 
             return [
@@ -75,7 +76,7 @@ class ExamIncidentController extends Controller
                 'filiere_name' => $filiere?->name ?? 'ENCG Fès',
                 'exam_date' => $exam?->exam_date ?? $inc->created_at?->format('Y-m-d'),
                 'type' => $inc->type,
-                'type_label' => match($inc->type) {
+                'type_label' => match ($inc->type) {
                     'fraude_antiseche', 'antiseche' => '📝 Fraude Antisèche / Documents',
                     'fraude_smartphone', 'smartphone' => '📱 Usage Smartphone / IA',
                     'usurpation' => '👤 Usurpation d\'Identité',
@@ -112,8 +113,8 @@ class ExamIncidentController extends Controller
             $user = $s->user;
             $firstNameFr = $user?->first_name ?? ($user ? explode(' ', $user->name)[0] : '');
             $lastNameFr = $user?->last_name ?? ($user ? (explode(' ', $user->name)[1] ?? '') : '');
-            $fullNameFr = trim(($firstNameFr ?: ($user?->name ?? 'Étudiant')) . ' ' . $lastNameFr);
-            $fullNameAr = trim(($s->first_name_ar ?? '') . ' ' . ($s->last_name_ar ?? ''));
+            $fullNameFr = trim(($firstNameFr ?: ($user?->name ?? 'Étudiant')).' '.$lastNameFr);
+            $fullNameAr = trim(($s->first_name_ar ?? '').' '.($s->last_name_ar ?? ''));
 
             return [
                 'id' => $s->id,
@@ -172,7 +173,8 @@ class ExamIncidentController extends Controller
             if (app()->bound(ExamCourseAttendanceService::class)) {
                 app(ExamCourseAttendanceService::class)->reportFraudIncident($incident);
             }
-        } catch (\Throwable $e) {}
+        } catch (\Throwable $e) {
+        }
 
         // Sanction automatique conservatoire pour fraude manifeste
         $exam = Exam::find($examId);
@@ -191,7 +193,8 @@ class ExamIncidentController extends Controller
                 ExamSeating::where('exam_id', $examId)
                     ->where('student_id', $validated['student_id'])
                     ->update(['is_present' => false]);
-            } catch (\Throwable $e) {}
+            } catch (\Throwable $e) {
+            }
         }
 
         return response()->json([
@@ -334,7 +337,7 @@ class ExamIncidentController extends Controller
             return;
         }
 
-        $reporter = \App\Models\User::where('email', 'like', '%prof%')->orWhere('email', 'like', '%admin%')->value('id');
+        $reporter = User::where('email', 'like', '%prof%')->orWhere('email', 'like', '%admin%')->value('id');
 
         $samples = [
             [

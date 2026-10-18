@@ -3,12 +3,13 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Services\Academic\StudentLifeService;
 use App\Models\Club;
+use App\Services\Academic\StudentLifeService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class ClubController extends Controller
 {
@@ -36,22 +37,22 @@ class ClubController extends Controller
     {
         $club = Club::with(['members'])->findOrFail($id);
 
-        $academicYear = date('Y') . '-' . (date('Y') + 1);
-        $agrementRef = 'AGR-ENCG-' . date('Y') . '-' . str_pad($club->id, 4, '0', STR_PAD_LEFT);
+        $academicYear = date('Y').'-'.(date('Y') + 1);
+        $agrementRef = 'AGR-ENCG-'.date('Y').'-'.str_pad($club->id, 4, '0', STR_PAD_LEFT);
 
         $presidentName = $club->president_name ?? 'Président du Bureau Exécutif';
 
         $verifyUrl = $club->verification_url;
         $qrBase64 = '';
-        if (class_exists(\SimpleSoftwareIO\QrCode\Facades\QrCode::class)) {
+        if (class_exists(QrCode::class)) {
             try {
-                $qrSvg = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')->size(120)->margin(0)->generate($verifyUrl);
-                $qrBase64 = 'data:image/svg+xml;base64,' . base64_encode($qrSvg);
+                $qrSvg = QrCode::format('svg')->size(120)->margin(0)->generate($verifyUrl);
+                $qrBase64 = 'data:image/svg+xml;base64,'.base64_encode($qrSvg);
             } catch (\Throwable) {
-                $qrBase64 = 'https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=' . urlencode($verifyUrl);
+                $qrBase64 = 'https://api.qrserver.com/v1/create-qr-code/?size=120x120&data='.urlencode($verifyUrl);
             }
         } else {
-            $qrBase64 = 'https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=' . urlencode($verifyUrl);
+            $qrBase64 = 'https://api.qrserver.com/v1/create-qr-code/?size=120x120&data='.urlencode($verifyUrl);
         }
 
         $data = [
@@ -70,7 +71,7 @@ class ClubController extends Controller
             ->setPaper('a4', 'portrait')
             ->setOptions(['isRemoteEnabled' => true]);
 
-        $fileName = 'Attestation_Agrement_' . Str::slug($club->name) . '_' . date('Y') . '.pdf';
+        $fileName = 'Attestation_Agrement_'.Str::slug($club->name).'_'.date('Y').'.pdf';
 
         return $pdf->stream($fileName);
     }

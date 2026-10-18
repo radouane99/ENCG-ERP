@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\DB;
 class CheckInstitutionIntegrityCommand extends Command
 {
     protected $signature = 'encg:check-institution';
+
     protected $description = 'Verify that all institution_id references are unified to ID 1';
 
     public function handle(): int
@@ -22,7 +23,7 @@ class CheckInstitutionIntegrityCommand extends Command
         $this->info('=== Institution Integrity Check ===');
 
         $institutions = Institution::all(['id', 'name', 'code', 'city', 'rector_name']);
-        $this->info("Institutions count: " . $institutions->count());
+        $this->info('Institutions count: '.$institutions->count());
         foreach ($institutions as $inst) {
             $this->line(" - ID {$inst->id}: {$inst->name} ({$inst->code}) in {$inst->city}, Rector: {$inst->rector_name}");
         }
@@ -30,7 +31,7 @@ class CheckInstitutionIntegrityCommand extends Command
         $usersByInst = User::select('institution_id', DB::raw('count(*) as total'))
             ->groupBy('institution_id')
             ->get();
-        $this->info("Users by institution_id:");
+        $this->info('Users by institution_id:');
         foreach ($usersByInst as $row) {
             $instVal = $row->institution_id ?? 'NULL';
             $this->line(" - institution_id {$instVal}: {$row->total} users");
@@ -39,7 +40,7 @@ class CheckInstitutionIntegrityCommand extends Command
         $studentsByInst = Student::select('institution_id', DB::raw('count(*) as total'))
             ->groupBy('institution_id')
             ->get();
-        $this->info("Students by institution_id:");
+        $this->info('Students by institution_id:');
         foreach ($studentsByInst as $row) {
             $this->line(" - institution_id {$row->institution_id}: {$row->total} students");
         }
@@ -47,7 +48,7 @@ class CheckInstitutionIntegrityCommand extends Command
         $professorsByInst = Professor::select('institution_id', DB::raw('count(*) as total'))
             ->groupBy('institution_id')
             ->get();
-        $this->info("Professors by institution_id:");
+        $this->info('Professors by institution_id:');
         foreach ($professorsByInst as $row) {
             $this->line(" - institution_id {$row->institution_id}: {$row->total} professors");
         }
@@ -55,7 +56,7 @@ class CheckInstitutionIntegrityCommand extends Command
         $campusesByInst = Campus::select('institution_id', DB::raw('count(*) as total'))
             ->groupBy('institution_id')
             ->get();
-        $this->info("Campuses by institution_id:");
+        $this->info('Campuses by institution_id:');
         foreach ($campusesByInst as $row) {
             $this->line(" - institution_id {$row->institution_id}: {$row->total} campuses");
         }
@@ -63,7 +64,7 @@ class CheckInstitutionIntegrityCommand extends Command
         $deptByInst = Department::select('institution_id', DB::raw('count(*) as total'))
             ->groupBy('institution_id')
             ->get();
-        $this->info("Departments by institution_id:");
+        $this->info('Departments by institution_id:');
         foreach ($deptByInst as $row) {
             $this->line(" - institution_id {$row->institution_id}: {$row->total} departments");
         }
@@ -71,7 +72,7 @@ class CheckInstitutionIntegrityCommand extends Command
         $filieresByInst = Filiere::select('institution_id', DB::raw('count(*) as total'))
             ->groupBy('institution_id')
             ->get();
-        $this->info("Filieres by institution_id:");
+        $this->info('Filieres by institution_id:');
         foreach ($filieresByInst as $row) {
             $this->line(" - institution_id {$row->institution_id}: {$row->total} filieres");
         }
@@ -88,7 +89,9 @@ class CheckInstitutionIntegrityCommand extends Command
             ");
             foreach ($tables as $t) {
                 $tableName = $t->table_name;
-                if ($tableName === 'institutions') continue;
+                if ($tableName === 'institutions') {
+                    continue;
+                }
                 $cnt = DB::table($tableName)->where('institution_id', 3)->count();
                 if ($cnt > 0) {
                     $tablesWith3[$tableName] = $cnt;
@@ -99,7 +102,7 @@ class CheckInstitutionIntegrityCommand extends Command
         if (empty($tablesWith3)) {
             $this->info('✅ ZERO orphan institution_id=3 records across all tables! Everything is cleanly unified on ID 1.');
         } else {
-            $this->error('⚠️ Found remaining records with institution_id=3: ' . json_encode($tablesWith3));
+            $this->error('⚠️ Found remaining records with institution_id=3: '.json_encode($tablesWith3));
         }
 
         return 0;

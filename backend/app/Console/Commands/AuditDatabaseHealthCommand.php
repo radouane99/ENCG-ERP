@@ -9,10 +9,13 @@ use Illuminate\Support\Facades\Schema;
 class AuditDatabaseHealthCommand extends Command
 {
     protected $signature = 'encg:audit-db';
+
     protected $description = 'Comprehensive audit of database integrity, foreign keys, academic consistency, and indexes';
 
     private array $issues = [];
+
     private array $warnings = [];
+
     private array $passes = [];
 
     public function handle(): int
@@ -59,10 +62,10 @@ class AuditDatabaseHealthCommand extends Command
         ];
 
         foreach ($checks as [$childTable, $childCol, $parentTable, $parentCol]) {
-            if (!Schema::hasTable($childTable) || !Schema::hasTable($parentTable)) {
+            if (! Schema::hasTable($childTable) || ! Schema::hasTable($parentTable)) {
                 continue;
             }
-            if (!Schema::hasColumn($childTable, $childCol) || !Schema::hasColumn($parentTable, $parentCol)) {
+            if (! Schema::hasColumn($childTable, $childCol) || ! Schema::hasColumn($parentTable, $parentCol)) {
                 continue;
             }
 
@@ -83,7 +86,7 @@ class AuditDatabaseHealthCommand extends Command
                 $this->passes[] = "{$childTable}.{$childCol} -> {$parentTable} intact (0 orphelin)";
             }
         }
-        $this->line("  ↳ Total relations FK testées : " . count($checks));
+        $this->line('  ↳ Total relations FK testées : '.count($checks));
     }
 
     private function checkAcademicDataIntegrity(): void
@@ -104,7 +107,7 @@ class AuditDatabaseHealthCommand extends Command
                 $this->error(" ❌ [Barème] {$msg}");
                 $this->issues[] = $msg;
             } else {
-                $this->passes[] = "Toutes les notes sont dans le barème légal [0, 20]";
+                $this->passes[] = 'Toutes les notes sont dans le barème légal [0, 20]';
             }
         }
 
@@ -123,7 +126,7 @@ class AuditDatabaseHealthCommand extends Command
                 $this->warn(" ⚠️ [Inscriptions multiples] {$msg}");
                 $this->warnings[] = $msg;
             } else {
-                $this->passes[] = "Chaque étudiant a au plus 1 parcours actif (is_current=true)";
+                $this->passes[] = 'Chaque étudiant a au plus 1 parcours actif (is_current=true)';
             }
         }
 
@@ -139,7 +142,7 @@ class AuditDatabaseHealthCommand extends Command
                 $this->warn(" ⚠️ [Groupe manquant] {$msg}");
                 $this->warnings[] = $msg;
             } else {
-                $this->passes[] = "Tous les étudiants actifs ont un groupe officiel";
+                $this->passes[] = 'Tous les étudiants actifs ont un groupe officiel';
             }
         }
     }
@@ -164,7 +167,7 @@ class AuditDatabaseHealthCommand extends Command
                 $this->warn(" ⚠️ [Rôle manquant] {$msg}");
                 $this->warnings[] = $msg;
             } else {
-                $this->passes[] = "Tous les utilisateurs ont au moins un rôle Spatie";
+                $this->passes[] = 'Tous les utilisateurs ont au moins un rôle Spatie';
             }
         }
 
@@ -181,7 +184,7 @@ class AuditDatabaseHealthCommand extends Command
             $this->error(" ❌ [Email doublon] {$msg}");
             $this->issues[] = $msg;
         } else {
-            $this->passes[] = "Toutes les adresses emails sont uniques";
+            $this->passes[] = 'Toutes les adresses emails sont uniques';
         }
 
         // 3. Étudiants orphelins sans CNE ou CIN
@@ -189,7 +192,7 @@ class AuditDatabaseHealthCommand extends Command
             $missingIds = DB::table('students')
                 ->where(function ($q) {
                     $q->whereNull('cne')->orWhere('cne', '')
-                      ->orWhereNull('cin')->orWhere('cin', '');
+                        ->orWhereNull('cin')->orWhere('cin', '');
                 })
                 ->count();
 
@@ -198,7 +201,7 @@ class AuditDatabaseHealthCommand extends Command
                 $this->warn(" ⚠️ [Identité académique] {$msg}");
                 $this->warnings[] = $msg;
             } else {
-                $this->passes[] = "Tous les étudiants ont un CNE et CIN renseignés";
+                $this->passes[] = 'Tous les étudiants ont un CNE et CIN renseignés';
             }
         }
     }
@@ -218,7 +221,7 @@ class AuditDatabaseHealthCommand extends Command
                 $this->warn(" ⚠️ [Sous-groupes TD] {$msg} (Utiliser encg:dispatch-subgroups)");
                 $this->warnings[] = $msg;
             } else {
-                $this->passes[] = "Tous les étudiants actifs sont bien répartis en sous-groupes TD";
+                $this->passes[] = 'Tous les étudiants actifs sont bien répartis en sous-groupes TD';
             }
         }
     }
@@ -250,12 +253,12 @@ class AuditDatabaseHealthCommand extends Command
             ORDER BY table_name, column_name
         ");
 
-        if (!empty($missingIndexes)) {
+        if (! empty($missingIndexes)) {
             $count = count($missingIndexes);
             $this->line("  ℹ️ {$count} colonnes FK sans index dédié (normal pour petites tables, ou à optimiser si tables volumineuses)");
             // On l'enregistre en notice informative
         } else {
-            $this->passes[] = "Toutes les clés étrangères sont indexées";
+            $this->passes[] = 'Toutes les clés étrangères sont indexées';
         }
     }
 
@@ -266,7 +269,7 @@ class AuditDatabaseHealthCommand extends Command
         $modelsWithOptimistic = ['grades', 'attendances', 'schedules', 'student_registrations'];
         foreach ($modelsWithOptimistic as $table) {
             if (Schema::hasTable($table)) {
-                if (!Schema::hasColumn($table, 'version')) {
+                if (! Schema::hasColumn($table, 'version')) {
                     $msg = "Table '{$table}' utilise OptimisticLocking mais manque la colonne 'version'!";
                     $this->error(" ❌ [OptimisticLocking] {$msg}");
                     $this->issues[] = $msg;
@@ -280,19 +283,19 @@ class AuditDatabaseHealthCommand extends Command
     private function printSummary(): void
     {
         $this->info("\n==================================================================");
-        $this->info("                       RÉSUMÉ DU DIAGNOSTIC                       ");
-        $this->info("==================================================================");
+        $this->info('                       RÉSUMÉ DU DIAGNOSTIC                       ');
+        $this->info('==================================================================');
 
-        $this->info("✅ Points conformes / Valides : " . count($this->passes));
+        $this->info('✅ Points conformes / Valides : '.count($this->passes));
         foreach (array_slice($this->passes, 0, 8) as $p) {
             $this->line("   ✓ {$p}");
         }
         if (count($this->passes) > 8) {
-            $this->line("   ... et " . (count($this->passes) - 8) . " autres points vérifiés avec succès.");
+            $this->line('   ... et '.(count($this->passes) - 8).' autres points vérifiés avec succès.');
         }
 
-        if (!empty($this->warnings)) {
-            $this->warn("\n⚠️ Avertissements / Points d'attention : " . count($this->warnings));
+        if (! empty($this->warnings)) {
+            $this->warn("\n⚠️ Avertissements / Points d'attention : ".count($this->warnings));
             foreach ($this->warnings as $w) {
                 $this->line("   ! {$w}");
             }
@@ -300,8 +303,8 @@ class AuditDatabaseHealthCommand extends Command
             $this->info("\n⚠️ Avertissements : 0");
         }
 
-        if (!empty($this->issues)) {
-            $this->error("\n❌ Erreurs bloquantes à corriger : " . count($this->issues));
+        if (! empty($this->issues)) {
+            $this->error("\n❌ Erreurs bloquantes à corriger : ".count($this->issues));
             foreach ($this->issues as $err) {
                 $this->line("   ✗ {$err}");
             }

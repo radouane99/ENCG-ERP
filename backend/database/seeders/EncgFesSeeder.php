@@ -599,11 +599,11 @@ class EncgFesSeeder extends Seeder
         };
 
         // Index professors by specialty
-        $profFinance    = $professors[0] ?? null;
+        $profFinance = $professors[0] ?? null;
         $profManagement = $professors[1] ?? null;
-        $profDroit      = $professors[2] ?? null;
-        $profLangues    = $professors[3] ?? null;
-        $profInfo       = $professors[4] ?? null;
+        $profDroit = $professors[2] ?? null;
+        $profLangues = $professors[3] ?? null;
+        $profInfo = $professors[4] ?? null;
 
         foreach ($allModules as $mod) {
             $name = mb_strtolower($mod->name);

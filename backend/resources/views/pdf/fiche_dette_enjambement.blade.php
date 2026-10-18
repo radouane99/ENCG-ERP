@@ -45,7 +45,7 @@
                     <tr style="border-bottom: 1px solid #f1f5f9;">
                         <td width="25%" style="font-weight: bold; color: #64748b;">Nom &amp; Prénom :</td>
                         <td width="35%" style="font-weight: 900; color: #0f2863; font-size: 10pt; text-transform: uppercase;">
-                            {{ $student->full_name ?? ($student->user?->name ?? 'Tazi Salma') }}
+                            {{ $student->full_name ?? ($student->user ?? 'Tazi Salma') }}
                         </td>
                         <td width="20%" style="font-weight: bold; color: #64748b;">Code CNE / MASSAR :</td>
                         <td width="20%" style="font-weight: 900; font-family: monospace; color: #059669;">
@@ -59,7 +59,7 @@
                         </td>
                         <td style="font-weight: bold; color: #64748b;">CNIE :</td>
                         <td style="font-weight: bold; font-family: monospace; color: #1e293b;">
-                            {{ $student->user?->cin ?? 'CD748291' }}
+                            {{ $student->user ?? 'CD748291' }}
                         </td>
                     </tr>
                     <tr style="border-bottom: 1px solid #f1f5f9;">

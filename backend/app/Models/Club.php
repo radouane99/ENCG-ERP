@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Crypt;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
@@ -20,16 +21,18 @@ class Club extends Model implements HasMedia
 
     public function getEncryptedVerifyTokenAttribute(): string
     {
-        $agrementRef = 'AGR-ENCG-' . date('Y') . '-' . str_pad($this->id, 4, '0', STR_PAD_LEFT);
-        $payload = "club_agrement:{$this->id}:{$agrementRef}:" . date('Ymd');
-        $raw = \Illuminate\Support\Facades\Crypt::encryptString($payload);
-        return 'ENC-' . rtrim(strtr($raw, '+/', '-_'), '=');
+        $agrementRef = 'AGR-ENCG-'.date('Y').'-'.str_pad($this->id, 4, '0', STR_PAD_LEFT);
+        $payload = "club_agrement:{$this->id}:{$agrementRef}:".date('Ymd');
+        $raw = Crypt::encryptString($payload);
+
+        return 'ENC-'.rtrim(strtr($raw, '+/', '-_'), '=');
     }
 
     public function getVerificationUrlAttribute(): string
     {
         $baseUrl = config('app.frontend_url') ?: (config('app.url') ?: 'https://encg-fes.ac.ma');
-        return rtrim($baseUrl, '/') . '/verify-document/' . $this->getEncryptedVerifyTokenAttribute();
+
+        return rtrim($baseUrl, '/').'/verify-document/'.$this->getEncryptedVerifyTokenAttribute();
     }
 
     protected function casts(): array

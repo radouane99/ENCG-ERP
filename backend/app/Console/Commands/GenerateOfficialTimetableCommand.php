@@ -7,7 +7,6 @@ use App\Models\Campus;
 use App\Models\Group;
 use App\Models\Institution;
 use App\Models\Module;
-use App\Models\ModuleProfessor;
 use App\Models\Professor;
 use App\Models\Room;
 use App\Models\Schedule;
@@ -19,6 +18,7 @@ use Illuminate\Support\Facades\DB;
 class GenerateOfficialTimetableCommand extends Command
 {
     protected $signature = 'encg:generate-timetable {--force : Exécuter sans confirmation}';
+
     protected $description = 'Génère l\'emploi du temps officiel ENCG Fès sans aucun conflit, aligné aux spécialités des professeurs et aux règles académiques';
 
     public function handle(): int
@@ -31,8 +31,9 @@ class GenerateOfficialTimetableCommand extends Command
         $institutionId = $institution?->id ?? 1;
 
         $academicYear = AcademicYear::where('is_current', true)->first() ?? AcademicYear::first();
-        if (!$academicYear) {
+        if (! $academicYear) {
             $this->error('❌ Aucune année académique trouvée.');
+
             return Command::FAILURE;
         }
 
@@ -85,24 +86,27 @@ class GenerateOfficialTimetableCommand extends Command
             }
             if ($fallbackName) {
                 $p = Professor::whereHas('user', fn ($q) => $q->where('name', 'like', "%{$fallbackName}%"))->first();
-                if ($p) return $p;
+                if ($p) {
+                    return $p;
+                }
             }
+
             return Professor::first();
         };
 
         // Enseignants clés
-        $profAminaChraibi   = $findProf('chraibi.amina@encg-fes.ma', 'Amina Chraibi');       // Management / Marketing
-        $profKarimAlami     = $findProf('prof@encg.ma', 'Karim Alami');                      // Finance / Compta
-        $profTarikMeziane   = $findProf('meziane.tarik@encg-fes.ma', 'Tarik Meziane');        // Droit
+        $profAminaChraibi = $findProf('chraibi.amina@encg-fes.ma', 'Amina Chraibi');       // Management / Marketing
+        $profKarimAlami = $findProf('prof@encg.ma', 'Karim Alami');                      // Finance / Compta
+        $profTarikMeziane = $findProf('meziane.tarik@encg-fes.ma', 'Tarik Meziane');        // Droit
         $profBouchraBennani = $findProf('bennani.bouchra@encg-fes.ma', 'Bouchra Bennani');    // Langues / Com
-        $profMohamedBenjIG  = $findProf('benjelloun.mohamed@encg-fes.ma', 'Mohamed Benjelloun'); // Informatique
-        $profSaraBenmoussa  = $findProf('s.benmoussa@encg-fes.ac.ma', 'Sara Benmoussa');    // Marketing
+        $profMohamedBenjIG = $findProf('benjelloun.mohamed@encg-fes.ma', 'Mohamed Benjelloun'); // Informatique
+        $profSaraBenmoussa = $findProf('s.benmoussa@encg-fes.ac.ma', 'Sara Benmoussa');    // Marketing
         $profYoussefChraibi = $findProf('y.chraibi@encg-fes.ac.ma', 'Youssef Chraibi');      // Comptabilité
         $profAbdelhakAmrani = $findProf('a.elamrani@encg-fes.ac.ma', 'Abdelhak El Amrani');  // Finance
-        $profMohamedBenjEA  = $findProf('m.benjelloun@encg-fes.ac.ma', 'Benjelloun');        // Économie / Stats
+        $profMohamedBenjEA = $findProf('m.benjelloun@encg-fes.ac.ma', 'Benjelloun');        // Économie / Stats
         $profFatimaBensouda = $findProf('fatima.bensouda@encg-fes.ma', 'Fatima Bensouda');  // Finance / Gestion
-        $profLaylaBerrada   = $findProf('l.berrada@encg-fes.ac.ma', 'Layla Berrada');        // Anglais
-        $profKarimIdrissi   = $findProf('k.idrissi@encg-fes.ac.ma', 'Karim Idrissi');        // Communication
+        $profLaylaBerrada = $findProf('l.berrada@encg-fes.ac.ma', 'Layla Berrada');        // Anglais
+        $profKarimIdrissi = $findProf('k.idrissi@encg-fes.ac.ma', 'Karim Idrissi');        // Communication
 
         $this->info("✅ Professeurs identifiés : Amina Chraibi (ID:{$profAminaChraibi->id}), Karim Alami (ID:{$profKarimAlami->id}), etc.");
 
@@ -141,57 +145,57 @@ class GenerateOfficialTimetableCommand extends Command
             // M1 (08:30-10:15)
             [
                 'group' => 'TC-S2-G1', 'module' => 'TC-S2-M05', // Marketing de Base
-                'prof' => $profAminaChraibi, 'room' => 'AMPH-A', 'day' => 1, 'time' => $tM1, 'type' => 'cm', 'sem' => $sem2
+                'prof' => $profAminaChraibi, 'room' => 'AMPH-A', 'day' => 1, 'time' => $tM1, 'type' => 'cm', 'sem' => $sem2,
             ],
             [
                 'group' => 'GFC-S5-G1', 'module' => 'GFC-S5-M01', // Comptabilité Approfondie
-                'prof' => $profYoussefChraibi, 'room' => 'S-101', 'day' => 1, 'time' => $tM1, 'type' => 'cm', 'sem' => $sem5
+                'prof' => $profYoussefChraibi, 'room' => 'S-101', 'day' => 1, 'time' => $tM1, 'type' => 'cm', 'sem' => $sem5,
             ],
             [
                 'group' => 'MCM-S5-G1', 'module' => 'MCM-S5-M01', // Comportement du Consommateur
-                'prof' => $profSaraBenmoussa, 'room' => 'S-102', 'day' => 1, 'time' => $tM1, 'type' => 'cm', 'sem' => $sem5
+                'prof' => $profSaraBenmoussa, 'room' => 'S-102', 'day' => 1, 'time' => $tM1, 'type' => 'cm', 'sem' => $sem5,
             ],
 
             // M2 (10:30-12:15)
             [
                 'group' => 'TC-S2-G2', 'module' => 'TC-S2-M05', // Marketing de Base
-                'prof' => $profAminaChraibi, 'room' => 'AMPH-A', 'day' => 1, 'time' => $tM2, 'type' => 'cm', 'sem' => $sem2
+                'prof' => $profAminaChraibi, 'room' => 'AMPH-A', 'day' => 1, 'time' => $tM2, 'type' => 'cm', 'sem' => $sem2,
             ],
             [
                 'group' => 'GFC-S5-G2', 'module' => 'GFC-S5-M01', // Comptabilité Approfondie
-                'prof' => $profYoussefChraibi, 'room' => 'S-101', 'day' => 1, 'time' => $tM2, 'type' => 'cm', 'sem' => $sem5
+                'prof' => $profYoussefChraibi, 'room' => 'S-101', 'day' => 1, 'time' => $tM2, 'type' => 'cm', 'sem' => $sem5,
             ],
             [
                 'group' => 'MCM-S5-G2', 'module' => 'MCM-S5-M01', // Comportement du Consommateur
-                'prof' => $profSaraBenmoussa, 'room' => 'S-102', 'day' => 1, 'time' => $tM2, 'type' => 'cm', 'sem' => $sem5
+                'prof' => $profSaraBenmoussa, 'room' => 'S-102', 'day' => 1, 'time' => $tM2, 'type' => 'cm', 'sem' => $sem5,
             ],
 
             // A1 (14:30-16:15)
             [
                 'group' => 'TC-S2-G1', 'module' => 'TC-S2-M04', // Langue Anglaise II
-                'prof' => $profBouchraBennani, 'room' => 'S-103', 'day' => 1, 'time' => $tA1, 'type' => 'td', 'sem' => $sem2
+                'prof' => $profBouchraBennani, 'room' => 'S-103', 'day' => 1, 'time' => $tA1, 'type' => 'td', 'sem' => $sem2,
             ],
             [
                 'group' => 'GFC-S5-G1', 'module' => 'GFC-S5-M07', // Anglais des Affaires
-                'prof' => $profLaylaBerrada, 'room' => 'S-104', 'day' => 1, 'time' => $tA1, 'type' => 'td', 'sem' => $sem5
+                'prof' => $profLaylaBerrada, 'room' => 'S-104', 'day' => 1, 'time' => $tA1, 'type' => 'td', 'sem' => $sem5,
             ],
             [
                 'group' => 'MCM-S5-G1', 'module' => 'MCM-S5-M07', // Anglais du Marketing
-                'prof' => $profKarimIdrissi, 'room' => 'S-105', 'day' => 1, 'time' => $tA1, 'type' => 'td', 'sem' => $sem5
+                'prof' => $profKarimIdrissi, 'room' => 'S-105', 'day' => 1, 'time' => $tA1, 'type' => 'td', 'sem' => $sem5,
             ],
 
             // A2 (16:30-18:15)
             [
                 'group' => 'TC-S2-G2', 'module' => 'TC-S2-M04', // Langue Anglaise II
-                'prof' => $profBouchraBennani, 'room' => 'S-103', 'day' => 1, 'time' => $tA2, 'type' => 'td', 'sem' => $sem2
+                'prof' => $profBouchraBennani, 'room' => 'S-103', 'day' => 1, 'time' => $tA2, 'type' => 'td', 'sem' => $sem2,
             ],
             [
                 'group' => 'GFC-S5-G2', 'module' => 'GFC-S5-M07', // Anglais des Affaires
-                'prof' => $profLaylaBerrada, 'room' => 'S-104', 'day' => 1, 'time' => $tA2, 'type' => 'td', 'sem' => $sem5
+                'prof' => $profLaylaBerrada, 'room' => 'S-104', 'day' => 1, 'time' => $tA2, 'type' => 'td', 'sem' => $sem5,
             ],
             [
                 'group' => 'MCM-S5-G2', 'module' => 'MCM-S5-M07', // Anglais du Marketing
-                'prof' => $profKarimIdrissi, 'room' => 'S-105', 'day' => 1, 'time' => $tA2, 'type' => 'td', 'sem' => $sem5
+                'prof' => $profKarimIdrissi, 'room' => 'S-105', 'day' => 1, 'time' => $tA2, 'type' => 'td', 'sem' => $sem5,
             ],
 
             // =========================================================================
@@ -200,57 +204,57 @@ class GenerateOfficialTimetableCommand extends Command
             // M1 (08:30-10:15)
             [
                 'group' => 'TC-S2-G1', 'module' => 'TC-S2-M02', // Comptabilité Générale II
-                'prof' => $profKarimAlami, 'room' => 'AMPH-B', 'day' => 2, 'time' => $tM1, 'type' => 'cm', 'sem' => $sem2
+                'prof' => $profKarimAlami, 'room' => 'AMPH-B', 'day' => 2, 'time' => $tM1, 'type' => 'cm', 'sem' => $sem2,
             ],
             [
                 'group' => 'GFC-S5-G1', 'module' => 'GFC-S5-M02', // Analyse Financière
-                'prof' => $profAbdelhakAmrani, 'room' => 'S-101', 'day' => 2, 'time' => $tM1, 'type' => 'cm', 'sem' => $sem5
+                'prof' => $profAbdelhakAmrani, 'room' => 'S-101', 'day' => 2, 'time' => $tM1, 'type' => 'cm', 'sem' => $sem5,
             ],
             [
                 'group' => 'MCM-S5-G1', 'module' => 'MCM-S5-M04', // Études de Marché
-                'prof' => $profSaraBenmoussa, 'room' => 'S-102', 'day' => 2, 'time' => $tM1, 'type' => 'cm', 'sem' => $sem5
+                'prof' => $profSaraBenmoussa, 'room' => 'S-102', 'day' => 2, 'time' => $tM1, 'type' => 'cm', 'sem' => $sem5,
             ],
 
             // M2 (10:30-12:15)
             [
                 'group' => 'TC-S2-G2', 'module' => 'TC-S2-M02', // Comptabilité Générale II
-                'prof' => $profKarimAlami, 'room' => 'AMPH-B', 'day' => 2, 'time' => $tM2, 'type' => 'cm', 'sem' => $sem2
+                'prof' => $profKarimAlami, 'room' => 'AMPH-B', 'day' => 2, 'time' => $tM2, 'type' => 'cm', 'sem' => $sem2,
             ],
             [
                 'group' => 'GFC-S5-G2', 'module' => 'GFC-S5-M02', // Analyse Financière
-                'prof' => $profAbdelhakAmrani, 'room' => 'S-101', 'day' => 2, 'time' => $tM2, 'type' => 'cm', 'sem' => $sem5
+                'prof' => $profAbdelhakAmrani, 'room' => 'S-101', 'day' => 2, 'time' => $tM2, 'type' => 'cm', 'sem' => $sem5,
             ],
             [
                 'group' => 'MCM-S5-G2', 'module' => 'MCM-S5-M04', // Études de Marché
-                'prof' => $profSaraBenmoussa, 'room' => 'S-102', 'day' => 2, 'time' => $tM2, 'type' => 'cm', 'sem' => $sem5
+                'prof' => $profSaraBenmoussa, 'room' => 'S-102', 'day' => 2, 'time' => $tM2, 'type' => 'cm', 'sem' => $sem5,
             ],
 
             // A1 (14:30-16:15)
             [
                 'group' => 'TC-S2-G1', 'module' => 'TC-S2-M06', // Informatique de Gestion II
-                'prof' => $profMohamedBenjIG, 'room' => 'INFO-1', 'day' => 2, 'time' => $tA1, 'type' => 'tp', 'sem' => $sem2
+                'prof' => $profMohamedBenjIG, 'room' => 'INFO-1', 'day' => 2, 'time' => $tA1, 'type' => 'tp', 'sem' => $sem2,
             ],
             [
                 'group' => 'GFC-S5-G1', 'module' => 'GFC-S5-M03', // Contrôle de Gestion
-                'prof' => $profFatimaBensouda, 'room' => 'S-103', 'day' => 2, 'time' => $tA1, 'type' => 'cm', 'sem' => $sem5
+                'prof' => $profFatimaBensouda, 'room' => 'S-103', 'day' => 2, 'time' => $tA1, 'type' => 'cm', 'sem' => $sem5,
             ],
             [
                 'group' => 'MCM-S5-G1', 'module' => 'MCM-S5-M05', // Management de la Force de Vente
-                'prof' => $profAminaChraibi, 'room' => 'S-106', 'day' => 2, 'time' => $tA1, 'type' => 'cm', 'sem' => $sem5
+                'prof' => $profAminaChraibi, 'room' => 'S-106', 'day' => 2, 'time' => $tA1, 'type' => 'cm', 'sem' => $sem5,
             ],
 
             // A2 (16:30-18:15)
             [
                 'group' => 'TC-S2-G2', 'module' => 'TC-S2-M06', // Informatique de Gestion II
-                'prof' => $profMohamedBenjIG, 'room' => 'INFO-1', 'day' => 2, 'time' => $tA2, 'type' => 'tp', 'sem' => $sem2
+                'prof' => $profMohamedBenjIG, 'room' => 'INFO-1', 'day' => 2, 'time' => $tA2, 'type' => 'tp', 'sem' => $sem2,
             ],
             [
                 'group' => 'GFC-S5-G2', 'module' => 'GFC-S5-M03', // Contrôle de Gestion
-                'prof' => $profFatimaBensouda, 'room' => 'S-103', 'day' => 2, 'time' => $tA2, 'type' => 'cm', 'sem' => $sem5
+                'prof' => $profFatimaBensouda, 'room' => 'S-103', 'day' => 2, 'time' => $tA2, 'type' => 'cm', 'sem' => $sem5,
             ],
             [
                 'group' => 'MCM-S5-G2', 'module' => 'MCM-S5-M05', // Management de la Force de Vente
-                'prof' => $profAminaChraibi, 'room' => 'S-106', 'day' => 2, 'time' => $tA2, 'type' => 'cm', 'sem' => $sem5
+                'prof' => $profAminaChraibi, 'room' => 'S-106', 'day' => 2, 'time' => $tA2, 'type' => 'cm', 'sem' => $sem5,
             ],
 
             // =========================================================================
@@ -259,49 +263,49 @@ class GenerateOfficialTimetableCommand extends Command
             // M1 (08:30-10:15)
             [
                 'group' => 'TC-S2-G1', 'module' => 'TC-S2-M01', // Statistiques et Probabilités
-                'prof' => $profMohamedBenjEA, 'room' => 'AMPH-A', 'day' => 3, 'time' => $tM1, 'type' => 'cm', 'sem' => $sem2
+                'prof' => $profMohamedBenjEA, 'room' => 'AMPH-A', 'day' => 3, 'time' => $tM1, 'type' => 'cm', 'sem' => $sem2,
             ],
             [
                 'group' => 'MCM-S5-G1', 'module' => 'MCM-S5-M02', // Marketing Stratégique
-                'prof' => $profAminaChraibi, 'room' => 'S-101', 'day' => 3, 'time' => $tM1, 'type' => 'cm', 'sem' => $sem5
+                'prof' => $profAminaChraibi, 'room' => 'S-101', 'day' => 3, 'time' => $tM1, 'type' => 'cm', 'sem' => $sem5,
             ],
             [
                 'group' => 'GFC-S5-G1', 'module' => 'GFC-S5-M04', // Fiscalité des Entreprises
-                'prof' => $profYoussefChraibi, 'room' => 'S-102', 'day' => 3, 'time' => $tM1, 'type' => 'cm', 'sem' => $sem5
+                'prof' => $profYoussefChraibi, 'room' => 'S-102', 'day' => 3, 'time' => $tM1, 'type' => 'cm', 'sem' => $sem5,
             ],
 
             // M2 (10:30-12:15)
             [
                 'group' => 'TC-S2-G2', 'module' => 'TC-S2-M01', // Statistiques et Probabilités
-                'prof' => $profMohamedBenjEA, 'room' => 'AMPH-A', 'day' => 3, 'time' => $tM2, 'type' => 'cm', 'sem' => $sem2
+                'prof' => $profMohamedBenjEA, 'room' => 'AMPH-A', 'day' => 3, 'time' => $tM2, 'type' => 'cm', 'sem' => $sem2,
             ],
             [
                 'group' => 'MCM-S5-G2', 'module' => 'MCM-S5-M02', // Marketing Stratégique
-                'prof' => $profAminaChraibi, 'room' => 'S-101', 'day' => 3, 'time' => $tM2, 'type' => 'cm', 'sem' => $sem5
+                'prof' => $profAminaChraibi, 'room' => 'S-101', 'day' => 3, 'time' => $tM2, 'type' => 'cm', 'sem' => $sem5,
             ],
             [
                 'group' => 'GFC-S5-G2', 'module' => 'GFC-S5-M04', // Fiscalité des Entreprises
-                'prof' => $profYoussefChraibi, 'room' => 'S-102', 'day' => 3, 'time' => $tM2, 'type' => 'cm', 'sem' => $sem5
+                'prof' => $profYoussefChraibi, 'room' => 'S-102', 'day' => 3, 'time' => $tM2, 'type' => 'cm', 'sem' => $sem5,
             ],
 
             // A1 (14:30-16:15)
             [
                 'group' => 'GFC-S5-G1', 'module' => 'GFC-S5-M06', // Droit des Sociétés
-                'prof' => $profTarikMeziane, 'room' => 'S-103', 'day' => 3, 'time' => $tA1, 'type' => 'cm', 'sem' => $sem5
+                'prof' => $profTarikMeziane, 'room' => 'S-103', 'day' => 3, 'time' => $tA1, 'type' => 'cm', 'sem' => $sem5,
             ],
             [
                 'group' => 'MCM-S5-G1', 'module' => 'MCM-S5-M03', // Communication Marketing Intégrée
-                'prof' => $profKarimIdrissi, 'room' => 'S-104', 'day' => 3, 'time' => $tA1, 'type' => 'cm', 'sem' => $sem5
+                'prof' => $profKarimIdrissi, 'room' => 'S-104', 'day' => 3, 'time' => $tA1, 'type' => 'cm', 'sem' => $sem5,
             ],
 
             // A2 (16:30-18:15)
             [
                 'group' => 'GFC-S5-G2', 'module' => 'GFC-S5-M06', // Droit des Sociétés
-                'prof' => $profTarikMeziane, 'room' => 'S-103', 'day' => 3, 'time' => $tA2, 'type' => 'cm', 'sem' => $sem5
+                'prof' => $profTarikMeziane, 'room' => 'S-103', 'day' => 3, 'time' => $tA2, 'type' => 'cm', 'sem' => $sem5,
             ],
             [
                 'group' => 'MCM-S5-G2', 'module' => 'MCM-S5-M03', // Communication Marketing Intégrée
-                'prof' => $profKarimIdrissi, 'room' => 'S-104', 'day' => 3, 'time' => $tA2, 'type' => 'cm', 'sem' => $sem5
+                'prof' => $profKarimIdrissi, 'room' => 'S-104', 'day' => 3, 'time' => $tA2, 'type' => 'cm', 'sem' => $sem5,
             ],
 
             // =========================================================================
@@ -310,41 +314,41 @@ class GenerateOfficialTimetableCommand extends Command
             // M1 (08:30-10:15)
             [
                 'group' => 'TC-S2-G1', 'module' => 'TC-S2-M03', // Économie Générale II
-                'prof' => $profMohamedBenjEA, 'room' => 'AMPH-B', 'day' => 4, 'time' => $tM1, 'type' => 'cm', 'sem' => $sem2
+                'prof' => $profMohamedBenjEA, 'room' => 'AMPH-B', 'day' => 4, 'time' => $tM1, 'type' => 'cm', 'sem' => $sem2,
             ],
             [
                 'group' => 'GFC-S5-G1', 'module' => 'GFC-S5-M05', // Finance d'Entreprise
-                'prof' => $profKarimAlami, 'room' => 'S-101', 'day' => 4, 'time' => $tM1, 'type' => 'cm', 'sem' => $sem5
+                'prof' => $profKarimAlami, 'room' => 'S-101', 'day' => 4, 'time' => $tM1, 'type' => 'cm', 'sem' => $sem5,
             ],
 
             // M2 (10:30-12:15)
             [
                 'group' => 'TC-S2-G2', 'module' => 'TC-S2-M03', // Économie Générale II
-                'prof' => $profMohamedBenjEA, 'room' => 'AMPH-B', 'day' => 4, 'time' => $tM2, 'type' => 'cm', 'sem' => $sem2
+                'prof' => $profMohamedBenjEA, 'room' => 'AMPH-B', 'day' => 4, 'time' => $tM2, 'type' => 'cm', 'sem' => $sem2,
             ],
             [
                 'group' => 'GFC-S5-G2', 'module' => 'GFC-S5-M05', // Finance d'Entreprise
-                'prof' => $profKarimAlami, 'room' => 'S-101', 'day' => 4, 'time' => $tM2, 'type' => 'cm', 'sem' => $sem5
+                'prof' => $profKarimAlami, 'room' => 'S-101', 'day' => 4, 'time' => $tM2, 'type' => 'cm', 'sem' => $sem5,
             ],
 
             // A1 (14:30-16:15)
             [
                 'group' => 'TC-S2-G1', 'module' => 'TC-S2-M07', // Soft Skills II
-                'prof' => $profBouchraBennani, 'room' => 'S-105', 'day' => 4, 'time' => $tA1, 'type' => 'td', 'sem' => $sem2
+                'prof' => $profBouchraBennani, 'room' => 'S-105', 'day' => 4, 'time' => $tA1, 'type' => 'td', 'sem' => $sem2,
             ],
             [
                 'group' => 'GFC-S5-G1', 'module' => 'GFC-S5-M02', // TD Analyse Financière
-                'prof' => $profAbdelhakAmrani, 'room' => 'S-107', 'day' => 4, 'time' => $tA1, 'type' => 'td', 'sem' => $sem5
+                'prof' => $profAbdelhakAmrani, 'room' => 'S-107', 'day' => 4, 'time' => $tA1, 'type' => 'td', 'sem' => $sem5,
             ],
 
             // A2 (16:30-18:15)
             [
                 'group' => 'TC-S2-G2', 'module' => 'TC-S2-M07', // Soft Skills II
-                'prof' => $profBouchraBennani, 'room' => 'S-105', 'day' => 4, 'time' => $tA2, 'type' => 'td', 'sem' => $sem2
+                'prof' => $profBouchraBennani, 'room' => 'S-105', 'day' => 4, 'time' => $tA2, 'type' => 'td', 'sem' => $sem2,
             ],
             [
                 'group' => 'GFC-S5-G2', 'module' => 'GFC-S5-M02', // TD Analyse Financière
-                'prof' => $profAbdelhakAmrani, 'room' => 'S-107', 'day' => 4, 'time' => $tA2, 'type' => 'td', 'sem' => $sem5
+                'prof' => $profAbdelhakAmrani, 'room' => 'S-107', 'day' => 4, 'time' => $tA2, 'type' => 'td', 'sem' => $sem5,
             ],
 
             // =========================================================================
@@ -353,37 +357,37 @@ class GenerateOfficialTimetableCommand extends Command
             // M1 (08:30-10:15)
             [
                 'group' => 'TC-S2-G1', 'module' => 'TC-S2-M02', // TD Comptabilité Générale II
-                'prof' => $profFatimaBensouda, 'room' => 'S-101', 'day' => 5, 'time' => $tM1, 'type' => 'td', 'sem' => $sem2
+                'prof' => $profFatimaBensouda, 'room' => 'S-101', 'day' => 5, 'time' => $tM1, 'type' => 'td', 'sem' => $sem2,
             ],
             [
                 'group' => 'MCM-S5-G1', 'module' => 'MCM-S5-M02', // TD Marketing Stratégique
-                'prof' => $profSaraBenmoussa, 'room' => 'S-102', 'day' => 5, 'time' => $tM1, 'type' => 'td', 'sem' => $sem5
+                'prof' => $profSaraBenmoussa, 'room' => 'S-102', 'day' => 5, 'time' => $tM1, 'type' => 'td', 'sem' => $sem5,
             ],
 
             // M2 (10:30-12:15)
             [
                 'group' => 'TC-S2-G2', 'module' => 'TC-S2-M02', // TD Comptabilité Générale II
-                'prof' => $profFatimaBensouda, 'room' => 'S-101', 'day' => 5, 'time' => $tM2, 'type' => 'td', 'sem' => $sem2
+                'prof' => $profFatimaBensouda, 'room' => 'S-101', 'day' => 5, 'time' => $tM2, 'type' => 'td', 'sem' => $sem2,
             ],
             [
                 'group' => 'MCM-S5-G2', 'module' => 'MCM-S5-M02', // TD Marketing Stratégique
-                'prof' => $profSaraBenmoussa, 'room' => 'S-102', 'day' => 5, 'time' => $tM2, 'type' => 'td', 'sem' => $sem5
+                'prof' => $profSaraBenmoussa, 'room' => 'S-102', 'day' => 5, 'time' => $tM2, 'type' => 'td', 'sem' => $sem5,
             ],
 
             // A1 (14:30-16:15)
             [
                 'group' => 'MCM-S5-G1', 'module' => 'MCM-S5-M06', // Droit Commercial
-                'prof' => $profTarikMeziane, 'room' => 'S-103', 'day' => 5, 'time' => $tA1, 'type' => 'cm', 'sem' => $sem5
+                'prof' => $profTarikMeziane, 'room' => 'S-103', 'day' => 5, 'time' => $tA1, 'type' => 'cm', 'sem' => $sem5,
             ],
 
             // A2 (16:30-18:15)
             [
                 'group' => 'MCM-S5-G2', 'module' => 'MCM-S5-M06', // Droit Commercial
-                'prof' => $profTarikMeziane, 'room' => 'S-103', 'day' => 5, 'time' => $tA2, 'type' => 'cm', 'sem' => $sem5
+                'prof' => $profTarikMeziane, 'room' => 'S-103', 'day' => 5, 'time' => $tA2, 'type' => 'cm', 'sem' => $sem5,
             ],
         ];
 
-        $this->info("Nombre de créneaux officiels structurés : " . count($schedulePlan));
+        $this->info('Nombre de créneaux officiels structurés : '.count($schedulePlan));
 
         // 5. Mettre à jour module_professor pour synchroniser exactement avec cette grille
         $this->newLine();
@@ -399,10 +403,12 @@ class GenerateOfficialTimetableCommand extends Command
                 $grpObj = $groups->get($entry['group']);
                 $profObj = $entry['prof'];
 
-                if (!$modObj || !$grpObj || !$profObj) continue;
+                if (! $modObj || ! $grpObj || ! $profObj) {
+                    continue;
+                }
 
                 $key = "{$modObj->id}_{$profObj->id}";
-                if (!isset($syncedPairs[$key])) {
+                if (! isset($syncedPairs[$key])) {
                     DB::table('module_professor')->insert([
                         'module_id' => $modObj->id,
                         'professor_id' => $profObj->id,
@@ -417,7 +423,7 @@ class GenerateOfficialTimetableCommand extends Command
                     $syncedPairs[$key] = true;
                 }
             }
-            $this->info("✅ " . count($syncedPairs) . " associations enregistrées dans module_professor.");
+            $this->info('✅ '.count($syncedPairs).' associations enregistrées dans module_professor.');
 
             // 6. Nettoyer et réinsérer dans schedules
             $oldCount = Schedule::count();
@@ -431,8 +437,9 @@ class GenerateOfficialTimetableCommand extends Command
                 $profObj = $entry['prof'];
                 $roomObj = $rooms->get($entry['room']);
 
-                if (!$modObj || !$grpObj || !$profObj || !$roomObj) {
-                    $this->warn("⚠️ Entrée ignorée car ressource manquante : " . json_encode($entry));
+                if (! $modObj || ! $grpObj || ! $profObj || ! $roomObj) {
+                    $this->warn('⚠️ Entrée ignorée car ressource manquante : '.json_encode($entry));
+
                     continue;
                 }
 

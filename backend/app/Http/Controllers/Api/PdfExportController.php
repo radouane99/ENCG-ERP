@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Helpers\ArabicGlyphReshaper;
 use App\Http\Controllers\Controller;
 use App\Jobs\GenerateOfficialPdfJob;
 use App\Mail\ProfessorAssignmentNotificationMail;
@@ -1620,7 +1621,7 @@ class PdfExportController extends Controller
         $moduleCode = $exam?->module?->code;
         $roomName = $exam?->room?->name ?? 'Amphithéâtre / Salle d\'examen';
         $examDate = $exam?->exam_date
-            ? \Carbon\Carbon::parse($exam->exam_date)->locale('fr')->isoFormat('dddd D MMMM YYYY')
+            ? Carbon::parse($exam->exam_date)->locale('fr')->isoFormat('dddd D MMMM YYYY')
             : date('d/m/Y');
         $timeRange = $exam?->formattedTimeRange()
             ?: ($exam?->start_time ? $exam->start_time.' ('.($exam->duration_minutes ?? 120).' min)' : '08:30 – 10:30 (120 min)');
@@ -1653,10 +1654,10 @@ class PdfExportController extends Controller
         }
         $surveillantsText = ! empty($surveillantsList) ? implode(', ', array_unique($surveillantsList)) : 'Karim Alami, Amina Chraibi';
 
-        $arabicTitle = \App\Helpers\ArabicGlyphReshaper::reshape('ورقة توقيع الحضور لاجتياز الامتحانات');
-        $arabicSchool = \App\Helpers\ArabicGlyphReshaper::reshape('المدرسة الوطنية للتجارة والتسيير بفاس');
-        $arabicUniv = \App\Helpers\ArabicGlyphReshaper::reshape('جامعة سيدي محمد بن عبد الله');
-        $arabicKingdom = \App\Helpers\ArabicGlyphReshaper::reshape('المملكة المغربية');
+        $arabicTitle = ArabicGlyphReshaper::reshape('ورقة توقيع الحضور لاجتياز الامتحانات');
+        $arabicSchool = ArabicGlyphReshaper::reshape('المدرسة الوطنية للتجارة والتسيير بفاس');
+        $arabicUniv = ArabicGlyphReshaper::reshape('جامعة سيدي محمد بن عبد الله');
+        $arabicKingdom = ArabicGlyphReshaper::reshape('المملكة المغربية');
 
         $examIdStr = $examId ? (string) $examId : '0';
         $safeCode = Str::slug($code ?: 'groupe');
@@ -1748,7 +1749,7 @@ class PdfExportController extends Controller
         $type = $request->query('type', 'main');
         $isMain = $type === 'main';
         $title = $isMain
-            ? "CONCOURS TAFEM 2026 — LISTE PRINCIPALE DES ADMIS (TOP 350)"
+            ? 'CONCOURS TAFEM 2026 — LISTE PRINCIPALE DES ADMIS (TOP 350)'
             : "CONCOURS TAFEM 2026 — LISTE D'ATTENTE (PAR ORDRE DE MÉRITE)";
         $listTypeLabel = $isMain ? 'LISTE PRINCIPALE (AFFECTÉS ENCG FÈS)' : "LISTE D'ATTENTE (RANG 351+)";
 
@@ -1760,8 +1761,8 @@ class PdfExportController extends Controller
                 $baseScore = $isMain ? (188.50 - ($idx * 0.95)) : (147.80 - ($idx * 0.85));
                 $candidates[] = [
                     'rank' => $isMain ? ($idx + 1) : ($idx + 351),
-                    'cne' => $st->cne ?? ('N13' . str_pad((string) $st->id, 7, '0', STR_PAD_LEFT)),
-                    'cin' => $st->cin ?? ($st->user?->cin ?? ('CD' . (720000 + $st->id))),
+                    'cne' => $st->cne ?? ('N13'.str_pad((string) $st->id, 7, '0', STR_PAD_LEFT)),
+                    'cin' => $st->cin ?? ($st->user?->cin ?? ('CD'.(720000 + $st->id))),
                     'name' => ($st->user?->name ?? 'CANDIDAT TAFEM'),
                     'score' => max(120.00, $baseScore),
                     'decision' => $isMain ? 'ADMIS DÉFINITIF' : "LISTE D'ATTENTE",
@@ -1771,9 +1772,9 @@ class PdfExportController extends Controller
             for ($i = 1; $i <= 20; $i++) {
                 $candidates[] = [
                     'rank' => $isMain ? $i : ($i + 350),
-                    'cne' => 'N13800' . str_pad((string) $i, 4, '0', STR_PAD_LEFT),
-                    'cin' => 'CD729' . str_pad((string) $i, 3, '0', STR_PAD_LEFT),
-                    'name' => 'CANDIDAT TAFEM ' . $i,
+                    'cne' => 'N13800'.str_pad((string) $i, 4, '0', STR_PAD_LEFT),
+                    'cin' => 'CD729'.str_pad((string) $i, 3, '0', STR_PAD_LEFT),
+                    'name' => 'CANDIDAT TAFEM '.$i,
                     'score' => $isMain ? (185.00 - ($i * 1.2)) : (147.00 - ($i * 0.8)),
                     'decision' => $isMain ? 'ADMIS DÉFINITIF' : "LISTE D'ATTENTE",
                 ];
@@ -1787,6 +1788,7 @@ class PdfExportController extends Controller
         ]);
 
         $filename = $isMain ? 'PV_Deliberation_TAFEM_Liste_Principale.pdf' : 'PV_Deliberation_TAFEM_Liste_Attente.pdf';
+
         return $pdf->stream($filename);
     }
 
@@ -1943,26 +1945,27 @@ class PdfExportController extends Controller
         $user = $student?->user;
         $firstNameFr = $user?->first_name ?? ($user ? explode(' ', $user->name)[0] : 'Étudiant');
         $lastNameFr = $user?->last_name ?? ($user ? (explode(' ', $user->name)[1] ?? '') : '');
-        $fullNameFr = trim(($firstNameFr ?: ($user?->name ?? 'Étudiant')) . ' ' . $lastNameFr);
-        
-        $rawAr = trim(($student?->first_name_ar ?? '') . ' ' . ($student?->last_name_ar ?? ''));
-        $fullNameAr = !empty($rawAr) ? \App\Helpers\ArabicGlyphReshaper::reshape($rawAr) : '';
+        $fullNameFr = trim(($firstNameFr ?: ($user?->name ?? 'Étudiant')).' '.$lastNameFr);
+
+        $rawAr = trim(($student?->first_name_ar ?? '').' '.($student?->last_name_ar ?? ''));
+        $fullNameAr = ! empty($rawAr) ? ArabicGlyphReshaper::reshape($rawAr) : '';
 
         $sealHash = strtoupper(hash('sha256', "CONVOCATION-DISCIPLINE-{$incident->id}-{$incident->student_id}-ENCG"));
-        $verifyUrl = url("/verify-discipline?id={$incident->id}&hash=" . substr($sealHash, 0, 16));
+        $verifyUrl = url("/verify-discipline?id={$incident->id}&hash=".substr($sealHash, 0, 16));
 
         $qrBase64 = '';
         try {
             $raw = QrCode::format('svg')->size(140)->margin(0)->generate($verifyUrl);
             $qrBase64 = 'data:image/svg+xml;base64,'.base64_encode((string) $raw);
-        } catch (\Throwable $e) {}
+        } catch (\Throwable $e) {
+        }
 
         $examDateRaw = $incident->exam?->exam_date ?? $incident->created_at;
-        $examDateFormatted = $examDateRaw ? \Carbon\Carbon::parse($examDateRaw)->format('d/m/Y') : date('d/m/Y');
+        $examDateFormatted = $examDateRaw ? Carbon::parse($examDateRaw)->format('d/m/Y') : date('d/m/Y');
 
         $hearingRaw = $incident->hearing_date ?: '';
         if (preg_match('/^(\d{4})-(\d{2})-(\d{2})(.*)$/', $hearingRaw, $m)) {
-            $formattedHearing = $m[3] . '/' . $m[2] . '/' . $m[1] . $m[4];
+            $formattedHearing = $m[3].'/'.$m[2].'/'.$m[1].$m[4];
         } else {
             $formattedHearing = $hearingRaw ?: 'Date à préciser';
         }
@@ -1975,16 +1978,16 @@ class PdfExportController extends Controller
             'module' => $incident->exam?->module,
             'fullNameFr' => $fullNameFr,
             'fullNameAr' => $fullNameAr,
-            'arKingdom' => \App\Helpers\ArabicGlyphReshaper::reshape('المملكة المغربية'),
-            'arUniv' => \App\Helpers\ArabicGlyphReshaper::reshape('جامعة سيدي محمد بن عبد الله - فاس'),
-            'arSchool' => \App\Helpers\ArabicGlyphReshaper::reshape('المدرسة الوطنية للتجارة والتسيير بفاس'),
-            'arDiscipline' => \App\Helpers\ArabicGlyphReshaper::reshape('مجلس التأديب'),
-            'arDocTitle' => \App\Helpers\ArabicGlyphReshaper::reshape('استدعاء للمثول أمام مجلس التأديب'),
+            'arKingdom' => ArabicGlyphReshaper::reshape('المملكة المغربية'),
+            'arUniv' => ArabicGlyphReshaper::reshape('جامعة سيدي محمد بن عبد الله - فاس'),
+            'arSchool' => ArabicGlyphReshaper::reshape('المدرسة الوطنية للتجارة والتسيير بفاس'),
+            'arDiscipline' => ArabicGlyphReshaper::reshape('مجلس التأديب'),
+            'arDocTitle' => ArabicGlyphReshaper::reshape('استدعاء للمثول أمام مجلس التأديب'),
             'cne' => $student?->cne ?? 'N/A',
             'filiere' => $incident->exam?->module?->filiere?->name ?? 'Tronc Commun ENCG',
             'moduleName' => $incident->exam?->module?->name ?? 'Épreuve Semestrielle',
             'examDate' => $examDateFormatted,
-            'typeLabel' => match($incident->type) {
+            'typeLabel' => match ($incident->type) {
                 'fraude_antiseche', 'antiseche' => 'Fraude Antisèche / Documents non autorisés',
                 'fraude_smartphone', 'smartphone' => 'Usage Smartphone / IA générative',
                 'usurpation' => 'Usurpation d\'Identité lors de l\'épreuve',
@@ -2003,6 +2006,7 @@ class PdfExportController extends Controller
         ])->setPaper('a4', 'portrait');
 
         $safeName = preg_replace('/[^A-Za-z0-9_]/', '_', $fullNameFr);
+
         return $pdf->stream("Convocation_Conseil_Discipline_{$safeName}_{$incidentId}.pdf");
     }
 
@@ -2014,22 +2018,23 @@ class PdfExportController extends Controller
         $user = $student?->user;
         $firstNameFr = $user?->first_name ?? ($user ? explode(' ', $user->name)[0] : 'Étudiant');
         $lastNameFr = $user?->last_name ?? ($user ? (explode(' ', $user->name)[1] ?? '') : '');
-        $fullNameFr = trim(($firstNameFr ?: ($user?->name ?? 'Étudiant')) . ' ' . $lastNameFr);
-        
-        $rawAr = trim(($student?->first_name_ar ?? '') . ' ' . ($student?->last_name_ar ?? ''));
-        $fullNameAr = !empty($rawAr) ? \App\Helpers\ArabicGlyphReshaper::reshape($rawAr) : '';
+        $fullNameFr = trim(($firstNameFr ?: ($user?->name ?? 'Étudiant')).' '.$lastNameFr);
+
+        $rawAr = trim(($student?->first_name_ar ?? '').' '.($student?->last_name_ar ?? ''));
+        $fullNameAr = ! empty($rawAr) ? ArabicGlyphReshaper::reshape($rawAr) : '';
 
         $sealHash = strtoupper(hash('sha256', "DECISION-DISCIPLINE-{$incident->id}-{$incident->student_id}-ENCG"));
-        $verifyUrl = url("/verify-discipline-pv?id={$incident->id}&hash=" . substr($sealHash, 0, 16));
+        $verifyUrl = url("/verify-discipline-pv?id={$incident->id}&hash=".substr($sealHash, 0, 16));
 
         $qrBase64 = '';
         try {
             $raw = QrCode::format('svg')->size(140)->margin(0)->generate($verifyUrl);
             $qrBase64 = 'data:image/svg+xml;base64,'.base64_encode((string) $raw);
-        } catch (\Throwable $e) {}
+        } catch (\Throwable $e) {
+        }
 
         $examDateRaw = $incident->exam?->exam_date ?? $incident->created_at;
-        $examDateFormatted = $examDateRaw ? \Carbon\Carbon::parse($examDateRaw)->format('d/m/Y') : date('d/m/Y');
+        $examDateFormatted = $examDateRaw ? Carbon::parse($examDateRaw)->format('d/m/Y') : date('d/m/Y');
 
         $pdf = $this->getPdfInstance('pdf.decision_discipline', [
             'incident' => $incident,
@@ -2039,16 +2044,16 @@ class PdfExportController extends Controller
             'module' => $incident->exam?->module,
             'fullNameFr' => $fullNameFr,
             'fullNameAr' => $fullNameAr,
-            'arKingdom' => \App\Helpers\ArabicGlyphReshaper::reshape('المملكة المغربية'),
-            'arUniv' => \App\Helpers\ArabicGlyphReshaper::reshape('جامعة سيدي محمد بن عبد الله - فاس'),
-            'arSchool' => \App\Helpers\ArabicGlyphReshaper::reshape('المدرسة الوطنية للتجارة والتسيير بفاس'),
-            'arDiscipline' => \App\Helpers\ArabicGlyphReshaper::reshape('مجلس التأديب'),
-            'arDocTitle' => \App\Helpers\ArabicGlyphReshaper::reshape('محضر مداولات وقرار مجلس التأديب'),
+            'arKingdom' => ArabicGlyphReshaper::reshape('المملكة المغربية'),
+            'arUniv' => ArabicGlyphReshaper::reshape('جامعة سيدي محمد بن عبد الله - فاس'),
+            'arSchool' => ArabicGlyphReshaper::reshape('المدرسة الوطنية للتجارة والتسيير بفاس'),
+            'arDiscipline' => ArabicGlyphReshaper::reshape('مجلس التأديب'),
+            'arDocTitle' => ArabicGlyphReshaper::reshape('محضر مداولات وقرار مجلس التأديب'),
             'cne' => $student?->cne ?? 'N/A',
             'filiere' => $incident->exam?->module?->filiere?->name ?? 'Tronc Commun ENCG',
             'moduleName' => $incident->exam?->module?->name ?? 'Épreuve Semestrielle',
             'examDate' => $examDateFormatted,
-            'typeLabel' => match($incident->type) {
+            'typeLabel' => match ($incident->type) {
                 'fraude_antiseche', 'antiseche' => 'Fraude Antisèche / Documents non autorisés',
                 'fraude_smartphone', 'smartphone' => 'Usage Smartphone / IA générative',
                 'usurpation' => 'Usurpation d\'Identité lors de l\'épreuve',
@@ -2065,6 +2070,7 @@ class PdfExportController extends Controller
         ])->setPaper('a4', 'portrait');
 
         $safeName = preg_replace('/[^A-Za-z0-9_]/', '_', $fullNameFr);
+
         return $pdf->stream("PV_Decision_Conseil_Discipline_{$safeName}_{$incidentId}.pdf");
     }
 
@@ -2075,7 +2081,7 @@ class PdfExportController extends Controller
             ->get();
 
         $logoBase64 = $this->resolveLogoBase64();
-        $batchSealHash = strtoupper(hash('sha256', "BATCH-CONVOCATIONS-ENCG-" . now()->format('Ymd')));
+        $batchSealHash = strtoupper(hash('sha256', 'BATCH-CONVOCATIONS-ENCG-'.now()->format('Ymd')));
         $directorSignature = $this->generateDirectorOfficialSeal();
         $secretaireSignature = $this->generateSecretaryVisaStamp();
 
@@ -2084,26 +2090,27 @@ class PdfExportController extends Controller
             $user = $student?->user;
             $firstNameFr = $user?->first_name ?? ($user ? explode(' ', $user->name)[0] : 'Étudiant');
             $lastNameFr = $user?->last_name ?? ($user ? (explode(' ', $user->name)[1] ?? '') : '');
-            $fullNameFr = trim(($firstNameFr ?: ($user?->name ?? 'Étudiant')) . ' ' . $lastNameFr);
-            
-            $rawAr = trim(($student?->first_name_ar ?? '') . ' ' . ($student?->last_name_ar ?? ''));
-            $fullNameAr = !empty($rawAr) ? \App\Helpers\ArabicGlyphReshaper::reshape($rawAr) : '';
+            $fullNameFr = trim(($firstNameFr ?: ($user?->name ?? 'Étudiant')).' '.$lastNameFr);
+
+            $rawAr = trim(($student?->first_name_ar ?? '').' '.($student?->last_name_ar ?? ''));
+            $fullNameAr = ! empty($rawAr) ? ArabicGlyphReshaper::reshape($rawAr) : '';
 
             $sealHash = strtoupper(hash('sha256', "CONVOCATION-DISCIPLINE-{$inc->id}-{$inc->student_id}-ENCG"));
-            $verifyUrl = url("/verify-discipline?id={$inc->id}&hash=" . substr($sealHash, 0, 16));
+            $verifyUrl = url("/verify-discipline?id={$inc->id}&hash=".substr($sealHash, 0, 16));
 
             $qrBase64 = '';
             try {
                 $raw = QrCode::format('svg')->size(120)->margin(0)->generate($verifyUrl);
                 $qrBase64 = 'data:image/svg+xml;base64,'.base64_encode((string) $raw);
-            } catch (\Throwable $e) {}
+            } catch (\Throwable $e) {
+            }
 
             $examDateRaw = $inc->exam?->exam_date ?? $inc->created_at;
-            $examDateFormatted = $examDateRaw ? \Carbon\Carbon::parse($examDateRaw)->format('d/m/Y') : date('d/m/Y');
+            $examDateFormatted = $examDateRaw ? Carbon::parse($examDateRaw)->format('d/m/Y') : date('d/m/Y');
 
             $hearingRaw = $inc->hearing_date ?: '';
             if (preg_match('/^(\d{4})-(\d{2})-(\d{2})(.*)$/', $hearingRaw, $m)) {
-                $formattedHearing = $m[3] . '/' . $m[2] . '/' . $m[1] . $m[4];
+                $formattedHearing = $m[3].'/'.$m[2].'/'.$m[1].$m[4];
             } else {
                 $formattedHearing = $hearingRaw ?: 'Date à préciser';
             }
@@ -2118,7 +2125,7 @@ class PdfExportController extends Controller
                 'module' => $inc->exam?->module?->name ?? 'Épreuve Semestrielle',
                 'examDate' => $examDateFormatted,
                 'type' => $inc->type,
-                'typeLabel' => match($inc->type) {
+                'typeLabel' => match ($inc->type) {
                     'fraude_antiseche', 'antiseche' => 'Fraude Antisèche / Documents non autorisés',
                     'fraude_smartphone', 'smartphone' => 'Usage Smartphone / IA',
                     'usurpation' => 'Usurpation d\'Identité',
@@ -2142,15 +2149,15 @@ class PdfExportController extends Controller
             'directorSignature' => $directorSignature,
             'secretaireSignature' => $secretaireSignature,
             'generatedAt' => now()->format('d/m/Y à H:i'),
-            'arKingdom' => \App\Helpers\ArabicGlyphReshaper::reshape('المملكة المغربية'),
-            'arUniv' => \App\Helpers\ArabicGlyphReshaper::reshape('جامعة سيدي محمد بن عبد الله - فاس'),
-            'arSchool' => \App\Helpers\ArabicGlyphReshaper::reshape('المدرسة الوطنية للتجارة والتسيير بفاس'),
-            'arDiscipline' => \App\Helpers\ArabicGlyphReshaper::reshape('مجلس التأديب'),
-            'arDocTitle' => \App\Helpers\ArabicGlyphReshaper::reshape('استدعاء للمثول أمام مجلس التأديب'),
-            'arBatchTitle' => \App\Helpers\ArabicGlyphReshaper::reshape('جدول إرسال وتبليغ الاستدعاءات التأديبية الرسمية'),
+            'arKingdom' => ArabicGlyphReshaper::reshape('المملكة المغربية'),
+            'arUniv' => ArabicGlyphReshaper::reshape('جامعة سيدي محمد بن عبد الله - فاس'),
+            'arSchool' => ArabicGlyphReshaper::reshape('المدرسة الوطنية للتجارة والتسيير بفاس'),
+            'arDiscipline' => ArabicGlyphReshaper::reshape('مجلس التأديب'),
+            'arDocTitle' => ArabicGlyphReshaper::reshape('استدعاء للمثول أمام مجلس التأديب'),
+            'arBatchTitle' => ArabicGlyphReshaper::reshape('جدول إرسال وتبليغ الاستدعاءات التأديبية الرسمية'),
         ])->setPaper('a4', 'portrait');
 
-        return $pdf->stream("Lot_Convocations_Conseil_Discipline_ENCG_Fes.pdf");
+        return $pdf->stream('Lot_Convocations_Conseil_Discipline_ENCG_Fes.pdf');
     }
 
     private function generateDirectorOfficialSeal(): string

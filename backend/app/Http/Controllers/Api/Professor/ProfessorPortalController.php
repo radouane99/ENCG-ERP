@@ -1358,7 +1358,7 @@ class ProfessorPortalController extends Controller
         $allAssignedModuleIds = array_values(array_unique(array_merge($scheduleModuleIds, $mpModuleIds)));
 
         // Charger STRICTEMENT les modules réellement affectés à cet enseignant (aucun mock/fallback)
-        $assignedModules = !empty($allAssignedModuleIds)
+        $assignedModules = ! empty($allAssignedModuleIds)
             ? Module::with('filiere')->whereIn('id', $allAssignedModuleIds)->get()
             : collect();
 
@@ -1373,6 +1373,7 @@ class ProfessorPortalController extends Controller
                     $duration = round($diff, 1);
                 }
             }
+
             return [
                 'id' => $s->id,
                 'module_id' => $s->module_id,
@@ -1387,7 +1388,7 @@ class ProfessorPortalController extends Controller
                 'end_time' => $endTime,
                 'session_type' => strtoupper($s->session_type ?? 'CM'),
                 'duration_hours' => $duration,
-                'display_label' => ($s->day_of_week ? ucfirst($s->day_of_week).' ' : '')."{$startTime}-{$endTime} • ".($s->module?->name ?? 'Module')." (".strtoupper($s->session_type ?? 'CM')." - ".($s->group?->name ?? 'Section').")",
+                'display_label' => ($s->day_of_week ? ucfirst($s->day_of_week).' ' : '')."{$startTime}-{$endTime} • ".($s->module?->name ?? 'Module').' ('.strtoupper($s->session_type ?? 'CM').' - '.($s->group?->name ?? 'Section').')',
             ];
         });
 

@@ -2,21 +2,19 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Module;
 use App\Models\ModuleProfessor;
-use App\Models\Professor;
-use App\Models\Schedule;
 use App\Models\User;
 use Illuminate\Console\Command;
 
 class CheckProfessorModulesCommand extends Command
 {
     protected $signature = 'encg:check-prof-modules';
+
     protected $description = 'Check professor module assignments';
 
     public function handle(): int
     {
-        $this->info("=== Professor Module Assignment Diagnostic ===");
+        $this->info('=== Professor Module Assignment Diagnostic ===');
 
         $amina = User::where('email', 'chraibi.amina@encg-fes.ma')->first();
         if ($amina && $amina->professor) {

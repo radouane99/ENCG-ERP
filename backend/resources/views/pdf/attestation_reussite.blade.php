@@ -135,7 +135,7 @@
         <tr>
             <td class="label">Filière</td>
             <td class="val" style="color: #002e5b;">
-                {{ $student->latestPathway?->filiere?->name ?? '—' }}
+                {{ $student->latestPathway?->filiere ?? '—' }}
             </td>
         </tr>
     </table>

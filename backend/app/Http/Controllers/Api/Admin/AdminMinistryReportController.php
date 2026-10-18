@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\Admin;
 
+use App\Helpers\ArabicGlyphReshaper;
 use App\Http\Controllers\Controller;
 use App\Models\AcademicYear;
 use App\Models\Attendance;
@@ -10,9 +11,12 @@ use App\Models\Filiere;
 use App\Models\FinalProject;
 use App\Models\Grade;
 use App\Models\Module;
+use App\Models\Professor;
 use App\Models\Student;
 use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class AdminMinistryReportController extends Controller
 {
@@ -44,7 +48,7 @@ class AdminMinistryReportController extends Controller
         // Professeurs
         $totalProfs = User::role('professor')->count();
         if ($totalProfs === 0) {
-            $totalProfs = \App\Models\Professor::count();
+            $totalProfs = Professor::count();
         }
         $vacataires = User::role('vacataire')->count();
 
@@ -119,7 +123,7 @@ class AdminMinistryReportController extends Controller
         // Par filière
         $byFiliere = Filiere::withCount(['students'])->orderByDesc('students_count')->get()->map(fn ($f) => [
             'filiere' => $f->name,
-            'code' => $f->code ?? ('FIL-' . str_pad((string)$f->id, 2, '0', STR_PAD_LEFT)),
+            'code' => $f->code ?? ('FIL-'.str_pad((string) $f->id, 2, '0', STR_PAD_LEFT)),
             'count' => $f->students_count,
             'percentage' => $totalStudents > 0 ? round(($f->students_count / $totalStudents) * 100, 1) : 0,
         ]);
@@ -136,7 +140,7 @@ class AdminMinistryReportController extends Controller
         // Professeurs
         $totalProfs = User::role('professor')->count();
         if ($totalProfs === 0) {
-            $totalProfs = \App\Models\Professor::count();
+            $totalProfs = Professor::count();
         }
         $vacataires = User::role('vacataire')->count();
         $ratioEtudiantProf = $totalProfs > 0 ? round($totalStudents / $totalProfs, 1) : 0;
@@ -160,36 +164,36 @@ class AdminMinistryReportController extends Controller
         $tauxJustification = $totalAbsences > 0 ? round(($justifiedAbsences / $totalAbsences) * 100, 1) : 0;
 
         $academicYear = AcademicYear::where('is_current', true)->value('label') ?? '2025-2026';
-        $refNumber = 'MESRSFC/ENCG-FÈS/STAT-' . date('Y') . '/N° 01';
+        $refNumber = 'MESRSFC/ENCG-FÈS/STAT-'.date('Y').'/N° 01';
         $generatedDate = now()->translatedFormat('d F Y');
-        $sealHash = hash('sha256', 'MESRSFC-ENCG-' . $academicYear . '-' . $totalStudents . '-' . date('Ymd'));
-        $verifyUrl = config('app.url', 'https://encg-fes.ac.ma') . '/verify/ministry-report/' . date('Y');
+        $sealHash = hash('sha256', 'MESRSFC-ENCG-'.$academicYear.'-'.$totalStudents.'-'.date('Ymd'));
+        $verifyUrl = config('app.url', 'https://encg-fes.ac.ma').'/verify/ministry-report/'.date('Y');
 
         $logoBase64 = null;
         foreach (['logo-encg.png', 'images/encg_logo.png', 'images/logo-encg.png', 'images/logo.png'] as $candidate) {
             $path = public_path($candidate);
             if (file_exists($path)) {
                 $mime = str_ends_with($candidate, '.png') ? 'image/png' : 'image/jpeg';
-                $logoBase64 = "data:{$mime};base64," . base64_encode((string) file_get_contents($path));
+                $logoBase64 = "data:{$mime};base64,".base64_encode((string) file_get_contents($path));
                 break;
             }
         }
 
         $qrCodeBase64 = null;
-        if (class_exists(\SimpleSoftwareIO\QrCode\Facades\QrCode::class)) {
+        if (class_exists(QrCode::class)) {
             try {
-                $qrSvg = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')->size(120)->margin(0)->generate($verifyUrl);
-                $qrCodeBase64 = 'data:image/svg+xml;base64,' . base64_encode($qrSvg);
+                $qrSvg = QrCode::format('svg')->size(120)->margin(0)->generate($verifyUrl);
+                $qrCodeBase64 = 'data:image/svg+xml;base64,'.base64_encode($qrSvg);
             } catch (\Throwable $e) {
                 // Fallback gracefully
             }
         }
 
-        $arKingdom = \App\Helpers\ArabicGlyphReshaper::reshape('المملكة المغربية');
-        $arMinistry = \App\Helpers\ArabicGlyphReshaper::reshape('وزارة التعليم العالي والبحث العلمي والابتكار');
-        $arUniv = \App\Helpers\ArabicGlyphReshaper::reshape('جامعة سيدي محمد بن عبد الله - فاس');
-        $arSchool = \App\Helpers\ArabicGlyphReshaper::reshape('المدرسة الوطنية للتجارة والتسيير بفاس');
-        $arDocTitle = \App\Helpers\ArabicGlyphReshaper::reshape('التقرير الإحصائي السنوي الرسمي للوزارة الوصية');
+        $arKingdom = ArabicGlyphReshaper::reshape('المملكة المغربية');
+        $arMinistry = ArabicGlyphReshaper::reshape('وزارة التعليم العالي والبحث العلمي والابتكار');
+        $arUniv = ArabicGlyphReshaper::reshape('جامعة سيدي محمد بن عبد الله - فاس');
+        $arSchool = ArabicGlyphReshaper::reshape('المدرسة الوطنية للتجارة والتسيير بفاس');
+        $arDocTitle = ArabicGlyphReshaper::reshape('التقرير الإحصائي السنوي الرسمي للوزارة الوصية');
 
         $data = compact(
             'totalStudents',
@@ -228,13 +232,13 @@ class AdminMinistryReportController extends Controller
             'arDocTitle'
         );
 
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.rapport_ministere_mesrsfc', $data)
+        $pdf = Pdf::loadView('pdf.rapport_ministere_mesrsfc', $data)
             ->setPaper('a4', 'portrait')
             ->setOptions([
                 'isRemoteEnabled' => true,
                 'isHtml5ParserEnabled' => true,
             ]);
 
-        return $pdf->stream('Rapport_Officiel_MESRSFC_ENCG_Fes_' . date('Y') . '.pdf');
+        return $pdf->stream('Rapport_Officiel_MESRSFC_ENCG_Fes_'.date('Y').'.pdf');
     }
 }

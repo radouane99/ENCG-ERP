@@ -88,4 +88,3 @@ class GradesExport implements FromArray, ShouldAutoSize, WithHeadings, WithTitle
         return $rows;
     }
 }
-

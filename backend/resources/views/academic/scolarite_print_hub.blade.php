@@ -108,7 +108,7 @@
     <!-- ── MAIN PDF VIEWPORT CONTAINER ── -->
     <main class="flex-1 bg-slate-950 p-2 relative overflow-hidden">
         @php
-            $dossierCompletUrl = '/api/v1/enrollments/dossier-complet-pdf?cne=' . urlencode($cne) . '&student_id=' . ($student?->id ?? 1);
+            $dossierCompletUrl = '/api/v1/enrollments/dossier-complet-pdf?cne=' . urlencode($cne) . '&student_id=' . ($student ?? 1);
         @endphp
         <iframe
             id="pdf-frame"

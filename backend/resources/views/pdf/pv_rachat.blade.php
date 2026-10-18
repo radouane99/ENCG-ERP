@@ -64,7 +64,7 @@
         <td class="header-right">
             <div class="ref-box">
                 N° Réf :<br>
-                RACH/{{ date('Y') }}/{{ str_pad($student?->id ?? 0, 4, '0', STR_PAD_LEFT) }}<br>
+                RACH/{{ date('Y') }}/{{ str_pad($student ?? 0, 4, '0', STR_PAD_LEFT) }}<br>
                 <small>{{ $generated_at }}</small>
             </div>
         </td>
@@ -76,9 +76,9 @@
 <!-- TITLE -->
 <div class="doc-title-bar">✦ PROCÈS-VERBAL DE RACHAT ✦</div>
 <div class="doc-subtitle">
-    Décision du Jury de Délibération — Filière : <strong>{{ $filiere?->name ?? 'N/D' }}</strong>
+    Décision du Jury de Délibération — Filière : <strong>{{ $filiere ?? 'N/D' }}</strong>
     &nbsp;|&nbsp; Semestre : <strong>S{{ $semester }}</strong>
-    &nbsp;|&nbsp; Année : <strong>{{ $academic_year?->label ?? date('Y').'/'.((int)date('Y')+1) }}</strong>
+    &nbsp;|&nbsp; Année : <strong>{{ $academic_year ?? date('Y').'/'.((int)date('Y')+1) }}</strong>
 </div>
 
 <hr class="divider">
@@ -88,21 +88,21 @@
 <table class="info-grid">
     <tr>
         <td class="lbl">Nom Complet :</td>
-        <td class="val">{{ strtoupper($student?->last_name ?? '—') }} {{ $student?->first_name ?? '' }}</td>
+        <td class="val">{{ strtoupper($student ?? '—') }} {{ $student ?? '' }}</td>
         <td style="width:10px;"></td>
         <td class="lbl">CNE :</td>
-        <td class="val">{{ $student?->cne ?? '—' }}</td>
+        <td class="val">{{ $student ?? '—' }}</td>
     </tr>
     <tr>
         <td class="lbl">N° Apogée :</td>
-        <td class="val">{{ $student?->apogee_code ?? $student?->student_number ?? '—' }}</td>
+        <td class="val">{{ $student ?? $student ?? '—' }}</td>
         <td></td>
         <td class="lbl">CIN :</td>
-        <td class="val">{{ $student?->cin ?? '—' }}</td>
+        <td class="val">{{ $student ?? '—' }}</td>
     </tr>
     <tr>
         <td class="lbl">Filière :</td>
-        <td class="val">{{ $filiere?->name ?? '—' }}</td>
+        <td class="val">{{ $filiere ?? '—' }}</td>
         <td></td>
         <td class="lbl">Semestre :</td>
         <td class="val">Semestre {{ $semester }} (S{{ $semester }})</td>
@@ -184,7 +184,7 @@
                 <div class="sig-label">Date &amp; Signature / Cachet</div>
             </div>
             <div style="font-size:7.5pt; text-align:center; margin-top:4px; font-weight:700; color:#333;">
-                Directeur des Études<br>Filière : {{ $filiere?->code ?? '—' }}
+                Directeur des Études<br>Filière : {{ $filiere ?? '—' }}
             </div>
         </td>
         <td>
@@ -210,7 +210,7 @@
 
 <!-- FOOTER -->
 <div class="footer">
-    <span>PV-RACH / {{ $filiere?->code ?? '—' }} / S{{ $semester }} / {{ date('Y') }}</span>
+    <span>PV-RACH / {{ $filiere ?? '—' }} / S{{ $semester }} / {{ date('Y') }}</span>
     <span>ENCG Fès — Document Officiel Confidentiel — Réservé au Jury</span>
     <span>{{ $generated_at }}</span>
 </div>

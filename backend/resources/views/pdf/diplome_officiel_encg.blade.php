@@ -244,12 +244,12 @@
             </p>
 
             <div class="recipient-name">
-                {{ strtoupper($student->last_name ?? ($student->user?->last_name ?? '')) }} {{ ucfirst(strtolower($student->first_name ?? ($student->user?->first_name ?? ''))) }}
+                {{ strtoupper($student->last_name ?? ($student->user ?? '')) }} {{ ucfirst(strtolower($student->first_name ?? ($student->user ?? ''))) }}
             </div>
 
             <p style="font-size: 9.5pt; color: #334155;">
                 Né(e) le <strong>{{ !empty($student->birth_date) ? \Carbon\Carbon::parse($student->birth_date)->format('d/m/Y') : '—' }}</strong> à <strong>{{ strtoupper($student->birth_city ?? '—') }}</strong> &nbsp;|&nbsp; 
-                Titulaire de la CNIE N° : <strong>{{ $student->cin ?? $student->user?->cin ?? '—' }}</strong> &nbsp;|&nbsp; 
+                Titulaire de la CNIE N° : <strong>{{ $student->cin ?? $student->user ?? '—' }}</strong> &nbsp;|&nbsp; 
                 Code Massar / CNE : <strong>{{ $student->cne ?? $student->student_number ?? '—' }}</strong>
             </p>
 
@@ -258,7 +258,7 @@
             </p>
 
             <div class="specialite-box">
-                {{ $filiereName ?? ($student->latestPathway?->filiere?->name ?? 'Gestion Financière et Comptable') }}
+                {{ $filiereName ?? ($student->latestPathway?->filiere ?? 'Gestion Financière et Comptable') }}
             </div>
 
             <p style="font-size: 10pt;">

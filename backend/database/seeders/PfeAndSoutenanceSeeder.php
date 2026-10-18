@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\Filiere;
 use App\Models\Professor;
 use App\Models\Room;
 use App\Models\Student;
@@ -19,6 +18,7 @@ class PfeAndSoutenanceSeeder extends Seeder
 
         if ($students->isEmpty() || $professors->isEmpty()) {
             $this->command->warn('No students or professors found. Skipping PFE seeding.');
+
             return;
         }
 
@@ -82,7 +82,9 @@ class PfeAndSoutenanceSeeder extends Seeder
         $sCount = 0;
 
         foreach ($createdProjects as $idx => $p) {
-            if (!$p['soutenanceDate']) continue;
+            if (! $p['soutenanceDate']) {
+                continue;
+            }
 
             $president = $professors[($idx + 1) % $professors->count()];
             $examiner = $professors[($idx + 2) % $professors->count()];
@@ -119,6 +121,6 @@ class PfeAndSoutenanceSeeder extends Seeder
             $sCount++;
         }
 
-        $this->command->info("Seeded " . count($createdProjects) . " final projects and $sCount soutenances successfully.");
+        $this->command->info('Seeded '.count($createdProjects)." final projects and $sCount soutenances successfully.");
     }
 }

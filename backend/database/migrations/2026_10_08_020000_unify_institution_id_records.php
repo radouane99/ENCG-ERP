@@ -58,7 +58,7 @@ return new class extends Migration
                 WHERE column_name = 'institution_id'
                   AND table_schema = 'public'
             ");
-            $tables = array_map(fn($r) => $r->table_name, $results);
+            $tables = array_map(fn ($r) => $r->table_name, $results);
         } elseif ($driver === 'mysql') {
             $results = DB::select("
                 SELECT table_name
@@ -66,7 +66,7 @@ return new class extends Migration
                 WHERE column_name = 'institution_id'
                   AND table_schema = DATABASE()
             ");
-            $tables = array_map(fn($r) => $r->TABLE_NAME ?? $r->table_name, $results);
+            $tables = array_map(fn ($r) => $r->TABLE_NAME ?? $r->table_name, $results);
         } else {
             // Fallback known tables list
             $tables = [

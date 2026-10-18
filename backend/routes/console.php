@@ -9,12 +9,11 @@ Artisan::command('inspire', function () {
 
 Artisan::command('pfe:seed', function () {
     require_once database_path('seeders/PfeAndSoutenanceSeeder.php');
-    $seeder = new \Database\Seeders\PfeAndSoutenanceSeeder();
+    $seeder = new PfeAndSoutenanceSeeder;
     $seeder->setCommand($this);
     $seeder->run();
     $this->info('PFE & Soutenances seeded successfully!');
 })->purpose('Seed PFE Workflow projects and jury defense schedules');
-
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schedule;
@@ -53,6 +52,7 @@ use App\Models\GradeEntryPeriod;
 use App\Models\Institution;
 use App\Models\Student;
 use App\Models\User;
+use Database\Seeders\PfeAndSoutenanceSeeder;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 

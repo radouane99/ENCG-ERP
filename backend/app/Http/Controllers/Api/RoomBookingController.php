@@ -110,7 +110,7 @@ class RoomBookingController extends Controller
             ->get();
 
         $baseUrl = config('app.frontend_url') ?: (config('app.url') ?: 'https://encg-fes.ac.ma');
-        $verifyUrl = rtrim($baseUrl, '/') . '/verify-document/ROOM-' . ($room->code ?: $room->id);
+        $verifyUrl = rtrim($baseUrl, '/').'/verify-document/ROOM-'.($room->code ?: $room->id);
         $qrCodeSvg = null;
         if (class_exists(QrCode::class)) {
             try {

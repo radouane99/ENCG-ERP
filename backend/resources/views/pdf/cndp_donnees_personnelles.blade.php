@@ -217,27 +217,27 @@
         </td>
         <td class="label">Code Massar / CNE :</td>
         <td class="val val-accent">
-            {{ $cne ?? ($student?->cne ?? 'N/A') }}
+            {{ $cne ?? ($student ?? 'N/A') }}
         </td>
     </tr>
     <tr>
         <td class="label">Carte Nationale (CIN) :</td>
         <td class="val val-mono">
-            {{ $cin ?? ($user->cin ?? ($student?->cin ?? 'Non renseigné')) }}
+            {{ $cin ?? ($user->cin ?? ($student ?? 'Non renseigné')) }}
         </td>
         <td class="label">N° Étudiant (Apogée) :</td>
         <td class="val val-mono">
-            {{ $studentNumber ?? ($student?->student_number ?? '20240001') }}
+            {{ $studentNumber ?? ($student ?? '20240001') }}
         </td>
     </tr>
     <tr>
         <td class="label">Date & Lieu Naissance :</td>
         <td class="val">
-            {{ $birthDate ?? '18/04/2004' }} à {{ strtoupper($birthCity ?? ($student?->birth_city ?? 'FÈS')) }}
+            {{ $birthDate ?? '18/04/2004' }} à {{ strtoupper($birthCity ?? ($student ?? 'FÈS')) }}
         </td>
         <td class="label">Nationalité :</td>
         <td class="val" style="font-weight: bold;">
-            {{ $nationality ?? ($student?->nationality ?? 'Marocaine') }}
+            {{ $nationality ?? ($student ?? 'Marocaine') }}
         </td>
     </tr>
 
@@ -281,17 +281,17 @@
         </td>
         <td class="label">Téléphone Contact :</td>
         <td class="val">
-            {{ $user->phone ?? ($student?->emergency_contact_phone ?? '+212 661 123456') }}
+            {{ $user->phone ?? ($student ?? '+212 661 123456') }}
         </td>
     </tr>
     <tr>
         <td class="label">Adresse de Résidence :</td>
         <td class="val">
-            {{ $student?->address ?? 'Route d Imouzzer, Résidence Atlas' }}, {{ $student?->city ?? 'Fès' }}
+            {{ $student ?? 'Route d Imouzzer, Résidence Atlas' }}, {{ $student ?? 'Fès' }}
         </td>
         <td class="label">Contact Tuteur / Urgence :</td>
         <td class="val">
-            {{ $student?->emergency_contact_name ?? 'Hassan El Mansouri' }} ({{ $student?->emergency_contact_phone ?? '+212 661 123456' }})
+            {{ $student ?? 'Hassan El Mansouri' }} ({{ $student ?? '+212 661 123456' }})
         </td>
     </tr>
 </table>

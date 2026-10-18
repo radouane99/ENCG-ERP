@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\DB;
 class AuditScheduleTimetableCommand extends Command
 {
     protected $signature = 'encg:audit-schedule';
+
     protected $description = 'Audit complete de l\'Emploi du Temps (schedules) pour détecter conflits, incohérences prof/module, et anomalies.';
 
     public function handle(): int
@@ -29,6 +30,7 @@ class AuditScheduleTimetableCommand extends Command
 
         if ($totalSchedules === 0) {
             $this->warn('⚠️ Aucun créneau trouvé dans la table schedules !');
+
             return Command::SUCCESS;
         }
 
@@ -80,12 +82,12 @@ class AuditScheduleTimetableCommand extends Command
 
             if ($type === Professor::class || $type === 'App\Models\Professor') {
                 $prof = Professor::find($s->professor_id);
-                if (!$prof) {
+                if (! $prof) {
                     $invalidProfCount++;
                 }
             } elseif ($type === User::class || $type === 'App\Models\User') {
                 $user = User::find($s->professor_id);
-                if (!$user) {
+                if (! $user) {
                     $invalidProfCount++;
                 }
             } else {
@@ -93,7 +95,7 @@ class AuditScheduleTimetableCommand extends Command
             }
         }
 
-        $this->line('Répartition professor_type : ' . json_encode($profTypeBreakdown));
+        $this->line('Répartition professor_type : '.json_encode($profTypeBreakdown));
         if ($invalidProfCount > 0) {
             $this->error("❌ {$invalidProfCount} créneaux avec professeur introuvable !");
             $issuesFound++;
@@ -150,10 +152,10 @@ class AuditScheduleTimetableCommand extends Command
                 $isAssigned = ModuleProfessor::where('module_id', $s->module_id)
                     ->where(function ($q) use ($prof) {
                         $q->where('professor_id', $prof->id)
-                          ->orWhere('professor_id', $prof->user_id);
+                            ->orWhere('professor_id', $prof->user_id);
                     })->exists();
 
-                if (!$isAssigned) {
+                if (! $isAssigned) {
                     $notAssignedInModuleProfessor++;
                     $profName = $prof->user ? "{$prof->user->first_name} {$prof->user->last_name}" : "ID:{$prof->id}";
                     $this->warn("⚠️ Non affecté: {$profName} enseigne '{$s->module->name}' (#{$s->module_id}) mais n'est pas dans module_professor !");
@@ -181,7 +183,9 @@ class AuditScheduleTimetableCommand extends Command
         $count = count($allSchedules);
         for ($i = 0; $i < $count; $i++) {
             $s1 = $allSchedules[$i];
-            if (!$s1->is_active) continue;
+            if (! $s1->is_active) {
+                continue;
+            }
 
             $s1Start = strtotime($s1->start_time);
             $s1End = strtotime($s1->end_time);
@@ -193,16 +197,22 @@ class AuditScheduleTimetableCommand extends Command
 
             for ($j = $i + 1; $j < $count; $j++) {
                 $s2 = $allSchedules[$j];
-                if (!$s2->is_active) continue;
+                if (! $s2->is_active) {
+                    continue;
+                }
 
-                if ($s1->day_of_week !== $s2->day_of_week) continue;
+                if ($s1->day_of_week !== $s2->day_of_week) {
+                    continue;
+                }
 
                 $s2Start = strtotime($s2->start_time);
                 $s2End = strtotime($s2->end_time);
 
                 // Overlap condition
                 $overlaps = ($s1Start < $s2End && $s2Start < $s1End);
-                if (!$overlaps) continue;
+                if (! $overlaps) {
+                    continue;
+                }
 
                 // Professor conflict
                 $sameProf = false;
@@ -257,7 +267,9 @@ class AuditScheduleTimetableCommand extends Command
             $aminaProf = Professor::where('user_id', $aminaUser->id)->first();
             $aminaSchedules = Schedule::with(['module', 'group', 'room'])
                 ->where(function ($q) use ($aminaProf, $aminaUser) {
-                    if ($aminaProf) $q->where('professor_id', $aminaProf->id);
+                    if ($aminaProf) {
+                        $q->where('professor_id', $aminaProf->id);
+                    }
                     $q->orWhere('professor_id', $aminaUser->id);
                 })
                 ->where('is_active', true)
@@ -287,12 +299,14 @@ class AuditScheduleTimetableCommand extends Command
         }
 
         $this->newLine();
-        $this->info("================================================================");
+        $this->info('================================================================');
         if ($issuesFound === 0) {
-            $this->info("🎉 TOUS LES TESTS SONT AU VERT ! 0 ANOMALIE DÉTECTÉE.");
+            $this->info('🎉 TOUS LES TESTS SONT AU VERT ! 0 ANOMALIE DÉTECTÉE.');
+
             return Command::SUCCESS;
         } else {
             $this->error("⚠️ {$issuesFound} ANOMALIES OU CONFLITS DÉTECTÉS !");
+
             return Command::FAILURE;
         }
     }

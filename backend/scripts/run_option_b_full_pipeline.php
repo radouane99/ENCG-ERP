@@ -1,15 +1,19 @@
 <?php
-require __DIR__ . '/../vendor/autoload.php';
-$app = require_once __DIR__ . '/../bootstrap/app.php';
-$kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
+
+require __DIR__.'/../vendor/autoload.php';
+$app = require_once __DIR__.'/../bootstrap/app.php';
+$kernel = $app->make(Kernel::class);
 $kernel->bootstrap();
 
-use App\Models\AcademicYear;
-use App\Models\Schedule;
-use App\Models\ModuleProfessor;
+use App\Http\Controllers\Api\AiTimetableSchedulerController;
 use App\Http\Controllers\Api\ProfessorAssignmentController;
+use App\Models\AcademicYear;
+use App\Models\Filiere;
+use App\Models\ModuleProfessor;
+use App\Models\Schedule;
 use App\Services\Academic\AiTimetableSchedulerService;
 use App\Services\Academic\OfficialTimetableMatrixService;
+use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Http\Request;
 
 echo "=========================================================\n";
@@ -23,8 +27,8 @@ $distributeRequest = Request::create('/api/professors/assignments/auto-distribut
 $distributeResponse = $assignmentController->autoDistribute($distributeRequest);
 $distributeData = json_decode($distributeResponse->getContent(), true);
 
-echo "Status: " . ($distributeData['success'] ? 'SUCCESS' : 'FAILED') . "\n";
-echo "Message: " . ($distributeData['message'] ?? 'N/A') . "\n";
+echo 'Status: '.($distributeData['success'] ? 'SUCCESS' : 'FAILED')."\n";
+echo 'Message: '.($distributeData['message'] ?? 'N/A')."\n";
 
 echo "\n--- Sample Module Assignments (CM) ---\n";
 $currYear = AcademicYear::where('is_current', true)->first();
@@ -37,7 +41,7 @@ $assignments = ModuleProfessor::with(['module.filiere', 'group', 'professor.user
 foreach ($assignments as $mId => $rows) {
     $mod = $rows->first()->module;
     $prof = $rows->first()->professor?->user?->name ?? 'N/A';
-    $grps = $rows->map(fn($r) => $r->group?->name ?? 'ALL')->unique()->implode(', ');
+    $grps = $rows->map(fn ($r) => $r->group?->name ?? 'ALL')->unique()->implode(', ');
     echo "- Module {$mod?->code} ({$mod?->name}) => Prof: {$prof} | Groups: [{$grps}]\n";
 }
 
@@ -52,11 +56,11 @@ $genResult = $scheduler->generateSchedule($currYear->id, 'odd', [
     'ignore_existing' => true,
 ]);
 
-echo "Total Scheduled Sessions: " . $genResult['total_scheduled_sessions'] . "\n";
-echo "Optimization Score: " . $genResult['optimization_score'] . "%\n";
-echo "Conflicts Count: " . $genResult['conflicts_count'] . "\n";
-if (!empty($genResult['conflicts_details'])) {
-    echo "Conflicts: " . json_encode($genResult['conflicts_details'], JSON_PRETTY_PRINT) . "\n";
+echo 'Total Scheduled Sessions: '.$genResult['total_scheduled_sessions']."\n";
+echo 'Optimization Score: '.$genResult['optimization_score']."%\n";
+echo 'Conflicts Count: '.$genResult['conflicts_count']."\n";
+if (! empty($genResult['conflicts_details'])) {
+    echo 'Conflicts: '.json_encode($genResult['conflicts_details'], JSON_PRETTY_PRINT)."\n";
 }
 
 echo "\n=========================================================\n";
@@ -69,23 +73,23 @@ $applyRequest = Request::create('/api/timetable/ai-scheduler/apply', 'POST', [
     'overwrite_existing' => true,
 ]);
 
-$applyController = app(App\Http\Controllers\Api\AiTimetableSchedulerController::class);
+$applyController = app(AiTimetableSchedulerController::class);
 $applyResponse = $applyController->apply($applyRequest);
 $applyData = json_decode($applyResponse->getContent(), true);
 
-echo "Apply Status: " . ($applyData['success'] ? 'SUCCESS' : 'FAILED') . "\n";
-echo "Message: " . ($applyData['message'] ?? 'N/A') . "\n";
+echo 'Apply Status: '.($applyData['success'] ? 'SUCCESS' : 'FAILED')."\n";
+echo 'Message: '.($applyData['message'] ?? 'N/A')."\n";
 
 echo "\n=========================================================\n";
 echo "4. SCANNING DATABASE FOR CONFLICTS (HEALTH CHECK)\n";
 echo "=========================================================\n";
 
 $scan = $scheduler->scanConflicts($currYear->id);
-echo "Database Conflict Status: " . $scan['status'] . "\n";
-echo "Total Scanned: " . $scan['total_scanned'] . "\n";
-echo "Conflicts Found: " . $scan['conflicts_count'] . "\n";
-if (!empty($scan['conflicts'])) {
-    echo "Conflicts: " . json_encode($scan['conflicts'], JSON_PRETTY_PRINT) . "\n";
+echo 'Database Conflict Status: '.$scan['status']."\n";
+echo 'Total Scanned: '.$scan['total_scanned']."\n";
+echo 'Conflicts Found: '.$scan['conflicts_count']."\n";
+if (! empty($scan['conflicts'])) {
+    echo 'Conflicts: '.json_encode($scan['conflicts'], JSON_PRETTY_PRINT)."\n";
 }
 
 echo "\n=========================================================\n";
@@ -93,14 +97,14 @@ echo "5. INSPECTING OFFICIAL TIMETABLE MATRIX PER FILIÈRE\n";
 echo "=========================================================\n";
 
 $matrixService = app(OfficialTimetableMatrixService::class);
-$filieres = App\Models\Filiere::whereIn('code', ['GFC', 'TC', 'MCM'])->get();
+$filieres = Filiere::whereIn('code', ['GFC', 'TC', 'MCM'])->get();
 
 foreach ($filieres as $filiere) {
     echo "\n>>> FILIERE: {$filiere->code} ({$filiere->name}) <<<\n";
     $filiereSchedules = Schedule::with(['module.filiere', 'group.filiere', 'professor.user', 'room'])
         ->where('academic_year_id', $currYear->id)
         ->where('is_active', true)
-        ->whereHas('module', fn($q) => $q->where('filiere_id', $filiere->id))
+        ->whereHas('module', fn ($q) => $q->where('filiere_id', $filiere->id))
         ->get();
 
     $matrix = $matrixService->fromSchedules($filiereSchedules, [
@@ -108,12 +112,12 @@ foreach ($filieres as $filiere) {
         'academic_year' => $currYear,
     ]);
 
-    echo "Title: {$matrix['title']} | Rows Count: " . count($matrix['rows']) . "\n";
+    echo "Title: {$matrix['title']} | Rows Count: ".count($matrix['rows'])."\n";
     foreach ($matrix['rows'] as $r) {
         $slotsStr = [];
         foreach ($r['days'] as $dayNum => $daySlots) {
-            if (!empty($daySlots)) {
-                $slotsStr[] = "J{$dayNum}: [" . implode(', ', $daySlots) . "]";
+            if (! empty($daySlots)) {
+                $slotsStr[] = "J{$dayNum}: [".implode(', ', $daySlots).']';
             }
         }
         $slotsDisplay = implode(' | ', $slotsStr);

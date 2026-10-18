@@ -35,7 +35,7 @@ function frenchToIso(frenchDate: string): string | null {
   if (!frenchDate) return null
   const cleaned = frenchDate.trim()
   // Match dd/mm/yyyy or dd-mm-yyyy or dd.mm.yyyy
-  const match = cleaned.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})$/)
+  const match = cleaned.match(/^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{4})$/)
   if (!match) return null
 
   const day = parseInt(match[1], 10)
