@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { UserPlus, Scale, Search, AlertTriangle, CheckCircle2, Clock, XCircle, ChevronRight, Zap, FileText, Printer, Eye, X, Filter, Sparkles, Check, RefreshCw, FolderOpen, QrCode, Camera, Archive, Download, Upload } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { UserPlus, Scale, Search, AlertTriangle, CheckCircle2, Clock, XCircle, ChevronRight, Zap, FileText, Printer, Eye, X, Filter, Sparkles, Check, RefreshCw, FolderOpen, QrCode, Camera, Archive, Download, Upload, Loader2 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import api from '@shared/lib/api';
 import { openAuthenticatedUrl } from '@shared/lib/documentAccess';
@@ -47,7 +47,7 @@ export default function EnrollmentManager() {
     try {
       setLoading(true);
       const [stRes, appRes, fRes] = await Promise.all([
-        api.get('/admin/students', { params: { per_page: 100 } }).catch(() => ({ data: { data: [] } })),
+        api.get('/admin/students', { params: { per_page: 500 } }).catch(() => ({ data: { data: [] } })),
         api.get('/admin/admissions/applications').catch(() => ({ data: { data: [] } })),
         api.get('/filieres').catch(() => ({ data: { data: [] } }))
       ]);
@@ -67,8 +67,12 @@ export default function EnrollmentManager() {
           normalizedStatus = 'pending';
         }
 
+        const matchedStudent = activeStudents.find(
+          (st) => st.cne && app.cne && st.cne.trim().toUpperCase() === app.cne.trim().toUpperCase()
+        );
+
         return {
-          id: app.id,
+          id: matchedStudent ? matchedStudent.id : app.id,
           first_name: app.first_name || '',
           last_name: app.last_name || '',
           first_name_ar: app.first_name_ar || app.arabic_first_name || '',
@@ -228,6 +232,9 @@ export default function EnrollmentManager() {
     }
   };
 
+  const [importingTafem, setImportingTafem] = useState(false);
+  const tafemInputRef = useRef<HTMLInputElement>(null);
+
   const handleDownloadTafemTemplate = async () => {
     toast.loading('Génération du modèle CSV officiel Ministère TAFEM...');
     try {
@@ -244,6 +251,27 @@ export default function EnrollmentManager() {
     } catch (err) {
       toast.dismiss();
       toast.error('Erreur lors du téléchargement du modèle CSV TAFEM.');
+    }
+  };
+
+  const handleImportTafemCsv = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    setImportingTafem(true);
+    const toastId = toast.loading(`Import de la liste TAFEM depuis "${file.name}"...`);
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      const res = await api.post('/admissions/import-ministry-tafem-csv', form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      toast.success(res.data.message || 'Import TAFEM effectué avec succès !', { id: toastId });
+      fetchData();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Erreur lors de l’import du fichier TAFEM.', { id: toastId });
+    } finally {
+      setImportingTafem(false);
+      if (tafemInputRef.current) tafemInputRef.current.value = '';
     }
   };
 
@@ -285,55 +313,112 @@ export default function EnrollmentManager() {
   return (
     <div className="space-y-6 sm:space-y-8 max-w-7xl mx-auto pb-24 px-3 sm:px-6 py-4 sm:py-6 font-sans">
       {/* Hero Header Section */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] p-6 sm:p-8 md:p-10 rounded-3xl sm:rounded-[2.5rem] shadow-2xl text-white border border-blue-800/40">
-        <div className="absolute top-0 right-0 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
+      <div className="relative overflow-hidden bg-gradient-to-br from-[#0a193c] via-[#112a66] to-[#06122c] p-6 sm:p-8 rounded-3xl sm:rounded-[2.5rem] shadow-2xl text-white border border-blue-500/25">
+        {/* Subtle Ambient Lighting */}
+        <div className="absolute -top-24 -right-24 w-96 h-96 bg-blue-500/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-24 -left-24 w-80 h-80 bg-indigo-500/15 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="relative z-10 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-6">
-          <div className="flex items-start sm:items-center gap-4 sm:gap-6">
-            <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-2xl sm:rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-amber-300 shadow-2xl shrink-0">
-              <UserPlus className="w-7 h-7 sm:w-10 sm:h-10 text-amber-400" />
+        {/* Hidden File Input for TAFEM Import */}
+        <input 
+          ref={tafemInputRef} 
+          type="file" 
+          accept=".csv" 
+          onChange={(e) => handleImportTafemCsv(e.target.files)} 
+          className="hidden" 
+        />
+
+        {/* Top Tier: Title & Identity + Primary Guichet & Refresh */}
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-white/10">
+          <div className="flex items-start sm:items-center gap-4 sm:gap-5">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-amber-400/20 to-amber-600/10 backdrop-blur-xl border border-amber-400/30 flex items-center justify-center text-amber-300 shadow-inner shrink-0">
+              <UserPlus className="w-7 h-7 sm:w-8 sm:h-8 text-amber-400" />
             </div>
             <div>
-              <div className="inline-flex items-center gap-2 bg-blue-400/20 text-blue-200 px-3 py-0.5 sm:px-4 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-widest mb-2 border border-blue-400/30">
-                <Zap className="w-3.5 h-3.5 text-amber-400" /> Validation & Dispatching ENCG
+              <div className="inline-flex items-center gap-2 bg-blue-400/15 text-blue-200 px-3 py-0.5 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-widest border border-blue-400/30 mb-1">
+                <Zap className="w-3 h-3 text-amber-400" /> Validation & Dispatching ENCG • S1
               </div>
-              <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight">
+              <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
                 Inscriptions & Réinscriptions
               </h1>
-              <p className="text-blue-100/90 text-xs sm:text-sm max-w-2xl font-medium mt-1 leading-relaxed">
-                Validez les dossiers de candidature, effectuez le dispatching automatique dans les groupes S1 et générez les attestations d'inscription officielles.
+              <p className="text-blue-100/80 text-xs sm:text-sm font-medium max-w-xl mt-0.5 leading-relaxed">
+                Validation des dossiers numériques, dispatching automatique S1 et contrôle guichet.
               </p>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2.5 w-full xl:w-auto shrink-0">
+          {/* Primary Action Group */}
+          <div className="flex items-center gap-3 shrink-0 self-start lg:self-center">
             <button 
               onClick={() => setIsScannerOpen(true)} 
-              className="flex items-center justify-center gap-2 px-4 py-2.5 sm:px-5 sm:py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl sm:rounded-2xl font-black border border-emerald-400 shadow-lg hover:scale-[1.02] active:scale-95 transition-all text-xs uppercase tracking-wider cursor-pointer"
+              className="group flex items-center gap-2.5 px-5 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white rounded-2xl font-black text-xs uppercase tracking-wider shadow-lg shadow-emerald-950/40 border border-emerald-400/30 hover:scale-[1.02] active:scale-98 transition-all cursor-pointer"
             >
-              <Camera className="w-4 h-4 text-emerald-100" /> Mode Guichet
-            </button>
-
-            <button 
-              onClick={handleExportZipBundle} 
-              disabled={isExportingZip}
-              className="flex items-center justify-center gap-2 px-4 py-2.5 sm:px-5 sm:py-3 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl sm:rounded-2xl font-black border border-amber-400 shadow-lg hover:scale-[1.02] active:scale-95 transition-all text-xs uppercase tracking-wider cursor-pointer disabled:opacity-50"
-            >
-              <Archive className="w-4 h-4 text-slate-950" /> Bundle ZIP
+              <Camera className="w-4 h-4 text-emerald-100 group-hover:scale-110 transition-transform" />
+              <span>Mode Guichet (QR)</span>
             </button>
 
             <button 
               onClick={fetchData} 
-              className="flex items-center justify-center gap-2 px-4 py-2.5 sm:px-5 sm:py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl sm:rounded-2xl font-bold border border-white/20 transition-all text-xs uppercase tracking-wider cursor-pointer"
+              title="Actualiser les données"
+              className="w-11 h-11 flex items-center justify-center rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 text-white transition-all cursor-pointer hover:rotate-180 duration-500 shrink-0"
             >
-              <RefreshCw className="w-4 h-4 text-amber-300" /> Actualiser
+              <RefreshCw className="w-4 h-4 text-amber-300" />
+            </button>
+          </div>
+        </div>
+
+        {/* Bottom Tier: Structured Modular Toolbar */}
+        <div className="relative z-10 pt-4 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
+          {/* TAFEM Ministry Flow */}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[10px] font-black tracking-widest uppercase text-blue-300/70 mr-1 flex items-center gap-1.5">
+              <Sparkles className="w-3 h-3 text-amber-400" /> Flux TAFEM :
+            </span>
+
+            <button 
+              onClick={handleDownloadTafemTemplate}
+              className="flex items-center gap-1.5 px-3.5 py-2 bg-white/10 hover:bg-white/15 text-blue-100 hover:text-white rounded-xl font-bold border border-white/15 backdrop-blur-md transition-all cursor-pointer hover:border-blue-400/40"
+              title="Télécharger le modèle CSV officiel Ministère pour importer les admis"
+            >
+              <FileText className="w-3.5 h-3.5 text-blue-300" />
+              <span>Modèle CSV</span>
+            </button>
+
+            <button 
+              onClick={() => tafemInputRef.current?.click()}
+              disabled={importingTafem}
+              className="flex items-center gap-1.5 px-3.5 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-100 hover:text-white rounded-xl font-bold border border-blue-400/30 backdrop-blur-md transition-all cursor-pointer disabled:opacity-50 hover:border-blue-300/60"
+              title="Importer la liste CSV officielle des admis du Ministère"
+            >
+              {importingTafem ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-300" />
+              ) : (
+                <Upload className="w-3.5 h-3.5 text-blue-300" />
+              )}
+              <span>Importer Admis TAFEM</span>
+            </button>
+          </div>
+
+          {/* Institutional Exports */}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[10px] font-black tracking-widest uppercase text-blue-300/70 mr-1">
+              Exports :
+            </span>
+
+            <button 
+              onClick={handleExportZipBundle} 
+              disabled={isExportingZip}
+              className="flex items-center gap-1.5 px-3.5 py-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 hover:text-amber-100 rounded-xl font-bold border border-amber-400/30 backdrop-blur-md transition-all cursor-pointer disabled:opacity-50"
+            >
+              <Archive className="w-3.5 h-3.5 text-amber-400" />
+              <span>Bundle ZIP Attestations</span>
             </button>
 
             <button
               onClick={handleExportUsmbaCSV}
-              className="flex items-center justify-center gap-2 px-4 py-2.5 sm:px-5 sm:py-3 bg-gradient-to-r from-violet-600 to-purple-700 hover:from-violet-700 hover:to-purple-800 text-white rounded-xl sm:rounded-2xl font-black border border-violet-500/50 shadow-lg hover:scale-[1.02] active:scale-95 transition-all text-xs uppercase tracking-wider cursor-pointer"
+              className="flex items-center gap-1.5 px-3.5 py-2 bg-purple-500/20 hover:bg-purple-500/30 text-purple-200 hover:text-purple-100 rounded-xl font-bold border border-purple-400/30 backdrop-blur-md transition-all cursor-pointer"
             >
-              <Download className="w-4 h-4 text-violet-200" /> Export USMBA
+              <Download className="w-3.5 h-3.5 text-purple-300" />
+              <span>Comptes USMBA (CSV)</span>
             </button>
           </div>
         </div>
@@ -475,6 +560,19 @@ export default function EnrollmentManager() {
         {/* Quick actions row */}
         <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center gap-2">
           <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-1">Actions Rapides :</span>
+          <button
+            onClick={handleDownloadTafemTemplate}
+            className="px-3 py-1.5 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 rounded-xl text-[10px] font-black uppercase tracking-wider cursor-pointer hover:bg-blue-100 transition-all flex items-center gap-1.5"
+          >
+            <FileText className="w-3.5 h-3.5" /> Modèle CSV TAFEM
+          </button>
+          <button
+            onClick={() => tafemInputRef.current?.click()}
+            disabled={importingTafem}
+            className="px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 rounded-xl text-[10px] font-black uppercase tracking-wider cursor-pointer hover:bg-emerald-100 transition-all flex items-center gap-1.5 disabled:opacity-50"
+          >
+            {importingTafem ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />} Importer TAFEM
+          </button>
           <button
             onClick={handleExportUsmbaCSV}
             className="px-3 py-1.5 bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800 rounded-xl text-[10px] font-black uppercase tracking-wider cursor-pointer hover:bg-violet-100 transition-all flex items-center gap-1.5"

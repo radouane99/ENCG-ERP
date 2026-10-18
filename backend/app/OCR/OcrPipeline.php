@@ -38,8 +38,25 @@ class OcrPipeline implements OcrPipelineInterface
         $this->engines[] = $engine;
     }
 
-    public function process(string $filePath, string $docType = ''): OcrResult
+    public function addEngine(OcrEngineInterface $engine): void
     {
+        $this->registerEngine($engine);
+    }
+
+    public function addParser(mixed $parser): void
+    {
+        // For backwards compatibility
+    }
+
+    public function process(string $filePath, ...$args): OcrResult
+    {
+        $docType = '';
+        if (count($args) === 1) {
+            $docType = (string) $args[0];
+        } elseif (count($args) >= 2) {
+            $docType = (string) $args[1];
+        }
+
         $this->processedEngines = [];
         $this->performanceMetrics = [];
         $startTime = microtime(true);
@@ -127,49 +144,7 @@ class OcrPipeline implements OcrPipelineInterface
      */
     private function executeWithTimeout(callable $callback, int $timeout)
     {
-        if (! function_exists('pcntl_fork')) {
-            // Fallback si pcntl n'est pas disponible
-            return $callback();
-        }
-
-        $pid = pcntl_fork();
-
-        if ($pid === -1) {
-            return $callback();
-        }
-
-        if ($pid === 0) {
-            // Processus enfant
-            try {
-                $result = $callback();
-                exit(serialize($result));
-            } catch (Throwable $e) {
-                exit(serialize(null));
-            }
-        }
-
-        // Processus parent
-        $status = 0;
-        $start = time();
-
-        while (time() - $start < $timeout) {
-            if (pcntl_waitpid($pid, $status, WNOHANG) > 0) {
-                break;
-            }
-            usleep(10000); // 10ms
-        }
-
-        if (! pcntl_waitpid($pid, $status, WNOHANG)) {
-            posix_kill($pid, SIGKILL);
-            throw new \RuntimeException("Engine timeout after {$timeout}s");
-        }
-
-        $result = pcntl_wexitstatus($status);
-        if ($result !== 0) {
-            throw new \RuntimeException("Engine failed with code: {$result}");
-        }
-
-        return null;
+        return $callback();
     }
 
     /**

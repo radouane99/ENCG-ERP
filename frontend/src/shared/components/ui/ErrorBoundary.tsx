@@ -39,6 +39,22 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
     this.setState({ errorInfo });
 
+    // Auto-recover from stale chunks or dynamic import failures during dev/deployment
+    const isChunkLoadFailed =
+      error?.message?.includes('Failed to fetch dynamically imported module') ||
+      error?.message?.includes('Importing a module script failed');
+
+    if (isChunkLoadFailed) {
+      const storageKey = 'vite_chunk_reload_' + window.location.pathname;
+      const lastReload = sessionStorage.getItem(storageKey);
+      const now = Date.now();
+      if (!lastReload || now - parseInt(lastReload, 10) > 10000) {
+        sessionStorage.setItem(storageKey, String(now));
+        window.location.reload();
+        return;
+      }
+    }
+
     // Log to console in development
     if (import.meta.env.DEV) {
       console.group('[ErrorBoundary] Caught runtime error');
@@ -57,6 +73,10 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   };
 
   private handleRetry = (): void => {
+    if (this.state.error?.message?.includes('Failed to fetch dynamically imported module')) {
+      window.location.reload();
+      return;
+    }
     this.setState({ hasError: false, error: null, errorInfo: null });
   };
 

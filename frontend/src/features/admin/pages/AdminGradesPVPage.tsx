@@ -50,59 +50,6 @@ export default function AdminGradesPVPage() {
   const [signatureDataUrl, setSignatureDataUrl] = useState<string>('')
   const [isSigning, setIsSigning] = useState(false)
 
-  const handleConfirmSignature = async () => {
-    if (!signatureDataUrl) {
-      toast.error("Veuillez d'abord dessiner votre signature tactile.")
-      return
-    }
-
-    if (activeJurySigningId) {
-      setIsSigning(true)
-      try {
-        await api.post('/academic/deliberations/sign-jury', {
-          jury_id: activeJurySigningId,
-          signature_data: signatureDataUrl
-        })
-        toast.success("✒️ Signature tactile apposée et scellée sur le PV de Délibération !")
-        setShowSignatureModal(false)
-        setActiveJurySigningId(null)
-        queryClient.invalidateQueries({ queryKey: ['jury-status'] })
-        queryClient.invalidateQueries({ queryKey: ['semester-pv'] })
-        queryClient.invalidateQueries({ queryKey: ['annual-compensation'] })
-      } catch (err: any) {
-        toast.error(err.response?.data?.message || "Erreur lors de la signature du jury.")
-      } finally {
-        setIsSigning(false)
-      }
-      return
-    }
-
-    const targetModuleId = moduleId || pvData?.module?.id
-    if (!targetModuleId) {
-      toast.error("Veuillez sélectionner un module spécifique ou un membre du jury à signer.")
-      return
-    }
-
-    setIsSigning(true)
-    try {
-      const res = await api.post(`/modules/${targetModuleId}/sign-pv`, {
-        group_id: groupId || searchParams.get('group_id') || null,
-        session: session || 'normale',
-        signature_data: signatureDataUrl
-      })
-
-      toast.success("✒️ Signature tactile apposée, horodatée et scellée sur le Procès-Verbal Officiel !")
-      setShowSignatureModal(false)
-      await refetchPV()
-      queryClient.invalidateQueries({ queryKey: ['module-pv'] })
-      queryClient.invalidateQueries({ queryKey: ['grades'] })
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Erreur lors de la signature du Procès-Verbal.")
-    } finally {
-      setIsSigning(false)
-    }
-  }
-
   const [rachatReason, setRachatReason] = useState('Rachat accordé par le Jury de Délibération')
 
   // Helper : Télécharge un PDF via l'API client (avec token JWT) pour éviter l'erreur Unauthenticated
@@ -273,6 +220,59 @@ export default function AdminGradesPVPage() {
     }).then(res => res.data),
     enabled: !!moduleId,
   })
+
+  const handleConfirmSignature = async () => {
+    if (!signatureDataUrl) {
+      toast.error("Veuillez d'abord dessiner votre signature tactile.")
+      return
+    }
+
+    if (activeJurySigningId) {
+      setIsSigning(true)
+      try {
+        await api.post('/academic/deliberations/sign-jury', {
+          jury_id: activeJurySigningId,
+          signature_data: signatureDataUrl
+        })
+        toast.success("✒️ Signature tactile apposée et scellée sur le PV de Délibération !")
+        setShowSignatureModal(false)
+        setActiveJurySigningId(null)
+        queryClient.invalidateQueries({ queryKey: ['jury-status'] })
+        queryClient.invalidateQueries({ queryKey: ['semester-pv'] })
+        queryClient.invalidateQueries({ queryKey: ['annual-compensation'] })
+      } catch (err: any) {
+        toast.error(err.response?.data?.message || "Erreur lors de la signature du jury.")
+      } finally {
+        setIsSigning(false)
+      }
+      return
+    }
+
+    const targetModuleId = moduleId || pvData?.module?.id
+    if (!targetModuleId) {
+      toast.error("Veuillez sélectionner un module spécifique ou un membre du jury à signer.")
+      return
+    }
+
+    setIsSigning(true)
+    try {
+      const res = await api.post(`/modules/${targetModuleId}/sign-pv`, {
+        group_id: groupId || searchParams.get('group_id') || null,
+        session: session || 'normale',
+        signature_data: signatureDataUrl
+      })
+
+      toast.success("✒️ Signature tactile apposée, horodatée et scellée sur le Procès-Verbal Officiel !")
+      setShowSignatureModal(false)
+      await refetchPV()
+      queryClient.invalidateQueries({ queryKey: ['module-pv'] })
+      queryClient.invalidateQueries({ queryKey: ['grades'] })
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Erreur lors de la signature du Procès-Verbal.")
+    } finally {
+      setIsSigning(false)
+    }
+  }
 
   const fetchAnnualCompensation = async () => {
     const targetFiliereId = selectedFiliere || pvData?.module?.filiere_id || filieres[0]?.id || 1
@@ -687,10 +687,25 @@ export default function AdminGradesPVPage() {
         },
         responseType: 'blob'
       })
+      let filename = `PV_Deliberation_Module_${moduleId}.pdf`
+      const disposition = response.headers?.['content-disposition']
+      if (disposition && disposition.includes('filename=')) {
+        const match = disposition.match(/filename="?([^";]+)"?/)
+        if (match && match[1]) {
+          filename = match[1]
+        }
+      } else {
+        const rawName = pvData?.module?.name || modules.find((m: any) => String(m.id) === String(moduleId))?.name
+        if (rawName) {
+          const cleanName = rawName.replace(/[\s/\\?%*:|"<>]+/g, '_').replace(/^_+|_+$/g, '')
+          filename = `PV_Deliberation_Module_${cleanName}.pdf`
+        }
+      }
+
       const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }))
       const link = document.createElement('a')
       link.href = url
-      link.setAttribute('download', `PV_Deliberation_Module_${moduleId}.pdf`)
+      link.setAttribute('download', filename)
       document.body.appendChild(link)
       link.click()
       link.remove()

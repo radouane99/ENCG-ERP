@@ -145,16 +145,22 @@ class TafemMinistryImportController extends Controller
                     ]
                 );
 
+                if (! $user->wasRecentlyCreated) {
+                    $user->update([
+                        'name' => $firstName.' '.$lastName,
+                        'first_name' => $firstName,
+                        'last_name' => $lastName,
+                        'cin' => $cin ?: $user->cin,
+                    ]);
+                }
+
                 $student = Student::updateOrCreate(
                     ['cne' => $cne],
                     [
                         'institution_id' => $institutionId,
                         'user_id' => $user->id,
-                        'student_number' => $cne,
-                        'first_name' => $firstName,
-                        'last_name' => $lastName,
+                        'student_number' => 'En attente',
                         'cin' => $cin,
-                        'massar_code' => $data['code_massar'] ?? $data['massar'] ?? $cne,
                         'gender' => $data['gender'] ?? 'M',
                         'birth_date' => '2006-01-01',
                         'nationality' => 'Marocaine',

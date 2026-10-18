@@ -178,18 +178,65 @@ class GeminiApiService
         };
 
         // ==========================================
-        // 100% LOCAL FREE OCR & PDF PARSER (Poppler + Tesseract)
+        // 100% LOCAL FREE OCR & PDF PARSER (Poppler + Tesseract) + GROQ AI ENHANCEMENT
         // ==========================================
         try {
             Log::info("OCR Local Service: Triggering Local OCR & PDF Parser for {$docType}...");
-            // Use Laravel container to properly resolve all injected dependencies
             $localOcr = app(LocalOcrService::class);
             $localData = $localOcr->extractDocumentOcr($filePath, $mimeType, $originalName, $docType);
 
-            Log::info('[GeminiApiService] Local OCR Execution Completed Successfully', $localData);
-            $this->lastError = null;
+            $extractedRawText = trim((string) ($localData['raw_text'] ?? ''));
 
-            return $localData;
+            if (! empty($extractedRawText) && strlen($extractedRawText) > 20) {
+                // Tier A: Groq LLM extraction on Tesseract/Poppler text (high accuracy for Arabic & French)
+                if (! empty($this->groqApiKey)) {
+                    Log::info("OCR AI Parsing: Sending Local OCR Text to Groq LLM for {$docType}...");
+                    $groqModels = ['openai/gpt-oss-120b', 'qwen/qwen3.8-27b', 'openai/gpt-oss-20b'];
+
+                    foreach ($groqModels as $gModel) {
+                        try {
+                            $gRes = Http::withoutVerifying()->timeout(15)->withHeaders([
+                                'Authorization' => 'Bearer '.$this->groqApiKey,
+                                'Content-Type' => 'application/json',
+                            ])->post('https://api.groq.com/openai/v1/chat/completions', [
+                                'model' => $gModel,
+                                'messages' => [
+                                    [
+                                        'role' => 'system',
+                                        'content' => $promptText.' Output ONLY valid raw JSON with keys: cin, cne, first_name_fr, last_name_fr, first_name_ar, last_name_ar, birth_date, birth_city_fr, birth_city_ar, father_name_fr, father_name_ar, mother_name_fr, mother_name_ar, address_fr, address_ar, bac_average, bac_mention, bac_type, high_school, academy.',
+                                    ],
+                                    [
+                                        'role' => 'user',
+                                        'content' => $extractedRawText,
+                                    ],
+                                ],
+                                'temperature' => 0.1,
+                                'response_format' => ['type' => 'json_object'],
+                            ]);
+
+                            if ($gRes->successful()) {
+                                $decoded = $this->parseJsonResponse($gRes->json('choices.0.message.content'));
+                                if (! empty($decoded) && is_array($decoded)) {
+                                    Log::info("OCR AI Parsing Success via Groq ({$gModel}) for {$docType}!", $decoded);
+                                    $this->lastError = null;
+
+                                    return $this->cleanAndNormalizeOcrData($decoded, $extractedRawText);
+                                }
+                            }
+                        } catch (\Throwable $ex) {
+                            Log::warning("Groq AI parsing model {$gModel} failed: ".$ex->getMessage());
+                        }
+                    }
+                }
+
+                // Tier B: Fallback to local regex parsed fields if present
+                $fields = $localData['fields'] ?? [];
+                if (! empty($fields) && count(array_filter($fields, fn ($v) => ! empty($v) && ! is_array($v))) > 2) {
+                    $this->lastError = null;
+
+                    return $this->cleanAndNormalizeOcrData($fields, $extractedRawText);
+                }
+            }
         } catch (\Throwable $e) {
             Log::error('[GeminiApiService] Local OCR error: '.$e->getMessage());
         }
@@ -630,10 +677,17 @@ class GeminiApiService
         return $imageBlobs[0];
     }
 
-    public function cleanAndNormalizeOcrData(array $data): array
+    public function cleanAndNormalizeOcrData(array $data, string $rawText = ''): array
     {
         $cneRaw = strtoupper(trim((string) ($data['cne'] ?? '')));
         $cinRaw = strtoupper(trim((string) ($data['cin'] ?? '')));
+
+        if (preg_match('/([A-Z]{1,2}\d{5,7})/i', $cinRaw, $mCin1)) {
+            $cinRaw = strtoupper($mCin1[1]);
+        }
+        if (preg_match('/([A-Z]\d{8,9}|\d{10})/i', $cneRaw, $mCne1)) {
+            $cneRaw = strtoupper($mCne1[1]);
+        }
 
         $isCinPattern = fn ($val) => preg_match('/^[A-Z]{1,2}\d{5,7}$/', trim($val));
         $isCnePattern = fn ($val) => preg_match('/^([A-Z]\d{8,9}|\d{10})$/', trim($val));
@@ -655,6 +709,32 @@ class GeminiApiService
             } elseif ($isCinPattern($cneRaw) && empty($finalCin)) {
                 $finalCin = $cneRaw;
             }
+        }
+
+        // If CIN is still empty, search raw text and MRZ lines (e.g. IDMAR...<9CD684035)
+        if (empty($finalCin) && ! empty($rawText)) {
+            if (preg_match('/IDMAR[A-Z0-9<]*?([A-Z]{1,2}\d{5,7})/i', $rawText, $mMrz)) {
+                $finalCin = strtoupper($mMrz[1]);
+            } elseif (preg_match_all('/([A-Z]{1,2}\d{5,7})/i', $rawText, $mAllCins)) {
+                foreach ($mAllCins[1] as $cand) {
+                    $cand = strtoupper($cand);
+                    if ($cand !== $finalCne) {
+                        $finalCin = $cand;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // If CNE is still empty, search raw text
+        if (empty($finalCne) && ! empty($rawText)) {
+            if (preg_match('/([A-Z]\d{8,9}|\d{10})/i', $rawText, $mFindCne)) {
+                $finalCne = strtoupper($mFindCne[1]);
+            }
+        }
+
+        if (! empty($finalCin) && ! empty($finalCne) && str_starts_with($finalCne, $finalCin)) {
+            $finalCin = '';
         }
 
         $data['cin'] = $finalCin;

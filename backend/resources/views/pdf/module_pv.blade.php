@@ -144,45 +144,41 @@
 <body>
     @include('pdf.encg-header')
 
-    <!-- Header Table -->
+    <!-- Meta & Session Info Table (Single Header, No duplicate logo) -->
     <table class="header-table">
         <tr>
-            <td style="width: 40%;">
-                <table style="width: 100%;">
-                    <tr>
-                        @if(!empty($logoBase64))
-                            <td style="width: 55px; vertical-align: top;">
-                                <img src="{{ $logoBase64 }}" style="height: 48px;" alt="Logo ENCG">
-                            </td>
-                        @endif
-                        <td style="vertical-align: top;">
-                            <div class="institution-title">
-                                ROYAUME DU MAROC<br>
-                                Université Sidi Mohamed Ben Abdellah de Fès<br>
-                                École Nationale de Commerce et de Gestion
-                            </div>
-                        </td>
-                    </tr>
-                </table>
+            <td style="width: 38%; vertical-align: middle;">
+                <div style="font-size: 9px; color: #1e293b; line-height: 1.5;">
+                    <span style="color: #64748b; font-weight: bold; text-transform: uppercase; font-size: 8px;">Année Universitaire :</span> <strong>{{ $academicYear ?? '2026/2027' }}</strong><br>
+                    <span style="color: #64748b; font-weight: bold; text-transform: uppercase; font-size: 8px;">Filière / Semestre :</span> <strong>{{ $module->filiere->name ?? 'ENCG' }} ({{ $semester ?? 'S'.($module->semester_number ?? 1) }})</strong><br>
+                    <span style="color: #64748b; font-weight: bold; text-transform: uppercase; font-size: 8px;">Périmètre :</span> <strong>{{ $perimetre }}</strong>
+                </div>
             </td>
-            <td style="width: 25%; text-align: center;">
-                <div style="font-size: 8px; font-weight: bold; background: #0f2863; color: #fff; padding: 4px 8px; border-radius: 4px; display: inline-block;">
+            <td style="width: 34%; text-align: center; vertical-align: middle;">
+                <div style="font-size: 9px; font-weight: 900; background: #0f2863; color: #ffffff; padding: 4px 12px; border-radius: 4px; display: inline-block; letter-spacing: 0.5px; text-transform: uppercase;">
                     DOCUMENT OFFICIEL
                 </div>
-                <div style="font-size: 8px; color: #475569; margin-top: 3px; font-weight: bold;">
+                <div style="font-size: 8.5px; color: #1e3a8a; margin-top: 3px; font-weight: 800; text-transform: uppercase;">
                     Session : {{ $session === 'normale' ? 'Ordinaire (Normale)' : ($session === 'rattrapage' ? 'de Rattrapage' : 'Bilan Complet Module') }}
                 </div>
-                @if(!empty($qrBase64))
-                    <div style="margin-top: 4px;">
-                        <img src="{{ $qrBase64 }}" style="width: 42px; height: 42px; border: 1px solid #cbd5e1; padding: 1px; background: #fff; border-radius: 3px;" alt="QR Code">
-                        <div style="font-size: 6px; font-weight: bold; color: #64748b; text-transform: uppercase;">SCAN TO VERIFY</div>
-                    </div>
-                @endif
+                <div style="font-size: 8px; color: #64748b; margin-top: 2px;">
+                    Édité le : <strong>{{ $date ?? date('d/m/Y H:i') }}</strong>
+                </div>
             </td>
-            <td style="width: 40%; text-align: right; font-size: 9px; color: #334155; font-weight: bold; line-height: 1.4;">
-                Année Universitaire : {{ $academicYear ?? '2026/2027' }}<br>
-                Semestre : {{ $semester ?? 'S5' }} | Périmètre : {{ $perimetre }}<br>
-                Date d'édition : {{ $date ?? date('d/m/Y H:i') }}
+            <td style="width: 28%; text-align: right; vertical-align: middle;">
+                @if(!empty($qrBase64))
+                    <table style="float: right; border-collapse: collapse;">
+                        <tr>
+                            <td style="vertical-align: middle; text-align: right; padding-right: 6px;">
+                                <div style="font-size: 7px; font-weight: 900; color: #0f2863; text-transform: uppercase;">Contrôle Apogée</div>
+                                <div style="font-size: 6px; color: #64748b; text-transform: uppercase;">SCAN TO VERIFY</div>
+                            </td>
+                            <td style="vertical-align: middle; text-align: right;">
+                                <img src="{{ $qrBase64 }}" style="width: 44px; height: 44px; border: 1px solid #cbd5e1; padding: 1px; background: #fff; border-radius: 3px;" alt="QR Code">
+                            </td>
+                        </tr>
+                    </table>
+                @endif
             </td>
         </tr>
     </table>

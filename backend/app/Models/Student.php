@@ -40,6 +40,41 @@ class Student extends Model
 
     protected $guarded = ['id'];
 
+    protected $fillable = [
+        'institution_id',
+        'user_id',
+        'student_number',
+        'cne',
+        'cin',
+        'massar_code',
+        'first_name',
+        'last_name',
+        'first_name_ar',
+        'last_name_ar',
+        'birth_date',
+        'birth_city',
+        'birth_country',
+        'gender',
+        'nationality',
+        'photo_path',
+        'email',
+        'phone',
+        'address',
+        'city',
+        'region',
+        'postal_code',
+        'emergency_contact_name',
+        'emergency_contact_phone',
+        'emergency_contact_relation',
+        'status',
+        'inscription_status',
+        'scholarship_type',
+        'has_disability',
+        'disability_details',
+        'filiere_id',
+        'group_id',
+    ];
+
     protected function casts(): array
     {
         return [
@@ -78,6 +113,13 @@ class Student extends Model
     {
         return Attribute::make(
             get: fn () => $this->getUserAttributeSafely('first_name'),
+            set: function ($val) {
+                if ($this->relationLoaded('user') && $this->user) {
+                    $this->user->first_name = $val;
+                }
+
+                return [];
+            },
         );
     }
 
@@ -85,6 +127,13 @@ class Student extends Model
     {
         return Attribute::make(
             get: fn () => $this->getUserAttributeSafely('last_name'),
+            set: function ($val) {
+                if ($this->relationLoaded('user') && $this->user) {
+                    $this->user->last_name = $val;
+                }
+
+                return [];
+            },
         );
     }
 
@@ -92,6 +141,13 @@ class Student extends Model
     {
         return Attribute::make(
             get: fn () => $this->getUserAttributeSafely('email'),
+            set: function ($val) {
+                if ($this->relationLoaded('user') && $this->user) {
+                    $this->user->email = $val;
+                }
+
+                return [];
+            },
         );
     }
 
@@ -99,6 +155,13 @@ class Student extends Model
     {
         return Attribute::make(
             get: fn () => $this->getUserAttributeSafely('phone'),
+            set: function ($val) {
+                if ($this->relationLoaded('user') && $this->user) {
+                    $this->user->phone = $val;
+                }
+
+                return [];
+            },
         );
     }
 
@@ -106,6 +169,9 @@ class Student extends Model
     {
         return Attribute::make(
             get: fn () => $this->getUserAttributeSafely('cin'),
+            set: fn ($val) => [
+                'cin' => $val,
+            ],
         );
     }
 
@@ -238,13 +304,27 @@ class Student extends Model
     public function resolveRouteBinding($value, $field = null)
     {
         if (is_numeric($value)) {
-            return $this->where('id', (int) $value)->first();
+            $student = $this->where('id', (int) $value)->first();
+            if ($student) {
+                return $student;
+            }
+
+            // Fallback: If numeric value corresponds to an Application ID, resolve student via CNE
+            $app = Application::find((int) $value);
+            if ($app && ! empty($app->cne)) {
+                $studentByCne = $this->where('cne', $app->cne)->first();
+                if ($studentByCne) {
+                    return $studentByCne;
+                }
+            }
+
+            return null;
         }
 
         if (Str::isUuid($value)) {
             return $this->where('uuid', $value)->first();
         }
 
-        return $this->where('student_number', $value)->first();
+        return $this->where('student_number', $value)->orWhere('cne', $value)->first();
     }
 }

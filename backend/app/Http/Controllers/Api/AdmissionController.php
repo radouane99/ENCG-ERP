@@ -317,8 +317,13 @@ class AdmissionController extends Controller
         $students = $query->limit(60)->get();
 
         $candidates = $students->map(function ($student, $idx) {
-            $hasApogee = ! empty($student->student_number) && $student->student_number !== 'En attente';
-            $isConforme = $hasApogee || $student->status === 'active';
+            $hasOfficialApogee = ! empty($student->student_number)
+                && $student->student_number !== 'En attente'
+                && $student->student_number !== $student->cne
+                && (str_starts_with((string) $student->student_number, '26') || str_starts_with((string) $student->student_number, '2024') || str_starts_with((string) $student->student_number, '2026'));
+
+            $isConforme = $student->inscription_status === 'DOSSIER_CONFORME'
+                || ($student->status === 'active' && $hasOfficialApogee && ! in_array($student->inscription_status, ['admis_tafem', 'liste_principale', 'liste_attente']));
 
             $docs = [
                 'bac_original' => $isConforme,
@@ -352,7 +357,7 @@ class AdmissionController extends Controller
                 'cne' => $student->cne ?? ('N13000'.str_pad((string) $student->id, 4, '0', STR_PAD_LEFT)),
                 'cin' => $student->cin ?? ($student->user?->cin ?? ('CD'.(720000 + $student->id))),
                 'tafem_score' => number_format($score, 2),
-                'apogee_code' => $student->student_number ?? 'En attente',
+                'apogee_code' => ($isConforme && $hasOfficialApogee) ? $student->student_number : 'En attente',
                 'physical_dossier_status' => $isConforme ? 'DOSSIER_CONFORME' : 'EN_ATTENTE_DEPOT',
                 'physical_documents' => $docs,
                 'phone' => $student->phone ?? ($student->user?->phone ?? '0661'.rand(100000, 999999)),
@@ -556,9 +561,19 @@ class AdmissionController extends Controller
     {
         $students = Student::with('user')->get();
 
-        $inscrits = $students->filter(fn ($s) => ! empty($s->student_number) || $s->status === 'active');
-        $preinscrits = $students->filter(fn ($s) => empty($s->student_number) && $s->status === 'pre_inscri');
-        $nonPreinscrits = $students->filter(fn ($s) => empty($s->student_number) && ! in_array($s->status, ['active', 'pre_inscri']));
+        $inscrits = $students->filter(function ($s) {
+            $hasOfficialApogee = ! empty($s->student_number)
+                && $s->student_number !== 'En attente'
+                && $s->student_number !== $s->cne
+                && (str_starts_with((string) $s->student_number, '26') || str_starts_with((string) $s->student_number, '2024') || str_starts_with((string) $s->student_number, '2026'));
+
+            return $s->inscription_status === 'DOSSIER_CONFORME'
+                || ($s->status === 'active' && $hasOfficialApogee && ! in_array($s->inscription_status, ['admis_tafem', 'liste_principale', 'liste_attente']));
+        });
+
+        $preinscrits = $students->filter(function ($s) use ($inscrits) {
+            return ! $inscrits->contains('id', $s->id);
+        });
 
         return response()->json([
             'success' => true,
@@ -566,7 +581,7 @@ class AdmissionController extends Controller
                 'total_admis_ministere' => $students->count(),
                 'inscrits_definitifs' => $inscrits->count(),
                 'preinscrits_sans_dossier' => $preinscrits->count(),
-                'non_preinscrits' => $nonPreinscrits->count(),
+                'non_preinscrits' => 0,
                 'conversion_rate' => $students->count() > 0
                     ? round(($inscrits->count() / $students->count()) * 100, 1).'%'
                     : '0%',
@@ -1359,7 +1374,39 @@ class AdmissionController extends Controller
      */
     public function uploadCandidateDocument(Request $request): JsonResponse
     {
-        CandidateDossierGate::requireIdentity($request, true);
+        $cne = strtoupper(trim((string) ($request->input('cne') ?: $request->query('cne', ''))));
+        $cin = strtoupper(trim((string) ($request->input('cin') ?: $request->query('cin', ''))));
+        $user = auth()->user();
+
+        if (! $cne && $user?->cne) {
+            $cne = strtoupper(trim($user->cne));
+        }
+        if (! $cin && $user?->cin) {
+            $cin = strtoupper(trim($user->cin));
+        }
+
+        // Auto-résolution intelligente : si l'un est présent, chercher l'autre dans la base
+        if ($cne && ! $cin) {
+            $foundCin = Application::where('cne', $cne)->value('cin')
+                ?? Student::where('cne', $cne)->value('cin');
+            if ($foundCin) {
+                $cin = strtoupper(trim($foundCin));
+            }
+        }
+        if ($cin && ! $cne) {
+            $foundCne = Application::where('cin', $cin)->value('cne')
+                ?? Student::whereCin($cin)->value('cne');
+            if ($foundCne) {
+                $cne = strtoupper(trim($foundCne));
+            }
+        }
+
+        // Si aucun identifiant n'est fourni, la porte de sécurité candidate bloque
+        if ($cne === '' && $cin === '') {
+            CandidateDossierGate::requireIdentity($request, true);
+        }
+
+        $request->merge(['cne' => $cne, 'cin' => $cin]);
 
         $typeInput = strtolower($request->input('type', ''));
         $allowedMimes = ($typeInput === 'photo') ? 'mimes:jpg,jpeg,png,webp' : 'mimes:pdf';
@@ -1367,21 +1414,18 @@ class AdmissionController extends Controller
         $request->validate([
             'file' => "required|file|max:10240|{$allowedMimes}",
             'type' => 'required|string|in:bac,cnie,photo,releve_notes,cin,cin_recto_verso',
-            'cne' => 'required|string',
-            'cin' => 'required|string',
+            'cne' => 'nullable|string',
+            'cin' => 'nullable|string',
         ], [
             'file.mimes' => ($typeInput === 'photo') ? 'Format de photo invalide (JPG/PNG/WEBP accepté).' : 'Format non autorisé. Seuls les documents au format PDF (.pdf) sont acceptés.',
         ]);
 
         $file = $request->file('file');
         $type = strtoupper($request->input('type'));
-        $cne = strtoupper(trim($request->input('cne', '')));
 
         // Récupérer le nom/prénom depuis la candidature, l'étudiant ou l'utilisateur connecté
         $nom = 'INCONNU';
         $prenom = 'INCONNU';
-        $cin = strtoupper(trim($request->input('cin', '')));
-        $user = auth()->user();
 
         $application = null;
         if ($cne) {
@@ -1394,6 +1438,12 @@ class AdmissionController extends Controller
         if ($application) {
             $nom = strtoupper(preg_replace('/\s+/', '-', trim($application->last_name ?? 'INCONNU')));
             $prenom = strtoupper(preg_replace('/\s+/', '-', trim($application->first_name ?? 'INCONNU')));
+            if (! $cne && $application->cne) {
+                $cne = strtoupper(trim($application->cne));
+            }
+            if (! $cin && $application->cin) {
+                $cin = strtoupper(trim($application->cin));
+            }
         } else {
             $student = null;
             if ($cne) {
@@ -1406,16 +1456,18 @@ class AdmissionController extends Controller
             if ($student) {
                 $nom = strtoupper(preg_replace('/\s+/', '-', trim($student->last_name ?? $student->user?->last_name ?? 'INCONNU')));
                 $prenom = strtoupper(preg_replace('/\s+/', '-', trim($student->first_name ?? $student->user?->first_name ?? 'INCONNU')));
+                if (! $cne && $student->cne) {
+                    $cne = strtoupper(trim($student->cne));
+                }
             } elseif ($user) {
                 $nom = strtoupper(preg_replace('/\s+/', '-', trim($user->last_name ?? 'INCONNU')));
                 $prenom = strtoupper(preg_replace('/\s+/', '-', trim($user->first_name ?? 'INCONNU')));
             }
         }
-        if (! $cne && $user?->cne) {
-            $cne = strtoupper(trim($user->cne));
-        }
 
-        // Construire un nom de fichier lisible : TYPE_CNE_NOM_PRENOM.ext
+        $ident = $cne ?: ($cin ?: 'DOSSIER_'.uniqid());
+
+        // Construire un nom de fichier lisible : TYPE_IDENT_NOM_PRENOM.ext
         $ext = strtolower($file->getClientOriginalExtension()) ?: 'pdf';
         $typeCode = match (strtolower($request->input('type'))) {
             'bac' => 'BAC',
@@ -1424,13 +1476,14 @@ class AdmissionController extends Controller
             'photo' => 'PHOTO',
             default => strtoupper($request->input('type')),
         };
-        $filename = "{$typeCode}_{$cne}_{$nom}_{$prenom}.{$ext}";
+        $filename = "{$typeCode}_{$ident}_{$nom}_{$prenom}.{$ext}";
         $storagePath = 'candidate_documents/'.$filename;
 
         Storage::disk('private')->put($storagePath, file_get_contents($file->getRealPath()));
 
+        $docKey = $cne ?: $cin;
         StudentDocument::updateOrCreate(
-            ['cne' => $cne, 'type' => strtolower($request->input('type'))],
+            ['cne' => $docKey, 'type' => strtolower($request->input('type'))],
             [
                 'file_path' => $storagePath,
                 'original_filename' => $filename,
@@ -1440,10 +1493,15 @@ class AdmissionController extends Controller
             ]
         );
 
+        // Si CNE et CIN sont tous les deux connus, unifier tous les documents précédemment enregistrés
+        if ($cne && $cin && $cne !== $cin) {
+            StudentDocument::where('cne', $cin)->update(['cne' => $cne]);
+        }
+
         return response()->json([
             'success' => true,
             'message' => "Document '{$typeCode}' enregistré sous le nom : {$filename}",
-            'file_path' => SignedDocumentUrl::make(strtolower($request->input('type')), $cne),
+            'file_path' => SignedDocumentUrl::make(strtolower($request->input('type')), $cne ?: $cin),
             'filename' => $filename,
         ]);
     }

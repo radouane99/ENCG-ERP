@@ -43,12 +43,16 @@ class CnieParser implements DocumentParserInterface
         '/بطاقة\s+الوطنية/u',
     ];
 
-    private array $emptyFields;
+    private readonly ArabicTextHelper $arabic;
+
+    private readonly FrenchNameHelper $french;
 
     public function __construct(
-        private readonly ArabicTextHelper $arabic,
-        private readonly FrenchNameHelper $french,
+        ?ArabicTextHelper $arabic = null,
+        ?FrenchNameHelper $french = null,
     ) {
+        $this->arabic = $arabic ?? new ArabicTextHelper;
+        $this->french = $french ?? new FrenchNameHelper;
         $this->emptyFields = $this->emptyResultArray();
     }
 

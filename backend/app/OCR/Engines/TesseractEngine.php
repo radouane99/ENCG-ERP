@@ -70,21 +70,20 @@ class TesseractEngine implements OcrEngineInterface
                 return new OcrResult('');
             }
 
-            // Une seule image pour la vitesse
-            $image = $images[0];
+            // OCR all extracted pages (e.g. Recto & Verso)
             $availableLangs = $this->getInstalledLanguages();
-            $lang = $this->getBestLanguage($availableLangs);
+            $lang = in_array('ara', $availableLangs) && in_array('fra', $availableLangs) ? 'fra+ara' : $this->getBestLanguage($availableLangs);
 
-            // Une seule passe OCR
-            $text = $this->runTesseractPass($image, $lang, 3, $tmpDir, $createdFiles);
-            $allText .= $text;
+            foreach ($images as $image) {
+                $text = $this->runTesseractPass($image, $lang, 3, $tmpDir, $createdFiles);
+                $allText .= "\n".$text;
 
-            // Si le texte est court, essayer avec une autre langue
-            if (strlen(trim($text)) < 50 && count($availableLangs) > 1) {
-                $secondLang = $this->getSecondLanguage($availableLangs, $lang);
-                $text2 = $this->runTesseractPass($image, $secondLang, 3, $tmpDir, $createdFiles);
-                if (strlen(trim($text2)) > strlen(trim($text))) {
-                    $allText = $text2;
+                if (strlen(trim($text)) < 50 && count($availableLangs) > 1) {
+                    $secondLang = $this->getSecondLanguage($availableLangs, $lang);
+                    $text2 = $this->runTesseractPass($image, $secondLang, 3, $tmpDir, $createdFiles);
+                    if (strlen(trim($text2)) > strlen(trim($text))) {
+                        $allText .= "\n".$text2;
+                    }
                 }
             }
 
@@ -107,12 +106,27 @@ class TesseractEngine implements OcrEngineInterface
     private function toImages(string $filePath, string $mimeType, string $tmpDir, array &$createdFiles): array
     {
         if ($this->isPdf($mimeType, $filePath)) {
+            // 1. Try extracting direct embedded images via pdfimages (fastest and highest quality for scans)
+            $imgPrefix = $tmpDir.'/pdf_raw_'.$this->processId;
+            @exec(sprintf('pdfimages -png %s %s 2>/dev/null', escapeshellarg($filePath), escapeshellarg($imgPrefix)));
+            $rawImages = glob("{$imgPrefix}*.png") ?: [];
+            $validScans = array_filter($rawImages, fn ($img) => @filesize($img) > 25000);
+
+            if (! empty($validScans)) {
+                foreach ($rawImages as $img) {
+                    $createdFiles[] = $img;
+                }
+
+                return array_slice(array_values($validScans), 0, 2);
+            }
+
+            // 2. Fallback to pdftoppm
             if (! $this->hasCommand('pdftoppm')) {
                 return [];
             }
 
             $tmpPrefix = $tmpDir.'/pdf_pg_'.$this->processId;
-            $cmd = sprintf('pdftoppm -png -r 150 -l 1 %s %s 2>/dev/null', // r 150 pour la vitesse
+            $cmd = sprintf('pdftoppm -png -r 200 -l 2 %s %s 2>/dev/null',
                 escapeshellarg($filePath),
                 escapeshellarg($tmpPrefix)
             );
@@ -123,8 +137,7 @@ class TesseractEngine implements OcrEngineInterface
                 $createdFiles[] = $p;
             }
 
-            // Limiter à une page
-            return array_slice($pages, 0, 1);
+            return array_slice($pages, 0, 2);
         }
 
         $tmpImg = $tmpDir.'/ocr_img_'.$this->processId.'.png';
@@ -148,9 +161,8 @@ class TesseractEngine implements OcrEngineInterface
         $outPath = $tmpDir.'/ocr_pass_'.$this->processId.'_'.uniqid();
         $txtFile = "{$outPath}.txt";
 
-        // Options de vitesse
         $cmd = sprintf(
-            'tesseract %s %s -l %s --psm %d -c tessedit_char_whitelist=0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzÀ-ÿ\x{0600}-\x{06FF} 2>/dev/null',
+            'tesseract %s %s -l %s --psm %d 2>/dev/null',
             escapeshellarg($imgPath),
             escapeshellarg($outPath),
             escapeshellarg($lang),

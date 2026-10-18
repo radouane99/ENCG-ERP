@@ -171,6 +171,25 @@ export default function AdminTafem() {
     }, 500);
   };
 
+  const handleDownloadTemplate = async () => {
+    toast.loading('Téléchargement du modèle officiel Ministère TAFEM...');
+    try {
+      const res = await api.get('/admissions/download-tafem-template-csv', { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'modele_import_admis_ministere_tafem.csv');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.dismiss();
+      toast.success('📄 Modèle CSV officiel téléchargé avec succès !');
+    } catch {
+      toast.dismiss();
+      toast.error('Erreur lors du téléchargement du modèle CSV.');
+    }
+  };
+
   const handleFileSelect = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
     const file = files[0];
@@ -577,6 +596,18 @@ export default function AdminTafem() {
                   Importer Fichier Scanners OMR (CSV / Excel)
                 </h3>
                 <p className="text-xs text-slate-500 font-medium">Format officiel : CNE, Note_QCM, Statut_Grille, Filiere</p>
+                <div className="mt-3">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDownloadTemplate();
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-100 hover:bg-emerald-200 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 text-[11px] font-black rounded-xl transition-all shadow-sm cursor-pointer"
+                  >
+                    <Download className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-300" /> Télécharger Modèle CSV Officiel
+                  </button>
+                </div>
               </div>
 
               <div className="space-y-3 pt-3">

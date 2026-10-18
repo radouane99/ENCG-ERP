@@ -926,9 +926,16 @@ class PdfExportController extends Controller
         $fraudIds = $this->gradeService->getFraudStudentIds($module);
         $resitStudentIds = ResitEligibility::where('module_id', $moduleId)->pluck('student_id')->toArray();
 
-        $data = $students->map(function ($student) use ($module, $normaleAssessments, $rattrapageAssessment, $fraudIds) {
+        $assessmentIds = $module->assessments->pluck('id');
+        $allStudentGrades = Grade::with('assessment')
+            ->whereIn('student_id', $students->pluck('id'))
+            ->whereIn('assessment_id', $assessmentIds)
+            ->get()
+            ->groupBy('student_id');
+
+        $data = $students->map(function ($student) use ($module, $normaleAssessments, $rattrapageAssessment, $fraudIds, $allStudentGrades) {
             $isFraud = in_array($student->id, $fraudIds);
-            $studentGrades = Grade::where('student_id', $student->id)->whereIn('assessment_id', $module->assessments->pluck('id'))->get();
+            $studentGrades = $allStudentGrades->get($student->id, collect());
 
             $gradesDetail = [];
             $totalWeight = 0;
@@ -1048,7 +1055,17 @@ class PdfExportController extends Controller
                 'date' => date('d/m/Y H:i'),
             ])->setPaper('a4', 'landscape');
 
-        return $pdf->download("PV_Deliberation_{$module->code}_{$session}.pdf");
+        $moduleNameClean = preg_replace('/[^\p{L}\p{N}\-_]+/u', '_', trim($module->name ?? ''));
+        $moduleNameClean = trim($moduleNameClean, '_');
+        if (empty($moduleNameClean)) {
+            $moduleNameClean = $module->code ?: "Module_{$moduleId}";
+        }
+        $filename = "PV_Deliberation_Module_{$moduleNameClean}.pdf";
+
+        return $pdf->download($filename, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ]);
     }
 
     public function exportRattrapage_PvPdf(Request $request, int $moduleId)

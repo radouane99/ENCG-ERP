@@ -823,6 +823,40 @@ export default function InscriptionPage({
   }, [editMode, user, initialData]);
 
   const [uploadedFiles, setUploadedFiles] = useState<{ [key: string]: File }>({});
+  const uploadedFilesRef = useRef<{ [key: string]: File }>({});
+  const identityRef = useRef<{ cne: string; cin: string }>({
+    cne: '',
+    cin: '',
+  });
+
+  useEffect(() => {
+    if (formData.cne) identityRef.current.cne = formData.cne.trim().toUpperCase();
+    if (formData.cin) identityRef.current.cin = formData.cin.trim().toUpperCase();
+  }, [formData.cne, formData.cin]);
+
+  const syncUploadedDocuments = async (customCne?: string, customCin?: string) => {
+    const cne = customCne || identityRef.current.cne || formData.cne || '';
+    const cin = customCin || identityRef.current.cin || formData.cin || '';
+    if (!cne && !cin) return;
+
+    const filesToSync = { ...uploadedFilesRef.current, ...uploadedFiles };
+    for (const [docKey, f] of Object.entries(filesToSync)) {
+      if (!f) continue;
+      try {
+        const sd = new FormData();
+        sd.append('file', f);
+        sd.append('type', docKey === 'cnie' ? 'cnie' : docKey);
+        if (cne) sd.append('cne', cne);
+        if (cin) sd.append('cin', cin);
+        await api.post('/public/upload-candidate-document', sd, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+      } catch (e) {
+        console.warn(`Doc sync error for ${docKey}:`, e);
+      }
+    }
+  };
+
   const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [pdfPreviewModal, setPdfPreviewModal] = useState<{ title: string; url: string; isImage?: boolean } | null>(null);
   const [showOcrConfirmationModal, setShowOcrConfirmationModal] = useState(false);
@@ -1028,14 +1062,17 @@ export default function InscriptionPage({
 
   const handleOcrDocumentUpload = async (docType: string, file: File) => {
     setUploadedFiles(prev => ({ ...prev, [docType]: file }));
+    uploadedFilesRef.current[docType] = file;
     setOcrExtracting(true);
     const toastId = toast.loading(`🤖 Gemini Vision AI : Extraction OCR de ${file.name}...`);
     try {
       const fd = new FormData();
       fd.append('file', file);
       fd.append('type', docType);
-      if (formData.cne) fd.append('cne', formData.cne);
-      if (formData.cin) fd.append('cin', formData.cin);
+      const knownCne = formData.cne || identityRef.current.cne;
+      const knownCin = formData.cin || identityRef.current.cin;
+      if (knownCne) fd.append('cne', knownCne);
+      if (knownCin) fd.append('cin', knownCin);
 
       const res = await api.post('/public/ocr-extract-documents', fd, {
         headers: { 'Content-Type': 'multipart/form-data' }
@@ -1179,21 +1216,30 @@ export default function InscriptionPage({
         toast.success(`✨ Gemini Vision AI : Extraction réussie du fichier ${file.name} !`, { id: toastId });
 
         // ── Sauvegarde automatique du document dans le storage ──
-        // On re-lit le CNE depuis le résultat OCR ou depuis formData
-        const cneToUse = ocr.cne || ocr.code_massar || formData.cne || (user as any)?.cne || '';
-        const cinToUse = ocr.cin || ocr.cnie || formData.cin || (user as any)?.cin || '';
+        const extCne = (ocr.cne || ocr.code_massar || '').trim().toUpperCase();
+        const extCin = (ocr.cin || ocr.cnie || '').trim().toUpperCase();
+        if (extCne) identityRef.current.cne = extCne;
+        if (extCin) identityRef.current.cin = extCin;
+
+        const cneToUse = extCne || identityRef.current.cne || formData.cne || (user as any)?.cne || '';
+        const cinToUse = extCin || identityRef.current.cin || formData.cin || (user as any)?.cin || '';
         if (cneToUse || cinToUse) {
           const saveId = toast.loading(`💾 Sauvegarde du document ${file.name} dans le dossier numérique...`);
           try {
             const saveData = new FormData();
             saveData.append('file', file);
             saveData.append('type', docType === 'cnie' ? 'cnie' : docType);
-            saveData.append('cne', cneToUse);
-            saveData.append('cin', cinToUse);
+            if (cneToUse) saveData.append('cne', cneToUse);
+            if (cinToUse) saveData.append('cin', cinToUse);
             await api.post('/public/upload-candidate-document', saveData, {
               headers: { 'Content-Type': 'multipart/form-data' }
             });
             toast.success(`✅ Document "${file.name}" sauvegardé dans le dossier numérique !`, { id: saveId });
+
+            // Si CNE et CIN sont tous les deux connus, synchroniser l'ensemble des documents
+            if (cneToUse && cinToUse) {
+              syncUploadedDocuments(cneToUse, cinToUse);
+            }
           } catch {
             toast.warning(`⚠️ Extraction réussie mais sauvegarde différée (sera relancée à la validation).`, { id: saveId });
           }
@@ -1377,6 +1423,9 @@ export default function InscriptionPage({
       if (editMode) {
         // EDIT MODE: update existing dossier
         await api.post('/public/update-candidate-dossier', payload);
+        try {
+          await syncUploadedDocuments(formData.cne, formData.cin);
+        } catch {}
         setSubmitting(false);
         toast.success('✅ Votre dossier a été mis à jour avec succès dans la base de données !');
         if (onSaved) {
@@ -1402,6 +1451,11 @@ export default function InscriptionPage({
           await api.post('/public/update-candidate-dossier', payload);
         } catch (e) {
           console.warn("Dossier details save warning:", e);
+        }
+        try {
+          await syncUploadedDocuments(formData.cne, formData.cin);
+        } catch (e) {
+          console.warn("Documents sync warning:", e);
         }
         setSubmitting(false);
         setDone(true);
@@ -2059,14 +2113,14 @@ export default function InscriptionPage({
                                   reader.readAsDataURL(file);
                                   setShowPhotoModal(true);
 
-                                  const cneToUse = formData.cne || (user as any)?.cne || '';
-                                  const cinToUse = formData.cin || (user as any)?.cin || '';
+                                  const cneToUse = identityRef.current.cne || formData.cne || (user as any)?.cne || '';
+                                  const cinToUse = identityRef.current.cin || formData.cin || (user as any)?.cin || '';
                                   if (cneToUse || cinToUse) {
                                     const saveData = new FormData();
                                     saveData.append('file', file);
                                     saveData.append('type', 'photo');
-                                    saveData.append('cne', cneToUse);
-                                    saveData.append('cin', cinToUse);
+                                    if (cneToUse) saveData.append('cne', cneToUse);
+                                    if (cinToUse) saveData.append('cin', cinToUse);
                                     api.post('/public/upload-candidate-document', saveData, {
                                       headers: { 'Content-Type': 'multipart/form-data' }
                                     }).catch(() => {});

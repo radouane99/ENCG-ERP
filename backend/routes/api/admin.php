@@ -410,7 +410,12 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|super_admin|instituti
 
     // Student Transcript PDF & Mission Orders & Convocations
     Route::get('students/export-attestations-zip', [PdfExportController::class, 'exportAttestationsZip']);
+    Route::get('admin/students/export-attestations-zip', [PdfExportController::class, 'exportAttestationsZip']);
+    Route::get('v1/admin/students/export-attestations-zip', [PdfExportController::class, 'exportAttestationsZip']);
+
     Route::get('students/export-usmba-accounts-csv', [StudentController::class, 'exportUsmbaAcademicAccountsCsv']);
+    Route::get('admin/students/export-usmba-accounts-csv', [StudentController::class, 'exportUsmbaAcademicAccountsCsv']);
+    Route::get('v1/admin/students/export-usmba-accounts-csv', [StudentController::class, 'exportUsmbaAcademicAccountsCsv']);
     Route::get('students/{student}/attestation-pdf', [PdfExportController::class, 'downloadAttestationInscriptionPdf']);
     Route::get('students/{student}/attestation-reussite-pdf', [PdfExportController::class, 'attestationReussite']);
     Route::get('students/{student}/diplome-officiel-pdf', [PdfExportController::class, 'downloadDiplomeOfficielPdf']);
