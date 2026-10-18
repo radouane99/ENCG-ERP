@@ -49,10 +49,12 @@ class GradeController extends Controller
         $fraudIds = $this->gradeService->getFraudStudentIds($assessment->module);
         $isRattrapage = $this->gradeService->isRattrapageAssessment($assessment);
         $isExam = $this->gradeService->isExamAssessment($assessment);
-        $isSigned = $this->gradeService->isPvSigned($assessment->module_id);
+        $assessmentSession = $isRattrapage ? 'rattrapage' : 'normale';
+        $isSigned = $this->gradeService->isPvSigned($assessment->module_id, $assessmentSession);
 
         $signatureRecord = ModulePvSignature::where('module_id', $assessment->module_id)
-            ->with('signer')->latest()->first();
+            ->where('session', $assessmentSession)
+            ->with('signer')->latest('signed_at')->first();
 
         $data = $students->map(function ($student) use ($assessment, $fraudIds, $isExam) {
             $grade = Grade::where('student_id', $student->id)
@@ -165,6 +167,16 @@ class GradeController extends Controller
 
         $module = Module::with('assessments')->findOrFail($moduleId);
         $groupId = $request->query('group_id');
+        $session = $request->query('session', 'normale');
+        if ($session === 'complet') {
+            $session = 'totale';
+        }
+
+        $numericGroupId = null;
+        if ($groupId && ! in_array($groupId, ['all', 'null', 'undefined', ''], true) && is_numeric($groupId)) {
+            $numericGroupId = (int) $groupId;
+        }
+
         $students = $this->gradeService->getRegisteredStudents($module, $groupId);
         $fraudIds = $this->gradeService->getFraudStudentIds($module);
 
@@ -260,7 +272,12 @@ class GradeController extends Controller
             ];
         });
 
-        $signature = $this->getPvSignature($moduleId);
+        $signature = $this->getPvSignature($moduleId, $session, $numericGroupId);
+        $signatures = [
+            'normale' => $this->getPvSignature($moduleId, 'normale', $numericGroupId),
+            'rattrapage' => $this->getPvSignature($moduleId, 'rattrapage', $numericGroupId),
+            'totale' => $this->getPvSignature($moduleId, 'totale', $numericGroupId),
+        ];
         $analytics = $this->gradeService->calculateAnalytics($data);
 
         $isRattrapageLocked = false;
@@ -292,6 +309,7 @@ class GradeController extends Controller
             ]),
             'data' => $data,
             'signature' => $signature,
+            'signatures' => $signatures,
             'analytics' => $analytics,
             'is_rattrapage_locked' => $isRattrapageLocked,
             'rattrapage_lock_reason' => $rattrapageLockReason,
@@ -309,13 +327,16 @@ class GradeController extends Controller
 
         $validated = $request->validate([
             'group_id' => 'nullable',
-            'session' => 'nullable|string|in:normale,rattrapage,totale',
+            'session' => 'nullable|string|in:normale,rattrapage,totale,complet',
             'signature_data' => 'nullable|string',
         ]);
 
         $module = Module::with('assessments')->findOrFail($moduleId);
         $user = $request->user();
         $session = $validated['session'] ?? 'normale';
+        if ($session === 'complet') {
+            $session = 'totale';
+        }
         $groupId = $validated['group_id'] ?? null;
         if ($groupId === 'all' || $groupId === '' || $groupId === 'undefined' || ! is_numeric($groupId)) {
             $groupId = null;
@@ -323,7 +344,7 @@ class GradeController extends Controller
             $groupId = (int) $groupId;
         }
 
-        $digitalSeal = hash('sha256', "module:{$moduleId}|session:{$session}|signer:{$user->id}|ts:".now()->timestamp);
+        $digitalSeal = hash('sha256', "module:{$moduleId}|session:{$session}|group:".($groupId ?? 'all')."|signer:{$user->id}|ts:".now()->timestamp);
 
         // Signature
         ModulePvSignature::updateOrCreate(
@@ -594,16 +615,40 @@ class GradeController extends Controller
 
     // ─── HELPERS PRIVÉS ───────────────────────────────────────
 
-    private function getPvSignature(int $moduleId): ?array
+    private function getPvSignature(int $moduleId, ?string $session = 'normale', ?int $groupId = null): ?array
     {
-        $sigRecord = ModulePvSignature::where('module_id', $moduleId)
-            ->with('signer')->latest()->first();
+        $session = $session ?: 'normale';
+        if ($session === 'complet') {
+            $session = 'totale';
+        }
+
+        $query = ModulePvSignature::where('module_id', $moduleId)
+            ->where('session', $session);
+
+        if ($groupId !== null) {
+            $query->where('group_id', $groupId);
+        }
+
+        $sigRecord = $query->with('signer')->latest()->first();
+
+        // Si non trouvé avec group_id spécifique, vérifier s'il existe une signature globale pour ce module & session
+        if (! $sigRecord && $groupId !== null) {
+            $sigRecord = ModulePvSignature::where('module_id', $moduleId)
+                ->where('session', $session)
+                ->whereNull('group_id')
+                ->with('signer')
+                ->latest()
+                ->first();
+        }
 
         if (! $sigRecord) {
             return null;
         }
 
         return [
+            'id' => $sigRecord->id,
+            'session' => $sigRecord->session,
+            'group_id' => $sigRecord->group_id,
             'signed_by' => $sigRecord->signer?->name ?? 'Enseignant',
             'signed_at' => $sigRecord->signed_at?->toIso8601String(),
             'signature_data' => $sigRecord->signature_data,

@@ -571,7 +571,12 @@
         <table class="signatures-table">
             <tr>
                 <td style="text-align: center;">
-                    <div class="sig-title">Signature de l'Enseignant Responsable du Module</div>
+                    <div class="sig-title">
+                        Signature de l'Enseignant Responsable du Module
+                        <div style="font-size: 5.8pt; color: #64748b; font-weight: normal; text-transform: uppercase; margin-top: 1px;">
+                            ({{ $session === 'rattrapage' ? 'Session Rattrapage' : ($session === 'totale' || $session === 'complet' ? 'Bilan Complet' : 'Session Ordinaire') }})
+                        </div>
+                    </div>
                     <div class="sig-box" style="height: {{ $sigH }};">
                         @if(!empty($signature['signature_data']))
                             <img src="{{ $signature['signature_data'] }}" style="max-height: {{ $sigImgH }};" alt="Signature">
@@ -579,7 +584,7 @@
                                 Signé par {{ $signature['signed_by'] ?? 'Enseignant' }} le {{ $signature['signed_at'] ?? '' }} (IP: {{ $signature['ip_address'] ?? 'N/A' }})
                             </div>
                         @else
-                            <div style="font-size: 7.2pt; color: #94a3b8; margin-top: 12px;">(Signature manuscrite / numérique)</div>
+                            <div style="font-size: 7.2pt; color: #94a3b8; margin-top: 12px;">(Signature non encore apposée — {{ $session === 'rattrapage' ? 'Rattrapage' : ($session === 'totale' || $session === 'complet' ? 'Bilan Complet' : 'Ordinaire') }})</div>
                         @endif
                     </div>
                 </td>

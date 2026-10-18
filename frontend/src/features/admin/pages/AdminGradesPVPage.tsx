@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react'
 
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, Printer, Save, CheckCircle2, AlertCircle, RefreshCw, ShieldCheck, Lock, Download, FileText, Layers, Sparkles, GraduationCap, Calendar, BookOpen, Users, ChevronDown, Check, Eye, Zap, FileSpreadsheet, Mail, Archive, History, X, TrendingUp, Trophy, BarChart2, Filter, Search, Send, Package, ClipboardList, Star, Link2, Calculator } from 'lucide-react'
+import { ArrowLeft, Printer, Save, CheckCircle2, AlertCircle, RefreshCw, ShieldCheck, Lock, Download, FileText, Layers, Sparkles, GraduationCap, Calendar, BookOpen, Users, ChevronDown, Check, Eye, Zap, FileSpreadsheet, Mail, Archive, History, X, TrendingUp, Trophy, BarChart2, Filter, Search, Send, Package, ClipboardList, Star, Link2, Calculator, Clock } from 'lucide-react'
 
 
 
@@ -262,8 +262,10 @@ export default function AdminGradesPVPage() {
         signature_data: signatureDataUrl
       })
 
-      toast.success("✒️ Signature tactile apposée, horodatée et scellée sur le Procès-Verbal Officiel !")
+      const sessionLabel = session === 'normale' ? 'Session Ordinaire' : session === 'rattrapage' ? 'Session de Rattrapage' : 'Bilan Complet (Vue Totale)'
+      toast.success(`✒️ Signature tactile apposée, horodatée et scellée pour la ${sessionLabel} !`)
       setShowSignatureModal(false)
+      setSignatureDataUrl('')
       await refetchPV()
       queryClient.invalidateQueries({ queryKey: ['module-pv'] })
       queryClient.invalidateQueries({ queryKey: ['grades'] })
@@ -800,14 +802,19 @@ export default function AdminGradesPVPage() {
         setActiveJurySigningId(null)
         fetchJury()
       } else {
+        const sessionLabel = session === 'normale' ? 'Session Ordinaire' : session === 'rattrapage' ? 'Session de Rattrapage' : 'Bilan Complet (Vue Totale)'
         const res = await api.post(`/modules/${moduleId}/pv/sign`, {
           group_id: (groupId && groupId !== 'null') ? groupId : 'all',
           session: session,
           signature_data: dataUrl
         })
-        toast.success(res.data.message || `PV (${session}) signé et verrouillé avec succès !`)
+        toast.success(res.data.message || `PV (${sessionLabel}) signé et scellé avec succès !`)
         setShowSignatureModal(false)
+        setSignatureDataUrl('')
+        clearCanvas()
         refetchPV()
+        queryClient.invalidateQueries({ queryKey: ['module-pv'] })
+        queryClient.invalidateQueries({ queryKey: ['grades'] })
       }
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Erreur lors de la signature.")
@@ -3163,14 +3170,24 @@ export default function AdminGradesPVPage() {
             🚀 Diffusion Email
           </Button>
 
-          {pvData.signature && (
+          {pvData.signature ? (
             <div className="flex flex-col text-right leading-tight bg-emerald-50 text-emerald-800 border border-emerald-300 px-3 py-1.5 rounded-xl text-[10px] font-extrabold shadow-sm shrink-0">
               <span className="flex items-center gap-1 text-emerald-700">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 animate-pulse shrink-0" />
                 Signé : {pvData.signature.signed_by || 'Enseignant'}
               </span>
-              <span className="text-[9px] text-emerald-600/80 font-mono">
-                {session === 'normale' ? 'S. Ordinaire' : session === 'rattrapage' ? 'S. Rattrapage' : 'Vue Totale'}
+              <span className="text-[9px] text-emerald-600/90 font-mono">
+                {session === 'normale' ? 'S. Ordinaire' : session === 'rattrapage' ? 'S. Rattrapage' : 'Vue Totale'} • {new Date(pvData.signature.signed_at).toLocaleString('fr-FR')}
+              </span>
+            </div>
+          ) : (
+            <div className="flex flex-col text-right leading-tight bg-amber-50 text-amber-800 border border-amber-300 px-3 py-1.5 rounded-xl text-[10px] font-bold shadow-sm shrink-0">
+              <span className="flex items-center gap-1 text-amber-700">
+                <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                Non signée ({session === 'normale' ? 'S. Ordinaire' : session === 'rattrapage' ? 'S. Rattrapage' : 'Vue Totale'})
+              </span>
+              <span className="text-[9px] text-amber-600/80">
+                En attente de confirmation
               </span>
             </div>
           )}
@@ -3180,9 +3197,14 @@ export default function AdminGradesPVPage() {
               setActiveJurySigningId(null)
               setShowSignatureModal(true)
             }}
-            className="bg-emerald-600 text-white hover:bg-emerald-700 rounded-xl flex items-center gap-1.5 text-xs font-bold shadow-md hover:-translate-y-0.5 transition-all px-4 py-2 shrink-0"
+            className={cn(
+              "rounded-xl flex items-center gap-1.5 text-xs font-bold shadow-md hover:-translate-y-0.5 transition-all px-4 py-2 shrink-0 text-white",
+              pvData.signature ? "bg-emerald-600 hover:bg-emerald-700" : "bg-indigo-600 hover:bg-indigo-700"
+            )}
           >
-            ✍️ {pvData.signature ? 'Re-signer le PV' : 'Signer le PV'}
+            ✍️ {pvData.signature 
+              ? `Re-signer (${session === 'normale' ? 'Ordinaire' : session === 'rattrapage' ? 'Rattrapage' : 'Vue Totale'})` 
+              : `Signer le PV (${session === 'normale' ? 'Ordinaire' : session === 'rattrapage' ? 'Rattrapage' : 'Vue Totale'})`}
           </Button>
         </div>
       </div>
@@ -3339,39 +3361,84 @@ export default function AdminGradesPVPage() {
       {/* Tabs and Toggles selector: Hidden during print */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 print:hidden">
         {/* Session Tabs */}
-        <div className="flex gap-2 p-1 bg-slate-100 rounded-2xl w-fit">
+        <div className="flex flex-wrap gap-2 p-1.5 bg-slate-100 rounded-2xl w-fit">
           <button
-            onClick={() => setSession('normale')}
+            onClick={() => { setSession('normale'); setSignatureDataUrl(''); }}
             className={cn(
-              "px-6 py-2.5 rounded-xl text-xs font-bold transition-all uppercase tracking-wider",
+              "px-5 py-2.5 rounded-xl text-xs font-bold transition-all uppercase tracking-wider flex items-center gap-2",
               session === 'normale'
                 ? "bg-[#0f2863] text-white shadow-sm"
                 : "text-slate-600 hover:bg-slate-200"
             )}
           >
-            Session Ordinaire (Normale)
+            <span>Session Ordinaire (Normale)</span>
+            {pvData?.signatures?.normale ? (
+              <span className={cn(
+                "px-2 py-0.5 rounded-full text-[9px] font-extrabold tracking-normal normal-case flex items-center gap-1",
+                session === 'normale' ? "bg-emerald-500 text-white" : "bg-emerald-100 text-emerald-800"
+              )}>
+                ✓ Signé
+              </span>
+            ) : (
+              <span className={cn(
+                "px-2 py-0.5 rounded-full text-[9px] font-normal tracking-normal normal-case",
+                session === 'normale' ? "bg-white/20 text-white" : "bg-slate-200 text-slate-500"
+              )}>
+                En attente
+              </span>
+            )}
           </button>
           <button
-            onClick={() => setSession('rattrapage')}
+            onClick={() => { setSession('rattrapage'); setSignatureDataUrl(''); }}
             className={cn(
-              "px-6 py-2.5 rounded-xl text-xs font-bold transition-all uppercase tracking-wider",
+              "px-5 py-2.5 rounded-xl text-xs font-bold transition-all uppercase tracking-wider flex items-center gap-2",
               session === 'rattrapage'
                 ? "bg-amber-600 text-white shadow-sm"
                 : "text-slate-600 hover:bg-slate-200"
             )}
           >
-            Session de Rattrapage
+            <span>Session de Rattrapage</span>
+            {pvData?.signatures?.rattrapage ? (
+              <span className={cn(
+                "px-2 py-0.5 rounded-full text-[9px] font-extrabold tracking-normal normal-case flex items-center gap-1",
+                session === 'rattrapage' ? "bg-emerald-500 text-white" : "bg-emerald-100 text-emerald-800"
+              )}>
+                ✓ Signé
+              </span>
+            ) : (
+              <span className={cn(
+                "px-2 py-0.5 rounded-full text-[9px] font-normal tracking-normal normal-case",
+                session === 'rattrapage' ? "bg-white/20 text-white" : "bg-slate-200 text-slate-500"
+              )}>
+                Non signée
+              </span>
+            )}
           </button>
           <button
-            onClick={() => setSession('totale')}
+            onClick={() => { setSession('totale'); setSignatureDataUrl(''); }}
             className={cn(
-              "px-6 py-2.5 rounded-xl text-xs font-bold transition-all uppercase tracking-wider",
+              "px-5 py-2.5 rounded-xl text-xs font-bold transition-all uppercase tracking-wider flex items-center gap-2",
               session === 'totale'
                 ? "bg-indigo-600 text-white shadow-sm"
                 : "text-slate-600 hover:bg-slate-200"
             )}
           >
-            Vue Totale (S.O + S.R)
+            <span>Vue Totale (S.O + S.R)</span>
+            {pvData?.signatures?.totale ? (
+              <span className={cn(
+                "px-2 py-0.5 rounded-full text-[9px] font-extrabold tracking-normal normal-case flex items-center gap-1",
+                session === 'totale' ? "bg-emerald-500 text-white" : "bg-emerald-100 text-emerald-800"
+              )}>
+                ✓ Signé
+              </span>
+            ) : (
+              <span className={cn(
+                "px-2 py-0.5 rounded-full text-[9px] font-normal tracking-normal normal-case",
+                session === 'totale' ? "bg-white/20 text-white" : "bg-slate-200 text-slate-500"
+              )}>
+                Non signée
+              </span>
+            )}
           </button>
         </div>
 
@@ -3770,24 +3837,37 @@ export default function AdminGradesPVPage() {
         {/* Official Signatures section */}
         <div className="mt-12 pt-6 border-t border-slate-200 grid grid-cols-2 text-center text-xs font-bold text-slate-800 gap-8">
           <div className="flex flex-col items-center justify-between p-4 bg-slate-50/50 rounded-2xl border border-slate-200 print:bg-transparent print:border-slate-400 min-h-[140px]">
-            <p className="uppercase text-[11px] text-[#0f2863]">Signature de l'Enseignant Responsable du Module</p>
-            {pvData?.signature || signatureDataUrl ? (
+            <div>
+              <p className="uppercase text-[11px] text-[#0f2863]">Signature de l'Enseignant Responsable du Module</p>
+              <p className="text-[9px] text-slate-500 font-semibold tracking-wider uppercase mt-0.5">
+                ({session === 'normale' ? 'Session Ordinaire' : session === 'rattrapage' ? 'Session de Rattrapage' : 'Bilan Complet (Vue Totale)'})
+              </p>
+            </div>
+            {pvData?.signature?.signature_data ? (
               <div className="flex flex-col items-center my-2">
-                <img src={pvData?.signature?.signature_data || signatureDataUrl} alt="Signature" className="h-16 object-contain border border-slate-200 rounded-lg p-1 bg-white" />
-                <p className="text-[9px] text-slate-600 font-bold uppercase tracking-wider mt-1">{pvData?.signature?.signed_by || 'Enseignant Responsable'}</p>
+                <img src={pvData.signature.signature_data} alt="Signature" className="h-16 object-contain border border-slate-200 rounded-lg p-1 bg-white" />
+                <p className="text-[9px] text-slate-600 font-bold uppercase tracking-wider mt-1">{pvData.signature.signed_by || 'Enseignant Responsable'}</p>
+                <p className="text-[8px] text-emerald-700 font-mono font-bold mt-0.5">
+                  ✓ Signé le {new Date(pvData.signature.signed_at).toLocaleDateString('fr-FR')} à {new Date(pvData.signature.signed_at).toLocaleTimeString('fr-FR')}
+                </p>
                 <p className="text-[7px] text-slate-400 font-mono">
-                  {pvData?.signature ? `IP: ${pvData.signature.ip_address} | ${new Date(pvData.signature.signed_at).toLocaleString('fr-FR')}` : 'Horodaté et certifié en temps réel'}
+                  IP: {pvData.signature.ip_address}
                 </p>
               </div>
             ) : (
-              <div className="my-6 text-slate-400 font-normal italic text-[10px] border-b border-dashed border-slate-400 w-56 py-4">
-                (Signature manuscrite / numérique)
+              <div className="my-6 text-slate-400 font-normal italic text-[10px] border-b border-dashed border-slate-400 w-64 py-4">
+                (Signature non encore apposée pour la {session === 'normale' ? 'Session Ordinaire' : session === 'rattrapage' ? 'Session de Rattrapage' : 'Vue Totale'})
               </div>
             )}
           </div>
 
           <div className="flex flex-col items-center justify-between p-4 bg-slate-50/50 rounded-2xl border border-slate-200 print:bg-transparent print:border-slate-400 min-h-[140px]">
-            <p className="uppercase text-[11px] text-[#0f2863]">Signature du Président du Jury & Cachet de l'Établissement</p>
+            <div>
+              <p className="uppercase text-[11px] text-[#0f2863]">Signature du Président du Jury & Cachet de l'Établissement</p>
+              <p className="text-[9px] text-slate-500 font-semibold tracking-wider uppercase mt-0.5">
+                (École Nationale de Commerce et de Gestion de Fès)
+              </p>
+            </div>
             <div className="my-6 text-slate-400 font-normal italic text-[10px] border-b border-dashed border-slate-400 w-56 py-4">
               (Cachet Officiel ENCG Fès)
             </div>
@@ -3804,8 +3884,13 @@ export default function AdminGradesPVPage() {
                 level="M"
               />
               <div>
-                <p className="font-bold text-slate-800 text-[9px] uppercase">Empreinte Numérique Cryptographique SHA-256</p>
+                <p className="font-bold text-slate-800 text-[9px] uppercase">
+                  Empreinte Numérique Cryptographique SHA-256 ({session === 'normale' ? 'Session Ordinaire' : session === 'rattrapage' ? 'Session Rattrapage' : 'Vue Totale'})
+                </p>
                 <p className="text-slate-500 font-mono text-[8px]">{pvData.signature.digital_seal}</p>
+                <p className="text-emerald-700 font-semibold text-[8px]">
+                  Horodatage Certifié : {new Date(pvData.signature.signed_at).toLocaleDateString('fr-FR')} à {new Date(pvData.signature.signed_at).toLocaleTimeString('fr-FR')}
+                </p>
               </div>
             </div>
             <span className="font-bold text-[#0f2863] uppercase">CERTIFICATION NUMÉRIQUE ENCG FÈS</span>
@@ -3829,10 +3914,10 @@ export default function AdminGradesPVPage() {
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl relative border border-slate-100 animate-in zoom-in-95 duration-200">
             <h3 className="text-lg font-bold text-[#0f2863] mb-1 flex items-center gap-2">
-              ✍️ Signature électronique du PV
+              ✍️ Signature électronique du PV — {session === 'normale' ? 'Session Ordinaire' : session === 'rattrapage' ? 'Session de Rattrapage' : 'Bilan Complet (Vue Totale)'}
             </h3>
             <p className="text-xs text-slate-500 mb-4 font-medium">
-              Veuillez dessiner votre signature ci-dessous. En validant, le PV sera définitivement clôturé et verrouillé.
+              Veuillez apposer votre signature manuscrite pour la <strong>{session === 'normale' ? 'Session Ordinaire' : session === 'rattrapage' ? 'Session de Rattrapage' : 'Vue Totale'}</strong>. En validant, le PV officiel de cette session sera horodaté avec date/heure et scellé sous une empreinte cryptographique SHA-256 distincte.
             </p>
 
             {/* Canvas Box */}

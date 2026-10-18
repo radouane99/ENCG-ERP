@@ -1020,13 +1020,36 @@ class PdfExportController extends Controller
             })->values();
         }
 
-        $sigRecord = ModulePvSignature::where('module_id', $moduleId)->with('signer')->latest()->first();
+        $sigSession = $session;
+        if ($sigSession === 'complet') {
+            $sigSession = 'totale';
+        }
+
+        $sigQuery = ModulePvSignature::where('module_id', $moduleId)
+            ->where('session', $sigSession)
+            ->when($groupId && ! in_array($groupId, ['all', 'null', 'undefined', ''], true), function ($q) use ($groupId) {
+                $q->where('group_id', (int) $groupId);
+            })
+            ->with('signer')
+            ->latest();
+
+        $sigRecord = $sigQuery->first();
+        if (! $sigRecord && $groupId && ! in_array($groupId, ['all', 'null', 'undefined', ''], true)) {
+            $sigRecord = ModulePvSignature::where('module_id', $moduleId)
+                ->where('session', $sigSession)
+                ->whereNull('group_id')
+                ->with('signer')
+                ->latest()
+                ->first();
+        }
+
         $signature = $sigRecord ? [
             'signed_by' => $sigRecord->signer?->name ?? 'Enseignant',
             'signed_at' => $sigRecord->signed_at?->format('d/m/Y H:i') ?? date('d/m/Y H:i'),
             'digital_seal' => $sigRecord->digital_seal,
             'ip_address' => $sigRecord->ip_address ?? 'N/A',
             'signature_data' => $sigRecord->signature_data ?? null,
+            'session' => $sigRecord->session,
         ] : null;
 
         $verifyUrl = url("/verify/pv/{$moduleId}/".($groupId ?: 'all'));
@@ -1126,12 +1149,28 @@ class PdfExportController extends Controller
         $verifyUrl = url("/verify/pv-rattrapage/{$moduleId}");
         $qrBase64 = $this->generateQrBase64($verifyUrl);
 
+        $sigRecord = ModulePvSignature::where('module_id', $moduleId)
+            ->where('session', 'rattrapage')
+            ->with('signer')
+            ->latest()
+            ->first();
+
+        $signature = $sigRecord ? [
+            'signed_by' => $sigRecord->signer?->name ?? 'Enseignant',
+            'signed_at' => $sigRecord->signed_at?->format('d/m/Y H:i') ?? date('d/m/Y H:i'),
+            'digital_seal' => $sigRecord->digital_seal,
+            'ip_address' => $sigRecord->ip_address ?? 'N/A',
+            'signature_data' => $sigRecord->signature_data ?? null,
+            'session' => 'rattrapage',
+        ] : null;
+
         $pdf = Pdf::setOption(['isRemoteEnabled' => true, 'chroot' => public_path()])
             ->loadView('pdf.module_pv', [
                 'module' => $module,
                 'session' => 'rattrapage',
                 'normaleAssessments' => $normaleAssessments,
                 'students' => $data,
+                'signature' => $signature,
                 'logoBase64' => $this->getLogoBase64(),
                 'qrBase64' => $qrBase64,
                 'verifyUrl' => $verifyUrl,
