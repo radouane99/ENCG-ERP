@@ -1270,7 +1270,7 @@ class PdfExportController extends Controller
                 'student' => mb_strtoupper($s['last_name'] ?? '').' '.($s['first_name'] ?? ''),
                 'modules' => $rowModules,
                 'semester_average' => $s['moyenne_semestrielle'] ?? 0,
-                'decision' => $s['decision_global'] ?? 'RAT',
+                'decision' => $s['decision_global'] ?? 'NV',
             ];
         }
 

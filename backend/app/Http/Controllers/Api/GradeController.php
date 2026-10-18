@@ -947,10 +947,16 @@ class GradeController extends Controller
                     }
                 }
                 unset($mInfo);
-            } elseif ($hasRattrapageModule || ($moyenneSemestrielle !== null && $moyenneSemestrielle < 10) || ! $canCompensate) {
+            } elseif ($moyenneSemestrielle === null || $moyenneSemestrielle < 10.00) {
+                // Règle ENCG : Moyenne semestrielle < 10.00 => Non Validé (NV)
+                $decisionGlobal = 'NV';
+                $totalElimines++;
+            } elseif ($session !== 'rattrapage' && ($hasRattrapageModule || $hasEliminatoire || ! $canCompensate)) {
+                // Moyenne >= 10.00 mais présence de note éliminatoire (< 6) ou > 2 modules non validés en session ordinaire
                 $decisionGlobal = 'RAT';
                 $totalRattrapages++;
             } else {
+                $decisionGlobal = 'NV';
                 $totalElimines++;
             }
 

@@ -2012,50 +2012,61 @@ export default function AdminGradesPVPage() {
 
                 {/* Filter Tabs */}
                 <div className="flex items-center gap-1 bg-white dark:bg-slate-800 p-1 border border-slate-200 dark:border-slate-700 rounded-xl text-xs">
-                  <button
-                    onClick={() => setMatrixDecisionFilter('all')}
-                    className={cn(
-                      "px-2.5 py-1 rounded-lg font-extrabold text-[11px] transition-all cursor-pointer",
-                      matrixDecisionFilter === 'all'
-                        ? "bg-[#0f2863] text-white shadow-xs"
-                        : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
-                    )}
-                  >
-                    Tous ({semesterPvData.students?.length || 0})
-                  </button>
-                  <button
-                    onClick={() => setMatrixDecisionFilter('V')}
-                    className={cn(
-                      "px-2.5 py-1 rounded-lg font-extrabold text-[11px] transition-all cursor-pointer",
-                      matrixDecisionFilter === 'V'
-                        ? "bg-emerald-600 text-white shadow-xs"
-                        : "text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
-                    )}
-                  >
-                    Validés
-                  </button>
-                  <button
-                    onClick={() => setMatrixDecisionFilter('RAT')}
-                    className={cn(
-                      "px-2.5 py-1 rounded-lg font-extrabold text-[11px] transition-all cursor-pointer",
-                      matrixDecisionFilter === 'RAT'
-                        ? "bg-amber-600 text-white shadow-xs"
-                        : "text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30"
-                    )}
-                  >
-                    Rattrapage
-                  </button>
-                  <button
-                    onClick={() => setMatrixDecisionFilter('NV')}
-                    className={cn(
-                      "px-2.5 py-1 rounded-lg font-extrabold text-[11px] transition-all cursor-pointer",
-                      matrixDecisionFilter === 'NV'
-                        ? "bg-rose-600 text-white shadow-xs"
-                        : "text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30"
-                    )}
-                  >
-                    Éliminés
-                  </button>
+                  {(() => {
+                    const allStudents = semesterPvData.students || []
+                    const valCount = allStudents.filter((s: any) => s.decision_global === 'V' || s.decision_global === 'VAR' || s.decision_global === 'VPC').length
+                    const ratCount = allStudents.filter((s: any) => s.decision_global === 'RAT').length
+                    const nvCount = allStudents.filter((s: any) => s.decision_global === 'NV' || (!['V', 'VAR', 'VPC', 'RAT'].includes(s.decision_global))).length
+
+                    return (
+                      <>
+                        <button
+                          onClick={() => setMatrixDecisionFilter('all')}
+                          className={cn(
+                            "px-2.5 py-1 rounded-lg font-extrabold text-[11px] transition-all cursor-pointer",
+                            matrixDecisionFilter === 'all'
+                              ? "bg-[#0f2863] text-white shadow-xs"
+                              : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
+                          )}
+                        >
+                          Tous ({allStudents.length})
+                        </button>
+                        <button
+                          onClick={() => setMatrixDecisionFilter('V')}
+                          className={cn(
+                            "px-2.5 py-1 rounded-lg font-extrabold text-[11px] transition-all cursor-pointer",
+                            matrixDecisionFilter === 'V'
+                              ? "bg-emerald-600 text-white shadow-xs"
+                              : "text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                          )}
+                        >
+                          Validés ({valCount})
+                        </button>
+                        <button
+                          onClick={() => setMatrixDecisionFilter('RAT')}
+                          className={cn(
+                            "px-2.5 py-1 rounded-lg font-extrabold text-[11px] transition-all cursor-pointer",
+                            matrixDecisionFilter === 'RAT'
+                              ? "bg-amber-600 text-white shadow-xs"
+                              : "text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30"
+                          )}
+                        >
+                          Rattrapage ({ratCount})
+                        </button>
+                        <button
+                          onClick={() => setMatrixDecisionFilter('NV')}
+                          className={cn(
+                            "px-2.5 py-1 rounded-lg font-extrabold text-[11px] transition-all cursor-pointer",
+                            matrixDecisionFilter === 'NV'
+                              ? "bg-rose-600 text-white shadow-xs"
+                              : "text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30"
+                          )}
+                        >
+                          Non Validés ({nvCount})
+                        </button>
+                      </>
+                    )
+                  })()}
                 </div>
 
                 {/* Mode Switcher: Compact vs Detailed */}
@@ -2124,7 +2135,7 @@ export default function AdminGradesPVPage() {
                 if (matrixDecisionFilter === 'V') return s.decision_global === 'V' || s.decision_global === 'VAR'
                 if (matrixDecisionFilter === 'VAR') return s.decision_global === 'VAR'
                 if (matrixDecisionFilter === 'RAT') return s.decision_global === 'RAT'
-                if (matrixDecisionFilter === 'NV') return s.decision_global === 'NV'
+                if (matrixDecisionFilter === 'NV') return s.decision_global === 'NV' || (!['V', 'VAR', 'VPC', 'RAT'].includes(s.decision_global))
 
                 return true
               })
@@ -2139,19 +2150,19 @@ export default function AdminGradesPVPage() {
                       <tr className="bg-[#0f2863] text-white">
                         <th
                           rowSpan={matrixViewMode === 'detailed' ? 2 : 1}
-                          className="py-3 px-3 font-black uppercase tracking-wider sticky left-0 z-30 bg-[#0f2863] text-white border-r border-slate-700/80 min-w-[95px] text-center"
+                          className="py-2.5 px-2 font-black uppercase tracking-wider sticky left-0 z-30 bg-[#0f2863] text-white border-r border-slate-700/80 min-w-[85px] w-[85px] text-center text-[11px]"
                         >
                           Apogée
                         </th>
                         <th
                           rowSpan={matrixViewMode === 'detailed' ? 2 : 1}
-                          className="py-3 px-3 font-black uppercase tracking-wider sticky left-[95px] z-30 bg-[#0f2863] text-amber-200 border-r border-slate-700/80 min-w-[85px] text-center"
+                          className="py-2.5 px-2 font-black uppercase tracking-wider sticky left-[85px] z-30 bg-[#0f2863] text-amber-200 border-r border-slate-700/80 min-w-[75px] w-[75px] text-center text-[11px]"
                         >
                           CIN
                         </th>
                         <th
                           rowSpan={matrixViewMode === 'detailed' ? 2 : 1}
-                          className="py-3 px-4 font-black uppercase tracking-wider sticky left-[180px] z-30 bg-[#0f2863] text-white border-r-2 border-slate-300 dark:border-slate-700 shadow-[4px_0_8px_-2px_rgba(0,0,0,0.08)] min-w-[190px]"
+                          className="py-2.5 px-3 font-black uppercase tracking-wider sticky left-[160px] z-30 bg-[#0f2863] text-white border-r-2 border-slate-300 dark:border-slate-700 shadow-[4px_0_8px_-2px_rgba(0,0,0,0.08)] min-w-[140px] max-w-[155px] text-[11px]"
                         >
                           Nom & Prénom
                         </th>
@@ -2249,7 +2260,7 @@ export default function AdminGradesPVPage() {
                             <tr key={s.student_id} className={cn("transition-colors", rowOpaqueBg, rowHoverBg)}>
                               {/* Apogee: 100% Solid background to completely prevent bleed-through */}
                               <td className={cn(
-                                "py-2.5 px-3 font-mono font-bold text-xs text-slate-800 dark:text-slate-200 border-r border-b border-slate-200 dark:border-slate-800 sticky left-0 z-20 text-center shadow-xs",
+                                "py-2 px-2 font-mono font-bold text-xs text-slate-800 dark:text-slate-200 border-r border-b border-slate-200 dark:border-slate-800 sticky left-0 z-20 text-center shadow-xs min-w-[85px] w-[85px]",
                                 rowOpaqueBg
                               )}>
                                 {s.apogee}
@@ -2257,25 +2268,27 @@ export default function AdminGradesPVPage() {
 
                               {/* CIN: Dedicated column */}
                               <td className={cn(
-                                "py-2.5 px-3 font-mono font-bold text-xs text-indigo-950 dark:text-indigo-200 border-r border-b border-slate-200 dark:border-slate-800 sticky left-[95px] z-20 text-center shadow-xs",
+                                "py-2 px-2 font-mono font-black text-xs text-indigo-950 dark:text-indigo-200 border-r border-b border-slate-200 dark:border-slate-800 sticky left-[85px] z-20 text-center shadow-xs min-w-[75px] w-[75px]",
                                 rowOpaqueBg
                               )}>
                                 {s.cin || '–'}
                               </td>
 
-                              {/* Student Name: 100% Solid background, clear distinction */}
+                              {/* Student Name: Reduced width and compact font size */}
                               <td className={cn(
-                                "py-2 px-4 border-r-2 border-b border-slate-300 dark:border-slate-700 sticky left-[180px] z-20 whitespace-nowrap shadow-[4px_0_8px_-2px_rgba(0,0,0,0.08)]",
+                                "py-2 px-3 border-r-2 border-b border-slate-300 dark:border-slate-700 sticky left-[160px] z-20 shadow-[4px_0_8px_-2px_rgba(0,0,0,0.08)] min-w-[140px] max-w-[155px]",
                                 rowOpaqueBg
                               )}>
-                                <span className="font-extrabold text-xs text-slate-900 dark:text-white flex items-center gap-1.5">
-                                  {s.last_name?.toUpperCase()} {s.first_name}
+                                <div className="flex items-center gap-1 min-w-0" title={`${s.last_name?.toUpperCase()} ${s.first_name}`}>
+                                  <span className="font-extrabold text-[11px] text-slate-900 dark:text-white truncate">
+                                    {s.last_name?.toUpperCase()} {s.first_name}
+                                  </span>
                                   {hasStudentFraud && (
-                                    <span className="px-1.5 py-0.5 bg-rose-600 text-white rounded text-[9px] font-black uppercase">
+                                    <span className="px-1 py-0.2 bg-rose-600 text-white rounded text-[8.5px] font-black uppercase shrink-0">
                                       FRAUDE
                                     </span>
                                   )}
-                                </span>
+                                </div>
                               </td>
 
                               {/* 7 Modules Data */}
