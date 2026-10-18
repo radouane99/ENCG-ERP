@@ -121,20 +121,93 @@ class GradeService
     }
 
     /**
-     * Vérifie si la saisie des notes de l'examen est verrouillée.
+     * Vérifie si la saisie des notes de l'examen est verrouillée selon la phase globale de l'établissement.
      */
     public function isExamLocked(Assessment $assessment): ?string
     {
         $institution = Institution::first();
-        if ($institution) {
-            $settings = is_array($institution->settings)
-                ? $institution->settings
-                : (is_string($institution->settings) ? json_decode($institution->settings, true) : []);
+        if (! $institution) {
+            return null;
+        }
 
-            $currentPhase = $settings['exam_lock_phase'] ?? null;
-            if ($currentPhase && in_array($currentPhase, ['Verrouillage Total', 'Verrouillé'])) {
-                return "La saisie des notes est actuellement verrouillée par l'administration (Phase: {$currentPhase}).";
-            }
+        $settings = is_array($institution->settings)
+            ? $institution->settings
+            : (is_string($institution->settings) ? json_decode($institution->settings, true) : []);
+
+        $currentPhase = $settings['exam_lock_phase'] ?? 'Verrouillé';
+        $deadline = $settings['exam_lock_deadline'] ?? null;
+
+        // 1. Verrouillage total ou statut verrouillé
+        if (in_array($currentPhase, ['Verrouillage Total', 'Verrouillé'])) {
+            return "La saisie des notes d'examen et de rattrapage est actuellement verrouillée par l'administration (Phase: {$currentPhase}).";
+        }
+
+        // 2. Vérification de la date limite officielle (si configurée)
+        if ($deadline) {
+            try {
+                if (\Carbon\Carbon::parse($deadline)->isPast()) {
+                    return "Le délai limite officiel fixé par l'administration pour cette session est expiré ({$deadline}). Les modifications sont bloquées.";
+                }
+            } catch (\Throwable) {}
+        }
+
+        $isRattrapage = $this->isRattrapageAssessment($assessment);
+        $isExam = $this->isExamAssessment($assessment);
+
+        // Si ce n'est ni un examen ni un rattrapage (ex: CC1, CC2, TP, devoir), la saisie reste ouverte (contrôle continu)
+        if (! $isRattrapage && ! $isExam) {
+            return null;
+        }
+
+        // Déterminer le semestre du module (Impairs = Automne [S1, S3, S5, S7, S9], Pairs = Printemps [S2, S4, S6, S8, S10])
+        $module = $assessment->relationLoaded('module') ? $assessment->module : ($assessment->module_id ? Module::find($assessment->module_id) : null);
+        $semNum = (int) ($module?->semester_number ?? 1);
+        $isOddSemester = ($semNum % 2 !== 0); // Automne
+        $isEvenSemester = ! $isOddSemester;   // Printemps
+
+        // 3. Vérification selon les 4 phases de la matrice de verrouillage
+        switch ($currentPhase) {
+            case 'Ordinaire Automne':
+                if ($isEvenSemester) {
+                    return "La phase active est « Ordinaire Automne ». La saisie pour les semestres pairs (Printemps) est verrouillée.";
+                }
+                if ($isRattrapage) {
+                    return "La session de rattrapage d'automne est actuellement verrouillée (fermée). Seule la session ordinaire d'automne est ouverte.";
+                }
+                break;
+
+            case 'Rattrapage Automne':
+                if ($isEvenSemester) {
+                    return "La phase active est « Rattrapage Automne ». La saisie pour les semestres pairs (Printemps) est verrouillée.";
+                }
+                if (! $isRattrapage) {
+                    return "La session ordinaire d'automne est clôturée. Seule la saisie des notes de rattrapage d'automne est autorisée.";
+                }
+                break;
+
+            case 'Ordinaire Printemps':
+                if ($isOddSemester) {
+                    return "La phase active est « Ordinaire Printemps ». La saisie pour les semestres impairs (Automne) est verrouillée.";
+                }
+                if ($isRattrapage) {
+                    return "La session de rattrapage de printemps est actuellement verrouillée (fermée). Seule la session ordinaire de printemps est ouverte.";
+                }
+                break;
+
+            case 'Rattrapage Printemps':
+                if ($isOddSemester) {
+                    return "La phase active est « Rattrapage Printemps ». La saisie pour les semestres impairs (Automne) est verrouillée.";
+                }
+                if (! $isRattrapage) {
+                    return "La session ordinaire de printemps est clôturée. Seule la saisie des notes de rattrapage de printemps est autorisée.";
+                }
+                break;
+
+            default:
+                if ($isRattrapage && ! str_contains(strtolower($currentPhase), 'rattrapage')) {
+                    return "La session de rattrapage n'est pas ouverte par l'administration (Phase actuelle : {$currentPhase}).";
+                }
+                break;
         }
 
         return null;

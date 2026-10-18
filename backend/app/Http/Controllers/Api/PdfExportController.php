@@ -1039,6 +1039,8 @@ class PdfExportController extends Controller
             $perimetreLabel .= ' (Bilan Complet)';
         }
 
+        $orientation = 'portrait';
+
         $pdf = Pdf::setOption(['isRemoteEnabled' => true, 'chroot' => public_path()])
             ->loadView('pdf.module_pv', [
                 'module' => $module,
@@ -1053,14 +1055,15 @@ class PdfExportController extends Controller
                 'academicYear' => '2026/2027',
                 'semester' => 'S'.($module->semester_number ?? 1),
                 'date' => date('d/m/Y H:i'),
-            ])->setPaper('a4', 'landscape');
+            ])->setPaper('a4', $orientation);
 
         $moduleNameClean = preg_replace('/[^\p{L}\p{N}\-_]+/u', '_', trim($module->name ?? ''));
         $moduleNameClean = trim($moduleNameClean, '_');
         if (empty($moduleNameClean)) {
             $moduleNameClean = $module->code ?: "Module_{$moduleId}";
         }
-        $filename = "PV_Deliberation_Module_{$moduleNameClean}.pdf";
+        $suffix = ($session === 'rattrapage') ? '_Session_Rattrapage' : '';
+        $filename = "PV_Deliberation_Module_{$moduleNameClean}{$suffix}.pdf";
 
         return $pdf->download($filename, [
             'Content-Type' => 'application/pdf',
@@ -1082,8 +1085,9 @@ class PdfExportController extends Controller
         }
 
         $rattrapageAssessment = $module->assessments->first(fn ($a) => str_contains(strtolower($a->type), 'rattrapage'));
+        $normaleAssessments = $module->assessments->filter(fn ($a) => ! str_contains(strtolower($a->type), 'rattrapage'));
 
-        $data = $accorded->map(function ($eligibility) use ($rattrapageAssessment) {
+        $data = $accorded->map(function ($eligibility) use ($rattrapageAssessment, $normaleAssessments) {
             $student = $eligibility->student;
             if (! $student) {
                 return null;
@@ -1097,12 +1101,22 @@ class PdfExportController extends Controller
             $rattrapageAbsent = $rGrade ? (bool) $rGrade->absent : false;
             $decisionFinale = $rattrapageAbsent ? 'ABI' : ($rattrapageVal !== null ? (floatval($rattrapageVal) >= 10 ? 'VAR' : 'NV') : 'Non saisi');
 
+            $gradesDetail = [];
+            foreach ($normaleAssessments as $na) {
+                $g = Grade::where('student_id', $student->id)->where('assessment_id', $na->id)->first();
+                $gradesDetail[$na->id] = [
+                    'value' => $g?->value,
+                    'is_absent' => (bool) $g?->absent,
+                ];
+            }
+
             return [
                 'student_id' => $student->id,
                 'apogee' => $student->student_number ?? $student->id,
                 'last_name' => $student->last_name,
                 'first_name' => $student->first_name,
                 'raison' => $eligibility->reason,
+                'grades_detail' => $gradesDetail,
                 'rattrapage_note' => $rattrapageVal,
                 'rattrapage_absent' => $rattrapageAbsent,
                 'decision_finale' => $decisionFinale,
@@ -1116,7 +1130,7 @@ class PdfExportController extends Controller
             ->loadView('pdf.module_pv', [
                 'module' => $module,
                 'session' => 'rattrapage',
-                'normaleAssessments' => collect(),
+                'normaleAssessments' => $normaleAssessments,
                 'students' => $data,
                 'logoBase64' => $this->getLogoBase64(),
                 'qrBase64' => $qrBase64,
@@ -1125,9 +1139,19 @@ class PdfExportController extends Controller
                 'academicYear' => '2026/2027',
                 'semester' => 'S'.($module->semester_number ?? 1),
                 'date' => date('d/m/Y H:i'),
-            ])->setPaper('a4', 'landscape');
+            ])->setPaper('a4', 'portrait');
 
-        return $pdf->download("PV_Rattrapage_{$module->code}.pdf");
+        $moduleNameClean = preg_replace('/[^\p{L}\p{N}\-_]+/u', '_', trim($module->name ?? ''));
+        $moduleNameClean = trim($moduleNameClean, '_');
+        if (empty($moduleNameClean)) {
+            $moduleNameClean = $module->code ?: "Module_{$moduleId}";
+        }
+        $filename = "PV_Deliberation_Module_{$moduleNameClean}_Session_Rattrapage.pdf";
+
+        return $pdf->download($filename, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ]);
     }
 
     // ─── PV SEMESTRIEL ──────────────────────────────────────────

@@ -698,7 +698,11 @@ export default function AdminGradesPVPage() {
         const rawName = pvData?.module?.name || modules.find((m: any) => String(m.id) === String(moduleId))?.name
         if (rawName) {
           const cleanName = rawName.replace(/[\s/\\?%*:|"<>]+/g, '_').replace(/^_+|_+$/g, '')
-          filename = `PV_Deliberation_Module_${cleanName}.pdf`
+          const suffix = session === 'rattrapage' ? '_Session_Rattrapage' : ''
+          filename = `PV_Deliberation_Module_${cleanName}${suffix}.pdf`
+        } else {
+          const suffix = session === 'rattrapage' ? '_Session_Rattrapage' : ''
+          filename = `PV_Deliberation_Module_${moduleId}${suffix}.pdf`
         }
       }
 
@@ -3670,7 +3674,7 @@ export default function AdminGradesPVPage() {
                                     type="text"
                                     placeholder="Note"
                                     value={rattrapageGrades[student.student_id]?.value || ''}
-                                    disabled={rattrapageGrades[student.student_id]?.absent || session === 'totale'}
+                                    disabled={rattrapageGrades[student.student_id]?.absent || session === 'totale' || Boolean(pvData?.is_rattrapage_locked)}
                                     onChange={(e) => handleInputChange(student.student_id, 'value', e.target.value)}
                                     className="w-16 p-1 border rounded-lg text-center font-bold text-slate-800 focus:border-amber-500 outline-none disabled:bg-slate-100 disabled:text-slate-400"
                                   />
@@ -3679,8 +3683,9 @@ export default function AdminGradesPVPage() {
                                       <input
                                         type="checkbox"
                                         checked={rattrapageGrades[student.student_id]?.absent || false}
+                                        disabled={Boolean(pvData?.is_rattrapage_locked)}
                                         onChange={(e) => handleInputChange(student.student_id, 'absent', e.target.checked)}
-                                        className="rounded border-slate-300 text-red-600 focus:ring-red-500"
+                                        className="rounded border-slate-300 text-red-600 focus:ring-red-500 disabled:opacity-50"
                                       />
                                       <span className="text-[10px] font-bold text-red-500">ABI</span>
                                     </label>
@@ -3726,13 +3731,24 @@ export default function AdminGradesPVPage() {
             </table>
           </div>
 
+          {/* Rattrapage Locked Notice Banner */}
+          {session === 'rattrapage' && pvData?.is_rattrapage_locked && (
+            <div className="mt-4 p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border-2 border-amber-400 text-amber-900 dark:text-amber-200 flex items-center gap-3 print:hidden">
+              <Lock className="w-5 h-5 text-amber-600 shrink-0" />
+              <div>
+                <p className="font-black text-xs uppercase tracking-wider">Session de Rattrapage Actuellement Verrouillée 🔒</p>
+                <p className="text-xs font-medium">{pvData?.rattrapage_lock_reason || "La session de rattrapage est actuellement fermée par l'administration (Phase active : Ordinaire Automne)."}</p>
+              </div>
+            </div>
+          )}
+
           {/* Rattrapage Saving action bar — only in rattrapage tab, only for R students */}
           {session === 'rattrapage' && (
             <div className="mt-8 flex justify-between items-center print:hidden">
               <Button
                 type="button"
                 onClick={handleGenerateEligibilities}
-                disabled={isGeneratingEligibilities}
+                disabled={isGeneratingEligibilities || Boolean(pvData?.is_rattrapage_locked)}
                 variant="outline"
                 className="border-amber-300 text-amber-700 hover:bg-amber-50 rounded-xl flex items-center gap-2 text-xs font-bold"
               >
@@ -3741,11 +3757,11 @@ export default function AdminGradesPVPage() {
               </Button>
               <Button
                 type="submit"
-                disabled={saveMutation.isPending}
-                className="bg-amber-600 text-white hover:bg-amber-700 rounded-xl flex items-center gap-2 text-xs font-bold"
+                disabled={saveMutation.isPending || Boolean(pvData?.is_rattrapage_locked)}
+                className="bg-amber-600 text-white hover:bg-amber-700 rounded-xl flex items-center gap-2 text-xs font-bold disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {saveMutation.isPending ? <Spinner className="text-white" /> : <Save className="w-4 h-4" />}
-                Enregistrer les notes de Rattrapage
+                {pvData?.is_rattrapage_locked ? 'Saisie Verrouillée 🔒' : 'Enregistrer les notes de Rattrapage'}
               </Button>
             </div>
           )}

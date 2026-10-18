@@ -76,10 +76,14 @@ class GradeController extends Controller
             ];
         });
 
+        $lockMessage = $this->gradeService->isExamLocked($assessment);
+        $isLocked = ($isSigned && $isExam) || ($lockMessage !== null);
+
         return response()->json([
             'success' => true,
             'data' => $data,
-            'is_locked' => $isSigned && $isExam,
+            'is_locked' => $isLocked,
+            'lock_reason' => $lockMessage,
             'is_module_pv_signed' => $isSigned,
             'is_exam' => $isExam,
             'signature' => $signatureRecord ? [
@@ -259,6 +263,27 @@ class GradeController extends Controller
         $signature = $this->getPvSignature($moduleId);
         $analytics = $this->gradeService->calculateAnalytics($data);
 
+        $isRattrapageLocked = false;
+        $rattrapageLockReason = null;
+        if ($rattrapageAssessment) {
+            $rLockMsg = $this->gradeService->isExamLocked($rattrapageAssessment);
+            if ($rLockMsg !== null) {
+                $isRattrapageLocked = true;
+                $rattrapageLockReason = $rLockMsg;
+            }
+        }
+
+        $normaleExamAssessment = $normaleAssessments->first(fn ($a) => $this->gradeService->isExamAssessment($a));
+        $isNormaleLocked = false;
+        $normaleLockReason = null;
+        if ($normaleExamAssessment) {
+            $nLockMsg = $this->gradeService->isExamLocked($normaleExamAssessment);
+            if ($nLockMsg !== null) {
+                $isNormaleLocked = true;
+                $normaleLockReason = $nLockMsg;
+            }
+        }
+
         return response()->json([
             'success' => true,
             'module' => ['id' => $module->id, 'name' => $module->name, 'code' => $module->code],
@@ -268,6 +293,10 @@ class GradeController extends Controller
             'data' => $data,
             'signature' => $signature,
             'analytics' => $analytics,
+            'is_rattrapage_locked' => $isRattrapageLocked,
+            'rattrapage_lock_reason' => $rattrapageLockReason,
+            'is_normale_locked' => $isNormaleLocked,
+            'normale_lock_reason' => $normaleLockReason,
         ]);
     }
 
