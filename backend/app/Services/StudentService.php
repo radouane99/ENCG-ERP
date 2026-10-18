@@ -39,6 +39,14 @@ class StudentService
 
         if (! empty($filters['status'])) {
             $query->where('students.status', $filters['status']);
+        } elseif (empty($filters['include_pending'])) {
+            // Par défaut, le Registre Général des Étudiants ne doit afficher que les étudiants officiellement inscrits (actifs)
+            // et NE PAS inclure les simples candidats TAFEM en attente de finalisation d'inscription.
+            $query->where('students.status', '!=', 'pending')
+                ->where(function ($q) {
+                    $q->whereNull('students.inscription_status')
+                        ->orWhereNotIn('students.inscription_status', ['admis_tafem', 'liste_principale', 'liste_attente']);
+                });
         }
 
         if (! empty($filters['filiere_id'])) {

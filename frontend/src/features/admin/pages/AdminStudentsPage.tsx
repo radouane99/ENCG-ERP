@@ -443,12 +443,20 @@ export default function AdminStudentsPage() {
                     <div className="flex flex-col gap-1.5">
                       {/* Filière, Semestre & Groupe CM */}
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-extrabold text-slate-900 dark:text-white text-xs">
-                          {s.current_filiere || 'TC'}
-                        </span>
-                        <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60">
-                          S{s.current_semester || 1}
-                        </span>
+                        {s.current_filiere ? (
+                          <>
+                            <span className="font-extrabold text-slate-900 dark:text-white text-xs">
+                              {s.current_filiere}
+                            </span>
+                            <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60">
+                              S{s.current_semester || 1}
+                            </span>
+                          </>
+                        ) : (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                            Non affecté
+                          </span>
+                        )}
                         {s.current_group && (
                           <span className="text-[11px] text-slate-600 dark:text-slate-300 font-bold truncate max-w-[140px]" title={s.current_group}>
                             {s.current_group.split(' - ')[0]}
@@ -478,9 +486,15 @@ export default function AdminStudentsPage() {
                           </span>
                         )}
 
-                        <span className="text-[10px] font-mono font-bold text-slate-400">
-                          MATRICULE : {s.student_number || ('2026' + s.id)}
-                        </span>
+                        {s.student_number && s.student_number !== 'En attente' ? (
+                          <span className="text-[10px] font-mono font-bold text-slate-400">
+                            MATRICULE : {s.student_number}
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-mono font-bold text-amber-500">
+                            Inscription en attente
+                          </span>
+                        )}
                       </div>
                     </div>
                   </td>
