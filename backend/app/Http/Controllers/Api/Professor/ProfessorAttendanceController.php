@@ -129,15 +129,42 @@ class ProfessorAttendanceController extends Controller
     /**
      * Récupérer la liste exacte des étudiants selon la filière, l'année et le groupe (G1, G2 ou Tous les groupes).
      */
+    /**
+     * Récupérer la liste exacte des étudiants selon la filière, l'année et le groupe (G1, G2 ou Tous les groupes).
+     */
     public function getStudents(Request $request): JsonResponse
     {
+        $sessionId = $request->input('session_id') ?? $request->input('schedule_id');
         $groupLabel = (string) $request->input('group_label', '');
         $groupName = (string) $request->input('group_name', '');
         $filiereCode = (string) $request->input('filiere_code', '');
         $semesterNum = $request->integer('semester_number');
+        $scheduleGroupId = null;
+        $sessionType = '';
+        $schedule = null;
+
+        // Si session_id est fourni, charger les métadonnées officielles de la séance d'emploi du temps
+        if ($sessionId && is_numeric($sessionId)) {
+            $schedule = Schedule::with(['module.filiere', 'group', 'room'])->find($sessionId);
+            if ($schedule) {
+                if (! $filiereCode && $schedule->module?->filiere?->code) {
+                    $filiereCode = $schedule->module->filiere->code;
+                }
+                if (! $semesterNum && $schedule->module?->semester_number) {
+                    $semesterNum = $schedule->module->semester_number;
+                }
+                if (! $groupLabel && $schedule->group?->name) {
+                    $groupLabel = $schedule->group->name;
+                }
+                if ($schedule->group_id) {
+                    $scheduleGroupId = $schedule->group_id;
+                }
+                $sessionType = strtoupper($schedule->session_type ?? 'CM');
+            }
+        }
 
         $academicYear = AcademicYear::query()->where('is_current', true)->first();
-        $combined = trim($groupLabel.' '.$groupName.' '.$filiereCode);
+        $combined = trim($groupLabel.' '.$groupName.' '.$filiereCode.' '.$sessionType);
 
         // 1. Détection du semestre académique (ex: S1 -> 1, S5 -> 5)
         if (! $semesterNum) {
@@ -148,12 +175,12 @@ class ProfessorAttendanceController extends Controller
             }
         }
 
-        // 2. Détection de la portée : Les examens en amphi regroupent TOUJOURS les 24 étudiants (G1 + G2)
+        // 2. Détection de la portée et du groupe ciblé (Règle 3 : toujours filtrer par groupe s'il est spécifié)
         $isExam = $request->boolean('is_exam')
             || $request->input('context') === 'exam'
-            || preg_match('/(exam|surveillance|amphi|amphithéâtre)/i', $combined);
+            || preg_match('/(exam|surveillance)/i', $combined);
 
-        $isAllGroups = $isExam || (bool) preg_match('/(tous|all|section|promo|g1\s*\+\s*g2)/i', $combined);
+        $isAllGroups = $isExam || (bool) preg_match('/(tous|all|section\s*complète|promo|g1\s*\+\s*g2)/i', $combined);
         $targetGroupNum = null;
 
         if (! $isAllGroups) {
@@ -161,12 +188,22 @@ class ProfessorAttendanceController extends Controller
                 $targetGroupNum = 2;
             } elseif (preg_match('/G1|Groupe\s*1/i', $combined)) {
                 $targetGroupNum = 1;
+            } elseif (preg_match('/G3|Groupe\s*3/i', $combined)) {
+                $targetGroupNum = 3;
+            } elseif (preg_match('/G4|Groupe\s*4/i', $combined)) {
+                $targetGroupNum = 4;
             }
         }
 
         // 3. Identification de la filière
         $filiere = null;
-        if ($filiereCode !== '') {
+        if ($request->has('filiere_id')) {
+            $filiere = Filiere::find($request->input('filiere_id'));
+        }
+        if (! $filiere && ! empty($schedule?->module?->filiere)) {
+            $filiere = $schedule->module->filiere;
+        }
+        if (! $filiere && $filiereCode !== '') {
             $cleanCode = trim(str_ireplace(['TC-', 'S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8', 'S9', 'S10', '•', 'G1', 'G2'], '', $filiereCode));
             if ($cleanCode !== '') {
                 $filiere = Filiere::where('code', 'ILIKE', "%{$cleanCode}%")
@@ -174,10 +211,16 @@ class ProfessorAttendanceController extends Controller
                     ->first();
             }
         }
+        if (! $filiere) {
+            $filiere = Filiere::where('code', 'TC')->first() ?? Filiere::first();
+        }
 
         // 4. Requête officielle des inscriptions d'étudiants (StudentRegistration)
-        $regQuery = StudentRegistration::with(['student.user', 'group', 'filiere'])
-            ->where('semester_number', $semesterNum);
+        // Les étudiants sont inscrits annuellement : le semestre en base peut être S1 ou S2 pour l'année 1
+        $yearLevel = (int) ceil($semesterNum / 2);
+        $semestersInYear = [($yearLevel * 2) - 1, $yearLevel * 2];
+
+        $regQuery = StudentRegistration::with(['student.user', 'group', 'filiere']);
 
         if ($academicYear) {
             $regQuery->where('academic_year_id', $academicYear->id);
@@ -187,14 +230,40 @@ class ProfessorAttendanceController extends Controller
             $regQuery->where('filiere_id', $filiere->id);
         }
 
-        // Si ce n'est PAS un examen et qu'un seul groupe est ciblé (ex: séance TD ordinaire)
-        if (! $isAllGroups && $targetGroupNum) {
-            $regQuery->whereHas('group', function ($q) use ($targetGroupNum) {
-                $q->where('name', 'ILIKE', "%{$targetGroupNum}%");
+        // Vérifier d'abord si le semestre exact a des inscriptions, sinon utiliser les semestres de l'année
+        $strictSemQuery = (clone $regQuery)->where('semester_number', $semesterNum);
+        if ($strictSemQuery->exists()) {
+            $regQuery->where('semester_number', $semesterNum);
+        } else {
+            $regQuery->whereIn('semester_number', $semestersInYear);
+        }
+
+        // Si ce n'est PAS un cours en amphi/examen et qu'un seul groupe est ciblé (séance TD/TP)
+        if (! $isAllGroups && ($targetGroupNum || $scheduleGroupId)) {
+            $regQuery->where(function ($q) use ($targetGroupNum, $scheduleGroupId) {
+                if ($scheduleGroupId) {
+                    $q->where('group_id', $scheduleGroupId);
+                }
+                if ($targetGroupNum) {
+                    $q->orWhereHas('group', function ($gq) use ($targetGroupNum) {
+                        $gq->where('name', 'ILIKE', "%G{$targetGroupNum}%")
+                           ->orWhere('name', 'ILIKE', "%Groupe {$targetGroupNum}%")
+                           ->orWhere('name', 'ILIKE', "%Groupe{$targetGroupNum}%");
+                    });
+                }
             });
         }
 
         $registrations = $regQuery->get();
+
+        // Si aucun étudiant avec le filtre groupe strict, récupérer tous les étudiants de la filière pour l'année
+        if ($registrations->isEmpty() && $filiere) {
+            $registrations = StudentRegistration::with(['student.user', 'group', 'filiere'])
+                ->where('filiere_id', $filiere->id)
+                ->where('academic_year_id', $academicYear?->id ?? 3)
+                ->whereIn('semester_number', $semestersInYear)
+                ->get();
+        }
 
         if ($registrations->isNotEmpty()) {
             $data = $registrations->map(function ($reg) {
@@ -215,7 +284,7 @@ class ProfessorAttendanceController extends Controller
                     'filiere' => $reg->filiere?->name ?? '—',
                     'status' => 'present',
                 ];
-            });
+            })->sortBy('name')->values();
 
             return response()->json([
                 'success' => true,

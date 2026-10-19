@@ -404,6 +404,7 @@ class DashboardAnalyticsService
             if (Schema::hasTable('schedules')) {
                 $scheduleRows = DB::table('schedules')
                     ->leftJoin('modules', 'schedules.module_id', '=', 'modules.id')
+                    ->leftJoin('filieres', 'modules.filiere_id', '=', 'filieres.id')
                     ->leftJoin('rooms', 'schedules.room_id', '=', 'rooms.id')
                     ->leftJoin('groups', 'schedules.group_id', '=', 'groups.id')
                     ->where(function ($q) {
@@ -421,8 +422,14 @@ class DashboardAnalyticsService
                         'schedules.start_time',
                         'schedules.end_time',
                         'schedules.session_type',
+                        'schedules.group_id',
+                        'modules.id as module_id',
                         'modules.name as module_name',
                         'modules.code as module_code',
+                        'modules.semester_number',
+                        'filieres.id as filiere_id',
+                        'filieres.code as filiere_code',
+                        'filieres.name as filiere_name',
                         'rooms.name as room_name',
                         'groups.name as group_name'
                     )
@@ -448,7 +455,13 @@ class DashboardAnalyticsService
                         'location' => $sched->room_name ?? 'Salle ENCG',
                         'room' => $sched->room_name ?? 'Salle ENCG',
                         'group' => $sched->group_name ?? 'Groupe 1',
+                        'group_id' => $sched->group_id,
                         'session_type' => $type,
+                        'filiere_id' => $sched->filiere_id,
+                        'filiere_code' => $sched->filiere_code ?? 'TC',
+                        'filiere_name' => $sched->filiere_name ?? 'Tronc Commun',
+                        'semester_number' => $sched->semester_number ?? 1,
+                        'semester_label' => 'S'.($sched->semester_number ?? 1),
                     ];
                 })->values()->toArray();
             }

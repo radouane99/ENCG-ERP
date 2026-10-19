@@ -39,13 +39,15 @@ export function QRScannerModal({ isOpen, onClose, sessionId, sessionData }: QRSc
 
   // 1. Fetch Students of the group for the checklist
   const { data: students = [], isLoading: isLoadingStudents } = useQuery({
-    queryKey: ['group-students-attendance', sessionId, sessionData?.group, sessionData?.filiere_code],
+    queryKey: ['group-students-attendance', sessionId, sessionData?.group, sessionData?.filiere_code, (sessionData as any)?.semester_number],
     queryFn: async () => {
       const res = await api.get('/professor/attendance/students', {
         params: {
+          session_id: sessionId,
+          schedule_id: sessionId,
           group_label: sessionData?.group,
           filiere_code: sessionData?.filiere_code,
-          semester_number: (sessionData as any)?.semester_label ? parseInt((sessionData as any).semester_label.replace(/\D/g, ''), 10) : undefined,
+          semester_number: (sessionData as any)?.semester_number || ((sessionData as any)?.semester_label ? parseInt((sessionData as any).semester_label.replace(/\D/g, ''), 10) : undefined),
         },
       });
       return res.data?.data || [];

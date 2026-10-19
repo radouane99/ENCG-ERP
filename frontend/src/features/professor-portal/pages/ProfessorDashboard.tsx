@@ -59,6 +59,12 @@ interface NextClassItem {
   location?: string;
   room?: string;
   group?: string;
+  group_id?: number;
+  filiere_id?: number;
+  filiere_code?: string;
+  filiere_name?: string;
+  semester_number?: number;
+  semester_label?: string;
 }
 
 interface ModuleItem {
@@ -121,7 +127,7 @@ export default function ProfessorDashboard() {
   ).toUpperCase();
 
   const [activeAiModule, setActiveAiModule] = useState<number | null>(null);
-  const [activeScannerSession, setActiveScannerSession] = useState<number | null>(null);
+  const [activeScannerSession, setActiveScannerSession] = useState<NextClassItem | null>(null);
 
   // Persist signature acknowledgement
   const [hasAcknowledged, setHasAcknowledged] = useState<boolean>(() => {
@@ -719,7 +725,7 @@ export default function ProfessorDashboard() {
 
                         <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
                           <button 
-                            onClick={() => setActiveScannerSession(cls.session_id || 1)}
+                            onClick={() => setActiveScannerSession(cls)}
                             className="px-4 py-2.5 bg-[#001A4B] hover:bg-[#082663] text-white rounded-xl text-xs font-black uppercase tracking-wider transition-colors shadow-sm cursor-pointer flex items-center gap-1.5"
                           >
                             <QrCode className="w-3.5 h-3.5 text-amber-300" /> Faire l'Appel
@@ -893,7 +899,8 @@ export default function ProfessorDashboard() {
       <QRScannerModal 
         isOpen={!!activeScannerSession} 
         onClose={() => setActiveScannerSession(null)} 
-        sessionId={activeScannerSession!} 
+        sessionId={activeScannerSession?.session_id || 1} 
+        sessionData={activeScannerSession || undefined}
       />
 
       {/* ✍️ SIGNATURE ÉLECTRONIQUE & ACCUSÉ DE RÉCEPTION MODAL */}
