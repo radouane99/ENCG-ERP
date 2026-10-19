@@ -1,0 +1,522 @@
+{
+	"info": {
+		"_postman_id": "e4a2c1d0-9988-4f2a-b7a1-encg-deliberations-v1",
+		"name": "ENCG Fès ERP — Suite Officielle de Test API",
+		"description": "Collection Postman complète et professionnelle pour tester et démontrer les APIs du Système d'Information de l'ENCG Fès : Authentification JWT/Sanctum, Délibérations LMD & APOGEE (PV 7 Modules), Signature Numérique du Jury, Rachat délibératoire, et Conformité Réglementaire CGI Maroc.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "01. Authentification & Profil",
+			"item": [
+				{
+					"name": "Connexion Super Admin (Génère le Token)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200 - Connexion réussie\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"var jsonData = pm.response.json();",
+									"var token = jsonData.token || (jsonData.data && jsonData.data.token);",
+									"",
+									"if (token) {",
+									"    pm.environment.set(\"auth_token\", token);",
+									"    console.log(\"✅ Token Sanctum sauvegardé avec succès dans l'environnement Postman !\");",
+									"} else {",
+									"    console.warn(\"⚠️ Aucun token trouvé dans la réponse.\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"admin@encg.ma\",\n    \"password\": \"password\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"login"
+							]
+						},
+						"description": "Authentifie l'administrateur et extrait automatiquement le Token Bearer pour toutes les autres requêtes."
+					},
+					"response": []
+				},
+				{
+					"name": "Vérifier le profil connecté (Me)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/me",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"me"
+							]
+						},
+						"description": "Renvoie les informations de l'utilisateur connecté avec ses rôles et permissions."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "02. Délibérations Semestrielles (Matrice 7 Modules)",
+			"item": [
+				{
+					"name": "Consulter le PV Semestriel Consolidé (7 Modules S5 MCM)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"var data = pm.response.json();",
+									"pm.test(\"Effectif de 24 étudiants retourné\", function () {",
+									"    pm.expect(data.students).to.be.an('array');",
+									"    pm.expect(data.students.length).to.eql(24);",
+									"});",
+									"",
+									"pm.test(\"Contient les 7 modules du semestre\", function () {",
+									"    pm.expect(data.modules.length).to.eql(7);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/grades/pv/semester?filiere_id=15&semester=5&academic_year_id=3&session=normale",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"grades",
+								"pv",
+								"semester"
+							],
+							"query": [
+								{
+									"key": "filiere_id",
+									"value": "15",
+									"description": "15 = Management Commercial et Marketing (MCM)"
+								},
+								{
+									"key": "semester",
+									"value": "5",
+									"description": "Semestre 5 (7 Modules)"
+								},
+								{
+									"key": "academic_year_id",
+									"value": "3",
+									"description": "Année académique courante (2026/2027)"
+								},
+								{
+									"key": "session",
+									"value": "normale"
+								}
+							]
+						},
+						"description": "Retourne la matrice consolidée des 7 modules pour les 24 étudiants de MCM S5, avec les moyennes, les statuts de validation (V, VPC, NV) et les éliminations (< 6.00)."
+					},
+					"response": []
+				},
+				{
+					"name": "Exporter le PV Officiel PDF (1 Page A4 Paysage + 8 Signataires)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200 - PDF généré\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Content-Type est application/pdf\", function () {",
+									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/pdf\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/pdf"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"type\": \"semestriel\",\n    \"filiere_id\": 15,\n    \"academic_year_id\": 3,\n    \"semester_number\": 5,\n    \"session\": \"normale\",\n    \"signed\": \"true\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/deliberations/export-pv-pdf",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"deliberations",
+								"export-pv-pdf"
+							]
+						},
+						"description": "Génère le document PDF officiel A4 Paysage intégrant les 24 étudiants, leurs notes par module, la moyenne semestrielle et la grille d'émargement officielle des 8 membres du jury."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "03. Signature Numérique & Suivi du Jury (8 Membres)",
+			"item": [
+				{
+					"name": "Statut des Signatures du Jury Semestriel",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/academic/deliberations/jury-status?filiere_id=15&academic_year_id=3&semester_number=5&type=semestriel",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"academic",
+								"deliberations",
+								"jury-status"
+							],
+							"query": [
+								{
+									"key": "filiere_id",
+									"value": "15"
+								},
+								{
+									"key": "academic_year_id",
+									"value": "3"
+								},
+								{
+									"key": "semester_number",
+									"value": "5"
+								},
+								{
+									"key": "type",
+									"value": "semestriel"
+								}
+							]
+						},
+						"description": "Affiche l'état des signatures des 7 professeurs de module et du Chef de Filière."
+					},
+					"response": []
+				},
+				{
+					"name": "Signer Numériquement un Module par un Membre du Jury",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"filiere_id\": 15,\n    \"academic_year_id\": 3,\n    \"semester_number\": 5,\n    \"type\": \"semestriel\",\n    \"module_code\": \"MCM-S5-M01\",\n    \"signature_data\": \"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==\",\n    \"digital_seal\": \"SIG-MCM-S5-M01-VALIDATED-2026\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/academic/deliberations/sign-jury",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"academic",
+								"deliberations",
+								"sign-jury"
+							]
+						},
+						"description": "Enregistre la signature électronique et le scellé cryptographique d'un membre du jury pour son module."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "04. Compensation Annuelle & Règles LMD APOGEE",
+			"item": [
+				{
+					"name": "Calcul de la Compensation Annuelle (S5 + S6)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/academic/deliberations/annual-compensation?filiere_id=15&academic_year_id=3&year_level=3",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"academic",
+								"deliberations",
+								"annual-compensation"
+							],
+							"query": [
+								{
+									"key": "filiere_id",
+									"value": "15"
+								},
+								{
+									"key": "academic_year_id",
+									"value": "3"
+								},
+								{
+									"key": "year_level",
+									"value": "3"
+								}
+							]
+						},
+						"description": "Calcule la compensation inter-semestrielle LMD (Moyenne Annuelle >= 10/20, aucune note éliminatoire < 6/20, max 4 modules non validés compensables)."
+					},
+					"response": []
+				},
+				{
+					"name": "Appliquer un Rachat Délibératoire (+0.50 pt Clémence)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"student_id\": 50,\n    \"module_id\": 78,\n    \"bonus_points\": 0.50,\n    \"reason\": \"Rachat délibératoire APOGEE pour débloquer la compensation VPC\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/deliberations/apply-rachat",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"deliberations",
+								"apply-rachat"
+							]
+						},
+						"description": "Accorde une bonification de jury pour racheter une note proche du seuil éliminatoire (ex: 5.75 -> 6.25)."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "05. Conformité Légale & Fiscale CGI (Article 73-II-F)",
+			"item": [
+				{
+					"name": "Test de Sécurité RBAC : Vacataire demandant Attestation Titulaire (Doit retourner 403 Forbidden)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Sécurité CGI respectée : HTTP 403 Interdit\", function () {",
+									"    pm.expect([403, 401]).to.include(pm.response.code);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"document_type\": \"attestation_travail\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/professor/documents/request",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"professor",
+								"documents",
+								"request"
+							]
+						},
+						"description": "Démontre au professeur la conformité juridique : Un enseignant vacataire n'a pas le droit de demander une Attestation de Travail (réservée aux fonctionnaires titulaires d'État). L'API rejette avec 403 Forbidden."
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000"
+		}
+	]
+}

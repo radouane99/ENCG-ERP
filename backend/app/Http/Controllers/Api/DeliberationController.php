@@ -400,19 +400,20 @@ class DeliberationController extends Controller
     public function exportPvQuery(Request $request)
     {
         try {
-            $type = $request->query('type', 'annuel');
-            $filiereId = (int) $request->query('filiere_id', 1);
-            $academicYearId = (int) $request->query('academic_year_id', 0);
-            $yearLevel = (int) $request->query('year_level', 1);
-            $semesterNum = (int) $request->query('semester_number', 1);
+            $type = $request->input('type', $request->query('type', 'semestriel'));
+            $filiereId = (int) $request->input('filiere_id', $request->query('filiere_id', 1));
+            $requestedYearId = (int) $request->input('academic_year_id', $request->query('academic_year_id', 0));
+            $academicYearId = $this->resolveAcademicYearId($requestedYearId);
+            $yearLevel = (int) $request->input('year_level', $request->query('year_level', 1));
+            $semesterNum = (int) $request->input('semester_number', $request->query('semester_number', 1));
+            $isSigned = filter_var($request->input('signed', $request->query('signed', false)), FILTER_VALIDATE_BOOLEAN);
+            $signatureData = $request->input('signature_data', $request->query('signature_data'));
 
             $filiere = Filiere::find($filiereId);
             if (! $filiere) {
                 $filiere = Filiere::first();
                 $filiereId = $filiere ? $filiere->id : $filiereId;
             }
-            $requestedYearId = (int) $request->query('academic_year_id', 0);
-            $academicYearId = $this->resolveAcademicYearId($requestedYearId);
             $academicYear = AcademicYear::find($academicYearId);
             if (! $academicYear) {
                 $academicYear = AcademicYear::first();
@@ -454,21 +455,74 @@ class DeliberationController extends Controller
                 $pdfView = 'pdf.pv_annuel';
                 $paper = 'a3';
             } else {
-                $pvResult = $this->deliberationService->getSemesterPVWithReservistes($filiereId, $academicYearId, $semesterNum);
+                // PV Semestriel officiel 7 Modules : Récupération fidèle via GradeController
+                $gradeController = app(GradeController::class);
+                $request->query->set('filiere_id', $filiereId);
+                $request->query->set('semester', $semesterNum);
+                $request->query->set('semester_number', $semesterNum);
+                $request->query->set('academic_year_id', $academicYearId);
+                $request->merge([
+                    'semester' => $semesterNum,
+                    'semester_number' => $semesterNum,
+                    'filiere_id' => $filiereId,
+                    'academic_year_id' => $academicYearId,
+                ]);
+                $pvResponse = $gradeController->getSemesterPv($request);
+                $pvData = json_decode($pvResponse->getContent(), true);
+
+                $modules = Module::with('assessments')
+                    ->where('filiere_id', $filiereId)
+                    ->where('semester_number', $semesterNum)
+                    ->get();
+
+                if ($modules->isEmpty()) {
+                    $modules = Module::with('assessments')->take(7)->get();
+                }
+
+                $matrix = [];
+                foreach ($pvData['students'] ?? [] as $s) {
+                    $rowModules = [];
+                    foreach ($modules as $m) {
+                        $gInfo = $s['module_grades'][$m->id] ?? null;
+                        $rowModules[$m->id] = [
+                            'grade' => $gInfo['note'] ?? null,
+                            'decision' => $gInfo['decision'] ?? 'NV',
+                            'validation_year' => $gInfo['validation_year'] ?? '2026/2027',
+                            'is_historical' => ! empty($gInfo['is_historical']),
+                        ];
+                    }
+                    $matrix[] = [
+                        'cne' => $s['apogee'] ?? 'N/A',
+                        'cin' => $s['cin'] ?? '-',
+                        'student' => mb_strtoupper($s['last_name'] ?? '').' '.($s['first_name'] ?? ''),
+                        'modules' => $rowModules,
+                        'semester_average' => $s['moyenne_semestrielle'] ?? null,
+                        'decision' => $s['decision_global'] ?? 'NV',
+                    ];
+                }
+
                 $juries = $this->deliberationService->autoComposeJury($filiereId, $academicYearId, $semesterNum, 'semestriel');
+                if ($isSigned && $signatureData) {
+                    foreach ($juries as &$j) {
+                        $j['status'] = 'signed';
+                        $j['signature_data'] = $signatureData;
+                    }
+                    unset($j);
+                }
 
                 $viewData = [
                     'filiere' => $filiere,
                     'academicYear' => $academicYear,
-                    'semesterNum' => $semesterNum,
+                    'semesterNumber' => $semesterNum,
                     'type' => $type,
-                    'modules' => $pvResult['modules'] ?? [],
-                    'matrix' => $pvResult['matrix'] ?? [],
+                    'modules' => $modules,
+                    'matrix' => $matrix,
                     'juries' => $juries,
                     'logoBase64' => $logoBase64,
                     'qrBase64' => $qrBase64,
                     'verifyUrl' => $verifyUrl,
                     'date' => date('d/m/Y H:i'),
+                    'stats' => $pvData['stats'] ?? [],
                 ];
 
                 $pdfView = 'pdf.pv_semestriel';

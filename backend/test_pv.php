@@ -11,17 +11,25 @@ $kernel = $app->make(Kernel::class);
 $kernel->bootstrap();
 
 try {
-    echo '1. Testing DeliberationController exportPvQuery (semestriel)...'.PHP_EOL;
+    $adminUser = \App\Models\User::first();
+    if ($adminUser) {
+        \Illuminate\Support\Facades\Auth::login($adminUser);
+    }
+    echo '1. Testing DeliberationController exportPvQuery (semestriel MCM S5)...'.PHP_EOL;
     $request = Request::create('/deliberations/export-pv-pdf', 'POST', [
         'type' => 'semestriel',
-        'filiere_id' => 13,
+        'filiere_id' => 15,
         'academic_year_id' => 3,
-        'semester_number' => 1,
+        'semester_number' => 5,
         'session' => 'normale',
     ]);
     $delibController = app(DeliberationController::class);
     $response = $delibController->exportPvQuery($request);
     echo 'DeliberationController exportPvQuery status: '.$response->getStatusCode().PHP_EOL;
+    file_put_contents(storage_path('app/pv_test_mcm_s5.pdf'), $response->getContent());
+    echo 'Saved PDF: '.storage_path('app/pv_test_mcm_s5.pdf').' ('.filesize(storage_path('app/pv_test_mcm_s5.pdf')).' bytes)'.PHP_EOL;
+    preg_match_all('/\/Count\s+(\d+)/', $response->getContent(), $matches);
+    echo 'PDF Total Pages: '.(empty($matches[1]) ? 'N/A' : end($matches[1])).PHP_EOL;
 
     echo '2. Testing DeliberationController exportPvQuery with default/fallback filiere...'.PHP_EOL;
     $requestFallback = Request::create('/deliberations/export-pv-pdf', 'POST', [

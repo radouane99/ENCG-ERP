@@ -352,6 +352,7 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|super_admin|instituti
     Route::get('modules/export-bulk-pv-zip', [PdfExportController::class, 'exportBulkPvZip']);
     Route::get('modules/{module}/pv', [GradeController::class, 'getModulePv']);
     Route::get('semester-pv', [GradeController::class, 'getSemesterPv']);
+    Route::get('grades/pv/semester', [GradeController::class, 'getSemesterPv']);
     Route::get('modules/{module}/pv/export-pdf', [PdfExportController::class, 'exportModulePvPdf']);
     Route::get('modules/{module}/pv/export-rattrapage-pdf', [PdfExportController::class, 'exportRattrapage_PvPdf']); // #3
     Route::post('modules/{module}/pv/sign', [GradeController::class, 'signModulePv']);

@@ -777,10 +777,10 @@ class GradeController extends Controller
             ], 403);
         }
 
-        $filiereId = intval($request->query('filiere_id', 1));
-        $semester = intval($request->query('semester', 1));
-        $groupId = $request->query('group_id');
-        $session = $request->query('session', 'normale');
+        $filiereId = intval($request->input('filiere_id', $request->query('filiere_id', 1)));
+        $semester = intval($request->input('semester', $request->input('semester_number', $request->query('semester', $request->query('semester_number', 1)))));
+        $groupId = $request->input('group_id', $request->query('group_id'));
+        $session = $request->input('session', $request->query('session', 'normale'));
 
         $filiere = Filiere::find($filiereId);
         $modules = Module::where('filiere_id', $filiereId)
@@ -793,8 +793,12 @@ class GradeController extends Controller
             $modules = Module::where('filiere_id', $filiereId)->take(7)->get();
         }
 
-        $academicYear = AcademicYear::where('is_current', true)->first()
-            ?? AcademicYear::first();
+        $academicYearId = $request->input('academic_year_id', $request->query('academic_year_id'));
+        if ($academicYearId) {
+            $academicYear = AcademicYear::find($academicYearId) ?? AcademicYear::where('is_current', true)->first() ?? AcademicYear::first();
+        } else {
+            $academicYear = AcademicYear::where('is_current', true)->first() ?? AcademicYear::first();
+        }
 
         $regQuery = StudentRegistration::where('filiere_id', $filiereId)
             ->where('academic_year_id', $academicYear?->id ?? 1);
@@ -807,6 +811,7 @@ class GradeController extends Controller
 
         $studentsData = [];
         $totalValids = 0;
+        $totalVpc = 0;
         $totalRattrapages = 0;
         $totalElimines = 0;
 
@@ -937,7 +942,13 @@ class GradeController extends Controller
             $isSemesterValidated = ($moyenneSemestrielle !== null && $moyenneSemestrielle >= 10.00 && ! $hasEliminatoire && $canCompensate);
 
             if ($isSemesterValidated) {
-                $decisionGlobal = $hasVarModule ? 'VAR' : 'V';
+                // Règle ENCG PV Semestriel : Si au moins un module compensé (6.00 <= note < 10.00), décision = VPC (Validé Par Compensation)
+                if ($weakModulesCount > 0) {
+                    $decisionGlobal = 'VPC';
+                    $totalVpc++;
+                } else {
+                    $decisionGlobal = $hasVarModule ? 'VAR' : 'V';
+                }
                 $totalValids++;
 
                 // Apply Compensation code VPC to the weak modules (6.00 <= note < 10.00)
@@ -947,15 +958,9 @@ class GradeController extends Controller
                     }
                 }
                 unset($mInfo);
-            } elseif ($moyenneSemestrielle === null || $moyenneSemestrielle < 10.00) {
-                // Règle ENCG : Moyenne semestrielle < 10.00 => Non Validé (NV)
-                $decisionGlobal = 'NV';
-                $totalElimines++;
-            } elseif ($session !== 'rattrapage' && ($hasRattrapageModule || $hasEliminatoire || ! $canCompensate)) {
-                // Moyenne >= 10.00 mais présence de note éliminatoire (< 6) ou > 2 modules non validés en session ordinaire
-                $decisionGlobal = 'RAT';
-                $totalRattrapages++;
             } else {
+                // Règle ENCG PV Semestriel : Tout semestre non validé (Moyenne < 10, Note éliminatoire < 6, ou > 2 modules non validés) est Non Validé (NV)
+                // En PV de semestre officiel, il n'y a pas de décision 'RAT' au niveau du semestre
                 $decisionGlobal = 'NV';
                 $totalElimines++;
             }
@@ -988,7 +993,8 @@ class GradeController extends Controller
             'stats' => [
                 'total_students' => count($studentsData),
                 'valids' => $totalValids,
-                'rattrapages' => $totalRattrapages,
+                'vpcs' => $totalVpc,
+                'rattrapages' => 0,
                 'elimines' => $totalElimines,
                 'success_rate' => count($studentsData) > 0 ? round(($totalValids / count($studentsData)) * 100, 1) : 0,
             ],

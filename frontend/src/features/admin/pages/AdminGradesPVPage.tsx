@@ -42,7 +42,7 @@ export default function AdminGradesPVPage() {
   const [selectedGroup, setSelectedGroup] = useState(groupId && groupId !== 'null' ? groupId : '')
   const [selectedModule, setSelectedModule] = useState(moduleId && moduleId !== 'null' ? moduleId : '')
   const [matrixSearchQuery, setMatrixSearchQuery] = useState('')
-  const [matrixDecisionFilter, setMatrixDecisionFilter] = useState<'all' | 'V' | 'VAR' | 'RAT' | 'NV'>('all')
+  const [matrixDecisionFilter, setMatrixDecisionFilter] = useState<'all' | 'V' | 'VPC' | 'VAR' | 'RAT' | 'NV'>('all')
   const [isFullscreenTable, setIsFullscreenTable] = useState(false)
   const [matrixViewMode, setMatrixViewMode] = useState<'compact' | 'detailed'>('compact')
   const [selectedRachatStudent, setSelectedRachatStudent] = useState<any>(null)
@@ -1870,10 +1870,15 @@ export default function AdminGradesPVPage() {
                                   onClick={() => {
                                     setSelectedRachatStudent({
                                       student_id: s.student_id,
-                                      name: `${s.last_name?.toUpperCase()} ${s.first_name}`,
-                                      apogee: s.apogee,
-                                      current_note: Number(s.moyenne_semestrielle).toFixed(2),
+                                      student_name: `${s.last_name?.toUpperCase()} ${s.first_name}`,
+                                      cne: s.apogee,
+                                      cin: s.cin,
+                                      module_id: null,
+                                      module_code: 'Moyenne Semestrielle',
                                       needed_points: needed,
+                                      target_grade: 10.00,
+                                      impact: 'Passage en Validé (V)',
+                                      text: `Rachat jury de +${needed} pt sur la moyenne pour validation du semestre`,
                                     })
                                   }}
                                   className="px-2.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black rounded-lg text-[10px] uppercase tracking-wider shadow-2xs hover:scale-105 transition-all cursor-pointer flex items-center gap-1 shrink-0"
@@ -1906,24 +1911,62 @@ export default function AdminGradesPVPage() {
                         </p>
                       ) : (
                         <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
-                          {eliminatoireBlockers.map((s: any) => (
-                            <div
-                              key={s.student_id}
-                              className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-rose-200/70 dark:border-slate-700 shadow-2xs flex items-center justify-between gap-2"
-                            >
-                              <div className="space-y-0.5">
-                                <div className="font-extrabold text-slate-900 dark:text-white text-xs">
-                                  {s.last_name?.toUpperCase()} {s.first_name}
+                          {eliminatoireBlockers.map((s: any) => {
+                            const failingModuleEntry = Object.values(s.module_grades || {}).find((mg: any) => mg.note !== null && Number(mg.note) < 6.00) as any
+                            const failingNote = failingModuleEntry ? Number(failingModuleEntry.note) : null
+                            const pointsNeeded = failingNote !== null ? Math.max(0, +(6.00 - failingNote).toFixed(2)) : 0
+                            const canRachat = failingNote !== null && pointsNeeded > 0 && pointsNeeded <= 1.00
+
+                            return (
+                              <div
+                                key={s.student_id}
+                                className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-rose-200/70 dark:border-slate-700 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+                              >
+                                <div className="space-y-0.5">
+                                  <div className="font-extrabold text-slate-900 dark:text-white text-xs">
+                                    {s.last_name?.toUpperCase()} {s.first_name}
+                                  </div>
+                                  <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                                    Moyenne: <span className="font-mono text-emerald-700 dark:text-emerald-400 font-bold">{Number(s.moyenne_semestrielle).toFixed(2)}/20</span>
+                                    {failingModuleEntry && (
+                                      <> • <span className="font-bold">{failingModuleEntry.module_code}</span>: <span className="font-mono text-rose-600 font-bold">{failingNote?.toFixed(2)}/20</span></>
+                                    )}
+                                  </div>
                                 </div>
-                                <div className="text-[10px] text-slate-500 dark:text-slate-400">
-                                  Moyenne: <span className="font-mono text-emerald-700 dark:text-emerald-400 font-bold">{Number(s.moyenne_semestrielle).toFixed(2)}/20</span>
+
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                  {canRachat ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setSelectedRachatStudent({
+                                          student_id: s.student_id,
+                                          student_name: `${s.last_name?.toUpperCase()} ${s.first_name}`,
+                                          cne: s.apogee,
+                                          cin: s.cin,
+                                          module_id: failingModuleEntry.module_id,
+                                          module_code: failingModuleEntry.module_code,
+                                          needed_points: pointsNeeded,
+                                          target_grade: 6.00,
+                                          impact: 'Levée Note Éliminatoire ➔ Passage en Validé par Compensation (VPC)',
+                                          text: `Rachat jury de +${pointsNeeded} pt sur ${failingModuleEntry.module_code} (${failingNote?.toFixed(2)} ➔ 6.00) pour éligibilité à la compensation semestrielle`,
+                                        })
+                                      }}
+                                      className="px-2.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-black rounded-lg text-[10px] uppercase tracking-wider shadow-2xs hover:scale-105 transition-all cursor-pointer flex items-center gap-1 shrink-0"
+                                      title="Accorder le rachat pour lever la note éliminatoire et valider par compensation"
+                                    >
+                                      <Sparkles className="w-3 h-3 text-white" />
+                                      <span>+{pointsNeeded} pt ➔ Rachat VPC</span>
+                                    </button>
+                                  ) : (
+                                    <span className="px-2.5 py-1 bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60 rounded-lg text-[10px] font-bold shrink-0">
+                                      {s.has_eliminatoire ? "Note < 6.00 Éliminatoire" : "> 2 Modules < 10"}
+                                    </span>
+                                  )}
                                 </div>
                               </div>
-                              <span className="px-2.5 py-1 bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60 rounded-lg text-[10px] font-bold shrink-0">
-                                {s.has_eliminatoire ? "Note < 6.00 Éliminatoire" : "> 2 Modules < 10"}
-                              </span>
-                            </div>
-                          ))}
+                            )
+                          })}
                         </div>
                       )}
                     </div>
@@ -2014,9 +2057,9 @@ export default function AdminGradesPVPage() {
                 <div className="flex items-center gap-1 bg-white dark:bg-slate-800 p-1 border border-slate-200 dark:border-slate-700 rounded-xl text-xs">
                   {(() => {
                     const allStudents = semesterPvData.students || []
-                    const valCount = allStudents.filter((s: any) => s.decision_global === 'V' || s.decision_global === 'VAR' || s.decision_global === 'VPC').length
-                    const ratCount = allStudents.filter((s: any) => s.decision_global === 'RAT').length
-                    const nvCount = allStudents.filter((s: any) => s.decision_global === 'NV' || (!['V', 'VAR', 'VPC', 'RAT'].includes(s.decision_global))).length
+                    const valCleanCount = allStudents.filter((s: any) => s.decision_global === 'V' || s.decision_global === 'VAR').length
+                    const vpcCount = allStudents.filter((s: any) => s.decision_global === 'VPC').length
+                    const nvCount = allStudents.filter((s: any) => s.decision_global === 'NV' || (!['V', 'VAR', 'VPC'].includes(s.decision_global))).length
 
                     return (
                       <>
@@ -2040,18 +2083,18 @@ export default function AdminGradesPVPage() {
                               : "text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
                           )}
                         >
-                          Validés ({valCount})
+                          Validés ({valCleanCount})
                         </button>
                         <button
-                          onClick={() => setMatrixDecisionFilter('RAT')}
+                          onClick={() => setMatrixDecisionFilter('VPC')}
                           className={cn(
                             "px-2.5 py-1 rounded-lg font-extrabold text-[11px] transition-all cursor-pointer",
-                            matrixDecisionFilter === 'RAT'
-                              ? "bg-amber-600 text-white shadow-xs"
-                              : "text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30"
+                            matrixDecisionFilter === 'VPC'
+                              ? "bg-indigo-600 text-white shadow-xs"
+                              : "text-indigo-700 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/30"
                           )}
                         >
-                          Rattrapage ({ratCount})
+                          Compensés ({vpcCount})
                         </button>
                         <button
                           onClick={() => setMatrixDecisionFilter('NV')}
@@ -2133,9 +2176,8 @@ export default function AdminGradesPVPage() {
                 if (!matchesSearch) return false
 
                 if (matrixDecisionFilter === 'V') return s.decision_global === 'V' || s.decision_global === 'VAR'
-                if (matrixDecisionFilter === 'VAR') return s.decision_global === 'VAR'
-                if (matrixDecisionFilter === 'RAT') return s.decision_global === 'RAT'
-                if (matrixDecisionFilter === 'NV') return s.decision_global === 'NV' || (!['V', 'VAR', 'VPC', 'RAT'].includes(s.decision_global))
+                if (matrixDecisionFilter === 'VPC') return s.decision_global === 'VPC'
+                if (matrixDecisionFilter === 'NV') return s.decision_global === 'NV' || (!['V', 'VAR', 'VPC'].includes(s.decision_global))
 
                 return true
               })
@@ -2398,14 +2440,14 @@ export default function AdminGradesPVPage() {
                                   "px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider border inline-block",
                                   hasStudentFraud ? "bg-rose-600 text-white border-rose-700 shadow-xs" :
                                   s.decision_global === 'V' ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800" :
+                                  s.decision_global === 'VPC' ? "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800" :
                                   s.decision_global === 'VAR' ? "bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800" :
-                                  s.decision_global === 'RAT' ? "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800" :
                                   "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800"
                                 )}>
                                   {hasStudentFraud ? '🚨 FRAUDE (0/20)' :
                                    s.decision_global === 'V' ? 'Validé (V)' :
+                                   s.decision_global === 'VPC' ? 'Validé par Compensation (VPC)' :
                                    s.decision_global === 'VAR' ? 'Validé Ratt. (VAR)' :
-                                   s.decision_global === 'RAT' ? 'Rattrapage (RAT)' :
                                    'Non Validé (NV)'}
                                 </span>
                               </td>
