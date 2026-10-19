@@ -1,12 +1,11 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useTranslation } from 'react-i18next'
 import {
   Gavel, AlertTriangle, CheckCircle2,
   Calendar, Search, FileText, Printer, Mail, Download,
   Scale, RefreshCw, Send, Plus, Trash2,
   Check, X, BookOpen, AlertOctagon, Info,
-  FileSpreadsheet, Eye, Sparkles, ExternalLink
+  FileSpreadsheet, Sparkles, ExternalLink
 } from 'lucide-react'
 import api from '@shared/lib/api'
 import { cn } from '@shared/lib/utils'
@@ -54,7 +53,6 @@ interface DisciplineCase {
 }
 
 export default function DisciplinePage(): React.ReactElement {
-  const { t, i18n } = useTranslation('common')
   const queryClient = useQueryClient()
 
   // Filters & Search
@@ -110,7 +108,7 @@ export default function DisciplinePage(): React.ReactElement {
       try {
         const res = await api.get('/discipline')
         return res.data?.data || []
-      } catch (e) {
+      } catch {
         const res = await api.get('/admin/discipline')
         return res.data?.data || []
       }
@@ -124,7 +122,7 @@ export default function DisciplinePage(): React.ReactElement {
       try {
         const res = await api.get('/discipline/students-list')
         return res.data || { students: [], exams: [] }
-      } catch (e) {
+      } catch {
         const res = await api.get('/admin/discipline/students-list')
         return res.data || { students: [], exams: [] }
       }
@@ -263,7 +261,7 @@ export default function DisciplinePage(): React.ReactElement {
       document.body.removeChild(a)
       window.URL.revokeObjectURL(url)
       toast.success('Document PDF officiel téléchargé avec succès !', { id: toastId })
-    } catch (e) {
+    } catch {
       toast.error('Erreur lors du téléchargement du PDF certifié.', { id: toastId })
     }
   }
@@ -284,7 +282,7 @@ export default function DisciplinePage(): React.ReactElement {
       document.body.removeChild(a)
       window.URL.revokeObjectURL(url)
       toast.success('Lot officiel des convocations (PDF A4) généré et téléchargé !', { id: toastId })
-    } catch (e) {
+    } catch {
       toast.error('Erreur lors de la génération du lot PDF.', { id: toastId })
     } finally {
       setIsBatchGenerating(false)

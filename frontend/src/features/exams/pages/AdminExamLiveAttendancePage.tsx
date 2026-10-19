@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { Eye, Download, ArrowLeft, RefreshCw, Users, CheckCircle2, XCircle, BarChart3, Loader2 } from 'lucide-react'
 import { cn } from '@shared/lib/utils'

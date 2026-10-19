@@ -38,9 +38,9 @@ class ClubController extends Controller
 
         if ($search) {
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'ilike', "%{$search}%")
-                    ->orWhere('description', 'ilike', "%{$search}%")
-                    ->orWhere('president_name', 'ilike', "%{$search}%");
+                $q->whereILike('name', "%{$search}%")
+                    ->orWhereILike('description', "%{$search}%")
+                    ->orWhereILike('president_name', "%{$search}%");
             });
         }
 

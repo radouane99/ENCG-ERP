@@ -162,14 +162,14 @@ class Student extends Model
     public function scopeSearch($query, string $search)
     {
         return $query->where(function ($q) use ($search) {
-            $q->where('student_number', 'ilike', "%{$search}%")
-                ->orWhere('cne', 'ilike', "%{$search}%")
+            $q->whereILike('student_number', "%{$search}%")
+                ->orWhereILike('cne', "%{$search}%")
                 ->orWhereHas('user', function ($uq) use ($search) {
-                    $uq->where('first_name', 'ilike', "%{$search}%")
-                        ->orWhere('last_name', 'ilike', "%{$search}%")
-                        ->orWhere('name', 'ilike', "%{$search}%")
-                        ->orWhere('email', 'ilike', "%{$search}%")
-                        ->orWhere('cin', 'ilike', "%{$search}%");
+                    $uq->whereILike('first_name', "%{$search}%")
+                        ->orWhereILike('last_name', "%{$search}%")
+                        ->orWhereILike('name', "%{$search}%")
+                        ->orWhereILike('email', "%{$search}%")
+                        ->orWhereILike('cin', "%{$search}%");
                 });
         });
     }

@@ -7,12 +7,15 @@ use App\Models\Group;
 use App\Models\Module;
 use App\Models\Professor;
 use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
 class ProfessorAiCopilotIntegrationTest extends TestCase
 {
+    use RefreshDatabase;
+
     protected User $professorUser;
 
     protected Professor $professor;
