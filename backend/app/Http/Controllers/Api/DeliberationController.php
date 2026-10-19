@@ -437,6 +437,15 @@ class DeliberationController extends Controller
                 $annualData = $this->deliberationService->calculateAnnualCompensation($filiereId, $academicYearId, $yearLevel);
                 $juries = $this->deliberationService->autoComposeJury($filiereId, $academicYearId, null, 'annuel');
 
+                if ($isSigned && $signatureData) {
+                    foreach ($juries as &$j) {
+                        $j['status'] = 'signed';
+                        $j['signature_data'] = $signatureData;
+                        $j['signature_image'] = $signatureData;
+                    }
+                    unset($j);
+                }
+
                 $viewData = [
                     'filiere' => $filiere,
                     'yearLevel' => $yearLevel,
@@ -577,24 +586,39 @@ class DeliberationController extends Controller
         $juries = $this->deliberationService->autoComposeJury($filiereId, $academicYearId, $type === 'semestriel' ? $semesterNum : null, $type);
 
         if ($type === 'annuel') {
-            $matrix = $this->deliberationService->calculateAnnualCompensation($filiereId, $academicYearId);
-            $modules = Module::where('filiere_id', $filiereId)->get();
+            $yearLevel = (int) $request->query('year_level', 1);
+            $annualData = $this->deliberationService->calculateAnnualCompensation($filiereId, $academicYearId, $yearLevel);
+            $modules = $annualData['modules'] ?? Module::where('filiere_id', $filiereId)->get();
+            $students = $annualData['students'] ?? [];
             $pdfView = 'pdf.pv_annuel';
+            $paper = 'a3';
+            $viewData = [
+                'filiere' => $filiere,
+                'yearLevel' => $yearLevel,
+                'academicYear' => $academicYear,
+                'odd_semester_label' => $annualData['odd_semester_label'] ?? 'S'.(($yearLevel * 2) - 1),
+                'even_semester_label' => $annualData['even_semester_label'] ?? 'S'.($yearLevel * 2),
+                'modules' => $modules,
+                'students' => $students,
+                'juries' => $juries,
+                'date' => date('d/m/Y H:i'),
+            ];
         } else {
             $pvResult = $this->deliberationService->getSemesterPVWithReservistes($filiereId, $academicYearId, $semesterNum);
             $modules = $pvResult['modules'];
             $matrix = $pvResult['matrix'];
             $pdfView = 'pdf.pv_semestriel';
+            $paper = 'a4';
+            $viewData = compact('filiere', 'academicYear', 'semesterNum', 'type', 'modules', 'matrix', 'juries');
         }
 
-        $viewData = compact('filiere', 'academicYear', 'semesterNum', 'type', 'modules', 'matrix', 'juries');
         $viewData['seal_hash'] = $delib?->seal_hash;
         $viewData['voters'] = $delib
             ? DB::table('deliberation_votes')->where('deliberation_id', $delib->id)->get()
             : collect();
 
         if (view()->exists($pdfView)) {
-            $pdf = Pdf::loadView($pdfView, $viewData)->setPaper('a4', 'landscape');
+            $pdf = Pdf::loadView($pdfView, $viewData)->setPaper($paper, 'landscape');
 
             return $pdf->download("pv_{$type}_filiere_{$filiereId}.pdf");
         }

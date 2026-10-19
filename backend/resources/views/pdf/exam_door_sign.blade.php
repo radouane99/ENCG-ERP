@@ -3,9 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <title>Affiche de Porte — {{ $room->name ?? 'Salle d\'Examen' }}</title>
+    @php
+        $totalSeatings = count($seatings ?? []);
+        
+        // Calibrage intelligent de l'espacement pour tenir sur 1 seule page (jusqu'à 26 étudiants)
+        if ($totalSeatings <= 22) {
+            $rowPad = '3.5px 8px';
+            $fontSize = '8.5pt';
+            $cneFont = '8.5pt';
+            $pillPad = '2px 8px';
+        } elseif ($totalSeatings <= 28) {
+            $rowPad = '2.4px 7px';
+            $fontSize = '8.0pt';
+            $cneFont = '8.0pt';
+            $pillPad = '1.5px 6px';
+        } elseif ($totalSeatings <= 35) {
+            $rowPad = '1.8px 6px';
+            $fontSize = '7.5pt';
+            $cneFont = '7.5pt';
+            $pillPad = '1px 5px';
+        } else {
+            $rowPad = '1.4px 5px';
+            $fontSize = '7.0pt';
+            $cneFont = '7.0pt';
+            $pillPad = '0.5px 4px';
+        }
+
+        $logoBase64 = $logoBase64 ?? '';
+        if (empty($logoBase64) && file_exists(public_path('logo-encg.png'))) {
+            $logoBase64 = 'data:image/png;base64,' . base64_encode(file_get_contents(public_path('logo-encg.png')));
+        }
+
+        $filiereObj = $exam->module?->filiere ?? $exam->filiere ?? null;
+        $filiereName = is_object($filiereObj) ? ($filiereObj->name ?? $filiereObj->code ?? 'Tronc Commun') : (is_string($filiereObj) ? $filiereObj : 'Tronc Commun ENCG');
+
+        $groupObj = $exam->group ?? null;
+        $groupName = is_object($groupObj) ? ($groupObj->name ?? $groupObj->code ?? '') : (is_string($groupObj) ? $groupObj : '');
+
+        $moduleName = is_object($exam->module) ? ($exam->module->name ?? 'Examen') : (is_string($exam->module) ? $exam->module : 'Examen');
+        $moduleCode = is_object($exam->module) ? ($exam->module->code ?? '') : '';
+    @endphp
     <style>
         @page {
-            margin: 7mm 10mm 7mm 10mm;
+            margin: 6mm 9mm 5mm 9mm;
             size: A4 portrait;
         }
         * {
@@ -16,8 +56,8 @@
             color: #0f172a;
             margin: 0;
             padding: 0;
-            font-size: 9pt;
-            line-height: 1.2;
+            font-size: {{ $fontSize }};
+            line-height: 1.15;
             background-color: #ffffff;
         }
 
@@ -25,15 +65,15 @@
         .institution-header {
             width: 100%;
             border-bottom: 2px solid #002e5b;
-            padding-bottom: 6px;
-            margin-bottom: 8px;
+            padding-bottom: 4px;
+            margin-bottom: 5px;
         }
         .header-logo {
             width: 22%;
             vertical-align: middle;
         }
         .header-logo img {
-            max-height: 44px;
+            max-height: 40px;
             width: auto;
             display: block;
         }
@@ -43,37 +83,37 @@
             vertical-align: middle;
         }
         .header-center .sub-title {
-            font-size: 7pt;
+            font-size: 6.8pt;
             text-transform: uppercase;
-            letter-spacing: 0.6px;
+            letter-spacing: 0.5px;
             color: #475569;
             font-weight: bold;
             margin: 0 0 1px 0;
         }
         .header-center .main-title {
-            font-size: 11pt;
+            font-size: 10.5pt;
             font-weight: 900;
             color: #002e5b;
             text-transform: uppercase;
-            letter-spacing: 0.8px;
+            letter-spacing: 0.6px;
             margin: 0 0 2px 0;
         }
         .header-center .document-badge {
             display: inline-block;
             background-color: #002e5b;
             color: #ffffff;
-            font-size: 7.5pt;
+            font-size: 7.2pt;
             font-weight: 800;
             text-transform: uppercase;
-            letter-spacing: 1.2px;
-            padding: 2px 12px;
-            border-radius: 12px;
+            letter-spacing: 1px;
+            padding: 2px 10px;
+            border-radius: 10px;
         }
         .header-right {
             width: 22%;
             text-align: right;
             vertical-align: middle;
-            font-size: 7pt;
+            font-size: 6.8pt;
             color: #64748b;
             line-height: 1.2;
         }
@@ -83,8 +123,8 @@
             width: 100%;
             background-color: #f8fafc;
             border: 1.5px solid #cbd5e1;
-            border-radius: 6px;
-            margin-bottom: 7px;
+            border-radius: 5px;
+            margin-bottom: 5px;
             border-collapse: collapse;
         }
         .hero-banner td {
@@ -92,38 +132,38 @@
             vertical-align: top;
         }
         .banner-cell-room {
-            width: 28%;
+            width: 27%;
             background-color: #002e5b;
             color: #ffffff;
-            border-top-left-radius: 5px;
-            border-bottom-left-radius: 5px;
-            padding: 8px 10px !important;
+            border-top-left-radius: 4px;
+            border-bottom-left-radius: 4px;
+            padding: 6px 8px !important;
             text-align: center;
         }
         .room-tag {
-            font-size: 6.5pt;
+            font-size: 6.2pt;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.8px;
             color: #93c5fd;
             font-weight: 800;
             margin-bottom: 1px;
         }
         .room-name {
-            font-size: 13pt;
+            font-size: 12pt;
             font-weight: 900;
             color: #ffffff;
             text-transform: uppercase;
             line-height: 1.1;
         }
         .room-capacity {
-            font-size: 7.5pt;
+            font-size: 7.2pt;
             color: #fde047;
             font-weight: bold;
             margin-top: 2px;
         }
 
         .meta-label {
-            font-size: 6.5pt;
+            font-size: 6.2pt;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             color: #64748b;
@@ -131,15 +171,16 @@
             margin-bottom: 1px;
         }
         .meta-value {
-            font-size: 9.5pt;
+            font-size: 9.0pt;
             font-weight: bold;
             color: #0f172a;
             line-height: 1.15;
         }
         .meta-sub {
-            font-size: 7.5pt;
+            font-size: 7.2pt;
             color: #475569;
             font-weight: normal;
+            margin-top: 2px;
         }
 
         /* Barre de Consignes & Surveillants */
@@ -147,9 +188,9 @@
             width: 100%;
             background-color: #f1f5f9;
             border-left: 3.5px solid #002e5b;
-            padding: 3.5px 8px;
-            margin-bottom: 7px;
-            font-size: 7pt;
+            padding: 3px 8px;
+            margin-bottom: 5px;
+            font-size: 6.8pt;
             color: #334155;
         }
         .notice-bar strong {
@@ -167,22 +208,22 @@
             color: #ffffff;
         }
         .seats-table th {
-            padding: 4.5px 8px;
-            font-size: 7.5pt;
+            padding: 3.5px 8px;
+            font-size: 7.2pt;
             font-weight: 800;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             border-right: 1px solid #1e3a8a;
-            text-align: left;
+            text-align: center;
         }
         .seats-table th:last-child {
             border-right: none;
         }
         .seats-table td {
-            padding: 3.8px 8px;
+            padding: {{ $rowPad }};
             border-bottom: 1px solid #e2e8f0;
             border-right: 1px solid #f1f5f9;
-            font-size: 8.5pt;
+            font-size: {{ $fontSize }};
             vertical-align: middle;
         }
         .seats-table td:last-child {
@@ -201,17 +242,17 @@
             background-color: #002e5b;
             color: #ffffff;
             font-weight: 900;
-            font-size: 8.5pt;
-            padding: 2px 8px;
-            border-radius: 10px;
+            font-size: {{ $fontSize }};
+            padding: {{ $pillPad }};
+            border-radius: 8px;
             text-align: center;
-            min-width: 48px;
+            min-width: 44px;
         }
         .cne-code {
-            font-family: 'Courier New', Courier, monospace;
+            font-family: 'DejaVu Sans Mono', 'Courier New', Courier, monospace;
             font-weight: bold;
-            font-size: 8.5pt;
-            color: #334155;
+            font-size: {{ $cneFont }};
+            color: #1e293b;
             letter-spacing: 0.5px;
         }
         .student-name-bold {
@@ -222,35 +263,34 @@
         .student-name-first {
             font-weight: normal;
             color: #334155;
-            text-transform: capitalize;
         }
 
         /* Footer & Signature de Vérification */
         .door-footer {
-            margin-top: 7px;
+            margin-top: 5px;
             border-top: 1px solid #cbd5e1;
-            padding-top: 4px;
+            padding-top: 3px;
             width: 100%;
         }
         .footer-table {
             width: 100%;
         }
         .footer-qr {
-            width: 42px;
+            width: 36px;
             vertical-align: middle;
         }
         .footer-qr img {
-            width: 38px;
-            height: 38px;
+            width: 32px;
+            height: 32px;
             display: block;
             border: 1px solid #cbd5e1;
             padding: 1px;
             background: #fff;
         }
         .footer-text {
-            font-size: 6.5pt;
+            font-size: 6.2pt;
             color: #64748b;
-            line-height: 1.25;
+            line-height: 1.2;
             vertical-align: middle;
             padding-left: 6px;
         }
@@ -268,17 +308,19 @@
             <td class="header-logo">
                 @if(!empty($logoBase64))
                     <img src="{{ $logoBase64 }}" alt="Logo ENCG Fes">
+                @else
+                    <div style="font-size: 11pt; font-weight: 900; color: #002e5b;">ENCG FÈS</div>
                 @endif
             </td>
             <td class="header-center">
-                <div class="sub-title">Royaume du Maroc - Universite Sidi Mohamed Ben Abdellah</div>
-                <div class="main-title">Ecole Nationale de Commerce et de Gestion de Fes</div>
-                <div class="document-badge">AFFICHE DE PORTE - REPARTITION DES PLACES</div>
+                <div class="sub-title">Royaume du Maroc - Université Sidi Mohamed Ben Abdellah</div>
+                <div class="main-title">École Nationale de Commerce et de Gestion de Fès</div>
+                <div class="document-badge">AFFICHE DE PORTE - RÉPARTITION DES PLACES</div>
             </td>
             <td class="header-right">
-                <strong>Session :</strong> {{ $exam->examSession->name ?? 'Session d\'Examens' }}<br>
-                <strong>Annee :</strong> {{ date('Y') }}/{{ date('Y') + 1 }}<br>
-                <strong>Epreuve ID :</strong> EXAM-{{ str_pad($exam->id, 4, '0', STR_PAD_LEFT) }}
+                <strong>Session :</strong> {{ $exam->examSession->name ?? 'Session Normale' }}<br>
+                <strong>Année :</strong> {{ date('Y') }}/{{ date('Y') + 1 }}<br>
+                <strong>Épreuve ID :</strong> EXAM-{{ str_pad($exam->id, 4, '0', STR_PAD_LEFT) }}
             </td>
         </tr>
     </table>
@@ -288,25 +330,25 @@
         <tr>
             <td class="banner-cell-room">
                 <div class="room-tag">Local d'Examen</div>
-                <div class="room-name">{{ $room->name ?? ($exam->room->name ?? 'Amphitheatre B') }}</div>
-                <div class="room-capacity">Effectif : {{ count($seatings) }} Convoque(s)</div>
+                <div class="room-name">{{ $room->name ?? ($exam->room->name ?? 'Amphithéâtre B') }}</div>
+                <div class="room-capacity">Effectif : {{ $totalSeatings }} Convoqué(s)</div>
             </td>
-            <td style="width: 42%; padding-left: 10px;">
-                <div class="meta-label">Module / Epreuve Academique</div>
-                <div class="meta-value" style="color: #002e5b; font-size: 10pt;">
-                    {{ $exam->module->name ?? 'Examen' }}
+            <td style="width: 43%; padding-left: 10px;">
+                <div class="meta-label">Module / Épreuve Académique</div>
+                <div class="meta-value" style="color: #002e5b; font-size: 9.5pt;">
+                    {{ $moduleName }} @if($moduleCode)<small style="font-size: 7.5pt; color: #64748b;">({{ $moduleCode }})</small>@endif
                 </div>
                 <div class="meta-sub">
-                    <strong>Filiere :</strong> {{ $exam->module?->filiere ?? 'Tronc Commun ENCG' }}
-                    @if($exam->group)
-                        - <strong>Groupe :</strong> {{ $exam->group->name }}
+                    <strong>Filière :</strong> {{ $filiereName }}
+                    @if(!empty($groupName))
+                        - <strong>Groupe :</strong> {{ $groupName }}
                     @endif
                 </div>
             </td>
             <td style="width: 30%; border-left: 1px dashed #cbd5e1; padding-left: 10px;">
-                <div class="meta-label">Date & Horaires Officiels</div>
+                <div class="meta-label">Date &amp; Horaires Officiels</div>
                 <div class="meta-value">
-                    {{ $dateFormatted ?? ($exam->exam_date ? \Carbon\Carbon::parse($exam->exam_date)->translatedFormat('l d F Y') : 'Date a definir') }}
+                    {{ $dateFormatted ?? ($exam->exam_date ? \Carbon\Carbon::parse($exam->exam_date)->translatedFormat('l d F Y') : 'Date à définir') }}
                 </div>
                 <div class="meta-sub" style="font-weight: bold; color: #b45309; margin-top: 2px;">
                     Horaire : {{ $startTime ?? substr($exam->start_time ?? '08:30', 0, 5) }} - {{ $endTime ?? '10:30' }} ({{ $durationMins ?? ($exam->duration_minutes ?? 120) }} min)
@@ -322,16 +364,16 @@
                 <td style="width: 58%; vertical-align: middle;">
                     <strong>Surveillance :</strong>
                     @if(!empty($presidentName))
-                        {{ $presidentName }} (President)
+                        {{ $presidentName }} (Président)
                     @endif
                     @if(!empty($surveillantNames) && count($surveillantNames) > 0)
                         - {{ implode(', ', $surveillantNames) }}
                     @elseif(empty($presidentName))
-                        Comite de surveillance assigne par le Decanat
+                        Comité de surveillance assigné par le Décanat
                     @endif
                 </td>
                 <td style="width: 42%; text-align: right; vertical-align: middle;">
-                    <strong>Consigne :</strong> CNIE / Carte d'Etudiant obligatoire - Acces selon place assignee
+                    <strong>Consigne :</strong> CNIE / Carte d'Étudiant obligatoire &bull; Accès selon place assignée
                 </td>
             </tr>
         </table>
@@ -341,60 +383,83 @@
     <table class="seats-table">
         <thead>
             <tr>
-                <th style="width: 16%; text-align: center;">N° Siege</th>
-                <th style="width: 54%; text-align: center;">Nom & Prenom de l'Etudiant</th>
+                <th style="width: 14%; text-align: center;">N° Siège</th>
+                <th style="width: 56%; text-align: left; padding-left: 14px;">Nom &amp; Prénom de l'Étudiant</th>
                 <th style="width: 30%; text-align: center;">Code CNE / Massar</th>
             </tr>
         </thead>
         <tbody>
             @forelse($seatings as $seating)
                 @php
-                    $sStudent = is_array($seating) ? null : ($seating->student ?? null);
-                    $sUser = $sStudent ?? null;
-                    
-                    $lastName = is_array($seating)
-                        ? ($seating['last_name'] ?? '')
-                        : ($sUser ?? $sStudent ?? '');
-                    
-                    $firstName = is_array($seating)
-                        ? ($seating['first_name'] ?? '')
-                        : ($sUser ?? $sStudent ?? '');
-                    
-                    $cne = is_array($seating)
-                        ? ($seating['cne'] ?? $seating['massar'] ?? '—')
-                        : ($sStudent ?? $sStudent ?? $sStudent ?? '—');
-                    
-                    $seatNum = is_array($seating)
+                    $isArr = is_array($seating);
+                    $student = $isArr ? ($seating['student'] ?? null) : ($seating->student ?? null);
+                    $user = is_object($student) ? ($student->user ?? null) : (is_array($student) ? ($student['user'] ?? null) : null);
+
+                    // Extract Nom
+                    $lastName = $isArr
+                        ? ($seating['last_name'] ?? ($student['last_name'] ?? ($user['last_name'] ?? '')))
+                        : ($student?->last_name ?? $user?->last_name ?? '');
+
+                    // Extract Prénom
+                    $firstName = $isArr
+                        ? ($seating['first_name'] ?? ($student['first_name'] ?? ($user['first_name'] ?? '')))
+                        : ($student?->first_name ?? $user?->first_name ?? '');
+
+                    // Fallback to full name if needed
+                    if (empty($lastName) && empty($firstName)) {
+                        $full = $isArr
+                            ? ($seating['full_name'] ?? ($seating['name'] ?? ($user['name'] ?? '')))
+                            : ($user?->name ?? '');
+                        if (is_string($full) && !empty($full)) {
+                            $parts = explode(' ', trim($full), 2);
+                            $lastName = $parts[0] ?? '';
+                            $firstName = $parts[1] ?? '';
+                        }
+                    }
+
+                    // Extract CNE / Massar / Code Étudiant
+                    $cne = $isArr
+                        ? ($seating['cne'] ?? ($seating['massar'] ?? ($student['cne'] ?? ($student['student_number'] ?? '—'))))
+                        : ($student?->cne ?? $student?->student_number ?? '—');
+
+                    // Extract CIN
+                    $cin = $isArr
+                        ? ($seating['cin'] ?? ($student['cin'] ?? ($user['cin'] ?? '')))
+                        : ($student?->cin ?? $user?->cin ?? '');
+
+                    // Seat Number
+                    $seatNum = $isArr
                         ? ($seating['seat_number'] ?? $loop->iteration)
                         : ($seating->seat_number ?: $loop->iteration);
 
-                    $hasName = !empty($lastName) || !empty($firstName);
-                    $fullDisplayName = is_array($seating) 
-                        ? ($seating['full_name'] ?? $seating['name'] ?? null)
-                        : ($sUser ?? null);
+                    $lastNameClean = is_string($lastName) ? trim($lastName) : '';
+                    $firstNameClean = is_string($firstName) ? trim($firstName) : '';
+                    $cneClean = is_string($cne) ? trim($cne) : '—';
+                    $cinClean = is_string($cin) ? trim($cin) : '';
                 @endphp
                 <tr>
                     <td style="text-align: center;">
-                        <span class="seat-pill">N° {{ sprintf('%02d', $seatNum) }}</span>
+                        <span class="seat-pill">N° {{ sprintf('%02d', (int)$seatNum) }}</span>
                     </td>
-                    <td style="text-align: center;">
-                        @if($hasName)
-                            <span class="student-name-bold">{{ strtoupper($lastName) }}</span>
-                            <span class="student-name-first">{{ ucfirst(strtolower($firstName)) }}</span>
-                        @elseif(!empty($fullDisplayName))
-                            <span class="student-name-bold">{{ strtoupper($fullDisplayName) }}</span>
+                    <td style="text-align: left; padding-left: 14px;">
+                        @if(!empty($lastNameClean) || !empty($firstNameClean))
+                            <span class="student-name-bold">{{ mb_strtoupper($lastNameClean) }}</span>
+                            <span class="student-name-first">{{ mb_convert_case($firstNameClean, MB_CASE_TITLE, "UTF-8") }}</span>
                         @else
-                            <span style="color: #94a3b8;">- Non renseigne -</span>
+                            <span style="color: #94a3b8; font-style: italic;">— Étudiant non renseigné —</span>
+                        @endif
+                        @if(!empty($cinClean))
+                            <span style="font-size: 7.2pt; color: #64748b; margin-left: 6px; font-weight: 600;">(CIN: {{ $cinClean }})</span>
                         @endif
                     </td>
                     <td style="text-align: center;">
-                        <span class="cne-code">{{ $cne }}</span>
+                        <span class="cne-code">{{ $cneClean }}</span>
                     </td>
                 </tr>
             @empty
                 <tr>
                     <td colspan="3" style="text-align: center; color: #64748b; padding: 18px;">
-                        Aucun etudiant place dans cette salle pour cette epreuve.
+                        Aucun étudiant placé dans cette salle pour cette épreuve.
                     </td>
                 </tr>
             @endforelse
@@ -411,12 +476,12 @@
                     </td>
                 @endif
                 <td class="footer-text">
-                    <span class="footer-legal">Document d'Affichage Officiel - Anti-Fraude Numerique (Loi 53-05)</span><br>
-                    Authenticite certifiee par le Systeme d'Information ENCG Fes - Genere le {{ date('d/m/Y a H:i') }}<br>
-                    Scannez le QR code de porte pour verifier la conformite du plan de placement et de la session en direct.
+                    <span class="footer-legal">Document d'Affichage Officiel &bull; Anti-Fraude Numérique (Loi 53-05)</span><br>
+                    Authenticité certifiée par le Système d'Information ENCG Fès &bull; Édité le {{ date('d/m/Y à H:i') }}<br>
+                    Plan officiel d'affectation et de placement des étudiants en salle d'examen.
                 </td>
-                <td style="text-align: right; vertical-align: middle; font-size: 7.5pt; font-weight: bold; color: #002e5b;">
-                    PAGE 1 / 1
+                <td style="text-align: right; vertical-align: middle; font-size: 7.2pt; font-weight: bold; color: #002e5b; white-space: nowrap;">
+                    ENCG FÈS &bull; EXAM-{{ str_pad($exam->id, 4, '0', STR_PAD_LEFT) }}
                 </td>
             </tr>
         </table>

@@ -1001,11 +1001,16 @@ export default function AdminGradesPVPage() {
     const pdfWindow = preview ? window.open('about:blank', '_blank') : null
     const toastId = toast.loading('Génération du Procès-Verbal PDF Officiel...')
     try {
+      const effectiveType = pvType === 'annuel' ? 'annuel' : 'semestriel'
+      const filiereId = selectedFiliere || 13
+      const yearLevel = selectedYearLevel || Math.max(1, Math.ceil((Number(selectedSemester) || 1) / 2))
+
       const response = await api.post('/deliberations/export-pv-pdf', {
-        type: pvType || 'semestriel',
-        filiere_id: selectedFiliere || 1,
+        type: effectiveType,
+        filiere_id: filiereId,
         academic_year_id: currentAcademicYearId,
         semester_number: selectedSemester || 1,
+        year_level: yearLevel,
         session: 'normale',
         signed: signatureDone ? 'true' : 'false',
         signature_data: signatureDataUrl || null
@@ -1023,7 +1028,9 @@ export default function AdminGradesPVPage() {
       } else {
         const link = document.createElement('a')
         link.href = url
-        link.download = `PV_Officiel_Semestriel_S${selectedSemester || 1}_ENCG.pdf`
+        link.download = effectiveType === 'annuel'
+          ? `PV_Annuel_Filiere${filiereId}_Annee${yearLevel}.pdf`
+          : `PV_Officiel_Semestriel_S${selectedSemester || 1}_ENCG.pdf`
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)
@@ -3029,8 +3036,17 @@ export default function AdminGradesPVPage() {
 
             <div className="flex items-center gap-2 flex-wrap">
               <Button
+                variant="outline"
+                onClick={() => handleExportPdf(true)}
+                className="rounded-xl border-slate-200 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 text-xs font-bold px-3.5 py-2 shadow-xs flex items-center gap-1.5 cursor-pointer"
+              >
+                <Eye className="w-3.5 h-3.5 text-slate-500" />
+                <span>Aperçu PDF (Voir)</span>
+              </Button>
+
+              <Button
                 onClick={() => {
-                  const filiereId = selectedFiliere || 1
+                  const filiereId = selectedFiliere || 13
                   const yearLevel = selectedYearLevel || 1
                   toast.loading('⏳ Génération du PDF Officiel...', { id: 'pdf-export' })
                   downloadPdf(
@@ -3315,56 +3331,77 @@ export default function AdminGradesPVPage() {
                     <>
                       <th
                         className="py-2 px-2 text-center border-r border-slate-700/80 bg-[#0f2863] text-amber-200 font-black text-xs tracking-wider"
-                        colSpan={annualModules.filter((m: any) => m.semester_number % 2 !== 0).length + 2}
+                        colSpan={annualModules.filter((m: any) => m.semester_number % 2 !== 0).length * 3 + 2}
                       >
                         MODULES {oddSemLabel}
                       </th>
                       <th
                         className="py-2 px-2 text-center border-r border-slate-700/80 bg-[#0a1c47] text-blue-200 font-black text-xs tracking-wider"
-                        colSpan={annualModules.filter((m: any) => m.semester_number % 2 === 0).length + 2}
+                        colSpan={annualModules.filter((m: any) => m.semester_number % 2 === 0).length * 3 + 2}
                       >
                         MODULES {evenSemLabel}
                       </th>
                     </>
                   ) : (
                     <>
-                      <th className="py-2.5 px-3 text-center border-r border-slate-700 bg-[#0f2863] text-white" rowSpan={2}>Moyenne {oddSemLabel}</th>
-                      <th className="py-2.5 px-3 text-center border-r border-slate-700 bg-[#0f2863] text-white" rowSpan={2}>Moyenne {evenSemLabel}</th>
+                      <th className="py-2.5 px-3 text-center border-r border-slate-700 bg-[#0f2863] text-white" rowSpan={3}>Moyenne {oddSemLabel}</th>
+                      <th className="py-2.5 px-3 text-center border-r border-slate-700 bg-[#0f2863] text-white" rowSpan={3}>Moyenne {evenSemLabel}</th>
                     </>
                   )}
 
                   <th
-                    rowSpan={annualModules.length > 0 ? 2 : 1}
-                    className="py-3 px-3 font-black text-center bg-[#0a1c47] text-amber-300 border-r border-slate-700 min-w-[95px]"
+                    rowSpan={annualModules.length > 0 ? 3 : 1}
+                    className="py-3 px-3 font-black text-center bg-[#0a1c47] text-amber-300 border-r border-slate-700 min-w-[85px]"
                   >
                     Moyenne Annuelle
                   </th>
                   <th
-                    rowSpan={annualModules.length > 0 ? 2 : 1}
-                    className="py-3 px-4 font-black text-center bg-[#0a1c47] text-white min-w-[170px]"
+                    rowSpan={annualModules.length > 0 ? 3 : 1}
+                    className="py-3 px-4 font-black text-center bg-[#0a1c47] text-white min-w-[155px]"
                   >
                     Décision Finale (Année)
                   </th>
                 </tr>
 
                 {annualModules.length > 0 && (
-                  <tr className="bg-[#153478] text-blue-100 border-b border-slate-700">
-                    {annualModules.filter((m: any) => m.semester_number % 2 !== 0).map((m: any, idx: number) => (
-                      <th key={m.id} className="py-1.5 px-1 font-mono text-[10px] font-bold text-center bg-[#153478] border-r border-slate-700/80 text-white min-w-[72px]" title={m.name}>
-                        {m.code || `M0${idx+1}`}
-                      </th>
-                    ))}
-                    <th className="py-1.5 px-2 font-extrabold text-[10px] text-center bg-[#0f2863] border-r border-slate-700 text-amber-200 min-w-[65px]">MOY {oddSemLabel}</th>
-                    <th className="py-1.5 px-2 font-extrabold text-[10px] text-center bg-[#0a1c47] border-r-2 border-slate-700 text-amber-300 min-w-[65px]">DÉC. {oddSemLabel}</th>
+                  <>
+                    {/* Row 2: Module Codes */}
+                    <tr className="bg-[#153478] text-blue-100 border-b border-slate-700">
+                      {annualModules.filter((m: any) => m.semester_number % 2 !== 0).map((m: any, idx: number) => (
+                        <th key={m.id} colSpan={3} className="py-1 px-1 font-mono text-[10px] font-black text-center bg-[#153478] border-r border-slate-700/80 text-white" title={m.name}>
+                          {m.code || `M0${idx+1}`}
+                        </th>
+                      ))}
+                      <th rowSpan={2} className="py-1.5 px-2 font-black text-[10px] text-center bg-[#0f2863] border-r border-slate-700 text-amber-200 min-w-[55px]">MOY {oddSemLabel}</th>
+                      <th rowSpan={2} className="py-1.5 px-2 font-black text-[10px] text-center bg-[#0a1c47] border-r-2 border-slate-700 text-amber-300 min-w-[55px]">DÉC. {oddSemLabel}</th>
 
-                    {annualModules.filter((m: any) => m.semester_number % 2 === 0).map((m: any, idx: number) => (
-                      <th key={m.id} className="py-1.5 px-1 font-mono text-[10px] font-bold text-center bg-[#153478] border-r border-slate-700/80 text-white min-w-[72px]" title={m.name}>
-                        {m.code || `M0${idx+8}`}
-                      </th>
-                    ))}
-                    <th className="py-1.5 px-2 font-extrabold text-[10px] text-center bg-[#0f2863] border-r border-slate-700 text-blue-200 min-w-[65px]">MOY {evenSemLabel}</th>
-                    <th className="py-1.5 px-2 font-extrabold text-[10px] text-center bg-[#0a1c47] border-r-2 border-slate-700 text-amber-300 min-w-[65px]">DÉC. {evenSemLabel}</th>
-                  </tr>
+                      {annualModules.filter((m: any) => m.semester_number % 2 === 0).map((m: any, idx: number) => (
+                        <th key={m.id} colSpan={3} className="py-1 px-1 font-mono text-[10px] font-black text-center bg-[#153478] border-r border-slate-700/80 text-white" title={m.name}>
+                          {m.code || `M0${idx+8}`}
+                        </th>
+                      ))}
+                      <th rowSpan={2} className="py-1.5 px-2 font-black text-[10px] text-center bg-[#0f2863] border-r border-slate-700 text-blue-200 min-w-[55px]">MOY {evenSemLabel}</th>
+                      <th rowSpan={2} className="py-1.5 px-2 font-black text-[10px] text-center bg-[#0a1c47] border-r-2 border-slate-700 text-amber-300 min-w-[55px]">DÉC. {evenSemLabel}</th>
+                    </tr>
+
+                    {/* Row 3: Sub-Headers (note | déc. | année) */}
+                    <tr className="bg-[#0b1c42] text-slate-300 border-b border-slate-700 text-[9px] font-bold">
+                      {annualModules.filter((m: any) => m.semester_number % 2 !== 0).map((m: any) => (
+                        <React.Fragment key={m.id}>
+                          <th className="py-0.5 px-1 text-center font-bold border-r border-slate-700/60 min-w-[38px] text-slate-300">note</th>
+                          <th className="py-0.5 px-1 text-center font-bold border-r border-slate-700/60 min-w-[28px] text-slate-300">déc.</th>
+                          <th className="py-0.5 px-1 text-center font-bold border-r border-slate-600 min-w-[32px] text-slate-300">année</th>
+                        </React.Fragment>
+                      ))}
+                      {annualModules.filter((m: any) => m.semester_number % 2 === 0).map((m: any) => (
+                        <React.Fragment key={m.id}>
+                          <th className="py-0.5 px-1 text-center font-bold border-r border-slate-700/60 min-w-[38px] text-slate-300">note</th>
+                          <th className="py-0.5 px-1 text-center font-bold border-r border-slate-700/60 min-w-[28px] text-slate-300">déc.</th>
+                          <th className="py-0.5 px-1 text-center font-bold border-r border-slate-600 min-w-[32px] text-slate-300">année</th>
+                        </React.Fragment>
+                      ))}
+                    </tr>
+                  </>
                 )}
               </thead>
 
@@ -3372,7 +3409,7 @@ export default function AdminGradesPVPage() {
                 {filteredAnnualData.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={annualModules.length > 0 ? annualModules.length + 9 : 9}
+                      colSpan={annualModules.length > 0 ? annualModules.length * 3 + 9 : 9}
                       className="py-12 text-center text-slate-400 dark:text-slate-500 italic text-xs"
                     >
                       Aucun étudiant ne correspond aux critères de recherche ou de filtre.
@@ -3421,53 +3458,47 @@ export default function AdminGradesPVPage() {
 
                         {annualModules.length > 0 ? (
                           <>
-                            {/* Odd Semester Modules */}
+                            {/* Odd Semester Modules (3 sub-columns: note | déc. | année) */}
                             {annualModules.filter((m: any) => m.semester_number % 2 !== 0).map((m: any) => {
                               const modInfo = row.modules_map?.[m.id] || row.modules_detail?.find((md: any) => md.module_id === m.id)
                               const gradeVal = modInfo ? Number(modInfo.final_grade) : null
                               const isElim = gradeVal !== null && gradeVal < 6.00
                               const isFailed = gradeVal !== null && gradeVal < 10.00
                               const decText = modInfo?.decision === 'V.Comp' ? 'VPC' : (modInfo?.decision || 'NV')
+                              const valYear = modInfo?.validation_year || ''
+                              let shortYear = '–'
+                              if (valYear) {
+                                const ym = valYear.match(/(\d{2,4})[\/\-](\d{2,4})/)
+                                if (ym) shortYear = `${ym[1].slice(-2)}-${ym[2].slice(-2)}`
+                                else shortYear = valYear
+                              }
 
                               const noteColor = 
-                                isElim ? 'text-rose-700 dark:text-rose-400 font-extrabold' :
-                                isFailed ? 'text-amber-700 dark:text-amber-400 font-bold' :
-                                gradeVal !== null ? 'text-slate-900 dark:text-slate-100 font-extrabold' :
-                                'text-slate-400'
+                                isElim ? 'text-rose-700 dark:text-rose-400 font-black' :
+                                isFailed ? 'text-amber-700 dark:text-amber-400 font-black' :
+                                gradeVal !== null ? 'text-slate-900 dark:text-slate-100 font-black' :
+                                'text-slate-400 font-bold'
 
-                              const noteBg = isElim ? 'bg-rose-50/70 dark:bg-rose-950/30' : isFailed ? 'bg-amber-50/40 dark:bg-amber-950/20' : ''
+                              const decColor =
+                                decText === 'V' ? "text-emerald-700 dark:text-emerald-400 font-black" :
+                                decText === 'VAR' ? "text-sky-700 dark:text-sky-400 font-black" :
+                                (decText === 'VPC' || decText === 'V.PC') ? "text-indigo-700 dark:text-indigo-400 font-black" :
+                                "text-rose-700 dark:text-rose-400 font-black"
 
-                              const decBadgeClass =
-                                decText === 'V' ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800" :
-                                decText === 'VAR' ? "bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800" :
-                                (decText === 'VPC' || decText === 'V.PC') ? "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800" :
-                                "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800"
+                              const bgElim = isElim ? 'bg-rose-50/70 dark:bg-rose-950/30' : ''
 
                               return (
-                                <td
-                                  key={m.id}
-                                  className={cn("py-2 px-1 text-center border-r border-b border-slate-200 dark:border-slate-800 min-w-[72px]", noteBg)}
-                                  title={`${m.name} — Note: ${gradeVal !== null ? Number(gradeVal).toFixed(2) : '-'}`}
-                                >
-                                  <div className="flex flex-col items-center justify-center gap-0.5">
-                                    <span className={cn("font-mono text-xs", noteColor)}>
-                                      {gradeVal !== null && !isNaN(gradeVal) ? Number(gradeVal).toFixed(2) : '–'}
-                                    </span>
-                                    <div className="flex items-center gap-1">
-                                      <span className={cn("text-[8.5px] px-1.5 py-0.2 rounded font-black uppercase tracking-wider border", decBadgeClass)}>
-                                        {decText}
-                                      </span>
-                                      {modInfo?.is_historical && (
-                                        <span
-                                          className="text-[8px] font-mono px-1 py-0.2 bg-purple-100 text-purple-900 dark:bg-purple-950 dark:text-purple-300 rounded font-bold"
-                                          title={`Validé en ${modInfo?.validation_year}`}
-                                        >
-                                          {modInfo?.validation_year ? modInfo.validation_year.slice(-2) : 'Ant.'}
-                                        </span>
-                                      )}
-                                    </div>
-                                  </div>
-                                </td>
+                                <React.Fragment key={m.id}>
+                                  <td className={cn("py-1.5 px-1 text-center border-r border-b border-slate-200 dark:border-slate-800 font-mono text-xs", bgElim, noteColor)}>
+                                    {gradeVal !== null && !isNaN(gradeVal) ? Number(gradeVal).toFixed(2) : '–'}
+                                  </td>
+                                  <td className={cn("py-1.5 px-1 text-center border-r border-b border-slate-200 dark:border-slate-800 font-mono text-[11px]", bgElim, decColor)}>
+                                    {decText}
+                                  </td>
+                                  <td className={cn("py-1.5 px-1 text-center border-r-2 border-b border-slate-300 dark:border-slate-700 font-mono text-[10px] text-slate-500 dark:text-slate-400 font-bold", bgElim)}>
+                                    {shortYear}
+                                  </td>
+                                </React.Fragment>
                               )
                             })}
 
@@ -3489,53 +3520,47 @@ export default function AdminGradesPVPage() {
                               </span>
                             </td>
 
-                            {/* Even Semester Modules */}
+                            {/* Even Semester Modules (3 sub-columns: note | déc. | année) */}
                             {annualModules.filter((m: any) => m.semester_number % 2 === 0).map((m: any) => {
                               const modInfo = row.modules_map?.[m.id] || row.modules_detail?.find((md: any) => md.module_id === m.id)
                               const gradeVal = modInfo ? Number(modInfo.final_grade) : null
                               const isElim = gradeVal !== null && gradeVal < 6.00
                               const isFailed = gradeVal !== null && gradeVal < 10.00
                               const decText = modInfo?.decision === 'V.Comp' ? 'VPC' : (modInfo?.decision || 'NV')
+                              const valYear = modInfo?.validation_year || ''
+                              let shortYear = '–'
+                              if (valYear) {
+                                const ym = valYear.match(/(\d{2,4})[\/\-](\d{2,4})/)
+                                if (ym) shortYear = `${ym[1].slice(-2)}-${ym[2].slice(-2)}`
+                                else shortYear = valYear
+                              }
 
                               const noteColor = 
-                                isElim ? 'text-rose-700 dark:text-rose-400 font-extrabold' :
-                                isFailed ? 'text-amber-700 dark:text-amber-400 font-bold' :
-                                gradeVal !== null ? 'text-slate-900 dark:text-slate-100 font-extrabold' :
-                                'text-slate-400'
+                                isElim ? 'text-rose-700 dark:text-rose-400 font-black' :
+                                isFailed ? 'text-amber-700 dark:text-amber-400 font-black' :
+                                gradeVal !== null ? 'text-slate-900 dark:text-slate-100 font-black' :
+                                'text-slate-400 font-bold'
 
-                              const noteBg = isElim ? 'bg-rose-50/70 dark:bg-rose-950/30' : isFailed ? 'bg-amber-50/40 dark:bg-amber-950/20' : ''
+                              const decColor =
+                                decText === 'V' ? "text-emerald-700 dark:text-emerald-400 font-black" :
+                                decText === 'VAR' ? "text-sky-700 dark:text-sky-400 font-black" :
+                                (decText === 'VPC' || decText === 'V.PC') ? "text-indigo-700 dark:text-indigo-400 font-black" :
+                                "text-rose-700 dark:text-rose-400 font-black"
 
-                              const decBadgeClass =
-                                decText === 'V' ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800" :
-                                decText === 'VAR' ? "bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800" :
-                                (decText === 'VPC' || decText === 'V.PC') ? "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800" :
-                                "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800"
+                              const bgElim = isElim ? 'bg-rose-50/70 dark:bg-rose-950/30' : ''
 
                               return (
-                                <td
-                                  key={m.id}
-                                  className={cn("py-2 px-1 text-center border-r border-b border-slate-200 dark:border-slate-800 min-w-[72px]", noteBg)}
-                                  title={`${m.name} — Note: ${gradeVal !== null ? Number(gradeVal).toFixed(2) : '-'}`}
-                                >
-                                  <div className="flex flex-col items-center justify-center gap-0.5">
-                                    <span className={cn("font-mono text-xs", noteColor)}>
-                                      {gradeVal !== null && !isNaN(gradeVal) ? Number(gradeVal).toFixed(2) : '–'}
-                                    </span>
-                                    <div className="flex items-center gap-1">
-                                      <span className={cn("text-[8.5px] px-1.5 py-0.2 rounded font-black uppercase tracking-wider border", decBadgeClass)}>
-                                        {decText}
-                                      </span>
-                                      {modInfo?.is_historical && (
-                                        <span
-                                          className="text-[8px] font-mono px-1 py-0.2 bg-purple-100 text-purple-900 dark:bg-purple-950 dark:text-purple-300 rounded font-bold"
-                                          title={`Validé en ${modInfo?.validation_year}`}
-                                        >
-                                          {modInfo?.validation_year ? modInfo.validation_year.slice(-2) : 'Ant.'}
-                                        </span>
-                                      )}
-                                    </div>
-                                  </div>
-                                </td>
+                                <React.Fragment key={m.id}>
+                                  <td className={cn("py-1.5 px-1 text-center border-r border-b border-slate-200 dark:border-slate-800 font-mono text-xs", bgElim, noteColor)}>
+                                    {gradeVal !== null && !isNaN(gradeVal) ? Number(gradeVal).toFixed(2) : '–'}
+                                  </td>
+                                  <td className={cn("py-1.5 px-1 text-center border-r border-b border-slate-200 dark:border-slate-800 font-mono text-[11px]", bgElim, decColor)}>
+                                    {decText}
+                                  </td>
+                                  <td className={cn("py-1.5 px-1 text-center border-r-2 border-b border-slate-300 dark:border-slate-700 font-mono text-[10px] text-slate-500 dark:text-slate-400 font-bold", bgElim)}>
+                                    {shortYear}
+                                  </td>
+                                </React.Fragment>
                               )
                             })}
 
@@ -3641,7 +3666,7 @@ export default function AdminGradesPVPage() {
 
                 <Button
                   onClick={() => {
-                    const filiereId = selectedFiliere || 1
+                    const filiereId = selectedFiliere || 13
                     const yearLevel = selectedYearLevel || 1
                     toast.loading('⏳ Génération du PDF Officiel...', { id: 'pdf-export' })
                     downloadPdf(
