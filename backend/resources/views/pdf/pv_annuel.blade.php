@@ -44,7 +44,7 @@
     <style>
         @page {
             size: A3 landscape;
-            margin: 3.5mm 5mm 3mm 5mm;
+            margin: 3mm 4mm 2.5mm 4mm;
         }
         * {
             box-sizing: border-box;
@@ -186,6 +186,7 @@
         /* ─── Main Matrix Table ─── */
         .matrix-table {
             width: 100%;
+            table-layout: fixed;
             border-collapse: collapse;
             margin-bottom: 2.5px;
         }
@@ -260,7 +261,10 @@
             font-weight: 800;
             color: #0f172a;
             white-space: nowrap;
-            padding-left: 5px !important;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding-left: 3px !important;
+            padding-right: 2px !important;
             font-size: {{ $tbFont }};
         }
 
@@ -350,24 +354,44 @@
             border: 0.5px solid #000000;
         }
         
+        .decision-cell {
+            text-align: center !important;
+            vertical-align: middle !important;
+            padding: 1px 2px !important;
+        }
+        .badge-annual {
+            display: block;
+            width: 98%;
+            margin: 0 auto;
+            padding: 1.5px 1px;
+            border-radius: 2px;
+            font-size: 5.4pt;
+            font-weight: 900;
+            text-transform: uppercase;
+            text-align: center;
+            letter-spacing: 0.1px;
+            line-height: 1.1;
+        }
+        .decision-subtext {
+            font-size: 4.5pt;
+            font-weight: 800;
+            text-align: center;
+            display: block;
+            margin-top: 1px;
+            line-height: 1;
+            white-space: nowrap;
+        }
+        .text-emerald { color: #15803d; }
+        .text-indigo { color: #3730a3; }
+        .text-amber { color: #b45309; }
+        .text-rose { color: #b91c1c; }
+
         .hist-year {
             font-size: 5pt;
             color: #6b21a8;
             font-weight: 900;
             display: block;
             margin-top: 1px;
-        }
-        .reason-text {
-            font-size: 5.2pt;
-            color: #475569;
-            font-weight: 700;
-            display: block;
-            margin-top: 1px;
-            line-height: 1.0;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 135px;
         }
 
         /* ─── Signatures Section (15 Members: 14 Modules + 1 Chef de Filière) ─── */
@@ -535,10 +559,10 @@
     <table class="matrix-table">
         <thead>
             <tr>
-                <th rowspan="2" class="border-sep" style="width: 2.2%;">N°</th>
-                <th rowspan="2" class="border-sep" style="width: 5.5%;">APOGÉE / CNE</th>
-                <th rowspan="2" class="border-sep" style="width: 4.5%;">CIN</th>
-                <th rowspan="2" class="border-sep" style="width: 11%;">NOM & PRÉNOM ÉTUDIANT</th>
+                <th rowspan="2" class="border-sep" style="width: 1.8%;">N°</th>
+                <th rowspan="2" class="border-sep" style="width: 4.6%;">APOGÉE / CNE</th>
+                <th rowspan="2" class="border-sep" style="width: 3.6%;">CIN</th>
+                <th rowspan="2" class="border-sep" style="width: 7.8%;">NOM & PRÉNOM ÉTUDIANT</th>
 
                 {{-- Header Semestre Impair (ex: S1/S3/S5) --}}
                 <th colspan="{{ $oddMods->count() + 2 }}" class="s1-head border-sep">
@@ -550,29 +574,29 @@
                     MODULES {{ $even_semester_label }} ({{ $evenMods->count() }} MODULES)
                 </th>
 
-                <th rowspan="2" class="border-sep" style="width: 4.2%;">MOY. ANN.</th>
-                <th rowspan="2" style="width: 11.6%;">DÉCISION DU JURY</th>
+                <th rowspan="2" class="border-sep" style="width: 3.6%;">MOY. ANN.</th>
+                <th rowspan="2" style="width: 8.8%;">DÉCISION FINALE (ANNÉE)</th>
             </tr>
             <tr>
                 {{-- S1 Subheaders --}}
                 @foreach($oddMods as $m)
                     @php $mCode = is_array($m) ? ($m['code'] ?? '') : ($m->code ?? ''); @endphp
-                    <th class="sub-head" title="{{ is_array($m) ? ($m['name'] ?? '') : ($m->name ?? '') }}">
+                    <th class="sub-head" style="width: 4.0%;" title="{{ is_array($m) ? ($m['name'] ?? '') : ($m->name ?? '') }}">
                         {{ $mCode }}
                     </th>
                 @endforeach
-                <th class="sub-head sub-head-res" style="width: 3.5%;">MOY {{ $odd_semester_label }}</th>
-                <th class="sub-head sub-head-res border-sep" style="width: 3.2%;">DÉC. {{ $odd_semester_label }}</th>
+                <th class="sub-head sub-head-res" style="width: 3.2%;">MOY {{ $odd_semester_label }}</th>
+                <th class="sub-head sub-head-res border-sep" style="width: 2.6%;">DÉC. {{ $odd_semester_label }}</th>
 
                 {{-- S2 Subheaders --}}
                 @foreach($evenMods as $m)
                     @php $mCode = is_array($m) ? ($m['code'] ?? '') : ($m->code ?? ''); @endphp
-                    <th class="sub-head" title="{{ is_array($m) ? ($m['name'] ?? '') : ($m->name ?? '') }}">
+                    <th class="sub-head" style="width: 4.0%;" title="{{ is_array($m) ? ($m['name'] ?? '') : ($m->name ?? '') }}">
                         {{ $mCode }}
                     </th>
                 @endforeach
-                <th class="sub-head sub-head-res" style="width: 3.5%;">MOY {{ $even_semester_label }}</th>
-                <th class="sub-head sub-head-res border-sep" style="width: 3.2%;">DÉC. {{ $even_semester_label }}</th>
+                <th class="sub-head sub-head-res" style="width: 3.2%;">MOY {{ $even_semester_label }}</th>
+                <th class="sub-head sub-head-res border-sep" style="width: 2.6%;">DÉC. {{ $even_semester_label }}</th>
             </tr>
         </thead>
         <tbody>
@@ -682,23 +706,27 @@
                         {{ is_numeric($s['annual_average'] ?? null) ? number_format((float)$s['annual_average'], 2) : ($s['annual_average'] ?? '-') }}
                     </td>
 
-                    {{-- Décision Finale du Jury --}}
-                    <td style="text-align: right; padding-right: 4px;">
+                    {{-- Décision Finale de l'Année --}}
+                    <td class="decision-cell">
                         @php $dec = $s['decision'] ?? 'AJ'; @endphp
                         @if($dec === 'V')
-                            <span class="badge badge-v">VALIDÉ DIRECT</span>
+                            <div class="badge-annual badge-v">VALIDÉ DIRECT</div>
+                            <span class="decision-subtext text-emerald">Admis Année Sup.</span>
                         @elseif($dec === 'V.Comp' || $dec === 'VPC')
-                            <span class="badge badge-vpc">VALIDÉ P. COMP</span>
+                            <div class="badge-annual badge-vpc">VALIDÉ PAR COMP.</div>
+                            <span class="decision-subtext text-indigo">Admis par Comp.</span>
                         @elseif($dec === 'PASS_DETTES')
-                            <span class="badge badge-dettes">PASSAGE AVEC DETTES</span>
+                            <div class="badge-annual badge-dettes">PASSAGE DETTES</div>
+                            <span class="decision-subtext text-amber">Admis (1 dette)</span>
                         @elseif($dec === 'FRAUDE' || ($s['has_fraud'] ?? false))
-                            <span class="badge badge-fraude">FRAUDE</span>
+                            <div class="badge-annual badge-fraude">FRAUDE</div>
+                            <span class="decision-subtext text-rose">Disciplinaire</span>
+                        @elseif($dec === 'REDOUBLE' || (is_numeric($s['annual_average'] ?? null) && floatval($s['annual_average']) < 6.0))
+                            <div class="badge-annual badge-aj">REDOUBLEMENT</div>
+                            <span class="decision-subtext text-rose">Moyenne &lt; 6.00</span>
                         @else
-                            <span class="badge badge-aj">AJOURNÉ / REDOUBLEMENT</span>
-                        @endif
-
-                        @if(!empty($s['decision_reason']) && $dec !== 'V')
-                            <span class="reason-text">{{ $s['decision_reason'] }}</span>
+                            <div class="badge-annual badge-aj">AJOURNÉ</div>
+                            <span class="decision-subtext text-rose">Non Admis (NV)</span>
                         @endif
                     </td>
                 </tr>

@@ -648,9 +648,9 @@ class DeliberationService
 
             $failedTotal = $failedOddCount + $failedEvenCount;
 
-            // 3. Annual Compensation S1+S2 (Moyenne Annuelle >= 10.00 & aucune note < 5.0 dans tout le bilan)
+            // 3. Annual Compensation S1+S2 (Moyenne Annuelle >= 10.00 & aucune note éliminatoire < 6.0 dans tout le bilan)
             $isAnnualCompensated = false;
-            if ($annualAvg >= 10.00 && ! $hasEliminatory && ! $hasFraud && $failedTotal <= 2) {
+            if ($annualAvg >= 10.00 && ! $hasEliminatory && ! $hasFraud) {
                 $isAnnualCompensated = true;
                 foreach ($allModuleDetails as &$md) {
                     if ($md['final_grade'] < 10.00) {
@@ -676,11 +676,14 @@ class DeliberationService
                 default => 'NV',
             };
 
-            // Nouvelle Règle ENCG : Passage avec dettes (Réserviste) autorisé uniquement si au maximum 1 SEUL module non validé sur TOUTE L'ANNÉE.
+            // Décision Annuelle Officielle : Validé Direct, Validé par Compensation, Passage avec Dettes, Ajourné, Redoublement
+            $allPassed = collect($allModuleDetails)->every(fn ($m) => $m['final_grade'] >= 10.0);
             $decision = match (true) {
                 $hasFraud => 'FRAUDE',
-                ($oddAvg >= 10.00 && $evenAvg >= 10.00 && ! $hasEliminatoryOdd && ! $hasEliminatoryEven) || $isAnnualCompensated => ($annualAvg >= 10.0 && ! $isOddCompensated && ! $isEvenCompensated && ! $isAnnualCompensated ? 'V' : 'V.Comp'),
-                $failedTotal <= 1 && $annualAvg >= 5.0 => 'PASS_DETTES',
+                $allPassed => 'V',
+                ($annualAvg >= 10.00 && ! $hasEliminatory) => 'V.Comp',
+                $failedTotal <= 1 && $annualAvg >= 6.0 => 'PASS_DETTES',
+                $annualAvg < 6.0 => 'REDOUBLE',
                 default => 'AJ',
             };
 
@@ -689,26 +692,24 @@ class DeliberationService
                 $modListStr = ! empty($fraudModules) ? implode(', ', $fraudModules) : 'Examen';
                 $decisionReason = "Sanction Disciplinaire pour Fraude ({$modListStr}) — Non Compensable";
             } elseif ($decision === 'V') {
-                $decisionReason = "Validation Directe du Bloc ({$oddSemNumber} & {$evenSemNumber})";
+                $decisionReason = "Validation Directe de l'Année ({$oddSemNumber} & {$evenSemNumber})";
             } elseif ($decision === 'V.Comp') {
-                $decisionReason = 'Validation par Compensation Annuelle (Pas de note < 5.0)';
+                $decisionReason = 'Validation par Compensation Annuelle (Pas de note < 6.0)';
             } elseif ($decision === 'PASS_DETTES') {
                 $failedNames = collect($allModuleDetails)->filter(fn ($m) => $m['final_grade'] < 10.00)->pluck('code')->toArray();
                 $modStr = ! empty($failedNames) ? implode(', ', $failedNames) : '';
-                $decisionReason = "Passage avec Dettes (1 seul module NV dans l'année : {$modStr})";
+                $decisionReason = "Passage avec Dettes (1 seul module NV : {$modStr})";
+            } elseif ($decision === 'REDOUBLE') {
+                $decisionReason = "Redoublement (Moyenne Annuelle < 6.00 : {$annualAvg}/20)";
             } else {
-                if ($failedTotal > 1) {
-                    $details = [];
-                    if ($failedOddCount > 0) {
-                        $details[] = "{$failedOddCount} mod. NV en S{$oddSemNumber}";
-                    }
-                    if ($failedEvenCount > 0) {
-                        $details[] = "{$failedEvenCount} mod. NV en S{$evenSemNumber}";
-                    }
-                    $decisionReason = "Redoublement (Plus de 1 module non validé dans l'année [{$failedTotal} mod. NV] : ".implode(', ', $details).')';
-                } else {
-                    $decisionReason = "Redoublement (Moyenne Annuelle < 5.00 : {$annualAvg}/20)";
+                $details = [];
+                if ($failedOddCount > 0) {
+                    $details[] = "{$failedOddCount} mod. NV en S{$oddSemNumber}";
                 }
+                if ($failedEvenCount > 0) {
+                    $details[] = "{$failedEvenCount} mod. NV en S{$evenSemNumber}";
+                }
+                $decisionReason = "Ajourné / Non Validé ({$failedTotal} mod. NV : ".implode(', ', $details).')';
             }
 
             $results[] = [

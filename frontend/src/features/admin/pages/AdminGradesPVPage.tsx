@@ -3306,7 +3306,7 @@ export default function AdminGradesPVPage() {
                   </th>
                   <th
                     rowSpan={annualModules.length > 0 ? 2 : 1}
-                    className="py-2.5 px-3 font-black uppercase tracking-wider sticky left-[160px] z-30 bg-[#0f2863] text-white border-r-2 border-slate-300 dark:border-slate-700 shadow-[4px_0_8px_-2px_rgba(0,0,0,0.08)] min-w-[140px] max-w-[155px] text-[11px]"
+                    className="py-2.5 px-2.5 font-black uppercase tracking-wider sticky left-[160px] z-30 bg-[#0f2863] text-white border-r-2 border-slate-300 dark:border-slate-700 shadow-[4px_0_8px_-2px_rgba(0,0,0,0.08)] min-w-[125px] max-w-[135px] text-[11px]"
                   >
                     Nom & Prénom
                   </th>
@@ -3335,15 +3335,15 @@ export default function AdminGradesPVPage() {
 
                   <th
                     rowSpan={annualModules.length > 0 ? 2 : 1}
-                    className="py-3 px-3 font-black text-center bg-[#0a1c47] text-amber-300 border-r border-slate-700 min-w-[90px]"
+                    className="py-3 px-3 font-black text-center bg-[#0a1c47] text-amber-300 border-r border-slate-700 min-w-[95px]"
                   >
                     Moyenne Annuelle
                   </th>
                   <th
                     rowSpan={annualModules.length > 0 ? 2 : 1}
-                    className="py-3 px-4 font-black text-center bg-[#0a1c47] text-white min-w-[160px]"
+                    className="py-3 px-4 font-black text-center bg-[#0a1c47] text-white min-w-[170px]"
                   >
-                    Décision Finale Jury
+                    Décision Finale (Année)
                   </th>
                 </tr>
 
@@ -3404,7 +3404,7 @@ export default function AdminGradesPVPage() {
 
                         {/* Student Name */}
                         <td className={cn(
-                          "py-2 px-3 border-r-2 border-b border-slate-300 dark:border-slate-700 sticky left-[160px] z-20 shadow-[4px_0_8px_-2px_rgba(0,0,0,0.08)] min-w-[140px] max-w-[155px]",
+                          "py-2 px-2.5 border-r-2 border-b border-slate-300 dark:border-slate-700 sticky left-[160px] z-20 shadow-[4px_0_8px_-2px_rgba(0,0,0,0.08)] min-w-[125px] max-w-[135px]",
                           rowOpaqueBg
                         )}>
                           <div className="flex items-center gap-1 min-w-0" title={row.student_name}>
@@ -3577,24 +3577,29 @@ export default function AdminGradesPVPage() {
                         <td className="py-2.5 px-3 text-center border-b border-slate-200 dark:border-slate-800">
                           <div className="flex flex-col items-center justify-center gap-1">
                             <span className={cn(
-                              "px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider border inline-block",
-                              row.has_fraud || row.decision === 'FRAUDE' ? "bg-rose-600 text-white border-rose-700 shadow-xs" :
+                              "px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider border inline-block shadow-xs",
+                              row.has_fraud || row.decision === 'FRAUDE' ? "bg-rose-600 text-white border-rose-700" :
                               row.decision === 'V' ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800" :
                               row.decision === 'V.Comp' ? "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800" :
                               row.decision === 'PASS_DETTES' ? "bg-amber-50 text-amber-800 border-amber-300 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800" :
+                              row.decision === 'REDOUBLE' ? "bg-red-100 text-red-900 border-red-300 dark:bg-red-950/60 dark:text-red-300 dark:border-red-800" :
                               "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800"
                             )}>
-                              {row.has_fraud || row.decision === 'FRAUDE' ? '🚨 FRAUDE (0/20)' :
-                               row.decision === 'V' ? `Validé (${oddSemLabel}+${evenSemLabel})` :
-                               row.decision === 'V.Comp' ? `Validé p. Comp (${oddSemLabel}+${evenSemLabel})` :
-                               row.decision === 'PASS_DETTES' ? 'Passage avec Dettes' :
-                               'Redoublement / Ajourné'}
+                              {row.has_fraud || row.decision === 'FRAUDE' ? '🚨 FRAUDE' :
+                               row.decision === 'V' ? 'VALIDÉ DIRECT' :
+                               row.decision === 'V.Comp' ? 'VALIDÉ PAR COMP.' :
+                               row.decision === 'PASS_DETTES' ? 'PASSAGE AVEC DETTES' :
+                               row.decision === 'REDOUBLE' ? 'REDOUBLEMENT' :
+                               'AJOURNÉ'}
                             </span>
-                            {row.decision_reason && row.decision !== 'V' && (
-                              <span className="text-[9px] text-slate-500 font-medium line-clamp-1 max-w-[200px]">
-                                {row.decision_reason}
-                              </span>
-                            )}
+                            <span className="text-[9.5px] text-slate-500 font-semibold tracking-tight">
+                              {row.has_fraud || row.decision === 'FRAUDE' ? 'Sanction Disciplinaire' :
+                               row.decision === 'V' ? 'Admis en Année Supérieure' :
+                               row.decision === 'V.Comp' ? 'Admis par Compensation' :
+                               row.decision === 'PASS_DETTES' ? 'Admis avec Réserve (1 dette)' :
+                               row.decision === 'REDOUBLE' ? 'Non Admis (Redoublement)' :
+                               'Non Admis (Ajourné)'}
+                            </span>
                           </div>
                         </td>
                       </tr>
