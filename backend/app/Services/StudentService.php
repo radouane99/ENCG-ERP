@@ -28,12 +28,12 @@ class StudentService
         if (! empty($filters['search'])) {
             $search = trim($filters['search']);
             $query->where(function ($q) use ($search) {
-                $q->where('students.student_number', 'ilike', "%{$search}%")
-                    ->orWhere('students.cne', 'ilike', "%{$search}%")
-                    ->orWhere('users.first_name', 'ilike', "%{$search}%")
-                    ->orWhere('users.last_name', 'ilike', "%{$search}%")
-                    ->orWhere('users.email', 'ilike', "%{$search}%")
-                    ->orWhere('users.cin', 'ilike', "%{$search}%");
+                $q->whereILike('students.student_number', "%{$search}%")
+                    ->orWhereILike('students.cne', "%{$search}%")
+                    ->orWhereILike('users.first_name', "%{$search}%")
+                    ->orWhereILike('users.last_name', "%{$search}%")
+                    ->orWhereILike('users.email', "%{$search}%")
+                    ->orWhereILike('users.cin', "%{$search}%");
             });
         }
 

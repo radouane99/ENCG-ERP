@@ -35,7 +35,7 @@ class ProfessorAccessService
             return collect();
         }
 
-        $profIds = array_filter(array_unique([$professor->id, $user->id]));
+        $profIds = [$professor->id];
 
         $assignedModuleIds = DB::table('module_professor')
             ->whereIn('professor_id', $profIds)

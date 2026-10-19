@@ -68,6 +68,7 @@ class Student extends Model
         'emergency_contact_relation',
         'status',
         'inscription_status',
+        'academic_year',
         'scholarship_type',
         'has_disability',
         'disability_details',

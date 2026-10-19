@@ -11,6 +11,7 @@ use App\Models\Semester;
 use App\Models\Student;
 use App\Models\User;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
+use Illuminate\Support\Facades\Schema;
 
 abstract class TestCase extends BaseTestCase
 {
@@ -47,7 +48,9 @@ abstract class TestCase extends BaseTestCase
             'services.ai.driver' => 'stub',
         ]);
 
-        $this->ensureInstitution();
+        if (Schema::hasTable('institutions')) {
+            $this->ensureInstitution();
+        }
     }
 
     protected function ensureInstitution(): Institution
@@ -96,6 +99,18 @@ abstract class TestCase extends BaseTestCase
     protected function makeTestAcademicYear(array $overrides = []): AcademicYear
     {
         unset($overrides['id']);
+        $startYear = $overrides['start_year'] ?? 2026;
+        $institutionId = $overrides['institution_id'] ?? 1;
+
+        $existing = AcademicYear::where('institution_id', $institutionId)
+            ->where('start_year', $startYear)
+            ->first();
+
+        if ($existing) {
+            $existing->update($overrides);
+
+            return $existing;
+        }
 
         return AcademicYear::create(array_merge([
             'institution_id' => 1,

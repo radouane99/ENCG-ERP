@@ -410,9 +410,9 @@ class RoomAvailabilityService
         }
         if ($search) {
             $roomsQuery->where(function ($q) use ($search) {
-                $q->where('name', 'ilike', "%{$search}%")
-                    ->orWhere('code', 'ilike', "%{$search}%")
-                    ->orWhere('building', 'ilike', "%{$search}%");
+                $q->whereILike('name', "%{$search}%")
+                    ->orWhereILike('code', "%{$search}%")
+                    ->orWhereILike('building', "%{$search}%");
             });
         }
 

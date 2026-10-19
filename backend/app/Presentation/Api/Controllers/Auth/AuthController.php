@@ -302,7 +302,9 @@ class AuthController extends Controller
             'user' => $this->buildUserData($user),
         ];
 
-        $data['token'] = $token;
+        if (strtolower((string) $request->header('X-Client')) === 'mobile') {
+            $data['token'] = $token;
+        }
 
         $payload = ['data' => $data];
         if ($message !== null) {

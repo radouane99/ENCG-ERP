@@ -193,12 +193,12 @@ class ParapheurWorkflowService
         if (! empty($filters['search'])) {
             $s = '%'.$filters['search'].'%';
             $query->where(function ($q) use ($s) {
-                $q->where('tracking_code', 'ilike', $s)
-                    ->orWhere('purpose', 'ilike', $s)
-                    ->orWhere('destination', 'ilike', $s)
+                $q->whereILike('tracking_code', $s)
+                    ->orWhereILike('purpose', $s)
+                    ->orWhereILike('destination', $s)
                     ->orWhereHas('user', function ($uq) use ($s) {
-                        $uq->where('name', 'ilike', $s)
-                            ->orWhere('email', 'ilike', $s);
+                        $uq->whereILike('name', $s)
+                            ->orWhereILike('email', $s);
                     });
             });
         }
