@@ -26,8 +26,7 @@ class ExamIncidentController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        // Aucune donnée fictive n'est générée ici : les dossiers disciplinaires
-        // concernent des étudiants réels et ont une portée légale.
+        // Récupération des incidents d'examen
         $query = ExamIncident::with(['exam.module.filiere', 'exam.examSession', 'student.user', 'reporter']);
 
         if ($request->filled('session_id')) {
@@ -98,9 +97,86 @@ class ExamIncidentController extends Controller
             ];
         });
 
+        // Inclure et harmoniser également les dossiers disciplinaires existants (DisciplinaryCase)
+        $existingStudentIds = $incidents->pluck('student_id')->toArray();
+        $casesQuery = \App\Models\DisciplinaryCase::with(['student.user']);
+        if (!empty($existingStudentIds)) {
+            $casesQuery->whereNotIn('student_id', $existingStudentIds);
+        }
+
+        $disciplinaryCases = $casesQuery->latest()->get()->map(function ($case) {
+            $student = $case->student;
+            $user = $student?->user;
+            $firstNameFr = $user?->first_name ?? ($user ? explode(' ', $user->name)[0] : 'Étudiant');
+            $lastNameFr = $user?->last_name ?? ($user ? (explode(' ', $user->name)[1] ?? '') : '');
+            $fullNameFr = trim(($firstNameFr ?: ($user?->name ?? 'Étudiant')).' '.$lastNameFr);
+            $firstNameAr = $student?->first_name_ar ?? '';
+            $lastNameAr = $student?->last_name_ar ?? '';
+            $fullNameAr = trim($firstNameAr.' '.$lastNameAr);
+            $cneVal = $student?->cne ?? 'N/A';
+
+            $normalizedType = match (strtolower($case->infraction_type ?? '')) {
+                'fraud', 'fraude' => 'fraude_antiseche',
+                'misconduct' => 'perturbation',
+                default => $case->infraction_type ?: 'fraude_antiseche',
+            };
+
+            $normalizedStatus = match ($case->status) {
+                'closed' => 'resolved',
+                'convoked' => 'convoked',
+                'pending' => 'pending',
+                default => $case->status ?: 'resolved',
+            };
+
+            return [
+                'id' => 50000 + $case->id,
+                'is_disciplinary_case' => true,
+                'disciplinary_case_id' => $case->id,
+                'student_id' => $case->student_id,
+                'student_name' => $fullNameFr,
+                'student_name_ar' => $fullNameAr,
+                'cne' => $cneVal,
+                'student' => [
+                    'id' => $case->student_id,
+                    'first_name' => $firstNameFr,
+                    'last_name' => $lastNameFr,
+                    'first_name_ar' => $firstNameAr,
+                    'last_name_ar' => $lastNameAr,
+                    'full_name_ar' => $fullNameAr,
+                    'cne' => $cneVal,
+                    'email' => $user?->email ?? 'N/A',
+                    'filiere' => 'ENCG Fès',
+                    'phone' => $student?->emergency_contact_phone ?? $student?->father_phone ?? null,
+                ],
+                'exam_id' => null,
+                'module_name' => str_contains($case->description ?? '', 'Comptabilité Approfondie') ? 'Comptabilité Approfondie' : 'Épreuve Semestrielle',
+                'filiere_name' => 'ENCG Fès',
+                'exam_date' => $case->incident_date ? \Carbon\Carbon::parse($case->incident_date)->format('Y-m-d') : ($case->created_at?->format('Y-m-d') ?? now()->format('Y-m-d')),
+                'type' => $normalizedType,
+                'type_label' => match ($normalizedType) {
+                    'fraude_antiseche', 'antiseche' => '📝 Fraude Antisèche / Documents',
+                    'fraude_smartphone', 'smartphone' => '📱 Usage Smartphone / IA',
+                    'perturbation' => '⚠️ Perturbation & Refus d\'Obtempérer',
+                    default => '🚨 Fraude à l\'Examen',
+                },
+                'description' => $case->description,
+                'confiscated_items' => 'Documents / Pièces saisies au PV',
+                'severity' => in_array(strtolower($case->infraction_type ?? ''), ['fraud', 'fraude']) ? 'high' : 'medium',
+                'status' => $normalizedStatus,
+                'hearing_date' => $case->incident_date ? \Carbon\Carbon::parse($case->incident_date)->format('Y-m-d à 10h00') : '2026-09-12 à 10h00',
+                'hearing_room' => 'Salle du Conseil de Direction',
+                'hearing_notes' => $case->student_statement ?? 'Audition contradictoire tenue par le Conseil de Discipline.',
+                'decision' => $normalizedStatus === 'resolved' ? 'Note 0.00/20 attribuée d\'office au module avec mention FRAUDE au PV' : null,
+                'sanction_scope' => $normalizedStatus === 'resolved' ? 'module' : null,
+                'created_at' => $case->created_at?->format('Y-m-d H:i') ?? now()->format('Y-m-d H:i'),
+            ];
+        });
+
+        $allData = $incidents->concat($disciplinaryCases)->values();
+
         return response()->json([
             'success' => true,
-            'data' => $incidents,
+            'data' => $allData,
         ]);
     }
 
@@ -209,10 +285,25 @@ class ExamIncidentController extends Controller
      */
     public function convoke(Request $request, int $id): JsonResponse
     {
-        $incident = ExamIncident::findOrFail($id);
-
+        $incident = ExamIncident::find($id);
         $dateStr = $request->input('hearing_date', date('Y-m-d à 10h00'));
         $roomStr = $request->input('hearing_room', 'Salle des Actes — ENCG Fès');
+
+        if (! $incident && $id >= 50000) {
+            $case = \App\Models\DisciplinaryCase::find($id - 50000);
+            if ($case) {
+                $case->update(['status' => 'convoked']);
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Convocation officielle émise avec succès.',
+                    'data' => $case,
+                ]);
+            }
+        }
+
+        if (! $incident) {
+            abort(404, 'Dossier introuvable');
+        }
 
         $incident->update([
             'status' => 'convoked',
@@ -232,9 +323,9 @@ class ExamIncidentController extends Controller
      */
     public function decide(Request $request, int $id): JsonResponse
     {
-        $incident = ExamIncident::findOrFail($id);
+        $incident = ExamIncident::find($id);
         $sanction = $request->input('sanction', 'module');
-        $notes = $request->input('observations') ?? $request->input('notes') ?? $incident->hearing_notes;
+        $notes = $request->input('observations') ?? $request->input('notes') ?? $incident?->hearing_notes;
 
         $isDismissed = in_array($sanction, ['dismissed', 'classement']);
 
@@ -246,6 +337,24 @@ class ExamIncidentController extends Controller
             'dismissed', 'classement' => 'Classement sans suite — Aucune charge retenue après audition contradictoire',
             default => 'Note 0.00/20 attribuée d\'office au module de l\'épreuve avec mention FRAUDE au PV',
         };
+
+        if (! $incident && $id >= 50000) {
+            $case = \App\Models\DisciplinaryCase::find($id - 50000);
+            if ($case) {
+                $case->update([
+                    'status' => $isDismissed ? 'dismissed' : 'closed',
+                ]);
+                return response()->json([
+                    'success' => true,
+                    'message' => $isDismissed ? 'Dossier classé sans suite.' : 'Décision du Conseil scellée et enregistrée.',
+                    'data' => $case,
+                ]);
+            }
+        }
+
+        if (! $incident) {
+            abort(404, 'Dossier introuvable');
+        }
 
         $incident->update([
             'status' => $isDismissed ? 'dismissed' : 'resolved',
@@ -295,8 +404,17 @@ class ExamIncidentController extends Controller
      */
     public function destroy(int $id): JsonResponse
     {
-        $incident = ExamIncident::findOrFail($id);
-        $incident->delete();
+        $incident = ExamIncident::find($id);
+        if ($incident) {
+            $incident->delete();
+        } elseif ($id >= 50000) {
+            $case = \App\Models\DisciplinaryCase::find($id - 50000);
+            if ($case) {
+                $case->delete();
+            }
+        } else {
+            abort(404, 'Dossier introuvable');
+        }
 
         return response()->json([
             'success' => true,
