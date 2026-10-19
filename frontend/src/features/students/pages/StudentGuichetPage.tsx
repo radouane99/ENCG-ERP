@@ -8,7 +8,7 @@ import {
   FileSignature, Shield, Copy, CheckCheck, QrCode,
   GraduationCap, Briefcase, Award, FileCheck, ArrowRight
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@shared/lib/api';
 import { toast } from 'sonner';
@@ -231,7 +231,7 @@ export default function StudentGuichetPage() {
   };
 
   // Animation variants
-  const containerVariants = {
+  const containerVariants: Variants = {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
@@ -239,7 +239,7 @@ export default function StudentGuichetPage() {
     }
   };
 
-  const cardVariants = {
+  const cardVariants: Variants = {
     hidden: { opacity: 0, y: 18, scale: 0.99 },
     show: { 
       opacity: 1, 

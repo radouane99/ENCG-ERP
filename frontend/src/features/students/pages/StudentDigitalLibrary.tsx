@@ -1,9 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import { 
-  BookOpen, Search, Filter, Book, Clock, Star, PlayCircle, 
-  Download, CheckCircle2, AlertCircle, Calendar, MapPin, 
-  ChevronRight, RefreshCw, X, FileText, BookmarkCheck, ArrowRight,
-  ShieldCheck, Sparkles, Building2
+  BookOpen, Search, Filter, Book, Clock, Star, 
+  Download, CheckCircle2, MapPin, 
+  ChevronRight, RefreshCw, X, BookmarkCheck, ArrowRight,
+  Sparkles, Building2
 } from 'lucide-react';
 import { cn, cleanMojibake } from '@shared/lib/utils';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
