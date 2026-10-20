@@ -19,7 +19,6 @@ export function generateClubAgrementHtml(club: any): string {
 
   const membersCount = club.members_count || club.members?.length || 30
   const clubRef = `AGR-ENCG-${currentYear}-${String(club.id || 1).padStart(4, '0')}`
-  const shaHash = `SHA256-${clubRef.replace(/[^A-Z0-9]/g, '')}E89F`
   const budget = club.budget || '15 000'
   const category = club.category || 'Pôle Entrepreneuriat & Management'
 
