@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  Users, CheckCircle2, Clock, AlertTriangle, Send, Search,
-  Filter, Download, RefreshCw, Sparkles, Building2, Phone,
-  Mail, Calendar, ArrowRight, ShieldCheck, Check
+  Users, CheckCircle2, Clock, Send, Search,
+  RefreshCw, Sparkles, Calendar, ArrowRight, ShieldCheck, Check
 } from 'lucide-react';
 import api from '@shared/lib/api';
 import { toast } from 'sonner';
