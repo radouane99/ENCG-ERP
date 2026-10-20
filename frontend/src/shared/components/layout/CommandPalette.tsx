@@ -14,7 +14,7 @@ export default function CommandPalette({ isOpen, onClose }: CommandPaletteProps)
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault()
-        isOpen ? onClose() : onClose() // Toggle logic handled higher up typically, so just open here if we pass open state
+        onClose()
       }
       if (e.key === 'Escape' && isOpen) {
         onClose()

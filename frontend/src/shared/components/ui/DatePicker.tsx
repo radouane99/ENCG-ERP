@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Calendar, ChevronDown } from 'lucide-react'
+import { Calendar } from 'lucide-react'
 import { cn } from '@/shared/lib/utils'
 
 interface DatePickerProps {

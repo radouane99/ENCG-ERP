@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Bell, User, BookOpen, CreditCard, ExternalLink, Check, CheckCircle2, FileText, AlertTriangle, ChevronRight, Inbox } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Bell, BookOpen, CreditCard, ExternalLink, Check, CheckCircle2, FileText, AlertTriangle, ChevronRight, Inbox } from 'lucide-react';
 import { cn, cleanMojibake } from '@shared/lib/utils';
 import { useNavigate } from 'react-router-dom';
 import api from '@shared/lib/api';
@@ -44,7 +43,6 @@ function formatRelativeTime(dateString: string): string {
 }
 
 export function NotificationBell() {
-  const { t } = useTranslation('common');
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -53,7 +51,7 @@ export function NotificationBell() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const prevUnreadCountRef = useRef<number | null>(null);
 
-  const fetchNotifications = async (isBackgroundPoll = false) => {
+  const fetchNotifications = useCallback(async (isBackgroundPoll = false) => {
     try {
       const res = await api.get('/notifications', { suppressToast: true } as any);
       const data: Notification[] = res.data?.data || [];
@@ -83,7 +81,7 @@ export function NotificationBell() {
       setNotifications([]);
       setUnreadCount(0);
     }
-  };
+  }, [navigate]);
 
   useEffect(() => {
     fetchNotifications(false);
@@ -91,7 +89,7 @@ export function NotificationBell() {
       fetchNotifications(true);
     }, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchNotifications]);
 
   // Close when clicking outside
   useEffect(() => {
