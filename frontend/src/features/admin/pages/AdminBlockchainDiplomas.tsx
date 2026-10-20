@@ -4,7 +4,6 @@ import {
   ShieldCheck, 
   Link as LinkIcon, 
   Award, 
-  FileText, 
   CheckCircle2, 
   Copy, 
   Search, 
@@ -12,23 +11,13 @@ import {
   Loader2, 
   XCircle,
   Sparkles, 
-  QrCode, 
-  ExternalLink, 
   RefreshCw, 
   Check, 
   Printer, 
   Building2, 
-  UserCheck, 
-  Shield,
   Download,
-  Filter,
   Boxes,
-  Cpu,
-  Fingerprint,
-  ArrowRight,
-  Database,
-  Lock,
-  Globe
+  Fingerprint
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { blockchainApi } from '@shared/api/blockchain';
