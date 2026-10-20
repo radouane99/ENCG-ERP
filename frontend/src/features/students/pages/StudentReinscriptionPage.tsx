@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   CheckCircle2, Sparkles, ArrowRight,
   ShieldCheck, Download, User,
-  Building2, GraduationCap, Clock, Check, AlertTriangle
+  Building2, GraduationCap, Check, AlertTriangle
 } from 'lucide-react';
 import api from '@shared/lib/api';
 import { toast } from 'sonner';
@@ -53,7 +53,7 @@ export default function StudentReinscriptionPage() {
     if (s.address && !address) setAddress(s.address);
     if (s.city && !city) setCity(s.city);
     if (s.is_confirmed) setStep(4);
-  }, [s, phone, address, city]);
+  }, [statusRes, phone, address, city]);
 
   if (isLoading) {
     return (

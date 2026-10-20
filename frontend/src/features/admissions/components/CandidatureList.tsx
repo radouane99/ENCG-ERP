@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Search, Filter, MoreHorizontal, CheckCircle2, XCircle, Clock, Eye, Download, Upload, Users, Plus, X, FileText, Check, Award, Calendar, Sparkles, Printer, Zap, RefreshCw, Edit3, Trash2, AlertTriangle, User, GraduationCap, Heart, Phone, Mail, MapPin, UserPlus } from 'lucide-react'
+import { Search, CheckCircle2, XCircle, Clock, Eye, Download, Upload, Users, Plus, X, FileText, Sparkles, Printer, Zap, RefreshCw, Edit3, Trash2, AlertTriangle, User, GraduationCap, Heart, Phone, Mail, MapPin, UserPlus } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
 import { openCustomAttestationPdf } from '@shared/lib/documentAccess'

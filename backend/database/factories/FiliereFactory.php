@@ -14,7 +14,7 @@ class FiliereFactory extends Factory
         return [
             'institution_id' => 1,
             'name' => fake()->words(3, true),
-            'code' => 'FIL-'.fake()->unique()->lexify('???'),
+            'code' => 'FIL-'.fake()->unique()->lexify('??????'),
             'type' => 'grande_ecole',
             'duration_years' => 5,
         ];

@@ -16,7 +16,7 @@ class ModuleFactory extends Factory
             'institution_id' => 1,
             'filiere_id' => Filiere::factory(),
             'name' => fake()->words(3, true),
-            'code' => 'MOD-'.fake()->unique()->numerify('###'),
+            'code' => 'MOD-'.fake()->unique()->numerify('######'),
             'semester_number' => 1,
             'coefficient' => 1.00,
             'credit_hours' => 45,

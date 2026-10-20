@@ -1,9 +1,8 @@
 import React, { useState } from 'react'
-import { QrCode, MessageSquareText, Settings, Users, BrainCircuit, Mic, Send } from 'lucide-react'
+import { QrCode, Settings, Users, BrainCircuit, Mic, Send } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@shared/lib/utils'
 import { Button } from '@shared/components/ui/Button'
-import { Input } from '@shared/components/ui/Input'
 
 export default function ClassroomPage() {
   const { t, i18n } = useTranslation('common')

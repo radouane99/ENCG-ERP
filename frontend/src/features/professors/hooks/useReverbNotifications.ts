@@ -24,7 +24,7 @@ export function useReverbNotifications() {
       wssPort: Number(import.meta.env.VITE_REVERB_PORT) || 8080,
       forceTLS: (import.meta.env.VITE_REVERB_SCHEME ?? 'https') === 'https',
       enabledTransports: ['ws', 'wss'],
-      authorizer: (channel: any, options: any) => {
+      authorizer: (channel: any, _options: any) => {
         return {
           authorize: (socketId: string, callback: any) => {
             api.post('/broadcasting/auth', {

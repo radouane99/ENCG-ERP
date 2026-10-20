@@ -9,9 +9,11 @@ class AcademicYearFactory extends Factory
 {
     protected $model = AcademicYear::class;
 
+    protected static int $nextYear = 2031;
+
     public function definition(): array
     {
-        $startYear = fake()->unique()->numberBetween(2020, 2030);
+        $startYear = static::$nextYear++;
         $endYear = $startYear + 1;
 
         return [
