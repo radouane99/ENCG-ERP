@@ -5,7 +5,6 @@ import {
   ArrowDown, 
   CheckCircle2, 
   Send,
-  AlertCircle,
   Briefcase,
   Layers,
   GraduationCap

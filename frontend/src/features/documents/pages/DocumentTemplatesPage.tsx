@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { FileText, Plus, Edit2, Trash2, Download } from 'lucide-react'
-import { cn } from '@shared/lib/utils'
 
 export default function DocumentTemplatesPage() {
   const [templates] = useState([

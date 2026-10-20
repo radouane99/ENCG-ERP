@@ -18,7 +18,7 @@ export default function DocumentCenter() {
       });
       setDocument(res.data.data);
       toast.success(res.data.data.message);
-    } catch (error: any) {
+    } catch {
       toast.error('Erreur lors de la génération.');
     } finally {
       setIsGenerating(false);

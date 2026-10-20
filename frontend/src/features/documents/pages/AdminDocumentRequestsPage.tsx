@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAdminDocumentRequests, useUpdateDocumentRequestStatus, useGenerateDocumentRequest } from '../api/useDocumentRequests';
 import { DocumentStatusBadge } from '../components/DocumentStatusBadge';
-import { Search, FileText, FileOutput, Loader2 } from 'lucide-react';
+import { FileText, FileOutput, Loader2 } from 'lucide-react';
 import { Button } from '@shared/components/ui/Button';
 
 export default function AdminDocumentRequestsPage() {

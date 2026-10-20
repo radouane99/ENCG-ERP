@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Search, BookOpen, Clock, CheckCircle, AlertCircle, FileText, Download } from 'lucide-react'
+import { Search, FileText, Download } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 
 export default function DocumentRequestsPage() {
