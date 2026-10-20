@@ -28,6 +28,18 @@ abstract class TestCase extends BaseTestCase
         putenv('DB_DATABASE=:memory:');
         $_ENV['DB_DATABASE'] = ':memory:';
         $_SERVER['DB_DATABASE'] = ':memory:';
+        putenv('SESSION_DRIVER=array');
+        $_ENV['SESSION_DRIVER'] = 'array';
+        $_SERVER['SESSION_DRIVER'] = 'array';
+        putenv('CACHE_STORE=array');
+        $_ENV['CACHE_STORE'] = 'array';
+        $_SERVER['CACHE_STORE'] = 'array';
+        putenv('QUEUE_CONNECTION=sync');
+        $_ENV['QUEUE_CONNECTION'] = 'sync';
+        $_SERVER['QUEUE_CONNECTION'] = 'sync';
+        putenv('MAIL_MAILER=array');
+        $_ENV['MAIL_MAILER'] = 'array';
+        $_SERVER['MAIL_MAILER'] = 'array';
         putenv('AI_DRIVER=stub');
         $_ENV['AI_DRIVER'] = 'stub';
         $_SERVER['AI_DRIVER'] = 'stub';
@@ -45,6 +57,10 @@ abstract class TestCase extends BaseTestCase
         config([
             'database.default' => 'sqlite',
             'database.connections.sqlite.database' => ':memory:',
+            'session.driver' => 'array',
+            'cache.default' => 'array',
+            'queue.default' => 'sync',
+            'mail.default' => 'array',
             'services.ai.driver' => 'stub',
         ]);
 
