@@ -6,12 +6,7 @@ import {
   CheckCircle2, 
   XCircle, 
   Clock, 
-  AlertCircle, 
-  FileText, 
-  ChevronRight, 
-  Award,
-  Filter,
-  RefreshCw,
+  RefreshCw, 
   Edit3
 } from 'lucide-react';
 import api from '@shared/lib/api';

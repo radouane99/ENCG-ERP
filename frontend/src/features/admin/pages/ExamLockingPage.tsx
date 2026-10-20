@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react'
-import { useTranslation } from 'react-i18next'
 import { 
   Lock, 
   Leaf, 
@@ -9,15 +8,10 @@ import {
   ShieldAlert, 
   CheckCircle2, 
   History, 
-  AlertTriangle, 
   ShieldCheck, 
-  ArrowRight, 
-  UserCheck, 
   LockKeyholeOpen as Unlock,
-  Calendar,
   Clock,
   Sparkles,
-  FileText,
   X,
   MessageSquare
 } from 'lucide-react'
@@ -26,9 +20,6 @@ import api from '@shared/lib/api'
 import { toast } from 'sonner'
 
 export default function ExamLockingPage() {
-  const { t, i18n } = useTranslation(['exams', 'common'])
-  const isRtl = i18n.language === 'ar'
-
   const [currentPhase, setCurrentPhase] = useState('Verrouillé')
   const [deadline, setDeadline] = useState<string>('')
   const [deadlineInput, setDeadlineInput] = useState<string>('')
