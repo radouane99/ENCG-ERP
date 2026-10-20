@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   ShieldCheck, 
   Activity, 
@@ -78,6 +78,7 @@ export default function AdminActivityLogsPage() {
 
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [selectedActionType, setSelectedActionType] = useState('ALL');
   const [selectedSeverity, setSelectedSeverity] = useState('ALL');
 
@@ -88,7 +89,7 @@ export default function AdminActivityLogsPage() {
   const [chainResult, setChainResult] = useState<any>(null);
   const [copiedHash, setCopiedHash] = useState<string | null>(null);
 
-  const fetchLogs = async (silent = false) => {
+  const fetchLogs = useCallback(async (silent = false) => {
     try {
       if (!silent) setLoading(true);
       const params: any = {
@@ -96,7 +97,7 @@ export default function AdminActivityLogsPage() {
         per_page: 25,
       };
 
-      if (searchQuery.trim()) params.search = searchQuery.trim();
+      if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
       if (selectedActionType !== 'ALL') params.action_type = selectedActionType;
       if (selectedSeverity !== 'ALL') params.severity = selectedSeverity;
 
@@ -120,20 +121,20 @@ export default function AdminActivityLogsPage() {
     } finally {
       if (!silent) setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchLogs(false);
-  }, [page, selectedActionType, selectedSeverity]);
+  }, [page, debouncedSearch, selectedActionType, selectedSeverity]);
 
   // Debounced search
   useEffect(() => {
     const handler = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
       setPage(1);
-      fetchLogs(false);
     }, 400);
     return () => clearTimeout(handler);
   }, [searchQuery]);
+
+  useEffect(() => {
+    fetchLogs(false);
+  }, [fetchLogs]);
 
   const handleVerifyChain = async () => {
     setVerifyingChain(true);
@@ -152,7 +153,7 @@ export default function AdminActivityLogsPage() {
           });
         }
       }
-    } catch (err) {
+    } catch {
       toast.error('Erreur lors de la vérification de la chaîne de hachage.');
     } finally {
       setVerifyingChain(false);

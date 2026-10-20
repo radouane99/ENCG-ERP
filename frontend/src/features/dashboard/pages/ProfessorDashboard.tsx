@@ -29,7 +29,6 @@ import {
 } from 'recharts';
 import api from '@/shared/lib/api';
 import { useAuthStore } from '@/stores/authStore';
-import { cn } from '@/shared/lib/utils';
 
 const ProfessorDashboard: React.FC = () => {
   const { user } = useAuthStore();

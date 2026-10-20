@@ -1,14 +1,11 @@
 import { useState, useEffect } from 'react'
-import { useTranslation } from 'react-i18next'
-import { Search, CheckCircle2, XCircle, Clock, Eye, Download, Upload, Users, Plus, X, FileText, Sparkles, Printer, Zap, RefreshCw, Edit3, Trash2, AlertTriangle, User, GraduationCap, Heart, Phone, Mail, MapPin, UserPlus } from 'lucide-react'
+import { Search, CheckCircle2, XCircle, Clock, Eye, Download, Upload, Users, Plus, X, FileText, Sparkles, Printer, Zap, RefreshCw, Edit3, Trash2, AlertTriangle, User, GraduationCap, UserPlus } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
 import { openCustomAttestationPdf } from '@shared/lib/documentAccess'
 import { toast } from 'sonner'
 
 export default function CandidatureList() {
-  const { t, i18n } = useTranslation('common')
-  const isRtl = i18n.language === 'ar'
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [candidatures, setCandidatures] = useState<any[]>([])
@@ -58,7 +55,7 @@ export default function CandidatureList() {
         if (campRes.data.data?.[0]?.id) {
           campaignId = campRes.data.data[0].id
         }
-      } catch (e) {
+      } catch {
         // Fallback
       }
 
@@ -100,7 +97,7 @@ export default function CandidatureList() {
       link.remove();
       toast.dismiss();
       toast.success('📄 Modèle CSV Ministère TAFEM téléchargé avec succès !');
-    } catch (err) {
+    } catch {
       toast.dismiss();
       toast.error('Erreur lors du téléchargement du modèle CSV TAFEM.');
     }
@@ -395,9 +392,6 @@ export default function CandidatureList() {
                   </tr>
                 ) : (
                   filteredCandidatures.map((c) => {
-                    const isAccepted = c.status === 'accepted' || c.status === 'admis' || c.status === 'admis_tafem' || c.status === 'valide';
-                    const isPending = c.status === 'pending' || c.status === 'under_review' || c.status === 'en_attente';
-
                     return (
                       <tr key={c.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
                         <td className="px-6 py-4">
@@ -842,7 +836,7 @@ export default function CandidatureList() {
               const name = `${editingCandidate.first_name} ${editingCandidate.last_name}`;
               try {
                 await api.put(`/admin/admissions/applications/${editingCandidate.id}`, editingCandidate);
-              } catch (err) {}
+              } catch {}
               setCandidatures((prev) => prev.map((c) => (c.id === editingCandidate.id ? { ...editingCandidate } : c)));
               toast.success(`✏️ Dossier de ${name} mis à jour avec succès !`);
               setEditingCandidate(null);
@@ -1000,7 +994,7 @@ export default function CandidatureList() {
                     const name = `${deletingCandidate.first_name} ${deletingCandidate.last_name}`;
                     try {
                       await api.delete(`/admin/admissions/applications/${deletingCandidate.id}`);
-                    } catch (err) {}
+                    } catch {}
                     setCandidatures((prev) => prev.filter((c) => c.id !== deletingCandidate.id));
                     setStats((prev) => ({ ...prev, total: Math.max(0, prev.total - 1) }));
                     toast.success(`🗑️ Candidature de ${name} supprimée avec succès !`);
@@ -1047,17 +1041,9 @@ export default function CandidatureList() {
               }
 
               const tId = toast.loading('Création du candidat en cours...');
-              let createdCandidate = {
-                id: Date.now(),
-                ...newCandidate,
-                created_at: new Date().toISOString()
-              };
 
               try {
-                const res = await api.post('/admin/admissions/applications', newCandidate);
-                if (res.data?.data?.id) {
-                  createdCandidate = res.data.data;
-                }
+                await api.post('/admin/admissions/applications', newCandidate);
                 toast.success(`✅ Candidat ${newCandidate.first_name} ${newCandidate.last_name} (CNE: ${newCandidate.cne}) enregistré dans la base de données !`, { id: tId });
                 fetchCandidatures();
               } catch (err: any) {
