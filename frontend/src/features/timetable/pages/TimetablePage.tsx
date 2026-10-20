@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { Calendar as CalendarIcon, Clock, MapPin, User, Search, Filter, Plus } from 'lucide-react';
+import { Calendar as CalendarIcon, MapPin, User, Search, Plus } from 'lucide-react';
 import api from '@/shared/lib/api';
 import { format, addDays, startOfWeek } from 'date-fns';
 import { fr, ar } from 'date-fns/locale';
@@ -21,7 +21,6 @@ interface ScheduleSession {
 }
 
 const DAYS = [1, 2, 3, 4, 5, 6]; // Lundi à Samedi
-const HOURS = ['08:00', '09:00', '10:00', '11:00', '12:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
 
 const TYPE_COLORS = {
   CM: 'bg-blue-500/20 text-blue-300 border-blue-500/30',

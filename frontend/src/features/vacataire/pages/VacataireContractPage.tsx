@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, FileText, Download, CheckCircle, Clock, Printer } from 'lucide-react'
+import { ArrowLeft, Download, CheckCircle, Printer } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@shared/lib/api'

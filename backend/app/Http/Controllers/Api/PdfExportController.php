@@ -31,6 +31,7 @@ use App\Services\Academic\DeliberationService;
 use App\Services\Academic\ExamConvocationService;
 use App\Services\Academic\GradeService;
 use App\Services\Documents\OfficialPdfFactory;
+use App\Services\Security\ProfessorAccessService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -905,9 +906,9 @@ class PdfExportController extends Controller
 
         // 🛡️ RBAC : Un enseignant ne peut exporter que ses propres modules
         $user = $request->user();
-        if ($user && $user->hasAnyRole(['professor', 'vacataire']) && 
+        if ($user && $user->hasAnyRole(['professor', 'vacataire']) &&
             ! $user->hasAnyRole(['super-admin', 'super_admin', 'admin', 'institution-admin', 'institution_admin', 'director', 'department-head', 'filiere-head'])) {
-            $authorizedModuleIds = app(\App\Services\Security\ProfessorAccessService::class)->getAuthorizedModuleIds($user);
+            $authorizedModuleIds = app(ProfessorAccessService::class)->getAuthorizedModuleIds($user);
             if (! $authorizedModuleIds->contains($moduleId)) {
                 abort(403, 'Accès non autorisé : Vous n’êtes pas affecté(e) à ce module.');
             }
@@ -943,7 +944,7 @@ class PdfExportController extends Controller
             ->get()
             ->groupBy('student_id');
 
-        $data = $students->map(function ($student) use ($module, $normaleAssessments, $rattrapageAssessment, $fraudIds, $allStudentGrades) {
+        $data = $students->map(function ($student) use ($normaleAssessments, $rattrapageAssessment, $fraudIds, $allStudentGrades) {
             $isFraud = in_array($student->id, $fraudIds);
             $studentGrades = $allStudentGrades->get($student->id, collect());
 
@@ -1100,7 +1101,7 @@ class PdfExportController extends Controller
 
         return $pdf->download($filename, [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ]);
     }
 
@@ -1110,9 +1111,9 @@ class PdfExportController extends Controller
 
         // 🛡️ RBAC : Un enseignant ne peut exporter que ses propres modules
         $user = $request->user();
-        if ($user && $user->hasAnyRole(['professor', 'vacataire']) && 
+        if ($user && $user->hasAnyRole(['professor', 'vacataire']) &&
             ! $user->hasAnyRole(['super-admin', 'super_admin', 'admin', 'institution-admin', 'institution_admin', 'director', 'department-head', 'filiere-head'])) {
-            $authorizedModuleIds = app(\App\Services\Security\ProfessorAccessService::class)->getAuthorizedModuleIds($user);
+            $authorizedModuleIds = app(ProfessorAccessService::class)->getAuthorizedModuleIds($user);
             if (! $authorizedModuleIds->contains($moduleId)) {
                 abort(403, 'Accès non autorisé : Vous n’êtes pas affecté(e) à ce module.');
             }
@@ -1209,7 +1210,7 @@ class PdfExportController extends Controller
 
         return $pdf->download($filename, [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ]);
     }
 

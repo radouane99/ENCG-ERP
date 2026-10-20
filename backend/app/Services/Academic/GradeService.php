@@ -14,6 +14,7 @@ use App\Models\ModulePvSignature;
 use App\Models\Professor;
 use App\Models\ResitEligibility;
 use App\Models\Student;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class GradeService
@@ -145,10 +146,11 @@ class GradeService
         // 2. Vérification de la date limite officielle (si configurée)
         if ($deadline) {
             try {
-                if (\Carbon\Carbon::parse($deadline)->isPast()) {
+                if (Carbon::parse($deadline)->isPast()) {
                     return "Le délai limite officiel fixé par l'administration pour cette session est expiré ({$deadline}). Les modifications sont bloquées.";
                 }
-            } catch (\Throwable) {}
+            } catch (\Throwable) {
+            }
         }
 
         $isRattrapage = $this->isRattrapageAssessment($assessment);
@@ -169,7 +171,7 @@ class GradeService
         switch ($currentPhase) {
             case 'Ordinaire Automne':
                 if ($isEvenSemester) {
-                    return "La phase active est « Ordinaire Automne ». La saisie pour les semestres pairs (Printemps) est verrouillée.";
+                    return 'La phase active est « Ordinaire Automne ». La saisie pour les semestres pairs (Printemps) est verrouillée.';
                 }
                 if ($isRattrapage) {
                     return "La session de rattrapage d'automne est actuellement verrouillée (fermée). Seule la session ordinaire d'automne est ouverte.";
@@ -178,7 +180,7 @@ class GradeService
 
             case 'Rattrapage Automne':
                 if ($isEvenSemester) {
-                    return "La phase active est « Rattrapage Automne ». La saisie pour les semestres pairs (Printemps) est verrouillée.";
+                    return 'La phase active est « Rattrapage Automne ». La saisie pour les semestres pairs (Printemps) est verrouillée.';
                 }
                 if (! $isRattrapage) {
                     return "La session ordinaire d'automne est clôturée. Seule la saisie des notes de rattrapage d'automne est autorisée.";
@@ -187,19 +189,19 @@ class GradeService
 
             case 'Ordinaire Printemps':
                 if ($isOddSemester) {
-                    return "La phase active est « Ordinaire Printemps ». La saisie pour les semestres impairs (Automne) est verrouillée.";
+                    return 'La phase active est « Ordinaire Printemps ». La saisie pour les semestres impairs (Automne) est verrouillée.';
                 }
                 if ($isRattrapage) {
-                    return "La session de rattrapage de printemps est actuellement verrouillée (fermée). Seule la session ordinaire de printemps est ouverte.";
+                    return 'La session de rattrapage de printemps est actuellement verrouillée (fermée). Seule la session ordinaire de printemps est ouverte.';
                 }
                 break;
 
             case 'Rattrapage Printemps':
                 if ($isOddSemester) {
-                    return "La phase active est « Rattrapage Printemps ». La saisie pour les semestres impairs (Automne) est verrouillée.";
+                    return 'La phase active est « Rattrapage Printemps ». La saisie pour les semestres impairs (Automne) est verrouillée.';
                 }
                 if (! $isRattrapage) {
-                    return "La session ordinaire de printemps est clôturée. Seule la saisie des notes de rattrapage de printemps est autorisée.";
+                    return 'La session ordinaire de printemps est clôturée. Seule la saisie des notes de rattrapage de printemps est autorisée.';
                 }
                 break;
 

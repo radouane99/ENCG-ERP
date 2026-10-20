@@ -24,6 +24,7 @@ use App\Models\StudentRegistration;
 use App\Services\Academic\AcademicWindowGuard;
 use App\Services\Academic\GradeService;
 use App\Services\Notification\NotificationDispatcherService;
+use App\Services\Security\ProfessorAccessService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -167,9 +168,9 @@ class GradeController extends Controller
 
         // 🛡️ RBAC : Un enseignant ne peut consulter que le PV de ses propres modules
         $user = $request->user();
-        if ($user && $user->hasAnyRole(['professor', 'vacataire']) && 
+        if ($user && $user->hasAnyRole(['professor', 'vacataire']) &&
             ! $user->hasAnyRole(['super-admin', 'super_admin', 'admin', 'institution-admin', 'institution_admin', 'director', 'department-head', 'filiere-head'])) {
-            $authorizedModuleIds = app(\App\Services\Security\ProfessorAccessService::class)->getAuthorizedModuleIds($user);
+            $authorizedModuleIds = app(ProfessorAccessService::class)->getAuthorizedModuleIds($user);
             if (! $authorizedModuleIds->contains($moduleId)) {
                 return response()->json([
                     'success' => false,
@@ -348,9 +349,9 @@ class GradeController extends Controller
         $user = $request->user();
 
         // 🛡️ RBAC : Un enseignant ne peut signer que les PV de ses propres modules
-        if ($user && $user->hasAnyRole(['professor', 'vacataire']) && 
+        if ($user && $user->hasAnyRole(['professor', 'vacataire']) &&
             ! $user->hasAnyRole(['super-admin', 'super_admin', 'admin', 'institution-admin', 'institution_admin', 'director', 'department-head', 'filiere-head'])) {
-            $authorizedModuleIds = app(\App\Services\Security\ProfessorAccessService::class)->getAuthorizedModuleIds($user);
+            $authorizedModuleIds = app(ProfessorAccessService::class)->getAuthorizedModuleIds($user);
             if (! $authorizedModuleIds->contains($moduleId)) {
                 return response()->json([
                     'success' => false,
@@ -769,7 +770,7 @@ class GradeController extends Controller
 
         // 🛡️ RBAC : Le PV Semestriel consolidé est réservé à l'Administration et au Jury de Délibération
         $user = $request->user();
-        if ($user && $user->hasAnyRole(['professor', 'vacataire']) && 
+        if ($user && $user->hasAnyRole(['professor', 'vacataire']) &&
             ! $user->hasAnyRole(['super-admin', 'super_admin', 'admin', 'institution-admin', 'institution_admin', 'director', 'department-head', 'filiere-head'])) {
             return response()->json([
                 'success' => false,

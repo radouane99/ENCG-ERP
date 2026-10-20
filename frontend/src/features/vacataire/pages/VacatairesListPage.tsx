@@ -2,13 +2,12 @@ import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import {
-  Users, Plus, Search, Eye, Edit2,
+  Users, Plus, Search, Edit2,
   Trash2, FileText, Briefcase, DollarSign,
-  AlertCircle, CheckCircle2, ChevronDown
+  AlertCircle, CheckCircle2
 } from 'lucide-react'
 import api from '@shared/lib/api'
 import ExcelActions from '@shared/components/ui/ExcelActions'
-import { cn } from '@shared/lib/utils'
 import { Button } from '@shared/components/ui/Button'
 import { Badge } from '@shared/components/ui/Badge'
 import { Input } from '@shared/components/ui/Input'

@@ -246,9 +246,9 @@ class ProfessorAttendanceController extends Controller
                 }
                 if ($targetGroupNum) {
                     $q->orWhereHas('group', function ($gq) use ($targetGroupNum) {
-                        $gq->where('name', 'ILIKE', "%G{$targetGroupNum}%")
-                           ->orWhere('name', 'ILIKE', "%Groupe {$targetGroupNum}%")
-                           ->orWhere('name', 'ILIKE', "%Groupe{$targetGroupNum}%");
+                        $gq->whereILike('name', "%G{$targetGroupNum}%")
+                            ->orWhereILike('name', "%Groupe {$targetGroupNum}%")
+                            ->orWhereILike('name', "%Groupe{$targetGroupNum}%");
                     });
                 }
             });

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Assessment;
+use App\Models\DisciplinaryCase;
 use App\Models\DocumentRequest;
 use App\Models\Exam;
 use App\Models\ExamIncident;
@@ -16,6 +17,7 @@ use App\Models\Student;
 use App\Models\User;
 use App\Services\Academic\ExamCourseAttendanceService;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -99,8 +101,8 @@ class ExamIncidentController extends Controller
 
         // Inclure et harmoniser également les dossiers disciplinaires existants (DisciplinaryCase)
         $existingStudentIds = $incidents->pluck('student_id')->toArray();
-        $casesQuery = \App\Models\DisciplinaryCase::with(['student.user']);
-        if (!empty($existingStudentIds)) {
+        $casesQuery = DisciplinaryCase::with(['student.user']);
+        if (! empty($existingStudentIds)) {
             $casesQuery->whereNotIn('student_id', $existingStudentIds);
         }
 
@@ -151,7 +153,7 @@ class ExamIncidentController extends Controller
                 'exam_id' => null,
                 'module_name' => str_contains($case->description ?? '', 'Comptabilité Approfondie') ? 'Comptabilité Approfondie' : 'Épreuve Semestrielle',
                 'filiere_name' => 'ENCG Fès',
-                'exam_date' => $case->incident_date ? \Carbon\Carbon::parse($case->incident_date)->format('Y-m-d') : ($case->created_at?->format('Y-m-d') ?? now()->format('Y-m-d')),
+                'exam_date' => $case->incident_date ? Carbon::parse($case->incident_date)->format('Y-m-d') : ($case->created_at?->format('Y-m-d') ?? now()->format('Y-m-d')),
                 'type' => $normalizedType,
                 'type_label' => match ($normalizedType) {
                     'fraude_antiseche', 'antiseche' => '📝 Fraude Antisèche / Documents',
@@ -163,7 +165,7 @@ class ExamIncidentController extends Controller
                 'confiscated_items' => 'Documents / Pièces saisies au PV',
                 'severity' => in_array(strtolower($case->infraction_type ?? ''), ['fraud', 'fraude']) ? 'high' : 'medium',
                 'status' => $normalizedStatus,
-                'hearing_date' => $case->incident_date ? \Carbon\Carbon::parse($case->incident_date)->format('Y-m-d à 10h00') : '2026-09-12 à 10h00',
+                'hearing_date' => $case->incident_date ? Carbon::parse($case->incident_date)->format('Y-m-d à 10h00') : '2026-09-12 à 10h00',
                 'hearing_room' => 'Salle du Conseil de Direction',
                 'hearing_notes' => $case->student_statement ?? 'Audition contradictoire tenue par le Conseil de Discipline.',
                 'decision' => $normalizedStatus === 'resolved' ? 'Note 0.00/20 attribuée d\'office au module avec mention FRAUDE au PV' : null,
@@ -290,9 +292,10 @@ class ExamIncidentController extends Controller
         $roomStr = $request->input('hearing_room', 'Salle des Actes — ENCG Fès');
 
         if (! $incident && $id >= 50000) {
-            $case = \App\Models\DisciplinaryCase::find($id - 50000);
+            $case = DisciplinaryCase::find($id - 50000);
             if ($case) {
                 $case->update(['status' => 'convoked']);
+
                 return response()->json([
                     'success' => true,
                     'message' => 'Convocation officielle émise avec succès.',
@@ -339,11 +342,12 @@ class ExamIncidentController extends Controller
         };
 
         if (! $incident && $id >= 50000) {
-            $case = \App\Models\DisciplinaryCase::find($id - 50000);
+            $case = DisciplinaryCase::find($id - 50000);
             if ($case) {
                 $case->update([
                     'status' => $isDismissed ? 'dismissed' : 'closed',
                 ]);
+
                 return response()->json([
                     'success' => true,
                     'message' => $isDismissed ? 'Dossier classé sans suite.' : 'Décision du Conseil scellée et enregistrée.',
@@ -408,7 +412,7 @@ class ExamIncidentController extends Controller
         if ($incident) {
             $incident->delete();
         } elseif ($id >= 50000) {
-            $case = \App\Models\DisciplinaryCase::find($id - 50000);
+            $case = DisciplinaryCase::find($id - 50000);
             if ($case) {
                 $case->delete();
             }

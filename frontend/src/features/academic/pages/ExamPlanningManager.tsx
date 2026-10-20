@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   Calendar, MapPin, Users, Clock, Mail, Printer, LayoutList,
-  ClipboardCheck, Activity, FileText, ChevronRight, Zap, AlertCircle, CheckCircle2, Trash2
+  ClipboardCheck, Activity, FileText, Zap, AlertCircle, CheckCircle2, Trash2
 } from 'lucide-react';
 import api from '@/shared/lib/api';
 import { toast } from 'sonner';
@@ -28,7 +28,7 @@ export default function ExamPlanningManager() {
   const filieres = filieresData?.data || [];
   const sessions = sessionsData?.data || [];
 
-  const { data: examsData, isLoading: examsLoading } = useQuery({
+  const { data: examsData } = useQuery({
     queryKey: ['exams', selectedFiliere, selectedSession],
     queryFn: () => api.get('/exam-planning', {
       params: { filiere_id: selectedFiliere, session_id: selectedSession }

@@ -21,12 +21,12 @@ class AuditForensicService
         if (! empty($filters['search'])) {
             $search = trim($filters['search']);
             $query->where(function (Builder $q) use ($search) {
-                $q->where('action', 'ILIKE', "%{$search}%")
-                    ->orWhere('description', 'ILIKE', "%{$search}%")
-                    ->orWhere('user_name', 'ILIKE', "%{$search}%")
-                    ->orWhere('user_email', 'ILIKE', "%{$search}%")
-                    ->orWhere('ip_address', 'ILIKE', "%{$search}%")
-                    ->orWhere('sha256_hash', 'ILIKE', "%{$search}%");
+                $q->whereILike('action', "%{$search}%")
+                    ->orWhereILike('description', "%{$search}%")
+                    ->orWhereILike('user_name', "%{$search}%")
+                    ->orWhereILike('user_email', "%{$search}%")
+                    ->orWhereILike('ip_address', "%{$search}%")
+                    ->orWhereILike('sha256_hash', "%{$search}%");
             });
         }
 

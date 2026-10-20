@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Models;
+
 /**
  * @property string|null $cne
  * @property string|null $father_phone
