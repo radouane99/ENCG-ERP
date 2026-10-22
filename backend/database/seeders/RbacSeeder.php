@@ -227,12 +227,12 @@ class RbacSeeder extends Seeder
 
         // Create all permissions
         foreach ($this->permissions as $permission) {
-            Permission::findOrCreate($permission, 'sanctum');
+            Permission::findOrCreate($permission, 'web');
         }
 
         // Create roles and assign permissions
         foreach ($this->rolePermissions as $roleName => $permissions) {
-            $role = Role::findOrCreate($roleName, 'sanctum');
+            $role = Role::findOrCreate($roleName, 'web');
 
             if (in_array('*', $permissions)) {
                 $role->givePermissionTo(Permission::all());

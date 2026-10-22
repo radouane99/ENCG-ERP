@@ -20,7 +20,8 @@ class EnsureDemoUsersSeeder extends Seeder
 
         $password = Hash::make('password');
 
-        $guards = ['web', 'sanctum'];
+
+
         $roleNames = [
             'super-admin',
             'admin',
@@ -35,10 +36,10 @@ class EnsureDemoUsersSeeder extends Seeder
             'library-manager',
         ];
 
-        foreach ($guards as $guard) {
-            foreach ($roleNames as $roleName) {
-                Role::firstOrCreate(['name' => $roleName, 'guard_name' => $guard]);
-            }
+        // Crée les rôles uniquement avec le guard 'web' (guard par défaut de l'application).
+        // Ne PAS utiliser 'sanctum' — Sanctum utilise les tokens, pas les rôles par guard.
+        foreach ($roleNames as $roleName) {
+            Role::firstOrCreate(['name' => $roleName, 'guard_name' => 'web']);
         }
 
         $institution = Institution::first();
