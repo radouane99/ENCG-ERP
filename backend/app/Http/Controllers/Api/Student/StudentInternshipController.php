@@ -93,6 +93,14 @@ class StudentInternshipController extends Controller
      */
     public function uploadDocument(int $internshipId, UploadInternshipDocumentRequest $request): JsonResponse
     {
+        $student = $request->user()?->student;
+        abort_unless($student, 403, 'Profil étudiant introuvable.');
+
+        // Vérification d'appartenance du stage à l'étudiant connecté
+        Internship::where('id', $internshipId)
+            ->where('student_id', $student->id)
+            ->firstOrFail();
+
         $document = $this->internshipService->uploadDocument(
             $internshipId,
             $request->validated('document_type'),

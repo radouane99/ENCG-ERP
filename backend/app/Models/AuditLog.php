@@ -101,7 +101,7 @@ class AuditLog extends Model
 
         return self::create([
             'user_id' => $data['user_id'] ?? null,
-            'institution_id' => $data['institution_id'] ?? null,
+            'institution_id' => $data['institution_id'] ?? (auth()->user()?->institution_id ?? 1),
             'user_name' => $data['user_name'] ?? 'Utilisateur Authentifié',
             'user_email' => $data['user_email'] ?? null,
             'user_role' => $data['user_role'] ?? 'Staff',

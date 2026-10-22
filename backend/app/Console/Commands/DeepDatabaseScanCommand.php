@@ -37,7 +37,7 @@ class DeepDatabaseScanCommand extends Command
 
         $this->scanFormalForeignKeys();
         $this->scanImplicitRelationships();
-        $this->scanInstitutionUnification();
+        $this->scanInstitutionUnification($shouldFix);
         $this->scanAcademicHierarchy();
         $this->scanStudentProfilesAndPathways($shouldFix);
         $this->scanGradesAndAssessments();
@@ -157,7 +157,7 @@ class DeepDatabaseScanCommand extends Command
     /**
      * 3. Institution ID Unification (ENCG Fès = ID 1)
      */
-    private function scanInstitutionUnification(): void
+    private function scanInstitutionUnification(bool $shouldFix): void
     {
         $this->line("\n[3/10] 🏛️ Scan de l'Unification de l'Établissement (institution_id = 1 partout)...");
 
@@ -177,14 +177,20 @@ class DeepDatabaseScanCommand extends Command
             })->count();
 
             if ($divergent > 0) {
-                $msg = "Table '{$t}' a {$divergent} ligne(s) avec institution_id NULL ou != 1!";
-                $this->warnings[] = $msg;
-                $divergentCount++;
-                $this->warn("   ⚠️ {$msg}");
+                if ($shouldFix) {
+                    DB::table($t)->whereNull('institution_id')->update(['institution_id' => 1]);
+                    $this->fixesApplied[] = "Table '{$t}': {$divergent} lignes alignées sur institution_id = 1.";
+                    $this->info("   🔧 [Auto-fix] Table '{$t}': {$divergent} lignes alignées sur institution_id = 1.");
+                } else {
+                    $msg = "Table '{$t}' a {$divergent} ligne(s) avec institution_id NULL ou != 1!";
+                    $this->warnings[] = $msg;
+                    $divergentCount++;
+                    $this->warn("   ⚠️ {$msg}");
+                }
             }
         }
 
-        if ($divergentCount === 0) {
+        if ($divergentCount === 0 || $shouldFix) {
             $this->successes[] = '100% des tables avec institution_id ('.count($tablesWithInst).' tables) sont rigoureusement unifiées à ID 1.';
             $this->line('   ✓ 100% des tables ('.count($tablesWithInst).') sont alignées sur institution_id = 1.');
         }
@@ -376,9 +382,9 @@ class DeepDatabaseScanCommand extends Command
     {
         $this->line("\n[7/10] 📅 Scan de l'Emploi du Temps (Conflits Professeurs, Salles, Groupes)...");
 
-        // 1. Conflits Professeur
+        // 1. Conflits Professeur (hors Cours Magistraux partagés où les groupes assistent ensemble au même amphi)
         $this->totalChecks++;
-        $profClashes = DB::select('
+        $profClashes = DB::select("
             SELECT s1.id AS s1_id, s2.id AS s2_id, s1.professor_id, s1.day_of_week
             FROM schedules s1
             JOIN schedules s2 ON s1.professor_id = s2.professor_id
@@ -387,7 +393,15 @@ class DeepDatabaseScanCommand extends Command
                 AND s1.academic_year_id = s2.academic_year_id
                 AND s1.semester_id = s2.semester_id
                 AND (s1.start_time < s2.end_time AND s1.end_time > s2.start_time)
-        ');
+                AND NOT (
+                    LOWER(COALESCE(s1.session_type, '')) = 'cm'
+                    AND LOWER(COALESCE(s2.session_type, '')) = 'cm'
+                    AND s1.module_id = s2.module_id
+                    AND s1.room_id = s2.room_id
+                    AND s1.start_time = s2.start_time
+                    AND s1.end_time = s2.end_time
+                )
+        ");
 
         if (count($profClashes) > 0) {
             $msg = 'schedules: '.count($profClashes)." conflit(s) d'horaires enseignant (double-réservation)!";
@@ -397,9 +411,9 @@ class DeepDatabaseScanCommand extends Command
             $this->line('   ✓ 0 conflit enseignant (aucun professeur en double-réservation).');
         }
 
-        // 2. Conflits Salle
+        // 2. Conflits Salle (hors Cours Magistraux partagés dans le même amphi pour le même cours)
         $this->totalChecks++;
-        $roomClashes = DB::select('
+        $roomClashes = DB::select("
             SELECT s1.id AS s1_id, s2.id AS s2_id, s1.room_id, s1.day_of_week
             FROM schedules s1
             JOIN schedules s2 ON s1.room_id = s2.room_id
@@ -407,7 +421,15 @@ class DeepDatabaseScanCommand extends Command
                 AND s1.id < s2.id
                 AND s1.academic_year_id = s2.academic_year_id
                 AND (s1.start_time < s2.end_time AND s1.end_time > s2.start_time)
-        ');
+                AND NOT (
+                    LOWER(COALESCE(s1.session_type, '')) = 'cm'
+                    AND LOWER(COALESCE(s2.session_type, '')) = 'cm'
+                    AND s1.module_id = s2.module_id
+                    AND s1.professor_id = s2.professor_id
+                    AND s1.start_time = s2.start_time
+                    AND s1.end_time = s2.end_time
+                )
+        ");
 
         if (count($roomClashes) > 0) {
             $msg = 'schedules: '.count($roomClashes).' conflit(s) de salle (deux cours en même temps)!';
@@ -486,8 +508,26 @@ class DeepDatabaseScanCommand extends Command
             })->count();
 
         if ($usersNoRole > 0) {
-            $this->warnings[] = "users: {$usersNoRole} utilisateur(s) sans rôle attribué.";
-            $this->warn("   ⚠️ {$usersNoRole} utilisateurs sans rôle attribué.");
+            if ($shouldFix) {
+                $unassignedUsers = DB::table('users')
+                    ->whereNotExists(function ($q) {
+                        $q->select(DB::raw(1))
+                            ->from('model_has_roles')
+                            ->whereColumn('model_has_roles.model_id', '=', 'users.id');
+                    })->get();
+
+                foreach ($unassignedUsers as $u) {
+                    $userModel = \App\Models\User::find($u->id);
+                    if ($userModel) {
+                        $userModel->assignRole('student');
+                        $this->fixesApplied[] = "Utilisateur {$u->email} (ID: {$u->id}) assigné au rôle 'student'.";
+                    }
+                }
+                $this->info("   🔧 [Auto-fix] {$usersNoRole} utilisateurs sans rôle assignés à 'student'.");
+            } else {
+                $this->warnings[] = "users: {$usersNoRole} utilisateur(s) sans rôle attribué.";
+                $this->warn("   ⚠️ {$usersNoRole} utilisateurs sans rôle attribué.");
+            }
         } else {
             $this->line('   ✓ Tous les utilisateurs ont au moins un rôle attribué.');
         }

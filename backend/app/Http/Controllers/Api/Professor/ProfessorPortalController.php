@@ -973,10 +973,16 @@ class ProfessorPortalController extends Controller
      */
     public function downloadDocumentPdf(Request $request, int $id)
     {
-        // Retrieve real DB record if exists with user and department
-        $doc = ProfessorDocumentRequest::with(['user.professor.department'])->find($id);
+        // Retrieve real DB record with user and department
+        $doc = ProfessorDocumentRequest::with(['user.professor.department'])->findOrFail($id);
 
-        $user = $doc?->user ?? $request->user();
+        $currentUser = $request->user();
+        $isStaff = $currentUser->hasAnyRole(['admin', 'super-admin', 'director', 'institution-admin', 'hr-officer', 'secretaire-general']);
+        if (! $isStaff && (int) $doc->user_id !== (int) $currentUser->id) {
+            abort(403, 'Accès non autorisé à ce document.');
+        }
+
+        $user = $doc->user;
         $prof = $user?->professor;
         $profLastName = $user ? strtoupper($user->last_name ?? '') : 'EL AMRANI';
         $profFirstName = $user ? ucfirst($user->first_name ?? '') : 'Abdelhak';
@@ -985,7 +991,7 @@ class ProfessorPortalController extends Controller
         $isVacataire = ($prof?->contract_type === 'vacataire') || ($prof?->type === 'vacataire') || $user?->hasRole('vacataire');
 
         // Security check: if vacataire attempts to download attestation_travail, block it!
-        if ($isVacataire && in_array($doc?->document_type, ['attestation_travail', 'attestation_salaire', 'autorisation_absence'])) {
+        if ($isVacataire && in_array($doc->document_type, ['attestation_travail', 'attestation_salaire', 'autorisation_absence'])) {
             abort(403, 'Document non autorisé pour un enseignant vacataire. Veuillez télécharger une Attestation d\'Heures de Vacation.');
         }
 

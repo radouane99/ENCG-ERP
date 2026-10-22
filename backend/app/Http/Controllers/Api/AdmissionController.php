@@ -103,6 +103,10 @@ class AdmissionController extends Controller
                 ]
             );
 
+            if (! $user->hasRole('student')) {
+                $user->assignRole('student');
+            }
+
             Student::updateOrCreate(
                 ['cne' => $cneClean],
                 [

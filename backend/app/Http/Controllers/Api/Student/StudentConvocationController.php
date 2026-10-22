@@ -171,7 +171,13 @@ class StudentConvocationController extends Controller
      */
     public function walletPass(int $id, Request $request): JsonResponse
     {
-        ExamSeating::with(['exam.module', 'room'])->findOrFail($id);
+        $student = Student::where('user_id', $request->user()->id)->first();
+        abort_unless($student, 403, 'Profil étudiant introuvable.');
+
+        ExamSeating::with(['exam.module', 'room'])
+            ->where('id', $id)
+            ->where('student_id', $student->id)
+            ->firstOrFail();
 
         return response()->json([
             'success' => true,
@@ -190,7 +196,12 @@ class StudentConvocationController extends Controller
             'certificate' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
         ]);
 
-        $seating = ExamSeating::findOrFail($id);
+        $student = Student::where('user_id', $request->user()->id)->first();
+        abort_unless($student, 403, 'Profil étudiant introuvable.');
+
+        $seating = ExamSeating::where('id', $id)
+            ->where('student_id', $student->id)
+            ->firstOrFail();
 
         $path = $request->hasFile('certificate')
             ? $request->file('certificate')->store('certificates', 'public')

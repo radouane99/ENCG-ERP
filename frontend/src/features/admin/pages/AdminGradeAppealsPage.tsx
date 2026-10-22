@@ -31,12 +31,25 @@ export default function AdminGradeAppealsPage() {
     queryKey: ['admin-grade-appeals', statusFilter],
     queryFn: () => api.get('/admin/grade-appeals', {
       params: { status: statusFilter !== 'all' ? statusFilter : undefined }
-    }).then(res => res.data?.data || res.data || [])
+    }).then(res => {
+      const d = res.data?.data;
+      if (Array.isArray(d)) return d;
+      if (Array.isArray(d?.data)) return d.data;
+      if (Array.isArray(res.data)) return res.data;
+      return [];
+    })
   });
 
   const resolveMutation = useMutation({
     mutationFn: (payload: { id: number; status: string; rectified_grade?: number; resolution_notes: string }) =>
-      api.post(`/admin/grade-appeals/${payload.id}/resolve`, payload),
+      api.post(`/admin/grade-appeals/${payload.id}/resolve`, {
+        decision: payload.status,
+        status: payload.status,
+        rectified_grade: payload.rectified_grade,
+        new_grade: payload.rectified_grade,
+        professor_comment: payload.resolution_notes || 'Décision enregistrée par l\'administration.',
+        resolution_notes: payload.resolution_notes,
+      }),
     onSuccess: () => {
       toast.success('Décision de réclamation enregistrée et note mise à jour avec succès !');
       setSelectedAppeal(null);
@@ -50,7 +63,7 @@ export default function AdminGradeAppealsPage() {
     }
   });
 
-  const appeals = Array.isArray(data) ? data : [];
+  const appeals = Array.isArray(data) ? data : (Array.isArray((data as any)?.data) ? (data as any).data : []);
   const filteredAppeals = appeals.filter((a: any) => {
     const studentName = `${a.student?.user?.first_name || ''} ${a.student?.user?.last_name || ''}`.toLowerCase();
     const cne = String(a.student?.cne || '').toLowerCase();

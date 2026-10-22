@@ -161,42 +161,88 @@ class GradeAppealController extends Controller
     public function resolve(Request $request, int $id): JsonResponse
     {
         $validated = $request->validate([
-            'decision' => 'required|in:rectified,maintained,rejected',
-            'rectified_grade' => 'required_if:decision,rectified|nullable|numeric|min:0|max:20',
-            'professor_comment' => 'required|string|max:1000',
+            'decision' => 'nullable|in:rectified,maintained,rejected',
+            'status' => 'nullable|in:rectified,maintained,rejected',
+            'rectified_grade' => 'nullable|numeric|min:0|max:20',
+            'new_grade' => 'nullable|numeric|min:0|max:20',
+            'professor_comment' => 'nullable|string|max:1000',
+            'resolution_notes' => 'nullable|string|max:1000',
         ]);
+
+        $decision = $validated['decision'] ?? $validated['status'] ?? null;
+        if (! $decision) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Le champ décision (ou statut) est requis.',
+            ], 422);
+        }
+
+        $rectifiedGrade = $validated['rectified_grade'] ?? $validated['new_grade'] ?? null;
+        if ($decision === 'rectified' && $rectifiedGrade === null) {
+            return response()->json([
+                'success' => false,
+                'message' => 'La note rectifiée est requise en cas de rectification.',
+            ], 422);
+        }
+
+        $comment = $validated['professor_comment'] ?? $validated['resolution_notes'] ?? 'Décision enregistrée.';
 
         $appeal = GradeAppeal::with(['student.user', 'module'])->findOrFail($id);
         $user = $request->user();
 
-        $appeal->status = $validated['decision'];
-        $appeal->professor_comment = $validated['professor_comment'];
-        $appeal->professor_notes = $validated['professor_comment'];
+        // Contrôle d'autorisation : Administrateurs ou Enseignant affecté au module
+        $isAdmin = $user->hasAnyRole(['super-admin', 'admin', 'institution-admin', 'director', 'pedagogy_officer', 'department_head']);
+        if (! $isAdmin) {
+            $isAssigned = app(\App\Services\Academic\GradeService::class)->isProfessorAssignedToModule($user->id, (int) $appeal->module_id);
+            if (! $isAssigned) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Accès refusé : Vous n\'êtes pas l\'enseignant affecté à ce module.',
+                ], 403);
+            }
+        }
+
+        $appeal->status = $decision;
+        $appeal->professor_comment = $comment;
+        $appeal->professor_notes = $comment;
         $appeal->resolved_by = $user->id;
         $appeal->resolved_at = now();
 
-        if ($validated['decision'] === 'rectified') {
-            $appeal->rectified_grade = $validated['rectified_grade'];
-            $appeal->new_grade = $validated['rectified_grade'];
+        if ($decision === 'rectified') {
+            $appeal->rectified_grade = (float) $rectifiedGrade;
+            $appeal->new_grade = (float) $rectifiedGrade;
 
-            // Update real Grade record if exists
-            $grade = Grade::where('student_id', $appeal->student_id)
-                ->where('module_id', $appeal->module_id)
-                ->first();
+            // Recherche et mise à jour de la note réelle via assessment_id
+            $grade = null;
+            if ($appeal->assessment_id) {
+                $grade = Grade::where('student_id', $appeal->student_id)
+                    ->where('assessment_id', $appeal->assessment_id)
+                    ->first();
+            }
+
+            if (! $grade && $appeal->module_id) {
+                $assessmentIds = \App\Models\Assessment::where('module_id', $appeal->module_id)->pluck('id');
+                $grade = Grade::where('student_id', $appeal->student_id)
+                    ->whereIn('assessment_id', $assessmentIds)
+                    ->first();
+            }
 
             if ($grade) {
-                $oldScore = $grade->grade ?? $appeal->original_grade;
-                $grade->grade = $validated['rectified_grade'];
+                $oldScore = $grade->value ?? $appeal->original_grade;
+                $grade->value = (float) $rectifiedGrade;
+                $grade->absent = false;
                 $grade->save();
 
-                // Forensic audit log
+                // Traçabilité légale CNDP / Audit Log
                 try {
                     GradeAudit::create([
                         'grade_id' => $grade->id,
                         'user_id' => $user->id,
-                        'old_grade' => $oldScore,
-                        'new_grade' => $validated['rectified_grade'],
-                        'reason' => 'Rectification suite à recours LMD : '.$validated['professor_comment'],
+                        'old_value' => $oldScore,
+                        'new_value' => (float) $rectifiedGrade,
+                        'ip_address' => $request->ip(),
+                        'user_agent' => $request->userAgent(),
+                        'reason' => 'Rectification suite à recours LMD : '.$comment,
                     ]);
                 } catch (\Throwable $e) {
                     Log::warning('Grade audit log error: '.$e->getMessage());
@@ -206,12 +252,12 @@ class GradeAppealController extends Controller
 
         $appeal->save();
 
-        // Notify student of the decision
+        // Notification in-app de l'étudiant
         try {
             $studentUserId = $appeal->student?->user_id;
             if ($studentUserId) {
-                $decisionLabel = match ($validated['decision']) {
-                    'rectified' => "Note Rectifiée à {$validated['rectified_grade']}/20 ✓",
+                $decisionLabel = match ($decision) {
+                    'rectified' => "Note Rectifiée à {$rectifiedGrade}/20 ✓",
                     'maintained' => 'Note Maintenue après recomptage',
                     default => 'Recours clôturé',
                 };
@@ -223,7 +269,7 @@ class GradeAppealController extends Controller
                     'notifiable_id' => $studentUserId,
                     'data' => json_encode([
                         'title' => "⚖️ Décision Recours : {$decisionLabel}",
-                        'message' => "Votre recours pour {$appeal->module?->name} a été traité : {$validated['professor_comment']}",
+                        'message' => "Votre recours pour {$appeal->module?->name} a été traité : {$comment}",
                         'type' => 'system',
                         'action_url' => '/student/grades',
                     ]),

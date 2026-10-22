@@ -145,6 +145,10 @@ class TafemMinistryImportController extends Controller
                     ]
                 );
 
+                if (! $user->hasRole('student')) {
+                    $user->assignRole('student');
+                }
+
                 if (! $user->wasRecentlyCreated) {
                     $user->update([
                         'name' => $firstName.' '.$lastName,

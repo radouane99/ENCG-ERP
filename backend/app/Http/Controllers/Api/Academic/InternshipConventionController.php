@@ -122,6 +122,15 @@ class InternshipConventionController extends Controller
     public function downloadConventionPdf(Request $request, int $id)
     {
         $internship = Internship::with(['student.user', 'student.filiere'])->findOrFail($id);
+        $user = $request->user();
+        $isStaff = $user && $user->hasAnyRole(['admin', 'super-admin', 'director', 'institution-admin', 'pedagogy_officer', 'department_head']);
+        if (! $isStaff) {
+            $student = $user?->student;
+            if (! $student || (int) $internship->student_id !== (int) $student->id) {
+                abort(403, 'Accès non autorisé à cette convention de stage.');
+            }
+        }
+
         $student = $internship->student;
 
         $trackingCode = $internship->convention_ref ?? ('CONV-ENCG-'.date('Y').'-'.str_pad($id, 4, '0', STR_PAD_LEFT));
