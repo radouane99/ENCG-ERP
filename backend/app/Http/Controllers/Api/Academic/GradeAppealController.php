@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Academic;
 
 use App\Http\Controllers\Controller;
+use App\Models\ExamSession;
 use App\Models\Grade;
 use App\Models\GradeAppeal;
 use App\Models\GradeAudit;
@@ -32,14 +33,8 @@ class GradeAppealController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        // 48h LMD Appeal Window active state
-        $activeAppealWindow = [
-            'is_open' => true,
-            'duration_hours' => 48,
-            'closes_at' => now()->addHours(36)->toIso8601String(),
-            'hours_remaining' => 36,
-            'session' => 'Session Ordinaire / Normale 2026',
-        ];
+        // 48h LMD Appeal Window — calculée depuis la session d'examen active
+        $activeAppealWindow = $this->resolveAppealWindow();
 
         return response()->json([
             'success' => true,
@@ -126,10 +121,45 @@ class GradeAppealController extends Controller
 
     /**
      * Liste des recours pour le professeur responsable ou l'administration.
+     *
+     * - Admins/Direction/Pédagogie : voient TOUS les recours de l'établissement.
+     * - Professeurs/Vacataires      : voient UNIQUEMENT les recours des modules
+     *                                 qu'ils enseignent (ségrégation de données).
      */
     public function index(Request $request): JsonResponse
     {
+        $user  = $request->user();
         $query = GradeAppeal::with(['student.user', 'module', 'assessment', 'resolver']);
+
+        // ─ Scoping par rôle ───────────────────────────────────────────────────────────
+        $isAdmin = $user->hasAnyRole([
+            'super-admin', 'admin', 'institution-admin',
+            'director', 'pedagogy_officer', 'department_head', 'scolarite',
+        ]);
+
+        $assignedModuleIds = collect();
+
+        if (! $isAdmin && $user->hasAnyRole(['professor', 'vacataire'])) {
+            $assignedModuleIds = DB::table('module_professor')
+                ->where('professor_id', function ($q) use ($user) {
+                    $q->select('id')
+                      ->from('professors')
+                      ->where('user_id', $user->id)
+                      ->limit(1);
+                })
+                ->pluck('module_id');
+
+            if ($assignedModuleIds->isEmpty()) {
+                return response()->json([
+                    'success'    => true,
+                    'data'       => [],
+                    'statistics' => ['total' => 0, 'submitted' => 0, 'rectified' => 0, 'maintained' => 0],
+                ]);
+            }
+
+            $query->whereIn('module_id', $assignedModuleIds);
+        }
+        // ─────────────────────────────────────────────────────────────────────
 
         if ($request->filled('status')) {
             $query->where('status', $request->input('status'));
@@ -141,16 +171,22 @@ class GradeAppealController extends Controller
 
         $appeals = $query->orderBy('created_at', 'desc')->paginate($request->input('per_page', 25));
 
+        // Stats calculées sur le même scope (pas l'établissement entier pour les profs)
+        $statsBase = GradeAppeal::query();
+        if (! $isAdmin && $assignedModuleIds->isNotEmpty()) {
+            $statsBase->whereIn('module_id', $assignedModuleIds);
+        }
+
         $stats = [
-            'total' => GradeAppeal::count(),
-            'submitted' => GradeAppeal::where('status', 'submitted')->count(),
-            'rectified' => GradeAppeal::where('status', 'rectified')->count(),
-            'maintained' => GradeAppeal::where('status', 'maintained')->count(),
+            'total'      => (clone $statsBase)->count(),
+            'submitted'  => (clone $statsBase)->where('status', 'submitted')->count(),
+            'rectified'  => (clone $statsBase)->where('status', 'rectified')->count(),
+            'maintained' => (clone $statsBase)->where('status', 'maintained')->count(),
         ];
 
         return response()->json([
-            'success' => true,
-            'data' => $appeals,
+            'success'    => true,
+            'data'       => $appeals,
             'statistics' => $stats,
         ]);
     }
@@ -284,7 +320,68 @@ class GradeAppealController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Le recours a été traité et la décision enregistrée avec succès.',
-            'data' => $appeal->load('resolver'),
+            'data'    => $appeal->load('resolver'),
         ]);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Helpers privés
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Calcule dynamiquement la fenêtre de recours LMD 48h depuis la
+     * session d'examen active la plus récente.
+     *
+     * Règle : la fenêtre s'ouvre à la fin de la session (end_date)
+     * et reste ouverte 48h.
+     *
+     * @return array{is_open: bool, duration_hours: int, closes_at: string|null,
+     *               hours_remaining: float, session: string|null}
+     */
+    private function resolveAppealWindow(): array
+    {
+        /** @var \App\Models\ExamSession|null $session */
+        $session = ExamSession::where('is_active', true)
+            ->latest('end_date')
+            ->first();
+
+        if (! $session) {
+            return [
+                'is_open'         => false,
+                'duration_hours'  => 48,
+                'closes_at'       => null,
+                'hours_remaining' => 0,
+                'session'         => null,
+            ];
+        }
+
+        $resultsPublishedAt = $session->end_date
+            ? \Carbon\Carbon::parse($session->end_date)
+            : null;
+
+        if (! $resultsPublishedAt) {
+            return [
+                'is_open'         => false,
+                'duration_hours'  => 48,
+                'closes_at'       => null,
+                'hours_remaining' => 0,
+                'session'         => $session->name,
+            ];
+        }
+
+        $appealDeadline  = $resultsPublishedAt->copy()->addHours(48);
+        $now             = now();
+        $isOpen          = $now->between($resultsPublishedAt, $appealDeadline);
+        $hoursRemaining  = $isOpen
+            ? max(0, round($now->diffInMinutes($appealDeadline) / 60, 1))
+            : 0;
+
+        return [
+            'is_open'         => $isOpen,
+            'duration_hours'  => 48,
+            'closes_at'       => $isOpen ? $appealDeadline->toIso8601String() : null,
+            'hours_remaining' => $hoursRemaining,
+            'session'         => $session->name,
+        ];
     }
 }
