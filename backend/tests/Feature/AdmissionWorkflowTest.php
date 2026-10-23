@@ -240,4 +240,23 @@ class AdmissionWorkflowTest extends TestCase
         $this->postJson('/api/academic/candidates/validate', ['student_id' => $s->id, 'filiere_id' => $a->campaign->filiere_id])->assertUnprocessable();
         $this->assertDatabaseCount('student_registrations', 0);
     }
+
+    public function test_cloud_policy_is_admin_controlled_and_mocked_extraction_rejects_invalid_fields(): void
+    {
+        config(['services.groq.key' => 'synthetic-test-key', 'services.groq.model' => 'synthetic-model']);
+        $a = $this->candidate(); $this->staff('scolarite');
+        $this->putJson(self::BASE.'/ocr-settings', ['cloud_enabled' => true])->assertForbidden();
+        $this->staff('admin');
+        $this->putJson(self::BASE.'/ocr-settings', ['cloud_enabled' => true])->assertOk()->assertJsonPath('cloud_enabled', true);
+        Storage::fake('private');
+        $pdf = app('dompdf.wrapper')->loadHTML('<html><body>SYNTHETIC DOCUMENT CNE N123456789 CIN AB123456</body></html>')->output();
+        Storage::disk('private')->put('cloud-synthetic.pdf', $pdf);
+        $doc = StudentDocument::create(['application_id' => $a->id, 'cne' => $a->cne, 'type' => 'bac', 'file_path' => 'cloud-synthetic.pdf', 'mime_type' => 'application/pdf', 'status' => 'pending']);
+        Http::fake(['api.groq.com/*' => Http::response(['choices' => [['message' => ['content' => json_encode(['cne' => 'N123456789', 'cin' => 'AB123456', 'birth_date' => '31/02/2006', 'bac_average' => 99])]]]])]);
+        $result = app(\App\Services\Ocr\AdmissionOcrService::class)->extract($doc->fresh(), 'cloud');
+        Http::assertSentCount(1);
+        $this->assertArrayNotHasKey('birth_date', $result['fields']);
+        $this->assertArrayNotHasKey('bac_average', $result['fields']);
+        $this->assertSame('N123456789', $result['fields']['cne']['value']);
+    }
 }

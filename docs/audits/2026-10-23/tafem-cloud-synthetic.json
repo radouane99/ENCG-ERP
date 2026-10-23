@@ -1,0 +1,8 @@
+  <warning> DEPRECATED </warning> Creation of dynamic property App\OCR\Parsers\CnieParser::$emptyFields is deprecated in app/OCR/Parsers/CnieParser.php on line 56.
+{
+    "provider_http_status": 200,
+    "cloud_used": true,
+    "synthetic_cne_matches": true,
+    "synthetic_cin_matches": true,
+    "duration_seconds": 3.68
+}

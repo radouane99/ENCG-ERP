@@ -3,49 +3,55 @@
 > vitest run
 
 
-[1m[30m[46m RUN [49m[39m[22m [36mv5.0.5 [39m[90m/app[39m
+ RUN  v5.0.5 /app
 
- [32m✓[39m src/features/exams/model/__tests__/GradeSaveQueue.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 54[2mms[22m[39m
- [32m✓[39m src/__tests__/security/fileUpload.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 27[2mms[22m[39m
- [32m✓[39m src/__tests__/lmd/lmdLabels.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 19[2mms[22m[39m
- [32m✓[39m src/features/public/components/__tests__/MvpRoadmapSection.test.tsx [2m([22m[2m1 test[22m[2m)[22m[32m 269[2mms[22m[39m
- [32m✓[39m src/__tests__/auth/useAuthStore.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 46[2mms[22m[39m
- [32m✓[39m src/features/public/components/__tests__/ImpactSection.test.tsx [2m([22m[2m1 test[22m[2m)[22m[33m 326[2mms[22m[39m
-   [32m✓[39m ImpactSection [2m(1)[22m
-     [33m[2m✓[22m[39m renders the section heading, public trust cards, and institution branding[33m 312[2mms[22m[39m
- [32m✓[39m src/features/public/components/__tests__/TestimonialsSection.test.tsx [2m([22m[2m1 test[22m[2m)[22m[32m 270[2mms[22m[39m
- [32m✓[39m src/features/public/components/__tests__/BenefitsSection.test.tsx [2m([22m[2m1 test[22m[2m)[22m[33m 330[2mms[22m[39m
-   [32m✓[39m BenefitsSection [2m(1)[22m
-     [33m[2m✓[22m[39m renders the benefit cards and section heading[33m 312[2mms[22m[39m
- [32m✓[39m src/features/public/components/__tests__/ConversionSection.test.tsx [2m([22m[2m1 test[22m[2m)[22m[33m 566[2mms[22m[39m
-   [32m✓[39m ConversionSection [2m(1)[22m
-     [33m[2m✓[22m[39m renders the main heading and CTAs[33m 552[2mms[22m[39m
- [32m✓[39m src/features/public/components/__tests__/RegistrationFields.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[33m 639[2mms[22m[39m
-   [33m[2m✓[22m[39m associates labels and propagates native select validation and disabled state[33m 508[2mms[22m[39m
- [32m✓[39m src/features/public/components/__tests__/RoleJourneySection.test.tsx [2m([22m[2m1 test[22m[2m)[22m[32m 223[2mms[22m[39m
- [32m✓[39m src/features/public/components/__tests__/FaqSection.test.tsx [2m([22m[2m1 test[22m[2m)[22m[33m 490[2mms[22m[39m
-   [32m✓[39m FaqSection [2m(1)[22m
-     [33m[2m✓[22m[39m reveals the answer when a question is expanded[33m 459[2mms[22m[39m
- [32m✓[39m src/features/profile/components/__tests__/DsarPanel.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[33m 506[2mms[22m[39m
-   [32m✓[39m DsarPanel completed export download [2m(2)[22m
-     [33m[2m✓[22m[39m does not expose an unauthenticated same-origin href for the DSAR file[33m 340[2mms[22m[39m
- [32m✓[39m src/features/auth/pages/__tests__/PasswordAuthRoutes.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[33m 525[2mms[22m[39m
-   [32m✓[39m password auth routes [2m(2)[22m
-     [33m[2m✓[22m[39m sends the forgot-password request to the v1 auth endpoint[33m 410[2mms[22m[39m
- [32m✓[39m src/__tests__/security/htmlSafe.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 18[2mms[22m[39m
- [32m✓[39m src/__tests__/security/routeAccess.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 18[2mms[22m[39m
- [32m✓[39m src/__tests__/lmd/gradeCalculation.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 19[2mms[22m[39m
- [32m✓[39m src/features/analytics/ui/__tests__/AdminAnalyticsDashboard.test.tsx [2m([22m[2m1 test[22m[2m)[22m[33m 322[2mms[22m[39m
-   [32m✓[39m analytics availability [2m(1)[22m
-     [33m[2m✓[22m[39m shows a retryable error instead of inventing zero metrics[33m 313[2mms[22m[39m
- [32m✓[39m src/__tests__/security/documentAccess.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+ ✓ src/__tests__/lmd/lmdLabels.test.ts (3 tests) 31ms
+ ✓ src/__tests__/security/fileUpload.test.ts (2 tests) 27ms
+ ✓ src/features/public/components/__tests__/MvpRoadmapSection.test.tsx (1 test) 388ms
+   ✓ MvpRoadmapSection (1)
+     ✓ renders the MVP roadmap phases 371ms
+ ✓ src/features/exams/model/__tests__/GradeSaveQueue.test.ts (3 tests) 138ms
+ ✓ src/features/public/components/__tests__/BenefitsSection.test.tsx (1 test) 583ms
+   ✓ BenefitsSection (1)
+     ✓ renders the benefit cards and section heading 550ms
+ ✓ src/features/public/components/__tests__/TestimonialsSection.test.tsx (1 test) 503ms
+   ✓ TestimonialsSection (1)
+     ✓ renders the testimonial section with quotes 483ms
+ ✓ src/__tests__/auth/useAuthStore.test.ts (7 tests) 35ms
+ ✓ src/features/public/components/__tests__/RoleJourneySection.test.tsx (1 test) 450ms
+   ✓ RoleJourneySection (1)
+     ✓ renders the experience highlights for each user role 418ms
+ ✓ src/features/public/components/__tests__/ConversionSection.test.tsx (1 test) 701ms
+   ✓ ConversionSection (1)
+     ✓ renders the main heading and CTAs 679ms
+ ✓ src/features/public/components/__tests__/RegistrationFields.test.tsx (2 tests) 759ms
+   ✓ associates labels and propagates native select validation and disabled state 555ms
+ ✓ src/features/public/components/__tests__/ImpactSection.test.tsx (1 test) 353ms
+   ✓ ImpactSection (1)
+     ✓ renders the section heading, public trust cards, and institution branding 307ms
+ ✓ src/features/public/components/__tests__/FaqSection.test.tsx (1 test) 741ms
+   ✓ FaqSection (1)
+     ✓ reveals the answer when a question is expanded 713ms
+ ✓ src/features/profile/components/__tests__/DsarPanel.test.tsx (2 tests) 626ms
+   ✓ DsarPanel completed export download (2)
+     ✓ does not expose an unauthenticated same-origin href for the DSAR file 423ms
+ ✓ src/features/auth/pages/__tests__/PasswordAuthRoutes.test.tsx (2 tests) 813ms
+   ✓ password auth routes (2)
+     ✓ sends the forgot-password request to the v1 auth endpoint 611ms
+ ✓ src/__tests__/lmd/gradeCalculation.test.ts (4 tests) 37ms
+ ✓ src/features/analytics/ui/__tests__/AdminAnalyticsDashboard.test.tsx (1 test) 504ms
+   ✓ analytics availability (1)
+     ✓ shows a retryable error instead of inventing zero metrics 492ms
+ ✓ src/__tests__/security/routeAccess.test.ts (3 tests) 16ms
+ ✓ src/__tests__/security/htmlSafe.test.ts (4 tests) 26ms
+ ✓ src/__tests__/security/documentAccess.test.ts (3 tests) 16ms
 
-[2m Test Files [22m [1m[32m19 passed[39m[22m[90m (19)[39m
-[2m      Tests [22m [1m[32m41 passed[39m[22m[90m (41)[39m
-[2m   Start at [22m 10:22:56
-[2m   Duration [22m 7.30s[2m (environment 57%, import 18%, transform 11%, setup 8%, tests 6%, worker 1%)[22m
+ Test Files  19 passed (19)
+      Tests  43 passed (43)
+   Start at  11:27:13
+   Duration  10.80s (environment 53%, import 16%, transform 14%, setup 9%, tests 6%, worker 1%)
 
-[2mEnvironment [22m [33mjsdom was created 19 times[39m[2m · 43.92s total, 57% of tracked time[22m
-[2m            [22m [2mcreate it once per worker with [22m[33mpool: 'vmThreads'[39m[2m (keeps per-file isolation) or [22m[33misolate: false[39m[2m (shares it across files)[22m
-[2m            [22m [2mlearn more: https://vitest.dev/guide/improving-performance#test-environments[22m
+Environment  jsdom was created 19 times · 60.68s total, 53% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments
 

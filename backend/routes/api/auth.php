@@ -24,6 +24,8 @@ Route::prefix('admissions/workflow')->middleware(['auth:sanctum', 'institution.c
     $appointments = \App\Http\Controllers\Api\AdmissionAppointmentController::class;
     Route::get('campaigns', [$workflow, 'campaigns']);
     Route::get('references', [$workflow, 'references']);
+    Route::get('ocr-settings', [$workflow, 'ocrSettings']);
+    Route::put('ocr-settings', [$workflow, 'ocrSettings']);
     Route::post('campaigns', [$workflow, 'saveCampaign']);
     Route::put('campaigns/{id}', [$workflow, 'saveCampaign']);
     Route::get('dossier', [$workflow, 'show']);
@@ -58,6 +60,7 @@ Route::prefix('admissions/workflow')->middleware(['auth:sanctum', 'institution.c
     Route::post('scan/{token}/check-in', [$appointments, 'checkIn']);
     Route::get('daily', [$appointments, 'daily']);
     Route::get('list-pdf', [\App\Http\Controllers\Api\AdmissionWorkflowPdfController::class, 'list']);
+    Route::get('appointment-labels', [\App\Http\Controllers\Api\AdmissionWorkflowPdfController::class, 'appointmentLabels']);
 });
 
 Route::prefix('v1/auth')->group(function () {

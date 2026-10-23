@@ -17,6 +17,7 @@ class AdmissionOcrService
     public function extract(StudentDocument $doc, string $mode): array
     {
         $path = Storage::disk($doc->storage_disk)->path($doc->file_path);
+        $app = Application::findOrFail($doc->application_id);
         $text = '';
         $engine = 'pdf-text';
         OcrProcess::budget(35);
@@ -30,8 +31,7 @@ class AdmissionOcrService
         $warnings = [];
         if (trim($text) === '') return ['engine' => $engine, 'fields' => [], 'warnings' => ['Document illisible. Utilisez une image plus nette ou la saisie manuelle.'], 'status' => 'needs_review'];
         $parsed = (new DocumentParserManager)->parse($doc->type, $text)->fields;
-        if ($mode === 'cloud') {
-            abort_unless(config('admissions.ocr_cloud_enabled', false), 422, 'Le traitement cloud est désactivé.');
+        if ($mode === 'cloud' && AdmissionOcrPolicy::available($app->campaign->institution_id)) {
             $model = config('services.groq.model');
             $key = config('services.groq.key') ?: config('services.groq.api_key');
             abort_unless($key && $model, 422, 'Fournisseur cloud non configuré. Utilisez le mode local ou la saisie manuelle.');
@@ -45,10 +45,9 @@ class AdmissionOcrService
                 if (is_array($cloud)) { $parsed = $cloud; $engine .= '+groq:'.$model; }
                 else $warnings[] = 'Réponse IA invalide ; extraction locale conservée.';
             } else $warnings[] = 'Fournisseur indisponible ; extraction locale conservée.';
-        }
+        } elseif ($mode === 'cloud') $warnings[] = 'Mode cloud indisponible ou désactivé ; extraction locale conservée.';
         $values = app(GeminiApiService::class)->cleanAndNormalizeOcrData($parsed, $text);
         $allowed = ['cin', 'cne', 'first_name_fr', 'last_name_fr', 'first_name_ar', 'last_name_ar', 'birth_date', 'bac_average', 'bac_type', 'high_school', 'academy'];
-        $app = Application::findOrFail($doc->application_id);
         $fields = [];
         foreach ($allowed as $name) {
             $value = $values[$name] ?? null;

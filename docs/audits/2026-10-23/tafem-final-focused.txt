@@ -1,0 +1,36 @@
+
+   PASS  Tests\Feature\AdmissionWorkflowTest
+  ✓ guests and unrelated accounts cannot access or mutate dossiers      47.12s
+  ✓ profile save is owned versioned and does not mark enrolled           1.44s
+  ✓ document versions preserve files and withdrawn urls stop working     2.16s
+  ✓ application only dossier contains only its documents                 1.45s
+  ✓ real submission review and approval create one registration without… 2.62s
+  ✓ import requires preview and preserves existing owner and approved s… 1.22s
+  ✓ ocr requires consent and has owned persistent status                 1.35s
+  ✓ appointment capacity entry and duplicate check in are real           1.30s
+  ✓ activation uses only a verified contact and token once               1.71s
+  ✓ stats and waiting invitations use actual campaign capacity and rank  0.93s
+  ✓ rejected document requests correction and preserves reviewed versio… 1.71s
+  ✓ real local async ocr records a result without any cloud call         3.31s
+  ✓ unlinked document requires manual identity confirmation              1.79s
+  ✓ legacy academic validation cannot bypass admission review            1.38s
+  ✓ cloud policy is admin controlled and mocked extraction rejects inva… 2.13s
+
+   PASS  Tests\Feature\TafemDeepScanAuditTest
+  ✓ upload rejects wrong cin and locked dossier                          1.77s
+  ✓ delete rejects wrong cin                                             1.30s
+  ✓ public preinscription cannot downgrade another active student        0.79s
+  ✓ matching massar is not reported as mismatch                          0.98s
+  ✓ update rejects wrong cin                                             0.80s
+  ✓ receipt rejects unknown candidate instead of fabricating admission   0.91s
+  ✓ ocr rejects out of range grade                                       0.68s
+  ✓ ocr does not accept impossible date or out of range grade            0.71s
+  ✓ imported candidate is rejected by current registration service       0.89s
+  ✓ real local pdf and raster ocr extract synthetic identity             2.68s
+  ✓ application only tracking does not mix unrelated documents           1.27s
+  ✓ authenticated user cannot track another application by cne           0.70s
+  ✓ professor cannot validate physical admission dossier                 0.74s
+
+  Tests:    28 passed (126 assertions)
+  Duration: 94.09s
+

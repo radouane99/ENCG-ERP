@@ -17,4 +17,14 @@ export interface AdmissionDossier {
   invitation_expires_at?: string | null;
 }
 export interface OcrRun { id: string; status: string; engine?: string; error_code?: string; document_id: number; fields: Record<string, { value: string | number; conflict: boolean; requires_confirmation: boolean }>; warnings: string[] }
-export const dateText = (value: string) => new Date(value).toLocaleString('fr-MA', { dateStyle: 'medium', timeStyle: 'short' })
+export const dateText = (value: string) => new Date(/^\d{4}-\d\d-\d\d \d/.test(value) ? value.replace(' ', 'T') + 'Z' : value).toLocaleString('fr-MA', { timeZone: 'Africa/Casablanca', dateStyle: 'medium', timeStyle: 'short' })
+export const dayText = (value: string) => new Date(value.slice(0, 10) + 'T12:00:00Z').toLocaleDateString('fr-MA', { timeZone: 'Africa/Casablanca', dateStyle: 'long' })
+
+export const profileLabels: Record<string, string> = {
+  cin: 'CIN', cne: 'CNE', first_name: 'Prénom', last_name: 'Nom', first_name_fr: 'Prénom', last_name_fr: 'Nom',
+  first_name_ar: 'الاسم الشخصي', last_name_ar: 'النسب', phone: 'Téléphone personnel', email: 'Email personnel',
+  birth_date: 'Date de naissance', birth_city: 'Lieu de naissance', gender: 'Genre', nationality: 'Nationalité',
+  address: 'Adresse', city: 'Ville', bac_average: 'Moyenne du bac /20', bac_year: 'Année du bac',
+  bac_type: 'Série du bac', bac_series: 'Série du bac', high_school: 'Lycée', academy: 'Académie', province: 'Province',
+  emergency_contact_name: 'Contact d’urgence', emergency_contact_phone: 'Téléphone d’urgence',
+}

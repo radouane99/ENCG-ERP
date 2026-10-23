@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import api from '@shared/lib/api'
 import { errorMessage, useAdmissionCampaigns } from '../api/workflow'
 import { workflowBase } from '../model/workflow'
+import AdmissionOcrSettings from './AdmissionOcrSettings'
 
 const initial = { name: '', academic_year_id: '', filiere_id: '', open_date: '', close_date: '', target_capacity: '100', status: 'draft' }
 export default function AdmissionCampaignSettings({ campaignId, onSelect }: { campaignId?: number; onSelect: (id: number) => void }) {
@@ -24,5 +25,6 @@ export default function AdmissionCampaignSettings({ campaignId, onSelect }: { ca
       <label className="text-sm">Ouverture<input required type="date" className={input} value={form.open_date} onChange={e => setForm(f => ({ ...f, open_date: e.target.value }))}/></label><label className="text-sm">Clôture<input required type="date" className={input} value={form.close_date} onChange={e => setForm(f => ({ ...f, close_date: e.target.value }))}/></label>
       <label className="text-sm">État<select className={input} value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value }))}><option value="draft">Brouillon</option><option value="open">Ouverte</option><option value="closed">Fermée</option></select></label><button disabled={busy || (!creating && !campaignId)} className="mt-5 min-h-11 rounded-lg bg-blue-900 px-4 text-sm font-semibold text-white disabled:opacity-50">{busy ? 'Enregistrement…' : 'Enregistrer la campagne'}</button>
     </form>
+    <AdmissionOcrSettings/>
   </section>
 }

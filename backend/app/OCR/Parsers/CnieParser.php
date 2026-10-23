@@ -47,6 +47,8 @@ class CnieParser implements DocumentParserInterface
 
     private readonly FrenchNameHelper $french;
 
+    private array $emptyFields;
+
     public function __construct(
         ?ArabicTextHelper $arabic = null,
         ?FrenchNameHelper $french = null,

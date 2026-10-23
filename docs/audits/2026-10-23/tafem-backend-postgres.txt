@@ -1,94 +1,94 @@
 
    PASS  Tests\Unit\AcademicCalendarServiceTest
-  ✓ it returns true when event is active                                25.30s  
-  ✓ it returns false when event is past                                  0.64s  
-  ✓ it returns false when event is inactive                              0.54s  
-  ✓ it accepts english type aliases from academic events migration       0.54s  
-  ✓ it accepts grades entry alias from academic events migration         0.54s  
+  ✓ it returns true when event is active                                49.98s
+  ✓ it returns false when event is past                                  1.46s
+  ✓ it returns false when event is inactive                              1.75s
+  ✓ it accepts english type aliases from academic events migration       1.57s
+  ✓ it accepts grades entry alias from academic events migration         1.53s
 
    PASS  Tests\Unit\AcademicStrategicModulesTest
-  ✓ grade appeal within 48h window                                       0.02s  
+  ✓ grade appeal within 48h window                                       0.06s
   ✓ grade appeal rejected after 48h deadline
-  ✓ grade appeal rectification workflow                                  0.10s  
-  ✓ specialty wishes hierarchy                                           0.01s  
+  ✓ grade appeal rectification workflow                                  0.27s
+  ✓ specialty wishes hierarchy                                           0.03s
   ✓ specialty allocation merit algorithm
-  ✓ internship convention legal fields and security                      0.03s  
+  ✓ internship convention legal fields and security                      0.08s
   ✓ internship convention tripartite signing workflow
   ✓ diploma supplement 300 ects calculation
   ✓ diploma supplement official sections and sha256
 
    PASS  Tests\Unit\AuditableTraitTest
-  ✓ creating sets created by from authenticated user                     2.96s  
-  ✓ updating sets updated by from authenticated user                     0.74s  
-  ✓ creating does not overwrite explicit created by                      0.65s  
+  ✓ creating sets created by from authenticated user                     6.56s
+  ✓ updating sets updated by from authenticated user                     1.51s
+  ✓ creating does not overwrite explicit created by                      1.44s
 
    PASS  Tests\Unit\AuthCookieTest
   ✓ encode roundtrip preserves sanctum token
-  ✓ middleware promotes http only cookie to bearer                       0.04s  
+  ✓ middleware promotes http only cookie to bearer                       0.08s
   ✓ middleware ignores query string token
 
    PASS  Tests\Unit\DatabaseSchemaAndRelationshipIntegrityTest
-  ✓ core database tables exist with proper schemas                       0.77s  
-  ✓ academic structure eloquent relationships and foreign keys           0.80s  
-  ✓ student user grades and pathway relationships                        0.91s  
-  ✓ module deletion cascades to assessments                              0.72s  
+  ✓ core database tables exist with proper schemas                       2.23s
+  ✓ academic structure eloquent relationships and foreign keys           1.58s
+  ✓ student user grades and pathway relationships                        2.06s
+  ✓ module deletion cascades to assessments                              1.90s
 
    PASS  Tests\Unit\Domain\Deliberation\Services\DeliberationEngineTest
-  ✓ it calculates the mention correctly                                  0.93s  
-  ✓ it treats only final exam types as rattrapage-replaceable, not CC2   0.56s  
-  ✓ it applies rattrapage only to the final exam component, not to CC2   0.80s  
-  ✓ it identifies eliminatory marks based on the 6.0 threshold           0.54s  
-  ✓ it processes a full deliberation and correctly applies compensation… 0.76s  
+  ✓ it calculates the mention correctly                                  1.41s
+  ✓ it treats only final exam types as rattrapage-replaceable, not CC2   1.01s
+  ✓ it applies rattrapage only to the final exam component, not to CC2   1.77s
+  ✓ it identifies eliminatory marks based on the 6.0 threshold           1.33s
+  ✓ it processes a full deliberation and correctly applies compensation… 1.55s
 
    PASS  Tests\Unit\ExamSlotCatalogTest
-  ✓ it resolves standard morning slots with fifteen minute break         0.03s  
+  ✓ it resolves standard morning slots with fifteen minute break         0.06s
   ✓ it formats convocation time from official slot
   ✓ it maps legacy afternoon start without break to official slot
   ✓ it maps end of previous slot to next slot with break
   ✓ it falls back to two hours for unknown start time
 
    PASS  Tests\Unit\ExampleTest
-  ✓ that true is true                                                    0.01s  
+  ✓ that true is true                                                    0.01s
 
    PASS  Tests\Unit\GeminiAiDriverPredictRiskTest
-  ✓ it returns unknown risk with zero confidence when the AI response i… 0.66s  
+  ✓ it returns unknown risk with zero confidence when the AI response i… 1.39s
 
    PASS  Tests\Unit\GradeAuditTest
-  ✓ grade update creates audit log                                       0.92s  
+  ✓ grade update creates audit log                                       2.11s
 
    PASS  Tests\Unit\LoginSecurityTest
-  ✓ suspicious login sends alert                                         0.76s  
-  ✓ same ip login does not send alert                                    0.58s  
+  ✓ suspicious login sends alert                                         0.95s
+  ✓ same ip login does not send alert                                    0.97s
 
    PASS  Tests\Unit\MoroccanLmdFormulasUnitTest
   ✓ module weighted average calculation
-  ✓ rattrapage formula takes maximum grade                               0.04s  
+  ✓ rattrapage formula takes maximum grade                               0.06s
   ✓ rattrapage does not penalize if lower than normal
   ✓ eliminatory grade detection
   ✓ moroccan academic honors mentions
   ✓ semester ects credits allocation
 
    PASS  Tests\Unit\ProfessorDocumentSegregationServiceTest
-  ✓ igr rate conforms to moroccan tax code                               0.01s  
+  ✓ igr rate conforms to moroccan tax code                               0.01s
   ✓ professor role and contract type detection
-  ✓ document catalog strict partitioning                                 0.01s  
+  ✓ document catalog strict partitioning                                 0.03s
   ✓ security interception of unauthorized document requests
-  ✓ administrative dossier required attributes                           0.02s  
+  ✓ administrative dossier required attributes                           0.03s
 
    PASS  Tests\Unit\TextbookAndAnnualActivityReportTest
-  ✓ syllabus progress calculation standard npn module
-  ✓ textbook session data structure                                      0.02s  
+  ✓ syllabus progress calculation standard npn module                    0.01s
+  ✓ textbook session data structure                                      0.05s
   ✓ department head visa workflow
   ✓ service fait dual eligibility
   ✓ annual activity report consolidation structure
   ✓ sha256 digital seal generation
 
    PASS  Tests\Unit\UnifiedStudentRecordTest
-  ✓ student can fetch own dossier                                        1.60s  
-  ✓ admin can fetch student dossier                                      0.79s  
+  ✓ student can fetch own dossier                                        3.09s
+  ✓ admin can fetch student dossier                                      1.11s
 
    PASS  Tests\Unit\Utf8TextTest
-  ✓ it repairs CP437 mojibake for Fès and École                          0.02s  
+  ✓ it repairs CP437 mojibake for Fès and École                          0.02s
   ✓ it formats academic year labels to short YY-YY
   ✓ it builds displayLabel from label column not name
 
@@ -102,159 +102,413 @@
   ✓ administrative dossier compliance structure
 
    PASS  Tests\Unit\ValidationWorkflowTest
-  ✓ it creates audit log on status change                                5.49s  
+  ✓ it creates audit log on status change                                7.04s
 
    PASS  Tests\Feature\AbsenceAndAttendanceTest
-  ✓ can record attendance and absence                                    0.68s  
-  ✓ can justify absence                                                  0.66s  
+  ✓ can record attendance and absence                                    0.77s
+  ✓ can justify absence                                                  0.75s
 
    PASS  Tests\Feature\AcademicLifecycleIntegrationTest
-  ✓ complete student academic lifecycle and deliberation workflow        0.94s  
+  ✓ complete student academic lifecycle and deliberation workflow        1.11s
 
    PASS  Tests\Feature\AcademicNonRegressionAndBoundaryTest
-  ✓ boundary eliminatory grade at six point zero                         0.57s  
-  ✓ boundary rachat grace threshold                                      0.60s  
-  ✓ absent grade is strictly zero in weighted calculations               0.59s  
-  ✓ grade update idempotency and integrity                               0.62s  
+  ✓ boundary eliminatory grade at six point zero                         0.65s
+  ✓ boundary rachat grace threshold                                      0.75s
+  ✓ absent grade is strictly zero in weighted calculations               0.83s
+  ✓ grade update idempotency and integrity                               0.73s
 
    PASS  Tests\Feature\AcademicYearRolloverAndProgressionTest
-  ✓ students progress to next academic year on rollover                  0.66s  
-  ✓ 5th year students become graduated after final year                  0.67s  
+  ✓ students progress to next academic year on rollover                  0.79s
+  ✓ 5th year students become graduated after final year                  0.80s
 
    PASS  Tests\Feature\AdminRouteRbacAccessTest
-  ✓ it forbids a vacataire from viewing or updating institution setting… 0.76s  
-  ✓ it forbids a vacataire from exporting APOGEE CSV data                0.64s  
-  ✓ it forbids a vacataire from dispatching students or subgroups        0.62s  
-  ✓ it forbids a vacataire from deleting an academic group               0.58s  
-  ✓ it forbids a vacataire from applying deliberation rachat             0.69s  
-  ✓ it allows a super-admin to access institution settings               0.60s  
+  ✓ it forbids a vacataire from viewing or updating institution setting… 0.85s
+  ✓ it forbids a vacataire from exporting APOGEE CSV data                0.80s
+  ✓ it forbids a vacataire from dispatching students or subgroups        0.69s
+  ✓ it forbids a vacataire from deleting an academic group               0.66s
+  ✓ it forbids a vacataire from applying deliberation rachat             0.81s
+  ✓ it allows a super-admin to access institution settings               0.70s
 
    PASS  Tests\Feature\AdmissionWorkflowTest
-  ✓ guests and unrelated accounts cannot access or mutate dossiers       0.93s  
-  ✓ profile save is owned versioned and does not mark enrolled           0.73s  
-  ✓ document versions preserve files and withdrawn urls stop working     1.34s  
-  ✓ application only dossier contains only its documents                 1.00s  
-  ✓ real submission review and approval create one registration without… 1.65s  
-  ✓ import requires preview and preserves existing owner and approved s… 1.24s  
-  ✓ ocr requires consent and has owned persistent status                 1.06s  
-  ✓ appointment capacity entry and duplicate check in are real           1.15s  
-  ✓ activation uses only a verified contact and token once               0.99s  
+  ✓ guests and unrelated accounts cannot access or mutate dossiers       1.13s
+  ✓ profile save is owned versioned and does not mark enrolled           0.73s
+  ✓ document versions preserve files and withdrawn urls stop working     1.61s
+  ✓ application only dossier contains only its documents                 1.17s
+  ✓ real submission review and approval create one registration without… 1.86s
+  ✓ import requires preview and preserves existing owner and approved s… 1.43s
+  ✓ ocr requires consent and has owned persistent status                 1.31s
+  ✓ appointment capacity entry and duplicate check in are real           1.41s
+  ✓ activation uses only a verified contact and token once               1.15s
+  ✓ stats and waiting invitations use actual campaign capacity and rank  0.97s
+  ✓ rejected document requests correction and preserves reviewed versio… 1.21s
+  ✓ real local async ocr records a result without any cloud call         2.80s
+  ✓ unlinked document requires manual identity confirmation              1.45s
 
    PASS  Tests\Feature\AiTutorAndCourseHandoutRAGTest
-  ✓ student can query ai tutor with handout citations                    0.68s  
-  ✓ student can generate quiz from course handouts                       0.67s  
+  ✓ student can query ai tutor with handout citations                    0.78s
+  ✓ student can generate quiz from course handouts                       0.69s
 
    PASS  Tests\Feature\AiTutorAndStudentAssistantTest
-  ✓ ai tutor conversation and message logging                            0.54s  
+  ✓ ai tutor conversation and message logging                            0.66s
 
    PASS  Tests\Feature\AlumniCareerAndJobHubTest
-  ✓ alumni survey submission and metrics                                 0.58s  
+  ✓ alumni survey submission and metrics                                 0.68s
 
    PASS  Tests\Feature\AlumniNetworkAndJobBoardTest
-  ✓ can create alumni profile and career record                          0.54s  
-  ✓ can publish exclusive job offer                                      0.59s  
+  ✓ can create alumni profile and career record                          0.67s
+  ✓ can publish exclusive job offer                                      0.75s
 
    PASS  Tests\Feature\AnnualSemesterCompensationAndProgressionTest
-  ✓ annual compensation validates year when s1 and s2 average is at lea… 0.57s  
-  ✓ eliminatory grade prevents compensation even if annual average is h… 0.53s  
+  ✓ annual compensation validates year when s1 and s2 average is at lea… 0.71s
+  ✓ eliminatory grade prevents compensation even if annual average is h… 0.67s
 
    PASS  Tests\Feature\AttendanceAndAbsenceJustificationWorkflowTest
-  ✓ attendance session creation and absence recording                    0.87s  
-  ✓ absence justification submission and approval                        1.05s  
+  ✓ attendance session creation and absence recording                    0.77s
+  ✓ absence justification submission and approval                        0.77s
 
    PASS  Tests\Feature\AttendanceTest
-  ✓ it returns a list of attendance sessions                             1.06s  
-  ✓ it returns 401 for unauthenticated attendance list                   0.63s  
-  ✓ it filters attendance sessions by search query                       0.76s  
-  ✓ it returns correct stats totals                                      0.78s  
-  ✓ it deletes an attendance session                                     0.70s  
-  ✓ it returns 404 when deleting non-existent session                    0.69s  
+  ✓ it returns a list of attendance sessions                             0.97s
+  ✓ it returns 401 for unauthenticated attendance list                   0.64s
+  ✓ it filters attendance sessions by search query                       0.73s
+  ✓ it returns correct stats totals                                      0.77s
+  ✓ it deletes an attendance session                                     0.71s
+  ✓ it returns 404 when deleting non-existent session                    0.65s
 PHP Deprecated:  SimpleSoftwareIO\QrCode\Generator::generate(): Implicitly marking parameter $filename as nullable is deprecated, the explicit nullable type must be used instead in /var/www/html/vendor/simplesoftwareio/simple-qrcode/src/Generator.php on line 169
 PHP Deprecated:  BaconQrCode\Encoder\Encoder::chooseMode(): Implicitly marking parameter $encoding as nullable is deprecated, the explicit nullable type must be used instead in /var/www/html/vendor/bacon/bacon-qr-code/src/Encoder/Encoder.php on line 158
 PHP Deprecated:  BaconQrCode\Common\ReedSolomonCodec::decode(): Implicitly marking parameter $erasures as nullable is deprecated, the explicit nullable type must be used instead in /var/www/html/vendor/bacon/bacon-qr-code/src/Common/ReedSolomonCodec.php on line 225
 
    PASS  Tests\Feature\AttestationAndOfficialDiplomaTest
-  ✓ can download attestation reussite                                    3.18s  
-  ✓ can download grand diplome officiel encg                             1.75s  
+  ✓ can download attestation reussite                                    2.53s
+  ✓ can download grand diplome officiel encg                             2.00s
 
    PASS  Tests\Feature\AuditLogAndSecurityRegressionTest
-  ✓ audit log creates tamper evident sha256 record                       1.16s  
+  ✓ audit log creates tamper evident sha256 record                       1.05s
 
    PASS  Tests\Feature\AutoRefuseExpiredRetakesTest
-  ✓ it resolves the retake justification deadline from a single institu… 0.82s  
+  ✓ it resolves the retake justification deadline from a single institu… 1.08s
 
    PASS  Tests\Feature\BackendSecurityNormsTest
-  ✓ track dossier requires cne and cin for guests                        0.98s  
-  ✓ serve document without signature is forbidden                        0.63s  
-  ✓ track dossier with cne and cin returns signed document urls          0.77s  
-  ✓ signed document url grants access                                    1.00s  
-  ✓ query token does not authenticate arbitrary api routes               0.74s  
-  ✓ http only auth cookie authenticates without authorization header     1.46s  
-  ✓ login response does not include password or login ip                 1.26s  
-  ✓ professor cannot manage roles permissions                            0.66s  
-  ✓ inscription status requires cne and cin                              0.73s  
-  ✓ track dossier matches cin on users not students                      0.74s  
+  ✓ track dossier requires cne and cin for guests                        0.71s
+  ✓ serve document without signature is forbidden                        0.68s
+  ✓ track dossier with cne and cin returns signed document urls          0.77s
+  ✓ signed document url grants access                                    0.80s
+  ✓ query token does not authenticate arbitrary api routes               0.70s
+  ✓ http only auth cookie authenticates without authorization header     1.39s
+  ✓ login response does not include password or login ip                 1.38s
+  ✓ professor cannot manage roles permissions                            0.70s
+  ✓ inscription status requires cne and cin                              0.74s
+  ✓ track dossier matches cin on users not students                      0.70s
 
    PASS  Tests\Feature\CampusAlertServiceTest
-  ✓ it journalise les 3 templates SMS campus sans HTTP externe           0.63s  
+  ✓ it journalise les 3 templates SMS campus sans HTTP externe           0.68s
 
    PASS  Tests\Feature\CedocDoctoralStudiesAndThesisTest
-  ✓ doctorant dashboard metrics and thesis progress                      0.63s  
+  ✓ doctorant dashboard metrics and thesis progress                      0.70s
 
    PASS  Tests\Feature\CndpDsarAndRetentionTest
-  ✓ it requires authentication to create a DSAR export request           0.64s  
-  ✓ it queues a DSAR export for the authenticated user                   0.65s  
-  ✓ it records a CNDP rectification request without queuing an export    0.66s  
-  ✓ it records a CNDP opposition request without auto-anonymizing        0.80s  
-  ✓ it anonymizes inactive accounts past the retention threshold         0.81s  
-  ✓ it forbids downloading another user DSAR export                      0.86s  
-  ✓ it lets the owner download a completed DSAR export with a Sanctum B… 1.26s  
-  ✓ it lets the owner preview and download the certified official CNDP…  3.20s  
+  ✓ it requires authentication to create a DSAR export request           0.66s
+  ✓ it queues a DSAR export for the authenticated user                   0.87s
+  ✓ it records a CNDP rectification request without queuing an export    0.74s
+  ✓ it records a CNDP opposition request without auto-anonymizing        0.71s
+  ✓ it anonymizes inactive accounts past the retention threshold         0.80s
+  ✓ it forbids downloading another user DSAR export                      0.80s
+  ✓ it lets the owner download a completed DSAR export with a Sanctum B… 1.37s
+  ✓ it lets the owner preview and download the certified official CNDP…  3.37s
 
    PASS  Tests\Feature\ComprehensivePdfGenerationAndSecurityTest
-  ✓ attestation reussite pdf generation                                  1.76s  
-  ✓ grand diplome officiel pdf generation                                1.89s  
-  ✓ timetable pdf export                                                 1.86s  
-  ✓ unauthenticated user cannot access secure pdfs                       1.05s  
+  ✓ attestation reussite pdf generation                                  2.48s
+  ✓ grand diplome officiel pdf generation                                2.16s
+  ✓ timetable pdf export                                                 2.18s
+  ✓ unauthenticated user cannot access secure pdfs                       1.22s
 
    PASS  Tests\Feature\ConcurrentGradeSubmissionAndLockingTest
-  ✓ grade has initial version for optimistic locking                     0.96s  
-  ✓ grade version increments on modification                             0.65s  
+  ✓ grade has initial version for optimistic locking                     1.09s
+  ✓ grade version increments on modification                             0.75s
 
    PASS  Tests\Feature\CybersecurityAndOwaspProtectionTest
-  ✓ sql injection payloads are safely parameterized                      0.79s  
-  ✓ cross site scripting xss inputs are sanitized                        0.88s  
-  ✓ idor student cannot access another students record                   0.72s  
-  ✓ mass assignment privilege escalation is blocked                      0.68s  
-  ✓ authentication invalid credentials do not leak stack traces          0.66s  
+  ✓ sql injection payloads are safely parameterized                      0.90s
+  ✓ cross site scripting xss inputs are sanitized                        0.89s
+  ✓ idor student cannot access another students record                   0.77s
+  ✓ mass assignment privilege escalation is blocked                      0.73s
+  ✓ authentication invalid credentials do not leak stack traces          0.73s
 
    PASS  Tests\Feature\DeliberationEngineTest
-  ✓ it calculates average correctly and returns V (Validé) for >= 10     0.65s  
-  ✓ it returns RAT (Rattrapage) for average < 10                         0.79s  
-  ✓ it returns NV (Non Validé) if Exam is strictly eliminatory (< 6)     0.64s  
-  ✓ it handles missing grades                                            0.61s  
-  ✓ it treats absent as 0                                                0.69s  
+  ✓ it calculates average correctly and returns V (Validé) for >= 10     0.73s
+  ✓ it returns RAT (Rattrapage) for average < 10                         0.74s
+  ✓ it returns NV (Non Validé) if Exam is strictly eliminatory (< 6)     0.86s
+  ✓ it handles missing grades                                            0.75s
+  ✓ it treats absent as 0                                                0.70s
 
    PASS  Tests\Feature\DigitalLibraryAndKohaLoansTest
-  ✓ can borrow and return library book                                   0.65s  
+  ✓ can borrow and return library book                                   0.78s
 
    PASS  Tests\Feature\DisciplineAndComplaintsTest
-  ✓ can submit and resolve student complaint                             0.63s  
-  ✓ can record disciplinary council action                               0.73s  
+  ✓ can submit and resolve student complaint                             0.69s
+  ✓ can record disciplinary council action                               0.72s
 
    PASS  Tests\Feature\EncgRoadmapLmdCampusTest
-  ✓ it uses a single LMD eliminatory threshold of 6/20                   0.61s  
-  ✓ it exports an empty APOGEE CSV without dummy rows                    0.68s  
-  ✓ it exports real APOGEE rows with CNE and Massar                      0.72s  
-  ✓ it opens grade entry when no academic window is configured           0.64s  
-  ✓ it opens justifications when only the english academic_events type…  0.57s  
-  ✓ it closes grade entry when all grade periods are closed              0.62s  
-  ✓ it seals a deliberation and requires four-eyes to reopen             0.67s  
-  ✓ it confirms Grande École reinscription without payment and blocks u… 0.75s  
-  ✓ it rejects timetable slots on holidays, out-of-service rooms and Ra… 0.78s  
-  ✓ it keeps course and exam attendance counters separate and opens a d… 0.76s  
-  ✓ it forbids IDOR on student dossier and records TAFEM-style audit li… 0.74s  
-  ✓ it caps vacataire hours at 45 and requires department visa before H… 0.70s  
-  ✓ it returns an empty Koha stub when KOHA_BASE_URL is unset and fakes… 0.94s  
-  ✓ it keeps a stable exam PV seal and treats unrecorded seating as abs… 0.62s  
-  ✓ it batches early-warning course absence counts instead of querying…  0.73s  
+  ✓ it uses a single LMD eliminatory threshold of 6/20                   0.67s
+  ✓ it exports an empty APOGEE CSV without dummy rows                    0.72s
+  ✓ it exports real APOGEE rows with CNE and Massar                      0.72s
+  ✓ it opens grade entry when no academic window is configured           0.64s
+  ✓ it opens justifications when only the english academic_events type…  0.66s
+  ✓ it closes grade entry when all grade periods are closed              0.69s
+  ✓ it seals a deliberation and requires four-eyes to reopen             0.80s
+  ✓ it confirms Grande École reinscription without payment and blocks u… 0.82s
+  ✓ it rejects timetable slots on holidays, out-of-service rooms and Ra… 0.79s
+  ✓ it keeps course and exam attendance counters separate and opens a d… 0.81s
+  ✓ it forbids IDOR on student dossier and records TAFEM-style audit li… 0.85s
+  ✓ it caps vacataire hours at 45 and requires department visa before H… 0.93s
+  ✓ it returns an empty Koha stub when KOHA_BASE_URL is unset and fakes… 1.16s
+  ✓ it keeps a stable exam PV seal and treats unrecorded seating as abs… 0.75s
+  ✓ it batches early-warning course absence counts instead of querying…  0.83s
+
+   PASS  Tests\Feature\ExamPlanningAndIncidentTest
+  ✓ can plan exam session with room and time                             0.72s
+  ✓ can record exam fraud incident                                       0.71s
+
+   PASS  Tests\Feature\ExampleTest
+  ✓ the application returns a successful response                        0.88s
+
+   PASS  Tests\Feature\FiliereModuleStructureTest
+  ✓ can create filiere and department                                    0.65s
+  ✓ can scaffold semesters s1 to s10                                     0.71s
+  ✓ can create module with elements and credits                          0.93s
+  ✓ can create groups per semester and filiere                           0.80s
+
+   PASS  Tests\Feature\GlobalAuditRemediationTest
+  ✓ public registration cannot replace existing student credentials      0.76s
+  ✓ public registration cannot claim student using another email         0.76s
+  ✓ student cannot change official dates                                 0.73s
+  ✓ dates are validated durable and survive cache clear                  1.09s
+  ✓ classroom endpoint only returns authorized group messages            0.86s
+  ✓ stale model cannot overwrite grade without version in payload        0.76s
+  ✓ authentication preserves angle brackets in password                  1.29s
+  ✓ audit payload redacts nested secrets and medical data                0.59s
+  ✓ new registration uses an open campaign and creates only a student a… 1.13s
+  ✓ grade bulk update rejects stale client version and keeps the saved…  1.03s
+  ✓ other institution cannot access this single institution instance     0.77s
+
+   PASS  Tests\Feature\GradeCalculationAndPvDeliberationTest
+  ✓ can calculate normal session module grade                            0.76s
+  ✓ rattrapage formula takes max grade                                   0.79s
+  ✓ pv signing generates sha256 seal and audit record                    0.74s
+
+   PASS  Tests\Feature\IdorStudentIsolationTest
+  ✓ it forbids student A from downloading student B document request     0.86s
+  ✓ it forbids student A from viewing student B complaint                0.86s
+  ✓ it ignores a foreign student_id when a student creates a complaint   0.94s
+
+   PASS  Tests\Feature\InternshipTest
+  ✓ it returns a list of internships for authorized user                 1.11s
+  ✓ it returns 401 for unauthenticated internship list                   0.69s
+  ✓ it returns 403 for unauthorized internship list                      0.65s
+  ✓ it validates an internship with action=validate                      0.85s
+  ✓ it assigns a supervisor to an internship                             0.92s
+  ✓ it returns 422 when action is missing on internship update           0.83s
+  ✓ it returns 422 when action is invalid                                0.86s
+  ✓ it returns 422 when supervisor_id is missing for assign_supervisor…  0.78s
+  ✓ it returns 422 when supervisor_id does not exist in professors tabl… 0.75s
+
+   PASS  Tests\Feature\LmdJudgeTest
+  ✓ it maps LMD scores 5.99 NV, 6.00 RAT and 10 V without eliminatory    0.66s
+  ✓ it does not present Grande Ecole as tuition fees                     0.62s
+  ✓ it returns a computed LMD verdict before any LLM copy for the stude… 0.80s
+  ✓ it falls back when a fake Gemini HTTP call fails                     0.70s
+  ✓ it explains NV from precomputed facts without inventing Validé       0.77s
+  ✓ it appends a single grounded-numbers footer from actual facts        0.69s
+
+   PASS  Tests\Feature\MultiRoleInteractionAndNotificationTest
+  ✓ student to admin document request and approval                       0.89s
+  ✓ admin to professor teaching assignment relationship                  0.98s
+  ✓ notification fetching and read lifecycle                             1.18s
+  ✓ rbac student cannot broadcast urgent alerts                          0.80s
+
+   PASS  Tests\Feature\OfficialTimetableMatrixTest
+  ✓ matrix uses official group and french hours                          0.77s
+  ✓ specialty semester is not forced to ap                               0.67s
+
+   PASS  Tests\Feature\OfficialTimetablePdfTest
+  ✓ official timetable html keeps accents logo and qr                    0.65s
+  ✓ official timetable pdf renders                                       1.35s
+
+   PASS  Tests\Feature\PfeAndInternshipWorkflowTest
+  ✓ can create and validate internship convention                        1.12s
+  ✓ can manage final project and defense                                 1.13s
+
+   PASS  Tests\Feature\ProfessorAiCopilotIntegrationTest
+  ✓ voice textbook structuring endpoint returns valid structure          2.23s
+  ✓ attendance textbook auto completion endpoint                         2.01s
+  ✓ attendance risk analysis endpoint                                    0.94s
+  ✓ download exam paper pdf endpoint                                     1.50s
+
+   PASS  Tests\Feature\ProfessorAndAssignmentTest
+  ✓ can create permanent and vacataire professors                        1.41s
+  ✓ can assign module and group to professor                             1.15s
+
+   PASS  Tests\Feature\ProfessorModuleAccessTest
+  ✓ it grants a professor access only to modules assigned to him         1.41s
+  ✓ it does not treat the user id as a professor id                      0.81s
+  ✓ it does not leak the modules of professor #1                         0.83s
+  ✓ it gives no module access to a user without a professor profile      0.75s
+  ✓ it confirms assignment for the assigned professor                    0.65s
+
+   PASS  Tests\Feature\ProfessorTest
+  ✓ it returns a list of professors for authorized user                  0.86s
+  ✓ it returns 401 for unauthenticated professor list                    0.72s
+  ✓ it returns 403 for unauthorized professor list                       0.87s
+  ✓ it creates a professor with valid data                               2.00s
+  ✓ it returns 422 when required fields are missing for professor        0.95s
+  ✓ it returns 422 when email is already taken for professor             1.03s
+  ✓ it returns 422 for invalid contract_type                             0.88s
+  ✓ it returns 403 when creating professor without permission            0.70s
+  ✓ it shows a single professor                                          0.82s
+  ✓ it updates a professor with valid data                               0.77s
+  ✓ it returns 422 for invalid contract_type on update                   0.73s
+  ✓ it soft-deletes a professor                                          0.77s
+  ✓ it returns 403 when deleting professor without permission            0.83s
+
+   PASS  Tests\Feature\PublicDocumentQrVerificationAndSecurityTest
+  ✓ public document verification with invalid token returns 404          0.76s
+  ✓ public module pv signature verification                              0.77s
+
+   PASS  Tests\Feature\ReinscriptionWorkflowTest
+  ✓ student can fetch reinscription status                               0.78s
+  ✓ student can confirm reinscription                                    0.77s
+  ✓ ouvrir reinscription uses command year not calendar year             0.93s
+  ✓ ouvrir reinscription defaults annee to upcoming end year             0.82s
+
+   PASS  Tests\Feature\RoomAvailabilityAndSmartFinderTest
+  ✓ smart find detects free room                                         0.76s
+  ✓ smart find detects occupied room and suggests alternatives           0.95s
+  ✓ occupancy matrix endpoint returns valid structure                    0.73s
+  ✓ smart find api endpoint                                              0.73s
+  ✓ weekly master matrix api endpoint                                    0.71s
+
+   PASS  Tests\Feature\SecondDeepScanRemediationTest
+  ✓ evaluations are isolated by year and keep historical grades          0.71s
+  ✓ unassigned professor cannot read secondary grid                      0.74s
+  ✓ secondary grid rejects missing versions                              0.84s
+  ✓ two semester registrations in same year are allowed                  0.74s
+  ✓ identity writes save the canonical user without loading relation     0.70s
+  ✓ submission persists and rejects a duplicate                          0.84s
+  ✓ assignment must belong to requested module                           0.81s
+  ✓ signed module cannot delete its modalities                           0.70s
+  ✓ secondary grid is atomic and rejects a stale version                 0.87s
+  ✓ secondary grid does not write for another group student              0.85s
+  ✓ repartition keeps the old year untouched                             0.76s
+  ✓ private submission file is downloadable only by owner or teacher     0.88s
+  ✓ explicit historical context does not leak into the next operation    1.09s
+  ✓ postgres rejects raw cascade deletion of a recorded assessment       0.73s
+  ✓ integrity review changes the canonical identity and closes only tha… 0.85s
+  ✓ review pending blocks grade writes without deleting existing grades  0.71s
+  ✓ qr scan requires a real token and prevents double attendance         0.87s
+  ✓ foreign key scanner pairs composite columns in order                 2.72s
+  ✓ legacy apogee validation preserves official identifiers and uses th… 0.74s
+
+   PASS  Tests\Feature\SensitiveRoutesRequireAuthenticationTest
+  ✓ it rejects unauthenticated access to previously public admin and PD… 0.77s
+  ✓ it rejects unauthenticated access to previously public admin and PD… 0.70s
+  ✓ it rejects unauthenticated access to previously public admin and PD… 0.62s
+  ✓ it rejects unauthenticated access to previously public admin and PD… 0.65s
+  ✓ it rejects unauthenticated access to previously public admin and PD… 0.63s
+  ✓ it rejects unauthenticated access to previously public admin and PD… 0.66s
+  ✓ it rejects unauthenticated access to previously public admin and PD… 0.74s
+  ✓ it rejects unauthenticated access to previously public admin and PD… 0.65s
+  ✓ it rejects unauthenticated access to previously public admin and PD… 0.62s
+  ✓ it rejects unauthenticated access to previously public admin and PD… 0.62s
+  ✓ it rejects unauthenticated access to previously public admin and PD… 0.66s
+  ✓ it rejects unauthenticated access to previously public admin and PD… 0.68s
+  ✓ it rejects unauthenticated access to previously public admin and PD… 0.65s
+  ✓ it rejects unauthenticated access to previously public admin and PD… 0.62s
+  ✓ it rejects unauthenticated access to previously public admin and PD… 0.62s
+  ✓ it rejects unauthenticated access to previously public admin and PD… 0.73s
+  ✓ it rejects unauthenticated access to previously public admin and PD… 0.63s
+  ✓ it rejects unauthenticated access to previously public admin and PD… 0.60s
+  ✓ it rejects unauthenticated access to previously public admin and PD… 0.62s
+  ✓ it rejects unauthenticated access to previously public admin and PD… 0.64s
+  ✓ it rejects unauthenticated access to previously public admin and PD… 0.67s
+  ✓ it requires a session for dossier details while leaving admissibili… 0.65s
+
+   PASS  Tests\Feature\SentryReporterTest
+  ✓ it does not attempt a network call when the Sentry DSN is empty      0.67s
+
+   PASS  Tests\Feature\SmartCampusAndRoomBookingTest
+  ✓ can book room and detect schedule conflicts                          0.63s
+  ✓ professor cannot self approve a room booking                         0.75s
+  ✓ scolarite can create an approved booking                             0.71s
+  ✓ professor cannot patch booking to approved                           0.71s
+
+   PASS  Tests\Feature\SmartTimetableGenerationAndAntiConflictTest
+  ✓ can schedule class slot without collision                            0.72s
+
+   PASS  Tests\Feature\SsoOidcTest
+  ✓ it lists only configured OpenID Connect providers                    0.73s
+  ✓ it starts an OIDC authorization-code plus PKCE redirect for Google   0.65s
+  ✓ it keeps the legacy Google redirect alias                            0.72s
+  ✓ it rejects an unknown SSO provider                                   0.66s
+  ✓ it rejects an SSO identity outside the institutional domain          0.72s
+  ✓ it rejects SSO when no ERP account exists for the identity           0.68s
+  ✓ it completes OIDC login and exchanges the one-time code for a Sanct… 0.68s
+  ✓ it rejects a reused SSO exchange code                                0.69s
+
+   PASS  Tests\Feature\StudentClubsAndAssociationHubTest
+  ✓ can create and approve club event                                    0.67s
+
+   PASS  Tests\Feature\StudentEvaluationsAndQualityBarometerTest
+  ✓ can submit anonymous course evaluation                               0.66s
+
+   PASS  Tests\Feature\StudentGuichetAndDocumentRequestTest
+  ✓ student can request administrative document                          0.63s
+  ✓ scolarite agent can approve document request                         0.64s
+
+   PASS  Tests\Feature\StudentMobilityAndExchangeTest
+  ✓ can apply for international mobility program                         0.67s
+
+   PASS  Tests\Feature\StudentSmartCardAndNfcTest
+  ✓ can issue and activate pvc smart card                                0.65s
+
+   PASS  Tests\Feature\StudentTest
+  ✓ it returns a list of students for authorized user                    0.84s
+  ✓ it returns 401 for unauthenticated student list                      0.63s
+  ✓ it returns 403 for unauthorized student list                         0.74s
+  ✓ it creates a student with valid data                                 1.43s
+  ✓ it returns 422 when required fields are missing on store             0.96s
+  ✓ it returns 422 when email is already taken on store                  0.75s
+  ✓ it returns 403 when creating student without permission              0.68s
+  ✓ it shows a single student                                            0.81s
+  ✓ it updates a student with valid data                                 0.89s
+  ✓ it returns 422 for invalid status on update                          0.79s
+  ✓ it soft-deletes a student                                            0.77s
+  ✓ it returns 403 when deleting student without permission              0.66s
+
+   PASS  Tests\Feature\TafemAdmissionAndEnrollmentTest
+  ✓ can import and process tafem candidate                               0.63s
+  ✓ can complete online preinscription                                   0.62s
+
+   PASS  Tests\Feature\TimetableCampaignServiceTest
+  ✓ odd semester is autumn campaign                                      0.65s
+  ✓ draft is blocked when campaign is closed                             0.72s
+
+   PASS  Tests\Feature\TimetableManualBoardTest
+  ✓ manual move rejects saturday                                         0.77s
+  ✓ manual move to empty slot succeeds                                   0.81s
+  ✓ add session rejects same group overlap                               0.87s
+  ✓ board snaps non standard times onto pedagogic slots                  1.10s
+  ✓ workspace counts unique professors not sessions                      1.08s
+
+   PASS  Tests\Feature\TimetablePerformanceStrategyTest
+  ✓ never double books professor room or group                           0.72s
+  ✓ weekdays only never assigns saturday                                 0.69s
+  ✓ cours magistral places both groups together                          0.63s
+  ✓ td uses small classroom not amphitheater                             0.61s
+  ✓ same professor cannot have overlapping intervals                     0.58s
+  ✓ parallel td for two groups is allowed                                0.64s
+
+   PASS  Tests\Feature\TimetableRoomGuardTest
+  ✓ approved booking hides room on same weekday slot                     0.72s
+  ✓ existing schedule occupies room for other filiere                    0.84s
+  ✓ available rooms excludes booked and scheduled rooms                  0.70s
+
+  Tests:    346 passed (1169 assertions)
+  Duration: 356.06s

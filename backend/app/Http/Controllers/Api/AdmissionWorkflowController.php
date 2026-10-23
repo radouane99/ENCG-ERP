@@ -32,6 +32,27 @@ class AdmissionWorkflowController extends Controller
         return response()->json(['data' => $q->orderByDesc('id')->get(['id', 'name', 'open_date', 'close_date', 'academic_year_id', 'filiere_id', 'status', 'target_capacity'])]);
     }
 
+    public function ocrSettings(Request $request)
+    {
+        AdmissionAccess::review($request);
+        $canManage = $request->user()->hasAnyRole(['super-admin', 'admin', 'institution-admin', 'director']);
+        $institution = \App\Models\Institution::findOrFail(AdmissionAccess::institution($request));
+        if ($request->isMethod('put')) {
+            abort_unless($canManage, 403);
+            $data = $request->validate(['cloud_enabled' => 'required|boolean']);
+            abort_if($data['cloud_enabled'] && ! \App\Services\Ocr\AdmissionOcrPolicy::configured(), 422, 'Clé ou modèle du fournisseur non configuré sur le serveur.');
+            DB::transaction(function () use ($institution, $data, $request) {
+                $institution = \App\Models\Institution::whereKey($institution->id)->lockForUpdate()->firstOrFail();
+                $settings = $institution->settings ?? [];
+                $settings['admissions']['ocr_cloud_enabled'] = $data['cloud_enabled'];
+                $institution->update(['settings' => $settings]);
+                activity()->causedBy($request->user())->withProperties(['cloud_enabled' => $data['cloud_enabled']])->log('admission_ocr_policy_updated');
+            });
+        }
+        return response()->json(['cloud_enabled' => \App\Services\Ocr\AdmissionOcrPolicy::enabled($institution->id),
+            'configured' => \App\Services\Ocr\AdmissionOcrPolicy::configured(), 'can_manage' => $canManage, 'provider' => 'Groq', 'local_available' => true]);
+    }
+
     public function references(Request $request)
     {
         AdmissionAccess::review($request);
@@ -145,7 +166,7 @@ class AdmissionWorkflowController extends Controller
             }),
             'document_history' => AdmissionAccess::staff(request()->user()) ? StudentDocument::where('application_id', $app->id)->orderByDesc('id')->limit(100)
                 ->get(['id', 'type', 'version', 'is_current', 'withdrawn_at', 'status'])->map(fn ($doc) => array_merge($doc->toArray(), ['url' => url('/api/admissions/workflow/documents/'.$doc->id.'/file')])) : [],
-            'cloud_available' => (bool) (config('admissions.ocr_cloud_enabled') && config('services.groq.model') && (config('services.groq.key') ?: config('services.groq.api_key'))),
+            'cloud_available' => \App\Services\Ocr\AdmissionOcrPolicy::available($app->campaign->institution_id),
         ]);
     }
 
@@ -214,7 +235,7 @@ class AdmissionWorkflowController extends Controller
         $app = AdmissionAccess::dossier($request, true);
         $data = $request->validate(['document_id' => 'required|integer', 'mode' => 'required|in:local,cloud',
             'consent' => 'required|accepted', 'consent_version' => 'required|in:admissions-v1']);
-        if ($data['mode'] === 'cloud') abort_unless(config('admissions.ocr_cloud_enabled'), 422, 'Traitement cloud désactivé.');
+        if ($data['mode'] === 'cloud') abort_unless(\App\Services\Ocr\AdmissionOcrPolicy::available($app->campaign->institution_id), 422, 'Traitement cloud désactivé ou non configuré.');
         $id = DB::transaction(function () use ($request, $app, $data) {
             Application::whereKey($app->id)->lockForUpdate()->firstOrFail();
             $doc = StudentDocument::whereKey($data['document_id'])->where('application_id', $app->id)->where('is_current', true)->whereNull('withdrawn_at')->firstOrFail();

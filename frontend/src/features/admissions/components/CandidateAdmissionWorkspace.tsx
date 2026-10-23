@@ -6,7 +6,7 @@ import api from '@shared/lib/api'
 import { QRCodeSVG } from 'qrcode.react'
 import PrepareDocumentImage from './PrepareDocumentImage'
 import { useAdmissionDossier, errorMessage } from '../api/workflow'
-import { dateText, documentLabels, documentTypes, statusLabels, workflowBase, type AdmissionDossier, type DocumentType, type OcrRun } from '../model/workflow'
+import { dateText, dayText, documentLabels, documentTypes, statusLabels, workflowBase, type AdmissionDossier, type DocumentType, type OcrRun } from '../model/workflow'
 
 const inputClass = 'w-full min-h-11 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100'
 const buttonClass = 'min-h-11 rounded-lg bg-blue-900 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50'
@@ -35,6 +35,7 @@ export default function CandidateAdmissionWorkspace() {
   const [slots, setSlots] = useState<{ id: number; starts_at: string; desk: string; capacity: number; reserved: number }[]>([])
   const initialId = useRef<number | null>(null)
   const mounted = useRef(true)
+  const campaignId = app?.campaign.id
   useEffect(() => { mounted.current = true; return () => { mounted.current = false } }, [])
   useEffect(() => {
     if (app && initialId.current !== app.id) {
@@ -49,11 +50,11 @@ export default function CandidateAdmissionWorkspace() {
     return () => window.removeEventListener('beforeunload', warn)
   }, [dirty])
   useEffect(() => {
-    if (!app) return
+    if (!campaignId) return
     const controller = new AbortController()
-    api.get(`${workflowBase}/slots`, { params: { campaign_id: app.campaign.id }, signal: controller.signal }).then(r => setSlots(r.data.data)).catch(() => {})
+    api.get(`${workflowBase}/slots`, { params: { campaign_id: campaignId }, signal: controller.signal }).then(r => setSlots(r.data.data)).catch(() => {})
     return () => controller.abort()
-  }, [app?.campaign.id])
+  }, [campaignId])
   useEffect(() => {
     if (!run || !['queued', 'processing'].includes(run.status)) return
     const controller = new AbortController()
@@ -89,7 +90,7 @@ export default function CandidateAdmissionWorkspace() {
   return <main data-testid="candidate-admission-workspace" className="mx-auto max-w-6xl space-y-5 p-4 text-slate-800 dark:text-slate-100 sm:p-6">
     {imagePreparation && <PrepareDocumentImage file={imagePreparation.file} onCancel={() => setImagePreparation(null)} onPrepared={file => { const type = imagePreparation.type; setImagePreparation(null); upload(type, file) }}/ >}
     <header className={`${panelClass} border-t-4 border-t-blue-900`}>
-      <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-widest text-blue-700">{app.campaign.name}</p><h1 className="mt-2 text-2xl font-bold">Mon dossier d’admission</h1><p className="mt-2 text-sm text-slate-500">{app.reference_number} · CNE {app.cne} · Échéance {dateText(app.campaign.close_date)}</p></div><span className="rounded-full bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-900">{statusLabels[app.dossier_status]}</span></div>
+      <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-widest text-blue-700">{app.campaign.name}</p><h1 className="mt-2 text-2xl font-bold">Mon dossier d’admission</h1><p className="mt-2 text-sm text-slate-500">{app.reference_number} · CNE {app.cne} · Échéance {dayText(app.campaign.close_date)}</p></div><span className="rounded-full bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-900">{statusLabels[app.dossier_status]}</span></div>
       <ol className="mt-6 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4" aria-label="Étapes du dossier">{['1 · Compléter', '2 · Vérifier les pièces', '3 · Soumettre', '4 · Suivre la décision'].map(x => <li key={x} className="rounded-lg bg-slate-50 p-3 dark:bg-slate-800">{x}</li>)}</ol>
       <p className="mt-4 text-sm">{statusLabels[app.eligibility]} · {complete}/4 pièces ajoutées. L’extraction facilite la saisie ; le service admissions vérifie votre dossier.</p>
     </header>

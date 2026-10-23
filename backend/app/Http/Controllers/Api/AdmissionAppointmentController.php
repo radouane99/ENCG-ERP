@@ -29,6 +29,8 @@ class AdmissionAppointmentController extends Controller
         $c = AdmissionAccess::campaign($request);
         $data = $request->validate(['starts_at' => 'required|date|after:now', 'ends_at' => 'required|date|after:starts_at',
             'desk' => 'required|string|max:80', 'capacity' => 'required|integer|min:1|max:1000']);
+        $data['starts_at'] = \Carbon\Carbon::parse($data['starts_at'], config('admissions.timezone'))->utc();
+        $data['ends_at'] = \Carbon\Carbon::parse($data['ends_at'], config('admissions.timezone'))->utc();
         $id = DB::table('admission_slots')->insertGetId($data + ['admission_campaign_id' => $c->id, 'created_at' => now(), 'updated_at' => now()]);
         return response()->json(['id' => $id], 201);
     }
@@ -126,7 +128,7 @@ class AdmissionAppointmentController extends Controller
             abort_unless($app->eligibility === 'main' && $app->dossier_status !== 'rejected', 422, 'Dossier non autorisé.');
             abort_if($a->checked_in_at, 409, 'Entrée déjà enregistrée.');
             $slot = DB::table('admission_slots')->find($a->slot_id);
-            abort_unless(now()->isSameDay($slot->starts_at), 422, 'Le rendez-vous n’est pas prévu aujourd’hui.');
+            abort_unless(now(config('admissions.timezone'))->toDateString() === \Carbon\Carbon::parse($slot->starts_at, 'UTC')->tz(config('admissions.timezone'))->toDateString(), 422, 'Le rendez-vous n’est pas prévu aujourd’hui.');
             DB::table('admission_appointments')->where('id', $a->id)->update(['checked_in_at' => now(), 'checked_in_by' => auth()->id()]);
             app(ManageDossierAction::class)->event($app, 'checked_in');
         });
@@ -140,7 +142,7 @@ class AdmissionAppointmentController extends Controller
         $c = AdmissionAccess::campaign($request);
         $rows = DB::table('admission_appointments as a')->join('admission_slots as s', 'a.slot_id', '=', 's.id')
             ->join('applications as p', 'a.application_id', '=', 'p.id')->where('s.admission_campaign_id', $c->id)
-            ->whereDate('s.starts_at', $request->input('date'))->orderBy('s.starts_at')
+            ->whereBetween('s.starts_at', [\Carbon\Carbon::parse($request->input('date'), config('admissions.timezone'))->startOfDay()->utc(), \Carbon\Carbon::parse($request->input('date'), config('admissions.timezone'))->endOfDay()->utc()])->orderBy('s.starts_at')
             ->get(['p.reference_number', 'p.first_name', 'p.last_name', 's.starts_at', 's.desk', 'a.checked_in_at']);
         return response()->json(['appointments' => $rows, 'total_authorized_today' => $rows->count()]);
     }

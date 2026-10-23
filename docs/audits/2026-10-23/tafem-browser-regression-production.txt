@@ -1,0 +1,23 @@
+
+Running 18 tests using 1 worker
+
+  ✓   1 [chromium] › e2e/critical-journeys.spec.ts:13:3 › P2 — 8 parcours critiques › 1. login — formulaire et authentification mockée (5.4s)
+  ✓   2 [chromium] › e2e/critical-journeys.spec.ts:22:3 › P2 — 8 parcours critiques › 2. notes étudiant (1.9s)
+  ✓   3 [chromium] › e2e/critical-journeys.spec.ts:31:3 › P2 — 8 parcours critiques › 2b. dashboard étudiant — CTA métier (1.8s)
+  ✓   4 [chromium] › e2e/critical-journeys.spec.ts:40:3 › P2 — 8 parcours critiques › 3. PV public — vérification QR (1.1s)
+  ✓   5 [chromium] › e2e/critical-journeys.spec.ts:46:3 › P2 — 8 parcours critiques › 4. guichet étudiant (2.0s)
+  ✓   6 [chromium] › e2e/critical-journeys.spec.ts:52:3 › P2 — 8 parcours critiques › 5. TAFEM — préinscription publique (1.8s)
+  ✓   7 [chromium] › e2e/critical-journeys.spec.ts:57:3 › P2 — 8 parcours critiques › 6. TAFEM admin (1.9s)
+  ✓   8 [chromium] › e2e/critical-journeys.spec.ts:66:3 › P2 — 8 parcours critiques › 7. PV admin — cockpit délibération (2.0s)
+  ✓   9 [chromium] › e2e/critical-journeys.spec.ts:73:3 › P2 — 8 parcours critiques › 8. guichet admin (2.1s)
+  ✓  10 [mobile-chrome] › e2e/critical-journeys.spec.ts:13:3 › P2 — 8 parcours critiques › 1. login — formulaire et authentification mockée (2.9s)
+  ✓  11 [mobile-chrome] › e2e/critical-journeys.spec.ts:22:3 › P2 — 8 parcours critiques › 2. notes étudiant (2.0s)
+  ✓  12 [mobile-chrome] › e2e/critical-journeys.spec.ts:31:3 › P2 — 8 parcours critiques › 2b. dashboard étudiant — CTA métier (1.9s)
+  ✓  13 [mobile-chrome] › e2e/critical-journeys.spec.ts:40:3 › P2 — 8 parcours critiques › 3. PV public — vérification QR (1.1s)
+  ✓  14 [mobile-chrome] › e2e/critical-journeys.spec.ts:46:3 › P2 — 8 parcours critiques › 4. guichet étudiant (1.8s)
+  ✓  15 [mobile-chrome] › e2e/critical-journeys.spec.ts:52:3 › P2 — 8 parcours critiques › 5. TAFEM — préinscription publique (1.7s)
+  ✓  16 [mobile-chrome] › e2e/critical-journeys.spec.ts:57:3 › P2 — 8 parcours critiques › 6. TAFEM admin (1.7s)
+  ✓  17 [mobile-chrome] › e2e/critical-journeys.spec.ts:66:3 › P2 — 8 parcours critiques › 7. PV admin — cockpit délibération (1.8s)
+  ✓  18 [mobile-chrome] › e2e/critical-journeys.spec.ts:73:3 › P2 — 8 parcours critiques › 8. guichet admin (1.7s)
+
+  18 passed (43.4s)

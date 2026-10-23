@@ -36,7 +36,8 @@ final class AdmissionAccess
         }
         $campaign = $q->firstOrFail();
         if ($open) {
-            abort_unless($campaign->status === 'open' && now()->startOfDay()->betweenIncluded($campaign->open_date, $campaign->close_date), 422, 'La campagne est fermée.');
+            $today = now(config('admissions.timezone'))->toDateString();
+            abort_unless($campaign->status === 'open' && $today >= $campaign->open_date->toDateString() && $today <= $campaign->close_date->toDateString(), 422, 'La campagne est fermée.');
         }
         return $campaign;
     }
@@ -72,7 +73,8 @@ final class AdmissionAccess
     public static function campaignOpen(Application $app): void
     {
         $c = $app->campaign;
-        abort_unless($c && $c->status === 'open' && now()->startOfDay()->betweenIncluded($c->open_date, $c->close_date), 422, 'La campagne est fermée.');
+        $today = now(config('admissions.timezone'))->toDateString();
+        abort_unless($c && $c->status === 'open' && $today >= $c->open_date->toDateString() && $today <= $c->close_date->toDateString(), 422, 'La campagne est fermée.');
         self::invitationActive($app);
     }
 

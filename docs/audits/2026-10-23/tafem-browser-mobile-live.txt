@@ -1,0 +1,6 @@
+
+Running 1 test using 1 worker
+
+  ✓  1 [chromium] › e2e/admission-workflow.spec.ts:66:3 › TAFEM — parcours réel sans API simulée › les dossiers restent lisibles sur téléphone après validation (16.8s)
+
+  1 passed (22.4s)
