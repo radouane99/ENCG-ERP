@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React,{ useState,useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { PlaneTakeoff, Settings2, Users, Download, Medal, CheckCircle2, FileText, ChevronRight, Sparkles, Zap, Printer, Clock, XCircle, RefreshCw, X, Plus, Mail, Check, Send, Loader2 } from 'lucide-react';
+import { PlaneTakeoff,Settings2,Users,Download,Medal,CheckCircle2,Sparkles,Printer,Clock,RefreshCw,X,Plus,Mail,Send,Loader2 } from 'lucide-react';
 
 import { cn } from '@shared/lib/utils';
 import api from '@shared/lib/api';

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, ShieldCheck, Clock3, Users } from 'lucide-react';
+import { ArrowRight,ShieldCheck,Clock3,Users } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 
 interface ConversionSectionProps {

@@ -1,15 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React,{ useState,useEffect } from 'react';
+import { motion,AnimatePresence } from 'framer-motion';
 import {
-  X,
-  QrCode,
-  CheckCircle2,
-  AlertTriangle,
-  ListChecks,
-  Search,
-  Save,
+X,
+QrCode,
+CheckCircle2,
+AlertTriangle,
+ListChecks,
+Search,
+Save,
 } from 'lucide-react';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation,useQuery } from '@tanstack/react-query';
 import api from '@shared/lib/api';
 import { Spinner } from '@shared/components/ui/Spinner';
 import { toast } from 'sonner';

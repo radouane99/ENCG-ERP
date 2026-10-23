@@ -1,5 +1,5 @@
 import api from '@shared/lib/api';
-import { PaginationParams, Student, ApiResponse, PaginatedResponse } from '../../types/models';
+import { PaginationParams,Student,ApiResponse,PaginatedResponse } from '../../types/models';
 
 export { api };
 

@@ -1,22 +1,22 @@
-import React, { useState, useMemo, useEffect } from 'react'
+import { useState,useMemo,useEffect } from 'react'
 import { cn } from '@/shared/lib/utils'
-import { 
-  FileText, 
-  Search, 
-  X, 
-  RotateCcw, 
-  Calendar, 
-  Settings, 
-  Check, 
-  Sparkles, 
-  Building2, 
-  DoorOpen, 
-  GraduationCap, 
-  BookOpen, 
-  Clock,
-  Users,
-  Layers,
-  ArrowUpRight
+import {
+FileText,
+Search,
+X,
+RotateCcw,
+Calendar,
+Settings,
+Check,
+Sparkles,
+Building2,
+DoorOpen,
+GraduationCap,
+BookOpen,
+Clock,
+Users,
+Layers,
+ArrowUpRight
 } from 'lucide-react'
 import api from '@/shared/lib/api'
 import { toast } from 'sonner'
@@ -364,11 +364,11 @@ function SectionTable({ section, searchQuery, coursStart, tdTpStart, onOpenConfi
 
 export default function OfficialTimetableMatrix({ matrix }: { matrix: any }) {
   const [searchQuery, setSearchQuery] = useState('')
-  const [coursStart, setCoursStart] = useState<string>('16/09/2024')
-  const [tdTpStart, setTdTpStart] = useState<string>('07/10/2024')
+  const [coursStart, setCoursStart] = useState<string>('')
+  const [tdTpStart, setTdTpStart] = useState<string>('')
   const [isConfigOpen, setIsConfigOpen] = useState(false)
-  const [tempCoursStart, setTempCoursStart] = useState<string>('16/09/2024')
-  const [tempTdTpStart, setTempTdTpStart] = useState<string>('07/10/2024')
+  const [tempCoursStart, setTempCoursStart] = useState<string>('')
+  const [tempTdTpStart, setTempTdTpStart] = useState<string>('')
   const [isSavingDates, setIsSavingDates] = useState(false)
   const [isDispatchingSubGroups, setIsDispatchingSubGroups] = useState(false)
 
@@ -564,10 +564,10 @@ export default function OfficialTimetableMatrix({ matrix }: { matrix: any }) {
                   type="text"
                   value={tempCoursStart}
                   onChange={(e) => setTempCoursStart(e.target.value)}
-                  placeholder="Ex: 16/09/2024"
+                  placeholder="JJ/MM/AAAA"
                   className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs"
                 />
-                <span className="text-[10.5px] text-slate-400 italic">Exemple standard ENCG : 16/09/2024</span>
+                <span className="text-[10.5px] text-slate-400 italic">Format : JJ/MM/AAAA</span>
               </div>
 
               <div className="space-y-1.5">
@@ -578,10 +578,10 @@ export default function OfficialTimetableMatrix({ matrix }: { matrix: any }) {
                   type="text"
                   value={tempTdTpStart}
                   onChange={(e) => setTempTdTpStart(e.target.value)}
-                  placeholder="Ex: 07/10/2024 ou la semaine du 07/10/2024"
+                  placeholder="JJ/MM/AAAA"
                   className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs"
                 />
-                <span className="text-[10.5px] text-slate-400 italic">Exemple standard ENCG : la semaine du 07/10/2024</span>
+                <span className="text-[10.5px] text-slate-400 italic">Format : JJ/MM/AAAA</span>
               </div>
             </div>
 

@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react'
-import { Search, Plus, Edit2, Trash2, X, Building } from 'lucide-react'
+import React,{ useState,useEffect,useCallback } from 'react'
+import { Search,Plus,Edit2,Trash2,X,Building } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
 import { toast } from 'sonner'

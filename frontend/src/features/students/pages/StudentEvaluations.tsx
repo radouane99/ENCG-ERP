@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { ShieldCheck, BookOpen, Star, CheckCircle2, Lock, ArrowRight, Send, X, Check, Award } from 'lucide-react';
+import React,{ useState } from 'react';
+import { ShieldCheck,BookOpen,Star,CheckCircle2,Lock,ArrowRight,Send,X,Check,Award } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import api from '@/shared/lib/api';

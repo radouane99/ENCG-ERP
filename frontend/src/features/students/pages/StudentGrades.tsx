@@ -1,26 +1,25 @@
-import React, { useState, useMemo } from 'react';
+import React,{ useState,useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { 
-  CheckCircle2, 
-  FlaskConical, 
-  Download, 
-  AlertCircle, 
-  Award, 
-  BookOpen, 
-  Sparkles, 
-  Scale, 
-  Clock, 
-  X, 
-  Send,
-  Eye,
-  EyeOff,
-  Search,
-  GraduationCap,
-  Info,
-  ShieldCheck,
-  Archive,
-  Layers,
-  Lock
+import {
+CheckCircle2,
+FlaskConical,
+Download,
+AlertCircle,
+Award,
+BookOpen,
+Sparkles,
+Scale,
+Clock,
+X,
+Send,
+Eye,
+EyeOff,
+Search,
+GraduationCap,
+Info,
+ShieldCheck,
+Archive,
+Layers
 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { useQuery } from '@tanstack/react-query';
@@ -29,7 +28,7 @@ import { Spinner } from '@shared/components/ui/Spinner';
 import LmdLegend from '@shared/components/academic/LmdLegend';
 import LmdBadge from '@shared/components/academic/LmdBadge';
 import EmptyState from '@shared/components/ui/EmptyState';
-import { decisionLabel, normalizeDecision } from '@shared/lib/lmd';
+import { decisionLabel,normalizeDecision } from '@shared/lib/lmd';
 import { toast } from 'sonner';
 
 function cleanMojibake(str?: string | null): string {

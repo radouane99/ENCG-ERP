@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useTranslation } from 'react-i18next';
-import { 
-  IdCard, Search, Filter, ShieldAlert, CheckCircle, 
-  AlertTriangle, RefreshCw, Printer, FileDown, Eye, Check, X, ShieldOff
+import React,{ useState } from 'react';
+import { useQuery,useMutation,useQueryClient } from '@tanstack/react-query';
+import {
+IdCard,Search,ShieldAlert,CheckCircle,
+AlertTriangle,RefreshCw,Printer,Check,X,ShieldOff
 } from 'lucide-react';
 import api from '@/shared/lib/api';
 import { Button } from '@/shared/components/ui/Button';

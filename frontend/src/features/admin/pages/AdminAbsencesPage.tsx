@@ -1,10 +1,8 @@
-import { useState, useEffect, useMemo } from 'react'
-import { Link } from 'react-router-dom'
-import { 
-  UserX, Search, Trash2, CheckCircle2, XCircle, Loader2, Sparkles, 
-  FileText, ExternalLink, RefreshCw, X, ShieldAlert, Eye, Calendar, 
-  Check, Filter, AlertTriangle, Clock, Award, ShieldCheck, Stethoscope, Building2,
-  ChevronRight, Hash, ArrowUpRight, CheckCheck, FileCheck, Layers
+import { useState,useEffect } from 'react'
+import {
+UserX,Search,Trash2,CheckCircle2,XCircle,Loader2,Sparkles,
+FileText,ExternalLink,RefreshCw,X,Eye,Calendar,
+Check,AlertTriangle,Clock,Stethoscope
 } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import { absencesApi } from '@shared/api/absences'

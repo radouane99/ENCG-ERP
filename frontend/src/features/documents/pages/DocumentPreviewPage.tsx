@@ -1,6 +1,5 @@
-import React from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Printer, ChevronLeft } from 'lucide-react';
+import { useParams,useNavigate } from 'react-router-dom';
+import { Printer,ChevronLeft } from 'lucide-react';
 
 import AttestationTravailTemplate from '../components/templates/AttestationTravailTemplate';
 import OrdreMissionTemplate from '../components/templates/OrdreMissionTemplate';

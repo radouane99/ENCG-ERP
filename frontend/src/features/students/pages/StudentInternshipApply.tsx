@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Briefcase } from 'lucide-react';
+import { ArrowLeft,Briefcase } from 'lucide-react';
 import { InternshipApplyForm } from '../components/InternshipApplyForm';
 
 export default function StudentInternshipApply() {

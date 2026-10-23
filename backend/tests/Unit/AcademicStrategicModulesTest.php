@@ -2,6 +2,7 @@
 
 namespace Tests\Unit;
 
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -10,13 +11,12 @@ use PHPUnit\Framework\TestCase;
  * 2. Moteur d'Orientation & Choix de Spécialité au Mérite (Numerus Clausus S6/S7)
  * 3. Workflow des Conventions de Stage Tripartites & Assurance RC
  * 4. Diploma Supplement (Annexe Descriptive au Diplôme - 300 ECTS Bologne / EHEA)
- *
- * @group academic-strategic
- * @group grade-appeals
- * @group specialty-orientation
- * @group internship-conventions
- * @group diploma-supplement
  */
+#[Group('academic-strategic')]
+#[Group('grade-appeals')]
+#[Group('specialty-orientation')]
+#[Group('internship-conventions')]
+#[Group('diploma-supplement')]
 class AcademicStrategicModulesTest extends TestCase
 {
     // =========================================================================

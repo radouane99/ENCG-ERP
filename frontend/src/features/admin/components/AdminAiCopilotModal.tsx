@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React,{ useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Bot, Send, X, Loader2 } from 'lucide-react';
+import { Bot,Send,X,Loader2 } from 'lucide-react';
 import api from '@shared/lib/api';
 import { cn } from '@shared/lib/utils';
 

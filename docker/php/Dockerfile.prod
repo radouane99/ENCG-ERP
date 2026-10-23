@@ -16,6 +16,8 @@ RUN apk add --no-cache \
     oniguruma-dev \
     libxml2-dev \
     postgresql-dev \
+    postgresql-client \
+    fcgi \
     linux-headers \
     $PHPIZE_DEPS \
     tesseract-ocr \
@@ -66,12 +68,16 @@ RUN mkdir -p /var/www/html/storage/logs \
     && chown -R www:www /var/www/html
 
 USER www
-RUN composer install --no-dev --no-interaction --prefer-dist --no-scripts --no-autoloader \
-    && composer dump-autoload --no-interaction --optimize --classmap-authoritative || true
+RUN composer install --no-dev --no-interaction --prefer-dist --no-scripts --no-autoloader
+COPY --chown=www:www backend/ /var/www/html/
+RUN mkdir -p storage/logs storage/framework/cache/data storage/framework/sessions storage/framework/views bootstrap/cache \
+    && composer dump-autoload --no-dev --no-interaction --optimize --classmap-authoritative --no-scripts \
+    && php artisan package:discover --ansi
 
 COPY docker/php/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+COPY docker/php/healthcheck.sh /usr/local/bin/healthcheck.sh
 USER root
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh /usr/local/bin/healthcheck.sh
 USER www
 
 EXPOSE 9000

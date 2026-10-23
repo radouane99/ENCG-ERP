@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
-  BrainCircuit, AlertTriangle, Activity, BellRing, RefreshCw, Sparkles, Cpu, Copy, Check,
+BrainCircuit,AlertTriangle,Activity,BellRing,RefreshCw,Sparkles,Cpu,Copy,Check,
 } from 'lucide-react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery,useMutation,useQueryClient } from '@tanstack/react-query';
 import api from '@shared/lib/api';
 import { toast } from 'sonner';
 

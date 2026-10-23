@@ -1,4 +1,4 @@
-import React, { ErrorInfo, ReactNode } from 'react';
+import React,{ ErrorInfo,ReactNode } from 'react';
 import './ErrorBoundary.css'; // we will create simple CSS for gradient and animation
 
 interface Props {

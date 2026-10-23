@@ -56,7 +56,7 @@ jobs:
         working-directory: ./backend
         run: |
           php artisan migrate --force --env=testing
-          php artisan test --env=testing
+          php artisan test --configuration=phpunit.postgres.xml --env=testing
         env:
           DB_CONNECTION: pgsql
           DB_HOST: 127.0.0.1
@@ -73,7 +73,11 @@ jobs:
         working-directory: ./frontend
         run: |
           npm ci
+          npx tsc --noEmit
+          npm run test:unit
+          npm audit --audit-level=high
           npm run build
+          npm run build:stats
 
   deploy:
     needs: test-and-build
@@ -102,9 +106,9 @@ jobs:
           script: |
             set -euo pipefail
             cd ~/ENCG-ERP-V1 || cd /opt/encg-erp || cd /var/www/encg-erp || exit 1
-            git fetch origin docker-v2
-            git checkout docker-v2
-            git pull --ff-only origin docker-v2
+            git diff --quiet && git diff --cached --quiet
+            git fetch origin ${{ github.sha }}
+            git checkout --detach ${{ github.sha }}
             chmod +x deploy.sh scripts/deploy-preflight.sh scripts/provision-ssl.sh scripts/backup-postgres.sh
             if [ "${{ github.event.inputs.skip_frontend }}" = "true" ]; then
               ./deploy.sh --no-git --skip-frontend docker-v2

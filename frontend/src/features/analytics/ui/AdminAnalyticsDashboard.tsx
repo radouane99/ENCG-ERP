@@ -1,19 +1,16 @@
-import React, { useEffect, useState } from 'react';
-import { analyticsApi, AnalyticsData } from '../api/analyticsApi';
+import React,{ useEffect,useState } from 'react';
+import { analyticsApi,AnalyticsData } from '../api/analyticsApi';
 import {
-  PieChart, Pie, Cell,
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  LineChart, Line
+PieChart,Pie,Cell,
+BarChart,Bar,XAxis,YAxis,CartesianGrid,Tooltip,Legend,ResponsiveContainer,
+LineChart,Line
 } from 'recharts';
 import {
-  Users,
-  FileText,
-  Briefcase,
-  AlertCircle,
-  RefreshCw,
-  TrendingUp,
-  Activity,
-  BarChart3
+Users,
+FileText,
+Briefcase,RefreshCw,
+TrendingUp,
+Activity
 } from 'lucide-react';
 import { StatCard } from "@shared/components/ui";
 
@@ -30,13 +27,8 @@ const AdminAnalyticsDashboard: React.FC = () => {
       setError(null);
       const result = await analyticsApi.getAdminAnalytics();
       setData(result);
-    } catch (err: any) {
-      // In case of error, set fallback safe object so UI never crashes
-      setData({
-        document_requests: { total: 0, pending_count: 0, status_breakdown: [], monthly_trend: [] },
-        academic_projects: { total: 0, active_count: 0, completion_rate: 0, type_distribution: [] },
-        student_activity: { total_active: 0, filiere_breakdown: [] }
-      });
+    } catch {
+      setError('Les statistiques sont indisponibles. Veuillez réessayer.');
     } finally {
       setLoading(false);
     }
@@ -53,6 +45,15 @@ const AdminAnalyticsDashboard: React.FC = () => {
           <RefreshCw className="h-8 w-8 animate-spin text-indigo-600" />
           <p className="text-xs font-extrabold">Chargement des statistiques en temps réel...</p>
         </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div role="alert" className="space-y-4 rounded-xl border border-red-200 p-6">
+        <p>{error}</p>
+        <button type="button" onClick={fetchData} className="rounded-lg border px-4 py-2">Réessayer</button>
       </div>
     );
   }

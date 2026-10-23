@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
+import React,{ useState } from 'react';
 import { useStudentInternships } from '../../api/useInternshipsStudent';
 import { InternshipStatusBadge } from '../components/InternshipStatusBadge';
 import { DocumentUploadModal } from '../components/DocumentUploadModal';
 import {
-  Sparkles, Trophy, Building2, Calendar, Upload, Plus, CheckCircle2,
-  Clock, Printer, MessageSquare, X, Send, Briefcase, FileText,
-  MapPin, User, AlertCircle, ChevronRight, Loader2, ArrowUpRight,
-  GraduationCap, BookOpen, Shield, Users, Star,
+Sparkles,Trophy,Building2,Calendar,Upload,Plus,CheckCircle2,
+Clock,Printer,MessageSquare,X,Send,Briefcase,FileText,
+MapPin,User,AlertCircle,ChevronRight,Loader2,ArrowUpRight,
+GraduationCap,BookOpen,Users,Star
 } from 'lucide-react';
 import api from '@shared/lib/api';
 import { toast } from 'sonner';

@@ -1,0 +1,51 @@
+
+> frontend@0.0.0 test:unit
+> vitest run
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv5.0.5 [39m[90m/app[39m
+
+ [32m✓[39m src/__tests__/security/htmlSafe.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 40[2mms[22m[39m
+ [32m✓[39m src/__tests__/security/fileUpload.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 42[2mms[22m[39m
+ [32m✓[39m src/__tests__/lmd/lmdLabels.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 31[2mms[22m[39m
+ [32m✓[39m src/__tests__/security/documentAccess.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 31[2mms[22m[39m
+ [32m✓[39m src/features/public/components/__tests__/TestimonialsSection.test.tsx [2m([22m[2m1 test[22m[2m)[22m[33m 351[2mms[22m[39m
+   [32m✓[39m TestimonialsSection [2m(1)[22m
+     [33m[2m✓[22m[39m renders the testimonial section with quotes[33m 333[2mms[22m[39m
+ [32m✓[39m src/__tests__/auth/useAuthStore.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 54[2mms[22m[39m
+ [32m✓[39m src/features/public/components/__tests__/RoleJourneySection.test.tsx [2m([22m[2m1 test[22m[2m)[22m[33m 421[2mms[22m[39m
+   [32m✓[39m RoleJourneySection [2m(1)[22m
+     [33m[2m✓[22m[39m renders the experience highlights for each user role[33m 394[2mms[22m[39m
+ [32m✓[39m src/features/public/components/__tests__/FaqSection.test.tsx [2m([22m[2m1 test[22m[2m)[22m[33m 808[2mms[22m[39m
+   [32m✓[39m FaqSection [2m(1)[22m
+     [33m[2m✓[22m[39m reveals the answer when a question is expanded[33m 780[2mms[22m[39m
+ [32m✓[39m src/features/public/components/__tests__/BenefitsSection.test.tsx [2m([22m[2m1 test[22m[2m)[22m[33m 535[2mms[22m[39m
+   [32m✓[39m BenefitsSection [2m(1)[22m
+     [33m[2m✓[22m[39m renders the benefit cards and section heading[33m 507[2mms[22m[39m
+ [32m✓[39m src/features/public/components/__tests__/ImpactSection.test.tsx [2m([22m[2m1 test[22m[2m)[22m[33m 347[2mms[22m[39m
+   [32m✓[39m ImpactSection [2m(1)[22m
+     [33m[2m✓[22m[39m renders the section heading, public trust cards, and institution branding[33m 335[2mms[22m[39m
+ [32m✓[39m src/features/public/components/__tests__/MvpRoadmapSection.test.tsx [2m([22m[2m1 test[22m[2m)[22m[33m 348[2mms[22m[39m
+   [32m✓[39m MvpRoadmapSection [2m(1)[22m
+     [33m[2m✓[22m[39m renders the MVP roadmap phases[33m 311[2mms[22m[39m
+ [32m✓[39m src/features/public/components/__tests__/ConversionSection.test.tsx [2m([22m[2m1 test[22m[2m)[22m[33m 735[2mms[22m[39m
+   [32m✓[39m ConversionSection [2m(1)[22m
+     [33m[2m✓[22m[39m renders the main heading and CTAs[33m 711[2mms[22m[39m
+ [32m✓[39m src/features/profile/components/__tests__/DsarPanel.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[33m 768[2mms[22m[39m
+   [32m✓[39m DsarPanel completed export download [2m(2)[22m
+     [33m[2m✓[22m[39m does not expose an unauthenticated same-origin href for the DSAR file[33m 535[2mms[22m[39m
+ [32m✓[39m src/features/auth/pages/__tests__/PasswordAuthRoutes.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[33m 933[2mms[22m[39m
+   [32m✓[39m password auth routes [2m(2)[22m
+     [33m[2m✓[22m[39m sends the forgot-password request to the v1 auth endpoint[33m 771[2mms[22m[39m
+ [32m✓[39m src/__tests__/lmd/gradeCalculation.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+ [32m✓[39m src/__tests__/security/routeAccess.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 22[2mms[22m[39m
+ [32m✓[39m src/features/analytics/ui/__tests__/AdminAnalyticsDashboard.test.tsx [2m([22m[2m1 test[22m[2m)[22m[32m 299[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m17 passed[39m[22m[90m (17)[39m
+[2m      Tests [22m [1m[32m36 passed[39m[22m[90m (36)[39m
+[2m   Start at [22m 15:26:58
+[2m   Duration [22m 13.29s[2m (environment 53%, transform 18%, import 13%, setup 11%, tests 4%, worker 1%)[22m
+
+[2m    Isolate [22m [33m17 workers spawned[39m[2m · ~5.59s startup each (spawn + environment, per file)[22m
+[2m            [22m [2mat least ~745ms faster with [22m[33misolate: false[39m[2m — reuses workers across files instead of one per file[22m
+

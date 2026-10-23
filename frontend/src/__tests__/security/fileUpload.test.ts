@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe,it,expect } from 'vitest'
 import { validateUploadFile } from '@shared/lib/fileUpload'
 
 describe('fileUpload — client allowlist', () => {

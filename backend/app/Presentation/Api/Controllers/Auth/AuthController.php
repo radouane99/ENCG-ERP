@@ -144,6 +144,8 @@ class AuthController extends Controller
             $token = $user->createToken('auth-token', ['*'], now()->addHours(8))->plainTextToken;
 
             return $this->authenticatedResponse($request, $user, $token, 'Inscription réussie.');
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             return response()->json(['message' => 'Erreur lors de l\'inscription.'], 500);
         }

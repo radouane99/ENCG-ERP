@@ -1,18 +1,16 @@
-import React, { useState, useMemo } from 'react';
+import { useState,useMemo } from 'react';
 import {
-  Calendar as CalendarIcon,
-  Clock,
-  MapPin,
-  Users,
-  Building2,
-  Info,
-  RefreshCcw,
-  LayoutGrid,
-  ListFilter,
-  Download,
-  Eye,
-  X,
-  ExternalLink
+Calendar as CalendarIcon,
+Clock,
+MapPin,
+Users,
+Building2,RefreshCcw,
+LayoutGrid,
+ListFilter,
+Download,
+Eye,
+X,
+ExternalLink
 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { useQuery } from '@tanstack/react-query';
@@ -20,7 +18,6 @@ import api from '@/shared/lib/api';
 import { Spinner } from '@shared/components/ui/Spinner';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/stores/authStore';
-import { openAuthenticatedUrl } from '@shared/lib/documentAccess';
 
 interface ScheduleSession {
   id: number | string;

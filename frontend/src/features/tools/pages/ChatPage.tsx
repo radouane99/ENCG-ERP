@@ -1,5 +1,4 @@
-﻿import React from 'react';
-
+﻿
 export default function ChatPage() {
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-8 font-sans animate-in fade-in zoom-in duration-500 pb-24 h-[calc(100vh-100px)] flex flex-col">

@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useLocation } from 'react-router-dom'
-import { applyDocumentLocale, normalizeLocale } from '@shared/lib/locale'
+import { applyDocumentLocale,normalizeLocale } from '@shared/lib/locale'
 import { GlobalLanguageDock } from './GlobalLanguageDock'
 
 /**

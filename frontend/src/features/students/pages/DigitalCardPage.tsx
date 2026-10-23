@@ -1,7 +1,7 @@
-import React, { useRef } from 'react';
+import { useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import QRCode from 'react-qr-code';
-import { Download, IdCard, Building2, User, Mail, Hash, BookOpen } from 'lucide-react';
+import { Download,IdCard,Building2,User,Mail,Hash,BookOpen } from 'lucide-react';
 import api from '@/shared/lib/api';
 import StudentCardCreator from '../components/StudentCardCreator';
 import Barcode from '../components/Barcode';

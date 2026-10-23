@@ -1,20 +1,20 @@
-import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { 
-  CheckCircle2, 
-  XCircle, 
-  FileText, 
-  ArrowLeft, 
-  Building2, 
-  ShieldCheck, 
-  Calendar, 
-  Clock, 
-  MapPin, 
-  GraduationCap, 
-  Hash, 
-  Copy, 
-  Check,
-  Award
+import { useEffect,useState } from 'react';
+import { useParams,Link } from 'react-router-dom';
+import {
+CheckCircle2,
+XCircle,
+FileText,
+ArrowLeft,
+Building2,
+ShieldCheck,
+Calendar,
+Clock,
+MapPin,
+GraduationCap,
+Hash,
+Copy,
+Check,
+Award
 } from 'lucide-react';
 import api from '@/shared/lib/api';
 import { cleanUtf8Text } from '@/shared/lib/utils';

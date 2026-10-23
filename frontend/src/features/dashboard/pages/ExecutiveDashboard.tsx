@@ -1,12 +1,11 @@
-import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
-  Building2, Users, GraduationCap, Percent,
-  Wallet, BarChart3, AlertTriangle
+Building2,Users,GraduationCap,Percent,
+Wallet,BarChart3,AlertTriangle
 } from 'lucide-react';
 import {
-  XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
-  ResponsiveContainer, AreaChart, Area
+XAxis,YAxis,CartesianGrid,Tooltip as RechartsTooltip,
+ResponsiveContainer,AreaChart,Area
 } from 'recharts';
 import api from '@/shared/lib/api';
 

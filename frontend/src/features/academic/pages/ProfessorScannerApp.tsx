@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Scan, Users, Clock, MapPin, CheckCircle2, RefreshCw } from 'lucide-react';
+import { useState,useEffect } from 'react';
+import { Scan,Users,Clock,MapPin,CheckCircle2,RefreshCw } from 'lucide-react';
 import api from '@/shared/lib/api';
 import { toast } from 'sonner';
 

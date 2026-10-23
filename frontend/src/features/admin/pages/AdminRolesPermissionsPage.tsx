@@ -1,32 +1,15 @@
-import React, { useState, useMemo } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { 
-  ShieldCheck, 
-  UserCog, 
-  Key, 
-  Search, 
-  Filter, 
-  Check, 
-  X, 
-  Sparkles, 
-  Layers, 
-  RefreshCw, 
-  Award, 
-  Lock, 
-  CheckCircle2, 
-  ShieldAlert,
-  Download,
-  Shield,
-  UserCheck,
-  ChevronLeft,
-  ChevronRight,
-  SlidersHorizontal,
-  Briefcase,
-  GraduationCap,
-  Building2,
-  Users,
-  Fingerprint,
-  AlertCircle
+import React,{ useState } from 'react'
+import { useQuery,useMutation,useQueryClient } from '@tanstack/react-query'
+import {
+ShieldCheck,
+UserCog,
+Key,
+Search,
+Filter,
+Check,
+X,RefreshCw,Download,
+Shield,ChevronLeft,
+ChevronRight,AlertCircle
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'

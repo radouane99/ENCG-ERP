@@ -1,18 +1,17 @@
-import { useState, useEffect, useMemo } from 'react'
-import { useQuery, useMutation } from '@tanstack/react-query'
+import { useState,useEffect,useMemo } from 'react'
+import { useQuery,useMutation } from '@tanstack/react-query'
 import {
-  Search, Plus, Edit2, Trash2, X, Monitor, Thermometer, Building, CheckCircle,
-  Upload, Sparkles, Printer, CalendarCheck, DoorOpen, Loader2,
-  Ticket, AlertTriangle, Clock, Calendar, Users, Layers, Download, Eye,
-  Wifi, ShieldCheck, FileText, Check, CheckSquare, Settings, LayoutGrid, List,
-  ArrowUpDown, Volume2, ShieldAlert
+Search,Plus,Edit2,Trash2,X,Monitor,Thermometer,Building,CheckCircle,
+Upload,Sparkles,Printer,CalendarCheck,DoorOpen,Loader2,
+Ticket,AlertTriangle,Clock,Calendar,Users,Download,Eye,
+Wifi,ShieldCheck,LayoutGrid,List
 } from 'lucide-react'
-import { cn, cleanUtf8Text } from '@shared/lib/utils'
-import { CustomSelect, SelectOption } from '@shared/components/ui/CustomSelect'
+import { cn,cleanUtf8Text } from '@shared/lib/utils'
+import { CustomSelect,SelectOption } from '@shared/components/ui/CustomSelect'
 import api from '@shared/lib/api'
 import { toast } from 'sonner'
 import MassImportView from '@shared/components/ui/MassImportView'
-import { generateRoomDoorSignHtml, generateAllRoomsDoorSignsHtml, RoomDocumentData } from '../utils/roomDocumentGenerator'
+import { generateRoomDoorSignHtml,generateAllRoomsDoorSignsHtml,RoomDocumentData } from '../utils/roomDocumentGenerator'
 
 interface Room {
   id: number;

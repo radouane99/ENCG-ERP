@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
-import { Lock, Loader2, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import React,{ useState,useEffect } from 'react';
+import { useSearchParams,Link } from 'react-router-dom';
+import { Lock,Loader2,ShieldCheck,CheckCircle2 } from 'lucide-react';
 import api from '@shared/lib/api';
-import { isPasswordPolicyValid, PASSWORD_POLICY_HINT } from '@shared/lib/htmlSafe';
+import { isPasswordPolicyValid,PASSWORD_POLICY_HINT } from '@shared/lib/htmlSafe';
 
 export default function ResetPasswordPage() {
   const [searchParams] = useSearchParams(); 

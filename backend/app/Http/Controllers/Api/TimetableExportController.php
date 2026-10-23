@@ -3,17 +3,18 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\SaveTimetableDatesRequest;
 use App\Models\Filiere;
 use App\Models\Professor;
 use App\Models\RoomBooking;
 use App\Models\Schedule;
 use App\Models\Student;
 use App\Services\Academic\OfficialTimetableMatrixService;
+use App\Services\Academic\TimetableDatesService;
 use App\Services\Documents\OfficialPdfFactory;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class TimetableExportController extends Controller
@@ -75,12 +76,13 @@ class TimetableExportController extends Controller
                 $professor = Professor::where('user_id', $request->user()->id)->with(['user', 'department'])->first();
             }
 
-            $profName = $professor?->user ? trim(($professor->user->first_name ?? '').' '.($professor->user->last_name ?? '')) : ($request->user()?->name ?? 'Amina Chraibi');
+            abort_unless($professor?->user, 422, 'Profil enseignant incomplet.');
+            $profName = trim(($professor->user->first_name ?? '').' '.($professor->user->last_name ?? ''));
             if ($profName === '') {
-                $profName = $professor?->user?->name ?? 'Amina Chraibi';
+                $profName = $professor->user->name ?? '';
             }
-            $departmentName = $professor?->department?->name ?? 'Sciences de Gestion & Finance';
-            $rank = (string) ($professor?->grade ?? $professor?->rank ?? 'Professeur de l’Enseignement Supérieur (PES)');
+            $departmentName = $professor->department?->name ?? 'Non renseigné';
+            $rank = (string) ($professor->grade ?? $professor->rank ?? 'Non renseigné');
             $profId = $professor?->id ?? $id;
 
             // Logo Base64
@@ -139,25 +141,24 @@ class TimetableExportController extends Controller
             if ($studentName === '') {
                 $studentName = $student?->user?->name ?? 'Étudiant ENCG';
             }
-            $cne = $student?->cne ?? 'N130000003';
-            $cin = $student?->cin ?? 'CD748291';
+            abort_unless($student && $student->cne, 422, 'Profil étudiant incomplet.');
+            $cne = $student->cne;
+            $cin = $student->cin ?? 'Non renseigné';
 
             $reg = $student?->registrations()->latest()->first();
-            $filiereName = $reg?->filiere?->name ?? 'Tronc Commun ENCG';
-            $groupName = $reg?->group?->name ?? 'TC-S2-G1';
-            $subGroup = $reg?->sub_group ?? 'G1.2';
-            $semesterNumber = $reg?->semester_number ?? 2;
-            $section = 'Section 1';
+            abort_unless($reg?->group && $reg?->filiere, 422, 'Affectation académique non renseignée.');
+            $filiereName = $reg->filiere->name;
+            $groupName = $reg->group->name;
+            $subGroup = $reg->sub_group ?? 'Non renseigné';
+            $semesterNumber = $reg->semester_number;
+            $section = 'Non renseignée';
             if (preg_match('/G(\d+)/i', $groupName, $m)) {
                 $section = "Section {$m[1]}";
             }
 
-            $cachedConfig = Cache::get('encg_timetable_dates_config', [
-                'cours_start' => '15 Septembre 2026',
-                'td_tp_start' => '22 Septembre 2026',
-            ]);
-            $coursStart = $cachedConfig['cours_start'] ?? '15 Septembre 2026';
-            $tdTpStart = $cachedConfig['td_tp_start'] ?? '22 Septembre 2026';
+            $cachedConfig = app(TimetableDatesService::class)->get(request()->user());
+            $coursStart = $cachedConfig['cours_start'] ?? '';
+            $tdTpStart = $cachedConfig['td_tp_start'] ?? '';
 
             $logoBase64 = null;
             $logoPath = public_path('logo-encg.png');
@@ -355,21 +356,10 @@ class TimetableExportController extends Controller
         $meta = ['filiere' => $filiere];
 
         // 1. Récupération des dates depuis le cache système (persistance globale)
-        $cachedConfig = Cache::get('encg_timetable_dates_config', [
-            'cours_start' => '16/09/2024',
-            'td_tp_start' => '07/10/2024',
-        ]);
+        $cachedConfig = app(TimetableDatesService::class)->get(request()->user());
 
-        $meta['cours_start'] = $cachedConfig['cours_start'] ?? '16/09/2024';
-        $meta['td_tp_start'] = $cachedConfig['td_tp_start'] ?? '07/10/2024';
-
-        // 2. Surcharge dynamique par les query params du client si fournis
-        if ($request && $request->filled('cours_start')) {
-            $meta['cours_start'] = trim((string) $request->input('cours_start'));
-        }
-        if ($request && $request->filled('td_tp_start')) {
-            $meta['td_tp_start'] = trim((string) $request->input('td_tp_start'));
-        }
+        $meta['cours_start'] = $cachedConfig['cours_start'] ?? '';
+        $meta['td_tp_start'] = $cachedConfig['td_tp_start'] ?? '';
 
         return $meta;
     }
@@ -377,19 +367,9 @@ class TimetableExportController extends Controller
     /**
      * Enregistrer la configuration globale des dates officielles de démarrage.
      */
-    public function saveDatesConfig(Request $request): JsonResponse
+    public function saveDatesConfig(SaveTimetableDatesRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'cours_start' => 'required|string|max:80',
-            'td_tp_start' => 'required|string|max:80',
-        ]);
-
-        $config = [
-            'cours_start' => trim($validated['cours_start']),
-            'td_tp_start' => trim($validated['td_tp_start']),
-        ];
-
-        Cache::forever('encg_timetable_dates_config', $config);
+        $config = app(TimetableDatesService::class)->save($request->user(), $request->validated());
 
         return response()->json([
             'success' => true,
@@ -403,10 +383,7 @@ class TimetableExportController extends Controller
      */
     public function getDatesConfig(): JsonResponse
     {
-        $config = Cache::get('encg_timetable_dates_config', [
-            'cours_start' => '16/09/2024',
-            'td_tp_start' => '07/10/2024',
-        ]);
+        $config = app(TimetableDatesService::class)->get(request()->user());
 
         return response()->json([
             'success' => true,

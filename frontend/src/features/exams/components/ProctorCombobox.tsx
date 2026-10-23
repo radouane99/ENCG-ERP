@@ -1,15 +1,13 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react'
+import { useState,useRef,useEffect,useMemo } from 'react'
 import {
-  Search,
-  X,
-  Check,
-  ChevronDown,
-  AlertTriangle,
-  User,
-  Shield,
-  Users,
-  UserPlus,
-  Sparkles,
+Search,
+X,
+Check,
+ChevronDown,
+AlertTriangle,
+User,
+Shield,UserPlus,
+Sparkles
 } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 

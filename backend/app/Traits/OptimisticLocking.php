@@ -3,52 +3,40 @@
 namespace App\Traits;
 
 use App\Exceptions\OptimisticLockException;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 
 trait OptimisticLocking
 {
-    /**
-     * Boot the optimistic locking trait for a model.
-     *
-     * @return void
-     */
-    public static function bootOptimisticLocking()
+    public function initializeOptimisticLocking(): void
     {
-        static::updating(function (Model $model) {
-            $versionColumn = $model->getVersionColumn();
-
-            // Only enforce if the version column exists and is dirty (provided in the update payload)
-            // Or we can just always enforce it by requiring the original version.
-            if ($model->isDirty($versionColumn)) {
-                // If the version provided by the client doesn't match the one in the DB (original)
-                // it means someone else updated the record in the meantime.
-                // Wait, Laravel sets the original value when fetching the model.
-                // We just need to check if the database still has this original value.
-
-                // Let's get the version from the DB directly to be absolutely sure
-                $currentDbVersion = $model->newQuery()->where($model->getKeyName(), $model->getKey())->value($versionColumn);
-
-                $originalVersion = $model->getOriginal($versionColumn);
-
-                if ($currentDbVersion !== $originalVersion) {
-                    throw new OptimisticLockException;
-                }
-
-                // Increment the version for the new save
-                $model->{$versionColumn} = $currentDbVersion + 1;
-            } else {
-                // Automatically increment on every update to maintain optimistic locking integrity
-                $model->{$versionColumn} = $model->{$versionColumn} + 1;
-            }
-        });
+        $this->attributes[$this->getVersionColumn()] ??= 1;
     }
 
-    /**
-     * Get the name of the "version" column.
-     *
-     * @return string
-     */
-    public function getVersionColumn()
+    /** Compare and write atomically, even when save() has no version payload. */
+    protected function performUpdate(Builder $query)
+    {
+        if ($this->fireModelEvent('updating') === false) {
+            return false;
+        }
+        if ($this->usesTimestamps()) {
+            $this->updateTimestamps();
+        }
+        $column = $this->getVersionColumn();
+        $expected = (int) $this->getRawOriginal($column);
+        $this->setAttribute($column, $expected + 1);
+        $dirty = $this->getDirtyForUpdate();
+        $affected = $this->setKeysForSaveQuery($query)->where($column, $expected)->update($dirty);
+        if ($affected !== 1) {
+            $this->setAttribute($column, $expected);
+            throw new OptimisticLockException;
+        }
+        $this->syncChanges();
+        $this->fireModelEvent('updated', false);
+
+        return true;
+    }
+
+    public function getVersionColumn(): string
     {
         return defined('static::VERSION') ? static::VERSION : 'version';
     }

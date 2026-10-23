@@ -1,5 +1,4 @@
-﻿import React, { useState } from 'react';
-import { Shield, BookOpen, AlertTriangle, ShieldCheck, Search, SlidersHorizontal, Settings2 } from 'lucide-react';
+﻿import { Shield,BookOpen,AlertTriangle,ShieldCheck,Search,Settings2 } from 'lucide-react';
 
 export default function CreditsAndDerogations() {
   const students = [

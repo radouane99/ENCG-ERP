@@ -1,14 +1,13 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React,{ useState,useEffect,useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { 
-  X, User, Mail, Phone, MapPin, Calendar, Award, BookOpen, ShieldCheck, 
-  FileText, Upload, Download, Eye, CheckCircle2, Clock, XCircle, AlertCircle, AlertTriangle, 
-  Edit3, Printer, Sparkles, Image as ImageIcon, FileCheck, Check, RefreshCw,
-  ZoomIn, ZoomOut, RotateCw, Maximize2
+import {
+X,User,Mail,Phone,MapPin,Calendar,Award,BookOpen,ShieldCheck,
+FileText,Upload,Download,Eye,CheckCircle2,Clock,AlertCircle,AlertTriangle,Printer,FileCheck,RefreshCw,
+ZoomIn,ZoomOut,RotateCw,Maximize2
 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import api from '@shared/lib/api';
-import { protectedDocumentUrl, openAuthenticatedUrl, studentAttestationPdfUrl } from '@shared/lib/documentAccess';
+import { protectedDocumentUrl,openAuthenticatedUrl,studentAttestationPdfUrl } from '@shared/lib/documentAccess';
 import { toast } from 'sonner';
 
 export interface StudentDossierData {

@@ -1,15 +1,12 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  FileText, Lock, ShieldCheck, CheckCircle2, AlertTriangle, Search,
-  Printer, Download, Eye, Calendar, Filter, Layers, ShieldAlert,
-  Sparkles, Package, ArrowLeft, RefreshCw, FileCheck, ChevronRight,
-  Archive, FileSpreadsheet, ExternalLink, CheckSquare, Clock
+FileText,Lock,AlertTriangle,Search,
+Printer,Eye,Calendar,Filter,ShieldAlert,Package,ArrowLeft,RefreshCw,Archive,FileSpreadsheet,CheckSquare,Clock
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import api from '@shared/lib/api'
 import { openAuthenticatedUrl } from '@shared/lib/documentAccess'
-import { cn } from '@shared/lib/utils'
 import { Button } from '@shared/components/ui/Button'
 import { Spinner } from '@shared/components/ui/Spinner'
 import { CustomSelect } from '@shared/components/ui/CustomSelect'

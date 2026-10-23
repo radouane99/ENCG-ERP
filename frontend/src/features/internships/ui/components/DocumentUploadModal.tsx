@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React,{ useState } from 'react';
 import { Button } from '@shared/components/ui/Button';
 import { useUploadInternshipDocument } from '../../api/useInternshipsStudent';
 import { validateUploadFile } from '@shared/lib/fileUpload';

@@ -1,8 +1,24 @@
-services:
+x-application: &application
+  image: encg-erp-backend:${ERP_IMAGE_TAG:-local}
+  build:
+    context: .
+    dockerfile: docker/php/Dockerfile.prod
+  restart: always
+  env_file:
+    - ./backend/.env.production
+  environment:
+    APP_ENV: production
+    APP_DEBUG: 'false'
+    REVERB_HOST: reverb
+    REVERB_PORT: 8080
+    REVERB_SCHEME: http
+  volumes:
+    - storage_data:/var/www/html/storage
+    - ./docker/php/php.prod.ini:/usr/local/etc/php/conf.d/custom.ini:ro
+  networks:
+    - encg_prod_net
 
-  # ──────────────────────────────────────────────────────────
-  # Nginx — Production Web Server & Reverse Proxy
-  # ──────────────────────────────────────────────────────────
+services:
   nginx:
     image: nginx:alpine
     container_name: encg_prod_nginx
@@ -18,93 +34,54 @@ services:
       - ./certbot/conf:/etc/letsencrypt:ro
       - ./certbot/www:/var/www/certbot:ro
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+      reverb:
+        condition: service_started
     networks:
       - encg_prod_net
 
-  # ──────────────────────────────────────────────────────────
-  # Backend — Laravel 12 / PHP 8.4-FPM Production
-  # ──────────────────────────────────────────────────────────
   backend:
-    build:
-      context: .
-      dockerfile: docker/php/Dockerfile.prod
+    <<: *application
     container_name: encg_prod_backend
-    restart: always
-    environment:
-      - APP_ENV=production
-      - APP_DEBUG=false
-    env_file:
-      - ./backend/.env.production
-    volumes:
-      - ./backend:/var/www/html
-      - storage_data:/var/www/html/storage
-      - bootstrap_cache:/var/www/html/bootstrap/cache
-      - ./docker/php/php.prod.ini:/usr/local/etc/php/conf.d/custom.ini:ro
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
-      test: ['CMD-SHELL', 'php -r "exit(file_exists(\"/var/www/html/artisan\")?0:1);"']
+      test: ['CMD', '/usr/local/bin/healthcheck.sh']
       interval: 15s
-      timeout: 5s
+      timeout: 10s
+      start_period: 30s
       retries: 5
-    networks:
-      - encg_prod_net
 
-  # ──────────────────────────────────────────────────────────
-  # Queue Worker / Horizon
-  # ──────────────────────────────────────────────────────────
   queue-worker:
-    build:
-      context: .
-      dockerfile: docker/php/Dockerfile.prod
+    <<: *application
     container_name: encg_prod_queue
-    restart: always
     command: php artisan horizon
-    env_file:
-      - ./backend/.env.production
-    volumes:
-      - ./backend:/var/www/html
-      - storage_data:/var/www/html/storage
-      - bootstrap_cache:/var/www/html/bootstrap/cache
-      - ./docker/php/php.prod.ini:/usr/local/etc/php/conf.d/custom.ini:ro
     depends_on:
       backend:
-        condition: service_started
+        condition: service_healthy
       redis:
         condition: service_healthy
-    networks:
-      - encg_prod_net
 
-  # ──────────────────────────────────────────────────────────
-  # Scheduler (Cron)
-  # ──────────────────────────────────────────────────────────
   scheduler:
-    build:
-      context: .
-      dockerfile: docker/php/Dockerfile.prod
+    <<: *application
     container_name: encg_prod_scheduler
-    restart: always
     command: php artisan schedule:work
-    env_file:
-      - ./backend/.env.production
-    volumes:
-      - ./backend:/var/www/html
-      - storage_data:/var/www/html/storage
-      - bootstrap_cache:/var/www/html/bootstrap/cache
-      - ./docker/php/php.prod.ini:/usr/local/etc/php/conf.d/custom.ini:ro
     depends_on:
       backend:
-        condition: service_started
-    networks:
-      - encg_prod_net
+        condition: service_healthy
 
-  # ──────────────────────────────────────────────────────────
-  # PostgreSQL 16
-  # ──────────────────────────────────────────────────────────
+  reverb:
+    <<: *application
+    container_name: encg_prod_reverb
+    command: php artisan reverb:start --host=0.0.0.0 --port=8080
+    depends_on:
+      redis:
+        condition: service_healthy
+
   postgres:
     image: postgres:16-alpine
     container_name: encg_prod_postgres
@@ -123,16 +100,13 @@ services:
       timeout: 5s
       retries: 5
 
-  # ──────────────────────────────────────────────────────────
-  # Redis 7
-  # ──────────────────────────────────────────────────────────
   redis:
     image: redis:7-alpine
     container_name: encg_prod_redis
     restart: always
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in backend/.env.production}
-    command: redis-server --requirepass ${REDIS_PASSWORD:?Set REDIS_PASSWORD in backend/.env.production} --maxmemory 512mb --maxmemory-policy allkeys-lru
+    command: redis-server --requirepass ${REDIS_PASSWORD:?Set REDIS_PASSWORD in backend/.env.production} --maxmemory 512mb --maxmemory-policy noeviction --appendonly yes --appendfsync everysec
     volumes:
       - redis_prod_data:/data
     networks:
@@ -143,9 +117,6 @@ services:
       timeout: 5s
       retries: 5
 
-  # ──────────────────────────────────────────────────────────
-  # Certbot — Automatic SSL / TLS
-  # ──────────────────────────────────────────────────────────
   certbot:
     image: certbot/certbot:latest
     container_name: encg_prod_certbot
@@ -164,4 +135,3 @@ volumes:
   postgres_prod_data:
   redis_prod_data:
   storage_data:
-  bootstrap_cache:

@@ -1,4 +1,3 @@
-import React from 'react';
 import { EventContentArg } from '@fullcalendar/core';
 
 export const renderEventContent = (eventInfo: EventContentArg) => {

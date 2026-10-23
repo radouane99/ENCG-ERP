@@ -3,14 +3,14 @@
 namespace Tests\Unit;
 
 use App\Domain\Deliberation\LmdRules;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 
 /**
  * Pure Unit Tests for Moroccan Higher Education LMD Formulas & Academic Rules.
  * Reference: Normes Pédagogiques Nationales (NPN) — ENCG / MESRSFC.
- *
- * @group lmd
  */
+#[Group('lmd')]
 class MoroccanLmdFormulasUnitTest extends TestCase
 {
     /**

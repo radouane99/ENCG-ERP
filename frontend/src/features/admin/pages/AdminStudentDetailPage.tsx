@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react'
-import { Link, useParams, useNavigate } from 'react-router-dom'
-import { FileText, CheckCircle, Bot, Loader2 } from 'lucide-react'
-import { studentsApi, api } from '@shared/api/students'
+import { useState,useEffect } from 'react'
+import { Link,useParams,useNavigate } from 'react-router-dom'
+import { FileText,CheckCircle,Bot,Loader2 } from 'lucide-react'
+import { studentsApi,api } from '@shared/api/students'
 import { toast } from 'sonner'
 import EditStudentModal from '../components/EditStudentModal'
 

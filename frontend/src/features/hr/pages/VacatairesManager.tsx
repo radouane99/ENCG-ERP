@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { 
-  Briefcase, FileText, DollarSign, Calculator, Search, Plus
+import { useState } from 'react';
+import { useQuery,useMutation,useQueryClient } from '@tanstack/react-query';
+import {
+Briefcase,FileText,DollarSign,Calculator,Search,Plus
 } from 'lucide-react';
 import api from '@/shared/lib/api';
 import { toast } from 'sonner';
-import { useTranslation } from 'react-i18next'
+import { useTranslation } from 'react-i18next';
 import { Spinner } from '@shared/components/ui/Spinner';
 
 export default function VacatairesManager() { 

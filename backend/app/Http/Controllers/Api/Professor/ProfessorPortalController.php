@@ -616,12 +616,12 @@ class ProfessorPortalController extends Controller
         return response()->json([
             'success' => true,
             'data' => [
-                'chapter_title' => 'Diagnostic Financier et Analyse de la Structure du Bilan',
-                'key_concepts' => ['Fonds de Roulement Net Global (FRNG)', 'Besoin en Fonds de Roulement (BFR)', 'Trésorerie Nette (TN)', 'Ratios de Liquidité'],
-                'pedagogical_goals' => 'Capacité à évaluer l\'équilibre financier d\'une entreprise marocaine et à formuler des recommandations de gestion de trésorerie.',
-                'homework_assigned' => 'Étude de cas N° 3 (Liasse fiscale de la société OCP Distribution) — À rendre sur le Classroom avant la prochaine séance.',
-                'structured_summary' => "Durant cette séance de 2 heures, nous avons approfondi l'analyse du bilan fonctionnel. Les étudiants ont calculé le FRNG et le BFR à partir d'exemples d'entreprises réelles. Une attention particulière a été portée à la règle d'orthodoxie financière et aux leviers de réduction du BFR.",
-                'syllabus_alignment' => 'Conforme à 100% à l\'Élément de Module M12 (Finance d\'Entreprise S5 ENCG Fès)',
+                'chapter_title' => '',
+                'key_concepts' => [],
+                'pedagogical_goals' => '',
+                'homework_assigned' => '',
+                'structured_summary' => $raw,
+                'syllabus_alignment' => 'À vérifier par l’enseignant',
             ],
         ]);
     }
@@ -634,28 +634,6 @@ class ProfessorPortalController extends Controller
         $user = $request->user();
         if (! $user) {
             return response()->json(['success' => false, 'message' => 'Non authentifié.'], 401);
-        }
-
-        // Ensure table exists
-        if (! Schema::hasTable('professor_document_requests')) {
-            Schema::create('professor_document_requests', function (Blueprint $table) {
-                $table->id();
-                $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
-                $table->foreignId('professor_id')->nullable();
-                $table->string('document_type');
-                $table->string('tracking_code')->unique();
-                $table->text('purpose');
-                $table->string('destination')->nullable();
-                $table->date('start_date')->nullable();
-                $table->date('end_date')->nullable();
-                $table->string('transport_mode')->nullable();
-                $table->string('status')->default('pending');
-                $table->text('admin_notes')->nullable();
-                $table->string('signed_by')->nullable();
-                $table->timestamp('signed_at')->nullable();
-                $table->string('file_path')->nullable();
-                $table->timestamps();
-            });
         }
 
         $prof = $user->professor;

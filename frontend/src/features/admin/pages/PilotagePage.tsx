@@ -2,13 +2,13 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
-  Target, Settings, AlertTriangle, ShieldAlert, BarChart3,
-  Clock, FileText, XCircle, GraduationCap, FileDown, ChevronRight,
-  Sparkles, X, User
+Target,Settings,AlertTriangle,ShieldAlert,BarChart3,
+Clock,FileText,XCircle,GraduationCap,FileDown,ChevronRight,
+Sparkles,X,User
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import api from '@shared/lib/api';
-import { cn, cleanUtf8Text } from '@shared/lib/utils';
+import { cn,cleanUtf8Text } from '@shared/lib/utils';
 
 export default function PilotagePage() {
   const [warningThreshold, setWarningThreshold] = useState(80);

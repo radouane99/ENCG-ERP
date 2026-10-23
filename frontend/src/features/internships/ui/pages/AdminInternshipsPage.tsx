@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { useAdminInternships, useValidateInternship } from '../../api/useInternshipsAdmin';
+import { useState } from 'react';
+import { useAdminInternships,useValidateInternship } from '../../api/useInternshipsAdmin';
 import LoadingScreen from '@shared/components/ui/LoadingScreen';
 import { InternshipStatusBadge } from '../components/InternshipStatusBadge';
 import { Button } from '@shared/components/ui/Button';
-import { Sparkles, Trophy, Building2, User, Check, X, FileText, Search } from 'lucide-react';
+import { Sparkles,Trophy,Building2,User,Check,X,FileText,Search } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { toast } from 'sonner';
 

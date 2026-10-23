@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScanLine, CheckCircle2, XCircle, Camera, Navigation, AlertCircle } from 'lucide-react';
+import { ScanLine,CheckCircle2,XCircle,Camera,Navigation,AlertCircle } from 'lucide-react';
 import api from '@/shared/lib/api';
 import toast from 'react-hot-toast';
 

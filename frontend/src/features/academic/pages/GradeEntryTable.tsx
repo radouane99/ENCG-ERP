@@ -1,21 +1,22 @@
-import { useState, useEffect } from 'react'
+import { useState,useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Card, CardHeader, CardTitle, CardContent } from '@shared/components/ui/Card'
+import { Card,CardHeader,CardTitle,CardContent } from '@shared/components/ui/Card'
 import { Input } from '@shared/components/ui/Input'
 import { Button } from '@shared/components/ui/Button'
 import { toast } from 'sonner'
-import { gradeEntrySchema, type GradeEntry } from '../../../schemas/grade.schema'
+import { gradeEntrySchema,type GradeEntry } from '../../../schemas/grade.schema'
 import { ZodError } from 'zod'
 
 import { Badge } from '@shared/components/ui/Badge'
 import LmdLegend from '@shared/components/academic/LmdLegend'
 
-import { useQuery, useMutation } from '@tanstack/react-query'
+import { useQuery,useMutation,useQueryClient } from '@tanstack/react-query'
 import api from '@shared/lib/api'
 
 type GradeRow = GradeEntry
 
 export default function GradeEntryTable() {
+  const queryClient = useQueryClient()
   const [searchParams] = useSearchParams()
   const assessmentId = Number(searchParams.get('assessment_id') || searchParams.get('assessmentId') || 0)
   const [sessionType, setSessionType] = useState<'NORMALE' | 'RATTRAPAGE'>('NORMALE')
@@ -64,7 +65,10 @@ export default function GradeEntryTable() {
   const saveMutation = useMutation({
     mutationFn: (payload: { grades: GradeRow[] }) =>
       api.post(`/assessments/${assessmentId}/grades`, payload),
-    onSuccess: () => toast.success('Notes enregistrées.'),
+    onSuccess: () => {
+      toast.success('Notes enregistrées.')
+      queryClient.invalidateQueries({ queryKey: ['students-for-grades', assessmentId] })
+    },
     onError: () => toast.error('Échec de l’enregistrement des notes.'),
   })
 
@@ -77,6 +81,7 @@ export default function GradeEntryTable() {
       const payload = Object.entries(grades).map(([studentId, data]) => {
         return gradeEntrySchema.parse({
           student_id: parseInt(studentId),
+          version: studentsList.find((student: any) => Number(student.student_id ?? student.id) === Number(studentId))?.version ?? 0,
           value: data.value === '' ? null : data.value,
           absent: data.absent,
         })

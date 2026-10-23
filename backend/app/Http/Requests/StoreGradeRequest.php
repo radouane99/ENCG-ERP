@@ -50,6 +50,7 @@ class StoreGradeRequest extends FormRequest
             'grades.*.student_id' => ['required', 'exists:students,id'],
             'grades.*.value' => ['nullable', 'numeric', 'min:0', 'max:20'],
             'grades.*.absent' => ['sometimes', 'boolean'],
+            'grades.*.version' => ['sometimes', 'integer', 'min:0'],
         ];
     }
 }

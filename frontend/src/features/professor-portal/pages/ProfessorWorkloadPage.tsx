@@ -1,18 +1,17 @@
-import React, { useState } from 'react';
-import { 
-  Clock, 
-  Download, 
-  CreditCard, 
-  ShieldCheck,
-  CheckCircle2,
-  Calendar,
-  CalendarDays,
-  BookOpen,
-  GraduationCap,
-  TrendingUp,
-  Award,
-  AlertCircle,
-  Loader2
+import { useState } from 'react';
+import {
+Clock,
+Download,
+CreditCard,
+ShieldCheck,
+CheckCircle2,
+Calendar,
+CalendarDays,
+BookOpen,
+GraduationCap,
+TrendingUp,
+Award,
+AlertCircle
 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { useQuery } from '@tanstack/react-query';

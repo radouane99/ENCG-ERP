@@ -13,11 +13,11 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
-      '@shared': path.resolve(__dirname, './src/shared'),
-      '@features': path.resolve(__dirname, './src/features'),
-      '@stores': path.resolve(__dirname, './src/stores'),
-      '@hooks': path.resolve(__dirname, './src/hooks'),
+      '@': path.resolve(import.meta.dirname, './src'),
+      '@shared': path.resolve(import.meta.dirname, './src/shared'),
+      '@features': path.resolve(import.meta.dirname, './src/features'),
+      '@stores': path.resolve(import.meta.dirname, './src/stores'),
+      '@hooks': path.resolve(import.meta.dirname, './src/hooks'),
     },
   },
 })

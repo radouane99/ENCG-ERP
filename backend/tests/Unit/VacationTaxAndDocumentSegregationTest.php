@@ -2,15 +2,15 @@
 
 namespace Tests\Unit;
 
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 
 /**
  * Tests Unitaires pour la Ségrégation RH, la Fiscalité des Vacations (CGI Maroc)
  * et les Règles Réglementaires MESRSFC / ENCG Fès.
- *
- * @group professor-documents
- * @group vacations
  */
+#[Group('professor-documents')]
+#[Group('vacations')]
 class VacationTaxAndDocumentSegregationTest extends TestCase
 {
     /**

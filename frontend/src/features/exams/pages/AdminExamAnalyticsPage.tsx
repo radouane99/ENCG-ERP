@@ -1,10 +1,9 @@
-import React from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
-  BarChart2, Clock, TrendingUp, AlertTriangle, Building, Sparkles
+BarChart2,Clock,TrendingUp,AlertTriangle,Building,Sparkles
 } from 'lucide-react'
 import {
-  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend
+ResponsiveContainer,BarChart,Bar,XAxis,YAxis,Tooltip,Legend
 } from 'recharts'
 import api from '@shared/lib/api'
 import { Button } from '@shared/components/ui/Button'

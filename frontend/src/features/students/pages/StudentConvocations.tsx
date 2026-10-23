@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect,useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Calendar as CalendarIcon, Clock, MapPin, FileText, Download, CheckCircle2, Loader2 } from 'lucide-react';
+import { Calendar as CalendarIcon,Clock,MapPin,FileText,Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { cn } from '@shared/lib/utils';
 import { examsApi } from '@shared/api/exams';
 import { useAuthStore } from '@stores/authStore';
 import PageHeader from '@shared/components/layout/PageHeader';

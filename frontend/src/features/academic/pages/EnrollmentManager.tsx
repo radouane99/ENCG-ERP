@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { UserPlus, Scale, Search, AlertTriangle, CheckCircle2, Clock, XCircle, ChevronRight, Zap, FileText, Printer, Eye, X, Filter, Sparkles, Check, RefreshCw, FolderOpen, QrCode, Camera, Archive, Download, Upload, Loader2 } from 'lucide-react';
+import { useState,useEffect,useRef } from 'react';
+import { UserPlus,Scale,Search,AlertTriangle,CheckCircle2,Clock,XCircle,Zap,FileText,Printer,X,Sparkles,RefreshCw,FolderOpen,QrCode,Camera,Archive,Download,Upload,Loader2 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import api from '@shared/lib/api';
 import { openAuthenticatedUrl } from '@shared/lib/documentAccess';

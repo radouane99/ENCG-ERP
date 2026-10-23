@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { useState,useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import QRCode from 'react-qr-code';
-import { Play, Square, Users, MapPin, Clock, CheckCircle2 } from 'lucide-react';
+import { Play,Square,Users,MapPin,Clock,CheckCircle2 } from 'lucide-react';
 import api from '@/shared/lib/api';
 
 export default function ProfessorAttendanceView() {

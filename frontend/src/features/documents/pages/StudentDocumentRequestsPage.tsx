@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { useStudentDocumentRequests, useCreateDocumentRequest, useDownloadDocumentRequest } from '../api/useDocumentRequests';
+import { useStudentDocumentRequests,useCreateDocumentRequest,useDownloadDocumentRequest } from '../api/useDocumentRequests';
 import { useDocumentTypes } from '../api/useDocumentTypes';
 import { DocumentStatusBadge } from '../components/DocumentStatusBadge';
-import { FileText, Download, Plus, Loader2 } from 'lucide-react';
+import { FileText,Download,Plus,Loader2 } from 'lucide-react';
 import { Button } from '@shared/components/ui/Button';
 
 export default function StudentDocumentRequestsPage() {

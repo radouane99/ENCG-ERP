@@ -1,7 +1,7 @@
-import React, { useEffect, useState, useRef, useMemo } from 'react'
+import React,{ useEffect,useState,useRef,useMemo } from 'react'
 
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, Printer, Save, CheckCircle2, AlertCircle, RefreshCw, ShieldCheck, Lock, Download, FileText, Layers, Sparkles, GraduationCap, Calendar, BookOpen, Users, ChevronDown, ChevronUp, Check, Eye, Zap, FileSpreadsheet, Mail, Archive, History, X, TrendingUp, Trophy, BarChart2, Filter, Search, Send, Package, ClipboardList, Star, Link2, Calculator, Clock, AlertTriangle, ShieldAlert, Maximize2, Minimize2, SlidersHorizontal, Table } from 'lucide-react'
+import { Link,useNavigate,useSearchParams } from 'react-router-dom'
+import { ArrowLeft,Printer,Save,CheckCircle2,AlertCircle,RefreshCw,ShieldCheck,Lock,Download,FileText,Layers,Sparkles,Calendar,BookOpen,Users,ChevronDown,ChevronUp,Eye,Zap,FileSpreadsheet,Mail,Archive,History,X,Trophy,BarChart2,Search,Link2,Calculator,Clock,AlertTriangle,ShieldAlert,Maximize2,Minimize2,SlidersHorizontal,Table } from 'lucide-react'
 
 
 
@@ -14,10 +14,10 @@ import { useTranslation } from 'react-i18next'
 import { cn } from '@shared/lib/utils'
 import { Button } from '@shared/components/ui/Button'
 import { Spinner } from '@shared/components/ui/Spinner'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query'
 import api from '@shared/lib/api'
 import { toast } from 'sonner'
-import { PieChart, Pie, Cell, BarChart as ReBarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
+import { PieChart,Pie,Cell,BarChart as ReBarChart,Bar,XAxis,YAxis,Tooltip,ResponsiveContainer } from 'recharts'
 import { PvFilterBar } from '../components/PvFilterBar'
 import { SignaturePad } from '../components/SignaturePad'
 import { QRCodeSVG } from 'qrcode.react'
@@ -959,6 +959,7 @@ export default function AdminGradesPVPage() {
     const payload = {
       grades: Object.entries(rattrapageGrades).map(([studentId, data]) => ({
         student_id: parseInt(studentId, 10),
+        version: pvData?.data?.find((student: any) => Number(student.student_id) === Number(studentId))?.rattrapage_version ?? 0,
         value: data.absent ? null : (data.value === '' ? null : parseFloat(data.value)),
         absent: data.absent,
       }))
@@ -3468,7 +3469,7 @@ export default function AdminGradesPVPage() {
                               const valYear = modInfo?.validation_year || ''
                               let shortYear = '–'
                               if (valYear) {
-                                const ym = valYear.match(/(\d{2,4})[\/\-](\d{2,4})/)
+                                const ym = valYear.match(/(\d{2,4})[/\-](\d{2,4})/)
                                 if (ym) shortYear = `${ym[1].slice(-2)}-${ym[2].slice(-2)}`
                                 else shortYear = valYear
                               }
@@ -3530,7 +3531,7 @@ export default function AdminGradesPVPage() {
                               const valYear = modInfo?.validation_year || ''
                               let shortYear = '–'
                               if (valYear) {
-                                const ym = valYear.match(/(\d{2,4})[\/\-](\d{2,4})/)
+                                const ym = valYear.match(/(\d{2,4})[/\-](\d{2,4})/)
                                 if (ym) shortYear = `${ym[1].slice(-2)}-${ym[2].slice(-2)}`
                                 else shortYear = valYear
                               }

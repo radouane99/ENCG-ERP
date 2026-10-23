@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest'
-import { ADMIN_ROLES, TEACHING_ROLES, userCanAccessRoles } from '@shared/lib/routeAccess'
+import { describe,it,expect } from 'vitest'
+import { ADMIN_ROLES,TEACHING_ROLES,userCanAccessRoles } from '@shared/lib/routeAccess'
 
 describe('routeAccess — ProtectedRoute RBAC', () => {
   it('blocks a student from admin routes', () => {

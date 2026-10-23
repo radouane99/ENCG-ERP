@@ -1,7 +1,6 @@
-import React from 'react'
 import { useTranslation } from 'react-i18next'
 import {
-  Bell, AlertTriangle, CheckCircle2, Sparkles, Loader2, RefreshCw, XCircle
+Bell,AlertTriangle,CheckCircle2,Sparkles,Loader2,RefreshCw,XCircle
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import api from '@shared/lib/api'

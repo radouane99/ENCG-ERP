@@ -1,15 +1,15 @@
-import React, { useState } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import React,{ useState } from 'react';
+import { useQuery,useMutation } from '@tanstack/react-query';
 import api from '@shared/lib/api';
 import { toast } from 'sonner';
 import {
-  Compass, Sparkles, TrendingUp, Landmark, ShieldCheck, Users, Globe,
-  Calculator, AlertTriangle, CheckCircle2, RefreshCw,
-  Briefcase, GraduationCap, BarChart2, BookOpen
+Compass,Sparkles,TrendingUp,Landmark,ShieldCheck,Users,Globe,
+Calculator,AlertTriangle,CheckCircle2,RefreshCw,
+Briefcase,GraduationCap,BarChart2,BookOpen
 } from 'lucide-react';
 import {
-  ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
-  Tooltip
+ResponsiveContainer,RadarChart,PolarGrid,PolarAngleAxis,PolarRadiusAxis,Radar,
+Tooltip
 } from 'recharts';
 import { cn } from '@shared/lib/utils';
 

@@ -102,7 +102,7 @@ use Maatwebsite\Excel\Facades\Excel;
 
 Route::post('/contact', [ContactController::class, 'send'])->middleware('throttle:6,1');
 
-Route::middleware(['auth:sanctum', 'role:admin|super-admin|super_admin|institution-admin|institution_admin|director|department-head|filiere-head|professor|vacataire|finance-officer|hr-officer|library-manager|discipline-committee'])->group(function () {
+Route::middleware(['auth:sanctum', 'institution.context', 'role:admin|super-admin|super_admin|institution-admin|institution_admin|director|department-head|filiere-head|professor|vacataire|finance-officer|hr-officer|library-manager|discipline-committee'])->group(function () {
     Route::get('/user', function (Request $request) {
         return new UserResource($request->user());
     });
@@ -766,7 +766,6 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|super_admin|instituti
     Route::get('/admin/exams/api/calendar', [InternalApiController::class, 'examCalendar']);
     Route::get('/admin/timetable/calendar-events', [InternalApiController::class, 'timetableEvents']);
     Route::get('/admin/exams/{exam}/live-attendance/stats', [InternalApiController::class, 'liveAttendanceStats']);
-    Route::get('/classroom/chat/{group}/{module}/messages', [InternalApiController::class, 'chatMessages']);
     Route::post('/admin/schedules/makeup/suggest', [InternalApiController::class, 'suggestMakeup']);
     Route::post('/classroom/ai/tutor', [AiFeatureController::class, 'tutor']);
 
@@ -801,7 +800,7 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin|super_admin|instituti
 // Authenticated document streaming and previously exposed admin endpoints
 $staffRoles = 'role:admin|super-admin|institution-admin|director|department-head|filiere-head|professor|vacataire|finance-officer|hr-officer|library-manager|discipline-committee';
 
-Route::middleware(['auth:sanctum', $staffRoles])->group(function () {
+Route::middleware(['auth:sanctum', 'institution.context', $staffRoles])->group(function () {
     Route::get('/students/{student}/transcript', [StudentTranscriptController::class, 'generateForAdmin']);
     Route::get('/admin/students/{student}/transcript', [StudentTranscriptController::class, 'generateForAdmin']);
     Route::get('/v1/admin/students/{student}/transcript', [StudentTranscriptController::class, 'generateForAdmin']);
@@ -1116,7 +1115,7 @@ Route::middleware(['auth:sanctum', $staffRoles])->group(function () {
     // ──────────────────────────────────────────────────────────────────────────────
     Route::post('/professor/ai/grade-report', [ProfessorAiController::class, 'gradeReport']);
 
-    Route::middleware(['auth:sanctum'])->prefix('v1/admin/substitutions')->group(function () {
+    Route::middleware(['auth:sanctum', 'institution.context'])->prefix('v1/admin/substitutions')->group(function () {
         Route::get('/', [ProfessorSubstitutionController::class, 'index']);
         Route::post('/', [ProfessorSubstitutionController::class, 'store']);
         Route::post('/{id}/revoke', [ProfessorSubstitutionController::class, 'revoke']);

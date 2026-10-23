@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useRef,useState } from 'react'
 
 export function SignaturePad({ onSave }: { onSave: (dataUrl: string) => void }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)

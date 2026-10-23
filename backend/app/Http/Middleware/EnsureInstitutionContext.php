@@ -16,10 +16,8 @@ class EnsureInstitutionContext
         $user = $request->user();
 
         if ($user) {
-            // Guarantee an institution context; default to 1 (ENCG Fès) if not set
-            if (empty($user->institution_id)) {
-                $user->institution_id = 1;
-            }
+            abort_unless($user->institution_id, 403, 'Aucun établissement associé au compte.');
+            abort_unless((int) $user->institution_id === (int) config('erp.institution_id', 1), 403, 'Établissement non autorisé sur cette instance.');
             $request->attributes->set('institution_id', $user->institution_id);
         }
 

@@ -1,10 +1,10 @@
-import React, { useState, useRef, useEffect } from 'react'
-import { useMutation, useQuery } from '@tanstack/react-query'
+import React,{ useState,useRef,useEffect } from 'react'
+import { useMutation,useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import {
-  Sparkles, Send, BrainCircuit, MessageSquareText,
-  FileQuestion, Lightbulb, GraduationCap, Copy, CheckCircle2,
-  Mic, Volume2, Square
+Sparkles,Send,BrainCircuit,MessageSquareText,
+FileQuestion,Lightbulb,GraduationCap,Copy,CheckCircle2,
+Mic,Volume2,Square
 } from 'lucide-react'
 import api from '@shared/lib/api'
 import { aiApi } from '@shared/api/ai'
@@ -237,7 +237,7 @@ export default function AiAssistantPage() {
             )}
           </div>
 
-          <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-[url('/assets/chat-bg.png')] bg-cover bg-center bg-opacity-20">
+          <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-gradient-to-b from-slate-50 to-white dark:from-slate-900 dark:to-slate-950">
             {messages.map((msg, idx) => (
               <div key={idx} className={cn("flex", msg.role === 'user' ? 'justify-end' : 'justify-start')}>
                 <div className={cn(

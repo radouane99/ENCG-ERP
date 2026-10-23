@@ -1,6 +1,5 @@
-import { Link, useParams } from 'react-router-dom'
-import { ShieldCheck, User, ShieldAlert, Plus, BookOpen } from 'lucide-react'
-import { cn } from '@shared/lib/utils'
+import { useParams } from 'react-router-dom'
+import { ShieldCheck,User,ShieldAlert,Plus,BookOpen } from 'lucide-react'
 
 export default function ManageStudentCreditPage() {
   const { id } = useParams()

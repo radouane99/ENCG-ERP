@@ -1,4 +1,4 @@
-import { ArrowRight, BadgeCheck, BookOpen, ShieldCheck, Sparkles } from 'lucide-react'
+import { ArrowRight,BadgeCheck,BookOpen,ShieldCheck,Sparkles } from 'lucide-react'
 
 const phases = [
   {

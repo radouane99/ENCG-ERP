@@ -68,7 +68,7 @@ fi
 
 if [ "$SKIP_FRONTEND" -eq 0 ]; then
   echo "==> Building frontend"
-  (cd frontend && npm ci && npm run build)
+  (cd frontend && npm ci && npx tsc --noEmit && npm run test:unit && npm run build)
 fi
 
 echo "==> Starting stack"
@@ -84,7 +84,6 @@ for i in $(seq 1 30); do
 done
 
 echo "==> Laravel migrate + optimize"
-docker exec encg_prod_backend composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
 docker exec encg_prod_backend php artisan migrate --force --no-interaction
 docker exec encg_prod_backend php artisan storage:link || true
 docker exec encg_prod_backend php artisan optimize:clear
@@ -94,7 +93,7 @@ docker exec encg_prod_backend php artisan view:cache
 docker exec encg_prod_backend php artisan event:cache
 
 echo "==> Restart queue worker"
-"${COMPOSE[@]}" restart queue-worker scheduler
+"${COMPOSE[@]}" restart queue-worker scheduler reverb
 
 echo "==> Health"
 docker exec encg_prod_backend php artisan --version

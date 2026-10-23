@@ -1,9 +1,9 @@
-import { describe, it, expect } from 'vitest'
+import { describe,it,expect } from 'vitest'
 import {
-  withAuthQuery,
-  protectedDocumentUrl,
-  examEmargementPdfUrl,
-  groupEmargementPdfUrl,
+withAuthQuery,
+protectedDocumentUrl,
+examEmargementPdfUrl,
+groupEmargementPdfUrl,
 } from '@shared/lib/documentAccess'
 
 describe('documentAccess — cookie session, no query token', () => {

@@ -1,6 +1,6 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render,screen,fireEvent,waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach,describe,expect,it,vi } from 'vitest'
 import api from '@shared/lib/api'
 import ForgotPasswordPage from '../ForgotPasswordPage'
 import ResetPasswordPage from '../ResetPasswordPage'

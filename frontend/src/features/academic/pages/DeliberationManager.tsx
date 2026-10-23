@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
-  Calculator, Lock, Unlock, FileText, CheckCircle2,
-  AlertTriangle
+Calculator,Lock,Unlock,FileText,CheckCircle2,
+AlertTriangle
 } from 'lucide-react';
 import api from '@/shared/lib/api';
 import { openAuthenticatedUrl } from '@shared/lib/documentAccess';

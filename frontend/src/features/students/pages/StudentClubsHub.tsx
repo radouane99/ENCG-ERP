@@ -1,10 +1,8 @@
-import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import React,{ useState } from 'react';
+import { useQuery,useMutation,useQueryClient } from '@tanstack/react-query';
 import {
-  Users, Calendar, Megaphone, Plus, ChevronRight, Heart, MessageCircle,
-  Sparkles, Tent, Search, Send, Check, X, Star, Printer, Trophy,
-  Clock, MapPin, UserPlus, Award, ShieldCheck, LogOut, CheckCircle2,
-  Tag, QrCode
+Calendar,Megaphone,Plus,Heart,MessageCircle,
+Sparkles,Tent,Search,Send,Check,X,Printer,MapPin,UserPlus,LogOut,CheckCircle2
 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import api from '@/shared/lib/api';

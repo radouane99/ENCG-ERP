@@ -1,5 +1,4 @@
-import React from 'react';
-import { Download, Printer } from 'lucide-react';
+import { Download,Printer } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 
 export default function ConvocationPDFView() {

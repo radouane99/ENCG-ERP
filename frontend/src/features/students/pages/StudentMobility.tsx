@@ -1,9 +1,9 @@
-import React, { useState, useMemo } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import React,{ useState,useMemo } from 'react';
+import { useQuery,useMutation,useQueryClient } from '@tanstack/react-query';
 import {
-  Globe2, MapPin, Star, CheckCircle2, Send, Zap, GraduationCap,
-  Filter, Search, Users, Building2, Award, ChevronRight, RotateCcw,
-  BookOpen, Clock, AlertCircle
+Globe2,MapPin,Star,CheckCircle2,Send,Zap,GraduationCap,
+Filter,Search,Users,Building2,Award,ChevronRight,RotateCcw,
+BookOpen,Clock,AlertCircle
 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { toast } from 'sonner';

@@ -1,44 +1,44 @@
-import { useState, useMemo } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useState,useMemo } from 'react'
+import { Link,useNavigate } from 'react-router-dom'
 import {
-  Calendar,
-  Users,
-  Loader2,
-  Sliders,
-  Sparkles,
-  Clock,
-  Layers,
-  Zap,
-  Archive,
-  RefreshCw,
-  ArrowUp,
-  ArrowDown,
-  FileText,
-  Mail,
-  AlertTriangle,
-  Printer,
-  ShieldCheck,
-  Search,
-  Building2,
-  CheckSquare,
-  BarChart3,
-  ScanLine,
-  DoorOpen,
-  UserCheck,
-  Edit3,
-  X,
-  Filter
+Calendar,
+Users,
+Loader2,
+Sliders,
+Sparkles,
+Clock,
+Layers,
+Zap,
+Archive,
+RefreshCw,
+ArrowUp,
+ArrowDown,
+FileText,
+Mail,
+AlertTriangle,
+Printer,
+ShieldCheck,
+Search,
+Building2,
+CheckSquare,
+BarChart3,
+ScanLine,
+DoorOpen,
+UserCheck,
+Edit3,
+X,
+Filter
 } from 'lucide-react'
 
-import { cn, cleanUtf8Text } from '@shared/lib/utils'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { cn,cleanUtf8Text } from '@shared/lib/utils'
+import { useQuery,useMutation,useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { academicApi } from '@shared/api/academic'
 import { examsApi } from '@shared/api/exams'
 import api from '@shared/lib/api'
-import { openExamEmargementPdf, openExamDoorSignPdf } from '@shared/lib/documentAccess'
+import { openExamEmargementPdf,openExamDoorSignPdf } from '@shared/lib/documentAccess'
 import { toast } from 'sonner'
-import { CustomSelect, SelectOption } from '@shared/components/ui'
+import { CustomSelect,SelectOption } from '@shared/components/ui'
 
 // Helper for date formatting in French
 function parseExamDate(dateStr?: string) {

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Globe } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
-import { changeAppLanguage, LOCALE_META, normalizeLocale, SUPPORTED_LOCALES } from '@shared/lib/locale'
+import { changeAppLanguage,LOCALE_META,normalizeLocale,SUPPORTED_LOCALES } from '@shared/lib/locale'
 
 export function LanguageSwitcher() {
   const { i18n, t } = useTranslation('common')

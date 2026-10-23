@@ -1,6 +1,6 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import {
-  BookOpen, Sparkles, Loader2, FileText, CheckCircle2, Lightbulb, Network
+BookOpen,Sparkles,Loader2,FileText,CheckCircle2,Lightbulb,Network
 } from 'lucide-react'
 import api from '@shared/lib/api'
 import { toast } from 'sonner'

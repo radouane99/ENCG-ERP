@@ -95,8 +95,12 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
 
   fetchUser: async () => {
     try {
-      const response = await api.get('/v1/auth/me', { suppressToast: true } as any)
-      set({ user: response.data.data, isAuthenticated: true, isLoading: false })
+      const response = await api.get('/v1/auth/me', { suppressToast: true, timeout: 10_000 } as any)
+      const user = response.data?.data
+      if (!user || !Array.isArray(user.roles) || !Array.isArray(user.permissions)) {
+        throw new Error('Invalid authenticated user response')
+      }
+      set({ user, isAuthenticated: true, isLoading: false })
     } catch {
       set({ user: null, isAuthenticated: false, isLoading: false })
     }

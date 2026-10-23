@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreApplicationRequest;
+use App\Http\Requests\UpdateApplicationRequest;
 use App\Jobs\ProcessOcrDocumentJob;
 use App\Mail\StudentRegistrationSuccessMail;
 use App\Models\AcademicYear;
@@ -20,7 +21,6 @@ use App\Support\CandidateDossierGate;
 use App\Support\SignedDocumentUrl;
 use App\Support\TemporaryPassword;
 use Carbon\Carbon;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -68,8 +68,11 @@ class AdmissionController extends Controller
         $cinClean = strtoupper(trim($data['cin'] ?? ''));
         $refNumber = 'TAFEM-'.date('Y').'-'.strtoupper(substr(md5(($cneClean ?: uniqid()).microtime()), 0, 6));
 
-        $campaign = AdmissionCampaign::first();
-        $campaignId = $campaign?->id ?? 1;
+        $campaign = AdmissionCampaign::where('institution_id', $request->user()->institution_id)
+            ->when($data['admission_campaign_id'] ?? null, fn ($q, $id) => $q->whereKey($id))
+            ->where('status', 'open')->latest('id')->first();
+        abort_unless($campaign, 422, 'Aucune campagne ouverte pour cet établissement.');
+        $campaignId = $campaign->id;
 
         $application = Application::create([
             'admission_campaign_id' => $campaignId,
@@ -87,7 +90,7 @@ class AdmissionController extends Controller
 
         // Créer le User + Student associé
         if (! empty($cneClean)) {
-            $institutionId = Institution::first()?->id ?? 1;
+            $institutionId = $campaign->institution_id;
 
             $user = User::firstOrProvision(
                 ['email' => strtolower($cneClean).'@candidat.tafem.ma'],
@@ -113,8 +116,8 @@ class AdmissionController extends Controller
                     'institution_id' => $institutionId,
                     'user_id' => $user->id,
                     'student_number' => $cneClean,
-                    'gender' => 'M',
-                    'birth_date' => '2006-01-01',
+                    'gender' => $data['gender'] ?? 'unknown',
+                    'birth_date' => $data['birth_date'] ?? null,
                     'nationality' => 'Marocaine',
                     'status' => 'pending',
                 ]
@@ -149,10 +152,11 @@ class AdmissionController extends Controller
     /**
      * Mettre à jour une candidature.
      */
-    public function update(Request $request, int $applicationId): JsonResponse
+    public function update(UpdateApplicationRequest $request, int $applicationId): JsonResponse
     {
         $application = Application::findOrFail($applicationId);
-        $application->update($request->all());
+        abort_unless($request->user()->hasRole('super-admin') || (string) $application->campaign?->institution_id === (string) $request->user()->institution_id, 403);
+        $application->update($request->validated());
 
         return response()->json([
             'success' => true,
@@ -625,182 +629,11 @@ class AdmissionController extends Controller
         ]);
     }
 
-    private function ensureSchemaColumnsExist(): void
-    {
-        try {
-            if (! Schema::hasColumn('applications', 'high_school')) {
-                Schema::table('applications', function (Blueprint $table) {
-                    if (! Schema::hasColumn('applications', 'high_school')) {
-                        $table->string('high_school')->nullable();
-                    }
-                    if (! Schema::hasColumn('applications', 'lycee')) {
-                        $table->string('lycee')->nullable();
-                    }
-                    if (! Schema::hasColumn('applications', 'academy')) {
-                        $table->string('academy')->nullable();
-                    }
-                    if (! Schema::hasColumn('applications', 'delegation')) {
-                        $table->string('delegation')->nullable();
-                    }
-                    if (! Schema::hasColumn('applications', 'province')) {
-                        $table->string('province')->nullable();
-                    }
-                    if (! Schema::hasColumn('applications', 'bac_year')) {
-                        $table->string('bac_year')->nullable();
-                    }
-                    if (! Schema::hasColumn('applications', 'bac_type')) {
-                        $table->string('bac_type')->nullable();
-                    }
-                    if (! Schema::hasColumn('applications', 'bac_serie')) {
-                        $table->string('bac_serie')->nullable();
-                    }
-                    if (! Schema::hasColumn('applications', 'blood_type')) {
-                        $table->string('blood_type')->nullable();
-                    }
-                    if (! Schema::hasColumn('applications', 'filiere')) {
-                        $table->string('filiere')->nullable();
-                    }
-                    if (! Schema::hasColumn('applications', 'father_name')) {
-                        $table->string('father_name')->nullable();
-                    }
-                    if (! Schema::hasColumn('applications', 'mother_name')) {
-                        $table->string('mother_name')->nullable();
-                    }
-                    if (! Schema::hasColumn('applications', 'father_cin')) {
-                        $table->string('father_cin')->nullable();
-                    }
-                    if (! Schema::hasColumn('applications', 'mother_cin')) {
-                        $table->string('mother_cin')->nullable();
-                    }
-                    if (! Schema::hasColumn('applications', 'father_profession')) {
-                        $table->string('father_profession')->nullable();
-                    }
-                    if (! Schema::hasColumn('applications', 'mother_profession')) {
-                        $table->string('mother_profession')->nullable();
-                    }
-                    if (! Schema::hasColumn('applications', 'first_name_ar')) {
-                        $table->string('first_name_ar')->nullable();
-                    }
-                    if (! Schema::hasColumn('applications', 'last_name_ar')) {
-                        $table->string('last_name_ar')->nullable();
-                    }
-                    if (! Schema::hasColumn('applications', 'birth_city')) {
-                        $table->string('birth_city')->nullable();
-                    }
-                    if (! Schema::hasColumn('applications', 'birth_city_ar')) {
-                        $table->string('birth_city_ar')->nullable();
-                    }
-                    if (! Schema::hasColumn('applications', 'address')) {
-                        $table->string('address')->nullable();
-                    }
-                    if (! Schema::hasColumn('applications', 'address_ar')) {
-                        $table->string('address_ar')->nullable();
-                    }
-                    if (! Schema::hasColumn('applications', 'city')) {
-                        $table->string('city')->nullable();
-                    }
-                    if (! Schema::hasColumn('applications', 'region')) {
-                        $table->string('region')->nullable();
-                    }
-                    if (! Schema::hasColumn('applications', 'is_locked')) {
-                        $table->boolean('is_locked')->default(false);
-                    }
-                });
-            }
-
-            if (! Schema::hasColumn('students', 'high_school')) {
-                Schema::table('students', function (Blueprint $table) {
-                    if (! Schema::hasColumn('students', 'high_school')) {
-                        $table->string('high_school')->nullable();
-                    }
-                    if (! Schema::hasColumn('students', 'lycee')) {
-                        $table->string('lycee')->nullable();
-                    }
-                    if (! Schema::hasColumn('students', 'academy')) {
-                        $table->string('academy')->nullable();
-                    }
-                    if (! Schema::hasColumn('students', 'delegation')) {
-                        $table->string('delegation')->nullable();
-                    }
-                    if (! Schema::hasColumn('students', 'province')) {
-                        $table->string('province')->nullable();
-                    }
-                    if (! Schema::hasColumn('students', 'bac_year')) {
-                        $table->string('bac_year')->nullable();
-                    }
-                    if (! Schema::hasColumn('students', 'bac_type')) {
-                        $table->string('bac_type')->nullable();
-                    }
-                    if (! Schema::hasColumn('students', 'bac_serie')) {
-                        $table->string('bac_serie')->nullable();
-                    }
-                    if (! Schema::hasColumn('students', 'blood_type')) {
-                        $table->string('blood_type')->nullable();
-                    }
-                    if (! Schema::hasColumn('students', 'father_last_name_fr')) {
-                        $table->string('father_last_name_fr')->nullable();
-                    }
-                    if (! Schema::hasColumn('students', 'father_first_name_fr')) {
-                        $table->string('father_first_name_fr')->nullable();
-                    }
-                    if (! Schema::hasColumn('students', 'father_last_name_ar')) {
-                        $table->string('father_last_name_ar')->nullable();
-                    }
-                    if (! Schema::hasColumn('students', 'father_first_name_ar')) {
-                        $table->string('father_first_name_ar')->nullable();
-                    }
-                    if (! Schema::hasColumn('students', 'mother_last_name_fr')) {
-                        $table->string('mother_last_name_fr')->nullable();
-                    }
-                    if (! Schema::hasColumn('students', 'mother_first_name_fr')) {
-                        $table->string('mother_first_name_fr')->nullable();
-                    }
-                    if (! Schema::hasColumn('students', 'mother_last_name_ar')) {
-                        $table->string('mother_last_name_ar')->nullable();
-                    }
-                    if (! Schema::hasColumn('students', 'mother_first_name_ar')) {
-                        $table->string('mother_first_name_ar')->nullable();
-                    }
-                    if (! Schema::hasColumn('students', 'father_name')) {
-                        $table->string('father_name')->nullable();
-                    }
-                    if (! Schema::hasColumn('students', 'mother_name')) {
-                        $table->string('mother_name')->nullable();
-                    }
-                    if (! Schema::hasColumn('students', 'father_cin')) {
-                        $table->string('father_cin')->nullable();
-                    }
-                    if (! Schema::hasColumn('students', 'mother_cin')) {
-                        $table->string('mother_cin')->nullable();
-                    }
-                    if (! Schema::hasColumn('students', 'father_profession')) {
-                        $table->string('father_profession')->nullable();
-                    }
-                    if (! Schema::hasColumn('students', 'mother_profession')) {
-                        $table->string('mother_profession')->nullable();
-                    }
-                    if (! Schema::hasColumn('students', 'address_ar')) {
-                        $table->string('address_ar')->nullable();
-                    }
-                    if (! Schema::hasColumn('students', 'birth_city_ar')) {
-                        $table->string('birth_city_ar')->nullable();
-                    }
-                    if (! Schema::hasColumn('students', 'is_locked')) {
-                        $table->boolean('is_locked')->default(false);
-                    }
-                });
-            }
-        } catch (\Throwable $e) {
-            \Log::warning('ensureSchemaColumnsExist warning: '.$e->getMessage());
-        }
-    }
-
     /**
      * Suivi du dossier candidat en temps réel.
      */
     public function trackCandidateDossier(Request $request): JsonResponse
     {
-        $this->ensureSchemaColumnsExist();
         $user = auth()->user();
         $identity = CandidateDossierGate::requireIdentity($request, false);
         $cne = $identity['cne'];
@@ -1090,7 +923,6 @@ class AdmissionController extends Controller
      */
     public function updateCandidateDossier(Request $request): JsonResponse
     {
-        $this->ensureSchemaColumnsExist();
         CandidateDossierGate::requireIdentity($request, true);
         $userAuth = auth()->user();
         $cne = strtoupper(trim($request->input('cne', '')));

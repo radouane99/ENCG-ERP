@@ -1,36 +1,26 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import { useState,useEffect,useMemo } from 'react'
 import { createPortal } from 'react-dom'
-import { useQuery, useMutation } from '@tanstack/react-query'
+import { useQuery,useMutation } from '@tanstack/react-query'
 import {
-  X,
-  Users,
-  Shield,
-  Calendar,
-  Clock,
-  MapPin,
-  AlertTriangle,
-  CheckCircle2,
-  Search,
-  RotateCcw,
-  Trash2,
-  Loader2,
-  Save,
-  ChevronDown,
-  UserPlus,
-  Filter,
-  GraduationCap,
-  Sparkles,
-  Info,
-  Check,
-  Building,
-  UserCheck,
-  Activity,
-  Layers,
+X,
+Users,
+Shield,
+Calendar,
+Clock,
+MapPin,
+AlertTriangle,Search,
+RotateCcw,
+Trash2,
+Loader2,
+Save,
+ChevronDown,Filter,
+GraduationCap,
+Sparkles,Activity
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@shared/lib/utils'
 import { examsApi } from '@shared/api/exams'
-import ProctorCombobox, { Proctor, ExamSlot } from './ProctorCombobox'
+import ProctorCombobox,{ Proctor,ExamSlot } from './ProctorCombobox'
 
 interface ManualProctorAssignmentModalProps {
   isOpen: boolean

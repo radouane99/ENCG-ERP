@@ -1,9 +1,8 @@
-import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
-import { ShieldCheck, Search, Shield, AlertTriangle, Users, BookOpen, User, CheckCircle2, Loader2, Printer, Zap, Award, Sparkles, FileText } from 'lucide-react'
+import { useState,useEffect } from 'react'
+import { ShieldCheck,Shield,AlertTriangle,Users,BookOpen,Loader2,Printer,Award } from 'lucide-react'
 import { studentsApi } from '@shared/api/students'
 import { toast } from 'sonner'
-import { openAuthenticatedUrl, openCustomAttestationPdf, openStudentAttestationPdf } from '@shared/lib/documentAccess'
+import { openStudentAttestationPdf } from '@shared/lib/documentAccess'
 
 export default function StudentsCreditsPage() {
   const [students, setStudents] = useState<any[]>([])

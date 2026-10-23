@@ -1,49 +1,36 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React,{ useState,useEffect,useMemo } from 'react'
 import {
-  Sparkles,
-  Search,
-  Filter,
-  Calendar,
-  Clock,
-  MapPin,
-  Users,
-  CheckCircle2,
-  AlertTriangle,
-  Send,
-  Loader2,
-  RotateCcw,
-  Check,
-  X,
-  Layers,
-  DoorOpen,
-  Monitor,
-  Thermometer,
-  FileText,
-  ChevronRight,
-  PlusCircle,
-  Building2,
-  ShieldCheck,
-  Printer,
-  Download,
-  CalendarPlus,
-  BellRing,
-  Table,
-  Grid,
-  FileSpreadsheet,
-  RefreshCw,
-  GraduationCap,
-  QrCode,
-  Eye,
-  Wifi,
-  LayoutList,
-  CalendarDays
+Sparkles,
+Search,
+Filter,
+Calendar,
+Clock,
+MapPin,
+Users,
+CheckCircle2,
+AlertTriangle,Loader2,Check,
+X,
+Layers,
+DoorOpen,
+Monitor,
+Thermometer,
+FileText,PlusCircle,
+Building2,
+ShieldCheck,
+Printer,CalendarPlus,
+BellRing,
+Table,FileSpreadsheet,
+RefreshCw,
+GraduationCap,
+QrCode,
+Eye,LayoutList
 } from 'lucide-react'
 import api from '@/shared/lib/api'
 import { toast } from 'sonner'
 import { cn } from '@/shared/lib/utils'
 import { CustomSelect } from '@/shared/components/ui/CustomSelect'
 import { DatePicker } from '@/shared/components/ui/DatePicker'
-import { format, startOfWeek, addDays, parseISO } from 'date-fns'
+import { format,startOfWeek,parseISO } from 'date-fns'
 import { fr } from 'date-fns/locale'
 
 const TIME_BLOCKS = [

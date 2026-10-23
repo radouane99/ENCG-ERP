@@ -7,11 +7,11 @@ import React from 'react'
 import { type VariantProps } from 'class-variance-authority'
 import { cn } from '@shared/lib/utils'
 import {
-  Info,
-  CheckCircle2,
-  AlertTriangle,
-  XCircle,
-  X,
+Info,
+CheckCircle2,
+AlertTriangle,
+XCircle,
+X,
 } from 'lucide-react'
 import { alertVariants } from './alertVariants'
 

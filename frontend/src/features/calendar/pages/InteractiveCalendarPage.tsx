@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -6,9 +6,9 @@ import interactionPlugin from '@fullcalendar/interaction';
 import { useQuery } from '@tanstack/react-query';
 import { fetchCalendarEvents } from '../api/calendarApi';
 import { renderEventContent } from '../components/EventContent';
-import { Card, CardContent, CardHeader, CardTitle } from '@shared/components/ui/Card';
-import { CalendarIcon, Loader2 } from 'lucide-react';
-import { format, startOfWeek, endOfWeek } from 'date-fns';
+import { Card,CardContent,CardHeader,CardTitle } from '@shared/components/ui/Card';
+import { CalendarIcon,Loader2 } from 'lucide-react';
+import { format,startOfWeek,endOfWeek } from 'date-fns';
 
 import { toast } from 'sonner';
 import { moveCalendarEvent } from '../api/calendarApi';

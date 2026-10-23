@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { Languages } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
-import { changeAppLanguage, normalizeLocale } from '@shared/lib/locale'
+import { changeAppLanguage,normalizeLocale } from '@shared/lib/locale'
 
 export function LanguageSwitcher({ className }: { className?: string }) {
   const { i18n, t } = useTranslation('common')

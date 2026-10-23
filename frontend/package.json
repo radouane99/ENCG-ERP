@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "lint": "oxlint",
+    "build:stats": "node scripts/build-stats.mjs",
+    "lint:imports": "node scripts/remove-unused-imports.mjs",
+    "lint": "oxlint --max-warnings=253",
     "preview": "vite preview",
     "test": "vitest",
     "test:unit": "vitest run",
@@ -68,6 +70,6 @@
     "tailwindcss-animate": "^1.0.7",
     "typescript": "~6.0.2",
     "vite": "^8.1.0",
-    "vitest": "^3.2.4"
+    "vitest": "^5.0.5"
   }
 }

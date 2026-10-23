@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import { useState,useEffect } from 'react';
 import {
-  GraduationCap, Loader2, Sparkles, ChevronRight, User, UserCheck,
-  Clock, Calendar, Search, Kanban,
-  Award, MapPin, Printer, Check, Users, FileDown
+GraduationCap,Loader2,Sparkles,ChevronRight,User,UserCheck,
+Clock,Calendar,Search,Kanban,
+Award,MapPin,Printer,Check,Users,FileDown
 } from 'lucide-react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery,useMutation,useQueryClient } from '@tanstack/react-query';
 import api from '@shared/lib/api';
 import { cn } from '@shared/lib/utils';
 import { toast } from 'sonner';

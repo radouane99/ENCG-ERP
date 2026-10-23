@@ -1,16 +1,12 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react'
-import { 
-  Calendar, Download, Upload, Trash2, Plus, CalendarDays, FileText, 
-  CheckCircle2, X, Sparkles, BookOpen, Users, Layers, Search, Filter, 
-  ChevronRight, ArrowUpRight, GraduationCap, ShieldCheck, Check, Clock, Edit3, AlertCircle,
-  Copy, Mail, Printer, Zap, BarChart2, Eye, EyeOff, CheckSquare, SlidersHorizontal,
-  ChevronDown, ArrowRight, RefreshCw, MoreVertical, Building2, UserCheck, AlertTriangle,
-  RotateCcw, ShieldAlert
+import React,{ useState,useEffect,useMemo,useRef } from 'react'
+import {
+Calendar,Download,Upload,Trash2,Plus,CalendarDays,FileText,X,Sparkles,BookOpen,Users,Layers,Search,GraduationCap,Check,Copy,Mail,Printer,Zap,BarChart2,Eye,ChevronDown,Building2,AlertTriangle,
+RotateCcw,ShieldAlert
 } from 'lucide-react'
-import { cn, cleanUtf8Text } from '@shared/lib/utils'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { cn,cleanUtf8Text } from '@shared/lib/utils'
+import { useQuery,useMutation,useQueryClient } from '@tanstack/react-query'
 import api from '@shared/lib/api'
-import { openAuthenticatedUrl, openProfessorOrdreDeServicePdf } from '@shared/lib/documentAccess'
+import { openAuthenticatedUrl,openProfessorOrdreDeServicePdf } from '@shared/lib/documentAccess'
 import { academicApi } from '@shared/api/academic'
 import { toast } from 'sonner'
 import { Spinner } from '@shared/components/ui/Spinner'

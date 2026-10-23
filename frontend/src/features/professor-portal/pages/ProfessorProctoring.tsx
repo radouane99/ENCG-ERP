@@ -1,38 +1,28 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React,{ useState,useRef,useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery,useQueryClient } from '@tanstack/react-query';
 import api from '@/shared/lib/api';
 import { useAuthStore } from '@stores/authStore';
 import { toast } from 'sonner';
-import { 
-  Eye, 
-  FileText, 
-  CheckCircle2, 
-  Clock, 
-  MapPin, 
-  Users, 
-  ShieldCheck,
-  Building2,
-  CalendarDays,
-  Download,
-  Search,
-  Check,
-  CheckCheck,
-  Loader2,
-  UserX,
-  AlertTriangle,
-  X,
-  Save,
-  QrCode,
-  PenTool,
-  Sparkles,
-  RotateCcw,
-  Stamp,
-  Printer
+import {
+Eye,CheckCircle2,
+Clock,
+MapPin,
+Users,
+ShieldCheck,
+Building2,
+CalendarDays,
+Download,
+Search,CheckCheck,
+Loader2,X,PenTool,
+Sparkles,
+RotateCcw,
+Stamp,
+Printer
 } from 'lucide-react';
 import { cn } from '@/shared/lib/utils';
 import { Spinner } from '@shared/components/ui/Spinner';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence,motion } from 'framer-motion';
 
 interface SurveillanceItem {
   id: number | string;

@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect, KeyboardEvent, ClipboardEvent } from 'react'
+import { useState,useRef,useEffect,KeyboardEvent,ClipboardEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ShieldCheck, ArrowRight, Loader2, KeyRound } from 'lucide-react'
+import { ShieldCheck,ArrowRight,Loader2,KeyRound } from 'lucide-react'
 import { useAuthStore } from '@stores/authStore'
 import { toast } from 'sonner'
 

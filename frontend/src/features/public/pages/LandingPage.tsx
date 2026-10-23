@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React,{ useEffect,useState } from 'react';
+import { useNavigate,Link } from 'react-router-dom';
 import api from '@shared/lib/api';
-import { 
-  ShieldCheck, Sparkles, GraduationCap, ArrowRight, LogIn, BrainCircuit,
-  Megaphone, UserCheck, Activity, QrCode, Database, BookOpen, Layers, BarChart3,
-  Sun, Moon, X, MapPin, Phone, Mail, Send, CheckCircle2, Award
+import {
+ShieldCheck,Sparkles,GraduationCap,ArrowRight,LogIn,BrainCircuit,
+Megaphone,UserCheck,Activity,QrCode,Database,BookOpen,Layers,BarChart3,
+Sun,Moon,X,MapPin,Phone,Mail,Send,CheckCircle2,Award
 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { useAuthStore } from '@stores/authStore';

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Conversation;
 use App\Models\Exam;
 use App\Models\ExamSeating;
 use App\Models\Group;
@@ -10,6 +11,7 @@ use App\Models\Message;
 use App\Models\Module;
 use App\Models\RoomBooking;
 use App\Models\Schedule;
+use App\Services\Security\ClassroomAccessService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -144,9 +146,15 @@ class InternalApiController extends Controller
     /**
      * Messages du chat.
      */
-    public function chatMessages(int $group, int $module): JsonResponse
+    public function chatMessages(Request $request, int $group, int $module): JsonResponse
     {
+        $groupModel = Group::findOrFail($group);
+        $moduleModel = Module::findOrFail($module);
+        app(ClassroomAccessService::class)->authorize($request->user(), $moduleModel, $groupModel);
+        $conversationId = Conversation::where('institution_id', $moduleModel->institution_id)
+            ->where('name', 'Classroom-Group-'.$group.'-Module-'.$module)->value('id');
         $messages = Message::with('sender')
+            ->where('conversation_id', $conversationId)
             ->latest()
             ->limit(50)
             ->get()

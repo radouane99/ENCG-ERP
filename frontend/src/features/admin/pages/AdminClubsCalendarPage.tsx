@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Calendar, ArrowLeft } from 'lucide-react'
+import { Calendar,ArrowLeft } from 'lucide-react'
 
 export default function AdminClubsCalendarPage() {
   return (

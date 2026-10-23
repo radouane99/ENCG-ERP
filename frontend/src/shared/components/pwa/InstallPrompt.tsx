@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { Download, X } from 'lucide-react'
+import { useState,useEffect } from 'react'
+import { Download,X } from 'lucide-react'
 
 export default function InstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null)

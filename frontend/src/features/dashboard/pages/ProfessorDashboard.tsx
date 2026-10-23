@@ -1,31 +1,31 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link,useNavigate } from 'react-router-dom';
 import {
-  Users, 
-  BookOpen, 
-  Clock, 
-  FileEdit, 
-  CheckCircle2, 
-  QrCode, 
-  BookMarked, 
-  Award, 
-  Sparkles, 
-  ArrowRight,
-  TrendingUp,
-  Calendar,
-  Layers,
-  GraduationCap
+Users,
+BookOpen,
+Clock,
+FileEdit,
+CheckCircle2,
+QrCode,
+BookMarked,
+Award,
+Sparkles,
+ArrowRight,
+TrendingUp,
+Calendar,
+Layers,
+GraduationCap
 } from 'lucide-react';
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer,
-  Cell
+import {
+BarChart,
+Bar,
+XAxis,
+YAxis,
+CartesianGrid,
+Tooltip,
+ResponsiveContainer,
+Cell
 } from 'recharts';
 import api from '@/shared/lib/api';
 import { useAuthStore } from '@/stores/authStore';

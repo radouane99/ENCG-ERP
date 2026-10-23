@@ -1,28 +1,27 @@
-import React, { useState, useMemo } from 'react';
+import { useState,useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  ShieldCheck, 
-  Link as LinkIcon, 
-  Award, 
-  CheckCircle2, 
-  Copy, 
-  Search, 
-  Key, 
-  Loader2, 
-  XCircle,
-  Sparkles, 
-  RefreshCw, 
-  Check, 
-  Printer, 
-  Building2, 
-  Download,
-  Boxes,
-  Fingerprint
+ShieldCheck,
+Link as LinkIcon,
+Award,
+CheckCircle2,
+Copy,
+Search,
+Key,
+Loader2,
+XCircle,
+Sparkles,
+RefreshCw,
+Check,
+Printer,
+Building2,
+Download,
+Boxes,
+Fingerprint
 } from 'lucide-react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery,useMutation,useQueryClient } from '@tanstack/react-query';
 import { blockchainApi } from '@shared/api/blockchain';
 import { toast } from 'sonner';
-import { cn } from '@shared/lib/utils';
 
 // Helper: Generate a real 100% Data-URL PNG QR Code image locally using HTML5 Canvas
 const generateQrDataUrl = (dataText: string): string => {

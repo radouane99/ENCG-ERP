@@ -1,16 +1,16 @@
-import { Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom'
-import { Suspense, lazy, useEffect, type ReactNode } from 'react'
+import { Routes,Route,Navigate,Outlet,useLocation } from 'react-router-dom'
+import { Suspense,lazy,type ReactNode } from 'react'
 import { useAuthStore } from '@stores/authStore'
 import AppShell from '@shared/components/layout/AppShell'
 import AuthLayout from '@shared/components/layout/AuthLayout'
 import LoadingScreen from '@shared/components/ui/LoadingScreen'
 import {
-  ADMIN_ROLES,
-  ACADEMIC_ROLES,
-  TEACHING_ROLES,
-  HR_ROLES,
-  STAFF_ROLES,
-  userCanAccessRoles,
+ADMIN_ROLES,
+ACADEMIC_ROLES,
+TEACHING_ROLES,
+HR_ROLES,
+STAFF_ROLES,
+userCanAccessRoles,
 } from '@shared/lib/routeAccess'
 // ── Lazy-loaded feature routes ─────────────────────────────────
 const LoginPage = lazy(() => import('@features/auth/pages/LoginPage'))
@@ -232,12 +232,6 @@ function ProtectedRoute({ roles, children }: { roles: string[]; children?: React
 
 // ── App Component ──────────────────────────────────────────────
 export default function RootRouter() {
-  const { fetchUser } = useAuthStore()
-
-  useEffect(() => {
-    void fetchUser()
-  }, [fetchUser])
-
   return (
     <Suspense fallback={<LoadingScreen />}>
       <Routes>

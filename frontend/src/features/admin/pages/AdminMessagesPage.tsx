@@ -1,7 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import { Mail, Search, Trash2, Eye } from 'lucide-react'
-import { cn } from '@shared/lib/utils'
+import { Mail } from 'lucide-react'
 
 export default function AdminMessagesPage() {
   const [messages] = useState([])

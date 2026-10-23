@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Save, User, FileText, Activity } from 'lucide-react'
+import { ArrowLeft,Save,User,FileText,Activity } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
 import { StudentsService } from '@/services/students.service'
-import { storeStudentSchema, type StoreStudentInput } from '@/schemas/student.schema'
+import { storeStudentSchema,type StoreStudentInput } from '@/schemas/student.schema'
 import { cn } from '@shared/lib/utils'
 import { useTranslation } from 'react-i18next'
 

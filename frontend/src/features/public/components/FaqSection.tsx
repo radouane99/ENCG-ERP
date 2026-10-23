@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowRight, ChevronDown, CircleHelp } from 'lucide-react'
+import { ArrowRight,ChevronDown,CircleHelp } from 'lucide-react'
 
 export type FaqLang = 'fr' | 'en' | 'ar'
 

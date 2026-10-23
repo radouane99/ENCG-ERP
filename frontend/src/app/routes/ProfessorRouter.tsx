@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes,Route } from 'react-router-dom';
 import { lazy } from 'react';
 
 const ProfessorDashboard = lazy(() => import('@features/professor-portal/pages/ProfessorDashboard'))
@@ -33,7 +33,7 @@ const ProfessorTimetablePage = lazy(() => import('@features/timetable/pages/Admi
 
 const AdminExamSurveillanceHubPage = lazy(() => import('@features/exams/pages/AdminExamSurveillanceHubPage'))
 
-import { useReverbNotifications } from '@features/professors/hooks/useReverbNotifications'
+import { useReverbNotifications } from '@features/professors/hooks/useReverbNotifications';
 
 export default function ProfessorRouter() {
   useReverbNotifications()

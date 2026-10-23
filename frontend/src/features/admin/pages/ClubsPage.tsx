@@ -1,14 +1,14 @@
-import React, { useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import React,{ useState } from 'react'
+import { useQuery,useMutation,useQueryClient } from '@tanstack/react-query'
 import {
-  Tent, Search, Sparkles,
-  DollarSign, Check, X, Calendar, BarChart2,
-  ShieldCheck, Send, Download
+Tent,Search,Sparkles,
+DollarSign,Check,X,Calendar,BarChart2,
+ShieldCheck,Send,Download
 } from 'lucide-react'
 import api from '@shared/lib/api'
 import { cn } from '@shared/lib/utils'
 import { toast } from 'sonner'
-import { generateClubAgrementHtml, generateClubImpactReportHtml } from '../utils/clubDocumentGenerator'
+import { generateClubAgrementHtml,generateClubImpactReportHtml } from '../utils/clubDocumentGenerator'
 
 export default function AdminClubsPage() {
   const queryClient = useQueryClient()

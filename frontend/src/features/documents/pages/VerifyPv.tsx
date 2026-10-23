@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { CheckCircle2, XCircle, FileText, ArrowLeft, Building2, ShieldCheck, Clock, Layers } from 'lucide-react';
+import { useEffect,useState } from 'react';
+import { useParams,Link } from 'react-router-dom';
+import { CheckCircle2,XCircle,FileText,ArrowLeft,Building2,ShieldCheck,Clock,Layers } from 'lucide-react';
 import api from '@/shared/lib/api';
 
 export default function VerifyPv() {

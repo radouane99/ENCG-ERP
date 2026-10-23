@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Search, Award, CheckCircle2, Clock, XCircle, ArrowRight, Sparkles, GraduationCap, ShieldCheck, UserCheck, Mail, Download } from 'lucide-react';
+import React,{ useState } from 'react';
+import { Search,Award,CheckCircle2,Clock,XCircle,ArrowRight,Sparkles,GraduationCap,ShieldCheck,UserCheck,Mail,Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '@shared/lib/api';
 import { toast } from 'sonner';

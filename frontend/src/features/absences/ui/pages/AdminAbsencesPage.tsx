@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useAdminJustifications, useUpdateJustificationStatus } from '../../api/absencesApi';
+import { useState } from 'react';
+import { useAdminJustifications,useUpdateJustificationStatus } from '../../api/absencesApi';
 import { AbsenceJustification } from '../../model/types';
 
 export default function AdminAbsencesPage() {

@@ -1,4 +1,4 @@
-import { ArrowRight, MessageSquare, Star } from 'lucide-react'
+import { ArrowRight,MessageSquare,Star } from 'lucide-react'
 
 export type TestimonialsLang = 'fr' | 'en' | 'ar'
 

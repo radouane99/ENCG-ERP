@@ -1,4 +1,4 @@
-import { ArrowRight, Cloud, ShieldCheck, Sparkles, Clock3, Users } from 'lucide-react'
+import { ArrowRight,Cloud,ShieldCheck,Sparkles,Clock3,Users } from 'lucide-react'
 
 export type BenefitsLang = 'fr' | 'en' | 'ar'
 

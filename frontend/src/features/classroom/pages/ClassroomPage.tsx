@@ -1,19 +1,19 @@
-import { useState, useEffect } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
-import { 
-  Search, 
-  Folder, 
-  Zap, 
-  X, 
-  BookOpen, 
-  Sparkles, 
-  FileText, 
-  MessageSquare,
-  GraduationCap,
-  ArrowRight,
-  Filter
+import { useState,useEffect } from 'react'
+import { useNavigate,useLocation } from 'react-router-dom'
+import {
+Search,
+Folder,
+Zap,
+X,
+BookOpen,
+Sparkles,
+FileText,
+MessageSquare,
+GraduationCap,
+ArrowRight,
+Filter
 } from 'lucide-react'
-import { cn, cleanMojibake } from '@shared/lib/utils'
+import { cn,cleanMojibake } from '@shared/lib/utils'
 import api from '@shared/lib/api'
 
 interface Classroom {

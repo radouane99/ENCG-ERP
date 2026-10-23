@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState,useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Building, ArrowLeft, Check, X, Clock, Sparkles, Key, QrCode, Printer, CheckCircle2 } from 'lucide-react'
+import { Building,ArrowLeft,Check,X,Clock,Sparkles,Key,QrCode,Printer,CheckCircle2 } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
 import { openAuthenticatedUrl } from '@shared/lib/documentAccess'

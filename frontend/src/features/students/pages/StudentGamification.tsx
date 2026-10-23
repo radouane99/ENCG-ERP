@@ -1,5 +1,4 @@
-import React from 'react';
-import { Trophy, Gift, Target, Flame, ChevronRight, CheckCircle2, Lock, Zap } from 'lucide-react';
+import { Gift,Target,Flame,CheckCircle2,Lock,Zap } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { useAuthStore } from '@/stores/authStore';
 

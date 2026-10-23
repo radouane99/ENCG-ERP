@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { QrCode, Settings, Users, BrainCircuit, Mic, Send } from 'lucide-react'
+import { useState } from 'react'
+import { QrCode,Settings,Users,BrainCircuit,Mic,Send } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@shared/lib/utils'
 import { Button } from '@shared/components/ui/Button'

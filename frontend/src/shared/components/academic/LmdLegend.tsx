@@ -1,4 +1,4 @@
-import { ELIMINATORY_THRESHOLD, VALIDATION_THRESHOLD } from '@shared/lib/lmd'
+import { ELIMINATORY_THRESHOLD,VALIDATION_THRESHOLD } from '@shared/lib/lmd'
 import LmdBadge from './LmdBadge'
 
 export default function LmdLegend() {

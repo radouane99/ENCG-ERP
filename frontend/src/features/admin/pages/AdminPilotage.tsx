@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react'
-import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell
+import { useState,useEffect } from 'react'
+import {
+BarChart,Bar,XAxis,YAxis,CartesianGrid,Tooltip,ResponsiveContainer,
+PieChart,Pie,Cell
 } from 'recharts'
-import { Activity, Users, GraduationCap, Building, TrendingUp, DollarSign, BrainCircuit, Target, RefreshCw } from 'lucide-react'
+import { Activity,Users,GraduationCap,Building,TrendingUp,DollarSign,BrainCircuit,Target,RefreshCw } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import api from '@shared/lib/api'
 import { cn } from '@shared/lib/utils'

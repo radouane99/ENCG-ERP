@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import React,{ useState } from 'react';
+import { useQuery,useMutation,useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import {
-  Users, Plus, Search, Eye, Edit2,
-  Trash2, GraduationCap, ChevronLeft, ChevronRight,
-  SortAsc, SortDesc, X, Mail
+Users,Plus,Search,Edit2,
+Trash2,GraduationCap,ChevronLeft,ChevronRight,
+SortAsc,SortDesc,X,Mail
 } from 'lucide-react';
 import api from '@/shared/lib/api';
 import { toast } from 'sonner';

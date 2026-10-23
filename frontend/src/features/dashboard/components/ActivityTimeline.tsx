@@ -1,6 +1,5 @@
-﻿import React from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Activity, Plus, Edit2, Trash2, ShieldAlert } from 'lucide-react';
+﻿import { useQuery } from '@tanstack/react-query';
+import { Activity,Plus,Edit2,Trash2,ShieldAlert } from 'lucide-react';
 import api from '@/shared/lib/api';
 import { cn } from '@/shared/lib/utils';
 

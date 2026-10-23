@@ -1,5 +1,4 @@
-import React from 'react';
-import { ArrowLeft, Printer } from 'lucide-react';
+import { ArrowLeft,Printer } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function StudentConvocationPdf() {

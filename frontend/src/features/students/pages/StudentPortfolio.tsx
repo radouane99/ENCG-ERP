@@ -1,28 +1,21 @@
-import React, { useState } from 'react';
-import { 
-  Share2, 
-  Briefcase, 
-  GraduationCap, 
-  Star, 
-  Zap, 
-  CheckCircle2, 
-  Download, 
-  ShieldCheck, 
-  Building2, 
-  Calendar, 
-  Award, 
-  Printer, 
-  FileText, 
-  X,
-  Phone,
-  Mail,
-  BookOpen,
-  Clock,
-  QrCode,
-  Sparkles,
-  ChevronRight,
-  Shield,
-  Layers
+import { useState } from 'react';
+import {
+Share2,
+Briefcase,
+GraduationCap,
+Star,CheckCircle2,
+Download,
+ShieldCheck,
+Building2,Award,
+Printer,
+FileText,
+X,BookOpen,
+Clock,
+QrCode,
+Sparkles,
+ChevronRight,
+Shield,
+Layers
 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { useAuthStore } from '@/stores/authStore';

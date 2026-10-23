@@ -42,7 +42,9 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: `npx vite --host 127.0.0.1 --port ${port} --strictPort`,
+    command: process.env.E2E_PRODUCTION
+      ? `npx vite preview --host 127.0.0.1 --port ${port} --strictPort`
+      : `npx vite --host 127.0.0.1 --port ${port} --strictPort`,
     url: baseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { Zap, CheckCircle2, Sparkles, Loader2, Send } from 'lucide-react';
+import { useState } from 'react';
+import { Zap,CheckCircle2,Sparkles,Loader2,Send } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation,useQuery } from '@tanstack/react-query';
 import api from '@/shared/lib/api';
 import { toast } from 'sonner';
 

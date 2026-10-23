@@ -2,15 +2,15 @@
 
 namespace Tests\Unit;
 
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 
 /**
  * Tests Unitaires & Règles Métier : Ségrégation des Documents RH (Vacataire vs Permanent),
  * Retenue IGR (Article 73-II-F du CGI marocain) et Workflow Parapheur ENCG Fès.
- *
- * @group professor-documents
- * @group quality-gate
  */
+#[Group('professor-documents')]
+#[Group('quality-gate')]
 class ProfessorDocumentSegregationServiceTest extends TestCase
 {
     /**

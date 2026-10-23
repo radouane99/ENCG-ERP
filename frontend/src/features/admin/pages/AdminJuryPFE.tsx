@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState,useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { GraduationCap, CalendarDays, Users, CheckCircle2, Clock, MapPin, Search, Calendar, FileText, Sparkles, Printer, AlertCircle, RefreshCw, Send, Check, Loader2, Award, Medal, X } from 'lucide-react';
+import { GraduationCap,CheckCircle2,Clock,MapPin,Search,Calendar,Sparkles,Printer,AlertCircle,Loader2,Award,X } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import api from '@shared/lib/api';
 import { toast } from 'sonner';

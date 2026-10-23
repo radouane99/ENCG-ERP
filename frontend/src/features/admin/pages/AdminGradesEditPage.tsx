@@ -1,12 +1,12 @@
-import { useState, FormEvent, useEffect } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, Save } from 'lucide-react'
+import { useState,FormEvent,useEffect } from 'react'
+import { Link,useSearchParams } from 'react-router-dom'
+import { ArrowLeft,Save } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@shared/lib/utils'
 import { Button } from '@shared/components/ui/Button'
 import { Badge } from '@shared/components/ui/Badge'
 import { Spinner } from '@shared/components/ui/Spinner'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query'
 import api from '@shared/lib/api'
 import { toast } from 'sonner'
 
@@ -300,6 +300,7 @@ export default function AdminGradesEditPage() {
         const data = grades[studentId]
         return {
           student_id: studentId,
+          version: studentsData.find((student: any) => Number(student.student_id) === studentId)?.version ?? 0,
           value: data.value === '' ? null : parseFloat(data.value),
           absent: data.absent
         }

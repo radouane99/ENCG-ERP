@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { BarChart3, AlertTriangle, TrendingDown, BellRing, Users, Activity, CheckCircle, ShieldAlert, Sparkles, Send, Loader2 } from 'lucide-react';
+import { BarChart3,AlertTriangle,BellRing,Users,Activity,Sparkles,Loader2 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery,useMutation } from '@tanstack/react-query';
 import api from '@/shared/lib/api';
 import { Spinner } from '@shared/components/ui/Spinner';
 import { toast } from 'sonner';

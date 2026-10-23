@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import path from 'path'
+import { readFileSync } from 'node:fs'
 
 export default defineConfig({
   plugins: [
@@ -35,16 +36,32 @@ export default defineConfig({
       },
       devOptions: {
         enabled: true
-      }
+      },
+      workbox: {
+        // Precache the application shell; fetch feature bundles only when visited.
+        manifestTransforms: [async (entries) => {
+          const html = readFileSync(path.resolve(import.meta.dirname, 'dist/index.html'), 'utf8')
+          const initialScripts = new Set([...html.matchAll(/(?:src|href)="\/(assets\/[^" ]+\.js)"/g)].map(match => match[1]))
+          return {
+            manifest: entries.filter(entry => !entry.url.endsWith('.js') || initialScripts.has(entry.url.replace(/^\//, ''))),
+            warnings: [],
+          }
+        }],
+        runtimeCaching: [{
+          urlPattern: /\/assets\/.*\.js$/,
+          handler: 'CacheFirst',
+          options: { cacheName: 'encg-feature-scripts', expiration: { maxEntries: 128, maxAgeSeconds: 30 * 24 * 60 * 60 } },
+        }],
+      },
     })
   ],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
-      '@features': path.resolve(__dirname, './src/features'),
-      '@shared': path.resolve(__dirname, './src/shared'),
-      '@stores': path.resolve(__dirname, './src/stores'),
-      '@app': path.resolve(__dirname, './src/app'),
+      '@': path.resolve(import.meta.dirname, './src'),
+      '@features': path.resolve(import.meta.dirname, './src/features'),
+      '@shared': path.resolve(import.meta.dirname, './src/shared'),
+      '@stores': path.resolve(import.meta.dirname, './src/stores'),
+      '@app': path.resolve(import.meta.dirname, './src/app'),
     },
   },
   server: {
@@ -72,23 +89,6 @@ export default defineConfig({
     sourcemap: false,
     cssCodeSplit: true,
     chunkSizeWarningLimit: 800,
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          if (id.includes('node_modules')) {
-            if (id.includes('react/') || id.includes('react-dom/') || id.includes('react-router')) {
-              return 'vendor-react-core';
-            }
-            if (id.includes('@tanstack') || id.includes('zustand')) {
-              return 'vendor-state';
-            }
-            if (id.includes('recharts') || id.includes('chart.js') || id.includes('lucide-react')) {
-              return 'vendor-ui-visuals';
-            }
-            return 'vendor-others';
-          }
-        },
-      },
-    },
+
   },
 })

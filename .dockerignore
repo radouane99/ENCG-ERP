@@ -1,0 +1,17 @@
+.git
+.agents
+.codex
+frontend/node_modules
+frontend/dist
+backend/vendor
+backend/.env
+backend/.env.*
+!backend/.env.example
+backend/storage
+backend/bootstrap/cache/*.php
+backend/*.sql
+backend/.phpunit.result.cache
+backups
+certbot
+docs/audits
+**/node_modules

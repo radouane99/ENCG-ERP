@@ -1,6 +1,5 @@
-import React from 'react';
-import { ArrowLeft, Download, FileText } from 'lucide-react';
-import { Link, useParams } from 'react-router-dom';
+import { ArrowLeft,Download,FileText } from 'lucide-react';
+import { Link,useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import api from '@shared/lib/api';
 

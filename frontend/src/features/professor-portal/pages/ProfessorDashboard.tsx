@@ -1,47 +1,36 @@
-import React, { useRef, useState } from 'react';
+import React,{ useRef,useState } from 'react';
 import {
-  BookOpen,
-  Users,
-  Calendar,
-  CheckCircle,
-  Clock,
-  QrCode,
-  Building2,
-  Eye,
-  Zap,
-  FileSignature,
-  RotateCcw,
-  Sparkles,
-  PenTool,
-  ShieldCheck,
-  Download,
-  X,
-  UserX,
-  Award,
-  ArrowRight,
-  BrainCircuit,
-  Mic,
-  ArrowRightLeft,
-  MapPin,
-  TrendingUp,
-  Stamp,
-  CheckCircle2,
-  AlertTriangle,
-  GraduationCap,
-  FileText,
-  Shield,
-  Layers,
-  ChevronRight,
-  Activity,
-  BarChart3,
-  CalendarCheck,
-  RefreshCcw,
-  FileSpreadsheet
+BookOpen,
+Users,
+Calendar,
+CheckCircle,
+Clock,
+QrCode,
+Building2,
+Eye,
+Zap,
+FileSignature,
+RotateCcw,
+Sparkles,
+PenTool,
+ShieldCheck,
+Download,
+X,
+UserX,ArrowRight,
+BrainCircuit,
+Mic,
+ArrowRightLeft,
+MapPin,
+TrendingUp,
+Stamp,
+CheckCircle2,
+AlertTriangle,
+GraduationCap,Shield,RefreshCcw
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '@stores/authStore';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery,useQueryClient } from '@tanstack/react-query';
 import api from '@shared/lib/api';
 import { ProfAiCopilotModal } from '../components/ProfAiCopilotModal';
 import { QRScannerModal } from '../components/QRScannerModal';

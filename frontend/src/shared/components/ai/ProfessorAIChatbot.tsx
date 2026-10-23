@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { X, Calendar, FileText, Send, MessageSquare, Loader2 } from 'lucide-react';
+import React,{ useState,useRef,useEffect } from 'react';
+import { X,Calendar,FileText,Send,MessageSquare,Loader2 } from 'lucide-react';
 import { useAuthStore } from '@stores/authStore';
 import api from '@/shared/lib/api';
 import { toast } from 'sonner';

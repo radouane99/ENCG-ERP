@@ -1,5 +1,5 @@
 import { cn } from '@shared/lib/utils'
-import { decisionLabel, normalizeDecision } from '@shared/lib/lmd'
+import { decisionLabel,normalizeDecision } from '@shared/lib/lmd'
 
 export default function LmdBadge({
   decision,

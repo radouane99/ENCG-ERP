@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { X, Send, BarChart3, Calendar, FileText, AlertTriangle, Mic, MicOff, Sparkles } from 'lucide-react';
+import { useState,useEffect,useRef } from 'react';
+import { X,Send,BarChart3,Calendar,FileText,AlertTriangle,Mic,MicOff,Sparkles } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { useAuthStore } from '@stores/authStore';
 import { toast } from 'sonner';

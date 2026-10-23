@@ -1,4 +1,4 @@
-import { ShieldCheck, Clock3, FileSearch, BookOpen } from 'lucide-react';
+import { ShieldCheck,Clock3,FileSearch,BookOpen } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 
 interface ImpactSectionProps {

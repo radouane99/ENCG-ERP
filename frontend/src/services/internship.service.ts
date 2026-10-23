@@ -1,5 +1,5 @@
 import { api } from '@/api/axios';
-import type { Internship, PaginatedResponse, ApiResponse } from '@/types/models';
+import type { Internship,PaginatedResponse,ApiResponse } from '@/types/models';
 import type { StoreInternshipInput } from '@/schemas/internship.schema';
 
 export const InternshipService = {

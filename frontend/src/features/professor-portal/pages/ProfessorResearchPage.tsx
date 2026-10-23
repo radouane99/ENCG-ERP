@@ -1,19 +1,11 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { 
-  GraduationCap, 
-  BookOpen, 
-  Award, 
-  FileText, 
-  CheckCircle2, 
-  Clock, 
-  Download, 
-  Plus, 
-  Sparkles, 
-  Search, 
-  ExternalLink,
-  ShieldCheck,
-  Users
+import {
+GraduationCap,
+BookOpen,
+Award,Clock,
+Download,ShieldCheck,
+Users
 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { useQuery } from '@tanstack/react-query';

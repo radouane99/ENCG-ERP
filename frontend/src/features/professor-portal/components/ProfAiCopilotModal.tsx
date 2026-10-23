@@ -1,6 +1,5 @@
-import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { X, Sparkles, BookOpen, AlertTriangle, TrendingUp, Users } from 'lucide-react';
+import { motion,AnimatePresence } from 'framer-motion';
+import { X,Sparkles,BookOpen,AlertTriangle,TrendingUp,Users } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import api from '@shared/lib/api';
 import { Spinner } from '@shared/components/ui/Spinner';

@@ -1,46 +1,38 @@
 #!/usr/bin/env bash
-# Restore the latest gzip dump into a throwaway database, smoke-test, then drop it.
+# Restore into a fresh isolated database; never run application tests against a backup.
 set -euo pipefail
-DUMP="${1:-}"
-if [ -z "$DUMP" ]; then
-  DUMP=$(ls -1t backups/encg_erp_*.sql.gz 2>/dev/null | head -n 1 || true)
-fi
-if [ -z "$DUMP" ] || [ ! -f "$DUMP" ]; then
-  echo "Usage: $0 path/to/backup.sql.gz"
-  exit 1
-fi
-
-DRILL_DB="${DRILL_DB:-encg_erp_drill}"
+DUMP="${1:?Usage: restore-postgres-drill.sh path/to/backup.sql.gz}"
+[ -f "$DUMP" ] || { echo "Backup not found" >&2; exit 1; }
+DRILL_DB="${DRILL_DB:-encg_erp_drill_$(date +%Y%m%d_%H%M%S)}"
 USER_NAME="${DB_USERNAME:-encg_prod_user}"
+[[ "$DRILL_DB" =~ ^encg_erp_drill_[0-9_]+$ ]] || { echo "Unsafe drill database name" >&2; exit 1; }
+[[ "$USER_NAME" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]] || { echo "Invalid database role" >&2; exit 1; }
+[ "$DRILL_DB" != "${DB_DATABASE:-encg_erp}" ] || exit 1
 
+pg_container="${PG_CONTAINER:-}"
+if [ -z "$pg_container" ]; then
+  for candidate in encg_prod_postgres encg_postgres; do
+    if docker ps --format '{{.Names}}' | grep -qx "$candidate"; then pg_container="$candidate"; break; fi
+  done
+fi
 psql_in() {
-  if docker ps --format '{{.Names}}' | grep -qx 'encg_prod_postgres'; then
-    docker exec -i encg_prod_postgres psql -U "$USER_NAME" -d postgres "$@"
-  elif docker ps --format '{{.Names}}' | grep -qx 'encg_postgres'; then
-    docker exec -i encg_postgres psql -U "$USER_NAME" -d postgres "$@"
+  local database="$1"; shift
+  if [ -n "$pg_container" ]; then
+    docker exec -i "$pg_container" psql -X -v ON_ERROR_STOP=1 -U "$USER_NAME" -d "$database" "$@"
   else
-    PGPASSWORD="${DB_PASSWORD:?}" psql -h "${DB_HOST:-127.0.0.1}" -U "$USER_NAME" -d postgres "$@"
+    PGPASSWORD="${DB_PASSWORD:?}" psql -X -v ON_ERROR_STOP=1 -h "${DB_HOST:-127.0.0.1}" -U "$USER_NAME" -d "$database" "$@"
   fi
 }
-
-echo "Creating $DRILL_DB from $DUMP"
-psql_in -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '$DRILL_DB';" || true
-psql_in -c "DROP DATABASE IF EXISTS $DRILL_DB;"
-psql_in -c "CREATE DATABASE $DRILL_DB OWNER $USER_NAME;"
-
-if docker ps --format '{{.Names}}' | grep -qx 'encg_prod_postgres'; then
-  gunzip -c "$DUMP" | docker exec -i encg_prod_postgres psql -U "$USER_NAME" -d "$DRILL_DB" >/dev/null
-elif docker ps --format '{{.Names}}' | grep -qx 'encg_postgres'; then
-  gunzip -c "$DUMP" | docker exec -i encg_postgres psql -U "$USER_NAME" -d "$DRILL_DB" >/dev/null
-else
-  gunzip -c "$DUMP" | PGPASSWORD="${DB_PASSWORD:?}" psql -h "${DB_HOST:-127.0.0.1}" -U "$USER_NAME" -d "$DRILL_DB" >/dev/null
-fi
-
-if docker ps --format '{{.Names}}' | grep -qx 'encg_prod_backend'; then
-  docker exec -e DB_DATABASE="$DRILL_DB" encg_prod_backend php artisan test --filter=StudentTest || true
-elif docker ps --format '{{.Names}}' | grep -q '^encg_backend$'; then
-  docker exec -e DB_DATABASE="$DRILL_DB" encg_backend php artisan test --filter=StudentTest || true
-fi
-
-psql_in -c "DROP DATABASE IF EXISTS $DRILL_DB;"
-echo "Restore drill completed (database dropped)."
+created=0
+cleanup() {
+  if [ "$created" -eq 1 ]; then psql_in postgres -c "DROP DATABASE \"$DRILL_DB\";"; fi
+}
+trap cleanup EXIT
+# CREATE fails if the name exists: never terminate sessions or replace somebody else's database.
+psql_in postgres -c "CREATE DATABASE \"$DRILL_DB\" OWNER \"$USER_NAME\";"
+created=1
+gunzip -c "$DUMP" | psql_in "$DRILL_DB" >/dev/null
+tables=$(psql_in "$DRILL_DB" -At -c "SELECT count(*) FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE';")
+[ "$tables" -ge "${DRILL_MIN_TABLES:-100}" ] || { echo "Restored schema is incomplete" >&2; exit 1; }
+psql_in "$DRILL_DB" -c 'SELECT count(*) AS users FROM users; SELECT count(*) AS students FROM students; SELECT count(*) AS grades FROM grades;'
+echo "Restore verified: $tables tables. Isolated drill database will be removed."

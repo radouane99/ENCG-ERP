@@ -1,52 +1,38 @@
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState,useEffect,useMemo,useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import {
-  FileText,
-  Mail,
-  Zap,
-  CheckCircle,
-  AlertTriangle,
-  Loader2,
-  Users,
-  Shield,
-  Calendar,
-  Clock,
-  MapPin,
-  ChevronRight,
-  BarChart3,
-  Eye,
-  Download,
-  X,
-  MessageCircle,
-  Search,
-  QrCode,
-  Sparkles,
-  ShieldCheck,
-  Send,
-  Building2,
-  Award,
-  Layers,
-  CheckCircle2,
-  RefreshCw,
-  SlidersHorizontal,
-  LayoutGrid,
-  ListFilter,
-  CheckCheck,
-  Printer,
-  ChevronDown,
-  Info,
-  BadgeCheck,
-  Inbox,
-  Share2,
-  ExternalLink,
-  Maximize2,
+FileText,
+Mail,
+Zap,
+CheckCircle,
+AlertTriangle,
+Loader2,
+Users,
+Shield,
+Calendar,
+Clock,
+MapPin,
+ChevronRight,
+BarChart3,
+Eye,
+Download,
+X,
+MessageCircle,
+Search,
+QrCode,
+Sparkles,
+ShieldCheck,
+Send,Layers,
+CheckCircle2,
+RefreshCw,LayoutGrid,
+ListFilter,Printer,BadgeCheck,
+Inbox,ExternalLink
 } from 'lucide-react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery,useMutation,useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
-import { openAuthenticatedUrl, openCustomAttestationPdf, openStudentAttestationPdf } from '@shared/lib/documentAccess'
 import { examsApi } from '@shared/api/exams'
 import ManualProctorAssignmentModal from '../components/ManualProctorAssignmentModal'
 

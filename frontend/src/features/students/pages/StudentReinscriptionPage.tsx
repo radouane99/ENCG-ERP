@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import React,{ useState } from 'react';
+import { useQuery,useMutation,useQueryClient } from '@tanstack/react-query';
 import {
-  CheckCircle2, Sparkles, ArrowRight,
-  ShieldCheck, Download, User,
-  Building2, GraduationCap, Check, AlertTriangle
+CheckCircle2,Sparkles,ArrowRight,
+ShieldCheck,Download,User,
+Building2,GraduationCap,Check,AlertTriangle
 } from 'lucide-react';
 import api from '@shared/lib/api';
 import { toast } from 'sonner';

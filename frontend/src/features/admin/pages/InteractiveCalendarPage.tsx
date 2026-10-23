@@ -1,34 +1,30 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState,useEffect,useMemo } from 'react'
 import {
-  Sparkles,
-  ChevronLeft,
-  ChevronRight,
-  X,
-  Loader2,
-  AlertTriangle,
-  CheckCircle2,
-  Send,
-  Zap,
-  CalendarSync,
-  Calendar,
-  Filter,
-  FileText,
-  MapPin,
-  User,
-  Layers,
-  Search,
-  Check,
-  Building2,
-  Users
+Sparkles,
+ChevronLeft,
+ChevronRight,
+X,
+Loader2,
+AlertTriangle,
+CheckCircle2,
+Send,
+Zap,
+CalendarSync,
+Calendar,
+Filter,
+FileText,
+MapPin,
+User,Search,Building2,
+Users
 } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
 import { toast } from 'sonner'
-import { format, startOfWeek, addDays, addWeeks, isSameDay } from 'date-fns'
+import { format,startOfWeek,addDays,addWeeks,isSameDay } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { useAuthStore } from '@/stores/authStore'
-import { reorganizeSessionsWithoutResourceConflicts, PERFORMANCE_SLOTS } from '@/features/timetable/lib/timetablePerformanceStrategy'
-import { CustomSelect, SelectOption } from '@/shared/components/ui/CustomSelect'
+import { reorganizeSessionsWithoutResourceConflicts } from '@/features/timetable/lib/timetablePerformanceStrategy'
+import { CustomSelect,SelectOption } from '@/shared/components/ui/CustomSelect'
 
 type CalendarSession = {
   id: string | number

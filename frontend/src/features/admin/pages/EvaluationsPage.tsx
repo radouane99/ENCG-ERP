@@ -1,5 +1,4 @@
-﻿import React from 'react';
-import { Bell, BarChart2, MessageCircle } from 'lucide-react';
+﻿import { Bell,BarChart2,MessageCircle } from 'lucide-react';
 
 export default function EvaluationsPage() {
   return (

@@ -1,14 +1,14 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React,{ useState,useEffect,useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { gradesApi } from '@shared/api/grades';
-import { CheckCircle2, AlertCircle, Loader2, RefreshCw } from 'lucide-react';
+import { CheckCircle2,AlertCircle,Loader2,RefreshCw } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { decisionFromScore } from '@shared/lib/lmd';
 import LmdLegend from '@shared/components/academic/LmdLegend';
 import LmdBadge from '@shared/components/academic/LmdBadge';
 import PageHeader from '@shared/components/layout/PageHeader';
 function useDebounceCallback<T extends (...args: any[]) => any>(callback: T, delay: number) {
-  const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   return React.useCallback((...args: Parameters<T>) => {
     if (timeoutRef.current) {

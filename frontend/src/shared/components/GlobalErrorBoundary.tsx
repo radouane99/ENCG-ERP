@@ -1,5 +1,5 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { AlertTriangle, RefreshCcw, Home } from 'lucide-react';
+import { Component,ErrorInfo,ReactNode } from 'react';
+import { AlertTriangle,RefreshCcw,Home } from 'lucide-react';
 import { Button } from './ui/Button';
 import { Link } from 'react-router-dom';
 

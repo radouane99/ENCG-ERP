@@ -87,7 +87,7 @@ jobs:
           DB_PASSWORD: encg_password
 
       - name: 🧪 Execute Pest / PHPUnit Test Suite
-        run: php artisan test --env=testing
+        run: php artisan test --configuration=phpunit.postgres.xml --env=testing
         env:
           DB_CONNECTION: pgsql
           DB_HOST: 127.0.0.1
@@ -123,6 +123,9 @@ jobs:
       - name: 🔍 Linter Validation (oxlint)
         run: npm run lint
 
+      - name: Dependency security audit (blocking)
+        run: npm audit --audit-level=high
+
       - name: 🛡️ TypeScript Typecheck
         run: npx tsc --noEmit
 
@@ -132,9 +135,39 @@ jobs:
       - name: 🚀 Verify Production Vite Build
         run: npm run build
 
+      - name: Initial JavaScript budget
+        run: npm run build:stats
+
   e2e-critical-journeys:
     name: 🎭 Playwright — 8 parcours critiques
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: encg_e2e_test
+          POSTGRES_USER: encg_user
+          POSTGRES_PASSWORD: encg_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      APP_ENV: testing
+      APP_DEBUG: 'false'
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_DATABASE: encg_e2e_test
+      DB_USERNAME: encg_user
+      DB_PASSWORD: encg_password
+      CACHE_STORE: array
+      SESSION_DRIVER: array
+      QUEUE_CONNECTION: sync
+      MAIL_MAILER: array
+      AI_DRIVER: stub
     defaults:
       run:
         working-directory: ./frontend
@@ -148,10 +181,27 @@ jobs:
           cache: 'npm'
           cache-dependency-path: './frontend/package-lock.json'
       - run: npm ci
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: pdo_pgsql, pgsql, mbstring, dom, fileinfo, gd, zip, bcmath, intl
+      - name: Prepare real API against an isolated database
+        working-directory: ./backend
+        run: |
+          composer install --no-interaction --prefer-dist --no-progress
+          cp .env.example .env.testing
+          php artisan key:generate --env=testing
+          php artisan migrate --env=testing --force
+          php artisan db:seed --env=testing --class=E2eSmokeSeeder --force
+          php artisan serve --no-reload --env=testing --host=127.0.0.1 --port=8000 > /tmp/encg-e2e-api.log 2>&1 &
       - run: npx playwright install --with-deps chromium
+      - run: npm run build
       - run: npm run test:e2e
         env:
           CI: true
+          E2E_LIVE: '1'
+          E2E_PRODUCTION: '1'
+          E2E_API_URL: http://127.0.0.1:8000/api
 
   security-regression:
     name: 🔐 Security regression (P0 routes)
@@ -194,7 +244,7 @@ jobs:
           DB_DATABASE: encg_erp_test
           DB_USERNAME: encg_user
           DB_PASSWORD: encg_password
-      - run: php artisan test --env=testing --filter=SensitiveRoutesRequireAuthenticationTest
+      - run: php artisan test --configuration=phpunit.postgres.xml --env=testing --filter=SensitiveRoutesRequireAuthenticationTest
         env:
           DB_CONNECTION: pgsql
           DB_HOST: 127.0.0.1
@@ -229,37 +279,9 @@ jobs:
         continue-on-error: true
         run: php vendor/bin/pint --test
 
-      - name: 🛡️ Composer Security Audit
+      - name: Composer security audit (blocking)
         working-directory: ./backend
-        continue-on-error: true
-        env:
-          COMPOSER_PROCESS_TIMEOUT: 600
-        run: |
-          composer config --global process-timeout 600
-          # Packagist /security-advisories often times out on GHA (Composer exit 100).
-          # Retry network failures; fail the job only on real advisories.
-          attempt=1
-          max_attempts=4
-          while [ "$attempt" -le "$max_attempts" ]; do
-            set +e
-            composer audit --abandoned=report
-            status=$?
-            set -e
-            if [ "$status" -eq 0 ]; then
-              exit 0
-            fi
-            if [ "$status" -ne 100 ]; then
-              echo "composer audit completed with code ${status}."
-              exit 0
-            fi
-            echo "Packagist security-advisories timed out (attempt ${attempt}/${max_attempts})."
-            if [ "$attempt" -eq "$max_attempts" ]; then
-              echo "::warning::Packagist unreachable after ${max_attempts} attempts (curl timeout). Audit skipped this run."
-              exit 0
-            fi
-            sleep $((attempt * 10))
-            attempt=$((attempt + 1))
-          done
+        run: composer audit --locked --no-dev --abandoned=report
 
   backup-restore-drill:
     name: 🗄️ Postgres restore drill (manual)
@@ -269,8 +291,17 @@ jobs:
       - uses: actions/checkout@v5
         with:
           submodules: false
-      - name: Syntax-check restore scripts
+      - name: Restore an isolated PostgreSQL backup
         run: |
+          set -euo pipefail
           bash -n scripts/backup-postgres.sh
           bash -n scripts/restore-postgres-drill.sh
-          echo "Scripts parse. Run the drill on the VPS monthly (see PRODUCTION_CHECKLIST.md)."
+          docker run -d --name encg_ci_drill -e POSTGRES_PASSWORD=test-only postgres:16-alpine
+          trap 'docker rm -f encg_ci_drill' EXIT
+          for i in $(seq 1 30); do
+            docker exec encg_ci_drill pg_isready -U postgres && break
+            sleep 1
+          done
+          docker exec encg_ci_drill psql -U postgres -c 'CREATE TABLE users(id int); CREATE TABLE students(id int); CREATE TABLE grades(id int); INSERT INTO users VALUES (1);'
+          docker exec encg_ci_drill pg_dump -U postgres postgres | gzip > /tmp/encg_ci_drill.sql.gz
+          PG_CONTAINER=encg_ci_drill DB_USERNAME=postgres DRILL_MIN_TABLES=3 bash scripts/restore-postgres-drill.sh /tmp/encg_ci_drill.sql.gz

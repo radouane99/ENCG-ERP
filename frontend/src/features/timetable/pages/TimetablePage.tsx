@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React,{ useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { Calendar as CalendarIcon, MapPin, User, Search, Plus } from 'lucide-react';
+import { Calendar as CalendarIcon,MapPin,User,Search,Plus } from 'lucide-react';
 import api from '@/shared/lib/api';
-import { format, addDays, startOfWeek } from 'date-fns';
-import { fr, ar } from 'date-fns/locale';
+import { format,addDays,startOfWeek } from 'date-fns';
+import { fr,ar } from 'date-fns/locale';
 import { Button } from '@shared/components/ui/Button';
 import { Input } from '@shared/components/ui/Input';
 

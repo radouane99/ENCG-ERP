@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Briefcase, MapPin, Clock, Building2, Search, Filter, Send, CheckCircle2, XCircle } from 'lucide-react';
+import { useState } from 'react';
+import { Briefcase,MapPin,Clock,Building2,Search,Filter,Send,CheckCircle2,XCircle } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import api from '@/shared/lib/api';

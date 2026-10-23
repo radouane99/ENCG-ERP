@@ -1,40 +1,40 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
-  Calendar as CalendarIcon,
-  MapPin,
-  FileText,
-  Download,
-  AlertTriangle,
-  GraduationCap,
-  Plus,
-  BookOpen,
-  Stamp,
-  UserX,
-  MailCheck,
-  Sparkles,
-  ShieldCheck,
-  Award,
-  Clock,
-  ArrowRight,
-  Maximize2,
-  X,
-  Building2,
-  CheckCircle2,
-  BrainCircuit,
-  Compass,
-  Scale,
-  Users,
-  Layers,
-  Info,
-  RefreshCcw,
-  CheckCircle
+Calendar as CalendarIcon,
+MapPin,
+FileText,
+Download,
+AlertTriangle,
+GraduationCap,
+Plus,
+BookOpen,
+Stamp,
+UserX,
+MailCheck,
+Sparkles,
+ShieldCheck,
+Award,
+Clock,
+ArrowRight,
+Maximize2,
+X,
+Building2,
+CheckCircle2,
+BrainCircuit,
+Compass,
+Scale,
+Users,
+Layers,
+Info,
+RefreshCcw,
+CheckCircle
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import api from '@shared/lib/api';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { useCreateDocumentRequest, useDocumentTypes } from '@features/guichet/api/guichetApi';
+import { useCreateDocumentRequest,useDocumentTypes } from '@features/guichet/api/guichetApi';
 import { cn } from '@shared/lib/utils';
 import { openAuthenticatedUrl } from '@shared/lib/documentAccess';
 

@@ -1,26 +1,17 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@stores/authStore';
 import api from '@shared/lib/api';
 import {
-  Calendar,
-  Clock,
-  MapPin,
-  Users,
-  Download,
-  QrCode,
-  CheckCircle2,
-  RefreshCcw,
-  BookOpen,
-  CalendarDays,
-  Sparkles,
-  Layers,
-  ChevronRight,
-  Shield,
-  Eye,
-  Building2,
-  FileText,
-  FileSpreadsheet
+Calendar,
+Clock,
+MapPin,
+Users,
+Download,
+QrCode,
+CheckCircle2,
+RefreshCcw,CalendarDays,Shield,
+Eye
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { QRScannerModal } from '../components/QRScannerModal';

@@ -2,16 +2,16 @@
 
 namespace Tests\Unit;
 
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 
 /**
  * Tests Unitaires pour le Cahier de Texte Synchrone, la Certification du Service Fait
  * et le Bilan Annuel d'Activité Universitaire (CNU / MESRSFC).
- *
- * @group textbook
- * @group service-fait
- * @group annual-activity-report
  */
+#[Group('textbook')]
+#[Group('service-fait')]
+#[Group('annual-activity-report')]
 class TextbookAndAnnualActivityReportTest extends TestCase
 {
     /**

@@ -1,43 +1,41 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { 
-  Mic, 
-  MicOff, 
-  Sparkles, 
-  BookOpen, 
-  CheckCircle2, 
-  Save, 
-  FileText, 
-  Loader2, 
-  Clock, 
-  ShieldCheck,
-  RefreshCw,
-  Download,
-  Award,
-  Layers,
-  Volume2,
-  VolumeX,
-  Edit3,
-  Trash2,
-  Plus,
-  Search,
-  Printer,
-  ChevronDown,
-  Zap,
-  RotateCcw,
-  Calendar,
-  Users,
-  MapPin,
-  Check,
-  Compass,
-  PenTool,
-  Eraser,
-  X
+import React,{ useState,useEffect,useRef,useMemo } from 'react';
+import {
+Mic,
+MicOff,
+Sparkles,
+BookOpen,
+CheckCircle2,
+Save,
+FileText,
+Loader2,
+Clock,
+ShieldCheck,Download,
+Award,
+Layers,
+Volume2,
+VolumeX,
+Edit3,
+Trash2,
+Plus,
+Search,
+Printer,
+ChevronDown,
+Zap,
+RotateCcw,
+Calendar,
+Users,
+MapPin,
+Check,
+Compass,
+PenTool,
+Eraser,
+X
 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery,useMutation,useQueryClient } from '@tanstack/react-query';
 import api from '@/shared/lib/api';
 import { openAuthenticatedUrl } from '@shared/lib/documentAccess';
-import { CustomSelect, SelectOption } from '@shared/components/ui/CustomSelect';
+import { CustomSelect,SelectOption } from '@shared/components/ui/CustomSelect';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/stores/authStore';
 

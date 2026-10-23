@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Printer, ArrowLeft } from 'lucide-react'
+import { Printer,ArrowLeft } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import api from '@shared/lib/api'
 

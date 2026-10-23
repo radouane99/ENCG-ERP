@@ -20,7 +20,7 @@ use App\Http\Controllers\Api\RoomBookingController;
 use Illuminate\Support\Facades\Route;
 
 // Professor API — Accessible to Professors, Vacataires, and Academic Coordinators/Admins
-Route::middleware(['auth:sanctum', 'role:professor|vacataire|department-head|filiere-head|super-admin|institution-admin|director'])->prefix('v1/professor')->group(function () {
+Route::middleware(['auth:sanctum', 'institution.context', 'role:professor|vacataire|department-head|filiere-head|super-admin|institution-admin|director'])->prefix('v1/professor')->group(function () {
     Route::post('/attendance/session', [AttendanceController::class, 'createSession']);
     Route::get('/attendance/session/{id}/stats', [AttendanceController::class, 'sessionStats']);
 
@@ -49,7 +49,7 @@ Route::middleware(['auth:sanctum', 'role:professor|vacataire|department-head|fil
     });
 });
 
-Route::middleware(['auth:sanctum', 'role:professor|vacataire|department-head|filiere-head|super-admin|institution-admin|director'])->group(function () {
+Route::middleware(['auth:sanctum', 'institution.context', 'role:professor|vacataire|department-head|filiere-head|super-admin|institution-admin|director'])->group(function () {
     // Dashboard Stats
     Route::get('/dashboard/professor/stats', [DashboardController::class, 'getProfessorStats']);
     Route::get('/professor/dashboard/stats', [DashboardController::class, 'getProfessorStats']);
@@ -137,7 +137,7 @@ Route::middleware(['auth:sanctum', 'role:professor|vacataire|department-head|fil
     Route::post('/v1/professor-portal/grade-appeals/{id}/resolve', [GradeAppealController::class, 'resolve']);
 });
 
-Route::middleware(['auth:sanctum', 'role:professor|vacataire|department-head|filiere-head|super-admin|institution-admin|director'])->group(function () {
+Route::middleware(['auth:sanctum', 'institution.context', 'role:professor|vacataire|department-head|filiere-head|super-admin|institution-admin|director'])->group(function () {
     Route::get('/professor-portal/documents/{id}/pdf', [ProfessorPortalController::class, 'downloadDocumentPdf']);
     Route::get('/v1/professor-portal/documents/{id}/pdf', [ProfessorPortalController::class, 'downloadDocumentPdf']);
     Route::get('/v1/professor-portal/workload-pdf', [ProfessorPortalController::class, 'downloadWorkloadPdf']);

@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import api from '@shared/lib/api';
 import { toast } from 'sonner';
 import {
-  Landmark, TrendingUp, Send, FileText, AlertCircle,
-  Search, ArrowUpRight, ArrowDownRight, RefreshCcw, Check, X,
-  Printer, Award, CreditCard, Building2
+Landmark,TrendingUp,Send,FileText,AlertCircle,
+Search,ArrowUpRight,ArrowDownRight,RefreshCcw,Check,X,
+Printer,Award,CreditCard
 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 

@@ -1,8 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { 
-  Bot, Send, Sparkles, BookOpen, HelpCircle, CheckCircle2, 
-  Award, RefreshCw, Copy, Check, MessageSquare, Flame, 
-  ArrowRight, ShieldCheck, FileText, ChevronDown, Lightbulb
+import { useState,useRef,useEffect } from 'react';
+import {
+Bot,Send,Sparkles,BookOpen,CheckCircle2,RefreshCw,Copy,Check,Flame,Lightbulb
 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { useQuery } from '@tanstack/react-query';

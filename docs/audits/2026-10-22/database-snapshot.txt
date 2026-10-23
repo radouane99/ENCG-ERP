@@ -1,0 +1,200 @@
+BEGIN
+ public_tables 
+---------------
+           138
+(1 row)
+
+ database_size 
+---------------
+ 30 MB
+(1 row)
+
+      table_name      | estimated_rows | total_size 
+----------------------+----------------+------------
+ audit_logs           |           2318 | 3992 kB
+ grades               |              0 | 728 kB
+ notifications        |              0 | 440 kB
+ exam_seatings        |              0 | 368 kB
+ activity_log         |              0 | 336 kB
+ users                |              0 | 320 kB
+ students             |              0 | 312 kB
+ deliberation_juries  |              0 | 232 kB
+ failed_jobs          |              0 | 216 kB
+ module_pv_signatures |              0 | 208 kB
+ model_has_roles      |            119 | 176 kB
+ module_professor     |              0 | 168 kB
+(12 rows)
+
+          table_name          |        fk_column        
+------------------------------+-------------------------
+ campuses                     | institution_id
+ departments                  | institution_id
+ consent_logs                 | institution_id
+ data_access_logs             | institution_id
+ retention_policies           | institution_id
+ data_export_requests         | institution_id
+ data_export_requests         | processed_by
+ data_export_requests         | user_id
+ semesters                    | academic_year_id
+ filieres                     | department_id
+ filieres                     | responsable_id
+ specialities                 | filiere_id
+ groups                       | speciality_id
+ modules                      | institution_id
+ modules                      | speciality_id
+ module_professor             | group_id
+ rooms                        | campus_id
+ rooms                        | institution_id
+ room_equipment               | room_id
+ schedules                    | academic_year_id
+ schedules                    | institution_id
+ schedules                    | module_id
+ schedules                    | schedule_version_id
+ schedule_changes             | created_by
+ schedule_changes             | new_room_id
+ schedule_changes             | schedule_id
+ student_pathways             | filiere_id
+ student_pathways             | speciality_id
+ student_academic_history     | student_id
+ admission_campaigns          | academic_year_id
+ admission_campaigns          | filiere_id
+ applications                 | reviewed_by
+ student_registrations        | academic_validated_by
+ student_registrations        | admin_validated_by
+ professors                   | department_id
+ vacation_contracts           | approved_by_dept_id
+ vacation_contracts           | approved_by_hr_id
+ vacation_contracts           | group_id
+ vacation_contracts           | module_id
+ vacation_contracts           | user_id
+ vacation_sessions            | validated_by
+ vacation_payments            | approved_by
+ attendance_sessions          | created_by
+ attendance_sessions          | schedule_id
+ absence_justifications       | attendance_id
+ absence_justifications       | reviewed_by
+ absence_justifications       | student_id
+ exam_sessions                | semester_id
+ exams                        | group_id
+ exams                        | room_id
+ deliberations                | academic_year_id
+ deliberations                | filiere_id
+ deliberations                | group_id
+ deliberations                | institution_id
+ deliberations                | president_id
+ deliberations                | semester_id
+ deliberation_members         | deliberation_id
+ deliberation_members         | user_id
+ compensation_rules           | filiere_id
+ compensation_rules           | institution_id
+ project_defenses             | room_id
+ defense_juries               | project_defense_id
+ internship_reports           | reviewed_by
+ diplomas                     | academic_year_id
+ diplomas                     | filiere_id
+ diplomas                     | institution_id
+ diplomas                     | issued_by
+ diplomas                     | student_id
+ announcements                | author_id
+ conversations                | institution_id
+ messages                     | sender_id
+ tickets                      | assigned_to
+ tickets                      | user_id
+ ticket_replies               | ticket_id
+ ticket_replies               | user_id
+ book_copies                  | book_id
+ borrowings                   | book_copy_id
+ borrowings                   | issued_by
+ disciplinary_cases           | student_id
+ disciplinary_decisions       | decided_by
+ disciplinary_decisions       | disciplinary_case_id
+ clubs                        | institution_id
+ club_events                  | club_id
+ risk_predictions             | academic_year_id
+ room_bookings                | booked_by
+ room_bookings                | room_id
+ research_labs                | director_id
+ research_labs                | institution_id
+ publications                 | author_id
+ publications                 | research_lab_id
+ student_cards                | student_id
+ grade_entry_periods          | closed_by
+ grade_entry_periods          | opened_by
+ student_module_reservations  | semester_id
+ exam_seatings                | room_id
+ exam_surveillances           | room_id
+ professor_availabilities     | academic_year_id
+ professor_availabilities     | professor_id
+ professor_availabilities     | semester_id
+ exam_locking_audits          | user_id
+ ai_chat_messages             | user_id
+ convocations                 | room_id
+ academic_projects            | academic_year_id
+ academic_projects            | institution_id
+ academic_projects            | professor_supervisor_id
+ academic_projects            | student_id
+ document_requests            | document_type_id
+ internships                  | supervisor_id
+ final_projects               | room_id
+ final_projects               | student_id
+ final_projects               | supervisor_id
+ quizzes                      | module_id
+ schedule_versions            | academic_year_id
+ schedule_versions            | edt_campaign_id
+ schedule_versions            | filiere_id
+ schedule_versions            | semester_id
+ resit_eligibilities          | decided_by
+ resit_eligibilities          | exam_session_id
+ module_pv_signatures         | signed_by
+ research_publications        | student_id
+ generated_documents          | document_request_id
+ generated_documents          | student_id
+ module_validations           | validated_at_session_id
+ validation_audits            | user_id
+ academic_events              | academic_year_id
+ grade_audits                 | grade_id
+ grade_audits                 | user_id
+ exam_incidents               | exam_id
+ exam_incidents               | reported_by
+ exam_incidents               | student_id
+ notification_logs            | user_id
+ blockchain_certificates      | student_id
+ exam_pv_signatures           | exam_id
+ exam_pv_signatures           | room_id
+ exam_pv_signatures           | signed_by_id
+ grade_appeals                | assessment_id
+ grade_appeals                | grade_id
+ grade_appeals                | professor_id
+ grade_appeals                | resolved_by
+ deliberation_juries          | module_id
+ deliberation_juries          | user_id
+ recommendation_requests      | professor_id
+ recommendation_requests      | student_id
+ student_dossier_audit_logs   | admin_id
+ professor_substitutions      | created_by
+ professor_substitutions      | module_id
+ professor_document_requests  | department_id
+ professor_document_requests  | department_visa_by
+ professor_document_requests  | user_id
+ audit_logs                   | institution_id
+ deliberation_reopen_requests | deliberation_id
+ deliberation_reopen_requests | requested_by
+ deliberation_reopen_requests | second_approver_id
+ edt_campaigns                | opened_by
+ complaints                   | handled_by
+ complaints                   | student_id
+ textbooks                    | group_id
+ textbooks                    | module_id
+ textbooks                    | professor_id
+ textbooks                    | schedule_id
+ textbooks                    | user_id
+ filiere_quotas               | filiere_id
+ soutenances                  | examiner_id
+ soutenances                  | final_project_id
+ soutenances                  | internship_id
+ soutenances                  | president_id
+ soutenances                  | room_id
+ soutenances                  | supervisor_id
+(168 rows)
+
+COMMIT

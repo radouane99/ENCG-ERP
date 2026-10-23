@@ -1,6 +1,6 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery,useMutation,useQueryClient } from '@tanstack/react-query'
 import api from '@shared/lib/api'
-import { DocumentRequest, DocumentType } from '../model/types'
+import { DocumentRequest,DocumentType } from '../model/types'
 
 type UpdateRequestStatusInput = {
   id: number

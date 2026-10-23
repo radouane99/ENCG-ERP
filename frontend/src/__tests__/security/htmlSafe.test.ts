@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest'
-import { escapeHtml, formatSafeRichText, isPasswordPolicyValid } from '@shared/lib/htmlSafe'
+import { describe,it,expect } from 'vitest'
+import { escapeHtml,formatSafeRichText,isPasswordPolicyValid } from '@shared/lib/htmlSafe'
 
 describe('htmlSafe — XSS and password policy', () => {
   it('escapes HTML tags in chatbot-style content', () => {

@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react'
+import React,{ useState,useEffect } from 'react'
 import {
-  Building2, Sparkles, GraduationCap, Users, BookOpen, Search, Plus,
-  Edit2, Trash2, X, CheckCircle2,
-  Printer, Eye, Award
+Building2,Sparkles,GraduationCap,Users,BookOpen,Search,Plus,
+Edit2,Trash2,X,CheckCircle2,
+Printer,Eye,Award
 } from 'lucide-react'
-import { cn, cleanUtf8Text } from '@shared/lib/utils'
+import { cn,cleanUtf8Text } from '@shared/lib/utils'
 import api from '@shared/lib/api'
-import { openDepartmentOrdreDeServicePdf, openDepartmentArreteNominationPdf } from '@shared/lib/documentAccess'
+import { openDepartmentOrdreDeServicePdf,openDepartmentArreteNominationPdf } from '@shared/lib/documentAccess'
 import { toast } from 'sonner'
 import CustomSelect from '@/shared/components/ui/CustomSelect'
 

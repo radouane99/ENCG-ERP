@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React,{ useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Kanban, MoreVertical, Plus, MessageSquare, Paperclip, Calendar as CalendarIcon, Move, CheckCircle2, User, Building, Search, Filter } from 'lucide-react';
+import { Kanban,Calendar as CalendarIcon,Move,User,Building,Search } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery,useMutation,useQueryClient } from '@tanstack/react-query';
 import api from '@/shared/lib/api';
 import { Spinner } from '@shared/components/ui/Spinner';
 import { toast } from 'sonner';

@@ -2,6 +2,7 @@ import { z } from 'zod'
 
 export const gradeEntrySchema = z.object({
   student_id: z.number().int().positive(),
+  version: z.number().int().nonnegative(),
   value: z
     .number()
     .min(0, 'Grade must be at least 0')

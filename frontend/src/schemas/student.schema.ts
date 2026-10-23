@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { StudentStatus, Gender } from '@/types/models';
+import type { StudentStatus,Gender } from '@/types/models';
 
 // ── Student Schemas (mirrors StoreStudentRequest / UpdateStudentRequest) ──────
 

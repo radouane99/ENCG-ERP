@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Map, Cpu, Zap, Thermometer, Users, AlertCircle, Video, Maximize, Sparkles, Power, Wind, ShieldAlert, Radio, Activity, RefreshCw, X, Check, Volume2 } from 'lucide-react';
+import { Map,Cpu,Thermometer,Video,Power,Wind,ShieldAlert,Radio,Activity,RefreshCw,X } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import api from '@shared/lib/api';

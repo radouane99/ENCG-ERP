@@ -1,14 +1,12 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import {
-  GraduationCap, Building2, Briefcase, TrendingUp,
-  Search, Filter, MapPin, Link, Mail, CheckCircle2, Users
+GraduationCap,Building2,Briefcase,TrendingUp,
+Search,Filter,MapPin,Link,Mail,CheckCircle2,Users
 } from 'lucide-react'
 import api from '@shared/lib/api'
-import { cn } from '@shared/lib/utils'
 import { Button } from '@shared/components/ui/Button'
-import { Badge } from '@shared/components/ui/Badge'
 import { Input } from '@shared/components/ui/Input'
 
 export default function AlumniNetwork() {

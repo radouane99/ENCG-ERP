@@ -1,8 +1,8 @@
-import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import React,{ useState,useRef,useEffect,useCallback,useMemo } from 'react';
 import {
-  X, Send, Loader2, Sparkles, RefreshCw,
-  BookOpen, Calendar, FileText, BarChart2, HelpCircle,
-  Minimize2, Maximize2, Bot, User
+X,Send,Loader2,Sparkles,RefreshCw,
+BookOpen,Calendar,FileText,BarChart2,HelpCircle,
+Minimize2,Maximize2,Bot,User
 } from 'lucide-react';
 import { useAuthStore } from '@stores/authStore';
 import api from '@shared/lib/api';

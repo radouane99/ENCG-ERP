@@ -22,12 +22,16 @@ abstract class TestCase extends BaseTestCase
         putenv('APP_ENV=testing');
         $_ENV['APP_ENV'] = 'testing';
         $_SERVER['APP_ENV'] = 'testing';
-        putenv('DB_CONNECTION=sqlite');
-        $_ENV['DB_CONNECTION'] = 'sqlite';
-        $_SERVER['DB_CONNECTION'] = 'sqlite';
-        putenv('DB_DATABASE=:memory:');
-        $_ENV['DB_DATABASE'] = ':memory:';
-        $_SERVER['DB_DATABASE'] = ':memory:';
+        $connection = getenv('ENCG_TEST_DATABASE') === 'pgsql' ? 'pgsql' : 'sqlite';
+        $database = $connection === 'pgsql' ? (getenv('DB_DATABASE') ?: 'encg_erp_test') : ':memory:';
+        if ($connection === 'pgsql' && ! preg_match('/_test$/', $database)) {
+            throw new \RuntimeException('PostgreSQL tests require a dedicated database ending in _test.');
+        }
+        foreach (['DB_CONNECTION' => $connection, 'DB_DATABASE' => $database] as $key => $value) {
+            putenv($key.'='.$value);
+            $_ENV[$key] = $value;
+            $_SERVER[$key] = $value;
+        }
         putenv('SESSION_DRIVER=array');
         $_ENV['SESSION_DRIVER'] = 'array';
         $_SERVER['SESSION_DRIVER'] = 'array';
@@ -55,7 +59,7 @@ abstract class TestCase extends BaseTestCase
         parent::setUp();
 
         config([
-            'database.default' => 'sqlite',
+            'database.default' => getenv('ENCG_TEST_DATABASE') === 'pgsql' ? 'pgsql' : 'sqlite',
             'database.connections.sqlite.database' => ':memory:',
             'session.driver' => 'array',
             'cache.default' => 'array',

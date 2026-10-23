@@ -1,5 +1,5 @@
-﻿import React, { useState, useEffect } from 'react';
-import { AlertTriangle, BrainCircuit, Activity, ChevronRight, UserX, AlertOctagon } from 'lucide-react';
+﻿import { useState,useEffect } from 'react';
+import { AlertTriangle,BrainCircuit,Activity,ChevronRight,UserX,AlertOctagon } from 'lucide-react';
 import api from '@/shared/lib/api';
 
 export default function PredictiveDashboard() {

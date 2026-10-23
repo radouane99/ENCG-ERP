@@ -10,6 +10,7 @@ const api = axios.create({
     'X-Requested-With': 'XMLHttpRequest',
   },
   withCredentials: true,
+  timeout: 30_000,
 })
 
 // ── Request Interceptor ────────────────────────────────────────

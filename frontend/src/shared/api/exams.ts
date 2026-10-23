@@ -1,5 +1,5 @@
 import api from '@shared/lib/api';
-import type { ExamPayload, RoomConflictPayload } from '../../types/models';
+import type { ExamPayload,RoomConflictPayload } from '../../types/models';
 
 export const examsApi = {
   // Exams

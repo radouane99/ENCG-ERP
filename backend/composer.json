@@ -1,6 +1,5 @@
 {
   "name": "encg/erp-backend",
-  "version": "1.0.0",
   "description": "ENCG ERP — University Management Platform for Moroccan Public Universities",
   "keywords": [
     "laravel",
@@ -29,21 +28,21 @@
     "simplesoftwareio/simple-qrcode": "^4.2",
     "smalot/pdfparser": "^2.12",
     "spatie/laravel-activitylog": "^4.10",
-    "spatie/laravel-backup": "*",
+    "spatie/laravel-backup": "^10.3",
     "spatie/laravel-medialibrary": "^11.11",
     "spatie/laravel-permission": "^6.10"
   },
   "require-dev": {
     "fakerphp/faker": "^1.23",
-    "larastan/larastan": "*",
-    "laravel/pint": "*",
+    "larastan/larastan": "^3.13",
+    "laravel/pint": "^1.32",
     "laravel/sail": "^1.41",
     "laravel/telescope": "^5.20",
     "mockery/mockery": "^1.6",
     "nunomaduro/collision": "^8.0",
     "pestphp/pest": "^3.8",
     "pestphp/pest-plugin-laravel": "^3.2",
-    "phpstan/phpstan": "*"
+    "phpstan/phpstan": "^2.3"
   },
   "autoload": {
     "psr-4": {

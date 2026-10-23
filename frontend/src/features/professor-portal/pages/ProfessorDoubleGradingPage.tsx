@@ -1,14 +1,12 @@
-import React, { useState } from 'react';
-import { 
-  ShieldCheck, 
-  AlertTriangle, 
-  CheckCircle2, 
-  FileText, 
-  Search, 
-  ArrowRightLeft, 
-  Save, 
-  Sparkles,
-  Scale
+import { useState } from 'react';
+import {
+ShieldCheck,
+AlertTriangle,
+CheckCircle2,
+FileText,
+Search,
+ArrowRightLeft,
+Save,Scale
 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { useQuery } from '@tanstack/react-query';

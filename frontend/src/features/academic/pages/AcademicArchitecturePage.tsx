@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Building2, GraduationCap, Users, Sparkles } from 'lucide-react'
+import { Building2,GraduationCap,Users,Sparkles } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import DepartmentList from '../components/DepartmentList'
 import FiliereList from '../components/FiliereList'

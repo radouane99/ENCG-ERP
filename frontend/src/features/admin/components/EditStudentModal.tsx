@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { X, Loader2, Save } from 'lucide-react'
+import { useState,useEffect } from 'react'
+import { X,Loader2,Save } from 'lucide-react'
 import { studentsApi } from '@shared/api/students'
 import { academicApi } from '@shared/api/academic'
 

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Award, Search, CheckCircle, Printer } from 'lucide-react'
+import { Award,Search,CheckCircle,Printer } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 
 export default function DiplomasPage() {

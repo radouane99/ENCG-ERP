@@ -1,12 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react'
-import { Link, useParams, useNavigate } from 'react-router-dom'
+import React,{ useState,useEffect,useRef } from 'react'
+import { useParams,useNavigate } from 'react-router-dom'
 import {
-  ShieldCheck, ArrowLeft, Printer, Download, Search, CheckCircle2,
-  XCircle, AlertTriangle, Clock, UserCheck, Eye, RefreshCw,
-  Sparkles, FileText, Lock, ShieldAlert, Award, UserX, AlertCircle, Check, X, Camera, QrCode,
-  Grid, List, Volume2, VolumeX, CheckSquare, Zap, FileCheck, UserPlus, Package, ChevronDown
+ShieldCheck,ArrowLeft,Printer,Search,CheckCircle2,
+XCircle,AlertTriangle,Clock,Sparkles,FileText,Lock,ShieldAlert,UserX,Check,X,Camera,QrCode,
+Grid,List,Volume2,VolumeX,CheckSquare,Zap,FileCheck,Package,ChevronDown
 } from 'lucide-react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery,useMutation,useQueryClient } from '@tanstack/react-query'
 import api from '@shared/lib/api'
 import { openAuthenticatedUrl } from '@shared/lib/documentAccess'
 import { cn } from '@shared/lib/utils'

@@ -28,7 +28,7 @@ use App\Http\Middleware\EnsureInstitutionContext;
 use Illuminate\Support\Facades\Route;
 
 // Mobile App Student Portal API
-Route::middleware(['auth:sanctum', 'role:student', EnsureInstitutionContext::class])->prefix('v1/mobile/student')->group(function () {
+Route::middleware(['auth:sanctum', 'institution.context', 'role:student', EnsureInstitutionContext::class])->prefix('v1/mobile/student')->group(function () {
     Route::get('/profile', [MobileStudentController::class, 'profile']);
     Route::get('/schedule', [MobileStudentController::class, 'schedule']);
     Route::get('/grades', [MobileStudentController::class, 'grades']);
@@ -161,7 +161,7 @@ $studentPortalRoutes = function () {
     Route::get('/diploma-supplement/pdf', [DiplomaSupplementController::class, 'download']);
 };
 
-Route::middleware(['auth:sanctum', 'role:student'])->prefix('v1/student-portal')->group($studentPortalRoutes);
-Route::middleware(['auth:sanctum', 'role:student'])->prefix('student-portal')->group($studentPortalRoutes);
-Route::middleware(['auth:sanctum', 'role:student'])->prefix('v1/student')->group($studentPortalRoutes);
-Route::middleware(['auth:sanctum', 'role:student'])->prefix('student')->group($studentPortalRoutes);
+Route::middleware(['auth:sanctum', 'institution.context', 'role:student'])->prefix('v1/student-portal')->group($studentPortalRoutes);
+Route::middleware(['auth:sanctum', 'institution.context', 'role:student'])->prefix('student-portal')->group($studentPortalRoutes);
+Route::middleware(['auth:sanctum', 'institution.context', 'role:student'])->prefix('v1/student')->group($studentPortalRoutes);
+Route::middleware(['auth:sanctum', 'institution.context', 'role:student'])->prefix('student')->group($studentPortalRoutes);

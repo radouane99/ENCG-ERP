@@ -1,15 +1,13 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState,useEffect,useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import api from '@shared/lib/api';
 import { academicApi } from '@shared/api/academic';
 import { toast } from 'sonner';
 import {
-  Settings, Building2, Image as ImageIcon, Calendar, ShieldCheck, Scale, Check, Save,
-  Upload, RefreshCw, Loader2, Sparkles, FileSignature, Lock, Bell, CheckCircle2,
-  Database, HelpCircle, Layers, Globe, Mail, Phone, MapPin, UserCheck, HardDrive, AlertOctagon, Cpu,
-  Archive, ArrowRight, CheckCircle, AlertTriangle, Users, GraduationCap, ArrowUpRight,
-  QrCode, Sliders, ExternalLink, Send, ShieldAlert, KeyRound, Clock, Eye, Copy
+Settings,Building2,Image as ImageIcon,Calendar,ShieldCheck,Scale,Save,
+Upload,RefreshCw,Loader2,Sparkles,FileSignature,CheckCircle2,Globe,Mail,Phone,MapPin,UserCheck,HardDrive,AlertOctagon,Cpu,
+Archive,ArrowRight,CheckCircle,GraduationCap,QrCode,Send,Clock,Eye,Copy
 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 

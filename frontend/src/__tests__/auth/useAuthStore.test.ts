@@ -1,5 +1,6 @@
-import { describe, it, expect, beforeEach } from 'vitest'
-import { useAuthStore, type User } from '@/stores/authStore'
+import { describe,it,expect,beforeEach,vi } from 'vitest'
+import { useAuthStore,type User } from '@/stores/authStore'
+import api from '@shared/lib/api'
 
 describe('useAuthStore — RBAC & State Management', () => {
   const mockStudentUser: User = {
@@ -58,5 +59,13 @@ describe('useAuthStore — RBAC & State Management', () => {
     useAuthStore.setState({ user: null, isAuthenticated: false })
     expect(useAuthStore.getState().user).toBeNull()
     expect(useAuthStore.getState().isAuthenticated).toBe(false)
+  })
+
+  it('does not create an authenticated session from an HTML or malformed API response', async () => {
+    const get = vi.spyOn(api, 'get').mockResolvedValueOnce({ data: '<html>unavailable</html>' })
+    await useAuthStore.getState().fetchUser()
+    expect(useAuthStore.getState().isAuthenticated).toBe(false)
+    expect(useAuthStore.getState().isLoading).toBe(false)
+    get.mockRestore()
   })
 })

@@ -1,6 +1,5 @@
-import React from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { Printer, ArrowLeft } from 'lucide-react';
+import { useParams,Link } from 'react-router-dom';
+import { Printer,ArrowLeft } from 'lucide-react';
 
 import { useQuery } from '@tanstack/react-query';
 import api from '@shared/lib/api';

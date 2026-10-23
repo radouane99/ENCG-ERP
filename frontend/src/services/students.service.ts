@@ -1,6 +1,6 @@
 import { api } from '@/api/axios';
-import type { Student, PaginatedResponse, ApiResponse } from '@/types/models';
-import type { StoreStudentInput, UpdateStudentInput } from '@/schemas/student.schema';
+import type { Student,PaginatedResponse,ApiResponse } from '@/types/models';
+import type { StoreStudentInput,UpdateStudentInput } from '@/schemas/student.schema';
 
 // [FE-01] Typed query parameters — replaces Record<string, any>
 export interface StudentQueryParams {

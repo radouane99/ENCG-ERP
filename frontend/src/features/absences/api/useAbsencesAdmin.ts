@@ -1,6 +1,6 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery,useMutation,useQueryClient } from '@tanstack/react-query';
 import api from '@shared/lib/api';
-import { GlobalAbsenceStats, AbsenceJustification } from '../model/types';
+import { GlobalAbsenceStats,AbsenceJustification } from '../model/types';
 
 export const useAdminAbsenceStats = () => {
   return useQuery({

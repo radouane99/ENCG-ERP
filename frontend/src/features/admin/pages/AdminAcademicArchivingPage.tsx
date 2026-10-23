@@ -1,16 +1,13 @@
-import React, { useState, useMemo } from 'react';
+import React,{ useState,useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from '@shared/lib/api';
 import { academicApi } from '@shared/api/academic';
 import { openAuthenticatedUrl } from '@shared/lib/documentAccess';
 import { toast } from 'sonner';
 import {
-  Archive, ShieldCheck, Lock, Eye, Download, Check,
-  AlertTriangle, Users, GraduationCap, CheckCircle2, Search,
-  Filter, ArrowRight, Loader2, CheckCircle, Mail, FolderArchive, Cloud,
-  QrCode, Award, AlertCircle, Unlock, UserCheck, BookOpen, Clock,
-  ChevronRight, RefreshCw, X, Sparkles, FileSpreadsheet, Building2,
-  EyeOff, KeyRound, ShieldAlert, FileText
+Archive,ShieldCheck,Lock,Eye,Download,Check,
+AlertTriangle,Users,GraduationCap,CheckCircle2,Search,ArrowRight,Loader2,CheckCircle,Mail,FolderArchive,Cloud,
+QrCode,Award,AlertCircle,Unlock,Clock,RefreshCw,X,Sparkles,FileSpreadsheet,EyeOff,KeyRound,ShieldAlert,FileText
 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 

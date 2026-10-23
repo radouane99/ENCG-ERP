@@ -8,8 +8,6 @@ use App\Mail\StudentRegistrationSuccessMail;
 use App\Models\AcademicYear;
 use App\Models\AdmissionCampaign;
 use App\Models\Application;
-use App\Models\Filiere;
-use App\Models\Institution;
 use App\Models\Student;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -18,6 +16,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
+use Spatie\Permission\Models\Role;
 
 class RegisterUserService
 {
@@ -32,32 +31,33 @@ class RegisterUserService
             $cinClean = strtoupper(trim($data['cin'] ?? ''));
             $emailClean = strtolower(trim($data['email'] ?? ''));
 
-            $user = null;
-            if ($emailClean !== '') {
-                $user = User::where('email', $emailClean)->first();
-                if ($user && ! $this->isSameCandidate($user, $cneClean, $cinClean)) {
-                    throw ValidationException::withMessages([
-                        'email' => ['Cette adresse email est déjà utilisée par un autre compte. Veuillez utiliser une adresse email unique.'],
-                    ]);
-                }
+            // Public registration must never activate or overwrite an existing identity.
+            $existingApp = $this->findApplicationForCandidate($cneClean, $cinClean);
+            $existingUser = User::withTrashed()->where('email', $emailClean)->exists()
+                || Student::withTrashed()->where('cne', $cneClean)->exists();
+            if ($cinClean !== '' && Schema::hasColumn('users', 'cin')) {
+                $existingUser = $existingUser || User::withTrashed()->where('cin', $cinClean)->exists();
+            }
+            if ($existingUser || $existingApp) {
+                throw ValidationException::withMessages([
+                    'email' => ['Un dossier ou un compte existe déjà. Connectez-vous ou utilisez la récupération de mot de passe.'],
+                ]);
             }
 
-            $existingApp = $this->findApplicationForCandidate($cneClean, $cinClean);
-
-            if (! $user && $existingApp && ! empty($existingApp->email)) {
-                $user = User::where('email', strtolower($existingApp->email))->first();
-                if ($user && ! $this->isSameCandidate($user, $cneClean, $cinClean)) {
-                    throw ValidationException::withMessages([
-                        'email' => ['Cette adresse email est déjà utilisée par un autre compte. Veuillez utiliser une adresse email unique.'],
-                    ]);
-                }
+            $institutionId = (int) config('erp.institution_id', 1);
+            $academicYear = AcademicYear::where('institution_id', $institutionId)->where('is_current', true)->first();
+            $campaign = AdmissionCampaign::where('institution_id', $institutionId)
+                ->where('academic_year_id', $academicYear?->id)->where('status', 'open')->latest('id')->first();
+            if (! $campaign) {
+                throw ValidationException::withMessages(['email' => ['Les inscriptions sont actuellement fermées.']]);
             }
 
             $userAttributes = [
                 'name' => trim(($data['first_name'] ?? '').' '.($data['last_name'] ?? '')),
-                'email' => $emailClean ?: ($user->email ?? ('candidat_'.strtolower($cneClean ?: uniqid()).'@encg-fes.ma')),
-                'phone' => $data['phone'] ?? $user?->phone,
+                'email' => $emailClean,
+                'phone' => $data['phone'] ?? null,
                 'is_active' => true,
+                'institution_id' => $institutionId,
             ];
             if (Schema::hasColumn('users', 'cin') && $cinClean !== '') {
                 $userAttributes['cin'] = $cinClean;
@@ -66,39 +66,10 @@ class RegisterUserService
                 $userAttributes['cne'] = $cneClean;
             }
 
-            if ($user) {
-                if (! empty($data['password'])) {
-                    $userAttributes['password'] = Hash::make($data['password']);
-                }
-                $user->forceFill($userAttributes)->save();
-            } else {
-                $plainPassword = $data['password'] ?? throw new \InvalidArgumentException('Password required');
-                $userAttributes['password'] = Hash::make($plainPassword);
-                $user = User::provision($userAttributes);
-            }
-
-            // 2. Find an active Admission Campaign or create a default one
-            $campaign = AdmissionCampaign::where('status', 'open')->first();
-            $academicYear = AcademicYear::where('is_current', true)->first();
-
-            if (! $campaign) {
-                $institution = Institution::first();
-                $filiereModel = Filiere::where('name', 'like', '%'.($data['filiere'] ?? '').'%')->first()
-                                ?? Filiere::first();
-
-                if ($institution && $academicYear && $filiereModel) {
-                    $campaign = AdmissionCampaign::create([
-                        'institution_id' => $institution->id,
-                        'academic_year_id' => $academicYear->id,
-                        'filiere_id' => $filiereModel->id,
-                        'name' => 'Campagne d\'Admission '.$academicYear->label,
-                        'status' => 'open',
-                        'open_date' => now(),
-                        'close_date' => now()->addMonths(2),
-                        'target_capacity' => 500,
-                    ]);
-                }
-            }
+            $plainPassword = $data['password'] ?? throw new \InvalidArgumentException('Password required');
+            $userAttributes['password'] = Hash::make($plainPassword);
+            $user = User::provision($userAttributes);
+            $user->assignRole(Role::findOrCreate('student', 'sanctum'));
 
             // 3. Create or Update Application Record (Confirm Enrollment Intention)
             $app = $existingApp ?? $this->findApplicationForCandidate($cneClean, $cinClean);
@@ -158,43 +129,6 @@ class RegisterUserService
 
             return $user;
         });
-    }
-
-    private function isSameCandidate(User $user, string $cneClean, string $cinClean): bool
-    {
-        if ($this->isPrivilegedAccount($user)) {
-            return false;
-        }
-
-        $userCne = strtoupper(trim((string) ($user->cne ?? '')));
-        $userCin = strtoupper(trim((string) ($user->cin ?? '')));
-
-        if ($cneClean !== '' && $userCne !== '' && $userCne === $cneClean) {
-            return true;
-        }
-        if ($cinClean !== '' && $userCin !== '' && $userCin === $cinClean) {
-            return true;
-        }
-
-        if ($cneClean !== '') {
-            $studentByCne = Student::where('cne', $cneClean)->first();
-            if ($studentByCne && (int) $studentByCne->user_id === (int) $user->id) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private function isPrivilegedAccount(User $user): bool
-    {
-        if (method_exists($user, 'hasAnyRole') && $user->hasAnyRole([
-            'super-admin', 'institution-admin', 'admin', 'director', 'professor', 'staff',
-        ])) {
-            return true;
-        }
-
-        return $user->professor()->exists();
     }
 
     private function findApplicationForCandidate(string $cneClean, string $cinClean): ?Application

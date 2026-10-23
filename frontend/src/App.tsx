@@ -1,4 +1,4 @@
-import { Suspense, useEffect } from 'react'
+import { Suspense,useEffect } from 'react'
 import { useAuthStore } from '@stores/authStore'
 import LoadingScreen from '@shared/components/ui/LoadingScreen'
 import RootRouter from './app/routes/RootRouter'

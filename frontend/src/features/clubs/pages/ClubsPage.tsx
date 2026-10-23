@@ -1,6 +1,6 @@
-import { useState } from 'react'
-import { Users } from 'lucide-react'
-import { useTranslation } from 'react-i18next'
+import { useState } from 'react';
+import { Users } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export default function ClubsPage() { 
   const { t } = useTranslation('modules');

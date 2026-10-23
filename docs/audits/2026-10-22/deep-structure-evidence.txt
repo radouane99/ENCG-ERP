@@ -1,0 +1,106 @@
+BEGIN
+ database |                                         version                                          
+----------+------------------------------------------------------------------------------------------
+ encg_erp | PostgreSQL 16.15 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit
+(1 row)
+
+ public_tables 
+---------------
+           138
+(1 row)
+
+ contype | count 
+---------+-------
+ c       |     4
+ f       |   277
+ p       |   138
+ u       |    72
+(4 rows)
+
+      table_name       |                       definition                        
+-----------------------+---------------------------------------------------------
+ academic_years        | UNIQUE (institution_id, start_year)
+ academic_years        | CHECK ((start_date < end_date))
+ module_professor      | UNIQUE (module_id, professor_id)
+ student_registrations | UNIQUE (student_id, academic_year_id)
+ student_registrations | UNIQUE (student_id, academic_year_id, semester_number)
+ grades                | UNIQUE (student_id, assessment_id)
+ module_pv_signatures  | UNIQUE (module_id, group_id, academic_year_id, session)
+(7 rows)
+
+                 metric                 | count 
+----------------------------------------+-------
+ duplicate_assessment_type_keys         |    24
+ modules_with_duplicate_assessment_type |    12
+ duplicate_current_pathways             |     0
+ pathway_group_context_mismatch         |     0
+ registration_group_context_mismatch    |     0
+ grade_outside_0_20                     |     0
+ absent_with_numeric_grade              |    72
+ identity_birthdate_disagreement        |     1
+ null_group_duplicate_signature_keys    |     0
+(9 rows)
+
+ table_name  | column_name |          data_type          | is_nullable 
+-------------+-------------+-----------------------------+-------------
+ assessments | created_at  | timestamp without time zone | YES
+ assessments | date        | date                        | YES
+ assessments | id          | bigint                      | NO
+ assessments | module_id   | bigint                      | NO
+ assessments | type        | character varying           | NO
+ assessments | updated_at  | timestamp without time zone | YES
+ assessments | weight      | numeric                     | NO
+ students    | address     | character varying           | YES
+ students    | birth_date  | character varying           | YES
+ students    | cin         | character varying           | YES
+ students    | city        | character varying           | YES
+ users       | address     | character varying           | YES
+ users       | birth_date  | date                        | YES
+ users       | cin         | character varying           | YES
+ users       | city        | character varying           | YES
+(15 rows)
+
+ assignments_table | submissions_table 
+-------------------+-------------------
+                   | 
+(1 row)
+
+                     indexname                     |                                                                       indexdef                                                                       
+---------------------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------
+ academic_years_pkey                               | CREATE UNIQUE INDEX academic_years_pkey ON public.academic_years USING btree (id)
+ academic_years_institution_id_start_year_unique   | CREATE UNIQUE INDEX academic_years_institution_id_start_year_unique ON public.academic_years USING btree (institution_id, start_year)
+ module_professor_professor_id_idx                 | CREATE INDEX module_professor_professor_id_idx ON public.module_professor USING btree (professor_id)
+ module_professor_module_id_idx                    | CREATE INDEX module_professor_module_id_idx ON public.module_professor USING btree (module_id)
+ module_professor_pkey                             | CREATE UNIQUE INDEX module_professor_pkey ON public.module_professor USING btree (id)
+ module_professor_module_id_academic_year_id_index | CREATE INDEX module_professor_module_id_academic_year_id_index ON public.module_professor USING btree (module_id, academic_year_id)
+ unique_module_professor                           | CREATE UNIQUE INDEX unique_module_professor ON public.module_professor USING btree (module_id, professor_id)
+ module_professor_professor_id_index               | CREATE INDEX module_professor_professor_id_index ON public.module_professor USING btree (professor_id)
+ idx_mod_prof_year                                 | CREATE INDEX idx_mod_prof_year ON public.module_professor USING btree (academic_year_id, professor_id, module_id)
+ module_pv_signatures_pkey                         | CREATE UNIQUE INDEX module_pv_signatures_pkey ON public.module_pv_signatures USING btree (id)
+ module_group_year_session_sig_unique              | CREATE UNIQUE INDEX module_group_year_session_sig_unique ON public.module_pv_signatures USING btree (module_id, group_id, academic_year_id, session)
+ student_pathways_pkey                             | CREATE UNIQUE INDEX student_pathways_pkey ON public.student_pathways USING btree (id)
+ student_pathways_student_id_is_current_index      | CREATE INDEX student_pathways_student_id_is_current_index ON public.student_pathways USING btree (student_id, is_current)
+ idx_pathways_group_year_fast                      | CREATE INDEX idx_pathways_group_year_fast ON public.student_pathways USING btree (academic_year_id, group_id, student_id)
+ student_pathways_group_id_sub_group_index         | CREATE INDEX student_pathways_group_id_sub_group_index ON public.student_pathways USING btree (group_id, sub_group)
+(15 rows)
+
+COMMIT
+BEGIN
+             metric             | count 
+--------------------------------+-------
+ ordinary_weight_sum_not_100    |    12
+ absent_with_nonzero_grade      |     0
+ signature_year_disagrees_group |     0
+(3 rows)
+
+ current_year_id 
+-----------------
+               3
+(1 row)
+
+   column_name    | is_nullable | column_default 
+------------------+-------------+----------------
+ academic_year_id | NO          | '1'::bigint
+(1 row)
+
+COMMIT

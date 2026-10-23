@@ -1,0 +1,110 @@
+#0 building with "desktop-linux" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile.prod
+#1 transferring dockerfile: 2.31kB 0.0s done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/composer:2
+#2 ...
+
+#3 [internal] load metadata for docker.io/library/php:8.4-fpm-alpine
+#3 DONE 1.3s
+
+#2 [internal] load metadata for docker.io/library/composer:2
+#2 DONE 1.4s
+
+#4 [internal] load .dockerignore
+#4 transferring context: 297B done
+#4 DONE 0.0s
+
+#5 [stage-0  1/15] FROM docker.io/library/php:8.4-fpm-alpine@sha256:a49524d3cec4a77d1807d0878e5bb38146116ae5489ec60c367aee53bb9b0699
+#5 resolve docker.io/library/php:8.4-fpm-alpine@sha256:a49524d3cec4a77d1807d0878e5bb38146116ae5489ec60c367aee53bb9b0699 0.1s done
+#5 DONE 0.1s
+
+#6 FROM docker.io/library/composer:2@sha256:da624c2c705d54e2f5a9bb77a5dc6c7d091711433ebefd7035672e84c2010fee
+#6 resolve docker.io/library/composer:2@sha256:da624c2c705d54e2f5a9bb77a5dc6c7d091711433ebefd7035672e84c2010fee 0.1s done
+#6 DONE 0.1s
+
+#7 [internal] load build context
+#7 transferring context: 527.38kB 0.2s done
+#7 DONE 0.2s
+
+#8 [stage-0  7/15] WORKDIR /var/www/html
+#8 CACHED
+
+#9 [stage-0  8/15] COPY --chown=www:www backend/composer.json backend/composer.lock /var/www/html/
+#9 CACHED
+
+#10 [stage-0  4/15] RUN pecl install redis     && docker-php-ext-enable redis     && apk del autoconf 		dpkg-dev dpkg 		file 		g++ 		gcc 		libc-dev 		make 		pkgconf 		re2c
+#10 CACHED
+
+#11 [stage-0  6/15] RUN addgroup -g 1000 -S www     && adduser -u 1000 -S www -G www
+#11 CACHED
+
+#12 [stage-0  2/15] RUN apk add --no-cache     bash     curl     git     zip     unzip     libzip-dev     libpng-dev     libjpeg-turbo-dev     freetype-dev     icu-dev     oniguruma-dev     libxml2-dev     postgresql-dev     postgresql-client     fcgi     linux-headers     autoconf 		dpkg-dev dpkg 		file 		g++ 		gcc 		libc-dev 		make 		pkgconf 		re2c     tesseract-ocr     tesseract-ocr-data-fra     tesseract-ocr-data-ara     tesseract-ocr-data-eng     poppler-utils     ghostscript     imagemagick     imagemagick-pdf     imagemagick-dev
+#12 CACHED
+
+#13 [stage-0  5/15] COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+#13 CACHED
+
+#14 [stage-0  9/15] RUN mkdir -p /var/www/html/storage/logs              /var/www/html/storage/framework/cache              /var/www/html/storage/framework/sessions              /var/www/html/storage/framework/views              /var/www/html/bootstrap/cache              /var/www/html/vendor     && chown -R www:www /var/www/html
+#14 CACHED
+
+#15 [stage-0  3/15] RUN docker-php-ext-configure gd --with-freetype --with-jpeg     && docker-php-ext-install -j$(nproc)         pdo         pdo_pgsql         pgsql         mbstring         exif         pcntl         bcmath         gd         zip         intl         xml         opcache         sockets
+#15 CACHED
+
+#16 [stage-0 10/15] RUN composer install --no-dev --no-interaction --prefer-dist --no-scripts --no-autoloader
+#16 CACHED
+
+#17 [stage-0 11/15] COPY --chown=www:www backend/ /var/www/html/
+#17 DONE 0.5s
+
+#18 [stage-0 12/15] RUN mkdir -p storage/logs storage/framework/cache/data storage/framework/sessions storage/framework/views bootstrap/cache     && composer dump-autoload --no-dev --no-interaction --optimize --classmap-authoritative --no-scripts     && php artisan package:discover --ansi
+#18 0.663 Composer could not detect the root package (encg/erp-backend) version, defaulting to '1.0.0'. See https://getcomposer.org/root-version
+#18 0.735 Generating optimized autoload files (authoritative)
+#18 5.160 Generated optimized autoload files (authoritative) containing 8888 classes
+#18 5.660 
+#18 5.660    INFO  Discovering packages.  
+#18 5.660 
+#18 5.669   barryvdh/laravel-dompdf ............................................... DONE
+#18 5.670   laravel/horizon ....................................................... DONE
+#18 5.672   laravel/reverb ........................................................ DONE
+#18 5.673   laravel/sanctum ....................................................... DONE
+#18 5.674   laravel/sentinel ...................................................... DONE
+#18 5.676   laravel/socialite ..................................................... DONE
+#18 5.678   laravel/tinker ........................................................ DONE
+#18 5.680   maatwebsite/excel ..................................................... DONE
+#18 5.682   nesbot/carbon ......................................................... DONE
+#18 5.683   nunomaduro/termwind ................................................... DONE
+#18 5.684   resend/resend-laravel ................................................. DONE
+#18 5.686   sentry/sentry-laravel ................................................. DONE
+#18 5.687   simplesoftwareio/simple-qrcode ........................................ DONE
+#18 5.688   spatie/laravel-activitylog ............................................ DONE
+#18 5.689   spatie/laravel-backup ................................................. DONE
+#18 5.690   spatie/laravel-medialibrary ........................................... DONE
+#18 5.691   spatie/laravel-permission ............................................. DONE
+#18 5.692   spatie/laravel-signal-aware-command ................................... DONE
+#18 5.693 
+#18 DONE 5.8s
+
+#19 [stage-0 13/15] COPY docker/php/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+#19 DONE 0.1s
+
+#20 [stage-0 14/15] COPY docker/php/healthcheck.sh /usr/local/bin/healthcheck.sh
+#20 DONE 0.1s
+
+#21 [stage-0 15/15] RUN chmod +x /usr/local/bin/docker-entrypoint.sh /usr/local/bin/healthcheck.sh
+#21 DONE 0.4s
+
+#22 exporting to image
+#22 exporting layers
+#22 exporting layers 1.1s done
+#22 exporting manifest sha256:567d1ba66aaf67ddf3ed63d1f9f6a5202984a7bffddb02f59f0650576b9ca7d6 0.0s done
+#22 exporting config sha256:f13d8194f6859c0ffa37af616ea1c72cf5f00c7beab6baae106578aeb7bee514 0.0s done
+#22 exporting attestation manifest sha256:cf3abe6530e5399e18e4fd513cdd7beeaa498291cc81e8fb02dfdde438f45d59 0.0s done
+#22 exporting manifest list sha256:d4d23e1640e93c8c50a8e91b4db84fe87fa82a702cc2dec850c8657ec0f981b0
+#22 exporting manifest list sha256:d4d23e1640e93c8c50a8e91b4db84fe87fa82a702cc2dec850c8657ec0f981b0 0.0s done
+#22 naming to docker.io/library/encg-erp-audit:20261022 done
+#22 unpacking to docker.io/library/encg-erp-audit:20261022
+#22 unpacking to docker.io/library/encg-erp-audit:20261022 0.9s done
+#22 DONE 2.3s

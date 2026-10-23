@@ -1,6 +1,6 @@
-import { render, screen } from '@testing-library/react';
+import { render,screen } from '@testing-library/react';
 import ImpactSection from '../ImpactSection';
-import { describe, expect, it } from 'vitest';
+import { describe,expect,it } from 'vitest';
 
 describe('ImpactSection', () => {
   it('renders the section heading, public trust cards, and institution branding', () => {

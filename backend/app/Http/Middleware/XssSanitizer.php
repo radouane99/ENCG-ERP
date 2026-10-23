@@ -15,8 +15,9 @@ class XssSanitizer
     {
         $input = $request->all();
 
-        array_walk_recursive($input, function (&$value) {
-            if (is_string($value)) {
+        array_walk_recursive($input, function (&$value, $key) {
+            // Authentication secrets are opaque bytes, never HTML input.
+            if (is_string($value) && ! preg_match('/password|token|secret|code/i', (string) $key)) {
                 $value = strip_tags($value);
             }
         });

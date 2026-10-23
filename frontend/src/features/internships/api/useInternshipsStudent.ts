@@ -1,6 +1,6 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery,useMutation,useQueryClient } from '@tanstack/react-query';
 import api from '@shared/lib/api';
-import { Internship, InternshipDocument } from '../model/types';
+import { Internship,InternshipDocument } from '../model/types';
 
 export const useStudentInternships = () => {
   return useQuery({

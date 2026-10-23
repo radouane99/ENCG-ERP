@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { FileText, Calendar, UploadCloud, CheckCircle } from 'lucide-react'
+import { FileText,Calendar,UploadCloud,CheckCircle } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 
 export default function AssignmentsPage() {

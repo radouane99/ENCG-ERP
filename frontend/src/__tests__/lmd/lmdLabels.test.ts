@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest'
-import { decisionFromScore, decisionLabel, documentStatusLabel, normalizeDecision } from '@shared/lib/lmd'
+import { describe,it,expect } from 'vitest'
+import { decisionFromScore,decisionLabel,documentStatusLabel,normalizeDecision } from '@shared/lib/lmd'
 
 describe('LMD labels', () => {
   it('maps scores to V / RAT / NV', () => {

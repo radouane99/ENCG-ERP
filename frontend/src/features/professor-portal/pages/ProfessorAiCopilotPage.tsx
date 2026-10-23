@@ -1,8 +1,8 @@
-import React, { useState } from 'react'
-import { useQuery, useMutation } from '@tanstack/react-query'
-import { 
-  Sparkles, BrainCircuit, BookOpen, FileText, CheckCircle2, Printer,
-  Download, Loader2
+import React,{ useState } from 'react'
+import { useQuery,useMutation } from '@tanstack/react-query'
+import {
+Sparkles,BrainCircuit,BookOpen,FileText,CheckCircle2,Printer,
+Download,Loader2
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@shared/lib/utils'

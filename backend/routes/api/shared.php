@@ -29,9 +29,24 @@ use App\Http\Controllers\Api\TimetableExportController;
 use App\Http\Controllers\Api\UnifiedStudentRecordController;
 use App\Models\DocumentType;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Broadcast;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Route;
 
 // Public Documents, Diplomas & Cards Verification
+Route::get('/health/ready', function () {
+    try {
+        DB::select('SELECT 1');
+        if (config('queue.default') === 'redis' || config('cache.default') === 'redis') {
+            Redis::connection()->ping();
+        }
+
+        return response()->json(['ready' => true]);
+    } catch (Throwable $e) {
+        return response()->json(['ready' => false], 503);
+    }
+});
 Route::match(['get', 'post'], '/documents/universal-verify', [PublicVerificationController::class, 'universalVerify']);
 Route::get('/documents/verify/{documentId}', [PublicVerificationController::class, 'verifyDocument'])->name('document.verify');
 Route::get('/verify/document/{documentId}', [PublicVerificationController::class, 'verifyDocument'])->name('document.verify.direct');
@@ -42,7 +57,8 @@ Route::get('/verify/surveillance/{token}/confirm', [ConvocationController::class
 Route::match(['get', 'post'], '/blockchain/public-verify', [AdminBlockchainController::class, 'verify']);
 Route::match(['get', 'post'], '/verify/blockchain', [AdminBlockchainController::class, 'verify']);
 
-Route::middleware(['auth:sanctum'])->group(function () {
+Route::middleware(['auth:sanctum', 'institution.context'])->group(function () {
+    Route::post('/broadcasting/auth', fn (Request $request) => Broadcast::auth($request));
     Route::match(['get', 'post'], '/exams/{examId}/pv-pdf', [ExamPdfController::class, 'pvExamen']);
     Route::get('/user', function (Request $request) {
         return $request->user();
@@ -103,7 +119,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/export/{type}/{id}/pdf', [TimetableExportController::class, 'exportPdf']);
         Route::get('/export/{type}/{id}/ics', [TimetableExportController::class, 'exportIcs']);
         Route::get('/dates-config', [TimetableExportController::class, 'getDatesConfig']);
-        Route::post('/dates-config', [TimetableExportController::class, 'saveDatesConfig']);
+        Route::post('/dates-config', [TimetableExportController::class, 'saveDatesConfig'])
+            ->middleware('role:super-admin|admin|institution-admin|director|scolarite');
     });
 
     // Room Bookings & Real-time Availability

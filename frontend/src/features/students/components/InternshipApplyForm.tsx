@@ -4,9 +4,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
-import { Briefcase, FileText, Send, Calendar, Building2 } from 'lucide-react';
+import { Briefcase,FileText,Send,Calendar,Building2 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
-import { storeInternshipSchema, type StoreInternshipInput } from '@/schemas/internship.schema';
+import { storeInternshipSchema,type StoreInternshipInput } from '@/schemas/internship.schema';
 import { InternshipService } from '@/services/internship.service';
 import { extractValidationErrors } from '@/api/axios';
 

@@ -1,5 +1,4 @@
-import React from 'react';
-import { Briefcase, FileText, Star } from 'lucide-react';
+import { Briefcase,FileText,Star } from 'lucide-react';
 
 export default function ProfessorInternships() {
   return (

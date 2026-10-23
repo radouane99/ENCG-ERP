@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { X, Download, Printer, Loader2, FileText, CheckCircle2 } from 'lucide-react'
+import { useState,useEffect } from 'react'
+import { X,Download,Printer,Loader2,FileText,CheckCircle2 } from 'lucide-react'
 import api from '@shared/lib/api'
 
 interface DocumentViewerModalProps {

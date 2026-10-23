@@ -1,15 +1,13 @@
-import React, { useState, useMemo } from 'react';
-import { 
-  FileText, Plus, Clock, CheckCircle2, XCircle, 
-  Download, Send, AlertTriangle, Sparkles,
-  ShieldCheck, Lock, Check, X,
-  Building2, Eye, RefreshCcw, Search, Calendar,
-  HelpCircle, ExternalLink, Loader2,
-  FileSignature, Shield, Copy, CheckCheck, QrCode,
-  GraduationCap, Briefcase, Award, FileCheck, ArrowRight
+import { useState,useMemo } from 'react';
+import {
+FileText,Plus,Clock,CheckCircle2,XCircle,
+Download,Send,AlertTriangle,Sparkles,
+ShieldCheck,Lock,Check,X,
+Building2,Eye,RefreshCcw,Search,Calendar,ExternalLink,Loader2,
+FileSignature,Shield,Copy,CheckCheck,GraduationCap,Briefcase,Award,FileCheck
 } from 'lucide-react';
-import { motion, AnimatePresence, type Variants } from 'framer-motion';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { motion,AnimatePresence,type Variants } from 'framer-motion';
+import { useQuery,useMutation,useQueryClient } from '@tanstack/react-query';
 import api from '@shared/lib/api';
 import { toast } from 'sonner';
 import { cn } from '@shared/lib/utils';

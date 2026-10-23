@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Send, X, Bot, Sparkles, User, RefreshCw } from 'lucide-react';
+import { useState,useRef,useEffect } from 'react';
+import { Send,X,Bot,Sparkles,User,RefreshCw } from 'lucide-react';
 import api from '@shared/lib/api';
 
 interface ChatMessage {

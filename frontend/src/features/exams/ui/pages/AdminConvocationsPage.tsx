@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useAdminConvocations, useGenerateConvocations, usePublishConvocations } from '../../api/useConvocationsAdmin';
+import { useState } from 'react';
+import { useAdminConvocations,useGenerateConvocations,usePublishConvocations } from '../../api/useConvocationsAdmin';
 import LoadingScreen from '@shared/components/ui/LoadingScreen';
 import { ConvocationStatusBadge } from '../components/ConvocationStatusBadge';
 import { Button } from '@shared/components/ui/Button';

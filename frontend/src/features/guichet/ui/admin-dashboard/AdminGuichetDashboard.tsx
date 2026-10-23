@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { useAdminRequests, useUpdateDocumentRequestStatus } from '../../api/guichetApi';
-import { DocumentRequest, DocumentRequestStatus } from '../../model/types';
+import React,{ useState } from 'react';
+import { useAdminRequests,useUpdateDocumentRequestStatus } from '../../api/guichetApi';
+import { DocumentRequest,DocumentRequestStatus } from '../../model/types';
 import { documentStatusLabel } from '@shared/lib/lmd';
 import PageHeader from '@shared/components/layout/PageHeader';
 

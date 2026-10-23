@@ -1,7 +1,7 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import {
-  BarChart3, Download, Loader2, RefreshCw, Sparkles, FileText, Users, GraduationCap,
-  TrendingUp, BookOpen, PlaneTakeoff, CheckCircle2, AlertTriangle, Building2, Globe
+BarChart3,Download,Loader2,RefreshCw,Sparkles,FileText,Users,GraduationCap,
+TrendingUp,BookOpen,PlaneTakeoff,CheckCircle2,AlertTriangle,Building2,Globe
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import api from '@shared/lib/api'

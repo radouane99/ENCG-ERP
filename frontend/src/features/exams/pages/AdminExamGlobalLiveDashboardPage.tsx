@@ -1,10 +1,8 @@
-import { useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
-import { Eye, ArrowLeft, RefreshCw, Users, CheckCircle2, XCircle, BarChart3, AlertTriangle, MessageCircle } from 'lucide-react'
+import { Link,useParams } from 'react-router-dom'
+import { ArrowLeft,RefreshCw,Users,CheckCircle2,BarChart3 } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
-import { useQuery, useMutation } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { examsApi } from '@shared/api/exams'
-import { toast } from 'sonner'
 
 export default function AdminExamGlobalLiveDashboardPage() {
   const { sessionId } = useParams()

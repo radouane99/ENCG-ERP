@@ -1,6 +1,6 @@
-﻿import React, { useState, useEffect } from 'react';
-import { Briefcase, Building2, TrendingUp, Search, Calendar, GraduationCap } from 'lucide-react';
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Legend } from 'recharts';
+﻿import { useState,useEffect } from 'react';
+import { Briefcase,Building2,TrendingUp,Search,Calendar,GraduationCap } from 'lucide-react';
+import { PieChart,Pie,Cell,BarChart,Bar,XAxis,YAxis,CartesianGrid,Tooltip as RechartsTooltip,ResponsiveContainer,Legend } from 'recharts';
 import api from '@/shared/lib/api';
 
 export default function AlumniDashboard() {

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { FileText, QrCode, Download, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { useState } from 'react';
+import { FileText,QrCode,Download,ShieldCheck,CheckCircle2 } from 'lucide-react';
 import api from '@/shared/lib/api';
 import { toast } from 'sonner';
 

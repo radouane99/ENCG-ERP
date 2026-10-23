@@ -1,21 +1,21 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { 
-  QrCode, 
-  Camera, 
-  Search, 
-  CheckCircle, 
-  AlertTriangle, 
-  Clock, 
-  XCircle, 
-  FileText, 
-  MapPin, 
-  Loader2, 
-  ArrowLeft,
-  Volume2,
-  VolumeX,
-  Sparkles,
-  Wifi,
-  WifiOff,
+import { useState,useEffect,useRef,useMemo } from 'react';
+import {
+QrCode,
+Camera,
+Search,
+CheckCircle,
+AlertTriangle,
+Clock,
+XCircle,
+FileText,
+MapPin,
+Loader2,
+ArrowLeft,
+Volume2,
+VolumeX,
+Sparkles,
+Wifi,
+WifiOff,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';

@@ -2,17 +2,17 @@ import { useForm } from 'react-hook-form'
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate,useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { useEffect, useState } from 'react'
-import { Eye, EyeOff, LogIn, Mail, Lock, Sparkles, UserCheck, Shield } from 'lucide-react'
+import { useEffect,useState } from 'react'
+import { Eye,EyeOff,LogIn,Mail,Lock,Sparkles,UserCheck,Shield } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuthStore } from '@stores/authStore'
 import { Button } from '@shared/components/ui/Button'
 import { Input } from '@shared/components/ui/Input'
 import { cn } from '@shared/lib/utils'
 import { CndpPrivacyModal } from '@shared/components/ui/CndpPrivacyModal'
-import { fetchSsoProviders, type SsoProvider } from '@features/auth/api/sso'
+import { fetchSsoProviders,type SsoProvider } from '@features/auth/api/sso'
 
 const loginSchema = z.object({
   email: z.string().email('Email invalide'),

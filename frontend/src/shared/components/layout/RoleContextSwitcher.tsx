@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react'
+import { useState,useRef,useEffect } from 'react'
 import { useAuthStore } from '@stores/authStore'
-import { GraduationCap, Building2, Layers, ShieldCheck, ChevronDown, Check, Sparkles } from 'lucide-react'
+import { GraduationCap,Building2,Layers,ShieldCheck,ChevronDown,Check,Sparkles } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 
 export default function RoleContextSwitcher() {

@@ -1,10 +1,10 @@
-import { Link, useParams } from 'react-router-dom'
-import { Download, FileText, ArrowLeft, Loader2, Eye } from 'lucide-react'
+import { Link,useParams } from 'react-router-dom'
+import { Download,FileText,ArrowLeft,Loader2,Eye } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import { useQuery } from '@tanstack/react-query'
 import { examsApi } from '@shared/api/exams'
 import api from '@shared/lib/api'
-import { openExamDoorSignPdf, examDoorSignPdfUrl } from '@shared/lib/documentAccess'
+import { openExamDoorSignPdf,examDoorSignPdfUrl } from '@shared/lib/documentAccess'
 import { toast } from 'sonner'
 
 export default function AdminExamDisplayListPage() {

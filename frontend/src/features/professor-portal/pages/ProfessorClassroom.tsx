@@ -1,18 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useState,useEffect } from 'react';
+import { useParams,Link } from 'react-router-dom';
 import api from '@shared/lib/api';
 import { toast } from 'sonner';
-import { 
-  ChevronLeft, 
-  BookOpen, 
-  Megaphone, 
-  Paperclip, 
-  MessageCircle, 
-  Bot, 
-  Folder, 
-  Info,
-  Calendar,
-  Sparkles
+import {
+ChevronLeft,
+BookOpen,
+Megaphone,
+Paperclip,
+MessageCircle,
+Bot,
+Folder,
+Info,
+Calendar,
+Sparkles
 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 

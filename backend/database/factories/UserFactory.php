@@ -28,6 +28,7 @@ class UserFactory extends Factory
         $lastName = fake()->lastName();
 
         return [
+            'institution_id' => 1,
             'name' => "{$firstName} {$lastName}",  // legacy NOT NULL column
             'first_name' => $firstName,
             'last_name' => $lastName,

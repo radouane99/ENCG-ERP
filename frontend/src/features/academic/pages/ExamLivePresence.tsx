@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Eye, Download, ArrowLeft, Users, CheckCircle2, XCircle, RefreshCw } from 'lucide-react';
-import { Link, useParams } from 'react-router-dom';
+import { useState,useEffect } from 'react';
+import { Eye,Download,ArrowLeft,Users,CheckCircle2,XCircle,RefreshCw } from 'lucide-react';
+import { Link,useParams } from 'react-router-dom';
 import api from '@/shared/lib/api';
 
 export default function ExamLivePresence() {

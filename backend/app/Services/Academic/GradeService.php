@@ -3,6 +3,7 @@
 namespace App\Services\Academic;
 
 use App\Domain\Deliberation\LmdRules;
+use App\Exceptions\OptimisticLockException;
 use App\Models\Assessment;
 use App\Models\DisciplinaryCase;
 use App\Models\ExamIncident;
@@ -519,16 +520,13 @@ class GradeService
             $savedCount = 0;
 
             foreach ($gradesData as $gradeData) {
-                Grade::updateOrCreate(
-                    [
-                        'student_id' => $gradeData['student_id'],
-                        'assessment_id' => $gradeData['assessment_id'],
-                    ],
-                    [
-                        'value' => $gradeData['value'] ?? null,
-                        'absent' => $gradeData['absent'] ?? false,
-                    ]
-                );
+                $grade = Grade::where('student_id', $gradeData['student_id'])
+                    ->where('assessment_id', $gradeData['assessment_id'])->lockForUpdate()->first();
+                if ((int) ($gradeData['version'] ?? 0) !== (int) ($grade?->version ?? 0)) {
+                    throw new OptimisticLockException;
+                }
+                $grade ??= new Grade(['student_id' => $gradeData['student_id'], 'assessment_id' => $gradeData['assessment_id']]);
+                $grade->fill(['value' => $gradeData['value'] ?? null, 'absent' => $gradeData['absent'] ?? false])->save();
                 $savedCount++;
             }
 

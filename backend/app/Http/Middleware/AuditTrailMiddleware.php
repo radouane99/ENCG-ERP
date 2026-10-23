@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\AuditLog;
+use App\Support\AuditPayload;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -61,7 +62,7 @@ class AuditTrailMiddleware
             $user = $request->user() ?? Auth::user();
 
             // Clean sensitive parameters
-            $payload = $request->except([
+            $payload = AuditPayload::redact($request->except([
                 'password',
                 'password_confirmation',
                 'token',
@@ -69,7 +70,7 @@ class AuditTrailMiddleware
                 '_token',
                 'secret',
                 'two_factor_secret',
-            ]);
+            ]));
 
             // Determine Action Type, Event & Severity
             $path = $request->path();
@@ -139,7 +140,7 @@ class AuditTrailMiddleware
                     'event' => $event,
                     'description' => $description,
                     'method' => $method,
-                    'url' => $request->fullUrl(),
+                    'url' => $request->url(),
                     'ip_address' => $request->ip() ?: '127.0.0.1',
                     'user_agent' => substr($request->userAgent() ?? '', 0, 500),
                     'payload' => ! empty($payload) ? $payload : null,

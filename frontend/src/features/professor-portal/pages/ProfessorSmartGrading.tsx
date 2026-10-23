@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FileSignature, PenTool, Check, Sparkles, UploadCloud, AlertTriangle, CheckCircle2, ShieldCheck, Loader2 } from 'lucide-react';
-import { cn } from '@shared/lib/utils';
+import { FileSignature,PenTool,Sparkles,AlertTriangle,CheckCircle2,ShieldCheck,Loader2 } from 'lucide-react';
 import api from '@shared/lib/api';
 import { toast } from 'sonner';
 

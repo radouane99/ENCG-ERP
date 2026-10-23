@@ -1,6 +1,6 @@
 import { api } from '@/api/axios';
-import type { Professor, PaginatedResponse, ApiResponse } from '@/types/models';
-import type { StoreProfessorInput, UpdateProfessorInput } from '@/schemas/professor.schema';
+import type { Professor,PaginatedResponse,ApiResponse } from '@/types/models';
+import type { StoreProfessorInput,UpdateProfessorInput } from '@/schemas/professor.schema';
 
 // [FE-01] Typed query parameters — replaces Record<string, any>
 export interface ProfessorQueryParams {

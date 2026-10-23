@@ -1,21 +1,21 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { 
-  Calendar, 
-  Download, 
-  QrCode, 
-  MapPin, 
-  Clock, 
-  CheckCircle2, 
-  ShieldCheck, 
-  AlertCircle, 
-  Loader2, 
-  Ticket,
-  FileCheck2,
-  X,
-  Eye,
-  ExternalLink
+import {
+Calendar,
+Download,
+QrCode,
+MapPin,
+Clock,
+CheckCircle2,
+ShieldCheck,
+AlertCircle,
+Loader2,
+Ticket,
+FileCheck2,
+X,
+Eye,
+ExternalLink
 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { useAuthStore } from '@stores/authStore';

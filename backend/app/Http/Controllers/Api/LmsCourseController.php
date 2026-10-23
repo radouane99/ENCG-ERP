@@ -12,6 +12,7 @@ use App\Models\Module;
 use App\Models\ModuleProfessor;
 use App\Models\Professor;
 use App\Models\Schedule;
+use App\Services\Security\ClassroomAccessService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -191,6 +192,7 @@ class LmsCourseController extends Controller
     public function show(Request $request, string $id): JsonResponse
     {
         $module = Module::with(['filiere.department'])->findOrFail($id);
+        app(ClassroomAccessService::class)->authorize($request->user(), $module);
         $user = $request->user();
 
         // 1. Supports de cours (Documents & Vidéos)
@@ -254,7 +256,7 @@ class LmsCourseController extends Controller
 
         // 4. Salon du Groupe (Conversation et Messages réels)
         $conversation = Conversation::firstOrCreate(
-            ['name' => 'Classroom-Module-'.$module->id],
+            ['name' => 'Classroom-Module-'.$module->id, 'institution_id' => $module->institution_id],
             [
                 'institution_id' => $module->institution_id ?? 1,
                 'type' => 'group',
@@ -319,7 +321,10 @@ class LmsCourseController extends Controller
      */
     public function storeAnnouncement(Request $request, string $id): JsonResponse
     {
+        $accessModule = Module::findOrFail($id);
+        app(ClassroomAccessService::class)->authorize($request->user(), $accessModule, write: true);
         $module = Module::findOrFail($id);
+        app(ClassroomAccessService::class)->authorize($request->user(), $module);
 
         $request->validate([
             'content' => 'required|string|min:5|max:2000',
@@ -356,13 +361,14 @@ class LmsCourseController extends Controller
     public function storeMessage(Request $request, string $id): JsonResponse
     {
         $module = Module::findOrFail($id);
+        app(ClassroomAccessService::class)->authorize($request->user(), $module);
 
         $request->validate([
             'text' => 'required|string|min:1|max:1000',
         ]);
 
         $conversation = Conversation::firstOrCreate(
-            ['name' => 'Classroom-Module-'.$module->id],
+            ['name' => 'Classroom-Module-'.$module->id, 'institution_id' => $module->institution_id],
             [
                 'institution_id' => $module->institution_id ?? 1,
                 'type' => 'group',
@@ -392,6 +398,8 @@ class LmsCourseController extends Controller
      */
     public function storeMaterial(Request $request, string $id): JsonResponse
     {
+        $accessModule = Module::findOrFail($id);
+        app(ClassroomAccessService::class)->authorize($request->user(), $accessModule, write: true);
         $moduleId = (int) $id;
         $hasPermittedRole = $request->user()->roles->pluck('name')
             ->intersect(['super-admin', 'admin', 'institution-admin', 'professor', 'vacataire'])
@@ -444,6 +452,8 @@ class LmsCourseController extends Controller
      */
     public function submitAssignment(Request $request, string $id, string $assignmentId): JsonResponse
     {
+        $accessModule = Module::findOrFail($id);
+        app(ClassroomAccessService::class)->authorize($request->user(), $accessModule);
         $request->validate([
             'text' => 'nullable|string',
             'file' => 'nullable|file|mimes:pdf,doc,docx,zip|max:20480',

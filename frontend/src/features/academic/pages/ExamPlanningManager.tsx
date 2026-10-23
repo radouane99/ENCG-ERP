@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
-  Calendar, MapPin, Users, Clock, Mail, Printer, LayoutList,
-  ClipboardCheck, Activity, FileText, Zap, AlertCircle, CheckCircle2, Trash2
+Calendar,MapPin,Users,Clock,Mail,Printer,LayoutList,
+ClipboardCheck,Activity,FileText,Zap,AlertCircle,CheckCircle2,Trash2
 } from 'lucide-react';
 import api from '@/shared/lib/api';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { cn } from '@shared/lib/utils';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery,useMutation,useQueryClient } from '@tanstack/react-query';
 import { CustomSelect } from '@shared/components/ui';
 
 export default function ExamPlanningManager() {

@@ -1,41 +1,26 @@
-import React, { useState } from 'react'
+import React,{ useState } from 'react'
 import { useAuthStore } from '@stores/authStore'
 import { useQuery } from '@tanstack/react-query'
-import { 
-  Camera, 
-  Loader2, 
-  ShieldCheck, 
-  User, 
-  KeyRound, 
-  Lock, 
-  GraduationCap, 
-  Mail, 
-  Phone, 
-  MapPin, 
-  Calendar, 
-  Copy, 
-  Check, 
-  AlertTriangle, 
-  CheckCircle2, 
-  FileText, 
-  Shield, 
-  Building2,
-  Sparkles,
-  Info,
-  Eye,
-  EyeOff,
-  Laptop,
-  Smartphone,
-  Globe,
-  ShieldAlert,
-  LogOut,
-  RefreshCw,
-  Key,
-  Award,
-  Briefcase,
-  FileCheck2,
-  CheckCircle,
-  XCircle
+import {
+Camera,
+Loader2,
+ShieldCheck,
+User,
+KeyRound,
+Lock,
+GraduationCap,
+Mail,
+Phone,Copy,
+Check,CheckCircle2,
+FileText,
+Shield,
+Building2,Info,
+Eye,
+EyeOff,
+Laptop,
+Smartphone,ShieldAlert,
+LogOut,Briefcase,CheckCircle,
+XCircle
 } from 'lucide-react'
 import api from '@shared/lib/api'
 import { cn } from '@shared/lib/utils'

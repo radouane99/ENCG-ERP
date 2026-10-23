@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from '@/shared/lib/api';
-import { Award, CheckCircle2, ShieldCheck, Download, FileText, Sparkles, Building2, User } from 'lucide-react';
+import { Award,CheckCircle2,ShieldCheck,Download } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { toast } from 'sonner';
 import { openAuthenticatedUrl } from '@shared/lib/documentAccess';

@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Camera, QrCode, AlertTriangle, CheckCircle2, ShieldCheck, UserCheck, RefreshCw, Sparkles, Building, Loader2 } from 'lucide-react';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { Camera,QrCode,ShieldCheck,UserCheck,Sparkles } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import api from '@shared/lib/api';
 import { toast } from 'sonner';
 

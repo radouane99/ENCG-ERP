@@ -1,5 +1,5 @@
-import { Link, useParams } from 'react-router-dom'
-import { Printer, ArrowLeft, Loader2 } from 'lucide-react'
+import { Link,useParams } from 'react-router-dom'
+import { Printer,ArrowLeft,Loader2 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { examsApi } from '@shared/api/exams'
 

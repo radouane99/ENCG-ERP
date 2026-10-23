@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useDocumentTypes, useCreateDocumentRequest } from '../../api/guichetApi';
+import React,{ useState } from 'react';
+import { useDocumentTypes,useCreateDocumentRequest } from '../../api/guichetApi';
 
 export const DocumentRequestForm: React.FC = () => {
   const { data: documentTypes, isLoading } = useDocumentTypes();

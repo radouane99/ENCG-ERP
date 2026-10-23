@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate,useLocation } from 'react-router-dom'
 import { useAuthStore } from '@stores/authStore'
-import { 
-  Search, LogOut, User, Menu, ChevronDown, 
-  Sparkles, Settings, Command
+import {
+Search,LogOut,User,Menu,ChevronDown,
+Sparkles,Settings,Command
 } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import { ThemeToggle } from './ThemeToggle'

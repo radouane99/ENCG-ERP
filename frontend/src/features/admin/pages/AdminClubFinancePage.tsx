@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Landmark, ArrowLeft } from 'lucide-react'
+import { Landmark,ArrowLeft } from 'lucide-react'
 
 export default function AdminClubFinancePage() {
   return (
