@@ -64,4 +64,16 @@ class InitialEducationTuitionTest extends TestCase
         $this->postJson('/api/student-portal/reinscription/confirm', $this->contact())->assertOk();
         $this->assertDatabaseHas('student_registrations', ['student_id' => $student->id, 'payment_status' => 'paid']);
     }
+
+    public function test_only_authorized_administration_can_change_course_tuition_classification(): void
+    {
+        [$year, $f, $student, $admin] = $this->context('grande_ecole');
+        $professor = $this->makeTestProfessor(); $professor->user->assignRole(Role::findOrCreate('professor', 'sanctum'));
+        Sanctum::actingAs($professor->user);
+        $this->putJson('/api/filieres/'.$f->id, ['type' => 'master_universite'])->assertForbidden();
+        $this->assertSame('grande_ecole', $f->fresh()->type);
+        Sanctum::actingAs($admin);
+        $this->getJson('/api/filieres/'.$f->id)->assertOk()->assertJsonPath('data.payment_required', false);
+        $this->postJson('/api/filieres', ['code' => 'SYN-MASTER-DU', 'name' => 'Master université synthétique', 'type' => 'master_universite', 'duration_years' => 2])->assertCreated()->assertJsonPath('data.payment_required', true);
+    }
 }

@@ -267,6 +267,8 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:admin|super-admi
 
     // Campagne de Réinscription des Étudiants Admis
     Route::get('/admin/reinscriptions/stats', [ReinscriptionController::class, 'getAdminStats']);
+    Route::get('/admin/reinscriptions/export', [ReinscriptionController::class, 'exportRoster']);
+    Route::post('/admin/reinscriptions/{student}/physical-review', [ReinscriptionController::class, 'verifyPhysical']);
     Route::post('/admin/reinscriptions/send-reminders', [ReinscriptionController::class, 'sendReminders']);
 
     // Official APOGEE Ministerial Export (MESRSFC)

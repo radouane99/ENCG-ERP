@@ -14,7 +14,7 @@ BrainCircuit,Landmark,ShieldCheck,Globe,PlaneTakeoff,Lock,Sparkles,Compass,
 X,IdCard,Eye,Calculator,TrendingUp,Search,BellRing,
 UserX,Gavel,CalendarCheck,MailCheck,FileEdit,UserCog,UserCheck,
 Clock3,DoorOpen,HeartHandshake,CreditCard,Stamp,
-FilterX,Archive,Key,Mic,ArrowRightLeft,Scale
+FilterX,Archive,Key,Mic,ArrowRightLeft,Scale,RefreshCw
 } from 'lucide-react'
 
 interface NavItem {
@@ -62,10 +62,10 @@ const navigation: (NavItem | NavGroup)[] = [
     items: [
       { label: 'Guichet Unique & Demandes', labelAr: 'الشباك والطلبات الإدارية', href: '/admin/guichet', icon: ClipboardList, badge: 'SLA', roles: ['super-admin', 'institution-admin', 'director', 'scolarite'] },
       { label: 'Gestion des Étudiants', labelAr: 'إدارة الطلبة', href: '/admin/students', icon: Users, roles: ['super-admin', 'institution-admin', 'director', 'scolarite'] },
-      { label: 'Inscriptions & Réinscriptions', labelAr: 'التسجيل وإعادة التسجيل', href: '/academic/enrollments', icon: UserPlus, roles: ['super-admin', 'institution-admin', 'director', 'scolarite'] },
+      { label: 'Nouvelles inscriptions (TAFEM / CNAEM)', labelAr: 'التسجيل الجديد وطافيم', href: '/academic/enrollments', icon: UserPlus, badge: 'Nouveaux', roles: ['super-admin', 'institution-admin', 'director', 'scolarite'] },
+      { label: 'Réinscriptions (Anciens)', labelAr: 'إعادة تسجيل القدامى', href: '/admin/reinscriptions', icon: RefreshCw, badge: '2A-5A', roles: ['super-admin', 'institution-admin', 'director', 'scolarite'] },
       { label: 'Architecture Pédagogique LMD', labelAr: 'الهيكلة والمسالك والأفواج', href: '/academic/architecture', icon: GraduationCap, badge: 'LMD', roles: ['super-admin', 'institution-admin', 'director', 'scolarite'] },
       { label: 'Cartes Étudiants & Pass', labelAr: 'بطاقات الطلبة الرقمية', href: '/admin/student-cards', icon: IdCard, badge: 'Pass', roles: ['super-admin', 'institution-admin', 'director', 'scolarite'] },
-      { label: 'Admissions & Concours TAFEM', labelAr: 'الترشيحات ومباراة طافيم', href: '/admin/tafem', icon: Trophy, roles: ['super-admin', 'institution-admin', 'director', 'scolarite'] },
       { label: 'Suivi des Absences', labelAr: 'تتبع الغيابات', href: '/admin/absences', icon: UserX, roles: ['super-admin', 'institution-admin', 'director', 'scolarite'] },
       { label: 'Conseil de Discipline', labelAr: 'مجلس التأديب', href: '/discipline', icon: Gavel, roles: ['super-admin', 'institution-admin', 'director'] },
     ]

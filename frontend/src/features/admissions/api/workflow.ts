@@ -9,7 +9,7 @@ export function useAdmissionDossier(applicationId?: number, enabled = true) {
 }
 export function useAdmissionCampaigns() {
   return useQuery({ queryKey: ['admission-campaigns'], queryFn: async ({ signal }) =>
-    (await api.get<{ data: { id: number; name: string; status: string; target_capacity: number; academic_year_id: number; filiere_id: number; open_date: string; close_date: string }[] }>(`${workflowBase}/campaigns`, { signal })).data.data })
+    (await api.get<{ data: { id: number; name: string; status: string; target_capacity: number; entry_route: string; entry_semester: number; academic_year_id: number; filiere_id: number; open_date: string; close_date: string }[] }>(`${workflowBase}/campaigns`, { signal })).data.data })
 }
 export function errorMessage(error: unknown): string {
   const e = error as { response?: { data?: { message?: string; errors?: Record<string, string[]> } }; message?: string }

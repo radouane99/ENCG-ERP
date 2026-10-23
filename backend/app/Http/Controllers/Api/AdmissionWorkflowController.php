@@ -29,7 +29,7 @@ class AdmissionWorkflowController extends Controller
     {
         $q = AdmissionCampaign::where('institution_id', AdmissionAccess::institution($request));
         if (! AdmissionAccess::staff($request->user())) $q->where('status', 'open')->whereDate('open_date', '<=', now())->whereDate('close_date', '>=', now());
-        return response()->json(['data' => $q->orderByDesc('id')->get(['id', 'name', 'open_date', 'close_date', 'academic_year_id', 'filiere_id', 'status', 'target_capacity'])]);
+        return response()->json(['data' => $q->orderByDesc('id')->get(['id', 'name', 'open_date', 'close_date', 'academic_year_id', 'filiere_id', 'status', 'target_capacity', 'entry_route', 'entry_semester'])]);
     }
 
     public function ocrSettings(Request $request)
@@ -65,13 +65,19 @@ class AdmissionWorkflowController extends Controller
         AdmissionAccess::review($request);
         $data = $request->validate(['name' => 'required|string|max:180', 'academic_year_id' => 'required|integer', 'filiere_id' => 'required|integer',
             'open_date' => 'required|date_format:Y-m-d', 'close_date' => 'required|date_format:Y-m-d|after_or_equal:open_date',
-            'status' => 'required|in:draft,open,closed', 'target_capacity' => 'required|integer|min:1|max:20000']);
+            'status' => 'required|in:draft,open,closed', 'target_capacity' => 'required|integer|min:1|max:20000', 'entry_route' => 'sometimes|in:tafem,cnaem', 'entry_semester' => 'sometimes|integer|in:1,5,7']);
+        $previous = $id ? AdmissionCampaign::where('institution_id', AdmissionAccess::institution($request))->findOrFail($id) : null;
+        $data['entry_route'] ??= $previous?->entry_route ?? 'tafem';
+        $data['entry_semester'] ??= $previous?->entry_semester ?? 1;
+        abort_unless(\App\Domain\Admission\AdmissionEntryRules::validEntry($data['entry_route'], $data['entry_semester']), 422, 'TAFEM : entrée S1 ; CNAEM : entrée S5 ou S7 selon la décision officielle.');
         $inst = AdmissionAccess::institution($request);
         \App\Models\AcademicYear::whereKey($data['academic_year_id'])->where('institution_id', $inst)->firstOrFail();
-        \App\Models\Filiere::whereKey($data['filiere_id'])->where('institution_id', $inst)->firstOrFail();
+        $filiere = \App\Models\Filiere::whereKey($data['filiere_id'])->where('institution_id', $inst)->firstOrFail();
+        abort_if($filiere->requiresTuitionPayment(), 422, 'TAFEM et CNAEM concernent la formation initiale gratuite.');
         $campaign = DB::transaction(function () use ($id, $inst, $data) {
             $c = $id ? AdmissionCampaign::whereKey($id)->where('institution_id', $inst)->lockForUpdate()->firstOrFail() : new AdmissionCampaign(['institution_id' => $inst]);
             if ($c->exists && Application::where('admission_campaign_id', $c->id)->exists()) {
+                abort_if($c->entry_route !== $data['entry_route'] || (int) $c->entry_semester !== (int) $data['entry_semester'], 409, 'Une campagne utilisée conserve son concours et son niveau d’entrée.');
                 abort_if((int) $c->academic_year_id !== (int) $data['academic_year_id'] || (int) $c->filiere_id !== (int) $data['filiere_id'], 409, 'Une campagne utilisée conserve son année et sa filière. Créez une nouvelle campagne.');
                 abort_if(Application::where('admission_campaign_id', $c->id)->where('dossier_status', 'approved')->count() > $data['target_capacity'], 422, 'Capacité inférieure aux inscriptions déjà validées.');
             }
@@ -157,9 +163,11 @@ class AdmissionWorkflowController extends Controller
             'dossier_status', 'eligibility', 'version', 'submitted_at', 'approved_at', 'ranking', 'selection_score', 'invitation_expires_at']), [
             'application_id' => $app->id, 'profile' => $app->profile ?? [], 'documents' => $mapped,
             'is_locked' => ! in_array($app->dossier_status, ['draft', 'needs_correction']),
-            'campaign' => $app->campaign->only(['id', 'name', 'open_date', 'close_date']), 'appointment' => $appointment,
+            'campaign' => $app->campaign->only(['id', 'name', 'open_date', 'close_date', 'entry_route', 'entry_semester']), 'appointment' => $appointment,
+            'required_documents' => \App\Domain\Admission\AdmissionEntryRules::documents($app->campaign->entry_route),
+            'physical_requirements' => \App\Domain\Admission\AdmissionEntryRules::physicalChecklist($app->campaign->entry_route),
             'events' => DB::table('admission_events')->where('application_id', $app->id)->orderByDesc('id')->limit(30)->get(['type', 'created_at']),
-            'reviews' => DB::table('admission_reviews')->where('application_id', $app->id)->orderByDesc('id')->limit(30)->get(['id', 'document_id', 'decision', 'reason', 'created_at']),
+            'reviews' => DB::table('admission_reviews as r')->leftJoin('users as u', 'u.id', '=', 'r.reviewer_id')->where('r.application_id', $app->id)->orderByDesc('r.id')->limit(30)->get(['r.id', 'r.document_id', 'r.decision', 'r.reason', 'r.physical_checklist', 'r.created_at', 'u.name as reviewer_name'])->map(function ($review) { $review->physical_checklist = $review->physical_checklist ? json_decode($review->physical_checklist, true) : null; return $review; }),
             'notifications' => DB::table('admission_notifications')->where('application_id', $app->id)->orderByDesc('id')->limit(10)->get(['id', 'type', 'status', 'sent_at']),
             'ocr_runs' => DB::table('admission_ocr_runs')->where('application_id', $app->id)->orderByDesc('created_at')->limit(12)->get()->map(function ($run) {
                 $run->fields = json_decode($run->fields ?? '{}', true); $run->warnings = json_decode($run->warnings ?? '[]', true); return $run;

@@ -51,6 +51,9 @@ Route::prefix('admissions/workflow')->middleware(['auth:sanctum', 'institution.c
     Route::get('unlinked-documents', [$workflow, 'unlinkedDocuments']);
     Route::post('unlinked-documents/{document}/reconcile', [$workflow, 'reconcileDocument']);
     Route::post('decide', [$workflow, 'decide']);
+    Route::get('enrollments', [\App\Http\Controllers\Api\AdmissionEnrollmentController::class, 'index']);
+    Route::post('enrollments/dispatch', [\App\Http\Controllers\Api\AdmissionEnrollmentController::class, 'dispatch']);
+    Route::get('enrollments/export', [\App\Http\Controllers\Api\AdmissionEnrollmentController::class, 'export']);
     Route::post('promote', [$workflow, 'promote']);
     Route::post('renew-invitation', [$workflow, 'renewInvitation']);
     Route::post('slots', [$appointments, 'createSlot']);

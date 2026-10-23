@@ -9,7 +9,7 @@ test.describe('Gratuité formation initiale et cursus payants', () => {
       if (mobile) await page.setViewportSize({ width: 390, height: 844 })
       await mockApi(page); await seedSession(page, 'student')
       let confirmed = false
-      const data = () => ({ student_name: 'Étudiant synthétique CNAEM', cne: 'SYN-INITIAL', academic_year: '2026/2027', current_filiere: 'Formation initiale Grande École', target_semester: 5, is_admis: true, is_confirmed: confirmed, can_confirm: true, payment_required: false, payment_status: 'not_applicable', invoice_reference: null, invoice_remaining: null, receipt_reference: confirmed ? 'SYN-RENEWAL' : null, phone: '0612345678', address: 'Adresse synthétique', city: 'Fès' })
+      const data = () => ({ student_name: 'Étudiant synthétique CNAEM', cne: 'SYN-INITIAL', academic_year: '2026/2027', current_filiere: 'Formation initiale Grande École', target_semester: 5, is_admis: true, is_confirmed: confirmed, confirmed_at: confirmed ? '2026-10-24T10:00:00Z' : null, can_confirm: true, payment_required: false, payment_status: 'not_applicable', invoice_reference: null, invoice_remaining: null, receipt_reference: confirmed ? 'SYN-RENEWAL' : null, phone: '0612345678', address: 'Adresse synthétique', city: 'Fès' })
       await page.route(url => url.pathname === '/api/student-portal/reinscription/status', route => route.fulfill(json(data())))
       await page.route(url => url.pathname === '/api/student-portal/reinscription/confirm', async route => {
         expect(route.request().postDataJSON()).toEqual({ phone: '0612345678', address: 'Adresse synthétique', city: 'Fès' })
@@ -23,6 +23,7 @@ test.describe('Gratuité formation initiale et cursus payants', () => {
       await expect(page.getByRole('heading', { name: 'Réinscription confirmée' })).toBeVisible()
       await expect(page.getByText('SYN-RENEWAL', { exact: true })).toBeVisible()
       await expect(page.getByText(/situation financière|règlement|facture|frais|exonéré/i)).toHaveCount(0)
+      await page.locator('main').evaluate(node => { node.scrollTop = 0 })
       await page.screenshot({ path: `test-results/initial-education-${device}.png`, fullPage: true })
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
       await page.keyboard.press('Control+k')

@@ -45,25 +45,51 @@ class ReinscriptionController extends Controller
         abort_unless($filiere?->requiresTuitionPayment(), 403, 'Aucun règlement de scolarité ne s’applique à cette formation.');
         return response()->json(['success' => false, 'message' => 'La simulation ne constitue pas un paiement. Contactez la régie pour une confirmation vérifiée.'], 422);
     }
-    public function getAdminStats(Request $request)
+    private function annualRoster(Request $request): array
     {
-        abort_unless($request->user()->hasAnyRole(['super-admin', 'admin', 'institution-admin', 'director', 'scolarite', 'pedagogy_officer']), 403);
+        abort_unless(\App\Support\AdmissionAccess::staff($request->user()) || $request->user()->hasRole('pedagogy_officer'), 403);
         $year = AcademicYear::where('institution_id', $request->user()->institution_id)->where('is_current', true)->firstOrFail();
-        $rows = StudentRegistration::with('student.user', 'filiere')->whereHas('student', fn ($q) => $q->where('institution_id', $request->user()->institution_id))->where('academic_year_id', $year->id)->where('registration_type', 're_enrollment')->whereIn('status', ['academic_validated', 'admin_validated'])->get()->unique('student_id');
+        $rows = StudentRegistration::with('student.user', 'filiere')->whereHas('student', fn ($q) => $q->where('institution_id', $request->user()->institution_id))->where('academic_year_id', $year->id)->where('registration_type', 're_enrollment')->whereNotIn('status', ['rejected','cancelled'])->get();
         $receipts = DB::table('student_renewals')->where('academic_year_id', $year->id)->whereIn('student_id', $rows->pluck('student_id'))->get()->keyBy('student_id');
-        $students = $rows->map(fn ($r) => ['id' => $r->student_id, 'name' => $r->student->user->name, 'cne' => $r->student->cne, 'cin' => $r->student->user->cin,
-            'email' => $r->student->user->email, 'phone' => $r->student->user->phone, 'current_level' => 'S'.$r->semester_number, 'level_code' => ceil($r->semester_number / 2).'A', 'filiere' => $r->filiere->name,
-            'is_confirmed' => isset($receipts[$r->student_id]), 'confirmed_at' => $receipts[$r->student_id]->confirmed_at ?? null, 'receipt_ref' => $receipts[$r->student_id]->receipt_reference ?? null])->values();
-        return response()->json(['success' => true, 'data' => ['academic_year' => $year->label, 'total_eligible' => $rows->count(), 'total_confirmed' => $receipts->count(),
-            'total_pending' => $students->where('is_confirmed', false)->count(), 'confirmation_rate' => $rows->isEmpty() ? 0 : round($receipts->count() * 100 / $rows->count(), 1), 'by_level' => $students->groupBy('level_code')->map(fn ($group) => ['total' => $group->count(), 'confirmed' => $group->where('is_confirmed', true)->count(), 'pending' => $group->where('is_confirmed', false)->count()]), 'students' => $students]]);
+        $students = $rows->groupBy('student_id')->map(function ($registrations) use ($receipts) {
+            $r = $registrations->first(); $receipt = $receipts->get($r->student_id); $conflict = $registrations->count() !== 1;
+            $ready = !$conflict && in_array($r->status, ['academic_validated','admin_validated'], true);
+            $state = $conflict ? 'needs_review' : (!$ready ? 'academic_pending' : (!$receipt ? 'pending' : ($receipt->physical_verified_at ? 'verified' : 'physical_pending')));
+            return ['id'=>$r->student_id,'name'=>$r->student->user->name,'cne'=>$r->student->cne,'cin'=>$r->student->user->cin,'email'=>$r->student->user->email,'phone'=>$r->student->user->phone,'current_level'=>'S'.$r->semester_number,'level_code'=>ceil($r->semester_number/2).'A','filiere'=>$r->filiere?->name,'is_confirmed'=>(bool)$receipt,'academic_ready'=>$ready,'status'=>$state,'confirmed_at'=>$receipt->confirmed_at ?? null,'receipt_ref'=>$receipt->receipt_reference ?? null,'physical_verified_at'=>$receipt->physical_verified_at ?? null,'physical_checklist'=>$receipt?->physical_checklist ? json_decode($receipt->physical_checklist,true) : null,'physical_verified_by'=>$receipt?->physical_verified_by ? \App\Models\User::find($receipt->physical_verified_by)?->name : null];
+        })->values();
+        return [$year,$students];
     }
-    public function sendReminders(Request $request)
-    {
-        abort_unless($request->user()->hasAnyRole(['super-admin', 'admin', 'institution-admin', 'director', 'scolarite', 'pedagogy_officer']), 403);
-        $year = AcademicYear::where('institution_id', $request->user()->institution_id)->where('is_current', true)->firstOrFail();
-        $students = Student::where('institution_id', $request->user()->institution_id)->whereHas('registrations', fn ($q) => $q->where('academic_year_id', $year->id)->where('registration_type', 're_enrollment')->where('status', 'academic_validated'))
-            ->whereNotIn('id', DB::table('student_renewals')->where('academic_year_id', $year->id)->select('student_id'))->with('user')->get();
-        foreach ($students as $student) $student->user->notify(new \App\Notifications\SystemNotification('Réinscription annuelle', 'Votre inscription académique est validée. Complétez votre confirmation.', 'info', '/student/reinscription'));
-        return response()->json(['success' => true, 'message' => 'Rappels dans les espaces personnels enregistrés.', 'sent_count' => $students->count()]);
+    private function filterRoster(Request $request, $students) {
+        if ($request->filled('level') && $request->input('level') !== 'all') $students = $students->where('level_code',$request->input('level'));
+        if ($request->filled('status') && $request->input('status') !== 'all') $students = $request->input('status') === 'confirmed' ? $students->where('is_confirmed',true) : $students->where('status',$request->input('status'));
+        if ($request->filled('search')) { $term = mb_strtolower(trim($request->input('search'))); $students = $students->filter(fn ($s) => str_contains(mb_strtolower($s['name'].' '.$s['cne'].' '.$s['cin']),$term)); }
+        return $students->values();
+    }
+    public function getAdminStats(Request $request) {
+        [$year,$students] = $this->annualRoster($request); $filtered=$this->filterRoster($request,$students); $page=max(1,$request->integer('page',1)); $perPage=50;
+        return response()->json(['success'=>true,'data'=>['academic_year'=>$year->label,'total_eligible'=>$students->where('academic_ready',true)->count(),'total_confirmed'=>$students->where('is_confirmed',true)->count(),'total_pending'=>$students->where('status','pending')->count(),'total_physical_pending'=>$students->where('status','physical_pending')->count(),'total_verified'=>$students->where('status','verified')->count(),'total_needs_review'=>$students->whereIn('status',['needs_review','academic_pending'])->count(),'by_level'=>$students->groupBy('level_code')->map(fn ($g)=>['total'=>$g->count(),'confirmed'=>$g->where('is_confirmed',true)->count(),'pending'=>$g->where('status','pending')->count(),'verified'=>$g->where('status','verified')->count()]),'students'=>$filtered->forPage($page,$perPage)->values(),'meta'=>['total'=>$filtered->count(),'current_page'=>$page,'last_page'=>max(1,(int)ceil($filtered->count()/$perPage))],'physical_requirements'=>\App\Actions\Academic\VerifyAnnualRenewalAction::CHECKLIST]]]);
+    }
+    public function verifyPhysical(Request $request, int $student) {
+        $data=$request->validate(['checklist'=>'required|array','observation'=>'nullable|string|max:2000']);
+        $receipt=app(\App\Actions\Academic\VerifyAnnualRenewalAction::class)->execute(Student::findOrFail($student),$data);
+        return response()->json(['success'=>true,'message'=>'Contrôle physique annuel enregistré.','physical_verified_at'=>$receipt->physical_verified_at]);
+    }
+    public function exportRoster(Request $request) {
+        [, $students]=$this->annualRoster($request); $students=$this->filterRoster($request,$students);
+        return response()->streamDownload(function () use ($students) { $out=fopen('php://output','w'); fwrite($out,"\xEF\xBB\xBF"); fputcsv($out,['Nom','CNE','CIN','Niveau','Formation','État du dossier','Référence','Contrôle physique'], ';','"',''); foreach($students as $s) fputcsv($out,array_map(fn($v)=>preg_match('/^[=+@\-\t\r]/u',(string)$v) ? "'".$v : $v,[$s['name'],$s['cne'],$s['cin'],$s['current_level'],$s['filiere'],$s['status'],$s['receipt_ref'],$s['physical_verified_at']]),';','"',''); fclose($out); },'Reinscriptions_Annuelles.csv',['Content-Type'=>'text/csv; charset=UTF-8','Cache-Control'=>'private, no-store']);
+    }
+    public function sendReminders(Request $request) {
+        [$year,$students]=$this->annualRoster($request); $students=$this->filterRoster($request,$students)->where('status','pending'); $sent=0; $queued=0;
+        foreach($students as $s) DB::transaction(function () use ($s,$year,$request,&$sent,&$queued) {
+            $student=Student::with('user')->whereKey($s['id'])->lockForUpdate()->firstOrFail();
+            if(DB::table('student_renewals')->where('student_id',$student->id)->where('academic_year_id',$year->id)->exists()) return;
+            $today=now(config('admissions.timezone'))->toDateString();
+            if(DB::table('student_renewal_reminders')->where('student_id',$student->id)->where('academic_year_id',$year->id)->where('reminder_date',$today)->exists()) return;
+            $email=filter_var($student->user->email,FILTER_VALIDATE_EMAIL) !== false;
+            DB::table('student_renewal_reminders')->insert(['student_id'=>$student->id,'academic_year_id'=>$year->id,'reminder_date'=>$today,'sent_by'=>$request->user()->id,'email_queued'=>$email,'created_at'=>now(),'updated_at'=>now()]);
+            $student->user->notify(new \App\Notifications\SystemNotification('Réinscription annuelle','Votre inscription académique est validée. Confirmez vos coordonnées puis suivez les indications de la scolarité.','info','/student/reinscription'));
+            if($email) { \Illuminate\Support\Facades\Mail::to($student->user->email)->queue(new \App\Mail\RenewalReminderMail($student->user->name,$year->label)); $queued++; } $sent++;
+        });
+        return response()->json(['success'=>true,'message'=>$sent.' notification(s) enregistrée(s), '.$queued.' email(s) mis en file. Une relance maximum par étudiant et par jour.','sent_count'=>$sent,'email_queued_count'=>$queued]);
     }
 }

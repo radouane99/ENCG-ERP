@@ -79,7 +79,7 @@ class ManageDossierAction
         $type = self::type($request->string('type')->toString());
         $request->merge(['type' => $type]);
         $request->validate(['application_id' => 'required|integer', 'version' => 'required|integer',
-            'type' => 'required|in:'.implode(',', self::TYPES),
+            'type' => 'required|in:'.implode(',', [...self::TYPES, 'attestation_admission', 'releve_parcours']),
             'file' => ['required', 'file', 'max:10240', $type === 'photo' ? 'mimes:jpg,jpeg,png,webp' : 'mimes:pdf,jpg,jpeg,png,webp']]);
         $file = $request->file('file');
         $mime = $file->getMimeType();
@@ -138,7 +138,7 @@ class ManageDossierAction
                 'birth_date' => 'required|date_format:Y-m-d|before:today', 'gender' => 'required|in:male,female',
                 'address' => 'required', 'bac_average' => 'required|numeric|between:0,20', 'bac_year' => 'required|integer'])->validate();
             $types = StudentDocument::where('application_id', $app->id)->where('is_current', true)->whereNull('withdrawn_at')->pluck('type')->all();
-            abort_if(array_diff(self::TYPES, $types), 422, 'Ajoutez le bac, la CNIE, le relevé et la photo avant de soumettre.');
+            abort_if(array_diff(\App\Domain\Admission\AdmissionEntryRules::documents($app->campaign->entry_route), $types), 422, 'Ajoutez toutes les pièces requises pour ce concours avant de soumettre.');
             $app->update(['dossier_status' => 'submitted', 'status' => 'submitted', 'submitted_at' => now(), 'version' => $app->version + 1]);
             $this->event($app, 'submitted');
             app(\App\Services\Admissions\AdmissionNotificationService::class)->queue($app, 'submitted');
@@ -193,6 +193,9 @@ class ManageDossierAction
         return DB::transaction(function () use ($request, $data) {
             $resolved = AdmissionAccess::dossier($request);
             $campaign = $resolved->campaign()->lockForUpdate()->firstOrFail();
+            $entrySemester = (int) $campaign->entry_semester;
+            abort_unless(\App\Domain\Admission\AdmissionEntryRules::validEntry($campaign->entry_route, $entrySemester), 422, 'Niveau d’entrée de campagne incohérent.');
+            abort_if(\App\Models\AcademicYear::findOrFail($campaign->academic_year_id)->is_locked, 422, 'Année universitaire verrouillée.');
             $app = Application::whereKey($resolved->id)->lockForUpdate()->firstOrFail();
             if ($app->dossier_status === 'approved') {
                 abort_unless($data['decision'] === 'approved' && Student::find($app->student_id)?->student_number === $data['official_number'], 409, 'Décision déjà enregistrée.');
@@ -201,13 +204,19 @@ class ManageDossierAction
             $this->version($app, $request);
             abort_unless(in_array($app->dossier_status, ['submitted', 'under_review']), 422, 'Le dossier doit être soumis avant revue.');
             if ($data['decision'] === 'approved') {
+                foreach (\App\Domain\Admission\AdmissionEntryRules::physicalChecklist($campaign->entry_route) as $key => $label) validator($data, ['physical_checklist.'.$key => 'required|accepted'])->validate();
+                abort_if($campaign->filiere->requiresTuitionPayment(), 422, 'Une admission TAFEM/CNAEM doit concerner une formation initiale gratuite.');
                 AdmissionAccess::invitationActive($app);
                 abort_unless($app->eligibility === 'main' && $app->owner_user_id, 422, 'Dossier non admissible ou non activé.');
                 $verified = StudentDocument::where('application_id', $app->id)->where('is_current', true)->whereNull('withdrawn_at')->where('status', 'verified')->pluck('type')->all();
-                abort_if(array_diff(self::TYPES, $verified), 422, 'Vérifiez chaque pièce numérique avant la validation définitive.');
+                abort_if(array_diff(\App\Domain\Admission\AdmissionEntryRules::documents($campaign->entry_route), $verified), 422, 'Vérifiez chaque pièce numérique avant la validation définitive.');
                 $already = Application::where('admission_campaign_id', $campaign->id)->where('dossier_status', 'approved')->count();
                 abort_if($already >= $campaign->target_capacity, 422, 'Capacité de la campagne atteinte.');
                 $student = Student::where('cne', $app->cne)->lockForUpdate()->first();
+                abort_if(Student::where('institution_id', $campaign->institution_id)->where('cne', '!=', $app->cne)->where(fn ($q) => $q->where('user_id', $app->owner_user_id)->orWhereHas('user', fn ($u) => $u->whereRaw('UPPER(TRIM(cin)) = ?', [strtoupper(trim($app->cin))])))->exists(), 409, 'Identité déjà liée à un autre dossier étudiant : rapprochement manuel requis.');
+                if ($student) {
+                    abort_if($student->registrations()->where('academic_year_id', $campaign->academic_year_id)->where(fn ($q) => $q->where('filiere_id', '!=', $campaign->filiere_id)->orWhere('semester_number', '!=', $entrySemester))->exists(), 409, 'Une inscription existe déjà pour cette année à un autre niveau ou cursus.');
+                }
                 abort_if($student && $student->user_id !== $app->owner_user_id, 409, 'Conflit de propriétaire : rapprochement manuel requis.');
                 $number = trim($data['official_number']);
                 abort_if($number === $app->cne || in_array(strtolower($number), ['en-attente', 'pending']), 422, 'Renseignez un numéro officiel vérifié.');
@@ -223,12 +232,12 @@ class ManageDossierAction
                 $student->fill(['student_number' => $number, 'status' => 'active', 'inscription_status' => 'DOSSIER_CONFORME', 'gender' => $profile['gender']]);
                 $student->save();
                 $group = empty($data['group_id']) ? null : Group::whereKey($data['group_id'])->where('filiere_id', $campaign->filiere_id)
-                    ->where('academic_year_id', $campaign->academic_year_id)->where('semester_number', 1)->firstOrFail();
+                    ->where('academic_year_id', $campaign->academic_year_id)->where('semester_number', $entrySemester)->firstOrFail();
                 StudentPathway::where('student_id', $student->id)->where('is_current', true)->update(['is_current' => false]);
-                StudentPathway::updateOrCreate(['student_id' => $student->id, 'academic_year_id' => $campaign->academic_year_id, 'current_semester' => 1],
+                StudentPathway::updateOrCreate(['student_id' => $student->id, 'academic_year_id' => $campaign->academic_year_id, 'current_semester' => $entrySemester],
                     ['filiere_id' => $campaign->filiere_id, 'group_id' => $group?->id, 'is_current' => true]);
-                StudentRegistration::updateOrCreate(['student_id' => $student->id, 'academic_year_id' => $campaign->academic_year_id, 'semester_number' => 1],
-                    ['filiere_id' => $campaign->filiere_id, 'group_id' => $group?->id, 'registration_type' => 'initial', 'status' => 'active']);
+                StudentRegistration::updateOrCreate(['student_id' => $student->id, 'academic_year_id' => $campaign->academic_year_id, 'semester_number' => $entrySemester],
+                    ['filiere_id' => $campaign->filiere_id, 'group_id' => $group?->id, 'registration_type' => 'initial', 'status' => 'admin_validated', 'payment_status' => 'not_applicable', 'admin_validated_at' => now()]);
                 StudentDocument::where('application_id', $app->id)->whereNull('student_id')->update(['student_id' => $student->id]);
                 $app->student_id = $student->id;
                 $app->approved_at = now();
