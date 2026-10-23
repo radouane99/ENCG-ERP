@@ -111,46 +111,10 @@ class ComplaintController extends Controller
      */
     public function submitGradeAppeal(Request $request): JsonResponse
     {
-        $this->authorize('create', Complaint::class);
-
-        $validated = $request->validate([
-            'student_id' => 'sometimes|exists:students,id',
-            'assessment_id' => 'required|exists:assessments,id',
-            'grade_id' => 'nullable|exists:grades,id',
-            'reason' => 'required|string|max:1000',
-        ]);
-
-        $user = $request->user();
-        if ($user->hasRole('student')) {
-            abort_unless($user->student, 403, 'Profil étudiant introuvable.');
-            $validated['student_id'] = $user->student->id;
-        } else {
-            abort_unless(! empty($validated['student_id']), 422, 'student_id est requis.');
-        }
-
-        $existingGrade = Grade::where('student_id', $validated['student_id'])
-            ->where('assessment_id', $validated['assessment_id'])
-            ->first();
-
-        $appeal = GradeAppeal::create([
-            'student_id' => $validated['student_id'],
-            'assessment_id' => $validated['assessment_id'],
-            'grade_id' => $existingGrade?->id,
-            'reason' => $validated['reason'],
-            'status' => 'pending',
-            'old_grade' => $existingGrade?->value ?? 0.00,
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Réclamation de note transmise au professeur.',
-            'appeal_id' => $appeal->id,
-        ], 201);
+        $a = \App\Models\Assessment::findOrFail($request->integer('assessment_id'));
+        $request->merge(['module_id' => $a->module_id, 'reason_category' => $request->input('reason_category', 'autre'), 'student_justification' => $request->input('student_justification', $request->input('reason'))]);
+        return app(\App\Http\Controllers\Api\Academic\GradeAppealController::class)->studentStore($request);
     }
-
-    /**
-     * Liste des réclamations de notes.
-     */
     public function listGradeAppeals(Request $request): JsonResponse
     {
         $this->authorize('viewAny', Complaint::class);
@@ -187,40 +151,8 @@ class ComplaintController extends Controller
      */
     public function resolveGradeAppeal(Request $request, int $id): JsonResponse
     {
-        $validated = $request->validate([
-            'status' => 'required|string|in:approved,rejected,under_review',
-            'new_grade' => 'required_if:status,approved|nullable|numeric|min:0|max:20',
-            'professor_notes' => 'nullable|string',
-        ]);
-
-        $appeal = GradeAppeal::findOrFail($id);
-
-        $appeal->update([
-            'status' => $validated['status'],
-            'new_grade' => $validated['status'] === 'approved' ? $validated['new_grade'] : null,
-            'professor_notes' => $validated['professor_notes'] ?? null,
-            'resolved_at' => now(),
-        ]);
-
-        // Mettre à jour la note officielle si approuvé
-        if ($validated['status'] === 'approved') {
-            Grade::updateOrCreate(
-                [
-                    'student_id' => $appeal->student_id,
-                    'assessment_id' => $appeal->assessment_id,
-                ],
-                [
-                    'value' => $validated['new_grade'],
-                    'absent' => false,
-                ]
-            );
-        }
-
-        return response()->json([
-            'success' => true,
-            'message' => $validated['status'] === 'approved'
-                ? 'Réclamation approuvée et note révisée.'
-                : 'Réclamation clôturée.',
-        ]);
+        $decision = ['approved' => 'rectified', 'rejected' => 'rejected'][$request->input('status')] ?? $request->input('status');
+        $request->merge(['decision' => $decision, 'rectified_grade' => $request->input('new_grade'), 'professor_comment' => $request->input('professor_notes')]);
+        return app(\App\Http\Controllers\Api\Academic\GradeAppealController::class)->resolve($request, $id);
     }
 }

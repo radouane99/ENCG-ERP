@@ -447,26 +447,8 @@ class TimetablePerformanceStrategy
      */
     private function prefetchUnavailability(): array
     {
-        if (! Schema::hasTable('professor_availabilities')) {
-            return [];
-        }
-
-        $map = [];
-        ProfessorAvailability::query()
-            ->select(['professor_id', 'day_of_week', 'start_time', 'end_time', 'is_available'])
-            ->get()
-            ->each(function ($row) use (&$map) {
-                $map[(int) $row->professor_id][] = [
-                    'day' => (int) $row->day_of_week,
-                    'start' => (string) $row->start_time,
-                    'end' => (string) $row->end_time,
-                    'available' => (bool) $row->is_available,
-                ];
-            });
-
-        return $map;
+        return ProfessorAvailabilityService::map();
     }
-
     private function isProfessorAvailable(array $unavailable, int $professorId, int $day, string $start, string $end): bool
     {
         $records = $unavailable[$professorId] ?? [];

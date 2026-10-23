@@ -25,12 +25,30 @@ class InternshipController extends Controller
     {
         $this->authorize('viewAny', Internship::class);
 
-        $internships = $this->careerService->getAllInternships();
+        $user = $request->user();
+        $internships = $user->hasRole('student') ? Internship::where('student_id', $user->student?->id ?? -1)->with('student.user', 'supervisor.user')->get()
+            : \App\Support\InternshipAccess::query($user)->with('student.user', 'supervisor.user')->get();
 
         return response()->json([
             'success' => true,
             'data' => InternshipResource::collection($internships),
         ]);
+    }
+
+    public function show(Internship $internship): JsonResponse
+    {
+        $this->authorize('view', $internship);
+        return response()->json(['success' => true, 'data' => new InternshipResource($internship->load('student.user', 'supervisor.user'))]);
+    }
+
+    public function store(Request $request): JsonResponse
+    {
+        abort_unless(\App\Support\InternshipAccess::staff($request->user()), 403);
+        $data = $request->validate(['student_id' => 'required|integer', 'type' => 'required|in:initiation,application,fin_etudes', 'company_name' => 'required|string|max:255',
+            'company_mentor_name' => 'required|string|max:255', 'supervisor_email' => 'required|email|max:255', 'position_title' => 'required|string|max:255', 'start_date' => 'required|date', 'end_date' => 'required|date|after:start_date']);
+        $student = \App\Models\Student::where('institution_id', $request->user()->institution_id)->findOrFail($data['student_id']); unset($data['student_id']);
+        $stage = app(\App\Actions\Internship\ManageConventionAction::class)->create($student, $data);
+        return response()->json(['success' => true, 'data' => new InternshipResource($stage)], 201);
     }
 
     /**

@@ -24,15 +24,17 @@ class InternshipPolicy
 
     public function view(User $user, Internship $internship): bool
     {
+        if ((int) $internship->student->institution_id !== (int) $user->institution_id) return false;
         if ($user->hasRole('student')) {
             return (int) $user->student?->id === (int) $internship->student_id;
         }
 
-        return $this->viewAny($user);
+        return \App\Support\InternshipAccess::staff($user) || ($user->professor && (int) $internship->supervisor_id === (int) $user->professor->id);
     }
 
     public function update(User $user, Internship $internship): bool
     {
+        if ((int) $internship->student->institution_id !== (int) $user->institution_id) return false;
         return $this->hasPermissionOrRole($user, 'internships.validate', [
             'admin', 'super-admin', 'institution-admin', 'director',
             'department-head', 'filiere-head', 'scolarite',

@@ -132,7 +132,7 @@ Route::middleware(['auth:sanctum', 'institution.context'])->group(function () {
     Route::get('/rooms/occupancy-matrix', [RoomBookingController::class, 'occupancyMatrix']);
     Route::get('/rooms/weekly-master-matrix', [RoomBookingController::class, 'weeklyMasterMatrix']);
     Route::get('/rooms/{room}/door-sign-pdf', [RoomBookingController::class, 'doorSignPdf']);
-    Route::apiResource('room-bookings', RoomBookingController::class);
+    Route::apiResource('room-bookings', RoomBookingController::class)->except(['show']);
 
     // Anti-Fraud Documents & PDFs
     Route::prefix('documents')->group(function () {
@@ -146,9 +146,6 @@ Route::middleware(['auth:sanctum', 'institution.context'])->group(function () {
         Route::get('/serve/{type}/{cne}', [AdmissionController::class, 'serveCandidateDocument'])->name('documents.serve');
 
         // PDF Previews
-        Route::get('/preview/ordre-mission', [PdfExportController::class, 'previewOrdreMission']);
-        Route::get('/preview/convention-stage', [PdfExportController::class, 'previewConventionStage']);
-        Route::get('/preview/attestation-travail', [PdfExportController::class, 'previewAttestationTravail']);
         Route::get('/preview/releve-notes', [PdfExportController::class, 'releveNotes']);
     });
 
@@ -170,8 +167,6 @@ Route::middleware(['auth:sanctum', 'institution.context'])->group(function () {
         Route::get('/search', [SearchController::class, 'search']);
 
         // User Profiles & Roles
-        Route::get('/users/{user}/roles', [ProfileController::class, 'roles']);
-        Route::get('/users/search', [ProfileController::class, 'search']);
 
         Route::get('/document-types', function () {
             return response()->json(['data' => DocumentType::all()]);

@@ -47,6 +47,7 @@ class ProductionModeBoundaryAuditTest extends TestCase
     {
         $user = User::factory()->create(['institution_id' => 1]); $this->login($user, 'institution-admin');
         $user->givePermissionTo(Permission::findOrCreate('users.manage', 'sanctum'));
+        Role::findOrCreate('professor', 'sanctum');
         $this->withoutExceptionHandling();
         $this->postJson('/api/users', ['name' => 'Synthetic staff', 'email' => 'synthetic-new@example.test', 'password' => 'SyntheticPassword123!', 'role' => 'professor'])->assertCreated();
     }

@@ -47,14 +47,7 @@ class ScheduleConflictService
         }
 
         // Check Professor Availability Preference
-        $isProfUnavailable = DB::table('professor_availabilities')
-            ->where('professor_id', $profId)
-            ->where('academic_year_id', $academicYearId)
-            ->where('day_of_week', $day)
-            ->where('is_available', false)
-            ->where('start_time', '<=', $start)
-            ->where('end_time', '>=', $end)
-            ->exists();
+        $isProfUnavailable = ! ProfessorAvailabilityService::allows(ProfessorAvailabilityService::map($academicYearId), $profId, $day, $start, $end);
 
         if ($isProfUnavailable) {
             return ['isValid' => false, 'reason' => 'Professor declared this time slot as unavailable.'];

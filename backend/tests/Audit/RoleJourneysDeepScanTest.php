@@ -46,6 +46,8 @@ class RoleJourneysDeepScanTest extends TestCase
     public function test_renewal_cannot_advance_two_semesters_on_every_retry(): void
     {
         $c = $this->academicContext(); $this->login($c['student']->user, 'student');
+        \App\Models\StudentRegistration::create(['student_id' => $c['student']->id, 'academic_year_id' => $c['year']->id, 'filiere_id' => $c['filiere']->id,
+            'semester_number' => 3, 'status' => 'academic_validated', 'registration_type' => 're_enrollment']);
         $a = $this->postJson('/api/student-portal/reinscription/confirm', $this->renewalPayload());
         $first = $c['pathway']->fresh()->current_semester;
         $b = $this->postJson('/api/student-portal/reinscription/confirm', $this->renewalPayload());
@@ -102,7 +104,7 @@ class RoleJourneysDeepScanTest extends TestCase
     public function test_rectification_without_any_grade_cannot_report_success(): void
     {
         $c = $this->academicContext(); $appeal = $this->appeal($c); $this->login(User::factory()->create(['institution_id' => 1]), 'institution-admin');
-        $r = $this->postJson('/api/admin/grade-appeals/'.$appeal->id.'/resolve', ['decision' => 'rectified', 'rectified_grade' => 18]);
+        $r = $this->postJson('/api/admin/grade-appeals/'.$appeal->id.'/resolve', ['decision' => 'rectified', 'rectified_grade' => 18, 'professor_comment' => 'Correction motivée pour test synthétique.']);
         $this->observed('rectification_without_grade', ['http' => $r->status(), 'appeal_status' => $appeal->fresh()->status, 'grades' => Grade::count()]);
         $r->assertUnprocessable();
     }
@@ -113,7 +115,7 @@ class RoleJourneysDeepScanTest extends TestCase
         $grade = Grade::create(['student_id' => $c['student']->id, 'assessment_id' => $assessment->id, 'value' => 8, 'absent' => false]);
         $appeal = $this->appeal($c, $assessment->id); $user = User::factory()->create(['institution_id' => 1]); $this->login($user, 'institution-admin');
         ModulePvSignature::create(['module_id' => $c['module']->id, 'academic_year_id' => $c['year']->id, 'signed_by' => $user->id, 'signed_at' => now(), 'signature_data' => 'synthetic-signature', 'digital_seal' => hash('sha256', 'synthetic-seal')]);
-        $r = $this->postJson('/api/admin/grade-appeals/'.$appeal->id.'/resolve', ['decision' => 'rectified', 'rectified_grade' => 18]);
+        $r = $this->postJson('/api/admin/grade-appeals/'.$appeal->id.'/resolve', ['decision' => 'rectified', 'rectified_grade' => 18, 'professor_comment' => 'Correction motivée pour test synthétique.']);
         $this->observed('signed_grade_appeal_bypass', ['http' => $r->status(), 'grade_after' => $grade->fresh()->value]);
         $this->assertSame(8.0, $grade->fresh()->value);
     }

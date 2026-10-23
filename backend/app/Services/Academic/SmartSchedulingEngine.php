@@ -471,32 +471,8 @@ class SmartSchedulingEngine
      */
     public function isProfessorAvailable(int $professorId, int $day, string $start, string $end): bool
     {
-        $records = ProfessorAvailability::where('professor_id', $professorId)
-            ->where('day_of_week', $day)
-            ->get();
-
-        if ($records->isEmpty()) {
-            return true;
-        }
-
-        foreach ($records as $record) {
-            if (! $record->is_available) {
-                if ($start < $record->end_time && $end > $record->start_time) {
-                    return false;
-                }
-            } else {
-                if ($start >= $record->start_time && $end <= $record->end_time) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
+        return ProfessorAvailabilityService::allows(ProfessorAvailabilityService::map(), $professorId, $day, $start, $end);
     }
-
-    /**
-     * Get global university scheduling health statistics.
-     */
     public function getGlobalStats(): array
     {
         $totalSchedules = DB::table('schedules')->count();

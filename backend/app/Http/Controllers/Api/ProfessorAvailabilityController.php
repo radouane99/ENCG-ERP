@@ -1,201 +1,55 @@
 <?php
-
 namespace App\Http\Controllers\Api;
-
 use App\Http\Controllers\Controller;
-use App\Mail\ProfessorAvailabilitySurveyMail;
-use App\Models\AcademicYear;
-use App\Models\Professor;
-use App\Models\ProfessorAvailability;
-use App\Models\User;
-use Illuminate\Http\JsonResponse;
+use App\Models\{AcademicYear, Professor, ProfessorAvailability, User};
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\DB;
 
 class ProfessorAvailabilityController extends Controller
 {
-    /**
-     * Liste des disponibilités des professeurs.
-     */
-    public function index(): JsonResponse
+    private const DAYS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+    private function year(Request $r): AcademicYear { return AcademicYear::where('institution_id', $r->user()->institution_id)->where('is_current', true)->firstOrFail(); }
+    public function index(Request $r)
     {
-        $professorProfiles = Professor::with(['user', 'department'])->get();
-
-        $academicYear = AcademicYear::where('is_current', true)->first();
-        $academicYearId = $academicYear?->id ?? 1;
-
-        $availabilities = ProfessorAvailability::where('academic_year_id', $academicYearId)
-            ->get()
-            ->keyBy('professor_id');
-
-        $data = $professorProfiles->map(function ($profProfile) use ($availabilities) {
-            $prof = $profProfile->user;
-            if (! $prof) {
-                return null;
+        $year = $this->year($r); $availability = ProfessorAvailability::where('academic_year_id', $year->id)->whereNull('semester_id')->whereNull('day_of_week')->get()->keyBy('professor_id');
+        $rows = Professor::with('user', 'department')->where('institution_id', $r->user()->institution_id)->get()->map(function ($p) use ($availability) {
+            $a = $availability[$p->user_id] ?? null; $days = [];
+            foreach ($a?->availability_data ?? [] as $day => $slots) {
+                $labels = []; if ($slots['matin'] ?? false) $labels[] = 'matin'; if ($slots['apresMidi'] ?? false) $labels[] = 'après-midi';
+                if ($labels) $days[] = $day.' '.implode(' / ', $labels);
             }
-
-            $avail = $availabilities->get($prof->id);
-            $departmentName = $profProfile->department->name ?? 'Inconnu';
-
-            $days = [];
-            if ($avail?->availability_data) {
-                $days = json_decode($avail->availability_data, true) ?? [];
-            }
-
-            $creneauxText = $avail ? $avail->available_slots_count.' créneaux' : '-';
-            if (! empty($days)) {
-                $creneauxText = implode(', ', $days).' ('.$creneauxText.')';
-            }
-
-            $contrat = match ($profProfile->contract_type) {
-                'vacataire' => 'Vacataire',
-                'doctorant' => 'Doctorant',
-                default => 'Permanent',
-            };
-
-            return [
-                'id' => $prof->id,
-                'nom' => $prof->name,
-                'email' => $prof->email,
-                'dept' => $departmentName,
-                'contrat' => $contrat,
-                'statut' => $avail?->status ?? 'Non envoyé',
-                'creneaux' => $creneauxText,
-                'date' => $avail?->updated_at?->format('d/m/Y H:i') ?? '-',
-            ];
-        })->filter();
-
-        return response()->json([
-            'success' => true,
-            'data' => $data->values(),
-        ]);
+            return ['id' => $p->user_id, 'nom' => $p->user->name, 'email' => $p->user->email, 'dept' => $p->department?->name,
+                'contrat' => $p->contract_type, 'statut' => $a?->status ?? 'Non soumis', 'creneaux' => $days ? implode(', ', $days) : 'Non renseigné', 'date' => $a?->updated_at?->format('d/m/Y H:i')];
+        });
+        return response()->json(['success' => true, 'data' => $rows]);
     }
-
-    /**
-     * Envoyer une alerte aux professeurs sélectionnés.
-     */
-    public function alert(Request $request): JsonResponse
+    public function alert(Request $r)
     {
-        $validated = $request->validate([
-            'professor_ids' => 'required|array',
-            'professor_ids.*' => 'integer|exists:users,id',
-        ]);
-
-        $professors = User::whereIn('id', $validated['professor_ids'])->get();
-
-        $academicYear = AcademicYear::where('is_current', true)->first();
-        $academicYearName = $academicYear?->label ?? '2026/2027';
-
-        foreach ($professors as $prof) {
-            $profName = trim(($prof->first_name ?? '').' '.($prof->last_name ?? '')) ?: ($prof->name ?? 'Enseignant');
-            Mail::to($prof->email)->send(new ProfessorAvailabilitySurveyMail([
-                'professorName' => $profName,
-                'name' => $profName,
-                'sessionName' => 'Session d\'Examens '.$academicYearName,
-                'session' => 'Session d\'Examens '.$academicYearName,
-                'sessionType' => 'Normale / Rattrapage',
-                'surveyUrl' => config('app.frontend_url', url('/')).'/professor/availability-survey',
-                'link' => config('app.frontend_url', url('/')).'/professor/availability-survey',
-                'deadline' => now()->addDays(7)->format('d/m/Y'),
-            ]));
-
-            ProfessorAvailability::updateOrCreate(
-                ['professor_id' => $prof->id, 'academic_year_id' => $academicYear?->id ?? 1],
-                ['status' => 'En attente', 'available_slots_count' => 0]
-            );
-        }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Sondage de disponibilité envoyé aux professeurs sélectionnés.',
-        ]);
+        abort_unless($r->user()->hasAnyRole(['super-admin', 'institution-admin', 'director', 'department-head', 'filiere-head']), 403);
+        $data = $r->validate(['professor_ids' => 'required|array|min:1|max:100', 'professor_ids.*' => 'required|integer|distinct']);
+        $users = User::where('institution_id', $r->user()->institution_id)->whereIn('id', $data['professor_ids'])->whereHas('professor')->get();
+        abort_unless($users->count() === count($data['professor_ids']), 422, 'Sélection d’enseignants invalide.');
+        foreach ($users as $user) $user->notify(new \App\Notifications\SystemNotification('Disponibilités à renseigner', 'Merci de renseigner vos créneaux pour l’année '.$this->year($r)->label.'.', 'info', '/professor/availability-survey'));
+        return response()->json(['success' => true, 'message' => 'Demandes enregistrées dans les espaces enseignants.', 'sent_count' => $users->count()]);
     }
-
-    /**
-     * Obtenir la disponibilité de l'enseignant connecté.
-     */
-    public function myAvailability(Request $request): JsonResponse
+    public function myAvailability(Request $r)
     {
-        $user = $request->user();
-        $profId = $user->professor?->id ?? $user->id;
-        $academicYear = AcademicYear::where('is_current', true)->first();
-        $academicYearId = $academicYear?->id ?? 1;
-
-        $avail = ProfessorAvailability::where('professor_id', $profId)
-            ->where('academic_year_id', $academicYearId)
-            ->first();
-
-        $slots = [
-            'Lundi' => ['matin' => true, 'apresMidi' => true],
-            'Mardi' => ['matin' => true, 'apresMidi' => true],
-            'Mercredi' => ['matin' => true, 'apresMidi' => false],
-            'Jeudi' => ['matin' => true, 'apresMidi' => true],
-            'Vendredi' => ['matin' => false, 'apresMidi' => true],
-            'Samedi' => ['matin' => false, 'apresMidi' => false],
-        ];
-
-        if ($avail && $avail->availability_data) {
-            $decoded = json_decode($avail->availability_data, true);
-            if (is_array($decoded)) {
-                $slots = array_merge($slots, $decoded);
-            }
-        }
-
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'availability' => $slots,
-                'status' => $avail?->status ?? 'Soumis',
-                'notes' => $avail?->notes ?? '',
-                'updated_at' => $avail?->updated_at?->format('d/m/Y H:i') ?? now()->format('d/m/Y H:i'),
-                'session_name' => 'Session d\'Automne '.($academicYear?->label ?? '2026/2027'),
-            ],
-        ]);
+        abort_unless($r->user()->professor, 403, 'Profil enseignant requis.');
+        $year = $this->year($r); $a = ProfessorAvailability::where('professor_id', $r->user()->id)->where('academic_year_id', $year->id)->whereNull('semester_id')->whereNull('day_of_week')->first();
+        $slots = []; foreach (self::DAYS as $day) $slots[$day] = ['matin' => false, 'apresMidi' => false];
+        return response()->json(['success' => true, 'data' => ['availability' => array_replace($slots, $a?->availability_data ?? []), 'status' => $a?->status ?? 'Non soumis', 'notes' => $a?->notes ?? '', 'updated_at' => $a?->updated_at?->toIso8601String(), 'session_name' => $year->label]]);
     }
-
-    /**
-     * Enregistrer la disponibilité de l'enseignant connecté.
-     */
-    public function saveMyAvailability(Request $request): JsonResponse
+    public function saveMyAvailability(Request $r)
     {
-        $user = $request->user();
-        $profId = $user->professor?->id ?? $user->id;
-        $academicYear = AcademicYear::where('is_current', true)->first();
-        $academicYearId = $academicYear?->id ?? 1;
-
-        $validated = $request->validate([
-            'availability' => 'required|array',
-            'notes' => 'nullable|string|max:1000',
-        ]);
-
-        $slotsCount = 0;
-        foreach ($validated['availability'] as $day => $s) {
-            if (! empty($s['matin'])) {
-                $slotsCount++;
-            }
-            if (! empty($s['apresMidi'])) {
-                $slotsCount++;
-            }
-        }
-
-        $avail = ProfessorAvailability::updateOrCreate(
-            [
-                'professor_id' => $profId,
-                'academic_year_id' => $academicYearId,
-            ],
-            [
-                'availability_data' => json_encode($validated['availability']),
-                'available_slots_count' => $slotsCount,
-                'notes' => $validated['notes'] ?? null,
-                'status' => 'Soumis',
-                'updated_at' => now(),
-            ]
-        );
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Disponibilités enregistrées avec succès !',
-            'data' => $avail,
-        ]);
+        abort_unless($r->user()->professor, 403, 'Profil enseignant requis.');
+        $data = $r->validate(['availability' => 'required|array:Lundi,Mardi,Mercredi,Jeudi,Vendredi,Samedi', 'availability.*' => 'required|array:matin,apresMidi',
+            'availability.*.matin' => 'required|boolean', 'availability.*.apresMidi' => 'required|boolean', 'notes' => 'nullable|string|max:1000']);
+        $count = 0; foreach ($data['availability'] as $slots) $count += (int) $slots['matin'] + (int) $slots['apresMidi'];
+        $a = DB::transaction(function () use ($r, $data, $count) {
+            User::whereKey($r->user()->id)->lockForUpdate()->firstOrFail();
+            return ProfessorAvailability::updateOrCreate(['professor_id' => $r->user()->id, 'academic_year_id' => $this->year($r)->id, 'semester_id' => null, 'day_of_week' => null],
+                ['availability_data' => $data['availability'], 'available_slots_count' => $count, 'notes' => $data['notes'] ?? null, 'status' => 'Soumis']);
+        });
+        return response()->json(['success' => true, 'message' => 'Disponibilités enregistrées.', 'data' => $a]);
     }
 }

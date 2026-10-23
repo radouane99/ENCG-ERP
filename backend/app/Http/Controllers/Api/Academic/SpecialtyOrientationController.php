@@ -1,219 +1,74 @@
 <?php
-
 namespace App\Http\Controllers\Api\Academic;
-
+use App\Actions\Academic\ManageSpecialtyAllocationAction;
 use App\Http\Controllers\Controller;
-use App\Models\Filiere;
-use App\Models\FiliereQuota;
-use App\Models\Grade;
-use App\Models\SpecialtyWish;
-use App\Models\Student;
-use Illuminate\Http\JsonResponse;
+use App\Models\{AcademicYear, Filiere, FiliereQuota, Institution, SpecialtyWish, Student};
+use App\Services\Academic\AcademicMeritService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class SpecialtyOrientationController extends Controller
 {
-    /**
-     * Liste des filières de spécialité disponibles pour l'orientation S5/S6 et vœux de l'étudiant.
-     */
-    public function studentGetChoices(Request $request): JsonResponse
+    public function __construct(private ManageSpecialtyAllocationAction $action) {}
+    public function studentGetChoices(Request $r)
     {
-        $user = $request->user();
-        $student = Student::where('user_id', $user->id)->first();
-        if (! $student) {
-            return response()->json(['success' => false, 'message' => 'Profil étudiant introuvable.'], 403);
-        }
-
-        // Fetch or simulate the 5 standard ENCG Specialties
-        $filieres = Filiere::where('type', 'grande_ecole')
-            ->orWhereIn('code', ['GFC', 'MACG', 'MCI', 'MRH', 'MLOG'])
-            ->get();
-
-        if ($filieres->isEmpty()) {
-            $filieres = collect([
-                (object) ['id' => 1, 'code' => 'GFC', 'name' => 'Gestion Financière et Comptable', 'description' => 'Finance de marché, corporate finance, ingénierie financière et audit bancaire.'],
-                (object) ['id' => 2, 'code' => 'MACG', 'name' => 'Management Audit et Contrôle de Gestion', 'description' => 'Audit légal, commissariat aux comptes, contrôle de gestion et pilotage de la performance.'],
-                (object) ['id' => 3, 'code' => 'MCI', 'name' => 'Marketing et Commerce International', 'description' => 'Marketing digital, brand management, négociation internationale et supply chain commerciale.'],
-                (object) ['id' => 4, 'code' => 'MRH', 'name' => 'Management des Ressources Humaines', 'description' => 'Gestion prévisionnelle des emplois et des compétences (GPEC), droit social et coaching d\'organisation.'],
-                (object) ['id' => 5, 'code' => 'MLOG', 'name' => 'Management Logistique & Supply Chain', 'description' => 'Logistique globale, gestion des opérations, achats stratégiques et commerce extérieur.'],
-            ]);
-        }
-
-        // Calculate student's cumulative merit score from completed grades
-        $grades = Grade::where('student_id', $student->id)->get();
-        $overallAverage = $grades->isNotEmpty() ? round($grades->avg('grade'), 2) : 14.50;
-
-        // Retrieve existing wishes
-        $existingWishes = SpecialtyWish::with('filiere')
-            ->where('student_id', $student->id)
-            ->orderBy('preference_rank', 'asc')
-            ->get();
-
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'filieres' => $filieres,
-                'existing_wishes' => $existingWishes,
-                'student_merit_score' => $overallAverage,
-                'is_campaign_open' => true,
-                'deadline' => now()->addDays(15)->format('d/m/Y'),
-            ],
-        ]);
+        $student = Student::where('user_id', $r->user()->id)->firstOrFail(); $c = $this->action->campaign($student->institution_id); $year = $this->action->year($c);
+        $score = app(AcademicMeritService::class)->summary($student, $c['source_year_id']);
+        $quotas = FiliereQuota::with('filiere')->where('academic_year', $year->label)->where('is_open', true)->whereHas('filiere', fn ($q) => $q->where('institution_id', $student->institution_id))->get();
+        $open = ($c['is_open'] ?? false) && ! ($c['finalized_at'] ?? false) && isset($c['opens_at'], $c['closes_at']) && now()->between(\Carbon\Carbon::parse($c['opens_at']), \Carbon\Carbon::parse($c['closes_at']));
+        return response()->json(['success' => true, 'data' => ['filieres' => $quotas->map(fn ($q) => $q->filiere->toArray() + ['capacity' => $q->capacity, 'min_score_required' => $q->min_score_required]),
+            'existing_wishes' => SpecialtyWish::with('filiere')->where('student_id', $student->id)->where('academic_year', $year->label)->orderBy('preference_rank')->get(),
+            'student_merit_score' => $score['average'], 'score_complete' => $score['complete'], 'is_campaign_open' => $open, 'deadline' => $c['closes_at'] ?? null, 'academic_year' => $year->label]]);
     }
-
-    /**
-     * Enregistrement des 5 vœux ordonnés de l'étudiant.
-     */
-    public function studentSubmitChoices(Request $request): JsonResponse
+    public function studentSubmitChoices(Request $r)
     {
-        $user = $request->user();
-        $student = Student::where('user_id', $user->id)->first();
-        if (! $student) {
-            return response()->json(['success' => false, 'message' => 'Profil étudiant introuvable.'], 403);
-        }
-
-        $validated = $request->validate([
-            'wishes' => 'required|array|min:2|max:5',
-            'wishes.*.filiere_id' => 'required|integer',
-            'wishes.*.preference_rank' => 'required|integer|min:1|max:5',
-        ]);
-
-        // Calculate student's merit score
-        $grades = Grade::where('student_id', $student->id)->get();
-        $meritScore = $grades->isNotEmpty() ? round($grades->avg('grade'), 2) : 14.50;
-
-        DB::transaction(function () use ($student, $validated, $meritScore) {
-            SpecialtyWish::where('student_id', $student->id)->delete();
-
-            foreach ($validated['wishes'] as $wish) {
-                SpecialtyWish::create([
-                    'student_id' => $student->id,
-                    'filiere_id' => $wish['filiere_id'],
-                    'preference_rank' => $wish['preference_rank'],
-                    'academic_year' => '2026/2027',
-                    'calculated_merit_score' => $meritScore,
-                    'allocation_status' => 'pending',
-                ]);
-            }
+        $data = $r->validate(['wishes' => 'required|array|min:1|max:5', 'wishes.*.filiere_id' => 'required|integer|distinct', 'wishes.*.preference_rank' => 'required|integer|min:1|max:5|distinct']);
+        $ranks = collect($data['wishes'])->pluck('preference_rank')->sort()->values()->all(); abort_unless($ranks === range(1, count($ranks)), 422, 'Classez les vœux de 1 à N sans interruption.');
+        $this->action->choices(Student::where('user_id', $r->user()->id)->firstOrFail(), $data['wishes']);
+        return $this->studentGetChoices($r);
+    }
+    public function adminGetSimulation(Request $r)
+    {
+        $this->action->authorize($r->user()); $c = $this->action->campaign($r->user()->institution_id); $year = $this->action->year($c);
+        $wishes = SpecialtyWish::with('student.user', 'filiere')->where('academic_year', $year->label)->whereHas('student', fn ($q) => $q->where('institution_id', $r->user()->institution_id))->get();
+        $candidates = $wishes->groupBy('student_id')->map(function ($rows) { $a = $rows->first(); $assigned = $rows->firstWhere('allocation_status', 'assigned'); return ['student_id' => $a->student_id,
+            'student_name' => $a->student->user->name, 'cne' => $a->student->cne, 'merit_score' => $a->calculated_merit_score, 'wishes' => $rows->sortBy('preference_rank')->values(), 'allocated_filiere' => $assigned?->filiere?->name]; })->values();
+        $quotas = FiliereQuota::with('filiere')->where('academic_year', $year->label)->whereHas('filiere', fn ($q) => $q->where('institution_id', $r->user()->institution_id))->get()->map(fn ($q) => $q->toArray() + ['filiere_code' => $q->filiere->code, 'filiere_name' => $q->filiere->name, 'allocated_count' => $wishes->where('allocation_status', 'assigned')->where('filiere_id', $q->filiere_id)->count()]);
+        return response()->json(['success' => true, 'data' => ['campaign' => $c, 'quotas' => $quotas, 'candidates' => $candidates, 'wishes' => $wishes,
+            'years' => AcademicYear::where('institution_id', $r->user()->institution_id)->get(['id', 'label']), 'filieres' => Filiere::where('institution_id', $r->user()->institution_id)->get(['id', 'name'])]]);
+    }
+    public function configure(Request $r)
+    {
+        $this->action->authorize($r->user());
+        $data = $r->validate(['source_year_id' => 'required|integer', 'target_year_id' => 'required|integer', 'target_semester' => 'required|in:5,7',
+            'opens_at' => 'required|date', 'closes_at' => 'required|date|after:opens_at', 'is_open' => 'required|boolean', 'reason' => 'required|string|min:10|max:2000']);
+        foreach (['source_year_id', 'target_year_id'] as $key) AcademicYear::where('institution_id', $r->user()->institution_id)->findOrFail($data[$key]);
+        DB::transaction(function () use ($r, $data) {
+            $institution = Institution::whereKey($r->user()->institution_id)->lockForUpdate()->firstOrFail(); $settings = $institution->settings ?? [];
+            $revision = ($settings['specialty_campaign']['revision'] ?? 0) + 1; $settings['specialty_campaign'] = $data + ['revision' => $revision, 'finalized_at' => null];
+            $institution->update(['settings' => $settings]); activity()->causedBy($r->user())->performedOn($institution)->withProperties($data)->log('specialty_campaign_configured');
         });
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Vos vœux de filière ont été enregistrés avec succès ! Score de mérite calculé : '.$meritScore.'/20.',
-            'data' => SpecialtyWish::where('student_id', $student->id)->orderBy('preference_rank')->get(),
-        ]);
+        return $this->adminGetSimulation($r);
     }
-
-    /**
-     * Administration : Aperçu de l'ensemble des vœux et simulation de l'affectation.
-     */
-    public function adminGetSimulation(Request $request): JsonResponse
+    public function saveQuotas(Request $r)
     {
-        $wishes = SpecialtyWish::with(['student.user', 'filiere'])
-            ->orderBy('calculated_merit_score', 'desc')
-            ->get();
-
-        $quotas = FiliereQuota::with('filiere')->get();
-
-        $stats = [
-            'total_students_voted' => $wishes->groupBy('student_id')->count(),
-            'gfc_first_choice' => $wishes->where('preference_rank', 1)->filter(fn ($w) => str_contains($w->filiere?->code ?? '', 'GFC'))->count(),
-            'macg_first_choice' => $wishes->where('preference_rank', 1)->filter(fn ($w) => str_contains($w->filiere?->code ?? '', 'MACG'))->count(),
-            'mci_first_choice' => $wishes->where('preference_rank', 1)->filter(fn ($w) => str_contains($w->filiere?->code ?? '', 'MCI'))->count(),
-            'mrh_first_choice' => $wishes->where('preference_rank', 1)->filter(fn ($w) => str_contains($w->filiere?->code ?? '', 'MRH'))->count(),
-            'mlog_first_choice' => $wishes->where('preference_rank', 1)->filter(fn ($w) => str_contains($w->filiere?->code ?? '', 'MLOG'))->count(),
-        ];
-
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'wishes' => $wishes,
-                'quotas' => $quotas,
-                'statistics' => $stats,
-            ],
-        ]);
-    }
-
-    /**
-     * Administration : Exécution de l'algorithme d'affectation au mérite (Gale-Shapley / Ranking Optimal).
-     */
-    public function adminRunAllocation(Request $request): JsonResponse
-    {
-        // 1. Group wishes by student and sort students by merit score DESC
-        $allWishes = SpecialtyWish::with(['student', 'filiere'])
-            ->orderBy('calculated_merit_score', 'desc')
-            ->get()
-            ->groupBy('student_id');
-
-        $capacities = [
-            1 => 60, // GFC
-            2 => 60, // MACG
-            3 => 60, // MCI
-            4 => 45, // MRH
-            5 => 45, // MLOG
-        ];
-
-        $assignedCounts = [];
-        $allocatedStudents = 0;
-        $satisfactionRank1 = 0;
-        $satisfactionRank2 = 0;
-
-        DB::transaction(function () use ($allWishes, &$capacities, &$assignedCounts, &$allocatedStudents, &$satisfactionRank1, &$satisfactionRank2) {
-            foreach ($allWishes as $studentId => $studentWishes) {
-                $sortedWishes = $studentWishes->sortBy('preference_rank');
-                $assigned = false;
-
-                foreach ($sortedWishes as $wish) {
-                    $fId = $wish->filiere_id;
-                    $currentCap = $capacities[$fId] ?? 60;
-                    $currentAssigned = $assignedCounts[$fId] ?? 0;
-
-                    if ($currentAssigned < $currentCap) {
-                        $wish->allocation_status = 'assigned';
-                        $wish->allocated_at = now();
-                        $wish->save();
-
-                        $assignedCounts[$fId] = $currentAssigned + 1;
-                        $assigned = true;
-                        $allocatedStudents++;
-
-                        if ($wish->preference_rank === 1) {
-                            $satisfactionRank1++;
-                        } elseif ($wish->preference_rank === 2) {
-                            $satisfactionRank2++;
-                        }
-
-                        // Mark other wishes of this student as not selected
-                        SpecialtyWish::where('student_id', $studentId)
-                            ->where('id', '!=', $wish->id)
-                            ->update(['allocation_status' => 'rejected']);
-
-                        break;
-                    }
-                }
-
-                // If student could not get any of their preferences due to capacity, place in waiting list
-                if (! $assigned) {
-                    $firstWish = $sortedWishes->first();
-                    if ($firstWish) {
-                        $firstWish->allocation_status = 'waiting_list';
-                        $firstWish->waiting_list_rank = 1;
-                        $firstWish->save();
-                    }
-                }
+        $this->action->authorize($r->user()); $data = $r->validate(['quotas' => 'required|array|min:1|max:100', 'quotas.*.filiere_id' => 'required|integer|distinct',
+            'quotas.*.capacity' => 'required|integer|min:0|max:10000', 'quotas.*.min_score_required' => 'required|numeric|min:0|max:20', 'quotas.*.is_open' => 'required|boolean']);
+        DB::transaction(function () use ($r, $data) {
+            Institution::whereKey($r->user()->institution_id)->lockForUpdate()->firstOrFail(); $c = $this->action->campaign($r->user()->institution_id);
+            abort_if($c['finalized_at'] ?? false, 409, 'Rouvrez explicitement la campagne avant de modifier ses quotas.'); $label = $this->action->year($c)->label;
+            foreach ($data['quotas'] as $q) {
+                Filiere::where('institution_id', $r->user()->institution_id)->findOrFail($q['filiere_id']);
+                FiliereQuota::updateOrCreate(['filiere_id' => $q['filiere_id'], 'academic_year' => $label], $q);
             }
+            activity()->causedBy($r->user())->withProperties(['academic_year' => $label])->log('specialty_quotas_updated');
         });
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Algorithme d\'orientation exécuté avec succès. Répartition au mérite validée.',
-            'data' => [
-                'total_allocated' => $allocatedStudents,
-                'capacities_usage' => $assignedCounts,
-                'first_choice_satisfaction_rate' => $allocatedStudents > 0 ? round(($satisfactionRank1 / $allocatedStudents) * 100, 1) : 0,
-                'second_choice_satisfaction_rate' => $allocatedStudents > 0 ? round(($satisfactionRank2 / $allocatedStudents) * 100, 1) : 0,
-            ],
-        ]);
+        return $this->adminGetSimulation($r);
+    }
+    public function preview(Request $r) { $p = $this->action->preview($r->user()); return response()->json(['success' => true, 'plan' => ['id' => $p->id, 'assignments' => json_decode($p->assignments, true)]]); }
+    public function adminRunAllocation(Request $r)
+    {
+        $data = $r->validate(['plan_id' => 'required|uuid']);
+        return response()->json(['success' => true, 'message' => 'Affectations enregistrées pour l’année cible.', 'data' => $this->action->commit($r->user(), $data['plan_id'])]);
     }
 }

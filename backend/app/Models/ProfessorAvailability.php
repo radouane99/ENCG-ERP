@@ -14,9 +14,15 @@ class ProfessorAvailability extends Model
 
     protected $guarded = ['id'];
 
+    public function setAvailabilityDataAttribute($value): void
+    {
+        $this->attributes['availability_data'] = json_encode(is_string($value) ? json_decode($value, true, flags: JSON_THROW_ON_ERROR) : $value);
+    }
+
     protected function casts(): array
     {
         return [
+            'availability_data' => 'array',
             'is_available' => 'boolean',
             'start_time' => 'datetime',
             'end_time' => 'datetime',
@@ -25,6 +31,6 @@ class ProfessorAvailability extends Model
 
     public function professor(): BelongsTo
     {
-        return $this->belongsTo(Professor::class, 'professor_id');
+        return $this->belongsTo(User::class, 'professor_id');
     }
 }

@@ -451,6 +451,8 @@ class GradeController extends Controller
      */
     public function unlockModulePv(Request $request, int $moduleId): JsonResponse
     {
+        abort_unless($request->user()->hasAnyRole(['super-admin', 'institution-admin', 'director']), 403);
+        $request->validate(['reason' => 'required|string|min:10|max:2000']);
         $this->authorize('create', Grade::class);
 
         $module = Module::findOrFail($moduleId);
@@ -461,7 +463,16 @@ class GradeController extends Controller
         if ($session && $session !== 'all') {
             $query->where('session', $session);
         }
-        $deleted = $query->delete();
+        $deleted = DB::transaction(function () use ($query, $module, $request, $user) {
+            Module::whereKey($module->id)->lockForUpdate()->firstOrFail();
+            $signatures = $query->lockForUpdate()->get();
+            foreach ($signatures as $signature) {
+                DB::table('module_pv_signature_archives')->insert(['module_id' => $module->id, 'academic_year_id' => $signature->academic_year_id,
+                    'signature_snapshot' => json_encode($signature->getAttributes()), 'reason' => $request->input('reason'), 'revoked_by' => $user->id, 'created_at' => now(), 'updated_at' => now()]);
+                $signature->delete();
+            }
+            return $signatures->count();
+        });
 
         if (class_exists(AuditLog::class)) {
             AuditLog::record([

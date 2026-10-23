@@ -114,6 +114,11 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:admin|super-admi
     // Dashboard Stats & Ministry Audit Reports
     Route::get('/dashboard/stats', [AdminDashboardController::class, 'getStats']);
     Route::get('/finance/stats', [AdminDashboardController::class, 'getFinanceStats']);
+    Route::get('/admin/finance/options', [\App\Http\Controllers\Api\Admin\TuitionFinanceController::class, 'options']);
+    Route::post('/admin/finance/invoices', [\App\Http\Controllers\Api\Admin\TuitionFinanceController::class, 'store']);
+    Route::post('/admin/finance/payments/{id}/validate', [\App\Http\Controllers\Api\Admin\TuitionFinanceController::class, 'validatePayment']);
+    Route::post('/admin/finance/reminders', [\App\Http\Controllers\Api\Admin\TuitionFinanceController::class, 'remind']);
+    Route::post('/admin/finance/invoices/{id}/reminder', [\App\Http\Controllers\Api\Admin\TuitionFinanceController::class, 'remind']);
     Route::get('/reports/ministry-audit', [AdminDashboardController::class, 'generateMinistryReport']);
 
     // Admin Custom Routes
@@ -131,8 +136,6 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:admin|super-admi
     Route::get('/v1/admin/exams/{exam}/door-sign-pdf', [PdfExportController::class, 'downloadDoorSignPdf']);
     Route::get('/v1/exams/{exam}/rooms/{room}/door-sign-pdf', [PdfExportController::class, 'downloadDoorSignPdf']);
     Route::get('/v1/exams/{exam}/door-sign-pdf', [PdfExportController::class, 'downloadDoorSignPdf']);
-    Route::post('/exams/pv/sign', [ExamIncidentController::class, 'storePvSignature']);
-    Route::get('/exams/{exam}/pv/pdf', [ExamIncidentController::class, 'downloadOfficialPvPdf']);
     Route::post('/notifications/broadcast-urgent', [NotificationController::class, 'broadcastUrgentAlert']);
     Route::post('/admin/notifications/broadcast-urgent', [NotificationController::class, 'broadcastUrgentAlert']);
     Route::get('/admin/pwa-notifications/stats', [NotificationController::class, 'getPwaStats']);
@@ -148,7 +151,7 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:admin|super-admi
     Route::post('/documents/generate', [DocumentCenterController::class, 'generate']);
     Route::get('/documents/download/{type}/{id}', [DocumentCenterController::class, 'downloadDocument']);
     Route::get('holidays/{holiday}/impact', [HolidayController::class, 'impact']);
-    Route::apiResource('holidays', HolidayController::class);
+    Route::apiResource('holidays', HolidayController::class)->except(['show']);
     Route::get('admin/holidays/{holiday}/impact', [HolidayController::class, 'impact']);
     // 🏛️ Institution & Global ERP Settings
     Route::get('/admin/institution-settings', [InstitutionSettingsController::class, 'getSettings']);
@@ -305,20 +308,20 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:admin|super-admi
     Route::patch('/admin/academic-integrity/assessments/{id}', [\App\Http\Controllers\Api\Admin\AcademicIntegrityController::class, 'resolve']);
     Route::post('/groups/dispatch-students', [GroupController::class, 'dispatchStudentsToGroups']);
     Route::post('/groups/dispatch-subgroups', [GroupController::class, 'dispatchSubGroups']);
-    Route::apiResource('groups', GroupController::class);
+    Route::apiResource('groups', GroupController::class)->except(['show']);
 
     Route::get('semesters', function () {
         return response()->json(['data' => Semester::all()]);
     });
-    Route::apiResource('academic-years', AcademicYearController::class);
+    Route::apiResource('academic-years', AcademicYearController::class)->except(['show']);
     Route::post('academic-years/{id}/rollover', [AcademicYearController::class, 'rollover']);
-    Route::apiResource('exam-sessions', ExamSessionController::class);
+    Route::apiResource('exam-sessions', ExamSessionController::class)->except(['show']);
     Route::apiResource('final-projects', FinalProjectController::class);
     Route::apiResource('attendances', AttendanceController::class)->only(['index', 'destroy']);
 
     // Clubs
     Route::get('clubs/{id}/agrement-pdf', [ClubController::class, 'downloadAgrementPdf']);
-    Route::apiResource('clubs', ClubController::class)->except(['destroy']);
+    Route::apiResource('clubs', ClubController::class)->except(['destroy', 'show']);
 
     // Internships
     Route::apiResource('internships', InternshipController::class)->except(['destroy']);
@@ -335,7 +338,7 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:admin|super-admi
     Route::apiResource('complaints', ComplaintController::class)->except(['destroy']);
 
     // Discipline
-    Route::apiResource('discipline', DisciplineController::class)->except(['destroy']);
+    Route::apiResource('discipline', DisciplineController::class)->except(['destroy', 'show', 'update']);
     Route::post('discipline/{id}/decide', [DisciplineController::class, 'decide']);
 
     // Absences (Admin)
@@ -347,12 +350,9 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:admin|super-admi
     // Grades & Deliberation
     Route::prefix('grades')->group(function () {
         Route::get('/my-modules', [GradeController::class, 'getMyAssignedModules']);
-        Route::post('/batch', [GradeController::class, 'storeBatch']);
-        Route::post('/validate', [GradeController::class, 'validateGrades']);
     });
     Route::get('modules/{module}/assessments', [AssessmentController::class, 'getForModule']);
     Route::post('modules/{module}/assessments', [AssessmentController::class, 'storeForModule']);
-    Route::get('modules/export-bulk-pv-zip', [PdfExportController::class, 'exportBulkPvZip']);
     Route::get('modules/{module}/pv', [GradeController::class, 'getModulePv']);
     Route::get('semester-pv', [GradeController::class, 'getSemesterPv']);
     Route::get('grades/pv/semester', [GradeController::class, 'getSemesterPv']);
@@ -540,7 +540,6 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:admin|super-admi
 
     // Smart Scheduling & Substitutions
     Route::get('/schedule-change-requests/substitutes', [ScheduleChangeRequestController::class, 'suggestSubstitutes']);
-    Route::post('/schedules/auto-generate', [SmartSchedulingController::class, 'autoGenerate']);
     Route::apiResource('schedules', ScheduleController::class)->except(['update', 'show']);
 
     // Exam Planning & Convocations
@@ -550,7 +549,6 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:admin|super-admi
         Route::post('/auto-generate', [ExamPlanningController::class, 'autoGenerateBatch']);
         Route::post('/auto-generate-batch', [ExamPlanningController::class, 'autoGenerateBatch']);
         Route::post('/custom-generate', [ExamPlanningController::class, 'autoGenerateBatch']);
-        Route::post('/generate-session', [ExamPlanningController::class, 'generateSession']);
         Route::post('/store', [ExamPlanningController::class, 'store']);
         Route::post('/check-conflict', [ExamPlanningController::class, 'checkRoomConflict']);
 
@@ -707,9 +705,6 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:admin|super-admi
         Route::get('/verify/{token}', [DocumentController::class, 'verify']);
 
         // PDF Previews
-        Route::get('/preview/ordre-mission', [PdfExportController::class, 'previewOrdreMission']);
-        Route::get('/preview/convention-stage', [PdfExportController::class, 'previewConventionStage']);
-        Route::get('/preview/attestation-travail', [PdfExportController::class, 'previewAttestationTravail']);
         Route::get('/preview/releve-notes', [PdfExportController::class, 'releveNotes']);
     });
 
@@ -1198,6 +1193,7 @@ Route::middleware(['auth:sanctum', 'institution.context', $staffRoles])->group(f
     Route::post('/v1/admin/textbooks/{id}/validate', [AdminTextbookController::class, 'validateSession']);
 
     // Réclamations de Notes LMD 48h (Administration / Scolarité)
+    Route::post('/admin/grade-publications', [GradeAppealController::class, 'publish']);
     Route::get('/admin/grade-appeals', [GradeAppealController::class, 'index']);
     Route::post('/admin/grade-appeals/{id}/resolve', [GradeAppealController::class, 'resolve']);
     Route::get('/v1/admin/grade-appeals', [GradeAppealController::class, 'index']);
@@ -1206,11 +1202,15 @@ Route::middleware(['auth:sanctum', 'institution.context', $staffRoles])->group(f
     // Orientation & Choix de Spécialité (Simulation & Allocation Gale-Shapley)
     Route::get('/admin/specialty-allocation/simulation', [SpecialtyOrientationController::class, 'adminGetSimulation']);
     Route::post('/admin/specialty-allocation/run', [SpecialtyOrientationController::class, 'adminRunAllocation']);
+    Route::post('/admin/specialty-allocation/preview', [SpecialtyOrientationController::class, 'preview']);
+    Route::put('/admin/specialty-allocation/campaign', [SpecialtyOrientationController::class, 'configure']);
+    Route::put('/admin/specialty-allocation/quotas', [SpecialtyOrientationController::class, 'saveQuotas']);
     Route::get('/v1/admin/specialty-allocation/simulation', [SpecialtyOrientationController::class, 'adminGetSimulation']);
     Route::post('/v1/admin/specialty-allocation/run', [SpecialtyOrientationController::class, 'adminRunAllocation']);
 
     // Conventions de Stage Tripartites Dématérialisées (Admin)
-    Route::get('/admin/internships/conventions', [InternshipConventionController::class, 'studentIndex']);
+    Route::get('/admin/internships/conventions', [InternshipConventionController::class, 'adminIndex']);
+    Route::post('/admin/internships/{id}/review-convention', [InternshipConventionController::class, 'reviewConvention']);
     Route::get('/admin/internships/{id}/convention-pdf', [InternshipConventionController::class, 'downloadConventionPdf']);
     Route::get('/v1/admin/internships/{id}/convention-pdf', [InternshipConventionController::class, 'downloadConventionPdf']);
 
@@ -1254,6 +1254,7 @@ Route::middleware('throttle:20,1')->group(function () {
     Route::post('/public/validate-photo-quality', [StudentController::class, 'validatePhotoQuality'])->middleware('throttle:uploads');
     Route::post('/public/scolarbot/chat', [AiScolarBotController::class, 'chat'])->middleware('throttle:10,1');
     Route::post('/public/convention-sign/{token}', [InternshipConventionController::class, 'publicSignCompany']);
+    Route::get('/public/convention-sign/{token}', [InternshipConventionController::class, 'companyPreview'])->middleware('throttle:20,1');
 });
 
 Route::middleware(['auth:sanctum', 'institution.context'])->group(function () {

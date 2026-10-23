@@ -1,0 +1,75 @@
+
+AUDIT {"probe":"renewal_retry","first_http":200,"second_http":200,"first_semester":3,"second_semester":3,"annual_registrations":1}
+
+AUDIT {"probe":"unverified_payment","http":402,"new_filiere":2,"target_filiere":3}
+
+AUDIT {"probe":"renewal_rejected_side_effect","http":402,"student_status":"pending"}
+
+AUDIT {"probe":"closed_appeal_window","window_open":false,"http":422,"persisted":0}
+
+AUDIT {"probe":"appeal_wrong_assessment","http":422,"persisted":0}
+
+AUDIT {"probe":"rectification_without_grade","http":422,"appeal_status":"submitted","grades":0}
+
+AUDIT {"probe":"signed_grade_appeal_bypass","http":409,"grade_after":8}
+
+AUDIT {"probe":"unrelated_professor_internships","http":200,"listed_ids":[]}
+
+AUDIT {"probe":"unrelated_professor_stage_mutation","http":403,"status_after":"active"}
+
+AUDIT {"probe":"outside_jury_evaluation","http":403,"grade_after":null}
+
+AUDIT {"probe":"availability_identity","http":200,"professor_profile_id":7,"expected_user_id":21,"stored_key":21}
+
+AUDIT {"probe":"empty_grades_average","http":200,"average":null,"admitted":false}
+
+   FAIL  Tests\Audit\RoleJourneysDeepScanTest
+  ✓ renewal cannot advance two semesters on every retry                 34.45s  
+  ✓ client claim of payment is not a verified payment                    0.91s  
+  ✓ payment rejection does not activate the student                      0.93s  
+  ✓ appeal is rejected when the reported window is closed                0.90s  
+  ✓ appeal assessment must belong to the claimed module                  0.83s  
+  ✓ rectification without any grade cannot report success                0.82s  
+  ✓ a signed module grade cannot be rewritten by ordinary appeal resolu… 0.90s  
+  ✓ professor only sees supervised internships                           1.06s  
+  ✓ unrelated professor cannot complete someone elses internship         0.92s  
+  ✓ professor outside jury cannot grade a defense                        1.01s  
+  ⨯ student cannot self certify school signature and insurance           2.09s  
+  ✓ availability uses the user key expected by the foreign key           1.15s  
+  ✓ student does not see a fabricated average without grades             0.91s  
+
+AUDIT {"probe":"production_convention","http":201,"insurance_verified":false,"school_status":"pending","persisted":1}
+
+AUDIT {"probe":"production_availability","http":200,"expected_user":25,"stored_user":25}
+
+AUDIT {"probe":"user_resource_uuid_lookup","http":200,"resource_identifier_kind":"uuid"}
+
+   PASS  Tests\Audit\ProductionModeBoundaryAuditTest
+  ✓ production mass assignment mode does not allow self certified insur… 0.71s  
+  ✓ production availability does not write the wrong users key           0.83s  
+  ✓ registered user creation route has a callable controller action      1.46s  
+  ✓ user details accept the uuid exposed by the user resource            0.98s  
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Audit\RoleJourneysDeepScanTest > s…  MassAssignmentException   
+  Add [supervisor_email] to fillable property to allow mass assignment on [App\Models\Internship].
+
+  at vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:624
+    620▕             } elseif ($totallyGuarded || static::preventsSilentlyDiscardingAttributes()) {
+    621▕                 if (isset(static::$discardedAttributeViolationCallback)) {
+    622▕                     call_user_func(static::$discardedAttributeViolationCallback, $this, [$key]);
+    623▕                 } else {
+  ➜ 624▕                     throw new MassAssignmentException(sprintf(
+    625▕                         'Add [%s] to fillable property to allow mass assignment on [%s].',
+    626▕                         $key, get_class($this)
+    627▕                     ));
+    628▕                 }
+
+      [2m+7 vendor frames [22m
+  8   app/Actions/Internship/ManageConventionAction.php:13
+      [2m+3 vendor frames [22m
+  12  app/Actions/Internship/ManageConventionAction.php:11
+
+
+  Tests:    1 failed, 16 passed (26 assertions)
+  Duration: 56.43s
+

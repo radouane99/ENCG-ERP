@@ -95,7 +95,7 @@ class DeliberationEngine extends CanonicalDeliberationEngine
         })->get();
     }
 
-    private function calculateModuleAverages(int $studentId, int $semesterNumber, bool $includeRattrapage): Collection
+    public function calculateModuleAverages(int $studentId, int $semesterNumber, bool $includeRattrapage): Collection
     {
         $rows = DB::table('grades')->whereIn('grades.assessment_id', Assessment::query()->select('id'))
             ->join('assessments', 'grades.assessment_id', '=', 'assessments.id')
@@ -107,7 +107,7 @@ class DeliberationEngine extends CanonicalDeliberationEngine
                 'assessments.id as assessment_id',
                 'assessments.type as assessment_type',
                 'assessments.weight as weight',
-                'grades.value as value'
+                'grades.value as value', 'grades.absent as absent'
             )
             ->get();
 
@@ -115,11 +115,11 @@ class DeliberationEngine extends CanonicalDeliberationEngine
             $normale = $moduleRows->reject(fn ($row) => $this->isRattrapageType($row->assessment_type));
             $resitBest = $moduleRows
                 ->filter(fn ($row) => $this->isRattrapageType($row->assessment_type))
-                ->max('value');
+                ->map(fn ($row) => $row->absent ? 0 : $row->value)->max();
 
             $score = 0.0;
             foreach ($normale as $row) {
-                $value = (float) ($row->value ?? 0);
+                $value = $row->absent ? 0.0 : (float) ($row->value ?? 0);
                 if ($includeRattrapage && $resitBest !== null && $this->isExamComponentType($row->assessment_type)) {
                     $value = max($value, (float) $resitBest);
                 }

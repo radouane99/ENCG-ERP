@@ -1,0 +1,23 @@
+
+AUDIT {"probe":"self_role_elevation","http":403,"super_admin_after":false}
+
+AUDIT {"probe":"matrix_self_role_elevation","http":403,"super_admin_after":false}
+
+   PASS  Tests\Audit\AdministrationDeepScanTest
+  ✓ institution admin cannot self promote to super admin                33.46s  
+  ✓ rbac matrix cannot grant the actor super admin to itself             0.82s  
+
+AUDIT {"probe":"unrelated_professor_internships","http":200,"listed_ids":[]}
+
+AUDIT {"probe":"unrelated_professor_stage_mutation","http":403,"status_after":"active"}
+
+AUDIT {"probe":"outside_jury_evaluation","http":403,"grade_after":null}
+
+   PASS  Tests\Audit\RoleJourneysDeepScanTest
+  ✓ professor only sees supervised internships                           1.24s  
+  ✓ unrelated professor cannot complete someone elses internship         0.73s  
+  ✓ professor outside jury cannot grade a defense                        0.91s  
+
+  Tests:    5 passed (6 assertions)
+  Duration: 42.39s
+
