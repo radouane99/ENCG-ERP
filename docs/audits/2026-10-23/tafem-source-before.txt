@@ -1,0 +1,12 @@
+BEGIN
+ grades |            grade_hash            
+--------+----------------------------------
+   1721 | 28456683e7a8598b343da2fcc70b844c
+(1 row)
+
+ documents 
+-----------
+         7
+(1 row)
+
+COMMIT

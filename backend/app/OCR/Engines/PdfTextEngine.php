@@ -32,7 +32,7 @@ class PdfTextEngine implements OcrEngineInterface
 
         // Try with UTF-8 encoding
         $command = sprintf('pdftotext -layout -enc UTF-8 %s - 2>/dev/null', escapeshellarg($filePath));
-        @exec($command, $output, $returnVar);
+        \App\OCR\OcrProcess::run($command, $output, $returnVar);
 
         $text = implode("\n", $output);
 
@@ -40,7 +40,7 @@ class PdfTextEngine implements OcrEngineInterface
         if ($returnVar !== 0 || empty(trim($text))) {
             $output = [];
             $command = sprintf('pdftotext -layout %s - 2>/dev/null', escapeshellarg($filePath));
-            @exec($command, $output, $returnVar);
+            \App\OCR\OcrProcess::run($command, $output, $returnVar);
             $text = implode("\n", $output);
         }
 

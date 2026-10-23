@@ -250,7 +250,7 @@ export default function RootRouter() {
           <Route path="/auth/callback" element={<SsoCallbackPage />} />
         </Route>
 
-        <Route path="/inscription" element={<RequireGuest><InscriptionPage /></RequireGuest>} />
+        <Route path="/inscription" element={<InscriptionPage />} />
         <Route path="/mon-dossier/modifier" element={<ModifierDossierPage />} />
 
         {/* Public Utility Routes */}
@@ -263,6 +263,10 @@ export default function RootRouter() {
         {/* ── Authenticated App Shell ───────────────────────── */}
         <Route element={<RequireAuth><AppShell /></RequireAuth>}>
           <Route path="/dashboard" element={<DashboardRouter />} />
+          <Route element={<ProtectedRoute roles={[...ADMIN_ROLES, 'scolarite']} />}>
+            <Route path="/admin/tafem" element={<AdminTafem />} />
+          </Route>
+          <Route path="/admissions/mon-dossier" element={<InscriptionPage editMode />} />
 
           <Route element={<ProtectedRoute roles={['student', 'professor', 'super-admin']} />}>
           <Route path="/cedoc/dashboard" element={<DoctorantDashboard />} />
@@ -477,7 +481,6 @@ export default function RootRouter() {
             <Route path="/admin/clubs/calendar" element={<AdminClubsCalendarPage />} />
             <Route path="/admin/clubs-room-requests" element={<AdminClubsRoomRequestsPage />} />
             <Route path="/admin/club-finance" element={<AdminClubFinancePage />} />
-            <Route path="/admin/tafem" element={<AdminTafem />} />
             <Route path="/admin/mobility" element={<AdminMobility />} />
             <Route path="/admin/jury-pfe" element={<AdminPFEWorkflowPage />} />
             <Route path="/admin/predictive-analytics" element={<AdminPredictiveAnalytics />} />
@@ -524,7 +527,6 @@ export default function RootRouter() {
             <Route path="/admin/blockchain-diplomas" element={<AdminBlockchainDiplomas />} />
             <Route path="/admin/predictive-analytics" element={<AdminPredictiveAnalytics />} />
             <Route path="/admin/smart-campus" element={<AdminSmartCampus />} />
-            <Route path="/admin/tafem" element={<AdminTafem />} />
             <Route path="/admin/mobility" element={<AdminMobility />} />
             <Route path="/admin/jury-pfe" element={<AdminPFEWorkflowPage />} />
             <Route path="/admin/alumni" element={<AlumniNetwork />} />

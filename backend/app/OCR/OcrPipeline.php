@@ -85,6 +85,7 @@ class OcrPipeline implements OcrPipelineInterface
             }
 
             try {
+                $this->processedEngines[] = get_class($engine);
                 $engineStartTime = microtime(true);
 
                 // Exécution avec timeout
@@ -144,7 +145,9 @@ class OcrPipeline implements OcrPipelineInterface
      */
     private function executeWithTimeout(callable $callback, int $timeout)
     {
-        return $callback();
+        OcrProcess::budget($timeout);
+        try { return $callback(); }
+        finally { OcrProcess::reset(); }
     }
 
     /**

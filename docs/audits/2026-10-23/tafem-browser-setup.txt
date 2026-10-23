@@ -1,0 +1,164 @@
+
+  Dropping all tables ............................................... 2 s DONE
+
+   INFO  Preparing database.  
+
+  Creating migration table ...................................... 76.00ms DONE
+
+   INFO  Running migrations.  
+
+  0001_01_01_000001_create_cache_table ......................... 186.36ms DONE
+  0001_01_01_000002_create_jobs_table ........................... 86.04ms DONE
+  2024_01_01_000001_create_institutions_table .................. 102.30ms DONE
+  2024_01_01_000002_create_auth_tables ......................... 117.46ms DONE
+  2024_01_01_000003_create_compliance_tables ................... 118.41ms DONE
+  2024_01_01_000004_create_academic_tables ..................... 263.92ms DONE
+  2024_01_01_000005_create_student_tables ...................... 216.10ms DONE
+  2024_01_01_000006_create_hr_tables ........................... 145.24ms DONE
+  2024_01_01_000007_create_exam_deliberation_tables ............ 273.87ms DONE
+  2024_01_01_000008_create_projects_documents_tables ........... 253.81ms DONE
+  2024_01_01_000009_create_lms_communication_tables ............ 256.34ms DONE
+  2024_01_01_000010_create_alumni_surveys_table ................. 16.58ms DONE
+  2024_01_01_000010_create_library_discipline_ai_tables ........ 217.82ms DONE
+  2026_06_24_100000_create_encg_audit_tables .................... 82.58ms DONE
+  2026_06_24_100001_add_institution_id_to_users_table ........... 13.75ms DONE
+  2026_06_24_100003_add_theme_preference_to_users_table .......... 4.44ms DONE
+  2026_06_24_100004_create_student_cards_table .................. 22.38ms DONE
+  2026_06_24_100006_create_activity_log_table ................... 23.48ms DONE
+  2026_06_24_110000_create_apogee_academic_tables ............... 72.91ms DONE
+  2026_06_24_150000_create_exam_planning_tables ................. 49.37ms DONE
+  2026_06_25_115821_create_permission_tables ................... 169.86ms DONE
+  2026_06_26_100000_create_contact_submissions_table ............ 15.96ms DONE
+  2026_06_28_011336_add_two_factor_to_users_table ................ 8.36ms DONE
+  2026_07_01_000001_create_professor_availabilities_table ....... 23.76ms DONE
+  2026_07_01_000002_create_schedule_change_requests_table ....... 18.62ms DONE
+  2026_07_01_092250_add_qr_token_to_exam_seatings_table .......... 6.84ms DONE
+  2026_07_01_093326_create_complaints_table ..................... 14.59ms DONE
+  2026_07_01_100000_create_exam_locking_audits_table ............ 12.07ms DONE
+  2026_07_02_113000_add_qr_fields_to_attendance_sessions ........ 18.46ms DONE
+  2026_07_02_150000_create_ai_chat_messages_table ............... 12.20ms DONE
+  2026_07_03_101724_make_grade_nullable_in_professors_table ...... 3.73ms DONE
+  2026_07_03_132802_add_professor_id_to_vacation_contracts_table . 5.08ms DONE
+  2026_07_03_134543_make_module_id_nullable_in_vacation_contracts  7.11ms DONE
+  2026_07_06_083009_create_telescope_entries_table .............. 43.67ms DONE
+  2026_07_06_105025_add_sent_at_to_exam_seatings_table ........... 3.00ms DONE
+  2026_07_06_120000_add_status_fields_to_attendance_records_table  10.00ms DONE
+  2026_07_06_125000_create_internship_documents_and_soutenances_tables  29.95ms DONE
+  2026_07_06_130000_create_convocations_table ................... 25.99ms DONE
+  2026_07_06_150000_identity_merge .............................. 78.77ms DONE
+  2026_07_06_150001_projects_merge .............................. 43.53ms DONE
+  2026_07_06_150002_redundancy_purge ............................ 64.49ms DONE
+  2026_07_06_150003_remove_path_columns_and_media_table ........ 101.67ms DONE
+  2026_07_06_160000_create_electronic_desk_tables ............... 37.24ms DONE
+  2026_07_07_084818_final_cleanup_and_hardening ................. 19.48ms DONE
+  2026_07_07_100000_update_schedule_changes_table ................ 3.19ms DONE
+  2026_07_07_200000_final_database_optimization ................ 438.98ms DONE
+  2026_07_08_000001_ensure_parent_tables_exist .................. 37.95ms DONE
+  2026_07_08_000002_normalize_identity_tables ................... 72.96ms DONE
+  2026_07_08_000003_merge_redundant_tables ...................... 60.14ms DONE
+  2026_07_08_000004_optimize_indices_and_status .................. 9.70ms DONE
+  2026_07_08_audit_performance_indexes .......................... 34.12ms DONE
+  2026_07_09_092752_safe_normalize_identity_and_constraints ..... 62.45ms DONE
+  2026_07_09_093046_optimize_fks_indexes_and_uuids ............. 108.75ms DONE
+  2026_07_09_094900_scaffold_timetable_ai_and_views ............. 52.71ms DONE
+  2026_07_09_094930_scaffold_timetable_ai_and_views .............. 0.76ms DONE
+  2026_07_09_100000_create_apogee_assessments_grades_tables ..... 35.72ms DONE
+  2026_07_09_101241_create_resit_eligibilities_table ............ 17.34ms DONE
+  2026_07_09_120831_add_fulltext_index_to_users_table ............ 5.47ms DONE
+  2026_07_09_phase8_fulltext_users_index ......................... 0.68ms DONE
+  2026_07_14_094300_add_room_id_to_room_bookings_table ........... 6.32ms DONE
+  2026_07_14_111104_create_discipline_cases_table ................ 1.67ms DONE
+  2026_07_15_101632_add_avatar_path_to_users_table ............... 3.17ms DONE
+  2026_07_15_150000_create_module_pv_signatures_table ........... 26.91ms DONE
+  2026_07_16_085628_change_status_to_string_in_student_cards ..... 6.03ms DONE
+  2026_07_16_110000_add_photo_url_to_student_cards ............... 2.89ms DONE
+  2026_07_17_082505_create_job_offers_table ..................... 12.42ms DONE
+  2026_07_17_085929_create_discipline_cases_table ............... 19.45ms DONE
+  2026_07_17_090242_create_research_publications_table .......... 16.10ms DONE
+  2026_07_17_135853_create_generated_documents_table ............ 23.80ms DONE
+  2026_07_17_143531_create_module_validations_table ............. 27.29ms DONE
+  2026_07_17_143554_create_student_module_retakes_table ......... 24.16ms DONE
+  2026_07_17_144221_update_generated_documents_table_for_standalone_docs  14.33ms DONE
+  2026_07_21_100000_create_mobility_partner_tables .............. 36.34ms DONE
+  2026_07_21_200000_create_validation_audits_table .............. 22.82ms DONE
+  2026_07_21_210000_create_academic_events_table ................ 19.72ms DONE
+  2026_07_21_220000_create_grade_audits_table ................... 20.64ms DONE
+  2026_07_21_230000_add_last_login_ip_to_users_table ............. 5.35ms DONE
+  2026_07_22_000000_add_qr_and_sent_to_exam_surveillances ....... 18.86ms DONE
+  2026_07_22_120000_add_confirmed_at_to_exam_surveillances_table . 6.24ms DONE
+  2026_07_22_120001_create_exam_incidents_table ................. 22.22ms DONE
+  2026_07_22_120002_create_notification_logs_table .............. 15.73ms DONE
+  2026_07_22_121800_add_attachment_path_to_exam_incidents_table .. 2.92ms DONE
+  2026_07_22_123800_create_blockchain_certificates_table ........ 23.39ms DONE
+  2026_07_23_000000_add_type_and_description_to_holidays_table .. 12.50ms DONE
+  2026_07_23_010000_add_exam_capacity_to_rooms_table ............. 8.92ms DONE
+  2026_07_23_020000_add_equipment_status_to_rooms_table .......... 8.20ms DONE
+  2026_07_23_030000_create_exam_pv_signatures_table ............. 22.99ms DONE
+  2026_07_23_040000_create_grade_appeals_table .................. 22.96ms DONE
+  2026_07_23_230000_add_reason_to_exam_locking_audits_table ...... 7.84ms DONE
+  2026_07_24_000000_create_deliberation_juries_table ............ 29.57ms DONE
+  2026_07_24_000001_add_responsable_id_to_filieres_table ......... 9.29ms DONE
+  2026_07_24_000002_fix_responsable_id_uuid_type ................. 7.56ms DONE
+  2026_07_24_000003_add_status_reason_to_resit_eligibilities .... 15.32ms DONE
+  2026_07_24_000004_add_decision_tracking_to_resit_eligibilities  20.29ms DONE
+  2026_07_24_000005_make_exam_session_id_nullable_in_resit_eligibilities  16.31ms DONE
+  2026_07_24_000006_make_group_id_nullable_in_module_pv_signatures  13.01ms DONE
+  2026_07_24_000007_add_session_to_module_pv_signatures_table ... 12.81ms DONE
+  2026_07_25_000000_add_delegate_student_id_to_groups_table ..... 11.48ms DONE
+  2026_07_25_000001_add_discipline_fields_to_exam_incidents_table  29.83ms DONE
+  2026_07_25_200000_create_course_evaluations_tables ............ 25.67ms DONE
+  2026_07_25_230000_create_recommendation_requests_table ........ 19.64ms DONE
+  2026_07_27_110000_add_is_locked_and_locked_at_to_exams_table .. 10.81ms DONE
+  2026_07_29_100000_add_inscription_workflow_and_audit_log ...... 64.96ms DONE
+  2026_07_29_170000_add_disability_fields_to_applications_table . 15.36ms DONE
+  2026_07_29_180000_add_medical_and_contact_fields_to_tables .... 92.04ms DONE
+  2026_07_30_000000_add_list_type_to_applications_and_students_tables  17.42ms DONE
+  2026_07_31_020000_ensure_student_and_application_documents_tables  342.40ms DONE
+  2026_08_11_030000_add_academic_location_fields_to_tables ..... 158.03ms DONE
+  2026_08_12_000010_create_professor_substitutions_table ........ 15.72ms DONE
+  2026_08_13_000001_add_performance_indexes ..................... 11.51ms DONE
+  2026_08_13_000002_add_postgresql_partial_indexes .............. 41.54ms DONE
+  2026_08_13_000003_drop_duplicate_discipline_cases_table ........ 5.82ms DONE
+  2026_08_14_000001_create_professor_document_requests_table .... 19.33ms DONE
+  2026_08_15_000001_create_system_audit_logs_table .............. 22.90ms DONE
+  2026_08_15_180000_add_supervisor_id_to_internships_table ....... 4.02ms DONE
+  2026_08_24_000001_add_must_change_password_to_users_table ...... 8.06ms DONE
+  2026_08_24_000001_add_production_deliberation_composite_indexes  40.78ms DONE
+  2026_08_24_120000_create_privacy_dsar_requests_table ........... 0.91ms DONE
+  2026_08_24_180000_add_dsar_type_to_data_export_requests ....... 17.22ms DONE
+  2026_08_24_180000_fix_grades_deliberation_composite_index ...... 5.79ms DONE
+  2026_08_24_200000_align_lmd_and_jury_windows .................. 99.57ms DONE
+  2026_08_24_210000_academic_events_description ................. 10.02ms DONE
+  2026_08_25_032000_create_edt_campaigns_and_confirmations ...... 45.52ms DONE
+  2026_08_26_224500_add_sso_identity_to_users .................... 8.97ms DONE
+  2026_08_27_120000_restore_complaints_table .................... 17.41ms DONE
+  2026_08_30_000001_enhance_professor_document_requests_parapheur  83.42ms DONE
+  2026_08_30_000002_enhance_audit_logs_forensics_and_diffs ...... 54.78ms DONE
+  2026_08_31_140000_seed_s6_modules_and_academic_consistency ... 201.92ms DONE
+  2026_09_01_120000_normalize_exam_slot_times_with_breaks ....... 12.39ms DONE
+  2026_09_02_130000_add_digital_signatures_to_exam_surveillances  19.25ms DONE
+  2026_09_04_000001_create_textbooks_table ...................... 25.75ms DONE
+  2026_09_05_000001_create_grade_appeals_table ................... 2.57ms DONE
+  2026_09_05_000002_create_specialty_wishes_tables .............. 37.66ms DONE
+  2026_09_05_000003_add_convention_fields_to_internships_table .. 64.43ms DONE
+  2026_09_06_000001_add_sub_group_to_student_pathways_and_registrations  26.82ms DONE
+  2026_09_06_120000_add_attendance_performance_indexes .......... 19.75ms DONE
+  2026_09_07_120000_drop_massar_code_from_students_table ........ 14.49ms DONE
+  2026_09_21_140000_restore_soutenances_and_enhance_pfe_tables .. 47.64ms DONE
+  2026_10_08_020000_unify_institution_id_records ............... 244.98ms DONE
+  2026_10_08_030000_ensure_default_academic_year_record .......... 7.37ms DONE
+  2026_10_22_000001_fix_grade_appeals_schema_and_indexes ....... 139.69ms DONE
+  2026_10_22_100000_complete_candidate_dossier_schema .......... 362.13ms DONE
+  2026_10_22_110000_index_operational_foreign_keys ............. 147.82ms DONE
+  2026_10_22_120000_align_seeded_postgres_sequences ............ 106.35ms DONE
+  2026_10_23_100000_strengthen_academic_integrity ............... 73.72ms DONE
+  2026_10_23_110000_persist_lms_submissions ..................... 24.02ms DONE
+  2026_10_23_120000_enforce_group_context ........................ 9.70ms DONE
+  2026_10_23_130000_backfill_canonical_identity .................. 2.96ms DONE
+  2026_10_23_140000_preserve_recorded_grades .................... 12.03ms DONE
+  2026_10_23_150000_reconcile_proven_academic_offerings .......... 2.48ms DONE
+  2026_10_23_200000_structure_admission_workflow ............... 262.74ms DONE
+
+
+   INFO  Seeding database.  
+

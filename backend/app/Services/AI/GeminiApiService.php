@@ -78,7 +78,7 @@ class GeminiApiService
         }
 
         try {
-            $response = Http::withoutVerifying()->timeout(15)->withHeaders([
+            $response = Http::connectTimeout(3)->timeout(15)->withHeaders([
                 'X-goog-api-key' => $this->geminiApiKey,
             ])->post($url, $payload);
             if ($response->successful()) {
@@ -87,11 +87,11 @@ class GeminiApiService
                     return trim($text);
                 }
             }
-            Log::warning('Gemini API Non-200 Response: '.$response->body());
+            Log::warning('Gemini API Non-200 Response: '.'provider_error');
 
             return null;
         } catch (\Exception $e) {
-            Log::warning('Gemini API Exception: '.$e->getMessage());
+            Log::warning('Gemini API Exception: '.'processing_error');
 
             return null;
         }
@@ -114,7 +114,7 @@ class GeminiApiService
 
         foreach ($models as $model) {
             try {
-                $response = Http::withoutVerifying()->timeout(15)->withHeaders([
+                $response = Http::connectTimeout(3)->timeout(15)->withHeaders([
                     'Authorization' => 'Bearer '.$this->groqApiKey,
                     'Content-Type' => 'application/json',
                 ])->post('https://api.groq.com/openai/v1/chat/completions', [
@@ -132,9 +132,9 @@ class GeminiApiService
                         return trim($text);
                     }
                 }
-                Log::warning("Groq API Non-200 Response [{$model}]: ".$response->body());
+                Log::warning("Groq API Non-200 Response [{$model}]: ".'provider_error');
             } catch (\Exception $e) {
-                Log::warning("Groq API Exception [{$model}]: ".$e->getMessage());
+                Log::warning("Groq API Exception [{$model}]: ".'processing_error');
             }
         }
 
@@ -195,7 +195,7 @@ class GeminiApiService
 
                     foreach ($groqModels as $gModel) {
                         try {
-                            $gRes = Http::withoutVerifying()->timeout(15)->withHeaders([
+                            $gRes = Http::connectTimeout(3)->timeout(15)->withHeaders([
                                 'Authorization' => 'Bearer '.$this->groqApiKey,
                                 'Content-Type' => 'application/json',
                             ])->post('https://api.groq.com/openai/v1/chat/completions', [
@@ -217,14 +217,14 @@ class GeminiApiService
                             if ($gRes->successful()) {
                                 $decoded = $this->parseJsonResponse($gRes->json('choices.0.message.content'));
                                 if (! empty($decoded) && is_array($decoded)) {
-                                    Log::info("OCR AI Parsing Success via Groq ({$gModel}) for {$docType}!", $decoded);
+                                    Log::info("OCR AI Parsing Success via Groq ({$gModel}) for {$docType}!");
                                     $this->lastError = null;
 
                                     return $this->cleanAndNormalizeOcrData($decoded, $extractedRawText);
                                 }
                             }
                         } catch (\Throwable $ex) {
-                            Log::warning("Groq AI parsing model {$gModel} failed: ".$ex->getMessage());
+                            Log::warning("Groq AI parsing model {$gModel} failed: ".'processing_error');
                         }
                     }
                 }
@@ -238,7 +238,7 @@ class GeminiApiService
                 }
             }
         } catch (\Throwable $e) {
-            Log::error('[GeminiApiService] Local OCR error: '.$e->getMessage());
+            Log::error('[GeminiApiService] Local OCR error: '.'processing_error');
         }
 
         $fileBytes = base64_encode(file_get_contents($filePath));
@@ -268,7 +268,7 @@ class GeminiApiService
                         ],
                     ];
 
-                    $resG = Http::withoutVerifying()->timeout(25)->withHeaders([
+                    $resG = Http::connectTimeout(3)->timeout(25)->withHeaders([
                         'X-goog-api-key' => $this->geminiApiKey,
                     ])->post($geminiUrl, [
                         'contents' => [['parts' => $parts]],
@@ -279,18 +279,18 @@ class GeminiApiService
                         $rawTxt = $resG->json('candidates.0.content.parts.0.text');
                         $decodedG = $this->parseJsonResponse($rawTxt);
                         if ($decodedG && count(array_filter($decodedG, fn ($v) => ! empty($v) && strtolower((string) $v) !== 'inconnu')) > 0) {
-                            Log::info("OCR Tier 1 Success via Gemini Vision ({$gModel})!", $decodedG);
+                            Log::info("OCR Tier 1 Success via Gemini Vision ({$gModel})!");
                             $this->lastError = null;
 
                             return $this->cleanAndNormalizeOcrData($decodedG);
                         }
                     } else {
-                        $errBody = substr($resG->body(), 0, 250);
-                        $this->lastError = "Gemini Vision ({$gModel}) HTTP ".$resG->status().': '.$errBody;
-                        Log::warning("OCR Tier 1 Gemini ({$gModel}) HTTP ".$resG->status().': '.$errBody);
+                        $errBody = substr('provider_error', 0, 250);
+                        $this->lastError = "Gemini Vision ({$gModel}) HTTP ".$resG->status().': provider_error';
+                        Log::warning("OCR Tier 1 Gemini ({$gModel}) HTTP ".$resG->status().': provider_error');
                     }
                 } catch (\Throwable $ex) {
-                    $this->lastError = "Gemini Vision Exception ({$gModel}): ".$ex->getMessage();
+                    $this->lastError = "Gemini Vision Exception ({$gModel}): ".'processing_error';
                 }
             }
         }
@@ -332,7 +332,7 @@ class GeminiApiService
                     try {
                         Log::info("OCR Tier 1.5: Triggering Groq Vision ({$modelName}) for {$docType}...");
 
-                        $gRes = Http::withoutVerifying()->timeout(25)->withHeaders([
+                        $gRes = Http::connectTimeout(3)->timeout(25)->withHeaders([
                             'Authorization' => 'Bearer '.$this->groqApiKey,
                             'Content-Type' => 'application/json',
                         ])->post('https://api.groq.com/openai/v1/chat/completions', [
@@ -350,19 +350,19 @@ class GeminiApiService
                             $rawJson = $gRes->json('choices.0.message.content');
                             $decodedG = $this->parseJsonResponse($rawJson);
                             if ($decodedG && count(array_filter($decodedG, fn ($v) => ! empty($v) && strtolower((string) $v) !== 'inconnu')) > 0) {
-                                Log::info("OCR Tier 1.5 Success via Groq Vision ({$modelName})!", $decodedG);
+                                Log::info("OCR Tier 1.5 Success via Groq Vision ({$modelName})!");
                                 $this->lastError = null;
 
                                 return $this->cleanAndNormalizeOcrData($decodedG);
                             }
                         } else {
-                            $errBody = substr($gRes->body(), 0, 250);
-                            $this->lastError = "Groq Vision ({$modelName}) HTTP ".$gRes->status().': '.$errBody;
-                            Log::warning("OCR Tier 1.5 Groq Vision ({$modelName}) HTTP ".$gRes->status().': '.$errBody);
+                            $errBody = substr('provider_error', 0, 250);
+                            $this->lastError = "Groq Vision ({$modelName}) HTTP ".$gRes->status().': provider_error';
+                            Log::warning("OCR Tier 1.5 Groq Vision ({$modelName}) HTTP ".$gRes->status().': provider_error');
                         }
                     } catch (\Throwable $ex) {
-                        $this->lastError = "Groq Vision Exception ({$modelName}): ".$ex->getMessage();
-                        Log::error("OCR Tier 1.5 Groq Vision Exception ({$modelName}): ".$ex->getMessage());
+                        $this->lastError = "Groq Vision Exception ({$modelName}): ".'processing_error';
+                        Log::error("OCR Tier 1.5 Groq Vision Exception ({$modelName}): ".'processing_error');
                     }
                 }
             }
@@ -399,7 +399,7 @@ class GeminiApiService
 
             try {
                 Log::info("OCR Tier 2: Triggering Groq Text LLM for {$docType}...");
-                $gResText = Http::withoutVerifying()->timeout(15)->withHeaders([
+                $gResText = Http::connectTimeout(3)->timeout(15)->withHeaders([
                     'Authorization' => 'Bearer '.$this->groqApiKey,
                     'Content-Type' => 'application/json',
                 ])->post('https://api.groq.com/openai/v1/chat/completions', [
@@ -422,17 +422,17 @@ class GeminiApiService
                     $rawJson = $gResText->json('choices.0.message.content');
                     $decodedG = $this->parseJsonResponse($rawJson);
                     if ($decodedG && count(array_filter($decodedG, fn ($v) => ! empty($v) && strtolower((string) $v) !== 'inconnu')) > 0) {
-                        Log::info('OCR Tier 2 Success via Groq Text LLM!', $decodedG);
+                        Log::info('OCR Tier 2 Success via Groq Text LLM!');
                         $this->lastError = null;
 
                         return $this->cleanAndNormalizeOcrData($decodedG);
                     }
                 } else {
-                    $errBody = substr($gResText->body(), 0, 250);
-                    $this->lastError = 'Groq Text HTTP '.$gResText->status().': '.$errBody;
+                    $errBody = substr('provider_error', 0, 250);
+                    $this->lastError = 'Groq Text HTTP '.$gResText->status().': provider_error';
                 }
             } catch (\Throwable $ex) {
-                $this->lastError = 'Groq Text Exception: '.$ex->getMessage();
+                $this->lastError = 'Groq Text Exception: '.'processing_error';
             }
         }
 
@@ -537,7 +537,7 @@ class GeminiApiService
 
                 return $imagick->getImageBlob();
             } catch (\Throwable $e) {
-                Log::warning('Imagick PDF conversion failed: '.$e->getMessage());
+                Log::warning('Imagick PDF conversion failed: '.'processing_error');
             }
         }
 
@@ -671,7 +671,7 @@ class GeminiApiService
                 return $combinedJpeg;
             }
         } catch (\Throwable $e) {
-            Log::warning('Image stitch skipped: '.$e->getMessage());
+            Log::warning('Image stitch skipped: '.'processing_error');
         }
 
         return $imageBlobs[0];
@@ -679,6 +679,7 @@ class GeminiApiService
 
     public function cleanAndNormalizeOcrData(array $data, string $rawText = ''): array
     {
+        $data = array_filter($data, fn ($value) => $value === null || is_scalar($value));
         $cneRaw = strtoupper(trim((string) ($data['cne'] ?? '')));
         $cinRaw = strtoupper(trim((string) ($data['cin'] ?? '')));
 
@@ -792,6 +793,14 @@ class GeminiApiService
             }
         }
 
+        if (! empty($data['birth_date'])) {
+            $date = \DateTimeImmutable::createFromFormat('!Y-m-d', (string) $data['birth_date']);
+            if (! $date || $date->format('Y-m-d') !== $data['birth_date'] || $date >= new \DateTimeImmutable('today') || $date->format('Y') < 1900) $data['birth_date'] = '';
+        }
+        if (array_key_exists('bac_average', $data)) {
+            $average = str_replace(',', '.', (string) $data['bac_average']);
+            $data['bac_average'] = is_numeric($average) && (float) $average >= 0 && (float) $average <= 20 ? (float) $average : '';
+        }
         foreach ($data as $key => $val) {
             if (is_null($val) || in_array(strtolower(trim((string) $val)), ['inconnu', 'n/a', 'null', 'none', 'undefined', 'aucun'])) {
                 $data[$key] = '';

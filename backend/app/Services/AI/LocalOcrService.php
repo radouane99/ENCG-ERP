@@ -301,7 +301,7 @@ class LocalOcrService
         $fileSize = filesize($filePath) ?: 0;
 
         return $this->config['cache_prefix'].md5(
-            $identifier.'_'.$modifiedTime.'_'.$fileSize.'_'.$docType
+            hash_file('sha256', $filePath).'_'.$docType.'_parsers-v2_'.(auth()->id() ?? 'local')
         );
     }
 

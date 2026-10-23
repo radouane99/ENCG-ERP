@@ -1162,19 +1162,13 @@ Route::middleware(['auth:sanctum', 'institution.context', $staffRoles])->group(f
     // Inscriptions TAFEM Ministère & Vérification des Dossiers Physiques à l'ENCG Fès
     // ──────────────────────────────────────────────────────────────────────────────
     Route::get('/admin/tafem/ministry-list', [AdmissionController::class, 'getMinistryTafemList']);
-    Route::post('/admin/tafem/verify-physical-dossier', [AdmissionController::class, 'verifyPhysicalDossier']);
 
     Route::get('/admin/tafem/stats', [AdmissionController::class, 'getTafemStats']);
     Route::get('/admin/admissions/tafem-stats', [AdmissionController::class, 'getTafemStats']);
     Route::get('/admissions/tafem-stats', [AdmissionController::class, 'getTafemStats']);
-    Route::post('/admin/tafem/auto-repartition', [AdmissionController::class, 'runAutoRepartition']);
-    Route::post('/admin/tafem/promote-waiting-list', [AdmissionController::class, 'promoteWaitingList']);
     Route::get('/admin/tafem/export-deliberation-pdf', [PdfExportController::class, 'exportTafemDeliberationPdf']);
     Route::get('/v1/tafem/export-deliberation-pdf', [PdfExportController::class, 'exportTafemDeliberationPdf']);
 
-    Route::get('/admin/tafem/scan-envelope/{token}', [AdmissionController::class, 'scanEnvelopeQrCode']);
-    Route::get('/admin/tafem/enrollment-stats', [AdmissionController::class, 'getEnrollmentStats']);
-    Route::get('/admin/tafem/security-daily-list', [AdmissionController::class, 'getSecurityDailyList']);
     // ── Forensic Audit Trail & CNDP Law 09-08 Compliance ──
     Route::get('/admin/audit-logs', [AuditForensicController::class, 'index']);
     Route::get('/admin/audit-logs/stats', [AuditForensicController::class, 'stats']);
@@ -1196,8 +1190,6 @@ Route::middleware(['auth:sanctum', 'institution.context', $staffRoles])->group(f
     Route::get('/admin/students/fiche-medicale-pdf', [PdfExportController::class, 'ficheMedicalePdf']);
     Route::get('/students/engagement-pdf', [PdfExportController::class, 'engagementPdf']);
     Route::get('/students/fiche-medicale-pdf', [PdfExportController::class, 'ficheMedicalePdf']);
-    Route::post('/public/toggle-lock-candidate-dossier', [AdmissionController::class, 'toggleLockCandidateDossier']);
-    Route::post('/public/send-convocation-email', [AdmissionController::class, 'sendCandidateConvocationEmail']);
 
     // Cahiers de Texte & Visa Chef de Département / Scolarité
     Route::get('/admin/textbooks', [AdminTextbookController::class, 'index']);
@@ -1253,12 +1245,6 @@ Route::middleware(['auth:sanctum', 'institution.context', $staffRoles])->group(f
 // Public Unauthenticated Endpoints (candidate TAFEM + document verify only)
 // ──────────────────────────────────────────────────────────────────────────────
 Route::middleware('throttle:20,1')->group(function () {
-    Route::post('/public/preinscription', [AdmissionController::class, 'submitOnlinePreinscription']);
-    Route::get('/public/track-dossier', [AdmissionController::class, 'trackCandidateDossier']);
-    Route::post('/public/update-candidate-dossier', [AdmissionController::class, 'updateCandidateDossier']);
-    Route::post('/public/upload-candidate-document', [AdmissionController::class, 'uploadCandidateDocument'])->middleware('throttle:uploads');
-    Route::delete('/public/delete-candidate-document', [AdmissionController::class, 'deleteCandidateDocument']);
-    Route::post('/public/ocr-extract-documents', [AdmissionController::class, 'extractDocumentDataOcr'])->middleware('throttle:ocr');
 
     Route::get('/public/recepisse-tafem-pdf', [PdfExportController::class, 'exportRecepisseTafemPdf']);
     Route::get('/public/engagement-pdf', [PdfExportController::class, 'engagementPdf']);
@@ -1268,4 +1254,21 @@ Route::middleware('throttle:20,1')->group(function () {
     Route::post('/public/validate-photo-quality', [StudentController::class, 'validatePhotoQuality'])->middleware('throttle:uploads');
     Route::post('/public/scolarbot/chat', [AiScolarBotController::class, 'chat'])->middleware('throttle:10,1');
     Route::post('/public/convention-sign/{token}', [InternshipConventionController::class, 'publicSignCompany']);
+});
+
+Route::middleware(['auth:sanctum', 'institution.context'])->group(function () {
+    Route::get('/public/track-dossier', [AdmissionController::class, 'trackCandidateDossier']);
+    Route::post('/public/update-candidate-dossier', [AdmissionController::class, 'updateCandidateDossier']);
+    Route::post('/public/upload-candidate-document', [AdmissionController::class, 'uploadCandidateDocument'])->middleware('throttle:uploads');
+    Route::delete('/public/delete-candidate-document', [AdmissionController::class, 'deleteCandidateDocument']);
+    Route::post('/public/ocr-extract-documents', [AdmissionController::class, 'extractDocumentDataOcr'])->middleware('throttle:ocr');
+    Route::post('/public/preinscription', [AdmissionController::class, 'submitOnlinePreinscription']);
+    Route::post('/public/send-convocation-email', [AdmissionController::class, 'sendCandidateConvocationEmail'])->middleware('throttle:3,1');
+    Route::post('/public/toggle-lock-candidate-dossier', [AdmissionController::class, 'toggleLockCandidateDossier']);
+    Route::post('/admin/tafem/verify-physical-dossier', [AdmissionController::class, 'verifyPhysicalDossier']);
+    Route::get('/admin/tafem/scan-envelope/{token}', [AdmissionController::class, 'scanEnvelopeQrCode']);
+    Route::get('/admin/tafem/enrollment-stats', [AdmissionController::class, 'getEnrollmentStats']);
+    Route::get('/admin/tafem/security-daily-list', [AdmissionController::class, 'getSecurityDailyList']);
+    Route::post('/admin/tafem/auto-repartition', [AdmissionController::class, 'runAutoRepartition']);
+    Route::post('/admin/tafem/promote-waiting-list', [AdmissionController::class, 'promoteWaitingList']);
 });

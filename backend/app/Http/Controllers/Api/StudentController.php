@@ -350,43 +350,10 @@ class StudentController extends Controller
      */
     public function getInscriptionStatusPublic(Request $request): JsonResponse
     {
-        $request->validate([
-            'cne' => 'required|string',
-            'cin' => 'required|string',
-        ]);
-
-        $cne = strtoupper(trim((string) $request->input('cne')));
-        $cin = strtoupper(trim((string) $request->input('cin')));
-
-        $student = Student::where('cne', $cne)
-            ->whereCin($cin)
-            ->with(['latestPathway.filiere', 'documents'])
-            ->first();
-
-        if (! $student) {
-            return response()->json(['message' => 'Aucun dossier trouvé pour ce CNE.'], 404);
-        }
-
-        $docTypes = $student->documents->pluck('type')->toArray();
-        $requiredDocs = ['photo', 'bac_recto', 'cin_recto_verso', 'releve_notes', 'extrait_naissance'];
-        $missingDocs = array_diff($requiredDocs, $docTypes);
-
-        return response()->json([
-            'cne' => $student->cne,
-            'nom' => strtoupper($student->last_name).' '.$student->first_name,
-            'inscription_status' => $student->inscription_status ?? 'submitted',
-            'student_number' => $student->student_number,
-            'filiere' => $student->latestPathway?->filiere?->name,
-            'submitted_at' => $student->inscription_submitted_at?->format('d/m/Y'),
-            'validated_at' => $student->inscription_validated_at?->format('d/m/Y'),
-            'missing_documents' => array_values($missingDocs),
-            'academic_year' => $student->academic_year ?? date('Y').'-'.(date('Y') + 1),
-        ]);
+        $request->validate(['cne' => 'required|string', 'cin' => 'required|string']);
+        return app(AdmissionWorkflowController::class)->admissibility($request);
     }
 
-    /**
-     * Validation IA de la qualité de la photo.
-     */
     public function validatePhotoQuality(Request $request): JsonResponse
     {
         $request->validate(['file' => 'required|image|max:10240']);

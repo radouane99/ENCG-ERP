@@ -1,0 +1,581 @@
+--- C:\Users\RADOUANE\Desktop\ENCG-ERP-V1\backend\app\Http\Controllers\Api\AdmissionCampaignController.php
++++ C:\Users\RADOUANE\Desktop\ENCG-ERP-V1\backend\app\Http\Controllers\Api\AdmissionCampaignController.php
+@@ -60,41 +60,4 @@
+         return response()->json(['threshold' => $score, 'source' => 'official_import', 'message' => 'Seuil constaté dans la liste officielle ; aucun reclassement automatique.']);
+     }
+ 
+-    private function legacyApplications(Request $request, $campaignId): JsonResponse
+-    {
+-        $query = Application::query();
+-
+-        if ($campaignId && $campaignId !== 'all') {
+-            $query->where('admission_campaign_id', (int) $campaignId);
+-        }
+-
+-        if ($request->filled('status')) {
+-            $query->where('status', $request->status);
+-        }
+-
+-        $applications = $query->orderByDesc('id')->get();
+-
+-        // Enrichir avec le list_type des étudiants si manquant
+-        $cnes = $applications->pluck('cne')->filter()->unique();
+-        $studentsListType = Student::whereIn('cne', $cnes)->pluck('list_type', 'cne');
+-
+-        $applications->each(function ($app) use ($studentsListType) {
+-            if (empty($app->list_type) && isset($studentsListType[$app->cne])) {
+-                $app->list_type = $studentsListType[$app->cne];
+-            }
+-        });
+-
+-        $stats = [
+-            'total' => $applications->count(),
+-            'pending' => $applications->filter(fn ($a) => str_contains(strtolower(($a->status ?? '').' '.($a->list_type ?? '')), 'attente'))->count(),
+-            'accepted' => $applications->filter(fn ($a) => str_contains(strtolower(($a->status ?? '').' '.($a->list_type ?? '')), 'principale') || in_array($a->status, ['accepted', 'admis', 'admis_tafem', 'valide']))->count(),
+-            'rejected' => $applications->filter(fn ($a) => in_array($a->status, ['rejected', 'rejete', 'suspended']))->count(),
+-        ];
+-
+-        return response()->json([
+-            'success' => true,
+-            'data' => $applications,
+-            'stats' => $stats,
+-        ]);
+-    }
+ }
+
+--- C:\Users\RADOUANE\Desktop\ENCG-ERP-V1\backend\app\Http\Controllers\Api\TafemMinistryImportController.php
++++ C:\Users\RADOUANE\Desktop\ENCG-ERP-V1\backend\app\Http\Controllers\Api\TafemMinistryImportController.php
+@@ -60,131 +60,4 @@
+         ]);
+     }
+ 
+-    // ─── HELPERS PRIVÉS ───────────────────────────────────────
+-
+-    private function cleanUtf8Content(string $content): string
+-    {
+-        if (substr($content, 0, 3) === "\xEF\xBB\xBF") {
+-            $content = substr($content, 3);
+-        }
+-        $content = mb_convert_encoding($content, 'UTF-8', 'UTF-8, ISO-8859-1, WINDOWS-1252');
+-
+-        return str_replace(["\r\n", "\r"], ["\n", "\n"], $content);
+-    }
+-
+-    private function detectDelimiter(string $line): string
+-    {
+-        $semicolons = substr_count($line, ';');
+-        $commas = substr_count($line, ',');
+-        $tabs = substr_count($line, "\t");
+-
+-        return match (true) {
+-            $semicolons > $commas && $semicolons > $tabs => ';',
+-            $tabs > $commas && $tabs > $semicolons => "\t",
+-            default => ',',
+-        };
+-    }
+-
+-    private function parseHeader(string $line, string $delimiter): array
+-    {
+-        $raw = $this->parseCsvLine($line, $delimiter);
+-
+-        return array_map(fn ($h) => strtolower(trim(preg_replace('/[^a-zA-Z0-9_]/', '', $h))), $raw);
+-    }
+-
+-    private function parseCsvLine(string $line, string $delimiter): array
+-    {
+-        $line = trim($line);
+-        if (empty($line)) {
+-            return [];
+-        }
+-
+-        // Cas : ligne entière entre guillemets (Excel)
+-        if (strlen($line) >= 2 && $line[0] === '"' && $line[-1] === '"') {
+-            $unwrapped = str_replace('""', '"', substr($line, 1, -1));
+-            $res = str_getcsv($unwrapped, $delimiter);
+-            if (count($res) >= 2) {
+-                return array_map('trim', $res);
+-            }
+-        }
+-
+-        $res = str_getcsv($line, $delimiter);
+-        if (count($res) >= 2) {
+-            return array_map('trim', $res);
+-        }
+-
+-        return array_map('trim', explode($delimiter, $line));
+-    }
+-
+-    private function mapRowToHeader(array $header, array $row): array
+-    {
+-        $data = [];
+-        foreach ($header as $idx => $key) {
+-            $data[$key] = isset($row[$idx]) ? trim($row[$idx]) : '';
+-        }
+-
+-        return $data;
+-    }
+-
+-    private function normalizeScore(float $value, float $max): float
+-    {
+-        if ($value > $max) {
+-            $value = $value >= 10000 ? round($value / 100, 2) : round($value / 10, 2);
+-        }
+-
+-        return min($value, $max);
+-    }
+-
+-    private function getOrCreateTroncCommun(int $institutionId): Filiere
+-    {
+-        $tc = Filiere::where('code', 'TC-S1')
+-            ->orWhere('code', 'TC')
+-            ->orWhere('name', 'like', '%Tronc Commun%')
+-            ->first();
+-
+-        if (! $tc) {
+-            $tc = Filiere::create([
+-                'institution_id' => $institutionId,
+-                'department_id' => Department::first()?->id ?? 1,
+-                'code' => 'TC-S1',
+-                'name' => 'Tronc Commun ENCG',
+-                'duration_years' => 2,
+-                'is_active' => true,
+-            ]);
+-        }
+-
+-        return $tc;
+-    }
+-
+-    private function getOrCreateCampaign(int $institutionId, Filiere $filiere): AdmissionCampaign
+-    {
+-        $campaign = AdmissionCampaign::where('status', 'open')->first()
+-            ?? AdmissionCampaign::first();
+-
+-        if (! $campaign) {
+-            $academicYear = AcademicYear::where('is_current', true)->first()
+-                ?? AcademicYear::create([
+-                    'institution_id' => $institutionId,
+-                    'label' => date('Y').'-'.(date('Y') + 1),
+-                    'start_date' => '2026-09-01',
+-                    'end_date' => '2027-06-30',
+-                    'is_current' => true,
+-                    'start_year' => (int) date('Y'),
+-                    'end_year' => (int) date('Y') + 1,
+-                ]);
+-
+-            $campaign = AdmissionCampaign::create([
+-                'institution_id' => $institutionId,
+-                'filiere_id' => $filiere->id,
+-                'academic_year_id' => $academicYear->id,
+-                'name' => 'Concours TAFEM '.date('Y'),
+-                'status' => 'open',
+-                'open_date' => now()->startOfYear(),
+-                'close_date' => now()->endOfYear(),
+-                'target_capacity' => 500,
+-            ]);
+-        }
+-
+-        return $campaign;
+-    }
+ }
+
+--- C:\Users\RADOUANE\Desktop\ENCG-ERP-V1\backend\app\Services\Core\DocumentOcrAuditorService.php
++++ C:\Users\RADOUANE\Desktop\ENCG-ERP-V1\backend\app\Services\Core\DocumentOcrAuditorService.php
+@@ -1,54 +1,9 @@
+ <?php
+-
+ namespace App\Services\Core;
+-
+ class DocumentOcrAuditorService
+ {
+-    /**
+-     * Audit candidate documents and return itemized AI verification report.
+-     */
+     public function auditCandidateDocuments(array $candidateData, array $documents): array
+     {
+-        $declaredCne = strtoupper(trim($candidateData['cne'] ?? ''));
+-        $declaredCin = strtoupper(trim($candidateData['cin'] ?? ''));
+-        $declaredName = strtoupper(trim(($candidateData['last_name'] ?? '').' '.($candidateData['first_name'] ?? '')));
+-        $declaredGrade = floatval($candidateData['bac_average'] ?? 16.63);
+-
+-        // Itemized Verification Statuses
+-        $bacStatus = [
+-            'status' => 'verified',
+-            'badge' => '🟢 Baccalauréat Conforme (CNE & Nom vérifiés par IA)',
+-            'cne_match' => true,
+-            'name_match' => true,
+-        ];
+-
+-        $cinStatus = [
+-            'status' => 'verified',
+-            'badge' => '🟢 CNIE Conforme (Numéro & Identité vérifiés par IA)',
+-            'cin_match' => true,
+-            'name_match' => true,
+-        ];
+-
+-        $releveStatus = [
+-            'status' => 'verified',
+-            'badge' => '🟢 Relevé de Notes Conforme (Moyenne Générale '.number_format($declaredGrade, 2).'/20 certifiée par IA)',
+-            'grade_match' => true,
+-            'declared_grade' => $declaredGrade,
+-            'detected_grade' => $declaredGrade,
+-        ];
+-
+-        // Perform text analysis if file exists
+-        if (isset($documents['releve_notes'])) {
+-            // Simulated AI OCR verification comparison logic
+-            $releveStatus['grade_match'] = true;
+-        }
+-
+-        return [
+-            'bac' => $bacStatus,
+-            'cin' => $cinStatus,
+-            'releve_notes' => $releveStatus,
+-            'overall_status' => 'conforme',
+-            'audited_at' => now()->format('d/m/Y H:i'),
+-        ];
++        return ['overall_status' => 'needs_review', 'message' => 'Une revue humaine des versions documentaires est requise. Aucun document ne peut être certifié par cette méthode.'];
+     }
+ }
+
+--- C:\Users\RADOUANE\Desktop\ENCG-ERP-V1\backend\app\Services\Admissions\TafemQualityReportService.php
++++ C:\Users\RADOUANE\Desktop\ENCG-ERP-V1\backend\app\Services\Admissions\TafemQualityReportService.php
+@@ -1,79 +1,25 @@
+ <?php
+-
+ namespace App\Services\Admissions;
+-
+-use App\Domain\Student\Models\StudentDossierAuditLog;
+-use App\Models\Student;
+-use Illuminate\Support\Facades\Schema;
++use App\Models\Application;
++use App\Models\StudentDocument;
++use Illuminate\Support\Facades\DB;
+ 
+ class TafemQualityReportService
+ {
+-    /**
+-     * @return array{duplicates_cne: int, missing_cin: int, missing_photo: int, massar_mismatch: int}
+-     */
+     public function build(bool $audit = true): array
+     {
+-        if (! Schema::hasTable('students')) {
+-            return [
+-                'duplicates_cne' => 0,
+-                'missing_cin' => 0,
+-                'missing_photo' => 0,
+-                'massar_mismatch' => 0,
+-            ];
++        $campaign = request()->input('campaign_id') ?: \App\Models\AdmissionCampaign::where('institution_id', config('erp.institution_id', 1))->where('status', 'open')->latest('id')->value('id');
++        $apps = Application::with('owner')->where('admission_campaign_id', $campaign)->get();
++        $photos = StudentDocument::whereIn('application_id', $apps->pluck('id'))->where('type', 'photo')->where('is_current', true)->whereNull('withdrawn_at')->pluck('application_id')->all();
++        $duplicates = $apps->groupBy('cne')->filter(fn ($g, $cne) => $cne !== '' && $g->count() > 1)->sum(fn ($g) => $g->count());
++        $mismatch = 0;
++        foreach (DB::table('admission_ocr_runs')->whereIn('application_id', $apps->pluck('id'))->whereNotNull('fields')->get(['application_id', 'fields']) as $run) {
++            $fields = json_decode($run->fields, true) ?: [];
++            if (! empty($fields['cne']['conflict'])) $mismatch++;
+         }
+-
+-        $select = ['id', 'cne', 'cin'];
+-        if (Schema::hasColumn('students', 'massar_code')) {
+-            $select[] = 'massar_code';
+-        }
+-        if (Schema::hasColumn('students', 'photo_path')) {
+-            $select[] = 'photo_path';
+-        }
+-
+-        $students = Student::query()->get($select);
+-        $cneCounts = $students->groupBy(fn ($s) => strtoupper(trim((string) $s->cne)))->filter(fn ($g, $cne) => $cne !== '' && $g->count() > 1);
+-        $duplicates = $cneCounts->sum(fn ($g) => $g->count());
+-
+-        $missingCin = $students->filter(fn ($s) => trim((string) $s->cin) === '')->count();
+-        $missingPhoto = Schema::hasColumn('students', 'photo_path')
+-            ? $students->filter(fn ($s) => trim((string) ($s->photo_path ?? '')) === '')->count()
+-            : 0;
+-        $massarMismatch = $students->filter(function ($s) {
+-            $cne = strtoupper(trim((string) $s->cne));
+-            $massar = strtoupper(trim((string) ($s->massar_code ?? '')));
+-
+-            return $massar === '' || ($cne !== '' && $massar === $cne);
+-        })->count();
+-
+-        $report = [
+-            'duplicates_cne' => (int) $duplicates,
+-            'missing_cin' => (int) $missingCin,
+-            'missing_photo' => (int) $missingPhoto,
+-            'massar_mismatch' => (int) $massarMismatch,
+-        ];
+-
+-        if ($audit) {
+-            $this->auditGaps($students);
+-        }
+-
+-        return $report;
+-    }
+-
+-    private function auditGaps($students): void
+-    {
+-        if (! class_exists(StudentDossierAuditLog::class) || ! Schema::hasTable('student_dossier_audit_logs')) {
+-            return;
+-        }
+-
+-        foreach ($students->filter(fn ($s) => trim((string) $s->cin) === '')->take(15) as $s) {
+-            StudentDossierAuditLog::log(
+-                (int) $s->id,
+-                StudentDossierAuditLog::ACTION_DATA_EDITED,
+-                'tafem_quality',
+-                null,
+-                ['gap' => 'missing_cin'],
+-                'Écart TAFEM : CIN manquant'
+-            );
+-        }
++        return ['duplicates_cne' => $duplicates,
++            'missing_cin' => $apps->filter(fn ($a) => trim((string) ($a->owner?->cin ?: $a->cin)) === '')->count(),
++            'missing_photo' => $apps->filter(fn ($a) => ! in_array($a->id, $photos))->count(),
++            'massar_mismatch' => $mismatch];
+     }
+ }
+
+--- C:\Users\RADOUANE\Desktop\ENCG-ERP-V1\backend\app\Http\Controllers\Api\AdmissionController.php
++++ C:\Users\RADOUANE\Desktop\ENCG-ERP-V1\backend\app\Http\Controllers\Api\AdmissionController.php
+@@ -140,26 +140,15 @@
+      */
+     public function updateStatus(Request $request, int $applicationId): JsonResponse
+     {
+-        $validated = $request->validate([
+-            'status' => 'required|string|in:pending,accepted,waitlisted,rejected',
+-        ]);
+-
+-        $application = $this->admissionService->updateApplicationStatus($applicationId, $validated['status']);
+-
+-        return response()->json([
+-            'success' => true,
+-            'message' => 'Statut mis à jour.',
+-            'data' => $application,
+-        ]);
+-    }
+-
+-    /**
+-     * Mettre à jour une candidature.
+-     */
++        \App\Support\AdmissionAccess::review($request);
++        abort(422, 'Utilisez la revue du dossier, son numéro officiel et sa checklist.');
++    }
++
+     public function update(UpdateApplicationRequest $request, int $applicationId): JsonResponse
+     {
+         $application = Application::findOrFail($applicationId);
+         abort_unless($request->user()->hasRole('super-admin') || (string) $application->campaign?->institution_id === (string) $request->user()->institution_id, 403);
++        abort_unless($application->dossier_status === 'draft', 403, 'Dossier déjà soumis.');
+         $application->update($request->validated());
+ 
+         return response()->json([
+@@ -174,19 +163,10 @@
+      */
+     public function destroy(int $applicationId): JsonResponse
+     {
+-        Application::findOrFail($applicationId)->delete();
+-
+-        return response()->json([
+-            'success' => true,
+-            'message' => 'Candidature supprimée.',
+-        ]);
+-    }
+-
+-    // ─── TAFEM MINISTÈRE & LOGISTIQUE ──────────────────────────
+-
+-    /**
+-     * Statistiques globales du Concours TAFEM & Amphithéâtres.
+-     */
++        \App\Support\AdmissionAccess::review(request());
++        abort(422, 'Les dossiers sont conservés pour audit. Utilisez une décision motivée.');
++    }
++
+     public function getTafemStats(Request $request): JsonResponse
+     {
+         return app(AdmissionWorkflowController::class)->stats($request);
+@@ -315,108 +295,16 @@
+     public function serveCandidateDocumentPublic(Request $request, string $type, string $cne): BinaryFileResponse|JsonResponse|Response
+     {
+         $cne = strtoupper(trim($cne));
+-        $userAuth = $request->user();
+-        $hasSignedAccess = SignedDocumentUrl::isValid($type, $cne, $request->query('exp'), $request->query('sig'));
+-        $isOwner = $userAuth && strtoupper(trim((string) $userAuth->cne)) === $cne;
+-        $isStaff = CandidateDossierGate::isStaff($userAuth);
+-
+-        if (! $hasSignedAccess && ! $isOwner && ! $isStaff) {
+-            return response()->json(['success' => false, 'message' => 'Accès au document refusé.'], 403);
+-        }
+-
+-        $typeList = match (strtolower($type)) {
+-            'bac' => ['bac', 'BAC'],
+-            'cin', 'cnie', 'cin_recto_verso' => ['cnie', 'cin', 'cin_recto_verso', 'CIN', 'CNIE'],
+-            'releve_notes', 'releve' => ['releve_notes', 'releve', 'RELEVE'],
+-            'photo' => ['photo', 'PHOTO'],
+-            default => [$type, strtolower($type), strtoupper($type)],
+-        };
+-
+-        // Helper pour servir un document depuis son file_path stocké en DB
+-        $serve = function ($doc) {
+-            $path = $doc->file_path;
+-            $mime = $doc->mime_type ?: (str_ends_with(strtolower($path), '.jpg') || str_ends_with(strtolower($path), '.jpeg') ? 'image/jpeg' : (str_ends_with(strtolower($path), '.png') ? 'image/png' : 'application/pdf'));
+-            $headers = ['Content-Type' => $mime, 'Content-Disposition' => 'inline'];
+-
+-            // Cas 1 : URL publique  →  /storage/candidate_documents/xxx.pdf
+-            if (str_starts_with($path, '/storage/')) {
+-                $relativePath = substr($path, strlen('/storage/'));
+-                if (Storage::disk('public')->exists($relativePath)) {
+-                    return response()->file(Storage::disk('public')->path($relativePath), $headers);
+-                }
+-            }
+-
+-            // Cas 2 : Chemin relatif disk local  →  private_candidate_documents/xxx.pdf
+-            if (Storage::disk('private')->exists($path)) {
+-                return response()->file(Storage::disk('private')->path($path), $headers);
+-            }
+-
+-            if (Storage::disk('local')->exists($path)) {
+-                return response()->file(Storage::disk('local')->path($path), $headers);
+-            }
+-
+-            // Cas 3 : Chemin relatif disk public  →  candidate_documents/xxx.pdf
+-            if (Storage::disk('public')->exists($path)) {
+-                return response()->file(Storage::disk('public')->path($path), $headers);
+-            }
+-
+-            // Cas 4 : Chemin absolu sur le système
+-            if (file_exists($path)) {
+-                return response()->file($path, $headers);
+-            }
+-
+-            return null;
+-        };
+-
+-        // 1) Recherche par CNE ou CNE lié
+-        $doc = StudentDocument::whereIn('cne', [$cne, ltrim($cne, '0')])->whereIn('type', $typeList)->first();
+-        if ($doc && $doc->file_path) {
+-            $response = $serve($doc);
+-            if ($response) {
+-                return $response;
+-            }
+-        }
+-
+-        // 2) Recherche par student_id (upload admin ou lié à l'utilisateur connecté)
+-        $userAuth = auth()->user();
+-        $student = null;
+-        if ($userAuth) {
+-            $student = Student::where('user_id', $userAuth->id)->first();
+-        }
+-        if (! $student && $cne) {
+-            $student = Student::where('cne', $cne)->first();
+-        }
+-        if ($student) {
+-            $doc2 = StudentDocument::where('student_id', $student->id)->whereIn('type', $typeList)->first();
+-            if ($doc2 && $doc2->file_path) {
+-                $response = $serve($doc2);
+-                if ($response) {
+-                    return $response;
+-                }
+-            }
+-        }
+-
+-        // 3) Recherche dans la table Applications pour tout document récent
+-        $app = Application::where('cne', $cne)->latest('id')->first();
+-        if ($app && $userAuth) {
+-            $doc3 = StudentDocument::whereHas('student', fn ($q) => $q->where('user_id', $userAuth->id))
+-                ->whereIn('type', $typeList)
+-                ->first();
+-            if ($doc3 && $doc3->file_path) {
+-                $response = $serve($doc3);
+-                if ($response) {
+-                    return $response;
+-                }
+-            }
+-        }
+-
+-        // 4) Si document introuvable, renvoyer 404 instantané au lieu d'une lourde compilation DomPDF
+-        return response()->json(['success' => false, 'message' => 'Document non disponible.'], 404);
+-    }
+-
+-    /**
+-     * Supprimer un document candidat.
+-     */
++        $signed = SignedDocumentUrl::isValid($type, $cne, $request->query('exp'), $request->query('sig'));
++        if (! $signed) \App\Support\AdmissionAccess::dossier($request);
++        $type = \App\Actions\Admission\ManageDossierAction::type($type);
++        $doc = StudentDocument::where('cne', $cne)->where('type', $type)->where('is_current', true)->whereNull('withdrawn_at')->firstOrFail();
++        if (! $signed) \App\Support\AdmissionAccess::dossier($request, false, $doc->application_id);
++        $disk = Storage::disk($doc->storage_disk);
++        abort_unless($disk->exists($doc->file_path), 404);
++        return response()->file($disk->path($doc->file_path), ['Content-Type' => $doc->mime_type ?: 'application/pdf', 'Cache-Control' => 'private, no-store', 'X-Content-Type-Options' => 'nosniff']);
++    }
++
+     public function deleteCandidateDocument(Request $request): JsonResponse
+     {
+         return app(AdmissionWorkflowController::class)->withdraw($request);
+
+--- C:\Users\RADOUANE\Desktop\ENCG-ERP-V1\backend\routes\api\admin.php
++++ C:\Users\RADOUANE\Desktop\ENCG-ERP-V1\backend\routes\api\admin.php
+@@ -1162,19 +1162,13 @@
+     // Inscriptions TAFEM Ministère & Vérification des Dossiers Physiques à l'ENCG Fès
+     // ──────────────────────────────────────────────────────────────────────────────
+     Route::get('/admin/tafem/ministry-list', [AdmissionController::class, 'getMinistryTafemList']);
+-    Route::post('/admin/tafem/verify-physical-dossier', [AdmissionController::class, 'verifyPhysicalDossier']);
+ 
+     Route::get('/admin/tafem/stats', [AdmissionController::class, 'getTafemStats']);
+     Route::get('/admin/admissions/tafem-stats', [AdmissionController::class, 'getTafemStats']);
+     Route::get('/admissions/tafem-stats', [AdmissionController::class, 'getTafemStats']);
+-    Route::post('/admin/tafem/auto-repartition', [AdmissionController::class, 'runAutoRepartition']);
+-    Route::post('/admin/tafem/promote-waiting-list', [AdmissionController::class, 'promoteWaitingList']);
+     Route::get('/admin/tafem/export-deliberation-pdf', [PdfExportController::class, 'exportTafemDeliberationPdf']);
+     Route::get('/v1/tafem/export-deliberation-pdf', [PdfExportController::class, 'exportTafemDeliberationPdf']);
+ 
+-    Route::get('/admin/tafem/scan-envelope/{token}', [AdmissionController::class, 'scanEnvelopeQrCode']);
+-    Route::get('/admin/tafem/enrollment-stats', [AdmissionController::class, 'getEnrollmentStats']);
+-    Route::get('/admin/tafem/security-daily-list', [AdmissionController::class, 'getSecurityDailyList']);
+     // ── Forensic Audit Trail & CNDP Law 09-08 Compliance ──
+     Route::get('/admin/audit-logs', [AuditForensicController::class, 'index']);
+     Route::get('/admin/audit-logs/stats', [AuditForensicController::class, 'stats']);
+@@ -1196,8 +1190,6 @@
+     Route::get('/admin/students/fiche-medicale-pdf', [PdfExportController::class, 'ficheMedicalePdf']);
+     Route::get('/students/engagement-pdf', [PdfExportController::class, 'engagementPdf']);
+     Route::get('/students/fiche-medicale-pdf', [PdfExportController::class, 'ficheMedicalePdf']);
+-    Route::post('/public/toggle-lock-candidate-dossier', [AdmissionController::class, 'toggleLockCandidateDossier']);
+-    Route::post('/public/send-convocation-email', [AdmissionController::class, 'sendCandidateConvocationEmail']);
+ 
+     // Cahiers de Texte & Visa Chef de Département / Scolarité
+     Route::get('/admin/textbooks', [AdminTextbookController::class, 'index']);
+@@ -1253,12 +1245,6 @@
+ // Public Unauthenticated Endpoints (candidate TAFEM + document verify only)
+ // ──────────────────────────────────────────────────────────────────────────────
+ Route::middleware('throttle:20,1')->group(function () {
+-    Route::post('/public/preinscription', [AdmissionController::class, 'submitOnlinePreinscription']);
+-    Route::get('/public/track-dossier', [AdmissionController::class, 'trackCandidateDossier']);
+-    Route::post('/public/update-candidate-dossier', [AdmissionController::class, 'updateCandidateDossier']);
+-    Route::post('/public/upload-candidate-document', [AdmissionController::class, 'uploadCandidateDocument'])->middleware('throttle:uploads');
+-    Route::delete('/public/delete-candidate-document', [AdmissionController::class, 'deleteCandidateDocument']);
+-    Route::post('/public/ocr-extract-documents', [AdmissionController::class, 'extractDocumentDataOcr'])->middleware('throttle:ocr');
+ 
+     Route::get('/public/recepisse-tafem-pdf', [PdfExportController::class, 'exportRecepisseTafemPdf']);
+     Route::get('/public/engagement-pdf', [PdfExportController::class, 'engagementPdf']);
+@@ -1269,3 +1255,20 @@
+     Route::post('/public/scolarbot/chat', [AiScolarBotController::class, 'chat'])->middleware('throttle:10,1');
+     Route::post('/public/convention-sign/{token}', [InternshipConventionController::class, 'publicSignCompany']);
+ });
++
++Route::middleware(['auth:sanctum', 'institution.context'])->group(function () {
++    Route::get('/public/track-dossier', [AdmissionController::class, 'trackCandidateDossier']);
++    Route::post('/public/update-candidate-dossier', [AdmissionController::class, 'updateCandidateDossier']);
++    Route::post('/public/upload-candidate-document', [AdmissionController::class, 'uploadCandidateDocument'])->middleware('throttle:uploads');
++    Route::delete('/public/delete-candidate-document', [AdmissionController::class, 'deleteCandidateDocument']);
++    Route::post('/public/ocr-extract-documents', [AdmissionController::class, 'extractDocumentDataOcr'])->middleware('throttle:ocr');
++    Route::post('/public/preinscription', [AdmissionController::class, 'submitOnlinePreinscription']);
++    Route::post('/public/send-convocation-email', [AdmissionController::class, 'sendCandidateConvocationEmail'])->middleware('throttle:3,1');
++    Route::post('/public/toggle-lock-candidate-dossier', [AdmissionController::class, 'toggleLockCandidateDossier']);
++    Route::post('/admin/tafem/verify-physical-dossier', [AdmissionController::class, 'verifyPhysicalDossier']);
++    Route::get('/admin/tafem/scan-envelope/{token}', [AdmissionController::class, 'scanEnvelopeQrCode']);
++    Route::get('/admin/tafem/enrollment-stats', [AdmissionController::class, 'getEnrollmentStats']);
++    Route::get('/admin/tafem/security-daily-list', [AdmissionController::class, 'getSecurityDailyList']);
++    Route::post('/admin/tafem/auto-repartition', [AdmissionController::class, 'runAutoRepartition']);
++    Route::post('/admin/tafem/promote-waiting-list', [AdmissionController::class, 'promoteWaitingList']);
++});
+

@@ -51,6 +51,7 @@ class RegisterUserService
             if (! $campaign) {
                 throw ValidationException::withMessages(['email' => ['Les inscriptions sont actuellement fermées.']]);
             }
+            \App\Support\AdmissionAccess::campaignOpen(new Application(['admission_campaign_id' => $campaign->id]));
 
             $userAttributes = [
                 'first_name' => $data['first_name'] ?? '',
@@ -88,7 +89,10 @@ class RegisterUserService
                 'bac_average' => (! empty($data['bac_average']) && is_numeric($data['bac_average'])) ? (float) $data['bac_average'] : null,
                 'bac_year' => $data['bac_year'] ?? date('Y'),
                 'bac_series' => $data['bac_series'] ?? $data['bac_name'] ?? null,
-                'status' => 'enrolled',
+                'status' => 'pending',
+                'dossier_status' => 'draft',
+                'owner_user_id' => $user->id,
+                'eligibility' => 'unconfirmed',
                 // Handicap / Accessibilité
                 'has_disability' => $data['has_disability'] ?? false,
                 'disability_type' => $data['disability_type'] ?? null,
@@ -110,24 +114,11 @@ class RegisterUserService
                 $app->update($appFields);
             } else {
                 $appFields['reference_number'] = 'ENCG-APP-'.date('Y').'-'.strtoupper(substr(md5(($cneClean ?: uniqid())), 0, 6));
-                Application::create($appFields);
+                $app = Application::create($appFields);
             }
 
-            // 4. Send Confirmation Notification Email to Candidate Personal Email (e.g. Gmail)
-            try {
-                $studentName = strtoupper(($data['last_name_fr'] ?? $data['last_name'] ?? '').' '.($data['first_name_fr'] ?? $data['first_name'] ?? ''));
-                Mail::to($data['email'])->send(new StudentRegistrationSuccessMail(
-                    studentName: trim($studentName) ?: 'CANDIDAT ADMIS',
-                    cne: $data['cne'] ?? 'N/A',
-                    cin: $data['cin'] ?? 'N/A',
-                    filiere: $data['filiere'] ?? 'DEUX ANNÉES PRÉPARATOIRES',
-                    pdfPath: null,
-                    academicYear: $academicYear?->label ?: (date('Y').'-'.((int) date('Y') + 1))
-                ));
-            } catch (\Exception $e) {
-                // Log email error gracefully without rolling back transaction
-                Log::warning("Erreur lors de l'envoi de l'email de confirmation à {$data['email']}: ".$e->getMessage());
-            }
+            app(\App\Actions\Admission\ManageDossierAction::class)->event($app, 'account_created');
+            app(\App\Services\Admissions\AdmissionNotificationService::class)->queue($app, 'account_created');
 
             return $user;
         });

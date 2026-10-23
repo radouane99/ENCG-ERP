@@ -36,8 +36,9 @@ it('rejects unauthenticated access to previously public admin and PDF routes', f
     ['GET', '/api/v1/privacy/export/1/download'],
 ]);
 
-it('keeps intentional public admission endpoints reachable without a token', function () {
+it('requires a session for dossier details while leaving admissibility public', function () {
     $response = getJson('/api/public/track-dossier');
 
-    expect($response->status())->not->toBe(401);
+    expect($response->status())->toBe(401);
+    getJson('/api/public/admissions/campaigns')->assertOk();
 });

@@ -207,6 +207,10 @@ class ApogeeEngineController extends Controller
             abort_unless($student->cne && $student->student_number, 422, 'Renseignez les identifiants officiels CNE et APOGEE avant validation.');
             $yearId = AcademicContext::yearId();
             abort_unless($yearId, 422, 'Année active requise.');
+            $admissionPending = \App\Models\Application::where(fn ($q) => $q->where('student_id', $student->id)->orWhere('cne', $student->cne))
+                ->whereHas('campaign', fn ($q) => $q->where('academic_year_id', $yearId)->where('institution_id', $student->institution_id))
+                ->where('dossier_status', '!=', 'approved')->exists();
+            abort_if($admissionPending, 422, 'Ce candidat possède un dossier admissions à vérifier. Utilisez la revue TAFEM avant l’inscription pédagogique.');
             Filiere::whereKey($data['filiere_id'])->where('institution_id', $student->institution_id)->firstOrFail();
             $group = isset($data['group_id']) ? Group::whereKey($data['group_id'])->where('filiere_id', $data['filiere_id'])->where('academic_year_id', $yearId)->firstOrFail() : null;
             $semester = $group?->semester_number ?? 1;

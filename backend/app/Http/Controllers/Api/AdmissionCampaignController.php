@@ -16,12 +16,13 @@ class AdmissionCampaignController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $campaigns = AdmissionCampaign::whereIn('status', ['open', 'active'])
+        \App\Support\AdmissionAccess::review($request);
+        $campaigns = AdmissionCampaign::where('institution_id', \App\Support\AdmissionAccess::institution($request))->whereIn('status', ['open', 'active'])
             ->orderByDesc('id')
             ->get();
 
         if ($campaigns->isEmpty()) {
-            $campaigns = AdmissionCampaign::orderByDesc('id')->get();
+            $campaigns = AdmissionCampaign::where('institution_id', \App\Support\AdmissionAccess::institution($request))->orderByDesc('id')->get();
         }
 
         return response()->json([
@@ -35,39 +36,28 @@ class AdmissionCampaignController extends Controller
      */
     public function getApplications(Request $request, $campaignId): JsonResponse
     {
-        $query = Application::query();
-
-        if ($campaignId && $campaignId !== 'all') {
-            $query->where('admission_campaign_id', (int) $campaignId);
-        }
-
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
-        $applications = $query->orderByDesc('id')->get();
-
-        // Enrichir avec le list_type des étudiants si manquant
-        $cnes = $applications->pluck('cne')->filter()->unique();
-        $studentsListType = Student::whereIn('cne', $cnes)->pluck('list_type', 'cne');
-
-        $applications->each(function ($app) use ($studentsListType) {
-            if (empty($app->list_type) && isset($studentsListType[$app->cne])) {
-                $app->list_type = $studentsListType[$app->cne];
-            }
-        });
-
-        $stats = [
-            'total' => $applications->count(),
-            'pending' => $applications->filter(fn ($a) => str_contains(strtolower(($a->status ?? '').' '.($a->list_type ?? '')), 'attente'))->count(),
-            'accepted' => $applications->filter(fn ($a) => str_contains(strtolower(($a->status ?? '').' '.($a->list_type ?? '')), 'principale') || in_array($a->status, ['accepted', 'admis', 'admis_tafem', 'valide']))->count(),
-            'rejected' => $applications->filter(fn ($a) => in_array($a->status, ['rejected', 'rejete', 'suspended']))->count(),
-        ];
-
-        return response()->json([
-            'success' => true,
-            'data' => $applications,
-            'stats' => $stats,
-        ]);
+        $request->merge(['campaign_id' => $campaignId]);
+        return app(AdmissionWorkflowController::class)->listing($request);
     }
+
+    public function tafemStats(Request $request): JsonResponse { return app(AdmissionWorkflowController::class)->stats($request); }
+    public function autoRepartition(Request $request, int $campaign): JsonResponse
+    {
+        $request->merge(['campaign_id' => $campaign]);
+        return app(AdmissionAppointmentController::class)->preview($request);
+    }
+    public function exportPdf(Request $request, int $campaign, string $type)
+    {
+        $request->merge(['campaign_id' => $campaign, 'type' => $type]);
+        return app(AdmissionWorkflowPdfController::class)->list($request);
+    }
+    public function calculateSeuil(Request $request, int $campaign): JsonResponse
+    {
+        \App\Support\AdmissionAccess::review($request);
+        $request->merge(['campaign_id' => $campaign]);
+        $c = \App\Support\AdmissionAccess::campaign($request);
+        $score = Application::where('admission_campaign_id', $c->id)->where('eligibility', 'main')->whereNotNull('official_rank_source')->min('selection_score');
+        return response()->json(['threshold' => $score, 'source' => 'official_import', 'message' => 'Seuil constaté dans la liste officielle ; aucun reclassement automatique.']);
+    }
+
 }

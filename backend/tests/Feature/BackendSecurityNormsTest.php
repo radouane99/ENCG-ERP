@@ -31,7 +31,7 @@ class BackendSecurityNormsTest extends TestCase
     public function test_track_dossier_requires_cne_and_cin_for_guests(): void
     {
         $this->getJson('/api/public/track-dossier?cne=N142088916')
-            ->assertStatus(422);
+            ->assertUnauthorized();
     }
 
     public function test_serve_document_without_signature_is_forbidden(): void
@@ -54,6 +54,7 @@ class BackendSecurityNormsTest extends TestCase
 
         StudentDocument::create([
             'student_id' => $student->id,
+            'application_id' => $this->ownedApplication($student),
             'cne' => $student->cne,
             'type' => 'bac',
             'file_path' => 'candidate_documents/bac.pdf',
@@ -61,6 +62,7 @@ class BackendSecurityNormsTest extends TestCase
             'status' => 'pending',
         ]);
 
+        Sanctum::actingAs($user);
         $response = $this->getJson('/api/public/track-dossier?cne=N142099001&cin=AB123456');
 
         $response->assertOk()
@@ -68,7 +70,7 @@ class BackendSecurityNormsTest extends TestCase
 
         $filePath = $response->json('candidate.documents.bac.file_path');
         $this->assertIsString($filePath);
-        $this->assertStringContainsString('sig=', $filePath);
+        $this->assertStringContainsString('signature=', $filePath);
         $this->assertStringNotContainsString('/storage/', $filePath);
     }
 
@@ -178,7 +180,7 @@ class BackendSecurityNormsTest extends TestCase
     public function test_track_dossier_matches_cin_on_users_not_students(): void
     {
         $user = User::factory()->create(['cin' => 'ZG195334']);
-        Student::create([
+        $student = Student::create([
             'user_id' => $user->id,
             'student_number' => 'ENCG-NORMS-CIN-USER',
             'cne' => 'H148073298',
@@ -187,8 +189,20 @@ class BackendSecurityNormsTest extends TestCase
             'institution_id' => 1,
         ]);
 
+        $this->ownedApplication($student);
+        Sanctum::actingAs($user);
         $this->getJson('/api/public/track-dossier?cne=H148073298&cin=ZG195334')
             ->assertOk()
             ->assertJsonPath('success', true);
+    }
+
+    private function ownedApplication(Student $student): int
+    {
+        $year = $this->makeTestAcademicYear(); $f = $this->makeTestFiliere();
+        $campaign = \App\Models\AdmissionCampaign::create(['institution_id' => 1, 'academic_year_id' => $year->id,
+            'filiere_id' => $f->id, 'name' => 'Security', 'status' => 'open', 'open_date' => now()->subDay(), 'close_date' => now()->addMonth(), 'target_capacity' => 5]);
+        return \App\Models\Application::create(['admission_campaign_id' => $campaign->id, 'reference_number' => 'SEC-'.$student->cne,
+            'cne' => $student->cne, 'cin' => $student->cin, 'owner_user_id' => $student->user_id, 'student_id' => $student->id,
+            'first_name' => 'Synthetic', 'last_name' => 'Candidate', 'status' => 'pending'])->id;
     }
 }

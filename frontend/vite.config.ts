@@ -70,7 +70,7 @@ export default defineConfig({
     allowedHosts: ['erp.irsale.fr', '.irsale.fr', 'localhost'],
     proxy: {
       '/api': {
-        target: 'http://encg_nginx:80',
+        target: process.env.E2E_API_PROXY_URL || 'http://encg_nginx:80',
         changeOrigin: true,
       },
       '/storage': {

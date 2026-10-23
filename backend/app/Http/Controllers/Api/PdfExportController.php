@@ -105,82 +105,7 @@ class PdfExportController extends Controller
 
     public function exportRecepisseTafemPdf(Request $request)
     {
-        $cne = strtoupper(trim($request->query('cne', '')));
-        $cin = strtoupper(trim($request->query('cin', '')));
-
-        $candidate = null;
-
-        if (! empty($cne) || ! empty($cin)) {
-            $candidate = Application::where(function ($q) use ($cne, $cin) {
-                if (! empty($cne)) {
-                    $q->where('cne', $cne);
-                }
-                if (! empty($cin)) {
-                    $q->orWhere('cin', $cin);
-                }
-            })->first();
-
-            if (! $candidate) {
-                $std = Student::with(['user', 'pathways.filiere'])
-                    ->where(function ($q) use ($cne, $cin) {
-                        if (! empty($cne)) {
-                            $q->where('cne', $cne);
-                        }
-                        if (! empty($cin)) {
-                            $q->orWhereHas('user', fn ($u) => $u->where('cin', $cin));
-                        }
-                    })->first();
-
-                if ($std) {
-                    $candidate = (object) [
-                        'first_name' => $std->user->name ?? '',
-                        'last_name' => '',
-                        'cne' => $std->cne,
-                        'cin' => $std->user->cin ?? '',
-                        'reference_number' => $std->pathways->first()?->filiere?->name ?? 'Deux années préparatoires',
-                        'status' => 'accepted',
-                        'selection_score' => 150.00,
-                    ];
-                }
-            }
-        }
-
-        if (! $candidate) {
-            $candidate = (object) [
-                'first_name' => 'Candidat',
-                'last_name' => 'ENCG Fès',
-                'cne' => ! empty($cne) ? $cne : 'N142088916',
-                'cin' => ! empty($cin) ? $cin : 'CD72910',
-                'reference_number' => 'Deux années préparatoires (TAFEM S1)',
-                'status' => 'en_attente',
-                'selection_score' => 150.00,
-            ];
-        }
-
-        $qrUrl = url('/public/track-dossier?cne='.($candidate->cne ?? $cne));
-        $qrBase64 = '';
-        if (class_exists(QrCode::class)) {
-            try {
-                $qrRaw = QrCode::format('png')->size(150)->generate($qrUrl);
-                $qrBase64 = 'data:image/png;base64,'.base64_encode($qrRaw);
-            } catch (\Throwable $e) {
-            }
-        }
-
-        $data = [
-            'name' => trim(($candidate->first_name ?? '').' '.($candidate->last_name ?? '')),
-            'cne' => $candidate->cne ?? $cne,
-            'cin' => $candidate->cin ?? $cin,
-            'filiere' => $candidate->reference_number ?? 'Deux années préparatoires (TAFEM S1)',
-            'score' => number_format($candidate->selection_score ?? 150.00, 2).' pts',
-            'statusLabel' => 'Admis sur Liste Principale',
-            'verifyUrl' => $qrUrl,
-            'qrBase64' => $qrBase64,
-        ];
-
-        $pdf = $this->getPdfInstance('pdf.recepisse_tafem', $data);
-
-        return $pdf->stream('Recepisse_TAFEM_'.($data['cne']).'.pdf', ['Attachment' => false]);
+        return app(AdmissionWorkflowPdfController::class)->receipt($request);
     }
 
     // ─── CONVOCATIONS ÉTUDIANTS ──────────────────────────────────
@@ -1847,50 +1772,7 @@ class PdfExportController extends Controller
 
     public function exportTafemDeliberationPdf(Request $request)
     {
-        $type = $request->query('type', 'main');
-        $isMain = $type === 'main';
-        $title = $isMain
-            ? 'CONCOURS TAFEM 2026 — LISTE PRINCIPALE DES ADMIS (TOP 350)'
-            : "CONCOURS TAFEM 2026 — LISTE D'ATTENTE (PAR ORDRE DE MÉRITE)";
-        $listTypeLabel = $isMain ? 'LISTE PRINCIPALE (AFFECTÉS ENCG FÈS)' : "LISTE D'ATTENTE (RANG 351+)";
-
-        $dbStudents = Student::with('user')->limit($isMain ? 35 : 25)->get();
-        $candidates = [];
-
-        if ($dbStudents->isNotEmpty()) {
-            foreach ($dbStudents as $idx => $st) {
-                $baseScore = $isMain ? (188.50 - ($idx * 0.95)) : (147.80 - ($idx * 0.85));
-                $candidates[] = [
-                    'rank' => $isMain ? ($idx + 1) : ($idx + 351),
-                    'cne' => $st->cne ?? ('N13'.str_pad((string) $st->id, 7, '0', STR_PAD_LEFT)),
-                    'cin' => $st->cin ?? ($st->user?->cin ?? ('CD'.(720000 + $st->id))),
-                    'name' => ($st->user?->name ?? 'CANDIDAT TAFEM'),
-                    'score' => max(120.00, $baseScore),
-                    'decision' => $isMain ? 'ADMIS DÉFINITIF' : "LISTE D'ATTENTE",
-                ];
-            }
-        } else {
-            for ($i = 1; $i <= 20; $i++) {
-                $candidates[] = [
-                    'rank' => $isMain ? $i : ($i + 350),
-                    'cne' => 'N13800'.str_pad((string) $i, 4, '0', STR_PAD_LEFT),
-                    'cin' => 'CD729'.str_pad((string) $i, 3, '0', STR_PAD_LEFT),
-                    'name' => 'CANDIDAT TAFEM '.$i,
-                    'score' => $isMain ? (185.00 - ($i * 1.2)) : (147.00 - ($i * 0.8)),
-                    'decision' => $isMain ? 'ADMIS DÉFINITIF' : "LISTE D'ATTENTE",
-                ];
-            }
-        }
-
-        $pdf = $this->getPdfInstance('pdf.pv_deliberation_tafem', [
-            'title' => $title,
-            'listTypeLabel' => $listTypeLabel,
-            'candidates' => $candidates,
-        ]);
-
-        $filename = $isMain ? 'PV_Deliberation_TAFEM_Liste_Principale.pdf' : 'PV_Deliberation_TAFEM_Liste_Attente.pdf';
-
-        return $pdf->stream($filename);
+        return app(AdmissionWorkflowPdfController::class)->list($request);
     }
 
     // ─── AUTRES PDF ─────────────────────────────────────────────

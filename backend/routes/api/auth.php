@@ -11,6 +11,55 @@ Route::post('/contact', [ContactController::class, 'send'])->middleware('throttl
 
 Route::get('/login', fn () => response()->json(['message' => 'Non authentifié. Veuillez vous connecter.'], 401))->name('login');
 
+Route::prefix('public/admissions')->middleware('throttle:10,1')->group(function () {
+    Route::get('campaigns', [\App\Http\Controllers\Api\AdmissionWorkflowController::class, 'campaigns']);
+    Route::post('admissibility', [\App\Http\Controllers\Api\AdmissionWorkflowController::class, 'admissibility']);
+    Route::post('request-activation', [\App\Http\Controllers\Api\AdmissionWorkflowController::class, 'requestActivation']);
+    Route::post('activate', [\App\Http\Controllers\Api\AdmissionWorkflowController::class, 'activate']);
+});
+Route::get('public/admissions/documents/{document}', [\App\Http\Controllers\Api\AdmissionWorkflowController::class, 'download'])->name('admissions.document');
+
+Route::prefix('admissions/workflow')->middleware(['auth:sanctum', 'institution.context'])->group(function () {
+    $workflow = \App\Http\Controllers\Api\AdmissionWorkflowController::class;
+    $appointments = \App\Http\Controllers\Api\AdmissionAppointmentController::class;
+    Route::get('campaigns', [$workflow, 'campaigns']);
+    Route::get('references', [$workflow, 'references']);
+    Route::post('campaigns', [$workflow, 'saveCampaign']);
+    Route::put('campaigns/{id}', [$workflow, 'saveCampaign']);
+    Route::get('dossier', [$workflow, 'show']);
+    Route::post('dossier', [$workflow, 'save']);
+    Route::post('documents', [$workflow, 'upload'])->middleware('throttle:uploads');
+    Route::delete('documents', [$workflow, 'withdraw']);
+    Route::post('submit', [$workflow, 'submit']);
+    Route::post('ocr', [$workflow, 'startOcr'])->middleware('throttle:ocr');
+    Route::get('ocr/{id}', [$workflow, 'ocrStatus']);
+    Route::delete('ocr/{id}', [$workflow, 'cancelOcr']);
+    Route::get('slots', [$appointments, 'slots']);
+    Route::post('appointments', [$appointments, 'book']);
+    Route::post('notify', [$workflow, 'notify'])->middleware('throttle:3,1');
+    Route::post('notifications/{id}/retry', [$workflow, 'retryNotification'])->middleware('throttle:10,1');
+    Route::get('receipt', [\App\Http\Controllers\Api\AdmissionWorkflowPdfController::class, 'receipt']);
+    Route::get('applications', [$workflow, 'listing']);
+    Route::get('stats', [$workflow, 'stats']);
+    Route::post('imports/preview', [$workflow, 'previewImport']);
+    Route::post('imports/{batch}/commit', [$workflow, 'commitImport']);
+    Route::post('applications/{id}/activation', [$workflow, 'issueActivation'])->middleware('throttle:10,1');
+    Route::post('documents/{document}/review', [$workflow, 'reviewDocument']);
+    Route::get('documents/{document}/file', [$workflow, 'download']);
+    Route::get('unlinked-documents', [$workflow, 'unlinkedDocuments']);
+    Route::post('unlinked-documents/{document}/reconcile', [$workflow, 'reconcileDocument']);
+    Route::post('decide', [$workflow, 'decide']);
+    Route::post('promote', [$workflow, 'promote']);
+    Route::post('renew-invitation', [$workflow, 'renewInvitation']);
+    Route::post('slots', [$appointments, 'createSlot']);
+    Route::post('allocation/preview', [$appointments, 'preview']);
+    Route::post('allocation/{id}/commit', [$appointments, 'commit']);
+    Route::get('scan/{token}', [$appointments, 'scan']);
+    Route::post('scan/{token}/check-in', [$appointments, 'checkIn']);
+    Route::get('daily', [$appointments, 'daily']);
+    Route::get('list-pdf', [\App\Http\Controllers\Api\AdmissionWorkflowPdfController::class, 'list']);
+});
+
 Route::prefix('v1/auth')->group(function () {
     Route::get('/check-cne-availability', [AuthController::class, 'checkCneAvailability'])->middleware('throttle:10,1');
     Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLinkEmail'])->middleware('throttle:login');

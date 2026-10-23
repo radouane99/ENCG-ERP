@@ -1,0 +1,64 @@
+
+   PASS  Tests\Feature\AdmissionWorkflowTest
+  ✓ guests and unrelated accounts cannot access or mutate dossiers      24.51s  
+  ✓ profile save is owned versioned and does not mark enrolled           0.78s  
+  ✓ document versions preserve files and withdrawn urls stop working     1.35s  
+  ✓ application only dossier contains only its documents                 0.93s  
+  ✓ real submission review and approval create one registration without… 1.87s  
+  ✓ import requires preview and preserves existing owner and approved s… 1.03s  
+  ✓ ocr requires consent and has owned persistent status                 0.95s  
+  ✓ appointment capacity entry and duplicate check in are real           1.11s  
+  ✓ activation uses only a verified contact and token once               1.24s  
+
+   PASS  Tests\Feature\BackendSecurityNormsTest
+  ✓ track dossier requires cne and cin for guests                        0.68s  
+  ✓ serve document without signature is forbidden                        0.59s  
+  ✓ track dossier with cne and cin returns signed document urls          0.62s  
+  ✓ signed document url grants access                                    0.65s  
+  ✓ query token does not authenticate arbitrary api routes               0.65s  
+  ✓ http only auth cookie authenticates without authorization header     1.26s  
+  ✓ login response does not include password or login ip                 1.11s  
+  ✓ professor cannot manage roles permissions                            0.59s  
+  ✓ inscription status requires cne and cin                              0.68s  
+  ✓ track dossier matches cin on users not students                      0.69s  
+
+   PASS  Tests\Feature\GlobalAuditRemediationTest
+  ✓ public registration cannot replace existing student credentials      0.66s  
+  ✓ public registration cannot claim student using another email         0.66s  
+  ✓ student cannot change official dates                                 0.59s  
+  ✓ dates are validated durable and survive cache clear                  0.77s  
+  ✓ classroom endpoint only returns authorized group messages            0.90s  
+  ✓ stale model cannot overwrite grade without version in payload        0.61s  
+  ✓ authentication preserves angle brackets in password                  1.12s  
+  ✓ audit payload redacts nested secrets and medical data                0.86s  
+  ✓ new registration uses an open campaign and creates only a student a… 1.50s  
+  ✓ grade bulk update rejects stale client version and keeps the saved…  0.59s  
+  ✓ other institution cannot access this single institution instance     0.66s  
+
+   PASS  Tests\Feature\SensitiveRoutesRequireAuthenticationTest
+  ✓ it rejects unauthenticated access to previously public admin and PD… 0.71s  
+  ✓ it rejects unauthenticated access to previously public admin and PD… 0.57s  
+  ✓ it rejects unauthenticated access to previously public admin and PD… 0.55s  
+  ✓ it rejects unauthenticated access to previously public admin and PD… 0.67s  
+  ✓ it rejects unauthenticated access to previously public admin and PD… 0.98s  
+  ✓ it rejects unauthenticated access to previously public admin and PD… 1.11s  
+  ✓ it rejects unauthenticated access to previously public admin and PD… 0.76s  
+  ✓ it rejects unauthenticated access to previously public admin and PD… 0.77s  
+  ✓ it rejects unauthenticated access to previously public admin and PD… 1.10s  
+  ✓ it rejects unauthenticated access to previously public admin and PD… 1.87s  
+  ✓ it rejects unauthenticated access to previously public admin and PD… 1.11s  
+  ✓ it rejects unauthenticated access to previously public admin and PD… 1.32s  
+  ✓ it rejects unauthenticated access to previously public admin and PD… 1.29s  
+  ✓ it rejects unauthenticated access to previously public admin and PD… 0.88s  
+  ✓ it rejects unauthenticated access to previously public admin and PD… 0.88s  
+  ✓ it rejects unauthenticated access to previously public admin and PD… 0.68s  
+  ✓ it rejects unauthenticated access to previously public admin and PD… 0.61s  
+  ✓ it rejects unauthenticated access to previously public admin and PD… 0.70s  
+  ✓ it rejects unauthenticated access to previously public admin and PD… 0.57s  
+  ✓ it rejects unauthenticated access to previously public admin and PD… 0.59s  
+  ✓ it rejects unauthenticated access to previously public admin and PD… 0.60s  
+  ✓ it requires a session for dossier details while leaving admissibili… 0.67s  
+
+  Tests:    52 passed (144 assertions)
+  Duration: 76.04s
+

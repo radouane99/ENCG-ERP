@@ -68,4 +68,21 @@ describe('useAuthStore — RBAC & State Management', () => {
     expect(useAuthStore.getState().isLoading).toBe(false)
     get.mockRestore()
   })
+
+  it('keeps an existing session on transient network failure and allows a retry', async () => {
+    useAuthStore.setState({ user: mockStudentUser, isAuthenticated: true })
+    const get = vi.spyOn(api, 'get').mockRejectedValueOnce(new Error('network unavailable'))
+    await useAuthStore.getState().fetchUser()
+    expect(useAuthStore.getState().isAuthenticated).toBe(true)
+    expect(useAuthStore.getState().sessionError).toBeTruthy()
+    get.mockRestore()
+  })
+
+  it('shares simultaneous bootstrap requests instead of clearing a valid session on duplicate refreshes', async () => {
+    const get = vi.spyOn(api, 'get').mockResolvedValue({ data: { data: mockStudentUser } })
+    await Promise.all([useAuthStore.getState().fetchUser(), useAuthStore.getState().fetchUser()])
+    expect(get).toHaveBeenCalledTimes(1)
+    expect(useAuthStore.getState().isAuthenticated).toBe(true)
+    get.mockRestore()
+  })
 })

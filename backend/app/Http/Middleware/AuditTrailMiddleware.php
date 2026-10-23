@@ -71,6 +71,10 @@ class AuditTrailMiddleware
                 'secret',
                 'two_factor_secret',
             ]));
+            if (str_contains($request->path(), 'admissions') || str_contains($request->path(), 'candidate') || str_contains($request->path(), 'preinscription')) {
+                // The dedicated dossier history stores structured events; do not duplicate personal fields in general logs.
+                $payload = ['fields' => array_keys($request->except(['password', 'password_confirmation', 'token', 'file']))];
+            }
 
             // Determine Action Type, Event & Severity
             $path = $request->path();

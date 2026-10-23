@@ -43,7 +43,7 @@ class PdfBinaryEngine implements OcrEngineInterface
 
             // Try with layout first
             $command = sprintf('pdftotext -layout -nopgbrk %s - 2>/dev/null', escapeshellarg($filePath));
-            @exec($command, $output, $returnVar);
+            \App\OCR\OcrProcess::run($command, $output, $returnVar);
 
             $text = implode("\n", $output);
 
@@ -51,7 +51,7 @@ class PdfBinaryEngine implements OcrEngineInterface
             if ($returnVar !== 0 || empty(trim($text))) {
                 $output = [];
                 $command = sprintf('pdftotext %s - 2>/dev/null', escapeshellarg($filePath));
-                @exec($command, $output, $returnVar);
+                \App\OCR\OcrProcess::run($command, $output, $returnVar);
                 $text = implode("\n", $output);
             }
 
@@ -82,7 +82,7 @@ class PdfBinaryEngine implements OcrEngineInterface
             escapeshellarg($tmpFile)
         );
 
-        @exec($command);
+        \App\OCR\OcrProcess::run($command);
 
         if (file_exists($tmpFile)) {
             $html = file_get_contents($tmpFile);

@@ -1,0 +1,86 @@
+{
+    "gemini_configured": false,
+    "groq_configured": true,
+    "ai_driver": "gemini",
+    "queue_connection": "redis",
+    "cache_store": "database",
+    "applications": 2,
+    "documents": 7,
+    "documents_without_relational_owner": 7,
+    "document_duplicate_keys": 0,
+    "application_duplicate_campaign_cne": 0,
+    "existing_document_files": 7,
+    "application_status_counts": [
+        {
+            "status": "admis_tafem",
+            "count": 2
+        }
+    ],
+    "student_status_counts": [
+        {
+            "status": "pending",
+            "inscription_status": "admis_tafem",
+            "count": 2
+        },
+        {
+            "status": "active",
+            "inscription_status": "submitted",
+            "count": 72
+        }
+    ],
+    "document_status_counts": [
+        {
+            "type": "photo",
+            "status": "pending",
+            "count": 1
+        },
+        {
+            "type": "releve_notes",
+            "status": "pending",
+            "count": 2
+        },
+        {
+            "type": "cnie",
+            "status": "pending",
+            "count": 2
+        },
+        {
+            "type": "bac",
+            "status": "pending",
+            "count": 2
+        }
+    ],
+    "campaigns": [
+        {
+            "id": 2,
+            "academic_year_id": 3,
+            "status": "open",
+            "open_date": "2026-01-01",
+            "close_date": "2026-12-31",
+            "target_capacity": 500
+        }
+    ],
+    "indexes": [
+        {
+            "indexdef": "CREATE UNIQUE INDEX applications_pkey ON public.applications USING btree (id)"
+        },
+        {
+            "indexdef": "CREATE INDEX applications_reference_number_index ON public.applications USING btree (reference_number)"
+        },
+        {
+            "indexdef": "CREATE UNIQUE INDEX applications_reference_number_unique ON public.applications USING btree (reference_number)"
+        },
+        {
+            "indexdef": "CREATE INDEX applications_admission_campaign_id_status_index ON public.applications USING btree (admission_campaign_id, status)"
+        },
+        {
+            "indexdef": "CREATE UNIQUE INDEX student_documents_pkey ON public.student_documents USING btree (id)"
+        },
+        {
+            "indexdef": "CREATE INDEX student_documents_cne_index ON public.student_documents USING btree (cne)"
+        },
+        {
+            "indexdef": "CREATE INDEX student_documents_type_index ON public.student_documents USING btree (type)"
+        }
+    ]
+}

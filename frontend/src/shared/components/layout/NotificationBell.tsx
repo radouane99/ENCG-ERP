@@ -50,8 +50,11 @@ export function NotificationBell() {
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
   const dropdownRef = useRef<HTMLDivElement>(null);
   const prevUnreadCountRef = useRef<number | null>(null);
+  const notificationInFlight = useRef(false);
 
   const fetchNotifications = useCallback(async (isBackgroundPoll = false) => {
+    if (notificationInFlight.current || (isBackgroundPoll && document.visibilityState === 'hidden')) return;
+    notificationInFlight.current = true;
     try {
       const res = await api.get('/notifications', { suppressToast: true } as any);
       const data: Notification[] = res.data?.data || [];
@@ -78,16 +81,15 @@ export function NotificationBell() {
       setNotifications(data);
       setUnreadCount(newUnreadCount);
     } catch {
-      setNotifications([]);
-      setUnreadCount(0);
-    }
+      // Keep the last known count on a transient failure; the next poll can recover.
+    } finally { notificationInFlight.current = false; }
   }, [navigate]);
 
   useEffect(() => {
     fetchNotifications(false);
     const interval = setInterval(() => {
       fetchNotifications(true);
-    }, 5000);
+    }, 30000);
     return () => clearInterval(interval);
   }, [fetchNotifications]);
 

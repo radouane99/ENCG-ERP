@@ -22,6 +22,8 @@ class UserResource extends JsonResource
         $roles = $this->roles->pluck('name')->values()->toArray();
 
         $academicInfo = null;
+        $student = null;
+        $admission = \App\Models\Application::where('owner_user_id', $this->resource->id)->whereHas('campaign', fn ($q) => $q->where('status', 'open'))->latest('id')->first();
         if (in_array('student', $roles)) {
             $student = $this->relationLoaded('student')
                 ? $this->student
@@ -40,7 +42,7 @@ class UserResource extends JsonResource
             'email' => $this->email,
             'phone' => $this->phone,
             'cin' => $this->cin,
-            'cne' => $this->cne,
+            'cne' => $student?->cne ?? $admission?->cne,
             'avatar_path' => $this->avatar_path,
             'is_active' => (bool) $this->is_active,
             'must_change_password' => (bool) $this->must_change_password,
@@ -55,6 +57,7 @@ class UserResource extends JsonResource
                 : (count($roles) ? 'admin' : 'user'),
             'role_label' => $roles[0] ?? 'Non assigné',
             'academic_info' => $academicInfo,
+            'admission_pending' => $admission && ! in_array($admission->dossier_status, ['approved', 'rejected']),
             'filiere' => $academicInfo ? ['name' => $academicInfo['filiere_name'], 'code' => $academicInfo['filiere_code']] : null,
             'section' => $academicInfo['section_label'] ?? null,
             'sub_group' => $academicInfo['sub_group'] ?? null,

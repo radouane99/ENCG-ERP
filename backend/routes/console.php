@@ -48,6 +48,8 @@ Schedule::call(function () {
 use App\Events\GradeDeadlineWarning;
 use App\Mail\GradeDeadlineReminder;
 use App\Mail\ReinscriptionOuverteMail;
+
+Schedule::command('admissions:maintain')->hourly()->withoutOverlapping();
 use App\Models\GradeEntryPeriod;
 use App\Models\Institution;
 use App\Models\Student;

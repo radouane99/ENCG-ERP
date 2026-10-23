@@ -1,0 +1,115 @@
+
+   FAIL  Tests\Feature\TafemDeepScanAuditTest
+  ⨯ upload rejects wrong cin and locked dossier                         24.94s  
+  ⨯ delete rejects wrong cin                                             0.90s  
+  ⨯ public preinscription cannot downgrade another active student        0.55s  
+  ✓ matching massar is not reported as mismatch                          0.58s  
+  ⨯ update rejects wrong cin                                             0.59s  
+  ⨯ receipt rejects unknown candidate instead of fabricating admission   0.79s  
+  ✓ ocr rejects out of range grade                                       0.51s  
+  ✓ ocr does not accept impossible date or out of range grade            0.48s  
+  ✓ imported candidate is rejected by current registration service       0.65s  
+  ✓ real local pdf and raster ocr extract synthetic identity             2.76s  
+  ⨯ application only tracking does not mix unrelated documents           0.93s  
+  ✓ authenticated user cannot track another application by cne           0.80s  
+  ✓ professor cannot validate physical admission dossier                 0.61s  
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\TafemDeepScanAuditTest > upload rejects wrong cin a…   
+  Expected response status code [403] but received 401.
+Failed asserting that 401 is identical to 403.
+
+  at tests/Audit/TafemDeepScanAuditTest.php:42
+     38▕         $s = $this->candidate('active');
+     39▕         $this->post('/api/public/upload-candidate-document', ['cne' => $s->cne,
+     40▕             'cin' => 'ZZ999999', 'type' => 'bac',
+     41▕             'file' => UploadedFile::fake()->create('audit.pdf', 1, 'application/pdf')],
+  ➜  42▕             ['Accept' => 'application/json'])->assertForbidden();
+     43▕     }
+     44▕ 
+     45▕     public function test_delete_rejects_wrong_cin(): void
+     46▕     {
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\TafemDeepScanAuditTest > delete rejects wrong cin      
+  Expected response status code [403] but received 401.
+Failed asserting that 401 is identical to 403.
+
+  at tests/Audit/TafemDeepScanAuditTest.php:50
+     46▕     {
+     47▕         $s = $this->candidate();
+     48▕         StudentDocument::create(['cne' => $s->cne, 'type' => 'bac', 'file_path' => 'audit.pdf']);
+     49▕         $this->deleteJson('/api/public/delete-candidate-document', ['cne' => $s->cne,
+  ➜  50▕             'cin' => 'ZZ999999', 'type' => 'bac'])->assertForbidden();
+     51▕         $this->assertDatabaseCount('student_documents', 1);
+     52▕     }
+     53▕ 
+     54▕     public function test_public_preinscription_cannot_downgrade_another_active_student(): void
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\TafemDeepScanAuditTest > public preinscription cann…   
+  Expected response status code [403] but received 401.
+Failed asserting that 401 is identical to 403.
+
+  at tests/Audit/TafemDeepScanAuditTest.php:59
+     55▕     {
+     56▕         $s = $this->candidate('active');
+     57▕         $this->postJson('/api/public/preinscription', ['cne' => $s->cne,
+     58▕             'cin' => 'ZZ999999', 'name' => 'Synthetic Audit', 'email' => 'audit@example.test'])
+  ➜  59▕             ->assertForbidden();
+     60▕         $this->assertSame('active', $s->fresh()->status);
+     61▕     }
+     62▕ 
+     63▕     public function test_matching_massar_is_not_reported_as_mismatch(): void
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\TafemDeepScanAuditTest > update rejects wrong cin      
+  Expected response status code [403] but received 401.
+Failed asserting that 401 is identical to 403.
+
+  at tests/Audit/TafemDeepScanAuditTest.php:75
+     71▕     {
+     72▕         $s = $this->candidate();
+     73▕         $this->applicationOnly();
+     74▕         $this->postJson('/api/public/update-candidate-dossier', ['cne' => $s->cne,
+  ➜  75▕             'cin' => 'ZZ999999', 'first_name' => 'Unauthorized Change'])->assertForbidden();
+     76▕     }
+     77▕ 
+     78▕     public function test_receipt_rejects_unknown_candidate_instead_of_fabricating_admission(): void
+     79▕     {
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\TafemDeepScanAuditTest > receipt rejects unknown ca…   
+  Expected response status code [404] but received 403.
+Failed asserting that 403 is identical to 404.
+
+  at tests/Audit/TafemDeepScanAuditTest.php:81
+     77▕ 
+     78▕     public function test_receipt_rejects_unknown_candidate_instead_of_fabricating_admission(): void
+     79▕     {
+     80▕         $this->get('/api/public/recepisse-tafem-pdf?cne=Z999999999&cin=ZZ999999',
+  ➜  81▕             ['Accept' => 'application/json'])->assertNotFound();
+     82▕     }
+     83▕ 
+     84▕     public function test_ocr_rejects_out_of_range_grade(): void
+     85▕     {
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\TafemDeepScanAuditTest > application only tracking…    
+  Expected response status code [200] but received 401.
+Failed asserting that 401 is identical to 200.
+
+  at tests/Audit/TafemDeepScanAuditTest.php:150
+    146▕     {
+    147▕         $app = $this->applicationOnly();
+    148▕         StudentDocument::create(['cne' => 'Z999999999', 'type' => 'bac',
+    149▕             'file_path' => 'unrelated.pdf', 'original_filename' => 'UNRELATED-SYNTHETIC.pdf']);
+  ➜ 150▕         $response = $this->getJson('/api/public/track-dossier?cne='.$app->cne.'&cin='.$app->cin)->assertOk();
+    151▕         $this->assertEmpty($response->json('candidate.documents'), 'Other candidates documents must not enter this dossier.');
+    152▕     }
+    153▕ 
+    154▕     public function test_authenticated_user_cannot_track_another_application_by_cne(): void
+
+
+  Tests:    6 failed, 7 passed (15 assertions)
+  Duration: 39.95s
+

@@ -1,0 +1,19 @@
+
+   PASS  Tests\Feature\AdmissionWorkflowTest
+  ✓ guests and unrelated accounts cannot access or mutate dossiers      48.64s  
+  ✓ profile save is owned versioned and does not mark enrolled           1.51s  
+  ✓ document versions preserve files and withdrawn urls stop working     2.50s  
+  ✓ application only dossier contains only its documents                 1.87s  
+  ✓ real submission review and approval create one registration without… 3.62s  
+  ✓ import requires preview and preserves existing owner and approved s… 1.95s  
+  ✓ ocr requires consent and has owned persistent status                 2.28s  
+  ✓ appointment capacity entry and duplicate check in are real           2.21s  
+  ✓ activation uses only a verified contact and token once               2.06s  
+  ✓ stats and waiting invitations use actual campaign capacity and rank  1.16s  
+  ✓ rejected document requests correction and preserves reviewed versio… 1.74s  
+  ✓ real local async ocr records a result without any cloud call         4.09s  
+  ✓ unlinked document requires manual identity confirmation              1.92s  
+
+  Tests:    13 passed (99 assertions)
+  Duration: 82.72s
+

@@ -20,7 +20,7 @@ class TesseractEngine implements OcrEngineInterface
         $this->processId = getmypid().'_'.uniqid();
         $this->config = array_merge([
             'dpi' => 200, // Réduit pour la vitesse
-            'max_pages' => 1, // Une seule page pour la vitesse
+            'max_pages' => 2, // Une seule page pour la vitesse
             'enable_roi_cropping' => false, // Désactivé pour la vitesse
             'enable_binarization' => false, // Désactivé pour la vitesse
             'default_lang' => 'ara+fra+eng',
@@ -108,7 +108,7 @@ class TesseractEngine implements OcrEngineInterface
         if ($this->isPdf($mimeType, $filePath)) {
             // 1. Try extracting direct embedded images via pdfimages (fastest and highest quality for scans)
             $imgPrefix = $tmpDir.'/pdf_raw_'.$this->processId;
-            @exec(sprintf('pdfimages -png %s %s 2>/dev/null', escapeshellarg($filePath), escapeshellarg($imgPrefix)));
+            \App\OCR\OcrProcess::run(sprintf('pdfimages -png %s %s 2>/dev/null', escapeshellarg($filePath), escapeshellarg($imgPrefix)));
             $rawImages = glob("{$imgPrefix}*.png") ?: [];
             $validScans = array_filter($rawImages, fn ($img) => @filesize($img) > 25000);
 
@@ -117,7 +117,7 @@ class TesseractEngine implements OcrEngineInterface
                     $createdFiles[] = $img;
                 }
 
-                return array_slice(array_values($validScans), 0, 2);
+                return array_slice(array_values($validScans), 0, min(8, $this->config['max_pages']));
             }
 
             // 2. Fallback to pdftoppm
@@ -126,18 +126,19 @@ class TesseractEngine implements OcrEngineInterface
             }
 
             $tmpPrefix = $tmpDir.'/pdf_pg_'.$this->processId;
-            $cmd = sprintf('pdftoppm -png -r 200 -l 2 %s %s 2>/dev/null',
+            $cmd = sprintf('pdftoppm -png -r 200 -l %d %s %s 2>/dev/null',
+                min(8, $this->config['max_pages']),
                 escapeshellarg($filePath),
                 escapeshellarg($tmpPrefix)
             );
-            @exec($cmd);
+            \App\OCR\OcrProcess::run($cmd);
 
             $pages = glob("{$tmpPrefix}*.png") ?: [];
             foreach ($pages as $p) {
                 $createdFiles[] = $p;
             }
 
-            return array_slice($pages, 0, 2);
+            return array_slice($pages, 0, min(8, $this->config['max_pages']));
         }
 
         $tmpImg = $tmpDir.'/ocr_img_'.$this->processId.'.png';
@@ -168,7 +169,7 @@ class TesseractEngine implements OcrEngineInterface
             escapeshellarg($lang),
             $psm
         );
-        @exec($cmd);
+        \App\OCR\OcrProcess::run($cmd);
 
         if (file_exists($txtFile)) {
             $createdFiles[] = $txtFile;
@@ -184,7 +185,7 @@ class TesseractEngine implements OcrEngineInterface
     private function getInstalledLanguages(): array
     {
         $output = [];
-        @exec('tesseract --list-langs 2>/dev/null', $output);
+        \App\OCR\OcrProcess::run('tesseract --list-langs 2>/dev/null', $output);
 
         $langs = [];
         foreach ($output as $line) {
@@ -252,7 +253,7 @@ class TesseractEngine implements OcrEngineInterface
     {
         $returnVar = -1;
         $output = [];
-        @exec("which {$cmd} 2>/dev/null", $output, $returnVar);
+        \App\OCR\OcrProcess::run("which {$cmd} 2>/dev/null", $output, $returnVar);
 
         return $returnVar === 0;
     }

@@ -18,7 +18,7 @@ const DashboardRouter: React.FC = () => {
   const isAdmin = roles.some(r => ['admin', 'super-admin', 'super_admin', 'institution-admin', 'institution_admin', 'scolarite'].includes(r));
   const isDirector = roles.some(r => ['director', 'directeur'].includes(r));
   const isProfessor = roles.some(r => ['professor', 'professeur', 'vacataire'].includes(r));
-  const isEnrolledStudent = roles.some(r => ['student', 'etudiant'].includes(r));
+  const isEnrolledStudent = !user.admission_pending && roles.some(r => ['student', 'etudiant'].includes(r));
 
   return (
     <Suspense fallback={<LoadingScreen />}>

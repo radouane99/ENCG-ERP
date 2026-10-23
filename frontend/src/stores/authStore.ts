@@ -1,6 +1,8 @@
 import { create } from 'zustand'
 import api from '@shared/lib/api'
 
+let sessionInFlight: Promise<void> | null = null
+
 export interface User {
   id: number
   name: string
@@ -18,6 +20,7 @@ export interface User {
   two_factor_enabled: boolean
   locale: 'fr' | 'ar'
   must_change_password?: boolean
+  admission_pending?: boolean
 }
 
 interface AuthState {
@@ -27,6 +30,7 @@ interface AuthState {
   requiresTwoFactor: boolean
   twoFactorChallengeToken: string | null
   activeRole: string | null
+  sessionError: string | null
 
   completeSession: (user?: User) => Promise<void>
   login: (email: string, password: string) => Promise<{ requiresTwoFactor: boolean }>
@@ -46,6 +50,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
   user: null,
   isAuthenticated: false,
   isLoading: true,
+  sessionError: null,
   requiresTwoFactor: false,
   twoFactorChallengeToken: null,
   activeRole: typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('encg_active_role') : null,
@@ -56,6 +61,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       return
     }
     await get().fetchUser()
+    if (!get().isAuthenticated) throw new Error(get().sessionError || 'La session n’a pas pu être établie. Connectez-vous pour reprendre votre dossier.')
   },
 
   login: async (email, password) => {
@@ -90,20 +96,26 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
   },
 
   clearSession: () => {
-    set({ user: null, isAuthenticated: false, isLoading: false, requiresTwoFactor: false, twoFactorChallengeToken: null })
+    set({ user: null, isAuthenticated: false, isLoading: false, requiresTwoFactor: false, twoFactorChallengeToken: null, sessionError: null })
   },
 
   fetchUser: async () => {
+    if (sessionInFlight) return sessionInFlight
+    sessionInFlight = (async () => {
     try {
-      const response = await api.get('/v1/auth/me', { suppressToast: true, timeout: 10_000 } as any)
+      const response = await api.get('/v1/auth/me', { suppressToast: true, timeout: 30_000 } as any)
       const user = response.data?.data
       if (!user || !Array.isArray(user.roles) || !Array.isArray(user.permissions)) {
         throw new Error('Invalid authenticated user response')
       }
-      set({ user, isAuthenticated: true, isLoading: false })
-    } catch {
-      set({ user: null, isAuthenticated: false, isLoading: false })
+      set({ user, isAuthenticated: true, isLoading: false, sessionError: null })
+    } catch (error) {
+      const status = (error as { response?: { status?: number } }).response?.status
+      if (status === 401 || status === 403) get().clearSession()
+      else set({ isLoading: false, sessionError: 'Connexion au serveur interrompue. Réessayez pour retrouver votre session.' })
     }
+    })()
+    try { await sessionInFlight } finally { sessionInFlight = null }
   },
 
   setUser: (user) => set({ user }),

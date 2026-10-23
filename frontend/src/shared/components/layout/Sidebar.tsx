@@ -135,6 +135,7 @@ const navigation: (NavItem | NavGroup)[] = [
     groupTitle: 'ESPACE ÉTUDIANT',
     groupTitleAr: 'فضاء الطالب',
     items: [
+      { label: 'Mon dossier d’admission', labelAr: 'ملف التسجيل', href: '/admissions/mon-dossier', icon: ClipboardList, roles: ['student'] },
       { label: 'Mon Emploi du Temps', labelAr: 'جداول أوقاتي', href: '/student/schedule', icon: CalendarDays, roles: ['student'] },
       { label: 'Espace Classroom & LMS', labelAr: 'الفصول الافتراضية والمقررات', href: '/student/classroom', icon: GraduationCap, badge: 'LMS', roles: ['student'] },
       { label: 'Orientation Master & LMD (IA)', labelAr: 'التوجيه الذكي وحساب التعويض', href: '/student/orientation', icon: Compass, badge: 'IA', roles: ['student'] },

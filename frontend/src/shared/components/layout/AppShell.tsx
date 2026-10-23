@@ -4,7 +4,6 @@ import Sidebar from './Sidebar'
 import Header from './Header'
 import { GlobalSearchModal } from './GlobalSearchModal'
 import { useEffect,useState } from 'react'
-import { useAuthStore } from '@stores/authStore'
 import CommandPalette from './CommandPalette'
 import ChatbotWidget from '../ui/ChatbotWidget'
 import { ErrorBoundary } from '@shared/components/ui/ErrorBoundary'
@@ -14,17 +13,12 @@ import MobileBottomNav from './MobileBottomNav'
 import { cn } from '@shared/lib/utils'
 
 export default function AppShell() {
-  const fetchUser = useAuthStore((s) => s.fetchUser)
   const [isCommandOpen, setIsCommandOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const location = useLocation()
 
   const isFullWidthPage = location.pathname.startsWith('/admin/grades/pv') || location.pathname.startsWith('/exams/deliberations')
-
-  useEffect(() => {
-    fetchUser()
-  }, [fetchUser])
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

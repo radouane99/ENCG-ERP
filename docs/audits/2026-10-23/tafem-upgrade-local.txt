@@ -1,0 +1,5 @@
+
+   INFO  Running migrations.  
+
+  2026_10_23_200000_structure_admission_workflow .................... 1 s DONE
+

@@ -15,6 +15,12 @@ class Application extends Model
     protected function casts(): array
     {
         return [
+            'profile' => 'array',
+            'version' => 'integer',
+            'submitted_at' => 'datetime',
+            'approved_at' => 'datetime',
+            'contact_verified_at' => 'datetime',
+            'invitation_expires_at' => 'datetime',
             'birth_date' => 'date',
             'bac_average' => 'float',
             'entrance_exam_score' => 'float',
@@ -28,4 +34,6 @@ class Application extends Model
     {
         return $this->belongsTo(AdmissionCampaign::class, 'admission_campaign_id');
     }
+
+    public function owner(): BelongsTo { return $this->belongsTo(User::class, 'owner_user_id'); }
 }
