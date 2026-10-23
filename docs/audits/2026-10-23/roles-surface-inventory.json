@@ -1,0 +1,264 @@
+{
+    "controller_routes": 1158,
+    "distinct_controllers": 125,
+    "missing_action_routes": [
+        {
+            "methods": [
+                "GET",
+                "HEAD"
+            ],
+            "uri": "api/room-bookings/{room_booking}",
+            "action": "App\\Http\\Controllers\\Api\\RoomBookingController@show"
+        },
+        {
+            "methods": [
+                "GET",
+                "HEAD"
+            ],
+            "uri": "api/documents/preview/ordre-mission",
+            "action": "App\\Http\\Controllers\\Api\\PdfExportController@previewOrdreMission"
+        },
+        {
+            "methods": [
+                "GET",
+                "HEAD"
+            ],
+            "uri": "api/documents/preview/convention-stage",
+            "action": "App\\Http\\Controllers\\Api\\PdfExportController@previewConventionStage"
+        },
+        {
+            "methods": [
+                "GET",
+                "HEAD"
+            ],
+            "uri": "api/documents/preview/attestation-travail",
+            "action": "App\\Http\\Controllers\\Api\\PdfExportController@previewAttestationTravail"
+        },
+        {
+            "methods": [
+                "GET",
+                "HEAD"
+            ],
+            "uri": "api/dashboard/users/{user}/roles",
+            "action": "App\\Http\\Controllers\\Api\\ProfileController@roles"
+        },
+        {
+            "methods": [
+                "GET",
+                "HEAD"
+            ],
+            "uri": "api/dashboard/users/search",
+            "action": "App\\Http\\Controllers\\Api\\ProfileController@search"
+        },
+        {
+            "methods": [
+                "POST"
+            ],
+            "uri": "api/exams/pv/sign",
+            "action": "App\\Http\\Controllers\\Api\\ExamIncidentController@storePvSignature"
+        },
+        {
+            "methods": [
+                "GET",
+                "HEAD"
+            ],
+            "uri": "api/exams/{exam}/pv/pdf",
+            "action": "App\\Http\\Controllers\\Api\\ExamIncidentController@downloadOfficialPvPdf"
+        },
+        {
+            "methods": [
+                "GET",
+                "HEAD"
+            ],
+            "uri": "api/holidays/{holiday}",
+            "action": "App\\Http\\Controllers\\Api\\HolidayController@show"
+        },
+        {
+            "methods": [
+                "GET",
+                "HEAD"
+            ],
+            "uri": "api/groups/{group}",
+            "action": "App\\Http\\Controllers\\Api\\GroupController@show"
+        },
+        {
+            "methods": [
+                "GET",
+                "HEAD"
+            ],
+            "uri": "api/academic-years/{academic_year}",
+            "action": "App\\Http\\Controllers\\Api\\AcademicYearController@show"
+        },
+        {
+            "methods": [
+                "GET",
+                "HEAD"
+            ],
+            "uri": "api/exam-sessions/{exam_session}",
+            "action": "App\\Http\\Controllers\\Api\\ExamSessionController@show"
+        },
+        {
+            "methods": [
+                "POST"
+            ],
+            "uri": "api/final-projects",
+            "action": "App\\Http\\Controllers\\Api\\FinalProjectController@store"
+        },
+        {
+            "methods": [
+                "GET",
+                "HEAD"
+            ],
+            "uri": "api/final-projects/{final_project}",
+            "action": "App\\Http\\Controllers\\Api\\FinalProjectController@show"
+        },
+        {
+            "methods": [
+                "DELETE"
+            ],
+            "uri": "api/final-projects/{final_project}",
+            "action": "App\\Http\\Controllers\\Api\\FinalProjectController@destroy"
+        },
+        {
+            "methods": [
+                "GET",
+                "HEAD"
+            ],
+            "uri": "api/clubs/{club}",
+            "action": "App\\Http\\Controllers\\Api\\ClubController@show"
+        },
+        {
+            "methods": [
+                "POST"
+            ],
+            "uri": "api/internships",
+            "action": "App\\Http\\Controllers\\Api\\InternshipController@store"
+        },
+        {
+            "methods": [
+                "GET",
+                "HEAD"
+            ],
+            "uri": "api/internships/{internship}",
+            "action": "App\\Http\\Controllers\\Api\\InternshipController@show"
+        },
+        {
+            "methods": [
+                "GET",
+                "HEAD"
+            ],
+            "uri": "api/discipline/{discipline}",
+            "action": "App\\Http\\Controllers\\Api\\DisciplineController@show"
+        },
+        {
+            "methods": [
+                "PUT",
+                "PATCH"
+            ],
+            "uri": "api/discipline/{discipline}",
+            "action": "App\\Http\\Controllers\\Api\\DisciplineController@update"
+        },
+        {
+            "methods": [
+                "POST"
+            ],
+            "uri": "api/grades/batch",
+            "action": "App\\Http\\Controllers\\Api\\GradeController@storeBatch"
+        },
+        {
+            "methods": [
+                "POST"
+            ],
+            "uri": "api/grades/validate",
+            "action": "App\\Http\\Controllers\\Api\\GradeController@validateGrades"
+        },
+        {
+            "methods": [
+                "GET",
+                "HEAD"
+            ],
+            "uri": "api/modules/export-bulk-pv-zip",
+            "action": "App\\Http\\Controllers\\Api\\PdfExportController@exportBulkPvZip"
+        },
+        {
+            "methods": [
+                "POST"
+            ],
+            "uri": "api/modules/{module}/bulk-send-transcripts",
+            "action": "App\\Http\\Controllers\\Api\\GradeController@bulkSendModuleTranscripts"
+        },
+        {
+            "methods": [
+                "POST"
+            ],
+            "uri": "api/admin/grades/send-prof-reminder",
+            "action": "App\\Http\\Controllers\\Api\\GradeController@sendProfReminder"
+        },
+        {
+            "methods": [
+                "GET",
+                "HEAD"
+            ],
+            "uri": "api/modules/{module}/pv/export-zip-bundle",
+            "action": "App\\Http\\Controllers\\Api\\GradeController@exportPvZipBundle"
+        },
+        {
+            "methods": [
+                "GET",
+                "HEAD"
+            ],
+            "uri": "api/students/export-attestations-zip",
+            "action": "App\\Http\\Controllers\\Api\\PdfExportController@exportAttestationsZip"
+        },
+        {
+            "methods": [
+                "GET",
+                "HEAD"
+            ],
+            "uri": "api/admin/students/export-attestations-zip",
+            "action": "App\\Http\\Controllers\\Api\\PdfExportController@exportAttestationsZip"
+        },
+        {
+            "methods": [
+                "GET",
+                "HEAD"
+            ],
+            "uri": "api/v1/admin/students/export-attestations-zip",
+            "action": "App\\Http\\Controllers\\Api\\PdfExportController@exportAttestationsZip"
+        },
+        {
+            "methods": [
+                "POST"
+            ],
+            "uri": "api/users",
+            "action": "App\\Http\\Controllers\\Api\\UserController@store"
+        },
+        {
+            "methods": [
+                "POST"
+            ],
+            "uri": "api/schedules/auto-generate",
+            "action": "App\\Http\\Controllers\\Api\\SmartSchedulingController@autoGenerate"
+        },
+        {
+            "methods": [
+                "POST"
+            ],
+            "uri": "api/exam-planning/generate-session",
+            "action": "App\\Http\\Controllers\\Api\\ExamPlanningController@generateSession"
+        }
+    ],
+    "source_counts": {
+        "students": 74,
+        "professors": 18,
+        "grades": 1721,
+        "student_registrations": 72,
+        "student_pathways": 72,
+        "grade_appeals": 0,
+        "internships": 3,
+        "soutenances": 0,
+        "professor_availabilities": 0,
+        "filiere_quotas": 0
+    },
+    "availability_without_professor_user": 0
+}

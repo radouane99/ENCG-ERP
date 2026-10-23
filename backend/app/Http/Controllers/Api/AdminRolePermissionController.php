@@ -135,19 +135,7 @@ class AdminRolePermissionController extends Controller
             'permissions.*' => 'string',
         ]);
 
-        // Assurer que les rôles existent
-        foreach ($validated['roles'] as $roleName) {
-            Role::findOrCreate($roleName);
-        }
-
-        // Assurer que les permissions existent
-        foreach ($validated['permissions'] as $permName) {
-            Permission::findOrCreate($permName);
-        }
-
-        // Synchroniser Spatie RBAC
-        $user->syncRoles($validated['roles']);
-        $user->syncPermissions($validated['permissions']);
+        $user = app(\App\Actions\Auth\ManageUserAccessAction::class)->execute($request->user(), $user, $validated['roles'], $validated['permissions']);
 
         return response()->json([
             'success' => true,

@@ -8,7 +8,7 @@ class EvaluateInternshipRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->hasRole('professor');
+        return $this->user()->hasAnyRole(['professor', 'vacataire', 'super-admin', 'institution-admin', 'director', 'department-head', 'filiere-head']);
     }
 
     public function rules(): array

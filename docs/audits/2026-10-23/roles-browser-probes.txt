@@ -1,0 +1,64 @@
+
+Running 2 tests using 1 worker
+
+  ✘  1 [chromium] › e2e/role-deep-audit.spec.ts:6:3 › Audit rôles — erreurs serveur et faux succès › un échec de sauvegarde des paramètres ne doit pas afficher un succès (3.8s)
+  ✘  2 [chromium] › e2e/role-deep-audit.spec.ts:19:3 › Audit rôles — erreurs serveur et faux succès › un paiement refusé par le serveur ne doit pas être annoncé validé (3.6s)
+
+
+  1) [chromium] › e2e/role-deep-audit.spec.ts:6:3 › Audit rôles — erreurs serveur et faux succès › un échec de sauvegarde des paramètres ne doit pas afficher un succès
+
+    Error: expect(locator).toHaveCount(expected) failed
+
+    Locator:  getByText('Paramètres enregistrés.', { exact: true })
+    Expected: 0
+    Received: 1
+    Timeout:  1000ms
+
+    Call log:
+      - Expect "toHaveCount" with timeout 1000ms
+      - waiting for getByText('Paramètres enregistrés.', { exact: true })
+        11 × locator resolved to 1 element
+           - unexpected value "1"
+
+
+      14 |     await expect(page.locator('[data-sonner-toast][data-type="error"]').first()).toBeVisible()
+      15 |     await page.screenshot({ path: 'test-results/roles-settings-false-success.png', fullPage: true })
+    > 16 |     await expect(page.getByText('Paramètres enregistrés.', { exact: true })).toHaveCount(0, { timeout: 1000 })
+         |                                                                              ^
+      17 |   })
+      18 |
+      19 |   test('un paiement refusé par le serveur ne doit pas être annoncé validé', async ({ page }) => {
+        at /app/e2e/role-deep-audit.spec.ts:16:78
+
+    Error Context: test-results/role-deep-audit-Audit-rôle-80735-doit-pas-afficher-un-succès-chromium/error-context.md
+
+  2) [chromium] › e2e/role-deep-audit.spec.ts:19:3 › Audit rôles — erreurs serveur et faux succès › un paiement refusé par le serveur ne doit pas être annoncé validé
+
+    Error: expect(locator).toHaveCount(expected) failed
+
+    Locator:  getByText('Paiement de Synthetic Audit validé avec succès !', { exact: true })
+    Expected: 0
+    Received: 1
+    Timeout:  1000ms
+
+    Call log:
+      - Expect "toHaveCount" with timeout 1000ms
+      - waiting for getByText('Paiement de Synthetic Audit validé avec succès !', { exact: true })
+        11 × locator resolved to 1 element
+           - unexpected value "1"
+
+
+      29 |     await expect(page.locator('[data-sonner-toast][data-type="error"]').first()).toBeVisible()
+      30 |     await page.screenshot({ path: 'test-results/roles-payment-false-success.png', fullPage: true })
+    > 31 |     await expect(success).toHaveCount(0, { timeout: 1000 })
+         |                           ^
+      32 |   })
+      33 | })
+      34 |
+        at /app/e2e/role-deep-audit.spec.ts:31:27
+
+    Error Context: test-results/role-deep-audit-Audit-rôle-8df17-oit-pas-être-annoncé-validé-chromium/error-context.md
+
+  2 failed
+    [chromium] › e2e/role-deep-audit.spec.ts:6:3 › Audit rôles — erreurs serveur et faux succès › un échec de sauvegarde des paramètres ne doit pas afficher un succès
+    [chromium] › e2e/role-deep-audit.spec.ts:19:3 › Audit rôles — erreurs serveur et faux succès › un paiement refusé par le serveur ne doit pas être annoncé validé

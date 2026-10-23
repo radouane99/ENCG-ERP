@@ -1,0 +1,29 @@
+
+   PASS  Tests\Feature\ReinscriptionWorkflowTest
+  ✓ student can fetch reinscription status                              35.52s
+  ✓ student can confirm reinscription                                    1.22s
+  ✓ ouvrir reinscription uses command year not calendar year             1.32s
+  ✓ ouvrir reinscription defaults annee to upcoming end year             1.03s
+
+   PASS  Tests\Feature\PfeAndInternshipWorkflowTest
+  ✓ can create and validate internship convention                        0.75s
+  ✓ can manage final project and defense                                 0.70s
+
+   PASS  Tests\Feature\ProfessorAndAssignmentTest
+  ✓ can create permanent and vacataire professors                        0.74s
+  ✓ can assign module and group to professor                             0.71s
+
+   PASS  Tests\Feature\IdorStudentIsolationTest
+  ✓ it forbids student A from downloading student B document request     0.89s
+  ✓ it forbids student A from viewing student B complaint                0.90s
+  ✓ it ignores a foreign student_id when a student creates a complaint   0.92s
+
+   PASS  Tests\Feature\ProfessorModuleAccessTest
+  ✓ it grants a professor access only to modules assigned to him         0.96s
+  ✓ it does not treat the user id as a professor id                      0.78s
+  ✓ it does not leak the modules of professor #1                         0.71s
+  ✓ it gives no module access to a user without a professor profile      0.70s
+  ✓ it confirms assignment for the assigned professor                    0.73s
+
+  Tests:    16 passed (43 assertions)
+  Duration: 54.18s
