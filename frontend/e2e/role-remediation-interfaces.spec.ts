@@ -29,6 +29,7 @@ test.describe('Interfaces des parcours corrigés', () => {
       await page.route(url => url.pathname === '/api/student-portal/reinscription/status', route => route.fulfill(json({ data: { student_name: 'Étudiant Synthétique', cne: 'SYNTH-01', academic_year: '2026/2027', current_filiere: 'Grande École', current_semester: 3, target_semester: null, is_admis: false, is_confirmed: false, can_confirm: false, payment_required: false, blocking_reason: 'La scolarité doit valider votre inscription académique annuelle.' } })))
       await page.goto('/student/reinscription'); await expect(page.getByRole('heading', { name: 'Validation académique en attente' })).toBeVisible()
       await expect(page.getByRole('button', { name: 'Confirmer ma réinscription' })).toBeDisabled(); await expect(page.getByText('AJOURNÉ(E) • REDOUBLEMENT')).toHaveCount(0)
+      await expect(page.getByText(/situation financière|règlement|facture|frais|exonéré/i)).toHaveCount(0)
       await page.screenshot({ path: `test-results/remediation-renewal-${size}.png`, fullPage: true })
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
     })

@@ -20,6 +20,13 @@ final class LmdRules
         'licence',
         'master_specialise',
         'formation_continue',
+        'licence_universite',
+        'licence_universitaire',
+        'master_universite',
+        'master_universitaire',
+        'master_temps_amenage',
+        'diplome_universite',
+        'du',
     ];
 
     public static function isEliminatory(?float $score): bool

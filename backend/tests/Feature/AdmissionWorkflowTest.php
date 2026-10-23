@@ -154,6 +154,7 @@ class AdmissionWorkflowTest extends TestCase
 
     public function test_appointment_capacity_entry_and_duplicate_check_in_are_real(): void
     {
+        $this->travelTo(now()->startOfDay()->addHours(10));
         $a = $this->candidate(); $this->staff();
         $slot = DB::table('admission_slots')->insertGetId(['admission_campaign_id' => $a->admission_campaign_id,
             'starts_at' => now()->addHour(), 'ends_at' => now()->addHours(2), 'desk' => 'Guichet test', 'capacity' => 1]);

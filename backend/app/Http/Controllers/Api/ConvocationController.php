@@ -376,8 +376,8 @@ class ConvocationController extends Controller
     {
         $data = $request->validate(['surveillance_ids' => 'sometimes|array|min:1|max:200', 'surveillance_ids.*' => 'integer|distinct', 'all' => 'sometimes|boolean']);
         $count = DB::transaction(function () use ($request, $id, $data) {
-            $query = ExamSurveillance::where('professor_id', $request->user()->id)
-                ->whereHas('exam.module', fn ($q) => $q->where('institution_id', $request->user()->institution_id));
+            $query = ExamSurveillance::whereHas('exam.module', fn ($q) => $q->where('institution_id', $request->user()->institution_id));
+            if (! $request->user()->hasAnyRole(['admin', 'institution-admin', 'super-admin', 'director', 'scolarite'])) $query->where('professor_id', $request->user()->id);
             if (isset($data['surveillance_ids'])) $query->whereIn('id', $data['surveillance_ids']);
             elseif ($id !== 'all' && ! ($data['all'] ?? false)) $query->whereKey($id);
             $rows = $query->lockForUpdate()->get();
@@ -452,8 +452,16 @@ class ConvocationController extends Controller
             'status' => 'required|string|in:present,late,absent',
         ]);
 
-        $updated = ExamSeating::where('qr_token', $qrToken)
-            ->update(['status' => $validated['status'], 'updated_at' => now()]);
+        $updated = DB::transaction(function () use ($request, $qrToken, $validated) {
+            $seat = ExamSeating::with('exam.module')->where('qr_token', $qrToken)->lockForUpdate()->first();
+            if (! $seat) return 0;
+            abort_unless((int) $seat->exam->module->institution_id === (int) $request->user()->institution_id, 403);
+            $surveillances = ExamSurveillance::where('exam_id', $seat->exam_id)->where('room_id', $seat->room_id)->lockForUpdate()->get();
+            abort_unless($request->user()->hasAnyRole(['admin', 'institution-admin', 'super-admin', 'director', 'scolarite']) || $surveillances->contains('professor_id', $request->user()->id), 403);
+            abort_if($surveillances->contains(fn ($row) => $row->signed_at !== null), 409, 'PV visé : une réouverture est requise.');
+            $seat->update(['status' => $validated['status'], 'is_present' => $validated['status'] !== 'absent']);
+            return 1;
+        });
 
         if (! $updated) {
             return response()->json(['success' => false, 'message' => 'Émargement introuvable.'], 404);

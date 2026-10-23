@@ -15,7 +15,7 @@ final class ManageTuitionInvoiceAction
             $student = Student::where('institution_id', $actor->institution_id)->whereKey($data['student_id'])->lockForUpdate()->firstOrFail();
             AcademicYear::where('institution_id', $actor->institution_id)->findOrFail($data['academic_year_id']);
             $filiere = Filiere::where('institution_id', $actor->institution_id)->findOrFail($data['filiere_id']);
-            abort_unless($filiere->requiresTuitionPayment(), 422, 'Le cursus Grande École est exonéré.');
+            abort_unless($filiere->requiresTuitionPayment(), 422, 'Cette formation est gratuite : aucune facturation de scolarité n’est autorisée.');
             abort_unless($student->registrations()->where('academic_year_id', $data['academic_year_id'])->where('filiere_id', $filiere->id)->exists()
                 || $student->pathways()->where('academic_year_id', $data['academic_year_id'])->where('filiere_id', $filiere->id)->exists(), 422, 'Aucune inscription correspondante à facturer.');
             abort_if(DB::table('tuition_invoices')->where('student_id', $student->id)->where('academic_year_id', $data['academic_year_id'])->where('filiere_id', $filiere->id)->exists(), 409, 'La facture de ce cursus et de cette année existe déjà.');
@@ -30,6 +30,8 @@ final class ManageTuitionInvoiceAction
         return DB::transaction(function () use ($actor, $id, $data) {
             $invoice = DB::table('tuition_invoices')->where('id', $id)->whereIn('student_id', Student::where('institution_id', $actor->institution_id)->select('id'))->lockForUpdate()->first();
             abort_unless($invoice, 404);
+            $filiere = Filiere::where('institution_id', $actor->institution_id)->findOrFail($invoice->filiere_id);
+            abort_unless($filiere->requiresTuitionPayment(), 422, 'Cette formation est gratuite : aucun règlement de scolarité n’est autorisé.');
             $prior = DB::table('tuition_payments')->where('reference', $data['reference'])->first();
             if ($prior) { abort_unless((int) $prior->invoice_id === $id && (float) $prior->amount === (float) $data['amount'], 409, 'Référence de paiement déjà utilisée.'); return $prior; }
             $amount = (int) round((float) $data['amount'] * 100);

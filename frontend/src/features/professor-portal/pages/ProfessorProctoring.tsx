@@ -71,10 +71,10 @@ export default function ProfessorProctoring() {
   const [hasDrawn, setHasDrawn] = useState(false);
 
   // 1. Fetch professor's surveillance sessions
-  const { data: serverSurveillances, isLoading } = useQuery({
+  const { data: serverSurveillances, isLoading, isError, refetch } = useQuery({
     queryKey: ['professor-surveillances'],
     queryFn: async () => {
-      const res = await api.get('/professor/my-surveillances').catch(() => null);
+      const res = await api.get('/professor/my-surveillances');
       return res?.data?.data || null;
     },
     staleTime: 60000,
@@ -230,7 +230,7 @@ export default function ProfessorProctoring() {
   };
 
   const handleDownloadSingleConvocation = (item: SurveillanceItem) => {
-    const surveillanceId = (item as any).surveillance_id || item.id || 1;
+    const surveillanceId = (item as any).surveillance_id || item.id;
     const ref = item.reference || `SURV-${surveillanceId}`;
     handleDownloadPdf(
       `/professor/surveillances/${surveillanceId}/pdf`, 
@@ -270,8 +270,8 @@ export default function ProfessorProctoring() {
 
       setSignatureStamp(stampData);
       setIsSigned(true);
-      toast.success("✅ PV d'Émargement & Absences signé électroniquement !", {
-        description: "Votre signature certifiée a été archivée et apposée sur le PV d'examen officiel."
+      toast.success('Visa de surveillance enregistré.', {
+        description: 'Votre visa a été enregistré avec l’empreinte des présences de la salle.'
       });
     } catch {
       toast.error('Le visa de surveillance n’a pas été enregistré.');
@@ -306,6 +306,7 @@ export default function ProfessorProctoring() {
 
   return (
     <div className="space-y-8 font-sans animate-in fade-in duration-500 text-slate-900 dark:text-slate-100 pb-28">
+        {isError && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-900">Les surveillances ne peuvent pas être chargées. <button className="underline" onClick={() => refetch()}>Réessayer</button></div>}
       
       {/* ── Executive Header Banner ── */}
       <div className="bg-gradient-to-br from-[#001A4B] via-[#082663] to-[#0d1d3d] rounded-[2.5rem] p-8 md:p-10 text-white shadow-2xl border border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">

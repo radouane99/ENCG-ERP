@@ -38,6 +38,11 @@ class Filiere extends Model
         return LmdRules::filiereRequiresPayment($this->type ?? null);
     }
 
+    public function scopeRequiringTuitionPayment(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
+    {
+        return $query->whereIn(\Illuminate\Support\Facades\DB::raw('LOWER(TRIM(type))'), LmdRules::PAID_FILIERE_TYPES);
+    }
+
     public function specialities(): HasMany
     {
         return $this->hasMany(Speciality::class);

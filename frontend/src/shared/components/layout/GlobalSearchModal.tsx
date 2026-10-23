@@ -7,6 +7,8 @@ Layers,ArrowRight
 } from 'lucide-react';
 import api from '@/shared/lib/api';
 import { cn } from '@/shared/lib/utils';
+import { useAuthStore } from '@/stores/authStore';
+import { ADMIN_ROLES, userCanAccessRoles } from '@/shared/lib/routeAccess';
 
 interface GlobalSearchModalProps {
   isOpen: boolean;
@@ -88,6 +90,8 @@ const QUICK_ACTIONS: QuickAction[] = [
 ];
 
 export function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModalProps) {
+  const userRoles = useAuthStore(state => state.user?.roles);
+  const activeRole = useAuthStore(state => state.activeRole);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -125,12 +129,10 @@ export function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModalProps) {
   }, [query]);
 
   // Filter Quick Actions
-  const filteredQuickActions = query.trim() === ''
-    ? QUICK_ACTIONS
-    : QUICK_ACTIONS.filter(act => 
-        act.title.toLowerCase().includes(query.toLowerCase()) ||
-        act.description.toLowerCase().includes(query.toLowerCase())
-      );
+  const filteredQuickActions = QUICK_ACTIONS.filter(act =>
+    userCanAccessRoles(activeRole ? [activeRole] : userRoles, act.id === 'act-finance-regie' ? [...ADMIN_ROLES, 'finance-officer'] : ADMIN_ROLES)
+    && (query.trim() === '' || act.title.toLowerCase().includes(query.toLowerCase()) || act.description.toLowerCase().includes(query.toLowerCase()))
+  );
 
   if (!isOpen) return null;
 

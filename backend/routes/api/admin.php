@@ -1225,7 +1225,7 @@ Route::middleware(['auth:sanctum', 'institution.context', $staffRoles])->group(f
     Route::get('/v1/admin/students/{id}/diploma-supplement/pdf', [DiplomaSupplementController::class, 'download']);
 
     // Gestion de la Bibliothèque & Fonds Documentaire (Administration & Bibliothécaire)
-    Route::prefix('admin/library')->group(function () {
+    Route::prefix('admin/library')->middleware('role:admin|super-admin|institution-admin|director|library-manager')->group(function () {
         Route::get('/stats', [AdminLibraryController::class, 'getStats']);
         Route::get('/books', [AdminLibraryController::class, 'indexBooks']);
         Route::post('/books', [AdminLibraryController::class, 'storeBook']);
@@ -1235,7 +1235,7 @@ Route::middleware(['auth:sanctum', 'institution.context', $staffRoles])->group(f
         Route::post('/borrowings', [AdminLibraryController::class, 'storeBorrowing']);
         Route::post('/borrowings/{id}/return', [AdminLibraryController::class, 'returnBorrowing']);
     });
-    Route::prefix('v1/admin/library')->group(function () {
+    Route::prefix('v1/admin/library')->middleware('role:admin|super-admin|institution-admin|director|library-manager')->group(function () {
         Route::get('/stats', [AdminLibraryController::class, 'getStats']);
         Route::get('/books', [AdminLibraryController::class, 'indexBooks']);
         Route::post('/books', [AdminLibraryController::class, 'storeBook']);

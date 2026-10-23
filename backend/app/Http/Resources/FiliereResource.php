@@ -23,6 +23,7 @@ class FiliereResource extends JsonResource
             'code' => $this->code,
             'name' => $this->name,
             'type' => $this->type ?? 'grande_ecole',
+            'payment_required' => $this->resource->requiresTuitionPayment(),
             'coordinator' => $this->department?->head_name ?? 'Non assigné',
             'responsable_id' => $this->responsable_id,
             'responsable_name' => $this->responsable?->name ?? 'Non assigné',

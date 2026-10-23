@@ -28,7 +28,7 @@ docker exec encg_backend php artisan tinker --execute="require 'tests/Audit/Runt
 
 ## Audit complémentaire étudiant / professeur / administration
 
-Le rapport `docs/audits/2026-10-23/ROLE-JOURNEYS-DEEP-SCAN.md` décrit les constats nouveaux. Les classes `RoleJourneysDeepScanTest`, `AdministrationDeepScanTest` et `ProductionModeBoundaryAuditTest` contiennent les protections attendues et sont actuellement rouges. Elles restent hors de la suite ordinaire ; ne pas les interpréter comme des validations réussies.
+Le rapport `docs/audits/2026-10-23/ROLE-JOURNEYS-DEEP-SCAN.md` décrit les constats nouveaux. Les classes `RoleJourneysDeepScanTest`, `AdministrationDeepScanTest` et `ProductionModeBoundaryAuditTest` contiennent les protections attendues et sont maintenant intégrées à la suite ordinaire via RoleJourneysRegressionTest, AdministrationAccessRegressionTest et ProductionRoleBoundariesRegressionTest. Les exécutions rouges initiales restent une preuve historique ; consulter ROLE-REMEDIATION.md pour les vérifications actuelles.
 
 Créer une base vide dédiée terminant par `_test`, puis exécuter uniquement dans Docker :
 

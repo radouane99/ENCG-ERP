@@ -590,7 +590,7 @@ export default function ProfessorSchedulePage() {
       <QRScannerModal
         isOpen={!!activeSession}
         onClose={() => setActiveSession(null)}
-        sessionId={activeSession?.session_id || 1}
+        sessionId={activeSession?.session_id ?? ''}
         sessionData={activeSession}
       />
     </div>

@@ -26,6 +26,7 @@ interface Filiere {
   code: string;
   name: string;
   type: string;
+  payment_required?: boolean;
   duration_years: number;
   coordinator: string;
   responsable_id?: number | null;
@@ -393,6 +394,7 @@ export default function FiliereList() {
                 </div>
                 <h3 className="text-xl font-black text-white mb-1.5 leading-tight">{filiere.name}</h3>
                 <p className="text-blue-100/80 text-xs font-semibold uppercase tracking-wider">{filiere.type || 'grande_ecole'}</p>
+                {typeof filiere.payment_required === 'boolean' && <p className="mt-2 text-xs text-white">{filiere.payment_required ? 'Cursus payant — suivi par la régie' : 'Formation gratuite — sans facturation de scolarité'}</p>}
               </div>
 
               {/* Chef de Filiere Designation Banner */}
@@ -565,10 +567,16 @@ export default function FiliereList() {
                   onChange={e => setFormData({...formData, type: e.target.value})}
                   className="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500"
                 >
-                  <option value="grande_ecole">Grande École ENCG</option>
-                  <option value="master_specialise">Master Spécialisé</option>
+                  <option value="grande_ecole">Formation initiale ENCG — gratuite (TAFEM / CNAEM)</option>
+                  <option value="formation_initiale">Autre formation initiale — gratuite</option>
+                  <option value="master_temps_amenage">Master à temps aménagé — payant</option>
+                  <option value="licence_universite">Licence d’université — payante</option>
+                  <option value="master_universite">Master d’université — payant</option>
+                  <option value="diplome_universite">Diplôme d’université (DU) — payant</option>
+                  <option value="master_specialise">Master spécialisé — payant (type historique)</option>
                   <option value="doctorat">Doctorat / Recherche</option>
-                  <option value="formation_continue">Formation Continue</option>
+                  <option value="formation_continue">Formation continue — payante</option>
+                  <option value="licence">Licence — payante (type historique)</option>
                 </select>
               </div>
 

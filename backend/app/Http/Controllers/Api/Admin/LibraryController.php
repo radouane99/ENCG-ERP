@@ -6,8 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Book;
 use App\Models\BookCopy;
 use App\Models\Borrowing;
-use App\Models\Institution;
-use Database\Seeders\LibrarySeeder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -20,19 +18,15 @@ class LibraryController extends Controller
      */
     public function getStats(): JsonResponse
     {
-        if (Book::count() === 0) {
-            (new LibrarySeeder)->run();
-        }
-
-        $totalBooks = Book::count();
-        $totalCopies = Book::sum('total_copies');
-        $availableCopies = Book::sum('available_copies');
-        $activeBorrowings = Borrowing::where('status', 'borrowed')->count();
-        $overdueBorrowings = Borrowing::where('status', 'overdue')
+        $totalBooks = Book::where('institution_id', request()->user()->institution_id)->count();
+        $totalCopies = Book::where('institution_id', request()->user()->institution_id)->sum('total_copies');
+        $availableCopies = Book::where('institution_id', request()->user()->institution_id)->sum('available_copies');
+        $activeBorrowings = Borrowing::whereHas('bookCopy.book', fn ($q) => $q->where('institution_id', request()->user()->institution_id))->where('status', 'borrowed')->count();
+        $overdueBorrowings = Borrowing::whereHas('bookCopy.book', fn ($q) => $q->where('institution_id', request()->user()->institution_id))->where(fn ($q) => $q->where('status', 'overdue')
             ->orWhere(function ($q) {
                 $q->where('status', 'borrowed')->where('due_date', '<', now()->toDateString());
             })
-            ->count();
+            )->count();
 
         return response()->json([
             'success' => true,
@@ -52,27 +46,7 @@ class LibraryController extends Controller
      */
     public function indexBooks(Request $request): JsonResponse
     {
-        if (Book::count() <= 4) {
-            (new LibrarySeeder)->run();
-        }
-
-        foreach (Book::all() as $bCheck) {
-            $cleanTitle = $this->sanitizeUtf8($bCheck->title);
-            $cleanCategory = $this->sanitizeUtf8($bCheck->category);
-            $cleanEdition = $this->sanitizeUtf8($bCheck->edition);
-            $cleanAuthor = $this->sanitizeUtf8($bCheck->author);
-
-            if ($cleanTitle !== $bCheck->title || $cleanCategory !== $bCheck->category || $cleanEdition !== $bCheck->edition) {
-                $bCheck->update([
-                    'title' => $cleanTitle,
-                    'category' => $cleanCategory,
-                    'edition' => $cleanEdition,
-                    'author' => $cleanAuthor,
-                ]);
-            }
-        }
-
-        $query = Book::with(['copies' => function ($q) {
+        $query = Book::where('institution_id', request()->user()->institution_id)->with(['copies' => function ($q) {
             $q->orderBy('barcode');
         }]);
 
@@ -92,7 +66,7 @@ class LibraryController extends Controller
 
         $books = $query->orderBy('title')->get();
 
-        $categories = Book::whereNotNull('category')
+        $categories = Book::where('institution_id', request()->user()->institution_id)->whereNotNull('category')
             ->distinct()
             ->pluck('category');
 
@@ -120,7 +94,7 @@ class LibraryController extends Controller
             'total_copies' => 'required|integer|min:1|max:100',
         ]);
 
-        $institutionId = Institution::first()?->id ?? 1;
+        $institutionId = $request->user()->institution_id;
 
         $book = DB::transaction(function () use ($validated, $institutionId) {
             $totalCopies = (int) $validated['total_copies'];
@@ -153,7 +127,7 @@ class LibraryController extends Controller
      */
     public function updateBook(Request $request, int $id): JsonResponse
     {
-        $book = Book::findOrFail($id);
+        $book = Book::where('institution_id', $request->user()->institution_id)->findOrFail($id);
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
@@ -168,6 +142,7 @@ class LibraryController extends Controller
         ]);
 
         DB::transaction(function () use ($book, $validated) {
+            $book = Book::whereKey($book->id)->lockForUpdate()->firstOrFail();
             $oldTotal = $book->total_copies;
             $newTotal = (int) $validated['total_copies'];
             $diff = $newTotal - $oldTotal;
@@ -189,8 +164,12 @@ class LibraryController extends Controller
                 $toDelete = abs($diff);
                 $availableCopies = BookCopy::where('book_id', $book->id)
                     ->where('is_available', true)
+                    ->whereDoesntHave('borrowings')
+                    ->orderBy('id')->lockForUpdate()
                     ->take($toDelete)
                     ->get();
+
+                abort_unless($availableCopies->count() === $toDelete, 422, 'Le stock ne peut être réduit : des exemplaires sont empruntés ou conservés dans l’historique.');
 
                 foreach ($availableCopies as $copy) {
                     $copy->delete();
@@ -213,7 +192,7 @@ class LibraryController extends Controller
      */
     public function deleteBook(int $id): JsonResponse
     {
-        $book = Book::with('copies')->findOrFail($id);
+        $book = Book::where('institution_id', request()->user()->institution_id)->with('copies')->findOrFail($id);
 
         $copyIds = $book->copies->pluck('id');
         $activeBorrowings = Borrowing::whereIn('book_copy_id', $copyIds)
@@ -240,7 +219,7 @@ class LibraryController extends Controller
      */
     public function indexBorrowings(Request $request): JsonResponse
     {
-        $query = Borrowing::with([
+        $query = Borrowing::whereHas('bookCopy.book', fn ($q) => $q->where('institution_id', $request->user()->institution_id))->with([
             'bookCopy.book',
             'user.student',
             'issuer',

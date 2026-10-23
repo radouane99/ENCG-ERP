@@ -888,7 +888,7 @@ export default function ProfessorDashboard() {
       <QRScannerModal 
         isOpen={!!activeScannerSession} 
         onClose={() => setActiveScannerSession(null)} 
-        sessionId={activeScannerSession?.session_id || 1} 
+        sessionId={activeScannerSession?.session_id ?? ''}
         sessionData={activeScannerSession || undefined}
       />
 

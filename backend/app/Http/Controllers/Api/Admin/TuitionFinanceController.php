@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 class TuitionFinanceController extends Controller
 {
     public function __construct(private ManageTuitionInvoiceAction $action) {}
-    private function query(Request $r) { $this->action->authorize($r->user()); return DB::table('tuition_invoices')->whereIn('student_id', Student::where('institution_id', $r->user()->institution_id)->select('id')); }
+    private function query(Request $r) { $this->action->authorize($r->user()); return DB::table('tuition_invoices')->whereIn('student_id', Student::where('institution_id', $r->user()->institution_id)->select('id'))->whereIn('filiere_id', Filiere::where('institution_id', $r->user()->institution_id)->requiringTuitionPayment()->select('id')); }
     public function stats(Request $r)
     {
         $q = $this->query($r); $list = clone $q;
@@ -36,10 +36,12 @@ class TuitionFinanceController extends Controller
     public function options(Request $r)
     {
         $this->action->authorize($r->user()); $students = Student::with('user')->where('institution_id', $r->user()->institution_id);
+        $paidFilieres = Filiere::where('institution_id', $r->user()->institution_id)->requiringTuitionPayment();
+        $students->where(fn ($q) => $q->whereHas('registrations', fn ($registration) => $registration->whereIn('filiere_id', (clone $paidFilieres)->select('id')))->orWhereHas('pathways', fn ($pathway) => $pathway->whereIn('filiere_id', (clone $paidFilieres)->select('id'))));
         if ($r->filled('search')) $students->where(function ($q) use ($r) { $q->where('cne', 'like', '%'.$r->input('search').'%')->orWhereHas('user', fn ($u) => $u->where('name', 'like', '%'.$r->input('search').'%')); });
         return response()->json(['students' => $students->limit(50)->get()->map(fn ($s) => ['id' => $s->id, 'name' => $s->user->name, 'cne' => $s->cne]),
             'years' => AcademicYear::where('institution_id', $r->user()->institution_id)->get(['id', 'label']),
-            'filieres' => Filiere::where('institution_id', $r->user()->institution_id)->whereIn('type', \App\Domain\Deliberation\LmdRules::PAID_FILIERE_TYPES)->get(['id', 'name'])]);
+            'filieres' => $paidFilieres->get(['id', 'name'])]);
     }
     public function store(Request $r)
     {

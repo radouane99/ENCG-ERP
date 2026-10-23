@@ -16,7 +16,8 @@ class ReinscriptionController extends Controller
         $year = $this->action->year($student); $registration = $this->action->eligibleRegistration($student, $year->id);
         $receipt = DB::table('student_renewals')->where('student_id', $student->id)->where('academic_year_id', $year->id)->first();
         $filiere = $registration?->filiere ?? $student->latestPathway?->filiere;
-        $invoice = DB::table('tuition_invoices')->where('student_id', $student->id)->where('academic_year_id', $year->id)->where('filiere_id', $filiere?->id)->first();
+        $requiresPayment = (bool) $filiere?->requiresTuitionPayment();
+        $invoice = $requiresPayment ? DB::table('tuition_invoices')->where('student_id', $student->id)->where('academic_year_id', $year->id)->where('filiere_id', $filiere->id)->first() : null;
         return response()->json(['success' => true, 'data' => ['student_id' => $student->id, 'student_name' => $student->user->name, 'cne' => $student->cne, 'cin' => $student->user->cin,
             'email' => $student->user->email, 'phone' => $student->user->phone, 'address' => $student->user->address, 'city' => $student->user->city,
             'academic_year' => $year->label, 'current_semester' => $student->latestPathway?->current_semester, 'current_level' => 'Semestre S'.$student->latestPathway?->current_semester,
@@ -38,6 +39,10 @@ class ReinscriptionController extends Controller
     }
     public function simulatePay(Request $request)
     {
+        $student = Student::with('latestPathway.filiere')->where('user_id', $request->user()->id)->firstOrFail();
+        $year = $this->action->year($student);
+        $filiere = $this->action->eligibleRegistration($student, $year->id)?->filiere ?? $student->latestPathway?->filiere;
+        abort_unless($filiere?->requiresTuitionPayment(), 403, 'Aucun règlement de scolarité ne s’applique à cette formation.');
         return response()->json(['success' => false, 'message' => 'La simulation ne constitue pas un paiement. Contactez la régie pour une confirmation vérifiée.'], 422);
     }
     public function getAdminStats(Request $request)

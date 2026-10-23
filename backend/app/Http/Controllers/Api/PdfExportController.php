@@ -705,7 +705,7 @@ class PdfExportController extends Controller
     public function exportAttestationInscriptionPdfFromBody(Request $request)
     {
         $validated = $request->validate([
-            'student_id' => ['nullable', 'uuid', 'exists:students,id'],
+            'student_id' => ['nullable', 'integer', 'exists:students,id'],
             'name' => ['required_without:student_id', 'string', 'max:255'],
             'cne' => ['required_without:student_id', 'string', 'max:64'],
             'cin' => ['nullable', 'string', 'max:32'],
