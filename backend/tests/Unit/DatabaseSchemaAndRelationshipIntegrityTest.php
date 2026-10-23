@@ -178,7 +178,7 @@ class DatabaseSchemaAndRelationshipIntegrityTest extends TestCase
             'is_active' => true,
         ]);
 
-        $assessment = Assessment::create([
+        $assessment = $this->createTestAssessment([
             'module_id' => $module->id,
             'type' => 'CC',
             'weight' => 50.00,
@@ -227,7 +227,7 @@ class DatabaseSchemaAndRelationshipIntegrityTest extends TestCase
             'is_active' => true,
         ]);
 
-        $assessment = Assessment::create([
+        $assessment = $this->createTestAssessment([
             'module_id' => $module->id,
             'type' => 'Exam',
             'weight' => 100.00,

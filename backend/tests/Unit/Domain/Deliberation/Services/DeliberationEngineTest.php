@@ -113,9 +113,10 @@ it('applies rattrapage only to the final exam component, not to CC2', function (
         'coefficient' => 1,
     ]);
 
-    $cc2 = Assessment::forceCreate(['module_id' => $module->id, 'type' => 'cc2', 'weight' => 40]);
-    $exam = Assessment::forceCreate(['module_id' => $module->id, 'type' => 'examen_final', 'weight' => 60]);
-    $resit = Assessment::forceCreate(['module_id' => $module->id, 'type' => 'rattrapage', 'weight' => 0]);
+    $academicYear->update(['is_current' => true]);
+    $cc2 = Assessment::forceCreate(['academic_year_id' => $academicYear->id,'module_id' => $module->id, 'type' => 'cc2', 'weight' => 40]);
+    $exam = Assessment::forceCreate(['academic_year_id' => $academicYear->id,'module_id' => $module->id, 'type' => 'examen_final', 'weight' => 60]);
+    $resit = Assessment::forceCreate(['academic_year_id' => $academicYear->id,'module_id' => $module->id, 'type' => 'rattrapage', 'weight' => 0]);
 
     Grade::forceCreate(['assessment_id' => $cc2->id, 'student_id' => $student->id, 'value' => 8]);
     Grade::forceCreate(['assessment_id' => $exam->id, 'student_id' => $student->id, 'value' => 7]);
@@ -241,7 +242,8 @@ it('processes a full deliberation and correctly applies compensation (rachat)', 
         'end_date' => '2026-01-15',
     ]);
 
-    $assessment = Assessment::forceCreate([
+    $academicYear->update(['is_current' => true]);
+    $assessment = Assessment::forceCreate(['academic_year_id' => $academicYear->id,
         'module_id' => $module->id,
         'type' => 'Exam',
         'weight' => 100, // 100% of the module

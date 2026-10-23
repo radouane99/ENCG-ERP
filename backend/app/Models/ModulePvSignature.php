@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ModulePvSignature extends Model
 {
-    use HasFactory;
+    use \App\Models\Concerns\BelongsToAcademicYear, HasFactory;
 
     protected $guarded = ['id'];
 

@@ -2,20 +2,24 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Actions\Student\SubmitAssignmentAction;
 use App\Http\Controllers\Controller;
 use App\Models\AcademicYear;
 use App\Models\Announcement;
 use App\Models\Conversation;
 use App\Models\LearningMaterial;
+use App\Models\LmsSubmission;
 use App\Models\Message;
 use App\Models\Module;
 use App\Models\ModuleProfessor;
 use App\Models\Professor;
 use App\Models\Schedule;
+use App\Services\Academic\AcademicContext;
 use App\Services\Security\ClassroomAccessService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class LmsCourseController extends Controller
 {
@@ -117,9 +121,10 @@ class LmsCourseController extends Controller
             $student = $user->student;
             $currentPathway = $student->pathways()->where('is_current', true)->first();
             $filiereId = $currentPathway?->filiere_id ?? $student->registrations()->latest()->value('filiere_id');
-            $semesterNumber = $currentPathway?->semester_number;
+            $semesterNumber = $currentPathway?->current_semester;
             $groupId = $currentPathway?->group_id;
 
+            if (! $filiereId) { return response()->json(['success' => true, 'data' => []]); }
             $query = Module::with(['filiere.department']);
             if ($filiereId) {
                 $query->where('filiere_id', $filiereId);
@@ -197,6 +202,7 @@ class LmsCourseController extends Controller
 
         // 1. Supports de cours (Documents & Vidéos)
         $materials = LearningMaterial::where('module_id', $module->id)
+            ->where('academic_year_id', AcademicContext::yearId())->where('is_published', true)
             ->where('type', 'document')
             ->latest()
             ->get()
@@ -208,17 +214,18 @@ class LmsCourseController extends Controller
                     'type' => $mat->type,
                     'file_url' => $mat->external_url,
                     'file_name' => basename($mat->external_url ?? 'document.pdf'),
-                    'file_size' => '2.4 MB',
+                    'file_size' => $mat->file_size ? round($mat->file_size / 1024).' KB' : null,
                     'created_at' => $mat->created_at->toIso8601String(),
                 ];
             });
 
         // 2. Devoirs & Travaux (Assignments)
         $assignments = LearningMaterial::where('module_id', $module->id)
+            ->where('academic_year_id', AcademicContext::yearId())->where('is_published', true)
             ->where('type', 'assignment')
             ->latest()
             ->get()
-            ->map(function ($assign) {
+            ->map(function ($assign) use ($user) {
                 return [
                     'id' => $assign->id,
                     'title' => $assign->title,
@@ -226,10 +233,10 @@ class LmsCourseController extends Controller
                     'type' => $assign->type,
                     'file_url' => $assign->external_url,
                     'file_name' => basename($assign->external_url ?? 'sujet.pdf'),
-                    'due_date' => Carbon::parse($assign->created_at)->addDays(10)->toIso8601String(),
-                    'max_score' => 20,
+                    'due_date' => $assign->due_date?->toIso8601String(),
+                    'max_score' => $assign->max_score,
                     'created_at' => $assign->created_at->toIso8601String(),
-                    'is_submitted' => false,
+                    'is_submitted' => $user->student && LmsSubmission::where('learning_material_id', $assign->id)->where('student_id', $user->student->id)->exists(),
                 ];
             });
 
@@ -265,9 +272,9 @@ class LmsCourseController extends Controller
 
         $messages = Message::where('conversation_id', $conversation->id)
             ->with('sender')
-            ->oldest()
+            ->latest('id')
             ->take(50)
-            ->get()
+            ->get()->reverse()->values()
             ->map(function ($msg) use ($user) {
                 return [
                     'id' => (string) $msg->id,
@@ -412,7 +419,9 @@ class LmsCourseController extends Controller
             'description' => 'nullable|string',
             'type' => 'required|in:document,video,link,quiz_bank,assignment',
             'file' => 'nullable|file|mimes:pdf,doc,docx,ppt,pptx|max:20480',
-            'external_url' => 'nullable|string',
+            'external_url' => 'nullable|url:http,https',
+            'due_date' => 'required_if:type,assignment|nullable|date|after:now',
+            'max_score' => 'nullable|numeric|between:1,100',
         ]);
 
         $fileUrl = $request->external_url;
@@ -421,12 +430,13 @@ class LmsCourseController extends Controller
             $fileUrl = '/storage/'.$path;
         }
 
-        $academicYear = AcademicYear::where('is_current', true)->first() ?? AcademicYear::first();
+        $academicYear = AcademicYear::find(AcademicContext::yearId());
         if (! $academicYear) {
             return response()->json(['success' => false, 'message' => 'Année académique introuvable.'], 404);
         }
 
-        $professor = $request->user()->professor ?? Professor::first();
+        $professor = $request->user()->professor;
+        abort_unless($professor, 422, 'Un profil enseignant est requis pour publier un support.');
 
         $material = LearningMaterial::create([
             'module_id' => $moduleId,
@@ -437,6 +447,9 @@ class LmsCourseController extends Controller
             'description' => $request->description,
             'type' => $request->type,
             'external_url' => $fileUrl,
+            'due_date' => $request->input('due_date'),
+            'max_score' => $request->input('max_score', 20),
+            'file_size' => $request->file('file')?->getSize(),
             'is_published' => true,
         ]);
 
@@ -454,16 +467,31 @@ class LmsCourseController extends Controller
     {
         $accessModule = Module::findOrFail($id);
         app(ClassroomAccessService::class)->authorize($request->user(), $accessModule);
-        $request->validate([
-            'text' => 'nullable|string',
-            'file' => 'nullable|file|mimes:pdf,doc,docx,zip|max:20480',
-        ]);
+        $data = $request->validate(['text' => 'required_without:file|nullable|string|max:100000', 'file' => 'required_without:text|nullable|file|mimes:pdf,doc,docx,zip|max:20480']);
+        $submission = app(SubmitAssignmentAction::class)->execute($request->user(), (int) $id, (int) $assignmentId, $data, $request->file('file'));
 
-        // Simplement confirmation de réception avec horodatage réel
-        return response()->json([
-            'success' => true,
-            'message' => 'Votre travail a été transmis avec succès à l’enseignant.',
-            'submitted_at' => Carbon::now()->toIso8601String(),
-        ]);
+        return response()->json(['success' => true, 'message' => 'Travail conservé et transmis.', 'data' => $submission, 'submitted_at' => $submission->submitted_at], 201);
+    }
+
+    public function submissions(Request $request, string $id, string $assignmentId): JsonResponse
+    {
+        $module = Module::findOrFail($id);
+        app(ClassroomAccessService::class)->authorize($request->user(), $module, write: true);
+        LearningMaterial::whereKey($assignmentId)->where('module_id', $id)->where('academic_year_id', AcademicContext::yearId())->where('type', 'assignment')->firstOrFail();
+
+        return response()->json(['success' => true, 'data' => LmsSubmission::where('learning_material_id', $assignmentId)->paginate(50)]);
+    }
+
+    public function submissionFile(Request $request, int $submissionId)
+    {
+        $submission = LmsSubmission::findOrFail($submissionId);
+        $assignment = LearningMaterial::findOrFail($submission->learning_material_id);
+        $module = Module::findOrFail($assignment->module_id);
+        if ((int) $request->user()->student?->id !== (int) $submission->student_id) {
+            app(ClassroomAccessService::class)->authorize($request->user(), $module, write: true);
+        }
+        abort_unless($submission->file_path, 404);
+
+        return Storage::disk('local')->download($submission->file_path, $submission->file_name, ['X-Content-Type-Options' => 'nosniff']);
     }
 }

@@ -3,6 +3,7 @@
 namespace Tests;
 
 use App\Models\AcademicYear;
+use App\Models\Assessment;
 use App\Models\Filiere;
 use App\Models\Institution;
 use App\Models\Module;
@@ -179,8 +180,21 @@ abstract class TestCase extends BaseTestCase
         ], $overrides));
     }
 
+    protected function createTestAssessment(array $attributes): Assessment
+    {
+        if (! AcademicYear::where('is_current', true)->exists()) {
+            $this->ensureAcademicYear()->update(['is_current' => true]);
+        }
+
+        return Assessment::create($attributes);
+    }
+
     protected function makeTestModule(int $filiereId, array $overrides = []): Module
     {
+        if (! AcademicYear::where('is_current', true)->exists()) {
+            $this->ensureAcademicYear()->update(['is_current' => true]);
+        }
+
         return Module::create(array_merge([
             'institution_id' => 1,
             'filiere_id' => $filiereId,

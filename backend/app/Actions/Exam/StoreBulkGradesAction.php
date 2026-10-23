@@ -5,6 +5,7 @@ namespace App\Actions\Exam;
 use App\Exceptions\OptimisticLockException;
 use App\Models\Assessment;
 use App\Models\Grade;
+use App\Models\Module;
 use App\Services\Academic\GradeService;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
@@ -22,6 +23,9 @@ class StoreBulkGradesAction
     public function execute(Assessment $assessment, array $grades, array $fraudIds, callable $logChange): int
     {
         return (int) DB::transaction(function () use ($assessment, $grades, $fraudIds, $logChange) {
+            Module::whereKey($assessment->module_id)->lockForUpdate()->firstOrFail();
+            Assessment::assertNoReview($assessment->module_id);
+            abort_if($this->gradeService->isExamAssessment($assessment) && $this->gradeService->isPvSigned($assessment->module_id), 403, 'PV signé : notes verrouillées.');
             $count = 0;
             foreach ($grades as $gradeData) {
                 $isFraud = $this->gradeService->isStudentFraud($gradeData['student_id'], $fraudIds)

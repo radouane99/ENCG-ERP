@@ -101,6 +101,8 @@ Route::middleware(['auth:sanctum', 'institution.context'])->group(function () {
 
     // LMS & E-Learning (Classroom for Students, Professors & Admin)
     Route::prefix('lms')->group(function () {
+        Route::get('/submissions/{submissionId}/file', [LmsCourseController::class, 'submissionFile']);
+        Route::get('/courses/{id}/assignments/{assignmentId}/submissions', [LmsCourseController::class, 'submissions']);
         Route::get('/courses', [LmsCourseController::class, 'index']);
         Route::get('/courses/{id}', [LmsCourseController::class, 'show']);
         Route::post('/courses/{id}/materials', [LmsCourseController::class, 'storeMaterial']);

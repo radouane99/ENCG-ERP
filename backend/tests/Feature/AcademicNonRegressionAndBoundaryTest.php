@@ -108,14 +108,14 @@ class AcademicNonRegressionAndBoundaryTest extends TestCase
      */
     public function test_absent_grade_is_strictly_zero_in_weighted_calculations(): void
     {
-        $assessmentCC = Assessment::create([
+        $assessmentCC = $this->createTestAssessment([
             'module_id' => $this->module->id,
             'type' => 'CC',
             'weight' => 50.00,
             'date' => '2026-11-10',
         ]);
 
-        $assessmentExam = Assessment::create([
+        $assessmentExam = $this->createTestAssessment([
             'module_id' => $this->module->id,
             'type' => 'Exam',
             'weight' => 50.00,
@@ -150,7 +150,7 @@ class AcademicNonRegressionAndBoundaryTest extends TestCase
      */
     public function test_grade_update_idempotency_and_integrity(): void
     {
-        $assessment = Assessment::create([
+        $assessment = $this->createTestAssessment([
             'module_id' => $this->module->id,
             'type' => 'CC',
             'weight' => 100.00,

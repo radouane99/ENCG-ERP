@@ -3,6 +3,7 @@
 namespace App\Services\Core;
 
 use App\Models\AiChatMessage;
+use App\Models\Assessment;
 use App\Models\Grade;
 use App\Models\Student;
 use App\Services\AI\GeminiApiService;
@@ -119,7 +120,7 @@ Format obligatoire pour CHAQUE question (en JSON STRICT, sans texte d'introducti
             $totalStudents = Student::count();
 
             // Average grade per student (across all grades)
-            $studentGrades = DB::table('grades')
+            $studentGrades = DB::table('grades')->whereIn('grades.assessment_id', Assessment::query()->select('id'))
                 ->select('student_id', DB::raw('AVG(value) as avg_grade'), DB::raw('COUNT(*) as grade_count'))
                 ->whereNotNull('value')
                 ->groupBy('student_id')
@@ -193,7 +194,7 @@ Format obligatoire pour CHAQUE question (en JSON STRICT, sans texte d'introducti
                 });
             }
 
-            $overallAvg = DB::table('grades')->whereNotNull('value')->avg('value');
+            $overallAvg = DB::table('grades')->whereIn('grades.assessment_id', Assessment::query()->select('id'))->whereNotNull('value')->avg('value');
 
             $currentYear = DB::table('academic_years')->where('is_current', true)->first();
             $currentCount = $currentYear && Schema::hasTable('student_registrations')

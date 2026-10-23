@@ -2200,19 +2200,19 @@ export default function AdminGradesPVPage() {
                       <tr className="bg-[#0f2863] text-white">
                         <th
                           rowSpan={matrixViewMode === 'detailed' ? 2 : 1}
-                          className="py-2.5 px-2 font-black uppercase tracking-wider sticky left-0 z-30 bg-[#0f2863] text-white border-r border-slate-700/80 min-w-[85px] w-[85px] text-center text-[11px]"
+                          className="py-2.5 px-2 font-black uppercase tracking-wider sm:sticky sm:left-0 z-30 bg-[#0f2863] text-white border-r border-slate-700/80 min-w-[85px] w-[85px] text-center text-[11px]"
                         >
                           Apogée
                         </th>
                         <th
                           rowSpan={matrixViewMode === 'detailed' ? 2 : 1}
-                          className="py-2.5 px-2 font-black uppercase tracking-wider sticky left-[85px] z-30 bg-[#0f2863] text-amber-200 border-r border-slate-700/80 min-w-[75px] w-[75px] text-center text-[11px]"
+                          className="py-2.5 px-2 font-black uppercase tracking-wider sm:sticky sm:left-[85px] z-30 bg-[#0f2863] text-amber-200 border-r border-slate-700/80 min-w-[75px] w-[75px] text-center text-[11px]"
                         >
                           CIN
                         </th>
                         <th
                           rowSpan={matrixViewMode === 'detailed' ? 2 : 1}
-                          className="py-2.5 px-3 font-black uppercase tracking-wider sticky left-[160px] z-30 bg-[#0f2863] text-white border-r-2 border-slate-300 dark:border-slate-700 shadow-[4px_0_8px_-2px_rgba(0,0,0,0.08)] min-w-[140px] max-w-[155px] text-[11px]"
+                          className="py-2.5 px-3 font-black uppercase tracking-wider sticky left-0 sm:left-[160px] z-30 bg-[#0f2863] text-white border-r-2 border-slate-300 dark:border-slate-700 shadow-[4px_0_8px_-2px_rgba(0,0,0,0.08)] min-w-[140px] max-w-[155px] text-[11px]"
                         >
                           Nom & Prénom
                         </th>
@@ -2310,7 +2310,7 @@ export default function AdminGradesPVPage() {
                             <tr key={s.student_id} className={cn("transition-colors", rowOpaqueBg, rowHoverBg)}>
                               {/* Apogee: 100% Solid background to completely prevent bleed-through */}
                               <td className={cn(
-                                "py-2 px-2 font-mono font-bold text-xs text-slate-800 dark:text-slate-200 border-r border-b border-slate-200 dark:border-slate-800 sticky left-0 z-20 text-center shadow-xs min-w-[85px] w-[85px]",
+                                "py-2 px-2 font-mono font-bold text-xs text-slate-800 dark:text-slate-200 border-r border-b border-slate-200 dark:border-slate-800 sm:sticky sm:left-0 z-20 text-center shadow-xs min-w-[85px] w-[85px]",
                                 rowOpaqueBg
                               )}>
                                 {s.apogee}
@@ -2318,7 +2318,7 @@ export default function AdminGradesPVPage() {
 
                               {/* CIN: Dedicated column */}
                               <td className={cn(
-                                "py-2 px-2 font-mono font-black text-xs text-indigo-950 dark:text-indigo-200 border-r border-b border-slate-200 dark:border-slate-800 sticky left-[85px] z-20 text-center shadow-xs min-w-[75px] w-[75px]",
+                                "py-2 px-2 font-mono font-black text-xs text-indigo-950 dark:text-indigo-200 border-r border-b border-slate-200 dark:border-slate-800 sm:sticky sm:left-[85px] z-20 text-center shadow-xs min-w-[75px] w-[75px]",
                                 rowOpaqueBg
                               )}>
                                 {s.cin || '–'}
@@ -2326,7 +2326,7 @@ export default function AdminGradesPVPage() {
 
                               {/* Student Name: Reduced width and compact font size */}
                               <td className={cn(
-                                "py-2 px-3 border-r-2 border-b border-slate-300 dark:border-slate-700 sticky left-[160px] z-20 shadow-[4px_0_8px_-2px_rgba(0,0,0,0.08)] min-w-[140px] max-w-[155px]",
+                                "py-2 px-3 border-r-2 border-b border-slate-300 dark:border-slate-700 sticky left-0 sm:left-[160px] z-20 shadow-[4px_0_8px_-2px_rgba(0,0,0,0.08)] min-w-[140px] max-w-[155px]",
                                 rowOpaqueBg
                               )}>
                                 <div className="flex items-center gap-1 min-w-0" title={`${s.last_name?.toUpperCase()} ${s.first_name}`}>
@@ -3311,19 +3311,19 @@ export default function AdminGradesPVPage() {
                 <tr className="bg-[#0f2863] text-white">
                   <th
                     rowSpan={annualModules.length > 0 ? 2 : 1}
-                    className="py-2.5 px-2 font-black uppercase tracking-wider sticky left-0 z-30 bg-[#0f2863] text-white border-r border-slate-700/80 min-w-[85px] w-[85px] text-center text-[11px]"
+                    className="py-2.5 px-2 font-black uppercase tracking-wider sm:sticky sm:left-0 z-30 bg-[#0f2863] text-white border-r border-slate-700/80 min-w-[85px] w-[85px] text-center text-[11px]"
                   >
                     Apogée
                   </th>
                   <th
                     rowSpan={annualModules.length > 0 ? 2 : 1}
-                    className="py-2.5 px-2 font-black uppercase tracking-wider sticky left-[85px] z-30 bg-[#0f2863] text-amber-200 border-r border-slate-700/80 min-w-[75px] w-[75px] text-center text-[11px]"
+                    className="py-2.5 px-2 font-black uppercase tracking-wider sm:sticky sm:left-[85px] z-30 bg-[#0f2863] text-amber-200 border-r border-slate-700/80 min-w-[75px] w-[75px] text-center text-[11px]"
                   >
                     CIN
                   </th>
                   <th
                     rowSpan={annualModules.length > 0 ? 2 : 1}
-                    className="py-2.5 px-2.5 font-black uppercase tracking-wider sticky left-[160px] z-30 bg-[#0f2863] text-white border-r-2 border-slate-300 dark:border-slate-700 shadow-[4px_0_8px_-2px_rgba(0,0,0,0.08)] min-w-[125px] max-w-[135px] text-[11px]"
+                    className="py-2.5 px-2.5 font-black uppercase tracking-wider sticky left-0 sm:left-[160px] z-30 bg-[#0f2863] text-white border-r-2 border-slate-300 dark:border-slate-700 shadow-[4px_0_8px_-2px_rgba(0,0,0,0.08)] min-w-[125px] max-w-[135px] text-[11px]"
                   >
                     Nom & Prénom
                   </th>
@@ -3426,7 +3426,7 @@ export default function AdminGradesPVPage() {
                       <tr key={row.student_id} className={cn("transition-colors", rowOpaqueBg, rowHoverBg)}>
                         {/* Apogee: 100% Solid background to completely prevent bleed-through */}
                         <td className={cn(
-                          "py-2 px-2 font-mono font-bold text-xs text-slate-800 dark:text-slate-200 border-r border-b border-slate-200 dark:border-slate-800 sticky left-0 z-20 text-center shadow-xs min-w-[85px] w-[85px]",
+                          "py-2 px-2 font-mono font-bold text-xs text-slate-800 dark:text-slate-200 border-r border-b border-slate-200 dark:border-slate-800 sm:sticky sm:left-0 z-20 text-center shadow-xs min-w-[85px] w-[85px]",
                           rowOpaqueBg
                         )}>
                           {row.cne}
@@ -3434,7 +3434,7 @@ export default function AdminGradesPVPage() {
 
                         {/* CIN: Dedicated column */}
                         <td className={cn(
-                          "py-2 px-2 font-mono font-black text-xs text-indigo-950 dark:text-indigo-200 border-r border-b border-slate-200 dark:border-slate-800 sticky left-[85px] z-20 text-center shadow-xs min-w-[75px] w-[75px]",
+                          "py-2 px-2 font-mono font-black text-xs text-indigo-950 dark:text-indigo-200 border-r border-b border-slate-200 dark:border-slate-800 sm:sticky sm:left-[85px] z-20 text-center shadow-xs min-w-[75px] w-[75px]",
                           rowOpaqueBg
                         )}>
                           {row.cin || '–'}
@@ -3442,7 +3442,7 @@ export default function AdminGradesPVPage() {
 
                         {/* Student Name */}
                         <td className={cn(
-                          "py-2 px-2.5 border-r-2 border-b border-slate-300 dark:border-slate-700 sticky left-[160px] z-20 shadow-[4px_0_8px_-2px_rgba(0,0,0,0.08)] min-w-[125px] max-w-[135px]",
+                          "py-2 px-2.5 border-r-2 border-b border-slate-300 dark:border-slate-700 sticky left-0 sm:left-[160px] z-20 shadow-[4px_0_8px_-2px_rgba(0,0,0,0.08)] min-w-[125px] max-w-[135px]",
                           rowOpaqueBg
                         )}>
                           <div className="flex items-center gap-1 min-w-0" title={row.student_name}>

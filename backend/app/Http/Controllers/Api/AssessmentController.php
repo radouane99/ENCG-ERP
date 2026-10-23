@@ -5,9 +5,13 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Assessment;
 use App\Models\Module;
+use App\Models\ModulePvSignature;
+use App\Services\Academic\AcademicContext;
 use App\Services\Security\ProfessorAccessService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class AssessmentController extends Controller
 {
@@ -37,9 +41,9 @@ class AssessmentController extends Controller
         }
 
         $validated = $request->validate([
-            'assessments' => 'required|array',
-            'assessments.*.id' => 'nullable|integer',
-            'assessments.*.type' => 'required|string|max:50',
+            'assessments' => 'required|array|min:1',
+            'assessments.*.id' => ['nullable', 'integer', 'distinct', Rule::exists('assessments', 'id')->where('module_id', $module->id)->where('academic_year_id', AcademicContext::yearId())->where('needs_review', false)],
+            'assessments.*.type' => 'required|string|max:50|distinct:ignore_case',
             'assessments.*.weight' => 'required|numeric|min:0|max:100',
         ]);
 
@@ -54,34 +58,40 @@ class AssessmentController extends Controller
             ], 422);
         }
 
-        $savedIds = [];
-        foreach ($validated['assessments'] as $aData) {
-            if (! empty($aData['id'])) {
-                $assessment = Assessment::where('id', $aData['id'])->where('module_id', $module->id)->first();
-                if ($assessment) {
-                    $assessment->update(['type' => $aData['type'], 'weight' => floatval($aData['weight'])]);
-                    $savedIds[] = $assessment->id;
+        return DB::transaction(function () use ($module, $validated) {
+            $module->newQuery()->whereKey($module->id)->lockForUpdate()->firstOrFail();
+            abort_if(ModulePvSignature::where('module_id', $module->id)->exists(), 409, 'PV signé : modalités verrouillées.');
+            $ids = array_filter(array_column($validated['assessments'], 'id'));
+            abort_if($module->assessments()->whereNotIn('id', $ids)->whereHas('grades')->exists(), 409, 'Une évaluation notée ne peut pas être supprimée.');
+            $savedIds = [];
+            foreach ($validated['assessments'] as $aData) {
+                if (! empty($aData['id'])) {
+                    $assessment = Assessment::where('id', $aData['id'])->where('module_id', $module->id)->first();
+                    if ($assessment) {
+                        $assessment->update(['type' => $aData['type'], 'weight' => floatval($aData['weight'])]);
+                        $savedIds[] = $assessment->id;
 
-                    continue;
+                        continue;
+                    }
                 }
+
+                $assessment = Assessment::create([
+                    'module_id' => $module->id,
+                    'type' => $aData['type'],
+                    'weight' => floatval($aData['weight']),
+                    'date' => now()->format('Y-m-d'),
+                ]);
+                $savedIds[] = $assessment->id;
             }
 
-            $assessment = Assessment::create([
-                'module_id' => $module->id,
-                'type' => $aData['type'],
-                'weight' => floatval($aData['weight']),
-                'date' => now()->format('Y-m-d'),
+            // Supprimer les évaluations non présentes dans la liste
+            $module->assessments()->whereNotIn('id', $savedIds)->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Modalités d\'évaluation enregistrées.',
+                'data' => $module->fresh()->assessments,
             ]);
-            $savedIds[] = $assessment->id;
-        }
-
-        // Supprimer les évaluations non présentes dans la liste
-        $module->assessments()->whereNotIn('id', $savedIds)->delete();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Modalités d\'évaluation enregistrées.',
-            'data' => $module->fresh()->assessments,
-        ]);
+        });
     }
 }

@@ -31,6 +31,7 @@ class StoreApplicationRequest extends FormRequest
             'email' => ['nullable', 'email', 'max:255'],
             'phone' => ['nullable', 'string', 'max:30'],
             'birth_date' => ['nullable', 'date', 'before:today'],
+            'nationality' => ['nullable','string','max:100'],
             'gender' => ['nullable', 'in:male,female'],
             'admission_campaign_id' => ['nullable', 'integer', 'exists:admission_campaigns,id'],
             'bac_average' => ['nullable', 'numeric', 'min:0', 'max:20'],

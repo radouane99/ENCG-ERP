@@ -145,14 +145,14 @@ class AcademicLifecycleIntegrationTest extends TestCase
         ]);
 
         // 3. Create Continuous Assessment (CC 40%) and Final Exam (Exam 60%)
-        $ccAssessment = Assessment::create([
+        $ccAssessment = $this->createTestAssessment([
             'module_id' => $this->module->id,
             'type' => 'CC',
             'weight' => 40.00,
             'date' => '2027-04-15',
         ]);
 
-        $examAssessment = Assessment::create([
+        $examAssessment = $this->createTestAssessment([
             'module_id' => $this->module->id,
             'type' => 'Exam',
             'weight' => 60.00,

@@ -23,6 +23,7 @@ AlertCircle
 import { cn,cleanMojibake } from '@shared/lib/utils'
 import { useAuthStore } from '@/stores/authStore'
 import api from '@shared/lib/api'
+import { CourseWorkPanel } from '../components/CourseWorkPanel';
 import { toast } from 'sonner'
 
 interface ModuleInfo {
@@ -104,6 +105,7 @@ export default function ClassroomShowPage() {
   // Assignment submission state
   const [submittingAssignmentId, setSubmittingAssignmentId] = useState<number | null>(null)
   const [submissionText, setSubmissionText] = useState('')
+  const [submissionFile, setSubmissionFile] = useState<File | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   // IA Tutor state
@@ -191,17 +193,20 @@ export default function ClassroomShowPage() {
   // Real Database Assignment Submission
   const handleSubmitAssignment = async (assignmentId: number) => {
     if (isSubmitting) return
+    if (!submissionText.trim() && !submissionFile) { toast.error('Saisissez votre travail avant de transmettre.'); return }
     setIsSubmitting(true)
 
     try {
-      const res = await api.post(`/lms/courses/${courseId}/assignments/${assignmentId}/submit`, {
-        text: submissionText.trim() || 'Devoir soumis via l\'espace numérique ENCG'
-      })
+      const payload = new FormData();
+      if (submissionText.trim()) payload.append('text', submissionText.trim());
+      if (submissionFile) payload.append('file', submissionFile);
+      const res = await api.post(`/lms/courses/${courseId}/assignments/${assignmentId}/submit`, payload)
       if (res.data?.success) {
         toast.success(res.data.message || 'Votre travail a été transmis avec succès à l’enseignant.')
         setAssignments(prev => prev.map(a => a.id === assignmentId ? { ...a, is_submitted: true } : a))
         setSubmittingAssignmentId(null)
         setSubmissionText('')
+        setSubmissionFile(null)
       }
     } catch (err) {
       console.error('Erreur remise devoir:', err)
@@ -226,14 +231,15 @@ export default function ClassroomShowPage() {
         message: `En tant que tuteur pédagogique pour le module "${course?.title || 'Management'}" à l'ENCG Fès, réponds de façon claire et académique à cette question d'étudiant : ${question}`,
         feature_type: 'classroom_tutor'
       })
-      const reply = res.data?.reply || res.data?.message || `Dans le cadre du module ${course?.title || 'académique'}, ce concept repose sur les principes vus en séance. Consultez les fiches de cours pour les applications numériques détaillées.`
+      const reply = res.data?.reply || res.data?.message;
+      if (!reply) throw new Error('Réponse vide');
       setIaMessages(prev => [...prev, { role: 'ai', text: reply }])
     } catch {
       setIaMessages(prev => [
         ...prev, 
         { 
           role: 'ai', 
-          text: `Excellente question sur ${course?.title || 'ce cours'}. Il est recommandé de revoir le polycopié du chapitre 1 et d'appliquer la méthode vue lors du dernier TD.` 
+          text: 'Le service IA est indisponible. Réessayez plus tard ou contactez votre enseignant.'
         }
       ])
     } finally {
@@ -312,6 +318,7 @@ export default function ClassroomShowPage() {
         </div>
       </div>
 
+      {isProfessorOrAdmin && courseId && <CourseWorkPanel courseId={courseId} assignments={assignments} refresh={fetchCourseDetails} />}
       {/* Tabs Navigation */}
       <div className="flex flex-wrap items-center gap-2 p-1.5 rounded-2xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700">
         <TabButton 
@@ -565,7 +572,7 @@ export default function ClassroomShowPage() {
                       <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-200/60 dark:border-slate-700/60">
                         <div className="flex items-center gap-2 text-xs text-slate-500">
                           <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                          <span>Échéance : {new Date(assign.due_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                          <span>Échéance : {assign.due_date ? new Date(assign.due_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : 'À configurer'}</span>
                         </div>
 
                         <div className="flex items-center gap-2">
@@ -601,9 +608,11 @@ export default function ClassroomShowPage() {
                             rows={2}
                             value={submissionText}
                             onChange={(e) => setSubmissionText(e.target.value)}
-                            placeholder="Commentaire ou lien de votre rendu (GitHub, Drive, rapport)..."
+                            placeholder="Votre travail ou lien du rendu..."
+                            aria-label="Texte de votre travail"
                             className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs focus:outline-none focus:ring-2 focus:ring-primary"
                           />
+                          <label className="block text-sm">Fichier du rendu<input type="file" accept=".pdf,.doc,.docx,.zip" onChange={event => setSubmissionFile(event.target.files?.[0] ?? null)} /></label>
                           <div className="flex items-center justify-between">
                             <span className="text-[11px] text-slate-400 flex items-center gap-1">
                               <AlertCircle className="w-3.5 h-3.5 text-amber-500" />

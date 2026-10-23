@@ -102,6 +102,7 @@ const Modal: React.FC<ModalProps> = ({
     }
     return () => {
       document.body.style.overflow = ''
+      previousFocusRef.current?.focus()
     }
   }, [open])
 

@@ -27,10 +27,10 @@ class GradesExport implements FromArray, ShouldAutoSize, WithHeadings, WithTitle
     public function headings(): array
     {
         if ($this->assessment) {
-            return ['CNE', 'Apogée', 'Nom', 'Prénom', 'Évaluation', 'Note', 'Absent'];
+            return ['CNE', 'Apogée', 'Nom', 'Prénom', 'Évaluation', 'Note', 'Absent', 'Version'];
         }
 
-        return ['CNE', 'Apogée', 'Nom', 'Prénom', 'Évaluation', 'Type', 'Note', 'Absent'];
+        return ['CNE', 'Apogée', 'Nom', 'Prénom', 'Évaluation', 'Type', 'Note', 'Absent', 'Version'];
     }
 
     public function array(): array
@@ -53,6 +53,7 @@ class GradesExport implements FromArray, ShouldAutoSize, WithHeadings, WithTitle
                     $this->assessment->type ?? 'CC',
                     $grade?->value !== null ? (string) $grade->value : '',
                     $grade?->absent ? 1 : 0,
+                    $grade?->version ?? 0,
                 ];
             }
         } else {
@@ -76,13 +77,14 @@ class GradesExport implements FromArray, ShouldAutoSize, WithHeadings, WithTitle
                         $assessment->type,
                         $grade?->value !== null ? (string) $grade->value : '',
                         $grade?->absent ? 1 : 0,
+                        $grade?->version ?? 0,
                     ];
                 }
             }
         }
 
         if ($rows === []) {
-            $rows[] = ['', '', '', '', $this->assessment?->type ?? 'CC', '', 0];
+            $rows[] = $this->assessment ? ['', '', '', '', $this->assessment->type, '', 0, 0] : ['', '', '', '', '', 'CC', '', 0, 0];
         }
 
         return $rows;

@@ -2,10 +2,12 @@
 
 namespace App\Imports;
 
+use App\Actions\Exam\StoreBulkGradesAction;
 use App\Models\Assessment;
 use App\Models\Grade;
 use App\Models\Module;
 use App\Models\Student;
+use App\Services\Academic\GradeService;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
@@ -104,15 +106,16 @@ class GradesImport implements ToCollection, WithHeadingRow
                 continue;
             }
 
-            $grade = Grade::firstOrNew([
-                'student_id' => $student->id,
-                'assessment_id' => $assessment->id,
-            ]);
-
-            $grade->value = $value;
-            $grade->absent = $isAbsent;
-            // Note: version column is left to Eloquent's OptimisticLocking trait to manage automatically
-            $grade->save();
+            $service = app(GradeService::class);
+            $allowed = $service->getRegisteredStudents($this->module, request()->input('group_id'))->pluck('id');
+            abort_unless($allowed->contains($student->id), 422, 'Étudiant hors du contexte pédagogique.');
+            abort_if($service->isExamLocked($assessment) || $service->isPvSigned($this->module->id), 403, 'Module verrouillé.');
+            abort_unless(isset($row['version']) && filter_var($row['version'], FILTER_VALIDATE_INT) !== false && (int) $row['version'] >= 0, 422, 'Colonne Version requise : téléchargez un modèle récent.');
+            app(StoreBulkGradesAction::class)->execute($assessment, [[
+                'student_id' => $student->id, 'value' => $value, 'absent' => $isAbsent, 'version' => (int) $row['version'],
+            ]], $service->getFraudStudentIds($this->module), function ($old, $new, $absent, $studentId, $assessment) {
+                activity()->causedBy(request()->user())->withProperties(['student_id' => $studentId, 'assessment_id' => $assessment->id, 'old_value' => $old?->value, 'value' => $new])->log('grade_imported');
+            });
             $this->imported++;
         }
     }
@@ -172,12 +175,9 @@ class GradesImport implements ToCollection, WithHeadingRow
             }
         }
 
-        // Fallback: If type was given, create or get
+        // Imports never invent evaluation modalities.
         if ($rawType !== '') {
-            return Assessment::firstOrCreate(
-                ['module_id' => $this->module->id, 'type' => $rawType],
-                ['name' => $rawType, 'weight' => 1]
-            );
+            return null;
         }
 
         // Default to first assessment of the module

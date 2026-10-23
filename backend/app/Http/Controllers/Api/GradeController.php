@@ -13,6 +13,7 @@ use App\Models\Assessment;
 use App\Models\AuditLog;
 use App\Models\Filiere;
 use App\Models\Grade;
+use App\Models\Group;
 use App\Models\Module;
 use App\Models\ModuleProfessor;
 use App\Models\ModulePvSignature;
@@ -21,12 +22,15 @@ use App\Models\Professor;
 use App\Models\Schedule;
 use App\Models\Student;
 use App\Models\StudentRegistration;
+use App\Services\Academic\AcademicContext;
 use App\Services\Academic\AcademicWindowGuard;
 use App\Services\Academic\GradeService;
 use App\Services\Notification\NotificationDispatcherService;
+use App\Services\Security\ClassroomAccessService;
 use App\Services\Security\ProfessorAccessService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Maatwebsite\Excel\Facades\Excel;
@@ -46,6 +50,7 @@ class GradeController extends Controller
 
         $assessment = Assessment::with('module')->findOrFail($assessmentId);
         $groupId = $request->query('group_id');
+        app(ClassroomAccessService::class)->authorize($request->user(), $assessment->module, $groupId && is_numeric($groupId) ? Group::findOrFail($groupId) : null, write: true);
         $students = $this->gradeService->getRegisteredStudents($assessment->module, $groupId);
         $fraudIds = $this->gradeService->getFraudStudentIds($assessment->module);
         $isRattrapage = $this->gradeService->isRattrapageAssessment($assessment);
@@ -133,6 +138,10 @@ class GradeController extends Controller
         }
 
         $validated = $request->validated();
+        $allowed = $this->gradeService->getRegisteredStudents($assessment->module, $request->input('group_id'))->pluck('id')->all();
+        foreach ($validated['grades'] as $row) {
+            abort_unless(in_array($row['student_id'], $allowed), 422, 'Étudiant hors du contexte pédagogique.');
+        }
         $fraudIds = $this->gradeService->getFraudStudentIds($assessment->module);
 
         $updatedCount = app(StoreBulkGradesAction::class)->execute(
@@ -339,94 +348,102 @@ class GradeController extends Controller
      */
     public function signModulePv(Request $request, int $moduleId): JsonResponse
     {
-        $this->authorize('create', Grade::class);
+        return DB::transaction(function () use ($request, $moduleId) {
+            $this->authorize('create', Grade::class);
 
-        $validated = $request->validate([
-            'group_id' => 'nullable',
-            'session' => 'nullable|string|in:normale,rattrapage,totale,complet',
-            'signature_data' => 'nullable|string',
-        ]);
-
-        $module = Module::with('assessments')->findOrFail($moduleId);
-        $user = $request->user();
-
-        // 🛡️ RBAC : Un enseignant ne peut signer que les PV de ses propres modules
-        if ($user && $user->hasAnyRole(['professor', 'vacataire']) &&
-            ! $user->hasAnyRole(['super-admin', 'super_admin', 'admin', 'institution-admin', 'institution_admin', 'director', 'department-head', 'filiere-head'])) {
-            $authorizedModuleIds = app(ProfessorAccessService::class)->getAuthorizedModuleIds($user);
-            if (! $authorizedModuleIds->contains($moduleId)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Accès refusé : Vous ne pouvez signer que le PV d’un module qui vous est assigné.',
-                ], 403);
-            }
-        }
-
-        $session = $validated['session'] ?? 'normale';
-        if ($session === 'complet') {
-            $session = 'totale';
-        }
-        $groupId = $validated['group_id'] ?? null;
-        if ($groupId === 'all' || $groupId === '' || $groupId === 'undefined' || ! is_numeric($groupId)) {
-            $groupId = null;
-        } else {
-            $groupId = (int) $groupId;
-        }
-
-        $digitalSeal = hash('sha256', "module:{$moduleId}|session:{$session}|group:".($groupId ?? 'all')."|signer:{$user->id}|ts:".now()->timestamp);
-
-        // Signature
-        ModulePvSignature::updateOrCreate(
-            ['module_id' => $moduleId, 'group_id' => $groupId, 'session' => $session],
-            [
-                'signed_by' => $user->id,
-                'signed_at' => now(),
-                'signature_data' => $validated['signature_data'] ?? null,
-                'ip_address' => $request->ip() ?: '127.0.0.1',
-                'digital_seal' => $digitalSeal,
-            ]
-        );
-
-        // Audit Trail Log
-        if (class_exists(AuditLog::class)) {
-            AuditLog::record([
-                'user_id' => $user->id,
-                'user_name' => $user->name ?? $user->email,
-                'user_email' => $user->email,
-                'user_role' => $user->role ?? ($user->roles?->first()?->name ?? 'Enseignant'),
-                'action' => 'Signature Électronique PV Module',
-                'action_type' => 'PV_SIGNATURE',
-                'description' => "Le Procès-Verbal ({$session}) du module '{$module->name}' ({$module->code}) a été signé électroniquement avec sceau SHA-256 [{$digitalSeal}]",
-                'method' => 'POST',
-                'url' => $request->fullUrl(),
-                'ip_address' => $request->ip() ?: '127.0.0.1',
-                'user_agent' => substr($request->userAgent() ?? '', 0, 500),
-                'severity' => 'warning',
-                'payload' => [
-                    'module_id' => $moduleId,
-                    'module_name' => $module->name,
-                    'session' => $session,
-                    'group_id' => $groupId,
-                    'digital_seal' => $digitalSeal,
-                ],
+            $validated = $request->validate([
+                'group_id' => 'nullable',
+                'session' => 'nullable|string|in:normale,rattrapage,totale,complet',
+                'signature_data' => 'nullable|string',
             ]);
-        }
 
-        // Génération éligibilités rattrapage
-        $students = $this->gradeService->getRegisteredStudents($module, $groupId);
-        $normaleAssessments = $module->assessments->filter(
-            fn ($a) => ! $this->gradeService->isRattrapageAssessment($a)
-        );
+            $module = Module::with('assessments')->lockForUpdate()->findOrFail($moduleId);
+            Assessment::assertModuleReady($moduleId);
+            $user = $request->user();
 
-        $result = $this->gradeService->generateRattrapageEligibilities($module, $students, $normaleAssessments);
+            // 🛡️ RBAC : Un enseignant ne peut signer que les PV de ses propres modules
+            if ($user && $user->hasAnyRole(['professor', 'vacataire']) &&
+                ! $user->hasAnyRole(['super-admin', 'super_admin', 'admin', 'institution-admin', 'institution_admin', 'director', 'department-head', 'filiere-head'])) {
+                $authorizedModuleIds = app(ProfessorAccessService::class)->getAuthorizedModuleIds($user);
+                if (! $authorizedModuleIds->contains($moduleId)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Accès refusé : Vous ne pouvez signer que le PV d’un module qui vous est assigné.',
+                    ], 403);
+                }
+            }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'PV signé avec succès. Éligibilités rattrapage générées.',
-            'digital_seal' => $digitalSeal,
-            'created' => $result['created'],
-            'updated' => $result['updated'],
-        ]);
+            $session = $validated['session'] ?? 'normale';
+            if ($session === 'complet') {
+                $session = 'totale';
+            }
+            $groupId = $validated['group_id'] ?? null;
+            if ($groupId === 'all' || $groupId === '' || $groupId === 'undefined' || ! is_numeric($groupId)) {
+                $groupId = null;
+            } else {
+                $groupId = (int) $groupId;
+            }
+
+            if ($groupId) {
+                $signatureGroup = Group::whereKey($groupId)->where('filiere_id', $module->filiere_id)
+                    ->where('academic_year_id', AcademicContext::yearId())->where('semester_number', $module->semester_number)->firstOrFail();
+                app(ClassroomAccessService::class)->authorize($user, $module, $signatureGroup, write: true);
+            }
+            $digitalSeal = hash('sha256', "module:{$moduleId}|session:{$session}|group:".($groupId ?? 'all')."|signer:{$user->id}|ts:".now()->timestamp);
+
+            // Signature
+            ModulePvSignature::updateOrCreate(
+                ['module_id' => $moduleId, 'group_id' => $groupId, 'session' => $session, 'academic_year_id' => AcademicContext::yearId()],
+                [
+                    'signed_by' => $user->id,
+                    'signed_at' => now(),
+                    'signature_data' => $validated['signature_data'] ?? null,
+                    'ip_address' => $request->ip() ?: '127.0.0.1',
+                    'digital_seal' => $digitalSeal,
+                ]
+            );
+
+            // Audit Trail Log
+            if (class_exists(AuditLog::class)) {
+                AuditLog::record([
+                    'user_id' => $user->id,
+                    'user_name' => $user->name ?? $user->email,
+                    'user_email' => $user->email,
+                    'user_role' => $user->role ?? ($user->roles?->first()?->name ?? 'Enseignant'),
+                    'action' => 'Signature Électronique PV Module',
+                    'action_type' => 'PV_SIGNATURE',
+                    'description' => "Le Procès-Verbal ({$session}) du module '{$module->name}' ({$module->code}) a été signé électroniquement avec sceau SHA-256 [{$digitalSeal}]",
+                    'method' => 'POST',
+                    'url' => $request->fullUrl(),
+                    'ip_address' => $request->ip() ?: '127.0.0.1',
+                    'user_agent' => substr($request->userAgent() ?? '', 0, 500),
+                    'severity' => 'warning',
+                    'payload' => [
+                        'module_id' => $moduleId,
+                        'module_name' => $module->name,
+                        'session' => $session,
+                        'group_id' => $groupId,
+                        'digital_seal' => $digitalSeal,
+                    ],
+                ]);
+            }
+
+            // Génération éligibilités rattrapage
+            $students = $this->gradeService->getRegisteredStudents($module, $groupId);
+            $normaleAssessments = $module->assessments->filter(
+                fn ($a) => ! $this->gradeService->isRattrapageAssessment($a)
+            );
+
+            $result = $this->gradeService->generateRattrapageEligibilities($module, $students, $normaleAssessments);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'PV signé avec succès. Éligibilités rattrapage générées.',
+                'digital_seal' => $digitalSeal,
+                'created' => $result['created'],
+                'updated' => $result['updated'],
+            ]);
+        });
     }
 
     /**
@@ -1034,12 +1051,18 @@ class GradeController extends Controller
     {
         $this->authorize('create', Grade::class);
 
+        $request->validate(['file' => 'required|file|mimes:xlsx,xls,csv|max:10240']);
+        app(AcademicWindowGuard::class)->assertGradesOpen();
         $moduleModel = Module::findOrFail($module);
+        app(ClassroomAccessService::class)->authorize($request->user(), $moduleModel, write: true);
         $assessmentId = $request->input('assessment_id');
         $targetAssessmentId = ($assessmentId && is_numeric($assessmentId)) ? (int) $assessmentId : null;
 
         $import = new GradesImport($moduleModel, $targetAssessmentId);
-        Excel::import($import, $request->file('file'));
+        DB::transaction(function () use ($moduleModel, $import, $request) {
+            Module::whereKey($moduleModel->id)->lockForUpdate()->firstOrFail();
+            Excel::import($import, $request->file('file'));
+        });
 
         return response()->json([
             'success' => true,

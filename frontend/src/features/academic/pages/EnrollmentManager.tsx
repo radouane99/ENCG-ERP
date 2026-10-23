@@ -30,6 +30,7 @@ interface Filiere {
 
 export default function EnrollmentManager() {
   const [selectedFiliere, setSelectedFiliere] = useState('');
+  const [dispatchSemester, setDispatchSemester] = useState(1);
   const [statusFilter, setStatusFilter] = useState('');
   const [search, setSearch] = useState('');
   const [students, setStudents] = useState<Student[]>([]);
@@ -152,11 +153,11 @@ export default function EnrollmentManager() {
     const toastId = toast.loading('Répartition équitable des étudiants validés dans les groupes S1...');
 
     try {
-      const res = await api.post('/groups/dispatch-students', { filiere_id: selectedFiliere });
+      const res = await api.post('/groups/dispatch-students', { filiere_id: selectedFiliere, academic_year_id: (await api.get('/academic-years')).data.data?.find((y: any) => y.is_current)?.id, semester_number: dispatchSemester });
       toast.success(`⚡ ${res.data.message || 'Dispatching terminé avec succès !'}`, { id: toastId });
       fetchData();
     } catch (err: any) {
-      toast.success('⚡ Dispatching 1-Clic exécuté ! Les étudiants validés ont été répartis équitablement dans les groupes S1.', { id: toastId });
+      toast.error(err?.response?.data?.message || 'Répartition non effectuée.', { id: toastId });
       fetchData();
     } finally {
       setIsDispatching(false);
@@ -445,6 +446,8 @@ export default function EnrollmentManager() {
           <div className="relative z-10 mt-4 space-y-2.5">
             <div>
               <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1 block">Filière Cible</label>
+              <label htmlFor="dispatch-semester" className="sr-only">Semestre de répartition</label>
+              <select id="dispatch-semester" value={dispatchSemester} onChange={e => setDispatchSemester(Number(e.target.value))} className="rounded-lg border border-input bg-background p-2">{Array.from({length: 10}, (_, i) => <option key={i+1} value={i+1}>S{i+1}</option>)}</select>
               <select
                 className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-bold rounded-xl px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500"
                 value={selectedFiliere}

@@ -50,6 +50,7 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:professor|vacata
 });
 
 Route::middleware(['auth:sanctum', 'institution.context', 'role:professor|vacataire|department-head|filiere-head|super-admin|institution-admin|director'])->group(function () {
+    Route::post('/professor/exam-attendance/scan', [\App\Http\Controllers\Api\ExamAttendanceController::class, 'scan']);
     // Dashboard Stats
     Route::get('/dashboard/professor/stats', [DashboardController::class, 'getProfessorStats']);
     Route::get('/professor/dashboard/stats', [DashboardController::class, 'getProfessorStats']);

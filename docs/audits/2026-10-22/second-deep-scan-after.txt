@@ -1,0 +1,60 @@
+================================================================================
+      🔬 ENCG ERP — SCAN PROFOND ET DIAGNOSTIC DE LA BASE DE DONNÉES           
+      Date : 2026-10-23 00:49:28 | PostgreSQL : 16                
+================================================================================
+
+[1/10] Scan des clés étrangères formelles, y compris les clés composites...
+   282 contraintes FK vérifiées : 0 orphelin.
+
+[2/10] 🔎 Scan des Relations Implicites (colonnes *_id sans contrainte formelle)...
+   ✓ Toutes les relations implicites *_id testées sont saines (0 orphelin).
+
+[3/10] 🏛️ Scan de l'Unification de l'Établissement (institution_id = 1 partout)...
+   ✓ 100% des tables (30) sont alignées sur institution_id = 1.
+
+[4/10] 📚 Scan de la Hiérarchie Académique (Années, Semestres, Filières, Modules)...
+   ✓ Exactement 1 année active officielle configurée : 2026-2027 (ID: 3).
+   ✓ Tous les semestres ont des numéros officiels conformes [1..10].
+   ✓ Tous les modules appartiennent à une filière valide.
+   ✓ Tous les modules ont des coefficients académiques positifs.
+
+[5/10] 🎓 Scan des Étudiants, Inscriptions & Sous-groupes TD (Règle 7)...
+   ✓ Tous les étudiants possèdent un compte utilisateur relié.
+   ✓ 100% des étudiants ont un code CNE/Massar renseigné.
+   ✓ Aucun étudiant n'a de doublon de parcours actif simultané.
+   ✓ 100% des étudiants actifs ont leur sous-groupe TD officiel assigné.
+
+[6/10] ⚖️ Scan des Notes, Barèmes LMD & Évaluations...
+   ✓ Toutes les notes sont rigoureusement dans le barème légal [0.00, 20.00].
+   ✓ Aucun doublon de note par évaluation.
+   ✓ Tous les modules évalués totalisent exactement 100% de pondération.
+
+[7/10] 📅 Scan de l'Emploi du Temps (Conflits Professeurs, Salles, Groupes)...
+   ✓ 0 conflit enseignant (aucun professeur en double-réservation).
+   ✓ 0 conflit de salle (toutes les salles ont une occupation exclusive).
+   ✓ 0 conflit de groupe (aucun groupe n'a deux cours simultanés).
+
+[8/10] 🛡️ Scan RBAC (Utilisateurs, Rôles Spatie & Permissions)...
+   ✓ Toutes les assignations de rôles pointent vers des rôles existants.
+   ✓ Toutes les permissions sont reliées à des rôles valides.
+   ✓ Tous les utilisateurs ont au moins un rôle attribué.
+
+[9/10] 🔒 Scan de Conformité Optimistic Locking (Règle 1 AGENTS.md)...
+   ✓ 100% conforme à la Règle 1 (colonne 'version' présente sur toutes les tables requises).
+
+[10/10] ⚡ Scan de Performance & Indexation des Clés Étrangères...
+   ℹ️ 167 clés étrangères sans index dédié (normal pour petites tables de paramétrage).
+
+================================================================================
+                       RÉSUMÉ DU SCAN DE SANTÉ DE LA BASE                      
+================================================================================
+  • Total des vérifications exécutées  : 347
+  • Erreurs Critiques / Conflits       : 0 (AUCUNE)
+  • Avertissements / Optimisations     : 2
+  • Statut des contrôles               : Aucune anomalie critique détectée ; consulter les avertissements.
+================================================================================
+
+DÉTAIL DES AVERTISSEMENTS & RECOMMANDATIONS :
+  1. 52 cas de données historiques restent à réconcilier dans le tableau de bord administration.
+  2. 167 colonne(s) de clé étrangère n'ont pas d'index dédié (optimisation recommandée pour de très gros volumes).
+

@@ -15,6 +15,8 @@ const api = axios.create({
 
 // ── Request Interceptor ────────────────────────────────────────
 api.interceptors.request.use((config) => {
+  // Let the browser generate the multipart boundary for real uploads.
+  if (config.data instanceof FormData) config.headers.delete('Content-Type')
   const lang = localStorage.getItem('encg_lang') || 'fr'
   config.headers['Accept-Language'] = lang
   return config

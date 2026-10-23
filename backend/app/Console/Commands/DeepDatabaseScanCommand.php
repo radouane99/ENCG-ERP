@@ -6,6 +6,7 @@ use App\Models\Attendance;
 use App\Models\Grade;
 use App\Models\Schedule;
 use App\Models\StudentRegistration;
+use App\Models\User;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -56,46 +57,37 @@ class DeepDatabaseScanCommand extends Command
      */
     private function scanFormalForeignKeys(): void
     {
-        $this->line("\n[1/10] 🔗 Scan de toutes les Clés Étrangères Formelles (274 Relations)...");
-
-        $fks = DB::select("
-            SELECT 
-                tc.table_name, 
-                kcu.column_name, 
-                ccu.table_name AS foreign_table_name,
-                ccu.column_name AS foreign_column_name 
-            FROM information_schema.table_constraints AS tc 
-            JOIN information_schema.key_column_usage AS kcu
-                ON tc.constraint_name = kcu.constraint_name AND tc.table_schema = kcu.table_schema
-            JOIN information_schema.constraint_column_usage AS ccu
-                ON ccu.constraint_name = tc.constraint_name AND ccu.table_schema = tc.table_schema
-            WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_schema = 'public'
-            ORDER BY tc.table_name, kcu.column_name
-        ");
-
+        $this->line("\n[1/10] Scan des clés étrangères formelles, y compris les clés composites...");
+        $fks = [];
+        foreach (DB::select("SELECT tablename FROM pg_tables WHERE schemaname='public' ORDER BY tablename") as $table) {
+            foreach (Schema::getForeignKeys($table->tablename) as $fk) {
+                $fks[] = array_merge($fk, ['table_name' => $table->tablename]);
+            }
+        }
         $orphanTotal = 0;
         foreach ($fks as $fk) {
             $this->totalChecks++;
-            $count = DB::table($fk->table_name)
-                ->whereNotNull($fk->column_name)
-                ->whereNotExists(function ($q) use ($fk) {
-                    $q->select(DB::raw(1))
-                        ->from($fk->foreign_table_name)
-                        ->whereColumn("{$fk->table_name}.{$fk->column_name}", '=', "{$fk->foreign_table_name}.{$fk->foreign_column_name}");
-                })->count();
-
+            $query = DB::table($fk['table_name']);
+            // PostgreSQL MATCH SIMPLE: a NULL in any component makes the FK optional.
+            foreach ($fk['columns'] as $column) {
+                $query->whereNotNull($column);
+            }
+            $count = $query->whereNotExists(function ($q) use ($fk) {
+                $q->selectRaw('1')->from($fk['foreign_table']);
+                foreach ($fk['columns'] as $position => $column) {
+                    $q->whereColumn($fk['table_name'].'.'.$column, $fk['foreign_table'].'.'.$fk['foreign_columns'][$position]);
+                }
+            })->count();
             if ($count > 0) {
-                $msg = "{$fk->table_name}.{$fk->column_name} -> {$fk->foreign_table_name}.{$fk->foreign_column_name} ({$count} orphelins)";
-                $this->criticalErrors[] = $msg;
+                $this->criticalErrors[] = $fk['table_name'].' ('.implode(',', $fk['columns']).') -> '.$fk['foreign_table'].' ('.$count.' orphelins)';
                 $orphanTotal++;
             }
         }
-
         if ($orphanTotal === 0) {
-            $this->successes[] = 'Toutes les '.count($fks).' relations formelles sont 100% intègres (0 orphelin).';
-            $this->line('   ✓ 274/274 relations FK formelles vérifiées : 0 orphelin.');
+            $this->successes[] = 'Toutes les '.count($fks).' relations formelles sont intègres (0 orphelin).';
+            $this->line('   '.count($fks).' contraintes FK vérifiées : 0 orphelin.');
         } else {
-            $this->error("   ❌ {$orphanTotal} relations FK contiennent des orphelins !");
+            $this->error($orphanTotal.' contraintes FK contiennent des orphelins.');
         }
     }
 
@@ -360,11 +352,12 @@ class DeepDatabaseScanCommand extends Command
         // 3. Somme des pondérations des évaluations par module (hors Rattrapage qui est une session de substitution à 100%)
         $this->totalChecks++;
         $unbalancedAssessments = DB::table('assessments')
-            ->whereRaw("LOWER(type) NOT LIKE '%rattrapage%'")
-            ->select('module_id', DB::raw('SUM(weight) as total_weight'))
-            ->groupBy('module_id')
-            ->havingRaw('ROUND(SUM(weight)::numeric, 1) NOT IN (100.0, 200.0, 300.0)')
-            ->count();
+            ->where('needs_review', false)->whereNotNull('academic_year_id')
+            ->whereRaw("LOWER(TRIM(type)) NOT IN ('rattrapage','resit','r')")
+            ->select('module_id', 'academic_year_id', DB::raw('SUM(weight) as total_weight'))
+            ->groupBy('module_id', 'academic_year_id')
+            ->havingRaw('ABS(SUM(weight) - 100) > 0.01')
+            ->get()->count();
 
         if ($unbalancedAssessments > 0) {
             $msg = "assessments: {$unbalancedAssessments} module(s) dont la somme des pondérations != 100%!";
@@ -372,6 +365,12 @@ class DeepDatabaseScanCommand extends Command
             $this->warn("   ⚠️ {$msg}");
         } else {
             $this->line('   ✓ Tous les modules évalués totalisent exactement 100% de pondération.');
+        }
+        if (Schema::hasTable('data_integrity_issues')) {
+            $pending = DB::table('data_integrity_issues')->whereNull('resolved_at')->count();
+            if ($pending) {
+                $this->warnings[] = "{$pending} cas de données historiques restent à réconcilier dans le tableau de bord administration.";
+            }
         }
     }
 
@@ -517,7 +516,7 @@ class DeepDatabaseScanCommand extends Command
                     })->get();
 
                 foreach ($unassignedUsers as $u) {
-                    $userModel = \App\Models\User::find($u->id);
+                    $userModel = User::find($u->id);
                     if ($userModel) {
                         $userModel->assignRole('student');
                         $this->fixesApplied[] = "Utilisateur {$u->email} (ID: {$u->id}) assigné au rôle 'student'.";
@@ -610,7 +609,7 @@ class DeepDatabaseScanCommand extends Command
         $this->line("  • Total des vérifications exécutées  : <info>{$this->totalChecks}</info>");
         $this->line('  • Erreurs Critiques / Conflits       : '.(empty($this->criticalErrors) ? '<info>0 (AUCUNE)</info>' : '<error>'.count($this->criticalErrors).' ERREUR(S)</error>'));
         $this->line('  • Avertissements / Optimisations     : '.(empty($this->warnings) ? '<info>0</info>' : '<comment>'.count($this->warnings).'</comment>'));
-        $this->line('  • Statut Global                      : '.(empty($this->criticalErrors) ? '<info>EXCELLENT (100% OPÉRATIONNEL)</info>' : '<error>ATTENTION REQUISE</error>'));
+        $this->line('  • Statut des contrôles               : '.(empty($this->criticalErrors) ? '<info>Aucune anomalie critique détectée ; consulter les avertissements.</info>' : '<error>ATTENTION REQUISE</error>'));
         $this->line("================================================================================\n");
 
         if (! empty($this->criticalErrors)) {

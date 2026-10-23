@@ -60,9 +60,10 @@ export default function StudentGrades() {
   const { i18n } = useTranslation(['students', 'common']);
   const isRtl = i18n.language === 'ar';
 
+  const [academicYearId, setAcademicYearId] = useState('');
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['student-grades'],
-    queryFn: () => api.get('/student-portal/grades').then(res => res.data)
+    queryKey: ['student-grades', academicYearId],
+    queryFn: () => api.get('/student-portal/grades', {params: academicYearId ? {academic_year_id: academicYearId} : {}}).then(res => res.data)
   });
 
   const { data: appealsData, refetch: refetchAppeals } = useQuery({
@@ -310,6 +311,12 @@ export default function StudentGrades() {
 
   return (
     <div data-testid="student-grades-page" className="space-y-6 sm:space-y-8 font-sans animate-in fade-in duration-500 text-slate-900 dark:text-slate-100 max-w-7xl mx-auto pb-12">
+      <label className="block text-sm font-medium">Année universitaire
+        <select aria-label="Année universitaire" value={academicYearId} onChange={event => setAcademicYearId(event.target.value)} className="ms-3 rounded-lg border border-input bg-background p-2">
+          <option value="">Année active</option>{(data?.available_years || []).map((year: any) => <option key={year.id} value={year.id}>{year.label}</option>)}
+        </select>
+      </label>
+      {data?.integrity_pending && <p role="status" className="rounded-lg border border-warning bg-card p-3 text-sm">Certaines évaluations historiques sont en cours de vérification par la scolarité. Elles ne sont pas remplacées par des zéros.</p>}
       {/* ── Page Header ── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>

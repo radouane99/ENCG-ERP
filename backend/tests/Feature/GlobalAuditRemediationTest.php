@@ -100,7 +100,7 @@ class GlobalAuditRemediationTest extends TestCase
     {
         $student = $this->makeTestStudent();
         $module = $this->makeTestModule($this->makeTestFiliere()->id);
-        $assessment = Assessment::create(['module_id' => $module->id, 'type' => 'CC1', 'weight' => 100]);
+        $assessment = $this->createTestAssessment(['module_id' => $module->id, 'type' => 'CC1', 'weight' => 100]);
         $grade = Grade::create(['student_id' => $student->id, 'assessment_id' => $assessment->id, 'value' => 10, 'version' => 1]);
         $first = Grade::findOrFail($grade->id);
         $stale = Grade::findOrFail($grade->id);
@@ -152,7 +152,7 @@ class GlobalAuditRemediationTest extends TestCase
     {
         $student = $this->makeTestStudent();
         $module = $this->makeTestModule($this->makeTestFiliere()->id);
-        $assessment = Assessment::create(['module_id' => $module->id, 'type' => 'CC1', 'weight' => 100]);
+        $assessment = $this->createTestAssessment(['module_id' => $module->id, 'type' => 'CC1', 'weight' => 100]);
         $grade = Grade::create(['student_id' => $student->id, 'assessment_id' => $assessment->id, 'value' => 10]);
         $action = app(StoreBulkGradesAction::class);
         $action->execute($assessment, [['student_id' => $student->id, 'value' => 15, 'version' => 1]], [], fn () => null);

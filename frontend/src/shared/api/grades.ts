@@ -2,8 +2,12 @@ import api from '@shared/lib/api';
 
 export interface GradeUpdate {
   student_id: number;
-  value: number | null;
-  absent: boolean;
+  cc: number | null;
+  exam: number | null;
+  cc_version: number;
+  exam_version: number;
+  cc_absent?: boolean;
+  exam_absent?: boolean;
 }
 
 export const gradesApi = {

@@ -29,30 +29,23 @@ class GradeService
             $groupId = null;
         }
 
-        $query = Student::with('user');
-        $filiereId = $module->filiere_id;
-
-        if ($groupId) {
-            $query->where(function ($q) use ($groupId) {
-                $q->whereHas('pathways', fn ($pq) => $pq->where('group_id', $groupId))
-                    ->orWhereHas('registrations', fn ($rq) => $rq->where('group_id', $groupId));
-            });
-        } elseif ($filiereId) {
-            $query->where(function ($q) use ($filiereId) {
-                $q->whereHas('pathways', fn ($p) => $p->where('filiere_id', $filiereId))
-                    ->orWhereHas('registrations', fn ($r) => $r->where('filiere_id', $filiereId));
-            });
+        $yearId = AcademicContext::yearId();
+        $query = Student::with('user')->where(function ($q) use ($module, $groupId, $yearId) {
+            $q->whereHas('pathways', fn ($p) => $p->where('academic_year_id', $yearId)->where('filiere_id', $module->filiere_id)
+                ->where('current_semester', $module->semester_number)->when($groupId, fn ($p) => $p->where('group_id', $groupId)))
+                ->orWhereHas('registrations', fn ($p) => $p->where('academic_year_id', $yearId)->where('filiere_id', $module->filiere_id)
+                    ->where('semester_number', $module->semester_number)->when($groupId, fn ($p) => $p->where('group_id', $groupId)));
+        });
+        $actor = request()->user();
+        if ($actor?->hasAnyRole(['professor', 'vacataire']) && ! $actor->hasAnyRole(['super-admin', 'admin', 'institution-admin', 'director'])) {
+            $assignments = ModuleProfessor::where('module_id', $module->id)->where('academic_year_id', $yearId)->where('professor_id', $actor->professor?->id)->get();
+            if (! $assignments->contains(fn ($a) => $a->group_id === null)) {
+                $groupIds = $assignments->pluck('group_id');
+                $query->where(fn ($q) => $q->whereHas('pathways', fn ($p) => $p->where('academic_year_id', $yearId)->whereIn('group_id', $groupIds))
+                    ->orWhereHas('registrations', fn ($p) => $p->where('academic_year_id', $yearId)->whereIn('group_id', $groupIds)));
+            }
         }
-
         $students = $query->orderBy('student_number')->get();
-
-        // Fallback de secours ciblé strictement sur la filière du module
-        if ($students->isEmpty() && $filiereId) {
-            $students = Student::with('user')
-                ->whereHas('pathways', fn ($p) => $p->where('filiere_id', $filiereId))
-                ->orderBy('student_number')
-                ->get();
-        }
 
         return $students->sortBy(fn ($s) => ($s->last_name ?? '').' '.($s->first_name ?? ''))->values();
     }
@@ -229,6 +222,7 @@ class GradeService
 
         return ModuleProfessor::where('professor_id', $prof->id)
             ->where('module_id', $moduleId)
+            ->where('academic_year_id', AcademicContext::yearId())
             ->exists();
     }
 

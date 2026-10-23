@@ -25,13 +25,13 @@ class LearningMaterial extends Model implements HasMedia
         'file_path',
         'external_url',
         'is_published',
-        'order',
+        'order', 'due_date', 'max_score', 'file_size',
     ];
 
     protected function casts(): array
     {
         return [
-            'is_published' => 'boolean',
+            'is_published' => 'boolean', 'due_date' => 'datetime', 'max_score' => 'float',
         ];
     }
 

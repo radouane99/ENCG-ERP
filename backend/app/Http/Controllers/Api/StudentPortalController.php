@@ -4,10 +4,13 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Academic\SubmitAbsenceRequest;
+use App\Models\AcademicYear;
+use App\Models\Assessment;
 use App\Models\Book;
 use App\Models\BookCopy;
 use App\Models\Borrowing;
 use App\Models\LearningMaterial;
+use App\Services\Academic\AcademicContext;
 use App\Services\Academic\StudentPortalService;
 use App\Services\Library\KohaLibraryClient;
 use App\Services\Notification\NotificationDispatcherService;
@@ -17,6 +20,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 
 class StudentPortalController extends Controller
 {
@@ -29,12 +33,16 @@ class StudentPortalController extends Controller
      */
     public function getGrades(Request $request): JsonResponse
     {
+        $request->validate(['academic_year_id' => ['nullable', 'integer', Rule::exists('academic_years', 'id')->where('institution_id', $request->user()->institution_id)]]);
         $studentId = $this->resolveAuthenticatedStudentId($request);
         $result = $this->portalService->getGrades($studentId);
 
         return response()->json([
             'success' => true,
             'data' => $result['data'],
+            'available_years' => AcademicYear::where('institution_id', $request->user()->institution_id)->orderByDesc('start_date')->get(['id', 'label', 'is_current']),
+            'academic_year_id' => AcademicContext::yearId(),
+            'integrity_pending' => Assessment::withoutGlobalScopes()->where('needs_review', true)->whereHas('grades', fn ($q) => $q->where('student_id', $studentId))->exists(),
             'current_semester' => $result['current_semester'] ?? 'S5',
             'current_semester_number' => $result['current_semester_number'] ?? 5,
             'semesters_summary' => $result['semesters_summary'] ?? [],

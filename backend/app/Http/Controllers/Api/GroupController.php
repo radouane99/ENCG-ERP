@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AcademicYear;
 use App\Models\Exam;
 use App\Models\ExamSeating;
+use App\Models\Filiere;
 use App\Models\Group;
 use App\Models\Schedule;
 use App\Models\Student;
@@ -216,37 +217,34 @@ class GroupController extends Controller
             abort(403, 'Non autorisé à répartir les étudiants dans les groupes.');
         }
 
-        $filiereId = $request->input('filiere_id');
-        if (! $filiereId) {
-            return response()->json(['success' => false, 'message' => 'Filière requise.'], 422);
-        }
+        $data = $request->validate(['filiere_id' => 'required|integer|exists:filieres,id', 'academic_year_id' => 'required|integer|exists:academic_years,id', 'semester_number' => 'required|integer|between:1,10']);
+        abort_unless(Filiere::whereKey($data['filiere_id'])->where('institution_id', $user->institution_id)->exists(), 403);
+        $dispatched = DB::transaction(function () use ($data) {
+            $groups = Group::where('filiere_id', $data['filiere_id'])->where('academic_year_id', $data['academic_year_id'])->where('semester_number', $data['semester_number'])->orderBy('name')->lockForUpdate()->get();
+            abort_if($groups->isEmpty(), 422, 'Aucun groupe pour ce contexte.');
+            $pathways = StudentPathway::with('student.user')->where('filiere_id', $data['filiere_id'])->where('academic_year_id', $data['academic_year_id'])
+                ->where('current_semester', $data['semester_number'])->where('is_current', true)->lockForUpdate()->get()
+                ->sortBy(fn ($p) => ($p->student?->last_name ?? '').' '.($p->student?->first_name ?? '').' '.str_pad((string) $p->student_id, 12, '0', STR_PAD_LEFT))->values();
+            $capacities = $groups->sum('capacity');
+            abort_if($pathways->count() > $capacities, 422, 'Capacité totale insuffisante.');
+            $offset = 0;
+            foreach ($groups as $index => $group) {
+                $remaining = $pathways->count() - $offset;
+                $balanced = (int) ceil($remaining / max(1, $groups->count() - $index));
+                $required = max(0, $remaining - $groups->slice($index + 1)->sum('capacity'));
+                $size = min($group->capacity, max($balanced, $required));
+                foreach ($pathways->slice($offset, $size) as $pathway) {
+                    $pathway->update(['group_id' => $group->id]);
+                    StudentRegistration::where('student_id', $pathway->student_id)->where('academic_year_id', $data['academic_year_id'])->where('semester_number', $data['semester_number'])->where('filiere_id', $data['filiere_id'])->update(['group_id' => $group->id]);
+                }
+                $offset += $size;
+                app(StudentSubGroupDispatcherService::class)->dispatchGroup($group);
+            }
 
-        $groups = Group::where('filiere_id', $filiereId)->get();
-        if ($groups->isEmpty()) {
-            return response()->json(['success' => false, 'message' => 'Aucun groupe trouvé.'], 404);
-        }
+            return $pathways->count();
+        });
 
-        $students = Student::whereHas('pathways', fn ($q) => $q->where('filiere_id', $filiereId))
-            ->orWhereHas('registrations', fn ($q) => $q->where('filiere_id', $filiereId))
-            ->limit(50)
-            ->get();
-        $groupCount = $groups->count();
-        $dispatched = 0;
-
-        foreach ($students as $index => $st) {
-            $assignedGroup = $groups[$index % $groupCount];
-
-            StudentRegistration::where('student_id', $st->id)->update(['group_id' => $assignedGroup->id]);
-            StudentPathway::where('student_id', $st->id)->update(['group_id' => $assignedGroup->id]);
-
-            $dispatched++;
-        }
-
-        return response()->json([
-            'success' => true,
-            'message' => "{$dispatched} étudiants répartis.",
-            'dispatched_count' => $dispatched,
-        ]);
+        return response()->json(['success' => true, 'message' => "{$dispatched} étudiants répartis.", 'dispatched_count' => $dispatched]);
     }
 
     /**

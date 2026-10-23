@@ -3,10 +3,12 @@
 namespace App\Domain\Deliberation\Services;
 
 use App\Domain\Deliberation\LmdRules;
+use App\Models\Assessment;
 use App\Models\Deliberation;
 use App\Models\DeliberationDecision;
 use App\Models\ResitEligibility;
 use App\Models\Student;
+use App\Services\Academic\AcademicContext;
 use App\Services\Academic\DeliberationEngine as CanonicalDeliberationEngine;
 use App\Services\Academic\DeliberationSealService;
 use Illuminate\Support\Collection;
@@ -19,62 +21,65 @@ class DeliberationEngine extends CanonicalDeliberationEngine
 {
     public function processDeliberation(Deliberation $deliberation): void
     {
-        app(DeliberationSealService::class)->assertNotSealed($deliberation);
+        AcademicContext::run($deliberation->academic_year_id, function () use ($deliberation) {
+            app(DeliberationSealService::class)->assertNotSealed($deliberation);
 
-        DB::transaction(function () use ($deliberation) {
-            $deliberation->update(['status' => 'in_progress']);
+            DB::transaction(function () use ($deliberation) {
+                $deliberation->update(['status' => 'in_progress']);
 
-            // 1. Fetch all students registered in this filiere/semester/group
-            $students = $this->getEligibleStudents($deliberation);
-            $semesterNumber = $deliberation->semester->number;
-            $isRattrapage = ($deliberation->type === 'RATTRAPAGE');
+                // 1. Fetch all students registered in this filiere/semester/group
+                $students = $this->getEligibleStudents($deliberation);
+                $semesterNumber = $deliberation->semester->number;
+                $isRattrapage = ($deliberation->type === 'RATTRAPAGE');
 
-            foreach ($students as $student) {
-                // 2. Calculate raw averages per module (Handles MAX of Normale vs Rattrapage)
-                $moduleAverages = $this->calculateModuleAverages($student->id, $semesterNumber, $isRattrapage);
+                foreach ($students as $student) {
+                    // 2. Calculate raw averages per module (Handles MAX of Normale vs Rattrapage)
+                    $moduleAverages = $this->calculateModuleAverages($student->id, $semesterNumber, $isRattrapage);
 
-                // 3. Grant Rattrapage Eligibility for failed modules (If this is NORMALE deliberation)
-                if (! $isRattrapage) {
-                    $this->grantResitEligibility($student->id, $moduleAverages, $deliberation);
+                    // 3. Grant Rattrapage Eligibility for failed modules (If this is NORMALE deliberation)
+                    if (! $isRattrapage) {
+                        $this->grantResitEligibility($student->id, $moduleAverages, $deliberation);
+                    }
+
+                    // 4. Check for eliminatory marks (< 6/20 NPN)
+                    $hasEliminatory = $this->checkEliminatoryMarks($moduleAverages);
+
+                    // 5. Calculate semester average
+                    $semesterAverage = $moduleAverages->avg('final_module_score');
+
+                    // 6. Apply Compensation (Rachat) rules if applicable
+                    $decision = 'retake'; // Assume retake by default
+                    $wasCompensated = false;
+                    $compensatedAverage = null;
+
+                    if ($semesterAverage >= LmdRules::VALIDATION_THRESHOLD && ! $hasEliminatory) {
+                        $decision = 'admitted';
+                    } elseif ($semesterAverage >= LmdRules::RACHAT_MIN_AVERAGE && $semesterAverage < LmdRules::VALIDATION_THRESHOLD && ! $hasEliminatory) {
+                        // System Rachat (Jury Compensation)
+                        $decision = 'admitted';
+                        $wasCompensated = true;
+                        $compensatedAverage = 10.00;
+                    }
+
+                    // 7. Record Decision
+                    DeliberationDecision::updateOrCreate(
+                        [
+                            'deliberation_id' => $deliberation->id,
+                            'student_id' => $student->id,
+                        ],
+                        [
+                            'semester_average' => $semesterAverage,
+                            'compensated_average' => $compensatedAverage,
+                            'decision' => $decision,
+                            'was_compensated' => $wasCompensated,
+                            'mention' => $this->calculateMention($compensatedAverage ?? $semesterAverage),
+                        ]
+                    );
                 }
 
-                // 4. Check for eliminatory marks (< 6/20 NPN)
-                $hasEliminatory = $this->checkEliminatoryMarks($moduleAverages);
+                $deliberation->update(['status' => 'completed']);
+            });
 
-                // 5. Calculate semester average
-                $semesterAverage = $moduleAverages->avg('final_module_score');
-
-                // 6. Apply Compensation (Rachat) rules if applicable
-                $decision = 'retake'; // Assume retake by default
-                $wasCompensated = false;
-                $compensatedAverage = null;
-
-                if ($semesterAverage >= LmdRules::VALIDATION_THRESHOLD && ! $hasEliminatory) {
-                    $decision = 'admitted';
-                } elseif ($semesterAverage >= LmdRules::RACHAT_MIN_AVERAGE && $semesterAverage < LmdRules::VALIDATION_THRESHOLD && ! $hasEliminatory) {
-                    // System Rachat (Jury Compensation)
-                    $decision = 'admitted';
-                    $wasCompensated = true;
-                    $compensatedAverage = 10.00;
-                }
-
-                // 7. Record Decision
-                DeliberationDecision::updateOrCreate(
-                    [
-                        'deliberation_id' => $deliberation->id,
-                        'student_id' => $student->id,
-                    ],
-                    [
-                        'semester_average' => $semesterAverage,
-                        'compensated_average' => $compensatedAverage,
-                        'decision' => $decision,
-                        'was_compensated' => $wasCompensated,
-                        'mention' => $this->calculateMention($compensatedAverage ?? $semesterAverage),
-                    ]
-                );
-            }
-
-            $deliberation->update(['status' => 'completed']);
         });
     }
 
@@ -92,7 +97,7 @@ class DeliberationEngine extends CanonicalDeliberationEngine
 
     private function calculateModuleAverages(int $studentId, int $semesterNumber, bool $includeRattrapage): Collection
     {
-        $rows = DB::table('grades')
+        $rows = DB::table('grades')->whereIn('grades.assessment_id', Assessment::query()->select('id'))
             ->join('assessments', 'grades.assessment_id', '=', 'assessments.id')
             ->join('modules', 'assessments.module_id', '=', 'modules.id')
             ->where('grades.student_id', $studentId)

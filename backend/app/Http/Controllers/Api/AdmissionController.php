@@ -64,71 +64,75 @@ class AdmissionController extends Controller
     public function store(StoreApplicationRequest $request): JsonResponse
     {
         $data = $request->validated();
-        $cneClean = strtoupper(trim($data['cne'] ?? ''));
-        $cinClean = strtoupper(trim($data['cin'] ?? ''));
-        $refNumber = 'TAFEM-'.date('Y').'-'.strtoupper(substr(md5(($cneClean ?: uniqid()).microtime()), 0, 6));
 
-        $campaign = AdmissionCampaign::where('institution_id', $request->user()->institution_id)
-            ->when($data['admission_campaign_id'] ?? null, fn ($q, $id) => $q->whereKey($id))
-            ->where('status', 'open')->latest('id')->first();
-        abort_unless($campaign, 422, 'Aucune campagne ouverte pour cet établissement.');
-        $campaignId = $campaign->id;
+        return DB::transaction(function () use ($request, $data) {
+            $cneClean = strtoupper(trim($data['cne'] ?? ''));
+            $cinClean = strtoupper(trim($data['cin'] ?? ''));
+            $refNumber = 'TAFEM-'.date('Y').'-'.strtoupper(substr(md5(($cneClean ?: uniqid()).microtime()), 0, 6));
 
-        $application = Application::create([
-            'admission_campaign_id' => $campaignId,
-            'reference_number' => $refNumber,
-            'first_name' => $data['first_name'] ?? '',
-            'last_name' => $data['last_name'] ?? '',
-            'cne' => $cneClean,
-            'cin' => $cinClean,
-            'email' => $data['email'] ?? ($cneClean ? strtolower($cneClean).'@candidat.tafem.ma' : null),
-            'phone' => $data['phone'] ?? null,
-            'bac_average' => ! empty($data['bac_average']) ? (float) $data['bac_average'] : null,
-            'selection_score' => ! empty($data['selection_score']) ? (float) $data['selection_score'] : null,
-            'status' => $data['status'] ?? 'submitted',
-        ]);
+            $campaign = AdmissionCampaign::where('institution_id', $request->user()->institution_id)
+                ->when($data['admission_campaign_id'] ?? null, fn ($q, $id) => $q->whereKey($id))
+                ->where('status', 'open')->latest('id')->first();
+            abort_unless($campaign, 422, 'Aucune campagne ouverte pour cet établissement.');
+            $campaignId = $campaign->id;
 
-        // Créer le User + Student associé
-        if (! empty($cneClean)) {
-            $institutionId = $campaign->institution_id;
+            abort_if(Student::withTrashed()->where('cne', $cneClean)->exists(), 409, 'CNE existant : utilisez le dossier étudiant existant.');
+            $application = Application::create([
+                'admission_campaign_id' => $campaignId,
+                'reference_number' => $refNumber,
+                'first_name' => $data['first_name'] ?? '',
+                'last_name' => $data['last_name'] ?? '',
+                'cne' => $cneClean,
+                'cin' => $cinClean,
+                'email' => $data['email'] ?? ($cneClean ? strtolower($cneClean).'@candidat.tafem.ma' : null),
+                'phone' => $data['phone'] ?? null,
+                'bac_average' => ! empty($data['bac_average']) ? (float) $data['bac_average'] : null,
+                'selection_score' => ! empty($data['selection_score']) ? (float) $data['selection_score'] : null,
+                'status' => $data['status'] ?? 'submitted',
+            ]);
 
-            $user = User::firstOrProvision(
-                ['email' => strtolower($cneClean).'@candidat.tafem.ma'],
-                [
-                    'name' => trim(($data['first_name'] ?? '').' '.($data['last_name'] ?? '')),
-                    'first_name' => $data['first_name'] ?? '',
-                    'last_name' => $data['last_name'] ?? '',
-                    'cin' => $cinClean,
-                    'password' => TemporaryPassword::hash(),
-                    'must_change_password' => true,
-                    'institution_id' => $institutionId,
-                    'is_active' => true,
-                ]
-            );
+            // Créer le User + Student associé
+            if (! empty($cneClean)) {
+                $institutionId = $campaign->institution_id;
 
-            if (! $user->hasRole('student')) {
-                $user->assignRole('student');
+                $user = User::firstOrProvision(
+                    ['email' => strtolower($cneClean).'@candidat.tafem.ma'],
+                    [
+                        'name' => trim(($data['first_name'] ?? '').' '.($data['last_name'] ?? '')),
+                        'first_name' => $data['first_name'] ?? '',
+                        'last_name' => $data['last_name'] ?? '',
+                        'cin' => $cinClean,
+                        'password' => TemporaryPassword::hash(),
+                        'must_change_password' => true,
+                        'institution_id' => $institutionId,
+                        'is_active' => true,
+                    ]
+                );
+
+                if (! $user->hasRole('student')) {
+                    $user->assignRole('student');
+                }
+
+                Student::updateOrCreate(
+                    ['cne' => $cneClean],
+                    [
+                        'institution_id' => $institutionId,
+                        'user_id' => $user->id,
+                        'student_number' => $cneClean,
+                        'gender' => $data['gender'] ?? 'unknown',
+                        'birth_date' => $data['birth_date'] ?? null,
+                        'nationality' => $data['nationality'] ?? 'Non renseignée',
+                        'status' => 'pending',
+                    ]
+                );
             }
 
-            Student::updateOrCreate(
-                ['cne' => $cneClean],
-                [
-                    'institution_id' => $institutionId,
-                    'user_id' => $user->id,
-                    'student_number' => $cneClean,
-                    'gender' => $data['gender'] ?? 'unknown',
-                    'birth_date' => $data['birth_date'] ?? null,
-                    'nationality' => 'Marocaine',
-                    'status' => 'pending',
-                ]
-            );
-        }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Candidature enregistrée avec succès.',
-            'data' => $application,
-        ], 201);
+            return response()->json([
+                'success' => true,
+                'message' => 'Candidature enregistrée avec succès.',
+                'data' => $application,
+            ], 201);
+        });
     }
 
     /**

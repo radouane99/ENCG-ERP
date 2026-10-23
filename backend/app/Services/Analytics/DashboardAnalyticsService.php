@@ -3,6 +3,7 @@
 namespace App\Services\Analytics;
 
 use App\Models\Application;
+use App\Models\Assessment;
 use App\Models\AttendanceRecord;
 use App\Models\Filiere;
 use App\Models\FinalProject;
@@ -176,7 +177,7 @@ class DashboardAnalyticsService
             $absentRecords = max(0, $totalRecords - $presentRecords);
             $attendanceRate = $totalRecords > 0 ? round(($presentRecords / $totalRecords) * 100, 1) : 100;
 
-            $grades = DB::table('grades')->where('student_id', $student->id)->whereNotNull('value')->avg('value');
+            $grades = DB::table('grades')->whereIn('grades.assessment_id', Assessment::query()->select('id'))->where('student_id', $student->id)->whereNotNull('value')->avg('value');
 
             $upcomingExams = 0;
             if (Schema::hasTable('exams')) {
@@ -309,14 +310,14 @@ class DashboardAnalyticsService
             // 5. Notes Apogée en attente (uniquement modules affectés)
             $pendingGrades = 0;
             if (! empty($allModuleIds)) {
-                $assessmentIds = DB::table('assessments')->whereIn('module_id', $allModuleIds)->pluck('id');
+                $assessmentIds = Assessment::query()->toBase()->whereIn('module_id', $allModuleIds)->pluck('id');
                 if ($assessmentIds->isNotEmpty()) {
-                    $pendingGrades = (int) DB::table('grades')
+                    $pendingGrades = (int) DB::table('grades')->whereIn('grades.assessment_id', Assessment::query()->select('id'))
                         ->whereIn('assessment_id', $assessmentIds)
                         ->whereNull('value')
                         ->count();
                     if ($pendingGrades === 0 && Schema::hasColumn('assessments', 'status')) {
-                        $pendingGrades = (int) DB::table('assessments')
+                        $pendingGrades = (int) Assessment::query()->toBase()
                             ->whereIn('id', $assessmentIds)
                             ->where('status', 'draft')
                             ->count();
@@ -370,11 +371,11 @@ class DashboardAnalyticsService
                             $groupName = $mod->filiere_code ?? ($mod->filiere_name ?? 'Tronc Commun');
                         }
 
-                        $totalAssessments = DB::table('assessments')->where('module_id', $mod->id)->count();
+                        $totalAssessments = Assessment::query()->toBase()->where('module_id', $mod->id)->count();
                         $enteredGrades = 0;
                         if ($totalAssessments > 0) {
-                            $assIds = DB::table('assessments')->where('module_id', $mod->id)->pluck('id');
-                            $enteredGrades = DB::table('grades')->whereIn('assessment_id', $assIds)->whereNotNull('value')->count();
+                            $assIds = Assessment::query()->toBase()->where('module_id', $mod->id)->pluck('id');
+                            $enteredGrades = DB::table('grades')->whereIn('grades.assessment_id', Assessment::query()->select('id'))->whereIn('assessment_id', $assIds)->whereNotNull('value')->count();
                         }
                         $expected = max(1, $totalAssessments * 30);
                         $progress = $totalAssessments > 0

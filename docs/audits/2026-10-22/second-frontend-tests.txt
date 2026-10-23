@@ -1,0 +1,52 @@
+
+> frontend@0.0.0 test:unit
+> vitest run
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv5.0.5 [39m[90m/app[39m
+
+ [32m✓[39m src/__tests__/lmd/gradeCalculation.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+ [32m✓[39m src/__tests__/security/fileUpload.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 27[2mms[22m[39m
+ [32m✓[39m src/features/public/components/__tests__/MvpRoadmapSection.test.tsx [2m([22m[2m1 test[22m[2m)[22m[32m 284[2mms[22m[39m
+ [32m✓[39m src/__tests__/lmd/lmdLabels.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 73[2mms[22m[39m
+ [32m✓[39m src/features/exams/model/__tests__/GradeSaveQueue.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 158[2mms[22m[39m
+ [32m✓[39m src/features/public/components/__tests__/BenefitsSection.test.tsx [2m([22m[2m1 test[22m[2m)[22m[33m 466[2mms[22m[39m
+   [32m✓[39m BenefitsSection [2m(1)[22m
+     [33m[2m✓[22m[39m renders the benefit cards and section heading[33m 446[2mms[22m[39m
+ [32m✓[39m src/features/public/components/__tests__/ImpactSection.test.tsx [2m([22m[2m1 test[22m[2m)[22m[33m 479[2mms[22m[39m
+   [32m✓[39m ImpactSection [2m(1)[22m
+     [33m[2m✓[22m[39m renders the section heading, public trust cards, and institution branding[33m 454[2mms[22m[39m
+ [32m✓[39m src/__tests__/auth/useAuthStore.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 31[2mms[22m[39m
+ [32m✓[39m src/features/public/components/__tests__/RoleJourneySection.test.tsx [2m([22m[2m1 test[22m[2m)[22m[33m 364[2mms[22m[39m
+   [32m✓[39m RoleJourneySection [2m(1)[22m
+     [33m[2m✓[22m[39m renders the experience highlights for each user role[33m 342[2mms[22m[39m
+ [32m✓[39m src/features/public/components/__tests__/TestimonialsSection.test.tsx [2m([22m[2m1 test[22m[2m)[22m[32m 228[2mms[22m[39m
+ [32m✓[39m src/features/public/components/__tests__/ConversionSection.test.tsx [2m([22m[2m1 test[22m[2m)[22m[33m 503[2mms[22m[39m
+   [32m✓[39m ConversionSection [2m(1)[22m
+     [33m[2m✓[22m[39m renders the main heading and CTAs[33m 477[2mms[22m[39m
+ [32m✓[39m src/features/public/components/__tests__/FaqSection.test.tsx [2m([22m[2m1 test[22m[2m)[22m[33m 501[2mms[22m[39m
+   [32m✓[39m FaqSection [2m(1)[22m
+     [33m[2m✓[22m[39m reveals the answer when a question is expanded[33m 487[2mms[22m[39m
+ [32m✓[39m src/features/profile/components/__tests__/DsarPanel.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[33m 552[2mms[22m[39m
+   [32m✓[39m DsarPanel completed export download [2m(2)[22m
+     [33m[2m✓[22m[39m does not expose an unauthenticated same-origin href for the DSAR file[33m 349[2mms[22m[39m
+ [32m✓[39m src/features/auth/pages/__tests__/PasswordAuthRoutes.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[33m 694[2mms[22m[39m
+   [32m✓[39m password auth routes [2m(2)[22m
+     [33m[2m✓[22m[39m sends the forgot-password request to the v1 auth endpoint[33m 525[2mms[22m[39m
+ [32m✓[39m src/features/analytics/ui/__tests__/AdminAnalyticsDashboard.test.tsx [2m([22m[2m1 test[22m[2m)[22m[33m 427[2mms[22m[39m
+   [32m✓[39m analytics availability [2m(1)[22m
+     [33m[2m✓[22m[39m shows a retryable error instead of inventing zero metrics[33m 416[2mms[22m[39m
+ [32m✓[39m src/__tests__/security/htmlSafe.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 19[2mms[22m[39m
+ [32m✓[39m src/__tests__/security/routeAccess.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 18[2mms[22m[39m
+ [32m✓[39m src/__tests__/security/documentAccess.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m src/features/public/components/__tests__/RegistrationFields.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[32m 290[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m19 passed[39m[22m[90m (19)[39m
+[2m      Tests [22m [1m[32m41 passed[39m[22m[90m (41)[39m
+[2m   Start at [22m 00:35:31
+[2m   Duration [22m 8.05s[2m (environment 56%, import 17%, transform 12%, setup 8%, tests 6%, worker 1%)[22m
+
+[2mEnvironment [22m [33mjsdom was created 19 times[39m[2m · 45.67s total, 56% of tracked time[22m
+[2m            [22m [2mcreate it once per worker with [22m[33mpool: 'vmThreads'[39m[2m (keeps per-file isolation) or [22m[33misolate: false[39m[2m (shares it across files)[22m
+[2m            [22m [2mlearn more: https://vitest.dev/guide/improving-performance#test-environments[22m
+

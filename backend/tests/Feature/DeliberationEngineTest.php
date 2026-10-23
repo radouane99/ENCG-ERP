@@ -13,13 +13,13 @@ it('calculates average correctly and returns V (Validé) for >= 10', function ()
     $student = Student::factory()->create();
     $module = Module::factory()->create();
 
-    $assessmentCC = Assessment::create([
+    $assessmentCC = $this->createTestAssessment([
         'module_id' => $module->id,
         'type' => 'CC',
         'weight' => 40,
     ]);
 
-    $assessmentExam = Assessment::create([
+    $assessmentExam = $this->createTestAssessment([
         'module_id' => $module->id,
         'type' => 'Exam',
         'weight' => 60,
@@ -41,8 +41,8 @@ it('returns RAT (Rattrapage) for average < 10', function () {
     $student = Student::factory()->create();
     $module = Module::factory()->create();
 
-    $assessmentCC = Assessment::create(['module_id' => $module->id, 'type' => 'CC', 'weight' => 40]);
-    $assessmentExam = Assessment::create(['module_id' => $module->id, 'type' => 'Exam', 'weight' => 60]);
+    $assessmentCC = $this->createTestAssessment(['module_id' => $module->id, 'type' => 'CC', 'weight' => 40]);
+    $assessmentExam = $this->createTestAssessment(['module_id' => $module->id, 'type' => 'Exam', 'weight' => 60]);
 
     // CC = 10, Exam = 8 => Avg = 4 + 4.8 = 8.8
     Grade::create(['student_id' => $student->id, 'assessment_id' => $assessmentCC->id, 'value' => 10]);
@@ -59,8 +59,8 @@ it('returns NV (Non Validé) if Exam is strictly eliminatory (< 6)', function ()
     $student = Student::factory()->create();
     $module = Module::factory()->create();
 
-    $assessmentCC = Assessment::create(['module_id' => $module->id, 'type' => 'CC', 'weight' => 40]);
-    $assessmentExam = Assessment::create(['module_id' => $module->id, 'type' => 'Exam', 'weight' => 60]);
+    $assessmentCC = $this->createTestAssessment(['module_id' => $module->id, 'type' => 'CC', 'weight' => 40]);
+    $assessmentExam = $this->createTestAssessment(['module_id' => $module->id, 'type' => 'Exam', 'weight' => 60]);
 
     Grade::create(['student_id' => $student->id, 'assessment_id' => $assessmentCC->id, 'value' => 20]);
     Grade::create(['student_id' => $student->id, 'assessment_id' => $assessmentExam->id, 'value' => 4]);
@@ -76,7 +76,7 @@ it('handles missing grades', function () {
     $student = Student::factory()->create();
     $module = Module::factory()->create();
 
-    Assessment::create(['module_id' => $module->id, 'type' => 'CC', 'weight' => 100]);
+    $this->createTestAssessment(['module_id' => $module->id, 'type' => 'CC', 'weight' => 100]);
 
     $engine = new DeliberationEngine;
     $result = $engine->calculateModuleResult($student, $module);
@@ -89,7 +89,7 @@ it('treats absent as 0', function () {
     $student = Student::factory()->create();
     $module = Module::factory()->create();
 
-    $assessment = Assessment::create(['module_id' => $module->id, 'type' => 'CC', 'weight' => 100]);
+    $assessment = $this->createTestAssessment(['module_id' => $module->id, 'type' => 'CC', 'weight' => 100]);
 
     Grade::create([
         'student_id' => $student->id,

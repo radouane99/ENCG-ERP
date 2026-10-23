@@ -23,7 +23,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -31,6 +31,57 @@ use Spatie\Activitylog\Traits\LogsActivity;
 class Student extends Model
 {
     use HasFactory, HasUuids, LogsActivity, SoftDeletes;
+
+    private array $pendingIdentity = [];
+
+    public function save(array $options = [])
+    {
+        return DB::transaction(function () use ($options) {
+            $identity = $this->pendingIdentity;
+            if ($identity && $this->user_id) {
+                $user = User::whereKey($this->user_id)->lockForUpdate()->firstOrFail();
+                $user->fill($identity);
+                $user->save();
+                $this->setRelation('user', $user);
+            }
+            $saved = parent::save($options);
+            if ($saved) {
+                $this->pendingIdentity = [];
+            }
+
+            return $saved;
+        });
+    }
+
+    protected function birthDate(): Attribute
+    {
+        return Attribute::make(get: fn () => array_key_exists('birth_date', $this->pendingIdentity) ? $this->pendingIdentity['birth_date'] : $this->getUserAttributeSafely('birth_date'),
+            set: function ($value) {
+                $this->pendingIdentity['birth_date'] = $value;
+
+                return [];
+            });
+    }
+
+    protected function address(): Attribute
+    {
+        return Attribute::make(get: fn () => array_key_exists('address', $this->pendingIdentity) ? $this->pendingIdentity['address'] : $this->getUserAttributeSafely('address'),
+            set: function ($value) {
+                $this->pendingIdentity['address'] = $value;
+
+                return [];
+            });
+    }
+
+    protected function city(): Attribute
+    {
+        return Attribute::make(get: fn () => array_key_exists('city', $this->pendingIdentity) ? $this->pendingIdentity['city'] : $this->getUserAttributeSafely('city'),
+            set: function ($value) {
+                $this->pendingIdentity['city'] = $value;
+
+                return [];
+            });
+    }
 
     public function getActivitylogOptions(): LogOptions
     {
@@ -101,80 +152,59 @@ class Student extends Model
 
     public function getUserAttributeSafely(string $attribute)
     {
-        $userVal = null;
-        if ($this->relationLoaded('user')) {
-            $userVal = $this->user?->{$attribute};
-        } elseif (! Model::preventsLazyLoading()) {
-            $userVal = $this->user?->{$attribute};
-        }
+        $identityUser = $this->relationLoaded('user') ? $this->getRelation('user') : $this->user()->first();
 
-        return $userVal ?? $this->attributes[$attribute] ?? null;
+        return $identityUser ? $identityUser->getAttribute($attribute) : ($this->attributes[$attribute] ?? null);
     }
 
     protected function firstName(): Attribute
     {
-        return Attribute::make(
-            get: fn () => $this->getUserAttributeSafely('first_name'),
-            set: function ($val) {
-                if ($this->relationLoaded('user') && $this->user) {
-                    $this->user->first_name = $val;
-                }
+        return Attribute::make(get: fn () => array_key_exists('first_name', $this->pendingIdentity) ? $this->pendingIdentity['first_name'] : $this->getUserAttributeSafely('first_name'),
+            set: function ($value) {
+                $this->pendingIdentity['first_name'] = $value;
 
                 return [];
-            },
-        );
+            });
     }
 
     protected function lastName(): Attribute
     {
-        return Attribute::make(
-            get: fn () => $this->getUserAttributeSafely('last_name'),
-            set: function ($val) {
-                if ($this->relationLoaded('user') && $this->user) {
-                    $this->user->last_name = $val;
-                }
+        return Attribute::make(get: fn () => array_key_exists('last_name', $this->pendingIdentity) ? $this->pendingIdentity['last_name'] : $this->getUserAttributeSafely('last_name'),
+            set: function ($value) {
+                $this->pendingIdentity['last_name'] = $value;
 
                 return [];
-            },
-        );
+            });
     }
 
     protected function email(): Attribute
     {
-        return Attribute::make(
-            get: fn () => $this->getUserAttributeSafely('email'),
-            set: function ($val) {
-                if ($this->relationLoaded('user') && $this->user) {
-                    $this->user->email = $val;
-                }
+        return Attribute::make(get: fn () => array_key_exists('email', $this->pendingIdentity) ? $this->pendingIdentity['email'] : $this->getUserAttributeSafely('email'),
+            set: function ($value) {
+                $this->pendingIdentity['email'] = $value;
 
                 return [];
-            },
-        );
+            });
     }
 
     protected function phone(): Attribute
     {
-        return Attribute::make(
-            get: fn () => $this->getUserAttributeSafely('phone'),
-            set: function ($val) {
-                if ($this->relationLoaded('user') && $this->user) {
-                    $this->user->phone = $val;
-                }
+        return Attribute::make(get: fn () => array_key_exists('phone', $this->pendingIdentity) ? $this->pendingIdentity['phone'] : $this->getUserAttributeSafely('phone'),
+            set: function ($value) {
+                $this->pendingIdentity['phone'] = $value;
 
                 return [];
-            },
-        );
+            });
     }
 
     protected function cin(): Attribute
     {
-        return Attribute::make(
-            get: fn () => $this->getUserAttributeSafely('cin'),
-            set: fn ($val) => [
-                'cin' => $val,
-            ],
-        );
+        return Attribute::make(get: fn () => array_key_exists('cin', $this->pendingIdentity) ? $this->pendingIdentity['cin'] : $this->getUserAttributeSafely('cin'),
+            set: function ($value) {
+                $this->pendingIdentity['cin'] = $value;
+
+                return [];
+            });
     }
 
     /**
@@ -188,12 +218,7 @@ class Student extends Model
             return $query->whereRaw('1 = 0');
         }
 
-        return $query->where(function (Builder $q) use ($cin) {
-            $q->whereHas('user', fn (Builder $u) => $u->where('cin', $cin));
-            if (Schema::hasColumn($this->getTable(), 'cin')) {
-                $q->orWhere('cin', $cin);
-            }
-        });
+        return $query->whereHas('user', fn (Builder $u) => $u->where('cin', $cin));
     }
 
     public function institution(): BelongsTo

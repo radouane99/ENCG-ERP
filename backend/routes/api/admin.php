@@ -300,6 +300,9 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:admin|super-admi
     Route::post('student-cards/bulk', [StudentCardController::class, 'bulkStore']);
     Route::get('/groups/{id}/students', [GroupController::class, 'getGroupStudents']);
     Route::post('/groups/{id}/assign-delegate', [GroupController::class, 'assignDelegate']);
+    Route::get('/admin/academic-integrity', [\App\Http\Controllers\Api\Admin\AcademicIntegrityController::class, 'index']);
+    Route::patch('/admin/academic-integrity/issues/{issueId}/identity', [\App\Http\Controllers\Api\Admin\AcademicIntegrityController::class, 'resolveIdentity']);
+    Route::patch('/admin/academic-integrity/assessments/{id}', [\App\Http\Controllers\Api\Admin\AcademicIntegrityController::class, 'resolve']);
     Route::post('/groups/dispatch-students', [GroupController::class, 'dispatchStudentsToGroups']);
     Route::post('/groups/dispatch-subgroups', [GroupController::class, 'dispatchSubGroups']);
     Route::apiResource('groups', GroupController::class);

@@ -83,6 +83,7 @@ class StudentSubGroupDispatcherService
                 DB::table('student_pathways')
                     ->where('student_id', $student->student_id)
                     ->where('group_id', $group->id)
+                    ->where('academic_year_id', $group->academic_year_id)
                     ->update([
                         'sub_group' => $assignedSubGroup,
                         'updated_at' => now(),
@@ -94,6 +95,7 @@ class StudentSubGroupDispatcherService
                 DB::table('student_registrations')
                     ->where('student_id', $student->student_id)
                     ->where('group_id', $group->id)
+                    ->where('academic_year_id', $group->academic_year_id)
                     ->update([
                         'sub_group' => $assignedSubGroup,
                         'updated_at' => now(),

@@ -3,6 +3,7 @@
 namespace App\Services\Academic;
 
 use App\Models\AcademicYear;
+use App\Models\Assessment;
 use App\Models\AuditLog;
 use App\Models\Group;
 use App\Models\Module;
@@ -25,6 +26,11 @@ class SmartAcademicProgressionService
      * - Diplômé : S10 validé.
      */
     public function getProgressionRoster(?int $academicYearId = null): array
+    {
+        return AcademicContext::run($academicYearId ?? AcademicContext::yearId() ?? -1, fn () => $this->buildProgressionRoster($academicYearId));
+    }
+
+    private function buildProgressionRoster(?int $academicYearId = null): array
     {
         $year = $academicYearId
             ? AcademicYear::find($academicYearId)
@@ -56,7 +62,7 @@ class SmartAcademicProgressionService
         $students = Student::whereIn('id', $studentIds)->with('user')->get()->keyBy('id');
 
         // Récupérer les notes de ces étudiants
-        $allGrades = DB::table('grades')
+        $allGrades = DB::table('grades')->whereIn('grades.assessment_id', Assessment::query()->select('id'))
             ->join('assessments', 'grades.assessment_id', '=', 'assessments.id')
             ->join('modules', 'assessments.module_id', '=', 'modules.id')
             ->whereIn('grades.student_id', $studentIds)

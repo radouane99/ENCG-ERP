@@ -72,7 +72,7 @@ it('exports an empty APOGEE CSV without dummy rows', function () {
 
 it('exports real APOGEE rows with CNE and Massar', function () {
     $module = Module::factory()->create();
-    $assessment = Assessment::create(['module_id' => $module->id, 'type' => 'Exam', 'weight' => 100]);
+    $assessment = $this->createTestAssessment(['module_id' => $module->id, 'type' => 'Exam', 'weight' => 100]);
     $a = Student::factory()->create(['cne' => 'G11111111']);
     $b = Student::factory()->create(['cne' => 'G22222222']);
     Grade::create(['student_id' => $a->id, 'assessment_id' => $assessment->id, 'value' => 12.5]);
@@ -427,7 +427,7 @@ it('batches early-warning course absence counts instead of querying per grade', 
     $module = $this->makeTestModule($filiere->id, ['code' => 'EW-MOD']);
     $studentA = $this->makeTestStudent(['first_name' => 'Nadia', 'cne' => 'N110000001']);
     $studentB = $this->makeTestStudent(['first_name' => 'Omar', 'cne' => 'N110000002']);
-    $assessment = Assessment::create(['module_id' => $module->id, 'type' => 'CC1', 'weight' => 40]);
+    $assessment = $this->createTestAssessment(['module_id' => $module->id, 'type' => 'CC1', 'weight' => 40]);
 
     Grade::create(['student_id' => $studentA->id, 'assessment_id' => $assessment->id, 'value' => 4.5, 'version' => 1]);
     Grade::create(['student_id' => $studentB->id, 'assessment_id' => $assessment->id, 'value' => 5.0, 'version' => 1]);

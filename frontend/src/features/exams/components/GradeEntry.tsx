@@ -1,5 +1,7 @@
 import React,{ useState,useEffect,useCallback } from 'react';
 import { useParams } from 'react-router-dom';
+import { GradeSaveQueue } from '../model/GradeSaveQueue';
+import { toast } from 'sonner';
 import { gradesApi } from '@shared/api/grades';
 import { CheckCircle2,AlertCircle,Loader2,RefreshCw } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
@@ -7,23 +9,20 @@ import { decisionFromScore } from '@shared/lib/lmd';
 import LmdLegend from '@shared/components/academic/LmdLegend';
 import LmdBadge from '@shared/components/academic/LmdBadge';
 import PageHeader from '@shared/components/layout/PageHeader';
-function useDebounceCallback<T extends (...args: any[]) => any>(callback: T, delay: number) {
-  const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  return React.useCallback((...args: Parameters<T>) => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-    timeoutRef.current = setTimeout(() => {
-      callback(...args);
-    }, delay);
-  }, [callback, delay]);
+export default function GradeEntry() {
+  const params = useParams();
+  return <GradeEntryGrid key={`${params.moduleId}:${params.groupId}`} />;
 }
 
-export default function GradeEntry() {
+function GradeEntryGrid() {
+  const versionsRef = React.useRef(new Map<number, {cc_version: number; exam_version: number}>());
+  const saveRef = React.useRef<(rows: any[]) => Promise<void>>(async () => {});
+  const queueRef = React.useRef<GradeSaveQueue<any> | null>(null);
+  if (!queueRef.current) queueRef.current = new GradeSaveQueue(rows => saveRef.current(rows));
   const [students, setStudents] = useState<any[]>([]);
   const [meta, setMeta] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
   // Read module and group from route parameters; do NOT hardcode values
@@ -34,6 +33,7 @@ export default function GradeEntry() {
   const fetchGrid = useCallback(async () => {
     try {
       setIsLoading(true);
+      setLoadError('');
       if (!moduleId || !groupId) {
         console.error('ModuleId and groupId are required for GradeEntry');
         setStudents([]);
@@ -42,9 +42,11 @@ export default function GradeEntry() {
       }
       const res = await gradesApi.getGradeGrid(moduleId, groupId);
       setStudents(res.data);
+      versionsRef.current = new Map(res.data.map((row: any) => [row.id, {cc_version: row.cc_version, exam_version: row.exam_version}]));
       setMeta(res.meta);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erreur chargement grille:", error);
+      setLoadError(error.response?.data?.message || 'Impossible de charger cette grille.');
     } finally {
       setIsLoading(false);
     }
@@ -61,7 +63,8 @@ export default function GradeEntry() {
     }
     try {
       setSaveStatus('saving');
-      const res = await gradesApi.saveGrades(moduleId, groupId, updates);
+      const res = await gradesApi.saveGrades(moduleId, groupId, updates.map(row => ({...row, ...versionsRef.current.get(row.student_id)})));
+      for (const row of res.calculated_results) versionsRef.current.set(row.student_id, {cc_version: row.cc_version, exam_version: row.exam_version});
       
       // Update local state with computed averages and statuses
       setStudents(prev => prev.map(st => {
@@ -73,17 +76,24 @@ export default function GradeEntry() {
       }));
 
       setSaveStatus('saved');
-      setTimeout(() => setSaveStatus('idle'), 3000);
+      // Keep the explicit saved state until the next edit.
     } catch (error) {
       console.error("Erreur sauvegarde:", error);
       setSaveStatus('error');
+      toast.error('Modifications non enregistrées. Réessayez ou rechargez après un conflit.');
+      throw error;
     }
   };
 
-  // Debounced save for auto-saving cell edits
-  const debouncedSave = useDebounceCallback((updates: any[]) => {
-    handleSave(updates);
-  }, 1000);
+  saveRef.current = handleSave;
+  useEffect(() => {
+    const preventLoss = (event: BeforeUnloadEvent) => {
+      if (queueRef.current?.dirty) { event.preventDefault(); event.returnValue = ''; }
+    };
+    window.addEventListener('beforeunload', preventLoss);
+    const queue = queueRef.current;
+    return () => { window.removeEventListener('beforeunload', preventLoss); void queue?.flush().catch(() => {}); };
+  }, []);
 
   const handleCellChange = (id: number, field: 'cc' | 'exam', value: string) => {
     const numValue = value === '' ? null : parseFloat(value);
@@ -95,11 +105,12 @@ export default function GradeEntry() {
       
       const changedStudent = updated.find(st => st.id === id);
       if (changedStudent) {
-        debouncedSave([{
+        queueRef.current?.enqueue({
           student_id: changedStudent.id,
           cc: changedStudent.cc,
-          exam: changedStudent.exam
-        }]);
+          exam: changedStudent.exam,
+          cc_absent: changedStudent.cc_absent, exam_absent: changedStudent.exam_absent
+        });
       }
       
       return updated;
@@ -124,11 +135,11 @@ export default function GradeEntry() {
             </span>
           )}
           {saveStatus === 'error' && (
-            <span className="text-xs font-bold text-red-600 flex items-center gap-2">
-              <AlertCircle className="w-3.5 h-3.5" /> Erreur de sauvegarde
-            </span>
+            <button type="button" onClick={() => void queueRef.current?.flush().catch(() => {})} className="text-xs font-bold text-red-600 flex items-center gap-2" aria-live="polite">
+              <AlertCircle className="w-3.5 h-3.5" /> Non enregistré — Réessayer
+            </button>
           )}
-          <button onClick={fetchGrid} className="p-2 text-slate-400 hover:text-slate-600 bg-white rounded-lg border border-slate-200">
+          <button aria-label="Recharger les notes" disabled={queueRef.current.dirty} onClick={fetchGrid} className="p-2 text-slate-400 hover:text-slate-600 bg-white rounded-lg border border-slate-200">
             <RefreshCw className="w-4 h-4" />
           </button>
           </div>
@@ -136,6 +147,10 @@ export default function GradeEntry() {
       />
 
       <LmdLegend />
+      {loadError && <p role="alert" className="rounded-lg border border-destructive p-3 text-destructive">{loadError}</p>}
+      {saveStatus === 'error' && <button type="button" className="min-h-11 rounded-lg border border-input px-3" onClick={() => {
+        if (queueRef.current?.discard()) { setSaveStatus('idle'); void fetchGrid(); }
+      }}>Abandonner les modifications locales et recharger</button>}
       <div className="bg-white dark:bg-slate-900 rounded-3xl border border-border shadow-sm overflow-x-auto">
         <table className="w-full text-sm text-left">
           <thead className="text-[10px] text-slate-400 uppercase tracking-wider bg-slate-50 border-b border-slate-100">

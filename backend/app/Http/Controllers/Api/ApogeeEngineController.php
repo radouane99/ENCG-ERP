@@ -196,55 +196,24 @@ class ApogeeEngineController extends Controller
      */
     public function validateCandidate(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'student_id' => 'required|integer',
-            'filiere_id' => 'required|integer',
-            'group_id' => 'nullable|integer',
-            'admission_type' => 'nullable|string',
-        ]);
-
-        $student = Student::findOrFail($validated['student_id']);
-        $apogeeCode = '26'.str_pad((string) $student->id, 6, '0', STR_PAD_LEFT);
-        $cneCode = 'K'.str_pad((string) random_int(10000000, 99999999), 8, '0', STR_PAD_LEFT);
-
-        $student->update([
-            'student_number' => $apogeeCode,
-            'cne' => $cneCode,
-            'status' => 'active',
-        ]);
-
-        $academicYearId = AcademicYear::where('is_current', true)->value('id') ?? 1;
-
-        StudentPathway::updateOrCreate(
-            ['student_id' => $student->id, 'is_current' => true],
-            [
-                'filiere_id' => $validated['filiere_id'],
-                'group_id' => $validated['group_id'] ?? null,
-                'academic_year_id' => $academicYearId,
-                'current_semester' => 1,
-            ]
-        );
-
-        StudentRegistration::firstOrCreate(
-            ['student_id' => $student->id, 'filiere_id' => $validated['filiere_id']],
-            ['academic_year_id' => 1]
-        );
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Candidat validé. Code APOGEE et CNE attribués.',
-            'data' => [
-                'student_id' => $student->id,
-                'student_name' => $student->user->name ?? 'N/A',
-                'apogee_code' => $apogeeCode,
-                'cne' => $cneCode,
-                'filiere_id' => $validated['filiere_id'],
-                'group_id' => $validated['group_id'] ?? null,
-                'admission_type' => $validated['admission_type'] ?? 'TAFEM',
-            ],
-        ]);
+        abort_unless($request->user()->hasAnyRole(['super-admin','admin','institution-admin','director','scolarite']),403);
+        $data=$request->validate(['student_id'=>'required|integer|exists:students,id','filiere_id'=>'required|integer|exists:filieres,id','group_id'=>'nullable|integer|exists:groups,id']);
+        return \Illuminate\Support\Facades\DB::transaction(function()use($request,$data){
+            $student=Student::whereKey($data['student_id'])->where('institution_id',$request->user()->institution_id)->lockForUpdate()->firstOrFail();
+            abort_unless($student->cne && $student->student_number,422,'Renseignez les identifiants officiels CNE et APOGEE avant validation.');
+            $yearId=\App\Services\Academic\AcademicContext::yearId();
+            abort_unless($yearId,422,'Année active requise.');
+            \App\Models\Filiere::whereKey($data['filiere_id'])->where('institution_id',$student->institution_id)->firstOrFail();
+            $group=isset($data['group_id']) ? \App\Models\Group::whereKey($data['group_id'])->where('filiere_id',$data['filiere_id'])->where('academic_year_id',$yearId)->firstOrFail() : null;
+            $semester=$group?->semester_number ?? 1;
+            StudentPathway::where('student_id',$student->id)->where('is_current',true)->update(['is_current'=>false]);
+            StudentPathway::updateOrCreate(['student_id'=>$student->id,'academic_year_id'=>$yearId,'current_semester'=>$semester],['filiere_id'=>$data['filiere_id'],'group_id'=>$group?->id,'is_current'=>true]);
+            StudentRegistration::updateOrCreate(['student_id'=>$student->id,'academic_year_id'=>$yearId,'semester_number'=>$semester],['filiere_id'=>$data['filiere_id'],'group_id'=>$group?->id,'registration_type'=>'initial','status'=>'active']);
+            $student->update(['status'=>'active']);
+            activity()->causedBy($request->user())->performedOn($student)->withProperties(['academic_year_id'=>$yearId,'semester_number'=>$semester])->log('candidate_academic_registration_validated');
+            return response()->json(['success'=>true,'message'=>'Inscription validée avec les identifiants officiels conservés.','data'=>['student_id'=>$student->id,'apogee_code'=>$student->student_number,'cne'=>$student->cne,'filiere_id'=>$data['filiere_id'],'academic_year_id'=>$yearId]]);
+        });
     }
-
     /**
      * Calculer la paie des vacataires.
      */

@@ -53,6 +53,8 @@ class RegisterUserService
             }
 
             $userAttributes = [
+                'first_name' => $data['first_name'] ?? '',
+                'last_name' => $data['last_name'] ?? '',
                 'name' => trim(($data['first_name'] ?? '').' '.($data['last_name'] ?? '')),
                 'email' => $emailClean,
                 'phone' => $data['phone'] ?? null,

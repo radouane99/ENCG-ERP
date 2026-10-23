@@ -1,0 +1,15 @@
+
+> frontend@0.0.0 build:stats
+> node scripts/build-stats.mjs
+
+{
+  "initialJsFiles": [
+    "/assets/index-B_4jhuhh.js",
+    "/assets/jsx-runtime-C40oxPSl.js",
+    "/assets/react-Fe368_yE.js",
+    "/assets/clsx-DB0hHKMi.js",
+    "/assets/utils-TirsgcU8.js"
+  ],
+  "initialJsBytes": 591681,
+  "initialJsGzipBytes": 182780
+}

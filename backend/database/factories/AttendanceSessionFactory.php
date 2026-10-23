@@ -29,7 +29,7 @@ class AttendanceSessionFactory extends Factory
                 'end_year' => 2027,
                 'start_date' => '2026-09-01',
                 'end_date' => '2027-06-30',
-                'is_current' => true,
+                'is_current' => ! AcademicYear::where('is_current', true)->exists(),
             ]
         );
         $filiere = Filiere::query()->firstOrCreate(

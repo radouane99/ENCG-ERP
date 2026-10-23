@@ -54,7 +54,7 @@ class ConcurrentGradeSubmissionAndLockingTest extends TestCase
             ]
         );
 
-        $this->assessment = Assessment::create([
+        $this->assessment = $this->createTestAssessment([
             'module_id' => $module->id,
             'type' => 'Exam',
             'weight' => 60.00,

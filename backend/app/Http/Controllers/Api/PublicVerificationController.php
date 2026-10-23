@@ -241,7 +241,7 @@ class PublicVerificationController extends Controller
         $module = Module::with('filiere')->findOrFail($moduleId);
         $group = Group::findOrFail($groupId);
 
-        $signature = ModulePvSignature::where('module_id', $moduleId)
+        $signature = ModulePvSignature::withoutGlobalScope('academic_year')->where('academic_year_id', $group->academic_year_id)->where('module_id', $moduleId)
             ->where('group_id', $groupId)
             ->with('signer')
             ->first();

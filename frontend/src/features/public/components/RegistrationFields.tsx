@@ -1,100 +1,21 @@
-import React,{ useState,useRef,useEffect } from 'react';
-import { Lock,ChevronDown,Check,X,Keyboard,Delete } from 'lucide-react';
+import React,{ useId } from 'react';
+import { Modal } from '@shared/components/ui/Modal';
+import { Lock,Check,X,Keyboard,Delete } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import type { Lang } from '../model/registrationTypes';
 
-export function CustomSelect({
-  icon: Icon,
-  value,
-  onChange,
-  options,
-  isRtl,
-  name,
-}: {
-  icon: React.ElementType;
-  value: string;
-  onChange: (e: { target: { name: string; value: string } }) => void;
-  options: { value: string; label: React.ReactNode }[];
-  isRtl: boolean;
-  name?: string;
+export function CustomSelect({ icon: Icon, value, onChange, options, isRtl, name, id, required, disabled }: {
+  icon: React.ElementType; value: string; onChange: (e: { target: { name: string; value: string } }) => void;
+  options: { value: string; label: React.ReactNode }[]; isRtl: boolean; name?: string; id?: string; required?: boolean; disabled?: boolean;
 }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  const selectedOption = options.find((opt) => String(opt.value) === String(value)) || options[0];
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isOpen]);
-
-  return (
-    <div ref={containerRef} className="relative w-full">
-      <button
-        type="button"
-        onClick={() => setIsOpen((prev) => !prev)}
-        className={cn(
-          "w-full flex items-center justify-between rounded-2xl py-3.5 text-base sm:text-lg font-extrabold focus:outline-none transition-all cursor-pointer shadow-sm text-left group",
-          (value !== undefined && value !== null && value !== '')
-            ? "bg-slate-100 dark:bg-slate-800/90 border-2 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white shadow-inner"
-            : "bg-white dark:bg-slate-900/90 border-2 border-slate-300 dark:border-white/20 text-slate-900 dark:text-white focus:border-[#0f2863] dark:focus:border-blue-400 focus:ring-4 focus:ring-[#0f2863]/20",
-          isOpen && "border-[#0f2863] dark:border-blue-400 ring-4 ring-[#0f2863]/20 shadow-md",
-          isRtl ? "pr-12 pl-4 text-right font-serif text-xl" : "pl-12 pr-4"
-        )}
-      >
-        <span className={cn("pointer-events-none absolute inset-y-0 flex items-center text-slate-400 dark:text-slate-500 group-focus-within:text-[#0f2863] dark:group-focus-within:text-blue-400 transition-colors", isRtl ? "right-4" : "left-4")}>
-          <Icon className="w-5 h-5" />
-        </span>
-
-        <span className={cn("truncate flex-1 font-extrabold text-slate-900 dark:text-white", isRtl && "font-serif font-bold text-xl")}>
-          {selectedOption?.label || value}
-        </span>
-
-        <ChevronDown className={cn("w-5 h-5 text-slate-400 transition-transform duration-200 shrink-0 ms-2", isOpen && "rotate-180 text-[#0f2863] dark:text-blue-400")} />
-      </button>
-
-      {/* Floating Options Menu */}
-      {isOpen && (
-        <div
-          className={cn(
-            "absolute left-0 right-0 mt-2 z-50 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 shadow-2xl rounded-2xl p-1.5 max-h-64 overflow-y-auto animate-in fade-in zoom-in-95 duration-150 space-y-1 divide-y divide-slate-100 dark:divide-slate-800/50",
-            isRtl && "text-right font-serif"
-          )}
-          dir={isRtl ? "rtl" : "ltr"}
-        >
-          {options.map((opt, idx) => {
-            const isSelected = String(opt.value) === String(value);
-            return (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => {
-                  onChange({ target: { name: name || '', value: String(opt.value) } });
-                  setIsOpen(false);
-                }}
-                className={cn(
-                  "w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm sm:text-base font-bold transition-all cursor-pointer text-slate-800 dark:text-slate-200 hover:bg-[#0f2863]/10 dark:hover:bg-blue-500/20 hover:text-[#0f2863] dark:hover:text-blue-300",
-                  isSelected && "bg-[#0f2863]/15 dark:bg-blue-500/25 text-[#0f2863] dark:text-blue-300 font-black shadow-2xs"
-                )}
-              >
-                <span className={cn("truncate", isRtl && "font-serif text-base font-bold")}>
-                  {opt.label}
-                </span>
-                {isSelected && <Check className="w-4 h-4 text-[#0f2863] dark:text-blue-400 shrink-0 ms-2" />}
-              </button>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
+  return <div className="relative w-full">
+    <Icon aria-hidden="true" className={cn('pointer-events-none absolute top-4 h-5 w-5 text-muted-foreground', isRtl ? 'right-4' : 'left-4')} />
+    <select id={id} name={name} required={required} disabled={disabled} value={value} dir={isRtl ? 'rtl' : 'ltr'}
+      onChange={e => onChange({ target: { name: name ?? '', value: e.target.value } })}
+      className="w-full rounded-xl border border-input bg-background px-12 py-3.5 text-base text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60">
+      {options.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+    </select>
+  </div>
 }
 
 export function Field({
@@ -109,6 +30,8 @@ export function Field({
   onUnlock?: () => void;
   children?: React.ReactNode;
 } & (React.InputHTMLAttributes<HTMLInputElement> | React.SelectHTMLAttributes<HTMLSelectElement>)) {
+  const generatedId = useId();
+  const inputId = props.id ?? generatedId;
   const cleanLabel = label.replace(/\s*\*\s*$/, '').trim();
 
   if (As === 'select') {
@@ -126,7 +49,7 @@ export function Field({
 
     return (
       <div className={cn('flex flex-col gap-2.5', className)}>
-        <label className={cn('text-sm sm:text-base font-black tracking-wide uppercase text-slate-800 dark:text-slate-200 flex items-center', isRtl && "justify-start font-serif text-lg font-black")}>
+        <label htmlFor={inputId} className={cn('text-sm sm:text-base font-black tracking-wide uppercase text-slate-800 dark:text-slate-200 flex items-center', isRtl && "justify-start font-serif text-lg font-black")}>
           <span>{cleanLabel}</span>
           {required && <span className="text-[#E60028] font-black ms-1">*</span>}
         </label>
@@ -134,6 +57,9 @@ export function Field({
           icon={Icon}
           value={String(selectProps.value ?? '')}
           name={selectProps.name}
+          id={inputId}
+          required={required}
+          disabled={selectProps.disabled}
           onChange={(e) => {
             if (selectProps.onChange) {
               selectProps.onChange(e as any);
@@ -152,7 +78,7 @@ export function Field({
 
   return (
     <div className={cn('flex flex-col gap-2.5', className)}>
-      <label className={cn('text-sm sm:text-base font-black tracking-wide uppercase text-slate-800 dark:text-slate-200 flex items-center', isRtl && "justify-start font-serif text-lg font-black")}>
+      <label htmlFor={inputId} className={cn('text-sm sm:text-base font-black tracking-wide uppercase text-slate-800 dark:text-slate-200 flex items-center', isRtl && "justify-start font-serif text-lg font-black")}>
         <span>{cleanLabel}</span>
         {required && <span className="text-rose-500 font-black ms-1">*</span>}
       </label>
@@ -162,6 +88,8 @@ export function Field({
         </span>
         <input
           {...(props as React.InputHTMLAttributes<HTMLInputElement>)}
+          id={inputId}
+          required={required}
           className={cn(
             "w-full rounded-2xl py-4 text-base sm:text-lg font-extrabold placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none transition-all shadow-sm",
             isReadOnly || hasVal
@@ -218,7 +146,7 @@ export function VirtualArabicKeyboardModal({
   const isAr = lang === 'ar';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-2 sm:p-4 bg-slate-950/70 backdrop-blur-md animate-in fade-in duration-200">
+    <Modal open={true} onClose={onClose} title={isAr ? "لوحة المفاتيح العربية" : "Clavier arabe"} size="lg">
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200">
 
         {/* Header */}
@@ -238,6 +166,7 @@ export function VirtualArabicKeyboardModal({
           </div>
           <button
             onClick={onClose}
+            aria-label={isAr ? "إغلاق" : "Fermer"}
             className="text-white/70 hover:text-white p-2 rounded-full hover:bg-white/10 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
@@ -269,15 +198,15 @@ export function VirtualArabicKeyboardModal({
         </div>
 
         {/* Tactile Keypad */}
-        <div className="p-4 space-y-2.5 bg-slate-100 dark:bg-slate-900 select-none">
+        <div className="p-4 space-y-2.5 overflow-x-auto bg-slate-100 dark:bg-slate-900 select-none">
           {/* Row 0: Numbers */}
-          <div className="grid grid-cols-11 gap-1.5" dir="rtl">
+          <div className="flex gap-1.5 min-w-max" dir="rtl">
             {['ذ', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩', '٠'].map(k => (
               <button
                 key={k}
                 type="button"
                 onClick={() => setFormData((prev: any) => ({ ...prev, [fieldName]: (prev[fieldName] || '') + k }))}
-                className="py-2.5 bg-white dark:bg-slate-800 hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-600 text-slate-900 dark:text-slate-100 font-serif font-bold text-lg rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs active:scale-95 transition-all cursor-pointer"
+                className="min-w-11 min-h-11 py-2.5 bg-white dark:bg-slate-800 hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-600 text-slate-900 dark:text-slate-100 font-serif font-bold text-lg rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs active:scale-95 transition-all cursor-pointer"
               >
                 {k}
               </button>
@@ -285,13 +214,13 @@ export function VirtualArabicKeyboardModal({
           </div>
 
           {/* Row 1 */}
-          <div className="grid grid-cols-12 gap-1.5" dir="rtl">
+          <div className="flex gap-1.5 min-w-max" dir="rtl">
             {['ض', 'ص', 'ث', 'ق', 'ف', 'غ', 'ع', 'ه', 'خ', 'ح', 'ج', 'د'].map(k => (
               <button
                 key={k}
                 type="button"
                 onClick={() => setFormData((prev: any) => ({ ...prev, [fieldName]: (prev[fieldName] || '') + k }))}
-                className="py-2.5 bg-white dark:bg-slate-800 hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-600 text-slate-900 dark:text-slate-100 font-serif font-bold text-lg rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs active:scale-95 transition-all cursor-pointer"
+                className="min-w-11 min-h-11 py-2.5 bg-white dark:bg-slate-800 hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-600 text-slate-900 dark:text-slate-100 font-serif font-bold text-lg rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs active:scale-95 transition-all cursor-pointer"
               >
                 {k}
               </button>
@@ -299,13 +228,13 @@ export function VirtualArabicKeyboardModal({
           </div>
 
           {/* Row 2 */}
-          <div className="grid grid-cols-11 gap-1.5" dir="rtl">
+          <div className="flex gap-1.5 min-w-max" dir="rtl">
             {['ش', 'س', 'ي', 'ب', 'ل', 'ا', 'ت', 'ن', 'م', 'ك', 'ط'].map(k => (
               <button
                 key={k}
                 type="button"
                 onClick={() => setFormData((prev: any) => ({ ...prev, [fieldName]: (prev[fieldName] || '') + k }))}
-                className="py-2.5 bg-white dark:bg-slate-800 hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-600 text-slate-900 dark:text-slate-100 font-serif font-bold text-lg rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs active:scale-95 transition-all cursor-pointer"
+                className="min-w-11 min-h-11 py-2.5 bg-white dark:bg-slate-800 hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-600 text-slate-900 dark:text-slate-100 font-serif font-bold text-lg rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs active:scale-95 transition-all cursor-pointer"
               >
                 {k}
               </button>
@@ -313,13 +242,13 @@ export function VirtualArabicKeyboardModal({
           </div>
 
           {/* Row 3 */}
-          <div className="grid grid-cols-10 gap-1.5" dir="rtl">
+          <div className="flex gap-1.5 min-w-max" dir="rtl">
             {['ئ', 'ء', 'ؤ', 'ر', 'لا', 'ى', 'ة', 'و', 'ز', 'ظ'].map(k => (
               <button
                 key={k}
                 type="button"
                 onClick={() => setFormData((prev: any) => ({ ...prev, [fieldName]: (prev[fieldName] || '') + k }))}
-                className="py-2.5 bg-white dark:bg-slate-800 hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-600 text-slate-900 dark:text-slate-100 font-serif font-bold text-lg rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs active:scale-95 transition-all cursor-pointer"
+                className="min-w-11 min-h-11 py-2.5 bg-white dark:bg-slate-800 hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-600 text-slate-900 dark:text-slate-100 font-serif font-bold text-lg rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs active:scale-95 transition-all cursor-pointer"
               >
                 {k}
               </button>
@@ -353,7 +282,7 @@ export function VirtualArabicKeyboardModal({
         </div>
 
       </div>
-    </div>
+    </Modal>
   );
 }
 

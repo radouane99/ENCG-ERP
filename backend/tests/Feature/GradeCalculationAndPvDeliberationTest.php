@@ -48,19 +48,19 @@ class GradeCalculationAndPvDeliberationTest extends TestCase
             'semester_number' => 7,
         ]);
 
-        $this->ccAssessment = Assessment::create([
+        $this->ccAssessment = $this->createTestAssessment([
             'module_id' => $this->module->id,
             'type' => 'CC',
             'weight' => 50.0,
         ]);
 
-        $this->examAssessment = Assessment::create([
+        $this->examAssessment = $this->createTestAssessment([
             'module_id' => $this->module->id,
             'type' => 'EXAM',
             'weight' => 50.0,
         ]);
 
-        $this->rattrapageAssessment = Assessment::create([
+        $this->rattrapageAssessment = $this->createTestAssessment([
             'module_id' => $this->module->id,
             'type' => 'RATTRAPAGE',
             'weight' => 100.0,

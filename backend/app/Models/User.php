@@ -52,6 +52,7 @@ class User extends Authenticatable implements HasMedia
     protected function casts(): array
     {
         return [
+            'birth_date' => 'date:Y-m-d',
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',

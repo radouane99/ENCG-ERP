@@ -16,6 +16,8 @@ class AssessmentFactory extends Factory
     public function definition(): array
     {
         return [
+            'academic_year_id' => fn () => \App\Models\AcademicYear::where('is_current', true)->value('id')
+                ?? \App\Models\AcademicYear::factory()->create(['is_current' => true])->id,
             'module_id' => Module::factory(),
             'type' => fake()->randomElement(['CC', 'Exam', 'TP']),
             'weight' => 50.0,

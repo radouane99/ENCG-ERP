@@ -4,6 +4,7 @@ namespace App\Services\Academic;
 
 use App\Models\AbsenceJustification;
 use App\Models\AcademicYear;
+use App\Models\Assessment;
 use App\Models\Attendance;
 use App\Models\ClubMember;
 use App\Models\Internship;
@@ -37,14 +38,15 @@ class StudentPortalService
         // 1. Identify student filiere and semester
         $pathway = DB::table('student_pathways')
             ->where('student_id', $studentId)
-            ->where('is_current', true)
-            ->first();
+            ->where('academic_year_id', AcademicContext::yearId())
+            ->orderByDesc('current_semester')->first();
 
         $filiereId = $pathway?->filiere_id;
         $semesterNumber = $pathway?->current_semester;
 
         if (! $filiereId) {
             $reg = DB::table('student_registrations')
+                ->where('academic_year_id', AcademicContext::yearId())->orderByDesc('semester_number')
                 ->where('student_id', $studentId)
                 ->first();
             $filiereId = $reg?->filiere_id;
@@ -74,10 +76,13 @@ class StudentPortalService
                 }
             });
         }
+        if (! $filiereId) {
+            $modulesQuery->whereRaw('1 = 0');
+        }
         $modules = $modulesQuery->get();
 
         // Also check any module IDs the student has grades for
-        $gradedModuleIds = DB::table('grades')
+        $gradedModuleIds = DB::table('grades')->whereIn('grades.assessment_id', Assessment::query()->select('id'))
             ->join('assessments', 'grades.assessment_id', '=', 'assessments.id')
             ->where('grades.student_id', $studentId)
             ->distinct()
@@ -99,7 +104,7 @@ class StudentPortalService
 
         // 3. Fetch all assessments for these modules
         $moduleIds = $modules->pluck('id')->toArray();
-        $assessments = DB::table('assessments')
+        $assessments = Assessment::query()->toBase()
             ->whereIn('module_id', $moduleIds)
             ->get()
             ->groupBy('module_id');
@@ -107,7 +112,7 @@ class StudentPortalService
         // 4. Fetch all student grades for these assessments
         $allAssessmentIds = $assessments->flatten()->pluck('id')->toArray();
         $grades = ! empty($allAssessmentIds)
-            ? DB::table('grades')
+            ? DB::table('grades')->whereIn('grades.assessment_id', Assessment::query()->select('id'))
                 ->where('student_id', $studentId)
                 ->whereIn('assessment_id', $allAssessmentIds)
                 ->get()
@@ -291,11 +296,7 @@ class StudentPortalService
         foreach ($semestersGrouped as $sDigit => $sRows) {
             $sDigit = (int) $sDigit;
             $sArchived = ($sDigit < $currentSemester);
-            $sAcadYear = match (true) {
-                $sDigit <= 2 => '2024-2025',
-                $sDigit <= 4 => '2025-2026',
-                default => '2026-2027',
-            };
+            $sAcadYear = AcademicYear::find(AcademicContext::yearId())?->label ?? 'Année non renseignée';
 
             $sFinalGrades = $sRows->pluck('moyenne_finale')->filter(fn ($v) => $v !== null);
             $sAverage = $sFinalGrades->isNotEmpty() ? round($sFinalGrades->avg(), 2) : null;
@@ -553,8 +554,8 @@ class StudentPortalService
 
         $pathway = DB::table('student_pathways')
             ->where('student_id', $studentId)
-            ->where('is_current', true)
-            ->first();
+            ->where('academic_year_id', AcademicContext::yearId())
+            ->orderByDesc('current_semester')->first();
 
         $groupId = $pathway?->group_id;
         if (! $groupId) {

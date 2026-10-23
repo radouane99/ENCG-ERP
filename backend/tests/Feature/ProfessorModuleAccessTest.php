@@ -20,11 +20,12 @@ use Spatie\Permission\Models\Role;
 
 function assignModuleToProfessor(Module $module, Professor $prof): void
 {
+    AcademicYear::where('start_year', 2025)->update(['is_current' => true]);
     DB::table('module_professor')->insert([
         'module_id' => $module->id,
         'academic_year_id' => AcademicYear::firstOrCreate(
             ['start_year' => 2025, 'end_year' => 2026],
-            ['institution_id' => 1, 'label' => '2025/2026']
+            ['institution_id' => 1, 'label' => '2025/2026', 'is_current' => true]
         )->id,
         'professor_id' => $prof->id,
         'professor_type' => Professor::class,

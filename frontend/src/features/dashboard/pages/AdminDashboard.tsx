@@ -1,3 +1,4 @@
+import { AcademicIntegrityPanel } from '../../admin/components/AcademicIntegrityPanel';
 import React,{ useState } from 'react';
 import { useQuery,useMutation,useQueryClient } from '@tanstack/react-query';
 import api from '@shared/lib/api';
@@ -206,6 +207,7 @@ export default function AdminDashboard() {
       isRTL && "font-serif"
     )}>
       <div className="w-full space-y-5">
+        <AcademicIntegrityPanel />
 
         {/* ══════════════════════════════════════════════════════════════
             HERO HEADER — Premium Dark Glassmorphism
