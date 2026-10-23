@@ -9,18 +9,18 @@ export default function ProfessorAvailability() {
   const queryClient = useQueryClient();
 
   const [availability, setAvailability] = useState<Record<string, { matin: boolean; apresMidi: boolean }>>({
-    Lundi: { matin: true, apresMidi: true },
-    Mardi: { matin: true, apresMidi: true },
-    Mercredi: { matin: true, apresMidi: false },
-    Jeudi: { matin: true, apresMidi: true },
-    Vendredi: { matin: false, apresMidi: true },
+    Lundi: { matin: false, apresMidi: false },
+    Mardi: { matin: false, apresMidi: false },
+    Mercredi: { matin: false, apresMidi: false },
+    Jeudi: { matin: false, apresMidi: false },
+    Vendredi: { matin: false, apresMidi: false },
     Samedi: { matin: false, apresMidi: false },
   });
 
   const [notes, setNotes] = useState('');
 
   // Fetch my availability from real backend
-  const { data: availData } = useQuery({
+  const { data: availData, isPending, isError, refetch } = useQuery({
     queryKey: ['my-availability'],
     queryFn: async () => {
       const res = await api.get('/professor-availability/my');
@@ -82,6 +82,7 @@ export default function ProfessorAvailability() {
   return (
     <div className="max-w-4xl mx-auto p-4 md:p-8 space-y-8 font-sans animate-in fade-in duration-500 pb-28">
       
+      {isError && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">Disponibilités indisponibles. <button className="underline" onClick={() => refetch()}>Réessayer</button></div>}
       {/* Header Banner */}
       <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-[#001A4B] rounded-3xl p-8 text-white shadow-xl border border-indigo-900/60 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none -translate-y-1/2 translate-x-1/3"></div>
@@ -89,10 +90,10 @@ export default function ProfessorAvailability() {
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> {availData?.status || 'Soumis'}
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> {availData?.status || 'Non soumis'}
               </span>
               <span className="text-xs font-bold text-slate-300">
-                {availData?.session_name || "Session d'Automne 2026/2027"}
+                {availData?.session_name || 'Année en cours de chargement'}
               </span>
             </div>
             <h1 className="text-2xl md:text-3xl font-black tracking-tight">Déclaration des Disponibilités & Contraintes</h1>
@@ -202,7 +203,7 @@ export default function ProfessorAvailability() {
           <button 
             type="button"
             onClick={() => saveMutation.mutate()}
-            disabled={saveMutation.isPending}
+            disabled={saveMutation.isPending || isPending || isError}
             className="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-[#001A4B] to-indigo-900 hover:opacity-95 text-white rounded-2xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg shadow-indigo-950/20 disabled:opacity-50 cursor-pointer"
           >
             {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : <Save className="w-4 h-4 text-amber-400" />}

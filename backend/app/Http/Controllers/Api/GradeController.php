@@ -189,7 +189,7 @@ class GradeController extends Controller
             }
         }
 
-        $module = Module::with('assessments')->findOrFail($moduleId);
+        $module = $this->workflowModule($request, $moduleId)->load('assessments');
         $groupId = $request->query('group_id');
         $session = $request->query('session', 'normale');
         if ($session === 'complet') {
@@ -457,6 +457,7 @@ class GradeController extends Controller
 
         $module = Module::findOrFail($moduleId);
         $user = $request->user();
+        abort_unless((int) $module->institution_id === (int) $user->institution_id, 404);
         $session = $request->input('session', 'normale');
 
         $query = ModulePvSignature::where('module_id', $moduleId);
@@ -508,7 +509,7 @@ class GradeController extends Controller
     {
         $this->authorize('create', Grade::class);
 
-        $module = Module::with('assessments')->findOrFail($moduleId);
+        $module = $this->workflowModule($request, $moduleId)->load('assessments');
         $groupId = $request->input('group_id');
         $students = $this->gradeService->getRegisteredStudents($module, $groupId);
         $normaleAssessments = $module->assessments->filter(
@@ -576,16 +577,24 @@ class GradeController extends Controller
         $student = Student::with('user')->findOrFail($studentId);
         $this->authorize('view', $student);
 
+        abort_unless((int) $student->institution_id === (int) $request->user()->institution_id, 403);
+        $year = AcademicYear::findOrFail(AcademicContext::yearId());
+        $grades = DB::table('grades as g')->join('assessments as a', 'g.assessment_id', '=', 'a.id')->join('modules as m', 'a.module_id', '=', 'm.id')
+            ->join('grade_publications as p', 'p.assessment_id', '=', 'a.id')->where('g.student_id', $student->id)->where('a.academic_year_id', $year->id)
+            ->where('m.institution_id', $student->institution_id)->where('p.published_at', '<=', now())->orderBy('m.name')->orderBy('a.id')->get(['m.name', 'a.type', 'g.value', 'g.absent']);
+        abort_if($grades->isEmpty(), 422, 'Aucune note publiée pour cette année.');
+        $pdf = app(\App\Services\Document\WorkflowDocumentExportService::class)->pdf('Notes publiées', ['Étudiant' => $student->user->name, 'CNE' => $student->cne, 'Année' => $year->label], ['Module', 'Évaluation', 'Note'], $grades->map(fn ($g) => [$g->name, $g->type, $g->absent ? 'ABS' : ($g->value ?? 'Non saisie')])->all(), 'État des notes publiées. Ne constitue pas une attestation de réussite ou une décision annuelle du jury.');
+
         if (! $student->user?->email) {
             return response()->json(['success' => false, 'message' => 'Email introuvable.'], 400);
         }
 
         try {
             Mail::to($student->user->email)->send(
-                new StudentTranscriptMail($student->user->name, 'Session 2025/2026')
+                new StudentTranscriptMail($student->user->name, $year->label, null, $pdf)
             );
 
-            return response()->json(['success' => true, 'message' => 'Email envoyé.']);
+            return response()->json(['success' => true, 'message' => 'Document transmis au service de messagerie.']);
         } catch (\Exception $e) {
             Log::error('Erreur envoi relevé de notes: '.$e->getMessage(), ['exception' => $e]);
 
@@ -1240,4 +1249,67 @@ class GradeController extends Controller
             'modules' => $result,
         ]);
     }
-}
+    private function workflowModule(Request $request, int $id): Module
+    {
+        $this->authorize('viewAny', Grade::class);
+        abort_unless($request->user()->hasAnyRole(['super-admin', 'admin', 'institution-admin', 'director', 'department-head', 'filiere-head', 'scolarite', 'professor', 'vacataire']), 403);
+        $module = Module::where('institution_id', $request->user()->institution_id)->findOrFail($id);
+        if ($request->user()->hasAnyRole(['professor', 'vacataire']) && ! $request->user()->hasAnyRole(['super-admin', 'admin', 'institution-admin', 'director', 'department-head', 'filiere-head'])) {
+            abort_unless(app(ProfessorAccessService::class)->getAuthorizedModuleIds($request->user())->contains($id), 403);
+        }
+        $group = $request->input('group_id');
+        if ($group && ! in_array($group, ['all', 'null', 'undefined'], true)) Group::where('academic_year_id', AcademicContext::yearId())->where('filiere_id', $module->filiere_id)->where('semester_number', $module->semester_number)->findOrFail($group);
+        return $module;
+    }
+
+    public function exportPvZipBundle(Request $request, int $module)
+    {
+        $model = $this->workflowModule($request, $module);
+        $payload = $this->getModulePv($request, $module)->getData(true);
+        $year = AcademicYear::findOrFail(AcademicContext::yearId());
+        $headers = ['CNE', 'Nom', 'Prénom', 'Moyenne normale', 'Moyenne finale', 'Décision'];
+        $rows = collect($payload['data'])->map(fn ($row) => [$row['apogee'] ?? '', $row['last_name'], $row['first_name'], $row['moyenne_normale'] ?? null, $row['moyenne_finale'] ?? null, $row['decision_finale'] ?? null])->all();
+        $service = app(\App\Services\Document\WorkflowDocumentExportService::class);
+        $pdf = $service->pdf('Résultats du module '.$model->name, ['Année' => $year->label, 'Module' => $model->code, 'Périmètre' => $request->input('group_id', 'Tous les groupes'), 'Visa enregistré' => empty($payload['signature']) ? 'Non — document de travail' : 'Oui'], $headers, $rows, 'Export des résultats enregistrés. Toute rectification suit la procédure de recours et de réouverture du PV.');
+        $stream = fopen('php://temp', 'r+'); fputcsv($stream, $headers, ';');
+        foreach ($rows as $row) fputcsv($stream, array_map(fn ($value) => is_string($value) && preg_match('/^[=+@\-\t\r]/', $value) ? "'".$value : $value, $row), ';');
+        rewind($stream); $csv = stream_get_contents($stream); fclose($stream);
+        return $service->zip(['Resultats_Module.pdf' => $pdf, 'Resultats_Module.csv' => "\xEF\xBB\xBF".$csv], 'Resultats_Module_'.$model->id.'.zip');
+    }
+
+    public function bulkSendModuleTranscripts(Request $request, int $module): JsonResponse
+    {
+        $input = $request->validate(['filter' => 'nullable|in:all,admis,rattrapage,ajournes', 'group_id' => 'nullable']);
+        $model = $this->workflowModule($request, $module);
+        $payload = $this->getModulePv($request, $module)->getData(true);
+        abort_if(empty($payload['signature']), 422, 'Le PV de ce périmètre doit être visé avant diffusion.');
+        $year = AcademicYear::findOrFail(AcademicContext::yearId());
+        $rows = collect($payload['data'])->filter(function ($row) use ($input) {
+            return match ($input['filter'] ?? 'all') { 'admis' => in_array($row['decision_finale'], ['V', 'VC', 'VAL', 'ADM']), 'rattrapage' => $row['decision_finale'] === 'R', 'ajournes' => in_array($row['decision_finale'], ['NV', 'AJ', 'FRAUDE']), default => true };
+        });
+        abort_if($rows->isEmpty(), 422, 'Aucun résultat correspondant à diffuser.');
+        abort_if($rows->count() > 250, 422, 'Sélectionnez un groupe de 250 étudiants au maximum.');
+        $students = Student::with('user')->whereIn('id', $rows->pluck('student_id'))->where('institution_id', $request->user()->institution_id)->get()->keyBy('id');
+        $sent = 0; $failed = 0;
+        foreach ($rows as $row) {
+            $student = $students[$row['student_id']] ?? null;
+            if (! $student?->user?->email) { $failed++; continue; }
+            try {
+                $pdf = app(\App\Services\Document\WorkflowDocumentExportService::class)->pdf('Résultats du module', ['Étudiant' => $student->user->name, 'CNE' => $student->cne, 'Année' => $year->label, 'Module' => $model->name], ['Moyenne normale', 'Moyenne finale', 'Décision'], [[$row['moyenne_normale'], $row['moyenne_finale'], $row['decision_finale']]], 'Résultats du module visé. Ce document ne constitue pas une attestation de réussite annuelle.');
+                Mail::to($student->user->email)->send(new \App\Mail\ModuleResultMail($student->user->name, $model->name, $year->label, $pdf)); $sent++;
+            } catch (\Throwable $exception) { $failed++; Log::warning('Module result delivery failed', ['student_id' => $student?->id, 'exception' => $exception::class]); }
+        }
+        activity()->causedBy($request->user())->performedOn($model)->withProperties(['sent_count' => $sent, 'failed_count' => $failed])->log('module_results_dispatched');
+        return response()->json(['success' => $failed === 0, 'message' => $sent.' relevé(s) transmis au service de messagerie, '.$failed.' échec(s).', 'sent_count' => $sent, 'failed_count' => $failed], $sent ? 200 : 502);
+    }
+
+    public function sendProfReminder(Request $request): JsonResponse
+    {
+        abort_unless($request->user()->hasAnyRole(['super-admin', 'admin', 'institution-admin', 'director', 'department-head', 'filiere-head', 'scolarite']), 403);
+        $data = $request->validate(['module_id' => 'required|integer']);
+        $module = $this->workflowModule($request, $data['module_id']);
+        $professors = Professor::with('user')->where('institution_id', $request->user()->institution_id)->whereIn('id', ModuleProfessor::where('module_id', $module->id)->where('academic_year_id', AcademicContext::yearId())->select('professor_id'))->get();
+        abort_if($professors->isEmpty(), 422, 'Aucun enseignant affecté à ce module pour cette année.');
+        foreach ($professors as $professor) $professor->user->notify(new \App\Notifications\SystemNotification('Suivi des notes', 'Veuillez vérifier la saisie et le visa des résultats du module '.$module->name.'.', 'info', '/professor/grades'));
+        return response()->json(['success' => true, 'message' => $professors->count().' rappel(s) enregistré(s) dans les espaces enseignants.']);
+    }}

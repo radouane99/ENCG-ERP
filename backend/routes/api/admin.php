@@ -316,6 +316,7 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:admin|super-admi
     Route::apiResource('academic-years', AcademicYearController::class)->except(['show']);
     Route::post('academic-years/{id}/rollover', [AcademicYearController::class, 'rollover']);
     Route::apiResource('exam-sessions', ExamSessionController::class)->except(['show']);
+    Route::get('final-projects/options', [FinalProjectController::class, 'options']);
     Route::apiResource('final-projects', FinalProjectController::class);
     Route::apiResource('attendances', AttendanceController::class)->only(['index', 'destroy']);
 
@@ -326,6 +327,7 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:admin|super-admi
     // Internships
     Route::apiResource('internships', InternshipController::class)->except(['destroy']);
     Route::prefix('admin/internships')->group(function () {
+        Route::get('/options', [AdminInternshipController::class, 'options']);
         Route::get('/', [AdminInternshipController::class, 'index']);
         Route::put('/{id}/status', [AdminInternshipController::class, 'updateStatus']);
         Route::post('/{id}/validate', [AdminInternshipController::class, 'validateInternship']);
@@ -452,6 +454,10 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:admin|super-admi
     Route::post('mission-orders', [ConvocationController::class, 'generateMissionOrder']);
     Route::post('schedules/ai-simulation', [ScheduleController::class, 'generateAiSimulation']);
     Route::get('mobility/ranking', [StudentMobilityController::class, 'calculateMeritRanking']);
+    Route::get('admin/mobility/ranking', [StudentMobilityController::class, 'calculateMeritRanking']);
+    Route::get('admin/mobility-partners', [\App\Http\Controllers\Api\Admin\MobilityPartnerController::class, 'index']);
+    Route::post('admin/mobility-partners', [\App\Http\Controllers\Api\Admin\MobilityPartnerController::class, 'store']);
+    Route::put('admin/mobility-partners/{id}', [\App\Http\Controllers\Api\Admin\MobilityPartnerController::class, 'update']);
 
     // Admin AI Suite
     Route::prefix('ai')->group(function () {

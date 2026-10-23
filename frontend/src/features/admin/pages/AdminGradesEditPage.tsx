@@ -320,7 +320,9 @@ export default function AdminGradesEditPage() {
       return
     }
     try {
-      const res = await api.post(`/modules/${moduleId}/unlock-pv`, { session: 'normale' })
+      const reason = window.prompt('Motif de réouverture du PV (10 caractères minimum) :')
+      if (!reason || reason.trim().length < 10) { toast.error('Un motif précis est obligatoire.'); return }
+      const res = await api.post(`/modules/${moduleId}/unlock-pv`, { session: 'normale', reason: reason.trim() })
       toast.success(res.data.message || 'PV déverrouillé avec succès !')
       queryClient.invalidateQueries({ queryKey: ['grades'] })
       queryClient.invalidateQueries({ queryKey: ['module-pv', moduleId] })

@@ -1,0 +1,1 @@
+<p>Bonjour {{ $studentName }},</p><p>Vous trouverez en pièce jointe vos résultats enregistrés pour le module {{ $moduleName }}, année {{ $year }}.</p><p>Pour toute demande de vérification, consultez votre espace étudiant et la période de recours publiée.</p><p>ENCG Fès</p>

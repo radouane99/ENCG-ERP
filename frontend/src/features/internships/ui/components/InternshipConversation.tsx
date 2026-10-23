@@ -1,0 +1,11 @@
+import { useState, type FormEvent } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import api from '@shared/lib/api'
+import { Button } from '@shared/components/ui/Button'
+import { toast } from 'sonner'
+export default function InternshipConversation({ internshipId }: { internshipId: number }) {
+  const [body, setBody] = useState(''); const [busy, setBusy] = useState(false)
+  const messages = useQuery({ queryKey: ['internship-messages', internshipId], queryFn: () => api.get(`/internships/${internshipId}/messages`).then(r => r.data.data as { id: number; author: string; text: string; date: string }[]) })
+  async function send(event: FormEvent) { event.preventDefault(); setBusy(true); try { await api.post(`/internships/${internshipId}/messages`, { body }); setBody(''); await messages.refetch(); toast.success('Message enregistré dans le suivi du stage.') } catch { toast.error('Le message n’a pas été enregistré.'); } finally { setBusy(false) } }
+  return <section className="space-y-4"><h3 className="font-semibold">Échanges sur le stage</h3>{messages.isPending ? <p role="status" className="text-sm">Chargement des échanges…</p> : messages.isError ? <p role="alert" className="text-sm">Échanges indisponibles. <button className="underline" onClick={() => messages.refetch()}>Réessayer</button></p> : <div className="max-h-80 space-y-3 overflow-y-auto">{messages.data?.length ? messages.data.map(message => <article className="rounded-lg bg-muted/50 p-3 text-sm" key={message.id}><div className="flex flex-wrap justify-between gap-2 text-xs text-muted-foreground"><span className="font-semibold">{message.author}</span><time>{new Date(message.date).toLocaleString('fr-FR')}</time></div><p className="mt-2 whitespace-pre-wrap break-words">{message.text}</p></article>) : <p className="text-sm text-muted-foreground">Aucun message enregistré.</p>}</div>}<form onSubmit={send} className="space-y-2"><label className="block text-sm font-medium">Votre message<textarea className="mt-1 w-full rounded-lg border border-border bg-background p-3 text-sm" rows={3} minLength={2} maxLength={4000} required value={body} onChange={e => setBody(e.target.value)} /></label><div className="flex justify-end"><Button type="submit" isLoading={busy}>Enregistrer le message</Button></div></form></section>
+}

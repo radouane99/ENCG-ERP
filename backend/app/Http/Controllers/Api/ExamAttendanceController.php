@@ -22,6 +22,7 @@ class ExamAttendanceController extends Controller
             abort_unless((int) $exam->module->institution_id === (int) $request->user()->institution_id, 403);
             $admin = $request->user()->hasAnyRole(['super-admin', 'institution-admin', 'director']);
             abort_unless($admin || ExamSurveillance::where('exam_id', $exam->id)->where('room_id', $data['room_id'])->where('professor_id', $request->user()->id)->exists(), 403, 'Surveillance non affectée.');
+            abort_if(ExamSurveillance::where('exam_id', $exam->id)->where('room_id', $data['room_id'])->whereNotNull('signed_at')->exists(), 409, 'PV de salle visé : réouverture requise avant tout nouveau pointage.');
             $seating = ExamSeating::with('student.user')->where('exam_id', $exam->id)->where('room_id', $data['room_id'])->where('qr_token', $data['qr_token'])->lockForUpdate()->firstOrFail();
             abort_if($seating->is_present, 409, 'Étudiant déjà pointé.');
             $seating->update(['is_present' => true]);

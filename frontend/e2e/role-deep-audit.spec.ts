@@ -5,10 +5,10 @@ test.describe('Audit rôles — erreurs serveur et faux succès', () => {
   test.skip(!process.env.E2E_ROLE_AUDIT, 'Sondes d’audit opt-in, assertions protectrices volontairement rouges.')
   test('un échec de sauvegarde des paramètres ne doit pas afficher un succès', async ({ page }) => {
     await mockApi(page); await seedSession(page, 'admin')
-    await page.route(url => url.pathname === '/api/settings', route => route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ message: 'Synthetic audit failure' }) }))
+    await page.route(url => url.pathname === '/api/admin/institution-settings', route => route.fulfill({ status: route.request().method() === 'POST' ? 500 : 200, contentType: 'application/json', body: JSON.stringify(route.request().method() === 'POST' ? { message: 'Synthetic audit failure' } : { institution: { institutionName: 'Établissement synthétique' }, academic_year: { label: '2026/2027', is_locked: false }, runtime: { mailer: 'array', mail_from: 'test@example.test', maintenance_mode: false, token_expiration_minutes: null }, academic_rules: { validation_threshold: 10, eliminatory_threshold: 6, paid_filiere_types: [] } }) }))
     await page.goto('/settings')
     await expect(page.getByRole('button', { name: 'Enregistrer les paramètres' })).toBeVisible()
-    const response = page.waitForResponse(r => new URL(r.url()).pathname === '/api/settings' && r.request().method() === 'POST')
+    const response = page.waitForResponse(r => new URL(r.url()).pathname === '/api/admin/institution-settings' && r.request().method() === 'POST')
     await page.getByRole('button', { name: 'Enregistrer les paramètres' }).click()
     expect((await response).status()).toBe(500)
     await expect(page.locator('[data-sonner-toast][data-type="error"]').first()).toBeVisible()

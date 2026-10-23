@@ -22,7 +22,7 @@ class ScheduleChangeRequest extends Model
 
     public function professor(): BelongsTo
     {
-        return $this->belongsTo(Professor::class, 'professor_id');
+        return $this->belongsTo(User::class, 'professor_id');
     }
 
     public function exam(): BelongsTo

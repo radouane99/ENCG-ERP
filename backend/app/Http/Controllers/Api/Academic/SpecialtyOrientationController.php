@@ -18,7 +18,7 @@ class SpecialtyOrientationController extends Controller
         $open = ($c['is_open'] ?? false) && ! ($c['finalized_at'] ?? false) && isset($c['opens_at'], $c['closes_at']) && now()->between(\Carbon\Carbon::parse($c['opens_at']), \Carbon\Carbon::parse($c['closes_at']));
         return response()->json(['success' => true, 'data' => ['filieres' => $quotas->map(fn ($q) => $q->filiere->toArray() + ['capacity' => $q->capacity, 'min_score_required' => $q->min_score_required]),
             'existing_wishes' => SpecialtyWish::with('filiere')->where('student_id', $student->id)->where('academic_year', $year->label)->orderBy('preference_rank')->get(),
-            'student_merit_score' => $score['average'], 'score_complete' => $score['complete'], 'is_campaign_open' => $open, 'deadline' => $c['closes_at'] ?? null, 'academic_year' => $year->label]]);
+            'student_merit_score' => $score['average'], 'score_complete' => $score['complete'], 'is_campaign_open' => $open, 'target_semester' => $c['target_semester'] ?? null, 'deadline' => $c['closes_at'] ?? null, 'academic_year' => $year->label]]);
     }
     public function studentSubmitChoices(Request $r)
     {
@@ -31,8 +31,8 @@ class SpecialtyOrientationController extends Controller
     {
         $this->action->authorize($r->user()); $c = $this->action->campaign($r->user()->institution_id); $year = $this->action->year($c);
         $wishes = SpecialtyWish::with('student.user', 'filiere')->where('academic_year', $year->label)->whereHas('student', fn ($q) => $q->where('institution_id', $r->user()->institution_id))->get();
-        $candidates = $wishes->groupBy('student_id')->map(function ($rows) { $a = $rows->first(); $assigned = $rows->firstWhere('allocation_status', 'assigned'); return ['student_id' => $a->student_id,
-            'student_name' => $a->student->user->name, 'cne' => $a->student->cne, 'merit_score' => $a->calculated_merit_score, 'wishes' => $rows->sortBy('preference_rank')->values(), 'allocated_filiere' => $assigned?->filiere?->name]; })->values();
+        $candidates = $wishes->groupBy('student_id')->map(function ($rows) use ($c) { $a = $rows->first(); $assigned = $rows->firstWhere('allocation_status', 'assigned'); $score = app(AcademicMeritService::class)->summary($a->student, $c['source_year_id']); return ['student_id' => $a->student_id,
+            'student_name' => $a->student->user->name, 'cne' => $a->student->cne, 'merit_score' => $score['average'], 'wishes' => $rows->sortBy('preference_rank')->values(), 'allocated_filiere' => $assigned?->filiere?->name]; })->sortByDesc('merit_score')->values();
         $quotas = FiliereQuota::with('filiere')->where('academic_year', $year->label)->whereHas('filiere', fn ($q) => $q->where('institution_id', $r->user()->institution_id))->get()->map(fn ($q) => $q->toArray() + ['filiere_code' => $q->filiere->code, 'filiere_name' => $q->filiere->name, 'allocated_count' => $wishes->where('allocation_status', 'assigned')->where('filiere_id', $q->filiere_id)->count()]);
         return response()->json(['success' => true, 'data' => ['campaign' => $c, 'quotas' => $quotas, 'candidates' => $candidates, 'wishes' => $wishes,
             'years' => AcademicYear::where('institution_id', $r->user()->institution_id)->get(['id', 'label']), 'filieres' => Filiere::where('institution_id', $r->user()->institution_id)->get(['id', 'name'])]]);

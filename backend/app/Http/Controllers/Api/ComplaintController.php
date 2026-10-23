@@ -117,35 +117,9 @@ class ComplaintController extends Controller
     }
     public function listGradeAppeals(Request $request): JsonResponse
     {
-        $this->authorize('viewAny', Complaint::class);
-
-        $query = GradeAppeal::with(['student.user', 'assessment.module']);
-
-        $user = $request->user();
-        if ($user->hasRole('student')) {
-            abort_unless($user->student, 403, 'Profil étudiant introuvable.');
-            $query->where('student_id', $user->student->id);
-        } elseif ($request->filled('student_id')) {
-            $query->where('student_id', $request->student_id);
-        }
-
-        $appeals = $query->latest()->get()->map(fn ($a) => [
-            'id' => $a->id,
-            'student_name' => $a->student->user->name ?? 'N/A',
-            'cne' => $a->student->cne ?? 'N/A',
-            'module_name' => $a->assessment->module->name ?? 'N/A',
-            'assessment_type' => $a->assessment->type ?? 'N/A',
-            'reason' => $a->reason,
-            'old_grade' => $a->old_grade,
-            'new_grade' => $a->new_grade,
-            'status' => $a->status,
-            'professor_notes' => $a->professor_notes,
-            'created_at' => $a->created_at?->format('d/m/Y'),
-        ]);
-
-        return response()->json(['success' => true, 'data' => $appeals]);
+        $controller = app(\App\Http\Controllers\Api\Academic\GradeAppealController::class);
+        return $request->user()->hasRole('student') ? $controller->studentIndex($request) : $controller->index($request);
     }
-
     /**
      * Résoudre une réclamation de note.
      */

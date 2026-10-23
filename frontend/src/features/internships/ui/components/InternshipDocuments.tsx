@@ -1,0 +1,11 @@
+import { useState } from 'react'
+import { Button } from '@shared/components/ui/Button'
+import { openAuthenticatedUrl } from '@shared/lib/documentAccess'
+import { toast } from 'sonner'
+import api from '@shared/lib/api'
+export interface StageDocument { id: number; document_type: string; status: string; feedback?: string }
+export default function InternshipDocuments({ documents, canReview = false, onRefresh }: { documents: StageDocument[]; canReview?: boolean; onRefresh: () => void }) {
+  const [busy, setBusy] = useState<number | null>(null)
+  async function review(id: number, status: string) { const feedback = window.prompt('Motif de la décision (5 caractères minimum) :'); if (!feedback || feedback.trim().length < 5) return; setBusy(id); try { await api.post(`/internship-documents/${id}/review`, { status, feedback }); toast.success('Revue du document enregistrée.'); onRefresh() } catch { toast.error('La revue du document n’a pas été enregistrée.'); } finally { setBusy(null) } }
+  return <section className="space-y-3"><h3 className="font-semibold">Documents du stage</h3>{documents.length ? documents.map(document => <article key={document.id} className="rounded-lg border border-border p-3 text-sm"><div className="flex flex-wrap items-center justify-between gap-2"><span className="font-medium">{document.document_type.replaceAll('_', ' ')}</span><span className="text-xs text-muted-foreground">{document.status === 'approved' ? 'Approuvé' : document.status === 'rejected' ? 'À corriger' : 'En attente de revue'}</span></div>{document.feedback && <p className="mt-2 text-muted-foreground">{document.feedback}</p>}<div className="mt-3 flex flex-wrap gap-2"><Button variant="outline" size="sm" onClick={() => openAuthenticatedUrl(`/api/internship-documents/${document.id}/download`)}>Télécharger</Button>{canReview && <><Button size="sm" disabled={busy !== null} onClick={() => review(document.id, 'approved')}>Approuver</Button><Button variant="outline" size="sm" disabled={busy !== null} onClick={() => review(document.id, 'rejected')}>Demander une correction</Button></>}</div></article>) : <p className="text-sm text-muted-foreground">Aucun document déposé.</p>}</section>
+}

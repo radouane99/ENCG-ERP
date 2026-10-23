@@ -50,6 +50,8 @@ class ReinscriptionWorkflowTest extends TestCase
             'current_semester' => 3,
             'is_current' => true,
         ]);
+        \App\Models\StudentRegistration::create(['student_id' => $this->student->id, 'filiere_id' => $this->filiere->id,
+            'academic_year_id' => $this->academicYear->id, 'semester_number' => 3, 'registration_type' => 're_enrollment', 'status' => 'academic_validated']);
     }
 
     /**

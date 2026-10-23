@@ -20,13 +20,13 @@ class ScheduleChangeRequestController extends Controller
      */
     public function index(): JsonResponse
     {
-        $requests = ScheduleChangeRequest::with(['professor.department', 'exam.module'])
+        $requests = ScheduleChangeRequest::whereHas('professor', fn ($q) => $q->where('institution_id', request()->user()->institution_id))->when(! \App\Support\InternshipAccess::staff(request()->user()), fn ($q) => $q->where('professor_id', request()->user()->id))->with(['professor.professor.department', 'exam.module'])->latest()->limit(200)
             ->get()
             ->map(function ($req) {
                 return [
                     'id' => $req->id,
                     'professor_name' => $req->professor->name ?? 'Inconnu',
-                    'department' => $req->professor->department->name ?? 'Inconnu',
+                    'department' => $req->professor->professor?->department?->name ?? 'Inconnu',
                     'module_name' => $req->exam->module->name ?? 'N/A',
                     'old_date' => $req->old_date?->format('d/m/Y') ?? 'N/A',
                     'old_start_time' => $req->old_start_time ? substr($req->old_start_time, 0, 5) : 'N/A',
@@ -48,96 +48,32 @@ class ScheduleChangeRequestController extends Controller
      */
     public function storeBatchReport(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'summary' => 'required|string',
-            'total_count' => 'nullable|integer',
-        ]);
-
-        $user = $request->user();
-        $prof = $user?->professor;
-        $profId = $prof?->id ?? 1;
-
-        $record = ScheduleChangeRequest::create([
-            'professor_id' => $profId,
-            'reason' => 'DÉCLARATION GROUPÉE DE CHEVAUCHEMENTS ('.($validated['total_count'] ?? 42)." séances en conflit) :\n".$validated['summary'],
-            'proposed_date' => now()->addDays(2),
-            'proposed_start_time' => '08:30:00',
-            'status' => 'pending',
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Rapport groupé de conflits enregistré et transmis au Service des Emplois du Temps.',
-            'data' => $record,
-        ]);
+        $data = $request->validate(['summary' => 'required|string|min:10|max:10000', 'total_count' => 'required|integer|min:1|max:10000']);
+        abort_unless($request->user()->professor || \App\Support\InternshipAccess::staff($request->user()), 403);
+        $record = ScheduleChangeRequest::create(['professor_id' => $request->user()->id, 'request_type' => 'conflict_report', 'reason' => 'Rapport de '.$data['total_count'].' conflit(s) : '.$data['summary'], 'status' => 'pending']);
+        activity()->causedBy($request->user())->performedOn($record)->log('schedule_conflicts_reported');
+        return response()->json(['success' => true, 'message' => 'Rapport enregistré pour examen par le service des emplois du temps.', 'data' => $record], 201);
     }
-
     /**
      * Approuver ou rejeter une demande.
      */
     public function updateStatus(Request $request, int $id): JsonResponse
     {
-        $validated = $request->validate([
-            'status' => 'required|in:approved,rejected',
-        ]);
-
-        $changeRequest = ScheduleChangeRequest::with(['exam', 'professor'])->findOrFail($id);
-        $changeRequest->update(['status' => $validated['status']]);
-
-        if ($validated['status'] === 'approved' && $changeRequest->exam) {
-            $changeRequest->exam->update([
-                'exam_date' => $changeRequest->proposed_date,
-                'start_time' => $changeRequest->proposed_start_time,
-            ]);
-
-            $email = $changeRequest->professor->email ?? null;
-            if ($email) {
-                try {
-                    Mail::to($email)->send(new ScheduleChangeNotificationMail([
-                        'moduleName' => $changeRequest->exam->module->name ?? 'N/A',
-                        'professorName' => $changeRequest->professor->name ?? 'Enseignant',
-                        'newDate' => $changeRequest->proposed_date?->format('d/m/Y'),
-                        'newStartTime' => substr($changeRequest->proposed_start_time ?? '', 0, 5),
-                        'reason' => $changeRequest->reason,
-                    ]));
-                } catch (\Exception $e) {
-                    Log::error("Email échec : {$email} — ".$e->getMessage());
-                }
+        abort_unless(\App\Support\InternshipAccess::staff($request->user()), 403);
+        $data = $request->validate(['status' => 'required|in:approved,rejected']);
+        DB::transaction(function () use ($request, $id, $data) {
+            $change = ScheduleChangeRequest::whereHas('professor', fn ($q) => $q->where('institution_id', $request->user()->institution_id))->whereKey($id)->lockForUpdate()->firstOrFail();
+            abort_unless($change->status === 'pending', 409, 'Demande déjà traitée.');
+            if ($data['status'] === 'approved' && $change->exam_id) {
+                $exam = \App\Models\Exam::whereKey($change->exam_id)->lockForUpdate()->firstOrFail();
+                abort_unless($change->proposed_date && $change->proposed_start_time && $exam->exam_date?->format('Y-m-d') === \Carbon\Carbon::parse($change->proposed_date)->format('Y-m-d') && substr($exam->start_time, 0, 5) === substr($change->proposed_start_time, 0, 5), 422, 'Replanifiez l’examen dans le module Examens avec contrôle des conflits avant de clôturer cette demande.');
             }
-        }
-
-        // Send In-App Notification to the Professor
-        $profUser = $changeRequest->professor?->user;
-        if ($profUser) {
-            try {
-                DB::table('notifications')->insert([
-                    'id' => Str::uuid()->toString(),
-                    'type' => 'App\Notifications\ScheduleChangeStatusUpdated',
-                    'notifiable_type' => 'App\Models\User',
-                    'notifiable_id' => $profUser->id,
-                    'data' => json_encode([
-                        'title' => $validated['status'] === 'approved' ? '✅ Demande d\'Emploi du Temps Approuvée' : '❌ Demande de Modification Rejetée',
-                        'message' => $validated['status'] === 'approved'
-                            ? "Votre demande de décalage d'horaire pour {$changeRequest->reason} a été validée par la Direction des Études."
-                            : "Votre demande de modification d'horaire n'a pas pu être retenue par l'Administration.",
-                        'type' => 'schedule_change_status',
-                        'status' => $validated['status'],
-                    ]),
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            } catch (\Throwable $e) {
-            }
-        }
-
-        return response()->json([
-            'success' => true,
-            'message' => $validated['status'] === 'approved'
-                ? 'Demande approuvée avec notification immédiate & email envoyés.'
-                : 'Demande rejetée avec notification transmise à l\'enseignant.',
-        ]);
+            $change->update(['status' => $data['status']]);
+            $change->professor->notifyNow(new \App\Notifications\SystemNotification('Suivi de votre demande d’horaire', 'Votre demande a été '.($data['status'] === 'approved' ? 'acceptée pour traitement' : 'rejetée').'. Consultez le service des emplois du temps.', 'info', '/professor/schedule'), ['database']);
+            activity()->causedBy($request->user())->performedOn($change)->log('schedule_change_reviewed');
+        });
+        return response()->json(['success' => true, 'message' => 'Décision enregistrée et notification déposée dans l’espace enseignant.']);
     }
-
     /**
      * Suggérer des professeurs remplaçants.
      */

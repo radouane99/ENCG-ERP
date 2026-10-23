@@ -8,7 +8,7 @@ class ValidateInternshipRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->can('internships.validate');
+        return \App\Support\InternshipAccess::staff($this->user());
     }
 
     public function rules(): array

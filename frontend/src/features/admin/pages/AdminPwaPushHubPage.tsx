@@ -292,7 +292,7 @@ export default function AdminPwaPushHubPage() {
 
       refetchStats();
     } catch {
-      toast.success("Notification enregistrée et diffusée sur la base de données !");
+      toast.error('La notification n’a pas été enregistrée ni diffusée.');
       refetchStats();
     } finally {
       setIsSending(false);

@@ -13,6 +13,7 @@ interface Student {
   cin: string;
   cne: string;
   status: string;
+  source?: 'student' | 'application';
   filiere_id?: number | null;
   filiere_name?: string;
   group_name?: string;
@@ -74,6 +75,7 @@ export default function EnrollmentManager() {
 
         return {
           id: matchedStudent ? matchedStudent.id : app.id,
+          source: matchedStudent ? 'student' as const : 'application' as const,
           first_name: app.first_name || '',
           last_name: app.last_name || '',
           first_name_ar: app.first_name_ar || app.arabic_first_name || '',
@@ -187,31 +189,27 @@ export default function EnrollmentManager() {
   };
 
   const handleExportZipBundle = async () => {
+    setIsExportingZip(true);
+    const toastId = toast.loading('Préparation des attestations d’inscription à viser…');
     try {
-      setIsExportingZip(true);
-      toast.loading("Génération du bundle ZIP de toutes les attestations d'inscription...");
-      openAuthenticatedUrl('/api/admin/students/export-attestations-zip');
-      setTimeout(() => {
-        toast.dismiss();
-        toast.success("📦 Bundle ZIP des attestations téléchargé avec succès !");
-        setIsExportingZip(false);
-      }, 1200);
-    } catch (err) {
-      toast.dismiss();
-      toast.error("Erreur lors de l'exportation du bundle ZIP.");
-      setIsExportingZip(false);
-    }
+      const response = await api.get('/admin/students/export-attestations-zip', { responseType: 'blob', params: { filiere_id: selectedFiliere || undefined } });
+      const url = URL.createObjectURL(response.data);
+      const link = document.createElement('a'); link.href = url; link.download = 'Attestations_Inscription_A_Viser.zip';
+      document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url);
+      toast.success('Archive préparée à partir des inscriptions validées.', { id: toastId });
+    } catch { toast.error('Export non effectué. Vérifiez le périmètre et les inscriptions validées.', { id: toastId }); }
+    finally { setIsExportingZip(false); }
   };
-
-  const handleExportAttestationPdf = (s: any) => {
-    toast.loading(`Génération de l'Attestation d'Inscription A4 (${s.first_name} ${s.last_name})...`);
-    setTimeout(() => {
-      toast.dismiss();
-      toast.success(`📜 Attestation d'Inscription (${s.first_name} ${s.last_name}) générée !`);
-      openAuthenticatedUrl(`/api/v1/admin/students/${s.id}/attestation-pdf?type=scolarite`);
-    }, 600);
+  const handleExportAttestationPdf = async (s: any) => {
+    const notice = toast.loading('Préparation du document de scolarité…');
+    try {
+      const result = await api.get(`/v1/admin/students/${s.id}/attestation-pdf`, { params: { type: 'scolarite', download: true }, responseType: 'blob' });
+      const url = URL.createObjectURL(result.data);
+      const link = document.createElement('a'); link.href = url; link.download = 'Attestation_Scolarite.pdf'; link.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 60000);
+      toast.success('Document téléchargé. Faites-le viser par la scolarité pour un usage officiel.', { id: notice });
+    } catch { toast.error('Export impossible. Vérifiez la validation administrative de l’inscription pour l’année active.', { id: notice }); }
   };
-
   const handleExportUsmbaCSV = async () => {
     toast.loading('Génération du fichier CSV — Comptes Académiques USMBA (UMPasse)...');
     try {
@@ -278,22 +276,16 @@ export default function EnrollmentManager() {
 
   const handleUpdateStatus = async (studentId: string | number, newStatus: string) => {
     try {
-      await api.patch(`/admin/students/${studentId}/inscription-status`, {
-        inscription_status: newStatus
-      }).catch(async () => {
-        await api.patch(`/admin/admissions/applications/${studentId}/status`, {
-          status: newStatus
-        });
-      });
-
-      toast.success(`Statut du dossier mis à jour : ${newStatus}`);
-      fetchData();
-    } catch {
-      toast.success(`Statut du dossier mis à jour : ${newStatus}`);
-      setStudents(prev => prev.map(s => s.id === studentId ? { ...s, inscription_status: newStatus, status: newStatus === 'valide' ? 'active' : newStatus } : s));
-    }
+      const dossier = students.find(student => String(student.id) === String(studentId));
+      if (dossier?.source === 'application') {
+        toast.info('La décision d’admission doit être enregistrée dans le dossier de candidature avec son motif.');
+        return;
+      }
+      await api.patch(`/admin/students/${studentId}/inscription-status`, { inscription_status: newStatus });
+      toast.success('Statut du dossier enregistré.');
+      await fetchData();
+    } catch { toast.error('Le statut du dossier n’a pas été enregistré.'); }
   };
-
   const pending = students.filter(s => s.status === 'pending' || s.status === 'en_attente' || (s as any).inscription_status === 'submitted' || (s as any).inscription_status === 'dossier_complet').length;
   const validated = students.filter(s => s.status === 'active' || s.status === 'valide' || (s as any).inscription_status === 'valide' || (s as any).inscription_status === 'inscrit').length;
   const rejected = students.filter(s => s.status === 'suspended' || s.status === 'inactive' || s.status === 'rejete').length;

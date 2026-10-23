@@ -62,20 +62,23 @@ export default function StudentInternshipsPage() {
           isProf: true,
         }));
       setCommentsList(feedbacks);
+      api.get(`/internships/${showSuiviModal.id}/messages`).then(response => setCommentsList([...feedbacks, ...response.data.data.map((message: any) => ({ ...message, date: new Date(message.date).toLocaleString('fr-FR') }))])).catch(() => toast.error('Impossible de charger les échanges du stage.'));
     } else {
       setCommentsList([]);
     }
   }, [showSuiviModal]);
 
   /* ─── Handlers ─── */
-  const handleAddComment = (e: React.FormEvent) => {
+  const handleAddComment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newComment.trim()) return;
-    setCommentsList(prev => [...prev, { author: 'Étudiant', date: "À l'instant", text: newComment, isProf: false }]);
-    setNewComment('');
-    toast.success('Message transmis à votre encadrant !');
+    if (!newComment.trim() || !showSuiviModal) return;
+    try {
+      await api.post(`/internships/${showSuiviModal.id}/messages`, { body: newComment });
+      const response = await api.get(`/internships/${showSuiviModal.id}/messages`);
+      setCommentsList(response.data.data.map((message: any) => ({ ...message, date: new Date(message.date).toLocaleString('fr-FR') })));
+      setNewComment(''); toast.success('Message enregistré dans le suivi du stage.');
+    } catch { toast.error('Le message n’a pas été enregistré.'); }
   };
-
   const handleCreateRequest = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);

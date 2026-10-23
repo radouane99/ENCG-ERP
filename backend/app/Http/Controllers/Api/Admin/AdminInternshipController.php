@@ -29,9 +29,10 @@ class AdminInternshipController extends Controller
     public function index(Request $request): JsonResponse
     {
         $this->authorize('viewAny', Internship::class);
+        abort_unless(\App\Support\InternshipAccess::staff($request->user()) || $request->user()->hasRole('scolarite'), 403);
 
         $perPage = min((int) $request->input('per_page', 20), 100);
-        $paginated = Internship::with(['student.user', 'soutenance.room'])
+        $paginated = Internship::whereHas('student', fn ($q) => $q->where('institution_id', $request->user()->institution_id))->with(['student.user', 'supervisor.user', 'soutenance.room', 'internshipDocuments'])
             ->latest()
             ->paginate($perPage);
 
@@ -54,7 +55,7 @@ class AdminInternshipController extends Controller
      */
     public function getSoutenancesList(): JsonResponse
     {
-        $soutenances = Soutenance::with([
+        $soutenances = Soutenance::where(fn ($q) => $q->whereHas('internship.student', fn ($s) => $s->where('institution_id', request()->user()->institution_id))->orWhereHas('finalProject.student', fn ($s) => $s->where('institution_id', request()->user()->institution_id)))->when(! \App\Support\InternshipAccess::staff(request()->user()), fn ($q) => $q->where(fn ($q) => $q->where('president_id', request()->user()->professor?->id ?? -1)->orWhere('examiner_id', request()->user()->professor?->id ?? -1)->orWhere('supervisor_id', request()->user()->professor?->id ?? -1)))->with([
             'internship.student.user',
             'internship.student.pathways.filiere',
             'finalProject.student.user',
@@ -64,7 +65,7 @@ class AdminInternshipController extends Controller
             'examiner.user',
             'supervisor.user',
         ])
-            ->latest('scheduled_at')
+            ->latest('date_time')->limit(250)
             ->get();
 
         $formatted = $soutenances->map(function ($s) {
@@ -77,8 +78,8 @@ class AdminInternshipController extends Controller
             $filiere = $filiere ?? 'Commerce & Gestion';
 
             $dateObj = $s->scheduled_at ?? $s->date_time;
-            $dateFormatted = $dateObj ? $dateObj->translatedFormat('d F Y') : '28 Juin 2026';
-            $timeFormatted = $dateObj ? $dateObj->format('H:i').' - '.$dateObj->copy()->addMinutes(90)->format('H:i') : '09:00 - 10:30';
+            $dateFormatted = $dateObj ? $dateObj->translatedFormat('d F Y') : 'Non planifiée';
+            $timeFormatted = $dateObj ? $dateObj->format('H:i').' - '.$dateObj->copy()->addMinutes(90)->format('H:i') : 'Non planifiée';
 
             return [
                 'id' => $s->id,
@@ -87,13 +88,13 @@ class AdminInternshipController extends Controller
                 'topic' => $s->finalProject?->title ?? $s->internship?->company_name ?? 'Projet de Fin d\'Études',
                 'date' => $dateFormatted,
                 'time' => $timeFormatted,
-                'room' => $s->room?->name ?? 'Amphi Al Khwarizmi',
-                'president' => $s->president?->user ? 'Dr. '.($s->president->user->last_name ?? $s->president->user->name) : 'Dr. El Fassi',
-                'encadrant' => $s->supervisor?->user ? 'Dr. '.($s->supervisor->user->last_name ?? $s->supervisor->user->name) : 'Dr. Benali',
-                'rapporteur' => $s->examiner?->user ? 'Dr. '.($s->examiner->user->last_name ?? $s->examiner->user->name) : 'Dr. Tazi',
+                'room' => $s->room?->name ?? 'Non renseignée',
+                'president' => $s->president?->user ? 'Dr. '.($s->president->user->last_name ?? $s->president->user->name) : 'Non désigné',
+                'encadrant' => $s->supervisor?->user ? 'Dr. '.($s->supervisor->user->last_name ?? $s->supervisor->user->name) : 'Non désigné',
+                'rapporteur' => $s->examiner?->user ? 'Dr. '.($s->examiner->user->last_name ?? $s->examiner->user->name) : 'Non désigné',
                 'status' => strtoupper($s->status ?? 'SCHEDULED'),
-                'score' => (float) ($s->grade ?? 16.5),
-                'mention' => $s->mention ?? 'Très Honorable',
+                'score' => $s->grade !== null ? (float) $s->grade : null,
+                'mention' => $s->mention,
                 'internship_id' => $s->internship_id,
                 'final_project_id' => $s->final_project_id,
                 'room_id' => $s->room_id,
@@ -124,15 +125,10 @@ class AdminInternshipController extends Controller
             'status' => ['required', 'string', 'in:'.implode(',', array_column(InternshipStatus::cases(), 'value'))],
         ]);
 
-        $internship->update([
-            'status' => $validated['status'],
-        ]);
+        $request->merge(['internship_id' => $id]);
+        return app(\App\Http\Controllers\Api\Professor\ProfessorInternshipController::class)->updateStatus($request);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Statut mis à jour',
-            'data' => $internship->fresh(['student.user']),
-        ]);
+
     }
 
     public function validateInternship(int $id, ValidateInternshipRequest $request): JsonResponse
@@ -172,109 +168,19 @@ class AdminInternshipController extends Controller
      */
     public function downloadConvocationPdf(int $id)
     {
-        $soutenance = Soutenance::with([
-            'internship.student.user',
-            'internship.student.pathways.filiere',
-            'finalProject.student.user',
-            'finalProject.student.pathways.filiere',
-            'room',
-            'president.user',
-            'examiner.user',
-            'supervisor.user',
-        ])->findOrFail($id);
-
-        $student = $soutenance->finalProject?->student ?? $soutenance->internship?->student;
-        $user = $student?->user;
-        $studentName = $user ? trim(($user->first_name ?? '').' '.($user->last_name ?? ($user->name ?? ''))) : 'Étudiant ENCG';
-
-        $filiereName = null;
-        if ($student && $student->relationLoaded('pathways')) {
-            $filiereName = $student->pathways->where('is_current', true)->first()?->filiere?->name;
+        $s = Soutenance::with('internship.student.user', 'finalProject.student.user', 'room', 'president.user', 'examiner.user', 'supervisor.user')->findOrFail($id);
+        $student = $s->internship?->student ?? $s->finalProject?->student; abort_unless($student && (int) $student->institution_id === (int) request()->user()->institution_id, 404);
+        if ((int) request()->user()->student?->id !== (int) $student->id) {
+            if ($s->internship) \App\Support\InternshipAccess::defense(request()->user(), $s);
+            else $this->authorize('view', $s->finalProject);
         }
-        $filiereName = $filiereName ?? 'Management & Commerce International';
-
-        $dateObj = $soutenance->scheduled_at ?? $soutenance->date_time;
-        $dateFormatted = $dateObj ? $dateObj->translatedFormat('d F Y') : '28 Juin 2026';
-        $timeFormatted = $dateObj ? $dateObj->format('H:i').' - '.$dateObj->copy()->addMinutes(90)->format('H:i') : '09:00 - 10:30';
-
-        $presidentName = $soutenance->president?->user ? 'Pr. '.($soutenance->president->user->last_name ?? $soutenance->president->user->name) : 'Pr. El Fassi';
-        $encadrantName = $soutenance->supervisor?->user ? 'Pr. '.($soutenance->supervisor->user->last_name ?? $soutenance->supervisor->user->name) : 'Pr. Benali';
-        $rapporteurName = $soutenance->examiner?->user ? 'Pr. '.($soutenance->examiner->user->last_name ?? $soutenance->examiner->user->name) : 'Pr. Tazi';
-
-        $logoBase64 = null;
-        foreach (['logo-encg.png', 'images/encg_logo.png', 'images/logo-encg.png', 'images/logo.png'] as $candidate) {
-            $path = public_path($candidate);
-            if (file_exists($path)) {
-                $mime = str_ends_with($candidate, '.png') ? 'image/png' : 'image/jpeg';
-                $logoBase64 = "data:{$mime};base64,".base64_encode((string) file_get_contents($path));
-                break;
-            }
-        }
-
-        // Arabic text reshaping using official helper for DomPDF
-        $arKingdom = ArabicGlyphReshaper::reshape('المملكة المغربية');
-        $arUniv = ArabicGlyphReshaper::reshape('جامعة سيدي محمد بن عبد الله - فاس');
-        $arSchool = ArabicGlyphReshaper::reshape('المدرسة الوطنية للتجارة والتسيير بفاس');
-        $arTitle = ArabicGlyphReshaper::reshape('إشعار ومقرر الحضور لمناقشة مشروع نهاية الدراسة');
-        $arDegree = ArabicGlyphReshaper::reshape('دبلوم المدرسة الوطنية للتجارة والتسيير (درجة ماستر • 5+كاب)');
-        $arDepartment = ArabicGlyphReshaper::reshape('مديرية الشؤون البيداغوجية والامتحانات');
-        $arJuryTitle = ArabicGlyphReshaper::reshape('لجنة تقييم ومناقشة مشاريع التخرج');
-
-        $studentNameAr = null;
-        if (! empty($student?->first_name_ar) || ! empty($student?->last_name_ar)) {
-            $rawAr = trim(($student->last_name_ar ?? '').' '.($student->first_name_ar ?? ''));
-            if (! empty($rawAr)) {
-                $studentNameAr = ArabicGlyphReshaper::reshape($rawAr);
-            }
-        }
-
-        $verifyUrl = config('app.url', 'https://encg-fes.ac.ma')."/verify/soutenance/{$soutenance->id}";
-        $qrCodeBase64 = null;
-        if (class_exists(QrCode::class)) {
-            try {
-                $qrSvg = QrCode::format('svg')->size(120)->margin(0)->generate($verifyUrl);
-                $qrCodeBase64 = 'data:image/svg+xml;base64,'.base64_encode($qrSvg);
-            } catch (\Throwable $e) {
-                // Fallback gracefully
-            }
-        }
-
-        $data = [
-            'soutenanceId' => $soutenance->id,
-            'studentName' => $studentName,
-            'studentNameAr' => $studentNameAr,
-            'filiereName' => $filiereName,
-            'topic' => $soutenance->finalProject?->title ?? $soutenance->internship?->company_name ?? 'Projet de Fin d\'Études',
-            'dateFormatted' => $dateFormatted,
-            'timeFormatted' => $timeFormatted,
-            'roomName' => $soutenance->room?->name ?? 'Amphi Al Khwarizmi',
-            'presidentName' => $presidentName,
-            'encadrantName' => $encadrantName,
-            'rapporteurName' => $rapporteurName,
-            'refNumber' => 'ENCG-FÈS/DP-SCOL/PFE-2026/N° '.str_pad((string) $soutenance->id, 4, '0', STR_PAD_LEFT),
-            'academicYear' => '2025 - 2026',
-            'cne' => $student?->cne ?? ('N138094'.str_pad((string) $soutenance->id, 3, '0', STR_PAD_LEFT)),
-            'cin' => $student?->cin ?? ($user?->cin ?? ('CD'.(600000 + $soutenance->id * 31))),
-            'logoBase64' => $logoBase64,
-            'resolvedLogoSrc' => $logoBase64,
-            'qrCodeBase64' => $qrCodeBase64,
-            'verifyUrl' => $verifyUrl,
-            'arKingdom' => $arKingdom,
-            'arUniv' => $arUniv,
-            'arSchool' => $arSchool,
-            'arTitle' => $arTitle,
-            'arDegree' => $arDegree,
-            'arDepartment' => $arDepartment,
-            'arJuryTitle' => $arJuryTitle,
-        ];
-
-        $pdf = Pdf::loadView('pdf.convocation_soutenance_pfe', $data)
-            ->setPaper('a4', 'portrait')
-            ->setOptions([
-                'isRemoteEnabled' => true,
-                'isHtml5ParserEnabled' => true,
-            ]);
-
-        return $pdf->stream("convocation_soutenance_{$soutenance->id}.pdf");
-    }
-}
+        abort_unless($s->status !== 'cancelled' && $s->date_time, 422, 'Soutenance annulée ou non planifiée.');
+        $bytes = app(\App\Services\Document\WorkflowDocumentExportService::class)->pdf('Convocation à la soutenance', [
+            'Référence' => $s->id, 'Étudiant' => $student->user->name, 'CNE' => $student->cne, 'Date et heure' => $s->date_time->format('d/m/Y H:i'),
+            'Salle' => $s->room?->name, 'Présidence' => $s->president?->user?->name, 'Examinateur' => $s->examiner?->user?->name, 'Encadrant' => $s->supervisor?->user?->name], [], [], 'Convocation préparée à partir de la planification enregistrée. Toute modification doit être confirmée par le service compétent.');
+        return response($bytes)->header('Content-Type', 'application/pdf')->header('Content-Disposition', 'inline; filename="Convocation_Soutenance_'.$id.'.pdf"')->header('Cache-Control', 'private, no-store');
+    }    public function options(Request $request): JsonResponse
+    {
+        abort_unless(\App\Support\InternshipAccess::staff($request->user()), 403);
+        return response()->json(['professors' => \App\Models\Professor::with('user')->where('institution_id', $request->user()->institution_id)->where('is_active', true)->get()->map(fn ($p) => ['id' => $p->id, 'name' => $p->user->name]), 'rooms' => \App\Models\Room::where('institution_id', $request->user()->institution_id)->where('is_out_of_service', false)->get(['id', 'name'])]);
+    }}

@@ -49,7 +49,7 @@ export default function ProfessorProctoring() {
   const teacherSlug = (
     authUser?.name 
     || ((authUser as any)?.first_name ? `${(authUser as any).first_name} ${(authUser as any).last_name || ''}`.trim() : '')
-    || 'Amina_Chraibi'
+    || 'Enseignant'
   ).replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '');
 
   const [filter, setFilter] = useState<'all' | 'confirmed' | 'pending'>('all');
@@ -57,7 +57,7 @@ export default function ProfessorProctoring() {
   const [confirmingRef, setConfirmingRef] = useState<string | null>(null);
   const [activeExamAttendance, setActiveExamAttendance] = useState<SurveillanceItem | null>(null);
   const [searchStudent, setSearchStudent] = useState('');
-  const [studentStatuses, setStudentStatuses] = useState<Record<number, 'present' | 'absent' | 'fraud'>>({});
+  const [studentStatuses, setStudentStatuses] = useState<Record<number, 'present' | 'absent'>>({});
   
   // Digital signature states
   const [signatureMode, setSignatureMode] = useState<'digital' | 'pad'>('digital');
@@ -86,7 +86,8 @@ export default function ProfessorProctoring() {
     queryFn: async () => {
       const res = await api.get('/professor/attendance/students', {
         params: {
-          module_name: activeExamAttendance?.module_name,
+          exam_id: (activeExamAttendance as any)?.exam_id,
+          room_id: (activeExamAttendance as any)?.room_id,
           group_label: activeExamAttendance?.group_name,
           is_exam: 1,
           context: 'exam',
@@ -100,9 +101,9 @@ export default function ProfessorProctoring() {
   // Initialize all exam students as present by default
   useEffect(() => {
     if (examStudents.length > 0) {
-      const initial: Record<number, 'present' | 'absent' | 'fraud'> = {};
+      const initial: Record<number, 'present' | 'absent'> = {};
       examStudents.forEach((st: any) => {
-        initial[st.id] = initial[st.id] || 'present';
+        initial[st.id] = st.status === 'present' ? 'present' : 'absent';
       });
       setStudentStatuses(initial);
     }
@@ -156,43 +157,18 @@ export default function ProfessorProctoring() {
     setHasDrawn(false);
   };
 
-  const defaultSurveillances: SurveillanceItem[] = [
-    {
-      id: 1,
-      reference: 'SURV-2026-001',
-      module_name: 'Comptabilité Générale I',
-      session_type: 'Session Normale (Automne 2026)',
-      role: 'Surveillant Secondaire (Salle)',
-      is_principal: false,
-      date_month: 'AOU',
-      date_day: '21',
-      date_full: 'Vendredi 21 Août 2026',
-      time: '16:30 - 18:30 (120 min)',
-      room: 'Amphithéâtre B',
-      group_name: 'ENCG - S1 • Groupe: TC-S2-G1',
-      is_confirmed: false,
-      color_theme: 'purple',
-    }
-  ];
-
-  const items: SurveillanceItem[] = Array.isArray(serverSurveillances) && serverSurveillances.length > 0 
-    ? serverSurveillances 
-    : defaultSurveillances;
-
+  const items: SurveillanceItem[] = Array.isArray(serverSurveillances) ? serverSurveillances : [];
   const handleConfirm = async (item: SurveillanceItem) => {
-    const survId = (item as any).surveillance_id || item.id || item.reference;
+    const surveillanceId = (item as any).surveillance_id;
+    if (!surveillanceId) { toast.error('Affectation de surveillance introuvable.'); return; }
     setConfirmingRef(item.reference);
     try {
-      const res = await api.post(`/professor/surveillances/${survId}/confirm`);
-      setConfirmedMap(prev => ({ ...prev, [item.reference]: true }));
+      await api.post(`/professor/surveillances/${surveillanceId}/confirm`);
+      setConfirmedMap(previous => ({ ...previous, [item.reference]: true }));
       await queryClient.invalidateQueries({ queryKey: ['professor-surveillances'] });
-      await queryClient.invalidateQueries({ queryKey: ['convocation-list'] });
-      await queryClient.invalidateQueries({ queryKey: ['convocation-stats'] });
-      toast.success(`Accusé de réception & présence confirmés pour ${item.reference} !`, {
-        description: res.data?.message || "Le bureau des examens et le chef de centre ont été notifiés de votre confirmation."
-      });
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Erreur lors de la confirmation de présence.");
+      toast.success('Accusé de réception enregistré.');
+    } catch {
+      toast.error('La confirmation n’a pas été enregistrée.');
     } finally {
       setConfirmingRef(null);
     }
@@ -275,19 +251,21 @@ export default function ProfessorProctoring() {
     }
 
     try {
-      const survId = activeExamAttendance?.id || 1;
+      const survId = (activeExamAttendance as any)?.surveillance_id;
+      if (!survId) throw new Error('Affectation introuvable.');
       const res = await api.post(`/professor/surveillances/${survId}/sign-pv`, {
         signature_data: signatureBase64,
         signature_type: signatureMode,
+        records: Object.entries(studentStatuses).map(([student_id, status]) => ({ student_id: Number(student_id), status })),
         present_count: examPresentCount,
         absent_count: examAbsentCount,
       });
 
       const stampData = {
-        signer: res.data?.signer_name || 'Pr. Amina Chraibi',
+        signer: res.data?.signer_name || authUser?.name || '',
         role: activeExamAttendance?.role || 'Surveillant Secondaire (Salle)',
         date: res.data?.signed_at || new Date().toLocaleString('fr-FR'),
-        hash: res.data?.signature_hash || 'SHA256:7D8E2A4F91B3C05E7A2F',
+        hash: res.data?.signature_hash || '',
       };
 
       setSignatureStamp(stampData);
@@ -295,17 +273,8 @@ export default function ProfessorProctoring() {
       toast.success("✅ PV d'Émargement & Absences signé électroniquement !", {
         description: "Votre signature certifiée a été archivée et apposée sur le PV d'examen officiel."
       });
-    } catch (e) {
-      // Fallback optimistic seal
-      const stampData = {
-        signer: 'Pr. Amina Chraibi',
-        role: activeExamAttendance?.role || 'Surveillant Secondaire (Salle)',
-        date: new Date().toLocaleString('fr-FR'),
-        hash: 'SHA256:7D8E2A4F91B3C05E7A2F',
-      };
-      setSignatureStamp(stampData);
-      setIsSigned(true);
-      toast.success("✅ PV d'Émargement & Absences signé avec succès !");
+    } catch {
+      toast.error('Le visa de surveillance n’a pas été enregistré.');
     } finally {
       setIsSavingSignature(false);
     }
@@ -334,7 +303,6 @@ export default function ProfessorProctoring() {
 
   const examPresentCount = Object.values(studentStatuses).filter(s => s === 'present').length;
   const examAbsentCount = Object.values(studentStatuses).filter(s => s === 'absent').length;
-  const examFraudCount = Object.values(studentStatuses).filter(s => s === 'fraud').length;
 
   return (
     <div className="space-y-8 font-sans animate-in fade-in duration-500 text-slate-900 dark:text-slate-100 pb-28">
@@ -510,7 +478,7 @@ export default function ProfessorProctoring() {
                   {/* Saisie des Absences & PV d'Examen */}
                   <button
                     onClick={() => {
-                      const examId = (item as any).exam_id || item.id || 193;
+                      const examId = (item as any).exam_id;
                       navigate(`/professor/exams/${examId}/surveillance`);
                     }}
                     className="px-4 py-2.5 bg-[#001A4B] hover:bg-[#082663] text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 shadow-sm cursor-pointer"
@@ -604,10 +572,6 @@ export default function ProfessorProctoring() {
                     <div className="text-xl font-black text-rose-400">{examAbsentCount}</div>
                     <div className="text-[10px] font-black uppercase text-rose-300">Absents (Note: ABS)</div>
                   </div>
-                  <div className="bg-purple-500/15 border border-purple-400/30 rounded-2xl p-3 text-center">
-                    <div className="text-xl font-black text-purple-400">{examFraudCount}</div>
-                    <div className="text-[10px] font-black uppercase text-purple-300">Exclus / Incident</div>
-                  </div>
                 </div>
 
                 {/* Search Bar */}
@@ -635,7 +599,7 @@ export default function ProfessorProctoring() {
                     </div>
                   ) : (
                     filteredExamStudents.map((st: any, idx: number) => {
-                      const status = studentStatuses[st.id] || 'present';
+                      const status = studentStatuses[st.id] || 'absent';
                       return (
                         <div
                           key={st.id}
@@ -673,15 +637,6 @@ export default function ProfessorProctoring() {
                             >
                               ✗ Absent
                             </button>
-                            <button
-                              onClick={() => setStudentStatuses(prev => ({ ...prev, [st.id]: 'fraud' }))}
-                              className={cn(
-                                "px-3 py-1 rounded-lg text-[10px] font-black uppercase transition-all cursor-pointer",
-                                status === 'fraud' ? "bg-purple-500 text-white shadow-xs" : "text-white/40 hover:text-white"
-                              )}
-                            >
-                              ! Incident
-                            </button>
                           </div>
                         </div>
                       );
@@ -708,7 +663,7 @@ export default function ProfessorProctoring() {
                             signatureMode === 'digital' ? "bg-amber-400 text-[#001A4B]" : "text-white/60 hover:text-white"
                           )}
                         >
-                          <Sparkles className="w-3 h-3 inline mr-1" /> Certificat Numérique ENCG
+                          <Sparkles className="w-3 h-3 inline mr-1" /> Visa du surveillant
                         </button>
                         <button
                           onClick={() => setSignatureMode('pad')}
@@ -744,7 +699,7 @@ export default function ProfessorProctoring() {
                             Horodatage : {signatureStamp.date} • Empreinte : {signatureStamp.hash}
                           </div>
                           <div className="text-[10px] text-emerald-400 font-bold mt-0.5">
-                            PV d'examen certifié, scellé et enregistré dans la base de données.
+                            Visa du PV enregistré dans la base de données.
                           </div>
                         </div>
                       </div>
@@ -761,7 +716,7 @@ export default function ProfessorProctoring() {
                       {signatureMode === 'digital' ? (
                         <div className="p-3.5 rounded-xl bg-black/20 border border-white/5 flex items-center justify-between">
                           <div className="text-xs text-blue-200">
-                            Signature certifiée au nom de : <strong className="text-white">Pr. Amina Chraibi</strong> (Qualité : <span className="text-amber-300">{activeExamAttendance.role}</span>)
+                            Visa enregistré au nom de : <strong className="text-white">{signatureStamp?.signer || authUser?.name}</strong> (Qualité : <span className="text-amber-300">{activeExamAttendance.role}</span>)
                           </div>
                           <span className="text-[10px] font-mono text-emerald-400 font-bold bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20">
                             Horodatage SHA-256 Prêt

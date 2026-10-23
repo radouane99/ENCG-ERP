@@ -1,3 +1,4 @@
+import { QRCodeSVG } from 'qrcode.react'
 import React,{ useState,useEffect,useCallback,useMemo } from 'react';
 import {
 Users,BookOpen,FileSpreadsheet,Search,Loader2,
@@ -80,11 +81,6 @@ const TAG_CONFIG: Record<AnnotationTag, { label: string; bg: string; text: strin
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-
-function generateQrDataUrl(text: string): string {
-  const encoded = encodeURIComponent(text);
-  return `https://api.qrserver.com/v1/create-qr-code/?size=70x70&data=${encoded}&bgcolor=0f172a&color=10b981&format=svg`;
-}
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
@@ -1458,12 +1454,7 @@ export default function ProfessorStudentRosterPage() {
 
                             {showQrCol && (
                               <td className="px-3 py-2 text-center">
-                                <img
-                                  src={generateQrDataUrl(s.matricule || String(s.id))}
-                                  alt={`QR ${s.matricule}`}
-                                  className="w-9 h-9 mx-auto rounded opacity-85 border border-slate-700"
-                                  loading="lazy"
-                                />
+                                <QRCodeSVG value={s.matricule || String(s.id)} size={36} className="mx-auto" title={`QR ${s.matricule}`} />
                               </td>
                             )}
 
@@ -2024,11 +2015,7 @@ export default function ProfessorStudentRosterPage() {
                     </p>
                   )}
                 </div>
-                <img
-                  src={generateQrDataUrl(individualStudent.matricule || String(individualStudent.id))}
-                  alt="QR Étudiant"
-                  className="w-14 h-14 rounded-lg border border-slate-700 bg-slate-900 p-1"
-                />
+                <QRCodeSVG value={individualStudent.matricule || String(individualStudent.id)} size={56} title="QR Étudiant" />
               </div>
 
               {/* Grid 10 Sessions Emargement / Rattrapage Table */}

@@ -725,91 +725,21 @@ class PdfExportController extends Controller
 
     private function respondAttestationInscriptionPdf(Request $request, Student $student)
     {
-        $type = strtolower($request->input('type', $request->query('type', 'scolarite')));
-
-        if ($type === 'inscription' || $type === 'recepisse') {
-            $pdf = $this->getPdfInstance('pdf.attestation_inscription', [
-                'studentName' => strtoupper($student->last_name.' '.$student->first_name),
-                'cne' => $student->cne ?? 'N/A',
-                'cin' => $student->user->cin ?? $student->cin ?? 'N/A',
-                'birthDate' => $student->birth_date ?? 'N/A',
-                'birthCity' => $student->birth_city ?? 'N/A',
-                'filiereName' => $student->latestPathway->filiere->name ?? 'Tronc Commun',
-                'semester' => 'Semestre 1',
-                'cycle' => 'Deux années préparatoires',
-                'academicYear' => '2026-2027',
-                'verifyUrl' => url("/verify-attestation?cne={$student->cne}&hash=".md5($student->cne.'ENCG')),
-            ])->setPaper('a4', 'portrait');
-
-            return $this->streamOrDownloadPdf($request, $pdf, "Attestation_Inscription_{$student->cne}.pdf");
-        }
-
-        $pdf = $this->getPdfInstance('pdf.attestation_scolarite', [
-            'student' => $student,
-            'studentName' => strtoupper(($student->last_name ?? '').' '.($student->first_name ?? '')),
-            'cne' => $student->cne ?? 'N/A',
-            'cin' => $student->user->cin ?? $student->cin ?? 'N/A',
-            'birthDate' => $student->birth_date ? Carbon::parse($student->birth_date)->format('d/m/Y') : '25/07/2008',
-            'birthCity' => strtoupper($student->birth_place ?? $student->birth_city ?? 'OUJDA'),
-            'nationality' => $student->nationality ?? 'Marocaine',
-            'student_number' => $student->student_number ?? $student->id ?? 'N/A',
-            'filiereName' => $student->latestPathway->filiere->name ?? 'DEUX ANNÉES PRÉPARATOIRES (TRONC COMMUN)',
-            'year' => '2026-2027',
-            'academicYear' => '2026-2027',
-            'date' => now()->format('d/m/Y'),
-            'verifyUrl' => url("/verify-attestation?cne={$student->cne}&hash=".md5($student->cne.'ENCG')),
-        ])->setPaper('a4', 'portrait');
-
-        return $this->streamOrDownloadPdf($request, $pdf, "Attestation_Scolarite_{$student->cne}.pdf");
+        $this->authorize('view', $student);
+        abort_unless((int) $student->institution_id === (int) $request->user()->institution_id, 403);
+        $registration = \App\Models\StudentRegistration::with(['academicYear', 'filiere', 'group'])->where('student_id', $student->id)->where('academic_year_id', \App\Services\Academic\AcademicContext::yearId())->where('status', 'admin_validated')->first();
+        abort_unless($registration, 422, 'Une inscription administrative validée est requise pour cette année.');
+        $bytes = app(\App\Services\Document\WorkflowDocumentExportService::class)->pdf('Attestation de scolarité — à viser', ['Étudiant' => $student->user->name, 'CNE' => $student->cne, 'Année universitaire' => $registration->academicYear->label, 'Formation' => $registration->filiere?->name ?? 'Non renseignée', 'Semestre' => $registration->semester_number, 'Groupe' => $registration->group?->name ?? 'Non affecté', 'Établi le' => now()->format('d/m/Y')], notice: 'Document établi à partir de l’inscription administrative enregistrée. À faire viser par le service de scolarité pour un usage officiel.');
+        return response($bytes, 200, ['Content-Type' => 'application/pdf', 'Content-Disposition' => ($request->boolean('download') ? 'attachment' : 'inline').'; filename="Attestation_Scolarite.pdf"', 'Cache-Control' => 'private, no-store']);
     }
 
     private function respondAttestationInscriptionPdfFromPayload(Request $request, array $payload)
     {
-        $name = $payload['name'];
-        $cne = $payload['cne'];
-        $cin = $payload['cin'] ?? 'N/A';
-        $filiere = $payload['filiere'] ?? 'DEUX ANNÉES PRÉPARATOIRES (TRONC COMMUN)';
-        $group = $payload['group'] ?? 'TC-S1-G1';
-        $type = strtolower($payload['type'] ?? 'scolarite');
-
-        if ($type === 'inscription' || $type === 'recepisse') {
-            $pdf = $this->getPdfInstance('pdf.attestation_inscription', [
-                'studentName' => $name,
-                'cne' => $cne,
-                'cin' => $cin,
-                'filiereName' => $filiere,
-                'groupName' => $group,
-                'verifyUrl' => url('/verify/document/ATTESTATION-'.md5($cne)),
-            ])->setPaper('a4', 'portrait');
-
-            return $this->streamOrDownloadPdf($request, $pdf, 'Attestation_Inscription_'.Str::slug($name).'.pdf');
-        }
-
-        $student = Student::with(['user', 'latestPathway.filiere'])
-            ->where('cne', $cne)
-            ->orWhere('student_number', $cne)
-            ->first();
-
-        $pdf = $this->getPdfInstance('pdf.attestation_scolarite', [
-            'student' => $student,
-            'studentName' => strtoupper($name),
-            'cne' => $cne,
-            'cin' => $cin,
-            'birthDate' => $student?->birth_date ? Carbon::parse($student->birth_date)->format('d/m/Y') : '25/07/2008',
-            'birthCity' => strtoupper($student?->birth_place ?? $student?->birth_city ?? 'OUJDA'),
-            'nationality' => $student?->nationality ?? 'Marocaine',
-            'student_number' => $student?->student_number ?? $student?->id ?? $cne,
-            'filiereName' => $student?->latestPathway?->filiere?->name ?? $filiere,
-            'groupName' => $group,
-            'year' => '2026-2027',
-            'academicYear' => '2026-2027',
-            'date' => now()->format('d/m/Y'),
-            'verifyUrl' => url('/verify/document/ATT_SCOL-'.md5($cne)),
-        ])->setPaper('a4', 'portrait');
-
-        return $this->streamOrDownloadPdf($request, $pdf, 'Attestation_Scolarite_'.Str::slug($name).'.pdf');
+        abort_unless($request->user()->hasAnyRole(['super-admin', 'admin', 'institution-admin', 'scolarite', 'director']), 403);
+        $student = Student::where('institution_id', $request->user()->institution_id)->where(function ($q) use ($payload) { $q->where('cne', $payload['cne'])->orWhere('student_number', $payload['cne']); })->firstOrFail();
+        $student->loadMissing('user');
+        return $this->respondAttestationInscriptionPdf($request, $student);
     }
-
     private function streamOrDownloadPdf(Request $request, $pdf, string $filename)
     {
         if ($request->boolean('download')) {
@@ -3268,4 +3198,23 @@ class PdfExportController extends Controller
 
         return 'data:image/svg+xml;base64,'.base64_encode($avatarSvg);
     }
-}
+    public function exportAttestationsZip(Request $request)
+    {
+        abort_unless($request->user()->hasAnyRole(['super-admin', 'admin', 'institution-admin', 'director', 'scolarite']), 403);
+        $year = \App\Models\AcademicYear::where('institution_id', $request->user()->institution_id)->findOrFail(\App\Services\Academic\AcademicContext::yearId());
+        $query = \App\Models\StudentRegistration::with('student.user', 'filiere', 'group')->where('academic_year_id', $year->id)->where('status', 'admin_validated')
+            ->whereHas('student', fn ($q) => $q->where('institution_id', $request->user()->institution_id));
+        if ($request->filled('group_id') && $request->input('group_id') !== 'all') $query->where('group_id', $request->input('group_id'));
+        if ($request->filled('filiere_id')) $query->where('filiere_id', $request->input('filiere_id'));
+        if ($request->filled('semester_number')) $query->where('semester_number', $request->integer('semester_number'));
+        abort_if((clone $query)->count() > 250, 422, 'Filtrez par filière ou groupe pour exporter au plus 250 inscriptions.');
+        $service = app(\App\Services\Document\WorkflowDocumentExportService::class); $files = [];
+        foreach ($query->orderBy('student_id')->get()->unique('student_id') as $registration) {
+            $files['Inscription_'.$registration->student_id.'.pdf'] = $service->pdf('Attestation d’inscription — à viser', [
+                'Référence inscription' => $registration->id, 'Étudiant' => $registration->student->user->name, 'CNE' => $registration->student->cne,
+                'Année universitaire' => $year->label, 'Formation' => $registration->filiere->name, 'Semestre' => 'S'.$registration->semester_number, 'Groupe' => $registration->group?->name,
+                'État administratif' => 'Inscription validée'], [], [], 'Document préparé à partir d’une inscription administrative validée. Signature et cachet du service compétent requis.');
+        }
+        activity()->causedBy($request->user())->withProperties(['academic_year_id' => $year->id, 'document_count' => count($files)])->log('registration_documents_exported');
+        return $service->zip($files, 'Inscriptions_'.$year->id.'.zip');
+    }}

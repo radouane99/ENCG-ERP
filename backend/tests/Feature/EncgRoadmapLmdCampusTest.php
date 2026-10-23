@@ -196,6 +196,8 @@ it('confirms Grande École reinscription without payment and blocks unpaid FC', 
         'is_current' => true,
     ]);
 
+    \App\Models\StudentRegistration::create(['student_id' => $geStudent->id, 'filiere_id' => $geFiliere->id,
+        'academic_year_id' => $year->id, 'semester_number' => 3, 'registration_type' => 're_enrollment', 'status' => 'academic_validated']);
     $this->actingAs($geUser, 'sanctum')
         ->postJson('/api/v1/student-portal/reinscription/confirm', [
             'phone' => '0611111111',

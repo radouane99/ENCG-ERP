@@ -1,10 +1,12 @@
 import api from '@/shared/lib/api';
 import { toast } from 'sonner';
+import { useAuthStore } from '@/stores/authStore';
 
 export interface OfflineAttendanceRecord {
   id: string;
   sessionId?: number | null;
   session_id?: number | null;
+  close_session?: boolean;
   moduleId?: string | number;
   module_id?: string | number;
   groupId?: string | number;
@@ -18,11 +20,14 @@ export interface OfflineAttendanceRecord {
 }
 
 const STORAGE_KEY = 'encg_offline_attendance_queue';
+const accountKey = () => { const user = useAuthStore.getState().user; return user ? `${STORAGE_KEY}:${user.institution_id}:${user.id}` : null; };
+let syncing = false;
 
 export const offlineAttendanceStore = {
   getQueue(): OfflineAttendanceRecord[] {
     try {
-      const data = sessionStorage.getItem(STORAGE_KEY);
+      const key = accountKey();
+      const data = key ? sessionStorage.getItem(key) : null;
       return data ? JSON.parse(data) : [];
     } catch {
       return [];
@@ -30,6 +35,8 @@ export const offlineAttendanceStore = {
   },
 
   saveOffline(record: Omit<OfflineAttendanceRecord, 'id' | 'createdAt'>): void {
+    const key = accountKey();
+    if (!key) { toast.error('Reconnectez-vous avant de conserver une feuille.'); return; }
     const queue = this.getQueue();
     const newEntry: OfflineAttendanceRecord = {
       ...record,
@@ -37,16 +44,19 @@ export const offlineAttendanceStore = {
       createdAt: new Date().toISOString(),
     };
     queue.push(newEntry);
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(queue));
+    sessionStorage.setItem(key, JSON.stringify(queue));
     toast.warning('📡 Mode hors-ligne', {
-      description: `${newEntry.records.length} présences enregistrées. Synchronisation automatique au retour du réseau.`,
+      description: `${newEntry.records.length} présences conservées dans ce navigateur, en attente d’enregistrement sur le serveur. Gardez la session ouverte pour la synchronisation.`,
       duration: 6000,
     });
   },
 
   async syncPendingRecords(): Promise<{ success: number; failed: number }> {
+    const key = accountKey();
+    if (!key || syncing) return { success: 0, failed: 0 };
     const queue = this.getQueue();
     if (queue.length === 0) return { success: 0, failed: 0 };
+    syncing = true;
 
     let successCount = 0;
     let failedCount = 0;
@@ -54,12 +64,14 @@ export const offlineAttendanceStore = {
     const toastId = toast.loading(`Synchronisation de ${queue.length} feuille(s) d'émargement…`);
 
     for (const record of queue) {
+      if (accountKey() !== key) { remainingQueue.push(record); failedCount++; continue; }
       try {
         await api.post('/professor/attendance/save', {
           session_id: record.session_id ?? record.sessionId,
           module_id: record.module_id ?? record.moduleId,
           group_id: record.group_id ?? record.groupId,
           date: record.date,
+          close_session: record.close_session ?? false,
           records: record.records,
         });
         successCount++;
@@ -69,7 +81,10 @@ export const offlineAttendanceStore = {
       }
     }
 
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(remainingQueue));
+    const processed = new Set(queue.map(record => record.id));
+    const current: OfflineAttendanceRecord[] = JSON.parse(sessionStorage.getItem(key) || '[]');
+    sessionStorage.setItem(key, JSON.stringify([...remainingQueue, ...current.filter(record => !processed.has(record.id))]));
+    syncing = false;
 
     if (successCount > 0) {
       toast.success(`${successCount} émargement(s) synchronisé(s).`, { id: toastId });

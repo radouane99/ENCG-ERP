@@ -192,4 +192,8 @@ Route::middleware(['auth:sanctum', 'institution.context'])->group(function () {
     Route::get('/incidents/{id}/decision-pdf', [PdfExportController::class, 'decisionDisciplinePdf']);
     // AI Chatbot Assistant (Accessible to all authenticated users)
     Route::post('/ai/chat', [AiChatController::class, 'chat']);
+    Route::get('/internships/{id}/messages', [\App\Http\Controllers\Api\InternshipConversationController::class, 'index']);
+    Route::post('/internships/{id}/messages', [\App\Http\Controllers\Api\InternshipConversationController::class, 'store']);
+    Route::get('/internship-documents/{id}/download', [\App\Http\Controllers\Api\InternshipDocumentController::class, 'download']);
+    Route::post('/internship-documents/{id}/review', [\App\Http\Controllers\Api\InternshipDocumentController::class, 'review']);
 });

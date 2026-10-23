@@ -41,6 +41,8 @@ final class ManageGradeAppealAction
             if ($decision === 'rectified') {
                 $assessment = Assessment::withoutGlobalScopes()->whereKey($appeal->assessment_id)->where('module_id', $appeal->module_id)->where('needs_review', false)->first();
                 abort_unless($assessment && $score !== null, 422, 'Évaluation et note de correction obligatoires.');
+                abort_if(\App\Models\AcademicYear::whereKey($assessment->academic_year_id)->value('is_locked'), 409, 'Année verrouillée : une réouverture académique est requise.');
+                abort_if(\App\Models\Deliberation::where('academic_year_id', $assessment->academic_year_id)->where('is_sealed', true)->whereHas('decisions', fn ($q) => $q->where('student_id', $appeal->student_id))->exists(), 409, 'Délibération scellée : une réouverture du jury est requise.');
                 abort_if(ModulePvSignature::withoutGlobalScopes()->where('module_id', $assessment->module_id)->where('academic_year_id', $assessment->academic_year_id)->exists(), 409, 'PV signé : une réouverture motivée par la direction est requise.');
                 $grade = Grade::where('student_id', $appeal->student_id)->where('assessment_id', $assessment->id)->lockForUpdate()->first();
                 abort_unless($grade, 422, 'La note officielle n’existe pas.');

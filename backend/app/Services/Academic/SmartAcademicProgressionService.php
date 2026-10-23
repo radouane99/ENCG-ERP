@@ -106,12 +106,8 @@ class SmartAcademicProgressionService
             // Récupérer les modules théoriques des semestres semA et semB
             $relevantModules = DB::table('modules')
                 ->whereIn('semester_number', [$semA, $semB])
-                ->where(function ($q) use ($pathway, $currentSem) {
-                    $q->where('filiere_id', $pathway->filiere_id);
-                    if ($currentSem > 4) {
-                        $q->orWhere('filiere_id', 1); // Tronc commun
-                    }
-                })
+                ->where('filiere_id', $pathway->filiere_id)
+                ->where('institution_id', $student->institution_id)
                 ->get()
                 ->keyBy('id');
 
@@ -130,40 +126,10 @@ class SmartAcademicProgressionService
                     continue;
                 }
 
-                $examNote = null;
-                $ccNotes = [];
-                $ratNote = null;
-
-                foreach ($gList as $g) {
-                    if ($g->value === null && ! $g->absent) continue;
-                    $val = $g->absent ? 0.0 : (float) $g->value;
-                    $type = strtolower((string) $g->assessment_type);
-                    if (str_contains($type, 'rat')) {
-                        $ratNote = $val;
-                    } elseif (str_contains($type, 'exam') || str_contains($type, 'terminal')) {
-                        $examNote = $val;
-                    } else {
-                        $ccNotes[] = $val;
-                    }
-                }
-
-                $moyenne = null;
-                if ($examNote !== null && ! empty($ccNotes)) {
-                    $ccAvg = array_sum($ccNotes) / count($ccNotes);
-                    $moyenne = round(($ccAvg * 0.5) + ($examNote * 0.5), 2);
-                } elseif ($examNote !== null) {
-                    $moyenne = $examNote;
-                } elseif (! empty($ccNotes)) {
-                    $moyenne = round(array_sum($ccNotes) / count($ccNotes), 2);
-                }
-
-                if ($ratNote !== null && $moyenne !== null) {
-                    $raw = max($moyenne, $ratNote);
-                    $moyenne = ($moyenne < 10.0 && $raw >= 10.0) ? min(12.00, round($raw, 2)) : round($raw, 2);
-                }
-
-                $isValidated = ($moyenne !== null && $moyenne >= 10.0);
-
+                if (! $relevantModules->has($modId)) continue;
+                $scores = app(\App\Domain\Deliberation\Services\DeliberationEngine::class)->calculateModuleAverages($student->id, $semNum, true);
+                $moyenne = $scores->firstWhere('module_id', $modId)?->final_module_score;
+                $isValidated = $moyenne !== null && $moyenne >= \App\Domain\Deliberation\LmdRules::VALIDATION_THRESHOLD;
                 $modulesResults[] = [
                     'module_id' => $modId,
                     'code' => $first->module_code,
@@ -182,8 +148,9 @@ class SmartAcademicProgressionService
             $failedCount = count($failedList);
 
             $gradesValues = array_filter(array_column($modulesResults, 'grade'), fn ($v) => $v !== null);
-            $annualAverage = count($gradesValues) > 0 ? round(array_sum($gradesValues) / count($gradesValues), 2) : null;
-            $incomplete = $annualAverage === null || $relevantModules->isEmpty()
+            $merit = app(AcademicMeritService::class)->summary($student, $year->id, $semA, $semB);
+            $annualAverage = $merit['average'];
+            $incomplete = ! $merit['complete'] || $annualAverage === null || $relevantModules->isEmpty()
                 || $relevantModules->keys()->diff(array_column($modulesResults, 'module_id'))->isNotEmpty()
                 || count($gradesValues) !== $totalModulesCount;
 
@@ -321,7 +288,8 @@ class SmartAcademicProgressionService
     public function executeSmartRollover(int $currentYearId, string $newLabel, string $startDate, string $endDate, ?string $authorizedBy = null): array
     {
         return DB::transaction(function () use ($currentYearId, $newLabel, $startDate, $endDate, $authorizedBy) {
-            $currentYear = AcademicYear::findOrFail($currentYearId);
+            $currentYear = AcademicYear::whereKey($currentYearId)->where('is_current', true)->lockForUpdate()->firstOrFail();
+            abort_if($currentYear->label === $newLabel, 422, 'L’année cible doit être différente.');
 
             // 1. Calculer le bilan officiel avant bascule
             $rosterData = $this->getProgressionRoster($currentYearId);
@@ -333,7 +301,7 @@ class SmartAcademicProgressionService
 
             // 3. Créer ou activer la nouvelle année académique
             $newYear = AcademicYear::firstOrCreate(
-                ['label' => $newLabel],
+                ['label' => $newLabel, 'institution_id' => $currentYear->institution_id],
                 [
                     'institution_id' => $currentYear->institution_id ?? 1,
                     'start_year' => (int) substr($newLabel, 0, 4),
@@ -345,7 +313,7 @@ class SmartAcademicProgressionService
                 ]
             );
 
-            AcademicYear::where('id', '!=', $newYear->id)->update(['is_current' => false]);
+            AcademicYear::where('institution_id', $currentYear->institution_id)->where('id', '!=', $newYear->id)->update(['is_current' => false]);
             $newYear->update(['is_current' => true, 'is_locked' => false]);
 
             // 4. Cloner les groupes pour la nouvelle année
@@ -403,44 +371,23 @@ class SmartAcademicProgressionService
 
                 // Déterminer la filière cible (Spécialité si passage vers S5)
                 $targetFiliereId = $student->filiere_id ?? 1;
-                if ($targetSem >= 5 && in_array($decision, ['ADMIS_PUR', 'ADMIS_AVEC_DETTE'])) {
-                    $wish = DB::table('specialty_wishes')
-                        ->where('student_id', $studentId)
-                        ->whereIn('status', ['allocated', 'approved', 'submitted', 'pending'])
-                        ->orderByRaw("CASE WHEN status = 'allocated' THEN 1 WHEN status = 'approved' THEN 2 ELSE 3 END")
-                        ->orderBy('preference_rank', 'asc')
-                        ->first();
-
-                    if ($wish && $wish->filiere_id) {
-                        $targetFiliereId = (int) $wish->filiere_id;
-                    } elseif ($targetFiliereId === 1) {
-                        $defaultSpec = DB::table('filieres')->where('code', 'GFC')->first();
-                        if ($defaultSpec) {
-                            $targetFiliereId = $defaultSpec->id;
-                        }
-                    }
+                if (in_array($targetSem, [5, 7], true) && in_array($decision, ['ADMIS_PUR', 'ADMIS_AVEC_DETTE'], true)) {
+                    $campaign = app(\App\Actions\Academic\ManageSpecialtyAllocationAction::class)->campaign($student->institution_id);
+                    if ((int) ($campaign['target_semester'] ?? 0) === $targetSem) {
+                        abort_unless(($campaign['finalized_at'] ?? null) && (int) $campaign['target_year_id'] === (int) $newYear->id, 422, 'Finalisez la campagne d’orientation pour l’année cible.');
+                        $wish = \App\Models\SpecialtyWish::where('student_id', $studentId)->where('academic_year', $newYear->label)->where('allocation_status', 'assigned')->first();
+                        abort_unless($wish, 422, 'Affectation de spécialité en attente pour un étudiant.');
+                        $targetFiliereId = $wish->filiere_id;
+                    } elseif ($targetSem === 5) abort(422, 'Configurez et finalisez la campagne d’orientation avant la bascule vers S5.');
                 }
-
                 // Trouver un groupe adéquat pour le semestre cible et la filière
                 $targetGroup = Group::where('academic_year_id', $newYear->id)
                     ->where('filiere_id', $targetFiliereId)
                     ->where('semester_number', $targetSem)
                     ->first();
 
-                if (! $targetGroup) {
-                    $targetGroup = Group::firstOrCreate(
-                        [
-                            'academic_year_id' => $newYear->id,
-                            'filiere_id' => $targetFiliereId,
-                            'semester_number' => $targetSem,
-                            'name' => "Groupe 1 (S{$targetSem})",
-                        ],
-                        [
-                            'capacity' => 60,
-                        ]
-                    );
-                }
-
+                abort_unless($targetGroup, 422, 'Configurez un groupe pour la filière et le semestre cibles avant la bascule.');
+                abort_if(StudentPathway::where('academic_year_id', $newYear->id)->where('group_id', $targetGroup->id)->count() >= $targetGroup->capacity, 422, 'La capacité du groupe cible est atteinte.');
                 // Créer le nouveau pathway
                 StudentPathway::create([
                     'student_id' => $studentId,

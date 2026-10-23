@@ -9,7 +9,10 @@ final class InternshipAccess
     public static function query(User $user)
     {
         $q = Internship::whereHas('student', fn ($s) => $s->where('institution_id', $user->institution_id));
-        if (! self::staff($user)) $q->where('supervisor_id', $user->professor?->id ?? -1);
+        if (! self::staff($user)) {
+            $profile = $user->professor?->id ?? -1;
+            $q->where(fn ($q) => $q->where('supervisor_id', $profile)->orWhereHas('soutenance', fn ($s) => $s->where('president_id', $profile)->orWhere('examiner_id', $profile)->orWhere('supervisor_id', $profile)));
+        }
         return $q;
     }
     public static function stage(User $user, Internship $stage): void

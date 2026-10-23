@@ -442,24 +442,11 @@ export default function InteractiveCalendarPage({ isAdmin = false }: { isAdmin?:
         `• ${c.day.toUpperCase()} (${c.time}) : ${c.events.length} cours superposés (${c.events.map(e => e.title).join(', ')})`
       ).join('\n')
 
-      await api.post('/schedule-change-requests/batch-report', {
-        summary: conflictSummary,
-        total_count: totalConflictingEventsCount
-      }).catch(() => {})
-
-      await api.post('/notifications', {
-        title: `🚨 Alerte Globale : ${totalConflictingEventsCount} Chevauchements Signalés`,
-        message: `L'enseignant ${currentProfName} a transmis une déclaration groupée de conflits d'horaires :\n\n${conflictSummary}\n\nAction : Arbitrage et redistribution requis par le Service des Emplois du Temps.`,
-        type: 'schedule_batch_conflict_alert'
-      }).catch(() => {})
-
-      toast.success(`📨 Pack de ${totalConflictingEventsCount} conflits transmis en 1-clic à l'Administration !`, {
-        description: "Le Chef de Département et le Service des Emplois du Temps ont reçu le rapport complet."
-      })
+      const response = await api.post('/schedule-change-requests/batch-report', { summary: conflictSummary, total_count: totalConflictingEventsCount })
+      toast.success(response.data.message)
       setShowBatchModal(false)
     } catch {
-      toast.success("Rapport groupé de conflits transmis à l'Administration.")
-      setShowBatchModal(false)
+      toast.error('Le rapport de conflits n’a pas été enregistré. Vos informations sont conservées.');
     } finally {
       setSubmittingRequest(false)
     }

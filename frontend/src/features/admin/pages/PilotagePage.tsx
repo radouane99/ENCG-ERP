@@ -91,7 +91,7 @@ export default function PilotagePage() {
   };
 
   const handleConvoquer = (student: string) => {
-    toast.success(`Convocation officielle au Conseil de Discipline envoyée à ${student} !`);
+    toast.info(`La convocation de ${student} doit être enregistrée et envoyée depuis le dossier disciplinaire.`);
   };
 
   const handleValidateJustification = async (id: string, student: string) => {
@@ -100,7 +100,7 @@ export default function PilotagePage() {
       toast.success(`Justification approuvée pour ${student}. Rattrapage accordé.`);
       refetchDashboard();
     } catch {
-      toast.success(`Justification approuvée pour ${student}.`);
+      toast.error(`La justification de ${student} n’a pas été approuvée.`);
       refetchDashboard();
     }
   };
@@ -108,10 +108,10 @@ export default function PilotagePage() {
   const handleRejectJustification = async (id: string, student: string) => {
     try {
       await api.patch(`/admin/absences-justifications/${id}/status`, { status: 'rejected' });
-      toast.error(`Justification rejetée pour ${student}.`);
+      toast.success(`Rejet de la justification enregistré pour ${student}.`);
       refetchDashboard();
     } catch {
-      toast.error(`Justification rejetée pour ${student}.`);
+      toast.error(`Le rejet de la justification de ${student} n’a pas été enregistré.`);
       refetchDashboard();
     }
   };

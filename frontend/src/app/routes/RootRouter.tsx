@@ -108,6 +108,7 @@ const CreditsAndDerogations = lazy(() => import('@features/academic/pages/Credit
 const PredictiveDashboard = lazy(() => import('@features/analytics/pages/PredictiveDashboard'))
 const DocumentCenter = lazy(() => import('@features/documents/pages/DocumentCenter'))
 const PublicDocumentVerification = lazy(() => import('@features/documents/pages/PublicDocumentVerification'))
+const PublicConventionAcceptancePage = lazy(() => import('@features/internships/ui/pages/PublicConventionAcceptancePage'))
 const AdmissionCampaignManager = lazy(() => import('@features/admissions/pages/AdmissionCampaignManager'))
 const AlumniDashboard = lazy(() => import('@features/alumni/pages/AlumniDashboard'))
 const DisciplinePage = lazy(() => import('@features/discipline/pages/DisciplinePage'))
@@ -240,6 +241,7 @@ export default function RootRouter() {
 
         {/* Public Verification Route */}
         <Route path="/verify-document/:token" element={<PublicDocumentVerification />} />
+        <Route path="/conventions/sign/:token" element={<PublicConventionAcceptancePage />} />
         
         {/* ── Auth Routes ──────────────────────────────────── */}
         <Route element={<AuthLayout />}>

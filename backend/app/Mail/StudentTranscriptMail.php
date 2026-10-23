@@ -19,7 +19,7 @@ class StudentTranscriptMail extends Mailable
 
     public ?string $pdfPath;
 
-    public function __construct(string $studentName, string $sessionName = 'Session Automne 2025/2026', ?string $pdfPath = null)
+    public function __construct(string $studentName, string $sessionName, ?string $pdfPath = null, private ?string $pdfBytes = null)
     {
         $this->studentName = $studentName;
         $this->sessionName = $sessionName;
@@ -29,7 +29,7 @@ class StudentTranscriptMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Relevé de Notes Officiel — ENCG Fès ('.$this->sessionName.')',
+            subject: 'Notes publiées — ENCG Fès ('.$this->sessionName.')',
         );
     }
 
@@ -46,6 +46,7 @@ class StudentTranscriptMail extends Mailable
 
     public function attachments(): array
     {
+        if ($this->pdfBytes !== null) return [Attachment::fromData(fn () => $this->pdfBytes, 'Notes_publiees_ENCG.pdf')->withMime('application/pdf')];
         if ($this->pdfPath && file_exists($this->pdfPath)) {
             return [
                 Attachment::fromPath($this->pdfPath)

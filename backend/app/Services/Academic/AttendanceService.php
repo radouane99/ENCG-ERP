@@ -20,7 +20,21 @@ class AttendanceService
     {
         return DB::transaction(function () use ($moduleId, $groupId, $professorId, $roomName, $options) {
             $group = Group::with('academicYear')->findOrFail($groupId);
+            $actor = auth()->user(); abort_unless($actor && (int) $actor->id === $professorId, 403);
+            $module = \App\Models\Module::findOrFail($moduleId);
+            app(\App\Services\Security\ClassroomAccessService::class)->authorize($actor, $module, $group, write: true);
+            $teacherId = $actor->professor?->id;
+            if (! $teacherId) {
+                $teachers = \App\Models\ModuleProfessor::where('module_id', $moduleId)->where('academic_year_id', $group->academic_year_id)->where(fn ($q) => $q->where('group_id', $groupId)->orWhereNull('group_id'))->pluck('professor_id')->unique();
+                abort_unless($teachers->count() === 1, 422, 'Un enseignant unique doit être affecté au groupe pour démarrer l’appel administratif.');
+                $teacherId = $teachers->first();
+            }
+            abort_if($group->academicYear->is_locked, 409, 'Année académique verrouillée.');
+            Group::whereKey($groupId)->lockForUpdate()->firstOrFail();
             $now = Carbon::now();
+            $date = $options['date'] ?? $now->toDateString();
+            $existing = AttendanceSession::where('module_id', $moduleId)->where('group_id', $groupId)->where('created_by', $actor->id)->where('session_date', $date)->where('status', 'active')->where('expires_at', '>=', $now)->first();
+            if ($existing) return $existing;
             $durationMinutes = max(1, (int) ($options['duration_minutes'] ?? 15));
             $endTime = $now->copy()->addMinutes($durationMinutes);
 
@@ -28,9 +42,9 @@ class AttendanceService
                 'module_id' => $moduleId,
                 'group_id' => $groupId,
                 'academic_year_id' => $group->academic_year_id ?? AcademicYear::where('is_current', true)->value('id') ?? 1,
-                'professor_id' => $professorId,
-                'professor_type' => User::class,
-                'session_date' => $now->toDateString(),
+                'professor_id' => $teacherId,
+                'professor_type' => \App\Models\Professor::class,
+                'session_date' => $date,
                 'start_time' => $now->format('H:i:s'),
                 'end_time' => $endTime->format('H:i:s'),
                 'session_type' => $options['session_type'] ?? 'qr',
@@ -76,6 +90,14 @@ class AttendanceService
         ?float $longitude = null,
         bool $isValid = true
     ): Attendance {
+        $session = AttendanceSession::findOrFail($sessionId);
+        $this->authorizeSession($session);
+        abort_unless($session->status === 'active', 409, 'Session fermée.');
+        $student = \App\Models\Student::findOrFail($studentId);
+        $member = $student->pathways()->where('academic_year_id', $session->academic_year_id)->where('group_id', $session->group_id)->exists()
+            || $student->registrations()->where('academic_year_id', $session->academic_year_id)->where('group_id', $session->group_id)->exists();
+        abort_unless($member, 403, 'Étudiant hors du groupe de cette session.');
+        if (auth()->user()->hasRole('student')) abort_unless((int) auth()->user()->student?->id === $studentId && $status === 'present', 403);
         $record = Attendance::firstOrCreate(
             ['attendance_session_id' => $sessionId, 'student_id' => $studentId],
             ['status' => 'absent', 'is_justified' => false]
@@ -98,6 +120,7 @@ class AttendanceService
     public function closeSession(int $sessionId): AttendanceSession
     {
         $session = AttendanceSession::findOrFail($sessionId);
+        $this->authorizeSession($session, false);
         $session->update([
             'status' => 'completed',
             'end_time' => Carbon::now()->format('H:i:s'),
@@ -105,5 +128,17 @@ class AttendanceService
         ]);
 
         return $session;
+    }
+
+    public function authorizeSession(AttendanceSession $session, bool $allowStudent = true): void
+    {
+        $actor = auth()->user(); abort_unless($actor, 403);
+        $module = \App\Models\Module::findOrFail($session->module_id);
+        abort_unless((int) $module->institution_id === (int) $actor->institution_id, 403);
+        if ($allowStudent && $actor->hasRole('student')) return;
+        $staff = $actor->hasAnyRole(['super-admin', 'admin', 'institution-admin', 'director', 'scolarite']);
+        abort_unless($staff || (int) $session->created_by === (int) $actor->id, 403, 'Session réservée à son enseignant.');
+        app(\App\Services\Security\ClassroomAccessService::class)->authorize($actor, $module, Group::findOrFail($session->group_id), write: true);
+        abort_if(AcademicYear::whereKey($session->academic_year_id)->value('is_locked'), 409, 'Année académique verrouillée.');
     }
 }

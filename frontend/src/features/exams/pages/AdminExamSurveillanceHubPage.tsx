@@ -768,6 +768,14 @@ export default function AdminExamSurveillanceHubPage() {
       signatureToSave = canvas.toDataURL('image/png')
     }
     
+    const signerName = signingSupervisorRole === 'principal' ? principalSupervisorName : secondarySupervisorName
+
+    try {
+      await api.post(`/exam-planning/${id}/save-signature`, {
+        signature_data: signatureToSave,
+        supervisor_name: signerName,
+        role: signingSupervisorRole
+      })
     if (signingSupervisorRole === 'principal') {
       setPrincipalSignatureUrl(signatureToSave)
       if (isCurrentUserPrincipal) {
@@ -781,18 +789,10 @@ export default function AdminExamSurveillanceHubPage() {
     }
     setShowSignatureModal(false)
 
-    const signerName = signingSupervisorRole === 'principal' ? principalSupervisorName : secondarySupervisorName
-
-    try {
-      await api.post(`/exam-planning/${id}/save-signature`, {
-        signature_data: signatureToSave,
-        supervisor_name: signerName,
-        role: signingSupervisorRole
-      })
       queryClient.invalidateQueries({ queryKey: ['admin-exam-details', id] })
       toast.success(`✍️ Signature enregistrée pour le ${signingSupervisorRole === 'principal' ? `Surveillant Principal (${principalSupervisorName})` : `Surveillant Secondaire (${secondarySupervisorName})`} !`)
     } catch (e) {
-      toast.success('✍️ Signature officielle enregistrée & certifiée !')
+      toast.error('La signature n’a pas été enregistrée. Réessayez avant de clôturer le PV.')
     }
   }
 

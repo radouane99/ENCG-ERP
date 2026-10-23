@@ -14,7 +14,7 @@ export default function AdminReinscriptionCockpitPage() {
   const [statusFilter, setStatusFilter] = useState<'all' | 'confirmed' | 'pending'>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const { data: resData, isLoading, refetch } = useQuery({
+  const { data: resData, isLoading, isError, refetch } = useQuery({
     queryKey: ['admin-reinscription-stats'],
     queryFn: async () => {
       const res = await api.get('/admin/reinscriptions/stats');
@@ -45,6 +45,7 @@ export default function AdminReinscriptionCockpitPage() {
     );
   }
 
+  if (isError) return <div role="alert" className="p-8"><p>Impossible de charger les réinscriptions.</p><button className="mt-3 underline" onClick={() => refetch()}>Réessayer</button></div>;
   const d = resData || {};
   const byLevel = d.by_level || {};
   const studentsList: any[] = d.students || [];
@@ -57,12 +58,7 @@ export default function AdminReinscriptionCockpitPage() {
 
     if (!matchesSearch) return false;
 
-    if (levelFilter !== 'all') {
-      if (levelFilter === '2A' && !s.current_level.includes('2ème')) return false;
-      if (levelFilter === '3A' && !s.current_level.includes('3ème')) return false;
-      if (levelFilter === '4A' && !s.current_level.includes('4ème')) return false;
-      if (levelFilter === '5A' && !s.current_level.includes('5ème')) return false;
-    }
+    if (levelFilter !== 'all' && s.level_code !== levelFilter) return false;
 
     if (statusFilter === 'confirmed' && !s.is_confirmed) return false;
     if (statusFilter === 'pending' && s.is_confirmed) return false;
@@ -76,7 +72,7 @@ export default function AdminReinscriptionCockpitPage() {
       <div className="bg-[#0f2863] rounded-[2.5rem] p-8 md:p-10 text-white shadow-xl relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6 border border-blue-400/20">
         <div className="space-y-2">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400/20 text-amber-300 text-xs font-black uppercase tracking-wider border border-amber-400/30">
-            <Sparkles className="w-3.5 h-3.5" /> Campagne de Rentrée {d.academic_year || '2026/2027'}
+            <Sparkles className="w-3.5 h-3.5" /> Campagne de Rentrée {d.academic_year || 'Non définie'}
           </div>
           <h1 className="text-2xl md:text-3xl font-black tracking-tight">
             Cockpit de Suivi des Réinscriptions Annuelles

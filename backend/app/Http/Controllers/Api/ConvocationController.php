@@ -16,6 +16,7 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
@@ -309,51 +310,11 @@ class ConvocationController extends Controller
         $profId = $user->id;
         $fullName = trim(($user->first_name ?? '').' '.($user->last_name ?? ''));
         if ($fullName === '') {
-            $fullName = $user->name ?? 'Amina Chraibi';
+            $fullName = $user->name ?? 'Enseignant';
         }
 
-        try {
-            $surveillances = ExamSurveillance::with(['exam.module.filiere', 'exam.examSession', 'exam.room', 'room', 'user'])
-                ->where(function ($query) use ($profId, $fullName) {
-                    $query->where('professor_id', $profId)
-                        ->orWhereHas('user', function ($uq) use ($fullName) {
-                            $uq->whereRaw("CONCAT(TRIM(first_name), ' ', TRIM(last_name)) ILIKE ?", [$fullName])
-                                ->orWhere('name', 'ILIKE', $fullName);
-                        });
-                })
-                ->orderBy('exam_id', 'desc')
-                ->get();
-        } catch (\Throwable $e) {
-            $surveillances = collect([]);
-        }
-
-        // Si aucune surveillance en BDD ou pour Amina Chraibi, retourner exactement son unique séance assignée
-        if ($surveillances->isEmpty()) {
-            $singleSurv = [
-                'id' => 193,
-                'exam_id' => 193,
-                'surveillance_id' => 331,
-                'reference' => 'SURV-2026-331',
-                'module_name' => 'Comptabilité Générale I',
-                'session_name' => 'Session Ordinaire (Automne 2026)',
-                'session_type' => 'NORMALE',
-                'exam_date' => '2026-08-21',
-                'date_month' => 'AOU',
-                'date_day' => '21',
-                'date_full' => '21/08/2026',
-                'time' => '16:30 - 18:30 (120 min)',
-                'room' => 'Amphithéâtre B',
-                'group_name' => 'ENCG - S1 • Groupe: TC-S2-G1',
-                'role' => 'Surveillant Secondaire (Salle)',
-                'is_principal' => false,
-                'qr_token' => 'SURV-TOKEN-AMINA-001',
-                'is_confirmed' => false,
-                'confirmed_at' => null,
-            ];
-
-            return response()->json(['success' => true, 'data' => [$singleSurv]]);
-        }
-
+        $surveillances = ExamSurveillance::with(['exam.module.filiere', 'exam.examSession', 'exam.room', 'room', 'user'])
+            ->where('professor_id', $profId)->whereHas('exam.module', fn ($q) => $q->where('institution_id', $user->institution_id))->orderByDesc('exam_id')->get();
         $monthsMap = [
             1 => 'JAN', 2 => 'FEV', 3 => 'MAR', 4 => 'AVR', 5 => 'MAI', 6 => 'JUIN',
             7 => 'JUIL', 8 => 'AOU', 9 => 'SEP', 10 => 'OCT', 11 => 'NOV', 12 => 'DEC',
@@ -361,9 +322,9 @@ class ConvocationController extends Controller
 
         $data = $surveillances->map(function ($s) use ($monthsMap) {
             $examDate = $s->exam?->exam_date ? Carbon::parse($s->exam->exam_date) : null;
-            $month = $examDate ? ($monthsMap[(int) $examDate->format('n')] ?? 'AOU') : 'AOU';
-            $day = $examDate ? $examDate->format('d') : '21';
-            $dateFull = $examDate ? $examDate->format('d/m/Y') : '21/08/2026';
+            $month = $examDate ? ($monthsMap[(int) $examDate->format('n')] ?? '—') : '—';
+            $day = $examDate ? $examDate->format('d') : '—';
+            $dateFull = $examDate ? $examDate->format('d/m/Y') : 'Non planifié';
 
             $startTime = $s->exam?->start_time ? substr($s->exam->start_time, 0, 5) : '08:30';
             $durationMins = $s->exam?->duration_minutes ?: 120;
@@ -374,8 +335,8 @@ class ConvocationController extends Controller
             $endM = str_pad($totalEndMins % 60, 2, '0', STR_PAD_LEFT);
             $endTime = "{$endH}:{$endM}";
 
-            $roomName = $s->room->name ?? ($s->exam->room->name ?? 'Amphithéâtre B');
-            $filiereName = $s->exam?->module?->filiere?->name ?? 'ENCG - S1 • Groupe: TC-S2-G1';
+            $roomName = $s->room->name ?? ($s->exam->room->name ?? 'Non renseignée');
+            $filiereName = $s->exam?->module?->filiere?->name ?? 'Non renseigné';
 
             // Rôle : Principal (Responsable) vs Secondaire (Adjoint)
             $isPrincipal = in_array(strtolower($s->role ?? ''), ['primary', 'principal', 'responsable', 'surveillant principal']);
@@ -383,13 +344,14 @@ class ConvocationController extends Controller
 
             return [
                 'id' => $s->id,
-                'exam_id' => $s->exam_id ?: ($s->exam?->id ?: 193),
+                'exam_id' => $s->exam_id,
                 'surveillance_id' => $s->id,
-                'reference' => 'SURV-2026-'.str_pad($s->id, 3, '0', STR_PAD_LEFT),
-                'module_name' => $s->exam->module->name ?? 'Comptabilité Générale I',
-                'session_name' => $s->exam->examSession->name ?? 'Session Ordinaire',
-                'session_type' => strtoupper($s->exam->examSession->type ?? 'NORMALE'),
-                'exam_date' => $s->exam->exam_date ?? '2026-08-21',
+                'room_id' => $s->room_id ?? $s->exam?->room_id,
+                'reference' => 'SURV-'.($examDate?->format('Y') ?? 'ND').'-'.str_pad($s->id, 3, '0', STR_PAD_LEFT),
+                'module_name' => $s->exam->module->name ?? 'Module non renseigné',
+                'session_name' => $s->exam->examSession->name ?? 'Session non renseignée',
+                'session_type' => strtoupper($s->exam->examSession->type ?? 'NON RENSEIGNÉE'),
+                'exam_date' => $s->exam->exam_date ?? null,
                 'date_month' => $month,
                 'date_day' => $day,
                 'date_full' => $dateFull,
@@ -412,138 +374,46 @@ class ConvocationController extends Controller
      */
     public function confirmSurveillance(Request $request, mixed $id = null): JsonResponse
     {
-        $user = $request->user();
-        $now = now();
-
-        // Cas 0 : Liste d'IDs transmis en batch
-        $ids = $request->input('surveillance_ids');
-        if (is_array($ids) && count($ids) > 0) {
-            $count = ExamSurveillance::whereIn('id', $ids)->update(['confirmed_at' => $now]);
-
-            return response()->json([
-                'success' => true,
-                'message' => "Présence confirmée pour {$count} séance(s).",
-                'confirmed_at' => $now->toDateTimeString(),
-            ]);
-        }
-
-        // Cas 1 : Confirmer toutes les séances assignées au professeur
-        if ($id === 'all' || $request->input('all') === true) {
-            $profId = $user?->id;
-            $fullName = trim(($user?->first_name ?? '').' '.($user?->last_name ?? ''));
-            if ($fullName === '') {
-                $fullName = $user?->name ?? '';
-            }
-
-            $query = ExamSurveillance::where(function ($q) use ($profId, $fullName) {
-                if ($profId) {
-                    $q->where('professor_id', $profId);
-                }
-                if (! empty($fullName)) {
-                    $q->orWhereHas('user', function ($uq) use ($fullName) {
-                        $uq->whereRaw("CONCAT(TRIM(first_name), ' ', TRIM(last_name)) ILIKE ?", [$fullName])
-                            ->orWhere('name', 'ILIKE', $fullName);
-                    });
-                }
-            });
-
-            $count = $query->update(['confirmed_at' => $now]);
-
-            return response()->json([
-                'success' => true,
-                'message' => "Toutes vos surveillances ({$count}) ont été confirmées avec succès.",
-                'confirmed_at' => $now->toDateTimeString(),
-            ]);
-        }
-
-        // Cas 2 : Confirmer une séance spécifique par ID ou Référence
-        $surveillance = null;
-        if (is_numeric($id) && (int) $id > 0) {
-            $surveillance = ExamSurveillance::find((int) $id);
-            if (! $surveillance) {
-                $surveillance = ExamSurveillance::where('exam_id', (int) $id)->first();
-            }
-        }
-
-        if (! $surveillance) {
-            $surveillance = ExamSurveillance::where('qr_token', (string) $id)->first();
-        }
-
-        if (! $surveillance && is_string($id) && preg_match('/SURV-\d+-(\d+)/', $id, $m)) {
-            $surveillance = ExamSurveillance::find((int) $m[1]);
-        }
-
-        if (! $surveillance) {
-            return response()->json(['success' => false, 'message' => 'Séance de surveillance introuvable.'], 404);
-        }
-
-        $surveillance->confirmed_at = $now;
-        $surveillance->save();
-
-        // Harmoniser avec le comportement de confirmation par email :
-        // Si cette séance fait partie d'une session d'examen, confirmer également
-        // l'ensemble des créneaux de surveillance de ce professeur pour la session.
-        $profId = $surveillance->professor_id ?? ($user?->id ?? null);
-        $sessionId = $surveillance->exam?->exam_session_id;
-        if ($profId && $sessionId) {
-            ExamSurveillance::where('professor_id', $profId)
-                ->whereHas('exam', fn ($q) => $q->where('exam_session_id', $sessionId))
-                ->update(['confirmed_at' => $now]);
-        }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Accusé de réception et présence confirmés avec succès.',
-            'confirmed_at' => $now->toDateTimeString(),
-            'surveillance' => [
-                'id' => $surveillance->id,
-                'reference' => 'SURV-2026-'.str_pad($surveillance->id, 3, '0', STR_PAD_LEFT),
-                'confirmed_at' => $surveillance->confirmed_at,
-            ],
-        ]);
+        $data = $request->validate(['surveillance_ids' => 'sometimes|array|min:1|max:200', 'surveillance_ids.*' => 'integer|distinct', 'all' => 'sometimes|boolean']);
+        $count = DB::transaction(function () use ($request, $id, $data) {
+            $query = ExamSurveillance::where('professor_id', $request->user()->id)
+                ->whereHas('exam.module', fn ($q) => $q->where('institution_id', $request->user()->institution_id));
+            if (isset($data['surveillance_ids'])) $query->whereIn('id', $data['surveillance_ids']);
+            elseif ($id !== 'all' && ! ($data['all'] ?? false)) $query->whereKey($id);
+            $rows = $query->lockForUpdate()->get();
+            abort_if($rows->isEmpty(), 404, 'Aucune surveillance affectée ne correspond.');
+            abort_if(isset($data['surveillance_ids']) && $rows->count() !== count($data['surveillance_ids']), 403, 'Une surveillance ne vous est pas affectée.');
+            foreach ($rows as $row) if (! $row->confirmed_at) $row->update(['confirmed_at' => now()]);
+            return $rows->count();
+        });
+        return response()->json(['success' => true, 'message' => "Réception confirmée pour {$count} surveillance(s).", 'confirmed_at' => now()->toDateTimeString()]);
     }
-
     /**
      * Signature électronique officielle du PV d'examen par le surveillant.
      */
     public function signExamPv(Request $request, mixed $id = null): JsonResponse
     {
-        $user = $request->user();
-        $signatureData = $request->input('signature_data');
-        $signatureType = $request->input('signature_type', 'digital');
-
-        if (is_numeric($id) && (int) $id > 0) {
-            $surveillance = ExamSurveillance::find((int) $id);
-            if ($surveillance) {
-                $surveillance->confirmed_at = now();
-                if (Schema::hasColumn('exam_surveillances', 'signed_at')) {
-                    $surveillance->signed_at = now();
-                    $surveillance->signature_data = $signatureData;
-                    $surveillance->signature_type = $signatureType;
-                    $surveillance->signature_hash = 'SHA256:'.hash('sha256', ($user?->id ?? 1).now()->toIso8601String().'ENCG-FES-PV');
-                }
-                $surveillance->save();
+        $data = $request->validate(['signature_type' => 'required|in:digital,pad', 'signature_data' => 'required_if:signature_type,pad|nullable|string|max:2000000', 'records' => 'sometimes|array|max:500', 'records.*.student_id' => 'required|integer|distinct', 'records.*.status' => 'required|in:present,absent']);
+        $row = DB::transaction(function () use ($request, $id, $data) {
+            $row = ExamSurveillance::with('exam.module')->whereKey($id)->where('professor_id', $request->user()->id)->lockForUpdate()->firstOrFail();
+            abort_unless((int) $row->exam->module->institution_id === (int) $request->user()->institution_id, 403);
+            abort_if(! $row->exam->exam_date || Carbon::parse($row->exam->exam_date)->startOfDay()->isFuture(), 422, 'L’examen n’a pas encore eu lieu.');
+            $room = $row->room_id ?? $row->exam->room_id;
+            $seats = ExamSeating::where('exam_id', $row->exam_id)->where('room_id', $room)->orderBy('id')->lockForUpdate()->get(['id', 'student_id', 'is_present']);
+            abort_if($seats->isEmpty(), 422, 'Aucune liste de placement enregistrée pour cette salle.');
+            foreach ($data['records'] ?? [] as $record) {
+                $seat = $seats->firstWhere('student_id', $record['student_id']); abort_unless($seat, 403, 'Étudiant hors de la salle affectée.');
+                $present = $record['status'] === 'present';
+                abort_if($row->signed_at && (bool) $seat->is_present !== $present, 409, 'PV visé : une réouverture est requise.');
+                if (! $row->signed_at) $seat->update(['is_present' => $present]);
             }
-        }
-
-        $signerName = trim(($user?->first_name ?? '').' '.($user?->last_name ?? ($user?->name ?? 'Amina Chraibi')));
-        if ($signerName === '') {
-            $signerName = 'Pr. Amina Chraibi';
-        }
-
-        $signatureHash = 'SHA256:'.strtoupper(substr(hash('sha256', $signerName.now()->toIso8601String().'PV-ENCG'), 0, 32));
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Procès-Verbal d\'examen signé électroniquement avec succès.',
-            'signer_name' => $signerName,
-            'role' => 'Surveillant Secondaire (Salle)',
-            'signed_at' => now()->format('d/m/Y H:i:s'),
-            'signature_hash' => $signatureHash,
-            'status' => 'signed_and_sealed',
-        ]);
+            if ($row->signed_at) return $row;
+            $row->fill(['signature_data' => $data['signature_data'] ?? null, 'signature_type' => $data['signature_type'], 'signed_at' => now(),
+                'signature_hash' => hash('sha256', json_encode(['exam_id' => $row->exam_id, 'room_id' => $room, 'signer' => $request->user()->id, 'seats' => $seats->toArray()], JSON_THROW_ON_ERROR))])->save();
+            activity()->causedBy($request->user())->performedOn($row)->log('surveillance_pv_visa_recorded'); return $row;
+        });
+        return response()->json(['success' => true, 'message' => 'Visa de surveillance enregistré.', 'signer_name' => $request->user()->name, 'signed_at' => $row->signed_at, 'signature_hash' => $row->signature_hash, 'status' => 'signed']);
     }
-
     public function scanVerify(string $qrToken): JsonResponse
     {
         $seating = ExamSeating::with(['student.user', 'exam.module', 'exam.examSession', 'room'])

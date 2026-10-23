@@ -1,0 +1,1 @@
+<p>Bonjour {{ $recipientName }},</p><p>Ce message confirme la réception du test de messagerie demandé depuis les paramètres du portail ENCG.</p><p>ENCG Fès</p>

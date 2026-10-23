@@ -1,505 +1,99 @@
-import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useQuery } from '@tanstack/react-query';
-import api from '@shared/lib/api';
-import { toast } from 'sonner';
-import {
-Landmark,TrendingUp,Send,FileText,AlertCircle,
-Search,ArrowUpRight,ArrowDownRight,RefreshCcw,Check,X,
-Printer,Award,CreditCard
-} from 'lucide-react';
-import { cn } from '@shared/lib/utils';
+import { useState, type FormEvent } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import { AlertCircle, Banknote, CheckCircle2, ChevronLeft, ChevronRight, Plus, RefreshCw, Search, Send } from 'lucide-react'
+import { toast } from 'sonner'
+import PageHeader from '@shared/components/layout/PageHeader'
+import { Button } from '@shared/components/ui/Button'
+import { Modal } from '@shared/components/ui/Modal'
+import { createTuitionInvoice, remindTuitionInvoice, useFinanceOptions, useTuitionLedger, verifyTuitionPayment, type TuitionInvoice } from '../api/tuitionFinance'
 
-interface PaymentItem {
-  id: number | string;
-  name: string;
-  cne?: string;
-  cin?: string;
-  type: string;
-  tranche: string;
-  method: string;
-  amount: string;
-  date: string;
-  status: 'PAID' | 'LATE' | 'PENDING';
-  receipt_number?: string;
-}
+const field = 'mt-1 w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30'
+const card = 'rounded-2xl border border-border bg-card p-5'
+const money = (value: number) => new Intl.NumberFormat('fr-MA', { style: 'currency', currency: 'MAD' }).format(value)
+const failure = (error: unknown) => (error as { response?: { data?: { message?: string } } })?.response?.data?.message || 'La demande a échoué. Réessayez.'
 
 export default function AdminFinanceDashboard() {
-  const { t, i18n } = useTranslation(['admin', 'common']);
-  const isRtl = i18n.language === 'ar';
-
-  const [filterStatus, setFilterStatus] = useState<'ALL' | 'PAID' | 'LATE' | 'PENDING'>('ALL');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedReceipt, setSelectedReceipt] = useState<PaymentItem | null>(null);
-
-  const { data: financeData, isLoading, refetch } = useQuery({
-    queryKey: ['admin-finance-stats'],
-    queryFn: async () => {
-      const res = await api.get('/finance/stats');
-      return res.data.data;
-    }
-  });
-
-  const rawPayments: PaymentItem[] = financeData?.payments || [];
-
-  const paymentsList = rawPayments;
-
-  const revenueMonth = financeData?.revenue_month || '0.00 MAD';
-  const unpaidAmount = financeData?.unpaid_amount || '0.00 MAD';
-  const unpaidCount = financeData?.unpaid_count || 0;
-  const clubBudget = financeData?.club_budget || '0.00 MAD';
-  const scholarshipTotal = financeData?.scholarship_total || '0.00 MAD';
-
-  const [paymentToVerify, setPaymentToVerify] = useState<PaymentItem | null>(null);
-  const [savingPayment, setSavingPayment] = useState(false);
-  const handleValidatePayment = (id: number | string, _name: string) => {
-    setPaymentToVerify(rawPayments.find(p => p.id === id) ?? null);
-  };
-  const handleSendReminder = async (invoice: PaymentItem) => {
+  const cache = useQueryClient()
+  const [page, setPage] = useState(1)
+  const [search, setSearch] = useState('')
+  const [status, setStatus] = useState('ALL')
+  const [createOpen, setCreateOpen] = useState(false)
+  const [studentSearch, setStudentSearch] = useState('')
+  const [selected, setSelected] = useState<TuitionInvoice | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [formError, setFormError] = useState('')
+  const ledger = useTuitionLedger(page, search, status)
+  const options = useFinanceOptions(studentSearch, createOpen)
+  const refresh = () => cache.invalidateQueries({ queryKey: ['admin-finance-stats'] })
+  const close = () => { if (!busy) { setCreateOpen(false); setSelected(null); setFormError('') } }
+  async function save(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const fields = new FormData(event.currentTarget)
+    setBusy(true); setFormError('')
     try {
-      const response = await api.post(`/admin/finance/invoices/${invoice.id}/reminder`);
-      toast.success(response.data.message);
-    } catch { toast.error('Le rappel n’a pas pu être enregistré.'); }
-  };
-  const handleAutoRelance = async () => {
-    try {
-      const response = await api.post('/admin/finance/reminders');
-      toast.success(`${response.data.sent_count} rappel(s) enregistré(s) dans les espaces personnels.`);
-    } catch { toast.error('Échec des relances.'); }
-  };
-  // Filter payments
-  const filteredPayments = paymentsList.filter(p => {
-    const matchesStatus = filterStatus === 'ALL' || p.status === filterStatus;
-    const matchesSearch = 
-      p.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      p.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (p.receipt_number && p.receipt_number.toLowerCase().includes(searchQuery.toLowerCase()));
-    return matchesStatus && matchesSearch;
-  });
-
-  return (
-    <div className="space-y-8 pb-12 animate-fade-in">
-      
-      {paymentToVerify && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true" aria-labelledby="payment-verification-title">
-        <form className="w-full max-w-lg space-y-4 rounded-xl bg-white p-6 text-slate-900" onSubmit={async event => {
-          event.preventDefault();
-          const fields = new FormData(event.currentTarget);
-          setSavingPayment(true);
-          try {
-            await api.post(`/admin/finance/payments/${paymentToVerify.id}/validate`, {
-              reference: fields.get('reference'), amount: fields.get('amount'), provider: fields.get('provider'),
-              verification_note: fields.get('verification_note'), receipt_verified: fields.get('receipt_verified') === 'on'
-            });
-            toast.success('Règlement vérifié et enregistré.'); setPaymentToVerify(null); await refetch();
-          } catch { toast.error('Le règlement n’a pas été enregistré. Vérifiez la référence, le montant et le justificatif.'); }
-          finally { setSavingPayment(false); }
-        }}>
-          <h2 id="payment-verification-title" className="text-lg font-bold">Vérifier le règlement — {paymentToVerify.name}</h2>
-          <label className="block">Référence du justificatif<input name="reference" required minLength={4} maxLength={150} className="block w-full rounded border p-2" /></label>
-          <label className="block">Montant reçu (MAD)<input name="amount" type="number" min="0.01" step="0.01" required className="block w-full rounded border p-2" /></label>
-          <label className="block">Mode de règlement<select name="provider" className="block w-full rounded border p-2"><option value="bank">Virement bancaire</option><option value="cash">Espèces à la régie</option><option value="cmi">Justificatif CMI</option><option value="wafacash">Justificatif Wafacash</option></select></label>
-          <label className="block">Compte rendu de vérification<textarea name="verification_note" required minLength={10} maxLength={2000} className="block w-full rounded border p-2" /></label>
-          <label className="block"><input name="receipt_verified" type="checkbox" required /> J’ai vérifié le justificatif et la réception du règlement.</label>
-          <div className="flex justify-end gap-3"><button type="button" disabled={savingPayment} onClick={() => setPaymentToVerify(null)}>Annuler</button><button disabled={savingPayment} className="rounded bg-blue-700 px-4 py-2 text-white">{savingPayment ? 'Enregistrement…' : 'Enregistrer le règlement'}</button></div>
-        </form>
-      </div>}
-      {/* ── Header Régie & Formations Continues ────────────────────────────────── */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#002e5b] via-[#0f2863] to-[#1e40af] p-6 md:p-10 text-white shadow-2xl">
-        <div className="absolute -top-24 -end-24 w-80 h-80 rounded-full bg-sky-400/15 blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-20 -start-20 w-72 h-72 rounded-full bg-emerald-400/15 blur-3xl pointer-events-none" />
-
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-          <div className="space-y-3 max-w-3xl">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-xs font-black uppercase tracking-wider backdrop-blur-md">
-                <Landmark className="w-3.5 h-3.5 text-emerald-400" /> Régie & Agence Comptable
-              </span>
-              <span className="px-3 py-1 rounded-full bg-white/15 border border-white/20 text-blue-200 text-xs font-black uppercase tracking-wider">
-                Masters Spécialisés & Formation Continue
-              </span>
-            </div>
-
-            <h1 className="text-3xl md:text-4xl font-black tracking-tight text-white">
-              Cockpit Financier, Régie & Facturation Officielle
-            </h1>
-
-            <p className="text-blue-100/90 text-sm leading-relaxed">
-              Paiement uniquement pour licence, master spécialisé et formation continue.
-              La Grande École (filière <strong>grande_ecole</strong>) est gratuite — aucun frais de scolarité.
-            </p>
-          </div>
-
-          <div className="shrink-0 flex items-center gap-3 flex-wrap">
-            <button
-              onClick={handleAutoRelance}
-              className="flex items-center gap-2 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white px-5 py-3 rounded-2xl text-xs font-black transition-all shadow-lg active:scale-95 cursor-pointer"
-            >
-              <Send className="w-4 h-4" />
-              <span>Relances Auto ({unpaidCount})</span>
-            </button>
-            <button
-              onClick={() => refetch()}
-              className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white border border-white/15 px-5 py-3 rounded-2xl text-xs font-extrabold backdrop-blur-md transition-all shadow-md active:scale-95 cursor-pointer"
-            >
-              <RefreshCcw className="w-4 h-4 text-emerald-400" />
-              <span>Actualiser</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* ── KPI Cards ──────────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        
-        {/* Recettes du Mois */}
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-200/80 dark:border-slate-800 hover:-translate-y-1 hover:shadow-xl transition-all duration-300 relative overflow-hidden group">
-          <div className="flex justify-between items-start mb-3">
-            <div className="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform">
-              <TrendingUp className="w-5 h-5" />
-            </div>
-            <span className="px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
-              ENCAISSÉ
-            </span>
-          </div>
-          <div>
-            <p className="text-xs font-extrabold uppercase text-slate-400 tracking-wider mb-1">
-              Recettes Encaissées
-            </p>
-            <p className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight leading-none mb-2">
-              {revenueMonth}
-            </p>
-            <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 text-xs font-extrabold">
-              <ArrowUpRight className="w-3.5 h-3.5" />
-              <span>+18.4% vs mois précédent</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Impayés */}
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-200/80 dark:border-slate-800 hover:-translate-y-1 hover:shadow-xl transition-all duration-300 relative overflow-hidden group">
-          <div className="flex justify-between items-start mb-3">
-            <div className="p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 group-hover:scale-110 transition-transform">
-              <AlertCircle className="w-5 h-5" />
-            </div>
-            <span className="px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider rounded-full bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300">
-              EN RETARD
-            </span>
-          </div>
-          <div>
-            <p className="text-xs font-extrabold uppercase text-slate-400 tracking-wider mb-1">
-              Impayés & Retards
-            </p>
-            <p className="text-2xl font-black text-rose-600 dark:text-rose-400 tracking-tight leading-none mb-2">
-              {unpaidAmount}
-            </p>
-            <div className="flex items-center gap-1 text-rose-600 dark:text-rose-400 text-xs font-extrabold">
-              <ArrowDownRight className="w-3.5 h-3.5" />
-              <span>{unpaidCount} auditeurs concernés</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Budget Clubs */}
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-200/80 dark:border-slate-800 hover:-translate-y-1 hover:shadow-xl transition-all duration-300 relative overflow-hidden group">
-          <div className="flex justify-between items-start mb-3">
-            <div className="p-3.5 rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform">
-              <CreditCard className="w-5 h-5" />
-            </div>
-            <span className="px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300">
-              ACTIVITÉS
-            </span>
-          </div>
-          <div>
-            <p className="text-xs font-extrabold uppercase text-slate-400 tracking-wider mb-1">
-              Budget Vie Étudiante & Clubs
-            </p>
-            <p className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight leading-none mb-2">
-              {clubBudget}
-            </p>
-            <div className="flex items-center gap-1 text-blue-600 dark:text-blue-400 text-xs font-extrabold">
-              <span>8 clubs accrédités actifs</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Bourses */}
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-200/80 dark:border-slate-800 hover:-translate-y-1 hover:shadow-xl transition-all duration-300 relative overflow-hidden group">
-          <div className="flex justify-between items-start mb-3">
-            <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/60 text-amber-500 group-hover:scale-110 transition-transform">
-              <Award className="w-5 h-5" />
-            </div>
-            <span className="px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider rounded-full bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300">
-              BOURSES
-            </span>
-          </div>
-          <div>
-            <p className="text-xs font-extrabold uppercase text-slate-400 tracking-wider mb-1">
-              Bourses d'Excellence & Mérite
-            </p>
-            <p className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight leading-none mb-2">
-              {scholarshipTotal}
-            </p>
-            <div className="flex items-center gap-1 text-amber-600 dark:text-amber-400 text-xs font-extrabold">
-              <span>Allocataires méritants ENCG</span>
-            </div>
-          </div>
-        </div>
-
-      </div>
-
-      {/* ── Table & Interactive Transactions Section ──────────────────────────── */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-sm hover:shadow-md transition-all space-y-6">
-        
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h2 className="text-lg font-black text-slate-900 dark:text-slate-100 tracking-tight">
-              Registre des Encaissements & Tranches de Formation Continue
-            </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
-              Historique des règlements Masters Exécutifs et Executive MBAs avec reçu A4
-            </p>
-          </div>
-
-          {/* Filter & Search Bar */}
-          <div className="flex items-center gap-3 flex-wrap">
-            <div className="relative">
-              <Search className="w-4 h-4 text-slate-400 absolute start-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder="Chercher par auditeur ou reçu..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="ps-9 pe-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none w-56"
-              />
-            </div>
-
-            <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
-              {[
-                { key: 'ALL', label: 'Tous' },
-                { key: 'PAID', label: 'Payés' },
-                { key: 'LATE', label: 'En Retard' },
-                { key: 'PENDING', label: 'En Attente' },
-              ].map((tab) => (
-                <button
-                  key={tab.key}
-                  onClick={() => setFilterStatus(tab.key as any)}
-                  className={cn(
-                    "px-3 py-1.5 text-xs font-black rounded-lg transition-all cursor-pointer",
-                    filterStatus === tab.key
-                      ? "bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 shadow-xs"
-                      : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
-                  )}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Transactions Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40">
-                <th className="p-4 text-xs font-black text-slate-400 uppercase tracking-wider">Auditeur & Programme</th>
-                <th className="p-4 text-xs font-black text-slate-400 uppercase tracking-wider">Tranche & Mode</th>
-                <th className="p-4 text-xs font-black text-slate-400 uppercase tracking-wider">Montant</th>
-                <th className="p-4 text-xs font-black text-slate-400 uppercase tracking-wider">Date</th>
-                <th className="p-4 text-xs font-black text-slate-400 uppercase tracking-wider">Statut</th>
-                <th className="p-4 text-xs font-black text-slate-400 uppercase tracking-wider text-right">Actions Régie</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredPayments.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="p-8 text-center text-xs font-bold text-slate-400 italic">
-                    Aucun encaissement ne correspond aux critères.
-                  </td>
-                </tr>
-              ) : (
-                filteredPayments.map((p) => (
-                  <tr key={p.id} className="border-b border-slate-100 dark:border-slate-800/60 hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
-                    <td className="p-4">
-                      <p className="font-extrabold text-sm text-slate-900 dark:text-slate-100">{p.name}</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">{p.type}</p>
-                    </td>
-                    <td className="p-4">
-                      <p className="text-xs font-bold text-slate-800 dark:text-slate-200">{p.tranche}</p>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400">{p.method}</p>
-                    </td>
-                    <td className="p-4 font-black text-sm text-indigo-600 dark:text-indigo-400">
-                      {p.amount}
-                    </td>
-                    <td className="p-4 text-xs text-slate-500 dark:text-slate-400 font-semibold">
-                      {p.date}
-                    </td>
-                    <td className="p-4">
-                      <span className={cn(
-                        "px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border",
-                        p.status === 'PAID' ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800" :
-                        p.status === 'LATE' ? "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950 dark:text-rose-300 dark:border-rose-800" :
-                        "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800"
-                      )}>
-                        {p.status === 'PAID' ? 'RÉGLÉ ✓' : p.status === 'LATE' ? 'EN RETARD ⚠️' : 'EN ATTENTE ⏳'}
-                      </span>
-                    </td>
-                    <td className="p-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        {p.status === 'PAID' && (
-                          <button
-                            onClick={() => setSelectedReceipt(p)}
-                            className="px-3 py-1.5 rounded-xl bg-[#0f2863] hover:bg-[#15347d] text-white text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center gap-1.5"
-                            title="Voir et imprimer le reçu A4"
-                          >
-                            <FileText className="w-3.5 h-3.5 text-amber-300" />
-                            <span>Reçu A4</span>
-                          </button>
-                        )}
-                        {p.status === 'LATE' && (
-                          <button
-                            onClick={() => handleSendReminder(p)}
-                            className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center gap-1"
-                            title="Envoyer une relance par mail"
-                          >
-                            <Send className="w-3.5 h-3.5" />
-                            <span>Relancer</span>
-                          </button>
-                        )}
-                        {p.status === 'PENDING' && (
-                          <button
-                            onClick={() => handleValidatePayment(p.id, p.name)}
-                            className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center gap-1"
-                            title="Valider la réception"
-                          >
-                            <Check className="w-3.5 h-3.5" />
-                            <span>Valider</span>
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* ── Official A4 Payment Receipt Modal ─────────────────────────────────── */}
-      {selectedReceipt && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-white text-slate-900 rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col border border-slate-200">
-            
-            {/* Modal Top Bar */}
-            <div className="p-4 bg-slate-900 text-white flex items-center justify-between no-print">
-              <div className="flex items-center gap-2">
-                <Landmark className="w-5 h-5 text-amber-400" />
-                <span className="font-black text-sm">Reçu Officiel de Paiement — Régie ENCG Fès</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => window.print()}
-                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-md"
-                >
-                  <Printer className="w-4 h-4" /> Imprimer A4
-                </button>
-                <button
-                  onClick={() => setSelectedReceipt(null)}
-                  className="p-1.5 text-white/70 hover:text-white rounded-lg transition-colors cursor-pointer"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-
-            {/* A4 Printable Receipt Body */}
-            <div className="p-8 space-y-6 bg-white" id="printable-receipt">
-              
-              {/* Header */}
-              <div className="text-center border-b-2 border-[#002e5b] pb-4">
-                <p className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">
-                  Royaume du Maroc • Université Sidi Mohamed Ben Abdellah
-                </p>
-                <h2 className="text-lg font-black text-[#002e5b] uppercase mt-0.5">
-                  École Nationale de Commerce et de Gestion de Fès
-                </h2>
-                <p className="text-xs font-extrabold text-slate-700 mt-1">
-                  SERVICE DE LA RÉGIE & AGENCE COMPTABLE — FORMATION CONTINUE
-                </p>
-              </div>
-
-              {/* Receipt Reference Banner */}
-              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex items-center justify-between">
-                <div>
-                  <span className="text-[10px] font-black text-slate-400 uppercase">N° Reçu d'Encaissement</span>
-                  <p className="text-base font-mono font-black text-[#002e5b]">{selectedReceipt.receipt_number}</p>
-                </div>
-                <div className="text-right">
-                  <span className="text-[10px] font-black text-slate-400 uppercase">Date d'Émission</span>
-                  <p className="text-xs font-bold text-slate-700">{selectedReceipt.date}</p>
-                </div>
-              </div>
-
-              {/* Student & Payment Details */}
-              <div className="grid grid-cols-2 gap-4 text-xs">
-                <div>
-                  <span className="text-slate-400 font-bold uppercase text-[10px]">Nom de l'Auditeur / Étudiant</span>
-                  <p className="font-extrabold text-slate-900 text-sm">{selectedReceipt.name}</p>
-                </div>
-                <div>
-                  <span className="text-slate-400 font-bold uppercase text-[10px]">Identifiants (CIN / CNE)</span>
-                  <p className="font-extrabold text-slate-900 text-sm">{selectedReceipt.cin || '—'} • {selectedReceipt.cne || '—'}</p>
-                </div>
-                <div className="col-span-2">
-                  <span className="text-slate-400 font-bold uppercase text-[10px]">Programme / Formation Spécialisée</span>
-                  <p className="font-bold text-slate-800">{selectedReceipt.type}</p>
-                </div>
-                <div>
-                  <span className="text-slate-400 font-bold uppercase text-[10px]">Tranche Réglée</span>
-                  <p className="font-bold text-slate-800">{selectedReceipt.tranche}</p>
-                </div>
-                <div>
-                  <span className="text-slate-400 font-bold uppercase text-[10px]">Mode de Règlement</span>
-                  <p className="font-bold text-slate-800">{selectedReceipt.method}</p>
-                </div>
-              </div>
-
-              {/* Amount Box */}
-              <div className="p-4 bg-emerald-50 border-2 border-emerald-200 rounded-2xl flex items-center justify-between">
-                <div>
-                  <span className="text-[10px] font-black uppercase text-emerald-800">Montant Total Réglé (TTC)</span>
-                  <p className="text-2xl font-black text-emerald-900">{selectedReceipt.amount}</p>
-                </div>
-                <div className="px-3 py-1 bg-emerald-600 text-white rounded-xl text-xs font-black uppercase">
-                  ACQUITTÉ ✓
-                </div>
-              </div>
-
-              {/* Signatures & Seal */}
-              <div className="grid grid-cols-2 pt-6 border-t border-slate-200 text-[11px]">
-                <div>
-                  <p className="font-bold text-slate-700">Le Régisseur / Agent Comptable</p>
-                  <p className="text-slate-400 italic text-[10px] mt-1">Cachet officiel & signature électronique</p>
-                  <div className="mt-2 w-24 h-12 border border-dashed border-slate-300 rounded-lg flex items-center justify-center text-[9px] text-slate-400">
-                    [CACHET RÉGIE]
-                  </div>
-                </div>
-                <div className="text-right flex flex-col items-end">
-                  <p className="font-bold text-slate-700">Vérification Cryptographique</p>
-                  <p className="text-slate-400 font-mono text-[9px] mt-1">SHA256:ENCG-PAY-{selectedReceipt.id}-USMBA</p>
-                  <div className="mt-2 w-12 h-12 bg-slate-900 text-white rounded-lg flex items-center justify-center text-[8px] font-mono">
-                    [QR FISCAL]
-                  </div>
-                </div>
-              </div>
-
-            </div>
-
-          </div>
-        </div>
-      )}
-
+      if (selected) {
+        await verifyTuitionPayment(selected.id, { reference: fields.get('reference'), amount: fields.get('amount'), provider: fields.get('provider'), verification_note: fields.get('verification_note'), receipt_verified: fields.get('receipt_verified') === 'on' })
+        toast.success('Règlement vérifié et enregistré.')
+      } else {
+        await createTuitionInvoice(Object.fromEntries(fields))
+        toast.success('Facture créée pour l’inscription sélectionnée.')
+      }
+      setCreateOpen(false); setSelected(null); await refresh()
+    } catch (error) { const message = failure(error); setFormError(message); toast.error(message) }
+    finally { setBusy(false) }
+  }
+  async function remind(id?: number) {
+    setBusy(true)
+    try { const response = await remindTuitionInvoice(id); toast.success(`${response.data.sent_count} rappel(s) enregistré(s) dans les espaces personnels.`) }
+    catch (error) { toast.error(failure(error)) }
+    finally { setBusy(false) }
+  }
+  const data = ledger.data
+  return <div className="mx-auto max-w-7xl space-y-6 p-4 md:p-6">
+    <PageHeader title="Régie & frais de formation" subtitle="Factures annuelles, règlements vérifiés et suivi des soldes." actions={<>
+      <Button variant="outline" onClick={() => ledger.refetch()} aria-label="Actualiser les factures"><RefreshCw className="h-4 w-4" /></Button>
+      <Button leadingIcon={<Plus className="h-4 w-4" />} onClick={() => { setFormError(''); setCreateOpen(true) }}>Créer une facture</Button>
+    </>} />
+    <div className="grid gap-4 sm:grid-cols-3">
+      {[['Encaissements vérifiés ce mois', data?.revenue_month], ['Solde restant à régulariser', data?.unpaid_amount], ['Factures non soldées', data?.unpaid_count]].map(([label, value]) => <div className={card} key={String(label)}><p className="text-sm text-muted-foreground">{label}</p><p className="mt-2 text-2xl font-bold tabular-nums">{value ?? '—'}</p></div>)}
     </div>
-  );
+    <div className="flex gap-3 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-950 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-100"><Banknote className="h-5 w-5 shrink-0" /><p>Les formations Grande École sont exonérées. Chaque règlement est enregistré après vérification du justificatif par la régie.</p></div>
+    <section className="overflow-hidden rounded-2xl border border-border bg-card" aria-label="Factures de formation">
+      <div className="flex flex-col gap-3 border-b border-border p-4 lg:flex-row lg:items-end">
+        <label className="flex-1 text-sm font-medium">Rechercher un étudiant ou une facture<div className="relative"><Search className="absolute start-3 top-4 h-4 w-4 text-muted-foreground" /><input className={`${field} ps-10`} value={search} onChange={e => { setSearch(e.target.value); setPage(1) }} placeholder="Nom, CNE ou référence" /></div></label>
+        <label className="text-sm font-medium">Statut<select className={field} value={status} onChange={e => { setStatus(e.target.value); setPage(1) }}><option value="ALL">Toutes les factures</option><option value="PENDING">À régulariser</option><option value="LATE">Échéance dépassée</option><option value="PAID">Soldées</option></select></label>
+        <Button variant="outline" disabled={busy || !data?.unpaid_count} leadingIcon={<Send className="h-4 w-4" />} onClick={() => remind()}>Relancer les impayés</Button>
+      </div>
+      {ledger.isPending ? <p role="status" className="p-10 text-center text-muted-foreground">Chargement des factures…</p> : ledger.isError ? <div role="alert" className="space-y-3 p-8 text-center"><p>Les factures ne peuvent pas être chargées.</p><Button variant="outline" onClick={() => ledger.refetch()}>Réessayer</Button></div> : !data?.payments.length ? <div className="p-12 text-center"><Banknote className="mx-auto mb-3 h-8 w-8 text-muted-foreground" /><h2 className="font-semibold">Aucune facture à afficher</h2><p className="mt-1 text-sm text-muted-foreground">Créez une facture pour une inscription à un cursus payant ou ajustez vos filtres.</p></div> : <>
+        <div className="overflow-x-auto"><table className="w-full text-start text-sm"><thead className="bg-muted/40 text-xs text-muted-foreground"><tr>{['Étudiant', 'Formation & échéance', 'Montant', 'Solde', 'Statut', 'Actions'].map(label => <th className="p-4 text-start font-semibold" key={label}>{label}</th>)}</tr></thead><tbody className="divide-y divide-border">{data.payments.map(invoice => <tr key={invoice.id} className="hover:bg-muted/25">
+          <td className="p-4"><p className="font-semibold">{invoice.name}</p><p className="text-xs text-muted-foreground">{invoice.cne}</p></td>
+          <td className="max-w-xs p-4"><p>{invoice.type}</p><p className="text-xs text-muted-foreground">Échéance : {invoice.date ? new Date(`${invoice.date}T12:00:00`).toLocaleDateString('fr-FR') : 'Non renseignée'}</p><p className="mt-1 max-w-48 truncate text-xs text-muted-foreground" title={invoice.receipt_number}>{invoice.receipt_number}</p></td>
+          <td className="whitespace-nowrap p-4 tabular-nums">{invoice.amount}</td><td className="whitespace-nowrap p-4 font-semibold tabular-nums">{invoice.remaining_amount == null ? '—' : money(invoice.remaining_amount)}</td>
+          <td className="p-4"><span className={`inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ${invoice.status === 'PAID' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200' : invoice.status === 'LATE' ? 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200' : 'bg-muted text-foreground'}`}>{invoice.status === 'PAID' && <CheckCircle2 className="h-3 w-3" />}{invoice.status === 'PAID' ? 'Soldée' : invoice.status === 'LATE' ? 'En retard' : 'À régulariser'}</span></td>
+          <td className="p-4">{invoice.status !== 'PAID' && <div className="flex gap-2"><Button size="sm" onClick={() => { setFormError(''); setSelected(invoice) }}>Valider</Button><Button size="sm" variant="outline" disabled={busy} onClick={() => remind(invoice.id)}>Rappeler</Button></div>}</td>
+        </tr>)}</tbody></table></div>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border p-4 text-sm text-muted-foreground"><p>{data.meta?.total ?? data.payments.length} facture(s) · Page {page} / {data.meta?.last_page ?? 1}</p><div className="flex gap-2"><Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(p => p - 1)} aria-label="Page précédente"><ChevronLeft className="h-4 w-4" /></Button><Button variant="outline" size="sm" disabled={page >= (data.meta?.last_page ?? 1)} onClick={() => setPage(p => p + 1)} aria-label="Page suivante"><ChevronRight className="h-4 w-4" /></Button></div></div>
+      </>}
+    </section>
+    <Modal open={createOpen || !!selected} onClose={close} preventBackdropClose={busy} preventEscapeClose={busy} title={selected ? `Vérifier le règlement — ${selected.name}` : 'Créer une facture de formation'} description={selected ? 'Contrôlez la réception du règlement avant de confirmer.' : 'La facture doit correspondre à une inscription existante au même cursus et à la même année.'}>
+      <form onSubmit={save} className="space-y-4">
+        {formError && <p role="alert" className="flex gap-2 rounded-lg bg-red-50 p-3 text-sm text-red-800 dark:bg-red-950 dark:text-red-200"><AlertCircle className="h-4 w-4 shrink-0" />{formError}</p>}
+        {selected ? <>
+          <p className="rounded-lg bg-muted p-3 text-sm">Solde de la facture : <strong>{selected.remaining_amount == null ? 'Consulter la régie' : money(selected.remaining_amount)}</strong></p>
+          <label className="block text-sm font-medium">Référence du justificatif<input className={field} name="reference" required minLength={4} maxLength={150} /></label>
+          <label className="block text-sm font-medium">Montant reçu (MAD)<input className={field} name="amount" type="number" required min="0.01" max={selected.remaining_amount} step="0.01" /></label>
+          <label className="block text-sm font-medium">Mode de règlement<select className={field} name="provider"><option value="bank">Virement bancaire</option><option value="cash">Espèces à la régie</option><option value="cmi">Justificatif CMI</option><option value="wafacash">Justificatif Wafacash</option></select></label>
+          <label className="block text-sm font-medium">Compte rendu de vérification<textarea className={field} name="verification_note" required minLength={10} maxLength={2000} rows={3} /></label>
+          <label className="flex items-start gap-2 text-sm"><input className="mt-1" name="receipt_verified" type="checkbox" required />J’ai vérifié le justificatif et la réception du règlement.</label>
+        </> : <>
+          <label className="block text-sm font-medium">Rechercher l’étudiant<input className={field} value={studentSearch} onChange={e => setStudentSearch(e.target.value)} placeholder="Nom ou CNE" /></label>
+          {options.isError && <p role="alert" className="text-sm text-red-700">Impossible de charger les inscriptions. <button type="button" className="underline" onClick={() => options.refetch()}>Réessayer</button></p>}
+          <label className="block text-sm font-medium">Étudiant<select className={field} name="student_id" required key={studentSearch}><option value="">{options.isPending ? 'Chargement…' : 'Sélectionner un étudiant'}</option>{options.data?.students.map(s => <option key={s.id} value={s.id}>{s.name} — {s.cne}</option>)}</select></label>
+          <div className="grid gap-4 sm:grid-cols-2"><label className="block text-sm font-medium">Année universitaire<select className={field} name="academic_year_id" required><option value="">Sélectionner</option>{options.data?.years.map(y => <option key={y.id} value={y.id}>{y.label}</option>)}</select></label><label className="block text-sm font-medium">Formation payante<select className={field} name="filiere_id" required><option value="">Sélectionner</option>{options.data?.filieres.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}</select></label></div>
+          <div className="grid gap-4 sm:grid-cols-2"><label className="block text-sm font-medium">Montant facturé (MAD)<input className={field} name="amount" type="number" required min="0.01" max="99999999" step="0.01" /></label><label className="block text-sm font-medium">Date d’échéance<input className={field} name="due_on" type="date" required /></label></div>
+        </>}
+        <div className="flex justify-end gap-2 border-t border-border pt-4"><Button type="button" variant="outline" disabled={busy} onClick={close}>Annuler</Button><Button type="submit" isLoading={busy} disabled={!selected && !options.data}>{selected ? 'Enregistrer le règlement' : 'Créer la facture'}</Button></div>
+      </form>
+    </Modal>
+  </div>
 }

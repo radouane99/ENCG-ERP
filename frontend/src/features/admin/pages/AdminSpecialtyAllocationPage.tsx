@@ -1,232 +1,60 @@
-import { useState } from 'react';
-import { useQuery,useMutation,useQueryClient } from '@tanstack/react-query';
-import {
-Sparkles,CheckCircle2,BarChart3,
-Layers,
-RefreshCw,
-Zap
-} from 'lucide-react';
-import api from '@shared/lib/api';
-import { toast } from 'sonner';
-import { cn } from '@shared/lib/utils';
-import PageHeader from '@shared/components/layout/PageHeader';
-import { Spinner } from '@shared/components/ui/Spinner';
+import { useEffect, useState, type FormEvent } from 'react'
+import { Eye, CheckCircle2, RefreshCw, Settings2 } from 'lucide-react'
+import { toast } from 'sonner'
+import PageHeader from '@shared/components/layout/PageHeader'
+import { Button } from '@shared/components/ui/Button'
+import { Modal } from '@shared/components/ui/Modal'
+import { commitSpecialtyAllocation, configureSpecialtyCampaign, previewSpecialtyAllocation, saveSpecialtyQuotas, useAllocation, type AllocationPlan, type Quota } from '@features/students/api/specialty'
 
+const field = 'mt-1 w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30'
+const failure = (error: unknown) => (error as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'La demande a échoué. Réessayez.'
+const localDate = (value?: string) => value ? new Date(new Date(value).getTime() - new Date(value).getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ''
 export default function AdminSpecialtyAllocationPage() {
-  const queryClient = useQueryClient();
-  const [academicYear, setAcademicYear] = useState('2026/2027');
-
-  const { data, isLoading, refetch } = useQuery({
-    queryKey: ['specialty-allocation-simulation', academicYear],
-    queryFn: () => api.get('/admin/specialty-allocation/simulation', {
-      params: { academic_year: academicYear }
-    }).then(res => res.data?.data || res.data || {})
-  });
-
-  const runAllocationMutation = useMutation({
-    mutationFn: () => api.post('/admin/specialty-allocation/run', { academic_year: academicYear }),
-    onSuccess: (res) => {
-      const allocatedCount = res.data?.allocated_count || 'tous les';
-      toast.success(`Algorithme exécuté avec succès ! ${allocatedCount} étudiants affectés à leur spécialité définitive.`);
-      queryClient.invalidateQueries({ queryKey: ['specialty-allocation-simulation'] });
-    },
-    onError: (err: any) => {
-      const msg = err?.response?.data?.message || 'Erreur lors de l\'exécution de l\'allocation.';
-      toast.error(msg);
-    }
-  });
-
-  const quotas = data?.quotas || [];
-  const candidates = data?.candidates || [];
-  const totalCapacity = quotas.reduce((acc: number, q: any) => acc + Number(q.capacity || 0), 0);
-  const totalAllocated = candidates.filter((c: any) => !!c.allocated_filiere).length;
-
-  return (
-    <div className="space-y-8 font-sans animate-in fade-in duration-500 text-slate-900 dark:text-slate-100 p-4 md:p-8 max-w-7xl mx-auto">
-      <PageHeader
-        title="Moteur d'Orientation & Choix de Spécialité (Numerus Clausus S6/S7)"
-        subtitle="Algorithme d'affectation au mérite (Gale-Shapley) • Respect strict des capacités plafonnées par filière"
-      />
-
-      {/* Hero Control Banner */}
-      <div className="bg-gradient-to-r from-[#001A4B] via-[#082663] to-[#0f347a] rounded-[2.5rem] p-6 sm:p-8 text-white shadow-2xl border border-white/10 relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="space-y-2 max-w-2xl">
-          <div className="inline-flex items-center gap-2 bg-amber-500/20 text-amber-300 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border border-amber-500/30">
-            <Zap className="w-3.5 h-3.5" /> Moteur d'Optimisation Algorithmique Actif
-          </div>
-          <h2 className="text-2xl font-black">Session d'Orientation Tronc Commun ➔ Spécialités</h2>
-          <p className="text-xs text-blue-200 font-medium">
-            Les étudiants de 2ème Année (S4) sont classés au mérite selon leur moyenne cumulée S1–S4 et affectés par ordre de préférence aux 5 filières accréditées (GFC, MACG, MCI, MRH, MLOG).
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3 shrink-0">
-          <button
-            onClick={() => refetch()}
-            className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl border border-white/15 transition-all cursor-pointer shadow-sm"
-            title="Rafraîchir les calculs"
-          >
-            <RefreshCw className="w-5 h-5" />
-          </button>
-
-          <button
-            onClick={() => {
-              if (window.confirm("Êtes-vous certain de vouloir exécuter l'allocation définitive ? Les parcours étudiants seront mis à jour en base.")) {
-                runAllocationMutation.mutate();
-              }
-            }}
-            disabled={runAllocationMutation.isPending || candidates.length === 0}
-            className="px-6 py-3.5 rounded-2xl bg-amber-500 hover:bg-amber-600 text-[#001A4B] font-black text-xs uppercase tracking-wider shadow-lg flex items-center gap-2 cursor-pointer transition-all disabled:opacity-50"
-          >
-            <Sparkles className="w-4 h-4 text-[#001A4B]" />
-            {runAllocationMutation.isPending ? "Exécution en cours..." : "Exécuter l'Affectation Définitive"}
-          </button>
-        </div>
-      </div>
-
-      {/* Quotas Grid */}
-      <div>
-        <h3 className="text-base font-black text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-          <BarChart3 className="w-5 h-5 text-indigo-600" /> Numerus Clausus & Capacités d'Accueil par Filière
-        </h3>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-          {quotas.map((quota: any) => {
-            const cap = Number(quota.capacity || 60);
-            const count = Number(quota.allocated_count || 0);
-            const percentage = Math.min(100, Math.round((count / cap) * 100));
-
-            return (
-              <div key={quota.filiere_code} className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <span className="font-black text-lg text-[#001A4B] dark:text-blue-300">{quota.filiere_code}</span>
-                    <p className="text-[10px] font-bold text-slate-400 truncate max-w-[120px]">{quota.filiere_name}</p>
-                  </div>
-                  <span className="text-xs font-mono font-black text-slate-600 dark:text-slate-300">
-                    {count} / {cap}
-                  </span>
-                </div>
-
-                <div className="w-full bg-slate-100 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden">
-                  <div 
-                    className={cn(
-                      "h-full rounded-full transition-all duration-700",
-                      percentage >= 95 ? "bg-rose-500" : percentage >= 70 ? "bg-amber-500" : "bg-emerald-500"
-                    )}
-                    style={{ width: `${percentage}%` }}
-                  />
-                </div>
-
-                <div className="flex justify-between items-center text-[10px] font-bold text-slate-400">
-                  <span>Remplissage : {percentage}%</span>
-                  <span className={percentage >= 100 ? "text-rose-500 font-black" : "text-emerald-500 font-black"}>
-                    {percentage >= 100 ? "Saturé" : `${cap - count} places`}
-                  </span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Simulation Table */}
-      <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-slate-100 dark:border-slate-800">
-          <div>
-            <h3 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
-              <Layers className="w-5 h-5 text-indigo-600" /> Classement au Mérite & Simulation des Affectations
-            </h3>
-            <p className="text-xs text-slate-400 mt-0.5">Trié par ordre décroissant du score de mérite (Moyenne générale S1-S4)</p>
-          </div>
-
-          <span className="px-3 py-1 rounded-full text-xs font-black bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200">
-            {candidates.length} Candidat{candidates.length > 1 ? 's' : ''} Classé{candidates.length > 1 ? 's' : ''}
-          </span>
-        </div>
-
-        {isLoading ? (
-          <div className="py-12 flex justify-center"><Spinner size="lg" /></div>
-        ) : candidates.length === 0 ? (
-          <div className="py-10 text-center text-slate-500 text-xs">
-            Aucun vœu de spécialité enregistré pour l'année académique active. Les étudiants peuvent saisir leurs choix sur leur portail.
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead>
-                <tr className="text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100 dark:border-slate-800">
-                  <th className="pb-3 pl-3 w-16">Rang</th>
-                  <th className="pb-3">Étudiant</th>
-                  <th className="pb-3 text-center">Score Mérite (S1-S4)</th>
-                  <th className="pb-3">Vœux Exprimés (1 ➔ 5)</th>
-                  <th className="pb-3 text-right pr-3">Filière Affectée</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
-                {candidates.map((cand: any, idx: number) => {
-                  const wishes = cand.wishes || [];
-                  const allocated = cand.allocated_filiere;
-                  const rankObtained = cand.rank_obtained || 1;
-
-                  return (
-                    <tr key={cand.student_id || idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                      <td className="py-3.5 pl-3">
-                        <span className={cn(
-                          "w-7 h-7 rounded-xl flex items-center justify-center font-black text-xs",
-                          idx === 0 ? "bg-amber-400 text-[#001A4B]" :
-                          idx === 1 ? "bg-slate-200 text-slate-700" :
-                          idx === 2 ? "bg-amber-700/20 text-amber-800 dark:text-amber-300" :
-                          "bg-slate-100 dark:bg-slate-800 text-slate-500"
-                        )}>
-                          #{idx + 1}
-                        </span>
-                      </td>
-                      <td className="py-3.5">
-                        <div className="font-black text-slate-900 dark:text-white text-sm">{cand.student_name}</div>
-                        <div className="text-[10px] font-mono font-bold text-slate-400">CNE: {cand.cne}</div>
-                      </td>
-                      <td className="py-3.5 text-center">
-                        <span className="font-mono font-black text-sm px-2.5 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300">
-                          {Number(cand.merit_score || 14.5).toFixed(2)} / 20
-                        </span>
-                      </td>
-                      <td className="py-3.5">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          {wishes.map((w: any, wIdx: number) => (
-                            <span 
-                              key={wIdx}
-                              className={cn(
-                                "px-2 py-0.5 rounded-md text-[10px] font-black uppercase font-mono",
-                                w.filiere_code === allocated
-                                  ? "bg-emerald-500 text-white shadow-xs"
-                                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
-                              )}
-                            >
-                              {wIdx + 1}. {w.filiere_code}
-                            </span>
-                          ))}
-                        </div>
-                      </td>
-                      <td className="py-3.5 text-right pr-3">
-                        <span className={cn(
-                          "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-black text-xs font-mono",
-                          rankObtained === 1 ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300" :
-                          rankObtained === 2 ? "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 border border-blue-300" :
-                          "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300"
-                        )}>
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                          {allocated || 'En cours'} (Vœu #{rankObtained})
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-    </div>
-  );
+  const query = useAllocation()
+  const [configureOpen, setConfigureOpen] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const [quotas, setQuotas] = useState<Quota[]>([])
+  const [quotasDirty, setQuotasDirty] = useState(false)
+  const [plan, setPlan] = useState<AllocationPlan | null>(null)
+  const [commitOpen, setCommitOpen] = useState(false)
+  useEffect(() => { if (query.data) setQuotas(query.data.filieres.map(f => query.data.quotas.find(q => q.filiere_id === f.id) ?? { filiere_id: f.id, capacity: 0, min_score_required: 0, is_open: false })) }, [query.data])
+  const data = query.data
+  const finalized = !!data?.campaign.finalized_at
+  async function perform(operation: () => Promise<unknown>, success: string) {
+    setBusy(true); setError('')
+    try { await operation(); toast.success(success); await query.refetch(); return true }
+    catch (err) { setError(failure(err)); toast.error(failure(err)); return false }
+    finally { setBusy(false) }
+  }
+  async function configure(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault(); const fields = new FormData(event.currentTarget)
+    const ok = await perform(() => configureSpecialtyCampaign({ source_year_id: Number(fields.get('source_year_id')), target_year_id: Number(fields.get('target_year_id')), target_semester: Number(fields.get('target_semester')), opens_at: new Date(String(fields.get('opens_at'))).toISOString(), closes_at: new Date(String(fields.get('closes_at'))).toISOString(), is_open: fields.get('is_open') === 'on', reason: fields.get('reason') }), 'Campagne enregistrée.')
+    if (ok) { setConfigureOpen(false); setPlan(null) }
+  }
+  async function preview() { setBusy(true); setError(''); try { setPlan(await previewSpecialtyAllocation()) } catch (err) { setError(failure(err)); toast.error(failure(err)) } finally { setBusy(false) } }
+  const rows = plan?.assignments ?? []
+  return <div className="mx-auto max-w-7xl space-y-6 p-4 md:p-6">
+    <PageHeader title="Affectation aux spécialités" subtitle="Configurez la campagne et les capacités, vérifiez l’aperçu, puis enregistrez les affectations." actions={<><Button variant="outline" aria-label="Actualiser les affectations" onClick={() => { setPlan(null); query.refetch() }}><RefreshCw className="h-4 w-4" /></Button><Button variant="outline" onClick={() => { setError(''); setConfigureOpen(true) }} leadingIcon={<Settings2 className="h-4 w-4" />}>Configurer la campagne</Button></>} />
+    {error && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200">{error}</p>}
+    {query.isPending ? <p role="status" className="p-10 text-center text-muted-foreground">Chargement de la campagne…</p> : query.isError ? <div role="alert" className="rounded-xl border border-border bg-card p-8"><p>Impossible de charger la campagne.</p><Button className="mt-3" variant="outline" onClick={() => query.refetch()}>Réessayer</Button></div> : data && <>
+      <section className="grid gap-4 rounded-2xl border border-border bg-card p-5 sm:grid-cols-4">{[['Campagne', finalized ? 'Affectations enregistrées' : data.campaign.is_open ? 'Collecte ouverte' : 'Collecte fermée'], ['Année source', data.years.find(y => y.id === data.campaign.source_year_id)?.label ?? 'À définir'], ['Année cible', data.years.find(y => y.id === data.campaign.target_year_id)?.label ?? 'À définir'], ['Semestre cible', data.campaign.target_semester ? `S${data.campaign.target_semester}` : 'À définir']].map(([name, value]) => <div key={name}><p className="text-xs text-muted-foreground">{name}</p><p className="mt-1 font-semibold">{value}</p></div>)}</section>
+      {!data.campaign.revision && <p className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-100">Commencez par définir les années, le semestre et les dates de la campagne.</p>}
+      <section className="overflow-hidden rounded-2xl border border-border bg-card"><div className="border-b border-border p-5"><h2 className="font-bold">Capacités par formation</h2><p className="mt-1 text-sm text-muted-foreground">Une capacité de zéro interdit toute affectation à cette formation.</p></div><div className="overflow-x-auto"><table className="w-full text-sm"><thead className="bg-muted/40 text-xs text-muted-foreground"><tr>{['Formation', 'Places', 'Score minimum /20', 'Ouverte', 'Affectées'].map(name => <th className="p-4 text-start" key={name}>{name}</th>)}</tr></thead><tbody className="divide-y divide-border">{quotas.map((q, index) => <tr key={q.filiere_id}><td className="p-4 font-medium">{data.filieres.find(f => f.id === q.filiere_id)?.name}</td><td className="w-28 p-3"><input aria-label={`Capacité ${q.filiere_id}`} className={field} type="number" min={0} max={10000} disabled={finalized || busy} value={q.capacity} onChange={e => { setPlan(null); setQuotasDirty(true); setQuotas(quotas.map((item, i) => i === index ? { ...item, capacity: Number(e.target.value) } : item)) }} /></td><td className="w-40 p-3"><input aria-label={`Score minimum ${q.filiere_id}`} className={field} type="number" min={0} max={20} step="0.01" disabled={finalized || busy} value={q.min_score_required} onChange={e => { setPlan(null); setQuotasDirty(true); setQuotas(quotas.map((item, i) => i === index ? { ...item, min_score_required: Number(e.target.value) } : item)) }} /></td><td className="p-4"><input type="checkbox" aria-label={`Ouvrir ${q.filiere_id}`} disabled={finalized || busy} checked={q.is_open} onChange={e => { setPlan(null); setQuotasDirty(true); setQuotas(quotas.map((item, i) => i === index ? { ...item, is_open: e.target.checked } : item)) }} /></td><td className="p-4 tabular-nums">{q.allocated_count ?? 0}</td></tr>)}</tbody></table></div><div className="flex justify-end border-t border-border p-4"><Button variant="outline" disabled={finalized || busy || !data.campaign.revision} onClick={() => { setPlan(null); perform(() => saveSpecialtyQuotas(quotas.map(({ filiere_id, capacity, min_score_required, is_open }) => ({ filiere_id, capacity, min_score_required, is_open }))), 'Capacités enregistrées.').then(ok => { if (ok) setQuotasDirty(false) }) }}>Enregistrer les capacités</Button></div></section>
+      <section className="overflow-hidden rounded-2xl border border-border bg-card"><div className="flex flex-wrap items-center justify-between gap-4 border-b border-border p-5"><div><h2 className="font-bold">{plan ? 'Aperçu des affectations' : 'Candidatures enregistrées'}</h2><p className="mt-1 text-sm text-muted-foreground">{data.candidates.length} candidat(s). Les données modifiées après l’aperçu imposent un nouveau calcul.</p></div><Button disabled={busy || finalized || quotasDirty || !data.candidates.length || !data.campaign.revision} leadingIcon={<Eye className="h-4 w-4" />} onClick={preview}>Calculer l’aperçu</Button></div><div className="overflow-x-auto"><table className="w-full text-sm"><thead className="bg-muted/40 text-xs text-muted-foreground"><tr>{['Candidat', 'Mérite /20', 'Préférences', 'Résultat'].map(name => <th className="p-4 text-start" key={name}>{name}</th>)}</tr></thead><tbody className="divide-y divide-border">{data.candidates.map(candidate => { const a = rows.find(row => row.student_id === candidate.student_id); return <tr key={candidate.student_id}><td className="p-4"><p className="font-semibold">{candidate.student_name}</p><p className="text-xs text-muted-foreground">{candidate.cne}</p></td><td className="p-4 tabular-nums">{(a?.score ?? candidate.merit_score) == null ? 'Bilan incomplet' : Number(a?.score ?? candidate.merit_score).toFixed(2)}</td><td className="max-w-xs p-4 text-xs">{candidate.wishes.map(w => `${w.preference_rank}. ${w.filiere?.name ?? w.filiere_id}`).join(' · ')}</td><td className="p-4 font-medium">{a ? a.status === 'assigned' ? data.filieres.find(f => f.id === a.filiere_id)?.name : a.status === 'needs_review' ? 'Vérification nécessaire' : `Liste d’attente · ${a.waiting_rank}` : candidate.allocated_filiere ?? 'En attente de calcul'}</td></tr> })}</tbody></table>{!data.candidates.length && <p className="p-10 text-center text-muted-foreground">Aucun vœu enregistré pour cette campagne.</p>}</div>{plan && <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border p-5"><p className="text-sm text-muted-foreground">{rows.filter(a => a.status === 'assigned').length} affectation(s) proposées · {rows.filter(a => a.status === 'needs_review').length} dossier(s) à vérifier</p><Button disabled={busy || finalized} onClick={() => setCommitOpen(true)}>Enregistrer les affectations</Button></div>}</section>
+    </>}
+    <Modal open={configureOpen} onClose={() => !busy && setConfigureOpen(false)} title="Configurer la campagne" preventBackdropClose={busy} preventEscapeClose={busy}>
+      <form className="space-y-4" onSubmit={configure}>
+        <p className="text-sm text-muted-foreground">La modification de la campagne invalide les aperçus précédents. Les affectations existantes ne sont pas effacées.</p>
+        <div className="grid gap-4 sm:grid-cols-2">{(['source', 'target'] as const).map(kind => <label key={kind} className="text-sm font-medium">Année {kind === 'source' ? 'des résultats' : 'd’inscription'}<select className={field} name={`${kind}_year_id`} defaultValue={data?.campaign[`${kind}_year_id`] ?? ''} required><option value="">Sélectionner</option>{data?.years.map(y => <option value={y.id} key={y.id}>{y.label}</option>)}</select></label>)}</div>
+        <label className="block text-sm font-medium">Semestre cible<select className={field} name="target_semester" defaultValue={data?.campaign.target_semester ?? ''} required><option value="">Sélectionner</option><option value="5">S5</option><option value="7">S7</option></select></label>
+        <div className="grid gap-4 sm:grid-cols-2"><label className="text-sm font-medium">Ouverture<input className={field} type="datetime-local" name="opens_at" required defaultValue={localDate(data?.campaign.opens_at)} /></label><label className="text-sm font-medium">Clôture<input className={field} type="datetime-local" name="closes_at" required defaultValue={localDate(data?.campaign.closes_at)} /></label></div>
+        <label className="flex gap-2 text-sm"><input type="checkbox" name="is_open" defaultChecked={data?.campaign.is_open} />Autoriser le dépôt des vœux pendant ces dates</label>
+        <label className="block text-sm font-medium">Motif de la configuration<textarea className={field} name="reason" required minLength={10} maxLength={2000} /></label>
+        {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
+        <div className="flex justify-end gap-2"><Button variant="outline" type="button" onClick={() => setConfigureOpen(false)} disabled={busy}>Annuler</Button><Button type="submit" isLoading={busy}>Enregistrer la campagne</Button></div>
+      </form>
+    </Modal>
+    <Modal open={commitOpen} onClose={() => !busy && setCommitOpen(false)} title="Enregistrer cet aperçu ?" description="Les affectations seront enregistrées pour l’année cible et la collecte des vœux sera fermée. Les inscriptions pédagogiques suivent leur procédure annuelle." footer={<><Button variant="outline" disabled={busy} onClick={() => setCommitOpen(false)}>Revenir à l’aperçu</Button><Button isLoading={busy} leadingIcon={<CheckCircle2 className="h-4 w-4" />} onClick={async () => { if (plan && await perform(() => commitSpecialtyAllocation(plan.id), 'Affectations enregistrées.')) { setCommitOpen(false); setPlan(null) } }}>Confirmer les affectations</Button></>}><p className="text-sm">{plan?.assignments.filter(a => a.status === 'assigned').length ?? 0} affectation(s) proposées.</p></Modal>
+  </div>
 }

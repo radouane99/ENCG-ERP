@@ -25,7 +25,9 @@ class ReinscriptionController extends Controller
             'is_confirmed' => (bool) $receipt, 'receipt_reference' => $receipt?->receipt_reference, 'confirmed_at' => $receipt?->confirmed_at,
             'filieres' => [], 'requires_filiere_choice' => false, 'payment_required' => (bool) $filiere?->requiresTuitionPayment(),
             'payment_status' => $filiere?->requiresTuitionPayment() ? ($invoice?->status ?? 'pending') : 'not_applicable',
-            'blocking_reason' => $registration ? null : 'La scolarité doit valider votre inscription académique annuelle.']]);
+            'invoice_reference' => $invoice?->reference, 'invoice_remaining' => $invoice ? max(0, round((float) $invoice->amount - (float) $invoice->paid_amount, 2)) : null,
+            'can_confirm' => ! $year->is_locked && (bool) $registration && (! $filiere?->requiresTuitionPayment() || ($invoice && $invoice->status === 'paid' && (float) $invoice->paid_amount >= (float) $invoice->amount)),
+            'blocking_reason' => $year->is_locked ? 'L’année universitaire est verrouillée. Contactez la scolarité.' : ($registration ? null : 'La scolarité doit valider votre inscription académique annuelle.')]]);
     }
     public function confirm(Request $request)
     {
@@ -40,19 +42,21 @@ class ReinscriptionController extends Controller
     }
     public function getAdminStats(Request $request)
     {
+        abort_unless($request->user()->hasAnyRole(['super-admin', 'admin', 'institution-admin', 'director', 'scolarite', 'pedagogy_officer']), 403);
         $year = AcademicYear::where('institution_id', $request->user()->institution_id)->where('is_current', true)->firstOrFail();
-        $rows = StudentRegistration::with('student.user', 'filiere')->where('academic_year_id', $year->id)->where('registration_type', 're_enrollment')->whereIn('status', ['academic_validated', 'admin_validated'])->get()->unique('student_id');
-        $receipts = DB::table('student_renewals')->where('academic_year_id', $year->id)->get()->keyBy('student_id');
+        $rows = StudentRegistration::with('student.user', 'filiere')->whereHas('student', fn ($q) => $q->where('institution_id', $request->user()->institution_id))->where('academic_year_id', $year->id)->where('registration_type', 're_enrollment')->whereIn('status', ['academic_validated', 'admin_validated'])->get()->unique('student_id');
+        $receipts = DB::table('student_renewals')->where('academic_year_id', $year->id)->whereIn('student_id', $rows->pluck('student_id'))->get()->keyBy('student_id');
         $students = $rows->map(fn ($r) => ['id' => $r->student_id, 'name' => $r->student->user->name, 'cne' => $r->student->cne, 'cin' => $r->student->user->cin,
-            'email' => $r->student->user->email, 'phone' => $r->student->user->phone, 'current_level' => 'S'.$r->semester_number, 'filiere' => $r->filiere->name,
+            'email' => $r->student->user->email, 'phone' => $r->student->user->phone, 'current_level' => 'S'.$r->semester_number, 'level_code' => ceil($r->semester_number / 2).'A', 'filiere' => $r->filiere->name,
             'is_confirmed' => isset($receipts[$r->student_id]), 'confirmed_at' => $receipts[$r->student_id]->confirmed_at ?? null, 'receipt_ref' => $receipts[$r->student_id]->receipt_reference ?? null])->values();
         return response()->json(['success' => true, 'data' => ['academic_year' => $year->label, 'total_eligible' => $rows->count(), 'total_confirmed' => $receipts->count(),
-            'total_pending' => $students->where('is_confirmed', false)->count(), 'confirmation_rate' => $rows->isEmpty() ? 0 : round($receipts->count() * 100 / $rows->count(), 1), 'by_level' => [], 'students' => $students]]);
+            'total_pending' => $students->where('is_confirmed', false)->count(), 'confirmation_rate' => $rows->isEmpty() ? 0 : round($receipts->count() * 100 / $rows->count(), 1), 'by_level' => $students->groupBy('level_code')->map(fn ($group) => ['total' => $group->count(), 'confirmed' => $group->where('is_confirmed', true)->count(), 'pending' => $group->where('is_confirmed', false)->count()]), 'students' => $students]]);
     }
     public function sendReminders(Request $request)
     {
+        abort_unless($request->user()->hasAnyRole(['super-admin', 'admin', 'institution-admin', 'director', 'scolarite', 'pedagogy_officer']), 403);
         $year = AcademicYear::where('institution_id', $request->user()->institution_id)->where('is_current', true)->firstOrFail();
-        $students = Student::whereHas('registrations', fn ($q) => $q->where('academic_year_id', $year->id)->where('registration_type', 're_enrollment')->where('status', 'academic_validated'))
+        $students = Student::where('institution_id', $request->user()->institution_id)->whereHas('registrations', fn ($q) => $q->where('academic_year_id', $year->id)->where('registration_type', 're_enrollment')->where('status', 'academic_validated'))
             ->whereNotIn('id', DB::table('student_renewals')->where('academic_year_id', $year->id)->select('student_id'))->with('user')->get();
         foreach ($students as $student) $student->user->notify(new \App\Notifications\SystemNotification('Réinscription annuelle', 'Votre inscription académique est validée. Complétez votre confirmation.', 'info', '/student/reinscription'));
         return response()->json(['success' => true, 'message' => 'Rappels dans les espaces personnels enregistrés.', 'sent_count' => $students->count()]);

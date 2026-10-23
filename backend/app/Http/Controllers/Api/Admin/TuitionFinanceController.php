@@ -13,12 +13,20 @@ class TuitionFinanceController extends Controller
     private function query(Request $r) { $this->action->authorize($r->user()); return DB::table('tuition_invoices')->whereIn('student_id', Student::where('institution_id', $r->user()->institution_id)->select('id')); }
     public function stats(Request $r)
     {
-        $q = $this->query($r); $rows = (clone $q)->orderByDesc('id')->paginate(50);
+        $q = $this->query($r); $list = clone $q;
+        if ($r->filled('search')) {
+            $term = mb_substr($r->string('search')->toString(), 0, 150);
+            $list->where(fn ($query) => $query->whereLike('reference', '%'.$term.'%')->orWhereIn('student_id', Student::where('institution_id', $r->user()->institution_id)->where(fn ($s) => $s->whereLike('cne', '%'.$term.'%')->orWhereHas('user', fn ($u) => $u->whereLike('name', '%'.$term.'%')))->select('id')));
+        }
+        if ($r->input('status') === 'PAID') $list->where('status', 'paid');
+        if ($r->input('status') === 'LATE') $list->where('status', '!=', 'paid')->where('due_on', '<', now()->toDateString());
+        if ($r->input('status') === 'PENDING') $list->where('status', '!=', 'paid')->where('due_on', '>=', now()->toDateString());
+        $rows = $list->orderByDesc('id')->paginate(min(100, max(1, $r->integer('per_page', 20))));
         $students = Student::with('user')->whereIn('id', collect($rows->items())->pluck('student_id'))->get()->keyBy('id');
         $filieres = Filiere::whereIn('id', collect($rows->items())->pluck('filiere_id'))->get()->keyBy('id');
         $payments = collect($rows->items())->map(fn ($i) => ['id' => $i->id, 'name' => $students[$i->student_id]->user->name, 'student_id' => $i->student_id,
             'cne' => $students[$i->student_id]->cne, 'type' => $filieres[$i->filiere_id]->name, 'tranche' => $i->reference, 'method' => 'Vérification par la régie',
-            'amount' => number_format((float) $i->amount, 2).' MAD', 'remaining_amount' => round((float) $i->amount - (float) $i->paid_amount, 2), 'date' => $i->due_on,
+            'amount' => number_format((float) $i->amount, 2).' MAD', 'paid_amount' => (float) $i->paid_amount, 'remaining_amount' => round((float) $i->amount - (float) $i->paid_amount, 2), 'date' => $i->due_on,
             'status' => $i->status === 'paid' ? 'PAID' : ($i->due_on < now()->toDateString() ? 'LATE' : 'PENDING'), 'receipt_number' => $i->reference]);
         $total = (float) (clone $q)->sum('amount'); $paid = (float) (clone $q)->sum('paid_amount');
         return response()->json(['success' => true, 'data' => ['revenue_month' => number_format((float) DB::table('tuition_payments')->whereIn('invoice_id', (clone $q)->select('id'))->where('verified_at', '>=', now()->startOfMonth())->sum('amount'), 2).' MAD',

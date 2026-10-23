@@ -69,8 +69,7 @@ export default function StudentGrades() {
   const { data: appealsData, refetch: refetchAppeals } = useQuery({
     queryKey: ['student-grade-appeals'],
     queryFn: () => api.get('/student-portal/grade-appeals', { suppressToast: true } as any)
-      .then(res => res.data?.data?.appeals || res.data?.data || res.data || [])
-      .catch(() => [])
+      .then(res => res.data.data)
   });
 
   // Confidential privacy mode toggle (default revealed)
@@ -90,9 +89,10 @@ export default function StudentGrades() {
   // Modal Réclamation LMD 48h
   const [appealModalOpen, setAppealModalOpen] = useState(false);
   const [selectedModuleForAppeal, setSelectedModuleForAppeal] = useState<any>(null);
-  const [appealReasonType, setAppealReasonType] = useState('erreur_sommation');
+  const [appealReasonType, setAppealReasonType] = useState('erreur_materielle');
   const [appealReasonDetails, setAppealReasonDetails] = useState('');
   const [submittingAppeal, setSubmittingAppeal] = useState(false);
+  const [selectedAssessmentId, setSelectedAssessmentId] = useState('');
 
   // Raw data extraction
   const grades = useMemo(() => {
@@ -246,9 +246,9 @@ export default function StudentGrades() {
     try {
       await api.post('/student-portal/grade-appeals', {
         module_id: selectedModuleForAppeal.module_id || selectedModuleForAppeal.id,
-        assessment_id: selectedModuleForAppeal.assessment_id,
-        original_grade: selectedModuleForAppeal.moyenne_finale ?? selectedModuleForAppeal.moyenne_normale ?? 0,
-        reason: reasonFull,
+        assessment_id: Number(selectedAssessmentId),
+        reason_category: appealReasonType,
+        student_justification: reasonFull,
       });
       toast.success('Réclamation enregistrée et transmise à l\'enseignant responsable !');
       setAppealModalOpen(false);
@@ -278,7 +278,9 @@ export default function StudentGrades() {
     }
   };
 
-  const appealsList = Array.isArray(appealsData) ? appealsData : [];
+  const appealsList = appealsData?.appeals ?? [];
+  const appealTargets = appealsData?.appeal_targets ?? [];
+  const selectedTarget = appealTargets.find((target: any) => String(target.assessment_id) === selectedAssessmentId);
 
   if (isLoading) {
     return (
@@ -998,11 +1000,13 @@ export default function StudentGrades() {
                       ) : (
                         <button
                           onClick={() => {
+                            setSelectedAssessmentId('');
                             setSelectedModuleForAppeal(grade);
                             setAppealModalOpen(true);
                           }}
                           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30 text-[11px] font-black transition-all cursor-pointer active:scale-95 shadow-2xs"
-                          title="Déposer un recours pour vérification matérielle de la note sous 48h"
+                          disabled={!appealTargets.some((target: any) => String(target.module_id) === String(grade.module_id || grade.id))}
+                            title="Déposer un recours pendant la période publiée"
                         >
                           <Scale className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" /> Recours 48h
                         </button>
@@ -1236,11 +1240,17 @@ export default function StudentGrades() {
               <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Module concerné</span>
               <p className="font-black text-sm text-slate-800 dark:text-white">{cleanMojibake(selectedModuleForAppeal.module_name || selectedModuleForAppeal.module?.name)}</p>
               <p className="text-xs font-mono text-slate-500">
-                Note actuelle enregistrée : <strong className="text-slate-800 dark:text-slate-200">{Number(selectedModuleForAppeal.moyenne_finale || selectedModuleForAppeal.moyenne_normale || 10).toFixed(2)} / 20</strong>
+                Note actuelle enregistrée : <strong className="text-slate-800 dark:text-slate-200">{selectedTarget ? Number(selectedTarget.value).toFixed(2) : '—'} / 20</strong>
               </p>
             </div>
 
             <form onSubmit={handleSubmitAppeal} className="space-y-4">
+              <label className="block text-sm font-medium">Évaluation publiée
+                <select required className="mt-1 w-full rounded-lg border border-border bg-background p-2.5" value={selectedAssessmentId} onChange={e => setSelectedAssessmentId(e.target.value)}>
+                  <option value="">Choisir l’évaluation concernée</option>
+                  {appealTargets.filter((target: any) => String(target.module_id) === String(selectedModuleForAppeal.module_id || selectedModuleForAppeal.id)).map((target: any) => <option key={target.assessment_id} value={target.assessment_id}>{target.type} — {target.value}/20 · avant le {new Date(target.appeals_until).toLocaleString('fr-FR')}</option>)}
+                </select>
+              </label>
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Nature du Recours</label>
                 <select
@@ -1248,10 +1258,10 @@ export default function StudentGrades() {
                   onChange={(e) => setAppealReasonType(e.target.value)}
                   className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-800 dark:text-slate-200 focus:outline-hidden focus:ring-2 focus:ring-[#001A4B]"
                 >
-                  <option value="erreur_sommation">Erreur matérielle de sommation des points sur l'épreuve</option>
-                  <option value="omission_cc">Omission ou erreur de report de la note de Contrôle Continu (CC)</option>
-                  <option value="omission_copie">Omission d'évaluation d'une copie double ou intercalaire</option>
-                  <option value="discordance_saisie">Discordance entre la note affichée et le barème de l'épreuve</option>
+                  <option value="erreur_materielle">Erreur matérielle de sommation des points sur l'épreuve</option>
+                  <option value="oubli_cc">Omission ou erreur de report de la note de Contrôle Continu (CC)</option>
+                  <option value="non_report">Omission d'évaluation d'une copie double ou intercalaire</option>
+                  <option value="autre">Discordance entre la note affichée et le barème de l'épreuve</option>
                 </select>
               </div>
 

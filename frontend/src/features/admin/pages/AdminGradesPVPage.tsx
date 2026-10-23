@@ -47,6 +47,7 @@ export default function AdminGradesPVPage() {
   const [matrixViewMode, setMatrixViewMode] = useState<'compact' | 'detailed'>('compact')
   const [selectedRachatStudent, setSelectedRachatStudent] = useState<any>(null)
   const [showSignatureModal, setShowSignatureModal] = useState(false)
+  const [publishingGrades, setPublishingGrades] = useState(false)
 
   // RBAC Segregation: Pure professors only have access to their assigned modules
   const { user, hasAnyRole } = useAuthStore()
@@ -547,7 +548,7 @@ export default function AdminGradesPVPage() {
     const toastId = toast.loading(isRtl ? 'جاري تحضير حزمة PV الكاملة...' : 'Génération du Pack PV Complet (ZIP)...')
     try {
       const response = await api.get(`/modules/${moduleId}/pv/export-zip-bundle`, {
-        responseType: 'blob'
+        responseType: 'blob', params: { group_id: viewAllGroups ? 'all' : (groupId || 'all'), session }
       })
       const url = window.URL.createObjectURL(new Blob([response.data]))
       const link = document.createElement('a')
@@ -566,22 +567,11 @@ export default function AdminGradesPVPage() {
 
   // 🎓 Feature 4: Batch Attestation Handler
   const handleGenerateBatchAttestations = async () => {
-    setIsGeneratingAttestations(true)
-    const toastId = toast.loading('Génération des attestations de réussite en cours...')
-    try {
-      await new Promise(r => setTimeout(r, 1500))
-      const validatedCount = (semesterPvData?.students || []).filter((s: any) => 
-        s.decision_global === 'V' || s.decision_global === 'VAR' || s.decision_global === 'VPC'
-      ).length
-      toast.success(`🎓 ${validatedCount} attestation(s) de réussite générées et prêtes à télécharger !`, { id: toastId })
-      setShowAttestationModal(false)
-    } catch (err) {
-      toast.error("Erreur lors de la génération des attestations.", { id: toastId })
-    } finally {
-      setIsGeneratingAttestations(false)
-    }
+    setIsGeneratingAttestations(false)
+    setShowAttestationModal(false)
+    toast.info('Les attestations de réussite nécessitent une décision annuelle validée. Consultez le centre documentaire pour leur émission.')
+    navigate('/academic/documents')
   }
-
   // 🗓️ Feature 5: Scheduler Handler
   const handleScheduleDeliberation = async () => {
     if (!schedulerForm.date || !schedulerForm.room || !schedulerForm.president) {
@@ -746,8 +736,9 @@ export default function AdminGradesPVPage() {
     setIsSendingBulk(true)
     const toastId = toast.loading(isRtl ? 'جاري إرسال النقط عبر الإيميل...' : 'Expédition des relevés de notes par email...')
     try {
-      const res = await api.post(`/modules/${moduleId}/bulk-send-transcripts`, { filter: bulkFilter })
-      toast.success(res.data.message || 'Émails envoyés avec succès !', { id: toastId })
+      const res = await api.post(`/modules/${moduleId}/bulk-send-transcripts`, { filter: bulkFilter, group_id: viewAllGroups ? 'all' : (groupId || 'all'), session })
+      if (res.data.failed_count) toast.warning(res.data.message, { id: toastId })
+      else toast.success(res.data.message || 'Résultats transmis.', { id: toastId })
       setShowBulkEmailModal(false)
     } catch (err) {
       toast.error('Erreur lors de l\'envoi des emails.', { id: toastId })
@@ -1016,7 +1007,7 @@ export default function AdminGradesPVPage() {
         signed: signatureDone ? 'true' : 'false',
         signature_data: signatureDataUrl || null
       }, {
-        responseType: 'blob'
+        responseType: 'blob', params: { group_id: viewAllGroups ? 'all' : (groupId || 'all'), session }
       })
 
       const blob = new Blob([response.data], { type: 'application/pdf' })
@@ -1051,7 +1042,16 @@ export default function AdminGradesPVPage() {
 
   const renderSelectorBar = () => (
     <div className="space-y-6" data-testid="admin-pv-page">
-      {/* Top Deep Navy Hero Banner */}
+      {moduleId && pvType === 'module' && hasAnyRole(['super-admin', 'admin', 'institution-admin', 'director']) && <form className="flex flex-wrap items-end gap-3 rounded-xl border border-border bg-card p-4" onSubmit={async event => {
+        event.preventDefault(); const fields = new FormData(event.currentTarget); setPublishingGrades(true)
+        try { const response = await api.post('/admin/grade-publications', { assessment_id: Number(fields.get('assessment_id')), duration_hours: Number(fields.get('duration_hours')) }); toast.success(`Publication enregistrée. Recours jusqu’au ${new Date(response.data.publication.appeals_until).toLocaleString('fr-FR')}.`) }
+        catch (err: any) { toast.error(err.response?.data?.message ?? 'Publication non enregistrée.') }
+        finally { setPublishingGrades(false) }
+      }}>
+        <label className="flex-1 text-sm font-medium">Évaluation à publier<select name="assessment_id" required className="mt-1 w-full rounded-lg border border-border bg-background p-2"><option value="">Choisir une évaluation</option>{pvData?.assessments?.map((assessment: any) => <option key={assessment.id} value={assessment.id}>{assessment.type}</option>)}</select></label>
+        <label className="text-sm font-medium">Délai de recours (heures)<input name="duration_hours" type="number" min={1} max={168} defaultValue={48} required className="mt-1 block w-36 rounded-lg border border-border bg-background p-2" /></label>
+        <Button type="submit" disabled={publishingGrades}>{publishingGrades ? 'Publication…' : 'Publier les résultats'}</Button>
+      </form>}      {/* Top Deep Navy Hero Banner */}
       <div className="relative overflow-hidden bg-gradient-to-br from-[#0c1e48] via-[#0f2863] to-[#07132e] p-6 md:p-8 rounded-[2rem] shadow-xl text-white border border-blue-900/40 space-y-5">
         <div className="absolute top-0 right-0 w-[450px] h-[450px] bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
 

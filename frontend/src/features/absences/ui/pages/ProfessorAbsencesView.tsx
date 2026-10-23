@@ -1,4 +1,5 @@
 import { useState,useEffect,useMemo } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 import {
 Users,Check,Clock,QrCode,Sparkles,Mic,MicOff,
 Search,Play,BookOpen,Layers,
@@ -53,7 +54,7 @@ export default function ProfessorAbsencesView() {
   const [selectedGroupe, setSelectedGroupe] = useState('');
   const [selectedModule, setSelectedModule] = useState('');
   const [_sessionType, setSessionType] = useState('Cours Magistral (CM)');
-  const [roomName, setRoomName] = useState('Amphi 2');
+  const [roomName, setRoomName] = useState('');
   const [sessionDate, setSessionDate] = useState(new Date().toISOString().split('T')[0]);
 
   // Timetable filter
@@ -65,8 +66,9 @@ export default function ProfessorAbsencesView() {
   const [sessionId, setSessionId] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<'trombi' | 'qr' | 'voice'>('trombi');
   const [searchQuery, setSearchQuery] = useState('');
-  const [qrToken, setQrToken] = useState('ENCG-ATT-' + Math.random().toString(36).substring(2, 9).toUpperCase());
-  const [qrCountdown, setQrCountdown] = useState(15);
+  const [qrToken, setQrToken] = useState('');
+  const [qrCountdown, setQrCountdown] = useState(0);
+  const [qrExpiresAt, setQrExpiresAt] = useState<string | null>(null);
 
   // Voice recognition state
   const [isListening, setIsListening] = useState(false);
@@ -133,42 +135,27 @@ export default function ProfessorAbsencesView() {
     }
   }, [filteredModules, selectedModule]);
 
-  // Fetch groups when filiere changes
   useEffect(() => {
-    if (selectedFiliere) {
-      api.get('/groups', { params: { filiere_id: selectedFiliere } })
-        .then((res) => {
-          const list = res.data.data || res.data || [];
-          setGroupes(list);
-          if (list.length > 0) setSelectedGroupe(list[0].id.toString());
-        })
-        .catch(console.error);
-    }
-  }, [selectedFiliere]);
+    const module = modules.find(item => String(item.id) === selectedModule);
+    if (!module?.filiere_id) return;
+    let cancelled = false;
+    api.get('/groups', { params: { filiere_id: module.filiere_id, semester_number: module.semester_number } }).then(response => {
+      if (cancelled) return;
+      const list = response.data.data ?? [];
+      setGroupes(list);
+      setSelectedGroupe(previous => list.some((group: any) => String(group.id) === previous) ? previous : String(list[0]?.id ?? ''));
+    }).catch(() => { if (!cancelled) { setGroupes([]); setSelectedGroupe(''); toast.error('Impossible de charger les groupes du module.'); } });
+    return () => { cancelled = true; };
+  }, [selectedModule, modules]);
 
-  // Fetch real students of selected group
   useEffect(() => {
-    if (selectedGroupe) {
-      api.get('/students', { params: { group_id: selectedGroupe } })
-        .then((res) => {
-          const raw = res.data.data || res.data || [];
-          if (raw.length > 0) {
-            setStudents(raw.map((s: any) => ({
-              id: s.id,
-              first_name: s.user?.first_name || s.first_name || 'Étudiant',
-              last_name: s.user?.last_name || s.last_name || `#${s.id}`,
-              cne: s.cne || s.apogee_code || '',
-              email: s.user?.email || s.email,
-              status: 'present'
-            })));
-          } else {
-            setStudents([]);
-          }
-        })
-        .catch(() => {});
-    }
-  }, [selectedGroupe]);
-
+    if (!selectedGroupe || !selectedModule) { setStudents([]); return; }
+    let cancelled = false;
+    api.get('/professor/attendance/students', { params: { module_id: selectedModule, group_id: selectedGroupe } }).then(response => {
+      if (!cancelled) setStudents((response.data.data ?? []).map((student: any) => ({ id: student.id, first_name: student.name, last_name: '', cne: student.cne, status: student.status ?? 'absent' })));
+    }).catch(() => { if (!cancelled) { setStudents([]); toast.error('La liste du groupe ne peut pas être chargée.'); } });
+    return () => { cancelled = true; };
+  }, [selectedGroupe, selectedModule]);
   // 🎯 1-CLIC ATTENDANCE FROM TIMETABLE SESSION
   const handleSelectSessionFromSchedule = (session: TimetableSession, startDirectly: boolean = false) => {
     setSelectedSessionId(session.id);
@@ -191,24 +178,18 @@ export default function ProfessorAbsencesView() {
     });
 
     if (startDirectly) {
-      handleStartSession();
+      handleStartSession(session);
     }
   };
 
   // QR Code Dynamic Token Rotation
   useEffect(() => {
-    if (!isSessionActive || activeTab !== 'qr') return;
-    const interval = setInterval(() => {
-      setQrCountdown((prev) => {
-        if (prev <= 1) {
-          setQrToken('ENCG-ATT-' + Math.random().toString(36).substring(2, 9).toUpperCase());
-          return 15;
-        }
-        return prev - 1;
-      });
-    }, 1000);
+    if (!isSessionActive || !qrExpiresAt) return;
+    const update = () => setQrCountdown(Math.max(0, Math.floor((new Date(qrExpiresAt).getTime() - Date.now()) / 1000)));
+    update();
+    const interval = setInterval(update, 1000);
     return () => clearInterval(interval);
-  }, [isSessionActive, activeTab]);
+  }, [isSessionActive, qrExpiresAt]);
 
   // Quick Action: Mark All Present
   const handleMarkAllPresent = () => {
@@ -290,24 +271,29 @@ export default function ProfessorAbsencesView() {
   };
 
   // Start Session
-  const handleStartSession = async () => {
+  const handleStartSession = async (context?: TimetableSession) => {
+    const module = context?.moduleId ?? selectedModule;
+    const group = context?.groupId ?? selectedGroupe;
+    if (!module || !group || !(context?.roomName ?? roomName)) { toast.error('Choisissez un module, un groupe et une salle.'); return; }
     setLoading(true);
     try {
       const res = await api.post('/professor/attendance/start', {
-        module_id: parseInt(selectedModule) || 1,
-        group_id: parseInt(selectedGroupe) || 1,
-        room_name: roomName,
+        module_id: Number(module),
+        group_id: Number(group),
+        room_name: context?.roomName ?? roomName,
         date: sessionDate
-      }).catch(() => null);
+      });
 
+      if (!res.data.session?.id) throw new Error('Session non créée.');
+      setSessionId(res.data.session.id);
+      setQrToken(res.data.session.qr_token ?? '');
+      setQrExpiresAt(res.data.session.expires_at);
       setIsSessionActive(true);
-      setSessionId(res?.data?.session?.id || Math.floor(Math.random() * 1000));
       toast.success("🚀 Session d'appel démarrée avec succès !", {
-        description: "Vous pouvez émarger rapidement via le trombinoscope ou projeter le QR code rotatif."
+        description: "Vérifiez les présences avant de fermer la session."
       });
     } catch {
-      setIsSessionActive(true);
-      toast.success("Session d'appel démarrée.");
+      toast.error('La session n’a pas démarré. Vérifiez votre affectation, le groupe et la connexion.');
     } finally {
       setLoading(false);
     }
@@ -318,6 +304,7 @@ export default function ProfessorAbsencesView() {
     setSavingAttendance(true);
     const payload = {
       session_id: sessionId,
+      close_session: true,
       module_id: selectedModule,
       group_id: selectedGroupe,
       date: sessionDate,
@@ -337,14 +324,13 @@ export default function ProfessorAbsencesView() {
     try {
       await api.post('/professor/attendance/save', payload);
 
-      toast.success("💾 Émargement officiel enregistré et certifié en base de données !", {
+      toast.success('Feuille d’appel enregistrée et session fermée.', {
         description: `Total: ${stats.total} · Présents: ${stats.present} · Absents: ${stats.absent}`
       });
       setIsSessionActive(false);
-    } catch {
-      // Fallback to offline store
-      offlineAttendanceStore.saveOffline(payload);
-      setIsSessionActive(false);
+    } catch (error: any) {
+      if (!error.response) { offlineAttendanceStore.saveOffline(payload); setIsSessionActive(false); }
+      else toast.error(error.response?.data?.message ?? 'La feuille d’appel n’a pas été enregistrée.');
     } finally {
       setSavingAttendance(false);
     }
@@ -425,7 +411,7 @@ export default function ProfessorAbsencesView() {
               </button>
             ) : (
               <button
-                onClick={handleStartSession}
+                onClick={() => handleStartSession()}
                 disabled={loading || !selectedModule || modules.length === 0}
                 className="px-6 py-3.5 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 disabled:opacity-40 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-xl transition-all flex items-center gap-2 cursor-pointer active:scale-95"
                 title={modules.length === 0 ? "Aucun module affecté" : "Démarrer la session d'appel"}
@@ -898,19 +884,15 @@ export default function ProfessorAbsencesView() {
             {activeTab === 'qr' && (
               <div className="text-center py-10 space-y-6 max-w-md mx-auto">
                 <div className="space-y-2">
-                  <h3 className="text-xl font-black text-slate-900 dark:text-white">Émargement Automatique par QR Code Rotatif</h3>
+                  <h3 className="text-xl font-black text-slate-900 dark:text-white">Émargement par QR de session</h3>
                   <p className="text-xs text-slate-500 font-medium">Les étudiants scannent ce code avec leur application mobile pour s'enregistrer automatiquement</p>
                 </div>
 
                 <div className="relative p-6 bg-white dark:bg-slate-800 rounded-3xl border-2 border-dashed border-indigo-500 inline-block shadow-2xl">
-                  <img
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${qrToken}`}
-                    alt="Attendance QR Code"
-                    className="w-56 h-56 mx-auto object-contain rounded-xl"
-                  />
+                  {qrToken && qrCountdown > 0 ? <QRCodeSVG value={qrToken} size={224} className="mx-auto rounded-xl bg-white p-2" aria-label="Code de présence de la session" /> : <p>Code expiré ou indisponible. Utilisez l’appel manuel.</p>}
                   <div className="mt-4 flex items-center justify-center gap-2 text-xs font-black text-indigo-600 dark:text-indigo-300">
                     <Clock size={16} className="animate-spin" />
-                    <span>Renouvellement automatique dans {qrCountdown}s</span>
+                    <span>Validité restante : {qrCountdown}s</span>
                   </div>
                 </div>
               </div>

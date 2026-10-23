@@ -33,6 +33,7 @@ class GradeAppealController extends Controller
     {
         $user = $request->user();
         $q = GradeAppeal::whereHas('student', fn ($s) => $s->where('institution_id', $user->institution_id));
+        if ($request->filled('search')) { $term = '%'.mb_substr($request->input('search'), 0, 100).'%'; $q->where(fn ($q) => $q->whereHas('student', fn ($s) => $s->whereLike('cne', $term)->orWhereHas('user', fn ($u) => $u->whereLike('name', $term)))->orWhereHas('module', fn ($m) => $m->whereLike('name', $term))); }
         if (! $user->hasAnyRole(['super-admin', 'admin', 'institution-admin', 'director', 'pedagogy_officer', 'department-head', 'scolarite'])) {
             $modules = DB::table('module_professor')->where('professor_id', $user->professor?->id ?? -1)->where('academic_year_id', AcademicContext::yearId())->pluck('module_id');
             $q->whereIn('module_id', $modules);

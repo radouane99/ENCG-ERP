@@ -29,7 +29,7 @@ class InternshipPolicy
             return (int) $user->student?->id === (int) $internship->student_id;
         }
 
-        return \App\Support\InternshipAccess::staff($user) || ($user->professor && (int) $internship->supervisor_id === (int) $user->professor->id);
+        return \App\Support\InternshipAccess::staff($user) || ($user->professor && ((int) $internship->supervisor_id === (int) $user->professor->id || $internship->soutenance()->where(fn ($q) => $q->where('president_id', $user->professor->id)->orWhere('examiner_id', $user->professor->id)->orWhere('supervisor_id', $user->professor->id))->exists()));
     }
 
     public function update(User $user, Internship $internship): bool

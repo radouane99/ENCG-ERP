@@ -20,7 +20,13 @@ class ProfessorInternshipController extends Controller
      */
     public function supervised(Request $request): JsonResponse
     {
-        $internships = \App\Support\InternshipAccess::query($request->user())->with(['student.user', 'soutenance'])->orderByDesc('id')->get();
+        $internships = \App\Support\InternshipAccess::query($request->user())->with(['student.user', 'soutenance.room', 'internshipDocuments'])->orderByDesc('id')->get();
+        foreach ($internships as $stage) {
+            $profile = $request->user()->professor?->id;
+            $stage->setAttribute('can_review_documents', \App\Support\InternshipAccess::staff($request->user()) || ($profile && (int) $stage->supervisor_id === (int) $profile));
+            $jury = $stage->soutenance;
+            $stage->setAttribute('can_evaluate', $jury && $jury->status === 'scheduled' && $jury->date_time?->isPast() && (\App\Support\InternshipAccess::staff($request->user()) || ($profile && in_array((int) $profile, array_map('intval', [$jury->president_id, $jury->examiner_id, $jury->supervisor_id]), true))));
+        }
 
         return response()->json([
             'success' => true,
@@ -65,6 +71,9 @@ class ProfessorInternshipController extends Controller
             $transitions = ['pending' => ['validated', 'cancelled'], 'validated' => ['active', 'cancelled'], 'active' => ['completed', 'cancelled'], 'completed' => [], 'cancelled' => []];
             abort_unless($stage->status->value === $validated['status'] || in_array($validated['status'], $transitions[$stage->status->value] ?? [], true), 422, 'Transition de stage interdite.');
             abort_if($validated['status'] === 'completed' && ! $stage->soutenance()->where('status', 'completed')->exists(), 422, 'Une soutenance validée est requise.');
+            abort_if($validated['status'] === 'validated' && (! $stage->insurance_verified || ! $stage->school_signed_by), 422, 'Assurance et visa administratif requis.');
+            abort_if($validated['status'] === 'active' && $stage->convention_status !== 'active', 422, 'Acceptation de l’entreprise requise.');
+            if ($validated['status'] === 'cancelled') $stage->fill(['convention_status' => 'cancelled', 'company_token_hash' => null]);
             $stage->update(['status' => $validated['status']]);
             activity()->causedBy($request->user())->performedOn($stage)->log('internship_status_changed');
             return $stage;
