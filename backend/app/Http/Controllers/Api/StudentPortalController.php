@@ -225,42 +225,18 @@ class StudentPortalController extends Controller
             'book_id' => 'required|exists:books,id',
         ]);
 
-        $book = Book::findOrFail($validated['book_id']);
-
-        // Vérifier si l'étudiant a déjà un emprunt en cours sur ce livre
-        $alreadyBorrowed = Borrowing::where('user_id', $user->id)
-            ->whereIn('status', ['borrowed', 'overdue'])
-            ->whereHas('bookCopy', fn ($q) => $q->where('book_id', $book->id))
-            ->exists();
-
-        if ($alreadyBorrowed) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Vous avez déjà un exemplaire de cet ouvrage en cours d\'emprunt.',
-            ], 422);
-        }
-
-        $copy = BookCopy::where('book_id', $book->id)
-            ->where('is_available', true)
-            ->first();
-
-        if (! $copy) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Tous les exemplaires physiques de cet ouvrage sont actuellement en prêt.',
-            ], 422);
-        }
-
-        $adminUser = User::whereHas('roles', fn ($q) => $q->whereIn('name', ['admin', 'super-admin', 'library-manager']))->first() ?? $user;
-
-        $borrowing = DB::transaction(function () use ($book, $copy, $user, $adminUser) {
+        $borrowing = DB::transaction(function () use ($validated, $user) {
+            $book = Book::where('institution_id', $user->institution_id)->whereKey($validated['book_id'])->lockForUpdate()->firstOrFail();
+            abort_if(Borrowing::where('user_id', $user->id)->whereIn('status', ['borrowed', 'overdue'])->whereHas('bookCopy', fn ($q) => $q->where('book_id', $book->id))->exists(), 422, 'Un emprunt est déjà en cours pour cet ouvrage.');
+            $copy = BookCopy::where('book_id', $book->id)->where('is_available', true)->orderBy('id')->lockForUpdate()->first();
+            abort_unless($copy, 422, 'Aucun exemplaire disponible.');
             $copy->update(['is_available' => false]);
             $book->decrement('available_copies');
 
             return Borrowing::create([
                 'book_copy_id' => $copy->id,
                 'user_id' => $user->id,
-                'issued_by' => $adminUser->id,
+                'issued_by' => $user->id,
                 'borrow_date' => now()->toDateString(),
                 'due_date' => now()->addDays(14)->toDateString(),
                 'status' => 'borrowed',

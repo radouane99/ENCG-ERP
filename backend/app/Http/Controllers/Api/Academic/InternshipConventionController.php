@@ -8,9 +8,6 @@ use App\Models\Student;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
-use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class InternshipConventionController extends Controller
 {
@@ -102,28 +99,17 @@ class InternshipConventionController extends Controller
         }
 
         $student = $internship->student;
+        abort_unless((int) $student->institution_id === (int) $user->institution_id, 404);
 
         $trackingCode = $internship->convention_ref ?? ('CONV-ENCG-'.date('Y').'-'.str_pad($id, 4, '0', STR_PAD_LEFT));
-        $verifyUrl = config('app.frontend_url', 'http://localhost:5173')."/verify/{$trackingCode}";
-
-        $qrBase64 = '';
-        if (class_exists(QrCode::class)) {
-            try {
-                $qrSvg = QrCode::format('svg')->size(90)->margin(0)->generate($verifyUrl);
-                $qrBase64 = 'data:image/svg+xml;base64,'.base64_encode($qrSvg);
-            } catch (\Throwable $e) {
-                Log::warning('QR Code error: '.$e->getMessage());
-            }
-        }
-
         $pdf = Pdf::loadView('pdf.convention_stage', [
             'internship' => $internship,
             'student' => $student,
             'conventionRef' => $trackingCode,
-            'academicYear' => (string) ($student->latestPathway?->academicYear?->label ?? 'Non renseignée'),
-            'startDateStr' => $internship->start_date ? $internship->start_date->format('d/m/Y') : now()->format('d/m/Y'),
-            'endDateStr' => $internship->end_date ? $internship->end_date->format('d/m/Y') : now()->addMonths(2)->format('d/m/Y'),
-            'qrBase64' => $qrBase64,
+            'academicYear' => (string) (\App\Models\AcademicYear::find($internship->academic_year_id)?->label ?? 'Non renseignée'),
+            'startDateStr' => $internship->start_date?->format('d/m/Y') ?? 'Non renseignée',
+            'endDateStr' => $internship->end_date?->format('d/m/Y') ?? 'Non renseignée',
+            'qrBase64' => '',
         ]);
 
         return $pdf->stream("Convention_Stage_{$trackingCode}.pdf", ['Attachment' => false]);

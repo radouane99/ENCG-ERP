@@ -239,7 +239,7 @@
     <div class="convention-banner">
         <div class="convention-title">CONVENTION DE STAGE TRIPARTITE</div>
         <div class="convention-subtitle">
-            Formation Initiale en Management &amp; Commerce • Année Universitaire {{ $academicYear ?? '2026-2027' }}
+            Formation Initiale en Management &amp; Commerce • Année Universitaire {{ $academicYear ?? 'Non renseignée' }}
         </div>
     </div>
 
@@ -255,7 +255,7 @@
             <td style="width: 37%; text-align: center;">
                 <strong>Type de Stage :</strong> 
                 <span style="color: #002e5b; font-weight: bold; text-transform: uppercase;">
-                    {{ match($internship->type ?? 'fin_etudes') {
+                    {{ match($internship->type ?? '') {
                         'initiation' => 'Stage d\'Initiation (1ère/2ème Année)',
                         'application' => 'Stage d\'Application (3ème/4ème Année)',
                         'fin_etudes', 'pfe' => 'Projet de Fin d\'Études — PFE (5ème Année)',
@@ -266,7 +266,7 @@
             <td style="width: 25%; text-align: right;">
                 <strong>Période :</strong> 
                 <span style="color: #b45309; font-weight: bold;">
-                    Du {{ $startDateStr ?? now()->format('d/m/Y') }} au {{ $endDateStr ?? now()->addMonths(2)->format('d/m/Y') }}
+                    Du {{ $startDateStr ?? 'Non renseignée' }} au {{ $endDateStr ?? 'Non renseignée' }}
                 </span>
             </td>
         </tr>
@@ -288,20 +288,20 @@
             <td class="party-box">
                 <div class="party-header">2. L'Entreprise d'Accueil</div>
                 <strong>{{ $internship->company_name ?? 'Entreprise Partenaire' }}</strong><br>
-                Adresse : {{ $internship->company_address ?? 'Maroc' }} ({{ $internship->company_city ?? 'Fès/Casablanca' }})<br>
+                Adresse : {{ $internship->company_address ?? 'Maroc' }} ({{ $internship->company_city ?? 'Non renseignée' }})<br>
                 Tuteur : <strong>{{ $internship->company_mentor_name ?? ($internship->supervisor_name ?? 'Encadrant Professionnel') }}</strong><br>
-                Fonction : {{ $internship->company_mentor_title ?? 'Responsable RH / Tuteur' }}<br>
-                Contact : {{ $internship->supervisor_email ?? 'stages@entreprise.ma' }}
+                Fonction : {{ $internship->company_mentor_title ?? 'Non renseignée' }}<br>
+                Contact : {{ $internship->supervisor_email ?? 'Non renseigné' }}
             </td>
 
             <!-- Party 3: Student -->
             <td class="party-box">
                 <div class="party-header">3. Le Stagiaire</div>
                 Étudiant(e) : <strong>{{ strtoupper($student->first_name ?? '') }} {{ strtoupper($student->last_name ?? '') }}</strong><br>
-                CNE/Massar : <span style="font-family: monospace; font-weight: bold; color: #002e5b;">{{ $student->cne ?? 'N130000051' }}</span> &nbsp;|&nbsp; CIN : <span style="font-family: monospace;">{{ $student->cin ?? 'CD53671' }}</span><br>
-                Filière : {{ $student->filiere->name ?? 'Sciences de Gestion & Commerce' }}<br>
-                Assurance : <strong>{{ $internship->insurance_company ?? 'MAMDA-MCMA / Assurance Scolaire & RC' }}</strong><br>
-                Police N° : <span style="font-family: monospace;">{{ $internship->insurance_policy_number ?? 'POL-2026-ENCG-884' }}</span>
+                CNE/Massar : <span style="font-family: monospace; font-weight: bold; color: #002e5b;">{{ $student->cne ?? 'Non renseigné' }}</span> &nbsp;|&nbsp; CIN : <span style="font-family: monospace;">{{ $student->cin ?? 'Non renseignée' }}</span><br>
+                Filière : {{ $student->filiere->name ?? 'Non renseignée' }}<br>
+                Assurance : <strong>{{ $internship->insurance_company ?? 'Non renseignée' }}</strong><br>
+                Police N° : <span style="font-family: monospace;">{{ $internship->insurance_policy_number ?? 'Non renseignée' }}</span>
             </td>
         </tr>
     </table>
@@ -314,7 +314,7 @@
 
         <div class="article-row">
             <span class="article-tag">Article 1 — Objet &amp; Mission :</span>
-            Le stage a pour finalité l'application pratique des enseignements dispensés à l'ENCG Fès et l'insertion en milieu professionnel. La mission confiée est : <strong>{{ $internship->position_title ?? 'Mission d\'analyse financière, management stratégique et audit' }}</strong>.
+            Le stage a pour finalité l'application pratique des enseignements dispensés à l'ENCG Fès et l'insertion en milieu professionnel. La mission confiée est : <strong>{{ $internship->position_title ?? 'Non renseignée' }}</strong>.
         </div>
 
         <div class="article-row">
@@ -324,12 +324,12 @@
 
         <div class="article-row">
             <span class="article-tag">Article 3 — Statut &amp; Gratification Mensuelle :</span>
-            Durant le stage, le stagiaire conserve son statut d'étudiant. Le stage ne constitue en aucun cas un contrat de travail au sens du Code du Travail marocain. L'entreprise peut verser une indemnité forfaitaire convenue de : <strong>{{ ($internship->monthly_allowance ?? 0) > 0 ? number_format($internship->monthly_allowance, 2) . ' DH / mois' : 'Prise en charge conventionnelle (Transport & Repas)' }}</strong>.
+            Durant le stage, le stagiaire conserve son statut d'étudiant. Le stage ne constitue en aucun cas un contrat de travail au sens du Code du Travail marocain. L'entreprise peut verser une indemnité forfaitaire convenue de : <strong>{{ ($internship->monthly_allowance ?? 0) > 0 ? number_format($internship->monthly_allowance, 2) . ' DH / mois' : 'Non renseignée' }}</strong>.
         </div>
 
         <div class="article-row">
             <span class="article-tag">Article 4 — Assurance Responsabilité Civile &amp; Accidents :</span>
-            L'étudiant est expressément couvert par une police d'assurance Responsabilité Civile et Accidents Corporels souscrite par l'Université Sidi Mohamed Ben Abdellah. En cas d'accident survenu sur le lieu de stage ou sur le trajet, l'entreprise s'engage à en informer la direction de l'école dans un délai légal de 48 heures.
+            La couverture et les garanties applicables doivent être vérifiées sur le justificatif d’assurance. État de la vérification administrative : {{ $internship->insurance_verified ? 'Vérifiée' : 'En attente de vérification' }}.
         </div>
 
         <div class="article-row" style="margin-bottom: 0;">
@@ -345,33 +345,15 @@
             <td class="signature-cell">
                 <div class="sig-title">POUR L'ENCG FÈS</div>
                 <div class="sig-role">Le Directeur de l'Établissement</div>
-                <div class="sig-stamp-box box-encg">
-                    <table width="100%" height="100%" cellpadding="0" cellspacing="0" style="height: 100%;">
-                        <tr>
-                            <td style="text-align: center; vertical-align: top; padding-top: 3px; height: 38px;">
-                                <div class="official-seal-circle">
-                                    ★ ENCG FÈS ★<br>
-                                    <span style="font-size: 4.2pt; color: #475569;">USMBA • DIRECTION</span><br>
-                                    SCEAU OFFICIEL
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td style="text-align: center; vertical-align: middle; height: 45px;">
-                                <svg width="78" height="22" viewBox="0 0 120 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M8,22 C16,10 24,4 30,4 C35,4 32,22 36,24 C40,26 45,14 50,10 C55,4 60,18 65,16 C70,14 82,6 90,14 C98,10 102,4 112,8" stroke="#002e5b" stroke-width="2" stroke-linecap="round"/>
-                                </svg>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td style="text-align: center; vertical-align: bottom; padding-bottom: 3px;">
-                                <div class="sig-caption" style="color: #002e5b;">Cachet officiel &amp; Signature</div>
-                            </td>
-                        </tr>
-                    </table>
+                <div class="sig-stamp-box box-encg" style="padding: 12px;">
+                    @if($internship->school_signed_by && $internship->school_signed_at)
+                        Visa administratif enregistré le {{ \Carbon\Carbon::parse($internship->school_signed_at)->format('d/m/Y') }}.
+                    @else
+                        Projet en attente de visa administratif.
+                    @endif
+                    <br><br>Cadre réservé au cachet et à la signature autorisés.
                 </div>
-                <div class="sig-date">Visa Direction des Études</div>
-            </td>
+                <div class="sig-date">Aucune signature manuscrite reproduite</div>            </td>
 
             <!-- Host Company (Entreprise) -->
             <td class="signature-cell">
@@ -399,7 +381,7 @@
                         </tr>
                     </table>
                 </div>
-                <div class="sig-date">Date : &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; / &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; / 2026</div>
+                <div class="sig-date">Date : &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; / &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; / ______</div>
             </td>
 
             <!-- Student (Stagiaire) -->
@@ -428,7 +410,7 @@
                         </tr>
                     </table>
                 </div>
-                <div class="sig-date">Fait à Fès, le {{ $dateIssued ?? date('d/m/Y') }}</div>
+                <div class="sig-date">Date de signature : ____ / ____ / ______</div>
             </td>
         </tr>
     </table>
@@ -442,17 +424,17 @@
                         <img src="{{ $qrBase64 }}" alt="QR Code Sécurité" style="width: 38px; height: 38px; display: block; border: 1px solid #cbd5e1; padding: 1px; background: #ffffff; border-radius: 2px;">
                     @else
                         <div style="width: 38px; height: 38px; border: 1px solid #cbd5e1; background: #ffffff; text-align: center; line-height: 38px; font-size: 5pt; color: #94a3b8; font-weight: bold;">
-                            QR CODE
+                            DOSSIER
                         </div>
                     @endif
                 </td>
                 <td style="vertical-align: middle; padding-left: 6px;">
                     <strong style="color: #002e5b; font-size: 6.4pt; text-transform: uppercase;">
-                        Convention Tripartite Officielle — Système SI ENCG Fès
+                        Convention de stage — Dossier ENCG Fès
                     </strong><br>
                     <span style="color: #64748b; line-height: 1.15;">
-                        Document certifié conforme aux dispositions du décret N° 2-15-260 et de la loi 53-05 sur l'échange électronique des données juridiques.<br>
-                        <strong>Authentification :</strong> {{ $conventionRef ?? ('CONV-ENCG-' . date('Y')) }} • SHA256-{{ strtoupper(substr(md5(($conventionRef ?? 'CONV') . date('Ymd')), 0, 12)) }}
+                        État administratif : {{ $internship->convention_status ?? 'pending' }}. Ce document ne constitue pas une signature électronique qualifiée.<br>
+                        <strong>Référence du dossier :</strong> {{ $conventionRef ?? 'Non renseignée' }}
                     </span>
                 </td>
                 <td style="width: 140px; text-align: right; vertical-align: middle;">

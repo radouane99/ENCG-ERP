@@ -177,4 +177,22 @@ class RoleJourneysDeepScanTest extends TestCase
         $this->observed('empty_grades_average', ['http' => $r->status(), 'average' => $r->json('data.average_grade'), 'admitted' => $r->json('data.is_admis')]);
         $r->assertOk(); $this->assertNull($r->json('data.average_grade'));
     }
+
+    public function test_rollover_without_grades_preserves_the_current_year_and_pathway(): void
+    {
+        $c = $this->academicContext();
+        $service = app(\App\Services\Academic\SmartAcademicProgressionService::class);
+        $roster = $service->getProgressionRoster($c['year']->id);
+        $this->assertNull($roster['students'][0]['annual_average']);
+        $this->assertSame('A_VERIFIER', $roster['students'][0]['decision_code']);
+        try {
+            $service->executeSmartRollover($c['year']->id, '2027/2028', '2027-09-01', '2028-06-30');
+            $this->fail('An incomplete academic record must block rollover.');
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+            $this->assertSame(422, $exception->getStatusCode());
+        }
+        $this->assertTrue((bool) $c['year']->fresh()->is_current);
+        $this->assertTrue((bool) $c['pathway']->fresh()->is_current);
+        $this->assertDatabaseMissing('academic_years', ['label' => '2027/2028']);
+    }
 }

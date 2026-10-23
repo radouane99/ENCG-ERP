@@ -11,8 +11,10 @@ final class ManageConventionAction
         return DB::transaction(function () use ($student, $data) {
             Student::whereKey($student->id)->lockForUpdate()->firstOrFail();
             $year = \App\Models\AcademicYear::where('institution_id', $student->institution_id)->where('is_current', true)->firstOrFail();
-            return Internship::create($data + ['student_id' => $student->id, 'academic_year_id' => $year->id, 'supervisor_name' => $data['company_mentor_name'],
-                'insurance_verified' => false, 'convention_ref' => 'CONV-'.Str::uuid(), 'convention_status' => 'pending', 'status' => 'pending']);
+            $attributes = \Illuminate\Support\Arr::only($data, ['type', 'company_name', 'company_address', 'company_city', 'supervisor_name', 'supervisor_email', 'supervisor_phone', 'position_title', 'start_date', 'end_date', 'company_mentor_name', 'company_mentor_title', 'monthly_allowance', 'insurance_company', 'insurance_policy_number']);
+            return Internship::create(array_merge($attributes, ['student_id' => $student->id, 'academic_year_id' => $year->id,
+                'supervisor_name' => $data['supervisor_name'] ?? $data['company_mentor_name'] ?? null,
+                'insurance_verified' => false, 'convention_ref' => 'CONV-'.Str::uuid(), 'convention_status' => 'pending', 'status' => 'pending']));
         });
     }
     public function approve(User $actor, int $id, array $data): array

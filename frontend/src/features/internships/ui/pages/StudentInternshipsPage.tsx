@@ -45,7 +45,7 @@ export default function StudentInternshipsPage() {
   const [form, setForm] = useState({
     company_name: '', company_city: '', position_title: '',
     company_mentor_name: '', company_mentor_email: '',
-    insurance_company: 'MAMDA-MCMA', insurance_policy_number: '',
+    insurance_company: '', insurance_policy_number: '',
     internship_type: 'pfe', start_date: '', end_date: '',
   });
 
@@ -91,21 +91,15 @@ export default function StudentInternshipsPage() {
         supervisor_name: form.company_mentor_name,
         company_mentor_email: form.company_mentor_email,
         supervisor_email: form.company_mentor_email,
-        supervisor_phone: '0600000000',
         insurance_company: form.insurance_company,
-        insurance_policy_number: form.insurance_policy_number || `POL-ENCG-${Date.now().toString().slice(-4)}`,
+        insurance_policy_number: form.insurance_policy_number || null,
         start_date: form.start_date,
         end_date: form.end_date,
       };
 
-      try {
-        await api.post('/v1/student-portal/internships', payload);
-      } catch {
-        // Fallback to conventions route
-        await api.post('/v1/student-portal/internships/conventions', payload);
-      }
+      await api.post('/v1/student-portal/internships', payload);
 
-      toast.success('Convention de stage soumise et visée avec succès !');
+      toast.success('Demande de stage enregistrée, en attente de validation par l’administration.');
       setShowRequestModal(false);
       refetch();
     } catch (err: any) {
@@ -115,43 +109,9 @@ export default function StudentInternshipsPage() {
     }
   };
 
-  const handlePrintBat = (studentName: string, topic: string) => {
-    const win = window.open('', '_blank');
-    if (!win) return;
-    win.document.write(`<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">
-      <title>BAT — ${studentName}</title>
-      <style>
-        body{font-family:'Segoe UI',sans-serif;padding:48px;color:#0f2863;max-width:800px;margin:0 auto}
-        .hdr{text-align:center;border-bottom:3px double #0f2863;padding-bottom:24px;margin-bottom:32px}
-        h1{font-size:18px;font-weight:900;text-transform:uppercase;margin:8px 0}
-        .box{background:#f8fafc;border:2px solid #e2e8f0;border-radius:16px;padding:24px;margin:20px 0}
-        .row{display:flex;justify-content:space-between;margin-bottom:12px;font-size:14px;border-bottom:1px dashed #e2e8f0;padding-bottom:8px}
-        .lbl{color:#64748b;font-weight:700}.val{font-weight:900;color:#0f2863}.ok{color:#16a34a}
-        .ftr{margin-top:60px;display:flex;justify-content:space-between;font-size:12px}
-        .sig{text-align:center;border-top:2px solid #0f2863;padding-top:8px;width:200px}
-      </style></head><body>
-      <div class="hdr">
-        <div style="font-size:13px;font-weight:900">ROYAUME DU MAROC — UNIVERSITÉ SIDI MOHAMED BEN ABDELLAH</div>
-        <div style="font-size:12px;color:#64748b;font-weight:700">ÉCOLE NATIONALE DE COMMERCE ET DE GESTION — FÈS</div>
-        <h1>AUTORISATION OFFICIELLE D'IMPRESSION<br>(BON À TIRER — BAT)</h1>
-      </div>
-      <div class="box">
-        <div class="row"><span class="lbl">Étudiant :</span><span class="val">${studentName}</span></div>
-        <div class="row"><span class="lbl">Intitulé du Mémoire :</span><span class="val">« ${topic} »</span></div>
-        <div class="row"><span class="lbl">Contrôle Anti-Plagiat :</span><span class="val ok">CONFORME (Turnitin &lt; 15%) ✅</span></div>
-        <div class="row"><span class="lbl">Décision Encadrant :</span><span class="val ok">BON À SOUTENIR — BAT ACCORDÉ ✅</span></div>
-        <div class="row"><span class="lbl">Date :</span><span class="val">${new Date().toLocaleDateString('fr-FR',{year:'numeric',month:'long',day:'numeric'})}</span></div>
-      </div>
-      <p style="font-size:12px;color:#475569;line-height:1.7">Cette autorisation certifie que le mémoire a été validé par le professeur encadrant. L'étudiant est autorisé à procéder au tirage et à la reliure des exemplaires destinés au jury.</p>
-      <div class="ftr">
-        <div class="sig">Signature Encadrant<br><br><br></div>
-        <div class="sig">Sceau ENCG Fès<br><br><br></div>
-        <div class="sig">Chef de Département<br><br><br></div>
-      </div><script>window.print();</script></body></html>`);
-    win.document.close();
-    toast.success('Autorisation BAT générée !');
+  const handlePrintBat = (_studentName: string, _topic: string) => {
+    toast.info('Le bon à tirer doit être délivré après validation enregistrée par l’encadrant. Aucune autorisation ni attestation antiplagiat ne peut être générée depuis cet écran.');
   };
-
   const handlePrintConvention = (internship: any) => {
     const tid = toast.loading('Génération de la Convention Tripartite...');
     api.get(`/v1/student-portal/internships/${internship.id}/convention-pdf`, { responseType: 'blob' })
@@ -524,7 +484,7 @@ export default function StudentInternshipsPage() {
                 <div className="space-y-2 text-xs">
                   <div className="flex items-center justify-between">
                     <span className="text-slate-700 dark:text-slate-300 font-medium">1. Convention PFE visée</span>
-                    <span className="text-emerald-600 font-bold text-[11px]">Validée ✅</span>
+                    <span className="font-bold text-[11px]">{['school_signed', 'active'].includes(pfeList[0]?.convention_status) ? 'Visée' : 'En attente de visa'}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-slate-700 dark:text-slate-300 font-medium">2. Mémoire final déposé</span>

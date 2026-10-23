@@ -161,7 +161,7 @@ export default function AdminSettingsPage() {
       });
 
       if (selectedYearId) {
-        await api.patch(`/academic-years/${selectedYearId}`, { is_current: true }).catch(() => {});
+        await api.patch(`/academic-years/${selectedYearId}`, { is_current: true });
       }
 
       localStorage.setItem('encg_institution_settings', JSON.stringify(formData));
@@ -213,16 +213,8 @@ export default function AdminSettingsPage() {
 
   // Backup Trigger
   const handleTriggerBackup = () => {
-    setIsBackingUp(true);
-    toast.info("Génération de la sauvegarde complète de la base de données PostgreSQL...", {
-      description: "Export SQL en cours avec chiffrement des tables d'audit et des étudiants."
-    });
-    setTimeout(() => {
-      setIsBackingUp(false);
-      toast.success("Sauvegarde réussie (encg_db_backup_20260911.sql) !", {
-        description: "Fichier archivé en lieu sûr conforme ISO-27001 et scellé CNDP."
-      });
-    }, 2000);
+    setIsBackingUp(false);
+    toast.info('La sauvegarde doit être lancée et vérifiée par l’administration technique. Aucun export créé depuis cet écran.');
   };
 
   // Simulated Grade Evaluation helper

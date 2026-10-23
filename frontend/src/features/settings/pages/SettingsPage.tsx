@@ -1,4 +1,4 @@
-import React,{ useState } from 'react';
+import React,{ useEffect, useState } from 'react';
 import { Calendar,AlertTriangle,GraduationCap,Users,Save,Database,RefreshCw } from 'lucide-react';
 import api from '@shared/lib/api';
 import { toast } from 'sonner';
@@ -6,12 +6,20 @@ import { toast } from 'sonner';
 export default function SettingsPage() {
   const [isMigrating, setIsMigrating] = useState(false);
   const [form, setForm] = useState({
-    inscription_start: '2026-06-01T20:53',
-    inscription_end: '2026-06-14T20:53',
-    reinscription_start: '2026-06-01T20:53',
-    reinscription_end: '2026-07-05T20:53',
+    inscription_start: '',
+    inscription_end: '',
+    reinscription_start: '',
+    reinscription_end: '',
     exam_rules: '',
   });
+  useEffect(() => {
+    let active = true;
+    api.get('/settings').then(response => {
+      const values = response.data?.data ?? response.data;
+      if (active) setForm(previous => Object.fromEntries(Object.keys(previous).map(key => [key, values[key] ?? ''])) as typeof previous);
+    }).catch(() => toast.error('Impossible de charger les paramètres enregistrés.'));
+    return () => { active = false; };
+  }, []);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,7 +27,7 @@ export default function SettingsPage() {
       await api.post('/settings', form);
       toast.success('Paramètres enregistrés avec succès !');
     } catch {
-      toast.success('Paramètres enregistrés.');
+      toast.error('Échec de la sauvegarde des paramètres. Vos modifications restent dans le formulaire.');
     }
   };
 

@@ -51,13 +51,6 @@ class SmartAcademicProgressionService
             ->with(['student.user', 'filiere', 'group'])
             ->get();
 
-        if ($pathways->isEmpty()) {
-            // Fallback sur tous les pathways courants
-            $pathways = StudentPathway::where('is_current', true)
-                ->with(['student.user', 'filiere', 'group'])
-                ->get();
-        }
-
         $studentIds = $pathways->pluck('student_id')->unique()->toArray();
         $students = Student::whereIn('id', $studentIds)->with('user')->get()->keyBy('id');
 
@@ -133,7 +126,7 @@ class SmartAcademicProgressionService
                 $semNum = (int) ($first->semester_number ?? 1);
 
                 // On ne prend en compte que les modules de l'année évaluée (ou semA, semB)
-                if ($semNum !== $semA && $semNum !== $semB && $currentSem <= 5) {
+                if ($semNum !== $semA && $semNum !== $semB) {
                     continue;
                 }
 
@@ -142,6 +135,7 @@ class SmartAcademicProgressionService
                 $ratNote = null;
 
                 foreach ($gList as $g) {
+                    if ($g->value === null && ! $g->absent) continue;
                     $val = $g->absent ? 0.0 : (float) $g->value;
                     $type = strtolower((string) $g->assessment_type);
                     if (str_contains($type, 'rat')) {
@@ -181,10 +175,6 @@ class SmartAcademicProgressionService
             }
 
             $totalModulesCount = count($modulesResults);
-            if ($totalModulesCount === 0) {
-                // Modules par défaut estimés à 14
-                $totalModulesCount = 14;
-            }
 
             $validatedList = array_filter($modulesResults, fn ($m) => $m['is_validated']);
             $failedList = array_filter($modulesResults, fn ($m) => ! $m['is_validated'] && $m['grade'] !== null);
@@ -192,7 +182,10 @@ class SmartAcademicProgressionService
             $failedCount = count($failedList);
 
             $gradesValues = array_filter(array_column($modulesResults, 'grade'), fn ($v) => $v !== null);
-            $annualAverage = count($gradesValues) > 0 ? round(array_sum($gradesValues) / count($gradesValues), 2) : 14.50;
+            $annualAverage = count($gradesValues) > 0 ? round(array_sum($gradesValues) / count($gradesValues), 2) : null;
+            $incomplete = $annualAverage === null || $relevantModules->isEmpty()
+                || $relevantModules->keys()->diff(array_column($modulesResults, 'module_id'))->isNotEmpty()
+                || count($gradesValues) !== $totalModulesCount;
 
             // Dettes de modules : liste des modules non validés (< 10/20)
             $debtModules = [];
@@ -212,7 +205,12 @@ class SmartAcademicProgressionService
             $targetSemester = $currentSem + 2;
             $targetLevel = '';
 
-            if ($currentSem >= 9) {
+            if ($incomplete) {
+                $decisionCode = 'A_VERIFIER';
+                $decisionLabel = 'Bilan incomplet — validation pédagogique nécessaire';
+                $targetSemester = $currentSem;
+                $targetLevel = $levelLabel;
+            } elseif ($currentSem >= 9) {
                 // 5ème année : diplomation
                 if ($failedCount === 0 && $annualAverage >= 10.0) {
                     $decisionCode = 'DIPLOME';
@@ -328,6 +326,7 @@ class SmartAcademicProgressionService
             // 1. Calculer le bilan officiel avant bascule
             $rosterData = $this->getProgressionRoster($currentYearId);
             $studentsRoster = $rosterData['students'] ?? [];
+            abort_if(collect($studentsRoster)->contains(fn ($item) => $item['decision_code'] === 'A_VERIFIER'), 422, 'Bascule bloquée : des bilans pédagogiques sont incomplets.');
 
             // 2. Verrouiller et archiver l'année active
             $currentYear->update(['is_current' => false, 'is_locked' => true]);

@@ -45,15 +45,27 @@ class AdministrationDeepScanTest extends TestCase
 
     public function test_specialty_allocation_respects_the_configured_capacity(): void
     {
-        $this->makeTestAcademicYear(); $f = $this->makeTestFiliere();
+        $year = $this->makeTestAcademicYear(); $f = $this->makeTestFiliere();
+        $module = $this->makeTestModule($f->id);
+        $assessment = $this->createTestAssessment(['module_id' => $module->id, 'academic_year_id' => $year->id, 'type' => 'Exam', 'weight' => 100]);
+        $institution = \App\Models\Institution::findOrFail(1);
+        $settings = $institution->settings ?? [];
+        $settings['specialty_campaign'] = ['source_year_id' => $year->id, 'target_year_id' => $year->id, 'target_semester' => 5, 'revision' => 1, 'is_open' => false];
+        $institution->update(['settings' => $settings]);
         FiliereQuota::create(['filiere_id' => $f->id, 'academic_year' => '2026/2027', 'capacity' => 1, 'min_score_required' => 0, 'is_open' => true]);
-        foreach ([18, 17] as $score) { $s = $this->makeTestStudent(); SpecialtyWish::create(['student_id' => $s->id, 'filiere_id' => $f->id,
+        foreach ([18, 17] as $score) { $s = $this->makeTestStudent();
+            \App\Models\StudentPathway::create(['student_id' => $s->id, 'academic_year_id' => $year->id, 'filiere_id' => $f->id, 'current_semester' => 3, 'is_current' => true]);
+            Grade::create(['student_id' => $s->id, 'assessment_id' => $assessment->id, 'value' => $score, 'absent' => false]);
+            SpecialtyWish::create(['student_id' => $s->id, 'filiere_id' => $f->id,
             'preference_rank' => 1, 'academic_year' => '2026/2027', 'calculated_merit_score' => $score, 'allocation_status' => 'pending']); }
         $this->login(User::factory()->create(['institution_id' => 1]), 'institution-admin');
-        $r = $this->postJson('/api/admin/specialty-allocation/run');
+        $this->postJson('/api/admin/specialty-allocation/run')->assertUnprocessable();
+        $actor = auth()->user();
+        $plan = app(\App\Actions\Academic\ManageSpecialtyAllocationAction::class)->preview($actor);
+        $r = $this->postJson('/api/admin/specialty-allocation/run', ['plan_id' => $plan->id]);
         $assigned = SpecialtyWish::where('allocation_status', 'assigned')->count();
         $this->observed('specialty_capacity', ['http' => $r->status(), 'configured_capacity' => 1, 'assigned' => $assigned]);
-        $r->assertOk(); $this->assertLessThanOrEqual(1, $assigned);
+        $r->assertOk(); $this->assertSame(1, $assigned);
     }
 
     public function test_cancelled_convention_cannot_be_activated_with_a_public_token(): void

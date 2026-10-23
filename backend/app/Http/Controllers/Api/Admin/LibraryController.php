@@ -299,20 +299,12 @@ class LibraryController extends Controller
             'notes' => 'nullable|string|max:500',
         ]);
 
-        $book = Book::findOrFail($validated['book_id']);
-
-        $copy = BookCopy::where('book_id', $book->id)
-            ->where('is_available', true)
-            ->first();
-
-        if (! $copy) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Aucun exemplaire physique n\'est actuellement disponible pour cet ouvrage.',
-            ], 422);
-        }
-
-        $borrowing = DB::transaction(function () use ($validated, $book, $copy, $request) {
+        $borrowing = DB::transaction(function () use ($validated, $request) {
+            $book = Book::where('institution_id', $request->user()->institution_id)->whereKey($validated['book_id'])->lockForUpdate()->firstOrFail();
+            \App\Models\User::where('institution_id', $request->user()->institution_id)->whereKey($validated['user_id'])->firstOrFail();
+            abort_if(Borrowing::where('user_id', $validated['user_id'])->whereIn('status', ['borrowed', 'overdue'])->whereHas('bookCopy', fn ($q) => $q->where('book_id', $book->id))->exists(), 422, 'Un emprunt est déjà en cours pour cet ouvrage.');
+            $copy = BookCopy::where('book_id', $book->id)->where('is_available', true)->orderBy('id')->lockForUpdate()->first();
+            abort_unless($copy, 422, 'Aucun exemplaire disponible.');
             $copy->update(['is_available' => false]);
             $book->decrement('available_copies');
 
@@ -322,7 +314,7 @@ class LibraryController extends Controller
             return Borrowing::create([
                 'book_copy_id' => $copy->id,
                 'user_id' => $validated['user_id'],
-                'issued_by' => $request->user()?->id ?? 1,
+                'issued_by' => $request->user()->id,
                 'borrow_date' => $borrowDate,
                 'due_date' => $dueDate,
                 'status' => 'borrowed',
@@ -342,7 +334,7 @@ class LibraryController extends Controller
      */
     public function returnBorrowing(int $id): JsonResponse
     {
-        $borrowing = Borrowing::with(['bookCopy.book'])->findOrFail($id);
+        $borrowing = Borrowing::whereHas('bookCopy.book', fn ($q) => $q->where('institution_id', request()->user()->institution_id))->with(['bookCopy.book'])->findOrFail($id);
 
         if ($borrowing->status === 'returned') {
             return response()->json([
@@ -352,6 +344,9 @@ class LibraryController extends Controller
         }
 
         DB::transaction(function () use ($borrowing) {
+            Book::whereKey($borrowing->bookCopy->book_id)->lockForUpdate()->firstOrFail();
+            $borrowing = Borrowing::whereKey($borrowing->id)->lockForUpdate()->firstOrFail();
+            abort_if($borrowing->status === 'returned', 422, 'Cet emprunt est déjà retourné.');
             $borrowing->update([
                 'return_date' => now()->toDateString(),
                 'status' => 'returned',

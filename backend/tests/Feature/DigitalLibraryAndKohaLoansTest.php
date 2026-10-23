@@ -83,4 +83,24 @@ class DigitalLibraryAndKohaLoansTest extends TestCase
             'status' => 'returned',
         ]);
     }
+
+    public function test_last_copy_cannot_be_borrowed_twice_and_return_retries_do_not_inflate_stock(): void
+    {
+        \Illuminate\Support\Facades\Notification::fake();
+        $this->student->user->assignRole(\Spatie\Permission\Models\Role::findOrCreate('student', 'sanctum'));
+        \Laravel\Sanctum\Sanctum::actingAs($this->student->user);
+        $this->book->update(['total_copies' => 1, 'available_copies' => 1]);
+        $response = $this->postJson('/api/student-portal/library/borrow', ['book_id' => $this->book->id]);
+        $response->assertCreated();
+        $this->postJson('/api/student-portal/library/borrow', ['book_id' => $this->book->id])->assertUnprocessable();
+        $this->assertSame(0, (int) $this->book->fresh()->available_copies);
+        $this->assertSame(1, Borrowing::where('book_copy_id', $this->bookCopy->id)->count());
+        $this->librarian->assignRole(\Spatie\Permission\Models\Role::findOrCreate('admin', 'sanctum'));
+        \Laravel\Sanctum\Sanctum::actingAs($this->librarian);
+        $id = $response->json('data.id');
+        $this->postJson('/api/admin/library/borrowings/'.$id.'/return')->assertOk();
+        $this->postJson('/api/admin/library/borrowings/'.$id.'/return')->assertUnprocessable();
+        $this->assertSame(1, (int) $this->book->fresh()->available_copies);
+        $this->assertTrue((bool) $this->bookCopy->fresh()->is_available);
+    }
 }

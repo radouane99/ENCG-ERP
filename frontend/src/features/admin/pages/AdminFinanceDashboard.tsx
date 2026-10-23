@@ -50,51 +50,23 @@ export default function AdminFinanceDashboard() {
   const clubBudget = financeData?.club_budget || '0.00 MAD';
   const scholarshipTotal = financeData?.scholarship_total || '0.00 MAD';
 
-  const handleValidatePayment = async (id: number | string, name: string) => {
-    try {
-      await api.post(`/admin/finance/payments/${id}/validate`);
-      toast.success(`Paiement de ${name} validé avec succès en base de données !`);
-      refetch();
-    } catch {
-      toast.success(`Paiement de ${name} validé avec succès !`);
-      refetch();
-    }
+  const [paymentToVerify, setPaymentToVerify] = useState<PaymentItem | null>(null);
+  const [savingPayment, setSavingPayment] = useState(false);
+  const handleValidatePayment = (id: number | string, _name: string) => {
+    setPaymentToVerify(rawPayments.find(p => p.id === id) ?? null);
   };
-
-  const handleSendReminder = async (name: string) => {
-    toast.loading(`Envoi du rappel de règlement à ${name}...`);
+  const handleSendReminder = async (invoice: PaymentItem) => {
     try {
-      await api.post('/admin/notifications/broadcast-urgent', {
-        title: "💳 Rappel de Règlement Frais de Formation FC - ENCG Fès",
-        message: `Cher(e) ${name}, nous vous prions de régulariser la tranche de frais d'études relative à la Formation Continue.`,
-        target_type: "students",
-        send_channels: ["email", "push", "system"]
-      });
-      toast.dismiss();
-      toast.success(`📧 Relance de paiement transmise par email à ${name} !`);
-    } catch {
-      toast.dismiss();
-      toast.success(`Relance de paiement envoyée à ${name}.`);
-    }
+      const response = await api.post(`/admin/finance/invoices/${invoice.id}/reminder`);
+      toast.success(response.data.message);
+    } catch { toast.error('Le rappel n’a pas pu être enregistré.'); }
   };
-
   const handleAutoRelance = async () => {
-    toast.loading("Lancement des relances automatiques en masse...");
     try {
-      await api.post('/admin/notifications/broadcast-urgent', {
-        title: "💳 Rappel Échéance Frais d'Études FC",
-        message: "Rappel automatique concernant le règlement des frais de scolarité de la Formation Continue.",
-        target_type: "students",
-        send_channels: ["email", "push", "system"]
-      });
-      toast.dismiss();
-      toast.success("🚀 Relances automatiques transmises par email à tous les dossiers en retard !");
-    } catch {
-      toast.dismiss();
-      toast.success("Relances automatiques envoyées aux dossiers en retard.");
-    }
+      const response = await api.post('/admin/finance/reminders');
+      toast.success(`${response.data.sent_count} rappel(s) enregistré(s) dans les espaces personnels.`);
+    } catch { toast.error('Échec des relances.'); }
   };
-
   // Filter payments
   const filteredPayments = paymentsList.filter(p => {
     const matchesStatus = filterStatus === 'ALL' || p.status === filterStatus;
@@ -108,6 +80,29 @@ export default function AdminFinanceDashboard() {
   return (
     <div className="space-y-8 pb-12 animate-fade-in">
       
+      {paymentToVerify && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true" aria-labelledby="payment-verification-title">
+        <form className="w-full max-w-lg space-y-4 rounded-xl bg-white p-6 text-slate-900" onSubmit={async event => {
+          event.preventDefault();
+          const fields = new FormData(event.currentTarget);
+          setSavingPayment(true);
+          try {
+            await api.post(`/admin/finance/payments/${paymentToVerify.id}/validate`, {
+              reference: fields.get('reference'), amount: fields.get('amount'), provider: fields.get('provider'),
+              verification_note: fields.get('verification_note'), receipt_verified: fields.get('receipt_verified') === 'on'
+            });
+            toast.success('Règlement vérifié et enregistré.'); setPaymentToVerify(null); await refetch();
+          } catch { toast.error('Le règlement n’a pas été enregistré. Vérifiez la référence, le montant et le justificatif.'); }
+          finally { setSavingPayment(false); }
+        }}>
+          <h2 id="payment-verification-title" className="text-lg font-bold">Vérifier le règlement — {paymentToVerify.name}</h2>
+          <label className="block">Référence du justificatif<input name="reference" required minLength={4} maxLength={150} className="block w-full rounded border p-2" /></label>
+          <label className="block">Montant reçu (MAD)<input name="amount" type="number" min="0.01" step="0.01" required className="block w-full rounded border p-2" /></label>
+          <label className="block">Mode de règlement<select name="provider" className="block w-full rounded border p-2"><option value="bank">Virement bancaire</option><option value="cash">Espèces à la régie</option><option value="cmi">Justificatif CMI</option><option value="wafacash">Justificatif Wafacash</option></select></label>
+          <label className="block">Compte rendu de vérification<textarea name="verification_note" required minLength={10} maxLength={2000} className="block w-full rounded border p-2" /></label>
+          <label className="block"><input name="receipt_verified" type="checkbox" required /> J’ai vérifié le justificatif et la réception du règlement.</label>
+          <div className="flex justify-end gap-3"><button type="button" disabled={savingPayment} onClick={() => setPaymentToVerify(null)}>Annuler</button><button disabled={savingPayment} className="rounded bg-blue-700 px-4 py-2 text-white">{savingPayment ? 'Enregistrement…' : 'Enregistrer le règlement'}</button></div>
+        </form>
+      </div>}
       {/* ── Header Régie & Formations Continues ────────────────────────────────── */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#002e5b] via-[#0f2863] to-[#1e40af] p-6 md:p-10 text-white shadow-2xl">
         <div className="absolute -top-24 -end-24 w-80 h-80 rounded-full bg-sky-400/15 blur-3xl pointer-events-none" />
@@ -363,7 +358,7 @@ export default function AdminFinanceDashboard() {
                         )}
                         {p.status === 'LATE' && (
                           <button
-                            onClick={() => handleSendReminder(p.name)}
+                            onClick={() => handleSendReminder(p)}
                             className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center gap-1"
                             title="Envoyer une relance par mail"
                           >
