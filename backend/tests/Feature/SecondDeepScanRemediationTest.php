@@ -306,6 +306,19 @@ class SecondDeepScanRemediationTest extends TestCase
         $method = new \ReflectionMethod($command, 'scanFormalForeignKeys');
         $method->invoke($command);
         $property = new \ReflectionProperty($command, 'criticalErrors');
-        $this->assertSame([],$property->getValue($command));
+        $this->assertSame([], $property->getValue($command));
+    }
+
+    public function test_legacy_apogee_validation_preserves_official_identifiers_and_uses_the_active_year(): void
+    {
+        [$year,$f,$m,$g] = $this->context();
+        $student = $this->makeTestStudent();
+        $cne = $student->cne;
+        $number = $student->student_number;
+        Sanctum::actingAs($this->actor('super-admin'));
+        $this->postJson('/api/academic/candidates/validate', ['student_id' => $student->id, 'filiere_id' => $f->id, 'group_id' => $g->id])->assertOk();
+        $this->assertSame($cne, $student->fresh()->cne);
+        $this->assertSame($number, $student->fresh()->student_number);
+        $this->assertDatabaseHas('student_registrations', ['student_id' => $student->id, 'academic_year_id' => $year->id, 'semester_number' => 1, 'group_id' => $g->id]);
     }
 }

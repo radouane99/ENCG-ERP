@@ -1,15 +1,15 @@
 BEGIN
- grade_count |      grade_content_checksum      
+ grade_count |      grade_content_checksum
 -------------+----------------------------------
         1721 | 93297e8d4442a9e998b32a0037e390d8
 (1 row)
 
- assessment_count 
+ assessment_count
 ------------------
               110
 (1 row)
 
- academic_year_id | needs_review | count 
+ academic_year_id | needs_review | count
 ------------------+--------------+-------
                 1 | f            |    28
                 2 | t            |    48
@@ -17,7 +17,7 @@ BEGIN
                 3 | f            |    31
 (4 rows)
 
-            reason            | count 
+            reason            | count
 ------------------------------+-------
  duplicate_legacy_cin         |     2
  duplicate_modality           |    48
@@ -25,7 +25,7 @@ BEGIN
  identity_conflict_cin        |     1
 (4 rows)
 
-      table_name       |                                                                                definition                                                                                 
+      table_name       |                                                                                definition
 -----------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  grades                | CHECK (((value IS NULL) OR ((value >= (0)::numeric) AND (value <= (20)::numeric))))
  assessments           | CHECK (((weight >= (0)::numeric) AND (weight <= (100)::numeric)))

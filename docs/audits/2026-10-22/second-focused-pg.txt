@@ -1,23 +1,23 @@
 
    PASS  Tests\Feature\SecondDeepScanRemediationTest
-  ✓ evaluations are isolated by year and keep historical grades         39.36s  
-  ✓ unassigned professor cannot read secondary grid                      2.28s  
-  ✓ secondary grid rejects missing versions                              0.95s  
-  ✓ two semester registrations in same year are allowed                  0.70s  
-  ✓ identity writes save the canonical user without loading relation     0.76s  
-  ✓ submission persists and rejects a duplicate                          0.88s  
-  ✓ assignment must belong to requested module                           0.71s  
-  ✓ signed module cannot delete its modalities                           0.70s  
-  ✓ secondary grid is atomic and rejects a stale version                 1.02s  
-  ✓ secondary grid does not write for another group student              0.82s  
-  ✓ repartition keeps the old year untouched                             0.82s  
-  ✓ private submission file is downloadable only by owner or teacher     1.32s  
-  ✓ explicit historical context does not leak into the next operation    0.98s  
-  ✓ postgres rejects raw cascade deletion of a recorded assessment       0.64s  
-  ✓ integrity review changes the canonical identity and closes only tha… 0.75s  
-  ✓ review pending blocks grade writes without deleting existing grades  0.61s  
-  ✓ qr scan requires a real token and prevents double attendance         0.91s  
-  ✓ foreign key scanner pairs composite columns in order                 2.39s  
+  ✓ evaluations are isolated by year and keep historical grades         39.36s
+  ✓ unassigned professor cannot read secondary grid                      2.28s
+  ✓ secondary grid rejects missing versions                              0.95s
+  ✓ two semester registrations in same year are allowed                  0.70s
+  ✓ identity writes save the canonical user without loading relation     0.76s
+  ✓ submission persists and rejects a duplicate                          0.88s
+  ✓ assignment must belong to requested module                           0.71s
+  ✓ signed module cannot delete its modalities                           0.70s
+  ✓ secondary grid is atomic and rejects a stale version                 1.02s
+  ✓ secondary grid does not write for another group student              0.82s
+  ✓ repartition keeps the old year untouched                             0.82s
+  ✓ private submission file is downloadable only by owner or teacher     1.32s
+  ✓ explicit historical context does not leak into the next operation    0.98s
+  ✓ postgres rejects raw cascade deletion of a recorded assessment       0.64s
+  ✓ integrity review changes the canonical identity and closes only tha… 0.75s
+  ✓ review pending blocks grade writes without deleting existing grades  0.61s
+  ✓ qr scan requires a real token and prevents double attendance         0.91s
+  ✓ foreign key scanner pairs composite columns in order                 2.39s
 
   Tests:    18 passed (41 assertions)
   Duration: 63.18s

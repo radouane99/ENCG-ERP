@@ -3,20 +3,23 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\AcademicYear;
 use App\Models\AttendanceSession;
 use App\Models\Deliberation;
 use App\Models\DeliberationDecision;
+use App\Models\Filiere;
 use App\Models\Grade;
+use App\Models\Group;
 use App\Models\Student;
 use App\Models\StudentPathway;
 use App\Models\StudentRegistration;
 use App\Models\User;
+use App\Services\Academic\AcademicContext;
 use App\Services\Academic\ApogeeDeliberationEngine;
 use App\Services\Academic\GradeLockService;
 use App\Services\Apogee\ApogeeExportService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ApogeeEngineController extends Controller
 {
@@ -196,24 +199,27 @@ class ApogeeEngineController extends Controller
      */
     public function validateCandidate(Request $request): JsonResponse
     {
-        abort_unless($request->user()->hasAnyRole(['super-admin','admin','institution-admin','director','scolarite']),403);
-        $data=$request->validate(['student_id'=>'required|integer|exists:students,id','filiere_id'=>'required|integer|exists:filieres,id','group_id'=>'nullable|integer|exists:groups,id']);
-        return \Illuminate\Support\Facades\DB::transaction(function()use($request,$data){
-            $student=Student::whereKey($data['student_id'])->where('institution_id',$request->user()->institution_id)->lockForUpdate()->firstOrFail();
-            abort_unless($student->cne && $student->student_number,422,'Renseignez les identifiants officiels CNE et APOGEE avant validation.');
-            $yearId=\App\Services\Academic\AcademicContext::yearId();
-            abort_unless($yearId,422,'Année active requise.');
-            \App\Models\Filiere::whereKey($data['filiere_id'])->where('institution_id',$student->institution_id)->firstOrFail();
-            $group=isset($data['group_id']) ? \App\Models\Group::whereKey($data['group_id'])->where('filiere_id',$data['filiere_id'])->where('academic_year_id',$yearId)->firstOrFail() : null;
-            $semester=$group?->semester_number ?? 1;
-            StudentPathway::where('student_id',$student->id)->where('is_current',true)->update(['is_current'=>false]);
-            StudentPathway::updateOrCreate(['student_id'=>$student->id,'academic_year_id'=>$yearId,'current_semester'=>$semester],['filiere_id'=>$data['filiere_id'],'group_id'=>$group?->id,'is_current'=>true]);
-            StudentRegistration::updateOrCreate(['student_id'=>$student->id,'academic_year_id'=>$yearId,'semester_number'=>$semester],['filiere_id'=>$data['filiere_id'],'group_id'=>$group?->id,'registration_type'=>'initial','status'=>'active']);
-            $student->update(['status'=>'active']);
-            activity()->causedBy($request->user())->performedOn($student)->withProperties(['academic_year_id'=>$yearId,'semester_number'=>$semester])->log('candidate_academic_registration_validated');
-            return response()->json(['success'=>true,'message'=>'Inscription validée avec les identifiants officiels conservés.','data'=>['student_id'=>$student->id,'apogee_code'=>$student->student_number,'cne'=>$student->cne,'filiere_id'=>$data['filiere_id'],'academic_year_id'=>$yearId]]);
+        abort_unless($request->user()->hasAnyRole(['super-admin', 'admin', 'institution-admin', 'director', 'scolarite']), 403);
+        $data = $request->validate(['student_id' => 'required|integer|exists:students,id', 'filiere_id' => 'required|integer|exists:filieres,id', 'group_id' => 'nullable|integer|exists:groups,id']);
+
+        return DB::transaction(function () use ($request, $data) {
+            $student = Student::whereKey($data['student_id'])->where('institution_id', $request->user()->institution_id)->lockForUpdate()->firstOrFail();
+            abort_unless($student->cne && $student->student_number, 422, 'Renseignez les identifiants officiels CNE et APOGEE avant validation.');
+            $yearId = AcademicContext::yearId();
+            abort_unless($yearId, 422, 'Année active requise.');
+            Filiere::whereKey($data['filiere_id'])->where('institution_id', $student->institution_id)->firstOrFail();
+            $group = isset($data['group_id']) ? Group::whereKey($data['group_id'])->where('filiere_id', $data['filiere_id'])->where('academic_year_id', $yearId)->firstOrFail() : null;
+            $semester = $group?->semester_number ?? 1;
+            StudentPathway::where('student_id', $student->id)->where('is_current', true)->update(['is_current' => false]);
+            StudentPathway::updateOrCreate(['student_id' => $student->id, 'academic_year_id' => $yearId, 'current_semester' => $semester], ['filiere_id' => $data['filiere_id'], 'group_id' => $group?->id, 'is_current' => true]);
+            StudentRegistration::updateOrCreate(['student_id' => $student->id, 'academic_year_id' => $yearId, 'semester_number' => $semester], ['filiere_id' => $data['filiere_id'], 'group_id' => $group?->id, 'registration_type' => 'initial', 'status' => 'active']);
+            $student->update(['status' => 'active']);
+            activity()->causedBy($request->user())->performedOn($student)->withProperties(['academic_year_id' => $yearId, 'semester_number' => $semester])->log('candidate_academic_registration_validated');
+
+            return response()->json(['success' => true, 'message' => 'Inscription validée avec les identifiants officiels conservés.', 'data' => ['student_id' => $student->id, 'apogee_code' => $student->student_number, 'cne' => $student->cne, 'filiere_id' => $data['filiere_id'], 'academic_year_id' => $yearId]]);
         });
     }
+
     /**
      * Calculer la paie des vacataires.
      */

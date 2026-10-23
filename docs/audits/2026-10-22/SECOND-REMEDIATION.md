@@ -40,12 +40,25 @@ Le tableau de bord administration contient désormais un panneau de réconciliat
 ## Améliorations complémentaires
 
 - Imports de notes : droits et période contrôlés, transaction/verrou, inscription vérifiée, colonne Version dans les exports, refus d'un import sans version ou périmé. Un import ne crée plus une modalité inconnue arbitrairement. Les modèles Excel anciens doivent être retéléchargés.
+- Validation administrative APOGEE : le chemin ancien n'invente plus de CNE ni de code APOGEE et ne force plus l'année 1. Les identifiants officiels sont exigés et conservés; parcours et inscription sont écrits sous transaction dans l'année et le groupe validés, avec contrôle des rôles et journal d'activité.
 - Uploads : l'intercepteur Axios retire le Content-Type JSON pour FormData afin que le navigateur définisse la frontière multipart correcte.
 - LMS : aucune réponse IA inventée lorsque le service échoue, aucune réponse vide présentée comme remise de devoir, aucun professeur arbitraire attribué au support, messages récents servis dans l'ordre chronologique.
 - Diagnostic SQL : le scanner traite les colonnes d'une FK composite ensemble et dans l'ordre. L'ancien produit cartésien des colonnes annonçait de faux orphelins après l'ajout des contraintes composites. Les nombres de FK ne sont plus codés en dur. Les pondérations sont vérifiées par module/année et les cas en révision sont signalés. Le scanner ne prétend plus certifier « 100 % opérationnel ».
 - Reprise : migrations additives, sauvegarde PostgreSQL préalable ignorée par Git, essai réel sur une copie isolée avant application sur la base locale. Les grades ne sont jamais supprimés pour résoudre une collision de modalités.
 
 ## Validation
+
+| Vérification finale | Résultat |
+|---|---|
+| Suite complète PostgreSQL | 333 tests, 1 069 assertions, tous réussis |
+| Suite complète SQLite | 331 réussis, 2 checks PostgreSQL explicitement ignorés |
+| Tests frontend | 41 réussis, 19 fichiers |
+| Parcours navigateur | 22 réussis, desktop/mobile et API réelle isolée |
+| TypeScript / build | Réussis |
+| Lint | 0 erreur, 250 warnings visibles |
+| Diagnostic SQL | 347 contrôles, 282 FK vérifiées sans orphelin, 0 anomalie critique détectée par ces contrôles |
+| JavaScript initial | 591 681 octets; 182 780 octets gzip; budget de 750 KB respecté |
+| Readiness locale Nginx → PHP-FPM → dépendances | ready=true |
 
 Les résultats finaux sont conservés dans les artefacts suivants :
 
@@ -57,6 +70,8 @@ Les résultats finaux sont conservés dans les artefacts suivants :
 - `second-deep-scan-after.txt` : contrôles relationnels et avertissements, sans option --fix.
 
 Les fixtures ont été adaptées pour déclarer une année universitaire valide. Les assertions de comportement antérieures n'ont pas été supprimées. Les nouvelles protections SQL ne sont pas désactivées dans les tests PostgreSQL.
+
+Les serveurs E2E et les bases de test créés pour cette intervention ont été nettoyés. Un signal de redémarrage gracieux a été envoyé aux workers locaux. La sauvegarde préalable reste dans l'emplacement de sauvegarde ignoré par Git.
 
 ## Limites restantes
 

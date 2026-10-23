@@ -1,6 +1,6 @@
 ================================================================================
-      🔬 ENCG ERP — SCAN PROFOND ET DIAGNOSTIC DE LA BASE DE DONNÉES           
-      Date : 2026-10-23 00:49:28 | PostgreSQL : 16                
+      🔬 ENCG ERP — SCAN PROFOND ET DIAGNOSTIC DE LA BASE DE DONNÉES
+      Date : 2026-10-23 00:49:28 | PostgreSQL : 16
 ================================================================================
 
 [1/10] Scan des clés étrangères formelles, y compris les clés composites...
@@ -46,7 +46,7 @@
    ℹ️ 167 clés étrangères sans index dédié (normal pour petites tables de paramétrage).
 
 ================================================================================
-                       RÉSUMÉ DU SCAN DE SANTÉ DE LA BASE                      
+                       RÉSUMÉ DU SCAN DE SANTÉ DE LA BASE
 ================================================================================
   • Total des vérifications exécutées  : 347
   • Erreurs Critiques / Conflits       : 0 (AUCUNE)

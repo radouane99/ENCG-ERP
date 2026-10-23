@@ -1,5 +1,5 @@
 
-   INFO  Running migrations.  
+   INFO  Running migrations.
 
   2026_10_23_100000_strengthen_academic_integrity .............. 911.66ms DONE
   2026_10_23_110000_persist_lms_submissions ..................... 33.91ms DONE
@@ -7,12 +7,12 @@
   2026_10_23_130000_backfill_canonical_identity ................ 195.72ms DONE
 
 
-   INFO  Running migrations.  
+   INFO  Running migrations.
 
   2026_10_23_140000_preserve_recorded_grades ................... 174.96ms DONE
 
 
-   INFO  Running migrations.  
+   INFO  Running migrations.
 
   2026_10_23_150000_reconcile_proven_academic_offerings ........ 568.65ms DONE
 
