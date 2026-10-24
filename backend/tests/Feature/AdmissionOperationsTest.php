@@ -29,6 +29,46 @@ class AdmissionOperationsTest extends TestCase
     {
         return StudentDocument::create(['application_id' => $app->id, 'cne' => $app->cne, 'type' => $type, 'file_path' => 'synthetic.pdf', 'mime_type' => 'application/pdf', 'status' => 'verified']);
     }
+    public function test_desk_arrival_is_idempotent_private_and_claims_protect_real_dossier_writes(): void
+    {
+        Queue::fake();
+        $app = $this->dossier(); $doc = $this->document($app); $agent = $this->actor();
+        $payload = ['application_id' => $app->id, 'desk' => 'Guichet A'];
+        $ticket = $this->postJson(self::BASE.'/operations/desk', $payload)->assertOk()->assertJsonPath('number', 1)->json();
+        $this->postJson(self::BASE.'/operations/desk', $payload)->assertOk()->assertJsonPath('id', $ticket['id']);
+        $url = self::BASE.'/operations/desk/'.$ticket['id'];
+        $this->postJson($url, ['event' => 'claim', 'version' => 1])->assertOk()->assertJsonPath('status', 'serving');
+        $other = $this->actor();
+        $this->postJson($url, ['event' => 'claim', 'version' => 1])->assertConflict();
+        $this->postJson($url, ['event' => 'release', 'version' => 2])->assertConflict();
+        $this->postJson(self::BASE.'/documents/'.$doc->id.'/review', ['application_id' => $app->id, 'version' => $app->fresh()->version, 'decision' => 'verified'])->assertConflict();
+        $this->postJson(self::BASE.'/operations/originals', ['application_id' => $app->id, 'operation_id' => (string) Str::uuid(), 'document_type' => 'bac', 'event' => 'received', 'storage_location' => 'A1', 'note' => 'Vérification titulaire'])->assertConflict();
+        Sanctum::actingAs($agent);
+        $this->postJson($url, ['event' => 'release', 'version' => 2])->assertOk()->assertJsonPath('status', 'waiting');
+        Sanctum::actingAs($other);
+        $this->postJson($url, ['event' => 'claim', 'version' => 3])->assertOk();
+        $this->postJson($url, ['event' => 'complete', 'version' => 4])->assertOk()->assertJsonPath('status', 'done');
+        $this->assertSame('submitted', $app->fresh()->dossier_status);
+        Sanctum::actingAs(User::findOrFail($app->owner_user_id));
+        $this->getJson(self::BASE.'/operations/context?application_id='.$app->id)->assertOk()->assertJsonPath('desk_ticket.number', 1);
+        $this->getJson(self::BASE.'/operations/desk?campaign_id='.$app->admission_campaign_id)->assertForbidden();
+        $this->postJson(self::BASE.'/operations/desk', $payload)->assertForbidden();
+    }
+
+    public function test_agent_cannot_claim_two_files_and_foreign_institution_cannot_access_queue(): void
+    {
+        $app = $this->dossier(); $second = $this->dossier(); $agent = $this->actor();
+        $first = $this->postJson(self::BASE.'/operations/desk', ['application_id' => $app->id, 'desk' => 'A'])->assertOk()->json('id');
+        $next = $this->postJson(self::BASE.'/operations/desk', ['application_id' => $second->id, 'desk' => 'A'])->assertOk()->json('id');
+        $this->postJson(self::BASE.'/operations/desk/'.$first, ['event' => 'claim', 'version' => 1])->assertOk();
+        $this->postJson(self::BASE.'/operations/desk/'.$next, ['event' => 'claim', 'version' => 1])->assertConflict();
+        $foreign = Institution::create(['name' => 'Synthetic foreign institution', 'code' => 'SYN-2', 'slug' => 'synthetic-foreign']); $this->actor('scolarite', $foreign->id);
+        $this->getJson(self::BASE.'/operations/desk?campaign_id='.$app->admission_campaign_id)->assertForbidden();
+        $this->postJson(self::BASE.'/operations/desk/'.$first, ['event' => 'complete', 'version' => 2])->assertForbidden();
+        $this->actor('admin');
+        $this->postJson(self::BASE.'/operations/desk/'.$first, ['event' => 'release', 'version' => 2])->assertUnprocessable();
+        $this->postJson(self::BASE.'/operations/desk/'.$first, ['event' => 'release', 'version' => 2, 'reason' => 'Agent absent, reprise par le responsable'])->assertOk()->assertJsonPath('status', 'waiting');
+    }
     private function ocrRun(Application $app, StudentDocument $doc, array $fields = [], string $status = 'needs_review'): string
     {
         $id = (string) Str::uuid(); DB::table('admission_ocr_runs')->insert(['id' => $id, 'application_id' => $app->id, 'document_id' => $doc->id, 'status' => $status, 'mode' => 'local', 'parser_version' => 'admissions-v1', 'fields' => json_encode($fields), 'created_at' => now(), 'updated_at' => now()]); return $id;

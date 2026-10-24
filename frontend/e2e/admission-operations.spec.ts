@@ -14,6 +14,26 @@ async function admin(page: Page) {
 }
 test.describe('Outils quotidiens admissions et actions', () => {
   test.skip(!process.env.E2E_ROLE_AUDIT, 'Jeux synthétiques uniquement')
+  for (const mobile of [false, true]) test(`prise en charge du guichet — ${mobile ? 'mobile' : 'desktop'}`, async ({ page }) => {
+    if (mobile) await page.setViewportSize({ width: 390, height: 844 }); await admin(page)
+    const ticket = { id: 12, application_id: 17, number: 1, desk: 'Guichet A', status: 'waiting', version: 1, served_by: null as number | null, agent: null as string | null, first_name: 'Sara', last_name: 'Synthetic', cne: 'N123456789' }
+    await page.route(url => url.pathname === `${base}/operations/queue`, r => r.fulfill(json({ data: [], total: 0, last_page: 1 })))
+    await page.route(url => url.pathname === `${base}/operations/monitor`, r => r.fulfill(json({ ocr: [], notifications: [] })))
+    await page.route(url => url.pathname === `${base}/operations/desk`, r => r.fulfill(json({ tickets: { data: [ticket], last_page: 1 }, counts: { [ticket.status]: 1 }, current_user_id: 1 })))
+    const events: string[] = []
+    await page.route(url => url.pathname === `${base}/operations/desk/12`, r => {
+      const data = r.request().postDataJSON(); expect(data.version).toBe(ticket.version); events.push(data.event); ticket.version++
+      ticket.status = data.event === 'claim' ? 'serving' : data.event === 'release' ? 'waiting' : 'done'; ticket.served_by = ticket.status === 'serving' ? 1 : null; ticket.agent = ticket.served_by ? 'Agent synthétique' : null
+      return r.fulfill(json(ticket))
+    })
+    await page.goto('/academic/enrollments'); await page.getByRole('button', { name: 'Suivi & incidents', exact: true }).click()
+    await page.getByRole('button', { name: 'Appeler et prendre en charge', exact: true }).click(); await expect(page.getByRole('button', { name: 'Clôturer le passage', exact: true })).toBeVisible()
+    await page.getByRole('button', { name: 'Libérer le dossier', exact: true }).click(); await expect(page.getByRole('button', { name: 'Appeler et prendre en charge', exact: true })).toBeVisible()
+    await page.getByRole('button', { name: 'Appeler et prendre en charge', exact: true }).click(); await page.getByRole('button', { name: 'Clôturer le passage', exact: true }).click()
+    await expect(page.getByRole('button', { name: 'Clôturer le passage', exact: true })).toHaveCount(0); expect(events).toEqual(['claim', 'release', 'claim', 'complete'])
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+    await page.screenshot({ path: `test-results/admission-guichet-${mobile ? 'mobile' : 'desktop'}.png`, fullPage: true })
+  })
   for (const mobile of [false, true]) {
     const device = mobile ? 'mobile' : 'desktop'
     test(`file de travail, affectation et journal des originaux — ${device}`, async ({ page }) => {

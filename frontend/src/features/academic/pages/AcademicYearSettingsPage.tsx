@@ -1,3 +1,4 @@
+import { assignmentSuggestions } from '../model/assignmentSuggestions'
 import React,{ useState,useEffect,useMemo,useRef } from 'react'
 import {
 Calendar,Download,Upload,Trash2,Plus,CalendarDays,FileText,X,Sparkles,BookOpen,Users,Layers,Search,GraduationCap,Check,Copy,Mail,Printer,Zap,BarChart2,Eye,ChevronDown,Building2,AlertTriangle,
@@ -635,77 +636,16 @@ export default function AcademicYearSettingsPage() {
 
   // AI Matching Handler
   const handleAiAutoMatching = () => {
-    setIsAnalyzingAi(true)
     setShowAiMatchingModal(true)
-
-    setTimeout(() => {
-      const suggestions: any[] = []
-      const assignedModuleGroupKeys = new Set(
-        assignments.map((a: any) => `${a.module_id || a.module}-${a.group_id || a.group}`)
-      )
-
-      modules.forEach((mod: any) => {
-        groups.forEach((grp: any) => {
-          const key = `${mod.id}-${grp.id}`
-          if (!assignedModuleGroupKeys.has(key) && suggestions.length < 4) {
-            const eligibleProfs = professors.map((p: any) => {
-              const assignedCount = assignments.filter((a: any) => a.professor_id == p.id || a.prof_id == p.id).length
-              return { ...p, assignedHours: assignedCount * 4 }
-            }).sort((a: any, b: any) => a.assignedHours - b.assignedHours)
-
-            const bestProf = eligibleProfs[0]
-            if (bestProf && bestProf.assignedHours < 18) {
-              const profName = (bestProf.first_name || bestProf.last_name)
-                ? `${bestProf.first_name || ''} ${bestProf.last_name || ''}`.trim()
-                : `Professeur #${bestProf.id}`
-
-              suggestions.push({
-                prof_id: bestProf.id,
-                prof_name: profName,
-                module_id: mod.id,
-                module_name: `${mod.code ? mod.code + ' - ' : ''}${mod.name}`,
-                group_id: grp.id,
-                group_name: grp.name,
-                match_score: Math.floor(Math.random() * 8) + 92,
-                reason: `Charge actuelle: ${bestProf.assignedHours}h/18h. Spécialité et département totalement compatibles.`
-              })
-            }
-          }
-        })
-      })
-
-      if (suggestions.length === 0) {
-        if (!professors[0] || !modules[0] || !groups[0]) {
-          setAiSuggestions([])
-          setIsAnalyzingAi(false)
-          return
-        }
-        const defaultProf = professors[0]
-        const defaultMod = modules[0]
-        const defaultGrp = groups[0]
-        suggestions.push({
-          prof_id: defaultProf.id,
-          prof_name: `${defaultProf.first_name || ''} ${defaultProf.last_name || ''}`.trim(),
-          module_id: defaultMod.id,
-          module_name: `${defaultMod.code ? defaultMod.code + ' - ' : ''}${defaultMod.name}`,
-          group_id: defaultGrp.id,
-          group_name: defaultGrp.name,
-          match_score: 0,
-          reason: 'Première affectation disponible dans le catalogue académique.'
-        })
-      }
-
-      setAiSuggestions(suggestions)
-      setIsAnalyzingAi(false)
-    }, 850)
+    setIsAnalyzingAi(false)
+    setAiSuggestions(assignmentSuggestions(professors, modules, groups, assignments))
   }
-
   const handleApplyAiSuggestions = async () => {
     const toastId = toast.loading('🤖 Application des affectations recommandées par l\'IA...')
     try {
       for (const item of aiSuggestions) {
         await api.post('/professor-assignments', {
-          professor_id: item.prof_id,
+          professor_id: item.prof_id, assigned_hours: item.assigned_hours, session_type: item.session_type,
           module_id: item.module_id,
           group_id: item.group_id
         })
@@ -2438,7 +2378,7 @@ export default function AcademicYearSettingsPage() {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <span className="px-1.5 py-0.5 bg-indigo-100 dark:bg-indigo-900/60 text-indigo-800 dark:text-indigo-300 rounded text-[9px] font-bold">
-                              ✨ {item.match_score}% Match
+                              Proposition à vérifier
                             </span>
                             <span className="text-xs font-bold text-slate-900 dark:text-white">
                               {item.prof_name}

@@ -369,6 +369,8 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:admin|super-admi
     Route::get('assessments/{assessment}/grades', [GradeController::class, 'getForAssessment']);
     Route::post('assessments/{assessment}/grades', [GradeController::class, 'storeBulk']);
     Route::get('academic/deliberations', [DeliberationController::class, 'index']);
+    Route::get('academic/pv-workflow/context', [\App\Http\Controllers\Api\Academic\PvWorkflowController::class, 'context']);
+    Route::post('academic/pv-workflow/meeting', [\App\Http\Controllers\Api\Academic\PvWorkflowController::class, 'schedule']);
 
     Route::get('admin/academic/deliberations', [DeliberationController::class, 'index']);
     Route::match(['get', 'post'], 'academic/deliberate', [DeliberationController::class, 'run']);

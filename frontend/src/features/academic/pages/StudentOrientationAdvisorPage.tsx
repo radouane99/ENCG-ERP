@@ -16,7 +16,7 @@ import { cn } from '@shared/lib/utils';
 interface ModuleSimItem {
   name: string;
   coefficient: number;
-  grade: number;
+  grade: number | null;
 }
 
 export default function StudentOrientationAdvisorPage() {
@@ -25,7 +25,7 @@ export default function StudentOrientationAdvisorPage() {
   const [activeTab, setActiveTab] = useState<'advisor' | 'simulator'>('advisor');
 
   // 1. Fetch AI Orientation Profile
-  const { data: profileData, isLoading } = useQuery({
+  const { data: profileData, isLoading, isError, refetch } = useQuery({
     queryKey: ['student-orientation-profile'],
     queryFn: async () => {
       const res = await api.get('/student/orientation/profile');
@@ -42,7 +42,7 @@ export default function StudentOrientationAdvisorPage() {
       setSimulatedModules(profileData.current_semester_modules.map((m: any) => ({
         name: m.name,
         coefficient: Number(m.coefficient) || 2,
-        grade: Number(m.grade) || 12.0,
+        grade: m.grade === null || m.grade === undefined ? null : Number(m.grade),
       })));
     }
     if (profileData?.current_semester) {
@@ -64,72 +64,8 @@ export default function StudentOrientationAdvisorPage() {
     }
   });
 
-  const radarData = profileData?.radar_skills || [
-    { subject: 'Finance & Banque', score: 14.5, fullMark: 20 },
-    { subject: 'Comptabilité & Audit', score: 15.0, fullMark: 20 },
-    { subject: 'Marketing & Vente', score: 12.5, fullMark: 20 },
-    { subject: 'Management & RH', score: 13.0, fullMark: 20 },
-    { subject: 'Droit & Économie', score: 11.5, fullMark: 20 },
-    { subject: 'Outils Quantitatifs', score: 12.0, fullMark: 20 },
-  ];
-
-  const recommendations = profileData?.recommendations || [
-    {
-      code: 'GFC',
-      name: 'Gestion Financière et Comptable',
-      icon: Landmark,
-      compatibility_score: 93.5,
-      match_level: 'Idéal',
-      description: 'Spécialisation d\'élite en ingénierie financière, marchés des capitaux, finance d\'entreprise et audit financier.',
-      career_prospects: ['Directeur Financier (DAF)', 'Analyste M&A', 'Gestionnaire de Portefeuille', 'Auditeur Senior Big 4'],
-      strengths: ['Excellence en Comptabilité (15.0/20)', 'Solide en Mathématiques Financières (14.5/20)'],
-      improvements: ['Renforcer le Droit des Affaires'],
-    },
-    {
-      code: 'ACG',
-      name: 'Audit et Contrôle de Gestion',
-      icon: ShieldCheck,
-      compatibility_score: 88.0,
-      match_level: 'Idéal',
-      description: 'Pilotage stratégique de la performance, contrôle budgétaire, gouvernance et conformité.',
-      career_prospects: ['Auditeur Interne', 'Contrôleur de Gestion Industriel', 'Risk Manager', 'Consultant Organisation'],
-      strengths: ['Rigueur analytique', 'Comptabilité analytique'],
-      improvements: ['Systèmes d\'information'],
-    },
-    {
-      code: 'MCM',
-      name: 'Management Commercial et Marketing',
-      icon: TrendingUp,
-      compatibility_score: 76.5,
-      match_level: 'Favorable',
-      description: 'Stratégie marketing omnicanale, marketing digital, négociation B2B et management de la relation client.',
-      career_prospects: ['Directeur Marketing', 'Chef de Produit / Brand Manager', 'Key Account Manager', 'Consultant Digital'],
-      strengths: ['Communication & Expression (15.0/20)'],
-      improvements: ['Études de marché quantitatives'],
-    },
-    {
-      code: 'GRH',
-      name: 'Management des Ressources Humaines',
-      icon: Users,
-      compatibility_score: 71.0,
-      match_level: 'Favorable',
-      description: 'Leadership, gestion prévisionnelle des emplois et compétences, droit du travail et transformation RH.',
-      career_prospects: ['DRH', 'Talent Acquisition Manager', 'Consultant en Recrutement', 'Responsable RSE'],
-      strengths: ['Management général'],
-      improvements: ['Droit social approfondi'],
-    },
-    {
-      code: 'MACI',
-      name: 'Management du Commerce International',
-      icon: Globe,
-      compatibility_score: 68.0,
-      match_level: 'Possible',
-      description: 'Développement export, logistique internationale, douanes et géopolitique des échanges mondiaux.',
-      career_prospects: ['Directeur Export', 'Supply Chain Manager', 'Acheteur International', 'Courtier Maritime'],
-      strengths: ['Langues étrangères & Anglais commercial'],
-      improvements: ['Techniques douanières'],
-    },
-  ];
+  const radarData = profileData?.radar_skills || [];
+  const recommendations = profileData?.recommendations || [];
 
   const topRec = recommendations[0];
 
@@ -140,6 +76,7 @@ export default function StudentOrientationAdvisorPage() {
   };
 
   const handleRunSimulation = () => {
+    if (simulatedModules.length === 0 || simulatedModules.some(m => m.grade === null)) { toast.error('Renseignez explicitement toutes les notes hypothétiques avant la simulation.'); return; }
     simulationMutation.mutate({
       modules: simulatedModules,
       semester_number: selectedSemester,
@@ -154,14 +91,14 @@ export default function StudentOrientationAdvisorPage() {
     let sum = 0;
     let coeffSum = 0;
     for (const m of simulatedModules) {
-      sum += (m.grade * m.coefficient);
+      if (m.grade === null) continue; sum += (m.grade * m.coefficient);
       coeffSum += m.coefficient;
     }
     return coeffSum > 0 ? (sum / coeffSum) : 0;
   })();
 
-  const hasEliminatory = simulatedModules.some(m => m.grade < 6.0);
-  const isValid = quickAverage >= 10.0 && !hasEliminatory;
+  const hasEliminatory = simulatedModules.some(m => m.grade !== null && m.grade < 6.0);
+  const isValid = simulatedModules.length > 0 && simulatedModules.every(m => m.grade !== null) && quickAverage >= 10.0 && !hasEliminatory;
 
   if (isLoading) {
     return (
@@ -172,6 +109,8 @@ export default function StudentOrientationAdvisorPage() {
     );
   }
 
+  if (isError) return <div role="alert" className="rounded-xl border border-red-200 p-5">Impossible de charger votre orientation. <button className="min-h-11 underline" onClick={() => void refetch()}>Réessayer</button></div>;
+  if (!topRec) return <div className="rounded-xl border p-5">Aucun résultat exploitable pour proposer une orientation. Vos notes ne sont pas remplacées par des données de démonstration.</div>;
   return (
     <div className="space-y-8 pb-16 animate-fade-in max-w-7xl mx-auto">
       
@@ -427,8 +366,8 @@ export default function StudentOrientationAdvisorPage() {
 
               <div className="space-y-4">
                 {simulatedModules.map((m, idx) => {
-                  const isElim = m.grade < 6.0;
-                  const isVal = m.grade >= 10.0;
+                  const isElim = m.grade !== null && m.grade < 6.0;
+                  const isVal = m.grade !== null && m.grade >= 10.0;
 
                   return (
                     <div key={idx} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 space-y-2">
@@ -450,7 +389,7 @@ export default function StudentOrientationAdvisorPage() {
                             {isVal ? 'Validé' : isElim ? 'Éliminatoire (<06)' : 'Compensable'}
                           </span>
                           <span className="font-mono font-black text-sm text-slate-900 dark:text-slate-100 min-w-[50px] text-right">
-                            {m.grade.toFixed(2)}/20
+                            {(m.grade === null ? 'À renseigner' : m.grade.toFixed(2))}/20
                           </span>
                         </div>
                       </div>
@@ -461,7 +400,7 @@ export default function StudentOrientationAdvisorPage() {
                         min="0"
                         max="20"
                         step="0.25"
-                        value={m.grade}
+                        value={m.grade ?? ''}
                         onChange={(e) => handleGradeChange(idx, parseFloat(e.target.value))}
                         className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-purple-600"
                       />

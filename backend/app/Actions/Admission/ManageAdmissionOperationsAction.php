@@ -36,6 +36,7 @@ class ManageAdmissionOperationsAction
         $app = AdmissionAccess::dossier($request);
         return DB::transaction(function () use ($app, $data, $request) {
             Application::whereKey($app->id)->lockForUpdate()->firstOrFail();
+            \App\Support\AdmissionDeskAccess::assertAvailable($app, $request->user()->id);
             $previous = DB::table('admission_original_events')->where('operation_id', $data['operation_id'])->first();
             if ($previous) {
                 abort_unless((int) $previous->application_id === $app->id && $previous->document_type === $data['document_type'] && $previous->event === $data['event'], 409, 'Référence déjà utilisée.');

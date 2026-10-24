@@ -188,6 +188,8 @@ export interface AdmissionDossier {
   reviews: {
     id: number;
     document_id: number | null;
+    document_type?: DocumentType | null;
+    document_version?: number | null;
     decision: string;
     reason: string | null;
     created_at: string;

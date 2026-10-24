@@ -145,9 +145,13 @@ class AbsenceJustificationController extends Controller
 
         $validated = $request->validate([
             'status' => 'required|in:approved,rejected',
-            'rejection_reason' => 'nullable|string|max:500',
+            'rejection_reason' => 'required_if:status,rejected|nullable|string|min:3|max:500',
         ]);
 
+        \Illuminate\Support\Facades\DB::transaction(function () use ($absenceJustification, $validated, $request) {
+        $absenceJustification = AbsenceJustification::whereKey($absenceJustification->id)->lockForUpdate()->firstOrFail();
+        $attendance = \App\Models\Attendance::whereKey($absenceJustification->attendance_id)->where('student_id', $absenceJustification->student_id)->lockForUpdate()->firstOrFail();
+        abort_if(\App\Models\AcademicYear::whereKey($attendance->attendanceSession->academic_year_id)->value('is_locked'), 409, 'Année académique verrouillée.');
         $absenceJustification->update([
             'status' => $validated['status'],
             'rejection_reason' => $validated['rejection_reason'] ?? null,
@@ -156,11 +160,9 @@ class AbsenceJustificationController extends Controller
         ]);
 
         // Marquer la présence comme justifiée si approuvé
-        if ($validated['status'] === 'approved' && $absenceJustification->attendance_id) {
-            AttendanceRecord::where('attendance_session_id', $absenceJustification->attendance_id)
-                ->where('student_id', $absenceJustification->student_id)
-                ->update(['is_justified' => true]);
-        }
+        $attendance->update(['is_justified' => $validated['status'] === 'approved']);
+        activity()->causedBy($request->user())->performedOn($absenceJustification)->withProperties(['status' => $validated['status'], 'attendance_id' => $attendance->id])->log('absence_justification_reviewed');
+        });
 
         // Notifier l'étudiant
         $studentUser = $absenceJustification->student?->user;

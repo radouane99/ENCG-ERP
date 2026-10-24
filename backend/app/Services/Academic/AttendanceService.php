@@ -61,7 +61,9 @@ class AttendanceService
             ]);
 
             // Créer les enregistrements d'absence par défaut
-            $studentIds = $group->students()->pluck('students.id')->all();
+            $studentIds = \App\Models\Student::where('institution_id', $module->institution_id)->where(fn ($q) =>
+                $q->whereHas('pathways', fn ($p) => $p->where('academic_year_id', $group->academic_year_id)->where('group_id', $groupId))
+                    ->orWhereHas('registrations', fn ($r) => $r->where('academic_year_id', $group->academic_year_id)->where('group_id', $groupId)))->pluck('id')->all();
             $records = array_map(fn ($studentId) => [
                 'attendance_session_id' => $session->id,
                 'student_id' => $studentId,
@@ -90,14 +92,19 @@ class AttendanceService
         ?float $longitude = null,
         bool $isValid = true
     ): Attendance {
-        $session = AttendanceSession::findOrFail($sessionId);
+        return DB::transaction(function () use ($sessionId, $studentId, $status, $latitude, $longitude, $isValid) {
+        abort_unless(in_array($status, ['present', 'absent', 'late', 'excused'], true), 422, 'Statut de présence invalide.');
+        $session = AttendanceSession::whereKey($sessionId)->lockForUpdate()->firstOrFail();
         $this->authorizeSession($session);
         abort_unless($session->status === 'active', 409, 'Session fermée.');
         $student = \App\Models\Student::findOrFail($studentId);
         $member = $student->pathways()->where('academic_year_id', $session->academic_year_id)->where('group_id', $session->group_id)->exists()
             || $student->registrations()->where('academic_year_id', $session->academic_year_id)->where('group_id', $session->group_id)->exists();
         abort_unless($member, 403, 'Étudiant hors du groupe de cette session.');
-        if (auth()->user()->hasRole('student')) abort_unless((int) auth()->user()->student?->id === $studentId && $status === 'present', 403);
+        if (auth()->user()->hasRole('student')) {
+            abort_unless((int) auth()->user()->student?->id === $studentId && $status === 'present', 403);
+            abort_if($session->expires_at?->isPast(), 409, 'QR expiré. Demandez la vérification à votre enseignant.');
+        }
         $record = Attendance::firstOrCreate(
             ['attendance_session_id' => $sessionId, 'student_id' => $studentId],
             ['status' => 'absent', 'is_justified' => false]
@@ -112,6 +119,7 @@ class AttendanceService
         ]);
 
         return $record->fresh(['student.user']);
+        });
     }
 
     /**
@@ -119,8 +127,10 @@ class AttendanceService
      */
     public function closeSession(int $sessionId): AttendanceSession
     {
-        $session = AttendanceSession::findOrFail($sessionId);
+        return DB::transaction(function () use ($sessionId) {
+        $session = AttendanceSession::whereKey($sessionId)->lockForUpdate()->firstOrFail();
         $this->authorizeSession($session, false);
+        if ($session->status === 'completed') return $session;
         $session->update([
             'status' => 'completed',
             'end_time' => Carbon::now()->format('H:i:s'),
@@ -128,6 +138,7 @@ class AttendanceService
         ]);
 
         return $session;
+        });
     }
 
     public function authorizeSession(AttendanceSession $session, bool $allowStudent = true): void
@@ -135,6 +146,7 @@ class AttendanceService
         $actor = auth()->user(); abort_unless($actor, 403);
         $module = \App\Models\Module::findOrFail($session->module_id);
         abort_unless((int) $module->institution_id === (int) $actor->institution_id, 403);
+        abort_if(AcademicYear::whereKey($session->academic_year_id)->value('is_locked'), 409, 'Année académique verrouillée.');
         if ($allowStudent && $actor->hasRole('student')) return;
         $staff = $actor->hasAnyRole(['super-admin', 'admin', 'institution-admin', 'director', 'scolarite']);
         abort_unless($staff || (int) $session->created_by === (int) $actor->id, 403, 'Session réservée à son enseignant.');

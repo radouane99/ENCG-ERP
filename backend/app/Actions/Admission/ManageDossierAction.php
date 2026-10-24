@@ -43,6 +43,7 @@ class ManageDossierAction
     {
         $found = AdmissionAccess::dossier($request, true);
         $app = Application::whereKey($found->id)->lockForUpdate()->firstOrFail();
+        if (AdmissionAccess::staff($request->user())) \App\Support\AdmissionDeskAccess::assertAvailable($app, $request->user()->id);
         abort_unless(in_array($app->dossier_status, ['draft', 'needs_correction']), 403, 'Le dossier est en cours de revue. Une demande de correction est nécessaire.');
         $this->version($app, $request);
         return $app;
@@ -164,6 +165,7 @@ class ManageDossierAction
         DB::transaction(function () use ($request, $documentId, $data) {
             $app = AdmissionAccess::dossier($request);
             $app = Application::whereKey($app->id)->lockForUpdate()->firstOrFail();
+            \App\Support\AdmissionDeskAccess::assertAvailable($app, $request->user()->id);
             $this->version($app, $request);
             abort_unless(in_array($app->dossier_status, ['submitted', 'under_review', 'needs_correction']), 422, 'Le candidat doit soumettre son dossier avant la revue.');
             $doc = StudentDocument::where('application_id', $app->id)->whereKey($documentId)->where('is_current', true)->whereNull('withdrawn_at')->firstOrFail();
@@ -203,6 +205,7 @@ class ManageDossierAction
             abort_unless(\App\Domain\Admission\AdmissionEntryRules::validEntry($campaign->entry_route, $entrySemester), 422, 'Niveau d’entrée de campagne incohérent.');
             abort_if(\App\Models\AcademicYear::findOrFail($campaign->academic_year_id)->is_locked, 422, 'Année universitaire verrouillée.');
             $app = Application::whereKey($resolved->id)->lockForUpdate()->firstOrFail();
+            \App\Support\AdmissionDeskAccess::assertAvailable($app, $request->user()->id);
             if ($app->dossier_status === 'approved') {
                 abort_unless($data['decision'] === 'approved' && Student::find($app->student_id)?->student_number === $data['official_number'], 409, 'Décision déjà enregistrée.');
                 return $app;

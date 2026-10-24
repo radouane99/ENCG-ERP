@@ -226,9 +226,17 @@ class AdmissionWorkflowTest extends TestCase
         $this->postJson(self::BASE.'/submit', ['application_id' => $a->id, 'version' => $a->fresh()->version])->assertOk();
         $doc = StudentDocument::where('application_id', $a->id)->where('type', 'cnie')->firstOrFail();
         $this->staff();
+        $bac = StudentDocument::where('application_id', $a->id)->where('type', 'bac')->firstOrFail();
+        $this->postJson(self::BASE.'/documents/'.$bac->id.'/review', ['application_id' => $a->id, 'version' => $a->fresh()->version, 'decision' => 'verified'])->assertOk();
         $this->postJson(self::BASE.'/documents/'.$doc->id.'/review', ['application_id' => $a->id, 'version' => $a->fresh()->version,
             'decision' => 'rejected', 'reason' => 'Verso manquant, merci de remplacer la pièce.'])->assertOk()->assertJsonPath('candidate.dossier_status', 'needs_correction');
+        $notes = StudentDocument::where('application_id', $a->id)->where('type', 'releve_notes')->firstOrFail();
+        $this->postJson(self::BASE.'/documents/'.$notes->id.'/review', ['application_id' => $a->id, 'version' => $a->fresh()->version, 'decision' => 'rejected', 'reason' => 'Image illisible'])->assertOk()->assertJsonPath('candidate.dossier_status', 'needs_correction');
         $this->login($a);
+        $this->deleteJson(self::BASE.'/documents', ['application_id' => $a->id, 'version' => $a->fresh()->version, 'type' => 'bac'])->assertUnprocessable();
+        $this->post(self::BASE.'/documents', ['application_id' => $a->id, 'version' => $a->fresh()->version, 'type' => 'bac', 'file' => UploadedFile::fake()->createWithContent('new.pdf', '%PDF-1.4 SYNTHETIC REPLACEMENT')], ['Accept' => 'application/json'])->assertUnprocessable();
+        $this->assertTrue($bac->fresh()->is_current);
+        $this->postJson(self::BASE.'/submit', ['application_id' => $a->id, 'version' => $a->fresh()->version])->assertUnprocessable();
         $this->post(self::BASE.'/documents', ['application_id' => $a->id, 'version' => $a->fresh()->version, 'type' => 'cnie',
             'file' => UploadedFile::fake()->createWithContent('new.pdf', '%PDF-1.4 NEW SYNTHETIC RECTO VERSO')], ['Accept' => 'application/json'])->assertOk();
         $this->assertFalse($doc->fresh()->is_current);

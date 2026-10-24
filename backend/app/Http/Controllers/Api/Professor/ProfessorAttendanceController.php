@@ -73,7 +73,8 @@ class ProfessorAttendanceController extends Controller
             ]);
 
         // Créneaux horaires réels de l'emploi du temps
-        $assignedSchedules = $dbSchedules->map(function ($s) {
+        $daysMap = [1 => 'Lundi', 2 => 'Mardi', 3 => 'Mercredi', 4 => 'Jeudi', 5 => 'Vendredi', 6 => 'Samedi', 7 => 'Dimanche'];
+        $assignedSchedules = $dbSchedules->map(function ($s) use ($daysMap) {
             $startTime = $s->start_time ? substr($s->start_time, 0, 5) : '08:30';
             $endTime = $s->end_time ? substr($s->end_time, 0, 5) : '10:30';
 
@@ -84,9 +85,14 @@ class ProfessorAttendanceController extends Controller
                 default => 'Cours Magistral (CM)',
             };
 
+            $dayName = is_numeric($s->day_of_week)
+                ? ($daysMap[(int) $s->day_of_week] ?? 'Lundi')
+                : ucfirst($s->day_of_week ?? 'Lundi');
+
             return [
                 'id' => (string) $s->id,
-                'day' => ucfirst($s->day_of_week ?? 'Lundi'),
+                'day' => $dayName,
+                'day_of_week' => is_numeric($s->day_of_week) ? (int) $s->day_of_week : null,
                 'timeSlot' => "{$startTime} - {$endTime}",
                 'filiereId' => $s->module?->filiere_id,
                 'filiereCode' => $s->module?->filiere?->code ?? 'ENCG',

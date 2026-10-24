@@ -301,6 +301,7 @@ class DeliberationService
         foreach ($modules as $module) {
             $profRecord = ModuleProfessor::with('professor.user')
                 ->where('module_id', $module->id)
+                ->where('academic_year_id', $academicYearId)
                 ->first();
 
             // Check if there is an existing Module PV signature recorded for this module
@@ -358,7 +359,7 @@ class DeliberationService
 
         // Chef de filière
         $filiere = Filiere::with('responsable')->find($filiereId);
-        $chefUserId = $filiere?->responsable?->id ?? User::first()?->id;
+        $chefUserId = $filiere?->responsable?->id;
         $chefName = $filiere?->responsable?->name ?? 'Chef de Filière';
 
         $chefJury = DeliberationJury::firstOrCreate(
@@ -398,10 +399,16 @@ class DeliberationService
      */
     public function signJuryPv(int $juryId, int $userId, string $signatureData, string $ipAddress): array
     {
-        $jury = DeliberationJury::find($juryId);
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($juryId, $userId, $signatureData, $ipAddress) {
+        $jury = DeliberationJury::whereKey($juryId)->lockForUpdate()->first();
         if (! $jury) {
             return ['status' => 'error', 'message' => 'Membre du jury introuvable.'];
         }
+        $actor = User::findOrFail($userId);
+        abort_unless((int) $jury->filiere->institution_id === (int) $actor->institution_id && (int) $jury->user_id === $userId, 403, 'Vous ne pouvez signer que votre propre visa du jury.');
+        abort_if(AcademicYear::whereKey($jury->academic_year_id)->value('is_locked'), 409, 'Année académique verrouillée.');
+        abort_unless(preg_match('/^data:image\/png;base64,[A-Za-z0-9+\/=\r\n]+$/', $signatureData) && strlen($signatureData) <= 500000, 422, 'Signature PNG requise.');
+        if ($jury->status === 'signed') return ['status' => 'success', 'digital_seal' => $jury->digital_seal, 'signed_at' => $jury->signed_at];
 
         $digitalSeal = hash('sha256', json_encode([
             'jury_id' => $juryId,
@@ -409,6 +416,7 @@ class DeliberationService
             'filiere_id' => $jury->filiere_id,
             'signed_at' => now()->toIso8601String(),
             'ip' => $ipAddress,
+            'academic_year_id' => $jury->academic_year_id, 'signature_hash' => hash('sha256', $signatureData),
         ]));
 
         $jury->update([
@@ -424,6 +432,7 @@ class DeliberationService
             'digital_seal' => $digitalSeal,
             'signed_at' => now()->toDateTimeString(),
         ];
+        });
     }
 
     /**

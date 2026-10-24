@@ -101,9 +101,10 @@ class AttendanceController extends Controller
     public function sessionStats(int $id): JsonResponse
     {
         $session = AttendanceSession::with(['records.student.user'])->findOrFail($id);
+        $this->attendanceService->authorizeSession($session, false);
         $records = $session->records;
         $presentRecords = $records->filter(
-            fn ($record) => in_array((string) $record->status, ['present', 'late', 'excused'], true)
+            fn ($record) => in_array($record->status->value, ['present', 'late', 'excused'], true)
         );
 
         return response()->json([
@@ -111,13 +112,13 @@ class AttendanceController extends Controller
             'data' => [
                 'session_id' => $session->id,
                 'scans_count' => $presentRecords->count(),
-                'present_count' => $presentRecords->where('status', 'present')->count(),
-                'late_count' => $presentRecords->where('status', 'late')->count(),
-                'absent_count' => $records->where('status', 'absent')->count(),
+                'present_count' => $presentRecords->filter(fn ($r) => $r->status->value === 'present')->count(),
+                'late_count' => $presentRecords->filter(fn ($r) => $r->status->value === 'late')->count(),
+                'absent_count' => $records->filter(fn ($r) => $r->status->value === 'absent')->count(),
                 'students' => $presentRecords->map(fn ($record) => [
                     'id' => $record->student_id,
                     'name' => $record->student?->user?->name ?? 'Étudiant',
-                    'status' => (string) $record->status,
+                    'status' => $record->status->value,
                     'scanned_at' => $record->scanned_at,
                     'is_valid' => (bool) $record->is_valid,
                 ])->values(),
@@ -166,7 +167,7 @@ class AttendanceController extends Controller
             'data' => [
                 'session_id' => $session->id,
                 'attendance_id' => $record->id,
-                'status' => (string) $record->status,
+                'status' => $record->status->value,
             ],
         ]);
     }
@@ -176,6 +177,8 @@ class AttendanceController extends Controller
      */
     public function destroy(AttendanceSession $attendance): JsonResponse
     {
+        $this->attendanceService->authorizeSession($attendance, false);
+        abort_if($attendance->records()->exists(), 409, 'Une session avec un appel doit être conservée dans l’historique.');
         $attendance->delete();
 
         activity()

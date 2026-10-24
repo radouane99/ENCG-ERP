@@ -121,8 +121,11 @@ class OrientationAdvisorService
     {
         // 1. Récupérer les notes réelles de l'étudiant
         $grades = Grade::where('student_id', $student->id)
+            ->whereHas('assessment', fn ($q) => $q->whereHas('module', fn ($m) => $m->where('institution_id', $student->institution_id)))
+            ->whereNotNull('value')
             ->with(['assessment.module'])
             ->get();
+        if ($grades->isEmpty()) return ['student_id' => $student->id, 'recommendations' => [], 'radar_skills' => [], 'total_grades_analyzed' => 0, 'ai_verdict' => 'Résultats insuffisants pour proposer une orientation.'];
 
         // 2. Extraire les moyennes par domaine de compétences
         $categoryScores = $this->calculateCategoryScores($grades);
@@ -137,7 +140,8 @@ class OrientationAdvisorService
             $improvements = [];
 
             foreach ($profile['weights'] as $cat => $weight) {
-                $catScore = $categoryScores[$cat] ?? 10.0;
+                $catScore = $categoryScores[$cat] ?? null;
+                if ($catScore === null) continue;
                 if ($catScore >= 12.5) {
                     $strengths[] = $this->getCategoryLabel($cat).' ('.number_format($catScore, 2).'/20)';
                 } elseif ($catScore < 10.0) {
@@ -163,12 +167,12 @@ class OrientationAdvisorService
 
         // 4. Synthèse Radar
         $radarData = [
-            ['subject' => 'Finance & Banque', 'score' => round($categoryScores['finance'] ?? 11.5, 1), 'fullMark' => 20],
-            ['subject' => 'Comptabilité & Audit', 'score' => round($categoryScores['accounting'] ?? 12.0, 1), 'fullMark' => 20],
-            ['subject' => 'Marketing & Vente', 'score' => round($categoryScores['marketing'] ?? 13.0, 1), 'fullMark' => 20],
-            ['subject' => 'Management & RH', 'score' => round($categoryScores['management'] ?? 12.5, 1), 'fullMark' => 20],
-            ['subject' => 'Droit & Économie', 'score' => round($categoryScores['law'] ?? 11.0, 1), 'fullMark' => 20],
-            ['subject' => 'Outils Quantitatifs', 'score' => round($categoryScores['quantitative'] ?? 10.5, 1), 'fullMark' => 20],
+            ['subject' => 'Finance & Banque', 'score' => (isset($categoryScores['finance']) ? round($categoryScores['finance'], 1) : null), 'fullMark' => 20],
+            ['subject' => 'Comptabilité & Audit', 'score' => (isset($categoryScores['accounting']) ? round($categoryScores['accounting'], 1) : null), 'fullMark' => 20],
+            ['subject' => 'Marketing & Vente', 'score' => (isset($categoryScores['marketing']) ? round($categoryScores['marketing'], 1) : null), 'fullMark' => 20],
+            ['subject' => 'Management & RH', 'score' => (isset($categoryScores['management']) ? round($categoryScores['management'], 1) : null), 'fullMark' => 20],
+            ['subject' => 'Droit & Économie', 'score' => (isset($categoryScores['law']) ? round($categoryScores['law'], 1) : null), 'fullMark' => 20],
+            ['subject' => 'Outils Quantitatifs', 'score' => (isset($categoryScores['quantitative']) ? round($categoryScores['quantitative'], 1) : null), 'fullMark' => 20],
         ];
 
         // 5. Conseil IA personnalisé
@@ -177,6 +181,7 @@ class OrientationAdvisorService
 
         $registration = DB::table('student_registrations')
             ->where('student_id', $student->id)
+            ->where('academic_year_id', AcademicContext::yearId())->orderByDesc('id')
             ->first();
         $currentSemester = $registration?->semester_number ?? $student->current_semester ?? 5;
 
@@ -210,7 +215,8 @@ class OrientationAdvisorService
         ];
 
         foreach ($grades as $grade) {
-            $note = $grade->absent ? 0.0 : (float) ($grade->value ?? 12.0);
+            if ($grade->value === null && ! $grade->absent) continue;
+            $note = $grade->absent ? 0.0 : (float) $grade->value;
             $module = $grade->assessment?->module ?? $grade->module;
             $moduleName = strtolower($module?->name ?? '');
 
@@ -242,7 +248,7 @@ class OrientationAdvisorService
 
         $scores = [];
         foreach ($categories as $cat => $notes) {
-            $scores[$cat] = count($notes) > 0 ? (array_sum($notes) / count($notes)) : 12.0; // Note pivot par défaut 12/20
+            $scores[$cat] = count($notes) > 0 ? (array_sum($notes) / count($notes)) : null;
         }
 
         return $scores;
@@ -257,14 +263,15 @@ class OrientationAdvisorService
         $totalWeight = 0;
 
         foreach ($weights as $cat => $weight) {
-            $score = $categoryScores[$cat] ?? 12.0;
+            $score = $categoryScores[$cat] ?? null;
+            if ($score === null) continue;
             $weightedSum += ($score / 20.0) * $weight;
             $totalWeight += $weight;
         }
 
-        $normalized = $totalWeight > 0 ? ($weightedSum / $totalWeight) * 100 : 70;
+        $normalized = $totalWeight > 0 ? ($weightedSum / $totalWeight) * 100 : 0;
 
-        return min(98.5, max(45.0, $normalized + 5.0)); // Ajustement pour échelle business school
+        return min(100, max(0, $normalized));
     }
 
     protected function getCategoryLabel(string $cat): string

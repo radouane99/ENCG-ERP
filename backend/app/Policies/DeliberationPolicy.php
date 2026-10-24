@@ -20,7 +20,7 @@ class DeliberationPolicy
 
     public function view(User $user, Deliberation $deliberation): bool
     {
-        return $this->viewAny($user);
+        return (int) $user->institution_id === (int) $deliberation->institution_id && $this->viewAny($user);
     }
 
     public function create(User $user): bool
@@ -33,6 +33,6 @@ class DeliberationPolicy
 
     public function update(User $user, Deliberation $deliberation): bool
     {
-        return $this->create($user);
+        return (int) $user->institution_id === (int) $deliberation->institution_id && $this->create($user);
     }
 }

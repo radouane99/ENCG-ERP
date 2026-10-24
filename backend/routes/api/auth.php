@@ -24,6 +24,10 @@ Route::prefix('admissions/workflow')->middleware(['auth:sanctum', 'institution.c
     $appointments = \App\Http\Controllers\Api\AdmissionAppointmentController::class;
     $operations = \App\Http\Controllers\Api\AdmissionOperationsController::class;
     Route::get('operations/context', [$operations, 'context']);
+    $desk = \App\Http\Controllers\Api\AdmissionDeskController::class;
+    Route::get('operations/desk', [$desk, 'index']);
+    Route::post('operations/desk', [$desk, 'arrive']);
+    Route::post('operations/desk/{ticket}', [$desk, 'transition'])->whereNumber('ticket');
     Route::get('operations/queue', [$operations, 'queue']);
     Route::put('operations/work', [$operations, 'assign'])->name('admissions.assign');
     Route::post('operations/originals', [$operations, 'original']);

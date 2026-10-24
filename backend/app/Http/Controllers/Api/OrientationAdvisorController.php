@@ -30,65 +30,21 @@ class OrientationAdvisorController extends Controller
      */
     public function getStudentProfile(Request $request): JsonResponse
     {
-        $user = $request->user();
-
-        // Récupérer l'étudiant associé
-        $student = null;
-        if ($user) {
-            $student = Student::where('user_id', $user->id)->first();
-        }
-
-        // Fallback démo si test sans compte student lié
-        if (! $student) {
-            $student = Student::first();
-        }
-
-        if (! $student) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Profil étudiant introuvable.',
-            ], 404);
-        }
-
-        $analysis = $this->orientationAdvisor->analyzeStudent($student);
-
-        // Récupérer la liste des modules réels accrédités pour le semestre actuel
-        $registration = DB::table('student_registrations')
-            ->where('student_id', $student->id)
-            ->first();
-        $currentSemester = $registration?->semester_number ?? $student->current_semester ?? 5;
-        $filiereId = $registration?->filiere_id ?? $student->filiere_id;
-
-        $semesterModulesQuery = Module::where('semester_number', $currentSemester)->where('is_active', true);
-        if ($filiereId) {
-            $semesterModulesQuery->where('filiere_id', $filiereId);
-        }
-        $semesterModules = $semesterModulesQuery->get()->map(fn ($m) => [
-            'id' => $m->id,
-            'code' => $m->code,
-            'name' => $m->name,
-            'coefficient' => (float) ($m->coefficient ?? 2.0),
-            'grade' => 12.0, // Valeur par défaut pour simulation
-        ]);
-
-        if ($semesterModules->isEmpty() && $filiereId) {
-            $semesterModules = Module::where('filiere_id', $filiereId)->where('is_active', true)->take(7)->get()->map(fn ($m) => [
-                'id' => $m->id,
-                'code' => $m->code,
-                'name' => $m->name,
-                'coefficient' => (float) ($m->coefficient ?? 2.0),
-                'grade' => 12.0,
-            ]);
-        }
-
-        return response()->json([
-            'success' => true,
-            'data' => array_merge($analysis, [
-                'current_semester_modules' => $semesterModules,
-            ]),
-        ]);
+        $student = Student::where('user_id', $request->user()->id)->where('institution_id', $request->user()->institution_id)->first();
+        abort_unless($student, 404, 'Profil étudiant non lié à ce compte. Contactez la scolarité.');
+        $yearId = \App\Services\Academic\AcademicContext::yearId();
+        $registration = DB::table('student_registrations')->where('student_id', $student->id)->where('academic_year_id', $yearId)->orderByDesc('id')->first();
+        $semester = $registration?->semester_number;
+        $modules = $registration ? Module::where('institution_id', $student->institution_id)->where('filiere_id', $registration->filiere_id)->where('semester_number', $semester)->where('is_active', true)->get()->map(function ($module) use ($student) {
+            $hasGrades = \App\Models\Grade::where('student_id', $student->id)->whereHas('assessment', fn ($q) => $q->where('module_id', $module->id))->exists();
+            $result = $hasGrades ? app(\App\Domain\Deliberation\Services\DeliberationEngine::class)->calculateModuleResult($student, $module) : null;
+            return ['id' => $module->id, 'code' => $module->code, 'name' => $module->name, 'coefficient' => $module->coefficient, 'grade' => $result['average'] ?? null, 'grade_source' => $hasGrades ? 'recorded' : 'missing'];
+        }) : collect();
+        return response()->json(['success' => true, 'data' => array_merge($this->orientationAdvisor->analyzeStudent($student), [
+            'current_semester_modules' => $modules, 'current_semester' => $semester, 'academic_year_id' => $yearId,
+            'has_registration' => (bool) $registration,
+        ])]);
     }
-
     /**
      * Simuler un calcul de compensation LMD avec des notes personnalisées.
      */

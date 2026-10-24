@@ -437,14 +437,6 @@ class DeliberationController extends Controller
                 $annualData = $this->deliberationService->calculateAnnualCompensation($filiereId, $academicYearId, $yearLevel);
                 $juries = $this->deliberationService->autoComposeJury($filiereId, $academicYearId, null, 'annuel');
 
-                if ($isSigned && $signatureData) {
-                    foreach ($juries as &$j) {
-                        $j['status'] = 'signed';
-                        $j['signature_data'] = $signatureData;
-                        $j['signature_image'] = $signatureData;
-                    }
-                    unset($j);
-                }
 
                 $viewData = [
                     'filiere' => $filiere,
@@ -511,13 +503,6 @@ class DeliberationController extends Controller
                 }
 
                 $juries = $this->deliberationService->autoComposeJury($filiereId, $academicYearId, $semesterNum, 'semestriel');
-                if ($isSigned && $signatureData) {
-                    foreach ($juries as &$j) {
-                        $j['status'] = 'signed';
-                        $j['signature_data'] = $signatureData;
-                    }
-                    unset($j);
-                }
 
                 $viewData = [
                     'filiere' => $filiere,
@@ -700,6 +685,7 @@ class DeliberationController extends Controller
     public function vote(Request $request, int $id): JsonResponse
     {
         $delib = Deliberation::findOrFail($id);
+        $this->authorize('update', $delib);
         $validated = $request->validate([
             'decision' => 'required|string|max:50',
             'comment' => 'nullable|string|max:2000',
@@ -729,6 +715,7 @@ class DeliberationController extends Controller
 
     public function requestReopen(Request $request, int $id): JsonResponse
     {
+        $this->authorize('update', Deliberation::findOrFail($id));
         $validated = $request->validate(['motif' => 'required|string|min:8']);
         $requestId = app(DeliberationSealService::class)->requestReopen(
             Deliberation::findOrFail($id),

@@ -48,7 +48,9 @@ test.describe('TAFEM — parcours réel sans API simulée', () => {
     await page.getByRole('button', { name: 'Enregistrer le brouillon', exact: true }).click()
     await expect(page.getByRole('button', { name: 'Enregistrer le brouillon', exact: true })).toBeDisabled()
     await page.screenshot({ path: 'test-results/tafem-candidate-desktop.png', fullPage: true })
-    await page.getByRole('button', { name: 'Soumettre le dossier', exact: true }).click()
+    await page.getByRole('button', { name: 'Vérifier avant envoi', exact: true }).click()
+    await page.getByRole('dialog').getByRole('checkbox').check()
+    await page.getByRole('button', { name: 'Confirmer et soumettre', exact: true }).click()
     await expect(page.getByText('Soumis', { exact: true })).toBeVisible()
     }
     expect((await page.request.post('/api/v1/auth/logout')).status()).toBe(200)

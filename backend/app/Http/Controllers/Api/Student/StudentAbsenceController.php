@@ -26,13 +26,15 @@ class StudentAbsenceController extends Controller
             'absenceJustification.media',
         ])
             ->where('student_id', $student->id)
+            ->whereHas('attendanceSession', fn ($q) => $q->where('status', 'completed')->where('academic_year_id', \App\Services\Academic\AcademicContext::yearId()))
             ->latest()
             ->get();
 
         $totalSessions = $attendances->count();
-        $presentCount = $attendances->where('status', 'present')->count();
-        $lateCount = $attendances->where('status', 'late')->count();
-        $absences = $attendances->where('status', 'absent');
+        $presentCount = $attendances->filter(fn ($a) => $a->status->value === 'present')->count();
+        $lateCount = $attendances->filter(fn ($a) => $a->status->value === 'late')->count();
+        $excusedCount = $attendances->filter(fn ($a) => $a->status->value === 'excused')->count();
+        $absences = $attendances->filter(fn ($a) => $a->status->value === 'absent');
         $absentCount = $absences->count();
 
         $justifiedCount = $absences->filter(fn ($a) => (bool) $a->is_justified || ($a->absenceJustification && $a->absenceJustification->status === 'approved'))->count();
@@ -40,7 +42,7 @@ class StudentAbsenceController extends Controller
         $unjustifiedCount = max(0, $absentCount - $justifiedCount - $pendingJustificationCount);
 
         $attendanceRate = $totalSessions > 0
-            ? round((($presentCount + ($lateCount * 0.5)) / $totalSessions) * 100, 1)
+            ? round((($presentCount + $lateCount + $excusedCount + $justifiedCount) / $totalSessions) * 100, 1)
             : 100.0;
 
         // Group by module to calculate warnings (>= 2 absences) and threshold reached (>= 3 absences)

@@ -3,9 +3,9 @@ import api from '@shared/lib/api'
 import { workflowBase } from '../model/workflow'
 export interface ConsistencyAlert { field: string; severity: string; sources: { source: string; value: string | number; document_id: number | null }[] }
 export interface OriginalEvent { id: number; document_type: string; event: string; storage_location?: string; note?: string; created_at: string; agent: string }
-export interface OperationsContext { alerts: ConsistencyAlert[]; originals: OriginalEvent[]; work: { assigned_to: number | null; next_action: string | null; due_on: string | null; version: number } | null; agents: { id: number; name: string }[] }
+export interface OperationsContext { desk_ticket?: { id: number; number: number; desk: string; status: string; service_day: string } | null; alerts: ConsistencyAlert[]; originals: OriginalEvent[]; work: { assigned_to: number | null; next_action: string | null; due_on: string | null; version: number } | null; agents: { id: number; name: string }[] }
 export function useAdmissionOperations(applicationId?: number) {
-  return useQuery({ queryKey: ['admission-operations', applicationId], enabled: !!applicationId,
+  return useQuery({ queryKey: ['admission-operations', applicationId], enabled: !!applicationId, refetchInterval: 20000,
     queryFn: async ({ signal }) => {
       const data = (await api.get<OperationsContext>(`${workflowBase}/operations/context`, { params: { application_id: applicationId }, signal })).data
       if (!Array.isArray(data.alerts) || !Array.isArray(data.originals) || !Array.isArray(data.agents)) throw new Error('Réponse de suivi indisponible. Actualisez le dossier.')

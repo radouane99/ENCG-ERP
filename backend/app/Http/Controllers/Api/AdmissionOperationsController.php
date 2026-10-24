@@ -24,6 +24,8 @@ class AdmissionOperationsController extends Controller
             ->orderByDesc('e.id')->limit(100)->get(['e.id', 'e.document_type', 'e.event', 'e.storage_location', 'e.note', 'e.created_at', 'u.name as agent']);
         if (! $staff) $events->transform(function ($event) { unset($event->storage_location, $event->note); return $event; });
         return response()->json(['alerts' => app(AdmissionConsistencyService::class)->inspect($app), 'originals' => $events,
+            'desk_ticket' => DB::table('admission_desk_tickets')->where('application_id', $app->id)->where('service_day', now(config('admissions.timezone'))->toDateString())
+                ->orderByDesc('id')->first(['id', 'number', 'desk', 'status', 'service_day']),
             'work' => $staff ? DB::table('admission_work_items')->where('application_id', $app->id)->first() : null,
             'agents' => $staff ? User::where('institution_id', AdmissionAccess::institution($request))->where('is_active', true)->whereHas('roles', fn ($q) => $q->whereIn('name', AdmissionAccess::REVIEW_ROLES))->orderBy('name')->get(['id', 'name']) : []]);
     }
