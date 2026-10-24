@@ -6,27 +6,460 @@ import PageHeader from '@shared/components/layout/PageHeader'
 import { Button } from '@shared/components/ui/Button'
 import { Modal } from '@shared/components/ui/Modal'
 import { errorMessage } from '@features/admissions/api/workflow'
-type Row = { id: number; name: string; cne: string; current_level: string; filiere: string; status: string; receipt_ref: string | null; physical_verified_at: string | null; physical_verified_by: string | null }
-type Data = { academic_year: string; total_eligible: number; total_pending: number; total_physical_pending: number; total_verified: number; total_needs_review: number; students: Row[]; physical_requirements: Record<string,string>; meta: { total: number; last_page: number }; by_level: Record<string,{ total: number; confirmed: number; verified: number }> }
-const labels: Record<string,string> = { needs_review: 'Rapprochement nécessaire', academic_pending: 'Décision académique attendue', pending: 'Confirmation étudiante attendue', physical_pending: 'Contrôle physique attendu', verified: 'Dossier finalisé' }
+
+type Row = {
+  id: number
+  name: string
+  cne: string
+  cin?: string
+  origin_level?: string
+  current_level: string
+  level_code?: string
+  filiere: string
+  status: string
+  receipt_ref: string | null
+  physical_verified_at: string | null
+  physical_verified_by: string | null
+}
+
+type Data = {
+  academic_year: string
+  total_eligible: number
+  total_pending: number
+  total_physical_pending: number
+  total_verified: number
+  total_needs_review: number
+  students: Row[]
+  physical_requirements: Record<string, string>
+  meta: { total: number; last_page: number }
+  by_level: Record<string, { total: number; confirmed: number; verified: number }>
+}
+
+const labels: Record<string, string> = {
+  needs_review: 'Rapprochement nécessaire',
+  academic_pending: 'Décision académique attendue',
+  pending: 'Confirmation étudiante attendue',
+  physical_pending: 'Contrôle physique attendu',
+  verified: 'Dossier finalisé',
+}
+
 const field = 'mt-1 w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm'
+
 export default function AdminReinscriptionCockpitPage() {
-  const [level,setLevel]=useState('all'); const [status,setStatus]=useState('all'); const [search,setSearch]=useState(''); const [page,setPage]=useState(1)
-  const [selected,setSelected]=useState<Row|null>(null); const [checks,setChecks]=useState<Record<string,boolean>>({}); const [observation,setObservation]=useState(''); const [reminders,setReminders]=useState(false); const [busy,setBusy]=useState(false); const [error,setError]=useState('')
-  const cache=useQueryClient(); const params={ level,status,search,page }
-  const query=useQuery({ queryKey:['admin-reinscription-stats',params], queryFn:async()=>(await api.get('/admin/reinscriptions/stats',{params})).data.data as Data })
-  const data=query.data
-  async function act(work:()=>Promise<string>) { setBusy(true);setError('');try{ const message=await work();toast.success(message);setSelected(null);setReminders(false);await cache.invalidateQueries({queryKey:['admin-reinscription-stats']}) }catch(e){setError(errorMessage(e));toast.error(errorMessage(e))}finally{setBusy(false)} }
-  async function download(){setBusy(true);try{const r=await api.get('/admin/reinscriptions/export',{params,responseType:'blob'});const url=URL.createObjectURL(r.data);const a=document.createElement('a');a.href=url;a.download='Reinscriptions_Annuelles.csv';a.click();window.setTimeout(()=>URL.revokeObjectURL(url),60000)}catch{toast.error('Export indisponible.')}finally{setBusy(false)}}
-  return <div className="mx-auto max-w-7xl space-y-6 p-4 md:p-6"><PageHeader title="Réinscriptions annuelles · anciens étudiants" subtitle={`Année ${data?.academic_year || 'en cours de chargement'} · Dossiers annuels distincts des nouvelles admissions TAFEM/CNAEM.`} actions={<><Button variant="outline" disabled={busy} onClick={()=>query.refetch()}>Actualiser</Button><Button variant="outline" disabled={busy||!data?.meta.total} onClick={download}>Exporter la liste filtrée</Button><Button disabled={busy||!data?.total_pending} onClick={()=>{setError('');setReminders(true)}}>Relancer les confirmations attendues</Button></>} />
-    <p className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-950 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-100">Le niveau provient de l’inscription annuelle préparée par la scolarité. Un dossier incomplet ou non confirmé n’est jamais assimilé à un redoublement. La confirmation de l’étudiant et le contrôle physique par un agent sont deux étapes distinctes.</p>
-    {query.isPending?<p role="status">Chargement des dossiers annuels…</p>:query.isError?<div role="alert">Impossible de charger les réinscriptions. <Button variant="outline" onClick={()=>query.refetch()}>Réessayer</Button></div>:data&&<>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{[['Décision académique validée',data.total_eligible],['Confirmation étudiante attendue',data.total_pending],['Dossier physique à contrôler',data.total_physical_pending],['Dossiers finalisés',data.total_verified]].map(([label,value])=><div key={String(label)} className="rounded-2xl border border-border bg-card p-5"><p className="text-sm text-muted-foreground">{label}</p><p className="mt-2 text-2xl font-bold">{value}</p></div>)}</div>
-      {data.total_needs_review>0&&<p className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">{data.total_needs_review} dossier(s) attendent une décision académique ou un rapprochement. Ils sont exclus des relances de confirmation.</p>}
-      <section className="overflow-hidden rounded-2xl border border-border bg-card"><div className="grid gap-3 border-b border-border p-4 md:grid-cols-[1fr_180px_270px]"><label className="text-sm">Rechercher<input className={field} value={search} onChange={e=>{setSearch(e.target.value);setPage(1)}} placeholder="Nom, CNE ou CIN"/></label><label className="text-sm">Niveau cible<select className={field} value={level} onChange={e=>{setLevel(e.target.value);setPage(1)}}><option value="all">Tous les niveaux</option>{['1A','2A','3A','4A','5A'].map(l=><option key={l} value={l}>{l} · {data.by_level[l]?.total||0} dossier(s)</option>)}</select></label><label className="text-sm">État du dossier<select className={field} value={status} onChange={e=>{setStatus(e.target.value);setPage(1)}}><option value="all">Tous les états</option>{Object.entries(labels).map(([key,label])=><option key={key} value={key}>{label}</option>)}</select></label></div>
-      <div className="overflow-x-auto"><table className="w-full text-sm"><thead className="bg-muted/40"><tr>{['Étudiant','Niveau & filière','État du dossier','Confirmation','Contrôle guichet'].map(label=><th key={label} className="p-4 text-start">{label}</th>)}</tr></thead><tbody>{data.students.map(s=><tr className="border-t border-border" key={s.id}><td className="p-4"><p className="font-semibold">{s.name}</p><p className="text-xs text-muted-foreground">{s.cne}</p></td><td className="p-4">{s.current_level}<p className="text-xs text-muted-foreground">{s.filiere}</p></td><td className="p-4">{labels[s.status]||s.status}</td><td className="max-w-56 break-all p-4 font-mono text-xs">{s.receipt_ref||'Non confirmée'}</td><td className="p-4">{s.status==='physical_pending'?<Button size="sm" onClick={()=>{setSelected(s);setChecks(Object.fromEntries(Object.keys(data.physical_requirements).map(key=>[key,false])));setObservation('');setError('')}}>Contrôler le dossier</Button>:s.physical_verified_at?<><p>{new Date(s.physical_verified_at).toLocaleString('fr-FR')}</p><p className="text-xs text-muted-foreground">{s.physical_verified_by}</p></>:'—'}</td></tr>)}</tbody></table>{!data.students.length&&<p className="p-8 text-center text-muted-foreground">Aucun dossier ne correspond aux filtres.</p>}</div><div className="flex flex-wrap items-center justify-between gap-3 border-t border-border p-4 text-sm"><p>{data.meta.total} dossier(s) · Page {page}/{data.meta.last_page}</p><div className="flex gap-2"><Button variant="outline" disabled={page===1} onClick={()=>setPage(p=>p-1)}>Précédent</Button><Button variant="outline" disabled={page>=data.meta.last_page} onClick={()=>setPage(p=>p+1)}>Suivant</Button></div></div></section>
-    </>}
-    <Modal open={!!selected} onClose={()=>!busy&&setSelected(null)} title="Vérification physique du dossier annuel" preventBackdropClose={busy} preventEscapeClose={busy}><p className="mb-4 text-sm">{selected?.name} · {selected?.cne} · {selected?.current_level}</p>{error&&<p role="alert" className="mb-4 text-sm text-red-700">{error}</p>}<div className="space-y-3">{Object.entries(data?.physical_requirements||{}).map(([key,label])=><label className="flex items-start gap-3 text-sm" key={key}><input className="mt-1" type="checkbox" checked={!!checks[key]} onChange={e=>setChecks({...checks,[key]:e.target.checked})}/>{label}</label>)}</div><label className="mt-4 block text-sm">Observation de l’agent<textarea className={field} rows={3} maxLength={2000} value={observation} onChange={e=>setObservation(e.target.value)}/></label><p className="mt-3 text-xs text-muted-foreground">Votre identité, l’heure et les contrôles seront enregistrés. Cette action ne modifie pas le niveau académique.</p><div className="mt-5 flex justify-end gap-2"><Button variant="outline" disabled={busy} onClick={()=>setSelected(null)}>Annuler</Button><Button isLoading={busy} disabled={!Object.keys(checks).length||!Object.values(checks).every(Boolean)} onClick={()=>act(async()=>{const r=await api.post(`/admin/reinscriptions/${selected?.id}/physical-review`,{checklist:checks,observation});return r.data.message})}>Valider le contrôle physique</Button></div></Modal>
-    <Modal open={reminders} onClose={()=>!busy&&setReminders(false)} title="Confirmer les relances annuelles" preventBackdropClose={busy}><p className="text-sm">Les filtres actuels seront appliqués. Seuls les étudiants avec une décision académique validée et sans confirmation recevront une notification et, si leur adresse est disponible, un email mis en file. Une seule relance par jour et par étudiant.</p>{error&&<p role="alert" className="mt-3 text-red-700">{error}</p>}<div className="mt-5 flex justify-end gap-2"><Button variant="outline" disabled={busy} onClick={()=>setReminders(false)}>Annuler</Button><Button isLoading={busy} onClick={()=>act(async()=>{const r=await api.post('/admin/reinscriptions/send-reminders',params);return r.data.message})}>Confirmer les relances</Button></div></Modal>
-  </div>
+  const [level, setLevel] = useState('all')
+  const [status, setStatus] = useState('all')
+  const [search, setSearch] = useState('')
+  const [page, setPage] = useState(1)
+  const [selected, setSelected] = useState<Row | null>(null)
+  const [checks, setChecks] = useState<Record<string, boolean>>({})
+  const [observation, setObservation] = useState('')
+  const [reminders, setReminders] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+
+  const cache = useQueryClient()
+  const params = { level, status, search, page }
+
+  const query = useQuery({
+    queryKey: ['admin-reinscription-stats', params],
+    queryFn: async () => (await api.get('/admin/reinscriptions/stats', { params })).data.data as Data,
+  })
+
+  const data = query.data
+
+  async function act(work: () => Promise<string>) {
+    setBusy(true)
+    setError('')
+    try {
+      const message = await work()
+      toast.success(message)
+      setSelected(null)
+      setReminders(false)
+      await cache.invalidateQueries({ queryKey: ['admin-reinscription-stats'] })
+    } catch (e) {
+      setError(errorMessage(e))
+      toast.error(errorMessage(e))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function download() {
+    setBusy(true)
+    try {
+      const r = await api.get('/admin/reinscriptions/export', { params, responseType: 'blob' })
+      const url = URL.createObjectURL(r.data)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'Reinscriptions_Annuelles_ENCG.csv'
+      a.click()
+      window.setTimeout(() => URL.revokeObjectURL(url), 60000)
+    } catch {
+      toast.error('Export indisponible.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="mx-auto max-w-7xl space-y-6 p-4 md:p-6 pb-24 font-sans">
+      <PageHeader
+        title="Réinscriptions annuelles • anciens étudiants"
+        subtitle={`Année ${data?.academic_year || 'en cours'} · Gestion des passages de niveau (1A ➔ 2A, 2A ➔ 3A, etc.)`}
+        actions={
+          <>
+            <Button
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold cursor-pointer"
+              disabled={busy}
+              onClick={() =>
+                act(async () => {
+                  const r = await api.post('/admin/reinscriptions/initialize-campaign')
+                  return r.data.message
+                })
+              }
+            >
+              ⚡ Initialiser la Campagne
+            </Button>
+            <Button variant="outline" disabled={busy} onClick={() => query.refetch()}>
+              Actualiser
+            </Button>
+            <Button variant="outline" disabled={busy || !data?.meta.total} onClick={download}>
+              Exporter la liste filtrée
+            </Button>
+            <Button
+              disabled={busy || !data?.total_pending}
+              onClick={() => {
+                setError('')
+                setReminders(true)
+              }}
+            >
+              Relancer les confirmations attendues
+            </Button>
+          </>
+        }
+      />
+
+      <p className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-xs md:text-sm text-blue-950 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-100">
+        Le niveau provient de la délibération et du parcours préparé par la scolarité. Les étudiants admis direct ou
+        avec module(s) en réserve (dette) sont habilités à confirmer leur réinscription dans leur espace étudiant. La
+        confirmation en ligne et le contrôle physique au guichet sont deux étapes distinctes et traçables.
+      </p>
+
+      {query.isPending ? (
+        <div className="p-12 text-center text-muted-foreground space-y-2">
+          <div className="w-8 h-8 border-3 border-primary/30 border-t-primary rounded-full animate-spin mx-auto" />
+          <p className="text-sm font-semibold">Chargement des dossiers annuels de réinscription…</p>
+        </div>
+      ) : query.isError ? (
+        <div role="alert" className="p-8 text-center space-y-3">
+          <p className="text-sm text-red-600 font-semibold">Impossible de charger les réinscriptions.</p>
+          <Button variant="outline" onClick={() => query.refetch()}>
+            Réessayer
+          </Button>
+        </div>
+      ) : (
+        data && (
+          <>
+            {/* Cartes KPI */}
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {[
+                ['Décision académique validée', data.total_eligible],
+                ['Confirmation étudiante attendue', data.total_pending],
+                ['Dossier physique à contrôler', data.total_physical_pending],
+                ['Dossiers finalisés', data.total_verified],
+              ].map(([label, value]) => (
+                <div key={String(label)} className="rounded-2xl border border-border bg-card p-5 shadow-xs">
+                  <p className="text-xs font-bold text-muted-foreground uppercase">{label}</p>
+                  <p className="mt-2 text-2xl font-black text-slate-900 dark:text-white">{value}</p>
+                </div>
+              ))}
+            </div>
+
+            {data.total_needs_review > 0 && (
+              <p className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-950 font-medium">
+                {data.total_needs_review} dossier(s) attendent une décision académique ou un rapprochement. Ils sont
+                exclus des relances automatiques de confirmation.
+              </p>
+            )}
+
+            {/* Tableau et Filtres */}
+            <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-xs">
+              <div className="grid gap-3 border-b border-border p-4 md:grid-cols-[1fr_200px_270px]">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                  Rechercher
+                  <input
+                    className={field}
+                    value={search}
+                    onChange={(e) => {
+                      setSearch(e.target.value)
+                      setPage(1)
+                    }}
+                    placeholder="Nom, CNE ou CIN"
+                  />
+                </label>
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                  Niveau cible
+                  <select
+                    className={field}
+                    value={level}
+                    onChange={(e) => {
+                      setLevel(e.target.value)
+                      setPage(1)
+                    }}
+                  >
+                    <option value="all">Tous les niveaux</option>
+                    {['1A', '2A', '3A', '4A', '5A'].map((l) => (
+                      <option key={l} value={l}>
+                        {l} · {data.by_level[l]?.total || 0} dossier(s)
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                  État du dossier
+                  <select
+                    className={field}
+                    value={status}
+                    onChange={(e) => {
+                      setStatus(e.target.value)
+                      setPage(1)
+                    }}
+                  >
+                    <option value="all">Tous les états</option>
+                    {Object.entries(labels).map(([key, label]) => (
+                      <option key={key} value={key}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead className="bg-muted/40 font-black uppercase text-[10px] text-slate-500">
+                    <tr>
+                      {['Étudiant', 'Passage & Filière', 'État du dossier', 'Confirmation', 'Contrôle guichet'].map(
+                        (label) => (
+                          <th key={label} className="p-4 text-start">
+                            {label}
+                          </th>
+                        )
+                      )}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {data.students.map((s) => (
+                      <tr key={s.id} className="hover:bg-muted/30 transition-colors">
+                        <td className="p-4 font-semibold text-slate-900 dark:text-white">
+                          <p>{s.name}</p>
+                          <p className="text-[10px] text-muted-foreground font-mono font-normal">{s.cne}</p>
+                        </td>
+                        <td className="p-4">
+                          <span className="font-bold text-indigo-600 dark:text-indigo-400">
+                            {s.origin_level ? `${s.origin_level} ➔ ` : ''}
+                            {s.current_level}
+                          </span>
+                          <p className="text-[10px] text-muted-foreground">{s.filiere}</p>
+                        </td>
+                        <td className="p-4">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                            {labels[s.status] || s.status}
+                          </span>
+                        </td>
+                        <td className="max-w-56 break-all p-4 font-mono text-[11px]">
+                          {s.receipt_ref ? (
+                            <span className="text-emerald-700 dark:text-emerald-300 font-bold">
+                              ✓ {s.receipt_ref}
+                            </span>
+                          ) : (
+                            <span className="text-amber-600 font-medium">En attente</span>
+                          )}
+                        </td>
+                        <td className="p-4">
+                          {s.status === 'physical_pending' ? (
+                            <Button
+                              size="sm"
+                              className="cursor-pointer"
+                              onClick={() => {
+                                setSelected(s)
+                                setChecks(
+                                  Object.fromEntries(Object.keys(data.physical_requirements).map((key) => [key, false]))
+                                )
+                                setObservation('')
+                                setError('')
+                              }}
+                            >
+                              Contrôler le dossier
+                            </Button>
+                          ) : s.physical_verified_at ? (
+                            <div className="space-y-0.5">
+                              <p className="text-emerald-600 font-bold">✓ Contrôle validé</p>
+                              <p className="text-[10px] text-muted-foreground">
+                                {new Date(s.physical_verified_at).toLocaleDateString('fr-FR')} · {s.physical_verified_by}
+                              </p>
+                            </div>
+                          ) : (
+                            <span className="text-slate-400">—</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+
+                {!data.students.length && (
+                  <div className="p-12 text-center space-y-4">
+                    <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 dark:bg-blue-950 dark:text-blue-300 flex items-center justify-center mx-auto text-xl font-black">
+                      🎓
+                    </div>
+                    <div className="max-w-md mx-auto space-y-1">
+                      <h3 className="font-bold text-sm text-slate-800 dark:text-slate-200">
+                        Aucun dossier ne correspond aux filtres ou campagne non initialisée
+                      </h3>
+                      <p className="text-xs text-muted-foreground">
+                        Cliquez sur le bouton ci-dessous pour lancer la détection automatique de passage (1A➔2A, 2A➔3A,
+                        etc.) pour l’année universitaire {data.academic_year}.
+                      </p>
+                    </div>
+                    <Button
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold cursor-pointer"
+                      disabled={busy}
+                      onClick={() =>
+                        act(async () => {
+                          const r = await api.post('/admin/reinscriptions/initialize-campaign')
+                          return r.data.message
+                        })
+                      }
+                    >
+                      ⚡ Lancer la synchronisation des passages
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border p-4 text-xs">
+                <p className="text-muted-foreground">
+                  {data.meta.total} dossier(s) annuel(s) · Page {page} / {data.meta.last_page}
+                </p>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage((p) => p - 1)}>
+                    Précédent
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={page >= data.meta.last_page}
+                    onClick={() => setPage((p) => p + 1)}
+                  >
+                    Suivant
+                  </Button>
+                </div>
+              </div>
+            </section>
+          </>
+        )
+      )}
+
+      {/* Modal Contrôle Physique */}
+      <Modal
+        open={!!selected}
+        onClose={() => !busy && setSelected(null)}
+        title="Vérification physique du dossier annuel"
+        preventBackdropClose={busy}
+        preventEscapeClose={busy}
+      >
+        <p className="mb-4 text-sm font-semibold">
+          {selected?.name} · {selected?.cne} · {selected?.current_level}
+        </p>
+        {error && (
+          <p role="alert" className="mb-4 text-sm text-red-700">
+            {error}
+          </p>
+        )}
+        <div className="space-y-3">
+          {Object.entries(data?.physical_requirements || {}).map(([key, label]) => (
+            <label className="flex items-start gap-3 text-xs md:text-sm font-medium cursor-pointer" key={key}>
+              <input
+                className="mt-0.5 rounded border-slate-300"
+                type="checkbox"
+                checked={!!checks[key]}
+                onChange={(e) => setChecks({ ...checks, [key]: e.target.checked })}
+              />
+              {label}
+            </label>
+          ))}
+        </div>
+        <label className="mt-4 block text-xs font-bold text-slate-700 dark:text-slate-300">
+          Observation de l’agent
+          <textarea
+            className={field}
+            rows={3}
+            maxLength={2000}
+            value={observation}
+            onChange={(e) => setObservation(e.target.value)}
+            placeholder="Remarques éventuelles sur les pièces physiques (quitus, assurance...)"
+          />
+        </label>
+        <p className="mt-3 text-[11px] text-muted-foreground">
+          Votre identité administrative, l’horodatage et la liste de contrôle seront archivés.
+        </p>
+        <div className="mt-5 flex justify-end gap-2">
+          <Button variant="outline" disabled={busy} onClick={() => setSelected(null)}>
+            Annuler
+          </Button>
+          <Button
+            isLoading={busy}
+            disabled={!Object.keys(checks).length || !Object.values(checks).every(Boolean)}
+            onClick={() =>
+              act(async () => {
+                const r = await api.post(`/admin/reinscriptions/${selected?.id}/physical-review`, {
+                  checklist: checks,
+                  observation,
+                })
+                return r.data.message
+              })
+            }
+          >
+            Valider le contrôle physique
+          </Button>
+        </div>
+      </Modal>
+
+      {/* Modal Relances */}
+      <Modal
+        open={reminders}
+        onClose={() => !busy && setReminders(false)}
+        title="Confirmer les relances annuelles"
+        preventBackdropClose={busy}
+      >
+        <p className="text-xs md:text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+          Les filtres actuels seront appliqués. Seuls les étudiants avec une décision académique validée et sans
+          confirmation recevront une notification portail et un email d’invitation. Une seule relance par jour et par
+          étudiant est autorisée pour respecter les quotas de communication.
+        </p>
+        {error && (
+          <p role="alert" className="mt-3 text-sm text-red-700">
+            {error}
+          </p>
+        )}
+        <div className="mt-5 flex justify-end gap-2">
+          <Button variant="outline" disabled={busy} onClick={() => setReminders(false)}>
+            Annuler
+          </Button>
+          <Button
+            isLoading={busy}
+            onClick={() =>
+              act(async () => {
+                const r = await api.post('/admin/reinscriptions/send-reminders', params)
+                return r.data.message
+              })
+            }
+          >
+            Confirmer les relances
+          </Button>
+        </div>
+      </Modal>
+    </div>
+  )
 }

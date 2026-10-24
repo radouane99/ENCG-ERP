@@ -267,6 +267,7 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:admin|super-admi
 
     // Campagne de Réinscription des Étudiants Admis
     Route::get('/admin/reinscriptions/stats', [ReinscriptionController::class, 'getAdminStats']);
+    Route::post('/admin/reinscriptions/initialize-campaign', [ReinscriptionController::class, 'initializeCampaign']);
     Route::get('/admin/reinscriptions/export', [ReinscriptionController::class, 'exportRoster']);
     Route::post('/admin/reinscriptions/{student}/physical-review', [ReinscriptionController::class, 'verifyPhysical']);
     Route::post('/admin/reinscriptions/send-reminders', [ReinscriptionController::class, 'sendReminders']);

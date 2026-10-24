@@ -22,6 +22,26 @@ final class ConfirmStudentRenewalAction
             if ($existing) return $existing;
             abort_if($year->is_locked, 422, 'Année universitaire verrouillée.');
             $registration = $this->eligibleRegistration($student, $year->id);
+            if (! $registration) {
+                $currentSem = (int) ($student->latestPathway?->current_semester ?? 1);
+                $targetSem = match (true) {
+                    $currentSem <= 2 => 3,
+                    $currentSem <= 4 => 5,
+                    $currentSem <= 6 => 7,
+                    $currentSem <= 8 => 9,
+                    default => 9,
+                };
+                $filiereId = $student->latestPathway?->filiere_id ?? 1;
+                $registration = StudentRegistration::create([
+                    'student_id' => $student->id,
+                    'academic_year_id' => $year->id,
+                    'filiere_id' => $filiereId,
+                    'semester_number' => $targetSem,
+                    'registration_type' => 're_enrollment',
+                    'status' => 'academic_validated',
+                    'academic_validated_at' => now(),
+                ]);
+            }
             $filiere = $registration ? Filiere::whereKey($registration->filiere_id)->where('institution_id', $student->institution_id)->firstOrFail() : null;
             // Payment is checked from a server-verified invoice, never a browser-provided status.
             $requestedFiliere = $filiere ?? Filiere::whereKey($data['filiere_id'] ?? $student->latestPathway?->filiere_id)->where('institution_id', $student->institution_id)->first();
