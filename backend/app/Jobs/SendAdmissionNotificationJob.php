@@ -23,7 +23,7 @@ class SendAdmissionNotificationJob implements ShouldQueue, ShouldBeEncrypted
     public function handle(): void
     {
         $n = DB::table('admission_notifications')->find($this->notificationId);
-        if (! $n || $n->status === 'sent') return;
+        if (! $n || in_array($n->status, ['sent', 'retried', 'failed'], true)) return;
         DB::table('admission_notifications')->where('id', $n->id)->increment('attempts');
         $app = Application::findOrFail($n->application_id);
         $base = rtrim(config('app.frontend_url', config('app.url')), '/');
@@ -33,6 +33,6 @@ class SendAdmissionNotificationJob implements ShouldQueue, ShouldBeEncrypted
     }
     public function failed(?\Throwable $e): void
     {
-        DB::table('admission_notifications')->where('id', $this->notificationId)->update(['status' => 'failed', 'updated_at' => now()]);
+        DB::table('admission_notifications')->where('id', $this->notificationId)->whereNotIn('status', ['sent', 'retried'])->update(['status' => 'failed', 'updated_at' => now()]);
     }
 }

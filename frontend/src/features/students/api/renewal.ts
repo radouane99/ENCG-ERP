@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import api from '@shared/lib/api'
+import type { RenewalCalendar } from './renewalCampaign'
 
 export interface FailedModule {
   id: number;
@@ -12,6 +13,7 @@ export interface FailedModule {
 }
 
 export interface RenewalStatus {
+  campaign?: RenewalCalendar;
   student_name: string;
   cne: string;
   cin: string;
@@ -28,6 +30,7 @@ export interface RenewalStatus {
   target_year_label?: string;
   current_filiere: string;
   is_admis: boolean;
+  is_graduated?: boolean;
   is_confirmed: boolean;
   can_confirm: boolean;
   receipt_reference: string | null;

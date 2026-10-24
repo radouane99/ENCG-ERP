@@ -256,6 +256,11 @@ class Student extends Model
         return $this->hasOne(StudentPathway::class)->latestOfMany();
     }
 
+    public function graduations(): HasMany
+    {
+        return $this->hasMany(StudentGraduation::class);
+    }
+
     public function registrations(): HasMany
     {
         return $this->hasMany(StudentRegistration::class);

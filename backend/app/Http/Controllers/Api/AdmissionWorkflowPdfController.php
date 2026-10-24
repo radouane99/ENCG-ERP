@@ -14,8 +14,7 @@ class AdmissionWorkflowPdfController extends Controller
     {
         $app = AdmissionAccess::dossier($request);
         abort_unless($app->submitted_at && ! in_array($app->dossier_status, ['draft', 'rejected']), 422, 'Soumettez votre dossier avant de télécharger son récépissé.');
-        return Pdf::loadView('pdf.admission-workflow', ['title' => 'Récépissé de dépôt de dossier', 'campaign' => $app->campaign,
-            'applications' => collect([$app]), 'receipt' => true])->setPaper('a4')->stream('Dossier-'.$app->reference_number.'.pdf')->header('Cache-Control', 'private, no-store');
+        return app(\App\Services\Admissions\AdmissionPreregistrationService::class)->render($app);
     }
 
     public function list(Request $request)

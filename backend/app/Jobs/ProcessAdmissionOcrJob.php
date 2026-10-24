@@ -28,7 +28,8 @@ class ProcessAdmissionOcrJob implements ShouldQueue
             return;
         }
         $start = microtime(true);
-        DB::table('admission_ocr_runs')->where('id', $this->runId)->update(['status' => 'processing', 'started_at' => now()]);
+        $claimed = DB::table('admission_ocr_runs')->where('id', $this->runId)->where('status', 'queued')->update(['status' => 'processing', 'started_at' => now(), 'updated_at' => now()]);
+        if ($claimed !== 1) return;
         try {
             $result = $ocr->extract($doc, $run->mode);
             DB::table('admission_ocr_runs')->where('id', $this->runId)->where('status', 'processing')->update(['status' => $result['status'],
@@ -42,7 +43,7 @@ class ProcessAdmissionOcrJob implements ShouldQueue
     }
     public function failed(?\Throwable $e): void
     {
-        DB::table('admission_ocr_runs')->where('id', $this->runId)->whereNotIn('status', ['cancelled', 'needs_review', 'succeeded'])->update(['status' => 'failed',
+        DB::table('admission_ocr_runs')->where('id', $this->runId)->whereNotIn('status', ['cancelled', 'retried', 'needs_review', 'succeeded'])->update(['status' => 'failed',
             'error_code' => 'extraction_failed', 'finished_at' => now(), 'updated_at' => now()]);
     }
 }

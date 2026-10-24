@@ -6,6 +6,8 @@ import PageHeader from '@shared/components/layout/PageHeader'
 import { Button } from '@shared/components/ui/Button'
 import { Modal } from '@shared/components/ui/Modal'
 import { errorMessage } from '@features/admissions/api/workflow'
+import RenewalCampaignPanel from '../components/RenewalCampaignPanel'
+import { useRenewalCampaign } from '@features/students/api/renewalCampaign'
 
 type Row = {
   id: number
@@ -66,6 +68,7 @@ export default function AdminReinscriptionCockpitPage() {
   })
 
   const data = query.data
+  const calendar = useRenewalCampaign()
 
   async function act(work: () => Promise<string>) {
     setBusy(true)
@@ -105,29 +108,17 @@ export default function AdminReinscriptionCockpitPage() {
     <div className="mx-auto max-w-7xl space-y-6 p-4 md:p-6 pb-24 font-sans">
       <PageHeader
         title="Réinscriptions annuelles • anciens étudiants"
-        subtitle={`Année ${data?.academic_year || 'en cours'} · Gestion des passages de niveau (1A ➔ 2A, 2A ➔ 3A, etc.)`}
+        subtitle={`Année ${data?.academic_year || 'en cours'} · Décision académique, confirmation étudiante et contrôle physique`}
         actions={
           <>
-            <Button
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold cursor-pointer"
-              disabled={busy}
-              onClick={() =>
-                act(async () => {
-                  const r = await api.post('/admin/reinscriptions/initialize-campaign')
-                  return r.data.message
-                })
-              }
-            >
-              ⚡ Initialiser la Campagne
-            </Button>
-            <Button variant="outline" disabled={busy} onClick={() => query.refetch()}>
+            <Button variant="outline" disabled={busy} onClick={() => { void query.refetch(); void calendar.refetch() }}>
               Actualiser
             </Button>
             <Button variant="outline" disabled={busy || !data?.meta.total} onClick={download}>
               Exporter la liste filtrée
             </Button>
             <Button
-              disabled={busy || !data?.total_pending}
+              disabled={busy || !data?.total_pending || !calendar.data?.data.is_open}
               onClick={() => {
                 setError('')
                 setReminders(true)
@@ -139,6 +130,7 @@ export default function AdminReinscriptionCockpitPage() {
         }
       />
 
+      <RenewalCampaignPanel />
       <p className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-xs md:text-sm text-blue-950 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-100">
         Le niveau provient de la délibération et du parcours préparé par la scolarité. Les étudiants admis direct ou
         avec module(s) en réserve (dette) sont habilités à confirmer leur réinscription dans leur espace étudiant. La
@@ -315,25 +307,13 @@ export default function AdminReinscriptionCockpitPage() {
                     </div>
                     <div className="max-w-md mx-auto space-y-1">
                       <h3 className="font-bold text-sm text-slate-800 dark:text-slate-200">
-                        Aucun dossier ne correspond aux filtres ou campagne non initialisée
+                        Aucun dossier ne correspond aux filtres
                       </h3>
                       <p className="text-xs text-muted-foreground">
-                        Cliquez sur le bouton ci-dessous pour lancer la détection automatique de passage (1A➔2A, 2A➔3A,
-                        etc.) pour l’année universitaire {data.academic_year}.
+                        Vérifiez les filtres et les décisions académiques pour {data.academic_year}.
+                        Les inscriptions annuelles sont préparées après validation pédagogique. Les lauréats sont suivis dans leur registre dédié.
                       </p>
                     </div>
-                    <Button
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold cursor-pointer"
-                      disabled={busy}
-                      onClick={() =>
-                        act(async () => {
-                          const r = await api.post('/admin/reinscriptions/initialize-campaign')
-                          return r.data.message
-                        })
-                      }
-                    >
-                      ⚡ Lancer la synchronisation des passages
-                    </Button>
                   </div>
                 )}
               </div>

@@ -2,10 +2,15 @@
 import { Briefcase,Building2,TrendingUp,Search,Calendar,GraduationCap } from 'lucide-react';
 import { PieChart,Pie,Cell,BarChart,Bar,XAxis,YAxis,CartesianGrid,Tooltip as RechartsTooltip,ResponsiveContainer,Legend } from 'recharts';
 import api from '@/shared/lib/api';
+import GraduateRegister from '../components/GraduateRegister';
+import { useAuthStore } from '@stores/authStore';
+import { ADMIN_ROLES, userCanAccessRoles } from '@shared/lib/routeAccess';
 
 export default function AlumniDashboard() {
+  const user = useAuthStore(state => state.user);
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -13,6 +18,7 @@ export default function AlumniDashboard() {
         const res = await api.get('/alumni/dashboard-stats');
         setStats(res.data.data);
       } catch (error) {
+        setLoadError(true);
         console.error(error);
       } finally {
         setLoading(false);
@@ -32,7 +38,7 @@ export default function AlumniDashboard() {
       <div>
         <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
           <Briefcase className="w-6 h-6 text-primary" />
-          Observatoire de l'Insertion Professionnelle
+          Lauréats & insertion professionnelle
         </h1>
         <p className="text-muted-foreground mt-1">
           Suivi des lauréats (Alumni), statistiques d'employabilité et cartographie des métiers.
@@ -40,6 +46,8 @@ export default function AlumniDashboard() {
       </div>
 
       {/* KPI Cards */}
+      {loadError && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">Les statistiques professionnelles sont indisponibles. Actualisez la page pour réessayer.</p>}
+      {userCanAccessRoles(user?.roles, [...ADMIN_ROLES, 'scolarite', 'pedagogy_officer']) && <GraduateRegister />}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
           <div className="flex justify-between items-start mb-2">
@@ -48,8 +56,8 @@ export default function AlumniDashboard() {
               <TrendingUp className="w-4 h-4 text-emerald-600" />
             </div>
           </div>
-          <div className="text-2xl font-bold text-foreground">{stats?.employment_rate}%</div>
-          <div className="text-xs text-muted-foreground mt-1">+2% par rapport Ã  2025</div>
+          <div className="text-2xl font-bold text-foreground">{stats?.total_responses ? `${stats.employment_rate}%` : '—'}</div>
+          <div className="text-xs text-muted-foreground mt-1">Calculé sur les réponses enregistrées</div>
         </div>
 
         <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
@@ -59,7 +67,7 @@ export default function AlumniDashboard() {
               <Building2 className="w-4 h-4 text-primary" />
             </div>
           </div>
-          <div className="text-2xl font-bold text-foreground">{stats?.avg_starting_salary} DH</div>
+          <div className="text-2xl font-bold text-foreground">{stats?.avg_starting_salary > 0 ? `${stats.avg_starting_salary} DH` : '—'}</div>
           <div className="text-xs text-muted-foreground mt-1">Net Mensuel</div>
         </div>
 
@@ -70,7 +78,7 @@ export default function AlumniDashboard() {
               <Calendar className="w-4 h-4 text-amber-600" />
             </div>
           </div>
-          <div className="text-2xl font-bold text-foreground">{stats?.avg_months_to_hire} Mois</div>
+          <div className="text-2xl font-bold text-foreground">{stats?.total_responses ? `${stats.avg_months_to_hire} Mois` : '—'}</div>
           <div className="text-xs text-muted-foreground mt-1">En moyenne après diplomation</div>
         </div>
 

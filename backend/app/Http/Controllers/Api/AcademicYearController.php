@@ -10,7 +10,6 @@ use App\Models\AcademicYear;
 use App\Models\Student;
 use App\Models\StudentPathway;
 use App\Models\StudentRegistration;
-use App\Services\Academic\AcademicYearRolloverService;
 use App\Services\Academic\SmartAcademicProgressionService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
@@ -114,15 +113,17 @@ class AcademicYearController extends Controller
     /**
      * Basculer vers une nouvelle année académique.
      */
-    public function rollover(RolloverAcademicYearRequest $request, int $id, AcademicYearRolloverService $rolloverService): JsonResponse
+    public function rollover(RolloverAcademicYearRequest $request, int $id, SmartAcademicProgressionService $rolloverService): JsonResponse
     {
         $validated = $request->validated();
 
-        $result = $rolloverService->executeRollover(
+        AcademicYear::whereKey($id)->where('institution_id', $request->user()->institution_id)->firstOrFail();
+        $result = $rolloverService->executeSmartRollover(
             $id,
             $validated['new_label'],
             $validated['start_date'],
-            $validated['end_date']
+            $validated['end_date'],
+            $request->user()->name
         );
 
         return response()->json($result, $result['success'] ? 200 : 500);
@@ -133,16 +134,19 @@ class AcademicYearController extends Controller
      */
     public function getArchivingDashboard(Request $request): JsonResponse
     {
-        $years = AcademicYear::orderByDesc('start_year')->get();
+        $years = AcademicYear::where('institution_id', $request->user()->institution_id)->orderByDesc('start_year')->get();
 
         $archives = $years->map(function ($y, $index) {
-            $pathwayCount = StudentPathway::where('academic_year_id', $y->id)->count();
-            $regCount = StudentRegistration::where('academic_year_id', $y->id)->count();
-            $studentCount = max($pathwayCount, $regCount);
-
-            $admittedCount = (int) round($studentCount * 0.89);
-            $repeatedCount = $studentCount - $admittedCount;
-            $graduatedCount = (int) round($admittedCount * 0.12);
+            $studentCount = StudentPathway::where('academic_year_id', $y->id)->pluck('student_id')
+                ->merge(StudentRegistration::where('academic_year_id', $y->id)->pluck('student_id'))->unique()->count();
+            $decisions = \App\Models\DeliberationDecision::whereHas('deliberation', fn ($q) => $q->where('academic_year_id', $y->id)
+                ->where('institution_id', $y->institution_id)->whereIn('type', ['annual', 'annuel'])->where('is_sealed', true))
+                ->orderByDesc('id')->get()->unique('student_id');
+            $admittedCount = $decisions->whereIn('decision', ['admitted', 'V', 'V.Comp', 'DIPLOME', 'graduated'])->count();
+            $repeatedCount = $decisions->whereIn('decision', ['REDOUBLANT', 'REPEAT_YEAR', 'repeat_year', 'repeated'])->count();
+            $graduatedCount = \App\Models\StudentGraduation::where('institution_id', $y->institution_id)->where('academic_year_id', $y->id)->distinct()->count('student_id');
+            $seals = \App\Models\Deliberation::where('academic_year_id', $y->id)->where('institution_id', $y->institution_id)
+                ->where('is_sealed', true)->whereNotNull('seal_hash')->pluck('seal_hash');
 
             $label = $y->label ?? $y->name ?? '2024-2025';
 
@@ -155,11 +159,11 @@ class AcademicYearController extends Controller
                 'admittedCount' => $admittedCount,
                 'repeatedCount' => max(0, $repeatedCount),
                 'graduatedCount' => $graduatedCount,
-                'pvChecksum' => 'sha256:'.substr(hash('sha256', 'ENCG_PV_'.$y->id.'_'.$label), 0, 32),
-                'blockchainHash' => '0x'.substr(hash('sha256', 'BLOCKCHAIN_ENCG_FES_'.$y->id), 0, 40),
-                'archivedDate' => $y->updated_at?->format('d/m/Y H:i:s') ?? now()->subMonths($index * 12)->format('d/m/Y H:i:s'),
-                'archivedBy' => 'Direction Académique ENCG Fès',
-                'cndpStatus' => 'CONFORME_LOI_09_08',
+                'pvChecksum' => $seals->isEmpty() ? 'Aucun PV scellé enregistré' : $seals->implode(' · '),
+                'blockchainHash' => '',
+                'archivedDate' => $y->is_locked ? ($y->updated_at?->format('d/m/Y H:i:s') ?? 'Non renseignée') : 'Année ouverte',
+                'archivedBy' => 'Agent d’archivage non renseigné',
+                'cndpStatus' => 'A_VERIFIER',
             ];
         });
 
@@ -185,7 +189,7 @@ class AcademicYearController extends Controller
     }
 
     /**
-     * Vérifier le mot de passe admin ou le code de sécurité maître avant une opération sensible.
+     * Vérifier le mot de passe du responsable avant une opération sensible.
      */
     public function verifyArchiveSecurityCode(Request $request): JsonResponse
     {
@@ -197,16 +201,7 @@ class AcademicYearController extends Controller
         $user = $request->user();
 
         $isPasswordValid = $user && Hash::check($inputCode, $user->password);
-        $masterCodes = [
-            'ENCG-ARCHIVE-SECURE',
-            'ENCG@ADMIN2026',
-            'admin123',
-            'password',
-            env('ARCHIVE_MASTER_PIN', 'ENCG2026'),
-        ];
-        $isMasterCodeValid = in_array($inputCode, $masterCodes, true);
-
-        if (! $isPasswordValid && ! $isMasterCodeValid) {
+        if (! $isPasswordValid) {
             return response()->json([
                 'success' => false,
                 'message' => 'Code d’autorisation ou mot de passe incorrect. Opération refusée.',
@@ -227,8 +222,8 @@ class AcademicYearController extends Controller
         $validated = $request->validate([
             'current_year_id' => 'required|integer',
             'new_label' => 'required|string',
-            'start_date' => 'nullable|date',
-            'end_date' => 'nullable|date',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after:start_date',
             'security_code' => 'required|string',
         ]);
 
@@ -236,16 +231,7 @@ class AcademicYearController extends Controller
         $user = $request->user();
 
         $isPasswordValid = $user && Hash::check($inputCode, $user->password);
-        $masterCodes = [
-            'ENCG-ARCHIVE-SECURE',
-            'ENCG@ADMIN2026',
-            'admin123',
-            'password',
-            env('ARCHIVE_MASTER_PIN', 'ENCG2026'),
-        ];
-        $isMasterCodeValid = in_array($inputCode, $masterCodes, true);
-
-        if (! $isPasswordValid && ! $isMasterCodeValid) {
+        if (! $isPasswordValid) {
             return response()->json([
                 'success' => false,
                 'message' => 'Code d’autorisation ou mot de passe administrateur incorrect. La bascule a été bloquée pour des raisons de sécurité.',
@@ -255,12 +241,13 @@ class AcademicYearController extends Controller
         $authorizedBy = $user
             ? "{$user->first_name} {$user->last_name} ({$user->email})"
             : 'Direction Académique';
+        AcademicYear::whereKey($validated['current_year_id'])->where('institution_id', $user->institution_id)->firstOrFail();
 
         $result = $progressionService->executeSmartRollover(
             (int) $validated['current_year_id'],
             $validated['new_label'],
-            $validated['start_date'] ?? '2026-09-01',
-            $validated['end_date'] ?? '2027-06-30',
+            $validated['start_date'],
+            $validated['end_date'],
             $authorizedBy
         );
 

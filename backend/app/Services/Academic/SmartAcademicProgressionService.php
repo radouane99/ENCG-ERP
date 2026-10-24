@@ -89,6 +89,7 @@ class SmartAcademicProgressionService
             }
 
             $currentSem = (int) ($pathway->current_semester ?? 1);
+            $finalSemester = \App\Domain\Deliberation\ProgramCompletionRules::finalSemester($pathway->filiere?->type, $pathway->filiere?->duration_years);
             $filiereName = $pathway->filiere?->name ?? 'Tronc Commun';
             $filiereCode = $pathway->filiere?->code ?? 'TC';
 
@@ -169,25 +170,38 @@ class SmartAcademicProgressionService
             // Décision intelligente selon le système LMD marocain ENCG
             $decisionCode = 'ADMIS_PUR';
             $decisionLabel = 'Admis (Validation Complète)';
-            $targetSemester = $currentSem + 2;
+            $targetSemester = $semB + 1;
             $targetLevel = '';
+            $graduationDecision = null;
 
-            if ($incomplete) {
+            if ($incomplete || $finalSemester === null || $currentSem > $finalSemester) {
                 $decisionCode = 'A_VERIFIER';
                 $decisionLabel = 'Bilan incomplet — validation pédagogique nécessaire';
                 $targetSemester = $currentSem;
                 $targetLevel = $levelLabel;
-            } elseif ($currentSem >= 9) {
-                // 5ème année : diplomation
-                if ($failedCount === 0 && $annualAverage >= 10.0) {
+            } elseif ($semB === $finalSemester) {
+                // A successful calculation is a proposal; graduation needs a sealed jury decision.
+                $graduationDecision = \App\Models\DeliberationDecision::where('student_id', $student->id)
+                    ->whereIn('decision', ['DIPLOME', 'graduated'])
+                    ->whereHas('deliberation', fn ($q) => $q->where('academic_year_id', $year->id)
+                        ->where('filiere_id', $pathway->filiere_id)->where('institution_id', $student->institution_id)
+                        ->whereIn('type', ['annual', 'annuel'])->where('is_sealed', true))
+                    ->latest('id')->first();
+                if ($failedCount === 0 && $annualAverage >= \App\Domain\Deliberation\LmdRules::VALIDATION_THRESHOLD && $graduationDecision) {
                     $decisionCode = 'DIPLOME';
-                    $decisionLabel = 'Diplômé ENCG (Lauréat)';
-                    $targetLevel = 'Lauréat Diplômé d’État';
+                    $decisionLabel = 'Diplômé (décision du jury scellée)';
+                    $targetLevel = 'Lauréat · '.$filiereName;
                     $statGraduated++;
+                } elseif ($failedCount === 0 && $annualAverage >= \App\Domain\Deliberation\LmdRules::VALIDATION_THRESHOLD) {
+                    $decisionCode = 'A_VERIFIER';
+                    $decisionLabel = 'Fin de cursus : décision de diplomation du jury à sceller';
+                    $targetSemester = $currentSem;
+                    $targetLevel = $levelLabel;
                 } else {
                     $decisionCode = 'REDOUBLANT';
-                    $decisionLabel = 'Ajourné (Maintien S9/S10)';
-                    $targetLevel = 'Maintien 5ème Année (S9/S10)';
+                    $decisionLabel = 'Ajourné (maintien du niveau terminal)';
+                    $targetSemester = $currentSem;
+                    $targetLevel = 'Maintien '.$levelLabel;
                     $statRepeated++;
                 }
             } elseif ($failedCount === 0 && $annualAverage >= 10.0) {
@@ -238,6 +252,7 @@ class SmartAcademicProgressionService
                 'has_debt' => count($debtModules) > 0,
                 'decision_code' => $decisionCode,
                 'decision_label' => $decisionLabel,
+                'graduation_decision_id' => $graduationDecision?->id,
             ];
         }
 
@@ -355,7 +370,8 @@ class SmartAcademicProgressionService
                 }
 
                 if ($decision === 'DIPLOME') {
-                    $student->update(['status' => 'graduated']);
+                    abort_unless(auth()->user(), 403, 'Un responsable authentifié doit confirmer la diplomation.');
+                    app(\App\Actions\Academic\FinalizeGraduationAction::class)->execute(auth()->user(), $studentItem['graduation_decision_id']);
                     $graduatedCount++;
 
                     continue;

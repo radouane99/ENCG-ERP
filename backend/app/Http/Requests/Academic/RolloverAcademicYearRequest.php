@@ -12,11 +12,7 @@ class RolloverAcademicYearRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        // Use generic permission, or update to 'academic.rollover' if created
-        return true;
-        // We will keep the default authorization open or let middleware handle it
-        // based on the previous code `abort_unless($request->user()->can('academic.rollover'), 403);`
-        // was commented out. We can enable it here.
+        return $this->user()?->hasAnyRole(['super-admin', 'admin', 'institution-admin', 'director']) ?? false;
     }
 
     /**

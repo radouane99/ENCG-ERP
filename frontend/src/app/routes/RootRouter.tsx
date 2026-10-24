@@ -206,7 +206,7 @@ function RequireAuth({ children }: { children: ReactNode }) {
   const location = useLocation()
 
   if (isLoading) return <LoadingScreen />
-  if (!isAuthenticated) return <Navigate to="/login" replace />
+  if (!isAuthenticated) return <Navigate to="/login" state={{ returnTo: location.pathname + location.search }} replace />
   if (user?.must_change_password && location.pathname !== '/profile') {
     return <Navigate to="/profile?change-password=1" replace />
   }
@@ -222,9 +222,10 @@ function RequireGuest({ children }: { children: ReactNode }) {
 
 function ProtectedRoute({ roles, children }: { roles: string[]; children?: ReactNode }) {
   const { isAuthenticated, user, isLoading } = useAuthStore()
+  const location = useLocation()
 
   if (isLoading) return <LoadingScreen />
-  if (!isAuthenticated) return <Navigate to="/login" replace />
+  if (!isAuthenticated) return <Navigate to="/login" state={{ returnTo: location.pathname + location.search }} replace />
 
   if (!userCanAccessRoles(user?.roles, roles)) return <Navigate to="/dashboard" replace />
 
@@ -267,6 +268,8 @@ export default function RootRouter() {
           <Route path="/dashboard" element={<DashboardRouter />} />
           <Route element={<ProtectedRoute roles={[...ADMIN_ROLES, 'scolarite']} />}>
             <Route path="/admin/tafem" element={<AdminTafem />} />
+            <Route path="/academic/enrollments" element={<EnrollmentManager />} />
+            <Route path="/admin/reinscriptions" element={<AdminReinscriptionCockpitPage />} />
           </Route>
           <Route path="/admissions/mon-dossier" element={<InscriptionPage editMode />} />
 
@@ -391,7 +394,7 @@ export default function RootRouter() {
 
           {/* Core Academic Administration */}
           <Route element={<ProtectedRoute roles={ACADEMIC_ROLES} />}>
-            <Route path="/academic/enrollments" element={<EnrollmentManager />} />
+
             <Route path="/academic/holidays" element={<HolidayManager />} />
             <Route path="/academic/credits-derogations" element={<CreditsAndDerogations />} />
             <Route path="/academic/internships" element={<AdminInternshipsPage />} />
@@ -525,7 +528,7 @@ export default function RootRouter() {
             <Route path="/admin/push-notifications" element={<AdminPwaPushHubPage />} />
             <Route path="/admin/finance" element={<AdminFinanceDashboard />} />
             <Route path="/admin/finance-dashboard" element={<AdminFinanceDashboard />} />
-            <Route path="/admin/reinscriptions" element={<AdminReinscriptionCockpitPage />} />
+
             <Route path="/admin/blockchain-diplomas" element={<AdminBlockchainDiplomas />} />
             <Route path="/admin/predictive-analytics" element={<AdminPredictiveAnalytics />} />
             <Route path="/admin/smart-campus" element={<AdminSmartCampus />} />

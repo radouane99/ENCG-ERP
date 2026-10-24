@@ -182,6 +182,9 @@ Route::middleware(['auth:sanctum', 'institution.context'])->group(function () {
 
     // Alumni / Insertion Pro
     Route::prefix('alumni')->group(function () {
+        Route::get('/graduates', [AlumniController::class, 'graduates']);
+        Route::post('/graduates/finalize', [AlumniController::class, 'finalizeGraduation']);
+        Route::get('/graduation-candidates', [AlumniController::class, 'graduationCandidates']);
         Route::get('/dashboard-stats', [AlumniController::class, 'getDashboardStats']);
     });
 
@@ -196,4 +199,13 @@ Route::middleware(['auth:sanctum', 'institution.context'])->group(function () {
     Route::post('/internships/{id}/messages', [\App\Http\Controllers\Api\InternshipConversationController::class, 'store']);
     Route::get('/internship-documents/{id}/download', [\App\Http\Controllers\Api\InternshipDocumentController::class, 'download']);
     Route::post('/internship-documents/{id}/review', [\App\Http\Controllers\Api\InternshipDocumentController::class, 'review']);
+});
+
+Route::middleware(['auth:sanctum', 'institution.context', 'role:admin|super-admin|institution-admin|director|scolarite|pedagogy_officer'])->group(function () {
+    Route::get('/admin/reinscriptions/stats', [\App\Http\Controllers\Api\ReinscriptionController::class, 'getAdminStats']);
+    Route::get('/admin/reinscriptions/campaign', [\App\Http\Controllers\Api\RenewalCampaignController::class, 'show']);
+    Route::put('/admin/reinscriptions/campaign', [\App\Http\Controllers\Api\RenewalCampaignController::class, 'update']);
+    Route::get('/admin/reinscriptions/export', [\App\Http\Controllers\Api\ReinscriptionController::class, 'exportRoster']);
+    Route::post('/admin/reinscriptions/{student}/physical-review', [\App\Http\Controllers\Api\ReinscriptionController::class, 'verifyPhysical']);
+    Route::post('/admin/reinscriptions/send-reminders', [\App\Http\Controllers\Api\ReinscriptionController::class, 'sendReminders']);
 });

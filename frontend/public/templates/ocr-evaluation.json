@@ -1,0 +1,15 @@
+{
+  "dataset_kind": "synthetic",
+  "samples": [
+    {
+      "document_type": "bac",
+      "expected": { "cne": "SYN123456", "bac_average": "15,50" },
+      "extracted": { "cne": "syn123456", "bac_average": 15.5 }
+    },
+    {
+      "document_type": "cnie",
+      "expected": { "cin": "SYN999", "first_name": "Exemple" },
+      "extracted": { "cin": "SYN998", "first_name": null }
+    }
+  ]
+}

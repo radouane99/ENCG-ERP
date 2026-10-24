@@ -35,6 +35,8 @@ export async function mockApi(page: Page) {
     }
     const url = request.url()
     const method = request.method()
+    if (url.includes('/admissions/workflow/operations/context')) return route.fulfill({ contentType: 'application/json', body: JSON.stringify({ alerts: [], originals: [], work: null, agents: [] }) })
+    if (url.includes('/student-portal/actions') || url.includes('/professor-portal/actions')) return route.fulfill({ contentType: 'application/json', body: JSON.stringify({ items: [], academic_year: '2026/2027', has_student: true }) })
 
     if (url.includes('/v1/auth/login') && method === 'POST') {
       const body = request.postDataJSON() as { email?: string }

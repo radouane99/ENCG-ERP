@@ -34,6 +34,7 @@ class RoleJourneysDeepScanTest extends TestCase
     private function academicContext(): array
     {
         $year = $this->makeTestAcademicYear(); $filiere = $this->makeTestFiliere();
+        $this->openTestRenewalCampaign($year);
         $module = $this->makeTestModule($filiere->id, ['semester_number' => 3]);
         $student = $this->makeTestStudent();
         $pathway = StudentPathway::create(['student_id' => $student->id, 'filiere_id' => $filiere->id,

@@ -47,12 +47,10 @@ Schedule::call(function () {
 
 use App\Events\GradeDeadlineWarning;
 use App\Mail\GradeDeadlineReminder;
-use App\Mail\ReinscriptionOuverteMail;
 
 Schedule::command('admissions:maintain')->hourly()->withoutOverlapping();
 use App\Models\GradeEntryPeriod;
 use App\Models\Institution;
-use App\Models\Student;
 use App\Models\User;
 use Database\Seeders\PfeAndSoutenanceSeeder;
 use Illuminate\Support\Facades\Log;
@@ -124,36 +122,11 @@ Schedule::call(function () {
     }
 })->dailyAt('09:00');
 
-// ── Réinscription Annuelle — 1er Juillet à 08:00 (Recommendation #4) ───────
-// Usage manual: php artisan reinscription:ouvrir --annee=2027
-Schedule::command('reinscription:ouvrir --annee='.(date('Y') + 1))
-    ->yearlyOn(7, 1, '08:00')
-    ->description('Ouverture automatique de la réinscription annuelle ENCG Fès');
+// Renewal dates are published by staff in renewal_campaigns. No scheduled
+// command promotes students or confirms their registration automatically.
 
 Schedule::command('encg:ai-risk-digest')->weeklyOn(1, '08:00')
     ->description('Digest hebdomadaire des alertes pédagogiques direction');
 
-// ── Rappel Réinscription — J-7 avant fermeture (1er Août à 09:00) ───────────
-Schedule::call(function () {
-    $annee = date('Y') + 1;
-    $academicYear = date('Y').'-'.$annee;
-
-    // Find all "reinscrit" students who have NOT yet completed their reinscription docs
-    $studentsNeedingReminder = Student::where('inscription_status', 'reinscrit')
-        ->where('academic_year', $academicYear)
-        ->with(['user'])
-        ->get();
-
-    foreach ($studentsNeedingReminder as $student) {
-        $email = $student->user?->email ?? $student->email;
-        if ($email) {
-            try {
-                Mail::to($email)->queue(
-                    new ReinscriptionOuverteMail($student, $academicYear, isReminder: true)
-                );
-            } catch (Exception $e) {
-                Log::warning("Rappel réinscription failed for {$student->cne}: ".$e->getMessage());
-            }
-        }
-    }
-})->yearlyOn(8, 1, '09:00')->description('Rappel réinscription J-7 pour étudiants ENCG');
+// Staff reminders use the published renewal calendar and the deduplicated
+// /admin/reinscriptions/send-reminders workflow, without fixed calendar dates.

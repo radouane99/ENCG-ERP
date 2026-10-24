@@ -182,6 +182,7 @@ it('seals a deliberation and requires four-eyes to reopen', function () {
 
 it('confirms Grande École reinscription without payment and blocks unpaid FC', function () {
     $year = AcademicYear::factory()->create(['is_current' => true, 'label' => '2026/2027']);
+    $this->openTestRenewalCampaign($year);
     $studentRole = Role::firstOrCreate(['name' => 'student', 'guard_name' => 'sanctum']);
 
     $geFiliere = Filiere::factory()->create(['type' => 'grande_ecole', 'code' => 'GE-TEST']);

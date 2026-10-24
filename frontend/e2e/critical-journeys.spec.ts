@@ -59,7 +59,7 @@ test.describe('P2 — 8 parcours critiques', () => {
     await open(page, '/admin/tafem')
     await expect(page.getByTestId('admin-tafem-page')).toBeVisible({ timeout: 15000 })
     await expect(
-      page.getByTestId('admin-tafem-page').getByRole('heading', { name: 'Gestion & Logistique TAFEM', exact: true }),
+      page.getByTestId('admin-tafem-page').getByRole('heading', { name: 'Admissions & nouvelles inscriptions', exact: true }),
     ).toBeVisible()
   })
 

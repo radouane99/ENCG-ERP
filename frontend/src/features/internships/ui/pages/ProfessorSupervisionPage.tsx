@@ -1,3 +1,4 @@
+import { useSearchParams } from 'react-router-dom'
 import { useState, type FormEvent } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
@@ -9,8 +10,9 @@ import InternshipConversation from '../components/InternshipConversation'
 import InternshipDocuments, { type StageDocument } from '../components/InternshipDocuments'
 interface Stage { id: number; company_name: string; status: string; student: { user: { name: string }; cne: string }; internship_documents: StageDocument[]; can_review_documents: boolean; can_evaluate: boolean; soutenance?: { id: number; date_time: string; status: string; grade: number | null; room?: { name: string } } }
 export default function ProfessorSupervisionPage() {
+  const [params] = useSearchParams()
   const query = useQuery({ queryKey: ['professorInternships'], queryFn: () => api.get('/professor/internships/supervised').then(r => r.data.internships as Stage[]) })
-  const [selection, setSelection] = useState<{ id: number; evaluate: boolean } | null>(null)
+  const [selection, setSelection] = useState<{ id: number; evaluate: boolean } | null>(() => { const id = Number(params.get('internship_id')); return Number.isSafeInteger(id) && id > 0 ? { id, evaluate: false } : null })
   const [busy, setBusy] = useState(false); const [error, setError] = useState('')
   const stage = query.data?.find(row => row.id === selection?.id)
   async function evaluate(event: FormEvent<HTMLFormElement>) { event.preventDefault(); if (!stage?.soutenance) return; const data = new FormData(event.currentTarget); setBusy(true); setError(''); try { await api.post(`/professor/internships/soutenances/${stage.soutenance.id}/evaluate`, { grade: Number(data.get('grade')), remarks: data.get('remarks') }); toast.success('Évaluation enregistrée.'); setSelection(null); await query.refetch() } catch (err: unknown) { const message = (err as { response?: { data?: { message?: string } } }).response?.data?.message ?? 'L’évaluation n’a pas été enregistrée.'; setError(message); toast.error(message) } finally { setBusy(false) } }

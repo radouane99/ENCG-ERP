@@ -22,10 +22,19 @@ Route::get('public/admissions/documents/{document}', [\App\Http\Controllers\Api\
 Route::prefix('admissions/workflow')->middleware(['auth:sanctum', 'institution.context'])->group(function () {
     $workflow = \App\Http\Controllers\Api\AdmissionWorkflowController::class;
     $appointments = \App\Http\Controllers\Api\AdmissionAppointmentController::class;
+    $operations = \App\Http\Controllers\Api\AdmissionOperationsController::class;
+    Route::get('operations/context', [$operations, 'context']);
+    Route::get('operations/queue', [$operations, 'queue']);
+    Route::put('operations/work', [$operations, 'assign'])->name('admissions.assign');
+    Route::post('operations/originals', [$operations, 'original']);
+    Route::get('operations/originals/{event}/receipt', [$operations, 'receipt']);
+    Route::get('operations/monitor', [$operations, 'monitor']);
+    Route::post('operations/ocr/{id}/retry', [$operations, 'retryOcr'])->middleware('throttle:ocr');
     Route::get('campaigns', [$workflow, 'campaigns']);
     Route::get('references', [$workflow, 'references']);
     Route::get('ocr-settings', [$workflow, 'ocrSettings']);
     Route::put('ocr-settings', [$workflow, 'ocrSettings']);
+    Route::post('ocr-evaluation', [\App\Http\Controllers\Api\AdmissionOcrEvaluationController::class, 'evaluate'])->middleware('throttle:6,1');
     Route::post('campaigns', [$workflow, 'saveCampaign']);
     Route::put('campaigns/{id}', [$workflow, 'saveCampaign']);
     Route::get('dossier', [$workflow, 'show']);

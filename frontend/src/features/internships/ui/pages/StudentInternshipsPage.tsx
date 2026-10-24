@@ -1,4 +1,5 @@
 import React,{ useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useStudentInternships } from '../../api/useInternshipsStudent';
 import { InternshipStatusBadge } from '../components/InternshipStatusBadge';
 import { DocumentUploadModal } from '../components/DocumentUploadModal';
@@ -31,12 +32,20 @@ const MILESTONES = [
 const PIPELINE = ['Déposée', 'En révision', 'Approuvée', 'En cours', 'Terminée'];
 
 export default function StudentInternshipsPage() {
+  const [params] = useSearchParams();
+  const linkedStageId = Number(params.get('internship_id'));
+  const openedStage = React.useRef<number | null>(null);
   const { data: internships, isLoading, refetch } = useStudentInternships();
 
   const [uploadModalOpen,   setUploadModalOpen]   = useState(false);
   const [selectedInternship, setSelectedInternship] = useState<number | null>(null);
   const [showRequestModal,  setShowRequestModal]  = useState(false);
   const [showSuiviModal,    setShowSuiviModal]    = useState<any>(null);
+  React.useEffect(() => {
+    if (!Number.isSafeInteger(linkedStageId) || linkedStageId < 1 || openedStage.current === linkedStageId || !Array.isArray(internships)) return;
+    const ownedStage = internships.find(stage => stage.id === linkedStageId);
+    if (ownedStage) { openedStage.current = linkedStageId; setShowSuiviModal(ownedStage); }
+  }, [internships, linkedStageId]);
   const [newComment,        setNewComment]        = useState('');
   const [submitting,        setSubmitting]        = useState(false);
   const [commentsList,      setCommentsList]      = useState<Array<{ author: string; date: string; text: string; isProf: boolean }>>([]);

@@ -1,5 +1,6 @@
 import { useState,useRef,useEffect,KeyboardEvent,ClipboardEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
+import { admissionReturnPath } from '../model/admissionReturnPath'
 import { ShieldCheck,ArrowRight,Loader2,KeyRound } from 'lucide-react'
 import { useAuthStore } from '@stores/authStore'
 import { toast } from 'sonner'
@@ -8,6 +9,7 @@ export default function TwoFactorPage() {
   const [code, setCode] = useState(['', '', '', '', '', ''])
   const [isLoading, setIsLoading] = useState(false)
   const navigate = useNavigate()
+  const location = useLocation()
   const { verifyTwoFactor, requiresTwoFactor } = useAuthStore()
   const inputRefs = useRef<(HTMLInputElement | null)[]>([])
 
@@ -64,7 +66,7 @@ export default function TwoFactorPage() {
     try {
       await verifyTwoFactor(fullCode)
       toast.success('Authentification réussie !')
-      navigate('/dashboard')
+      navigate(admissionReturnPath(location.state))
     } catch (err: any) {
       const msg = err.response?.data?.message || 'Code invalide ou expiré.'
       toast.error(msg)

@@ -91,8 +91,14 @@ class AdmissionWorkflowController extends Controller
         AdmissionAccess::review($request);
         $n = DB::table('admission_notifications')->find($id); abort_unless($n && $n->status === 'failed', 422, 'Aucun envoi échoué à relancer.');
         $app = AdmissionAccess::dossier($request, false, $n->application_id);
-        if ($n->type === 'activation') app(ActivateCandidateAction::class)->issue($app);
-        else app(\App\Services\Admissions\AdmissionNotificationService::class)->queue($app, $n->type);
+        DB::transaction(function () use ($n, $app) {
+            Application::whereKey($app->id)->lockForUpdate()->firstOrFail();
+            $current = DB::table('admission_notifications')->where('id', $n->id)->lockForUpdate()->firstOrFail();
+            abort_unless($current->status === 'failed', 409, 'Cet envoi a déjà été relancé.');
+            DB::table('admission_notifications')->where('id', $n->id)->update(['status' => 'retried', 'updated_at' => now()]);
+            if ($n->type === 'activation') app(ActivateCandidateAction::class)->issue($app);
+            else abort_unless(app(\App\Services\Admissions\AdmissionNotificationService::class)->queue($app, $n->type), 422, 'Contact destinataire à vérifier.');
+        });
         return response()->json(['message' => 'Nouvelle tentative mise en file.']);
     }
 
@@ -167,7 +173,7 @@ class AdmissionWorkflowController extends Controller
             'required_documents' => \App\Domain\Admission\AdmissionEntryRules::documents($app->campaign->entry_route),
             'physical_requirements' => \App\Domain\Admission\AdmissionEntryRules::physicalChecklist($app->campaign->entry_route),
             'events' => DB::table('admission_events')->where('application_id', $app->id)->orderByDesc('id')->limit(30)->get(['type', 'created_at']),
-            'reviews' => DB::table('admission_reviews as r')->leftJoin('users as u', 'u.id', '=', 'r.reviewer_id')->where('r.application_id', $app->id)->orderByDesc('r.id')->limit(30)->get(['r.id', 'r.document_id', 'r.decision', 'r.reason', 'r.physical_checklist', 'r.created_at', 'u.name as reviewer_name'])->map(function ($review) { $review->physical_checklist = $review->physical_checklist ? json_decode($review->physical_checklist, true) : null; return $review; }),
+            'reviews' => DB::table('admission_reviews as r')->leftJoin('users as u', 'u.id', '=', 'r.reviewer_id')->leftJoin('student_documents as rd', 'rd.id', '=', 'r.document_id')->where('r.application_id', $app->id)->orderByDesc('r.id')->limit(30)->get(['r.id', 'r.document_id', 'r.decision', 'r.reason', 'r.physical_checklist', 'r.created_at', 'u.name as reviewer_name', 'rd.type as document_type', 'rd.version as document_version'])->map(function ($review) { $review->physical_checklist = $review->physical_checklist ? json_decode($review->physical_checklist, true) : null; return $review; }),
             'notifications' => DB::table('admission_notifications')->where('application_id', $app->id)->orderByDesc('id')->limit(10)->get(['id', 'type', 'status', 'sent_at']),
             'ocr_runs' => DB::table('admission_ocr_runs')->where('application_id', $app->id)->orderByDesc('created_at')->limit(12)->get()->map(function ($run) {
                 $run->fields = json_decode($run->fields ?? '{}', true); $run->warnings = json_decode($run->warnings ?? '[]', true); return $run;

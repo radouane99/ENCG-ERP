@@ -40,6 +40,7 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:student', Ensure
 
 // Web App Student Portal API (`/v1/...` and `/student-portal/...` — frontend often omits v1)
 $studentPortalRoutes = function () {
+    Route::get('/actions', [\App\Http\Controllers\Api\UserActionCenterController::class, 'student']);
     Route::get('/my-dossier', [UnifiedStudentRecordController::class, 'myDossier']);
     Route::get('/dashboard', [StudentPortalController::class, 'getDashboardStats']);
     Route::get('/schedule', [StudentPortalController::class, 'getSchedule']);

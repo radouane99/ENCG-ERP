@@ -24,6 +24,7 @@ class RoleWorkflowIntegrationTest extends TestCase
     public function test_invoice_payment_is_verified_once_and_cannot_exceed_the_balance(): void
     {
         $this->admin(); $year = $this->makeTestAcademicYear(); $filiere = $this->makeTestFiliere(['type' => 'formation_continue']); $student = $this->makeTestStudent();
+        $this->openTestRenewalCampaign($year);
         StudentRegistration::create(['student_id' => $student->id, 'academic_year_id' => $year->id, 'filiere_id' => $filiere->id, 'semester_number' => 1, 'status' => 'academic_validated', 'registration_type' => 're_enrollment']);
         $invoice = $this->postJson('/api/admin/finance/invoices', ['student_id' => $student->id, 'academic_year_id' => $year->id, 'filiere_id' => $filiere->id, 'amount' => 1000, 'due_on' => now()->addDays(5)->toDateString()])->assertCreated()->json('invoice.id');
         $payload = ['reference' => 'SYNTHETIC-RECEIPT-001', 'amount' => 400, 'provider' => 'bank', 'verification_note' => 'Justificatif synthétique vérifié.', 'receipt_verified' => true];

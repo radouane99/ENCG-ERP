@@ -28,7 +28,7 @@ class ImportMinistryListAction
         $required = ['cne', 'cin', 'first_name', 'last_name', 'list_type', 'rank', $scoreColumn];
         if ($campaign->entry_route === 'tafem') $required[] = 'bac_average';
         abort_if(array_diff($required, $headers), 422, 'Colonnes requises : '.implode(', ', $required));
-        $rows = []; $errors = []; $seen = []; $ranks = []; $line = 1;
+        $rows = []; $errors = []; $seen = []; $seenCins = []; $ranks = []; $line = 1;
         while (($values = fgetcsv($handle, 0, $delimiter, '"', '')) !== false) {
             $line++;
             abort_if($line > 20001, 422, 'Maximum 20 000 candidats par fichier.');
@@ -46,12 +46,14 @@ class ImportMinistryListAction
                 'list_type' => 'required|in:liste_principale,liste_attente', 'email' => 'nullable|email|max:255']);
             $messages = $v->errors()->all();
             if (isset($seen[$data['cne']])) $messages[] = 'CNE présent plusieurs fois dans le fichier.';
+            if (isset($seenCins[$data['cin']])) $messages[] = 'CNIE présente plusieurs fois : rapprochez l’identité avant import.';
+            $seenCins[$data['cin']] = true;
             if (isset($ranks[$data['rank']])) $messages[] = 'Rang dupliqué : clarifiez la règle officielle des ex aequo avant import.';
             $seen[$data['cne']] = true; $ranks[$data['rank']] = true;
             $existing = Application::where('admission_campaign_id', $campaign->id)->where('cne', $data['cne'])->first();
             if ($existing && (strtoupper((string) $existing->cin) !== $data['cin'] || $existing->dossier_status === 'approved')) $messages[] = 'Identité en conflit ou inscription déjà validée : aucune modification automatique.';
             if ($messages) $errors[] = ['line' => $line, 'messages' => $messages];
-            else $rows[] = array_intersect_key($data, array_flip([...$required, 'email']));
+            else $rows[] = array_intersect_key($data, array_flip([...$required, 'email', 'tafem_score', 'bac_average']));
         }
         fclose($handle);
         abort_if(! $rows && ! $errors, 422, 'Aucun candidat dans le fichier.');
@@ -75,7 +77,7 @@ class ImportMinistryListAction
                 $app = Application::where('admission_campaign_id', $campaign->id)->where('cne', $row['cne'])->lockForUpdate()->first();
                 abort_if($app && ($app->cin !== $row['cin'] || $app->dossier_status === 'approved'), 409, 'Le dossier a changé depuis la prévisualisation. Relancez l’import.');
                 $data = ['first_name' => $row['first_name'], 'last_name' => $row['last_name'], 'cin' => $row['cin'],
-                    'bac_average' => ($row['bac_average'] === '' ? null : $row['bac_average']), 'selection_score' => $row['tafem_score'], 'ranking' => $row['rank'],
+                    'bac_average' => (($row['bac_average'] ?? '') === '' ? null : $row['bac_average']), 'selection_score' => $row['tafem_score'], 'ranking' => $row['rank'],
                     'eligibility' => $row['list_type'] === 'liste_principale' ? 'main' : 'waiting',
                     'official_rank_source' => 'import:'.$batch->id];
                 if (! $app) {

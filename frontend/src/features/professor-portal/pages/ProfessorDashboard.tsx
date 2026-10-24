@@ -1,3 +1,4 @@
+import UserActionCenter from '@features/dashboard/components/UserActionCenter'
 import React,{ useRef,useState } from 'react';
 import {
 BookOpen,
@@ -302,6 +303,7 @@ export default function ProfessorDashboard() {
   return (
     <div className="space-y-8 font-sans animate-in fade-in duration-500 text-slate-900 dark:text-slate-100 pb-12">
       
+      <UserActionCenter actor="professor"/>
       {/* ── Executive Top Cockpit Header (Admin Style) ── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800/80 pb-5">
         <div>

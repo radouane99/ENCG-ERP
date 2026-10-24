@@ -7,12 +7,17 @@ use Illuminate\Database\Eloquent\Collection;
 
 class AlumniService
 {
+    private function surveys(): \Illuminate\Database\Eloquent\Builder
+    {
+        return AcademicProject::where('type', 'alumni_survey')
+            ->where('institution_id', auth()->user()?->institution_id ?? config('erp.institution_id', 1));
+    }
     /**
      * Statistiques du tableau de bord Alumni.
      */
     public function getDashboardStats(): array
     {
-        $totalResponses = AcademicProject::where('type', 'alumni_survey')->count();
+        $totalResponses = $this->surveys()->count();
 
         if ($totalResponses === 0) {
             return [
@@ -26,12 +31,12 @@ class AlumniService
             ];
         }
 
-        $employedCount = AcademicProject::where('type', 'alumni_survey')->whereNotNull('company_name')->count();
+        $employedCount = $this->surveys()->whereNotNull('company_name')->count();
 
         return [
             'employment_rate' => (int) round(($employedCount / $totalResponses) * 100),
-            'avg_starting_salary' => (float) (AcademicProject::where('type', 'alumni_survey')->whereNotNull('starting_salary')->avg('starting_salary') ?? 0),
-            'avg_months_to_hire' => (float) (AcademicProject::where('type', 'alumni_survey')->whereNotNull('months_to_hire')->avg('months_to_hire') ?? 0),
+            'avg_starting_salary' => (float) ($this->surveys()->whereNotNull('starting_salary')->avg('starting_salary') ?? 0),
+            'avg_months_to_hire' => (float) ($this->surveys()->whereNotNull('months_to_hire')->avg('months_to_hire') ?? 0),
             'total_responses' => $totalResponses,
             'status_distribution' => $this->getDistribution('employment_status'),
             'sector_distribution' => $this->getDistribution('sector'),
@@ -44,8 +49,7 @@ class AlumniService
      */
     public function getAlumniDirectory(array $filters = []): Collection
     {
-        $query = AcademicProject::with(['student.user', 'academicYear'])
-            ->where('type', 'alumni_survey');
+        $query = $this->surveys()->with(['student.user', 'academicYear']);
 
         if (! empty($filters['promotion'])) {
             $query->where('graduation_year', $filters['promotion']);
@@ -64,7 +68,7 @@ class AlumniService
             return [];
         }
 
-        return AcademicProject::where('type', 'alumni_survey')
+        return $this->surveys()
             ->whereNotNull($column)
             ->selectRaw($column.' as name, count(*) as value')
             ->groupBy($column)
@@ -79,7 +83,7 @@ class AlumniService
      */
     private function getTopCompanies(): array
     {
-        return AcademicProject::where('type', 'alumni_survey')
+        return $this->surveys()
             ->whereNotNull('company_name')
             ->selectRaw('company_name as name, count(*) as count')
             ->groupBy('company_name')

@@ -2,7 +2,8 @@ import { useForm } from 'react-hook-form'
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { useNavigate,useSearchParams } from 'react-router-dom'
+import { useNavigate,useSearchParams,useLocation } from 'react-router-dom'
+import { admissionReturnPath } from '../model/admissionReturnPath'
 import { useTranslation } from 'react-i18next'
 import { useEffect,useState } from 'react'
 import { Eye,EyeOff,LogIn,Mail,Lock,Sparkles,UserCheck,Shield } from 'lucide-react'
@@ -25,6 +26,7 @@ type LoginForm = z.infer<typeof loginSchema>
 export default function LoginPage() {
   const { t, i18n } = useTranslation('auth')
   const navigate = useNavigate()
+  const location = useLocation()
   const [searchParams] = useSearchParams()
   const { login } = useAuthStore()
   const [showPassword, setShowPassword] = useState(false)
@@ -74,9 +76,9 @@ export default function LoginPage() {
     try {
       const result = await login(data.email, data.password)
       if (result.requiresTwoFactor) {
-        navigate('/two-factor')
+        navigate('/two-factor', { state: location.state })
       } else {
-        navigate('/dashboard')
+        navigate(admissionReturnPath(location.state))
         toast.success(isAr ? 'مرحباً بك!' : 'Bienvenue sur votre portail ENCG !')
       }
     } catch (err) {

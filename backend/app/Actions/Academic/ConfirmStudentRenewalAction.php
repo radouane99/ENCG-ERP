@@ -10,38 +10,30 @@ final class ConfirmStudentRenewalAction
     public function year(Student $student): AcademicYear { return AcademicYear::where('institution_id', $student->institution_id)->where('is_current', true)->firstOrFail(); }
     public function eligibleRegistration(Student $student, int $year)
     {
-        return StudentRegistration::where('student_id', $student->id)->where('academic_year_id', $year)->where('registration_type', 're_enrollment')
-            ->whereIn('status', ['academic_validated', 'admin_validated'])->orderBy('semester_number')->first();
+        if ($student->status === 'graduated') return null;
+        $rows = StudentRegistration::with('filiere')->where('student_id', $student->id)->where('academic_year_id', $year)->where('registration_type', 're_enrollment')
+            ->whereNotIn('status', ['rejected', 'cancelled'])->limit(2)->get();
+        if ($rows->count() !== 1) return null;
+        $registration = $rows->first();
+        if ($student->graduations()->where('filiere_id', $registration->filiere_id)->exists()) return null;
+        $terminal = \App\Domain\Deliberation\ProgramCompletionRules::finalSemester($registration->filiere?->type, $registration->filiere?->duration_years);
+
+        return in_array($registration->status, ['academic_validated', 'admin_validated'], true)
+            && $terminal && $registration->semester_number >= 1 && $registration->semester_number <= $terminal
+            ? $registration : null;
     }
     public function execute(Student $student, array $data): object
     {
         return DB::transaction(function () use ($student, $data) {
+            $year = AcademicYear::where('institution_id', $student->institution_id)->where('is_current', true)->lockForUpdate()->firstOrFail();
             $student = Student::whereKey($student->id)->lockForUpdate()->firstOrFail();
-            $year = $this->year($student);
+            abort_if($student->status === 'graduated', 422, 'Cursus terminé : contactez la scolarité pour une nouvelle admission dans un autre cursus.');
             $existing = DB::table('student_renewals')->where('student_id', $student->id)->where('academic_year_id', $year->id)->first();
             if ($existing) return $existing;
             abort_if($year->is_locked, 422, 'Année universitaire verrouillée.');
+            $calendar = app(\App\Services\Academic\RenewalCampaignService::class)->forYear($year);
+            abort_unless($calendar['is_open'], 422, $calendar['message']);
             $registration = $this->eligibleRegistration($student, $year->id);
-            if (! $registration) {
-                $currentSem = (int) ($student->latestPathway?->current_semester ?? 1);
-                $targetSem = match (true) {
-                    $currentSem <= 2 => 3,
-                    $currentSem <= 4 => 5,
-                    $currentSem <= 6 => 7,
-                    $currentSem <= 8 => 9,
-                    default => 9,
-                };
-                $filiereId = $student->latestPathway?->filiere_id ?? 1;
-                $registration = StudentRegistration::create([
-                    'student_id' => $student->id,
-                    'academic_year_id' => $year->id,
-                    'filiere_id' => $filiereId,
-                    'semester_number' => $targetSem,
-                    'registration_type' => 're_enrollment',
-                    'status' => 'academic_validated',
-                    'academic_validated_at' => now(),
-                ]);
-            }
             $filiere = $registration ? Filiere::whereKey($registration->filiere_id)->where('institution_id', $student->institution_id)->firstOrFail() : null;
             // Payment is checked from a server-verified invoice, never a browser-provided status.
             $requestedFiliere = $filiere ?? Filiere::whereKey($data['filiere_id'] ?? $student->latestPathway?->filiere_id)->where('institution_id', $student->institution_id)->first();

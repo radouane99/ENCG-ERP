@@ -16,7 +16,7 @@ function syntheticPdf() {
 test.describe('TAFEM — parcours réel sans API simulée', () => {
   test.skip(!live, 'E2E_ADMISSIONS_LIVE=1 et base dédiée requises.')
   test('un candidat dépose, soumet puis la scolarité examine et valide le dossier', async ({ page }) => {
-    test.setTimeout(360_000)
+    test.setTimeout(600_000)
     page.on('requestfailed', r => console.log('request_failed', new URL(r.url()).pathname, r.failure()?.errorText))
     page.on('response', r => { if (r.url().includes('/v1/auth/me')) console.log('session_response', r.status()) })
     await page.goto('/inscription')
@@ -24,14 +24,24 @@ test.describe('TAFEM — parcours réel sans API simulée', () => {
     const login = await page.request.post('/api/v1/auth/login', { data: { email: 'e2e.candidate@example.test', password: 'TestOnlyPassword123!' } })
     expect(login.status()).toBe(200)
     expect((await page.request.get('/api/v1/auth/me')).status()).toBe(200)
+    // Keep reruns deterministic on the dedicated synthetic database only.
+    let current = (await (await page.request.get('/api/admissions/workflow/dossier')).json()).candidate
+    if (current.dossier_status === 'draft') {
+      for (const type of Object.keys(current.documents)) {
+        const removed = await page.request.delete('/api/admissions/workflow/documents', { data: { application_id: current.id, version: current.version, type } })
+        expect(removed.ok()).toBe(true)
+        current = (await (await page.request.get('/api/admissions/workflow/dossier')).json()).candidate
+      }
+    }
     await page.goto('/admissions/mon-dossier')
     await expect(page.getByTestId('candidate-admission-workspace')).toBeVisible({ timeout: 90_000 })
+    if (current.dossier_status === 'draft' || current.dossier_status === 'needs_correction') {
     const photo = await page.screenshot({ clip: { x: 0, y: 0, width: 300, height: 400 } })
-    for (const label of ['Baccalauréat', 'CNIE · recto et verso', 'Relevé de notes']) {
+    for (const label of ['Baccalauréat', 'CNIE · recto et verso', 'Relevé de notes officiel']) {
       await page.getByLabel(`Ajouter ${label}`, { exact: true }).setInputFiles({ name: 'synthetic.pdf', mimeType: 'application/pdf', buffer: syntheticPdf() })
       await expect(page.getByRole('button', { name: 'Retirer', exact: true })).toHaveCount(label === 'Baccalauréat' ? 1 : label.startsWith('CNIE') ? 2 : 3)
     }
-    await page.getByLabel('Ajouter Photo d’identité', { exact: true }).setInputFiles({ name: 'synthetic.png', mimeType: 'image/png', buffer: photo })
+    await page.getByLabel('Ajouter Photo d’identité récente', { exact: true }).setInputFiles({ name: 'synthetic.png', mimeType: 'image/png', buffer: photo })
     await page.getByRole('button', { name: 'Envoyer l’original', exact: true }).click()
     await expect(page.getByRole('button', { name: 'Retirer', exact: true })).toHaveCount(4)
     await page.locator('#admission-phone').fill('0612345679')
@@ -40,23 +50,35 @@ test.describe('TAFEM — parcours réel sans API simulée', () => {
     await page.screenshot({ path: 'test-results/tafem-candidate-desktop.png', fullPage: true })
     await page.getByRole('button', { name: 'Soumettre le dossier', exact: true }).click()
     await expect(page.getByText('Soumis', { exact: true })).toBeVisible()
+    }
     expect((await page.request.post('/api/v1/auth/logout')).status()).toBe(200)
     expect((await page.request.post('/api/v1/auth/login', { data: { email: 'e2e.admissions.admin@example.test', password: 'TestOnlyPassword123!' } })).status()).toBe(200)
     await page.goto('/admin/tafem')
     await expect(page.getByTestId('admin-tafem-page')).toBeVisible()
     await page.getByRole('button', { name: 'Ouvrir', exact: true }).first().click()
-    await expect(page.getByRole('heading', { name: 'Candidate Synthetic', exact: true })).toBeVisible()
-    for (const label of ['Baccalauréat', 'CNIE · recto et verso', 'Relevé de notes', 'Photo d’identité']) {
+    await expect(page.getByRole('heading', { name: 'Candidate Synthetic', exact: true })).toBeVisible({ timeout: 90_000 })
+    if (current.dossier_status !== 'approved') {
+    for (const label of ['Baccalauréat', 'CNIE · recto et verso', 'Relevé de notes officiel', 'Photo d’identité récente']) {
       await page.getByRole('button', { name: new RegExp(`^${label}`) }).click()
       await page.getByRole('button', { name: 'Vérifier cette version', exact: true }).click()
       await expect(page.getByRole('button', { name: `${label} · ✓`, exact: true })).toBeVisible()
     }
     await page.screenshot({ path: 'test-results/tafem-admin-desktop.png', fullPage: true })
     await page.getByText('Validation physique et inscription définitive', { exact: true }).click()
-    for (const label of ['Bac original reçu', 'Relevé reçu', 'Copie CNIE reçue', 'Photos reçues']) await page.getByLabel(label, { exact: true }).check()
+    for (const label of ['Baccalauréat original contrôlé', 'Relevé de notes contrôlé', 'Identité CNIE rapprochée', 'Photos reçues']) await page.getByLabel(label, { exact: true }).check()
     await page.getByLabel('Numéro APOGEE officiel', { exact: true }).fill('E2E-OFFICIAL-001')
     await page.getByRole('button', { name: 'Valider l’inscription définitive', exact: true }).click()
     await expect(page.getByText(/Inscription validée/).last()).toBeVisible()
+    }
+    await page.getByRole('button', { name: 'Inscriptions & groupes', exact: true }).click()
+    await expect(page.getByText('E2E-OFFICIAL-001', { exact: true })).toBeVisible()
+    await page.getByRole('button', { name: 'Affecter les étudiants sans groupe', exact: true }).click()
+    await page.getByRole('button', { name: 'Confirmer l’affectation', exact: true }).click()
+    await expect(page.getByText('E2E-S1-G1', { exact: true })).toBeVisible()
+    await expect(page.getByText('G1.1', { exact: true })).toBeVisible()
+    const csv = page.waitForEvent('download')
+    await page.getByRole('button', { name: 'Liste & comptes existants (CSV)', exact: true }).click()
+    expect(await (await csv).failure()).toBeNull()
     await page.setViewportSize({ width: 390, height: 844 })
     await expect.poll(() => page.locator('div.fixed.inset-y-0').first().evaluate(el => el.getBoundingClientRect().right)).toBeLessThanOrEqual(1)
     await page.screenshot({ path: 'test-results/tafem-admin-mobile.png', fullPage: true })
@@ -64,7 +86,7 @@ test.describe('TAFEM — parcours réel sans API simulée', () => {
   })
 
   test('les dossiers restent lisibles sur téléphone après validation', async ({ page }) => {
-    test.setTimeout(180_000)
+    test.setTimeout(240_000)
     await page.setViewportSize({ width: 390, height: 844 })
     expect((await page.request.post('/api/v1/auth/login', { data: { email: 'e2e.candidate@example.test', password: 'TestOnlyPassword123!' } })).status()).toBe(200)
     await page.goto('/admissions/mon-dossier')

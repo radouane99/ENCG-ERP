@@ -1,0 +1,31 @@
+import { useEffect, useState, type FormEvent } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import api from '@shared/lib/api'
+import { useAdmissionOperations } from '../api/operations'
+import { errorMessage } from '../api/workflow'
+import { dateText, documentLabels, workflowBase, type DocumentType } from '../model/workflow'
+const input = 'mt-1 min-h-11 w-full rounded-lg border border-border bg-background p-3 text-sm'
+const button = 'min-h-11 rounded-lg bg-blue-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50'
+export default function AdmissionDossierOperations({ applicationId }: { applicationId: number }) {
+  const query = useAdmissionOperations(applicationId); const cache = useQueryClient()
+  const [error, setError] = useState(''); const [busy, setBusy] = useState(false); const [saved, setSaved] = useState('')
+  const [workDirty, setWorkDirty] = useState(false)
+  const [work, setWork] = useState({ assigned_to: '', next_action: '', due_on: '', version: 0 })
+  const assigned = query.data?.work?.assigned_to; const nextAction = query.data?.work?.next_action; const due = query.data?.work?.due_on
+  const version = query.data?.work?.version ?? 0
+  useEffect(() => { if (!workDirty) setWork({ assigned_to: assigned ? String(assigned) : '', next_action: nextAction ?? '', due_on: due ?? '', version }) }, [applicationId, assigned, nextAction, due, version, workDirty])
+  async function submit(e: FormEvent<HTMLFormElement>, original: boolean) {
+    e.preventDefault(); const form = e.currentTarget; const data = new FormData(form); setBusy(true); setError(''); setSaved('')
+    try {
+      if (original) await api.post(`${workflowBase}/operations/originals`, { application_id: applicationId, operation_id: crypto.randomUUID(), document_type: data.get('document_type'), event: data.get('event'), storage_location: data.get('storage_location') || null, note: data.get('note') })
+      else await api.put(`${workflowBase}/operations/work`, { application_id: applicationId, assigned_to: work.assigned_to ? Number(work.assigned_to) : null, next_action: work.next_action || null, due_on: work.due_on || null, version: work.version })
+      await Promise.all([query.refetch(), cache.invalidateQueries({ queryKey: ['admission-work-queue'] })]); if (original) form.reset()
+      if (!original) setWorkDirty(false)
+      setSaved(original ? 'Mouvement enregistré dans le journal.' : 'Suivi du dossier enregistré.')
+    } catch (err) { setError(errorMessage(err)) } finally { setBusy(false) }
+  }
+  return <div className="my-4 space-y-3">{error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-800">{error} <button className="underline" onClick={() => { setWorkDirty(false); void query.refetch(); setError('') }}>Actualiser le suivi</button></p>}{saved && <p role="status" className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-900">{saved}</p>}
+    <details className="rounded-xl border border-border p-4"><summary className="cursor-pointer font-semibold">Responsable, prochaine action et échéance</summary><form onSubmit={e => void submit(e, false)} className="mt-4 grid gap-3 sm:grid-cols-2"><fieldset disabled={busy} className="contents"><label className="text-sm">Responsable<select aria-label="Responsable du dossier" className={input} value={work.assigned_to} onChange={e => { setWorkDirty(true); setWork(w => ({ ...w, assigned_to: e.target.value })) }}><option value="">Non affecté</option>{query.data?.agents.map(agent => <option key={agent.id} value={agent.id}>{agent.name}</option>)}</select></label><label className="text-sm">Échéance de traitement<input type="date" className={input} value={work.due_on} onChange={e => { setWorkDirty(true); setWork(w => ({ ...w, due_on: e.target.value })) }}/></label><label className="text-sm sm:col-span-2">Prochaine action<textarea maxLength={500} className={input} value={work.next_action} onChange={e => { setWorkDirty(true); setWork(w => ({ ...w, next_action: e.target.value })) }}/></label><button disabled={busy || !query.data} className={button}>Enregistrer le suivi</button></fieldset></form></details>
+    <details className="rounded-xl border border-border p-4"><summary className="cursor-pointer font-semibold">Conservation des originaux</summary><p className="mt-3 text-xs text-muted-foreground">Chaque mouvement reste dans le journal. La réception d’un original ne valide pas son authenticité ni l’inscription.</p><form onSubmit={e => void submit(e, true)} className="mt-4 grid gap-3 sm:grid-cols-2"><fieldset disabled={busy} className="contents"><label className="text-sm">Type d’original<select aria-label="Type original" name="document_type" className={input}>{(['bac', 'releve_notes', 'attestation_admission', 'releve_parcours', 'diplome_bac2'] as DocumentType[]).map(type => <option key={type} value={type}>{documentLabels[type]}</option>)}</select></label><label className="text-sm">Mouvement<select aria-label="Mouvement" name="event" className={input}><option value="received">Réception</option><option value="relocated">Changement de rangement</option><option value="returned">Restitution au titulaire</option></select></label><label className="text-sm">Emplacement de rangement<input name="storage_location" className={input} maxLength={180} placeholder="Armoire, boîte, référence interne"/></label><label className="text-sm">Observation / contrôle du titulaire<input required name="note" minLength={3} maxLength={500} className={input}/></label><button disabled={busy || !query.data} className={button}>Enregistrer le mouvement</button></fieldset></form><ol className="mt-5 space-y-3">{query.data?.originals.map(event => <li key={event.id} className="rounded-lg border border-border p-3 text-sm"><strong>{documentLabels[event.document_type as DocumentType]}</strong> · {{ received: 'Reçu', relocated: 'Déplacé', returned: 'Restitué' }[event.event]}<p className="mt-1">{event.storage_location} · {event.note}</p><p className="mt-1 text-xs text-muted-foreground">{dateText(event.created_at)} · {event.agent}</p><a className="inline-flex min-h-11 items-center text-blue-700 underline dark:text-blue-300" target="_blank" rel="noreferrer" href={`${api.defaults.baseURL}${workflowBase}/operations/originals/${event.id}/receipt`}>Télécharger le reçu ORI-{event.id}</a></li>)}</ol></details>
+  </div>
+}

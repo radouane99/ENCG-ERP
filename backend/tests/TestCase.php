@@ -157,6 +157,12 @@ abstract class TestCase extends BaseTestCase
         ], $overrides));
     }
 
+    protected function openTestRenewalCampaign(AcademicYear $year): \App\Models\RenewalCampaign
+    {
+        return \App\Models\RenewalCampaign::updateOrCreate(['institution_id' => $year->institution_id, 'academic_year_id' => $year->id],
+            ['status' => 'open', 'opens_on' => now('Africa/Casablanca')->subDay()->toDateString(), 'closes_on' => now('Africa/Casablanca')->addDay()->toDateString()]);
+    }
+
     protected function makeTestStudent(array $overrides = []): Student
     {
         $firstName = $overrides['first_name'] ?? 'Karim';

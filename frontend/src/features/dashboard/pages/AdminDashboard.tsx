@@ -114,7 +114,7 @@ const DICT = {
 
 // ── Quick Action Tiles ───────────────────────────────────────────────────
 const QUICK_ACTIONS = [
-  { label: 'Inscriptions & TAFEM', path: '/academic/enrollments', icon: Trophy, accent: '#f59e0b', bg: 'from-amber-500/10 to-orange-500/5', border: 'border-amber-500/20', iconBg: 'bg-amber-500/15 text-amber-500' },
+  { label: 'Admissions TAFEM / CNAEM', path: '/academic/enrollments', icon: Trophy, accent: '#f59e0b', bg: 'from-amber-500/10 to-orange-500/5', border: 'border-amber-500/20', iconBg: 'bg-amber-500/15 text-amber-500' },
   { label: 'Guichet Unique', path: '/admin/guichet', icon: Stamp, accent: '#6366f1', bg: 'from-indigo-500/10 to-blue-500/5', border: 'border-indigo-500/20', iconBg: 'bg-indigo-500/15 text-indigo-500' },
   { label: 'Notes & PV', path: '/admin/grades/pv', icon: FileSpreadsheet, accent: '#10b981', bg: 'from-emerald-500/10 to-teal-500/5', border: 'border-emerald-500/20', iconBg: 'bg-emerald-500/15 text-emerald-500' },
   { label: 'Convocations', path: '/admin/convocations', icon: CalendarCheck, accent: '#a855f7', bg: 'from-purple-500/10 to-pink-500/5', border: 'border-purple-500/20', iconBg: 'bg-purple-500/15 text-purple-500' },

@@ -5,7 +5,7 @@ $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 use Illuminate\Support\Facades\DB;
 $database = DB::connection()->getDatabaseName();
 if ($database !== 'encg_erp' && ! str_ends_with($database, '_test')) throw new RuntimeException('Unexpected database.');
-$path = storage_path('app/role-baseline-'.$database.'.json');
+$path = storage_path('app/'.basename(getenv('ROLE_BASELINE_FILE') ?: 'role-baseline-'.$database.'.json'));
 $mode = getenv('ROLE_SNAPSHOT_MODE') ?: 'verify';
 $quote = fn ($value) => '"'.str_replace('"', '""', $value).'"';
 DB::statement('BEGIN READ ONLY');

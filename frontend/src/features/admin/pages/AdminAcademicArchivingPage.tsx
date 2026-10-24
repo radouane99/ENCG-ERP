@@ -1,4 +1,5 @@
 import React,{ useState,useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import api from '@shared/lib/api';
 import { academicApi } from '@shared/api/academic';
@@ -21,6 +22,7 @@ type AcademicYear = {
 };
 
 interface ArchiveRecord {
+  isLocked?: boolean;
   id: string;
   yearLabel: string;
   studentsCount: number;
@@ -94,6 +96,7 @@ interface ProgressionResponse {
 }
 
 export default function AdminAcademicArchivingPage() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'roster' | 'archives'>('roster');
   const [rosterSearch, setRosterSearch] = useState('');
   const [decisionFilter, setDecisionFilter] = useState<'ALL' | 'ADMIS_PUR' | 'ADMIS_AVEC_DETTE' | 'REDOUBLANT' | 'DIPLOME'>('ALL');
@@ -125,8 +128,8 @@ export default function AdminAcademicArchivingPage() {
 
   // Calculate default next year based on current
   React.useEffect(() => {
-    if (currentYearObj?.label && currentYearObj.label.includes('-')) {
-      const parts = currentYearObj.label.split('-');
+    if (currentYearObj?.label && /[-/]/.test(currentYearObj.label)) {
+      const parts = currentYearObj.label.split(/[-/]/);
       const y1 = parseInt(parts[0], 10);
       const y2 = parseInt(parts[1], 10);
       if (!isNaN(y1) && !isNaN(y2)) {
@@ -312,9 +315,7 @@ export default function AdminAcademicArchivingPage() {
   };
 
   const handleMigrateAlumniGraduates = () => {
-    toast.success("Migration des diplômés S10 vers le Réseau Alumni ENCG...", {
-      description: "Lauréats transmis automatiquement à l'annuaire des diplômés."
-    });
+    navigate('/alumni/dashboard');
   };
 
   const handleUnsealYear = () => {
@@ -355,7 +356,7 @@ export default function AdminAcademicArchivingPage() {
   // Execution of the intelligent annual rollover with strict admin security check
   const handleExecuteRollover = async () => {
     if (!adminSecurityCode.trim()) {
-      setSecurityError("Le mot de passe administrateur ou le code de sécurité maître est obligatoire.");
+      setSecurityError("Le mot de passe du responsable connecté est obligatoire.");
       toast.error("Code de sécurité requis pour exécuter cette action sensible.");
       return;
     }
@@ -365,7 +366,7 @@ export default function AdminAcademicArchivingPage() {
     setRolloverStep(1);
 
     try {
-      const parts = nextYearLabel.split('-');
+      const parts = nextYearLabel.split(/[-/]/);
       const startDate = `${parts[0]}-09-01`;
       const endDate = `${parts[1] || parts[0]}-06-30`;
 
@@ -1176,19 +1177,19 @@ export default function AdminAcademicArchivingPage() {
                   <Award className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-black text-slate-900 dark:text-slate-100">Migration Alumni</h3>
-                  <p className="text-[11px] text-slate-400">Lauréats S10</p>
+                  <h3 className="text-sm font-black text-slate-900 dark:text-slate-100">Registre des lauréats</h3>
+                  <p className="text-[11px] text-slate-400">Fin de cursus et décision du jury</p>
                 </div>
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                Migrer automatiquement les lauréats diplômés du Semestre 10 vers l'annuaire du Réseau Alumni ENCG.
+                Vérifier les décisions annuelles scellées et finaliser les diplomations de chaque formation, y compris les masters.
               </p>
               <button
                 onClick={handleMigrateAlumniGraduates}
                 className="w-full py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-amber-50 text-amber-600 dark:text-amber-400 font-extrabold text-xs transition-all cursor-pointer flex items-center justify-center gap-2"
               >
                 <Award className="w-3.5 h-3.5" />
-                <span>Migrer Diplômés</span>
+                <span>Ouvrir le registre</span>
               </button>
             </div>
 
@@ -1259,7 +1260,7 @@ export default function AdminAcademicArchivingPage() {
                       <td className="p-4 font-black text-slate-900 dark:text-slate-100 text-sm">
                         {archive.yearLabel}
                         <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-[10px] font-black uppercase ms-2 border border-slate-200 dark:border-slate-700">
-                          Archivée
+                          {archive.isLocked ? 'Archivée' : 'En cours'}
                         </span>
                       </td>
                       <td className="p-4 font-extrabold text-slate-700 dark:text-slate-300">
@@ -1275,11 +1276,11 @@ export default function AdminAcademicArchivingPage() {
                       </td>
                       <td className="p-4 font-mono text-[11px]">
                         <button
-                          onClick={() => handleVerifyBlockchainSeal(archive.blockchainHash)}
+                          disabled={!archive.blockchainHash} onClick={() => handleVerifyBlockchainSeal(archive.blockchainHash)}
                           className="px-2 py-0.5 rounded bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 font-black text-[10px] hover:underline cursor-pointer flex items-center gap-1"
                         >
                           <QrCode className="w-3 h-3" />
-                          <span>{archive.blockchainHash.substring(0, 10)}...</span>
+                          <span>{archive.blockchainHash ? `${archive.blockchainHash.substring(0, 10)}...` : "Non ancré"}</span>
                         </button>
                       </td>
                       <td className="p-4 font-bold text-slate-500 dark:text-slate-400 whitespace-nowrap">
@@ -1673,7 +1674,7 @@ export default function AdminAcademicArchivingPage() {
                   <div className="flex items-center justify-between">
                     <label className="font-black text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
                       <KeyRound className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                      <span>Code d'Autorisation Administrateur / Mot de Passe</span>
+                      <span>Mot de passe du responsable connecté</span>
                       <span className="text-rose-500 font-black">*</span>
                     </label>
                     <span className="text-[10px] text-slate-400 font-bold">Sécurité Obligatoire</span>
@@ -1690,7 +1691,7 @@ export default function AdminAcademicArchivingPage() {
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') handleExecuteRollover();
                       }}
-                      placeholder="Saisissez votre mot de passe admin ou code de sécurité..."
+                      placeholder="Saisissez votre mot de passe"
                       className={cn(
                         "w-full h-12 ps-4 pe-11 rounded-xl bg-slate-50 dark:bg-slate-800 border text-sm font-semibold outline-none transition-all",
                         securityError

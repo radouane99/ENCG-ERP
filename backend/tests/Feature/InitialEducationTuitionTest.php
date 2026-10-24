@@ -18,6 +18,7 @@ class InitialEducationTuitionTest extends TestCase
     {
         Notification::fake();
         $year = $this->makeTestAcademicYear(); $f = $this->makeTestFiliere(['type' => $type]); $student = $this->makeTestStudent();
+        $this->openTestRenewalCampaign($year);
         $student->user->assignRole(Role::findOrCreate('student', 'sanctum'));
         StudentPathway::create(['student_id' => $student->id, 'academic_year_id' => $year->id, 'filiere_id' => $f->id, 'current_semester' => $semester, 'is_current' => true]);
         StudentRegistration::create(['student_id' => $student->id, 'academic_year_id' => $year->id, 'filiere_id' => $f->id, 'semester_number' => $semester, 'registration_type' => 're_enrollment', 'status' => 'academic_validated']);

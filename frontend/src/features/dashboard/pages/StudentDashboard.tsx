@@ -1,3 +1,4 @@
+import UserActionCenter from '@features/dashboard/components/UserActionCenter'
 import { useState } from 'react';
 import {
 Calendar as CalendarIcon,
@@ -202,6 +203,7 @@ export default function StudentDashboard() {
   return (
     <div data-testid="student-dashboard" className="space-y-8 font-sans animate-in fade-in duration-500 text-slate-900 dark:text-slate-100 pb-12">
       
+      <UserActionCenter actor="student"/>
       {/* ── Executive Top Cockpit Header (Matching Admin & Professor Cockpit) ── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800/80 pb-5">
         <div>

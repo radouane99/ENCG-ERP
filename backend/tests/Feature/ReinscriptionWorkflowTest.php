@@ -32,6 +32,7 @@ class ReinscriptionWorkflowTest extends TestCase
         parent::setUp();
 
         $this->academicYear = $this->makeTestAcademicYear();
+        $this->openTestRenewalCampaign($this->academicYear);
         $this->filiere = $this->makeTestFiliere(['name' => 'Commerce International', 'code' => 'CI']);
 
         $this->student = $this->makeTestStudent([
@@ -97,85 +98,23 @@ class ReinscriptionWorkflowTest extends TestCase
         ]);
     }
 
-    public function test_ouvrir_reinscription_uses_command_year_not_calendar_year(): void
+    public function test_legacy_command_cannot_promote_students_or_create_an_academic_year(): void
     {
         Mail::fake();
-        Carbon::setTestNow('2026-08-24');
-
-        $this->student->update([
-            'inscription_status' => 'reinscrit',
-            'academic_year' => '2027-2028',
-        ]);
-
-        $eligible = $this->makeTestStudent([
-            'first_name' => 'Sara',
-            'last_name' => 'AMRANI',
-            'cne' => 'N778899002',
-        ]);
-        $eligible->update([
-            'inscription_status' => 'inscrit',
-            'academic_year' => '2025-2026',
-        ]);
-        StudentPathway::create([
-            'student_id' => $eligible->id,
-            'filiere_id' => $this->filiere->id,
-            'academic_year_id' => $this->academicYear->id,
-            'current_semester' => 3,
-            'is_current' => true,
-        ]);
-
-        $this->artisan('reinscription:ouvrir', ['--annee' => '2028'])->assertSuccessful();
-
-        $this->student->refresh();
-        $eligible->refresh();
-
-        $this->assertSame('reinscrit', $this->student->inscription_status);
-        $this->assertSame('2027-2028', $this->student->academic_year);
-        $this->assertDatabaseMissing('student_dossier_audit_logs', [
-            'student_id' => $this->student->id,
-            'action' => 'reinscription_blocked',
-        ]);
-
-        $this->artisan('reinscription:ouvrir', ['--annee' => '2028'])->assertSuccessful();
-        $this->assertSame(
-            0,
-            StudentDossierAuditLog::query()
-                ->where('student_id', $this->student->id)
-                ->where('action', 'reinscription_blocked')
-                ->count()
-        );
-
-        $this->assertSame('reinscrit', $eligible->inscription_status);
-        $this->assertSame('2027-2028', $eligible->academic_year);
-        $targetYear = AcademicYear::query()
-            ->where('start_year', 2027)
-            ->where('end_year', 2028)
-            ->first();
-        $this->assertNotNull($targetYear);
-        $this->assertDatabaseHas('student_pathways', [
-            'student_id' => $eligible->id,
-            'is_current' => true,
-            'academic_year_id' => $targetYear->id,
-        ]);
-        $this->assertDatabaseHas('student_dossier_audit_logs', [
-            'student_id' => $eligible->id,
-            'action' => StudentDossierAuditLog::ACTION_REINSCRIPTION,
-            'old_value' => 'inscrit',
-            'new_value' => 'reinscrit',
-        ]);
-
-        Carbon::setTestNow();
+        $before = $this->student->fresh()->getRawOriginal();
+        $years = AcademicYear::count();
+        $this->artisan('reinscription:ouvrir', ['--annee' => '2028'])->assertFailed();
+        $this->assertSame($before, $this->student->fresh()->getRawOriginal());
+        $this->assertSame($years, AcademicYear::count());
+        Mail::assertNothingOutgoing();
     }
 
-    public function test_ouvrir_reinscription_defaults_annee_to_upcoming_end_year(): void
+    public function test_legacy_command_without_options_cannot_open_a_campaign_or_send_notifications(): void
     {
         Mail::fake();
-        Carbon::setTestNow('2026-07-01');
-
-        $this->artisan('reinscription:ouvrir')
-            ->expectsOutputToContain('2026-2027')
-            ->assertSuccessful();
-
-        Carbon::setTestNow();
+        $campaigns = \App\Models\RenewalCampaign::count();
+        $this->artisan('reinscription:ouvrir')->expectsOutputToContain('Commande automatique désactivée')->assertFailed();
+        $this->assertSame($campaigns, \App\Models\RenewalCampaign::count());
+        Mail::assertNothingOutgoing();
     }
 }

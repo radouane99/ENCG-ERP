@@ -41,6 +41,30 @@ class AdmissionWorkflowTest extends TestCase
             'profile' => ['phone' => '0612345678', 'birth_date' => '2006-02-12', 'address' => 'Test address', 'gender' => 'female', 'bac_average' => 16.5, 'bac_year' => 2026]]);
     }
     private function login(Application $app): void { Sanctum::actingAs(User::findOrFail($app->owner_user_id)); }
+    public function test_preregistration_receipt_contains_private_photo_profile_and_massar_qr(): void
+    {
+        $a = $this->candidate(); $this->login($a); $this->documents($a);
+        $this->get(self::BASE.'/receipt?application_id='.$a->id)->assertStatus(422);
+        $a->update(['submitted_at' => now(), 'dossier_status' => 'submitted']);
+        $data = [];
+        \Illuminate\Support\Facades\View::composer('pdf.admission-preregistration', function ($view) use (&$data) { $data = $view->getData(); });
+        $response = $this->get(self::BASE.'/receipt?application_id='.$a->id)->assertOk()->assertHeader('Content-Type', 'application/pdf');
+        $this->assertStringStartsWith('%PDF-', $response->getContent());
+        $this->assertSame(1, preg_match_all('~/Type\s*/Page\b~', $response->getContent()));
+        $html = view('pdf.admission-preregistration', $data)->render();
+        $this->assertStringContainsString('data:image/png;base64,', $html);
+        $this->assertStringContainsString('data:image/svg+xml;base64,', $html);
+        $this->assertStringContainsString($a->cne, $html);
+        $this->assertStringContainsString('Test address', $html);
+        $this->assertStringContainsString('préinscription', $html);
+        $expectedUrl = rtrim(config('app.frontend_url') ?: config('app.url'), '/').'/academic/enrollments?'.http_build_query([
+            'campaign_id' => $a->admission_campaign_id, 'application_id' => $a->id, 'cne' => $a->cne,
+        ]);
+        $this->assertSame('data:image/svg+xml;base64,'.base64_encode(\SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')->size(180)->margin(2)->generate($expectedUrl)), $data['qrData']);
+        if (getenv('ADMISSION_PDF_PREVIEW')) file_put_contents(storage_path('app/preregistration-synthetic-preview.pdf'), $response->getContent());
+        $this->login($this->candidate('Z999999999', 'CD999999'));
+        $this->get(self::BASE.'/receipt?application_id='.$a->id)->assertNotFound();
+    }
     private function staff(string $role = 'scolarite'): void
     {
         $u = User::factory()->create(['institution_id' => 1]);
@@ -259,5 +283,101 @@ class AdmissionWorkflowTest extends TestCase
         $this->assertArrayNotHasKey('birth_date', $result['fields']);
         $this->assertArrayNotHasKey('bac_average', $result['fields']);
         $this->assertSame('N123456789', $result['fields']['cne']['value']);
+    }
+
+    public static function unavailableCloudResponses(): array
+    {
+        return [
+            'timeout or connection failure' => ['connection'],
+            'rate limited' => ['429'],
+            'provider unavailable' => ['503'],
+            'malformed JSON' => ['malformed'],
+            'missing completion' => ['missing'],
+            'list instead of object' => ['list'],
+            'nested values' => ['nested'],
+            'null or invalid values' => ['invalid'],
+        ];
+    }
+
+    public function test_scanned_image_uses_real_local_ocr_without_cloud(): void
+    {
+        Queue::fake(); Http::preventStrayRequests(); Storage::fake('private');
+        $a = $this->candidate(); $this->login($a);
+        $disk = Storage::disk('private');
+        $disk->put('scan-source.pdf', app('dompdf.wrapper')->loadHTML('<html><body style="font-family:DejaVu Sans;font-size:26px"><p>SYNTHETIC DOCUMENT</p><p>CNE N123456789</p><p>CIN AB123456</p></body></html>')->output());
+        $rasterize = new \Symfony\Component\Process\Process(['pdftoppm', '-singlefile', '-r', '150', '-png', $disk->path('scan-source.pdf'), $disk->path('scan-image')]);
+        $rasterize->setTimeout(15)->mustRun();
+        $doc = StudentDocument::create(['application_id' => $a->id, 'cne' => $a->cne, 'type' => 'bac', 'file_path' => 'scan-image.png', 'mime_type' => 'image/png', 'status' => 'pending']);
+        $queued = $this->postJson(self::BASE.'/ocr', ['application_id' => $a->id, 'document_id' => $doc->id,
+            'mode' => 'local', 'consent' => true, 'consent_version' => 'admissions-v1'])->assertAccepted();
+        (new \App\Jobs\ProcessAdmissionOcrJob($queued->json('id')))->handle(app(\App\Services\Ocr\AdmissionOcrService::class));
+        $this->getJson(self::BASE.'/ocr/'.$queued->json('id'))->assertOk()->assertJsonPath('status', 'needs_review')
+            ->assertJsonPath('engine', 'tesseract')->assertJsonPath('fields.cne.value', 'N123456789')->assertJsonPath('fields.cin.value', 'AB123456');
+        Http::assertNothingSent();
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('unavailableCloudResponses')]
+    public function test_cloud_failure_preserves_local_results_through_the_candidate_api(string $failure): void
+    {
+        Queue::fake(); Http::preventStrayRequests(); Storage::fake('private');
+        config(['services.groq.key' => 'synthetic-test-key', 'services.groq.model' => 'synthetic-model']);
+        $a = $this->candidate(); $this->login($a);
+        $institution = $a->campaign->institution;
+        $settings = $institution->settings ?? []; $settings['admissions']['ocr_cloud_enabled'] = true;
+        $institution->update(['settings' => $settings]);
+        $pdf = app('dompdf.wrapper')->loadHTML('<html><body><h1>SYNTHETIC DOCUMENT</h1><p>CNE N123456789</p><p>CIN AB123456</p></body></html>')->output();
+        Storage::disk('private')->put('fallback-synthetic.pdf', $pdf);
+        $doc = StudentDocument::create(['application_id' => $a->id, 'cne' => $a->cne, 'type' => 'bac', 'file_path' => 'fallback-synthetic.pdf', 'mime_type' => 'application/pdf', 'status' => 'pending']);
+        $service = app(\App\Services\Ocr\AdmissionOcrService::class);
+        $local = $service->extract($doc->fresh(), 'local');
+        $this->assertSame('N123456789', $local['fields']['cne']['value']);
+        Http::assertNothingSent();
+        $attempts = 0;
+        Http::fake(['api.groq.com/*' => function () use ($failure, &$attempts) {
+            $attempts++;
+            if ($failure === 'connection') throw new \Illuminate\Http\Client\ConnectionException('SYNTHETIC_PRIVATE_PROVIDER_DETAILS');
+            if (in_array($failure, ['429', '503'], true)) return Http::response(['error' => 'SYNTHETIC_PRIVATE_PROVIDER_DETAILS'], (int) $failure);
+            if ($failure === 'missing') return Http::response(['choices' => []]);
+            $content = match ($failure) {
+                'malformed' => '{invalid', 'list' => '["N123456789"]',
+                'nested' => '{"cne":{"value":"WRONG"},"first_name_fr":["WRONG"]}',
+                default => '{"cne":null,"cin":null,"birth_date":"31/02/2006","bac_average":99}',
+            };
+            return Http::response(['choices' => [['message' => ['content' => $content]]]]);
+        }]);
+        $response = $this->postJson(self::BASE.'/ocr', ['application_id' => $a->id, 'document_id' => $doc->id,
+            'mode' => 'cloud', 'consent' => true, 'consent_version' => 'admissions-v1'])->assertAccepted();
+        (new \App\Jobs\ProcessAdmissionOcrJob($response->json('id')))->handle($service);
+        $result = $this->getJson(self::BASE.'/ocr/'.$response->json('id'))->assertOk()->assertJsonPath('status', 'needs_review');
+        $this->assertSame($local['fields'], $result->json('fields'));
+        $this->assertSame($local['engine'], $result->json('engine'));
+        $this->assertStringContainsString('extraction locale conservée', implode(' ', $result->json('warnings')));
+        $this->assertStringNotContainsString('SYNTHETIC_PRIVATE_PROVIDER_DETAILS', $result->getContent());
+        $this->assertSame(1, $attempts);
+        Http::assertSentCount($failure === 'connection' ? 0 : 1);
+    }
+
+    public function test_partial_cloud_enrichment_keeps_local_identifiers_and_document_provenance(): void
+    {
+        Http::preventStrayRequests(); Storage::fake('private');
+        config(['services.groq.key' => 'synthetic-test-key', 'services.groq.model' => 'synthetic-model']);
+        $a = $this->candidate();
+        $institution = $a->campaign->institution;
+        $settings = $institution->settings ?? []; $settings['admissions']['ocr_cloud_enabled'] = true;
+        $institution->update(['settings' => $settings]);
+        $pdf = app('dompdf.wrapper')->loadHTML('<html><body><h1>SYNTHETIC DOCUMENT</h1><p>CNE N123456789</p><p>CIN AB123456</p></body></html>')->output();
+        Storage::disk('private')->put('partial-synthetic.pdf', $pdf);
+        $doc = StudentDocument::create(['application_id' => $a->id, 'cne' => $a->cne, 'type' => 'bac', 'file_path' => 'partial-synthetic.pdf', 'mime_type' => 'application/pdf', 'status' => 'pending']);
+        Http::fake(['api.groq.com/*' => Http::response(['choices' => [['message' => ['content' => '{"cne":null,"birth_date":"12/02/2006","bac_average":16.5,"status":"approved"}']]]])]);
+        $result = app(\App\Services\Ocr\AdmissionOcrService::class)->extract($doc->fresh(), 'cloud');
+        $this->assertSame('N123456789', $result['fields']['cne']['value']);
+        $this->assertSame('AB123456', $result['fields']['cin']['value']);
+        $this->assertSame('2006-02-12', $result['fields']['birth_date']['value']);
+        $this->assertSame(16.5, $result['fields']['bac_average']['value']);
+        $this->assertSame($doc->id, $result['fields']['birth_date']['document_id']);
+        $this->assertTrue($result['fields']['birth_date']['requires_confirmation']);
+        $this->assertArrayNotHasKey('status', $result['fields']);
+        $this->assertStringContainsString('+groq:synthetic-model', $result['engine']);
+        Http::assertSentCount(1);
     }
 }

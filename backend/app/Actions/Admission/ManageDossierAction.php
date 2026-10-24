@@ -95,6 +95,7 @@ class ManageDossierAction
             return DB::transaction(function () use ($request, $type, $file, $mime, $hash, &$path) {
                 $app = $this->locked($request);
                 $old = StudentDocument::where('application_id', $app->id)->where('type', $type)->where('is_current', true)->first();
+                abort_if($app->dossier_status === 'needs_correction' && $old?->status === 'verified', 422, 'Cette pièce est déjà validée. Remplacez uniquement les pièces à corriger ou contactez la scolarité.');
                 if ($old && $old->content_hash === $hash) return $old;
                 $version = StudentDocument::where('application_id', $app->id)->where('type', $type)->max('version') + 1;
                 $ext = match ($mime) { 'application/pdf' => 'pdf', 'image/png' => 'png', 'image/webp' => 'webp', default => 'jpg' };
@@ -121,6 +122,7 @@ class ManageDossierAction
             $app = $this->locked($request);
             $doc = StudentDocument::where('application_id', $app->id)->where('type', self::type($request->input('type', '')))
                 ->where('is_current', true)->lockForUpdate()->firstOrFail();
+            abort_if($app->dossier_status === 'needs_correction' && $doc->status === 'verified', 422, 'Une pièce validée doit être conservée pendant la correction.');
             // Keep the immutable file/version for audit; it is no longer visible to the candidate.
             $doc->update(['is_current' => false, 'withdrawn_at' => now()]);
             $app->increment('version');
@@ -139,6 +141,7 @@ class ManageDossierAction
                 'address' => 'required', 'bac_average' => 'required|numeric|between:0,20', 'bac_year' => 'required|integer'])->validate();
             $types = StudentDocument::where('application_id', $app->id)->where('is_current', true)->whereNull('withdrawn_at')->pluck('type')->all();
             abort_if(array_diff(\App\Domain\Admission\AdmissionEntryRules::documents($app->campaign->entry_route), $types), 422, 'Ajoutez toutes les pièces requises pour ce concours avant de soumettre.');
+            abort_if(StudentDocument::where('application_id', $app->id)->where('is_current', true)->whereNull('withdrawn_at')->where('status', 'rejected')->exists(), 422, 'Remplacez les pièces signalées à corriger avant de soumettre à nouveau.');
             $app->update(['dossier_status' => 'submitted', 'status' => 'submitted', 'submitted_at' => now(), 'version' => $app->version + 1]);
             $this->event($app, 'submitted');
             app(\App\Services\Admissions\AdmissionNotificationService::class)->queue($app, 'submitted');
@@ -162,7 +165,7 @@ class ManageDossierAction
             $app = AdmissionAccess::dossier($request);
             $app = Application::whereKey($app->id)->lockForUpdate()->firstOrFail();
             $this->version($app, $request);
-            abort_unless(in_array($app->dossier_status, ['submitted', 'under_review']), 422, 'Le candidat doit soumettre son dossier avant la revue.');
+            abort_unless(in_array($app->dossier_status, ['submitted', 'under_review', 'needs_correction']), 422, 'Le candidat doit soumettre son dossier avant la revue.');
             $doc = StudentDocument::where('application_id', $app->id)->whereKey($documentId)->where('is_current', true)->whereNull('withdrawn_at')->firstOrFail();
             $doc->update(['status' => $data['decision']]);
             DB::table('admission_reviews')->insert(['application_id' => $app->id, 'document_id' => $doc->id,
@@ -170,7 +173,8 @@ class ManageDossierAction
                 'corrections' => ! empty($data['corrections']) ? json_encode($data['corrections'], JSON_UNESCAPED_UNICODE) : null,
                 'created_at' => now(), 'updated_at' => now()]);
             if (! empty($data['corrections'])) $app->profile = array_replace($app->profile ?? [], $data['corrections']);
-            $app->update(['dossier_status' => $data['decision'] === 'rejected' ? 'needs_correction' : 'under_review', 'version' => $app->version + 1]);
+            $requiresCorrection = $data['decision'] === 'rejected' || StudentDocument::where('application_id', $app->id)->where('is_current', true)->whereNull('withdrawn_at')->where('status', 'rejected')->exists();
+            $app->update(['dossier_status' => $requiresCorrection || $app->dossier_status === 'needs_correction' ? 'needs_correction' : 'under_review', 'version' => $app->version + 1]);
             $this->event($app, 'document_reviewed', ['document_id' => $doc->id, 'decision' => $data['decision']]);
             if ($data['decision'] === 'rejected') {
                 $this->event($app, 'needs_correction', ['document_id' => $doc->id]);
@@ -189,7 +193,9 @@ class ManageDossierAction
             'physical_checklist.bac_original' => 'required_if:decision,approved|accepted',
             'physical_checklist.releve_notes' => 'required_if:decision,approved|accepted',
             'physical_checklist.cin_copy' => 'required_if:decision,approved|accepted',
-            'physical_checklist.photos' => 'required_if:decision,approved|accepted']);
+            'physical_checklist.photos' => 'required_if:decision,approved|accepted',
+            'physical_checklist.attestation_admission' => 'sometimes|accepted',
+            'physical_checklist.releve_parcours' => 'sometimes|accepted']);
         return DB::transaction(function () use ($request, $data) {
             $resolved = AdmissionAccess::dossier($request);
             $campaign = $resolved->campaign()->lockForUpdate()->firstOrFail();
