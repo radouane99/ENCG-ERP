@@ -1,24 +1,24 @@
-import React,{ useState } from 'react'
-import { useQuery,useMutation,useQueryClient } from '@tanstack/react-query'
-import { UserCheck,ShieldAlert,Plus,X } from 'lucide-react'
-import { useTranslation } from 'react-i18next'
-import { toast } from 'sonner'
-import { cn } from '@shared/lib/utils'
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { UserCheck, ShieldAlert, Plus, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
+import { cn } from '@shared/lib/utils';
 import api from '@shared/lib/api'
-import { Spinner } from '@shared/components/ui/Spinner'
+import { Spinner } from '@shared/components/ui/Spinner';
 
 export default function DepartmentSubstitutionsPage() {
-  const { t, i18n } = useTranslation(['admin', 'common'])
-  const isRtl = i18n.language === 'ar'
+  const { i18n } = useTranslation(['admin', 'common']);
+  void (i18n.language === 'ar');
   const queryClient = useQueryClient()
 
-  const [showModal, setShowModal] = useState(false)
-  const [originalProf, setOriginalProf] = useState('')
-  const [substituteProf, setSubstituteProf] = useState('')
-  const [selectedModule, setSelectedModule] = useState('')
-  const [startDate, setStartDate] = useState(nowDateStr())
-  const [endDate, setEndDate] = useState(futureDateStr(14))
-  const [reason, setReason] = useState('')
+  const [showModal, setShowModal] = useState(false);
+  const [originalProf, setOriginalProf] = useState('');
+  const [substituteProf, setSubstituteProf] = useState('');
+  const [selectedModule, setSelectedModule] = useState('');
+  const [startDate, setStartDate] = useState(nowDateStr());
+  const [endDate, setEndDate] = useState(futureDateStr(14));
+  const [reason, setReason] = useState('');
 
   function nowDateStr() {
     return new Date().toISOString().split('T')[0]
@@ -31,22 +31,25 @@ export default function DepartmentSubstitutionsPage() {
   }
 
   // Fetch substitutions
-  const { data: substitutions = [], isLoading } = useQuery({
+  // Fetch substitutions
+const { data: substitutions = [], isLoading } = useQuery({
     queryKey: ['substitutions'],
     queryFn: () => api.get('/v1/admin/substitutions').then(res => res.data.data)
-  })
+});
 
   // Fetch professors list
-  const { data: professors = [] } = useQuery({
+  // Fetch professors list
+const { data: professors = [] } = useQuery({
     queryKey: ['professors-list'],
     queryFn: () => api.get('/professors').then(res => res.data.data || res.data)
-  })
+});
 
   // Fetch modules list
-  const { data: modules = [] } = useQuery({
+  // Fetch modules list
+const { data: modules = [] } = useQuery({
     queryKey: ['modules-list'],
     queryFn: () => api.get('/modules').then(res => res.data.data || res.data)
-  })
+});
 
   // Create substitution mutation
   const createMutation = useMutation({

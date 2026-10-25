@@ -88,7 +88,7 @@ export default function StudentGuichetPage() {
     }
   });
 
-  const requests: any[] = fetchRes?.data || [];
+  const requests: any[] = useMemo(() => (fetchRes?.data || []), [fetchRes]);
 
   // Computed metrics
   const totalCount = requests.length;

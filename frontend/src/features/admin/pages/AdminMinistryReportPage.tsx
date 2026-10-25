@@ -1,23 +1,20 @@
-import { useState } from 'react'
-import {
-BarChart3,Download,Loader2,RefreshCw,Sparkles,FileText,Users,GraduationCap,
-TrendingUp,BookOpen,PlaneTakeoff,CheckCircle2,AlertTriangle,Building2,Globe
-} from 'lucide-react'
-import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react';
+import { BarChart3, Download, Loader2, RefreshCw, Sparkles, FileText, Users, GraduationCap, TrendingUp, BookOpen, PlaneTakeoff, CheckCircle2, AlertTriangle, Building2, Globe } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import api from '@shared/lib/api'
-import { cn } from '@shared/lib/utils'
-import { toast } from 'sonner'
+import { cn } from '@shared/lib/utils';
+import { toast } from 'sonner';
 
 export default function AdminMinistryReportPage() {
-  const [isExporting, setIsExporting] = useState(false)
+  const [isExporting] = useState(false);
 
   const { data, isLoading, refetch, isFetching } = useQuery({
     queryKey: ['ministry-report'],
     queryFn: async () => {
-      const res = await api.get('/admin/ministry-report')
-      return res.data
+        const res = await api.get('/admin/ministry-report');
+        return res.data;
     }
-  })
+});
 
   const handleExportPDF = () => {
     window.open('/api/admin/ministry-report/pdf', '_blank')

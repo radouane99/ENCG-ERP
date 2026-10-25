@@ -287,7 +287,7 @@ export default function ProfessorsListPage() {
     queryFn: () => api.get('/departments').then(r => r.data)
   })
 
-  const professors: Professor[] = data?.data || []
+  const professors: Professor[] = useMemo(() => (data?.data || []), [data])
   const departments: Department[] = deptsData?.data || []
 
   // Mutations

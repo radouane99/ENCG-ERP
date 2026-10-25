@@ -1,6 +1,6 @@
-import { useState,useRef } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { Calendar as CalendarIcon,Search,Download,Filter } from 'lucide-react'
+import { useState, useRef } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Calendar as CalendarIcon, Search, Download, Filter } from 'lucide-react';
 import FullCalendar from '@fullcalendar/react'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
@@ -8,24 +8,11 @@ import interactionPlugin from '@fullcalendar/interaction'
 import arLocale from '@fullcalendar/core/locales/ar'
 import frLocale from '@fullcalendar/core/locales/fr'
 import api from '@shared/lib/api'
-import { useTranslation } from 'react-i18next'
-import { Button } from '@shared/components/ui/Button'
-import { Input } from '@shared/components/ui/Input'
+import { useTranslation } from 'react-i18next';
+import { Button } from '@shared/components/ui/Button';
+import { Input } from '@shared/components/ui/Input';
 
-interface TimetableEvent {
-  id: string;
-  title: string;
-  start: string;
-  end: string;
-  extendedProps: {
-    professor: string;
-    room: string;
-    type: 'CM' | 'TD' | 'TP' | 'EXAM';
-    group: string;
-  };
-  backgroundColor: string;
-  borderColor: string;
-}
+
 
 const TYPE_COLORS: Record<string, { bg: string, border: string }> = {
   CM: { bg: 'var(--color-primary)', border: 'transparent' },
@@ -35,17 +22,19 @@ const TYPE_COLORS: Record<string, { bg: string, border: string }> = {
 };
 
 export default function ModernTimetable() {
-  const { t, i18n } = useTranslation(['modules', 'common'])
+  const { t, i18n } = useTranslation(['modules', 'common']);
   const isRtl = i18n.language === 'ar'
-  const [targetType, setTargetType] = useState<'group' | 'professor' | 'room'>('group')
-  const [targetId, setTargetId] = useState<string>('1') // default group ID
+  const [targetType, setTargetType] = useState<'group' | 'professor' | 'room'>('group');
+  const [targetId, setTargetId] = useState<string>('1'); // default group ID
+ // default group ID
   const calendarRef = useRef<FullCalendar>(null)
 
   // In reality, this endpoint would use the `TimetableService` to export FullCalendar compatible events
-  const { data, isLoading } = useQuery({
+  // In reality, this endpoint would use the `TimetableService` to export FullCalendar compatible events
+const { data } = useQuery({
     queryKey: ['timetable', targetType, targetId],
     queryFn: () => api.get(`/timetable`, { params: { [`${targetType}_id`]: targetId } }).then(r => r.data),
-  })
+});
 
   // Format the raw DB response into FullCalendar format
   const formatEvents = (rawSchedules: any[]) => {

@@ -1,58 +1,51 @@
-import React,{ useState } from 'react'
-import { useQuery,useMutation,useQueryClient } from '@tanstack/react-query'
-import {
-ShieldCheck,
-UserCog,
-Key,
-Search,
-Filter,
-Check,
-X,RefreshCw,Download,
-Shield,ChevronLeft,
-ChevronRight,AlertCircle
-} from 'lucide-react'
-import { useTranslation } from 'react-i18next'
-import { toast } from 'sonner'
-import { cn } from '@shared/lib/utils'
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { ShieldCheck, UserCog, Key, Search, Filter, Check, X, RefreshCw, Download, Shield, ChevronLeft, ChevronRight, AlertCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
+import { cn } from '@shared/lib/utils';
 import api from '@shared/lib/api'
-import { Spinner } from '@shared/components/ui/Spinner'
+import { Spinner } from '@shared/components/ui/Spinner';
 
 export default function AdminRolesPermissionsPage() {
-  const { t, i18n } = useTranslation(['admin', 'common'])
-  const isRtl = i18n.language === 'ar'
+  const { i18n } = useTranslation(['admin', 'common']);
+  void (i18n.language === 'ar');
   const queryClient = useQueryClient()
 
-  const [search, setSearch] = useState('')
-  const [roleFilter, setRoleFilter] = useState('')
-  const [activeCategoryFilter, setActiveCategoryFilter] = useState<string>('ALL')
-  const [page, setPage] = useState(1)
+  const [search, setSearch] = useState('');
+  const [roleFilter, setRoleFilter] = useState('');
+  const [activeCategoryFilter, setActiveCategoryFilter] = useState<string>('ALL');
+  const [page, setPage] = useState(1);
 
   // Edit Modal State
-  const [selectedUser, setSelectedUser] = useState<any | null>(null)
-  const [userRoles, setUserRoles] = useState<string[]>([])
-  const [userPermissions, setUserPermissions] = useState<string[]>([])
+  // Edit Modal State
+const [selectedUser, setSelectedUser] = useState<any | null>(null);
+  const [userRoles, setUserRoles] = useState<string[]>([]);
+  const [userPermissions, setUserPermissions] = useState<string[]>([]);
 
   // Fetch matrix data with resilient endpoint fallback
-  const { data, isLoading, isError, error, refetch } = useQuery({
+  // Fetch matrix data with resilient endpoint fallback
+const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['admin-roles-permissions', search, roleFilter, activeCategoryFilter, page],
     queryFn: async () => {
-      const params = { 
-        search, 
-        role: roleFilter, 
-        category: activeCategoryFilter, 
-        page, 
-        per_page: 50 
-      }
-      try {
-        const res = await api.get('/v1/admin/roles-permissions/data', { params })
-        return res.data
-      } catch {
-        const res = await api.get('/admin/roles-permissions/data', { params })
-        return res.data
-      }
+        const params = {
+            search,
+            role: roleFilter,
+            category: activeCategoryFilter,
+            page,
+            per_page: 50
+        };
+        try {
+            const res = await api.get('/v1/admin/roles-permissions/data', { params });
+            return res.data;
+        }
+        catch {
+            const res = await api.get('/admin/roles-permissions/data', { params });
+            return res.data;
+        }
     },
     retry: 1,
-  })
+});
 
   // Mutation to update user roles & permissions
   const updateMutation = useMutation({

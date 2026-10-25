@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Map,Cpu,Thermometer,Video,Power,Wind,ShieldAlert,Radio,Activity,RefreshCw,X } from 'lucide-react';
+import { Map, Cpu, Thermometer, Video, Power, Wind, ShieldAlert, Radio, Activity, RefreshCw, X } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import api from '@shared/lib/api';
 import { toast } from 'sonner';
 
 export default function AdminSmartCampus() {
-  const { t } = useTranslation(['admin', 'common']);
+  useTranslation(['admin', 'common']);
   const [selectedRoomControls, setSelectedRoomControls] = useState<any>(null);
   const [selectedCamera, setSelectedCamera] = useState<any>(null);
   const [acState, setAcState] = useState<Record<number, boolean>>({});
@@ -17,7 +17,7 @@ export default function AdminSmartCampus() {
     queryKey: ['admin-smart-campus'],
     queryFn: () => api.get('/admin/smart-campus').then((res) => res.data.data),
     refetchInterval: 10000 // Auto-refresh every 10s
-  });
+});
 
   const rooms = campusData?.rooms || [];
   const energy = campusData?.energy || '0 salles actives';

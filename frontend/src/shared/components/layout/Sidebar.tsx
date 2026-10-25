@@ -1,21 +1,9 @@
-import { useState,useMemo,useRef,useEffect } from 'react'
-import { NavLink,useNavigate,useLocation } from 'react-router-dom'
-import { useTranslation } from 'react-i18next'
-import { useAuthStore } from '@stores/authStore'
-import { cn } from '@shared/lib/utils'
-import {
-LayoutDashboard,Users,GraduationCap,BookOpen,Calendar,
-ClipboardList,Award,Settings,
-ChevronRight,ChevronDown,Briefcase,
-Trophy,Clock,UserPlus,Target,
-ScanLine,CalendarDays,Activity,Kanban,
-MapPin,Crown,Book,
-BrainCircuit,Landmark,ShieldCheck,Globe,PlaneTakeoff,Lock,Sparkles,Compass,
-X,IdCard,Eye,Calculator,TrendingUp,Search,BellRing,
-UserX,Gavel,CalendarCheck,MailCheck,FileEdit,UserCog,UserCheck,
-Clock3,DoorOpen,HeartHandshake,CreditCard,Stamp,
-FilterX,Archive,Key,Mic,ArrowRightLeft,Scale,RefreshCw
-} from 'lucide-react'
+import { useState, useMemo, useRef, useEffect } from 'react';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { useAuthStore } from '@stores/authStore';
+import { cn } from '@shared/lib/utils';
+import { LayoutDashboard, Users, GraduationCap, BookOpen, Calendar, ClipboardList, Award, Settings, ChevronRight, ChevronDown, Briefcase, Clock, UserPlus, Target, ScanLine, CalendarDays, Activity, Kanban, MapPin, Crown, Book, BrainCircuit, Landmark, ShieldCheck, Globe, PlaneTakeoff, Lock, Sparkles, Compass, X, IdCard, Eye, Calculator, TrendingUp, Search, BellRing, UserX, Gavel, CalendarCheck, MailCheck, FileEdit, UserCog, UserCheck, Clock3, DoorOpen, HeartHandshake, CreditCard, Stamp, FilterX, Archive, Key, Mic, ArrowRightLeft, Scale, RefreshCw } from 'lucide-react';
 
 interface NavItem {
   label: string
@@ -179,8 +167,8 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ onClose }: SidebarProps) {
-  const { i18n } = useTranslation('common')
-  const { user, hasAnyRole, activeRole } = useAuthStore()
+  const { i18n } = useTranslation('common');
+  const { user, hasAnyRole, activeRole } = useAuthStore();
   const loc = i18n.language.slice(0, 2)
   const isRtl = loc === 'ar'
   const navLabel = (item: { label: string; labelAr?: string; labelEn?: string }) =>
@@ -189,8 +177,9 @@ export default function Sidebar({ onClose }: SidebarProps) {
   const location = useLocation()
 
   // Search and collapsing states
-  const [searchQuery, setSearchQuery] = useState('')
-  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({})
+  // Search and collapsing states
+const [searchQuery, setSearchQuery] = useState('');
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
   const searchInputRef = useRef<HTMLInputElement>(null)
 
   // Toggle group open/collapsed state

@@ -1,15 +1,11 @@
-import React,{ useState,useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import api from '@shared/lib/api';
 import { academicApi } from '@shared/api/academic';
 import { openAuthenticatedUrl } from '@shared/lib/documentAccess';
 import { toast } from 'sonner';
-import {
-Archive,ShieldCheck,Lock,Eye,Download,Check,
-AlertTriangle,Users,GraduationCap,CheckCircle2,Search,ArrowRight,Loader2,CheckCircle,Mail,FolderArchive,Cloud,
-QrCode,Award,AlertCircle,Unlock,Clock,RefreshCw,X,Sparkles,FileSpreadsheet,EyeOff,KeyRound,ShieldAlert,FileText
-} from 'lucide-react';
+import { Archive, ShieldCheck, Lock, Eye, Download, Check, AlertTriangle, Users, GraduationCap, CheckCircle2, Search, ArrowRight, Loader2, CheckCircle, Mail, FolderArchive, Cloud, QrCode, Award, AlertCircle, Unlock, Clock, RefreshCw, X, Sparkles, FileSpreadsheet, EyeOff, KeyRound, ShieldAlert, FileText } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 
 type AcademicYear = {
@@ -119,10 +115,11 @@ export default function AdminAcademicArchivingPage() {
   const [simulationResult, setSimulationResult] = useState<any>(null);
 
   // 1. Academic Years Query
-  const { data: academicYears = [], isLoading: isLoadingYears, refetch: refetchYears } = useQuery<AcademicYear[]>({
+  // 1. Academic Years Query
+const { data: academicYears = [], refetch: refetchYears } = useQuery<AcademicYear[]>({
     queryKey: ['academic-years'],
     queryFn: academicApi.getAcademicYears,
-  });
+});
 
   const currentYearObj = academicYears.find(y => y.is_current) || academicYears[0] || { label: '2026-2027', id: 1 };
 
@@ -139,27 +136,24 @@ export default function AdminAcademicArchivingPage() {
   }, [currentYearObj?.label]);
 
   // 2. Progression Roster Query (Official Moroccan LMD Evaluation)
-  const {
-    data: progressionData,
-    isLoading: isLoadingRoster,
-    isRefetching: isRefetchingRoster,
-    refetch: refetchRoster
-  } = useQuery<ProgressionResponse>({
+  // 2. Progression Roster Query (Official Moroccan LMD Evaluation)
+const { data: progressionData, isLoading: isLoadingRoster, isRefetching: isRefetchingRoster, refetch: refetchRoster } = useQuery<ProgressionResponse>({
     queryKey: ['progression-roster', currentYearObj.id],
     queryFn: async () => {
-      const res = await api.get('/admin/academic-archiving/progression-roster', {
-        params: { academic_year_id: currentYearObj.id }
-      });
-      return res.data;
+        const res = await api.get('/admin/academic-archiving/progression-roster', {
+            params: { academic_year_id: currentYearObj.id }
+        });
+        return res.data;
     },
     enabled: !!currentYearObj.id,
-  });
+});
 
   // 3. Certified Archives Registry Query
-  const { data: archivingResponse, isLoading: isLoadingArchiving, refetch: refetchArchiving } = useQuery({
+  // 3. Certified Archives Registry Query
+const { data: archivingResponse, refetch: refetchArchiving } = useQuery({
     queryKey: ['archiving-stats'],
     queryFn: () => api.get('/admin/archiving-stats').then(res => res.data?.data ?? null),
-  });
+});
 
   const archivesList: ArchiveRecord[] = archivingResponse?.archives || [];
 
@@ -170,7 +164,7 @@ export default function AdminAcademicArchivingPage() {
   );
 
   // Filtered students for promotion roster
-  const allStudents = progressionData?.students || [];
+  const allStudents = useMemo(() => (progressionData?.students || []), [progressionData]);
   const stats = progressionData?.stats || {
     total_students: 0,
     admitted_clean: 0,
@@ -868,7 +862,7 @@ export default function AdminAcademicArchivingPage() {
                     {filteredStudents.map((st) => {
                       const isAdmisPur = st.decision_code === 'ADMIS_PUR';
                       const isAdmisDette = st.decision_code === 'ADMIS_AVEC_DETTE';
-                      const isRedoublant = st.decision_code === 'REDOUBLANT';
+                      void (st.decision_code === 'REDOUBLANT');
                       const isDiplome = st.decision_code === 'DIPLOME';
 
                       return (

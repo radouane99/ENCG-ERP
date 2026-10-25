@@ -1,13 +1,6 @@
 import React, { useRef, useState } from 'react';
 import UserActionCenter from '@features/dashboard/components/UserActionCenter';
-import {
-  BookOpen, Users, Calendar, CheckCircle, Clock, QrCode,
-  Building2, Eye, Zap, FileSignature, RotateCcw, Sparkles,
-  PenTool, ShieldCheck, Download, X, UserX, ArrowRight,
-  BrainCircuit, Mic, ArrowRightLeft, MapPin, TrendingUp,
-  Stamp, CheckCircle2, AlertTriangle, GraduationCap, Shield,
-  RefreshCcw, FileEdit, Check, ChevronRight, Layers, Award
-} from 'lucide-react';
+import { BookOpen, Users, Calendar, CheckCircle, Clock, QrCode, Building2, Eye, Zap, FileSignature, RotateCcw, Sparkles, PenTool, ShieldCheck, Download, X, UserX, ArrowRight, BrainCircuit, Mic, ArrowRightLeft, MapPin, TrendingUp, CheckCircle2, GraduationCap, RefreshCcw, FileEdit } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '@stores/authStore';
@@ -89,7 +82,7 @@ interface ProfessorStatsResponse {
 export default function ProfessorDashboard() {
   const { i18n } = useTranslation(['professors', 'common']);
   const { user } = useAuthStore();
-  const queryClient = useQueryClient();
+  useQueryClient();
 
   const currentDate = new Date().toLocaleDateString(
     i18n.language === 'ar' ? 'ar-MA' : i18n.language === 'en' ? 'en-US' : 'fr-FR',
@@ -100,9 +93,10 @@ export default function ProfessorDashboard() {
   const [activeScannerSession, setActiveScannerSession] = useState<NextClassItem | null>(null);
 
   // Persist signature acknowledgement
-  const [hasAcknowledged, setHasAcknowledged] = useState<boolean>(() => {
+  // Persist signature acknowledgement
+const [hasAcknowledged, setHasAcknowledged] = useState<boolean>(() => {
     return localStorage.getItem('encg_prof_os_signed') === 'true';
-  });
+});
   const [showSignModal, setShowSignModal] = useState<boolean>(false);
 
   // Canvas drawing state
@@ -111,14 +105,15 @@ export default function ProfessorDashboard() {
   const [hasDrawn, setHasDrawn] = useState(false);
 
   // Fetch real statistics from database backend
-  const { data: statsData, isLoading, refetch, isFetching } = useQuery<ProfessorStatsResponse>({
+  // Fetch real statistics from database backend
+const { data: statsData, isLoading, refetch, isFetching } = useQuery<ProfessorStatsResponse>({
     queryKey: ['professor-stats'],
     queryFn: async () => {
-      const res = await api.get('/dashboard/professor/stats');
-      return res.data.data;
+        const res = await api.get('/dashboard/professor/stats');
+        return res.data.data;
     },
     staleTime: 60000,
-  });
+});
 
   const stats: ProfessorStatsResponse = {
     total_students: statsData?.total_students ?? 0,

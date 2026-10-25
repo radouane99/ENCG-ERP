@@ -1,18 +1,18 @@
-import { useState,useEffect } from 'react'
-import { ShieldCheck,Shield,AlertTriangle,Users,BookOpen,Loader2,Printer,Award } from 'lucide-react'
-import { studentsApi } from '@shared/api/students'
-import { toast } from 'sonner'
-import { openStudentAttestationPdf } from '@shared/lib/documentAccess'
+import { useCallback, useState, useEffect } from 'react';
+import { ShieldCheck, Shield, AlertTriangle, Users, BookOpen, Loader2, Printer, Award } from 'lucide-react';
+import { studentsApi } from '@shared/api/students';
+import { toast } from 'sonner';
+import { openStudentAttestationPdf } from '@shared/lib/documentAccess';
 
 export default function StudentsCreditsPage() {
-  const [students, setStudents] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [search, setSearch] = useState('')
-  const [page, setPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
-  const [total, setTotal] = useState(0)
+  const [students, setStudents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search] = useState('');
+  const [page] = useState(1);
+  const [, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
 
-  const fetchStudents = async () => {
+  const fetchStudents = useCallback(async () => {
     try {
       setLoading(true)
       const res = await studentsApi.getStudents({ search: search || undefined, page, per_page: 15 })
@@ -24,9 +24,9 @@ export default function StudentsCreditsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [setLoading, search, page, setStudents, setTotalPages, setTotal])
 
-  useEffect(() => { fetchStudents() }, [page])
+  useEffect(() => { fetchStudents() }, [page, fetchStudents])
 
   const handleExportDerogationPdf = (student: any) => {
     const fullName = `${student.first_name} ${student.last_name}`

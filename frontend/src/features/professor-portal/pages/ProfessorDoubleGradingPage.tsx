@@ -1,13 +1,5 @@
 import { useState } from 'react';
-import {
-ShieldCheck,
-AlertTriangle,
-CheckCircle2,
-FileText,
-Search,
-ArrowRightLeft,
-Save,Scale
-} from 'lucide-react';
+import { ShieldCheck, AlertTriangle, CheckCircle2, FileText, Search, ArrowRightLeft, Save, Scale } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import api from '@/shared/lib/api';
@@ -16,17 +8,18 @@ import { toast } from 'sonner';
 export default function ProfessorDoubleGradingPage() {
   const [searchTerm, setSearchTerm] = useState('');
 
-  const { data: gradingData } = useQuery({
+  useQuery({
     queryKey: ['double-grading-data'],
     queryFn: async () => {
-      try {
-        const res = await api.get('/professor-portal/double-grading');
-        return res.data.data;
-      } catch {
-        return null;
-      }
+        try {
+            const res = await api.get('/professor-portal/double-grading');
+            return res.data.data;
+        }
+        catch {
+            return null;
+        }
     }
-  });
+});
 
   const defaultCopies = [
     {

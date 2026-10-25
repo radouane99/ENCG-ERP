@@ -44,7 +44,7 @@ export default function AdmissionAdminWorkbench() {
     setPage(1); setPreview(null); setAllocation(null)
     setSelected(campaign === linkedCampaign && !status && !search && Number.isSafeInteger(linkedApplication) && linkedApplication > 0 ? linkedApplication : undefined)
   }, [campaign, status, search, linkedCampaign, linkedApplication])
-  useEffect(() => { setReason(''); setOfficialNumber(''); setContactEmail(dossier.data?.email || ''); setVerifiedContact(false); setPhysical(Object.fromEntries(Object.keys(dossier.data?.physical_requirements ?? { bac_original: '', releve_notes: '', cin_copy: '', photos: '' }).map(key => [key, false]))) }, [selected, dossier.data?.id, dossier.data?.email])
+  useEffect(() => { setReason(''); setOfficialNumber(''); setContactEmail(dossier.data?.email || ''); setVerifiedContact(false); setPhysical(Object.fromEntries(Object.keys(dossier.data?.physical_requirements ?? { bac_original: '', releve_notes: '', cin_copy: '', photos: '' }).map(key => [key, false]))) }, [selected, dossier.data?.id, dossier.data?.email, dossier.data?.physical_requirements])
   const rows = useQuery({ queryKey: ['admission-list', campaign, status, search, page], enabled: !!campaign,
     queryFn: async ({ signal }) => (await api.get<{ data: Row[]; current_page: number; last_page: number; total: number }>(`${workflowBase}/applications`, { params: { campaign_id: campaign, status: status || undefined, search: search || undefined, page }, signal })).data })
   const stats = useQuery({ queryKey: ['admission-stats', campaign], enabled: !!campaign, queryFn: async ({ signal }) =>

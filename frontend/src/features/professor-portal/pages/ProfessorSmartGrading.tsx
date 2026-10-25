@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FileSignature,PenTool,Sparkles,AlertTriangle,CheckCircle2,ShieldCheck,Loader2 } from 'lucide-react';
+import { FileSignature, PenTool, Sparkles, AlertTriangle, CheckCircle2, ShieldCheck, Loader2 } from 'lucide-react';
 import api from '@shared/lib/api';
 import { toast } from 'sonner';
 
 export default function ProfessorSmartGrading() {
-  const { t, i18n } = useTranslation(['professors', 'common']);
+  useTranslation(['professors', 'common']);
   const [reportContent, setReportContent] = useState('');
   const [rubric, setRubric] = useState('Barème standard ENCG Fès (20 pts)');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -27,7 +27,7 @@ export default function ProfessorSmartGrading() {
       });
       setResult(res.data);
       toast.success('Correction IA effectuée avec succès !');
-    } catch (err) {
+    } catch {
       toast.error("Erreur lors de l'analyse IA");
     } finally {
       setIsProcessing(false);

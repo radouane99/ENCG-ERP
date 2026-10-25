@@ -1,31 +1,29 @@
-import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { useTranslation } from 'react-i18next'
-import {
-GraduationCap,Building2,Briefcase,TrendingUp,
-Search,Filter,MapPin,Link,Mail,CheckCircle2,Users
-} from 'lucide-react'
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
+import { GraduationCap, Building2, Briefcase, TrendingUp, Search, Filter, MapPin, Link, Mail, CheckCircle2, Users } from 'lucide-react';
 import api from '@shared/lib/api'
-import { Button } from '@shared/components/ui/Button'
-import { Input } from '@shared/components/ui/Input'
+import { Button } from '@shared/components/ui/Button';
+import { Input } from '@shared/components/ui/Input';
 
 export default function AlumniNetwork() {
-  const { t, i18n } = useTranslation('common')
+  const { i18n } = useTranslation('common');
   const isRtl = i18n.language === 'ar'
   
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useState('');
 
   // Fetch Stats
-  const { data: stats } = useQuery({
+  // Fetch Stats
+const { data: stats } = useQuery({
     queryKey: ['alumni-stats'],
     queryFn: () => api.get('/alumni/dashboard-stats').then(res => res.data.data),
     staleTime: 5 * 60 * 1000,
-  })
+});
 
   const { data: alumniData } = useQuery({
     queryKey: ['alumni-directory'],
     queryFn: () => api.get('/alumni').then(res => res.data.data),
-  })
+});
 
   const alumniList = alumniData || []
 

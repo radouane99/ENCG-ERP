@@ -1,37 +1,12 @@
-import React,{ useState,useEffect,useMemo } from 'react'
-import {
-Sparkles,
-Search,
-Filter,
-Calendar,
-Clock,
-MapPin,
-Users,
-CheckCircle2,
-AlertTriangle,Loader2,Check,
-X,
-Layers,
-DoorOpen,
-Monitor,
-Thermometer,
-FileText,PlusCircle,
-Building2,
-ShieldCheck,
-Printer,CalendarPlus,
-BellRing,
-Table,FileSpreadsheet,
-RefreshCw,
-GraduationCap,
-QrCode,
-Eye,LayoutList
-} from 'lucide-react'
+import React, { useCallback, useState, useEffect, useMemo } from 'react';
+import { Sparkles, Search, Filter, Calendar, Clock, MapPin, Users, CheckCircle2, AlertTriangle, Loader2, Check, X, Layers, DoorOpen, Monitor, Thermometer, FileText, PlusCircle, Building2, ShieldCheck, Printer, CalendarPlus, BellRing, Table, FileSpreadsheet, RefreshCw, GraduationCap, QrCode, Eye, LayoutList } from 'lucide-react';
 import api from '@/shared/lib/api'
-import { toast } from 'sonner'
-import { cn } from '@/shared/lib/utils'
-import { CustomSelect } from '@/shared/components/ui/CustomSelect'
-import { DatePicker } from '@/shared/components/ui/DatePicker'
-import { format,startOfWeek,parseISO } from 'date-fns'
-import { fr } from 'date-fns/locale'
+import { toast } from 'sonner';
+import { cn } from '@/shared/lib/utils';
+import { CustomSelect } from '@/shared/components/ui/CustomSelect';
+import { DatePicker } from '@/shared/components/ui/DatePicker';
+import { format, startOfWeek, parseISO } from 'date-fns';
+import { fr } from 'date-fns/locale';
 
 const TIME_BLOCKS = [
   { start: '08:30', end: '10:30', label: '08:30 – 10:30 (Matin 1)' },
@@ -41,58 +16,65 @@ const TIME_BLOCKS = [
 ]
 
 export default function RoomAvailabilityHubPage() {
-  const [activeTab, setActiveTab] = useState<'master_matrix' | 'finder' | 'matrix' | 'room_schedule' | 'bookings'>('master_matrix')
-  const [isExamMode, setIsExamMode] = useState<boolean>(false)
+  const [activeTab, setActiveTab] = useState<'master_matrix' | 'finder' | 'matrix' | 'room_schedule' | 'bookings'>('master_matrix');
+  const [isExamMode, setIsExamMode] = useState<boolean>(false);
 
   // --- Common Data ---
-  const [rooms, setRooms] = useState<any[]>([])
-  const [filieres, setFilieres] = useState<any[]>([])
-  const [groups, setGroups] = useState<any[]>([])
-  const [loadingInitial, setLoadingInitial] = useState(true)
+  // --- Common Data ---
+const [rooms, setRooms] = useState<any[]>([]);
+  const [filieres, setFilieres] = useState<any[]>([]);
+  const [groups, setGroups] = useState<any[]>([]);
+  const [, setLoadingInitial] = useState(true);
 
   // --- Master Weekly Matrix State ---
-  const [masterStartDate, setMasterStartDate] = useState(format(startOfWeek(new Date(), { weekStartsOn: 1 }), 'yyyy-MM-dd'))
-  const [masterSemester, setMasterSemester] = useState<string>('')
-  const [masterTypeFilter, setMasterTypeFilter] = useState<string>('all')
-  const [masterSearch, setMasterSearch] = useState<string>('')
-  const [masterLoading, setMasterLoading] = useState(false)
-  const [masterMatrixData, setMasterMatrixData] = useState<any>(null)
+  // --- Master Weekly Matrix State ---
+const [masterStartDate, setMasterStartDate] = useState(format(startOfWeek(new Date(), { weekStartsOn: 1 }), 'yyyy-MM-dd'));
+  const [masterSemester, setMasterSemester] = useState<string>('');
+  const [masterTypeFilter, setMasterTypeFilter] = useState<string>('all');
+  const [masterSearch] = useState<string>('');
+  const [masterLoading, setMasterLoading] = useState(false);
+  const [masterMatrixData, setMasterMatrixData] = useState<any>(null);
 
   // --- Smart Finder State ---
-  const [targetDate, setTargetDate] = useState(format(new Date(), 'yyyy-MM-dd'))
-  const [selectedSlotIndex, setSelectedSlotIndex] = useState<number>(0)
-  const [sessionType, setSessionType] = useState<string>('cm')
-  const [selectedFiliereId, setSelectedFiliereId] = useState<string>('')
-  const [selectedGroupIds, setSelectedGroupIds] = useState<number[]>([])
-  const [preferredRoomId, setPreferredRoomId] = useState<string>('')
-  const [customHeadcount, setCustomHeadcount] = useState<string>('')
-  const [searching, setSearching] = useState(false)
-  const [finderResult, setFinderResult] = useState<any>(null)
+  // --- Smart Finder State ---
+const [targetDate, setTargetDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [selectedSlotIndex, setSelectedSlotIndex] = useState<number>(0);
+  const [sessionType, setSessionType] = useState<string>('cm');
+  const [selectedFiliereId, setSelectedFiliereId] = useState<string>('');
+  const [selectedGroupIds, setSelectedGroupIds] = useState<number[]>([]);
+  const [preferredRoomId, setPreferredRoomId] = useState<string>('');
+  const [customHeadcount, setCustomHeadcount] = useState<string>('');
+  const [searching, setSearching] = useState(false);
+  const [finderResult, setFinderResult] = useState<any>(null);
 
   // --- Matrix Daily Heatmap State ---
-  const [matrixDate, setMatrixDate] = useState(format(new Date(), 'yyyy-MM-dd'))
-  const [matrixTypeFilter, setMatrixTypeFilter] = useState<string>('all')
-  const [matrixSearch, setMatrixSearch] = useState<string>('')
-  const [matrixLoading, setMatrixLoading] = useState(false)
-  const [matrixData, setMatrixData] = useState<any>(null)
+  // --- Matrix Daily Heatmap State ---
+const [matrixDate, setMatrixDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [matrixTypeFilter, setMatrixTypeFilter] = useState<string>('all');
+  const [matrixSearch] = useState<string>('');
+  const [matrixLoading, setMatrixLoading] = useState(false);
+  const [matrixData, setMatrixData] = useState<any>(null);
 
   // --- Single Room Schedule State ---
-  const [selectedScheduleRoomId, setSelectedScheduleRoomId] = useState<string>('')
-  const [roomScheduleEvents, setRoomScheduleEvents] = useState<any[]>([])
-  const [roomScheduleLoading, setRoomScheduleLoading] = useState(false)
-  const [exportingPdf, setExportingPdf] = useState(false)
-  const [scheduleViewMode, setScheduleViewMode] = useState<'timeline' | 'preview_a4' | 'matrix'>('timeline')
-  const [selectedScheduleDay, setSelectedScheduleDay] = useState<number>(0) // 0 = All days, 1 = Mon, ..., 6 = Sat
-  const [scheduleSearchQuery, setScheduleSearchQuery] = useState<string>('')
+  // --- Single Room Schedule State ---
+const [selectedScheduleRoomId, setSelectedScheduleRoomId] = useState<string>('');
+  const [roomScheduleEvents, setRoomScheduleEvents] = useState<any[]>([]);
+  const [roomScheduleLoading, setRoomScheduleLoading] = useState(false);
+  const [exportingPdf, setExportingPdf] = useState(false);
+  const [scheduleViewMode, setScheduleViewMode] = useState<'timeline' | 'preview_a4' | 'matrix'>('timeline');
+  const [selectedScheduleDay, setSelectedScheduleDay] = useState<number>(0); // 0 = All days, 1 = Mon, ..., 6 = Sat
+ // 0 = All days, 1 = Mon, ..., 6 = Sat
+  const [scheduleSearchQuery, setScheduleSearchQuery] = useState<string>('');
 
   // --- Bookings State ---
-  const [bookings, setBookings] = useState<any[]>([])
-  const [bookingsLoading, setBookingsLoading] = useState(false)
-  const [bookingModalOpen, setBookingModalOpen] = useState(false)
-  const [bookingRoom, setBookingRoom] = useState<any>(null)
-  const [bookingPurpose, setBookingPurpose] = useState('')
-  const [notifyStudents, setNotifyStudents] = useState(true)
-  const [submittingBooking, setSubmittingBooking] = useState(false)
+  // --- Bookings State ---
+const [bookings, setBookings] = useState<any[]>([]);
+  const [bookingsLoading, setBookingsLoading] = useState(false);
+  const [bookingModalOpen, setBookingModalOpen] = useState(false);
+  const [bookingRoom, setBookingRoom] = useState<any>(null);
+  const [bookingPurpose, setBookingPurpose] = useState('');
+  const [notifyStudents, setNotifyStudents] = useState(true);
+  const [submittingBooking, setSubmittingBooking] = useState(false);
 
   // Initial Load
   useEffect(() => {
@@ -100,9 +82,9 @@ export default function RoomAvailabilityHubPage() {
       try {
         setLoadingInitial(true)
         const [roomsRes, filieresRes] = await Promise.all([
-          api.get('/rooms').catch(() => ({ data: { data: [] } })),
-          api.get('/filieres').catch(() => ({ data: { data: [] } })),
-        ])
+    api.get('/rooms').catch(() => ({ data: { data: [] } })),
+    api.get('/filieres').catch(() => ({ data: { data: [] } })),
+]);
         const roomList = roomsRes.data.data || roomsRes.data || []
         setRooms(roomList)
         setFilieres(filieresRes.data.data || filieresRes.data || [])
@@ -120,7 +102,7 @@ export default function RoomAvailabilityHubPage() {
   }, [])
 
   // Load Master Matrix Data
-  const loadMasterMatrix = async () => {
+  const loadMasterMatrix = useCallback(async () => {
     try {
       setMasterLoading(true)
       const res = await api.get('/rooms/weekly-master-matrix', {
@@ -138,13 +120,13 @@ export default function RoomAvailabilityHubPage() {
     } finally {
       setMasterLoading(false)
     }
-  }
+  }, [setMasterLoading, masterStartDate, masterSemester, masterTypeFilter, masterSearch, setMasterMatrixData])
 
   useEffect(() => {
     if (activeTab === 'master_matrix') {
       loadMasterMatrix()
     }
-  }, [activeTab, masterStartDate, masterSemester, masterTypeFilter])
+  }, [activeTab, masterStartDate, masterSemester, masterTypeFilter, loadMasterMatrix])
 
   // When filiere changes, load groups
   useEffect(() => {
@@ -203,7 +185,7 @@ export default function RoomAvailabilityHubPage() {
   }
 
   // Load Daily Matrix Data
-  const loadOccupancyMatrix = async () => {
+  const loadOccupancyMatrix = useCallback(async () => {
     try {
       setMatrixLoading(true)
       const res = await api.get('/rooms/occupancy-matrix', {
@@ -220,13 +202,13 @@ export default function RoomAvailabilityHubPage() {
     } finally {
       setMatrixLoading(false)
     }
-  }
+  }, [setMatrixLoading, matrixDate, matrixTypeFilter, matrixSearch, setMatrixData])
 
   useEffect(() => {
     if (activeTab === 'matrix') {
       loadOccupancyMatrix()
     }
-  }, [activeTab, matrixDate, matrixTypeFilter])
+  }, [activeTab, matrixDate, matrixTypeFilter, loadOccupancyMatrix])
 
   // Load Single Room Schedule
   const loadRoomSchedule = async (roomId: string) => {

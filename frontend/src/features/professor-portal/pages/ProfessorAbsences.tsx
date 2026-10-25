@@ -1,20 +1,20 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { Clock,ArrowRight } from 'lucide-react';
+import { Clock, ArrowRight } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import api from '@/shared/lib/api';
 import { Spinner } from '@shared/components/ui/Spinner';
 
 export default function ProfessorAbsences() {
-  const { t, i18n } = useTranslation(['professors', 'common']);
-  const isRtl = i18n.language === 'ar';
+  const { i18n } = useTranslation(['professors', 'common']);
+  void (i18n.language === 'ar');
   const { data: sessions, isLoading } = useQuery({
     queryKey: ['professor-schedule'],
     queryFn: async () => {
-      const res = await api.get('/professor-portal/schedule');
-      return res.data.data;
+        const res = await api.get('/professor-portal/schedule');
+        return res.data.data;
     }
-  });
+});
 
   if (isLoading) {
     return <div className="min-h-screen flex items-center justify-center"><Spinner className="w-8 h-8 text-[#003a8c]" /></div>;

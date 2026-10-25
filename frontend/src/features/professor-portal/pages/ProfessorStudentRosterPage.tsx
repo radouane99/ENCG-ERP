@@ -1,17 +1,6 @@
-import { QRCodeSVG } from 'qrcode.react'
-import React,{ useState,useEffect,useCallback,useMemo } from 'react';
-import {
-Users,BookOpen,FileSpreadsheet,Search,Loader2,
-ChevronDown,GraduationCap,Layers,ClipboardList,Filter,
-UserCheck,ShieldAlert,RefreshCw,Printer,Info,
-FileText,X,CheckCircle2,BarChart3,Download,Copy,
-LayoutGrid,LayoutList,UserX,RotateCcw,QrCode,
-Lock,Unlock,MessageCircle,Eye,Calendar,Pencil,
-Tag,PrinterIcon,Save,Sparkles,AlertTriangle,Clock,
-Radio,Smartphone,CheckCheck,Maximize2,Minimize2,Zap,
-Mic,MicOff,Volume2,CheckSquare,CalendarDays,Play,Check,Wifi,WifiOff,
-History,Plus,Trash2,ArrowRight
-} from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { Users, BookOpen, FileSpreadsheet, Search, Loader2, ChevronDown, GraduationCap, Layers, ClipboardList, UserCheck, ShieldAlert, RefreshCw, Printer, Info, FileText, FileDown, X, CheckCircle2, BarChart3, Download, Copy, LayoutGrid, LayoutList, UserX, RotateCcw, QrCode, Lock, Unlock, MessageCircle, Eye, Calendar, Pencil, Tag, PrinterIcon, Save, Sparkles, AlertTriangle, Clock, Radio, Smartphone, CheckCheck, Maximize2, Minimize2, Zap, Mic, MicOff, Volume2, CheckSquare, CalendarDays, Play, Check, Wifi, WifiOff, History, Trash2, Send, Scale } from 'lucide-react';
 import api from '@/shared/lib/api';
 import { openAuthenticatedUrl } from '@shared/lib/documentAccess';
 import { toast } from 'sonner';
@@ -145,15 +134,7 @@ function getDateForScheduleDay(dayOfWeek: number): string {
   return `${y}-${m}-${d}`;
 }
 
-const DAY_COLORS: Record<number, { bg: string; border: string; text: string; dot: string }> = {
-  1: { bg: 'bg-blue-500/10',   border: 'border-blue-500/30',   text: 'text-blue-300',   dot: 'bg-blue-400' },
-  2: { bg: 'bg-violet-500/10', border: 'border-violet-500/30', text: 'text-violet-300', dot: 'bg-violet-400' },
-  3: { bg: 'bg-emerald-500/10',border: 'border-emerald-500/30',text: 'text-emerald-300',dot: 'bg-emerald-400' },
-  4: { bg: 'bg-amber-500/10',  border: 'border-amber-500/30',  text: 'text-amber-300',  dot: 'bg-amber-400' },
-  5: { bg: 'bg-rose-500/10',   border: 'border-rose-500/30',   text: 'text-rose-300',   dot: 'bg-rose-400' },
-  6: { bg: 'bg-pink-500/10',   border: 'border-pink-500/30',   text: 'text-pink-300',   dot: 'bg-pink-400' },
-  7: { bg: 'bg-slate-500/10',  border: 'border-slate-500/30',  text: 'text-slate-300',  dot: 'bg-slate-400' },
-};
+
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
@@ -166,7 +147,8 @@ export default function ProfessorStudentRosterPage() {
   const [loadingOptions, setLoadingOptions] = useState(true);
 
   // Schedule-based group selection
-  const [schedules, setSchedules] = useState<ScheduleItem[]>([]);
+  // Schedule-based group selection
+const [schedules, setSchedules] = useState<ScheduleItem[]>([]);
   const [loadingSchedules, setLoadingSchedules] = useState(true);
   const [selectedScheduleId, setSelectedScheduleId] = useState<number | null>(null);
 
@@ -180,30 +162,36 @@ export default function ProfessorStudentRosterPage() {
   const [searchQuery, setSearchQuery] = useState('');
 
   // View & display settings
-  const [viewMode, setViewMode] = useState<ViewMode>('table');
+  // View & display settings
+const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [showQrCol, setShowQrCol] = useState(false);
   const [showStats, setShowStats] = useState(false);
 
   // 1. Séance Selector & Storage per Séance
-  const [selectedSeance, setSelectedSeance] = useState<string>('S1');
+  // 1. Séance Selector & Storage per Séance
+const [selectedSeance, setSelectedSeance] = useState<string>('S1');
   const [seanceDate, setSeanceDate] = useState<string>(new Date().toISOString().slice(0, 10));
   const [seanceStore, setSeanceStore] = useState<Record<string, SeanceData>>({});
 
   // 2. Lock State
-  const [isLocked, setIsLocked] = useState(false);
+  // 2. Lock State
+const [isLocked, setIsLocked] = useState(false);
 
   // 3. Annotations State
-  const [annotations, setAnnotations] = useState<Record<number, StudentAnnotation>>({});
+  // 3. Annotations State
+const [annotations, setAnnotations] = useState<Record<number, StudentAnnotation>>({});
   const [editingStudentId, setEditingStudentId] = useState<number | null>(null);
   const [editNoteText, setEditNoteText] = useState('');
   const [editNoteTag, setEditNoteTag] = useState<AnnotationTag>('remarque');
 
   // 4. Quick Filters
-  const [attendanceFilter, setAttendanceFilter] = useState<AttendanceFilter>('all');
+  // 4. Quick Filters
+const [attendanceFilter, setAttendanceFilter] = useState<AttendanceFilter>('all');
   const [absentIds, setAbsentIds] = useState<Set<number>>(new Set());
 
   // 5. PDF Modal & Live Preview Iframe
-  const [showPdfModal, setShowPdfModal] = useState(false);
+  // 5. PDF Modal & Live Preview Iframe
+const [showPdfModal, setShowPdfModal] = useState(false);
   const [showPdfPreview, setShowPdfPreview] = useState(false);
   const [pdfPreviewBlobUrl, setPdfPreviewBlobUrl] = useState<string | null>(null);
   const [loadingPdfPreview, setLoadingPdfPreview] = useState(false);
@@ -213,35 +201,41 @@ export default function ProfessorStudentRosterPage() {
   const [downloadingExcel, setDownloadingExcel] = useState(false);
 
   // 6. WhatsApp Share Modal
-  const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
+  // 6. WhatsApp Share Modal
+const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
   const [whatsAppType, setWhatsAppType] = useState<'absents_only' | 'full_roster'>('absents_only');
 
   // 7. Individual Student Sheet Modal
-  const [individualStudent, setIndividualStudent] = useState<StudentRow | null>(null);
+  // 7. Individual Student Sheet Modal
+const [individualStudent, setIndividualStudent] = useState<StudentRow | null>(null);
 
   // 8. Backend Persistence State & Textbook Sync
-  const [savingAttendance, setSavingAttendance] = useState(false);
-  const [loadingAttendanceHistory, setLoadingAttendanceHistory] = useState(false);
+  // 8. Backend Persistence State & Textbook Sync
+const [savingAttendance, setSavingAttendance] = useState(false);
+  const [, setLoadingAttendanceHistory] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [syncTextbook, setSyncTextbook] = useState(true);
   const [customChapterTitle, setCustomChapterTitle] = useState('');
   const [customKeyConcepts, setCustomKeyConcepts] = useState('');
 
   // 9. AI Copilot & Predictive Attendance Risk
-  const [isGeneratingAiSuggestion, setIsGeneratingAiSuggestion] = useState(false);
+  // 9. AI Copilot & Predictive Attendance Risk
+const [isGeneratingAiSuggestion, setIsGeneratingAiSuggestion] = useState(false);
   const [showRiskModal, setShowRiskModal] = useState(false);
   const [loadingRiskAnalysis, setLoadingRiskAnalysis] = useState(false);
   const [riskData, setRiskData] = useState<any>(null);
 
   // 10. Solutions 1, 2, 3: Live Auto-Detection, Timeline & Smart QR Check-in
-  const [showLiveQrModal, setShowLiveQrModal] = useState(false);
+  // 10. Solutions 1, 2, 3: Live Auto-Detection, Timeline & Smart QR Check-in
+const [showLiveQrModal, setShowLiveQrModal] = useState(false);
   const [qrCountdown, setQrCountdown] = useState(15);
   const [qrRotator, setQrRotator] = useState(0);
   const [qrCheckedInIds, setQrCheckedInIds] = useState<Set<number>>(new Set());
   const [isFullscreenQr, setIsFullscreenQr] = useState(false);
 
   // 11. Voice Dictation IA (Mode Appel Vocal - merged from ProfessorAbsencesView)
-  const [isListening, setIsListening] = useState(false);
+  // 11. Voice Dictation IA (Mode Appel Vocal - merged from ProfessorAbsencesView)
+const [isListening, setIsListening] = useState(false);
   const [voiceTranscript, setVoiceTranscript] = useState('');
 
   // 12. Live Session (4-status, backend QR token, offline sync)
@@ -261,7 +255,8 @@ export default function ProfessorStudentRosterPage() {
   const [selectedDayFilter, setSelectedDayFilter] = useState('all');
 
   // 13. Rattrapage (Séance de Rattrapage & Appel des Absents)
-  const [showRattrapageModal, setShowRattrapageModal] = useState(false);
+  // 13. Rattrapage (Séance de Rattrapage & Appel des Absents)
+const [showRattrapageModal, setShowRattrapageModal] = useState(false);
   const [rattrapageTargetSeance, setRattrapageTargetSeance] = useState<string>('S1');
   const [rattrapageDate, setRattrapageDate] = useState<string>(new Date().toISOString().slice(0, 10));
   const [rattrapageTime, setRattrapageTime] = useState<string>('14:00 - 16:00');
@@ -272,15 +267,32 @@ export default function ProfessorStudentRosterPage() {
     status: 'present' | 'absent' | 'retard' | 'excuse';
     note: string;
     regularize: boolean;
-  }[]>([]);
+}[]>([]);
   const [rattrapageTab, setRattrapageTab] = useState<'call' | 'qr' | 'history'>('call');
   const [autoRegularizeOriginal, setAutoRegularizeOriginal] = useState<boolean>(true);
   const [savingRattrapage, setSavingRattrapage] = useState(false);
   const [rattrapageSearchQuery, setRattrapageSearchQuery] = useState('');
   const [rattrapageStatusFilter, setRattrapageStatusFilter] = useState<'all' | 'absent' | 'present'>('all');
   const [selectedStudentToAdd, setSelectedStudentToAdd] = useState<number | null>(null);
-  const [rattrapageQrCountdown, setRattrapageQrCountdown] = useState(15);
-  const [rattrapageQrCheckedInIds, setRattrapageQrCheckedInIds] = useState<Set<number>>(new Set());
+  const [, setRattrapageQrCheckedInIds] = useState<Set<number>>(new Set());
+  const [syncRattrapageTextbook, setSyncRattrapageTextbook] = useState(true);
+  const [sendingRattrapageConvocations, setSendingRattrapageConvocations] = useState(false);
+  const [downloadingRattrapagePv, setDownloadingRattrapagePv] = useState(false);
+
+  // ─── Article 14: Total non-justified absences per student across all sessions ───
+  const studentAbsenceCounts = useMemo(() => {
+    const counts: Record<number, number> = {};
+    Object.entries(seanceStore).forEach(([code, data]) => {
+      const absIds = code === selectedSeance ? Array.from(absentIds) : (data?.absentIds || []);
+      absIds.forEach(id => {
+        const ann = code === selectedSeance ? annotations[id] : data?.annotations?.[id];
+        if (ann?.tag !== 'justifie' && ann?.tag !== 'rattrapage') {
+          counts[id] = (counts[id] || 0) + 1;
+        }
+      });
+    });
+    return counts;
+  }, [seanceStore, selectedSeance, absentIds, annotations]);
   // Storage key for caching séances locally
   const storageKey = useMemo(() => {
     if (!selectedGroupId || !selectedModuleId) return null;
@@ -326,7 +338,7 @@ export default function ProfessorStudentRosterPage() {
     } catch {
       // ignore parsing error
     }
-  }, [storageKey]);
+  }, [storageKey, selectedSeance]);
 
   // Switch séance and restore its state
   const handleSelectSeance = (seance: string) => {
@@ -455,10 +467,10 @@ export default function ProfessorStudentRosterPage() {
     });
   }, [seanceStore]);
 
-  const nextRecommendedSeance = useMemo(() => {
+  useMemo(() => {
     const firstUncompleted = SEANCES.find(s => !completedSeances.includes(s));
     return firstUncompleted || 'S1';
-  }, [completedSeances]);
+}, [completedSeances]);
 
   // Is the current selected timetable slot live right now?
   const isLiveSessionNow = useMemo(() => {
@@ -561,7 +573,7 @@ export default function ProfessorStudentRosterPage() {
     const targetData = sCode === selectedSeance
       ? { absentIds: Array.from(absentIds) }
       : seanceStore[sCode];
-    
+
     const targetAbsentIds = targetData?.absentIds || [];
     const absentStudentObjects = students.filter(st => targetAbsentIds.includes(st.id));
 
@@ -735,9 +747,9 @@ export default function ProfessorStudentRosterPage() {
           is_locked: false,
           absent_ids: rattrapageStudents.filter(s => s.status === 'absent').map(s => s.student.id),
           annotations: updatedAnnotations,
-          sync_textbook: false,
+          sync_textbook: syncRattrapageTextbook,
           chapter_title: `Séance de Rattrapage — ${rattrapageTargetSeance}`,
-          key_concepts: `Rattrapage officiel pour ${rattrapageTargetSeance}. ${presentCount} étudiants régularisés. Salle: ${rattrapageRoom}.`,
+          key_concepts: `Rattrapage officiel pour ${rattrapageTargetSeance}. ${presentCount} étudiants régularisés. Salle: ${rattrapageRoom}. Heures effectives certifiées.`,
         });
       } catch (err) {
         console.warn('Backend sync saved locally:', err);
@@ -751,6 +763,93 @@ export default function ProfessorStudentRosterPage() {
       toast.error('Erreur lors de l\'enregistrement du rattrapage.');
     } finally {
       setSavingRattrapage(false);
+    }
+  };
+
+  // ─── Export PDF du Procès-Verbal Officiel de Séance de Rattrapage ───────────
+  const handleDownloadRattrapagePvPdf = async (pastRattrapage?: RattrapageSession) => {
+    if (!selectedGroupId || !selectedModuleId) return;
+    setDownloadingRattrapagePv(true);
+    try {
+      const recordsToExport = pastRattrapage
+        ? pastRattrapage.records.map(r => {
+            const st = students.find(s => s.id === r.studentId);
+            return {
+              id: r.studentId,
+              matricule: st?.matricule || '—',
+              cne: st?.cne || '—',
+              last_name: st?.last_name || '',
+              first_name: st?.first_name || '',
+              status: r.status,
+              note: r.note,
+            };
+          })
+        : rattrapageStudents.map(s => ({
+            id: s.student.id,
+            matricule: s.student.matricule || '—',
+            cne: s.student.cne || '—',
+            last_name: s.student.last_name,
+            first_name: s.student.first_name,
+            status: s.status,
+            note: s.note,
+          }));
+
+      const payload = {
+        group_id: selectedGroupId,
+        module_id: selectedModuleId,
+        seance_code: pastRattrapage ? pastRattrapage.originalSeance : rattrapageTargetSeance,
+        date: pastRattrapage ? pastRattrapage.date : rattrapageDate,
+        time_slot: pastRattrapage ? pastRattrapage.timeSlot : rattrapageTime,
+        room: pastRattrapage ? pastRattrapage.room : rattrapageRoom,
+        records: recordsToExport,
+      };
+
+      const res = await api.post('/professor-portal/student-lists/rattrapage-pv', payload, {
+        responseType: 'blob',
+        headers: { Accept: 'application/pdf' },
+      });
+
+      const blob = new Blob([res.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `PV_Rattrapage_${payload.seance_code}_${payload.date}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast.success('Procès-Verbal officiel de rattrapage téléchargé (PDF)');
+    } catch {
+      toast.error('Erreur lors de la génération du PV de rattrapage (PDF).');
+    } finally {
+      setDownloadingRattrapagePv(false);
+    }
+  };
+
+  // ─── Convocation Automatique par Email (Resend) & Notification ──────────────
+  const handleSendRattrapageConvocations = async () => {
+    const targetIds = rattrapageStudents.map(s => s.student.id);
+    if (targetIds.length === 0) {
+      toast.error('Aucun étudiant dans cette séance de rattrapage.');
+      return;
+    }
+    setSendingRattrapageConvocations(true);
+    try {
+      const res = await api.post('/professor-portal/student-lists/rattrapage-convocation', {
+        group_id: selectedGroupId,
+        module_id: selectedModuleId,
+        seance_code: rattrapageTargetSeance,
+        date: rattrapageDate,
+        time_slot: rattrapageTime,
+        room: rattrapageRoom,
+        notes: rattrapageTitle,
+        student_ids: targetIds,
+      });
+      toast.success(`📢 Convocations officielles envoyées avec succès par email à ${res.data?.sent_count ?? targetIds.length} étudiant(s) !`);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Erreur lors de l\'envoi des convocations.');
+    } finally {
+      setSendingRattrapageConvocations(false);
     }
   };
 
@@ -1051,12 +1150,12 @@ export default function ProfessorStudentRosterPage() {
   };
 
   useEffect(() => { fetchOptions(); fetchSchedules(); }, [fetchOptions, fetchSchedules]);
-  useEffect(() => { if (selectedGroupId) fetchStudents(); }, [selectedGroupId, listMode, selectedSubGroup]);
+  useEffect(() => { if (selectedGroupId) fetchStudents(); }, [selectedGroupId, fetchStudents]);
   useEffect(() => {
     if (selectedGroupId && selectedModuleId) {
       fetchAttendanceHistory();
     }
-  }, [selectedGroupId, selectedModuleId, listMode, selectedSubGroup]);
+  }, [selectedGroupId, selectedModuleId, fetchAttendanceHistory]);
   useEffect(() => { setSelectedSubGroup(availableSubGroups[0] ?? ''); }, [availableSubGroups]);
 
   // Actions: Absence Toggle
@@ -1139,62 +1238,10 @@ export default function ProfessorStudentRosterPage() {
 
 
   // Quick Action: Mark All Present (remove all absences)
-  const handleMarkAllPresent = () => {
-    if (isLocked) { toast.error('Liste verrouillée'); return; }
-    const next = new Set<number>();
-    setAbsentIds(next);
-    persistCurrentSeance(next, annotations, isLocked, seanceDate);
-    toast.success(`✨ Tous les ${students.length} étudiants marqués Présents !`);
-  };
+
 
   // Voice Dictation IA — Appel vocal par reconnaissance de noms
-  const handleToggleVoiceRecognition = () => {
-    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-      toast.error("La reconnaissance vocale n'est pas supportée sur ce navigateur (Chrome/Edge requis).");
-      return;
-    }
-    if (isListening) { setIsListening(false); return; }
 
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    const recognition = new SpeechRecognition();
-    recognition.lang = 'fr-FR';
-    recognition.continuous = false;
-    recognition.interimResults = false;
-
-    recognition.onstart = () => {
-      setIsListening(true);
-      toast.info('🎙️ En écoute... Prononcez les noms des absents.');
-    };
-
-    recognition.onresult = (event: any) => {
-      const text = event.results[0][0].transcript.toLowerCase();
-      setVoiceTranscript(text);
-      setIsListening(false);
-
-      let markedCount = 0;
-      const next = new Set(absentIds);
-      students.forEach(s => {
-        const fullName = `${s.first_name} ${s.last_name}`.toLowerCase();
-        const lastName = s.last_name.toLowerCase();
-        if (text.includes(lastName) || text.includes(fullName)) {
-          next.add(s.id);
-          markedCount++;
-        }
-      });
-
-      if (markedCount > 0) {
-        setAbsentIds(next);
-        persistCurrentSeance(next, annotations, isLocked, seanceDate);
-        toast.success(`🎙️ ${markedCount} absence(s) détectée(s) et cochée(s) par l'IA vocale !`);
-      } else {
-        toast.warning("Aucun nom d'étudiant reconnu. Réessayez en prononçant clairement le nom de famille.");
-      }
-    };
-
-    recognition.onerror = () => { setIsListening(false); toast.error("Erreur de reconnaissance vocale."); };
-    recognition.onend = () => setIsListening(false);
-    recognition.start();
-  };
 
   // ─── Live Session Handlers (4-status + QR backend + offline sync) ────────
 
@@ -1772,7 +1819,7 @@ export default function ProfessorStudentRosterPage() {
               {/* Interactive Timeline Track */}
               <div className="overflow-x-auto pb-2 pt-1 -mx-2 px-2 scrollbar-thin">
                 <div className="flex items-center gap-2 min-w-[780px]">
-                  {SEANCES.map((s, index) => {
+                  {SEANCES.map((s, _index) => {
                     const seanceInfo = seanceStore[s];
                     const isCompleted = completedSeances.includes(s);
                     const isSelected = selectedSeance === s;
@@ -2457,7 +2504,26 @@ export default function ProfessorStudentRosterPage() {
                                 <p className={cn('font-bold text-sm leading-tight', isAbsent ? 'text-rose-900 dark:text-rose-200' : 'text-slate-900 dark:text-white')}>
                                   {(s.last_name || '').toUpperCase()} {s.first_name}
                                 </p>
-                                <p className="text-slate-500 text-xs font-mono font-medium">{s.matricule || '—'}</p>
+                                <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                                  <span className="text-slate-500 text-xs font-mono font-medium">{s.matricule || '—'}</span>
+                                  {(() => {
+                                    const unexcused = studentAbsenceCounts[s.id] || 0;
+                                    if (unexcused >= 3) {
+                                      return (
+                                        <span className="px-1.5 py-0.2 rounded-full bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 text-[10px] font-black border border-rose-300" title="Article 14 : Seuil d'exclusion atteint">
+                                          🚨 {unexcused} abs. (Art. 14)
+                                        </span>
+                                      );
+                                    } else if (unexcused === 2) {
+                                      return (
+                                        <span className="px-1.5 py-0.2 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300 text-[10px] font-bold border border-amber-300" title="Article 14 : Risque d'exclusion">
+                                          ⚠️ 2/3 abs.
+                                        </span>
+                                      );
+                                    }
+                                    return null;
+                                  })()}
+                                </div>
                               </div>
                             </div>
                             <span className="text-slate-400 text-[11px] font-mono">#{idx + 1}</span>
@@ -2595,10 +2661,27 @@ export default function ProfessorStudentRosterPage() {
                                 >
                                   {(s.last_name?.[0] || '?').toUpperCase()}
                                 </div>
-                                <div>
+                                <div className="flex items-center gap-1.5 flex-wrap">
                                   <p className={cn('font-bold text-sm', isAbsent ? 'text-rose-800 dark:text-rose-300 line-through' : 'text-slate-900 dark:text-white')}>
                                     {(s.last_name || '').toUpperCase()} {s.first_name}
                                   </p>
+                                  {(() => {
+                                    const unexcused = studentAbsenceCounts[s.id] || 0;
+                                    if (unexcused >= 3) {
+                                      return (
+                                        <span className="inline-flex items-center px-1.5 py-0.2 rounded-full bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 text-[10px] font-black border border-rose-300" title="Article 14 : Seuil d'exclusion atteint">
+                                          🚨 {unexcused} abs.
+                                        </span>
+                                      );
+                                    } else if (unexcused === 2) {
+                                      return (
+                                        <span className="inline-flex items-center px-1.5 py-0.2 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300 text-[10px] font-bold border border-amber-300" title="Article 14 : Risque d'exclusion">
+                                          ⚠️ 2/3 abs.
+                                        </span>
+                                      );
+                                    }
+                                    return null;
+                                  })()}
                                 </div>
                               </div>
                             </td>
@@ -3707,7 +3790,7 @@ export default function ProfessorStudentRosterPage() {
       {showRattrapageModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
           <div className="relative w-full max-w-4xl bg-white dark:bg-slate-900 border border-purple-200 dark:border-purple-900/60 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
-            
+
             {/* Header */}
             <div className="p-5 border-b border-purple-100 dark:border-purple-950/60 bg-gradient-to-r from-purple-50 via-indigo-50/50 to-white dark:from-purple-950/30 dark:via-slate-900 dark:to-slate-900 flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
@@ -3857,10 +3940,44 @@ export default function ProfessorStudentRosterPage() {
 
             {/* Modal Body */}
             <div className="p-5 overflow-y-auto space-y-4 flex-1">
-              
+
               {/* TAB 1: FEUILLE D'APPEL */}
               {rattrapageTab === 'call' && (
                 <div className="space-y-4">
+                  {/* Article 14 Legal Impact & Protection Banner */}
+                  {(() => {
+                    const savedFromExclusion = rattrapageStudents.filter(s => (studentAbsenceCounts[s.student.id] || 0) >= 3);
+                    const pulledFromDanger = rattrapageStudents.filter(s => (studentAbsenceCounts[s.student.id] || 0) === 2);
+                    return (
+                      <div className="bg-gradient-to-r from-purple-500/10 via-amber-500/10 to-transparent border border-purple-300 dark:border-purple-800/80 rounded-2xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+                        <div className="flex items-start sm:items-center gap-2.5">
+                          <div className="p-2 rounded-xl bg-purple-600 text-white shrink-0">
+                            <Scale className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-xs font-black text-slate-900 dark:text-white">
+                                Impact Réglementaire (Article 14 ENCG Fès)
+                              </span>
+                              <span className="px-2 py-0.2 rounded-full text-[10px] font-extrabold bg-purple-200 dark:bg-purple-900/80 text-purple-900 dark:text-purple-200">
+                                Seuil d'Exclusion : 3 Absences
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-slate-600 dark:text-slate-300 mt-0.5">
+                              En validant ce rattrapage, <strong className="text-emerald-700 dark:text-emerald-400 font-black">{savedFromExclusion.length} étudiant(s)</strong> évitent l'exclusion directe des examens finaux, et <strong className="text-amber-700 dark:text-amber-400 font-bold">{pulledFromDanger.length}</strong> sortent de la zone rouge critique.
+                            </p>
+                          </div>
+                        </div>
+
+                        {savedFromExclusion.length > 0 && (
+                          <span className="shrink-0 text-xs font-black px-2.5 py-1 rounded-xl bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 border border-rose-300 dark:border-rose-800">
+                            🚨 {savedFromExclusion.length} en danger d'exclusion
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })()}
+
                   {/* KPI Summary Cards */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
@@ -3908,6 +4025,22 @@ export default function ProfessorStudentRosterPage() {
                         className="px-3 py-1.5 rounded-xl bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-xs font-bold transition-all cursor-pointer"
                       >
                         <span>Tous Absents</span>
+                      </button>
+
+                      {/* Convocation Automatique par Email */}
+                      <button
+                        type="button"
+                        onClick={handleSendRattrapageConvocations}
+                        disabled={sendingRattrapageConvocations || rattrapageStudents.length === 0}
+                        className="px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition-all shadow-2xs cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                        title="Envoyer un email officiel de convocation via Resend aux étudiants absents"
+                      >
+                        {sendingRattrapageConvocations ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Send className="w-3.5 h-3.5 text-purple-200" />
+                        )}
+                        <span>Convoquer par Email ({rattrapageStudents.length})</span>
                       </button>
 
                       {/* Status Filter */}
@@ -4021,7 +4154,7 @@ export default function ProfessorStudentRosterPage() {
                                 </div>
 
                                 <div>
-                                  <div className="flex items-center gap-2">
+                                  <div className="flex items-center gap-2 flex-wrap">
                                     <span className="text-xs font-bold text-slate-900 dark:text-white">
                                       {item.student.last_name} {item.student.first_name}
                                     </span>
@@ -4030,10 +4163,43 @@ export default function ProfessorStudentRosterPage() {
                                         {item.student.sub_group}
                                       </span>
                                     )}
+                                    {(() => {
+                                      const unexcused = studentAbsenceCounts[item.student.id] || 0;
+                                      if (unexcused >= 3) {
+                                        return (
+                                          <span className="px-1.5 py-0.2 rounded-full bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 text-[10px] font-black border border-rose-300" title="Article 14 : Seuil d'exclusion atteint">
+                                            🚨 Seuil Art. 14 Dépassé ({unexcused} abs.)
+                                          </span>
+                                        );
+                                      } else if (unexcused === 2) {
+                                        return (
+                                          <span className="px-1.5 py-0.2 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300 text-[10px] font-bold border border-amber-300" title="Article 14 : Risque d'exclusion">
+                                            ⚠️ Risque Art. 14 (2/3 abs.)
+                                          </span>
+                                        );
+                                      }
+                                      return (
+                                        <span className="px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 text-[10px] font-mono">
+                                          {unexcused}/3 abs.
+                                        </span>
+                                      );
+                                    })()}
                                   </div>
-                                  <span className="text-[11px] text-slate-400 font-mono">
-                                    {item.student.matricule || item.student.cne || 'ENCG Fès'}
-                                  </span>
+                                  <div className="flex items-center gap-2 mt-0.5">
+                                    <span className="text-[11px] text-slate-400 font-mono">
+                                      {item.student.matricule || item.student.cne || 'ENCG Fès'}
+                                    </span>
+                                    {isPres && (
+                                      <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5">
+                                        <Check className="w-3 h-3" /> Régularisé (échappe au seuil)
+                                      </span>
+                                    )}
+                                    {isAbs && (
+                                      <span className="text-[10px] font-medium text-rose-500 dark:text-rose-400">
+                                        • Absence maintenue
+                                      </span>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
 
@@ -4118,8 +4284,8 @@ export default function ProfessorStudentRosterPage() {
                     </div>
                   )}
 
-                  {/* Regularization Options Checkbox */}
-                  <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
+                  {/* Regularization & Textbook Options Checkboxes */}
+                  <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700 dark:text-slate-300">
                       <input
                         type="checkbox"
@@ -4128,7 +4294,19 @@ export default function ProfessorStudentRosterPage() {
                         className="w-4 h-4 rounded text-purple-600 focus:ring-purple-500"
                       />
                       <span>
-                        Régulariser automatiquement l'absence de la séance d'origine ({rattrapageTargetSeance}) pour les étudiants présents au rattrapage
+                        Régulariser automatiquement l'absence de la séance d'origine ({rattrapageTargetSeance}) pour les étudiants présents
+                      </span>
+                    </label>
+
+                    <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-purple-700 dark:text-purple-300 bg-purple-50/60 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800/60 px-3 py-1.5 rounded-xl">
+                      <input
+                        type="checkbox"
+                        checked={syncRattrapageTextbook}
+                        onChange={e => setSyncRattrapageTextbook(e.target.checked)}
+                        className="w-4 h-4 rounded text-purple-600 focus:ring-purple-500"
+                      />
+                      <span>
+                        📚 Inscrire au Cahier de Texte (2h vacation certifiées)
                       </span>
                     </label>
                   </div>
@@ -4230,13 +4408,25 @@ export default function ProfessorStudentRosterPage() {
                             </span>
                           </div>
 
-                          <div className="flex items-center justify-between text-xs pt-1">
+                          <div className="flex items-center justify-between text-xs pt-1 flex-wrap gap-2">
                             <span className="font-semibold text-slate-600 dark:text-slate-300">
                               Bilan de présence : <strong className="text-emerald-600 dark:text-emerald-400">{presentCount} régularisé(s)</strong> sur {rat.records.length} convoqué(s)
                             </span>
-                            <span className="text-[11px] text-slate-400">
-                              Enregistré le {new Date(rat.createdAt).toLocaleDateString()}
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[11px] text-slate-400">
+                                Enregistré le {new Date(rat.createdAt).toLocaleDateString()}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => handleDownloadRattrapagePvPdf(rat)}
+                                disabled={downloadingRattrapagePv}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/60 dark:hover:bg-purple-900/60 border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 text-xs font-bold transition-all cursor-pointer"
+                                title="Télécharger le Procès-Verbal officiel (PDF)"
+                              >
+                                <FileDown className="w-3.5 h-3.5" />
+                                <span>PV Officiel (PDF)</span>
+                              </button>
+                            </div>
                           </div>
                         </div>
                       );
@@ -4247,12 +4437,27 @@ export default function ProfessorStudentRosterPage() {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 border-t border-purple-100 dark:border-purple-950/60 bg-slate-50/50 dark:bg-slate-900/90 flex items-center justify-between">
+            <div className="p-4 border-t border-purple-100 dark:border-purple-950/60 bg-slate-50/50 dark:bg-slate-900/90 flex items-center justify-between flex-wrap gap-2">
               <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                 {rattrapageStudents.filter(s => s.status === 'present').length} présence(s) à régulariser
               </span>
 
               <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleDownloadRattrapagePvPdf()}
+                  disabled={downloadingRattrapagePv || rattrapageStudents.length === 0}
+                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/60 dark:hover:bg-purple-900/60 border border-purple-300 dark:border-purple-700 text-purple-700 dark:text-purple-300 text-xs font-bold transition-all cursor-pointer disabled:opacity-50"
+                  title="Télécharger le Procès-Verbal officiel de cette séance de rattrapage (PDF)"
+                >
+                  {downloadingRattrapagePv ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <FileDown className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+                  )}
+                  <span>PV Officiel (PDF)</span>
+                </button>
+
                 <button
                   type="button"
                   onClick={() => setShowRattrapageModal(false)}
@@ -4285,12 +4490,7 @@ export default function ProfessorStudentRosterPage() {
 
 // ─── Sub-Components ──────────────────────────────────────────────────────────
 
-function StatCard({
-  label,
-  value,
-  icon,
-  color,
-}: {
+function StatCard({ label, value, icon, color }: {
   label: string;
   value: string | number;
   icon: string;
@@ -4315,13 +4515,7 @@ function StatCard({
   );
 }
 
-function PdfModeCard({
-  active,
-  onClick,
-  icon,
-  title,
-  subtitle,
-}: {
+function PdfModeCard({ active, onClick, icon, title, subtitle }: {
   active: boolean;
   onClick: () => void;
   icon: React.ReactNode;

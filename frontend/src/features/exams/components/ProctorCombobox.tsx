@@ -1,4 +1,4 @@
-import { useState,useRef,useEffect,useMemo } from 'react'
+import { useCallback, useState,useRef,useEffect,useMemo } from 'react'
 import {
 Search,
 X,
@@ -158,7 +158,7 @@ export function ProctorCombobox({
   }
 
   // Helper to check if a proctor has a time overlap with this specific currentExam
-  const getProctorConflict = (proctorId: number) => {
+  const getProctorConflict = useCallback((proctorId: number) => {
     const data = workload.get(proctorId)
     if (!data || !data.slots || data.slots.length === 0) return null
 
@@ -184,7 +184,7 @@ export function ProctorCombobox({
       }
     }
     return null
-  }
+  }, [workload, currentExam, checkOverlap])
 
   // Filter proctors for the popover list
   const filteredProctors = useMemo(() => {
@@ -212,7 +212,7 @@ export function ProctorCombobox({
         const countB = workload.get(b.id)?.count || 0
         return countA - countB
       })
-  }, [proctors, excludeIds, categoryFilter, search, workload, currentExam])
+  }, [proctors, excludeIds, categoryFilter, search, workload, getProctorConflict])
 
   const selectedLoad = selectedProctor ? workload.get(selectedProctor.id)?.count || 0 : 0
   const selectedTypeStyles = selectedProctor ? getTypeBadgeStyles(selectedProctor.type) : null

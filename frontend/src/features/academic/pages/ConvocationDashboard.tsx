@@ -1,18 +1,18 @@
-import { useState } from 'react'
-import { ClipboardList,Users,CheckCircle2,GraduationCap,FileText,Send,Mail,Printer } from 'lucide-react'
-import { useTranslation } from 'react-i18next'
-import { cn } from '@shared/lib/utils'
-import { Button } from '@shared/components/ui/Button'
-import { useMutation,useQueryClient } from '@tanstack/react-query'
+import { useState } from 'react';
+import { ClipboardList, Users, CheckCircle2, GraduationCap, FileText, Send, Mail, Printer } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { cn } from '@shared/lib/utils';
+import { Button } from '@shared/components/ui/Button';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@shared/lib/api'
-import { toast } from 'sonner'
+import { toast } from 'sonner';
 
 export default function ConvocationDashboard() {
-  const { t, i18n } = useTranslation('common')
+  const { i18n } = useTranslation('common');
   const isRtl = i18n.language === 'ar'
   const queryClient = useQueryClient()
 
-  const [activeTab, setActiveTab] = useState<'etudiants' | 'surveillants' | 'dispo'>('surveillants')
+  const [activeTab, setActiveTab] = useState<'etudiants' | 'surveillants' | 'dispo'>('surveillants');
 
   const generateMutation = useMutation({
     mutationFn: (examId: number) => api.post(`/exam-planning/${examId}/generate-convocations`),

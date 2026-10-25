@@ -1,16 +1,10 @@
-import { useState,useMemo } from 'react';
-import { useQuery,useMutation } from '@tanstack/react-query';
+import { useState, useMemo } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import api from '@shared/lib/api';
 import { toast } from 'sonner';
-import {
-Calendar,Clock,CheckCircle2,AlertTriangle,ShieldCheck,
-RefreshCw,Save,MapPin,User,
-Building2,Sliders,Cpu,Hand,Grid,Leaf,
-Wand2,BookOpen,GraduationCap,Sparkles,Trash2,RotateCcw,X,AlertCircle,
-Users,Monitor,FileText,Search,SearchX,Filter
-} from 'lucide-react';
+import { Calendar, Clock, CheckCircle2, AlertTriangle, ShieldCheck, RefreshCw, Save, MapPin, User, Building2, Sliders, Cpu, Hand, Grid, Leaf, Wand2, BookOpen, GraduationCap, Sparkles, Trash2, RotateCcw, X, AlertCircle, Users, Monitor, FileText, Search, SearchX, Filter } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
-import { CustomSelect,SelectOption } from '@/shared/components/ui/CustomSelect';
+import { CustomSelect, SelectOption } from '@/shared/components/ui/CustomSelect';
 import ManualTimetableBoard from '@/features/admin/pages/ManualTimetableBoard';
 import OfficialTimetableMatrix from '@/features/admin/pages/OfficialTimetableMatrix';
 
@@ -64,7 +58,8 @@ export default function AdminAiTimetableSchedulerPage() {
   const [activeTab, setActiveTab] = useState<'generator' | 'manual_board' | 'matrix'>('generator');
 
   // Generator & CSP Parameters
-  const [selectedSemester, setSelectedSemester] = useState<string | number>('odd');
+  // Generator & CSP Parameters
+const [selectedSemester, setSelectedSemester] = useState<string | number>('odd');
   const [selectedFiliere, setSelectedFiliere] = useState<string>('all');
   const [avoidSaturday, setAvoidSaturday] = useState<boolean>(true);
   const [preferMorning, setPreferMorning] = useState<boolean>(true);
@@ -72,26 +67,29 @@ export default function AdminAiTimetableSchedulerPage() {
   const [profAvailWeight, setProfAvailWeight] = useState<number>(90);
   const [buildingWeight, setBuildingWeight] = useState<number>(75);
   const [selectedStrategy, setSelectedStrategy] = useState<string>('mrv_degree_lcv');
-  
+
   // Dedicated Rooms per Filière / Department (Configurable par l'admin, vide par défaut)
-  const [dedicatedRooms, setDedicatedRooms] = useState<Record<string, string[]>>({});
+  // Dedicated Rooms per Filière / Department (Configurable par l'admin, vide par défaut)
+const [dedicatedRooms, setDedicatedRooms] = useState<Record<string, string[]>>({});
 
   // Dedicated Professors per Filière / Department (Configurable par l'admin, vide par défaut)
-  const [dedicatedProfessors, setDedicatedProfessors] = useState<Record<string, string[]>>({});
+  // Dedicated Professors per Filière / Department (Configurable par l'admin, vide par défaut)
+const [dedicatedProfessors, setDedicatedProfessors] = useState<Record<string, string[]>>({});
 
   const [showDedicatedRoomsModal, setShowDedicatedRoomsModal] = useState<boolean>(false);
   const [resourceModalTab, setResourceModalTab] = useState<'rooms' | 'professors'>('rooms');
 
   // Query live resources from backend API (rooms, professors, filieres 100% réelles de la BDD)
-  const { data: resourcesData } = useQuery({
+  // Query live resources from backend API (rooms, professors, filieres 100% réelles de la BDD)
+const { data: resourcesData } = useQuery({
     queryKey: ['timetable-resources'],
     queryFn: async () => {
-      const res = await api.get('/admin/timetable/ai-scheduler/resources');
-      return res.data?.data || res.data || {};
+        const res = await api.get('/admin/timetable/ai-scheduler/resources');
+        return res.data?.data || res.data || {};
     },
     staleTime: 5 * 60 * 1000,
     retry: false,
-  });
+});
 
   // Liste des professeurs réels de la BDD (aucun mock statique)
   const availableProfessorsList = useMemo(() => {
@@ -147,7 +145,8 @@ export default function AdminAiTimetableSchedulerPage() {
   }, [campusRoomsList]);
 
   // Filter & Search state for preview grid
-  const [dayFilter, setDayFilter] = useState<number | 'all'>('all');
+  // Filter & Search state for preview grid
+const [dayFilter, setDayFilter] = useState<number | 'all'>('all');
   const [groupFilter, setGroupFilter] = useState<string>('all');
   const [filiereFilter, setFiliereFilter] = useState<string>('all');
   const [profFilter, setProfFilter] = useState<string>('all');
@@ -158,39 +157,42 @@ export default function AdminAiTimetableSchedulerPage() {
   const [sortBy, setSortBy] = useState<'chrono' | 'module' | 'professor' | 'group' | 'room'>('chrono');
 
   // Query active database schedules if no AI generation has run yet
-  const { data: activeSessionsData, refetch: refetchActiveSessions } = useQuery({
+  // Query active database schedules if no AI generation has run yet
+const { data: activeSessionsData } = useQuery({
     queryKey: ['timetable-active-sessions'],
     queryFn: async () => {
-      const res = await api.get('/admin/timetable/ai-scheduler/active-sessions');
-      return res.data?.data || res.data || {};
+        const res = await api.get('/admin/timetable/ai-scheduler/active-sessions');
+        return res.data?.data || res.data || {};
     },
     retry: false,
-  });
+});
 
   // 1. Conflict Scanner Query
-  const { data: conflictData, refetch: refetchConflicts, isFetching: isScanning } = useQuery({
+  // 1. Conflict Scanner Query
+const { data: conflictData, refetch: refetchConflicts, isFetching: isScanning } = useQuery({
     queryKey: ['timetable-conflicts-scan'],
     queryFn: async () => {
-      const res = await api.get('/admin/timetable/ai-scheduler/conflicts');
-      return res.data?.data || res.data || {};
+        const res = await api.get('/admin/timetable/ai-scheduler/conflicts');
+        return res.data?.data || res.data || {};
     },
-  });
+});
 
   // Query Official Timetable Matrix directly from active database schedules
-  const { data: matrixData, refetch: refetchMatrix, isFetching: isMatrixFetching } = useQuery({
+  // Query Official Timetable Matrix directly from active database schedules
+const { data: matrixData, refetch: refetchMatrix, isFetching: isMatrixFetching } = useQuery({
     queryKey: ['official-timetable-matrix', selectedSemester, selectedFiliere],
     queryFn: async () => {
-      const type = selectedFiliere !== 'all' ? 'filiere' : 'all';
-      const id = selectedFiliere !== 'all' ? Number(selectedFiliere) : 0;
-      const params: Record<string, any> = {};
-      if (typeof selectedSemester === 'number') {
-        params.semester_number = selectedSemester;
-      }
-      const res = await api.get(`/timetable/export/${type}/${id}/matrix`, { params });
-      return res.data?.data || res.data;
+        const type = selectedFiliere !== 'all' ? 'filiere' : 'all';
+        const id = selectedFiliere !== 'all' ? Number(selectedFiliere) : 0;
+        const params: Record<string, any> = {};
+        if (typeof selectedSemester === 'number') {
+            params.semester_number = selectedSemester;
+        }
+        const res = await api.get(`/timetable/export/${type}/${id}/matrix`, { params });
+        return res.data?.data || res.data;
     },
     enabled: activeTab === 'matrix',
-  });
+});
 
   // 2. Generate Schedule Mutation
   const generateMutation = useMutation({
@@ -278,7 +280,8 @@ export default function AdminAiTimetableSchedulerPage() {
   });
 
   // 6. Clear / Reset Schedules Mutation
-  const [showClearModal, setShowClearModal] = useState<boolean>(false);
+  // 6. Clear / Reset Schedules Mutation
+const [showClearModal, setShowClearModal] = useState<boolean>(false);
   const [clearMode, setClearMode] = useState<'period' | 'single' | 'all'>('period');
   const [clearPeriod, setClearPeriod] = useState<'odd' | 'even'>('odd');
   const [clearSemesterNumber, setClearSemesterNumber] = useState<number>(typeof selectedSemester === 'number' ? selectedSemester : 1);
@@ -306,10 +309,10 @@ export default function AdminAiTimetableSchedulerPage() {
   });
 
   const generatedData = generateMutation.data;
-  const scheduledSessions: any[] = generatedData?.scheduled_items 
-    || generatedData?.scheduled_sessions 
-    || activeSessionsData?.scheduled_sessions 
-    || [];
+  const scheduledSessions: any[] = useMemo(() => (generatedData?.scheduled_items
+    || generatedData?.scheduled_sessions
+    || activeSessionsData?.scheduled_sessions
+    || []), [generatedData, activeSessionsData]);
 
   const uniqueGroups = useMemo(() => {
     return Array.from(new Set(scheduledSessions.map((s: any) => s.group_name).filter(Boolean))).sort();
@@ -329,25 +332,25 @@ export default function AdminAiTimetableSchedulerPage() {
 
   // ── 🏛️ Effectifs & Comptage par format pédagogique ENCG Fès (CM: 75, TD: 35, TP: 30) ──
   const cmCount = useMemo(() => {
-    return scheduledSessions.filter((s: any) => 
-      s.session_format === 'cm' || 
-      String(s.session_badge || '').toUpperCase().includes('CM') || 
+    return scheduledSessions.filter((s: any) =>
+      s.session_format === 'cm' ||
+      String(s.session_badge || '').toUpperCase().includes('CM') ||
       String(s.room_name || '').toLowerCase().includes('amphi')
     ).length;
   }, [scheduledSessions]);
 
   const tdCount = useMemo(() => {
-    return scheduledSessions.filter((s: any) => 
-      s.session_format === 'td' || 
+    return scheduledSessions.filter((s: any) =>
+      s.session_format === 'td' ||
       (String(s.session_badge || '').toUpperCase().includes('TD') && !String(s.session_badge || '').toUpperCase().includes('TP'))
     ).length;
   }, [scheduledSessions]);
 
   const tpCount = useMemo(() => {
-    return scheduledSessions.filter((s: any) => 
-      s.session_format === 'tp' || 
-      String(s.session_badge || '').toUpperCase().includes('TP') || 
-      String(s.room_type || '').toLowerCase().includes('lab') || 
+    return scheduledSessions.filter((s: any) =>
+      s.session_format === 'tp' ||
+      String(s.session_badge || '').toUpperCase().includes('TP') ||
+      String(s.room_type || '').toLowerCase().includes('lab') ||
       String(s.room_name || '').toLowerCase().includes('info')
     ).length;
   }, [scheduledSessions]);
@@ -574,7 +577,7 @@ export default function AdminAiTimetableSchedulerPage() {
 
   return (
     <div className="space-y-6 pb-24 animate-in fade-in max-w-[1700px] mx-auto p-4 md:p-8 font-sans">
-      
+
       {/* ── 🌟 Hero Executive Banner (ENCG Deep Navy Branding) ─────────────────────── */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#061330] via-[#0f2863] to-[#1e3a8a] p-6 md:p-8 text-white shadow-xl border border-blue-900/40">
         <div className="absolute -top-24 -end-24 w-96 h-96 rounded-full bg-blue-500/10 blur-3xl pointer-events-none" />
@@ -674,7 +677,7 @@ export default function AdminAiTimetableSchedulerPage() {
       {/* ═════════════════════════════════════════════════════════════════════════ */}
       {activeTab === 'generator' && (
         <div className="space-y-6 animate-in fade-in">
-          
+
           {/* 📊 High-End KPI Metric Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-xs flex items-center justify-between">
@@ -735,8 +738,8 @@ export default function AdminAiTimetableSchedulerPage() {
               </div>
               <div className={cn(
                 "w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border",
-                conflictsCount === 0 
-                  ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 border-emerald-100 dark:border-emerald-900/40" 
+                conflictsCount === 0
+                  ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 border-emerald-100 dark:border-emerald-900/40"
                   : "bg-rose-50 dark:bg-rose-950/60 text-rose-600 border-rose-100 dark:border-rose-900/40"
               )}>
                 {conflictsCount === 0 ? <CheckCircle2 className="w-6 h-6" /> : <AlertTriangle className="w-6 h-6 animate-pulse" />}
@@ -746,7 +749,7 @@ export default function AdminAiTimetableSchedulerPage() {
 
           {/* Generator Controls & Live Conflict Scanner */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            
+
             {/* Left Column: Paramètres du Solveur IA (5 Cols) with CustomSelect */}
             <div className="lg:col-span-5 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-xs space-y-5">
               <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 dark:border-slate-800">
@@ -1061,7 +1064,7 @@ export default function AdminAiTimetableSchedulerPage() {
 
             {/* Right Column: Live Conflict Scanner & Campus Room Radar (7 Cols) */}
             <div className="lg:col-span-7 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-xs flex flex-col justify-between space-y-6">
-              
+
               <div className="space-y-4">
                 {/* Header with status badge & Refresh button */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-slate-100 dark:border-slate-800">
@@ -1635,13 +1638,13 @@ export default function AdminAiTimetableSchedulerPage() {
                     // Pedagogical format detection (ENCG Fès)
                     const isCM = session.session_format === 'cm' || isAmphi || String(session.session_badge || '').toUpperCase().includes('CM');
                     const isTP = session.session_format === 'tp' || isIT || String(session.session_badge || '').toUpperCase().includes('TP');
-                    const isTD = !isCM && !isTP;
+                    void (!isCM && !isTP);
 
                     // Effectif réel provenant directement de la base de données (student_pathways / groups)
                     const studentCount = session.students_count ? Number(session.students_count) : null;
-                    const studentLabel = isCM 
+                    const studentLabel = isCM
                       ? (studentCount ? `${studentCount} Étudiants (Section entière)` : "Section entière")
-                      : isTP 
+                      : isTP
                       ? (studentCount ? `${studentCount} Étudiants (Postes machine)` : "Postes machine")
                       : (studentCount ? `${studentCount} Étudiants (Sous-groupe dédoublé)` : "Sous-groupe dédoublé");
 
@@ -1650,12 +1653,12 @@ export default function AdminAiTimetableSchedulerPage() {
                         key={idx}
                         className={cn(
                           "p-5 rounded-2xl border transition-all space-y-3.5 shadow-sm bg-card hover:shadow-md",
-                          isCM 
-                            ? "border-amber-500/30 hover:border-amber-500" 
-                            : isTP 
-                            ? "border-purple-500/30 hover:border-purple-500" 
-                            : isLanguage 
-                            ? "border-emerald-500/30 hover:border-emerald-500" 
+                          isCM
+                            ? "border-amber-500/30 hover:border-amber-500"
+                            : isTP
+                            ? "border-purple-500/30 hover:border-purple-500"
+                            : isLanguage
+                            ? "border-emerald-500/30 hover:border-emerald-500"
                             : "border-blue-500/30 hover:border-blue-500"
                         )}
                       >
@@ -1698,10 +1701,10 @@ export default function AdminAiTimetableSchedulerPage() {
                             </span>
                             <span className={cn(
                               "text-[10px] font-extrabold px-2 py-0.5 rounded-md flex items-center gap-1 border",
-                              isCM 
-                                ? "bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 border-amber-200 dark:border-amber-900/50" 
-                                : isTP 
-                                ? "bg-purple-50 dark:bg-purple-950/40 text-purple-900 dark:text-purple-200 border-purple-200 dark:border-purple-900/50" 
+                              isCM
+                                ? "bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 border-amber-200 dark:border-amber-900/50"
+                                : isTP
+                                ? "bg-purple-50 dark:bg-purple-950/40 text-purple-900 dark:text-purple-200 border-purple-200 dark:border-purple-900/50"
                                 : "bg-blue-50 dark:bg-blue-950/40 text-blue-900 dark:text-blue-200 border-blue-200 dark:border-blue-900/50"
                             )}>
                               <Users className="w-3 h-3" />
@@ -1716,7 +1719,7 @@ export default function AdminAiTimetableSchedulerPage() {
                             <User className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                             <span className="truncate font-medium">{highlightMatch(session.professor_name, searchQuery)}</span>
                           </span>
-                          
+
                           <span className={cn(
                             "font-bold px-2 py-0.8 rounded-lg flex items-center gap-1.5 shrink-0 text-[11px] border",
                             isLab
@@ -2016,7 +2019,7 @@ export default function AdminAiTimetableSchedulerPage() {
                   <Trash2 className="w-4 h-4" />
                 )}
                 <span>
-                  {clearMutation.isPending ? 'Suppression en cours...' : 
+                  {clearMutation.isPending ? 'Suppression en cours...' :
                    clearMode === 'period' ? `Oui, Effacer les Séances (${clearPeriod === 'odd' ? 'Automne S1/S3/S5/S7' : 'Printemps S2/S4/S6/S8'})` :
                    clearMode === 'single' ? `Oui, Effacer les Séances du Semestre S${clearSemesterNumber}` :
                    'Oui, Effacer Tous les Emplois du Temps (Toute l\'Année)'}
@@ -2038,7 +2041,7 @@ export default function AdminAiTimetableSchedulerPage() {
       {showDedicatedRoomsModal && (
         <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
           <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl max-w-3xl w-full p-6 md:p-8 space-y-5 animate-in zoom-in-95">
-            
+
             <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-3">
                 <div className={cn(
@@ -2165,7 +2168,7 @@ export default function AdminAiTimetableSchedulerPage() {
                                   onClick={() => {
                                     setDedicatedRooms(prev => {
                                       const current = prev[fCode] || [];
-                                      const updated = isSelected 
+                                      const updated = isSelected
                                         ? current.filter((r: string) => r !== rName)
                                         : [...current, rName];
                                       return { ...prev, [fCode]: updated };
@@ -2287,7 +2290,7 @@ export default function AdminAiTimetableSchedulerPage() {
                                   onClick={() => {
                                     setDedicatedProfessors(prev => {
                                       const current = prev[fCode] || [];
-                                      const updated = isSelected 
+                                      const updated = isSelected
                                         ? current.filter((p: string) => p !== pName)
                                         : [...current, pName];
                                       return { ...prev, [fCode]: updated };

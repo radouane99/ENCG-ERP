@@ -1,13 +1,9 @@
-import React,{ useState,useEffect,useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import {
-X,User,Mail,Phone,MapPin,Calendar,Award,BookOpen,ShieldCheck,
-FileText,Upload,Download,Eye,CheckCircle2,Clock,AlertCircle,AlertTriangle,Printer,FileCheck,RefreshCw,
-ZoomIn,ZoomOut,RotateCw,Maximize2
-} from 'lucide-react';
+import { X, User, Mail, Phone, MapPin, Calendar, Award, BookOpen, ShieldCheck, FileText, Upload, Download, Eye, CheckCircle2, Clock, AlertCircle, AlertTriangle, Printer, FileCheck, RefreshCw, ZoomIn, ZoomOut, RotateCw, Maximize2 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import api from '@shared/lib/api';
-import { protectedDocumentUrl,openAuthenticatedUrl,studentAttestationPdfUrl } from '@shared/lib/documentAccess';
+import { protectedDocumentUrl, openAuthenticatedUrl, studentAttestationPdfUrl } from '@shared/lib/documentAccess';
 import { toast } from 'sonner';
 
 export interface StudentDossierData {
@@ -28,7 +24,7 @@ export interface StudentDossierData {
   nationality?: string;
   nationality_ar?: string;
   photo_path?: string;
-  
+
   // Coordonnées
   email?: string;
   phone?: string;
@@ -218,9 +214,9 @@ const PdfCanvasViewer: React.FC<{ url: string; zoom?: number; rotate?: number }>
   if (error) {
     const cleanUrl = url.split('#')[0];
     return (
-      <object 
-        data={`${cleanUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`} 
-        type="application/pdf" 
+      <object
+        data={`${cleanUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
+        type="application/pdf"
         className="w-full h-[450px] border-none bg-white"
       >
         <embed src={`${cleanUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`} type="application/pdf" className="w-full h-[450px]" />
@@ -229,7 +225,7 @@ const PdfCanvasViewer: React.FC<{ url: string; zoom?: number; rotate?: number }>
   }
 
   return (
-    <div 
+    <div
       ref={containerRef}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
@@ -245,12 +241,12 @@ const PdfCanvasViewer: React.FC<{ url: string; zoom?: number; rotate?: number }>
           <RefreshCw className="w-4 h-4 animate-spin text-amber-400" /> Rendu du Document HD en cours...
         </div>
       )}
-      <div 
+      <div
         className="transition-transform duration-150 origin-top flex items-center justify-center my-auto pointer-events-none"
         style={{ transform: `scale(${zoom}) rotate(${rotate}deg)` }}
       >
-        <canvas 
-          ref={canvasRef} 
+        <canvas
+          ref={canvasRef}
           className="max-w-none shadow-2xl rounded-xl border border-slate-200 dark:border-slate-700 bg-white"
           style={{ height: '440px', width: 'auto' }}
         />
@@ -290,7 +286,7 @@ const ImageViewerWithPan: React.FC<{ url: string; zoom: number; rotate: number }
   };
 
   return (
-    <div 
+    <div
       ref={containerRef}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
@@ -301,14 +297,14 @@ const ImageViewerWithPan: React.FC<{ url: string; zoom: number; rotate: number }
         isPanning ? "cursor-grabbing" : "cursor-grab"
       )}
     >
-      <div 
+      <div
         className="transition-transform duration-150 origin-top flex items-center justify-center my-auto pointer-events-none"
         style={{ transform: `scale(${zoom}) rotate(${rotate}deg)` }}
       >
-        <img 
-          src={url} 
-          alt="Scan Document Inspection" 
-          className="shadow-2xl rounded-xl border border-slate-200 dark:border-slate-700 bg-white" 
+        <img
+          src={url}
+          alt="Scan Document Inspection"
+          className="shadow-2xl rounded-xl border border-slate-200 dark:border-slate-700 bg-white"
           style={{ maxHeight: '440px', width: 'auto' }}
         />
       </div>
@@ -323,6 +319,7 @@ const CnieCombinedViewer: React.FC<{ rectoUrl: string; versoUrl: string; zoom: n
   const [startPos, setStartPos] = useState({ x: 0, y: 0 });
   const [scrollPos, setScrollPos] = useState({ left: 0, top: 0 });
   const [renderedPages, setRenderedPages] = useState<string[]>([]); // base64 data URLs per page
+ // base64 data URLs per page
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [totalPages, setTotalPages] = useState(0);
@@ -472,37 +469,43 @@ interface Props {
   onExportAttestation?: (student: StudentDossierData) => void;
 }
 
-export default function StudentDigitalDossierModal({ student, onClose, onStatusUpdate, onExportAttestation }: Props) {
+export default function StudentDigitalDossierModal({ student, onClose, onStatusUpdate }: Props) {
   const [activeTab, setActiveTab] = useState<'identity' | 'contact' | 'parents' | 'academic' | 'administrative' | 'card' | 'documents' | 'audit'>('identity');
   const [documents, setDocuments] = useState<Record<string, StudentDocumentItem>>({});
   const [loadingDocs, setLoadingDocs] = useState(false);
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
   const [loadingAudit, setLoadingAudit] = useState(false);
   const [uploadingType, setUploadingType] = useState<string | null>(null);
-  const [previewDoc, setPreviewDoc] = useState<{ title: string; url: string } | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [previewDoc, setPreviewDoc] = useState<{
+    title: string;
+    url: string;
+} | null>(null);
+  const [isEditing] = useState(false);
   const [editFormData, setEditFormData] = useState<Partial<StudentDossierData>>({});
   const [aiAuditResult, setAiAuditResult] = useState<any | null>(null);
   const [splitViewMode, setSplitViewMode] = useState(false);
-  const [selectedDocForSplit, setSelectedDocForSplit] = useState<{ title: string; url: string } | null>(null);
+  const [selectedDocForSplit, setSelectedDocForSplit] = useState<{
+    title: string;
+    url: string;
+} | null>(null);
   const [splitZoom, setSplitZoom] = useState(1);
   const [splitRotate, setSplitRotate] = useState(0);
   const [showGuichetPrintModal, setShowGuichetPrintModal] = useState(false);
 
   // AI OCR Audit statuses — per-document verification
-  const [ocrAudit, setOcrAudit] = useState<{
+  useState<{
     bac: 'pending' | 'verified' | 'mismatch';
     cin: 'pending' | 'verified' | 'mismatch';
     releve_notes: 'pending' | 'verified' | 'mismatch';
     bacDeclared: string;
     bacDetected: string;
-  }>({
+}>({
     bac: 'pending',
     cin: 'pending',
     releve_notes: 'pending',
     bacDeclared: '',
     bacDetected: '',
-  });
+});
 
   const [physicalDocs, setPhysicalDocs] = useState<Record<string, boolean>>({
     bac: true,
@@ -511,16 +514,80 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
     photo: true,
     naissance: true,
     fiche: true,
-  });
+});
   // Tracks which doc keys were just flipped to true (awaiting receipt print)
-  const [pendingReceipt, setPendingReceipt] = useState<Record<string, boolean>>({});
+  // Tracks which doc keys were just flipped to true (awaiting receipt print)
+const [pendingReceipt, setPendingReceipt] = useState<Record<string, boolean>>({});
   // Per-document verification status (conforme / signale) with digital certification stamp
-  const [verifiedScans, setVerifiedScans] = useState<Record<string, 'conforme' | 'signale'>>({
+  // Per-document verification status (conforme / signale) with digital certification stamp
+const [verifiedScans, setVerifiedScans] = useState<Record<string, 'conforme' | 'signale'>>({
     bac: 'conforme',
     cnie: 'conforme',
     releve_notes: 'conforme',
     photo: 'conforme',
-  });
+});
+
+  const fetchStudentDocuments = useCallback(async (studentId: string | number) => {
+    setLoadingDocs(true);
+    try {
+      const map: Record<string, StudentDocumentItem> = {};
+
+      // Source 1: Admin uploaded docs (by student_id)
+      const res = await api.get(`/students/${studentId}/documents`).catch(() => null);
+      if (res?.data?.data && res.data.data.length > 0) {
+        (res.data.data as StudentDocumentItem[]).forEach(d => {
+          if (d && d.type) {
+            const signed = (d as StudentDocumentItem & { signed_url?: string }).signed_url
+              || d.file_path
+            map[d.type] = {
+              ...d,
+              file_path: protectedDocumentUrl(
+                signed?.includes('/serve-document/')
+                  ? signed
+                  : `/api/public/serve-document/${d.type}/${encodeURIComponent(student?.cne || '')}`
+              ),
+            }
+          }
+        });
+      }
+
+      // Source 2: Candidate portal uploaded docs & candidate data (by CNE via track-dossier)
+      if (student?.cne || student?.cin) {
+        const trackRes = await api.get('/public/track-dossier', {
+          params: { cne: student?.cne, cin: student?.cin }
+        }).catch(() => null);
+
+        const cand = trackRes?.data?.candidate;
+        if (cand) {
+          setEditFormData(prev => ({
+            ...prev,
+            last_name_ar: cand.last_name_ar || cand.arabic_last_name || prev.last_name_ar,
+            first_name_ar: cand.first_name_ar || cand.arabic_first_name || prev.first_name_ar,
+            father_name_ar: cand.father_name_ar || prev.father_name_ar,
+            mother_name_ar: cand.mother_name_ar || prev.mother_name_ar,
+            birth_city_ar: cand.birth_city_ar || prev.birth_city_ar,
+            address_ar: cand.address_ar || prev.address_ar,
+          }));
+
+          const candDocs = cand.documents;
+          if (candDocs) {
+            Object.keys(candDocs).forEach(type => {
+              const d = candDocs[type];
+              if (d && d.file_path && !map[type]) {
+                map[type] = { type, ...d };
+              }
+            });
+          }
+        }
+      }
+
+      setDocuments(map);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingDocs(false);
+    }
+  }, [setLoadingDocs, setEditFormData, setDocuments, student?.cne, student?.cin]);
 
   useEffect(() => {
     if (student) {
@@ -528,7 +595,7 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
       fetchStudentDocuments(student.id);
       fetchAuditLogs(student.id);
     }
-  }, [student]);
+  }, [student, fetchStudentDocuments]);
 
   // Comprehensive Auto-Print & Validate Handler using Scolarité Print Hub (1-Tab, 0 Popup Blocks)
   const handleValidateAndPrint = useCallback(() => {
@@ -599,67 +666,7 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
     }
   };
 
-  const fetchStudentDocuments = async (studentId: string | number) => {
-    setLoadingDocs(true);
-    try {
-      const map: Record<string, StudentDocumentItem> = {};
 
-      // Source 1: Admin uploaded docs (by student_id)
-      const res = await api.get(`/students/${studentId}/documents`).catch(() => null);
-      if (res?.data?.data && res.data.data.length > 0) {
-        (res.data.data as StudentDocumentItem[]).forEach(d => {
-          if (d && d.type) {
-            const signed = (d as StudentDocumentItem & { signed_url?: string }).signed_url
-              || d.file_path
-            map[d.type] = {
-              ...d,
-              file_path: protectedDocumentUrl(
-                signed?.includes('/serve-document/')
-                  ? signed
-                  : `/api/public/serve-document/${d.type}/${encodeURIComponent(student?.cne || '')}`
-              ),
-            }
-          }
-        });
-      }
-
-      // Source 2: Candidate portal uploaded docs & candidate data (by CNE via track-dossier)
-      if (student?.cne || student?.cin) {
-        const trackRes = await api.get('/public/track-dossier', {
-          params: { cne: student?.cne, cin: student?.cin }
-        }).catch(() => null);
-
-        const cand = trackRes?.data?.candidate;
-        if (cand) {
-          setEditFormData(prev => ({
-            ...prev,
-            last_name_ar: cand.last_name_ar || cand.arabic_last_name || prev.last_name_ar,
-            first_name_ar: cand.first_name_ar || cand.arabic_first_name || prev.first_name_ar,
-            father_name_ar: cand.father_name_ar || prev.father_name_ar,
-            mother_name_ar: cand.mother_name_ar || prev.mother_name_ar,
-            birth_city_ar: cand.birth_city_ar || prev.birth_city_ar,
-            address_ar: cand.address_ar || prev.address_ar,
-          }));
-
-          const candDocs = cand.documents;
-          if (candDocs) {
-            Object.keys(candDocs).forEach(type => {
-              const d = candDocs[type];
-              if (d && d.file_path && !map[type]) {
-                map[type] = { type, ...d };
-              }
-            });
-          }
-        }
-      }
-
-      setDocuments(map);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoadingDocs(false);
-    }
-  };
 
 
   const handleFileUpload = async (type: string, file: File) => {
@@ -699,7 +706,7 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
   return createPortal(
     <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-950 animate-in fade-in duration-200 overflow-hidden">
       <div className="bg-white dark:bg-slate-900 w-screen h-screen max-w-none h-screen rounded-none shadow-none overflow-hidden flex flex-col relative">
-        
+
         {/* Header Bar Banner — Ultra-Ergonomic ENCG Royal Navy Header */}
         <div className="px-4 sm:px-6 pt-3.5 pb-2 bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] text-white shrink-0 relative overflow-hidden border-b border-blue-900/40 flex flex-col justify-between shadow-md">
           <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
@@ -775,7 +782,7 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
                     const res = await api.post(`/admin/students/${student.id}/ai-audit`);
                     setAiAuditResult(res.data.data);
                     toast.success('✅ Audit IA certifié !', { id: tId });
-                  } catch (err: any) {
+                  } catch {
                     toast.error('Erreur audit IA.', { id: tId });
                   }
                 }}
@@ -842,8 +849,8 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
                   onClick={() => setActiveTab(tab.id as any)}
                   className={cn(
                     "px-3 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer shrink-0 border shadow-xs",
-                    isActive 
-                      ? "bg-amber-400 text-slate-950 border-amber-300 shadow-md ring-2 ring-amber-400/30 font-black" 
+                    isActive
+                      ? "bg-amber-400 text-slate-950 border-amber-300 shadow-md ring-2 ring-amber-400/30 font-black"
                       : "bg-white/10 hover:bg-white/20 text-white border-white/10 font-bold"
                   )}
                 >
@@ -889,8 +896,8 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
         {/* Tab Content Container */}
         <div className={cn(
           "overflow-y-auto flex-1",
-          splitViewMode 
-            ? "p-0 bg-slate-100 dark:bg-slate-950" 
+          splitViewMode
+            ? "p-0 bg-slate-100 dark:bg-slate-950"
             : "p-4 sm:p-6 space-y-6 bg-slate-50/50 dark:bg-slate-900/50"
         )}>
 
@@ -905,7 +912,7 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
 
                 {/* ════════ LEFT PANEL (5 COLS - 41.6% WIDTH): Données Déclarées ════════ */}
                 <div className="lg:col-span-5 overflow-y-auto custom-scrollbar bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col">
-                  
+
                   {/* Left Header */}
                   <div className="px-4 py-3 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-10">
                     <h3 className="text-[11px] font-black uppercase tracking-widest text-[#0f2863] dark:text-blue-300 flex items-center gap-1.5">
@@ -1032,14 +1039,14 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
 
                 {/* ════════ CENTER PANEL (4 COLS - 33.3% WIDTH): Inspection Viewer HD ════════ */}
                 <div className="lg:col-span-4 flex flex-col overflow-hidden border-r border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-950">
-                  
+
                   {/* Document Tabs Toolbar */}
                   <div className="p-2.5 bg-slate-900 border-b border-slate-800 text-white flex flex-wrap items-center justify-between gap-2 shrink-0">
                     <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
                       {(() => {
                         const cnieRectoUrl = documents['cnie']?.file_path || documents['cin_recto_verso']?.file_path || documents['cnie_recto']?.file_path || documents['cin_recto']?.file_path || `/api/public/serve-document/cnie/${encodeURIComponent(student.cne || '')}`;
                         const cnieVersoUrl = documents['cnie_verso']?.file_path || documents['cin_verso']?.file_path || `/api/public/serve-document/cnie_verso/${encodeURIComponent(student.cne || '')}`;
-                        
+
                         return [
                           { key: 'bac', title: '📜 Bac', fullTitle: '📜 Baccalauréat', url: documents['bac']?.file_path || `/api/public/serve-document/bac/${encodeURIComponent(student.cne || '')}`, isDual: false },
                           { key: 'cnie', title: '🪪 CNIE', fullTitle: '🪪 CNIE (Recto-Verso)', url: cnieRectoUrl, versoUrl: cnieVersoUrl, isDual: true },
@@ -1055,8 +1062,8 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
                               onClick={() => { setSelectedDocForSplit({ key: doc.key, title: doc.fullTitle, url: doc.url, versoUrl: (doc as any).versoUrl, isDual: doc.isDual } as any); setSplitZoom(1); setSplitRotate(0); }}
                               className={cn(
                                 "px-2.5 py-1 rounded-lg text-xs font-extrabold transition-all cursor-pointer whitespace-nowrap shrink-0 flex items-center gap-1.5 border relative",
-                                isSel 
-                                  ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-blue-400 shadow-md" 
+                                isSel
+                                  ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-blue-400 shadow-md"
                                   : "bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700"
                               )}
                             >
@@ -1191,7 +1198,7 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
 
                 {/* ════════ RIGHT PANEL (3 COLS - 25% WIDTH): Actions & Décision Unique ════════ */}
                 <div className="lg:col-span-3 overflow-y-auto custom-scrollbar bg-white dark:bg-slate-900 flex flex-col">
-                  
+
                   {/* Right Header */}
                   <div className="px-4 py-3 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-10">
                     <h3 className="text-[11px] font-black uppercase tracking-widest text-[#0f2863] dark:text-blue-300 flex items-center gap-1.5">
@@ -1536,7 +1543,7 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
               </div>
             </div>
           )}
-          
+
           {/* TAB 1: IDENTITÉ */}
           {activeTab === 'identity' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in">
@@ -2049,9 +2056,9 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
                         {missingItems.map((item, idx) => (
                           <div key={idx} className={cn(
                             "flex items-center justify-between p-2.5 rounded-xl border text-xs font-bold transition-all",
-                            item.ok 
+                            item.ok
                               ? "bg-emerald-50/60 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300"
-                              : item.critical 
+                              : item.critical
                                 ? "bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800 text-red-800 dark:text-red-300"
                                 : "bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300"
                           )}>
@@ -2097,8 +2104,8 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
                           }}
                           className={cn(
                             "px-5 py-2.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 shadow-lg cursor-pointer",
-                            isFullyValid 
-                              ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/30" 
+                            isFullyValid
+                              ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/30"
                               : "bg-slate-300 dark:bg-slate-700 text-slate-500 cursor-not-allowed"
                           )}
                         >
@@ -2288,9 +2295,9 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
                         {canPreview ? (
                           <button
                             type="button"
-                            onClick={() => setPreviewDoc({ 
-                              title: docReq.label, 
-                              url: getDocUrl() 
+                            onClick={() => setPreviewDoc({
+                              title: docReq.label,
+                              url: getDocUrl()
                             })}
                             className="px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-xs font-black transition-all flex items-center gap-2 cursor-pointer shadow-md hover:scale-105"
                           >
@@ -2541,7 +2548,7 @@ export default function StudentDigitalDossierModal({ student, onClose, onStatusU
                           try {
                             iframe.contentWindow?.focus();
                             iframe.contentWindow?.print();
-                          } catch (e) {}
+                          } catch {}
                         }, 300);
                       };
                       toast.success(`🖨️ Impression de ${doc.title} lancée !`);

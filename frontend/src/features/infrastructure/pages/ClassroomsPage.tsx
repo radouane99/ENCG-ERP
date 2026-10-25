@@ -1,17 +1,12 @@
-import { useState,useEffect,useMemo } from 'react'
-import { useQuery,useMutation } from '@tanstack/react-query'
-import {
-Search,Plus,Edit2,Trash2,X,Monitor,Thermometer,Building,CheckCircle,
-Upload,Sparkles,Printer,CalendarCheck,DoorOpen,Loader2,
-Ticket,AlertTriangle,Clock,Calendar,Users,Download,Eye,
-Wifi,ShieldCheck,LayoutGrid,List
-} from 'lucide-react'
-import { cn,cleanUtf8Text } from '@shared/lib/utils'
-import { CustomSelect,SelectOption } from '@shared/components/ui/CustomSelect'
+import { useCallback, useState, useEffect, useMemo } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { Search, Plus, Edit2, Trash2, X, Monitor, Thermometer, Building, CheckCircle, Upload, Sparkles, Printer, CalendarCheck, DoorOpen, Loader2, Ticket, AlertTriangle, Clock, Calendar, Users, Download, Eye, Wifi, ShieldCheck, LayoutGrid, List } from 'lucide-react';
+import { cn, cleanUtf8Text } from '@shared/lib/utils';
+import { CustomSelect, SelectOption } from '@shared/components/ui/CustomSelect';
 import api from '@shared/lib/api'
-import { toast } from 'sonner'
+import { toast } from 'sonner';
 import MassImportView from '@shared/components/ui/MassImportView'
-import { generateRoomDoorSignHtml,generateAllRoomsDoorSignsHtml,RoomDocumentData } from '../utils/roomDocumentGenerator'
+import { generateRoomDoorSignHtml, generateAllRoomsDoorSignsHtml, RoomDocumentData } from '../utils/roomDocumentGenerator';
 
 interface Room {
   id: number;
@@ -119,13 +114,7 @@ const ROOM_TYPE_THEMES: Record<string, RoomTheme> = {
   },
 }
 
-const TYPE_OPTIONS = [
-  { value: 'all', label: 'Toutes les catégories', badge: 'TOUT' },
-  { value: 'amphitheatre', label: 'Amphithéâtres (Grands Amphis)', badge: 'AMPHI' },
-  { value: 'classroom', label: 'Salles TD (Travaux Dirigés)', badge: 'TD' },
-  { value: 'lab', label: 'Laboratoires Informatique TP', badge: 'LABO' },
-  { value: 'seminar', label: 'Salles de Séminaire / Master', badge: 'SÉMINAIRE' }
-]
+
 
 const SLOTS = [
   { start: '08:30', end: '10:30', label: '08h30 – 10h30' },
@@ -188,40 +177,42 @@ const EMPTY = {
 }
 
 export default function ClassroomsPage() {
-  const [activeTab, setActiveTab] = useState<'inventory' | 'availability' | 'reservations'>('inventory')
+  const [activeTab, setActiveTab] = useState<'inventory' | 'availability' | 'reservations'>('inventory');
 
   // ── Tab 1: Inventory State ──────────────────────────────────────────────────
-  const [rooms, setRooms] = useState<Room[]>([])
-  const [stats, setStats] = useState<Stats>({ total: 0, available: 0, amphitheatres: 0, total_capacity: 0 })
-  const [loading, setLoading] = useState(true)
-  const [search, setSearch] = useState('')
-  const [typeFilter, setTypeFilter] = useState('all')
-  const [filterProjectorOnly, setFilterProjectorOnly] = useState(false)
-  const [filterAcOnly, setFilterAcOnly] = useState(false)
-  const [filterAvailableOnly, setFilterAvailableOnly] = useState(false)
-  const [minCapacityFilter, setMinCapacityFilter] = useState(0)
-  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid')
-  const [sortBy, setSortBy] = useState<string>('capacity-desc')
+  // ── Tab 1: Inventory State ──────────────────────────────────────────────────
+const [rooms, setRooms] = useState<Room[]>([]);
+  const [stats, setStats] = useState<Stats>({ total: 0, available: 0, amphitheatres: 0, total_capacity: 0 });
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [typeFilter, setTypeFilter] = useState('all');
+  const [filterProjectorOnly, setFilterProjectorOnly] = useState(false);
+  const [filterAcOnly, setFilterAcOnly] = useState(false);
+  const [filterAvailableOnly, setFilterAvailableOnly] = useState(false);
+  const [minCapacityFilter, setMinCapacityFilter] = useState(0);
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
+  const [sortBy, setSortBy] = useState<string>('capacity-desc');
   
-  const [showModal, setShowModal] = useState(false)
-  const [isImporting, setIsImporting] = useState(false)
-  const [editingId, setEditingId] = useState<number | null>(null)
-  const [form, setForm] = useState({ ...EMPTY })
+  const [showModal, setShowModal] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [form, setForm] = useState({ ...EMPTY });
 
   // Details & Timetable Modal State
-  const [selectedRoomForDetails, setSelectedRoomForDetails] = useState<Room | null>(null)
-  const [roomScheduleEvents, setRoomScheduleEvents] = useState<any[]>([])
-  const [loadingSchedule, setLoadingSchedule] = useState(false)
-  const [downloadingPdfId, setDownloadingPdfId] = useState<number | null>(null)
+  // Details & Timetable Modal State
+const [selectedRoomForDetails, setSelectedRoomForDetails] = useState<Room | null>(null);
+  const [roomScheduleEvents, setRoomScheduleEvents] = useState<any[]>([]);
+  const [loadingSchedule, setLoadingSchedule] = useState(false);
+  const [downloadingPdfId, setDownloadingPdfId] = useState<number | null>(null);
 
   // ── Tab 2: Live Room Availability State ─────────────────────────────────────
   const today = new Date().toISOString().slice(0, 10)
-  const [date, setDate] = useState(today)
-  const [slot, setSlot] = useState(0)
-  const [headcount, setHeadcount] = useState('35')
-  const [availKind, setAvailKind] = useState<'all' | 'td' | 'amphi'>('all')
-  const [motif, setMotif] = useState('extra')
-  const [note, setNote] = useState('')
+  const [date, setDate] = useState(today);
+  const [slot, setSlot] = useState(0);
+  const [headcount, setHeadcount] = useState('35');
+  const [availKind, setAvailKind] = useState<'all' | 'td' | 'amphi'>('all');
+  const [motif, setMotif] = useState('extra');
+  const [note, setNote] = useState('');
 
   const start = SLOTS[slot].start
   const end = SLOTS[slot].end
@@ -266,9 +257,10 @@ export default function ClassroomsPage() {
   })
 
   // ── Tab 3: Reservations State ───────────────────────────────────────────────
-  const [reservations, setReservations] = useState<any[]>([])
-  const [loadingReservations, setLoadingReservations] = useState(false)
-  const [reservationSearch, setReservationSearch] = useState('')
+  // ── Tab 3: Reservations State ───────────────────────────────────────────────
+const [reservations, setReservations] = useState<any[]>([]);
+  const [loadingReservations, setLoadingReservations] = useState(false);
+  const [reservationSearch, setReservationSearch] = useState('');
 
   const fetchReservations = async () => {
     try {
@@ -283,7 +275,7 @@ export default function ClassroomsPage() {
     }
   }
 
-  const fetchRooms = async () => {
+  const fetchRooms = useCallback(async () => {
     try {
       setLoading(true)
       const realFilter = typeFilter === 'all' ? '' : typeFilter
@@ -295,11 +287,11 @@ export default function ClassroomsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [setLoading, typeFilter, search, setRooms, setStats])
 
   useEffect(() => {
     fetchRooms()
-  }, [search, typeFilter])
+  }, [search, typeFilter, fetchRooms])
 
   useEffect(() => {
     fetchReservations()

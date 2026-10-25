@@ -1,12 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-GraduationCap,
-BookOpen,
-Award,Clock,
-Download,ShieldCheck,
-Users
-} from 'lucide-react';
+import { GraduationCap, BookOpen, Award, Clock, Download, ShieldCheck, Users } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import api from '@/shared/lib/api';
@@ -14,16 +8,16 @@ import { openAuthenticatedUrl } from '@shared/lib/documentAccess';
 import { toast } from 'sonner';
 
 export default function ProfessorResearchPage() {
-  const { t, i18n } = useTranslation(['professors', 'common']);
+  useTranslation(['professors', 'common']);
   const [activeTab, setActiveTab] = useState<'phd' | 'publications'>('phd');
 
-  const { data: researchData, isLoading } = useQuery({
+  const { data: researchData } = useQuery({
     queryKey: ['professor-research'],
     queryFn: async () => {
-      const res = await api.get('/professor-portal/research');
-      return res.data.data;
+        const res = await api.get('/professor-portal/research');
+        return res.data.data;
     }
-  });
+});
 
   const handleValidateCst = (studentName: string) => {
     toast.success(`Rapport de Comité de Suivi de Thèse (CST) validé pour ${studentName} !`, {

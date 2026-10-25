@@ -1,44 +1,16 @@
-import { useState,useMemo } from 'react'
-import { Link,useNavigate } from 'react-router-dom'
-import {
-Calendar,
-Users,
-Loader2,
-Sliders,
-Sparkles,
-Clock,
-Layers,
-Zap,
-Archive,
-RefreshCw,
-ArrowUp,
-ArrowDown,
-FileText,
-Mail,
-AlertTriangle,
-Printer,
-ShieldCheck,
-Search,
-Building2,
-CheckSquare,
-BarChart3,
-ScanLine,
-DoorOpen,
-UserCheck,
-Edit3,
-X,
-Filter
-} from 'lucide-react'
+import { useState, useMemo } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Calendar, Users, Loader2, Sliders, Sparkles, Clock, Layers, Zap, Archive, RefreshCw, ArrowUp, ArrowDown, FileText, Mail, AlertTriangle, Printer, ShieldCheck, Search, Building2, CheckSquare, BarChart3, ScanLine, DoorOpen, UserCheck, Edit3, X, Filter } from 'lucide-react';
 
-import { cn,cleanUtf8Text } from '@shared/lib/utils'
-import { useQuery,useMutation,useQueryClient } from '@tanstack/react-query'
-import { useTranslation } from 'react-i18next'
-import { academicApi } from '@shared/api/academic'
-import { examsApi } from '@shared/api/exams'
+import { cn, cleanUtf8Text } from '@shared/lib/utils';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
+import { academicApi } from '@shared/api/academic';
+import { examsApi } from '@shared/api/exams';
 import api from '@shared/lib/api'
-import { openExamEmargementPdf,openExamDoorSignPdf } from '@shared/lib/documentAccess'
-import { toast } from 'sonner'
-import { CustomSelect,SelectOption } from '@shared/components/ui'
+import { openExamEmargementPdf, openExamDoorSignPdf } from '@shared/lib/documentAccess';
+import { toast } from 'sonner';
+import { CustomSelect, SelectOption } from '@shared/components/ui';
 
 // Helper for date formatting in French
 function parseExamDate(dateStr?: string) {
@@ -69,7 +41,7 @@ function parseExamDate(dateStr?: string) {
 // Helper for end time calculation
 function getExamTimes(startTime?: string, durationMinutes: number = 120) {
   if (!startTime) return { start: '08:30', end: '10:30', duration: `${durationMinutes} min` }
-  const [hStr, mStr] = startTime.split(':')
+  const [hStr, mStr] = startTime.split(':');
   const startMins = (parseInt(hStr, 10) || 0) * 60 + (parseInt(mStr, 10) || 0)
   const endMins = startMins + durationMinutes
   const endH = String(Math.floor(endMins / 60) % 24).padStart(2, '0')
@@ -82,60 +54,64 @@ function getExamTimes(startTime?: string, durationMinutes: number = 120) {
 }
 
 export default function AdminExamsPage() {
-  const navigate = useNavigate()
-  const { t: _t } = useTranslation('exams')
+  useNavigate();
+  const { t: _t } = useTranslation('exams');
   const queryClient = useQueryClient()
 
   // Filter States
-  const [selectedSemesterNum, setSelectedSemesterNum] = useState<number | ''>('')
-  const [selectedSessionId, setSelectedSessionId] = useState<number | ''>('')
-  const [selectedFiliereId, setSelectedFiliereId] = useState<number | ''>('')
-  const [selectedDateFilter, setSelectedDateFilter] = useState<string>('')
-  const [searchQuery, setSearchQuery] = useState('')
-  const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards')
+  // Filter States
+const [selectedSemesterNum, setSelectedSemesterNum] = useState<number | ''>('');
+  const [selectedSessionId, setSelectedSessionId] = useState<number | ''>('');
+  const [selectedFiliereId, setSelectedFiliereId] = useState<number | ''>('');
+  const [selectedDateFilter, setSelectedDateFilter] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
 
   // Loading States
-  const [isAutoGenerating, setIsAutoGenerating] = useState(false)
-  const [isAssigningProctors, setIsAssigningProctors] = useState(false)
-  const [isResetting, setIsResetting] = useState(false)
-  const [showResetConfirm, setShowResetConfirm] = useState(false)
+  // Loading States
+const [isAutoGenerating, setIsAutoGenerating] = useState(false);
+  const [isAssigningProctors, setIsAssigningProctors] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   // Custom planning modal state
-  const [showCustomGenModal, setShowCustomGenModal] = useState(false)
-  const [modulesPerDay, setModulesPerDay] = useState<number>(2)
-  const [daySlotMode, setDaySlotMode] = useState<'matin' | 'pm' | 'split' | 'balanced'>('balanced')
-  const [customStartDate, setCustomStartDate] = useState<string>('')
-  const [orderedModuleList, setOrderedModuleList] = useState<any[]>([])
-  const [selectedModuleIds, setSelectedModuleIds] = useState<Set<number>>(new Set())
-  const [moduleSearchQuery, setModuleSearchQuery] = useState('')
+  // Custom planning modal state
+const [showCustomGenModal, setShowCustomGenModal] = useState(false);
+  const [modulesPerDay, setModulesPerDay] = useState<number>(2);
+  const [daySlotMode, setDaySlotMode] = useState<'matin' | 'pm' | 'split' | 'balanced'>('balanced');
+  const [customStartDate, setCustomStartDate] = useState<string>('');
+  const [orderedModuleList, setOrderedModuleList] = useState<any[]>([]);
+  const [selectedModuleIds, setSelectedModuleIds] = useState<Set<number>>(new Set());
+  const [moduleSearchQuery, setModuleSearchQuery] = useState('');
 
   // Queries
-  const { data: filieres } = useQuery({
+  // Queries
+const { data: filieres } = useQuery({
     queryKey: ['filieres'],
     queryFn: academicApi.getFilieres
-  })
+});
 
   const { data: exams, isLoading: isLoadingExams } = useQuery({
     queryKey: ['admin-exams', selectedFiliereId, selectedSessionId, selectedSemesterNum],
     queryFn: () => examsApi.getExams({
-      filiere_id: selectedFiliereId,
-      session_id: selectedSessionId,
-      semester_number: selectedSemesterNum
+        filiere_id: selectedFiliereId,
+        session_id: selectedSessionId,
+        semester_number: selectedSemesterNum
     })
-  })
+});
 
   const { data: modules } = useQuery({
     queryKey: ['modules'],
     queryFn: academicApi.getModules
-  })
+});
 
   const { data: examSessions } = useQuery({
     queryKey: ['exam-sessions'],
     queryFn: async () => {
-      const res = await api.get('/exam-sessions')
-      return res.data.data
+        const res = await api.get('/exam-sessions');
+        return res.data.data;
     }
-  })
+});
 
   const handleNotify = (msg: string, type: 'success' | 'error' = 'success') => {
     if (type === 'success') {
@@ -1155,25 +1131,7 @@ export default function AdminExamsPage() {
 }
 
 // 📇 Redesigned Premium ExamCard Component
-function ExamCard({
-  id,
-  title,
-  group,
-  filiereCode,
-  semester,
-  time,
-  duration,
-  room,
-  surveillants,
-  day,
-  month,
-  dayName,
-  isToday,
-  type,
-  generated,
-  sent,
-  onNotify
-}: {
+function ExamCard({ id, title, group, filiereCode, semester, time, duration, room, surveillants, day, month, dayName, isToday, type, generated, sent, onNotify }: {
   id: number
   title: string
   group: string
@@ -1192,7 +1150,7 @@ function ExamCard({
   sent: number
   onNotify: (msg: string, type?: 'success' | 'error') => void
 }) {
-  const [isGenerating, setIsGenerating] = useState(false)
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const cleanTitle = cleanUtf8Text(title)
   const cleanRoom = cleanUtf8Text(room)

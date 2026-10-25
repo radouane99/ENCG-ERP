@@ -281,7 +281,7 @@ export function QRScannerModal({ isOpen, onClose, sessionId, sessionData, attend
       const scheduleDay = selectedSchedule.day_of_week ?? selectedSchedule.day
       setSessionDate(getDateForScheduleDay(scheduleDay))
     }
-  }, [selectedSchedule?.id, selectedSchedule?.day, selectedSchedule?.day_of_week, attendanceSessionId])
+  }, [selectedSchedule, attendanceSessionId])
 
   // Start attendance session
   async function handleStartSession() {

@@ -29,7 +29,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
+use App\Mail\RattrapageConvocationMail;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class ProfessorPortalController extends Controller
@@ -2189,15 +2191,21 @@ class ProfessorPortalController extends Controller
             if ($syncTextbook && $prof) {
                 $moduleObj = Module::find($moduleId);
                 $cleanNum = preg_replace('/[^0-9]/', '', $seanceCode) ?: '1';
-                $defaultTitle = "Séance {$seanceCode} — ".($moduleObj?->name ?? 'Enseignement');
-                $defaultConcepts = "Séance officielle {$seanceCode} (".strtoupper($sessionType).'). Effectif : '.count($students).' inscrits, '.(count($students) - count($absentIds)).' présents, '.count($absentIds).' absents.';
+                $isRattrapage = str_contains(strtoupper($seanceCode), 'RAT');
+                $actualSessionType = $isRattrapage ? 'rattrapage' : $sessionType;
+                $defaultTitle = $isRattrapage
+                    ? "Séance de Rattrapage {$seanceCode} — ".($moduleObj?->name ?? 'Régularisation Pédagogique')
+                    : "Séance {$seanceCode} — ".($moduleObj?->name ?? 'Enseignement');
+                $defaultConcepts = $isRattrapage
+                    ? "Séance officielle de compensation et de rattrapage des absences ({$seanceCode}). Effectif : ".(count($students) - count($absentIds)).' présents régularisés.'
+                    : "Séance officielle {$seanceCode} (".strtoupper($sessionType).'). Effectif : '.count($students).' inscrits, '.(count($students) - count($absentIds)).' présents, '.count($absentIds).' absents.';
 
                 Textbook::updateOrCreate(
                     [
                         'professor_id' => $prof->id,
                         'module_id' => $moduleId,
                         'session_date' => $sessionDate,
-                        'session_type' => $sessionType,
+                        'session_type' => $actualSessionType,
                     ],
                     [
                         'user_id' => $user->id,
@@ -2205,7 +2213,7 @@ class ProfessorPortalController extends Controller
                         'session_duration_hours' => 2.0,
                         'chapter_title' => $chapterTitle ?: $defaultTitle,
                         'key_concepts' => $keyConcepts ?: $defaultConcepts,
-                        'pedagogical_goals' => "Progression du syllabus officiel & contrôle d'assiduité",
+                        'pedagogical_goals' => $isRattrapage ? "Rattrapage pédagogique officiel & régularisation d'absences (Art. 14)" : "Progression du syllabus officiel & contrôle d'assiduité",
                         'syllabus_percentage' => min(100, (int) $cleanNum * 8 ?: 15),
                         'status' => 'submitted',
                     ]
@@ -2322,6 +2330,148 @@ class ProfessorPortalController extends Controller
         $filename = "Emargement_{$cleanGroupName}{$cleanSubGroup}.pdf";
 
         return $pdf->stream($filename, ['Attachment' => false]);
+    }
+
+    /**
+     * Export officiel du Procès-Verbal de Séance de Rattrapage (PDF).
+     */
+    public function downloadRattrapagePvPdf(Request $request)
+    {
+        $groupId = (int) $request->input('group_id');
+        $moduleId = (int) $request->input('module_id');
+        $seanceCode = trim((string) $request->input('seance_code', 'S1'));
+        $rattrapageDate = trim((string) $request->input('date', date('d/m/Y')));
+        $timeSlot = trim((string) $request->input('time_slot', '14:00 - 16:00'));
+        $room = trim((string) $request->input('room', 'Salle de Rattrapage'));
+        $rawRecords = $request->input('records', []);
+
+        if (! $groupId) {
+            return response()->json(['success' => false, 'message' => 'Groupe obligatoire.'], 422);
+        }
+
+        $group = Group::with(['filiere', 'academicYear'])->findOrFail($groupId);
+        $module = $moduleId ? Module::find($moduleId) : null;
+        $user = $request->user();
+        $prof = $user?->professor;
+        $professorName = $user ? trim(($user->first_name ?? '').' '.($user->last_name ?? '')) : 'Professeur ENCG';
+
+        $statusLabel = 'Professeur Titulaire (Permanent)';
+        if (($prof?->contract_type === 'vacataire') || ($user && $user->hasRole('vacataire'))) {
+            $statusLabel = 'Enseignant Vacataire';
+        }
+
+        // Parse records if string
+        if (is_string($rawRecords)) {
+            $rawRecords = json_decode($rawRecords, true) ?: [];
+        }
+
+        $records = [];
+        if (! empty($rawRecords)) {
+            foreach ($rawRecords as $rec) {
+                $studentId = $rec['student_id'] ?? ($rec['id'] ?? null);
+                if (! $studentId) continue;
+                $stObj = Student::with(['user', 'latestPathway'])->find($studentId);
+                if ($stObj) {
+                    $records[] = [
+                        'id' => $stObj->id,
+                        'student_number' => $stObj->student_number,
+                        'cne' => $stObj->cne ?: ($stObj->massar_code ?: '—'),
+                        'first_name' => $stObj->user?->first_name ?? '',
+                        'last_name' => $stObj->user?->last_name ?? '',
+                        'status' => $rec['status'] ?? 'present',
+                        'note' => $rec['note'] ?? '',
+                    ];
+                }
+            }
+        }
+
+        $academicYear = $group->academicYear?->name ?? (date('Y').'/'.(date('Y') + 1));
+        $trackingCode = 'PV-RAT-'.date('Y').'-'.str_pad($group->id, 4, '0', STR_PAD_LEFT).'-'.$seanceCode;
+        $securityHash = hash('sha256', ($group->id ?? 0).'_'.($module?->id ?? 0).'_'.$seanceCode.'_'.date('Ymd').'_'.($user?->id ?? 0));
+
+        $pdf = Pdf::loadView('pdf.pv_seance_rattrapage', [
+            'professorName' => $professorName,
+            'professorStatus' => $statusLabel,
+            'groupName' => $group->name,
+            'filiereCode' => $group->filiere?->code ?? 'TC',
+            'filiereName' => $group->filiere?->name ?? 'Tronc Commun',
+            'semester' => $group->semester_number ?? 1,
+            'moduleName' => $module?->name ?? 'Module Pédagogique',
+            'moduleCode' => $module?->code ?? 'MOD',
+            'subGroup' => $request->input('sub_group'),
+            'academicYear' => $academicYear,
+            'seanceCode' => $seanceCode,
+            'rattrapageDate' => $rattrapageDate,
+            'timeSlot' => $timeSlot,
+            'room' => $room,
+            'records' => $records,
+            'trackingCode' => $trackingCode,
+            'securityHash' => $securityHash,
+        ])->setPaper('a4', 'portrait');
+
+        $cleanGroupName = Str::slug($group->name);
+        $filename = "PV_Rattrapage_{$seanceCode}_{$cleanGroupName}.pdf";
+
+        return $pdf->stream($filename, ['Attachment' => false]);
+    }
+
+    /**
+     * Envoi des convocations officielles aux étudiants absents pour la séance de rattrapage.
+     */
+    public function sendRattrapageConvocation(Request $request): JsonResponse
+    {
+        $groupId = (int) $request->input('group_id');
+        $moduleId = (int) $request->input('module_id');
+        $seanceCode = trim((string) $request->input('seance_code', 'S1'));
+        $date = trim((string) $request->input('date', date('d/m/Y')));
+        $timeSlot = trim((string) $request->input('time_slot', '14:00 - 16:00'));
+        $room = trim((string) $request->input('room', 'Salle de Rattrapage'));
+        $notes = $request->input('notes');
+        $studentIds = (array) $request->input('student_ids', []);
+
+        if (empty($studentIds)) {
+            return response()->json(['success' => false, 'message' => 'Aucun étudiant sélectionné pour la convocation.'], 422);
+        }
+
+        $user = $request->user();
+        $professorName = $user ? trim(($user->first_name ?? '').' '.($user->last_name ?? '')) : 'Professeur ENCG';
+        $module = Module::find($moduleId);
+        $moduleName = $module?->name ?? 'Module Pédagogique';
+        $moduleCode = $module?->code ?? 'MOD';
+
+        $students = Student::with('user')->whereIn('id', $studentIds)->get();
+        $sentCount = 0;
+
+        foreach ($students as $student) {
+            $studentUser = $student->user;
+            $studentEmail = $studentUser?->email;
+            $studentName = $studentUser ? trim($studentUser->first_name.' '.$studentUser->last_name) : 'Étudiant(e)';
+
+            if ($studentEmail && filter_var($studentEmail, FILTER_VALIDATE_EMAIL)) {
+                try {
+                    Mail::to($studentEmail)->send(new RattrapageConvocationMail(
+                        studentName: $studentName,
+                        moduleName: $moduleName,
+                        moduleCode: $moduleCode,
+                        seanceCode: $seanceCode,
+                        professorName: $professorName,
+                        date: $date,
+                        timeSlot: $timeSlot,
+                        room: $room,
+                        notes: $notes
+                    ));
+                    $sentCount++;
+                } catch (\Throwable $e) {
+                    Log::warning("Échec envoi convocation rattrapage à {$studentEmail}: ".$e->getMessage());
+                }
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'sent_count' => $sentCount,
+            'message' => "Convocations envoyées avec succès à {$sentCount} étudiant(s).",
+        ]);
     }
 
     /**

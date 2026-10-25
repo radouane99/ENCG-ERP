@@ -1,10 +1,10 @@
-import React,{ useMemo,useState } from 'react'
-import { useMutation,useQuery } from '@tanstack/react-query'
-import { ArrowLeft,GripVertical,Loader2,Plus,Trash2,X,Building2,Calendar,Users,BookOpen,MapPin } from 'lucide-react'
+import React, { useMemo, useState } from 'react';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { ArrowLeft, GripVertical, Loader2, Plus, Trash2, X, Building2, Calendar, Users, BookOpen, MapPin } from 'lucide-react';
 import api from '@/shared/lib/api'
-import { toast } from 'sonner'
-import { cn } from '@/shared/lib/utils'
-import { CustomSelect,SelectOption } from '@/shared/components/ui/CustomSelect'
+import { toast } from 'sonner';
+import { cn } from '@/shared/lib/utils';
+import { CustomSelect, SelectOption } from '@/shared/components/ui/CustomSelect';
 
 type Slot = { slot_index: number; start: string; end: string; label: string }
 type Block = {
@@ -42,7 +42,7 @@ function hhmm(value?: string) {
 }
 
 function toMinutes(value?: string) {
-  const [h, m] = hhmm(value).split(':').map(Number)
+  const [h, m] = hhmm(value).split(':').map(Number);
   return (h || 0) * 60 + (m || 0)
 }
 
@@ -59,21 +59,16 @@ function slotForBlock(block: Block, slots: Slot[]): Slot | undefined {
   }) || slots.find((s) => hhmm(s.start) === hhmm(block.start_time))
 }
 
-export default function ManualTimetableBoard({
-  versionId,
-  filiereLabel,
-  onBack,
-  onChanged,
-}: {
+export default function ManualTimetableBoard({ versionId, filiereLabel, onBack, onChanged }: {
   versionId: number
   filiereLabel: string
   onBack: () => void
   onChanged?: () => void
 }) {
-  const [picked, setPicked] = useState<Block | null>(null)
-  const [draggingBlock, setDraggingBlock] = useState<Block | null>(null)
-  const [showAdd, setShowAdd] = useState(false)
-  const [dropHint, setDropHint] = useState<string | null>(null)
+  const [picked, setPicked] = useState<Block | null>(null);
+  const [draggingBlock, setDraggingBlock] = useState<Block | null>(null);
+  const [showAdd, setShowAdd] = useState(false);
+  const [dropHint, setDropHint] = useState<string | null>(null);
   const [form, setForm] = useState({
     module_id: '',
     professor_id: '',
@@ -82,23 +77,25 @@ export default function ManualTimetableBoard({
     session_type: 'td',
     day_of_week: '0',
     slot: '08:30:00|10:30:00',
-  })
+});
 
-  const [selectedFiliere, setSelectedFiliere] = useState<string>('all')
-  const [selectedSemester, setSelectedSemester] = useState<string>('all')
-  const [selectedGroup, setSelectedGroup] = useState<string>('all')
+  const [selectedFiliere, setSelectedFiliere] = useState<string>('all');
+  const [selectedSemester, setSelectedSemester] = useState<string>('all');
+  const [selectedGroup, setSelectedGroup] = useState<string>('all');
 
   const { data: board, refetch, isLoading } = useQuery({
     queryKey: ['edt-manual-board', versionId, selectedFiliere, selectedSemester],
     queryFn: () => {
-      const params: Record<string, any> = {}
-      if (selectedFiliere !== 'all') params.filiere_id = Number(selectedFiliere)
-      if (selectedSemester !== 'all') params.semester_number = Number(selectedSemester)
-      return api.get(`/admin/smart-scheduling/versions/${versionId}/board`, { params }).then((res) => res.data.data)
+        const params: Record<string, any> = {};
+        if (selectedFiliere !== 'all')
+            params.filiere_id = Number(selectedFiliere);
+        if (selectedSemester !== 'all')
+            params.semester_number = Number(selectedSemester);
+        return api.get(`/admin/smart-scheduling/versions/${versionId}/board`, { params }).then((res) => res.data.data);
     },
-  })
+});
 
-  const applyBoard = (payload: any) => {
+  const applyBoard = (_payload: any) => {
     refetch()
     onChanged?.()
   }
@@ -142,14 +139,14 @@ export default function ManualTimetableBoard({
     onError: (err: any) => toast.error(err.response?.data?.message || 'Suppression impossible.'),
   })
 
-  const slots: Slot[] = board?.slots || [
+  const slots: Slot[] = useMemo(() => (board?.slots || [
     { slot_index: 1, start: '08:30:00', end: '10:15:00', label: '08:30 - 10:15' },
     { slot_index: 2, start: '10:30:00', end: '12:15:00', label: '10:30 - 12:15' },
     { slot_index: 3, start: '14:30:00', end: '16:15:00', label: '14:30 - 16:15' },
     { slot_index: 4, start: '16:30:00', end: '18:15:00', label: '16:30 - 18:15' },
-  ]
+  ]), [board])
 
-  const rawBlocks: Block[] = board?.blocks || []
+  const rawBlocks: Block[] = useMemo(() => (board?.blocks || []), [board])
   const blocks = useMemo(() => {
     if (selectedGroup === 'all') return rawBlocks
     return rawBlocks.filter((b) => b.group_ids.some(id => String(id) === selectedGroup))
@@ -302,7 +299,7 @@ export default function ManualTimetableBoard({
 
   const submitAdd = (e: React.FormEvent) => {
     e.preventDefault()
-    const [start, end] = form.slot.split('|')
+    const [start, end] = form.slot.split('|');
     if (form.session_type !== 'cm' && !form.group_id) {
       toast.warning('Choisissez un groupe pour le TD/TP.')
       return

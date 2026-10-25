@@ -1,11 +1,9 @@
-import { useTranslation } from 'react-i18next'
-import {
-Bell,AlertTriangle,CheckCircle2,Sparkles,Loader2,RefreshCw,XCircle
-} from 'lucide-react'
-import { useQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next';
+import { Bell, AlertTriangle, CheckCircle2, Sparkles, Loader2, RefreshCw, XCircle } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import api from '@shared/lib/api'
-import { cn } from '@shared/lib/utils'
-import { toast } from 'sonner'
+import { cn } from '@shared/lib/utils';
+import { toast } from 'sonner';
 
 interface Alert {
   id: number
@@ -18,20 +16,21 @@ interface Alert {
 }
 
 export default function AdminAlertsPage() {
-  const { t } = useTranslation(['admin', 'common'])
+  useTranslation(['admin', 'common']);
 
   const { data, isLoading, refetch, isFetching } = useQuery({
     queryKey: ['admin-alerts'],
     queryFn: async () => {
-      try {
-        const res = await api.get('/admin/alerts')
-        return res.data
-      } catch {
-        return null
-      }
+        try {
+            const res = await api.get('/admin/alerts');
+            return res.data;
+        }
+        catch {
+            return null;
+        }
     },
     refetchInterval: 30000, // auto-refresh every 30s
-  })
+});
 
   const alerts: Alert[] = data?.alerts || []
   const stats = data?.stats || {}

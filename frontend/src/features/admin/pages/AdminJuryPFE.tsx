@@ -1,51 +1,39 @@
-import { useState,useEffect } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { GraduationCap,CheckCircle2,Clock,MapPin,Search,Calendar,Sparkles,Printer,AlertCircle,Loader2,Award,X } from 'lucide-react';
+import { GraduationCap, CheckCircle2, Clock, MapPin, Search, Calendar, Sparkles, Printer, AlertCircle, Loader2, Award, X } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
+import { escapeHtml } from '@shared/lib/htmlSafe';
+import { useNavigate } from 'react-router-dom';
 import api from '@shared/lib/api';
 import { toast } from 'sonner';
 import { printPfeConvocation } from '../utils/printPfeConvocation';
 
 export default function AdminJuryPFE() {
-  const { t, i18n } = useTranslation(['admin', 'common']);
-  const isRtl = i18n.language === 'ar';
+  const navigate = useNavigate();
+  const { i18n } = useTranslation(['admin', 'common']);
+  void (i18n.language === 'ar');
   const [search, setSearch] = useState('');
   const [soutenances, setSoutenances] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPvModal, setSelectedPvModal] = useState<any>(null);
   const [pvScore, setPvScore] = useState<number>(17);
 
-  const fetchSoutenances = async () => {
+  const fetchSoutenances = useCallback(async () => {
     try {
       setLoading(true);
       const res = await api.get('/soutenances');
       const data = res.data?.data || res.data;
-      if (Array.isArray(data) && data.length > 0) {
-        setSoutenances(data);
-        return;
-      }
+      setSoutenances(Array.isArray(data) ? data : []);
     } catch {
-      console.log('No /soutenances API data yet, loading default schedule dataset');
-    } finally {
-      setLoading(false);
-    }
-
-    // Default soutenances dataset so page is never empty
-    setSoutenances([
-      { id: 1, student: isRtl ? 'آية ر.' : 'Aya R.', topic: isRtl ? 'الإستراتيجية الرقمية في القطاع البنكي' : 'Stratégie Digitale dans le secteur bancaire', date: '28 Juin 2026', time: '09:00 - 10:30', room: 'Amphi Al Khwarizmi', president: 'Dr. El Fassi', encadrant: 'Dr. Benali', rapporteur: 'Dr. Tazi', status: 'SCHEDULED', score: 18, mention: 'Très Honorable avec Félicitations' },
-      { id: 2, student: isRtl ? 'عثمان ب.' : 'Othmane B.', topic: isRtl ? 'تحسين سلسلة التوريد عبر البلوكشين' : 'Optimisation de la Supply Chain via Blockchain', date: '28 Juin 2026', time: '11:00 - 12:30', room: 'Amphi Ibn Sina', president: 'Dr. Idrissi', encadrant: 'Dr. El Fassi', rapporteur: 'Dr. Mansour', status: 'SCHEDULED', score: 16.5, mention: 'Très Honorable' },
-      { id: 3, student: isRtl ? 'كريم ل.' : 'Karim L.', topic: isRtl ? 'التدقيق المالي للمقاولات الصغرى والمتوسطة' : 'Audit financier des PME au Maroc', date: '29 Juin 2026', time: '14:00 - 15:30', room: 'Salle B10', president: 'Dr. Benali', encadrant: 'Dr. Tazi', rapporteur: 'Dr. Idrissi', status: 'CONFLICT', score: 15, mention: 'Honorable' },
-    ]);
-  };
-
+      setSoutenances([]);
+      toast.error('Le calendrier des soutenances est indisponible.');
+    } finally { setLoading(false); }
+  }, []);
   useEffect(() => {
     fetchSoutenances();
-  }, []);
+  }, [fetchSoutenances]);
 
-  const handleAutoScheduleIA = () => {
-    setSoutenances(prev => prev.map(s => s.status === 'CONFLICT' ? { ...s, status: 'SCHEDULED', room: 'Amphi Al Khwarizmi' } : s));
-    toast.success('✨ Auto-Planificateur IA : Conflit de la Salle B10 résolu ! Réaffecté à Amphi Al Khwarizmi.');
-  };
+  const handleOpenPlanning = () => navigate('/academic/internships');
 
   const getMention = (score: number) => {
     if (score >= 18) return 'Très Honorable avec Félicitations du Jury';
@@ -60,6 +48,7 @@ export default function AdminJuryPFE() {
   };
 
   const handlePrintPvSoutenance = (s: any, score: number) => {
+    s = { ...s, ...Object.fromEntries(['student', 'topic', 'date', 'president', 'encadrant', 'rapporteur', 'room', 'time'].map(key => [key, escapeHtml(String(s[key] ?? ''))])) };
     const win = window.open('', '_blank');
     if (!win) return;
     const mentionText = getMention(score);
@@ -86,7 +75,7 @@ export default function AdminJuryPFE() {
           <div class="header">
             <div style="font-size: 16px; font-weight: 900;">ROYAUME DU MAROC — ENCG FÈS</div>
             <div style="font-size: 11px; color: #64748b; font-weight: 800;">COMMISSION DE DÉLIBÉRATION DU DIPLÔME ENCG FÈS</div>
-            <div class="title">PROCÈS-VERBAL OFFICIEL DE SOUTENANCE DU PFE</div>
+            <div class="title">BROUILLON DE PV — NON VALIDÉ</div>
           </div>
 
           <div class="box">
@@ -112,7 +101,7 @@ export default function AdminJuryPFE() {
       </html>
     `);
     win.document.close();
-    toast.success(`Procès-Verbal officiel généré avec la note ${score}/20 !`);
+    toast.success(`Brouillon de PV préparé, sans enregistrement de la note ${score}/20 !`);
   };
 
   const handleWhatsAppJuryBroadcast = (s: any) => {
@@ -147,17 +136,17 @@ export default function AdminJuryPFE() {
                 Jurys & Soutenances PFE
               </h1>
               <p className="text-blue-100/90 text-xs md:text-sm font-medium mt-1 max-w-2xl">
-                Planificateur algorithmique croisant les disponibilités des professeurs, les sujets des étudiants et l'occupation des salles.
+                Suivi des soutenances enregistrées, des membres du jury et des créneaux planifiés.
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-3 flex-wrap shrink-0">
             <button 
-              onClick={handleAutoScheduleIA}
+              onClick={handleOpenPlanning}
               className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-black rounded-2xl transition-all text-xs uppercase tracking-wider shadow-lg cursor-pointer"
             >
-              <Sparkles className="w-4 h-4 text-white" /> Auto-Planifier (IA)
+              <Sparkles className="w-4 h-4 text-white" /> Planifier les soutenances
             </button>
           </div>
         </div>
@@ -166,7 +155,7 @@ export default function AdminJuryPFE() {
         <div className="relative z-10 grid grid-cols-2 md:grid-cols-4 gap-4 pt-6 border-t border-white/10">
           <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15">
             <span className="text-[10px] font-black uppercase tracking-wider text-blue-200 block">PFE À SOUTENIR</span>
-            <span className="text-2xl font-black text-white font-mono mt-1 block">385 Diplômants</span>
+            <span className="text-2xl font-black text-white font-mono mt-1 block">{soutenances.length} dossiers</span>
           </div>
 
           <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15">
@@ -301,10 +290,10 @@ export default function AdminJuryPFE() {
 
                     {s.status === 'CONFLICT' && (
                       <button
-                        onClick={handleAutoScheduleIA}
+                        onClick={handleOpenPlanning}
                         className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-black text-xs rounded-xl shadow-md transition-all cursor-pointer flex items-center gap-1.5"
                       >
-                        <Sparkles className="w-3.5 h-3.5" /> Résoudre par IA
+                        <Sparkles className="w-3.5 h-3.5" /> Revoir la planification
                       </button>
                     )}
                   </div>

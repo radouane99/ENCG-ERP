@@ -1,28 +1,39 @@
-import { useState,useEffect,useRef } from 'react'
-import { useTranslation } from 'react-i18next'
-import { Eye,Download,Clock,CheckCircle2,XCircle,Loader2,UploadCloud,Check,Mail } from 'lucide-react'
-import { cn } from '@shared/lib/utils'
+import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Eye, Download, Clock, CheckCircle2, XCircle, Loader2, UploadCloud, Check, Mail } from 'lucide-react';
+import { cn } from '@shared/lib/utils';
 import DocumentViewerModal from '@shared/components/ui/DocumentViewerModal'
 import api from '@shared/lib/api'
-import { toast } from 'sonner'
+import { toast } from 'sonner';
 
 export default function AdminRequestsPage() {
-  const { t, i18n } = useTranslation('admin')
-  const isRtl = i18n.language === 'ar'
+  const { t, i18n } = useTranslation('admin');
+  void (i18n.language === 'ar');
 
-  const [selectedDoc, setSelectedDoc] = useState<{url: string, title: string, person?: string} | null>(null)
-  const [requests, setRequests] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [stats, setStats] = useState<any>({})
+  const [selectedDoc, setSelectedDoc] = useState<{
+    url: string;
+    title: string;
+    person?: string;
+} | null>(null);
+  const [requests, setRequests] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<any>({});
 
   // Drag & Drop State for Dragging Files into Upload Zone
-  const [isDraggingFile, setIsDraggingFile] = useState(false)
-  const [uploadedFiles, setUploadedFiles] = useState<Array<{ name: string, size: number, type: string, progress: number }>>([])
+  // Drag & Drop State for Dragging Files into Upload Zone
+const [isDraggingFile, setIsDraggingFile] = useState(false);
+  const [, setUploadedFiles] = useState<Array<{
+    name: string;
+    size: number;
+    type: string;
+    progress: number;
+}>>([]);
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Drag & Drop State for Kanban columns
-  const [activeDropColumn, setActiveDropColumn] = useState<string | null>(null)
-  const [draggedRequestId, setDraggedRequestId] = useState<number | null>(null)
+  // Drag & Drop State for Kanban columns
+const [activeDropColumn, setActiveDropColumn] = useState<string | null>(null);
+  const [draggedRequestId, setDraggedRequestId] = useState<number | null>(null);
 
   const fetchRequests = async () => {
     try {
@@ -45,14 +56,14 @@ export default function AdminRequestsPage() {
       rejection_reason = prompt(t('requests.messages.rejection_prompt') || 'Motif du refus :') || undefined
     }
     try {
-      await api.patch(`/admin/document-requests/${id}/status`, { 
-        status: status === 'approved' ? 'ready' : 'rejected', 
-        admin_notes: status === 'rejected' ? { reason: rejection_reason } : undefined 
+      await api.patch(`/admin/document-requests/${id}/status`, {
+        status: status === 'approved' ? 'ready' : 'rejected',
+        admin_notes: status === 'rejected' ? { reason: rejection_reason } : undefined
       })
       toast.success(status === 'approved' ? (t('requests.messages.approve_success') || 'Demande approuvée avec succès.') : (t('requests.messages.reject_success') || 'Demande refusée.'))
       fetchRequests()
-    } catch (error: any) { 
-      toast.error(error.response?.data?.message || t('requests.messages.error') || 'Erreur lors de la mise à jour.') 
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || t('requests.messages.error') || 'Erreur lors de la mise à jour.')
     }
   }
 
@@ -61,7 +72,7 @@ export default function AdminRequestsPage() {
       toast.loading("Envoi de la notification e-mail via Resend...", { id: `email-${requestId}` })
       const res = await api.post(`/admin/document-requests/${requestId}/send-email-notification`)
       toast.success(res.data.message || "Notification email envoyée avec succès !", { id: `email-${requestId}` })
-      
+
       setRequests(prev => prev.map(r => r.id === requestId ? {
         ...r,
         email_sent: true,
@@ -183,25 +194,25 @@ export default function AdminRequestsPage() {
           </div>
         </div>
 
-        <div 
+        <div
           onDragOver={(e) => { e.preventDefault(); setIsDraggingFile(true); }}
           onDragLeave={() => setIsDraggingFile(false)}
           onDrop={handleFileDrop}
           onClick={() => fileInputRef.current?.click()}
           className={cn(
             "rounded-[2rem] p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-200 border-2 border-dashed relative overflow-hidden",
-            isDraggingFile 
-              ? "border-blue-500 bg-blue-50/80 scale-[1.02] shadow-lg ring-4 ring-blue-200" 
+            isDraggingFile
+              ? "border-blue-500 bg-blue-50/80 scale-[1.02] shadow-lg ring-4 ring-blue-200"
               : "border-slate-300 bg-white hover:border-blue-400 hover:bg-slate-50/80 shadow-sm"
           )}
         >
-          <input 
-            ref={fileInputRef} 
-            type="file" 
-            multiple 
-            className="hidden" 
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            className="hidden"
             accept=".pdf,.doc,.docx,.png,.jpg"
-            onChange={(e) => e.target.files && processFiles(Array.from(e.target.files))} 
+            onChange={(e) => e.target.files && processFiles(Array.from(e.target.files))}
           />
 
           <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-700 flex items-center justify-center mb-3 border border-blue-100 shadow-xs">
@@ -240,9 +251,9 @@ export default function AdminRequestsPage() {
                 <p className="font-semibold">{t('requests.empty_pending') || 'Aucune demande en attente'}</p>
               </div>
             ) : pendingRequests.map(req => (
-              <RequestCard 
-                t={t} 
-                key={req.id} 
+              <RequestCard
+                t={t}
+                key={req.id}
                 request={req}
                 onDragStart={() => setDraggedRequestId(req.id)}
                 onPreview={() => setSelectedDoc({url: req.preview_url || req.url || '', title: req.type, person: req.person})}
@@ -254,7 +265,7 @@ export default function AdminRequestsPage() {
           </div>
         </div>
 
-        <div 
+        <div
           onDragOver={(e) => handleKanbanDragOver(e, 'approved')}
           onDragLeave={handleKanbanDragLeave}
           onDrop={(e) => handleKanbanDrop(e, 'approved')}
@@ -276,9 +287,9 @@ export default function AdminRequestsPage() {
 
           <div className="flex-1 space-y-4 overflow-y-auto pr-1">
             {approvedRequests.map(req => (
-              <RequestCard 
-                t={t} 
-                key={req.id} 
+              <RequestCard
+                t={t}
+                key={req.id}
                 request={req}
                 onDragStart={() => setDraggedRequestId(req.id)}
                 onPreview={() => setSelectedDoc({url: req.preview_url || req.url || '', title: req.type, person: req.person})}
@@ -288,7 +299,7 @@ export default function AdminRequestsPage() {
           </div>
         </div>
 
-        <div 
+        <div
           onDragOver={(e) => handleKanbanDragOver(e, 'rejected')}
           onDragLeave={handleKanbanDragLeave}
           onDrop={(e) => handleKanbanDrop(e, 'rejected')}
@@ -310,9 +321,9 @@ export default function AdminRequestsPage() {
 
           <div className="flex-1 space-y-4 overflow-y-auto pr-1">
             {rejectedRequests.map(req => (
-              <RequestCard 
-                t={t} 
-                key={req.id} 
+              <RequestCard
+                t={t}
+                key={req.id}
                 request={req}
                 onDragStart={() => setDraggedRequestId(req.id)}
                 onPreview={() => setSelectedDoc({url: req.preview_url || req.url || '', title: req.type, person: req.person})}
@@ -323,36 +334,28 @@ export default function AdminRequestsPage() {
         </div>
       </div>
 
-      <DocumentViewerModal 
-        isOpen={!!selectedDoc} 
-        onClose={() => setSelectedDoc(null)} 
-        pdfUrl={selectedDoc?.url || ''} 
-        title={selectedDoc?.title || 'Document'} 
+      <DocumentViewerModal
+        isOpen={!!selectedDoc}
+        onClose={() => setSelectedDoc(null)}
+        pdfUrl={selectedDoc?.url || ''}
+        title={selectedDoc?.title || 'Document'}
         studentName={selectedDoc?.person || 'Étudiant ENCG'}
       />
     </div>
   )
 }
 
-function RequestCard({ 
-  request, 
-  onPreview, 
-  onApprove, 
-  onReject, 
-  onSendEmail,
-  onDragStart,
-  t 
-}: { 
-  request: any, 
-  onPreview: () => void, 
-  onApprove?: () => void, 
+function RequestCard({ request, onPreview, onApprove, onReject, onSendEmail, onDragStart, t }: {
+  request: any,
+  onPreview: () => void,
+  onApprove?: () => void,
   onReject?: () => void,
   onSendEmail?: () => void,
   onDragStart?: () => void,
-  t: (key: string) => string 
+  t: (key: string) => string
 }) {
   return (
-    <div 
+    <div
       draggable={true}
       onDragStart={(e) => {
         e.dataTransfer.setData('requestId', String(request.id))
@@ -368,7 +371,7 @@ function RequestCard({
           ID: #{request.id}
         </span>
       </div>
-      
+
       <div className="mb-3">
         <h4 className="font-extrabold text-slate-900 text-sm leading-tight mb-0.5">{request.person}</h4>
         <p className="text-[10px] font-extrabold text-blue-700 uppercase tracking-wider">{request.role}</p>
@@ -387,7 +390,7 @@ function RequestCard({
               <Check className="w-3.5 h-3.5 text-emerald-600 font-bold" /> Notification Email Envoyée ({request.email_recipient || 'Étudiant'})
             </span>
           ) : (
-            <button 
+            <button
               onClick={onSendEmail}
               className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white font-black text-[9px] uppercase tracking-wider rounded-lg shadow-2xs transition-colors cursor-pointer"
             >
@@ -401,17 +404,17 @@ function RequestCard({
         <span className="text-slate-400 uppercase tracking-wider text-[9px]">
           {request.time}
         </span>
-        
+
         {request.status === 'pending' && onApprove && (
           <div className="flex items-center gap-1.5">
-            <button 
-              onClick={onApprove} 
+            <button
+              onClick={onApprove}
               className="flex items-center gap-1 px-2.5 py-1 bg-emerald-600 text-white text-[10px] font-black rounded-lg hover:bg-emerald-700 transition-colors shadow-2xs"
             >
               <CheckCircle2 className="w-3 h-3" /> {t('requests.actions.approve') || 'Approuver'}
             </button>
-            <button 
-              onClick={onReject} 
+            <button
+              onClick={onReject}
               className="flex items-center gap-1 px-2.5 py-1 bg-red-500 text-white text-[10px] font-black rounded-lg hover:bg-red-600 transition-colors shadow-2xs"
             >
               <XCircle className="w-3 h-3" /> {t('requests.actions.reject') || 'Refuser'}

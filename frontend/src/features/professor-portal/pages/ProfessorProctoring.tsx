@@ -1,28 +1,13 @@
-import React,{ useState,useRef,useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery,useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '@/shared/lib/api';
 import { useAuthStore } from '@stores/authStore';
 import { toast } from 'sonner';
-import {
-Eye,CheckCircle2,
-Clock,
-MapPin,
-Users,
-ShieldCheck,
-Building2,
-CalendarDays,
-Download,
-Search,CheckCheck,
-Loader2,X,PenTool,
-Sparkles,
-RotateCcw,
-Stamp,
-Printer
-} from 'lucide-react';
+import { Eye, CheckCircle2, Clock, MapPin, Users, ShieldCheck, Building2, CalendarDays, Download, Search, CheckCheck, Loader2, X, PenTool, Sparkles, RotateCcw, Stamp, Printer } from 'lucide-react';
 import { cn } from '@/shared/lib/utils';
 import { Spinner } from '@shared/components/ui/Spinner';
-import { AnimatePresence,motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 
 interface SurveillanceItem {
   id: number | string;
@@ -60,9 +45,15 @@ export default function ProfessorProctoring() {
   const [studentStatuses, setStudentStatuses] = useState<Record<number, 'present' | 'absent'>>({});
   
   // Digital signature states
-  const [signatureMode, setSignatureMode] = useState<'digital' | 'pad'>('digital');
+  // Digital signature states
+const [signatureMode, setSignatureMode] = useState<'digital' | 'pad'>('digital');
   const [isSigned, setIsSigned] = useState(false);
-  const [signatureStamp, setSignatureStamp] = useState<{ signer: string; role: string; date: string; hash: string } | null>(null);
+  const [signatureStamp, setSignatureStamp] = useState<{
+    signer: string;
+    role: string;
+    date: string;
+    hash: string;
+} | null>(null);
   const [isSavingSignature, setIsSavingSignature] = useState(false);
 
   // Canvas drawing pad
@@ -71,32 +62,34 @@ export default function ProfessorProctoring() {
   const [hasDrawn, setHasDrawn] = useState(false);
 
   // 1. Fetch professor's surveillance sessions
-  const { data: serverSurveillances, isLoading, isError, refetch } = useQuery({
+  // 1. Fetch professor's surveillance sessions
+const { data: serverSurveillances, isLoading, isError, refetch } = useQuery({
     queryKey: ['professor-surveillances'],
     queryFn: async () => {
-      const res = await api.get('/professor/my-surveillances');
-      return res?.data?.data || null;
+        const res = await api.get('/professor/my-surveillances');
+        return res?.data?.data || null;
     },
     staleTime: 60000,
-  });
+});
 
   // 2. Fetch exam room students when attendance modal is open (All 24 students G1+G2)
-  const { data: examStudents = [], isLoading: isLoadingExamStudents } = useQuery({
+  // 2. Fetch exam room students when attendance modal is open (All 24 students G1+G2)
+const { data: examStudents = [], isLoading: isLoadingExamStudents } = useQuery({
     queryKey: ['exam-room-students', activeExamAttendance?.id],
     queryFn: async () => {
-      const res = await api.get('/professor/attendance/students', {
-        params: {
-          exam_id: (activeExamAttendance as any)?.exam_id,
-          room_id: (activeExamAttendance as any)?.room_id,
-          group_label: activeExamAttendance?.group_name,
-          is_exam: 1,
-          context: 'exam',
-        }
-      });
-      return res.data?.data || [];
+        const res = await api.get('/professor/attendance/students', {
+            params: {
+                exam_id: (activeExamAttendance as any)?.exam_id,
+                room_id: (activeExamAttendance as any)?.room_id,
+                group_label: activeExamAttendance?.group_name,
+                is_exam: 1,
+                context: 'exam',
+            }
+        });
+        return res.data?.data || [];
     },
     enabled: !!activeExamAttendance,
-  });
+});
 
   // Initialize all exam students as present by default
   useEffect(() => {
@@ -223,7 +216,7 @@ export default function ProfessorProctoring() {
       document.body.removeChild(link);
       window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60000);
       toast.success(`Document (${filename}) téléchargé avec succès !`, { id: 'pdf-dl' });
-    } catch (e) {
+    } catch {
       window.open(url, '_blank');
       toast.dismiss('pdf-dl');
     }

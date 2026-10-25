@@ -1,44 +1,25 @@
-import React,{ useState } from 'react'
-import { useAuthStore } from '@stores/authStore'
-import { useQuery } from '@tanstack/react-query'
-import {
-Camera,
-Loader2,
-ShieldCheck,
-User,
-KeyRound,
-Lock,
-GraduationCap,
-Mail,
-Phone,Copy,
-Check,CheckCircle2,
-FileText,
-Shield,
-Building2,Info,
-Eye,
-EyeOff,
-Laptop,
-Smartphone,ShieldAlert,
-LogOut,Briefcase,CheckCircle,
-XCircle
-} from 'lucide-react'
+import React, { useState } from 'react';
+import { useAuthStore } from '@stores/authStore';
+import { useQuery } from '@tanstack/react-query';
+import { Camera, Loader2, ShieldCheck, User, KeyRound, Lock, GraduationCap, Mail, Phone, Copy, Check, CheckCircle2, FileText, Shield, Building2, Info, Eye, EyeOff, Laptop, Smartphone, ShieldAlert, LogOut, Briefcase, CheckCircle, XCircle } from 'lucide-react';
 import api from '@shared/lib/api'
-import { cn } from '@shared/lib/utils'
-import { QRCodeSVG } from 'qrcode.react'
-import { toast } from 'sonner'
-import { DsarPanel } from '../components/DsarPanel'
+import { cn } from '@shared/lib/utils';
+import { QRCodeSVG } from 'qrcode.react';
+import { toast } from 'sonner';
+import { DsarPanel } from '../components/DsarPanel';
 
 export default function ProfilePage() {
-  const { user, updateUser } = useAuthStore()
+  const { user, updateUser } = useAuthStore();
 
-  const [activeTab, setActiveTab] = useState<'general' | 'security' | '2fa' | 'cndp' | 'sessions'>('general')
+  const [activeTab, setActiveTab] = useState<'general' | 'security' | '2fa' | 'cndp' | 'sessions'>('general');
 
-  const [isLoading, setIsLoading] = useState(false)
-  const [successMessage, setSuccessMessage] = useState('')
-  const [errorMessage, setErrorMessage] = useState('')
+  const [isLoading, setIsLoading] = useState(false);
+  const [, setSuccessMessage] = useState('');
+  const [, setErrorMessage] = useState('');
   
   // Form state
-  const [formData, setFormData] = useState({
+  // Form state
+const [formData, setFormData] = useState({
     name: user?.name || '',
     name_ar: (user as any)?.name_ar || '',
     phone: (user as any)?.phone || '',
@@ -47,25 +28,26 @@ export default function ProfilePage() {
     current_password: '',
     password: '',
     password_confirmation: ''
-  })
+});
 
   // Password visibility toggles
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false)
-  const [showNewPassword, setShowNewPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  // Password visibility toggles
+const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Avatar state
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(
-    user?.avatar_path ? `${(import.meta.env.VITE_API_URL || '').replace(/\/api\/?$/, '')}/storage/${user.avatar_path}` : null
-  )
-  const [avatarFile, setAvatarFile] = useState<File | null>(null)
+  // Avatar state
+const [avatarPreview, setAvatarPreview] = useState<string | null>(user?.avatar_path ? `${(import.meta.env.VITE_API_URL || '').replace(/\/api\/?$/, '')}/storage/${user.avatar_path}` : null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
 
   // 2FA state
-  const [setupData, setSetupData] = useState<any>(null)
-  const [totpCode, setTotpCode] = useState('')
-  const [isSettingUp2FA, setIsSettingUp2FA] = useState(false)
-  const [isConfirming2FA, setIsConfirming2FA] = useState(false)
-  const [copiedKey, setCopiedKey] = useState(false)
+  // 2FA state
+const [setupData, setSetupData] = useState<any>(null);
+  const [totpCode, setTotpCode] = useState('');
+  const [isSettingUp2FA, setIsSettingUp2FA] = useState(false);
+  const [isConfirming2FA, setIsConfirming2FA] = useState(false);
+  const [copiedKey, setCopiedKey] = useState(false);
 
   // Robust Persona & Role Detection
   const roles = user?.roles || []
@@ -76,19 +58,21 @@ export default function ProfilePage() {
   const isStudent = !isAdmin && !isProfessor && (roles.some(r => ['student', 'etudiant'].includes(r)) || userType === 'student' || true)
 
   // Fetch academic dossier if student
-  const { data: studentDossier } = useQuery({
+  // Fetch academic dossier if student
+const { data: studentDossier } = useQuery({
     queryKey: ['student-profile-dossier', user?.id],
     queryFn: async () => {
-      try {
-        const res = await api.get('/student-portal/my-dossier')
-        return res.data?.data || null
-      } catch {
-        return null
-      }
+        try {
+            const res = await api.get('/student-portal/my-dossier');
+            return res.data?.data || null;
+        }
+        catch {
+            return null;
+        }
     },
     enabled: isStudent,
     staleTime: 5 * 60 * 1000,
-  })
+});
 
   // Role Badge Label
   const roleDisplayLabel = isSuperAdmin 

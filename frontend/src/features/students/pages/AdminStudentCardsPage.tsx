@@ -1,9 +1,6 @@
-import React,{ useState } from 'react';
-import { useQuery,useMutation,useQueryClient } from '@tanstack/react-query';
-import {
-IdCard,Search,ShieldAlert,CheckCircle,
-AlertTriangle,RefreshCw,Printer,Check,X,ShieldOff
-} from 'lucide-react';
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { IdCard, Search, ShieldAlert, CheckCircle, AlertTriangle, RefreshCw, Printer, Check, X, ShieldOff } from 'lucide-react';
 import api from '@/shared/lib/api';
 import { Button } from '@/shared/components/ui/Button';
 import { toast } from 'sonner';
@@ -38,7 +35,8 @@ export default function AdminStudentCardsPage() {
   const queryClient = useQueryClient();
   
   // Filters & State
-  const [search, setSearch] = useState('');
+  // Filters & State
+const [search, setSearch] = useState('');
   const [status, setStatus] = useState('all');
   const [filiereId, setFiliereId] = useState('all');
   const [groupId, setGroupId] = useState('all');
@@ -46,37 +44,46 @@ export default function AdminStudentCardsPage() {
   const [perPage] = useState(15);
   
   // Selected cards for bulk actions
-  const [selectedIds, setSelectedIds] = useState<number[]>([]); // user ids / student ids
+  // Selected cards for bulk actions
+const [selectedIds, setSelectedIds] = useState<number[]>([]); // user ids / student ids
+ // user ids / student ids
   const [selectedCards, setSelectedCards] = useState<StudentCardItem[]>([]);
   
   // Expiration override for bulk generation
-  const [bulkExpiresAt, setBulkExpiresAt] = useState('');
+  // Expiration override for bulk generation
+const [bulkExpiresAt, setBulkExpiresAt] = useState('');
   const [showBulkModal, setShowBulkModal] = useState(false);
-  const [isPrinting, setIsPrinting] = useState(false);
+  const [, setIsPrinting] = useState(false);
 
   // Fetch filieres & groups for filters
-  const { data: filieres } = useQuery({
+  // Fetch filieres & groups for filters
+const { data: filieres } = useQuery({
     queryKey: ['filieres-list'],
     queryFn: () => api.get('/filieres').then(res => res.data.data)
-  });
+});
 
   const { data: groups } = useQuery({
     queryKey: ['groups-list'],
     queryFn: () => api.get('/groups').then(res => res.data.data)
-  });
+});
 
   // Fetch cards/students
-  const { data: cardResponse, isLoading, refetch } = useQuery({
+  // Fetch cards/students
+const { data: cardResponse, isLoading, refetch } = useQuery({
     queryKey: ['admin-student-cards', search, status, filiereId, groupId, page],
     queryFn: () => {
-      const params: any = { page, per_page: perPage };
-      if (search) params.search = search;
-      if (status !== 'all') params.status = status;
-      if (filiereId !== 'all') params.filiere_id = filiereId;
-      if (groupId !== 'all') params.group_id = groupId;
-      return api.get('/student-cards', { params }).then(res => res.data);
+        const params: any = { page, per_page: perPage };
+        if (search)
+            params.search = search;
+        if (status !== 'all')
+            params.status = status;
+        if (filiereId !== 'all')
+            params.filiere_id = filiereId;
+        if (groupId !== 'all')
+            params.group_id = groupId;
+        return api.get('/student-cards', { params }).then(res => res.data);
     }
-  });
+});
 
   const cardsData: StudentCardItem[] = cardResponse?.data || [];
   const meta = cardResponse?.meta || { total: 0, current_page: 1, last_page: 1 };
@@ -86,7 +93,7 @@ export default function AdminStudentCardsPage() {
     mutationFn: ({ cardId, newStatus }: { cardId: number; newStatus: string }) => {
       return api.patch(`/student-cards/${cardId}/status`, { status: newStatus });
     },
-    onSuccess: (res) => {
+    onSuccess: (_res) => {
       toast.success('Statut de la carte mis à jour !');
       queryClient.invalidateQueries({ queryKey: ['admin-student-cards'] });
     },

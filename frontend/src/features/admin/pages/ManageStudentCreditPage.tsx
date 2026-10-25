@@ -1,8 +1,8 @@
-import { useParams } from 'react-router-dom'
-import { ShieldCheck,User,ShieldAlert,Plus,BookOpen } from 'lucide-react'
+import { useParams } from 'react-router-dom';
+import { ShieldCheck, User, ShieldAlert, Plus, BookOpen } from 'lucide-react';
 
 export default function ManageStudentCreditPage() {
-  const { id } = useParams()
+  useParams();
 
   return (
     <div className="space-y-8 animate-in p-6 max-w-[1400px] mx-auto">

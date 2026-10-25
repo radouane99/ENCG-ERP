@@ -27,6 +27,7 @@ const ProfessorResearchPage = lazy(() => import('@features/professor-portal/page
 const ProfessorWorkloadPage = lazy(() => import('@features/professor-portal/pages/ProfessorWorkloadPage'))
 const ProfessorDocumentsPage = lazy(() => import('@features/professor-portal/pages/ProfessorDocumentsPage'))
 const ProfessorStudentRosterPage = lazy(() => import('@features/professor-portal/pages/ProfessorStudentRosterPage'))
+const ProfessorCall = lazy(() => import('@features/professor-portal/pages/ProfessorCall'))
 
 const ProfessorTimetablePage = lazy(() => import('@features/professor-portal/pages/ProfessorSchedulePage'))
 
@@ -52,7 +53,7 @@ export default function ProfessorRouter() {
       <Route path="voice-textbook" element={<ProfessorVoiceTextbook />} />
       <Route path="internships" element={<ProfessorInternships />} />
       <Route path="absences" element={<Navigate to="/professor/student-rosters" replace />} />
-      <Route path="absences/call/:sessionId" element={<Navigate to="/professor/student-rosters" replace />} />
+      <Route path="absences/call/:sessionId" element={<ProfessorCall />} />
       <Route path="classroom/:moduleId" element={<ProfessorClassroom />} />
       <Route path="reservations" element={<ProfessorReservations />} />
       <Route path="rooms/availability" element={<RoomAvailabilityHubPage />} />

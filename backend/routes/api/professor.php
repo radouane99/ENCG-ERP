@@ -123,6 +123,9 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:professor|vacata
     Route::get('/professor-portal/student-lists/excel', [ProfessorPortalController::class, 'exportStudentListExcel']);
     Route::get('/v1/professor-portal/student-lists/pdf', [ProfessorPortalController::class, 'downloadStudentListPdf']);
     Route::get('/v1/professor-portal/student-lists/excel', [ProfessorPortalController::class, 'exportStudentListExcel']);
+    Route::get('/professor-portal/student-lists/rattrapage-pv', [ProfessorPortalController::class, 'downloadRattrapagePvPdf']);
+    Route::post('/professor-portal/student-lists/rattrapage-pv', [ProfessorPortalController::class, 'downloadRattrapagePvPdf']);
+    Route::post('/professor-portal/student-lists/rattrapage-convocation', [ProfessorPortalController::class, 'sendRattrapageConvocation']);
 
     // Surveillances & Convocations PDF & PV Signature & Confirmation
     Route::get('/professor/my-surveillances', [ConvocationController::class, 'mySurveillances']);

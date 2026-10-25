@@ -1,13 +1,9 @@
-import { useState,useEffect } from 'react'
-import {
-UserX,Search,Trash2,CheckCircle2,XCircle,Loader2,Sparkles,
-FileText,ExternalLink,RefreshCw,X,Eye,Calendar,
-Check,AlertTriangle,Clock,Stethoscope
-} from 'lucide-react'
-import { cn } from '@shared/lib/utils'
-import { absencesApi } from '@shared/api/absences'
-import { toast } from 'sonner'
-import { useTranslation } from 'react-i18next'
+import { useCallback, useState, useEffect } from 'react';
+import { UserX, Search, Trash2, CheckCircle2, XCircle, Loader2, Sparkles, FileText, ExternalLink, RefreshCw, X, Eye, Calendar, Check, AlertTriangle, Clock, Stethoscope } from 'lucide-react';
+import { cn } from '@shared/lib/utils';
+import { absencesApi } from '@shared/api/absences';
+import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 
 interface AbsenceItem {
   id: number
@@ -47,27 +43,29 @@ interface AbsenceItem {
 }
 
 export default function AdminAbsencesPage() {
-  const { t, i18n } = useTranslation(['absences', 'common'])
-  const isRtl = i18n.language === 'ar'
+  const { i18n } = useTranslation(['absences', 'common']);
+  void (i18n.language === 'ar');
 
-  const [absences, setAbsences] = useState<AbsenceItem[]>([])
-  const [loading, setLoading] = useState(true)
-  const [stats, setStats] = useState<any>({ total: 0, pending: 0, approved: 0, rejected: 0 })
-  const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState('')
-  const [page, setPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
+  const [absences, setAbsences] = useState<AbsenceItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<any>({ total: 0, pending: 0, approved: 0, rejected: 0 });
+  const [search, setSearch] = useState('');
+  const [submittedSearch, setSubmittedSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   // Modals State
-  const [selectedAbsence, setSelectedAbsence] = useState<AbsenceItem | null>(null)
-  const [rejectingAbsence, setRejectingAbsence] = useState<AbsenceItem | null>(null)
-  const [rejectionReason, setRejectionReason] = useState('')
+  // Modals State
+const [selectedAbsence, setSelectedAbsence] = useState<AbsenceItem | null>(null);
+  const [rejectingAbsence, setRejectingAbsence] = useState<AbsenceItem | null>(null);
+  const [rejectionReason, setRejectionReason] = useState('');
 
-  const fetchJustifications = async () => {
+  const fetchJustifications = useCallback(async () => {
     try {
       setLoading(true)
       const res = await absencesApi.getJustifications({ 
-        search: search.trim() || undefined,
+        search: submittedSearch || undefined,
         status: statusFilter || undefined, 
         page, 
         per_page: 15 
@@ -81,20 +79,21 @@ export default function AdminAbsencesPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [submittedSearch, statusFilter, page])
 
   useEffect(() => {
     fetchJustifications()
-  }, [statusFilter, page])
+  }, [statusFilter, page, fetchJustifications])
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setPage(1)
-    fetchJustifications()
+    setSubmittedSearch(search.trim())
   }
 
   const handleClearFilters = () => {
     setSearch('')
+    setSubmittedSearch('')
     setStatusFilter('')
     setPage(1)
   }
@@ -425,7 +424,7 @@ export default function AdminAbsencesPage() {
                 </tr>
               ) : absences.map((item) => {
                 const badge = getStatusBadge(item.status)
-                const BadgeIcon = badge.icon
+                void (badge.icon);
                 const studentName = item.student?.name || `${item.student?.first_name || ''} ${item.student?.last_name || ''}`.trim() || 'Étudiant ENCG'
                 const initials = getInitials(studentName)
                 const isWithin48 = item.is_within_48h !== false

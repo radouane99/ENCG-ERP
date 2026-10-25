@@ -1,41 +1,10 @@
-import React,{ useState,useEffect,useRef,useMemo } from 'react';
-import {
-Mic,
-MicOff,
-Sparkles,
-BookOpen,
-CheckCircle2,
-Save,
-FileText,
-Loader2,
-Clock,
-ShieldCheck,Download,
-Award,
-Layers,
-Volume2,
-VolumeX,
-Edit3,
-Trash2,
-Plus,
-Search,
-Printer,
-ChevronDown,
-Zap,
-RotateCcw,
-Calendar,
-Users,
-MapPin,
-Check,
-Compass,
-PenTool,
-Eraser,
-X
-} from 'lucide-react';
+import React, { useCallback, useState, useEffect, useRef, useMemo } from 'react';
+import { Mic, MicOff, Sparkles, BookOpen, CheckCircle2, Save, FileText, Loader2, Clock, ShieldCheck, Download, Award, Layers, Volume2, VolumeX, Edit3, Trash2, Plus, Search, Printer, ChevronDown, Zap, RotateCcw, Calendar, Users, MapPin, Check, Compass, PenTool, Eraser, X } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
-import { useQuery,useMutation,useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/shared/lib/api';
 import { openAuthenticatedUrl } from '@shared/lib/documentAccess';
-import { CustomSelect,SelectOption } from '@shared/components/ui/CustomSelect';
+import { CustomSelect, SelectOption } from '@shared/components/ui/CustomSelect';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/stores/authStore';
 
@@ -120,21 +89,15 @@ interface TactileSignatureModalProps {
   professorName: string;
 }
 
-function TactileSignatureModal({
-  isOpen,
-  onClose,
-  onSave,
-  onClearSaved,
-  currentSignature,
-  professorName,
-}: TactileSignatureModalProps) {
+function TactileSignatureModal({ isOpen, onClose, onSave, onClearSaved, currentSignature, professorName }: TactileSignatureModalProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const isDrawing = useRef(false);
   const [hasDrawn, setHasDrawn] = useState(false);
   const [inkColor, setInkColor] = useState('#001A4B'); // Royal Navy ENCG
+ // Royal Navy ENCG
   const [penThickness, setPenThickness] = useState(2.5);
 
-  const initCanvas = () => {
+  const initCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
@@ -149,7 +112,7 @@ function TactileSignatureModal({
       ctx.strokeStyle = inkColor;
       ctx.lineWidth = penThickness;
     }
-  };
+  }, [canvasRef, inkColor, penThickness]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -158,7 +121,7 @@ function TactileSignatureModal({
       initCanvas();
     }, 120);
     return () => clearTimeout(timer);
-  }, [isOpen]);
+  }, [isOpen, initCanvas]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -419,14 +382,16 @@ export default function ProfessorVoiceTextbook() {
       : 'Pr. Mohammed EL ALAMI');
 
   // ── Recording & Speech State ──
-  const [isRecording, setIsRecording] = useState(false);
+  // ── Recording & Speech State ──
+const [isRecording, setIsRecording] = useState(false);
   const [transcription, setTranscription] = useState('');
   const [selectedLang, setSelectedLang] = useState<'fr-FR' | 'ar-MA' | 'en-US'>('fr-FR');
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const [isSpeaking, setIsSpeaking] = useState(false);
 
   // ── Session Configuration State ──
-  const [selectedModule, setSelectedModule] = useState<string>('');
+  // ── Session Configuration State ──
+const [selectedModule, setSelectedModule] = useState<string>('');
   const [sessionDuration, setSessionDuration] = useState<string>('2.0');
   const [sessionType, setSessionType] = useState<string>('CM');
   const [sessionDate, setSessionDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
@@ -436,24 +401,28 @@ export default function ProfessorVoiceTextbook() {
   const [pedagogicalMethod, setPedagogicalMethod] = useState<string>('Cours Magistral Interactif');
 
   // ── AI Structured Data & In-Place Editing ──
-  const [structuredData, setStructuredData] = useState<StructuredSession | null>(null);
+  // ── AI Structured Data & In-Place Editing ──
+const [structuredData, setStructuredData] = useState<StructuredSession | null>(null);
   const [isAiProcessing, setIsAiProcessing] = useState(false);
   const [isEditingDraft, setIsEditingDraft] = useState(false);
 
   // ── History Filter ──
-  const [historySearch, setHistorySearch] = useState('');
+  // ── History Filter ──
+const [historySearch, setHistorySearch] = useState('');
   const [historyTypeFilter, setHistoryTypeFilter] = useState('ALL');
   const [expandedSessionId, setExpandedSessionId] = useState<number | null>(null);
 
   // ── Tactile Handwritten Signature State ──
-  const [isSignatureModalOpen, setIsSignatureModalOpen] = useState(false);
+  // ── Tactile Handwritten Signature State ──
+const [isSignatureModalOpen, setIsSignatureModalOpen] = useState(false);
   const [professorSignature, setProfessorSignature] = useState<string | null>(() => {
     try {
-      return localStorage.getItem('encg_prof_signature_data') || null;
-    } catch {
-      return null;
+        return localStorage.getItem('encg_prof_signature_data') || null;
     }
-  });
+    catch {
+        return null;
+    }
+});
 
   const handleSaveSignature = (sigDataUrl: string) => {
     setProfessorSignature(sigDataUrl);
@@ -572,23 +541,25 @@ export default function ProfessorVoiceTextbook() {
   };
 
   // ── Query Textbook Logged Sessions & Assigned Timetable ──
-  const { data: textbookData, isLoading } = useQuery({
+  // ── Query Textbook Logged Sessions & Assigned Timetable ──
+const { data: textbookData } = useQuery({
     queryKey: ['professor-textbook-entries', selectedModule],
     queryFn: async () => {
-      try {
-        const res = await api.get('/professor-portal/textbook', {
-          params: { module_id: selectedModule || undefined }
-        });
-        return res.data?.data || { entries: [], modules_summary: [], assigned_schedules: [] };
-      } catch {
-        return { entries: [], modules_summary: [], assigned_schedules: [] };
-      }
+        try {
+            const res = await api.get('/professor-portal/textbook', {
+                params: { module_id: selectedModule || undefined }
+            });
+            return res.data?.data || { entries: [], modules_summary: [], assigned_schedules: [] };
+        }
+        catch {
+            return { entries: [], modules_summary: [], assigned_schedules: [] };
+        }
     }
-  });
+});
 
-  const entries = textbookData?.entries || [];
+  const entries = useMemo(() => (textbookData?.entries || []), [textbookData]);
   const assignedSchedules: AssignedSchedule[] = textbookData?.assigned_schedules || [];
-  const modulesSummary: any[] = textbookData?.modules_summary || [];
+  const modulesSummary: any[] = useMemo(() => (textbookData?.modules_summary || []), [textbookData]);
 
   // Strictly filter to professor's assigned modules (no fake mock fallbacks!)
   const assignedModulesList: ModuleItem[] = useMemo(() => {

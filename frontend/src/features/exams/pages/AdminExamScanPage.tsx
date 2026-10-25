@@ -1,22 +1,6 @@
-import { useState,useEffect,useRef,useMemo } from 'react';
-import {
-QrCode,
-Camera,
-Search,
-CheckCircle,
-AlertTriangle,
-Clock,
-XCircle,
-FileText,
-MapPin,
-Loader2,
-ArrowLeft,
-Volume2,
-VolumeX,
-Sparkles,
-Wifi,
-WifiOff,
-} from 'lucide-react';
+import { flushOfflineQueue } from '@shared/lib/offlineQueue';
+import { useCallback, useState, useEffect, useRef, useMemo } from 'react';
+import { QrCode, Camera, Search, CheckCircle, AlertTriangle, Clock, XCircle, FileText, MapPin, Loader2, ArrowLeft, Volume2, VolumeX, Sparkles, Wifi, WifiOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { academicApi } from '@shared/api/academic';
@@ -35,23 +19,26 @@ export default function AdminExamScanPage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(true);
-  const [voiceSynthEnabled, setVoiceSynthEnabled] = useState(true);
+  const [voiceSynthEnabled] = useState(true);
 
   // Fetch real rooms from DB
-  const { data: dbRooms } = useQuery({
+  // Fetch real rooms from DB
+const { data: dbRooms } = useQuery({
     queryKey: ['rooms-scan'],
     queryFn: async () => {
-      try {
-        const res = await academicApi.getRooms();
-        return res || [];
-      } catch (e) {
-        return [];
-      }
+        try {
+            const res = await academicApi.getRooms();
+            return res || [];
+        }
+        catch {
+            return [];
+        }
     }
-  });
+});
 
   // Current Amphi Context Filter
-  const [currentAmphiFilter, setCurrentAmphiFilter] = useState('');
+  // Current Amphi Context Filter
+const [currentAmphiFilter, setCurrentAmphiFilter] = useState('');
 
   const amphiList = useMemo(() => {
     return (dbRooms && dbRooms.length > 0) ? dbRooms.map((r: any, idx: number) => ({
@@ -79,7 +66,7 @@ export default function AdminExamScanPage() {
       utterance.lang = 'fr-FR';
       utterance.rate = 1.0;
       window.speechSynthesis.speak(utterance);
-    } catch (e) {}
+    } catch {}
   };
 
   const handleAutoDetectIpBeacon = () => {
@@ -97,15 +84,25 @@ export default function AdminExamScanPage() {
 
 
   // PWA Offline Queue State
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  // PWA Offline Queue State
+const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [pendingScans, setPendingScans] = useState<any[]>(() => {
     try {
-      return JSON.parse(sessionStorage.getItem('offline_scans_queue') || '[]');
-    } catch {
-      return [];
+        return JSON.parse(sessionStorage.getItem('offline_scans_queue') || '[]');
     }
-  });
+    catch {
+        return [];
+    }
+});
 
+  const syncOfflineQueue = useCallback(async () => {
+    try {
+      const result = await flushOfflineQueue<{ qrToken: string; status: 'present' | 'absent' | 'late' }>(sessionStorage, 'offline_scans_queue', item => examsApi.updateExamAttendance(item.qrToken, item.status));
+      setPendingScans(JSON.parse(sessionStorage.getItem('offline_scans_queue') || '[]'));
+      if (result.sent) setActionSuccess(`${result.sent} émargement(s) confirmé(s) par le serveur.`);
+      if (result.failed) setErrorMsg(`${result.failed} pointage(s) non transmis : conservés pour une prochaine tentative.`);
+    } catch { setErrorMsg('Synchronisation impossible. Les pointages locaux sont conservés.'); }
+  }, []);
   useEffect(() => {
     const handleOnline = () => {
       setIsOnline(true);
@@ -120,25 +117,7 @@ export default function AdminExamScanPage() {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, []);
-
-  const syncOfflineQueue = async () => {
-    try {
-      const queue = JSON.parse(sessionStorage.getItem('offline_scans_queue') || '[]');
-      if (queue.length === 0) return;
-
-      for (const item of queue) {
-        try {
-          await examsApi.updateExamAttendance(item.qrToken, item.status);
-        } catch (e) {}
-      }
-
-      sessionStorage.setItem('offline_scans_queue', '[]');
-      setPendingScans([]);
-      setActionSuccess(`🔄 ${queue.length} émargement(s) hors-ligne synchronisé(s) avec succès !`);
-      playAudioFeedback('success');
-    } catch (e) {}
-  };
+  }, [syncOfflineQueue]);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
@@ -171,7 +150,7 @@ export default function AdminExamScanPage() {
         osc.start();
         osc.stop(audioCtx.currentTime + 0.3);
       }
-    } catch (e) {}
+    } catch {}
   };
 
   // Start camera stream
@@ -187,7 +166,7 @@ export default function AdminExamScanPage() {
         videoRef.current.play();
       }
       setIsScanning(true);
-    } catch (err) {
+    } catch {
       setErrorMsg('Impossible d\'accéder à la caméra. Utilisez la saisie manuelle ou un lecteur douchette USB.');
       setIsScanning(false);
     }
@@ -239,7 +218,7 @@ export default function AdminExamScanPage() {
           realCin = found.cin || found.user?.cin || '—';
           realFiliere = found.filiere?.name || '—';
         }
-      } catch (e) {}
+      } catch {}
 
       if (!realStudentName) {
         // Fallback API convocation call
@@ -258,7 +237,7 @@ export default function AdminExamScanPage() {
               realSeatNum = String(data.seat_number);
             }
           }
-        } catch (e) {}
+        } catch {}
       }
 
       if (!realStudentName) {
@@ -315,7 +294,9 @@ export default function AdminExamScanPage() {
     try {
       if (!isOnline) {
         // Save to offline queue
-        const newQueue = [...pendingScans, { qrToken: studentData.qr_token, status, timestamp: new Date().toISOString() }];
+        const storedQueue = JSON.parse(sessionStorage.getItem('offline_scans_queue') || '[]');
+        if (!Array.isArray(storedQueue)) throw new Error('File locale invalide');
+        const newQueue = [...storedQueue, { qrToken: studentData.qr_token, status, timestamp: new Date().toISOString() }];
         sessionStorage.setItem('offline_scans_queue', JSON.stringify(newQueue));
         setPendingScans(newQueue);
         setStudentData({ ...studentData, status });
@@ -331,7 +312,7 @@ export default function AdminExamScanPage() {
       setStudentData({ ...studentData, status });
       setActionSuccess(`Émargement enregistré avec succès : ${statusLabels[status]}`);
       playAudioFeedback(status === 'absent' ? 'warning' : status === 'fraud' ? 'error' : 'success');
-    } catch (err: any) {
+    } catch {
       setErrorMsg('Erreur lors de la mise à jour de l\'émargement.');
       playAudioFeedback('error');
     } finally {

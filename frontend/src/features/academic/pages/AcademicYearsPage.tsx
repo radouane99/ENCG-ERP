@@ -34,7 +34,8 @@ export default function AcademicYearsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      editingId ? await api.put(`/academic-years/${editingId}`, form) : await api.post('/academic-years', form)
+      if (editingId) await api.put(`/academic-years/${editingId}`, form)
+      else await api.post('/academic-years', form)
       toast.success(editingId ? 'Année mise à jour !' : 'Année créée !')
       setShowModal(false); fetchData()
     } catch (err: any) { toast.error(err?.response?.data?.message || 'Erreur.') }

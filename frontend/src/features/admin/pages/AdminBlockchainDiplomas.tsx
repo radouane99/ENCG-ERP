@@ -1,25 +1,7 @@
-import { useState,useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-ShieldCheck,
-Link as LinkIcon,
-Award,
-CheckCircle2,
-Copy,
-Search,
-Key,
-Loader2,
-XCircle,
-Sparkles,
-RefreshCw,
-Check,
-Printer,
-Building2,
-Download,
-Boxes,
-Fingerprint
-} from 'lucide-react';
-import { useQuery,useMutation,useQueryClient } from '@tanstack/react-query';
+import { ShieldCheck, Link as LinkIcon, Award, CheckCircle2, Copy, Search, Key, Loader2, XCircle, Sparkles, RefreshCw, Check, Printer, Building2, Download, Boxes, Fingerprint } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { blockchainApi } from '@shared/api/blockchain';
 import { toast } from 'sonner';
 
@@ -94,26 +76,27 @@ const generateQrDataUrl = (dataText: string): string => {
 };
 
 export default function AdminBlockchainDiplomas() {
-  const { t } = useTranslation(['admin', 'common']);
+  useTranslation(['admin', 'common']);
   const queryClient = useQueryClient();
 
   const [verifyQuery, setVerifyQuery] = useState('');
   const [verificationResult, setVerificationResult] = useState<any>(null);
   const [tableSearch, setTableSearch] = useState('');
-  const [selectedFiliere, setSelectedFiliere] = useState('ALL');
+  const [selectedFiliere] = useState('ALL');
   const [copiedHash, setCopiedHash] = useState<string | null>(null);
 
   // Fetch Real DB Ledger via Laravel Eloquent API
-  const { data, isLoading, refetch } = useQuery({
+  // Fetch Real DB Ledger via Laravel Eloquent API
+const { data, isLoading, refetch } = useQuery({
     queryKey: ['blockchain-ledger'],
     queryFn: async () => {
-      const res = await blockchainApi.getLedger();
-      return res;
+        const res = await blockchainApi.getLedger();
+        return res;
     },
-  });
+});
 
-  const certificates: any[] = data?.data || [];
-  const stats = data?.stats || {};
+  const certificates: any[] = useMemo(() => (data?.data || []), [data]);
+  void (data?.stats || {});
 
   // Real Laravel Certify Promo Mutation
   const certifyMutation = useMutation({

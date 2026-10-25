@@ -1,41 +1,41 @@
 import PvGroupComparison from '../components/PvGroupComparison'
 import PvSignatureDialog from '../components/PvSignatureDialog'
 import PvMeetingForm from '../components/PvMeetingForm'
-import { usePvWorkflow, type PvContext } from '../api/usePvWorkflow'
-import { moduleSuccessRates } from '../model/pvStatistics'
-import { Modal } from '@shared/components/ui/Modal'
-import React,{ useEffect,useState,useMemo } from 'react'
+import { usePvWorkflow, type PvContext } from '../api/usePvWorkflow';
+import { moduleSuccessRates } from '../model/pvStatistics';
+import { Modal } from '@shared/components/ui/Modal';
+import React, { useCallback, useEffect, useState, useMemo } from 'react';
 
-import { Link,useNavigate,useSearchParams } from 'react-router-dom'
-import { ArrowLeft,Printer,Save,CheckCircle2,AlertCircle,RefreshCw,ShieldCheck,Lock,Download,FileText,Layers,Sparkles,Calendar,BookOpen,Users,ChevronDown,ChevronUp,Eye,Zap,FileSpreadsheet,Mail,Archive,History,X,Trophy,BarChart2,Search,Link2,Calculator,Clock,AlertTriangle,ShieldAlert,Maximize2,Minimize2,SlidersHorizontal,Table } from 'lucide-react'
-
-
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { ArrowLeft, Printer, Save, AlertCircle, RefreshCw, ShieldCheck, Lock, Download, FileText, Layers, Sparkles, Calendar, BookOpen, Users, ChevronDown, ChevronUp, Eye, Zap, FileSpreadsheet, Mail, Archive, History, X, Trophy, BarChart2, Search, Link2, Calculator, Clock, AlertTriangle, ShieldAlert, Maximize2, Minimize2, SlidersHorizontal, Table } from 'lucide-react';
 
 
 
 
 
 
-import { useTranslation } from 'react-i18next'
-import { cn } from '@shared/lib/utils'
-import { Button } from '@shared/components/ui/Button'
-import { Spinner } from '@shared/components/ui/Spinner'
-import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query'
+
+
+import { useTranslation } from 'react-i18next';
+import { cn } from '@shared/lib/utils';
+import { Button } from '@shared/components/ui/Button';
+import { Spinner } from '@shared/components/ui/Spinner';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '@shared/lib/api'
-import { toast } from 'sonner'
-import { PieChart,Pie,Cell,BarChart as ReBarChart,Bar,XAxis,YAxis,Tooltip,ResponsiveContainer } from 'recharts'
-import { PvFilterBar } from '../components/PvFilterBar'
-import { SignaturePad } from '../components/SignaturePad'
-import { QRCodeSVG } from 'qrcode.react'
-import { useAuthStore } from '@stores/authStore'
+import { toast } from 'sonner';
+import { PieChart, Pie, Cell, BarChart as ReBarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { PvFilterBar } from '../components/PvFilterBar';
+
+import { QRCodeSVG } from 'qrcode.react';
+import { useAuthStore } from '@stores/authStore';
 
 export default function AdminGradesPVPage() {
 
 
   const navigate = useNavigate()
-  const { t, i18n } = useTranslation('common')
+  const { i18n } = useTranslation('common');
   const isRtl = i18n.language === 'ar'
-  const [searchParams] = useSearchParams()
+  const [searchParams] = useSearchParams();
   const moduleId = searchParams.get('module_id')
   const groupId = searchParams.get('group_id')
   const filiereParam = searchParams.get('filiere_id')
@@ -43,20 +43,22 @@ export default function AdminGradesPVPage() {
   const queryClient = useQueryClient()
 
   // Selection states for selector bar
-  const [selectedFiliere, setSelectedFiliere] = useState(filiereParam && filiereParam !== 'null' ? filiereParam : '')
-  const [selectedSemester, setSelectedSemester] = useState(semesterParam && semesterParam !== 'null' ? semesterParam : '')
-  const [selectedGroup, setSelectedGroup] = useState(groupId && groupId !== 'null' ? groupId : '')
-  const [selectedModule, setSelectedModule] = useState(moduleId && moduleId !== 'null' ? moduleId : '')
-  const [matrixSearchQuery, setMatrixSearchQuery] = useState('')
-  const [matrixDecisionFilter, setMatrixDecisionFilter] = useState<'all' | 'V' | 'VPC' | 'VAR' | 'RAT' | 'NV'>('all')
-  const [isFullscreenTable, setIsFullscreenTable] = useState(false)
-  const [matrixViewMode, setMatrixViewMode] = useState<'compact' | 'detailed'>('compact')
-  const [selectedRachatStudent, setSelectedRachatStudent] = useState<any>(null)
-  const [showSignatureModal, setShowSignatureModal] = useState(false)
-  const [publishingGrades, setPublishingGrades] = useState(false)
+  // Selection states for selector bar
+const [selectedFiliere, setSelectedFiliere] = useState(filiereParam && filiereParam !== 'null' ? filiereParam : '');
+  const [selectedSemester, setSelectedSemester] = useState(semesterParam && semesterParam !== 'null' ? semesterParam : '');
+  const [selectedGroup, setSelectedGroup] = useState(groupId && groupId !== 'null' ? groupId : '');
+  const [selectedModule, setSelectedModule] = useState(moduleId && moduleId !== 'null' ? moduleId : '');
+  const [matrixSearchQuery, setMatrixSearchQuery] = useState('');
+  const [matrixDecisionFilter, setMatrixDecisionFilter] = useState<'all' | 'V' | 'VPC' | 'VAR' | 'RAT' | 'NV'>('all');
+  const [isFullscreenTable, setIsFullscreenTable] = useState(false);
+  const [matrixViewMode, setMatrixViewMode] = useState<'compact' | 'detailed'>('compact');
+  const [selectedRachatStudent, setSelectedRachatStudent] = useState<any>(null);
+  const [showSignatureModal, setShowSignatureModal] = useState(false);
+  const [publishingGrades, setPublishingGrades] = useState(false);
 
   // RBAC Segregation: Pure professors only have access to their assigned modules
-  const { user, hasAnyRole } = useAuthStore()
+  // RBAC Segregation: Pure professors only have access to their assigned modules
+const { user, hasAnyRole } = useAuthStore();
   const isPureProfessor = useMemo(() => {
     const isTeacher = hasAnyRole(['professor', 'vacataire'])
     const isAdminOrHead = hasAnyRole([
@@ -74,23 +76,24 @@ export default function AdminGradesPVPage() {
   }, [hasAnyRole])
 
   // Fetch teacher's directly assigned modules
-  const { data: myAssignedModulesData = [], isLoading: isLoadingMyModules } = useQuery({
+  // Fetch teacher's directly assigned modules
+const { data: myAssignedModulesData = [], isLoading: isLoadingMyModules } = useQuery({
     queryKey: ['my-assigned-modules-for-pv', user?.id],
     queryFn: () => api.get('/grades/my-modules').then(r => r.data?.modules || []),
     enabled: isPureProfessor,
-  })
+});
 
   const myModulesList = useMemo(() => {
     return Array.isArray(myAssignedModulesData) ? myAssignedModulesData : []
   }, [myAssignedModulesData])
 
-  const [signatureDone, setSignatureDone] = useState(false)
-  const [signatureDetails, setSignatureDetails] = useState<any>(null)
-  const [signatureDataUrl, setSignatureDataUrl] = useState<string>('')
-  const [isSigning, setIsSigning] = useState(false)
-  const [showAnalytics, setShowAnalytics] = useState(false)
+  const [signatureDone, setSignatureDone] = useState(false);
+  const [signatureDetails, setSignatureDetails] = useState<any>(null);
+  const [signatureDataUrl, setSignatureDataUrl] = useState<string>('');
+  useState(false);
+  const [showAnalytics, setShowAnalytics] = useState(false);
 
-  const [rachatReason, setRachatReason] = useState('Rachat accordé par le Jury de Délibération')
+  const [rachatReason, setRachatReason] = useState('Rachat accordé par le Jury de Délibération');
 
   // Helper : Télécharge un PDF via l'API client (avec token JWT) pour éviter l'erreur Unauthenticated
   const downloadPdf = async (url: string, fallbackFilename: string) => {
@@ -98,7 +101,7 @@ export default function AdminGradesPVPage() {
       // Strip domain and /api prefix if present so axios `api` instance adds Authorization headers
       const cleanUrl = url.includes('/api/') ? url.substring(url.indexOf('/api/') + 4) : url
       const res = await api.get(cleanUrl, { responseType: 'blob' })
-      
+
       let filename = fallbackFilename
       const disposition = res.headers['content-disposition']
       if (disposition && disposition.includes('filename=')) {
@@ -153,10 +156,10 @@ export default function AdminGradesPVPage() {
     }
   })
 
-  const [filieres, setFilieres] = useState<any[]>([])
-  const [groupes, setGroupes] = useState<any[]>([])
-  const [modules, setModules] = useState<any[]>([])
-  const [selectedRachatReason, setSelectedRachatReason] = useState<string>('')
+  const [filieres, setFilieres] = useState<any[]>([]);
+  const [groupes, setGroupes] = useState<any[]>([]);
+  const [modules, setModules] = useState<any[]>([]);
+  const [selectedRachatReason, setSelectedRachatReason] = useState<string>('');
 
 
 
@@ -166,9 +169,7 @@ export default function AdminGradesPVPage() {
     api.get('/filieres').then(r => {
       const data = r.data.data || r.data
       setFilieres(data)
-      if (data.length > 0 && !selectedFiliere) {
-        setSelectedFiliere(String(data[0].id))
-      }
+      if (data.length > 0) setSelectedFiliere((current: string) => current || String(data[0].id))
     }).catch(console.error)
   }, [])
 
@@ -187,9 +188,7 @@ export default function AdminGradesPVPage() {
   }, [selectedFiliere, selectedSemester])
 
   const sessionParam = searchParams.get('session')
-  const [session, setSession] = useState<'normale' | 'rattrapage' | 'totale'>(
-    sessionParam === 'rattrapage' || sessionParam === 'totale' ? sessionParam : 'normale'
-  )
+  const [session, setSession] = useState<'normale' | 'rattrapage' | 'totale'>(sessionParam === 'rattrapage' || sessionParam === 'totale' ? sessionParam : 'normale');
 
   useEffect(() => {
     const s = searchParams.get('session')
@@ -198,15 +197,17 @@ export default function AdminGradesPVPage() {
     }
   }, [searchParams])
 
-  const [rattrapageGrades, setRattrapageGrades] = useState<Record<number, { value: string; absent: boolean }>>({})
-  const [viewAllGroups, setViewAllGroups] = useState(false)
-  const [isExportingPdf, setIsExportingPdf] = useState(false)
+  const [rattrapageGrades, setRattrapageGrades] = useState<Record<number, {
+    value: string;
+    absent: boolean;
+}>>({});
+  const [viewAllGroups, setViewAllGroups] = useState(false);
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
 
 
   // Jury & Dual PV State: Pure professors are strictly restricted to 'module'
-  const [pvType, setPvType] = useState<'module' | 'semestriel' | 'annuel'>(
-    isPureProfessor || moduleId ? 'module' : searchParams.get('pv_type') === 'annuel' ? 'annuel' : 'semestriel'
-  )
+  // Jury & Dual PV State: Pure professors are strictly restricted to 'module'
+const [pvType, setPvType] = useState<'module' | 'semestriel' | 'annuel'>(isPureProfessor || moduleId ? 'module' : searchParams.get('pv_type') === 'annuel' ? 'annuel' : 'semestriel');
 
   // Force module mode for pure professors
   useEffect(() => {
@@ -254,18 +255,19 @@ export default function AdminGradesPVPage() {
     return filtered.length > 0 ? filtered : filieres
   }, [isPureProfessor, myModulesList, filieres])
 
-  const [selectedYearLevel, setSelectedYearLevel] = useState<number>(1)
-  const [juryStatus, setJuryStatus] = useState<any>(null)
-  const [loadingJury, setLoadingJury] = useState(false)
-  const [annualCompensationData, setAnnualCompensationData] = useState<any[]>([])
-  const [activeJurySigningId, setActiveJurySigningId] = useState<number | null>(null)
-  const [showAiAnalysis, setShowAiAnalysis] = useState(true)
+  const [selectedYearLevel, setSelectedYearLevel] = useState<number>(1);
+  const [juryStatus, setJuryStatus] = useState<any>(null);
+  const [, setLoadingJury] = useState(false);
+  const [annualCompensationData, setAnnualCompensationData] = useState<any[]>([]);
+  const [activeJurySigningId, setActiveJurySigningId] = useState<number | null>(null);
+  const [showAiAnalysis, setShowAiAnalysis] = useState(true);
 
   // Dynamic current academic year
-  const { data: academicYearsData = [] } = useQuery({
+  // Dynamic current academic year
+const { data: academicYearsData = [] } = useQuery({
     queryKey: ['academic-years-for-pv'],
     queryFn: () => api.get('/academic-years').then(r => r.data?.data || r.data || []),
-  })
+});
 
   const currentAcademicYearId = useMemo(() => {
     const yearsList = Array.isArray(academicYearsData) ? academicYearsData : []
@@ -273,7 +275,7 @@ export default function AdminGradesPVPage() {
     return Number(searchParams.get('academic_year_id')) && yearsList.some((y: any) => y.id === Number(searchParams.get('academic_year_id'))) ? Number(searchParams.get('academic_year_id')) : current?.id || yearsList[0]?.id || 0
   }, [academicYearsData, searchParams])
 
-  const fetchJury = async () => {
+  const fetchJury = useCallback(async () => {
     if (!selectedFiliere || isPureProfessor || pvType === 'module') return
     setLoadingJury(true)
     try {
@@ -294,20 +296,21 @@ export default function AdminGradesPVPage() {
     } finally {
       setLoadingJury(false)
     }
-  }
+  }, [selectedFiliere, isPureProfessor, pvType, currentAcademicYearId, selectedSemester, selectedGroup, session, selectedYearLevel, user?.id])
 
 
   // Fetch consolidated PV data for single module
-  const { data: pvData, isLoading: isLoadingPV, refetch: refetchPV } = useQuery({
+  // Fetch consolidated PV data for single module
+const { data: pvData, isLoading: isLoadingPV, refetch: refetchPV } = useQuery({
     queryKey: ['module-pv', moduleId, selectedGroup, viewAllGroups, session, currentAcademicYearId],
     queryFn: () => api.get(`/modules/${moduleId}/pv`, {
-      params: {
-        academic_year_id: currentAcademicYearId, group_id: viewAllGroups ? 'all' : (selectedGroup || 'all'),
-        session: session
-      }
+        params: {
+            academic_year_id: currentAcademicYearId, group_id: viewAllGroups ? 'all' : (selectedGroup || 'all'),
+            session: session
+        }
     }).then(res => res.data),
     enabled: !!moduleId && !!currentAcademicYearId,
-  })
+});
 
   const openJuryVisa = (member: any) => {
     if (Number(member.user_id) !== Number(user?.id)) { toast.error('Ce visa appartient à un autre membre du jury.'); return }
@@ -328,7 +331,7 @@ export default function AdminGradesPVPage() {
     }
     setShowSignatureModal(false); setActiveJurySigningId(null); toast.success('Votre visa a été enregistré sur le serveur.')
   }
-  const fetchAnnualCompensation = async () => {
+  const fetchAnnualCompensation = useCallback(async () => {
     const targetFiliereId = selectedFiliere || pvData?.module?.filiere_id || filieres[0]?.id || 1
     try {
       const res = await api.get('/academic/deliberations/annual-compensation', {
@@ -338,35 +341,37 @@ export default function AdminGradesPVPage() {
     } catch (err) {
       console.error(err)
     }
-  }
+  }, [selectedFiliere, pvData?.module?.filiere_id, filieres, currentAcademicYearId, selectedYearLevel])
 
   useEffect(() => {
     fetchJury()
     if (pvType === 'annuel') {
       fetchAnnualCompensation()
     }
-  }, [selectedFiliere, selectedSemester, selectedYearLevel, selectedGroup, session, pvType, pvData, currentAcademicYearId])
+  }, [fetchJury, fetchAnnualCompensation, pvType])
 
   // Fetch full 7-module semester PV matrix
-  const { data: semesterPvData, isLoading: isLoadingSemesterPV } = useQuery({
+  // Fetch full 7-module semester PV matrix
+const { data: semesterPvData, isLoading: isLoadingSemesterPV } = useQuery({
     queryKey: ['semester-pv', selectedFiliere, selectedSemester, session, selectedGroup, currentAcademicYearId],
     queryFn: () => api.get('/semester-pv', {
-      params: {
-        filiere_id: selectedFiliere || 1,
-        academic_year_id: currentAcademicYearId,
-        semester: selectedSemester || 1,
-        session: session,
-        group_id: selectedGroup || 'all'
-      }
+        params: {
+            filiere_id: selectedFiliere || 1,
+            academic_year_id: currentAcademicYearId,
+            semester: selectedSemester || 1,
+            session: session,
+            group_id: selectedGroup || 'all'
+        }
     }).then(res => res.data),
     enabled: (!moduleId || pvType === 'semestriel' || pvType === 'annuel') && !!selectedFiliere && !!selectedSemester,
-  })
+});
 
   // Fetch real exam incidents to bind fraud 0.00 sanction to PV matrix
-  const { data: allExamIncidents = [] } = useQuery({
+  // Fetch real exam incidents to bind fraud 0.00 sanction to PV matrix
+const { data: allExamIncidents = [] } = useQuery({
     queryKey: ['all-exam-incidents-for-pv'],
     queryFn: () => api.get('/exam-incidents').then(res => res.data?.data || res.data || []),
-  })
+});
 
 
 
@@ -384,43 +389,50 @@ export default function AdminGradesPVPage() {
         setSelectedModule(String(pvData.module.id))
       }
     }
-  }, [pvData])
+  }, [pvData, selectedFiliere, selectedModule, selectedSemester])
 
   // PRO MAX Suite States
-  const [isExportingZip, setIsExportingZip] = useState(false)
-  const [showBulkEmailModal, setShowBulkEmailModal] = useState(false)
-  const [bulkFilter, setBulkFilter] = useState<'all' | 'admis' | 'rattrapage' | 'ajournes'>('all')
-  const [isSendingBulk, setIsSendingBulk] = useState(false)
+  // PRO MAX Suite States
+const [isExportingZip, setIsExportingZip] = useState(false);
+  const [showBulkEmailModal, setShowBulkEmailModal] = useState(false);
+  const [bulkFilter, setBulkFilter] = useState<'all' | 'admis' | 'rattrapage' | 'ajournes'>('all');
+  const [isSendingBulk] = useState(false);
 
   // 🔍 Feature 4: Search & Quick Filters
-  const [searchQuery, setSearchQuery] = useState('')
-  const [statusFilter, setStatusFilter] = useState<'all' | 'v' | 'rat' | 'r' | 'reserviste' | 'nv'>('all')
+  // 🔍 Feature 4: Search & Quick Filters
+const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'v' | 'rat' | 'r' | 'reserviste' | 'nv'>('all');
 
   // 🛡️ Feature 5: Audit Trail Modal State
-  const [showAuditModal, setShowAuditModal] = useState(false)
+  // 🛡️ Feature 5: Audit Trail Modal State
+const [showAuditModal, setShowAuditModal] = useState(false);
 
   // 📊 Feature 2: Stats Dashboard State
-  const [showStatsDashboard, setShowStatsDashboard] = useState(false)
+  // 📊 Feature 2: Stats Dashboard State
+const [showStatsDashboard, setShowStatsDashboard] = useState(false);
 
   // 🎓 Feature 4: Batch Attestations
-  const [isGeneratingAttestations, setIsGeneratingAttestations] = useState(false)
-  const [showAttestationModal, setShowAttestationModal] = useState(false)
+  // 🎓 Feature 4: Batch Attestations
+const [isGeneratingAttestations, setIsGeneratingAttestations] = useState(false);
+  const [showAttestationModal, setShowAttestationModal] = useState(false);
 
   // 🗓️ Feature 5: Deliberation Scheduler
-  const [showSchedulerModal, setShowSchedulerModal] = useState(false)
+  // 🗓️ Feature 5: Deliberation Scheduler
+const [showSchedulerModal, setShowSchedulerModal] = useState(false);
 
   // 🔒 Feature NEW — Verrouillage Officiel du PV
-  const [pvLocked, setPvLocked] = useState(false)
+  // 🔒 Feature NEW — Verrouillage Officiel du PV
+const [pvLocked, setPvLocked] = useState(false);
   const [pvLockDetails, setPvLockDetails] = useState<{
-    lockedBy: string
-    lockedAt: string
-    role: string
-    hash: string
-    reason: string
-  } | null>(null)
-  const [showLockModal, setShowLockModal] = useState(false)
-  const [isLocking, setIsLocking] = useState(false)
-  const [lockReason, setLockReason] = useState('Délibération officielle clôturée — PV définitif')
+    lockedBy: string;
+    lockedAt: string;
+    role: string;
+    hash: string;
+    reason: string;
+} | null>(null);
+  const [showLockModal, setShowLockModal] = useState(false);
+  const [isLocking, setIsLocking] = useState(false);
+  const [lockReason, setLockReason] = useState('Délibération officielle clôturée — PV définitif');
 
   const workflowContext: PvContext = { filiere_id: Number(selectedFiliere), academic_year_id: Number(currentAcademicYearId), semester_number: pvType === 'annuel' ? selectedYearLevel * 2 : Number(selectedSemester), type: pvType === 'annuel' ? 'annuel' : 'semestriel', group_id: pvType === 'annuel' ? null : Number(selectedGroup) || null }
   const officialWorkflow = usePvWorkflow(workflowContext, !isPureProfessor && pvType !== 'module')
@@ -430,17 +442,20 @@ export default function AdminGradesPVPage() {
     setPvLockDetails(value?.is_sealed ? { lockedBy: 'État officiel enregistré', lockedAt: value.sealed_at || '', role: 'Service habilité', hash: value.seal_hash || '', reason: 'Scellé serveur' } : null)
   }, [officialWorkflow.data, selectedFiliere, selectedSemester, pvType, selectedGroup])
   // 📋 Feature N°2 — Comparaison Inter-Groupes
-  const [showGroupCompareModal, setShowGroupCompareModal] = useState(false)
+  // 📋 Feature N°2 — Comparaison Inter-Groupes
+const [showGroupCompareModal, setShowGroupCompareModal] = useState(false);
 
   // 🎯 Feature N°3 — Simulateur Jury "What-If"
-  const [showSimulatorModal, setShowSimulatorModal] = useState(false)
-  const [simBonusPoints, setSimBonusPoints] = useState<number>(0.5)
-  const [simTargetCategory, setSimTargetCategory] = useState<'rattrapage' | 'ajourne' | 'all'>('rattrapage')
+  // 🎯 Feature N°3 — Simulateur Jury "What-If"
+const [showSimulatorModal, setShowSimulatorModal] = useState(false);
+  const [simBonusPoints, setSimBonusPoints] = useState<number>(0.5);
+  useState<'rattrapage' | 'ajourne' | 'all'>('rattrapage');
 
   // 🔗 Feature N°4 — Lien interne (connexion et droits requis)
-  const [showShareModal, setShowShareModal] = useState(false)
-  const [shareLink, setShareLink] = useState('')
-  const [shareCopied, setShareCopied] = useState(false)
+  // 🔗 Feature N°4 — Lien interne (connexion et droits requis)
+const [showShareModal, setShowShareModal] = useState(false);
+  const [shareLink, setShareLink] = useState('');
+  const [shareCopied, setShareCopied] = useState(false);
 
 
   // 📊 Feature 1: Excel Export Handler
@@ -449,11 +464,11 @@ export default function AdminGradesPVPage() {
     try {
       const activeMatrix = semesterPvData?.data?.matrix || []
       const modulesList = semesterPvData?.data?.modules || []
-      
+
       let csvContent = "data:text/csv;charset=utf-8,\uFEFF"
       csvContent += `PROCES-VERBAL OFFICIEL DE DELIBERATION — SEMESTRE ${selectedSemester || 1}\n`
       csvContent += `Filiere: ${semesterPvData?.data?.filiere?.name || 'ENCG Fès'}; Academic Year: 2025/2026; Date: ${new Date().toLocaleDateString('fr-FR')}\n\n`
-      
+
       // Header 1
       let header1 = "Code Apogee;Etudiant;Moyenne Semestrielle;Decision Global;Credits;"
       modulesList.forEach((m: any) => {
@@ -502,11 +517,12 @@ export default function AdminGradesPVPage() {
     navigate('/academic/documents')
   }
   // Query AI Grade Distribution Audit
-  const { data: aiAuditData } = useQuery({
+  // Query AI Grade Distribution Audit
+const { data: aiAuditData } = useQuery({
     queryKey: ['module-ai-audit', moduleId],
     queryFn: () => api.get(`/modules/${moduleId}/ai-audit`).then(r => r.data),
     enabled: !!moduleId && !!currentAcademicYearId,
-  })
+});
 
   const handleDownloadZipBundle = async () => {
     if (!moduleId) return
@@ -524,7 +540,7 @@ export default function AdminGradesPVPage() {
       link.click()
       link.remove()
       toast.success(isRtl ? 'تم تحميل حزمة ZIP بنجاح' : 'Pack PV Complet (ZIP) téléchargé avec succès !', { id: toastId })
-    } catch (err) {
+    } catch {
       toast.error('Erreur lors du téléchargement du Pack ZIP.', { id: toastId })
     } finally {
       setIsExportingZip(false)
@@ -559,7 +575,7 @@ export default function AdminGradesPVPage() {
     try {
       const activeMatrix = semesterPvData?.data?.matrix || []
       const modulesList = semesterPvData?.data?.modules || []
-      
+
       let htmlDoc = `
         <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
         <head><title>PV Officiel ENCG</title>
@@ -615,7 +631,7 @@ export default function AdminGradesPVPage() {
         </body>
         </html>
       `
-      
+
       const blob = new Blob(['\ufeff', htmlDoc], { type: 'application/msword' })
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -633,7 +649,7 @@ export default function AdminGradesPVPage() {
     }
   }
 
-  const [isGeneratingEligibilities, setIsGeneratingEligibilities] = useState(false)
+  const [isGeneratingEligibilities, setIsGeneratingEligibilities] = useState(false);
 
 
   const handleGenerateEligibilities = async () => {
@@ -652,21 +668,7 @@ export default function AdminGradesPVPage() {
     }
   }
 
-  const handleBulkSendEmails = async () => {
-    if (!moduleId) return
-    setIsSendingBulk(true)
-    const toastId = toast.loading(isRtl ? 'جاري إرسال النقط عبر الإيميل...' : 'Expédition des relevés de notes par email...')
-    try {
-      const res = await api.post(`/modules/${moduleId}/bulk-send-transcripts`, { filter: bulkFilter, group_id: viewAllGroups ? 'all' : (groupId || 'all'), session })
-      if (res.data.failed_count) toast.warning(res.data.message, { id: toastId })
-      else toast.success(res.data.message || 'Résultats transmis.', { id: toastId })
-      setShowBulkEmailModal(false)
-    } catch (err) {
-      toast.error('Erreur lors de l\'envoi des emails.', { id: toastId })
-    } finally {
-      setIsSendingBulk(false)
-    }
-  }
+
 
   const handleDownloadPdf = async () => {
     setIsExportingPdf(true)
@@ -783,7 +785,7 @@ export default function AdminGradesPVPage() {
     saveMutation.mutate(payload)
   }
 
-  const [isCalculating, setIsCalculating] = useState(false)
+  const [isCalculating, setIsCalculating] = useState(false);
 
   const handleRunDeliberation = async () => {
     setIsCalculating(true)
@@ -899,8 +901,8 @@ export default function AdminGradesPVPage() {
               {isRtl ? 'محاضر النقاط الرسمية' : 'Procès-Verbaux de Notes Officiels'}
             </h1>
             <p className="text-blue-100/80 text-xs md:text-sm font-medium mt-0.5">
-              {isPureProfessor 
-                ? 'Consultez, délibérez et signez numériquement les procès-verbaux de vos modules d\'enseignement affectés.' 
+              {isPureProfessor
+                ? 'Consultez, délibérez et signez numériquement les procès-verbaux de vos modules d\'enseignement affectés.'
                 : (isRtl ? 'اخther نوع المحضر والشعبة للدورة الدراسية.' : 'Sélectionnez le type de PV (Module, Semestriel ou Annuel Global) et la filière pour générer les procès-verbaux officiels.')}
             </p>
           </div>
@@ -916,8 +918,8 @@ export default function AdminGradesPVPage() {
                 onClick={() => setPvType('module')}
                 className={cn(
                   "px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-2 uppercase tracking-wider",
-                  pvType === 'module' 
-                    ? "bg-white text-[#0f2863] shadow-md" 
+                  pvType === 'module'
+                    ? "bg-white text-[#0f2863] shadow-md"
                     : "text-blue-100 hover:text-white hover:bg-white/10"
                 )}
               >
@@ -930,8 +932,8 @@ export default function AdminGradesPVPage() {
                 onClick={() => setPvType('semestriel')}
                 className={cn(
                   "px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-2 uppercase tracking-wider",
-                  pvType === 'semestriel' 
-                    ? "bg-white text-[#0f2863] shadow-md" 
+                  pvType === 'semestriel'
+                    ? "bg-white text-[#0f2863] shadow-md"
                     : "text-blue-100 hover:text-white hover:bg-white/10"
                 )}
               >
@@ -944,8 +946,8 @@ export default function AdminGradesPVPage() {
                 onClick={() => setPvType('annuel')}
                 className={cn(
                   "px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-2 uppercase tracking-wider",
-                  pvType === 'annuel' 
-                    ? "bg-white text-[#0f2863] shadow-md" 
+                  pvType === 'annuel'
+                    ? "bg-white text-[#0f2863] shadow-md"
                     : "text-blue-100 hover:text-white hover:bg-white/10"
                 )}
               >
@@ -1858,7 +1860,7 @@ export default function AdminGradesPVPage() {
             "bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-3xl overflow-hidden shadow-sm space-y-0 transition-all",
             isFullscreenTable && "fixed inset-0 z-50 rounded-none border-0 p-4 md:p-6 flex flex-col h-screen w-screen bg-white dark:bg-slate-950 overflow-hidden"
           )}>
-            
+
             {/* Header Toolbar: Search & Filters + View Switcher + Fullscreen */}
             <div className="p-4 md:p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-4 bg-slate-50/70 dark:bg-slate-850 shrink-0">
               <div className="space-y-0.5">
@@ -2003,7 +2005,7 @@ export default function AdminGradesPVPage() {
             {/* Filtered Students Table */}
             {(() => {
               const filteredStudents = (semesterPvData.students || []).filter((s: any) => {
-                const matchesSearch = !matrixSearchQuery || 
+                const matchesSearch = !matrixSearchQuery ||
                   s.last_name?.toLowerCase().includes(matrixSearchQuery.toLowerCase()) ||
                   s.first_name?.toLowerCase().includes(matrixSearchQuery.toLowerCase()) ||
                   String(s.apogee).includes(matrixSearchQuery) ||
@@ -2044,7 +2046,7 @@ export default function AdminGradesPVPage() {
                         >
                           Nom & Prénom
                         </th>
-                        
+
                         {/* 7 Modules Headers */}
                         {semesterPvData.modules?.map((m: any, idx: number) => (
                           <th
@@ -2176,7 +2178,7 @@ export default function AdminGradesPVPage() {
                                 const dec = mInfo?.decision
                                 const isFraud = mInfo?.is_fraud || dec === 'FRAUDE' || (hasStudentFraud && (mInfo?.is_fraud || !!studentExpandedSanction))
 
-                                const noteColor = 
+                                const noteColor =
                                   isFraud ? 'text-rose-700 dark:text-rose-400 font-black' :
                                   note === null || note === undefined ? 'text-slate-400' :
                                   note >= 10.00 ? 'text-slate-900 dark:text-slate-100 font-extrabold' :
@@ -2319,8 +2321,8 @@ export default function AdminGradesPVPage() {
                       {juryStatus.signed_count} / {juryStatus.total_members} Signatures Récoltées
                     </span>
                     <div className="w-36 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden mt-1">
-                      <div 
-                        className="h-full bg-gradient-to-r from-indigo-500 to-emerald-500 rounded-full transition-all duration-500" 
+                      <div
+                        className="h-full bg-gradient-to-r from-indigo-500 to-emerald-500 rounded-full transition-all duration-500"
                         style={{ width: `${juryStatus.total_members > 0 ? (juryStatus.signed_count / juryStatus.total_members) * 100 : 0}%` }}
                       />
                     </div>
@@ -2346,12 +2348,12 @@ export default function AdminGradesPVPage() {
               {/* Members Matrix */}
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                 {juryStatus.members?.map((member: any) => (
-                  <div 
+                  <div
                     key={member.id}
                     className={cn(
                       "p-4 rounded-2xl border transition-all flex flex-col justify-between space-y-3",
-                      member.status === 'signed' 
-                        ? "bg-emerald-50/50 border-emerald-200 dark:bg-emerald-950/20" 
+                      member.status === 'signed'
+                        ? "bg-emerald-50/50 border-emerald-200 dark:bg-emerald-950/20"
                         : "bg-slate-50 border-slate-200 dark:bg-slate-800/50"
                     )}
                   >
@@ -3213,12 +3215,12 @@ export default function AdminGradesPVPage() {
                               const valYear = modInfo?.validation_year || ''
                               let shortYear = '–'
                               if (valYear) {
-                                const ym = valYear.match(/(\d{2,4})[/\-](\d{2,4})/)
+                                const ym = valYear.match(/(\d{2,4})[/-](\d{2,4})/)
                                 if (ym) shortYear = `${ym[1].slice(-2)}-${ym[2].slice(-2)}`
                                 else shortYear = valYear
                               }
 
-                              const noteColor = 
+                              const noteColor =
                                 isElim ? 'text-rose-700 dark:text-rose-400 font-black' :
                                 isFailed ? 'text-amber-700 dark:text-amber-400 font-black' :
                                 gradeVal !== null ? 'text-slate-900 dark:text-slate-100 font-black' :
@@ -3275,12 +3277,12 @@ export default function AdminGradesPVPage() {
                               const valYear = modInfo?.validation_year || ''
                               let shortYear = '–'
                               if (valYear) {
-                                const ym = valYear.match(/(\d{2,4})[/\-](\d{2,4})/)
+                                const ym = valYear.match(/(\d{2,4})[/-](\d{2,4})/)
                                 if (ym) shortYear = `${ym[1].slice(-2)}-${ym[2].slice(-2)}`
                                 else shortYear = valYear
                               }
 
-                              const noteColor = 
+                              const noteColor =
                                 isElim ? 'text-rose-700 dark:text-rose-400 font-black' :
                                 isFailed ? 'text-amber-700 dark:text-amber-400 font-black' :
                                 gradeVal !== null ? 'text-slate-900 dark:text-slate-100 font-black' :
@@ -3402,8 +3404,8 @@ export default function AdminGradesPVPage() {
                     {juryStatus.signed_count} / {juryStatus.total_members} Signatures Récoltées
                   </span>
                   <div className="w-36 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden mt-1">
-                    <div 
-                      className="h-full bg-gradient-to-r from-indigo-500 to-emerald-500 rounded-full transition-all duration-500" 
+                    <div
+                      className="h-full bg-gradient-to-r from-indigo-500 to-emerald-500 rounded-full transition-all duration-500"
                       style={{ width: `${juryStatus.total_members > 0 ? (juryStatus.signed_count / juryStatus.total_members) * 100 : 0}%` }}
                     />
                   </div>
@@ -3429,12 +3431,12 @@ export default function AdminGradesPVPage() {
             {/* Members Matrix */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
               {juryStatus.members?.map((member: any) => (
-                <div 
+                <div
                   key={member.id}
                   className={cn(
                     "p-4 rounded-2xl border transition-all flex flex-col justify-between space-y-3",
-                    member.status === 'signed' 
-                      ? "bg-emerald-50/50 border-emerald-200 dark:bg-emerald-950/20" 
+                    member.status === 'signed'
+                      ? "bg-emerald-50/50 border-emerald-200 dark:bg-emerald-950/20"
                       : "bg-slate-50 border-slate-200 dark:bg-slate-800/50"
                   )}
                 >
@@ -3608,8 +3610,8 @@ export default function AdminGradesPVPage() {
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
           {/* Left: Back button + Title & Module Identity */}
           <div className="flex items-center gap-3.5">
-            <Link 
-              to="/admin/grades" 
+            <Link
+              to="/admin/grades"
               className="w-10 h-10 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 flex items-center justify-center text-slate-700 dark:text-slate-200 transition-all shadow-xs shrink-0"
               title="Retour aux notes"
             >
@@ -3666,15 +3668,15 @@ export default function AdminGradesPVPage() {
               }}
               className={cn(
                 "rounded-2xl flex items-center gap-2 text-xs font-black shadow-md hover:-translate-y-0.5 transition-all px-4 py-2.5 text-white shrink-0",
-                pvData.signature 
-                  ? "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20" 
+                pvData.signature
+                  ? "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20"
                   : "bg-[#0f2863] hover:bg-[#1a387e] shadow-blue-900/20"
               )}
             >
               <span>✍️</span>
               <span>
-                {pvData.signature 
-                  ? `Re-signer (${session === 'normale' ? 'Ordinaire' : session === 'rattrapage' ? 'Rattrapage' : 'Vue Totale'})` 
+                {pvData.signature
+                  ? `Re-signer (${session === 'normale' ? 'Ordinaire' : session === 'rattrapage' ? 'Rattrapage' : 'Vue Totale'})`
                   : `Signer le PV (${session === 'normale' ? 'Ordinaire' : session === 'rattrapage' ? 'Rattrapage' : 'Vue Totale'})`}
               </span>
             </Button>
@@ -3777,8 +3779,8 @@ export default function AdminGradesPVPage() {
               {aiAuditData && (
                 <span className={cn(
                   "text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border",
-                  aiAuditData.anomalies_detected 
-                    ? "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800" 
+                  aiAuditData.anomalies_detected
+                    ? "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800"
                     : "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800"
                 )}>
                   {aiAuditData.anomalies_detected ? '⚠️ Anomalie IA' : '✨ IA Conforme'}
@@ -3831,8 +3833,8 @@ export default function AdminGradesPVPage() {
 
                 <span className={cn(
                   "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border shrink-0 flex items-center gap-1.5",
-                  aiAuditData.anomalies_detected 
-                    ? "bg-rose-500/20 text-rose-300 border-rose-500/30 animate-pulse" 
+                  aiAuditData.anomalies_detected
+                    ? "bg-rose-500/20 text-rose-300 border-rose-500/30 animate-pulse"
                     : "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
                 )}>
                   <span className={cn("w-1.5 h-1.5 rounded-full", aiAuditData.anomalies_detected ? "bg-rose-400" : "bg-emerald-400")} />
@@ -4171,7 +4173,7 @@ export default function AdminGradesPVPage() {
 
       {/* PV Printable Document Container */}
       <div className="bg-white rounded-3xl border border-slate-200 p-8 shadow-sm print:border-none print:shadow-none print:p-0 pv-print-card">
-        
+
         {/* Official Institution Header (Visible on Web & Print) */}
         <div className="border-b-2 border-[#0f2863] pb-4 mb-6 official-header">
           <div className="flex justify-between items-center gap-4">
@@ -4209,10 +4211,10 @@ export default function AdminGradesPVPage() {
 
               {/* Dynamic QR Code for Authenticity Verification */}
               <div className="flex flex-col items-center shrink-0">
-                <QRCodeSVG 
-                  value={`${window.location.origin}/verify/pv/${moduleId}/${groupId || 'all'}`} 
-                  size={58} 
-                  level="H" 
+                <QRCodeSVG
+                  value={`${window.location.origin}/verify/pv/${moduleId}/${groupId || 'all'}`}
+                  size={58}
+                  level="H"
                   className="border border-slate-200 p-1 bg-white rounded-md shadow-sm"
                 />
                 <span className="text-[7px] text-slate-400 font-mono tracking-widest uppercase mt-0.5">VERIFICATION</span>
@@ -4242,7 +4244,7 @@ export default function AdminGradesPVPage() {
                 <tr>
                   <th className="border border-slate-300 p-3 text-left">Code Apogée</th>
                   <th className="border border-slate-300 p-3 text-left">Nom & Prénom</th>
-                  
+
                   {/* Dynamic assessment columns — hide rattrapage from header */}
                   {displayAssessments.map((a: any) => (
                     <th key={a.id} className="border border-slate-300 p-3 w-20">
@@ -4526,7 +4528,7 @@ export default function AdminGradesPVPage() {
         {pvData.signature && pvData.signature.digital_seal && (
           <div className="mt-6 pt-3 border-t border-slate-200 flex justify-between items-center text-[8px] font-mono text-slate-500">
             <div className="flex items-center gap-3">
-              <QRCodeSVG 
+              <QRCodeSVG
                 value={`${window.location.origin}/verify-pv?seal=${pvData.signature.digital_seal}`}
                 size={48}
                 level="M"

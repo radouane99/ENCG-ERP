@@ -1,38 +1,38 @@
-import { useState,useEffect } from 'react'
-import { Link,useParams,useNavigate } from 'react-router-dom'
-import { FileText,CheckCircle,Bot,Loader2 } from 'lucide-react'
-import { studentsApi,api } from '@shared/api/students'
-import { toast } from 'sonner'
+import { useCallback, useState, useEffect } from 'react';
+import { Link, useParams, useNavigate } from 'react-router-dom';
+import { FileText, CheckCircle, Bot, Loader2 } from 'lucide-react';
+import { studentsApi, api } from '@shared/api/students';
+import { toast } from 'sonner';
 import EditStudentModal from '../components/EditStudentModal'
 
 export default function AdminStudentDetailPage() {
-  const { id } = useParams()
+  const { id } = useParams();
   const navigate = useNavigate()
-  const [student, setStudent] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
-  const [isEditing, setIsEditing] = useState(false)
+  const [student, setStudent] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
 
-  const fetchStudent = async () => {
+  const fetchStudent = useCallback(async () => {
     if (!id) return;
     try {
       const data = await studentsApi.getStudent(id)
       setStudent(data)
-    } catch (error) {
+    } catch {
       toast.error('Erreur lors du chargement de l\'étudiant')
       navigate('/admin/students')
     } finally {
       setLoading(false)
     }
-  }
+  }, [id, setStudent, navigate, setLoading])
 
   useEffect(() => {
     if (id) fetchStudent()
-  }, [id, navigate])
+  }, [id, navigate, fetchStudent])
 
   const getInitials = (name: string) => name ? name.charAt(0).toUpperCase() : '?'
 
   const handleDocumentClick = async (type: string) => {
-    const year = student.latest_pathway?.academic_year_id || '2025-2026'; // Defaulting to 2025/2026 string or id
+    void (student.latest_pathway?.academic_year_id || '2025-2026'); // Defaulting to 2025/2026 string or id
     // Since backend expects year string in route like 2025/2026 but URL can't have slash, we encode or use a safe string. Let's just use 2025-2026
     const encodedYear = '2025-2026';
     
@@ -53,7 +53,7 @@ export default function AdminStudentDetailPage() {
       document.body.appendChild(link);
       link.click();
       toast.success('Document généré avec succès !', { id: 'pdf' });
-    } catch (error) {
+    } catch {
       toast.error('Erreur lors de la génération du document', { id: 'pdf' });
     }
   }
@@ -69,7 +69,7 @@ export default function AdminStudentDetailPage() {
       toast.success('Bilan pédagogique généré avec succès !', { id: 'ai' });
       // We could display this in a modal, but for now an alert will do
       alert("Bilan Pédagogique IA :\n\n" + response.data.reply);
-    } catch (error) {
+    } catch {
       toast.error('Erreur lors de la génération du bilan', { id: 'ai' });
     }
   }

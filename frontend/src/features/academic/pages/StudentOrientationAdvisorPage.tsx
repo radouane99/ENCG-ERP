@@ -1,16 +1,9 @@
-import React,{ useState } from 'react';
-import { useQuery,useMutation } from '@tanstack/react-query';
+import React, { useState } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import api from '@shared/lib/api';
 import { toast } from 'sonner';
-import {
-Compass,Sparkles,TrendingUp,Landmark,ShieldCheck,Users,Globe,
-Calculator,AlertTriangle,CheckCircle2,RefreshCw,
-Briefcase,GraduationCap,BarChart2,BookOpen
-} from 'lucide-react';
-import {
-ResponsiveContainer,RadarChart,PolarGrid,PolarAngleAxis,PolarRadiusAxis,Radar,
-Tooltip
-} from 'recharts';
+import { Compass, Sparkles, Calculator, AlertTriangle, CheckCircle2, RefreshCw, Briefcase, GraduationCap, BarChart2, BookOpen } from 'lucide-react';
+import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Tooltip } from 'recharts';
 import { cn } from '@shared/lib/utils';
 
 interface ModuleSimItem {
@@ -25,16 +18,18 @@ export default function StudentOrientationAdvisorPage() {
   const [activeTab, setActiveTab] = useState<'advisor' | 'simulator'>('advisor');
 
   // 1. Fetch AI Orientation Profile
-  const { data: profileData, isLoading, isError, refetch } = useQuery({
+  // 1. Fetch AI Orientation Profile
+const { data: profileData, isLoading, isError, refetch } = useQuery({
     queryKey: ['student-orientation-profile'],
     queryFn: async () => {
-      const res = await api.get('/student/orientation/profile');
-      return res.data?.data || res.data || {};
+        const res = await api.get('/student/orientation/profile');
+        return res.data?.data || res.data || {};
     },
-  });
+});
 
   // State for simulated modules
-  const [simulatedModules, setSimulatedModules] = useState<ModuleSimItem[]>([]);
+  // State for simulated modules
+const [simulatedModules, setSimulatedModules] = useState<ModuleSimItem[]>([]);
 
   // Sync real modules from database when profileData loads
   React.useEffect(() => {

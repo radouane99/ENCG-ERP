@@ -1,40 +1,42 @@
-import { useState,useEffect } from 'react'
-import { Upload,Plus,Eye,Edit,Trash2,Users,Loader2,Search,RefreshCw,X,Printer,Award,FileText,Sparkles,UserCheck } from 'lucide-react'
-import { studentsApi } from '@shared/api/students'
-import { academicApi } from '@shared/api/academic'
+import { useCallback, useState, useEffect } from 'react';
+import { Upload, Plus, Eye, Edit, Trash2, Users, Loader2, Search, RefreshCw, X, Printer, Award, FileText, Sparkles, UserCheck } from 'lucide-react';
+import { studentsApi } from '@shared/api/students';
+import { academicApi } from '@shared/api/academic';
 import EditStudentModal from '../components/EditStudentModal'
 import AddStudentModal from '../components/AddStudentModal'
-import { toast } from 'sonner'
-import { openAuthenticatedUrl,openStudentAttestationPdf } from '@shared/lib/documentAccess'
+import { toast } from 'sonner';
+import { openAuthenticatedUrl, openStudentAttestationPdf } from '@shared/lib/documentAccess';
 
-import { useTranslation } from 'react-i18next'
-import { Student } from '@/types/models'
+import { useTranslation } from 'react-i18next';
+import { Student } from '@/types/models';
 import CustomSelect from '@shared/components/ui/CustomSelect'
 
 export default function AdminStudentsPage() {
-  const { t, i18n } = useTranslation(['students', 'common'])
-  const isRtl = i18n.language === 'ar'
+  const { i18n } = useTranslation(['students', 'common']);
+  void (i18n.language === 'ar');
 
-  const [students, setStudents] = useState<Student[]>([])
-  const [loading, setLoading] = useState(true)
-  const [page, setPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
-  const [total, setTotal] = useState(0)
-  const [filieres, setFilieres] = useState<any[]>([])
-  const [groups, setGroups] = useState<any[]>([])
-  const [selectedStudentForModal, setSelectedStudentForModal] = useState<Student | null>(null)
+  const [students, setStudents] = useState<Student[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [filieres, setFilieres] = useState<any[]>([]);
+  const [groups, setGroups] = useState<any[]>([]);
+  const [selectedStudentForModal, setSelectedStudentForModal] = useState<Student | null>(null);
 
   // Filters State
-  const [search, setSearch] = useState('')
-  const [selectedFiliere, setSelectedFiliere] = useState('')
-  const [selectedSemester, setSelectedSemester] = useState('')
-  const [selectedGroup, setSelectedGroup] = useState('')
-  const [selectedSubGroup, setSelectedSubGroup] = useState('')
+  // Filters State
+const [search, setSearch] = useState('');
+  const [selectedFiliere, setSelectedFiliere] = useState('');
+  const [selectedSemester, setSelectedSemester] = useState('');
+  const [selectedGroup, setSelectedGroup] = useState('');
+  const [selectedSubGroup, setSelectedSubGroup] = useState('');
 
   // Modals & Menus
-  const [editingStudent, setEditingStudent] = useState<Student | null>(null)
-  const [showAddModal, setShowAddModal] = useState(false)
-  const [showZipMenu, setShowZipMenu] = useState(false)
+  // Modals & Menus
+const [editingStudent, setEditingStudent] = useState<Student | null>(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showZipMenu, setShowZipMenu] = useState(false);
 
   const handleBulkZipExport = (docType: string, onlyPassed: boolean = false) => {
     setShowZipMenu(false)
@@ -49,7 +51,7 @@ export default function AdminStudentsPage() {
     }, 800)
   }
 
-  const fetchStudents = async () => {
+  const fetchStudents = useCallback(async () => {
     try {
       setLoading(true)
       const params: any = { page, per_page: 15 }
@@ -68,11 +70,11 @@ export default function AdminStudentsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [setLoading, page, search, selectedFiliere, selectedSemester, selectedGroup, selectedSubGroup, setStudents, setTotalPages, setTotal])
 
   useEffect(() => {
     fetchStudents()
-  }, [page, search, selectedFiliere, selectedSemester, selectedGroup, selectedSubGroup])
+  }, [page, search, selectedFiliere, selectedSemester, selectedGroup, selectedSubGroup, fetchStudents])
 
   useEffect(() => {
     academicApi.getFilieres().then(setFilieres).catch(console.error)

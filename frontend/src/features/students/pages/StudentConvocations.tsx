@@ -1,25 +1,21 @@
-import { useEffect,useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Calendar as CalendarIcon,Clock,MapPin,FileText,Loader2 } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, MapPin, FileText, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { examsApi } from '@shared/api/exams';
 import { useAuthStore } from '@stores/authStore';
 import PageHeader from '@shared/components/layout/PageHeader';
 
 export default function StudentConvocations() {
-  const { t, i18n } = useTranslation(['exams', 'common']);
-  const isRtl = i18n.language === 'ar';
-  const navigate = useNavigate();
+  const { i18n } = useTranslation(['exams', 'common']);
+  void (i18n.language === 'ar');
+  useNavigate();
   const { user } = useAuthStore();
   const [convocations, setConvocations] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDownloading, setIsDownloading] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchConvocations();
-  }, []);
-
-  const fetchConvocations = async () => {
+  const fetchConvocations = useCallback(async () => {
     try {
       setIsLoading(true);
       if (!user?.id) {
@@ -37,7 +33,13 @@ export default function StudentConvocations() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [setIsLoading, user, setConvocations]);
+
+  useEffect(() => {
+    fetchConvocations();
+  }, [fetchConvocations]);
+
+
 
   const handleDownloadPdf = async (convId: number) => {
     try {
@@ -60,13 +62,13 @@ export default function StudentConvocations() {
   return (
     <div className="space-y-6 font-sans animate-in fade-in zoom-in duration-500">
       <PageHeader title="Mes Convocations" subtitle="Téléchargez chaque convocation en PDF." />
-      
+
       {/* Header Banner */}
       <div className="bg-primary rounded-3xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden shadow-2xl border border-white/10">
-        <div className="absolute inset-0 opacity-20 pointer-events-none" 
+        <div className="absolute inset-0 opacity-20 pointer-events-none"
              style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '24px 24px' }}>
         </div>
-        
+
         <div className="relative z-10 flex-1">
           <div className="text-[10px] font-bold text-[#003a8c] bg-blue-500/20 w-max px-3 py-1 rounded-full uppercase tracking-widest border border-blue-500/30 mb-4">
             ESPACE ÉTUDIANT
@@ -104,7 +106,7 @@ export default function StudentConvocations() {
         <div className="space-y-6">
           {convocations.map((conv, idx) => (
             <div key={idx} className="flex flex-col md:flex-row items-center gap-6 p-6 rounded-2xl border border-white/5 hover:border-blue-200 bg-white/[0.02]/50 hover:bg-white hover:shadow-md transition-all group">
-              
+
               {/* Date Box */}
               <div className="w-20 h-20 bg-gradient-to-b from-amber-400 to-amber-500 rounded-2xl shadow-inner border border-amber-300 flex flex-col items-center justify-center text-white shrink-0">
                 <span className="text-[10px] font-bold uppercase tracking-widest opacity-90">{conv.date.split('.')[0]}</span>
@@ -119,7 +121,7 @@ export default function StudentConvocations() {
                     {conv.type}
                   </span>
                 </div>
-                
+
                 <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-xs font-bold text-white/50 mb-3">
                   <div className="flex items-center gap-1.5">
                     <Clock className="w-4 h-4 text-gray-400" /> {conv.time}
@@ -143,7 +145,7 @@ export default function StudentConvocations() {
                   <div className="text-xl font-black text-[#001A4B]">{conv.days}</div>
                   <div className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">JOURS</div>
                 </div>
-                <button 
+                <button
                   onClick={() => handleDownloadPdf(conv.id)}
                   disabled={isDownloading === conv.id.toString()}
                   className="bg-[#0b1021] text-white px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-[#000d26] transition-colors shadow-sm disabled:opacity-50"

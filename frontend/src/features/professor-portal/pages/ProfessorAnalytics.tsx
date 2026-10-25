@@ -1,23 +1,23 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { BarChart3,AlertTriangle,BellRing,Users,Activity,Sparkles,Loader2 } from 'lucide-react';
+import { BarChart3, AlertTriangle, BellRing, Users, Activity, Sparkles, Loader2 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
-import { useQuery,useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import api from '@/shared/lib/api';
 import { Spinner } from '@shared/components/ui/Spinner';
 import { toast } from 'sonner';
 
 export default function ProfessorAnalytics() {
-  const { t, i18n } = useTranslation(['professors', 'common']);
+  useTranslation(['professors', 'common']);
   const [selectedModule, setSelectedModule] = useState('all');
 
   const { data: analytics, isLoading } = useQuery({
     queryKey: ['professor-analytics'],
     queryFn: async () => {
-      const res = await api.get('/professor-portal/analytics');
-      return res.data;
+        const res = await api.get('/professor-portal/analytics');
+        return res.data;
     }
-  });
+});
 
   const sendReminderMutation = useMutation({
     mutationFn: async (studentName: string) => {

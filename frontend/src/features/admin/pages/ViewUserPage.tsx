@@ -1,4 +1,4 @@
-import { useState,useEffect } from 'react'
+import { useCallback, useState,useEffect } from 'react'
 import { Link,useParams,useNavigate } from 'react-router-dom'
 import {
 User as UserIcon,
@@ -29,7 +29,7 @@ export default function ViewUserPage() {
   const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'academic'>('profile')
   const [resettingPassword, setResettingPassword] = useState(false)
 
-  const fetchUser = async () => {
+  const fetchUser = useCallback(async () => {
     try {
       setLoading(true)
       const res = await api.get(`/users/${id}`)
@@ -40,11 +40,11 @@ export default function ViewUserPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [setLoading, id, setUser])
 
   useEffect(() => {
     fetchUser()
-  }, [id])
+  }, [id, fetchUser])
 
   const handleSendResetPassword = async () => {
     if (!user) return

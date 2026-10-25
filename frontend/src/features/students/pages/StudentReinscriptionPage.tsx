@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import PageHeader from '@shared/components/layout/PageHeader'
@@ -7,7 +7,8 @@ import { confirmStudentRenewal, useRenewalStatus } from '../api/renewal'
 const field='mt-1 w-full rounded-lg border border-border bg-background p-3 text-sm'
 export default function StudentReinscriptionPage() {
  const status=useRenewalStatus(); const cache=useQueryClient(); const [contact,setContact]=useState({phone:'',address:'',city:''}); const [consent,setConsent]=useState(false); const [error,setError]=useState('')
- useEffect(()=>{if(status.data)setContact({phone:status.data.phone??'',address:status.data.address??'',city:status.data.city??''})},[status.data?.student_name])
+ const initializedContact=useRef('')
+ useEffect(()=>{if(!status.data)return;const key=`${status.data.cne}:${status.data.academic_year}`;if(initializedContact.current===key)return;initializedContact.current=key;setContact({phone:status.data.phone??'',address:status.data.address??'',city:status.data.city??''})},[status.data])
  const confirm=useMutation({mutationFn:()=>confirmStudentRenewal(contact),onSuccess:async()=>{toast.success('Réinscription annuelle confirmée.');await cache.invalidateQueries({queryKey:['student-reinscription-status']})},onError:(e:any)=>setError(e.response?.data?.message||'Confirmation impossible. Vos coordonnées sont conservées.')})
  const data=status.data;const receipt=!!data?.is_confirmed||confirm.isSuccess
  function submit(e:FormEvent){e.preventDefault();setError('');if(consent&&data?.can_confirm)confirm.mutate()}

@@ -1,18 +1,18 @@
-import { Link,useParams } from 'react-router-dom'
-import { ArrowLeft,RefreshCw,Users,CheckCircle2,BarChart3 } from 'lucide-react'
-import { cn } from '@shared/lib/utils'
-import { useQuery } from '@tanstack/react-query'
-import { examsApi } from '@shared/api/exams'
+import { Link, useParams } from 'react-router-dom';
+import { ArrowLeft, RefreshCw, Users, CheckCircle2, BarChart3 } from 'lucide-react';
+import { cn } from '@shared/lib/utils';
+import { useQuery } from '@tanstack/react-query';
+import { examsApi } from '@shared/api/exams';
 
 export default function AdminExamGlobalLiveDashboardPage() {
-  const { sessionId } = useParams()
+  const { sessionId } = useParams();
   
-  const { data: liveData, isLoading, refetch, isFetching } = useQuery({
+  const { data: liveData, refetch, isFetching } = useQuery({
     queryKey: ['global-live-attendance', sessionId],
     queryFn: () => examsApi.getGlobalLiveStats(Number(sessionId)),
     refetchInterval: 5000,
     enabled: !!sessionId
-  })
+});
 
   const stats = liveData?.data || { 
     session_name: '', 
@@ -21,7 +21,7 @@ export default function AdminExamGlobalLiveDashboardPage() {
   }
 
   const studentProgress = stats.students.total > 0 ? Math.round((stats.students.present / stats.students.total) * 100) : 0
-  const profProgress = stats.professors.total > 0 ? Math.round((stats.professors.present / stats.professors.total) * 100) : 0
+  void (stats.professors.total > 0 ? Math.round((stats.professors.present / stats.professors.total) * 100) : 0);
   const profConfirmProgress = stats.professors.total > 0 ? Math.round((stats.professors.confirmed / stats.professors.total) * 100) : 0
 
   return (

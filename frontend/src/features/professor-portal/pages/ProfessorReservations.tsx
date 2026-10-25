@@ -1,42 +1,45 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Building2,Plus,Calendar,Clock,CheckCircle2,Loader2,X,Send } from 'lucide-react';
+import { Building2, Plus, Calendar, Clock, CheckCircle2, Loader2, X, Send } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
-import { useQuery,useMutation,useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/shared/lib/api';
 import { Spinner } from '@shared/components/ui/Spinner';
 import { toast } from 'sonner';
 
 export default function ProfessorReservations() {
-  const { t, i18n } = useTranslation(['professors', 'common']);
+  useTranslation(['professors', 'common']);
   const queryClient = useQueryClient();
   const [showModal, setShowModal] = useState(false);
 
   // Form State
-  const [roomId, setRoomId] = useState('');
+  // Form State
+const [roomId, setRoomId] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [startTime, setStartTime] = useState('14:30');
   const [endTime, setEndTime] = useState('16:30');
   const [purpose, setPurpose] = useState('');
 
   // Fetch Professor's Reservations
-  const { data: reservations = [], isLoading } = useQuery({
+  // Fetch Professor's Reservations
+const { data: reservations = [], isLoading } = useQuery({
     queryKey: ['professor-reservations'],
     queryFn: async () => {
-      const res = await api.get('/professor-portal/reservations');
-      return res.data.data || [];
+        const res = await api.get('/professor-portal/reservations');
+        return res.data.data || [];
     }
-  });
+});
 
   // Fetch Rooms list
-  const { data: rooms = [] } = useQuery({
+  // Fetch Rooms list
+const { data: rooms = [] } = useQuery({
     queryKey: ['rooms-list'],
     queryFn: async () => {
-      const res = await api.get('/rooms');
-      return res.data.data || res.data || [];
+        const res = await api.get('/rooms');
+        return res.data.data || res.data || [];
     }
-  });
+});
 
   // Create Reservation Mutation
   const createMutation = useMutation({

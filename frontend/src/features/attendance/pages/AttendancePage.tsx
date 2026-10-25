@@ -1,4 +1,4 @@
-import { useState,useEffect } from 'react'
+import { useCallback, useState,useEffect } from 'react'
 import { Search,Trash2,Clock,ShieldCheck } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
@@ -30,7 +30,7 @@ export default function AttendancePage() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true)
       const res = await api.get('/attendances', { params: { search } })
@@ -41,9 +41,9 @@ export default function AttendancePage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [setLoading, search, setSessions, setStats])
 
-  useEffect(() => { fetchData() }, [search])
+  useEffect(() => { fetchData() }, [search, fetchData])
 
   const handleDelete = async (id: number) => {
     if (!confirm(t('attendance:delete_confirm'))) return

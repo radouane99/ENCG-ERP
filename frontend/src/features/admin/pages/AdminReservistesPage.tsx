@@ -1,51 +1,42 @@
-import { useState,useEffect } from 'react'
-import { useTranslation } from 'react-i18next'
-import {
-Users,CheckCircle2,
-RefreshCw,
-Loader2,
-Search,Download,
-Award,
-FileText,
-BookOpen,
-AlertTriangle,
-Sparkles,
-X,
-FileSignature,ShieldCheck
-} from 'lucide-react'
-import { cn } from '@shared/lib/utils'
+import { useCallback, useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Users, CheckCircle2, RefreshCw, Loader2, Search, Download, Award, FileText, BookOpen, AlertTriangle, Sparkles, X, FileSignature, ShieldCheck } from 'lucide-react';
+import { cn } from '@shared/lib/utils';
 import api from '@shared/lib/api'
-import { toast } from 'sonner'
+import { toast } from 'sonner';
 import CustomSelect from '@/shared/components/ui/CustomSelect'
 
 export default function AdminReservistesPage() {
-  const { i18n } = useTranslation('common')
-  const isRtl = i18n.language === 'ar'
+  const { i18n } = useTranslation('common');
+  void (i18n.language === 'ar');
 
-  const [loading, setLoading] = useState(true)
-  const [reservistes, setReservistes] = useState<any[]>([])
-  const [summary, setSummary] = useState<any>({ total_reservistes: 0, total_derogations: 0, total_debts_count: 0 })
-  const [topModules, setTopModules] = useState<any[]>([])
-  const [filieres, setFilieres] = useState<any[]>([])
+  const [loading, setLoading] = useState(true);
+  const [reservistes, setReservistes] = useState<any[]>([]);
+  const [summary, setSummary] = useState<any>({ total_reservistes: 0, total_derogations: 0, total_debts_count: 0 });
+  const [topModules, setTopModules] = useState<any[]>([]);
+  const [filieres, setFilieres] = useState<any[]>([]);
 
   // Filters
-  const [selectedFiliere, setSelectedFiliere] = useState<string>('all')
-  const [statusFilter, setStatusFilter] = useState<string>('all')
-  const [searchQuery, setSearchQuery] = useState<string>('')
+  // Filters
+const [selectedFiliere, setSelectedFiliere] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   // Modal State for Derogation
-  const [selectedStudent, setSelectedStudent] = useState<any>(null)
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [derogationStatus, setDerogationStatus] = useState<string>('accordee')
-  const [derogationRef, setDerogationRef] = useState<string>('')
-  const [derogationNotes, setDerogationNotes] = useState<string>('')
-  const [savingDerogation, setSavingDerogation] = useState(false)
+  // Modal State for Derogation
+const [selectedStudent, setSelectedStudent] = useState<any>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [derogationStatus, setDerogationStatus] = useState<string>('accordee');
+  const [derogationRef, setDerogationRef] = useState<string>('');
+  const [derogationNotes, setDerogationNotes] = useState<string>('');
+  const [savingDerogation, setSavingDerogation] = useState(false);
 
   // Audit Cursus Backup Modal State
-  const [isAuditModalOpen, setIsAuditModalOpen] = useState(false)
-  const [auditData, setAuditData] = useState<any>(null)
-  const [loadingAudit, setLoadingAudit] = useState(false)
-  const [sendingMailId, setSendingMailId] = useState<number | null>(null)
+  // Audit Cursus Backup Modal State
+const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
+  const [auditData, setAuditData] = useState<any>(null);
+  const [loadingAudit, setLoadingAudit] = useState(false);
+  const [sendingMailId, setSendingMailId] = useState<number | null>(null);
 
   const handleSendNotificationMail = async (student: any) => {
     setSendingMailId(student.student_id)
@@ -74,7 +65,7 @@ export default function AdminReservistesPage() {
     }
   }
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true)
       const res = await api.get('/admin/reservistes', {
@@ -93,7 +84,7 @@ export default function AdminReservistesPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [setLoading, selectedFiliere, statusFilter, searchQuery, setReservistes, setSummary, setTopModules])
 
   useEffect(() => {
     api.get('/filieres').then(r => setFilieres(r.data.data || r.data)).catch(console.error)
@@ -101,7 +92,7 @@ export default function AdminReservistesPage() {
 
   useEffect(() => {
     fetchData()
-  }, [selectedFiliere, statusFilter])
+  }, [selectedFiliere, statusFilter, fetchData])
 
   const handleOpenDerogationModal = (student: any) => {
     setSelectedStudent(student)

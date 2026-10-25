@@ -1,26 +1,11 @@
-import { useState,useEffect,useMemo } from 'react'
-import { createPortal } from 'react-dom'
-import { useQuery,useMutation } from '@tanstack/react-query'
-import {
-X,
-Users,
-Shield,
-Calendar,
-Clock,
-MapPin,
-AlertTriangle,Search,
-RotateCcw,
-Trash2,
-Loader2,
-Save,
-ChevronDown,Filter,
-GraduationCap,
-Sparkles,Activity
-} from 'lucide-react'
-import { toast } from 'sonner'
-import { cn } from '@shared/lib/utils'
-import { examsApi } from '@shared/api/exams'
-import ProctorCombobox,{ Proctor,ExamSlot } from './ProctorCombobox'
+import { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { X, Users, Shield, Calendar, Clock, MapPin, AlertTriangle, Search, RotateCcw, Trash2, Loader2, Save, ChevronDown, Filter, GraduationCap, Sparkles, Activity } from 'lucide-react';
+import { toast } from 'sonner';
+import { cn } from '@shared/lib/utils';
+import { examsApi } from '@shared/api/exams';
+import ProctorCombobox, { Proctor, ExamSlot } from './ProctorCombobox';
 
 interface ManualProctorAssignmentModalProps {
   isOpen: boolean
@@ -29,38 +14,38 @@ interface ManualProctorAssignmentModalProps {
   onSuccess?: () => void
 }
 
-export default function ManualProctorAssignmentModal({
-  isOpen,
-  onClose,
-  sessionId,
-  onSuccess,
-}: ManualProctorAssignmentModalProps) {
+export default function ManualProctorAssignmentModal({ isOpen, onClose, sessionId, onSuccess }: ManualProctorAssignmentModalProps) {
   // 1. Fetch all data for this session
-  const { data, isLoading, refetch } = useQuery({
+  // 1. Fetch all data for this session
+const { data, isLoading } = useQuery({
     queryKey: ['proctor-assignment-data', sessionId],
     queryFn: () => examsApi.getProctorAssignmentData(sessionId),
     enabled: isOpen && !!sessionId,
-  })
+});
 
   const proctors: Proctor[] = useMemo(() => data?.data?.proctors || [], [data])
   const exams: ExamSlot[] = useMemo(() => data?.data?.exams || [], [data])
   const sessionName: string = data?.data?.session_name || 'Session'
 
   // Local state for assignments: exam_id -> { principal_id, secondary_ids }
-  const [assignments, setAssignments] = useState<
-    Record<number, { principal_id: number | null; secondary_ids: number[] }>
-  >({})
+  // Local state for assignments: exam_id -> { principal_id, secondary_ids }
+const [assignments, setAssignments] = useState<Record<number, {
+    principal_id: number | null;
+    secondary_ids: number[];
+}>>({});
 
   // Filters
-  const [searchQuery, setSearchQuery] = useState('')
-  const [dateFilter, setDateFilter] = useState('all')
-  const [filiereFilter, setFiliereFilter] = useState('all')
-  const [statusFilter, setStatusFilter] = useState<'all' | 'incomplete' | 'unassigned'>('all')
+  // Filters
+const [searchQuery, setSearchQuery] = useState('');
+  const [dateFilter, setDateFilter] = useState('all');
+  const [filiereFilter, setFiliereFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'incomplete' | 'unassigned'>('all');
 
   // Proctor panel search and filters
-  const [proctorSearch, setProctorSearch] = useState('')
-  const [proctorTypeFilter, setProctorTypeFilter] = useState('all')
-  const [highlightedProctorId, setHighlightedProctorId] = useState<number | null>(null)
+  // Proctor panel search and filters
+const [proctorSearch, setProctorSearch] = useState('');
+  const [proctorTypeFilter, setProctorTypeFilter] = useState('all');
+  const [highlightedProctorId, setHighlightedProctorId] = useState<number | null>(null);
 
   // Initialize assignments map when data loads
   useEffect(() => {
@@ -169,7 +154,7 @@ export default function ManualProctorAssignmentModal({
   ) => {
     if (dateA !== dateB) return false
     const parseMins = (t: string) => {
-      const [h, m] = t.split(':').map(Number)
+      const [h, m] = t.split(':').map(Number);
       return (h || 0) * 60 + (m || 0)
     }
     const startA = parseMins(timeA)
@@ -773,7 +758,7 @@ export default function ManualProctorAssignmentModal({
                                 const secProctor = proctorsMap.get(secId)
                                 if (!secProctor) return null
                                 const styles = getTypeBadgeStyles(secProctor.type)
-                                const count = proctorWorkload.get(secId)?.count || 0
+                                void (proctorWorkload.get(secId)?.count || 0);
 
                                 return (
                                   <span

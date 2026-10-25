@@ -32,7 +32,7 @@ interface SectionTableProps {
 }
 
 function SectionTable({ section, searchQuery, coursStart, tdTpStart, onOpenConfig }: SectionTableProps) {
-  const rawRows = section?.rows || []
+  const rawRows = useMemo(() => (section?.rows || []), [section])
   const filiereId = section?.filiere_id || 0
   const semesterNum = section?.semester_number || ''
 

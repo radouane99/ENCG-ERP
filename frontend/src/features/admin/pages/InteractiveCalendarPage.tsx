@@ -1,30 +1,13 @@
-import { useState,useEffect,useMemo } from 'react'
-import {
-Sparkles,
-ChevronLeft,
-ChevronRight,
-X,
-Loader2,
-AlertTriangle,
-CheckCircle2,
-Send,
-Zap,
-CalendarSync,
-Calendar,
-Filter,
-FileText,
-MapPin,
-User,Search,Building2,
-Users
-} from 'lucide-react'
-import { cn } from '@shared/lib/utils'
+import { useState, useEffect, useMemo } from 'react';
+import { Sparkles, ChevronLeft, ChevronRight, X, Loader2, AlertTriangle, CheckCircle2, Send, Zap, CalendarSync, Calendar, Filter, FileText, MapPin, User, Search, Building2, Users } from 'lucide-react';
+import { cn } from '@shared/lib/utils';
 import api from '@shared/lib/api'
-import { toast } from 'sonner'
-import { format,startOfWeek,addDays,addWeeks,isSameDay } from 'date-fns'
-import { fr } from 'date-fns/locale'
-import { useAuthStore } from '@/stores/authStore'
-import { reorganizeSessionsWithoutResourceConflicts } from '@/features/timetable/lib/timetablePerformanceStrategy'
-import { CustomSelect,SelectOption } from '@/shared/components/ui/CustomSelect'
+import { toast } from 'sonner';
+import { format, startOfWeek, addDays, addWeeks, isSameDay } from 'date-fns';
+import { fr } from 'date-fns/locale';
+import { useAuthStore } from '@/stores/authStore';
+import { reorganizeSessionsWithoutResourceConflicts } from '@/features/timetable/lib/timetablePerformanceStrategy';
+import { CustomSelect, SelectOption } from '@/shared/components/ui/CustomSelect';
 
 type CalendarSession = {
   id: string | number
@@ -122,7 +105,7 @@ function parseSessionBounds(item: any) {
 }
 
 function mapTimetableItem(item: any, index: number): CalendarSession {
-  const { start, end } = parseSessionBounds(item)
+  const { start, end } = parseSessionBounds(item);
   const startHour = start.getHours() + start.getMinutes() / 60
   const endHour = end.getHours() + end.getMinutes() / 60
   const props = item.extendedProps || {}
@@ -168,29 +151,30 @@ function applySessionToSlot(item: any, weekMonday: Date, dayIndex: number, slot:
 }
 
 export default function InteractiveCalendarPage({ isAdmin = false }: { isAdmin?: boolean }) {
-  const { user } = useAuthStore()
+  const { user } = useAuthStore();
   const u = user as any
   const currentProfName = u ? `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.name || '' : ''
-  const [viewMode, setViewMode] = useState<'Semaine' | 'Jour' | 'Liste'>('Semaine')
-  const [showSaturday, setShowSaturday] = useState(false)
-  const [showBatchModal, setShowBatchModal] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [resolvingCsp, setResolvingCsp] = useState(false)
-  const [cspResolved, setCspResolved] = useState(false)
-  const [currentDate, setCurrentDate] = useState(new Date())
+  const [viewMode, setViewMode] = useState<'Semaine' | 'Jour' | 'Liste'>('Semaine');
+  const [showSaturday, setShowSaturday] = useState(false);
+  const [showBatchModal, setShowBatchModal] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [resolvingCsp, setResolvingCsp] = useState(false);
+  const [cspResolved, setCspResolved] = useState(false);
+  const [currentDate, setCurrentDate] = useState(new Date());
 
-  const [submittingRequest, setSubmittingRequest] = useState(false)
+  const [submittingRequest, setSubmittingRequest] = useState(false);
 
   // Filters state
-  const [filieres, setFilieres] = useState<any[]>([])
-  const [groupes, setGroupes] = useState<any[]>([])
-  const [professors, setProfessors] = useState<any[]>([])
+  // Filters state
+const [filieres, setFilieres] = useState<any[]>([]);
+  const [groupes, setGroupes] = useState<any[]>([]);
+  const [professors, setProfessors] = useState<any[]>([]);
 
-  const [selectedFiliere, setSelectedFiliere] = useState('')
-  const [selectedGroupe, setSelectedGroupe] = useState('')
-  const [selectedProfessor, setSelectedProfessor] = useState('')
+  const [selectedFiliere, setSelectedFiliere] = useState('');
+  const [selectedGroupe, setSelectedGroupe] = useState('');
+  const [selectedProfessor, setSelectedProfessor] = useState('');
 
-  const [timetableItems, setTimetableItems] = useState<any[]>([])
+  const [timetableItems, setTimetableItems] = useState<any[]>([]);
 
   // Helper to fetch and merge schedules across all filieres
   const fetchAllFilieresSchedules = async (fList: any[]) => {
@@ -600,7 +584,7 @@ export default function InteractiveCalendarPage({ isAdmin = false }: { isAdmin?:
 
           {/* Days grid */}
           <div className="flex-1 min-w-[750px] flex">
-            {days.map(({ date, formatted, isToday }) => {
+            {days.map(({ formatted, isToday }) => {
               const dayName = formatted.split('.')[0]
               const dayEvents = mappedEvents.filter(e => e.day.startsWith(dayName))
 

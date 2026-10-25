@@ -1,24 +1,24 @@
-import React,{ useState } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Kanban,Calendar as CalendarIcon,Move,User,Building,Search } from 'lucide-react';
+import { Kanban, Calendar as CalendarIcon, Move, User, Building, Search } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
-import { useQuery,useMutation,useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/shared/lib/api';
 import { Spinner } from '@shared/components/ui/Spinner';
 import { toast } from 'sonner';
 
 export default function ProfessorProjectsKanban() {
-  const { t, i18n } = useTranslation(['professors', 'common']);
+  useTranslation(['professors', 'common']);
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
 
   const { data: internships = [], isLoading } = useQuery({
     queryKey: ['professor-internships'],
     queryFn: async () => {
-      const res = await api.get('/professor/internships/supervised');
-      return res.data.internships || [];
+        const res = await api.get('/professor/internships/supervised');
+        return res.data.internships || [];
     }
-  });
+});
 
   // Mutation to persist status on drag and drop
   const updateStatusMutation = useMutation({
@@ -29,18 +29,13 @@ export default function ProfessorProjectsKanban() {
       });
       return res.data;
     },
-    onSuccess: (data) => {
+    onSuccess: (_data) => {
       toast.success('Statut du projet PFE mis à jour avec succès !');
       queryClient.invalidateQueries({ queryKey: ['professor-internships'] });
     }
   });
 
-  const columnsMap: Record<string, { title: string; color: string; status: string }> = {
-    'col-1': { title: 'Sujet Validé', color: 'bg-blue-100 text-blue-900 border-blue-200', status: 'approved' },
-    'col-2': { title: 'En Rédaction / Stage', color: 'bg-amber-100 text-amber-900 border-amber-200', status: 'active' },
-    'col-3': { title: 'Rapport Déposé', color: 'bg-purple-100 text-purple-900 border-purple-200', status: 'submitted' },
-    'col-4': { title: 'Prêt pour Soutenance', color: 'bg-emerald-100 text-emerald-900 border-emerald-200', status: 'completed' },
-  };
+
 
   const initialColumns = React.useMemo(() => {
     const cols = [
@@ -82,7 +77,10 @@ export default function ProfessorProjectsKanban() {
     setColumns(initialColumns);
   }, [initialColumns]);
 
-  const [draggedCard, setDraggedCard] = useState<{ colId: string; cardId: string } | null>(null);
+  const [draggedCard, setDraggedCard] = useState<{
+    colId: string;
+    cardId: string;
+} | null>(null);
 
   if (isLoading) {
     return <div className="min-h-screen flex items-center justify-center"><Spinner className="w-8 h-8 text-[#003a8c]" /></div>;
@@ -133,7 +131,7 @@ export default function ProfessorProjectsKanban() {
 
   return (
     <div className="max-w-[1600px] mx-auto p-4 md:p-8 font-sans animate-in fade-in duration-500 flex flex-col space-y-6 pb-28">
-      
+
       {/* Header Banner */}
       <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-[#001A4B] rounded-3xl p-8 text-white shadow-xl border border-indigo-900/60 flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl pointer-events-none -translate-y-1/2 translate-x-1/3"></div>
@@ -166,13 +164,13 @@ export default function ProfessorProjectsKanban() {
       {/* Kanban Columns */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 items-start">
         {columns.map(col => {
-          const filteredCards = col.cards.filter(c => 
+          const filteredCards = col.cards.filter(c =>
             !searchTerm || c.student.toLowerCase().includes(searchTerm.toLowerCase()) || c.title.toLowerCase().includes(searchTerm.toLowerCase())
           );
 
           return (
-            <div 
-              key={col.id} 
+            <div
+              key={col.id}
               className="bg-slate-50/80 rounded-3xl border border-slate-200/80 flex flex-col min-h-[500px] p-4 space-y-4"
               onDragOver={handleDragOver}
               onDrop={(e) => handleDrop(e, col.id)}
@@ -192,7 +190,7 @@ export default function ProfessorProjectsKanban() {
               {/* Cards */}
               <div className="space-y-3 flex-1 overflow-y-auto">
                 {filteredCards.map(card => (
-                  <div 
+                  <div
                     key={card.id}
                     draggable
                     onDragStart={(e) => handleDragStart(e, col.id, card.id)}
@@ -205,11 +203,11 @@ export default function ProfessorProjectsKanban() {
                       </span>
                       <Move className="w-3.5 h-3.5 text-slate-300" />
                     </div>
-                    
+
                     <h3 className="font-black text-sm text-slate-900 leading-snug">
                       {card.title}
                     </h3>
-                    
+
                     <div className="text-xs font-semibold text-slate-500 flex items-center gap-1.5">
                       <Building className="w-3.5 h-3.5 text-slate-400" /> {card.company}
                     </div>

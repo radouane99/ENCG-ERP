@@ -122,7 +122,8 @@ export default function GroupsPage() {
     e.preventDefault()
     try {
       const payload = { ...form, filiere_id: form.filiere_id ? +form.filiere_id : null, academic_year_id: form.academic_year_id ? +form.academic_year_id : null }
-      editingId ? await api.put(`/groups/${editingId}`, payload) : await api.post('/groups', payload)
+      if (editingId) await api.put(`/groups/${editingId}`, payload)
+      else await api.post('/groups', payload)
       toast.success(editingId ? 'Groupe mis à jour !' : 'Groupe créé avec succès !')
       setShowModal(false); fetchData()
     } catch (err: any) { 

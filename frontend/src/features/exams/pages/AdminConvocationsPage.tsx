@@ -1,65 +1,39 @@
-import { useState,useEffect,useMemo,useCallback } from 'react'
-import { createPortal } from 'react-dom'
-import { useNavigate } from 'react-router-dom'
-import {
-FileText,
-Mail,
-Zap,
-CheckCircle,
-AlertTriangle,
-Loader2,
-Users,
-Shield,
-Calendar,
-Clock,
-MapPin,
-ChevronRight,
-BarChart3,
-Eye,
-Download,
-X,
-MessageCircle,
-Search,
-QrCode,
-Sparkles,
-ShieldCheck,
-Send,Layers,
-CheckCircle2,
-RefreshCw,LayoutGrid,
-ListFilter,Printer,BadgeCheck,
-Inbox,ExternalLink
-} from 'lucide-react'
-import { useQuery,useMutation,useQueryClient } from '@tanstack/react-query'
-import { toast } from 'sonner'
-import { cn } from '@shared/lib/utils'
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { createPortal } from 'react-dom';
+import { useNavigate } from 'react-router-dom';
+import { FileText, Mail, Zap, CheckCircle, AlertTriangle, Loader2, Users, Shield, Calendar, Clock, MapPin, ChevronRight, BarChart3, Eye, Download, X, MessageCircle, Search, QrCode, Sparkles, ShieldCheck, Send, Layers, CheckCircle2, RefreshCw, LayoutGrid, ListFilter, Printer, BadgeCheck, Inbox, ExternalLink } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { cn } from '@shared/lib/utils';
 import api from '@shared/lib/api'
-import { examsApi } from '@shared/api/exams'
+import { examsApi } from '@shared/api/exams';
 import ManualProctorAssignmentModal from '../components/ManualProctorAssignmentModal'
 
 export default function AdminConvocationsPage() {
   const navigate = useNavigate()
-  const queryClient = useQueryClient()
-  const [selectedSessionId, setSelectedSessionId] = useState<number | null>(null)
-  const [activeTab, setActiveTab] = useState<'students' | 'surveillants' | 'overview'>('students')
-  const [isManualAssignModalOpen, setIsManualAssignModalOpen] = useState(false)
-  const [selectedFiliere, setSelectedFiliere] = useState<string>('all')
-  const [statusFilter, setStatusFilter] = useState<'all' | 'sent' | 'pending'>('all')
-  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table')
-  const [selectedSeatings, setSelectedSeatings] = useState<Set<number>>(new Set())
-  const [selectedSurveillants, setSelectedSurveillants] = useState<Set<number>>(new Set())
+  useQueryClient();
+  const [selectedSessionId, setSelectedSessionId] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState<'students' | 'surveillants' | 'overview'>('students');
+  const [isManualAssignModalOpen, setIsManualAssignModalOpen] = useState(false);
+  const [selectedFiliere, setSelectedFiliere] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'sent' | 'pending'>('all');
+  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
+  const [selectedSeatings, setSelectedSeatings] = useState<Set<number>>(new Set());
+  const [selectedSurveillants, setSelectedSurveillants] = useState<Set<number>>(new Set());
   const [previewState, setPreviewState] = useState<{
-    url: string
-    studentName?: string
-  } | null>(null)
-  const [previewLoading, setPreviewLoading] = useState(false)
-  const [searchStudent, setSearchStudent] = useState('')
-  const [selectedStudentDetail, setSelectedStudentDetail] = useState<any | null>(null)
+    url: string;
+    studentName?: string;
+} | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [searchStudent, setSearchStudent] = useState('');
+  const [selectedStudentDetail, setSelectedStudentDetail] = useState<any | null>(null);
 
   // Alerte Flash Salle Modal State
-  const [flashAlertModalOpen, setFlashAlertModalOpen] = useState(false)
-  const [flashRoomName, setFlashRoomName] = useState('Amphithéâtre B')
-  const [flashMessage, setFlashMessage] = useState('')
-  const [isSendingFlash, setIsSendingFlash] = useState(false)
+  // Alerte Flash Salle Modal State
+const [flashAlertModalOpen, setFlashAlertModalOpen] = useState(false);
+  const [flashRoomName, setFlashRoomName] = useState('Amphithéâtre B');
+  const [flashMessage, setFlashMessage] = useState('');
+  const [isSendingFlash, setIsSendingFlash] = useState(false);
 
   const handleSendFlashAlert = async () => {
     if (!flashMessage.trim()) {
@@ -75,7 +49,7 @@ export default function AdminConvocationsPage() {
       notify(res.data.message || 'Alerte Flash transmise avec succès !')
       setFlashAlertModalOpen(false)
       setFlashMessage('')
-    } catch (e) {
+    } catch {
       notify('Erreur lors de la transmission de l\'alerte.', 'error')
     } finally {
       setIsSendingFlash(false)
@@ -91,10 +65,11 @@ export default function AdminConvocationsPage() {
   }
 
   // Fetch all exam sessions
-  const { data: sessions, isLoading: isLoadingSessions } = useQuery({
+  // Fetch all exam sessions
+const { data: sessions, isLoading: isLoadingSessions } = useQuery({
     queryKey: ['exam-sessions'],
     queryFn: () => api.get('/exam-sessions').then((r) => r.data.data),
-  })
+});
 
   useEffect(() => {
     if (sessions && sessions.length > 0 && !selectedSessionId) {
@@ -103,25 +78,28 @@ export default function AdminConvocationsPage() {
   }, [sessions, selectedSessionId])
 
   // Fetch session stats
-  const { data: sessionStats, isLoading: isLoadingStats, refetch: refetchStats } = useQuery({
+  // Fetch session stats
+const { data: sessionStats, refetch: refetchStats } = useQuery({
     queryKey: ['convocation-stats', selectedSessionId],
     queryFn: () => examsApi.getConvocationSessionStats(selectedSessionId!),
     enabled: !!selectedSessionId,
-  })
+});
 
   // Fetch convocations list
-  const { data: convocationList, isLoading: isLoadingList, refetch: refetchList } = useQuery({
+  // Fetch convocations list
+const { data: convocationList, isLoading: isLoadingList, refetch: refetchList } = useQuery({
     queryKey: ['convocation-list', selectedSessionId, selectedFiliere],
     queryFn: () => examsApi.getConvocationSessionList(selectedSessionId!, selectedFiliere === 'all' ? undefined : selectedFiliere),
     enabled: !!selectedSessionId,
-  })
+});
 
   // Fetch exams for selected session
-  const { data: exams, isLoading: isLoadingExams } = useQuery({
+  // Fetch exams for selected session
+const { data: exams, isLoading: isLoadingExams } = useQuery({
     queryKey: ['session-exams', selectedSessionId],
     queryFn: () => api.get('/exams').then((r) => (r.data.data || []).filter((e: any) => e.exam_session_id === selectedSessionId)),
     enabled: !!selectedSessionId,
-  })
+});
 
   // Generate all convocations for session
   const generateMutation = useMutation({
@@ -237,8 +215,8 @@ export default function AdminConvocationsPage() {
   })
 
   const stats = sessionStats
-  const students: any[] = convocationList?.students || []
-  const surveillants: any[] = convocationList?.surveillants || []
+  const students: any[] = useMemo(() => (convocationList?.students || []), [convocationList])
+  const surveillants: any[] = useMemo(() => (convocationList?.surveillants || []), [convocationList])
 
   const closePreview = useCallback(() => {
     setPreviewState((prev) => {
@@ -278,7 +256,7 @@ export default function AdminConvocationsPage() {
         url,
         studentName: studentName || selectedStudentDetail?.student_name,
       })
-    } catch (error) {
+    } catch {
       notify('Erreur lors de la prévisualisation.', 'error')
     } finally {
       setPreviewLoading(false)
@@ -297,7 +275,7 @@ export default function AdminConvocationsPage() {
       a.click()
       a.remove()
       window.URL.revokeObjectURL(url)
-    } catch (error) {
+    } catch {
       notify('Erreur lors du téléchargement.', 'error')
     }
   }
@@ -316,7 +294,7 @@ export default function AdminConvocationsPage() {
         url,
         studentName: profName ? `Pr. ${profName}` : 'Professeur ENCG',
       })
-    } catch (error) {
+    } catch {
       notify('Erreur lors de la prévisualisation.', 'error')
     } finally {
       setPreviewLoading(false)
@@ -335,7 +313,7 @@ export default function AdminConvocationsPage() {
       a.click()
       a.remove()
       window.URL.revokeObjectURL(url)
-    } catch (error) {
+    } catch {
       notify('Erreur lors du téléchargement.', 'error')
     }
   }
@@ -352,7 +330,7 @@ export default function AdminConvocationsPage() {
       a.click()
       a.remove()
       notify('Archive ZIP téléchargée avec succès !')
-    } catch (error) {
+    } catch {
       notify('Erreur lors de la génération du fichier ZIP.', 'error')
     }
   }

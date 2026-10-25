@@ -1,33 +1,28 @@
 import { useState } from 'react';
 import { cn } from '@shared/lib/utils';
-import { useQuery,useMutation,useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/shared/lib/api';
-import {
-Search,
-BookOpen,
-CheckCircle2,
-Clock,
-Layers,
-Award,ShieldCheck,Check,Loader2
-} from 'lucide-react';
+import { Search, BookOpen, CheckCircle2, Clock, Layers, Award, ShieldCheck, Check, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function TextbooksPage() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'submitted' | 'validated'>('all');
-  const [page, setPage] = useState(1);
+  const [page] = useState(1);
 
   const { data: textbooksResponse, isLoading } = useQuery({
     queryKey: ['admin-textbooks', statusFilter, searchTerm, page],
     queryFn: async () => {
-      const params: any = { page };
-      if (statusFilter !== 'all') params.status = statusFilter;
-      if (searchTerm) params.search = searchTerm;
-      const res = await api.get('/admin/textbooks', { params });
-      return res.data;
+        const params: any = { page };
+        if (statusFilter !== 'all')
+            params.status = statusFilter;
+        if (searchTerm)
+            params.search = searchTerm;
+        const res = await api.get('/admin/textbooks', { params });
+        return res.data;
     }
-  });
+});
 
   const validateMutation = useMutation({
     mutationFn: async ({ id, decision }: { id: number; decision: 'validated' | 'rejected' }) => {

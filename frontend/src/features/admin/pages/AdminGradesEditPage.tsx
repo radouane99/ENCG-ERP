@@ -1,60 +1,73 @@
-﻿import { useState,FormEvent,useEffect } from 'react'
-import { Link,useSearchParams } from 'react-router-dom'
-import { ArrowLeft,Save } from 'lucide-react'
-import { useTranslation } from 'react-i18next'
-import { cn } from '@shared/lib/utils'
-import { Button } from '@shared/components/ui/Button'
-import { Badge } from '@shared/components/ui/Badge'
-import { Spinner } from '@shared/components/ui/Spinner'
-import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query'
+﻿import { useMemo, useState, FormEvent, useEffect } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { ArrowLeft, Save } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { cn } from '@shared/lib/utils';
+import { Button } from '@shared/components/ui/Button';
+
+import { Spinner } from '@shared/components/ui/Spinner';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '@shared/lib/api'
-import { toast } from 'sonner'
+import { toast } from 'sonner';
 
 import './AdminGradesEditPage.css';
 
 export default function AdminGradesEditPage() {
-  const { t, i18n } = useTranslation('common')
+  const { i18n } = useTranslation('common');
   const isRtl = i18n.language === 'ar'
-  const [searchParams] = useSearchParams()
+  const [searchParams] = useSearchParams();
   const moduleId = searchParams.get('module_id')
   const queryClient = useQueryClient()
 
-  const [selectedAssessmentId, setSelectedAssessmentId] = useState<number | null>(null)
-  const [grades, setGrades] = useState<Record<number, { value: string; absent: boolean }>>({})
-  const [grades2, setGrades2] = useState<Record<number, { value: string; absent: boolean }>>({})
-  const [isDoubleSaisie, setIsDoubleSaisie] = useState(false)
+  const [selectedAssessmentId, setSelectedAssessmentId] = useState<number | null>(null);
+  const [grades, setGrades] = useState<Record<number, {
+    value: string;
+    absent: boolean;
+}>>({});
+  const [grades2, setGrades2] = useState<Record<number, {
+    value: string;
+    absent: boolean;
+}>>({});
+  const [isDoubleSaisie, setIsDoubleSaisie] = useState(false);
   const currentGroupId = searchParams.get('group_id')
-  const [viewAllGroups, setViewAllGroups] = useState(!currentGroupId || currentGroupId === 'null' || currentGroupId === 'all')
-  const [showAuditLogsDrawer, setShowAuditLogsDrawer] = useState(false)
+  const [viewAllGroups, setViewAllGroups] = useState(!currentGroupId || currentGroupId === 'null' || currentGroupId === 'all');
+  const [showAuditLogsDrawer, setShowAuditLogsDrawer] = useState(false);
 
-  const [showModalityModal, setShowModalityModal] = useState(false)
-  const [modalityAssessments, setModalityAssessments] = useState<{ id: number | null; type: string; weight: number }[]>([])
-  const [rattrapageCap, setRattrapageCap] = useState<number>(12)
+  const [showModalityModal, setShowModalityModal] = useState(false);
+  const [modalityAssessments, setModalityAssessments] = useState<{
+    id: number | null;
+    type: string;
+    weight: number;
+}[]>([]);
+  const [rattrapageCap, setRattrapageCap] = useState<number>(12);
 
   // Query audit logs
-  const { data: auditLogs, isLoading: isLoadingLogs } = useQuery({
+  // Query audit logs
+const { data: auditLogs, isLoading: isLoadingLogs } = useQuery({
     queryKey: ['module-audit-logs', moduleId],
     queryFn: () => api.get(`/modules/${moduleId}/audit-logs`).then(res => res.data?.data || (Array.isArray(res.data) ? res.data : [])),
     enabled: !!moduleId && showAuditLogsDrawer,
-  })
+});
 
   // Fetch assessments for the given module
-  const { data: assessmentsData, isLoading: isLoadingAssessments } = useQuery({
+  // Fetch assessments for the given module
+const { data: assessmentsData, isLoading: isLoadingAssessments } = useQuery({
     queryKey: ['assessments', moduleId],
     queryFn: () => api.get(`/modules/${moduleId}/assessments`).then(res => res.data.data),
     enabled: !!moduleId,
-  })
+});
 
   // Fetch students & grades for the selected assessment
-  const { data: gradesResponse, isLoading: isLoadingStudents } = useQuery({
+  // Fetch students & grades for the selected assessment
+const { data: gradesResponse, isLoading: isLoadingStudents } = useQuery({
     queryKey: ['grades', selectedAssessmentId, currentGroupId, viewAllGroups],
     queryFn: () => api.get(`/assessments/${selectedAssessmentId}/grades`, {
-      params: { group_id: viewAllGroups ? 'all' : (currentGroupId && currentGroupId !== 'null' ? currentGroupId : 'all') }
+        params: { group_id: viewAllGroups ? 'all' : (currentGroupId && currentGroupId !== 'null' ? currentGroupId : 'all') }
     }).then(res => res.data),
     enabled: !!selectedAssessmentId,
-  })
+});
 
-  const studentsData = Array.isArray(gradesResponse?.data) ? gradesResponse.data : (Array.isArray(gradesResponse) ? gradesResponse : [])
+  const studentsData = useMemo(() => (Array.isArray(gradesResponse?.data) ? gradesResponse.data : (Array.isArray(gradesResponse) ? gradesResponse : [])), [gradesResponse])
   const selectedAssessment = assessmentsData?.find((a: any) => a.id === selectedAssessmentId)
   const assessmentType = (selectedAssessment?.type || '').trim().toLowerCase()
   const isExamAssessment = assessmentType.includes('exam') || assessmentType.includes('rattrapage') || assessmentType === 'ef' || assessmentType === 'eo'
@@ -63,7 +76,7 @@ export default function AdminGradesEditPage() {
   // Les contrôles continus (CC1, CC2, TP...) restent toujours ouverts et modifiables par l'enseignant.
   const isAssessmentLocked = (gradesResponse?.is_locked || false) && isExamAssessment
   const isModulePvSigned = Boolean(gradesResponse?.is_module_pv_signed || gradesResponse?.is_locked)
-  const isPvLocked = isAssessmentLocked
+  void (isAssessmentLocked);
   const signatureInfo = gradesResponse?.signature
 
   useEffect(() => {
@@ -184,11 +197,12 @@ export default function AdminGradesEditPage() {
   }
 
   // Fetch module details for dynamic filename export
-  const { data: moduleDetails } = useQuery({
+  // Fetch module details for dynamic filename export
+const { data: moduleDetails } = useQuery({
     queryKey: ['module-details', moduleId],
     queryFn: () => api.get(`/modules/${moduleId}`).then(res => res.data.data || res.data),
     enabled: !!moduleId,
-  })
+});
 
   const handleExportExcel = async () => {
     try {
@@ -215,7 +229,7 @@ export default function AdminGradesEditPage() {
       link.click()
       link.remove()
       toast.success(isRtl ? `تم تحميل كشف النقاط: ${fileName}` : `Canevas Excel (${fileName}) téléchargé avec succès !`)
-    } catch (err) {
+    } catch {
       toast.error(isRtl ? 'حدث خطأ أثناء تحميل الملف' : 'Erreur lors du téléchargement du canevas Excel.')
     }
   }

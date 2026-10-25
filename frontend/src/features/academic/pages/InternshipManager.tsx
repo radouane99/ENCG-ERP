@@ -1,28 +1,26 @@
-import { useState } from 'react'
-import { useQuery,useMutation,useQueryClient } from '@tanstack/react-query'
-import { useTranslation } from 'react-i18next'
-import {
-Briefcase,Search,Download,CheckCircle2,Clock,
-MapPin,UserSquare2,FileCheck2,Filter
-} from 'lucide-react'
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
+import { Briefcase, Search, Download, CheckCircle2, Clock, MapPin, UserSquare2, FileCheck2, Filter } from 'lucide-react';
 import api from '@shared/lib/api'
-import { Button } from '@shared/components/ui/Button'
-import { Badge } from '@shared/components/ui/Badge'
-import { Input } from '@shared/components/ui/Input'
-import { toast } from 'sonner'
+import { Button } from '@shared/components/ui/Button';
+import { Badge } from '@shared/components/ui/Badge';
+import { Input } from '@shared/components/ui/Input';
+import { toast } from 'sonner';
 
 export default function InternshipManager() {
-  const { t, i18n } = useTranslation('common')
+  const { i18n } = useTranslation('common');
   const isRtl = i18n.language === 'ar'
   const queryClient = useQueryClient()
   
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useState('');
 
   // Fetch Internships
-  const { data: internships, isLoading } = useQuery({
+  // Fetch Internships
+const { data: internships, isLoading } = useQuery({
     queryKey: ['admin-internships'],
     queryFn: () => api.get('/admin/internships').then(res => res.data.data)
-  })
+});
 
   // Validate Convention Mutation
   const validateMutation = useMutation({

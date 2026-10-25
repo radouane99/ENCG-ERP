@@ -1,20 +1,20 @@
-import { useState,useEffect } from 'react'
-import { useTranslation } from 'react-i18next'
-import { Upload,Plus,Eye,Edit,Trash2,Users2,Loader2,Search,Mail,ShieldCheck,FileSpreadsheet,Lock,Sparkles,X } from 'lucide-react'
-import { cn } from '@shared/lib/utils'
-import { Link } from 'react-router-dom'
+import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Upload, Plus, Eye, Edit, Trash2, Users2, Loader2, Search, Mail, ShieldCheck, FileSpreadsheet, Lock, Sparkles, X } from 'lucide-react';
+import { cn } from '@shared/lib/utils';
+import { Link } from 'react-router-dom';
 import api from '@shared/lib/api'
-import { toast } from 'sonner'
+import { toast } from 'sonner';
 
 export default function StaffProfessorsPage() {
-  const { t, i18n } = useTranslation(['professors', 'common'])
-  const isRtl = i18n.language === 'ar'
+  const { i18n } = useTranslation(['professors', 'common']);
+  void (i18n.language === 'ar');
 
-  const [activeTab, setActiveTab] = useState('TOUS')
-  const [searchQuery, setSearchQuery] = useState('')
-  const [professors, setProfessors] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [showImportModal, setShowImportModal] = useState(false)
+  const [activeTab, setActiveTab] = useState('TOUS');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [professors, setProfessors] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showImportModal, setShowImportModal] = useState(false);
 
   useEffect(() => {
     const fetchProfessors = async () => {
@@ -46,7 +46,7 @@ export default function StaffProfessorsPage() {
       await api.post(`/users/${user.id}/reset-password`)
       toast.dismiss()
       toast.success(`Lien de réinitialisation envoyé par Email (Resend) à ${user.email} !`)
-    } catch (e) {
+    } catch {
       toast.dismiss()
       toast.success(`Lien de réinitialisation sécurisé envoyé à ${user.email} !`)
     }

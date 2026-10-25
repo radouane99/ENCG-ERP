@@ -1,18 +1,18 @@
-import { Link,useParams } from 'react-router-dom'
-import { Eye,Download,ArrowLeft,Users,CheckCircle2,XCircle,BarChart3,Loader2 } from 'lucide-react'
-import { cn } from '@shared/lib/utils'
-import { useQuery } from '@tanstack/react-query'
-import { examsApi } from '@shared/api/exams'
+import { Link, useParams } from 'react-router-dom';
+import { Eye, Download, ArrowLeft, Users, CheckCircle2, XCircle, BarChart3, Loader2 } from 'lucide-react';
+import { cn } from '@shared/lib/utils';
+import { useQuery } from '@tanstack/react-query';
+import { examsApi } from '@shared/api/exams';
 
 export default function AdminExamLiveAttendancePage() {
-  const { id } = useParams()
+  const { id } = useParams();
   
-  const { data: liveData, isLoading, refetch, isFetching } = useQuery({
+  const { data: liveData, isLoading, isFetching } = useQuery({
     queryKey: ['live-attendance', id],
     queryFn: () => examsApi.getExamLiveStats(Number(id)),
     refetchInterval: 5000, // Refresh every 5 seconds
     enabled: !!id
-  })
+});
 
   const stats = liveData?.data || { total_students: 0, present: 0, absent: 0, latest_scans: [] }
   const scans = stats.latest_scans || []

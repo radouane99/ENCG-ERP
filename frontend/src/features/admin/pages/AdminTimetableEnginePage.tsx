@@ -1,27 +1,9 @@
-import React,{ useMemo,useState } from 'react'
-import { useMutation,useQuery } from '@tanstack/react-query'
-import {
-Building2,
-Check,
-ChevronRight,
-Clock,
-FileText,
-Filter,
-GripVertical,
-Leaf,
-Loader2,
-Play,
-RotateCcw,
-Search,
-Send,
-Sliders,
-Sparkles,
-Users,
-Zap,
-} from 'lucide-react'
+import React, { useMemo, useState } from 'react';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { Building2, Check, ChevronRight, Clock, FileText, Filter, GripVertical, Leaf, Loader2, Play, RotateCcw, Search, Send, Sliders, Sparkles, Users, Zap } from 'lucide-react';
 import api from '@/shared/lib/api'
-import { toast } from 'sonner'
-import { cn } from '@/shared/lib/utils'
+import { toast } from 'sonner';
+import { cn } from '@/shared/lib/utils';
 import ManualTimetableBoard from './ManualTimetableBoard'
 import OfficialTimetableMatrix from './OfficialTimetableMatrix'
 import SemesterReadinessPanel from '../components/SemesterReadinessPanel'
@@ -80,51 +62,53 @@ const STEPS = [
 ]
 
 export default function AdminTimetableEnginePage() {
-  const [selectedFiliere, setSelectedFiliere] = useState('')
-  const [selectedSemester, setSelectedSemester] = useState('')
-  const [energyWeight, setEnergyWeight] = useState(DEFAULTS.energyWeight)
-  const [profAvailWeight, setProfAvailWeight] = useState(DEFAULTS.profAvailWeight)
-  const [maxDailyHours, setMaxDailyHours] = useState(DEFAULTS.maxDailyHours)
-  const [teachingWeeks, setTeachingWeeks] = useState(15)
-  const [workMode, setWorkMode] = useState<'filieres' | 'official' | 'result'>('filieres')
-  const [viewTab, setViewTab] = useState<'grid' | 'energy' | 'audit'>('grid')
-  const [simResult, setSimResult] = useState<SimulationData | null>(null)
-  const [suggestedSlots, setSuggestedSlots] = useState<any[]>([])
-  const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState('ALL')
-  const [previewDay, setPreviewDay] = useState('ALL')
-  const [previewType, setPreviewType] = useState('ALL')
-  const [previewSearch, setPreviewSearch] = useState('')
-  const [showAdvanced, setShowAdvanced] = useState(false)
-  const [manualBoard, setManualBoard] = useState<{ versionId: number; label: string } | null>(null)
-  const [busyFiliereId, setBusyFiliereId] = useState<number | null>(null)
-  const [confirmPublishId, setConfirmPublishId] = useState<number | null>(null)
+  const [selectedFiliere, setSelectedFiliere] = useState('');
+  const [selectedSemester, setSelectedSemester] = useState('');
+  const [energyWeight, setEnergyWeight] = useState(DEFAULTS.energyWeight);
+  const [profAvailWeight, setProfAvailWeight] = useState(DEFAULTS.profAvailWeight);
+  const [maxDailyHours, setMaxDailyHours] = useState(DEFAULTS.maxDailyHours);
+  const [teachingWeeks, setTeachingWeeks] = useState(15);
+  const [workMode, setWorkMode] = useState<'filieres' | 'official' | 'result'>('filieres');
+  const [viewTab, setViewTab] = useState<'grid' | 'energy' | 'audit'>('grid');
+  const [simResult, setSimResult] = useState<SimulationData | null>(null);
+  const [suggestedSlots, setSuggestedSlots] = useState<any[]>([]);
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [previewDay, setPreviewDay] = useState('ALL');
+  const [previewType, setPreviewType] = useState('ALL');
+  const [previewSearch, setPreviewSearch] = useState('');
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [manualBoard, setManualBoard] = useState<{
+    versionId: number;
+    label: string;
+} | null>(null);
+  const [busyFiliereId, setBusyFiliereId] = useState<number | null>(null);
+  const [confirmPublishId, setConfirmPublishId] = useState<number | null>(null);
 
   const { data: workspace, refetch: refetchWorkspace, isError: workspaceError } = useQuery({
     queryKey: ['edt-campaign-workspace'],
     queryFn: () => api.get('/admin/smart-scheduling/workspace').then((res) => res.data.data || res.data),
-  })
+});
 
   const { data: filieres = [] } = useQuery({
     queryKey: ['filieres-list'],
     queryFn: () => api.get('/filieres').then((res) => res.data.data || res.data || []),
-  })
+});
 
   const officialScope = selectedFiliere ? 'filiere' : 'all'
   const officialId = selectedFiliere || '0'
   const { data: officialMatrix, isFetching: matrixLoading } = useQuery({
     queryKey: ['edt-official-matrix', officialScope, officialId, selectedSemester],
     enabled: workMode === 'official',
-    queryFn: () =>
-      api.get(`/timetable/export/${officialScope}/${officialId}/matrix`, {
+    queryFn: () => api.get(`/timetable/export/${officialScope}/${officialId}/matrix`, {
         params: selectedSemester ? { semester_number: Number(selectedSemester) } : {},
-      }).then((res) => res.data.data),
-  })
+    }).then((res) => res.data.data),
+});
 
   const { refetch: refetchStats } = useQuery({
     queryKey: ['smart-scheduling-stats'],
     queryFn: () => api.get('/admin/smart-scheduling/stats').then((res) => res.data.data || res.data || null),
-  })
+});
 
   const openCampaignMutation = useMutation({
     mutationFn: () => api.post('/admin/smart-scheduling/campaign/open', { allow_saturday: false }),
@@ -265,7 +249,7 @@ export default function AdminTimetableEnginePage() {
     }
   }
 
-  const filiereCards = workspace?.filieres || []
+  const filiereCards = useMemo(() => (workspace?.filieres || []), [workspace])
   const filteredCards = useMemo(() => {
     return filiereCards.filter((card: any) => {
       const q = search.trim().toLowerCase()
@@ -298,21 +282,9 @@ export default function AdminTimetableEnginePage() {
     })
   }, [simResult, previewSearch, previewDay, previewType])
 
-  const statusBadge = (status: string) => {
-    if (status === 'PUBLISHED') return 'bg-emerald-50 text-emerald-800 border-emerald-200'
-    if (status === 'PROPOSED') return 'bg-indigo-50 text-indigo-800 border-indigo-200'
-    if (status === 'DRAFT') return 'bg-amber-50 text-amber-900 border-amber-200'
-    return 'bg-slate-100 text-slate-600 border-slate-200'
-  }
 
-  const getFiliereColor = (code: string = '') => {
-    const c = code.toUpperCase()
-    if (c.includes('GFC') || c.includes('FINANCE')) return 'bg-indigo-600 border-l-indigo-900 text-white'
-    if (c.includes('MCM') || c.includes('MARKETING')) return 'bg-purple-600 border-l-purple-900 text-white'
-    if (c.includes('TC') || c.includes('TRONC')) return 'bg-emerald-600 border-l-emerald-900 text-white'
-    if (c.includes('GRH') || c.includes('RH')) return 'bg-amber-600 border-l-amber-900 text-white'
-    return 'bg-blue-600 border-l-blue-900 text-white'
-  }
+
+
 
   const generateEmpty = async () => {
     const empties = filteredCards.filter((c: any) => c.status === 'EMPTY')
@@ -788,7 +760,7 @@ export default function AdminTimetableEnginePage() {
               { label: 'Séances placées', value: simResult ? String(simResult.total_placed) : '—', sub: `sur ${simResult?.total_variables ?? '?'} variables`, color: '#6366f1', accent: 'rgba(99,102,241,0.08)' },
               { label: 'Score énergie', value: simResult ? `${simResult.energy_efficiency_score}%` : '—', sub: 'Clustering bâtiments', color: '#06b6d4', accent: 'rgba(6,182,212,0.08)' },
               { label: 'Temps calcul', value: simResult ? `${simResult.execution_time_ms} ms` : '—', sub: 'Heuristiques IA', color: '#f59e0b', accent: 'rgba(245,158,11,0.08)' },
-            ].map(({ label, value, sub, color, accent }) => (
+            ].map(({ label, value, sub, color }) => (
               <div key={label} className="relative overflow-hidden rounded-2xl p-4 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
                 <div className="absolute top-0 left-0 right-0 h-0.5 rounded-t-2xl" style={{ background: `linear-gradient(90deg, ${color}80, ${color}00)` }} />
                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{label}</p>

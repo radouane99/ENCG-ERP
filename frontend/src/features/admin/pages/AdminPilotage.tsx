@@ -1,24 +1,21 @@
-import { useState,useEffect } from 'react'
-import {
-BarChart,Bar,XAxis,YAxis,CartesianGrid,Tooltip,ResponsiveContainer,
-PieChart,Pie,Cell
-} from 'recharts'
-import { Activity,Users,GraduationCap,Building,TrendingUp,DollarSign,BrainCircuit,Target,RefreshCw } from 'lucide-react'
-import { useTranslation } from 'react-i18next'
+import { useState, useEffect } from 'react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { Activity, Users, GraduationCap, Building, TrendingUp, DollarSign, BrainCircuit, Target, RefreshCw } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import api from '@shared/lib/api'
-import { cn } from '@shared/lib/utils'
-import { Button } from '@shared/components/ui/Button'
-import { Badge } from '@shared/components/ui/Badge'
+import { cn } from '@shared/lib/utils';
+import { Button } from '@shared/components/ui/Button';
+import { Badge } from '@shared/components/ui/Badge';
 
 // Enhanced UI/UX Pro Max Color Palette
 const COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#64748b']
 
 export default function AdminPilotage() {
-  const { t, i18n } = useTranslation('common')
+  const { i18n } = useTranslation('common');
   const isRtl = i18n.language === 'ar'
-  const [data, setData] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
-  const [refreshing, setRefreshing] = useState(false)
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const fetchData = async () => {
     setRefreshing(true)
@@ -46,7 +43,7 @@ export default function AdminPilotage() {
     )
   }
 
-  const { kpis, charts } = data
+  const { kpis, charts } = data;
 
   const KPI_CARDS = [
     { title: isRtl ? 'إجمالي الطلاب' : 'Effectif Étudiant', value: kpis.total_students || 0, icon: <Users size={24}/>, color: 'text-blue-500', bg: 'bg-blue-500/10' },

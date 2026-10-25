@@ -1,32 +1,34 @@
-import { useState } from 'react'
-import { useQuery,useMutation,useQueryClient } from '@tanstack/react-query'
-import { useTranslation } from 'react-i18next'
-import { Tent,Search,Sparkles,Check,Download,ShieldCheck } from 'lucide-react'
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
+import { Tent, Search, Sparkles, Check, Download, ShieldCheck } from 'lucide-react';
 import api from '@shared/lib/api'
-import { cn } from '@shared/lib/utils'
-import { toast } from 'sonner'
-import { generateClubAgrementHtml } from '../utils/clubDocumentGenerator'
+import { cn } from '@shared/lib/utils';
+import { toast } from 'sonner';
+import { generateClubAgrementHtml } from '../utils/clubDocumentGenerator';
 
 export default function AdminClubsPage() {
-  const { t, i18n } = useTranslation('common')
+  const { i18n } = useTranslation('common');
   const isRtl = i18n.language === 'ar'
   const queryClient = useQueryClient()
   
-  const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState('all')
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
 
   // Fetch Clubs
-  const { data: clubs, isLoading } = useQuery({
+  // Fetch Clubs
+const { data: clubs, isLoading } = useQuery({
     queryKey: ['admin-clubs'],
     queryFn: async () => {
-      try {
-        const res = await api.get('/clubs')
-        return res.data.data || res.data || []
-      } catch {
-        return []
-      }
+        try {
+            const res = await api.get('/clubs');
+            return res.data.data || res.data || [];
+        }
+        catch {
+            return [];
+        }
     }
-  })
+});
 
   // Validate Mutation
   const updateStatusMutation = useMutation({

@@ -1,17 +1,14 @@
-import { assignmentSuggestions } from '../model/assignmentSuggestions'
+import { assignmentSuggestions } from '../model/assignmentSuggestions';
 import AssignmentCarryForwardPanel from '../components/AssignmentCarryForwardPanel'
-import React,{ useState,useEffect,useMemo,useRef } from 'react'
-import {
-Calendar,Download,Upload,Trash2,Plus,CalendarDays,FileText,X,Sparkles,BookOpen,Users,Layers,Search,GraduationCap,Check,Copy,Mail,Printer,Zap,BarChart2,Eye,ChevronDown,Building2,AlertTriangle,
-RotateCcw,ShieldAlert
-} from 'lucide-react'
-import { cn,cleanUtf8Text } from '@shared/lib/utils'
-import { useQuery,useMutation,useQueryClient } from '@tanstack/react-query'
+import React, { useCallback, useState, useEffect, useMemo, useRef } from 'react';
+import { Calendar, Download, Upload, Trash2, Plus, CalendarDays, FileText, X, Sparkles, BookOpen, Users, Layers, Search, GraduationCap, Check, Mail, Printer, Zap, BarChart2, Eye, ChevronDown, Building2, AlertTriangle, RotateCcw, ShieldAlert } from 'lucide-react';
+import { cn, cleanUtf8Text } from '@shared/lib/utils';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@shared/lib/api'
-import { openAuthenticatedUrl,openProfessorOrdreDeServicePdf } from '@shared/lib/documentAccess'
-import { academicApi } from '@shared/api/academic'
-import { toast } from 'sonner'
-import { Spinner } from '@shared/components/ui/Spinner'
+import { openProfessorOrdreDeServicePdf } from '@shared/lib/documentAccess';
+import { academicApi } from '@shared/api/academic';
+import { toast } from 'sonner';
+import { Spinner } from '@shared/components/ui/Spinner';
 
 // ─── 1. CUSTOM FORM SEARCHABLE SELECT (4-STEP ASSIGNMENT FORM) ────────────────
 interface CustomSelectOption {
@@ -31,18 +28,9 @@ interface CustomSelectProps {
   searchable?: boolean
 }
 
-function CustomSelect({
-  label,
-  stepNumber,
-  placeholder,
-  value,
-  onChange,
-  options,
-  icon,
-  searchable = true
-}: CustomSelectProps) {
-  const [isOpen, setIsOpen] = useState(false)
-  const [searchTerm, setSearchTerm] = useState('')
+function CustomSelect({ label, stepNumber, placeholder, value, onChange, options, icon, searchable = true }: CustomSelectProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   const containerRef = useRef<HTMLDivElement>(null)
 
   const selectedOption = options.find(o => String(o.value) === String(value))
@@ -181,19 +169,9 @@ interface CustomMultiSelectProps {
   selectAllOption?: boolean
 }
 
-function CustomMultiSelect({
-  label,
-  stepNumber,
-  placeholder,
-  values,
-  onChange,
-  options,
-  icon,
-  searchable = true,
-  selectAllOption = true
-}: CustomMultiSelectProps) {
-  const [isOpen, setIsOpen] = useState(false)
-  const [searchTerm, setSearchTerm] = useState('')
+function CustomMultiSelect({ label, stepNumber, placeholder, values, onChange, options, icon, searchable = true, selectAllOption = true }: CustomMultiSelectProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   const containerRef = useRef<HTMLDivElement>(null)
 
   const filteredOptions = options.filter(o =>
@@ -388,17 +366,9 @@ interface FilterDropdownProps {
   className?: string
 }
 
-function FilterDropdown({
-  label,
-  value,
-  onChange,
-  options,
-  icon,
-  searchable = false,
-  className
-}: FilterDropdownProps) {
-  const [isOpen, setIsOpen] = useState(false)
-  const [searchTerm, setSearchTerm] = useState('')
+function FilterDropdown({ label, value, onChange, options, icon, searchable = false, className }: FilterDropdownProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   const containerRef = useRef<HTMLDivElement>(null)
 
   const selectedOption = options.find(o => String(o.value) === String(value))
@@ -518,40 +488,47 @@ function FilterDropdown({
 
 export default function AcademicYearSettingsPage() {
   const queryClient = useQueryClient()
-  const [activeTab, setActiveTab] = useState<'affectations' | 'sessions' | 'annees'>('affectations')
-  const [showImportModal, setShowImportModal] = useState(false)
-  const [assignmentSearch, setAssignmentSearch] = useState('')
-  const [selectedDeptFilter, setSelectedDeptFilter] = useState('all')
-  const [selectedModuleFilter, setSelectedModuleFilter] = useState('all')
-  const [workloadFilter, setWorkloadFilter] = useState<'all' | 'unassigned' | 'available' | 'full' | 'overloaded'>('all')
+  const [activeTab, setActiveTab] = useState<'affectations' | 'sessions' | 'annees'>('affectations');
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [assignmentSearch, setAssignmentSearch] = useState('');
+  const [selectedDeptFilter, setSelectedDeptFilter] = useState('all');
+  const [selectedModuleFilter, setSelectedModuleFilter] = useState('all');
+  const [workloadFilter, setWorkloadFilter] = useState<'all' | 'unassigned' | 'available' | 'full' | 'overloaded'>('all');
 
   // 🎓 Période Semestrielle Active (Automne S1/S3/S5/S7/S9 vs Printemps S2/S4/S6/S8/S10 vs Annuel)
-  const [selectedSemesterPeriod, setSelectedSemesterPeriod] = useState<'all' | 'odd' | 'even' | string>('all')
-  const [distributeSemesterPeriod, setDistributeSemesterPeriod] = useState<'all' | 'odd' | 'even' | string>('odd')
+  // 🎓 Période Semestrielle Active (Automne S1/S3/S5/S7/S9 vs Printemps S2/S4/S6/S8/S10 vs Annuel)
+const [selectedSemesterPeriod, setSelectedSemesterPeriod] = useState<'all' | 'odd' | 'even' | string>('all');
+  const [distributeSemesterPeriod, setDistributeSemesterPeriod] = useState<'all' | 'odd' | 'even' | string>('odd');
 
   // Selected professor for viewing detailed assignments modal
-  const [selectedProfForModal, setSelectedProfForModal] = useState<any>(null)
-  const [showResetDistributeModal, setShowResetDistributeModal] = useState(false)
-  const [showUnassignAllModal, setShowUnassignAllModal] = useState(false)
+  // Selected professor for viewing detailed assignments modal
+const [selectedProfForModal, setSelectedProfForModal] = useState<any>(null);
+  const [showResetDistributeModal, setShowResetDistributeModal] = useState(false);
+  const [showUnassignAllModal, setShowUnassignAllModal] = useState(false);
 
   const [assignmentForm, setAssignmentForm] = useState<{
-    department_id: string
-    professor_id: string
-    module_ids: string[]
-    group_ids: string[]
-    session_type: 'cm' | 'td' | 'both'
-  }>({
+    department_id: string;
+    professor_id: string;
+    module_ids: string[];
+    group_ids: string[];
+    session_type: 'cm' | 'td' | 'both';
+}>({
     department_id: '',
     professor_id: '',
     module_ids: [],
     group_ids: [],
     session_type: 'cm'
-  })
+});
 
-  const [newYearLabel, setNewYearLabel] = useState('')
-  const [newYearIsCurrent, setNewYearIsCurrent] = useState(false)
-  const [sessionDates, setSessionDates] = useState<Record<number, {name: string, type: string, start_date: string, end_date: string}>>({})
-  const [showNewSessionForm, setShowNewSessionForm] = useState(false)
+  const [newYearLabel, setNewYearLabel] = useState('');
+  const [newYearIsCurrent, setNewYearIsCurrent] = useState(false);
+  const [sessionDates, setSessionDates] = useState<Record<number, {
+    name: string;
+    type: string;
+    start_date: string;
+    end_date: string;
+}>>({});
+  const [showNewSessionForm, setShowNewSessionForm] = useState(false);
   const [newSessionForm, setNewSessionForm] = useState({
     name: '',
     type: '',
@@ -559,64 +536,66 @@ export default function AcademicYearSettingsPage() {
     end_date: '',
     academic_year_id: '',
     semester_id: ''
-  })
+});
 
   // 🤖 AI AUTO-MATCHING ENGINE FOR TEACHER ASSIGNMENTS
-  const [showAiMatchingModal, setShowAiMatchingModal] = useState(false)
-  const [aiSuggestions, setAiSuggestions] = useState<any[]>([])
-  const [isAnalyzingAi, setIsAnalyzingAi] = useState(false)
+  // 🤖 AI AUTO-MATCHING ENGINE FOR TEACHER ASSIGNMENTS
+const [showAiMatchingModal, setShowAiMatchingModal] = useState(false);
+  const [aiSuggestions, setAiSuggestions] = useState<any[]>([]);
+  const [isAnalyzingAi, setIsAnalyzingAi] = useState(false);
 
   // Queries
-  const { data: departmentsData } = useQuery({
+  // Queries
+const { data: departmentsData } = useQuery({
     queryKey: ['departments'],
     queryFn: () => api.get('/departments').then(r => r.data)
-  })
+});
 
   const { data: professorsData } = useQuery({
     queryKey: ['professors'],
     queryFn: () => api.get('/hr/professors').then(r => r.data)
-  })
+});
 
   const { data: modulesData } = useQuery({
     queryKey: ['modules'],
     queryFn: () => api.get('/modules').then(r => r.data)
-  })
+});
 
   const { data: groupsData } = useQuery({
     queryKey: ['groups'],
     queryFn: () => api.get('/groups').then(r => r.data)
-  })
+});
 
   const { data: assignmentsData, isLoading: assignmentsLoading } = useQuery({
     queryKey: ['professor-assignments', selectedSemesterPeriod],
     queryFn: () => api.get(`/professor-assignments?semester_period=${selectedSemesterPeriod}`).then(r => r.data)
-  })
+});
 
   const { data: examSessionsData } = useQuery({
     queryKey: ['exam-sessions'],
     queryFn: () => academicApi.getExamSessions()
-  })
+});
 
   const { data: yearsData = [] } = useQuery({
     queryKey: ['academic-years'],
     queryFn: academicApi.getAcademicYears,
     select: (rows) => (Array.isArray(rows) ? rows : []),
-  })
+});
 
   const { data: semestersData } = useQuery({
     queryKey: ['semesters'],
     queryFn: () => api.get('/semesters').then(r => r.data)
-  })
+});
 
-  const departments = departmentsData?.data || []
-  const allProfessors = professorsData?.data || []
+  const departments = useMemo(() => (departmentsData?.data || []), [departmentsData])
+  const allProfessors = useMemo(() => (professorsData?.data || []), [professorsData])
   const professors = assignmentForm.department_id
     ? allProfessors.filter((p: any) => p.department_id == assignmentForm.department_id)
     : allProfessors
   const modules = modulesData?.data || []
   const groups = groupsData?.data || []
-  const assignments = assignmentsData?.data || []
-  const examSessions = examSessionsData || []
+  const assignments = useMemo(() => (assignmentsData?.data || []), [assignmentsData])
+  const examSessions = useMemo(() => examSessionsData || [], [examSessionsData])
   const years = Array.isArray(yearsData) ? yearsData : []
   const semesters = semestersData?.data || []
 
@@ -633,7 +612,7 @@ export default function AcademicYearSettingsPage() {
       })
       setSessionDates(dates)
     }
-  }, [examSessionsData])
+  }, [examSessions])
 
   // AI Matching Handler
   const handleAiAutoMatching = () => {
@@ -665,7 +644,7 @@ export default function AcademicYearSettingsPage() {
   const selectedProfAssignments = assignments.filter((a: any) => String(a.professor_id ?? a.prof_id) === String(assignmentForm.professor_id))
   const selectedProfVolumeHours = selectedProfAssignments.some((a: any) => a.assigned_hours === null || !Number.isFinite(Number(a.assigned_hours))) ? null : selectedProfAssignments.reduce((sum: number, a: any) => sum + Number(a.assigned_hours), 0)
   // Resolve professor UUID from assignment row
-  const resolveAssignmentProfessorId = (assignment: any): string | null => {
+  const resolveAssignmentProfessorId = useCallback((assignment: any): string | null => {
     const direct = assignment?.professor_id || assignment?.prof_id || assignment?.professor?.id
     if (direct) return String(direct)
     const profName = (assignment?.prof || '').trim().toLowerCase()
@@ -678,7 +657,7 @@ export default function AcademicYearSettingsPage() {
       return full === profName || alt === profName || (p.email && profName.includes(String(p.last_name || '').toLowerCase()))
     })
     return matched?.id ? String(matched.id) : null
-  }
+  }, [allProfessors])
 
   // Group Assignments by Professor
   const groupedAssignmentsMap = useMemo(() => {
@@ -727,7 +706,7 @@ export default function AcademicYearSettingsPage() {
     })
 
     return map
-  }, [allProfessors, assignments, departments])
+  }, [allProfessors, assignments, departments, resolveAssignmentProfessorId])
 
   const groupedProfessors = useMemo(() => {
     return Object.values(groupedAssignmentsMap).filter((profGroup: any) => {
@@ -917,7 +896,7 @@ export default function AcademicYearSettingsPage() {
       )
       await Promise.all(promises)
       toast.success('💾 Périodes d\'examens enregistrées avec succès')
-    } catch (e) {
+    } catch {
       toast.error('Erreur lors de l\'enregistrement des périodes')
     }
   }
@@ -1665,7 +1644,7 @@ export default function AcademicYearSettingsPage() {
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80 font-medium">
                     {groupedProfessors.map((profGroup: any, idx: number) => {
                       const count = profGroup.assignmentsList.length
-                      const totalHours = count * 48
+                      void (count * 48);
                       const weeklyHours = count * 4
                       const percentage = Math.min(Math.round((weeklyHours / 18) * 100), 100)
 

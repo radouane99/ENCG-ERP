@@ -1,19 +1,16 @@
-import React,{ useState,useEffect,useRef } from 'react'
-import { useParams,useNavigate } from 'react-router-dom'
-import {
-ShieldCheck,ArrowLeft,Printer,Search,CheckCircle2,
-XCircle,AlertTriangle,Clock,Sparkles,FileText,Lock,ShieldAlert,UserX,Check,X,Camera,QrCode,
-Grid,List,Volume2,VolumeX,CheckSquare,Zap,FileCheck,Package,ChevronDown
-} from 'lucide-react'
-import { useQuery,useMutation,useQueryClient } from '@tanstack/react-query'
+import { flushOfflineQueue } from '@shared/lib/offlineQueue'
+import React, { useState, useEffect, useRef } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { ShieldCheck, ArrowLeft, Printer, Search, CheckCircle2, XCircle, AlertTriangle, Clock, Sparkles, FileText, Lock, ShieldAlert, UserX, Check, X, Camera, QrCode, Grid, List, Volume2, VolumeX, CheckSquare, Zap, FileCheck, Package, ChevronDown } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@shared/lib/api'
-import { openAuthenticatedUrl } from '@shared/lib/documentAccess'
-import { cn } from '@shared/lib/utils'
-import { Button } from '@shared/components/ui/Button'
-import { Spinner } from '@shared/components/ui/Spinner'
-import { toast } from 'sonner'
-import { QRCodeSVG } from 'qrcode.react'
-import { useAuthStore } from '@stores/authStore'
+import { openAuthenticatedUrl } from '@shared/lib/documentAccess';
+import { cn } from '@shared/lib/utils';
+import { Button } from '@shared/components/ui/Button';
+import { Spinner } from '@shared/components/ui/Spinner';
+import { toast } from 'sonner';
+import { QRCodeSVG } from 'qrcode.react';
+import { useAuthStore } from '@stores/authStore';
 
 interface Candidate {
   id: number
@@ -40,7 +37,7 @@ interface IncidentReport {
 }
 
 export default function AdminExamSurveillanceHubPage() {
-  const { id } = useParams()
+  const { id } = useParams();
   const navigate = useNavigate()
   const queryClient = useQueryClient()
 
@@ -55,100 +52,73 @@ export default function AdminExamSurveillanceHubPage() {
   })()
 
   // View Mode: 'list' | 'grid' (Plan de Salle Visual Grid)
-  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
+  // View Mode: 'list' | 'grid' (Plan de Salle Visual Grid)
+const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   
   // Sound Feedback
-  const [soundEnabled, setSoundEnabled] = useState(true)
+  // Sound Feedback
+const [soundEnabled, setSoundEnabled] = useState(true);
 
   // Detect Professor View Mode
   const isProfessorView = window.location.pathname.includes('/professor/') || !!localStorage.getItem('auth_user_role')?.includes('professor')
 
   // Admin / Professor Supervisor Mode & Exam Metadata
-  const [adminSupervisorName, setAdminSupervisorName] = useState(
-    storedUser?.name ? `${storedUser.name} (${isProfessorView ? 'Surveillant' : 'Responsable'})` : (isProfessorView ? 'Surveillant de Salle' : 'Responsable d\'Examen')
-  )
-  const [customCopiesCount, setCustomCopiesCount] = useState<number | ''>('')
+  // Admin / Professor Supervisor Mode & Exam Metadata
+const [adminSupervisorName, setAdminSupervisorName] = useState(storedUser?.name ? `${storedUser.name} (${isProfessorView ? 'Surveillant' : 'Responsable'})` : (isProfessorView ? 'Surveillant de Salle' : 'Responsable d\'Examen'));
+  const [customCopiesCount, setCustomCopiesCount] = useState<number | ''>('');
 
   // Offline PWA Sync State
-  const [isOnline, setIsOnline] = useState(navigator.onLine)
-  const [offlineQueueCount, setOfflineQueueCount] = useState(0)
+  // Offline PWA Sync State
+const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [offlineQueueCount, setOfflineQueueCount] = useState(0);
 
   // Signature Mode: Digital Stamp vs Pad Canvas
-  const [signatureMode, setSignatureMode] = useState<'digital' | 'pad'>('digital')
-
-  useEffect(() => {
-    // Check initial queue
-    try {
-      const queue = JSON.parse(sessionStorage.getItem(`offline_emargement_queue_${id}`) || '[]')
-      setOfflineQueueCount(queue.length)
-    } catch (e) {}
-
-    const handleOnline = () => {
-      setIsOnline(true)
-      toast.success('🟢 Connexion Internet rétablie ! Synchronisation de la file d\'émargement...')
-      try {
-        const queue = JSON.parse(sessionStorage.getItem(`offline_emargement_queue_${id}`) || '[]')
-        if (queue.length > 0) {
-          queue.forEach((item: any) => {
-            updateAttendanceMutation.mutate({ seating_id: item.seating_id, student_id: item.student_id, status: item.status })
-          })
-          sessionStorage.removeItem(`offline_emargement_queue_${id}`)
-          setOfflineQueueCount(0)
-          toast.success(`✅ ${queue.length} émargement(s) hors-ligne synchronisés avec la BDD !`)
-        }
-      } catch (e) {}
-    }
-
-    const handleOffline = () => {
-      setIsOnline(false)
-      toast.warning('🟡 Wi-Fi déconnecté. Mode PWA Hors-Ligne actif. Vos pointages seront conservés en local.')
-    }
-
-    window.addEventListener('online', handleOnline)
-    window.addEventListener('offline', handleOffline)
-    return () => {
-      window.removeEventListener('online', handleOnline)
-      window.removeEventListener('offline', handleOffline)
-    }
-  }, [id])
+  // Signature Mode: Digital Stamp vs Pad Canvas
+const [signatureMode, setSignatureMode] = useState<'digital' | 'pad'>('digital');
 
   // Search & Filter
-  const [searchQuery, setSearchQuery] = useState('')
-  const [statusFilter, setStatusFilter] = useState<'all' | 'present' | 'absent' | 'late' | 'fraud'>('all')
+  // Search & Filter
+const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'present' | 'absent' | 'late' | 'fraud'>('all');
 
 
   // Fraud Modal State
-  const [showFraudModal, setShowFraudModal] = useState(false)
-  const [selectedStudentForFraud, setSelectedStudentForFraud] = useState<Candidate | null>(null)
-  const [fraudType, setFraudType] = useState<'fraude' | 'retard' | 'usurpation' | 'refus_signature' | 'perturbation'>('fraude')
-  const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false)
-  const [sanctionScope, setSanctionScope] = useState<'module' | 'semestre' | 'exclusion'>('module')
-  const [isSanctionDropdownOpen, setIsSanctionDropdownOpen] = useState(false)
-  const [fraudDescription, setFraudDescription] = useState('')
-  const [confiscatedItems, setConfiscatedItems] = useState('')
-  const [incidentsList, setIncidentsList] = useState<IncidentReport[]>([])
+  // Fraud Modal State
+const [showFraudModal, setShowFraudModal] = useState(false);
+  const [selectedStudentForFraud, setSelectedStudentForFraud] = useState<Candidate | null>(null);
+  const [fraudType, setFraudType] = useState<'fraude' | 'retard' | 'usurpation' | 'refus_signature' | 'perturbation'>('fraude');
+  const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
+  const [sanctionScope, setSanctionScope] = useState<'module' | 'semestre' | 'exclusion'>('module');
+  const [isSanctionDropdownOpen, setIsSanctionDropdownOpen] = useState(false);
+  const [fraudDescription, setFraudDescription] = useState('');
+  const [confiscatedItems, setConfiscatedItems] = useState('');
+  const [incidentsList, setIncidentsList] = useState<IncidentReport[]>([]);
 
   // Camera QR Scanner Modal State
-  const [showQrScanModal, setShowQrScanModal] = useState(false)
-  const [scannedQrToken, setScannedQrToken] = useState('')
+  // Camera QR Scanner Modal State
+const [showQrScanModal, setShowQrScanModal] = useState(false);
+  const [scannedQrToken, setScannedQrToken] = useState('');
 
   // Printable PV Preview Modal State
-  const [showPvPreviewModal, setShowPvPreviewModal] = useState(false)
+  // Printable PV Preview Modal State
+const [showPvPreviewModal, setShowPvPreviewModal] = useState(false);
 
   // Signature & Lock State (Separated for Principal & Secondary Professors)
-  const [showSignatureModal, setShowSignatureModal] = useState(false)
-  const [signingSupervisorRole, setSigningSupervisorRole] = useState<'principal' | 'secondary'>('secondary')
-  const [principalSignatureUrl, setPrincipalSignatureUrl] = useState('')
-  const [secondarySignatureUrl, setSecondarySignatureUrl] = useState('')
-  const [isDrawing, setIsDrawing] = useState(false)
-  const [signatureDataUrl, setSignatureDataUrl] = useState('')
-  const [hasDrawn, setHasDrawn] = useState(false)
+  // Signature & Lock State (Separated for Principal & Secondary Professors)
+const [showSignatureModal, setShowSignatureModal] = useState(false);
+  const [signingSupervisorRole, setSigningSupervisorRole] = useState<'principal' | 'secondary'>('secondary');
+  const [principalSignatureUrl, setPrincipalSignatureUrl] = useState('');
+  const [secondarySignatureUrl, setSecondarySignatureUrl] = useState('');
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [signatureDataUrl, setSignatureDataUrl] = useState('');
+  const [hasDrawn, setHasDrawn] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
-  const [isPvLocked, setIsPvLocked] = useState(false)
-  const [pvLockSeal, setPvLockSeal] = useState<string | null>(null)
+  const [isPvLocked, setIsPvLocked] = useState(false);
+  const [pvLockSeal, setPvLockSeal] = useState<string | null>(null);
 
   // Candidate State bound to DB
-  const [candidates, setCandidates] = useState<Candidate[]>([])
+  // Candidate State bound to DB
+const [candidates, setCandidates] = useState<Candidate[]>([]);
 
   // Sound Synth Generator
   const playAudioFeedback = (type: 'present' | 'absent' | 'fraud' | 'click') => {
@@ -185,19 +155,20 @@ export default function AdminExamSurveillanceHubPage() {
         osc.start()
         osc.stop(ctx.currentTime + 0.08)
       }
-    } catch (e) {}
+    } catch {}
   }
 
   // 1. Fetch Real Exam Details & Seatings from DB (Real-time polling for dual proctors synchronization)
-  const { data: detailsData, isLoading: isLoadingDetails, refetch: refetchDetails } = useQuery({
+  // 1. Fetch Real Exam Details & Seatings from DB (Real-time polling for dual proctors synchronization)
+const { data: detailsData, isLoading: isLoadingDetails } = useQuery({
     queryKey: ['admin-exam-details', id],
     queryFn: async () => {
-      const res = await api.get(`/exam-planning/${id}/details`)
-      return res.data?.data || res.data
+        const res = await api.get(`/exam-planning/${id}/details`);
+        return res.data?.data || res.data;
     },
     refetchInterval: 2500,
     enabled: !!id
-  })
+});
 
   // 👥 Extract Real Proctors & Supervisors from DB
   const surveillancesList: any[] = Array.isArray(detailsData?.surveillances) ? detailsData.surveillances : []
@@ -247,57 +218,41 @@ export default function AdminExamSurveillanceHubPage() {
   }, [isCurrentUserPrincipal])
 
   // 2. Fetch Live Stats
-  const { data: liveStatsData } = useQuery({
+  useQuery({
     queryKey: ['admin-exam-live-stats', id],
     queryFn: async () => {
-      const res = await api.get(`/exam-planning/${id}/live-stats`)
-      return res.data?.data || res.data
+        const res = await api.get(`/exam-planning/${id}/live-stats`);
+        return res.data?.data || res.data;
     },
     refetchInterval: 2500,
     enabled: !!id
-  })
+});
 
   // 3. Fetch Incidents from DB
-  const { data: dbIncidentsData } = useQuery({
+  // 3. Fetch Incidents from DB
+const { data: dbIncidentsData } = useQuery({
     queryKey: ['admin-exam-incidents', id],
     queryFn: async () => {
-      const res = await api.get('/exam-incidents', { params: { exam_id: id } })
-      return res.data?.data || res.data || []
+        const res = await api.get('/exam-incidents', { params: { exam_id: id } });
+        return res.data?.data || res.data || [];
     },
     refetchInterval: 2500,
     enabled: !!id
-  })
+});
 
-  // Auto-sync any queued local incidents to DB on load
+  // Synchronize only incidents explicitly associated with this exam.
   useEffect(() => {
-    try {
-      const existingQueue = JSON.parse(sessionStorage.getItem('encg_exam_incidents_queue') || '[]')
-      if (Array.isArray(existingQueue) && existingQueue.length > 0 && id) {
-        existingQueue.forEach(async (item: any) => {
-          if (item.student?.id) {
-            try {
-              await api.post('/exam-incidents', {
-                exam_id: Number(id),
-                student_id: item.student.id,
-                type: 'fraude',
-                description: item.description || "Fraude constatée en salle d'examen",
-                confiscated_items: item.confiscated_items || null
-              })
-              await api.post(`/exam-planning/${id}/update-seating-status`, {
-                student_id: item.student.id,
-                status: 'present'
-              })
-              sessionStorage.removeItem('encg_exam_incidents_queue')
-              queryClient.invalidateQueries({ queryKey: ['admin-exam-incidents', id] })
-              queryClient.invalidateQueries({ queryKey: ['admin-exam-details', id] })
-              queryClient.invalidateQueries({ queryKey: ['admin-exam-live-stats', id] })
-            } catch (e) {}
-          }
-        })
+    if (!id) return
+    flushOfflineQueue<any>(sessionStorage, 'encg_exam_incidents_queue', async item => {
+      if (String(item.exam_id) !== String(id) || !item.student?.id) throw new Error('Incident requires its original exam context')
+      await api.post('/exam-incidents', { exam_id: Number(id), student_id: item.student.id, type: 'fraude', description: item.description, confiscated_items: item.confiscated_items || null })
+    }).then(result => {
+      if (result.sent) {
+        queryClient.invalidateQueries({ queryKey: ['admin-exam-incidents', id] })
+        queryClient.invalidateQueries({ queryKey: ['admin-exam-details', id] })
       }
-    } catch (e) {}
-  }, [id])
-
+    }).catch(() => toast.error('Les incidents hors ligne sont conservés; leur synchronisation a échoué.'))
+  }, [id, queryClient])
   // Lock & Signature state initialization from DB
   useEffect(() => {
     if (detailsData?.exam) {
@@ -323,7 +278,7 @@ export default function AdminExamSurveillanceHubPage() {
         setSignatureDataUrl(detailsData.exam.secondary_signature || '')
       }
     }
-  }, [detailsData?.exam, id])
+  }, [detailsData?.exam, id, isCurrentUserPrincipal])
 
   // Populate Incidents from DB
   useEffect(() => {
@@ -352,7 +307,7 @@ export default function AdminExamSurveillanceHubPage() {
       }))
       setIncidentsList(mappedIncidents)
     }
-  }, [dbIncidentsData, detailsData?.incidents])
+  }, [dbIncidentsData, detailsData?.incidents, adminSupervisorName])
 
   // Populate Candidates from DB Seatings or Students + Preserve Local Attendance State & Incidents
   useEffect(() => {
@@ -483,6 +438,23 @@ export default function AdminExamSurveillanceHubPage() {
     }
   })
 
+  const { mutateAsync: syncAttendance } = updateAttendanceMutation
+  useEffect(() => {
+    const key = `offline_emargement_queue_${id}`
+    try { setOfflineQueueCount(JSON.parse(sessionStorage.getItem(key) || '[]').length) } catch { /* Keep malformed local data for review. */ }
+    const handleOnline = async () => {
+      setIsOnline(true)
+      try {
+        const result = await flushOfflineQueue<any>(sessionStorage, key, item => syncAttendance({ seating_id: item.seating_id, student_id: item.student_id, status: item.status }))
+        setOfflineQueueCount(result.remaining)
+        if (result.sent) toast.success(`${result.sent} émargement(s) confirmé(s) par le serveur.`)
+        if (result.failed) toast.warning(`${result.failed} pointage(s) conservé(s) pour une prochaine tentative.`)
+      } catch { toast.error('Synchronisation impossible. Les pointages locaux sont conservés.') }
+    }
+    const handleOffline = () => { setIsOnline(false); toast.warning('Connexion interrompue. Vos pointages restent enregistrés localement.') }
+    window.addEventListener('online', handleOnline); window.addEventListener('offline', handleOffline)
+    return () => { window.removeEventListener('online', handleOnline); window.removeEventListener('offline', handleOffline) }
+  }, [id, syncAttendance])
   // Update candidate status handler
   const handleToggleStatus = (candidate: Candidate, newStatus: 'present' | 'absent' | 'late') => {
     if (isPvLocked) {
@@ -507,7 +479,7 @@ export default function AdminExamSurveillanceHubPage() {
         sessionStorage.setItem(`offline_emargement_queue_${id}`, JSON.stringify(queue))
         setOfflineQueueCount(queue.length)
         toast.info(`💾 Pointage enregistré localement (${queue.length} en attente de synchro)`)
-      } catch (e) {}
+      } catch {}
     } else {
       updateAttendanceMutation.mutate({
         seating_id: candidate.seating_id,
@@ -609,7 +581,7 @@ export default function AdminExamSurveillanceHubPage() {
           seating_id: selectedStudentForFraud.seating_id,
           status: 'present'
         })
-      } catch (e) {}
+      } catch {}
 
       queryClient.invalidateQueries({ queryKey: ['admin-exam-incidents', id] })
       queryClient.invalidateQueries({ queryKey: ['admin-exam-details', id] })
@@ -627,6 +599,7 @@ export default function AdminExamSurveillanceHubPage() {
       }
 
       const newDisciplineCase = {
+        exam_id: Number(id),
         id: Date.now(),
         student: {
           id: selectedStudentForFraud.student_id || selectedStudentForFraud.id || Date.now(),
@@ -634,9 +607,9 @@ export default function AdminExamSurveillanceHubPage() {
           last_name: selectedStudentForFraud.name.split(' ')[0] || '',
           cne: selectedStudentForFraud.cne,
           apogee: selectedStudentForFraud.cne,
-          email: `${selectedStudentForFraud.name.toLowerCase().replace(/\s+/g, '.')}@encg-fes.ac.ma`,
+          email: '',
           filiere: examObj?.module?.filiere?.name || '—',
-          guardian_email: `tuteur.${selectedStudentForFraud.cne.toLowerCase()}@gmail.com`
+          guardian_email: ''
         },
         module_name: examObj?.module?.name || '—',
         exam_date: examObj?.exam_date || new Date().toISOString().split('T')[0],
@@ -651,7 +624,7 @@ export default function AdminExamSurveillanceHubPage() {
       try {
         const existingQueue = JSON.parse(sessionStorage.getItem('encg_exam_incidents_queue') || '[]')
         sessionStorage.setItem('encg_exam_incidents_queue', JSON.stringify([newDisciplineCase, ...existingQueue]))
-      } catch (e) {}
+      } catch {}
 
       setIncidentsList(prev => {
         const filtered = prev.filter(p => p.cne !== selectedStudentForFraud.cne && p.student_name !== selectedStudentForFraud.name)
@@ -661,7 +634,7 @@ export default function AdminExamSurveillanceHubPage() {
 
       setShowFraudModal(false)
       toast.success(`🚨 Incident de type "${fraudType.toUpperCase()}" enregistré avec succès ! Transmission automatique au Conseil de Discipline.`, { id: toastId })
-    } catch (err) {
+    } catch {
       const newReport: IncidentReport = {
         id: Date.now(),
         student_name: selectedStudentForFraud.name,
@@ -674,6 +647,7 @@ export default function AdminExamSurveillanceHubPage() {
       }
 
       const newDisciplineCase = {
+        exam_id: Number(id),
         id: Date.now(),
         student: {
           id: selectedStudentForFraud.student_id || selectedStudentForFraud.id || Date.now(),
@@ -681,9 +655,9 @@ export default function AdminExamSurveillanceHubPage() {
           last_name: selectedStudentForFraud.name.split(' ')[0] || '',
           cne: selectedStudentForFraud.cne,
           apogee: selectedStudentForFraud.cne,
-          email: `${selectedStudentForFraud.name.toLowerCase().replace(/\s+/g, '.')}@encg-fes.ac.ma`,
+          email: '',
           filiere: examObj?.module?.filiere?.name || '—',
-          guardian_email: `tuteur.${selectedStudentForFraud.cne.toLowerCase()}@gmail.com`
+          guardian_email: ''
         },
         module_name: examObj?.module?.name || '—',
         exam_date: examObj?.exam_date || new Date().toISOString().split('T')[0],
@@ -698,7 +672,7 @@ export default function AdminExamSurveillanceHubPage() {
       try {
         const existingQueue = JSON.parse(sessionStorage.getItem('encg_exam_incidents_queue') || '[]')
         sessionStorage.setItem('encg_exam_incidents_queue', JSON.stringify([newDisciplineCase, ...existingQueue]))
-      } catch (e) {}
+      } catch {}
 
       setIncidentsList(prev => {
         const filtered = prev.filter(p => p.cne !== selectedStudentForFraud.cne && p.student_name !== selectedStudentForFraud.name)
@@ -791,7 +765,7 @@ export default function AdminExamSurveillanceHubPage() {
 
       queryClient.invalidateQueries({ queryKey: ['admin-exam-details', id] })
       toast.success(`✍️ Signature enregistrée pour le ${signingSupervisorRole === 'principal' ? `Surveillant Principal (${principalSupervisorName})` : `Surveillant Secondaire (${secondarySupervisorName})`} !`)
-    } catch (e) {
+    } catch {
       toast.error('La signature n’a pas été enregistrée. Réessayez avant de clôturer le PV.')
     }
   }
@@ -813,7 +787,7 @@ export default function AdminExamSurveillanceHubPage() {
       setPvLockSeal(seal)
       setIsPvLocked(true)
       toast.success('🔒 PV d\'Examen scellé et verrouillé définitivement dans la BDD !', { id: toastId })
-    } catch (e) {
+    } catch {
       const seal = `SHA256:ENCG-FES-${id || 1}-${Date.now().toString(36).toUpperCase()}`
       setPvLockSeal(seal)
       setIsPvLocked(true)
