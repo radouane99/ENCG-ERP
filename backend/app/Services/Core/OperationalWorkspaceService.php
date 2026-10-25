@@ -41,6 +41,7 @@ class OperationalWorkspaceService
                 $follow = $followups->get($row->id);
                 return ['id' => $row->id, 'label' => $row->documentType?->name ?? 'Document', 'person' => $row->student?->user?->name,
                     'status' => $row->status, 'requested_at' => $row->requested_at ?? $row->created_at,
+                    'email_state' => ($row->admin_notes['email_sent'] ?? false) ? 'accepted' : (! empty($row->admin_notes['email_error']) ? 'failed' : 'unknown'),
                     'assigned_to' => $follow?->assigned_to, 'due_at' => $follow?->due_at,
                     'overdue' => $follow?->due_at && now()->gt($follow->due_at) && in_array($row->status, ['pending', 'processing'], true),
                     'revision' => $staff ? (int) ($follow?->version ?? 0) : null];

@@ -429,6 +429,20 @@ class AdminDocumentRequestController extends Controller
      */
     public function sendEmailNotification(DocumentRequest $documentRequest): JsonResponse
     {
+        $workspace = app(\App\Services\Core\OperationalWorkspaceService::class);
+        abort_unless($workspace->isStaff(auth()->user()), 403);
+        $documentRequest = $workspace->requests(auth()->user())->whereKey($documentRequest->id)->firstOrFail();
+        $lock = \Illuminate\Support\Facades\Cache::lock('document-email:'.$documentRequest->id, 120);
+        if (! $lock->get()) {
+            return response()->json(['message' => 'Un envoi est déjà en cours. Réessayez plus tard.'], 409);
+        }
+        try {
+            return $this->deliverEmailNotification($documentRequest->fresh());
+        } finally { $lock->release(); }
+    }
+
+    private function deliverEmailNotification(DocumentRequest $documentRequest): JsonResponse
+    {
         $documentRequest->loadMissing(['student.user', 'documentType']);
         $studentUser = $documentRequest->student?->user;
 
@@ -443,12 +457,20 @@ class AdminDocumentRequestController extends Controller
             'status' => $documentRequest->status,
             'rejection_reason' => $documentRequest->admin_notes['reason'] ?? $documentRequest->admin_notes['rejection_reason'] ?? null,
         ];
+        $fingerprint = hash('sha256', json_encode($emailData + ['recipient' => $studentUser->email]));
+        $previous = $documentRequest->admin_notes ?? [];
+        if (($previous['email_notification_fingerprint'] ?? null) === $fingerprint && ($previous['email_sent'] ?? false)
+            && ! empty($previous['email_sent_at']) && \Carbon\Carbon::parse($previous['email_sent_at'])->gt(now()->subMinutes(2))) {
+            return response()->json(['success' => true, 'deduplicated' => true, 'email_sent' => true, 'message' => 'Envoi déjà accepté récemment. Aucun nouvel email envoyé.']);
+        }
 
         try {
             Mail::to($studentUser->email)->send(new DocumentRequestStatusMail($emailData));
 
             $adminNotes = is_array($documentRequest->admin_notes) ? $documentRequest->admin_notes : [];
             $adminNotes['email_sent'] = true;
+            $adminNotes['email_notification_fingerprint'] = $fingerprint;
+            unset($adminNotes['email_error']);
             $adminNotes['email_sent_at'] = now()->toIso8601String();
             $adminNotes['email_recipient'] = $studentUser->email;
             $documentRequest->update(['admin_notes' => $adminNotes]);
@@ -463,7 +485,7 @@ class AdminDocumentRequestController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => "Email envoyé à {$studentUser->email}.",
+                'message' => "Email accepté par le transport pour {$studentUser->email}.",
                 'email_sent' => true,
                 'email_sent_at' => $adminNotes['email_sent_at'],
                 'email_recipient' => $studentUser->email,
@@ -475,6 +497,7 @@ class AdminDocumentRequestController extends Controller
             $adminNotes['email_sent'] = false;
             $adminNotes['email_error'] = $e->getMessage();
             $documentRequest->update(['admin_notes' => $adminNotes]);
+            NotificationLog::create(['user_id' => $studentUser->id, 'type' => 'email', 'recipient' => $studentUser->email, 'message' => 'Échec de notification pour la demande #'.$documentRequest->id, 'status' => 'failed']);
 
             return response()->json([
                 'success' => false,

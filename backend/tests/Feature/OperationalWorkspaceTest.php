@@ -111,4 +111,24 @@ class OperationalWorkspaceTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         app(VerifiedDatabaseBackupService::class)->verifyRestore('encg_20261025_123456_abcdef12.dump', 'encg_erp');
     }
+
+    public function test_email_retry_is_scoped_and_recent_identical_success_is_not_sent_twice(): void
+    {
+        \Illuminate\Support\Facades\Mail::fake();
+        $this->staff(); $document = $this->requestDocument();
+        $url = '/api/admin/document-requests/'.$document->id.'/send-email-notification';
+        $this->postJson($url)->assertOk()->assertJsonPath('email_sent', true);
+        $this->postJson($url)->assertOk()->assertJsonPath('deduplicated', true);
+        \Illuminate\Support\Facades\Mail::assertSent(\App\Mail\DocumentRequestStatusMail::class, 1);
+        $this->assertSame('accepted', $this->getJson('/api/workspace/today')->assertOk()->json('data.requests.0.email_state'));
+    }
+
+    public function test_failed_email_is_logged_and_does_not_report_success(): void
+    {
+        $this->staff(); $document = $this->requestDocument();
+        \Illuminate\Support\Facades\Mail::shouldReceive('to')->once()->andThrow(new \RuntimeException('Transport synthétique indisponible'));
+        $this->postJson('/api/admin/document-requests/'.$document->id.'/send-email-notification')->assertStatus(500)->assertJsonPath('success', false);
+        $this->assertDatabaseHas('notification_logs', ['type' => 'email', 'status' => 'failed', 'recipient' => $document->student->user->email]);
+        $this->assertSame('failed', $this->getJson('/api/workspace/today')->assertOk()->json('data.requests.0.email_state'));
+    }
 }
