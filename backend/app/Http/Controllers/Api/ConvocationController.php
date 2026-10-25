@@ -27,11 +27,16 @@ class ConvocationController extends Controller
         private ExamConvocationService $convocationService
     ) {}
 
+    private function serviceResult(array $result): JsonResponse
+    {
+        return response()->json($result, ($result['success'] ?? true) ? 200 : 422);
+    }
+
     // ─── MÉTHODES DÉLÉGUÉES AUX SERVICES ───────────────────
 
     public function autoAssign(int $sessionId): JsonResponse
     {
-        return response()->json($this->proctorService->autoAssignProctors($sessionId));
+        return $this->serviceResult($this->proctorService->autoAssignProctors($sessionId));
     }
 
     public function assignmentData(int $sessionId): JsonResponse
@@ -59,7 +64,7 @@ class ConvocationController extends Controller
 
     public function sendAvailabilitySurvey(int $sessionId): JsonResponse
     {
-        return response()->json($this->proctorService->sendAvailabilitySurvey($sessionId));
+        return $this->serviceResult($this->proctorService->sendAvailabilitySurvey($sessionId));
     }
 
     public function generateSession(Request $request): JsonResponse
@@ -68,7 +73,7 @@ class ConvocationController extends Controller
             'session_id' => 'required|integer|exists:exam_sessions,id',
         ]);
 
-        return response()->json($this->convocationService->generateSessionConvocations($validated['session_id']));
+        return $this->serviceResult($this->convocationService->generateSessionConvocations($validated['session_id']));
     }
 
     public function publishSession(Request $request): JsonResponse
@@ -84,7 +89,7 @@ class ConvocationController extends Controller
             'session_id' => 'required|integer|exists:exam_sessions,id',
         ]);
 
-        return response()->json($this->convocationService->sendSessionEmails($validated['session_id']));
+        return $this->serviceResult($this->convocationService->sendSessionEmails($validated['session_id']));
     }
 
     public function sendCampusAlerts(int $sessionId, CampusAlertService $alerts): JsonResponse
@@ -115,19 +120,19 @@ class ConvocationController extends Controller
 
     public function sessionStats(int $sessionId): JsonResponse
     {
-        return response()->json($this->convocationService->getSessionConvocationStats($sessionId));
+        return $this->serviceResult($this->convocationService->getSessionConvocationStats($sessionId));
     }
 
     public function globalLiveStats(int $sessionId): JsonResponse
     {
-        return response()->json($this->convocationService->getGlobalLiveStats($sessionId));
+        return $this->serviceResult($this->convocationService->getGlobalLiveStats($sessionId));
     }
 
     public function sessionList(Request $request, int $sessionId): JsonResponse
     {
         $filters = $request->only(['filiere']);
 
-        return response()->json($this->convocationService->getSessionConvocationsList($sessionId, $filters));
+        return $this->serviceResult($this->convocationService->getSessionConvocationsList($sessionId, $filters));
     }
 
     public function verify(string $reference): JsonResponse
@@ -146,12 +151,12 @@ class ConvocationController extends Controller
 
     public function generate(int $examId): JsonResponse
     {
-        return response()->json($this->convocationService->generateConvocations($examId));
+        return $this->serviceResult($this->convocationService->generateConvocations($examId));
     }
 
     public function sendEmails(int $examId): JsonResponse
     {
-        return response()->json($this->convocationService->sendEmails($examId));
+        return $this->serviceResult($this->convocationService->sendEmails($examId));
     }
 
     public function sendBatchEmails(Request $request, int $sessionId): JsonResponse
@@ -161,22 +166,22 @@ class ConvocationController extends Controller
             return response()->json(['success' => false, 'message' => 'Aucune convocation sélectionnée.'], 400);
         }
 
-        return response()->json($this->convocationService->sendBatchEmails($sessionId, $seatingIds));
+        return $this->serviceResult($this->convocationService->sendBatchEmails($sessionId, $seatingIds));
     }
 
     public function liveStats(int $examId): JsonResponse
     {
-        return response()->json($this->convocationService->getLiveStats($examId));
+        return $this->serviceResult($this->convocationService->getLiveStats($examId));
     }
 
     public function getDetails(int $examId): JsonResponse
     {
-        return response()->json($this->convocationService->getExamDetails($examId));
+        return $this->serviceResult($this->convocationService->getExamDetails($examId));
     }
 
     public function notifyAbsents(int $examId): JsonResponse
     {
-        return response()->json($this->convocationService->notifyAbsents($examId));
+        return $this->serviceResult($this->convocationService->notifyAbsents($examId));
     }
 
     // ─── MÉTHODES AVEC ELOQUENT ────────────────────────────
@@ -653,27 +658,40 @@ class ConvocationController extends Controller
 
     public function downloadProfessorConvocationPdf(Request $request, int $professorId)
     {
-        // Garde le code existant pour l'instant
+        $professor = \App\Models\Professor::findOrFail($professorId);
+        if ((int) $professor->user_id !== (int) $request->user()->id) { app(\App\Services\Academic\ExamWorkflowGuard::class)->manage(); }
+        $request->merge(['professor_id' => $professor->user_id]);
+        return app(PdfExportController::class)->downloadMySurveillancesPdf($request);
     }
 
     public function sendStudentConvocationsIntelligent(Request $request): JsonResponse
     {
-        // Garde le code existant pour l'instant
+        $data = $request->validate(['session_id' => 'required|integer', 'seating_ids' => 'sometimes|array', 'seating_ids.*' => 'integer']);
+        $result = isset($data['seating_ids']) ? $this->convocationService->sendBatchEmails($data['session_id'], $data['seating_ids']) : $this->convocationService->sendSessionEmails($data['session_id']);
+        return response()->json($result, $result['success'] ? 200 : 422);
     }
 
     public function sendProfessorConvocationsIntelligent(Request $request): JsonResponse
     {
-        // Garde le code existant pour l'instant
+        $data = $request->validate(['session_id' => 'required|integer', 'surveillance_ids' => 'sometimes|array', 'surveillance_ids.*' => 'integer']);
+        $ids = $data['surveillance_ids'] ?? ExamSurveillance::whereHas('exam', fn ($q) => $q->where('exam_session_id', $data['session_id']))->pluck('id')->all();
+        $result = $this->convocationService->sendBatchSurveillantsEmails($data['session_id'], $ids);
+        return response()->json($result, $result['success'] ? 200 : 422);
     }
 
     public function exportConvocationsZip(Request $request)
     {
-        // Garde le code existant pour l'instant
+        $data = $request->validate(['session_id' => 'required|integer', 'student_ids' => 'sometimes|array', 'student_ids.*' => 'integer', 'filiere_id' => 'nullable|integer']);
+        return app(\App\Actions\Exam\ExportExamConvocationsAction::class)->execute($data['session_id'], $data['student_ids'] ?? [], $data['filiere_id'] ?? null);
     }
 
     public function generateMissionOrder(Request $request): JsonResponse
     {
-        // Garde le code existant
+        $data = $request->validate(['surveillance_id' => 'required|integer']);
+        $row = ExamSurveillance::with('exam')->findOrFail($data['surveillance_id']);
+        app(\App\Services\Academic\ExamWorkflowGuard::class)->viewExam($row->exam);
+        if ((int) $row->professor_id !== (int) $request->user()->id) { app(\App\Services\Academic\ExamWorkflowGuard::class)->manage(); }
+        return response()->json(['success' => true, 'message' => 'Document de surveillance disponible.', 'pdf_url' => url('/api/exam-planning/surveillant/'.$row->id.'/download')]);
     }
 
     public function sendBatchSurveillantsEmails(Request $request, int $sessionId): JsonResponse
@@ -683,7 +701,7 @@ class ConvocationController extends Controller
             return response()->json(['success' => false, 'message' => 'Aucun surveillant sélectionné.'], 400);
         }
 
-        return response()->json($this->convocationService->sendBatchSurveillantsEmails($sessionId, $surveillanceIds));
+        return $this->serviceResult($this->convocationService->sendBatchSurveillantsEmails($sessionId, $surveillanceIds));
     }
 
     public function sendBatchSurveillantsWhatsApp(Request $request, int $sessionId, WhatsAppService $whatsappService): JsonResponse

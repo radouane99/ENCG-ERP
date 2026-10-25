@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\AttendanceStatus;
+use App\Traits\Auditable;
 use App\Traits\OptimisticLocking;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -11,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Attendance extends Model
 {
-    use HasFactory, OptimisticLocking;
+    use Auditable, HasFactory, OptimisticLocking;
 
     protected $table = 'attendances';
 

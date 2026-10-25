@@ -32,7 +32,12 @@
 
 ## Vérifications
 
-Résultats finaux à compléter après la dernière exécution.
+- Backend : **178 tests réussis, 675 assertions**, sur PostgreSQL dédié, dont 28 scénarios du workflow examens.
+- Navigateur Chromium : **38 scénarios réussis**, dont 9 consacrés aux examens. Les réponses API navigateur sont synthétiques; les tests HTTP backend complètent ces contrôles.
+- Frontend : TypeScript et build de production réussis; lint sur 503 fichiers sans erreur ni avertissement. Les 55 tests unitaires ont aussi réussi pendant cette intervention.
+- Source en lecture seule : 4 sessions, 21 épreuves, **1 721 notes conservées**. Les trois nouvelles colonnes sont présentes. La comparaison des anciennes colonnes sur 157 tables ne relève aucune modification métier préexistante.
+- Publication portail idempotente, séparation normal/rattrapage, refus HTTP des envois, identité réelle du surveillant et archive ZIP vérifiés. Pour le test ZIP, le moteur PDF est simulé; la mise en page imprimée reste à vérifier pendant la recette.
+- Les anciens endpoints de diffusion et export utilisent maintenant les services réels. Les erreurs de service deviennent des erreurs HTTP. Les ZIP sont limités à 150 étudiants par lot. La sélection du surveillant distingue identifiant de compte et identifiant de profil.
 
 Journaux : `backend/storage/logs/exam-workflow-api-20261025.log` et `backend/storage/logs/exam-workflow-complete-20261025.log`. Scénarios navigateur : `frontend/e2e/exam-workflow.spec.ts` avec réponses API synthétiques; tests HTTP backend réels : `backend/tests/Feature/ExamWorkflowReliabilityTest.php`.
 

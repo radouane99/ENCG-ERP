@@ -309,5 +309,51 @@ class ExamWorkflowReliabilityTest extends TestCase
         $this->assertDatabaseHas('exam_seatings', ['id' => $seat->id, 'status' => 'sent', 'qr_token' => 'SYN-QR']);
         \Illuminate\Support\Facades\Mail::assertNothingSent();
     }
+
+    public function test_legacy_exam_aliases_validate_inputs_instead_of_returning_empty_responses(): void
+    {
+        $this->postJson('/api/convocations/send-students', [])->assertUnprocessable();
+        $this->postJson('/api/convocations/send-professors', [])->assertUnprocessable();
+        $this->getJson('/api/convocations/export-zip')->assertUnprocessable();
+        $this->postJson('/api/mission-orders', [])->assertUnprocessable();
+    }
+
+    public function test_convocation_export_contains_real_pdf_entries_in_a_zip(): void
+    {
+        $seat = $this->seat();
+        $this->mock(\App\Http\Controllers\Api\PdfExportController::class)->shouldReceive('studentConvocationPdf')->once()->with($seat->id)->andReturn(response('%PDF-synthetic'));
+        $response = $this->get('/api/convocations/export-zip?session_id='.$this->session->id)->assertOk()->assertDownload('Convocations_session_'.$this->session->id.'.zip');
+        $path = $response->baseResponse->getFile()->getPathname();
+        $zip = new \ZipArchive;
+        $this->assertTrue($zip->open($path));
+        $this->assertEquals(1, $zip->numFiles);
+        $this->assertStringStartsWith('%PDF', $zip->getFromIndex(0));
+        $zip->close();
+        \Illuminate\Support\Facades\File::delete($path);
+    }
+
+    public function test_surveillance_email_uses_user_identity_even_when_a_profile_id_collides(): void
+    {
+        \Illuminate\Support\Facades\Mail::fake();
+        $teacher = User::factory()->create(['institution_id' => 1, 'email' => 'teacher@example.test']);
+        $decoy = User::factory()->create(['institution_id' => 1, 'email' => 'decoy@example.test']);
+        $profile = new \App\Models\Professor(['institution_id' => 1, 'user_id' => $decoy->id, 'employee_number' => 'SYN-COLLISION', 'grade' => 'PES', 'contract_type' => 'permanent', 'hire_date' => '2020-01-01', 'is_active' => true]);
+        $profile->id = $teacher->id;
+        $profile->save();
+        $row = ExamSurveillance::create(['exam_id' => $this->exam->id, 'room_id' => $this->exam->room_id, 'professor_id' => $teacher->id, 'role' => 'president_salle']);
+        $pdf = \Mockery::mock(\Barryvdh\DomPDF\PDF::class);
+        $pdf->shouldReceive('output')->once()->andReturn('%PDF-synthetic');
+        \Barryvdh\DomPDF\Facade\Pdf::shouldReceive('loadView')->once()->with('pdf.convocations_profs_batch', \Mockery::type('array'))->andReturn($pdf);
+        $result = app(ExamConvocationService::class)->sendBatchSurveillantsEmails($this->session->id, [$row->id]);
+        $this->assertTrue($result['success']);
+        \Illuminate\Support\Facades\Mail::assertSent(\App\Mail\ProfessorConvocationEmail::class, fn ($mail) => $mail->hasTo('teacher@example.test') && ! $mail->hasTo('decoy@example.test'));
+    }
+
+    public function test_failed_email_batch_is_an_http_error_and_does_not_claim_success(): void
+    {
+        \Illuminate\Support\Facades\Mail::fake();
+        $this->postJson('/api/convocations/send-session', ['session_id' => $this->session->id])->assertUnprocessable()->assertJsonPath('success', false);
+        \Illuminate\Support\Facades\Mail::assertNothingSent();
+    }
 }
 

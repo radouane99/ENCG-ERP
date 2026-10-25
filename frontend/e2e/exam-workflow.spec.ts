@@ -131,4 +131,23 @@ test.describe('Workflow complet des examens', () => {
     await expect(button).toHaveCount(0)
     expect(reconciled).toBe(true)
   })
+
+  test('la diffusion portail est indépendante des emails et affiche un refus serveur', async ({ page }) => {
+    await admin(page)
+    await page.route(url => url.pathname === '/api/exam-sessions', route => route.fulfill(json({ data: [{ id: 8, name: 'Session synthétique', is_active: true }] })))
+    let accepted = false; let emailCalls = 0
+    page.on('request', request => { if (request.method() === 'POST' && /send.*email|send-session/.test(new URL(request.url()).pathname)) emailCalls++ })
+    await page.route(url => url.pathname === '/api/convocations/publish-session', route => {
+      expect(route.request().postDataJSON()).toEqual({ session_id: 8 })
+      return route.fulfill(accepted ? json({ success: true, message: '3 convocations publiées. Aucun email envoyé.' }) : { ...json({ message: 'Placement incomplet' }), status: 422 })
+    })
+    await page.goto('/admin/convocations?session_id=8')
+    const button = page.getByRole('button', { name: 'Publier sur le portail', exact: true })
+    await button.click()
+    await expect(page.getByText('Placement incomplet', { exact: true })).toBeVisible()
+    accepted = true
+    await button.click()
+    await expect(page.getByText('3 convocations publiées. Aucun email envoyé.', { exact: true })).toBeVisible()
+    expect(emailCalls).toBe(0)
+  })
 })

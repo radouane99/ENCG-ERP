@@ -319,7 +319,7 @@ class PdfExportController extends Controller
                     'time' => $timeRange,
                     'module' => $s->exam->module->name ?? 'Module N/A',
                     'enseignant' => $profName,
-                    'room' => $s->room->name ?? ($s->exam->room->name ?? 'Amphithéâtre B'),
+                    'room' => $s->room->name ?? ($s->exam->room->name ?? '—'),
                     'seat' => $this->formatConvocationSeat($s),
                     'qr_token' => $s->qr_token,
                 ];
@@ -331,14 +331,13 @@ class PdfExportController extends Controller
         $sessionName = $seating->exam?->examSession?->name ?? 'Session d\'Examens';
         $sessionType = $seating->exam?->examSession?->type ?? 'Normale';
         $filiereName = $seating->exam?->module?->filiere?->name ?? 'Tronc Commun ENCG';
-        $currentYear = AcademicYear::where('is_current', true)->first()
-            ?? AcademicYear::orderByDesc('start_year')->first();
-        $academicYearLabel = str_replace('/', ' — ', $currentYear?->displayLabel() ?? $currentYear?->label ?? '2025/2026');
+        $currentYear = $seating->exam?->examSession?->academicYear;
+        $academicYearLabel = $currentYear ? str_replace('/', ' — ', $currentYear->displayLabel() ?? $currentYear->label) : '—';
 
-        $verifyToken = $seating->qr_token ?: Str::uuid()->toString();
+        $verifyToken = $seating->qr_token;
         $verifyUrl = url('/api/convocations/'.$verifyToken.'/verify');
         $qrCodeBase64 = null;
-        if (class_exists(QrCode::class)) {
+        if ($verifyToken && class_exists(QrCode::class)) {
             try {
                 $qrRaw = QrCode::format('png')->size(120)->generate($verifyUrl);
                 $qrCodeBase64 = 'data:image/png;base64,'.base64_encode($qrRaw);
@@ -357,7 +356,7 @@ class PdfExportController extends Controller
             'qr_token' => $verifyToken,
             'qrCodeBase64' => $qrCodeBase64,
             'person_name' => trim(($user?->first_name ?? '').' '.($user?->last_name ?? ($user?->name ?? ($student?->user?->name ?? 'Étudiant')))),
-            'person_id' => $student?->cne ?? ($user?->cin ?? 'N13800000'),
+            'person_id' => $student?->cne ?? ($user?->cin ?? '—'),
             'filiere_name' => $filiereName,
             'session_name' => $sessionName,
             'session_type' => $sessionType,
@@ -407,7 +406,7 @@ class PdfExportController extends Controller
                     'date' => $s->exam->exam_date ? Carbon::parse($s->exam->exam_date)->format('d/m/Y') : 'N/A',
                     'time' => $timeRange,
                     'module' => $s->exam->module->name ?? 'N/A',
-                    'room' => $s->room->name ?? ($s->exam->room->name ?? 'Amphithéâtre B'),
+                    'room' => $s->room->name ?? ($s->exam->room->name ?? '—'),
                     'role' => $roleLabel,
                 ];
             }
@@ -415,21 +414,21 @@ class PdfExportController extends Controller
 
         usort($exams, fn ($a, $b) => strcmp($a['date'].' '.$a['time'], $b['date'].' '.$b['time']));
 
-        $profName = trim(($profUser?->first_name ?? $professorRecord?->first_name ?? '').' '.($profUser?->last_name ?? $professorRecord?->last_name ?? ($profUser?->name ?? $professorRecord?->name ?? '')));
+        $profName = trim(($profUser?->first_name ?? $profRecord?->first_name ?? '').' '.($profUser?->last_name ?? $profRecord?->last_name ?? ($profUser?->name ?? $profRecord?->name ?? '')));
         if ($profName === '') {
-            $profName = $profUser?->name ?? $professorRecord?->name ?? 'Professeur ENCG';
+            $profName = $profUser?->name ?? $profRecord?->name ?? 'Professeur ENCG';
         }
         $sessionName = $surveillance->exam?->examSession?->name ?? 'Session d\'Examens';
         $sessionType = $surveillance->exam?->examSession?->type ?? 'Normale';
 
-        $currentYear = AcademicYear::where('is_current', true)->first()
-            ?? AcademicYear::orderByDesc('start_year')->first();
-        $academicYear = $currentYear ? str_replace('/', ' — ', $currentYear->displayLabel() ?? $currentYear->label) : '2026 — 2027';
+        $currentYear = $surveillance->exam?->examSession?->academicYear;
+        $academicYear = $currentYear ? str_replace('/', ' — ', $currentYear->displayLabel() ?? $currentYear->label) : '—';
 
-        $verifyToken = $surveillance->qr_token ?: Str::uuid()->toString();
+        $verifyToken = $surveillance->qr_token;
         $verifyUrl = url('/api/convocations/'.$verifyToken.'/verify');
         $qrCodeBase64 = null;
         try {
+            if (!$verifyToken) throw new \RuntimeException('QR de surveillance non émis.');
             $qrSvg = QrCode::format('svg')->size(100)->margin(0)->generate($verifyUrl);
             $qrCodeBase64 = 'data:image/svg+xml;base64,'.base64_encode($qrSvg);
         } catch (\Throwable $e) {
@@ -439,10 +438,10 @@ class PdfExportController extends Controller
             'id' => $surveillance->professor_id,
             'created_at' => $surveillance->created_at?->toIso8601String() ?? now()->toIso8601String(),
             'person_name' => strtoupper($profName),
-            'person_id' => $profUser?->cin ?? $professorRecord?->cin ?? 'CD59871',
-            'department_name' => $professorRecord?->department?->name ?? 'Commerce & Gestion',
-            'department_label' => $professorRecord?->departmentDisplayLabel() ?? 'Département Commerce & Gestion — ENCG Fès',
-            'filiere_name' => $professorRecord?->departmentDisplayLabel() ?? 'Corps Professoral — ENCG Fès',
+            'person_id' => $profUser?->cin ?? $profRecord?->cin ?? '—',
+            'department_name' => $profRecord?->department?->name ?? 'Commerce & Gestion',
+            'department_label' => $profRecord?->departmentDisplayLabel() ?? 'Département Commerce & Gestion — ENCG Fès',
+            'filiere_name' => $profRecord?->departmentDisplayLabel() ?? 'Corps Professoral — ENCG Fès',
             'person_role' => $surveillance->role ?? 'Surveillant',
             'session_name' => $sessionName,
             'session_type' => $sessionType,
