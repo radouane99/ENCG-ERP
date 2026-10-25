@@ -22,6 +22,7 @@ use App\Models\StudentPathway;
 use App\Models\Textbook;
 use App\Models\User;
 use App\Models\VacationContract;
+use App\Policies\ProfessorCoursePolicy;
 use App\Services\Academic\TimetableCampaignService;
 use App\Services\Documents\OfficialPdfFactory;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -1998,6 +1999,16 @@ class ProfessorPortalController extends Controller
 
         $group = Group::with('filiere')->findOrFail($groupId);
 
+        // 🔐 SECURITY — Row-Level Access Control: verify professor is assigned to this group
+        $policy = new ProfessorCoursePolicy();
+        if (! $policy->viewGroupStudents($request->user(), $group)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Accès refusé : vous n\'êtes pas affecté à ce groupe pour cette année académique.',
+                'code' => 'NOT_YOUR_GROUP',
+            ], 403);
+        }
+
         $query = Student::with(['user', 'latestPathway.filiere', 'latestPathway.group'])
             ->select('students.*')
             ->leftJoin('users', 'students.user_id', '=', 'users.id')
@@ -2067,6 +2078,16 @@ class ProfessorPortalController extends Controller
 
         if (! $groupId) {
             return response()->json(['success' => false, 'message' => 'Groupe obligatoire.'], 422);
+        }
+
+        // 🔐 SECURITY — Row-Level Access Control
+        $policy = new ProfessorCoursePolicy();
+        if (! $policy->manageGroupAttendance($request->user(), $groupId)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Accès refusé : vous n\'êtes pas affecté à ce groupe.',
+                'code' => 'NOT_YOUR_GROUP',
+            ], 403);
         }
 
         $query = AttendanceSession::with(['attendances'])
@@ -2145,6 +2166,16 @@ class ProfessorPortalController extends Controller
 
         if (! $groupId || ! $moduleId) {
             return response()->json(['success' => false, 'message' => 'Groupe et Module obligatoires.'], 422);
+        }
+
+        // 🔐 SECURITY — Row-Level Access Control: professor must be assigned to this group
+        $policy = new ProfessorCoursePolicy();
+        if (! $policy->manageGroupAttendance($request->user(), $groupId)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Accès refusé : vous n\'êtes pas affecté à ce groupe.',
+                'code' => 'NOT_YOUR_GROUP',
+            ], 403);
         }
 
         // Règle Académique ENCG Fès : Suspension du pointage d'assiduité ordinaire durant la semaine d'examens
@@ -2325,6 +2356,13 @@ class ProfessorPortalController extends Controller
         }
 
         $group = Group::with(['filiere', 'academicYear'])->findOrFail($groupId);
+
+        // 🔐 SECURITY — Row-Level Access Control
+        $policy = new ProfessorCoursePolicy();
+        if (! $policy->viewGroupStudents($request->user(), $group)) {
+            abort(403, 'Accès refusé : vous n\'êtes pas affecté à ce groupe.');
+        }
+
         $module = $moduleId ? Module::find($moduleId) : null;
 
         $user = $request->user();

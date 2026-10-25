@@ -701,6 +701,9 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:admin|super-admi
     // Analytics & AI
     Route::prefix('analytics')->group(function () {
         Route::get('/at-risk-students', [AnalyticsController::class, 'getAtRiskStudents']);
+        Route::get('/article14-risk', [AnalyticsController::class, 'getArticle14Risk']);
+        Route::get('/absenteeism-by-filiere', [AnalyticsController::class, 'getAbsenteeismByFiliere']);
+
     });
 
     // Anti-Fraud Documents & PDFs
