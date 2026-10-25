@@ -321,10 +321,10 @@ const [isOnline, setIsOnline] = useState(navigator.onLine);
   };
 
   return (
-    <div className="max-w-[1400px] mx-auto p-6 space-y-8 font-sans animate-in duration-500 pb-24">
+    <div className="max-w-[1400px] mx-auto space-y-8 font-sans animate-in duration-500 pb-24">
       
       {/* Hero Header Banner */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] p-8 md:p-10 rounded-[2.5rem] shadow-2xl text-white border border-blue-800/40">
+      <div className="relative overflow-hidden p-8 md:p-10 text-white border border-blue-800/40 erp-page-banner">
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-indigo-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
 
         <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
@@ -337,10 +337,10 @@ const [isOnline, setIsOnline] = useState(navigator.onLine);
               <ArrowLeft className="w-6 h-6" />
             </button>
             <div>
-              <div className="inline-flex items-center gap-2 bg-indigo-500/20 text-indigo-200 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-2 border border-indigo-400/30">
+              <div className="inline-flex items-center gap-2 bg-indigo-500/20 text-indigo-200 px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mb-2 border border-indigo-400/30">
                 <Sparkles className="w-4 h-4 text-amber-400" /> Émargement Numérique Direct ENCG Fès
               </div>
-              <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight">
+              <h1 className="text-white erp-page-title">
                 Scanner d'Émargement QR Code
               </h1>
               <p className="text-blue-100/90 text-xs md:text-sm max-w-2xl font-medium mt-1">
@@ -351,11 +351,11 @@ const [isOnline, setIsOnline] = useState(navigator.onLine);
 
           <div className="flex items-center gap-3 flex-wrap shrink-0">
             {isOnline ? (
-              <span className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-black bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+              <span className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
                 <Wifi className="w-4 h-4 text-emerald-400 animate-pulse" /> En ligne (Synchro)
               </span>
             ) : (
-              <span className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-black bg-amber-500/20 text-amber-300 border border-amber-400/30">
+              <span className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-400/30">
                 <WifiOff className="w-4 h-4 text-amber-400 animate-ping" /> Hors ligne ({pendingScans.length})
               </span>
             )}
@@ -371,14 +371,14 @@ const [isOnline, setIsOnline] = useState(navigator.onLine);
             {!isScanning ? (
               <button
                 onClick={startCamera}
-                className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-3.5 rounded-2xl font-black hover:scale-102 transition-all shadow-lg flex items-center gap-2 cursor-pointer text-xs uppercase tracking-wider"
+                className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-3.5 rounded-2xl font-bold hover:scale-102 transition-all shadow-lg flex items-center gap-2 cursor-pointer text-xs uppercase tracking-wider"
               >
                 <Camera className="w-4 h-4 text-amber-300" /> Activer la Caméra
               </button>
             ) : (
               <button
                 onClick={stopCamera}
-                className="bg-rose-600 hover:bg-rose-700 text-white px-6 py-3.5 rounded-2xl font-black transition-all shadow-lg flex items-center gap-2 cursor-pointer text-xs uppercase tracking-wider"
+                className="bg-rose-600 hover:bg-rose-700 text-white px-6 py-3.5 rounded-2xl font-bold transition-all shadow-lg flex items-center gap-2 cursor-pointer text-xs uppercase tracking-wider"
               >
                 <XCircle className="w-4 h-4" /> Arrêter Caméra
               </button>
@@ -393,15 +393,15 @@ const [isOnline, setIsOnline] = useState(navigator.onLine);
         <div className="lg:col-span-5 space-y-6">
           
           {/* Amphi Picker Widget */}
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] border border-slate-200/80 dark:border-slate-800 shadow-xl space-y-4">
+          <div className="bg-card dark:bg-card p-6 rounded-2xl border border-slate-200/80 dark:border-border shadow-sm space-y-4">
             <div className="flex items-center justify-between">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Amphi / Salle de Contrôle Actuel</label>
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Amphi / Salle de Contrôle Actuel</label>
               <button
                 onClick={handleAutoDetectIpBeacon}
-                className="text-[10px] font-black text-indigo-600 hover:text-indigo-700 bg-indigo-50 dark:bg-indigo-950/60 px-2.5 py-1 rounded-xl border border-indigo-200 flex items-center gap-1 cursor-pointer transition-all"
+                className="text-[10px] font-bold text-primary hover:text-primary bg-primary/5 dark:bg-indigo-950/60 px-2.5 py-1 rounded-xl border border-primary/20 flex items-center gap-1 cursor-pointer transition-all"
                 title="Détecter automatiquement l'amphi selon l'IP et la balise Wi-Fi"
               >
-                <Wifi className="w-3 h-3 text-indigo-500" /> Auto-Détection IP
+                <Wifi className="w-3 h-3 text-primary" /> Auto-Détection IP
               </button>
             </div>
 
@@ -418,20 +418,20 @@ const [isOnline, setIsOnline] = useState(navigator.onLine);
                     className={cn(
                       "p-4 rounded-2xl border-2 transition-all cursor-pointer space-y-2 group relative overflow-hidden",
                       isActive
-                        ? "border-indigo-600 bg-gradient-to-r from-indigo-50/80 to-purple-50/80 dark:from-indigo-950/60 dark:to-purple-950/60 shadow-md ring-4 ring-indigo-500/10"
-                        : "border-slate-200 dark:border-slate-800 hover:border-indigo-300 bg-slate-50/50 dark:bg-slate-800/40"
+                        ? "border-primary bg-gradient-to-r from-indigo-50/80 to-purple-50/80 dark:from-indigo-950/60 dark:to-purple-950/60 shadow-md ring-4 ring-indigo-500/10"
+                        : "border-border dark:border-border hover:border-primary/20 bg-slate-50/50 dark:bg-slate-800/40"
                     )}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <div className={cn(
                           "w-10 h-10 rounded-xl flex items-center justify-center text-lg font-bold shadow-xs shrink-0 transition-transform group-hover:scale-105",
-                          isActive ? "bg-indigo-600 text-white" : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200"
+                          isActive ? "bg-primary text-primary-foreground" : "bg-card dark:bg-card text-slate-700 dark:text-foreground border border-border"
                         )}>
                           {amphi.icon}
                         </div>
                         <div>
-                          <h4 className={cn("font-black text-xs", isActive ? "text-indigo-950 dark:text-white" : "text-slate-900 dark:text-white")}>
+                          <h4 className={cn("font-bold text-xs", isActive ? "text-indigo-950 dark:text-white" : "text-foreground dark:text-white")}>
                             {amphi.name}
                           </h4>
                           <p className="text-[10px] font-bold text-slate-400 mt-0.5">{amphi.gate} • Capacité : {amphi.cap}</p>
@@ -439,11 +439,11 @@ const [isOnline, setIsOnline] = useState(navigator.onLine);
                       </div>
 
                       <div className="text-right">
-                        <span className={cn("text-[10px] font-black font-mono block", isSaturated ? "text-rose-600 font-extrabold" : isActive ? "text-indigo-600 dark:text-indigo-400" : "text-slate-500")}>
+                        <span className={cn("text-[10px] font-bold font-mono block", isSaturated ? "text-rose-600 font-bold" : isActive ? "text-primary dark:text-indigo-400" : "text-muted-foreground")}>
                           {amphi.count} / {amphi.cap} Présents {isSaturated && '(Alarme 90%+)'}
                         </span>
                         {isActive && (
-                          <span className="inline-flex items-center gap-1 text-[9px] font-black text-emerald-600 uppercase">
+                          <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-600 uppercase">
                             ● Actif
                           </span>
                         )}
@@ -453,9 +453,9 @@ const [isOnline, setIsOnline] = useState(navigator.onLine);
 
                     {/* Live Progress Fill Bar (Live Meter) */}
                     <div className="space-y-1 pt-1">
-                      <div className="flex justify-between items-center text-[9px] font-black">
+                      <div className="flex justify-between items-center text-[9px] font-bold">
                         <span className="text-slate-400 uppercase">Taux de Remplissage (Live)</span>
-                        <span className={cn("font-mono", isSaturated ? "text-rose-600 font-extrabold" : "text-emerald-600")}>{fillPercent}%</span>
+                        <span className={cn("font-mono", isSaturated ? "text-rose-600 font-bold" : "text-emerald-600")}>{fillPercent}%</span>
                       </div>
                       <div className="h-2 w-full bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
                         <div
@@ -477,9 +477,9 @@ const [isOnline, setIsOnline] = useState(navigator.onLine);
 
           {/* Camera Viewport */}
           {isScanning && (
-            <div className="bg-slate-950 rounded-[2.5rem] overflow-hidden border border-slate-800 relative aspect-video shadow-2xl flex items-center justify-center">
+            <div className="bg-slate-950 rounded-2xl overflow-hidden border border-slate-800 relative aspect-video shadow-sm flex items-center justify-center">
               <video ref={videoRef} className="w-full h-full object-cover" />
-              <div className="absolute inset-0 border-2 border-indigo-500/40 rounded-[2.5rem] pointer-events-none flex items-center justify-center">
+              <div className="absolute inset-0 border-2 border-indigo-500/40 rounded-2xl pointer-events-none flex items-center justify-center">
                 <div className="w-48 h-48 border-2 border-indigo-400 rounded-2xl animate-pulse relative">
                   <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-amber-400" />
                   <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-amber-400" />
@@ -494,9 +494,9 @@ const [isOnline, setIsOnline] = useState(navigator.onLine);
           )}
 
           {/* Manual Input / Douchette Barcode */}
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] border border-slate-200/80 dark:border-slate-800 shadow-xl space-y-4">
-            <h3 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
-              <Search className="w-4 h-4 text-indigo-600" /> Saisie Manuelle ou Douchette Code-barres
+          <div className="bg-card dark:bg-card p-6 rounded-2xl border border-slate-200/80 dark:border-border shadow-sm space-y-4">
+            <h3 className="text-sm font-bold text-foreground dark:text-white flex items-center gap-2">
+              <Search className="w-4 h-4 text-primary" /> Saisie Manuelle ou Douchette Code-barres
             </h3>
             
             <form onSubmit={(e) => { e.preventDefault(); handleVerifyToken(tokenInput); }} className="flex gap-2">
@@ -505,13 +505,13 @@ const [isOnline, setIsOnline] = useState(navigator.onLine);
                 value={tokenInput}
                 onChange={(e) => setTokenInput(e.target.value)}
                 placeholder="Collez ou scannez le QR Token (ex: ENCG-N13809281...)"
-                className="flex-1 px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-mono font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white"
+                className="flex-1 px-4 py-3 border border-border dark:border-border bg-muted/50 dark:bg-card text-xs font-mono font-bold focus:outline-none focus:ring-2 focus:ring-ring dark:text-white rounded-[var(--control-radius)]"
                 autoFocus
               />
               <button
                 type="submit"
                 disabled={loading || !tokenInput.trim()}
-                className="bg-[#0f2863] text-white px-5 py-3 rounded-2xl text-xs font-black uppercase tracking-wider disabled:opacity-50 flex items-center gap-1.5 cursor-pointer shadow-md"
+                className="bg-[#0f2863] text-white px-5 py-3 rounded-2xl text-xs font-bold uppercase tracking-wider disabled:opacity-50 flex items-center gap-1.5 cursor-pointer shadow-md"
               >
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Vérifier'}
               </button>
@@ -524,7 +524,7 @@ const [isOnline, setIsOnline] = useState(navigator.onLine);
 
           {/* Error Banner */}
           {errorMsg && (
-            <div className="p-5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 rounded-3xl text-rose-700 dark:text-rose-400 text-xs font-black flex items-center gap-3 animate-in fade-in shadow-sm">
+            <div className="p-5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 rounded-2xl text-rose-700 dark:text-rose-400 text-xs font-bold flex items-center gap-3 animate-in fade-in shadow-sm">
               <AlertTriangle className="w-6 h-6 shrink-0 text-rose-600" />
               <span>{errorMsg}</span>
             </div>
@@ -532,7 +532,7 @@ const [isOnline, setIsOnline] = useState(navigator.onLine);
 
           {/* Action Success Banner */}
           {actionSuccess && (
-            <div className="p-5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50 rounded-3xl text-emerald-700 dark:text-emerald-300 text-xs font-black flex items-center gap-3 animate-in fade-in shadow-sm">
+            <div className="p-5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50 rounded-2xl text-emerald-700 dark:text-emerald-300 text-xs font-bold flex items-center gap-3 animate-in fade-in shadow-sm">
               <CheckCircle className="w-6 h-6 shrink-0 text-emerald-600" />
               <span>{actionSuccess}</span>
             </div>
@@ -543,8 +543,8 @@ const [isOnline, setIsOnline] = useState(navigator.onLine);
         <div className="lg:col-span-7">
           {studentData ? (
             <div className={cn(
-              "rounded-[2.5rem] border shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 space-y-0",
-              studentData.is_wrong_room ? "bg-rose-50/50 dark:bg-rose-950/20 border-rose-300" : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
+              "rounded-2xl border shadow-sm overflow-hidden animate-in zoom-in-95 duration-200 space-y-0",
+              studentData.is_wrong_room ? "bg-rose-50/50 dark:bg-rose-950/20 border-rose-300" : "bg-card dark:bg-card border-border dark:border-border"
             )}>
               
               {/* Identity Header */}
@@ -553,14 +553,14 @@ const [isOnline, setIsOnline] = useState(navigator.onLine);
                 studentData.is_wrong_room ? "bg-gradient-to-r from-rose-900 via-rose-800 to-slate-900" : "bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d]"
               )}>
                 <div className="flex items-center gap-5">
-                  <div className="w-20 h-20 rounded-3xl bg-white/10 border border-white/20 flex items-center justify-center text-3xl font-black text-amber-300 shadow-2xl shrink-0">
+                  <div className="w-20 h-20 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center text-3xl font-bold text-amber-300 shadow-sm shrink-0">
                     {studentData.student_name.charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <span className="px-3 py-1 rounded-full text-[10px] font-black bg-amber-400 text-slate-950 uppercase tracking-widest">
+                    <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-amber-400 text-slate-950 uppercase tracking-widest">
                       {studentData.is_wrong_room ? '⚠️ MAUVAIS AMPHI' : 'Étudiant Convoqué'}
                     </span>
-                    <h2 className="text-2xl font-black text-white mt-1">
+                    <h2 className="text-2xl font-bold text-white mt-1">
                       {studentData.student_name}
                     </h2>
                     <div className="flex items-center gap-3 text-xs text-blue-200 mt-1">
@@ -571,8 +571,8 @@ const [isOnline, setIsOnline] = useState(navigator.onLine);
                 </div>
 
                 <div className="text-right">
-                  <span className="text-[10px] text-blue-200 block uppercase font-black tracking-widest">Emplacement Attribué</span>
-                  <span className="text-2xl font-black text-amber-400 font-mono">
+                  <span className="text-[10px] text-blue-200 block uppercase font-bold tracking-widest">Emplacement Attribué</span>
+                  <span className="text-2xl font-bold text-amber-400 font-mono">
                     {studentData.seat_number}
                   </span>
                   <span className="text-xs font-bold text-blue-100 block mt-0.5">{studentData.row_letter}</span>
@@ -584,26 +584,26 @@ const [isOnline, setIsOnline] = useState(navigator.onLine);
                 
                 {/* Details Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 space-y-1">
-                    <span className="text-[10px] text-slate-400 font-black uppercase flex items-center gap-1.5">
-                      <FileText className="w-3.5 h-3.5 text-indigo-500" /> Module d'Examen
+                  <div className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/60 border border-border dark:border-slate-700/60 space-y-1">
+                    <span className="text-[10px] text-slate-400 font-bold uppercase flex items-center gap-1.5">
+                      <FileText className="w-3.5 h-3.5 text-primary" /> Module d'Examen
                     </span>
-                    <p className="font-extrabold text-slate-900 dark:text-white text-sm">
+                    <p className="font-bold text-foreground dark:text-white text-sm">
                       {studentData.module_name}
                     </p>
-                    <p className="text-xs text-indigo-600 dark:text-indigo-400 font-bold">
+                    <p className="text-xs text-primary dark:text-indigo-400 font-bold">
                       {studentData.filiere}
                     </p>
                   </div>
 
-                  <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 space-y-1">
-                    <span className="text-[10px] text-slate-400 font-black uppercase flex items-center gap-1.5">
+                  <div className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/60 border border-border dark:border-slate-700/60 space-y-1">
+                    <span className="text-[10px] text-slate-400 font-bold uppercase flex items-center gap-1.5">
                       <MapPin className="w-3.5 h-3.5 text-rose-500" /> Salle d'Examen Assignée
                     </span>
-                    <p className={cn("font-black text-sm", studentData.is_wrong_room ? "text-rose-600" : "text-slate-900 dark:text-white")}>
+                    <p className={cn("font-bold text-sm", studentData.is_wrong_room ? "text-rose-600" : "text-foreground dark:text-white")}>
                       {studentData.room_name}
                     </p>
-                    <p className="text-xs text-slate-500 font-bold">
+                    <p className="text-xs text-muted-foreground font-bold">
                       Horaire : {studentData.start_time} (2h00)
                     </p>
                   </div>
@@ -611,12 +611,12 @@ const [isOnline, setIsOnline] = useState(navigator.onLine);
 
                 {/* Tactile Action Buttons: PRESENT / ABSENT / FRAUD */}
                 <div className="space-y-3 pt-2">
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Valider l'Émargement Tactile en 1-Clic</span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Valider l'Émargement Tactile en 1-Clic</span>
                   <div className="grid grid-cols-3 gap-3">
                     <button
                       onClick={() => handleUpdateStatus('present')}
                       className={cn(
-                        "py-3.5 rounded-2xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md",
+                        "py-3.5 rounded-2xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md",
                         studentData.status === 'present' ? "bg-emerald-600 text-white ring-4 ring-emerald-200" : "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 hover:bg-emerald-100"
                       )}
                     >
@@ -626,7 +626,7 @@ const [isOnline, setIsOnline] = useState(navigator.onLine);
                     <button
                       onClick={() => handleUpdateStatus('absent')}
                       className={cn(
-                        "py-3.5 rounded-2xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md",
+                        "py-3.5 rounded-2xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md",
                         studentData.status === 'absent' ? "bg-amber-600 text-white ring-4 ring-amber-200" : "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 hover:bg-amber-100"
                       )}
                     >
@@ -636,7 +636,7 @@ const [isOnline, setIsOnline] = useState(navigator.onLine);
                     <button
                       onClick={() => handleUpdateStatus('fraud')}
                       className={cn(
-                        "py-3.5 rounded-2xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md",
+                        "py-3.5 rounded-2xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md",
                         studentData.status === 'fraud' ? "bg-rose-600 text-white ring-4 ring-rose-200" : "bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 hover:bg-rose-100"
                       )}
                     >
@@ -648,11 +648,11 @@ const [isOnline, setIsOnline] = useState(navigator.onLine);
               </div>
             </div>
           ) : (
-            <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200/80 dark:border-slate-800 p-12 text-center shadow-xl space-y-4">
-              <div className="w-20 h-20 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 flex items-center justify-center mx-auto">
+            <div className="bg-card dark:bg-card rounded-2xl border border-slate-200/80 dark:border-border p-12 text-center shadow-sm space-y-4">
+              <div className="w-20 h-20 rounded-full bg-muted dark:bg-card text-slate-400 flex items-center justify-center mx-auto">
                 <QrCode className="w-10 h-10" />
               </div>
-              <h3 className="text-xl font-black text-slate-900 dark:text-white">Aucune convocation scannée</h3>
+              <h3 className="text-xl font-bold text-foreground dark:text-white">Aucune convocation scannée</h3>
               <p className="text-xs text-slate-400 max-w-sm mx-auto font-medium">
                 Scannez le QR Code imprimé sur la convocation de l'étudiant avec votre caméra ou votre lecteur douchette USB.
               </p>

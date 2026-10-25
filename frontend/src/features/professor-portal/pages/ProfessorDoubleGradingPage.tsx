@@ -89,22 +89,22 @@ export default function ProfessorDoubleGradingPage() {
   const conforming = totalCopies - discrepancies;
 
   return (
-    <div className="space-y-8 font-sans animate-in fade-in duration-500 text-slate-900 dark:text-slate-100 pb-28">
+    <div className="space-y-8 font-sans animate-in fade-in duration-500 text-foreground dark:text-foreground pb-28">
       
       {/* ── Executive Header Banner ── */}
-      <div className="bg-gradient-to-br from-[#001A4B] via-[#082663] to-[#0d1d3d] rounded-[2.5rem] p-8 md:p-10 text-white shadow-2xl border border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
+      <div className="p-8 md:p-10 text-white border border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden erp-page-banner">
         <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
         <div className="absolute bottom-0 left-1/3 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
         <div className="flex items-center gap-5 relative z-10">
-          <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-3xl flex items-center justify-center shadow-xl shadow-indigo-500/20 text-white shrink-0 font-black">
+          <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-sm shadow-indigo-500/20 text-white shrink-0 font-bold">
             <ArrowRightLeft className="w-8 h-8" />
           </div>
           <div className="space-y-1">
-            <span className="bg-indigo-500/20 text-indigo-300 border border-indigo-400/30 px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest inline-flex items-center gap-1">
+            <span className="bg-indigo-500/20 text-indigo-300 border border-indigo-400/30 px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest inline-flex items-center gap-1">
               <ShieldCheck className="w-3.5 h-3.5" /> Système Anonyme & Équité Apogée
             </span>
-            <h1 className="text-2xl md:text-3xl font-black tracking-tight">Double Correction & Arbitrage des Écarts</h1>
+            <h1 className="erp-page-title">Double Correction & Arbitrage des Écarts</h1>
             <p className="text-xs md:text-sm text-blue-200 font-medium">
               Concordance automatique entre les deux correcteurs avec seuil d'arbitrage fixé à Δ ≥ 3.0 points.
             </p>
@@ -113,7 +113,7 @@ export default function ProfessorDoubleGradingPage() {
 
         <button
           onClick={handleSaveAll}
-          className="px-6 py-3.5 bg-amber-400 hover:bg-amber-300 text-[#001A4B] rounded-2xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg shrink-0 cursor-pointer"
+          className="px-6 py-3.5 bg-amber-400 hover:bg-amber-300 text-[#001A4B] rounded-2xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg shrink-0 cursor-pointer"
         >
           <Save className="w-4 h-4" /> Enregistrer le PV de Correction
         </button>
@@ -121,46 +121,46 @@ export default function ProfessorDoubleGradingPage() {
 
       {/* KPI Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 flex items-center justify-center font-black shrink-0">
+        <div className="bg-card dark:bg-card rounded-2xl p-6 shadow-sm border border-border dark:border-border flex items-center gap-4">
+          <div className="w-14 h-14 rounded-2xl bg-primary/5 dark:bg-blue-950 text-primary dark:text-blue-400 flex items-center justify-center font-bold shrink-0">
             <FileText className="w-7 h-7" />
           </div>
           <div>
-            <div className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Total Copies Évaluées</div>
-            <div className="text-2xl font-black text-slate-900 dark:text-white">{totalCopies} Copies</div>
-            <div className="text-[11px] font-bold text-slate-500">Session Normale Automne</div>
+            <div className="text-[10px] font-bold uppercase text-slate-400 tracking-widest">Total Copies Évaluées</div>
+            <div className="text-2xl font-bold text-foreground dark:text-white">{totalCopies} Copies</div>
+            <div className="text-[11px] font-bold text-muted-foreground">Session Normale Automne</div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-black shrink-0">
+        <div className="bg-card dark:bg-card rounded-2xl p-6 shadow-sm border border-border dark:border-border flex items-center gap-4">
+          <div className="w-14 h-14 rounded-2xl bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold shrink-0">
             <CheckCircle2 className="w-7 h-7" />
           </div>
           <div>
-            <div className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Copies Conformes (Δ &lt; 3 pts)</div>
-            <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400">{conforming} Validées</div>
-            <div className="text-[11px] font-bold text-slate-500">Moyenne arithmétique adoptée</div>
+            <div className="text-[10px] font-bold uppercase text-slate-400 tracking-widest">Copies Conformes (Δ &lt; 3 pts)</div>
+            <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{conforming} Validées</div>
+            <div className="text-[11px] font-bold text-muted-foreground">Moyenne arithmétique adoptée</div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-rose-50 dark:bg-rose-950 text-rose-600 dark:text-rose-400 flex items-center justify-center font-black shrink-0">
+        <div className="bg-card dark:bg-card rounded-2xl p-6 shadow-sm border border-border dark:border-border flex items-center gap-4">
+          <div className="w-14 h-14 rounded-2xl bg-rose-50 dark:bg-rose-950 text-rose-600 dark:text-rose-400 flex items-center justify-center font-bold shrink-0">
             <AlertTriangle className="w-7 h-7" />
           </div>
           <div>
-            <div className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Écarts Majeurs (Δ ≥ 3 pts)</div>
-            <div className="text-2xl font-black text-rose-600 dark:text-rose-400">{discrepancies} À Arbitrer</div>
-            <div className="text-[11px] font-bold text-slate-500">Décision du 3ème correcteur requise</div>
+            <div className="text-[10px] font-bold uppercase text-slate-400 tracking-widest">Écarts Majeurs (Δ ≥ 3 pts)</div>
+            <div className="text-2xl font-bold text-rose-600 dark:text-rose-400">{discrepancies} À Arbitrer</div>
+            <div className="text-[11px] font-bold text-muted-foreground">Décision du 3ème correcteur requise</div>
           </div>
         </div>
       </div>
 
       {/* Copies Reconciliation Table */}
-      <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-200 dark:border-slate-800 space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
+      <div className="bg-card dark:bg-card rounded-2xl p-6 sm:p-8 shadow-sm border border-border dark:border-border space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border dark:border-border pb-4">
           <div>
-            <h2 className="text-base font-black text-slate-900 dark:text-white uppercase tracking-wide flex items-center gap-2">
-              <Scale className="w-5 h-5 text-indigo-600" /> Grille de Concordance des Notes Anonymes
+            <h2 className="text-base font-bold text-foreground dark:text-white uppercase tracking-wide flex items-center gap-2">
+              <Scale className="w-5 h-5 text-primary" /> Grille de Concordance des Notes Anonymes
             </h2>
             <p className="text-xs text-slate-400 font-medium">Les notes sont automatiquement moyennées sauf en cas d'écart significatif.</p>
           </div>
@@ -172,7 +172,7 @@ export default function ProfessorDoubleGradingPage() {
               placeholder="Rechercher code copie / anonymat..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-9 pr-4 py-2 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs text-foreground dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-ring rounded-[var(--control-radius)]"
             />
           </div>
         </div>
@@ -180,7 +180,7 @@ export default function ProfessorDoubleGradingPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-slate-100 dark:border-slate-800 text-[10px] font-black uppercase tracking-wider text-slate-400">
+              <tr className="border-b border-border dark:border-border text-[10px] font-bold uppercase tracking-wider text-slate-400">
                 <th className="pb-3 pl-2">N° Copie</th>
                 <th className="pb-3">Code Anonymat</th>
                 <th className="pb-3 text-center">Correcteur 1</th>
@@ -196,23 +196,23 @@ export default function ProfessorDoubleGradingPage() {
 
                 return (
                   <tr key={row.copy_id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors">
-                    <td className="py-4 pl-2 font-mono font-black text-indigo-700 dark:text-indigo-400">{row.copy_id}</td>
-                    <td className="py-4 font-mono text-slate-600 dark:text-slate-300">{row.student_anonymous_id}</td>
-                    <td className="py-4 text-center font-mono font-black text-slate-800 dark:text-white">{row.grade_corrector_1.toFixed(2)}</td>
-                    <td className="py-4 text-center font-mono font-black text-slate-800 dark:text-white">{row.grade_corrector_2.toFixed(2)}</td>
+                    <td className="py-4 pl-2 font-mono font-bold text-primary dark:text-indigo-400">{row.copy_id}</td>
+                    <td className="py-4 font-mono text-muted-foreground dark:text-foreground">{row.student_anonymous_id}</td>
+                    <td className="py-4 text-center font-mono font-bold text-foreground dark:text-white">{row.grade_corrector_1.toFixed(2)}</td>
+                    <td className="py-4 text-center font-mono font-bold text-foreground dark:text-white">{row.grade_corrector_2.toFixed(2)}</td>
                     <td className="py-4 text-center">
                       <span className={cn(
-                        "px-2.5 py-1 rounded-lg font-mono font-black text-xs",
+                        "px-2.5 py-1 rounded-lg font-mono font-bold text-xs",
                         isDiscrepancy 
                           ? "bg-rose-50 dark:bg-rose-950 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800" 
-                          : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+                          : "bg-muted dark:bg-card text-slate-700 dark:text-foreground"
                       )}>
                         {row.delta.toFixed(2)} pts
                       </span>
                     </td>
                     <td className="py-4 text-center">
                       <span className={cn(
-                        "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border",
+                        "px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border",
                         isDiscrepancy 
                           ? "bg-rose-50 dark:bg-rose-950 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800" 
                           : "bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
@@ -231,11 +231,11 @@ export default function ProfessorDoubleGradingPage() {
                             placeholder="Note Arbitre"
                             value={row.final_grade}
                             onChange={e => handleArbitrate(row.copy_id, e.target.value)}
-                            className="w-24 p-1.5 bg-rose-50 dark:bg-rose-950 border border-rose-300 dark:border-rose-700 rounded-lg text-center font-black text-xs text-rose-900 dark:text-rose-200 focus:outline-none focus:ring-2 focus:ring-rose-500"
+                            className="w-24 p-1.5 bg-rose-50 dark:bg-rose-950 border border-rose-300 dark:border-rose-700 text-center font-bold text-xs text-rose-900 dark:text-rose-200 focus:outline-none focus:ring-2 focus:ring-rose-500 rounded-[var(--control-radius)]"
                           />
                         </div>
                       ) : (
-                        <span className="font-mono font-black text-base text-[#001A4B] dark:text-blue-300">
+                        <span className="font-mono font-bold text-base text-[#001A4B] dark:text-blue-300">
                           {Number(row.final_grade).toFixed(2)} / 20
                         </span>
                       )}

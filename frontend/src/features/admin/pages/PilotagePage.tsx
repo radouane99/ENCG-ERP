@@ -117,23 +117,23 @@ export default function PilotagePage() {
   };
 
   return (
-    <div className="max-w-[1700px] mx-auto p-4 md:p-8 space-y-8 font-sans animate-in fade-in pb-24">
+    <div className="max-w-[1700px] mx-auto space-y-8 font-sans animate-in fade-in pb-24">
 
       {/* ── Hero Powerhouse Banner ────────────────────────────────────────────── */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-slate-950 via-[#001A4B] to-indigo-950 p-8 md:p-10 rounded-[2.5rem] shadow-2xl text-white border border-indigo-900/40">
+      <div className="relative overflow-hidden p-8 md:p-10 text-white border border-indigo-900/40 erp-page-banner">
         <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="flex items-center gap-6">
-            <div className="w-16 h-16 md:w-20 md:h-20 rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center shadow-2xl shrink-0">
+            <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center shadow-sm shrink-0">
               <Target className="w-8 h-8 md:w-10 md:h-10 text-amber-300" />
             </div>
             <div>
-              <div className="inline-flex items-center gap-2 bg-indigo-500/20 text-indigo-200 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-2 border border-indigo-400/30">
+              <div className="inline-flex items-center gap-2 bg-indigo-500/20 text-indigo-200 px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mb-2 border border-indigo-400/30">
                 <Sparkles className="w-4 h-4 text-amber-300" /> Centre de Pilotage & Gouvernance Académique
               </div>
-              <h1 className="text-2xl md:text-4xl font-black text-white tracking-tight leading-tight">
+              <h1 className="text-white leading-tight erp-page-title">
                 Tableau de Bord Stratégique & Vigilance
               </h1>
               <p className="text-indigo-100/90 text-xs md:text-sm font-medium mt-1 max-w-2xl">
@@ -172,8 +172,8 @@ export default function PilotagePage() {
             { label: 'VACATAIRES ACTIFS', value: Array.isArray(cockpit?.vacataire_load) ? cockpit.vacataire_load.length : 0 },
           ].map(s => (
             <div key={s.label} className="p-3.5 rounded-2xl bg-white/10 border border-white/15 text-center">
-              <span className="text-[9px] font-black uppercase tracking-wider text-indigo-200 block">{s.label}</span>
-              <span className="text-2xl font-black text-white font-mono mt-1 block">{s.value}</span>
+              <span className="text-[9px] font-bold uppercase tracking-wider text-indigo-200 block">{s.label}</span>
+              <span className="text-2xl font-bold text-white font-mono mt-1 block">{s.value}</span>
             </div>
           ))}
         </div>
@@ -181,9 +181,9 @@ export default function PilotagePage() {
 
       {/* Threshold Configuration Panel */}
       {showConfig && (
-        <div className="p-6 rounded-3xl bg-card border border-border shadow-xl space-y-4 animate-in zoom-in-95">
+        <div className="p-6 rounded-2xl bg-card border border-border shadow-sm space-y-4 animate-in zoom-in-95">
           <div className="flex items-center justify-between pb-3 border-b border-border">
-            <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-primary">
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-primary">
               <Settings className="w-4 h-4" />
               <span>Paramétrage des Seuils de Tolérance d'Absence</span>
             </div>
@@ -201,7 +201,7 @@ export default function PilotagePage() {
                 type="number"
                 value={warningThreshold}
                 onChange={(e) => setWarningThreshold(Number(e.target.value))}
-                className="w-full px-4 py-2.5 rounded-xl bg-background border border-input text-xs font-bold text-foreground focus:outline-none"
+                className="w-full px-4 py-2.5 bg-background border border-input text-xs font-bold text-foreground focus:outline-none rounded-[var(--control-radius)]"
               />
             </div>
 
@@ -213,7 +213,7 @@ export default function PilotagePage() {
                 type="number"
                 value={disciplineThreshold}
                 onChange={(e) => setDisciplineThreshold(Number(e.target.value))}
-                className="w-full px-4 py-2.5 rounded-xl bg-background border border-input text-xs font-bold text-foreground focus:outline-none"
+                className="w-full px-4 py-2.5 bg-background border border-input text-xs font-bold text-foreground focus:outline-none rounded-[var(--control-radius)]"
               />
             </div>
           </div>
@@ -227,7 +227,7 @@ export default function PilotagePage() {
             </button>
             <button
               onClick={handleSaveThresholds}
-              className="px-6 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-black rounded-xl cursor-pointer shadow-sm"
+              className="px-6 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold rounded-xl cursor-pointer shadow-sm"
             >
               Enregistrer les Seuils 💾
             </button>
@@ -244,7 +244,7 @@ export default function PilotagePage() {
               key={item.id}
               to={item.link}
               className={cn(
-                "p-5 rounded-3xl border bg-card shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-4 hover:-translate-y-0.5",
+                "p-5 rounded-2xl border bg-card shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-4 hover:-translate-y-0.5",
                 item.bg
               )}
             >
@@ -252,13 +252,13 @@ export default function PilotagePage() {
                 <div className={cn("w-10 h-10 rounded-2xl flex items-center justify-center shadow-xs", item.bg)}>
                   <Icon className={cn("w-5 h-5", item.color)} />
                 </div>
-                <span className={cn("px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider", item.badgeColor)}>
+                <span className={cn("px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider", item.badgeColor)}>
                   {item.badge}
                 </span>
               </div>
 
               <div>
-                <span className="text-3xl font-black text-foreground font-mono block">
+                <span className="text-3xl font-bold text-foreground font-mono block">
                   {item.value}
                 </span>
                 <p className="text-xs font-bold text-muted-foreground mt-1 whitespace-pre-line leading-relaxed">
@@ -266,7 +266,7 @@ export default function PilotagePage() {
                 </p>
               </div>
 
-              <div className="flex items-center justify-between text-[11px] font-black text-primary pt-2 border-t border-border/50">
+              <div className="flex items-center justify-between text-[11px] font-bold text-primary pt-2 border-t border-border/50">
                 <span>Consulter les dossiers</span>
                 <ChevronRight className="w-3.5 h-3.5" />
               </div>
@@ -280,7 +280,7 @@ export default function PilotagePage() {
         <button
           onClick={() => setActiveTab('early_warnings')}
           className={cn(
-            "flex items-center gap-2.5 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap",
+            "flex items-center gap-2.5 px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap",
             activeTab === 'early_warnings'
               ? "bg-[#0f2863] text-white shadow-md"
               : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -293,7 +293,7 @@ export default function PilotagePage() {
         <button
           onClick={() => setActiveTab('discipline')}
           className={cn(
-            "flex items-center gap-2.5 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap",
+            "flex items-center gap-2.5 px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap",
             activeTab === 'discipline'
               ? "bg-[#0f2863] text-white shadow-md"
               : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -306,7 +306,7 @@ export default function PilotagePage() {
         <button
           onClick={() => setActiveTab('justifications')}
           className={cn(
-            "flex items-center gap-2.5 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap",
+            "flex items-center gap-2.5 px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap",
             activeTab === 'justifications'
               ? "bg-[#0f2863] text-white shadow-md"
               : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -321,10 +321,10 @@ export default function PilotagePage() {
       {/* ── TAB 1: ALERTES PRÉCOCES (EARLY WARNINGS) ────────────────────────────── */}
       {/* ═════════════════════════════════════════════════════════════════════════ */}
       {activeTab === 'early_warnings' && (
-        <div className="bg-card border border-border rounded-[2.5rem] shadow-xl overflow-hidden p-6 md:p-8 space-y-4 animate-in fade-in">
+        <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden p-6 md:p-8 space-y-4 animate-in fade-in">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
             <div>
-              <h3 className="text-base font-black text-foreground flex items-center gap-2">
+              <h3 className="text-base font-bold text-foreground flex items-center gap-2">
                 <AlertTriangle className="w-5 h-5 text-amber-500" />
                 <span>Étudiants en Risque d'Échec ou d'Élimination Académique</span>
               </h3>
@@ -332,14 +332,14 @@ export default function PilotagePage() {
                 Détection automatique combinant note éliminatoire (&lt; 6/20) et absentéisme répété en cours.
               </p>
             </div>
-            <span className="px-3 py-1 bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border border-amber-200 rounded-xl text-xs font-black">
+            <span className="px-3 py-1 bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border border-amber-200 rounded-xl text-xs font-bold">
               {earlyWarnings.length} Dossiers Identifiés
             </span>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left border-collapse">
-              <thead className="text-[10px] font-black text-muted-foreground uppercase tracking-wider border-b border-border bg-muted/30">
+              <thead className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider border-b border-border bg-muted/30">
                 <tr>
                   <th className="px-5 py-4">Étudiant</th>
                   <th className="px-5 py-4">Module Concerné</th>
@@ -359,7 +359,7 @@ export default function PilotagePage() {
                   earlyWarnings.map((row: any, idx: number) => (
                     <tr key={`${row.student_id}-${idx}`} className="hover:bg-muted/40 transition-colors">
                       <td className="px-5 py-4">
-                        <div className="font-black text-foreground text-sm flex items-center gap-2">
+                        <div className="font-bold text-foreground text-sm flex items-center gap-2">
                           <User className="w-4 h-4 text-primary" />
                           <span>{cleanUtf8Text(row.student_name || `Étudiant #${row.student_id}`)}</span>
                         </div>
@@ -374,17 +374,17 @@ export default function PilotagePage() {
 
                       <td className="px-5 py-4">
                         <span className={cn(
-                          "px-2.5 py-1 rounded-xl text-[10px] font-black uppercase",
+                          "px-2.5 py-1 rounded-xl text-[10px] font-bold uppercase",
                           row.exam_or_cc === 'exam'
                             ? "bg-purple-50 text-purple-700 border border-purple-200"
-                            : "bg-indigo-50 text-indigo-700 border border-indigo-200"
+                            : "bg-primary/5 text-primary border border-primary/20"
                         )}>
                           {row.exam_or_cc === 'exam' ? 'Examen Final' : 'Contrôle Continu'}
                         </span>
                       </td>
 
                       <td className="px-5 py-4">
-                        <span className="font-mono font-black text-rose-600 dark:text-rose-400 text-sm">
+                        <span className="font-mono font-bold text-rose-600 dark:text-rose-400 text-sm">
                           {row.course_absences} séance(s)
                         </span>
                       </td>
@@ -392,7 +392,7 @@ export default function PilotagePage() {
                       <td className="px-5 py-4 text-right">
                         <button
                           onClick={() => toast.success(`Notification d'avertissement envoyée à ${row.student_name || 'l\'étudiant'}`)}
-                          className="px-3.5 py-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-800 rounded-xl text-xs font-black cursor-pointer transition-colors"
+                          className="px-3.5 py-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-800 rounded-xl text-xs font-bold cursor-pointer transition-colors"
                         >
                           Avertir ⚡
                         </button>
@@ -410,10 +410,10 @@ export default function PilotagePage() {
       {/* ── TAB 2: CONSEIL DE DISCIPLINE ───────────────────────────────────────── */}
       {/* ═════════════════════════════════════════════════════════════════════════ */}
       {activeTab === 'discipline' && (
-        <div className="bg-card border border-border rounded-[2.5rem] shadow-xl overflow-hidden p-6 md:p-8 space-y-4 animate-in fade-in">
+        <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden p-6 md:p-8 space-y-4 animate-in fade-in">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
             <div>
-              <h3 className="text-base font-black text-foreground flex items-center gap-2">
+              <h3 className="text-base font-bold text-foreground flex items-center gap-2">
                 <ShieldAlert className="w-5 h-5 text-rose-500" />
                 <span>Étudiants Dépassant le Seuil de Discipline (≥ {disciplineThreshold}h)</span>
               </h3>
@@ -421,14 +421,14 @@ export default function PilotagePage() {
                 Cas d'absentéisme majeur soumis à convocation formelle devant le conseil de discipline.
               </p>
             </div>
-            <span className="px-3 py-1 bg-rose-50 dark:bg-rose-950 text-rose-700 dark:text-rose-300 border border-rose-200 rounded-xl text-xs font-black">
+            <span className="px-3 py-1 bg-rose-50 dark:bg-rose-950 text-rose-700 dark:text-rose-300 border border-rose-200 rounded-xl text-xs font-bold">
               {disciplineCases.length} Convocations Requises
             </span>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left border-collapse">
-              <thead className="text-[10px] font-black text-muted-foreground uppercase tracking-wider border-b border-border bg-muted/30">
+              <thead className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider border-b border-border bg-muted/30">
                 <tr>
                   <th className="px-5 py-4">Étudiant</th>
                   <th className="px-5 py-4">Filière / Niveau</th>
@@ -441,12 +441,12 @@ export default function PilotagePage() {
                 {disciplineCases.map((d: any) => (
                   <tr key={d.id} className="hover:bg-muted/40 transition-colors">
                     <td className="px-5 py-4">
-                      <div className="font-black text-foreground text-sm">{d.student}</div>
+                      <div className="font-bold text-foreground text-sm">{d.student}</div>
                       <div className="text-[11px] text-muted-foreground font-mono">CNE: {d.cne}</div>
                     </td>
                     <td className="px-5 py-4 font-bold text-foreground">{d.filiere}</td>
                     <td className="px-5 py-4">
-                      <span className="px-2.5 py-1 bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 rounded-xl font-mono font-black text-xs">
+                      <span className="px-2.5 py-1 bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 rounded-xl font-mono font-bold text-xs">
                         {d.hours}
                       </span>
                     </td>
@@ -454,7 +454,7 @@ export default function PilotagePage() {
                     <td className="px-5 py-4 text-right">
                       <button
                         onClick={() => handleConvoquer(d.student)}
-                        className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer shadow-sm transition-colors"
+                        className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider cursor-pointer shadow-sm transition-colors"
                       >
                         Convoquer ⚖️
                       </button>
@@ -471,10 +471,10 @@ export default function PilotagePage() {
       {/* ── TAB 3: JUSTIFICATIFS EN ATTENTE ────────────────────────────────────── */}
       {/* ═════════════════════════════════════════════════════════════════════════ */}
       {activeTab === 'justifications' && (
-        <div className="bg-card border border-border rounded-[2.5rem] shadow-xl overflow-hidden p-6 md:p-8 space-y-4 animate-in fade-in">
+        <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden p-6 md:p-8 space-y-4 animate-in fade-in">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
             <div>
-              <h3 className="text-base font-black text-foreground flex items-center gap-2">
+              <h3 className="text-base font-bold text-foreground flex items-center gap-2">
                 <Clock className="w-5 h-5 text-orange-500" />
                 <span>Demandes de Justification d'Absence en Attente de Validation</span>
               </h3>
@@ -482,14 +482,14 @@ export default function PilotagePage() {
                 Validation médicale et administrative ouvrant droit aux séances de rattrapage.
               </p>
             </div>
-            <span className="px-3 py-1 bg-orange-50 dark:bg-orange-950 text-orange-700 dark:text-orange-300 border border-orange-200 rounded-xl text-xs font-black">
+            <span className="px-3 py-1 bg-orange-50 dark:bg-orange-950 text-orange-700 dark:text-orange-300 border border-orange-200 rounded-xl text-xs font-bold">
               {justifications.length} Demandes en Cours
             </span>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left border-collapse">
-              <thead className="text-[10px] font-black text-muted-foreground uppercase tracking-wider border-b border-border bg-muted/30">
+              <thead className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider border-b border-border bg-muted/30">
                 <tr>
                   <th className="px-5 py-4">Étudiant</th>
                   <th className="px-5 py-4">Filière & Module</th>
@@ -501,7 +501,7 @@ export default function PilotagePage() {
               <tbody className="divide-y divide-border">
                 {justifications.map((j: any) => (
                   <tr key={j.id} className="hover:bg-muted/40 transition-colors">
-                    <td className="px-5 py-4 font-black text-foreground text-sm">{cleanUtf8Text(j.student)}</td>
+                    <td className="px-5 py-4 font-bold text-foreground text-sm">{cleanUtf8Text(j.student)}</td>
                     <td className="px-5 py-4">
                       <div className="font-bold text-foreground text-xs">{cleanUtf8Text(j.module)}</div>
                       <div className="text-[11px] text-primary font-mono">{j.filiere}</div>
@@ -512,13 +512,13 @@ export default function PilotagePage() {
                       <div className="inline-flex items-center gap-2">
                         <button
                           onClick={() => handleValidateJustification(j.id, j.student)}
-                          className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black cursor-pointer shadow-sm transition-colors"
+                          className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold cursor-pointer shadow-sm transition-colors"
                         >
                           Valider ✅
                         </button>
                         <button
                           onClick={() => handleRejectJustification(j.id, j.student)}
-                          className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-black cursor-pointer shadow-sm transition-colors"
+                          className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold cursor-pointer shadow-sm transition-colors"
                         >
                           Rejeter ❌
                         </button>

@@ -21,11 +21,17 @@ class OperationalWorkspaceService
     public function snapshot(User $user): array
     {
         $staff = $this->isStaff($user);
-        $requests = $this->requests($user)->with('documentType', 'student.user')->latest()->limit(50)->get();
+        $requests = $this->requests($user)->with('documentType', 'student.user')
+            ->orderByRaw("CASE WHEN status IN ('pending', 'processing') THEN 0 ELSE 1 END")
+            ->orderByRaw('(SELECT due_at FROM operational_request_followups WHERE document_request_id = document_requests.id) ASC NULLS LAST')
+            ->latest()->limit(50)->get();
         $tasks = [
             ['label' => 'Notifications non lues', 'count' => $user->unreadNotifications()->count(), 'url' => '/notifications'],
             ['label' => $staff ? 'Demandes à traiter' : 'Mes demandes en cours', 'count' => $this->requests($user)->whereIn('status', ['pending', 'processing'])->count(), 'url' => $staff ? '/admin/guichet' : '/student/documents'],
         ];
+        if ($staff) {
+            $tasks[] = ['label' => 'Demandes hors délai', 'count' => $this->requests($user)->whereIn('status', ['pending', 'processing'])->whereIn('id', DB::table('operational_request_followups')->where('due_at', '<', now())->select('document_request_id'))->count(), 'url' => '/admin/guichet'];
+        }
         $upcoming = ExamSurveillance::where('professor_id', $user->id)->whereHas('exam', fn ($q) => $q->whereDate('exam_date', '>=', today())->whereHas('examSession', fn ($s) => $s->where('institution_id', $user->institution_id)))->count();
         if ($user->hasAnyRole(['professor', 'professeur', 'vacataire'])) {
             $tasks[] = ['label' => 'Surveillances à venir', 'count' => $upcoming, 'url' => '/professor/proctor-convocations'];
@@ -58,6 +64,9 @@ class OperationalWorkspaceService
                 'missing_cne' => (clone $students)->where(fn ($q) => $q->whereNull('cne')->orWhereRaw("TRIM(cne) = ''"))->count(),
                 'registrations_without_group' => $year ? StudentRegistration::where('academic_year_id', $year->id)->whereNull('group_id')->whereIn('status', ['academic_validated', 'admin_validated', 'validated'])->whereHas('student', fn ($q) => $q->where('institution_id', $user->institution_id))->count() : null,
                 'academic_year' => $year?->displayLabel(),
+                'modules_without_assignment' => $year ? \App\Models\Module::where('institution_id', $user->institution_id)
+                    ->whereIn('filiere_id', StudentRegistration::where('academic_year_id', $year->id)->whereHas('student', fn ($q) => $q->where('institution_id', $user->institution_id))->select('filiere_id'))
+                    ->whereNotIn('id', \App\Models\ModuleProfessor::where('academic_year_id', $year->id)->select('module_id'))->count() : null,
                 'duplicate_cne_samples' => $duplicateCnes->take(10)->map(fn ($row) => ['cne' => $row->normalized, 'count' => (int) $row->total])->values(),
                 'missing_cne_ids' => (clone $students)->where(fn ($q) => $q->whereNull('cne')->orWhereRaw("TRIM(cne) = ''"))->limit(10)->pluck('id'),
             ];

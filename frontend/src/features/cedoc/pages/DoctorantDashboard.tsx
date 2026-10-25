@@ -18,10 +18,10 @@ export default function DoctorantDashboard() {
   const training = stats?.training || { completed_hours: 0, required_hours: 200 };
 
   return (
-    <div className="max-w-[1400px] mx-auto p-4 md:p-8 space-y-8 font-sans animate-in fade-in zoom-in duration-500 pb-24">
+    <div className="max-w-[1400px] mx-auto space-y-8 font-sans animate-in fade-in zoom-in duration-500 pb-24">
       
       {/* Header Banner */}
-      <div className="bg-[#0b1021] rounded-[2rem] p-8 md:p-12 relative overflow-hidden shadow-2xl border border-white/10">
+      <div className="bg-[#0b1021] rounded-2xl p-8 md:p-12 relative overflow-hidden shadow-sm border border-white/10">
         <div className="absolute inset-0 opacity-20 pointer-events-none" 
              style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '24px 24px' }}>
         </div>
@@ -29,10 +29,10 @@ export default function DoctorantDashboard() {
         
         <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
           <div>
-            <div className="inline-flex items-center gap-2 bg-[#00e5ff]/20 text-[#00e5ff] px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-4 border border-[#00e5ff]/30">
+            <div className="inline-flex items-center gap-2 bg-[#00e5ff]/20 text-[#00e5ff] px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mb-4 border border-[#00e5ff]/30">
               <Microscope className="w-3.5 h-3.5" /> CEDoc ENCG
             </div>
-            <h1 className="text-4xl font-black text-white mb-2">Espace Chercheur & Doctorant</h1>
+            <h1 className="text-white mb-2 erp-page-title">Espace Chercheur & Doctorant</h1>
             <p className="text-gray-400 text-lg max-w-2xl">
               Suivi de l'état d'avancement de la thèse, publications scientifiques et gestion des heures de vacation.
             </p>
@@ -40,7 +40,7 @@ export default function DoctorantDashboard() {
           <div className="shrink-0 flex items-center gap-4">
             <div className="bg-white/5 border border-white/10 p-4 rounded-xl backdrop-blur-md">
               <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Année de Thèse</div>
-              <div className="text-3xl font-black text-white">2ème <span className="text-sm font-medium text-white/50">Année</span></div>
+              <div className="text-3xl font-bold text-white">2ème <span className="text-sm font-medium text-white/50">Année</span></div>
             </div>
           </div>
         </div>
@@ -50,17 +50,17 @@ export default function DoctorantDashboard() {
         
         {/* Avancement Thèse */}
         <div className="md:col-span-2 space-y-6">
-          <div className="bg-card rounded-[2rem] p-8 shadow-sm border border-border relative overflow-hidden">
+          <div className="bg-card rounded-2xl p-8 shadow-sm border border-border relative overflow-hidden">
             <div className="absolute top-0 right-0 p-8 opacity-5"><GraduationCap className="w-32 h-32 text-primary" /></div>
             
-            <h2 className="text-xl font-black text-foreground mb-2">Thèse de Doctorat</h2>
+            <h2 className="text-xl font-bold text-foreground mb-2">Thèse de Doctorat</h2>
             <div className="text-sm font-bold text-primary mb-6">{thesis.title || '"Digitalisation et Performance des PME Marocaines"'}</div>
 
             <div className="space-y-6 relative z-10">
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm font-bold text-foreground/80">Progression Globale Estimée</span>
-                  <span className="text-sm font-black text-primary">{thesis.progress || 0}%</span>
+                  <span className="text-sm font-bold text-primary">{thesis.progress || 0}%</span>
                 </div>
                 <div className="h-3 w-full bg-muted rounded-full overflow-hidden">
                   <div className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full" style={{ width: `${thesis.progress || 0}%` }}></div>
@@ -81,9 +81,9 @@ export default function DoctorantDashboard() {
           </div>
 
           {/* Publications */}
-          <div className="bg-card rounded-[2rem] p-8 shadow-sm border border-border">
+          <div className="bg-card rounded-2xl p-8 shadow-sm border border-border">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-black text-foreground flex items-center gap-2">
+              <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
                 <BookOpen className="w-5 h-5 text-primary" /> Publications Scientifiques
               </h3>
               <button className="text-sm font-bold text-primary hover:bg-muted px-3 py-1.5 rounded-lg transition-colors">
@@ -97,7 +97,7 @@ export default function DoctorantDashboard() {
                   <h4 className="font-bold text-foreground leading-tight mb-1">{pub.title}</h4>
                   <div className="text-xs text-muted-foreground mb-3">{pub.journal} • {pub.date}</div>
                   <span className={cn(
-                    "px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-widest",
+                    "px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest",
                     pub.status === 'PUBLISHED' ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20" : "bg-amber-500/10 text-amber-500 border border-amber-500/20"
                   )}>
                     {pub.status === 'PUBLISHED' ? 'Publié' : 'En révision'}
@@ -112,7 +112,7 @@ export default function DoctorantDashboard() {
         <div className="space-y-6">
           
           <div className="bg-card rounded-2xl p-6 shadow-sm border border-border">
-            <h3 className="text-sm font-black text-foreground uppercase tracking-widest mb-4 flex items-center gap-2">
+            <h3 className="text-sm font-bold text-foreground uppercase tracking-widest mb-4 flex items-center gap-2">
               <Award className="w-4 h-4 text-purple-500" /> Formations CEDoc
             </h3>
             
@@ -123,7 +123,7 @@ export default function DoctorantDashboard() {
                   <circle cx="64" cy="64" r="56" className="stroke-purple-500" strokeWidth="12" fill="none" strokeDasharray="351.858" strokeDashoffset={351.858 * (1 - (training.completed_hours || 0)/(training.required_hours || 200))} />
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-2xl font-black text-foreground">{training.completed_hours || 0}h</span>
+                  <span className="text-2xl font-bold text-foreground">{training.completed_hours || 0}h</span>
                   <span className="text-[10px] font-bold text-muted-foreground uppercase">/ {training.required_hours || 200}h req.</span>
                 </div>
               </div>
@@ -131,7 +131,7 @@ export default function DoctorantDashboard() {
           </div>
 
           <div className="bg-card rounded-2xl p-6 shadow-sm border border-border">
-            <h3 className="text-sm font-black text-foreground uppercase tracking-widest mb-4 flex items-center gap-2">
+            <h3 className="text-sm font-bold text-foreground uppercase tracking-widest mb-4 flex items-center gap-2">
               <Clock className="w-4 h-4 text-emerald-500" /> Mes Vacations (TD)
             </h3>
             

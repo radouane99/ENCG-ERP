@@ -362,7 +362,7 @@ const { data: moduleDetails } = useQuery({
       {/* Header */}
       <div className="agp-header">
         <div>
-          <h1 className="agp-title">{isRtl ? 'إدخال النقاط' : 'Edition des Notes'}</h1>
+          <h1 className="agp-title erp-page-title">{isRtl ? 'إدخال النقاط' : 'Edition des Notes'}</h1>
           <p className="agp-subtitle">{isRtl ? 'الرجاء إدخال النقاط بدقة' : 'Saisissez et validez les notes avec precision'}</p>
         </div>
         <div className="agp-header-actions">
@@ -558,7 +558,7 @@ const { data: moduleDetails } = useQuery({
                               value={(isExamAssessment && isFraud) ? '0' : (grades[student.student_id]?.value ?? '')}
                               disabled={isAssessmentLocked || (isExamAssessment && isFraud) || grades[student.student_id]?.absent}
                               onChange={(e) => handleInputChange(student.student_id, 'value', e.target.value)}
-                              className={cn("agp-grade-input", (isExamAssessment && isFraud) && "agp-grade-input--fraud")}
+                              className={cn("agp-grade-input rounded-[var(--control-radius)]", (isExamAssessment && isFraud) && "agp-grade-input--fraud rounded-[var(--control-radius)]")}
                             />
                             {(isExamAssessment && isFraud) && <div className="agp-fraud-note">00/20</div>}
                           </td>
@@ -575,7 +575,7 @@ const { data: moduleDetails } = useQuery({
                               value={(isExamAssessment && isFraud) ? '0' : (grades2[student.student_id]?.value ?? '')}
                               disabled={isAssessmentLocked || (isExamAssessment && isFraud) || grades2[student.student_id]?.absent}
                               onChange={(e) => handleInputChange2(student.student_id, 'value', e.target.value)}
-                              className={cn("agp-grade-input", (isExamAssessment && isFraud) && "agp-grade-input--fraud")}
+                              className={cn("agp-grade-input rounded-[var(--control-radius)]", (isExamAssessment && isFraud) && "agp-grade-input--fraud rounded-[var(--control-radius)]")}
                             />
                           </td>
                           <td className="agp-td agp-td--center">
@@ -599,7 +599,7 @@ const { data: moduleDetails } = useQuery({
                               value={(isExamAssessment && isFraud) ? '0' : (grades[student.student_id]?.value ?? '')}
                               disabled={isAssessmentLocked || (isExamAssessment && isFraud) || grades[student.student_id]?.absent}
                               onChange={(e) => handleInputChange(student.student_id, 'value', e.target.value)}
-                              className={cn("agp-grade-input", (isExamAssessment && isFraud) && "agp-grade-input--fraud")}
+                              className={cn("agp-grade-input rounded-[var(--control-radius)]", (isExamAssessment && isFraud) && "agp-grade-input--fraud rounded-[var(--control-radius)]")}
                             />
                             {(isExamAssessment && isFraud) && <div className="agp-fraud-note">00/20</div>}
                           </td>
@@ -651,7 +651,7 @@ const { data: moduleDetails } = useQuery({
                 <div key={index} className="agp-modality-row">
                   <div className="agp-modality-row__field">
                     <label className="agp-field-label">Type</label>
-                    <select value={a.type} onChange={(e) => updateModalityField(index, 'type', e.target.value)} className="agp-select">
+                    <select value={a.type} onChange={(e) => updateModalityField(index, 'type', e.target.value)} className="agp-select rounded-[var(--control-radius)]">
                       <option value="CC">Controle Continu</option>
                       <option value="CC1">CC1</option>
                       <option value="CC2">CC2</option>
@@ -666,7 +666,7 @@ const { data: moduleDetails } = useQuery({
                     <label className="agp-field-label">Poids (%)</label>
                     <input type="number" min="0" max="100" value={a.weight}
                       onChange={(e) => updateModalityField(index, 'weight', parseFloat(e.target.value) || 0)}
-                      className="agp-input agp-input--center"
+                      className="agp-input agp-input--center rounded-[var(--control-radius)]"
                     />
                   </div>
                   <button type="button" onClick={() => removeModalityRow(index)} className="agp-btn-remove">🗑️</button>
@@ -679,7 +679,7 @@ const { data: moduleDetails } = useQuery({
                 <h4>Plafond Rattrapage</h4>
                 <p>Note maximale apres deliberation de rattrapage</p>
               </div>
-              <select value={rattrapageCap} onChange={(e) => setRattrapageCap(Number(e.target.value))} className="agp-select agp-select--sm">
+              <select value={rattrapageCap} onChange={(e) => setRattrapageCap(Number(e.target.value))} className="agp-select agp-select--sm rounded-[var(--control-radius)]">
                 <option value={10}>10.00 / 20</option>
                 <option value={12}>12.00 / 20 (LMD ENCG)</option>
                 <option value={14}>14.00 / 20</option>

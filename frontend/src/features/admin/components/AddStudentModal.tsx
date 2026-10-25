@@ -54,13 +54,13 @@ export default function AddStudentModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl animate-in zoom-in-95">
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+      <div className="bg-card rounded-2xl w-full max-w-lg overflow-hidden shadow-sm animate-in zoom-in-95">
+        <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-slate-50/50">
           <div className="flex items-center gap-2">
             <UserPlus className="w-5 h-5 text-[#0f2863]" />
             <h3 className="font-bold text-[#0f2863]">Ajouter un nouvel étudiant</h3>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors">
+          <button onClick={onClose} className="text-slate-400 hover:text-muted-foreground transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -68,82 +68,82 @@ export default function AddStudentModal({
         <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[85vh] overflow-y-auto">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-slate-500 mb-1">Prénom <span className="text-red-500">*</span></label>
+              <label className="block text-xs font-bold text-muted-foreground mb-1">Prénom <span className="text-red-500">*</span></label>
               <input 
                 type="text" 
                 placeholder="Prénom" 
                 value={formData.first_name} 
                 onChange={e => setFormData({...formData, first_name: e.target.value})} 
-                className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20" 
+                className="w-full px-3.5 py-2.5 border border-border text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 rounded-[var(--control-radius)]"
                 required 
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-500 mb-1">Nom <span className="text-red-500">*</span></label>
+              <label className="block text-xs font-bold text-muted-foreground mb-1">Nom <span className="text-red-500">*</span></label>
               <input 
                 type="text" 
                 placeholder="Nom" 
                 value={formData.last_name} 
                 onChange={e => setFormData({...formData, last_name: e.target.value})} 
-                className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20" 
+                className="w-full px-3.5 py-2.5 border border-border text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 rounded-[var(--control-radius)]"
                 required 
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-500 mb-1">Email Académique / Personnel <span className="text-red-500">*</span></label>
+            <label className="block text-xs font-bold text-muted-foreground mb-1">Email Académique / Personnel <span className="text-red-500">*</span></label>
             <input 
               type="email" 
               placeholder="etudiant@student.encg.ma" 
               value={formData.email} 
               onChange={e => setFormData({...formData, email: e.target.value})} 
-              className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20" 
+              className="w-full px-3.5 py-2.5 border border-border text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 rounded-[var(--control-radius)]"
               required 
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-slate-500 mb-1">CIN</label>
+              <label className="block text-xs font-bold text-muted-foreground mb-1">CIN</label>
               <input 
                 type="text" 
                 placeholder="ex: CD123456" 
                 value={formData.cin} 
                 onChange={e => setFormData({...formData, cin: e.target.value})} 
-                className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20" 
+                className="w-full px-3.5 py-2.5 border border-border text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 rounded-[var(--control-radius)]"
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-500 mb-1">CNE / Code Massar</label>
+              <label className="block text-xs font-bold text-muted-foreground mb-1">CNE / Code Massar</label>
               <input 
                 type="text" 
                 placeholder="ex: N134000123" 
                 value={formData.cne} 
                 onChange={e => setFormData({ ...formData, cne: e.target.value, massar_code: e.target.value })} 
-                className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20" 
+                className="w-full px-3.5 py-2.5 border border-border text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 rounded-[var(--control-radius)]"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-500 mb-1">Numéro de Téléphone</label>
+            <label className="block text-xs font-bold text-muted-foreground mb-1">Numéro de Téléphone</label>
             <input 
               type="tel" 
               placeholder="0612345678" 
               value={formData.phone} 
               onChange={e => setFormData({...formData, phone: e.target.value})} 
-              className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20" 
+              className="w-full px-3.5 py-2.5 border border-border text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 rounded-[var(--control-radius)]"
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4 border-t border-slate-100 pt-4">
+          <div className="grid grid-cols-2 gap-4 border-t border-border pt-4">
             <div>
-              <label className="block text-xs font-bold text-slate-500 mb-1">Filière d'affectation</label>
+              <label className="block text-xs font-bold text-muted-foreground mb-1">Filière d'affectation</label>
               <select 
                 value={formData.current_filiere} 
                 onChange={e => setFormData({...formData, current_filiere: e.target.value})} 
-                className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                className="w-full px-3.5 py-2.5 border border-border text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 rounded-[var(--control-radius)]"
               >
                 <option value="">Sélectionner une filière</option>
                 {filieres.map(f => (
@@ -152,11 +152,11 @@ export default function AddStudentModal({
               </select>
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-500 mb-1">Semestre</label>
+              <label className="block text-xs font-bold text-muted-foreground mb-1">Semestre</label>
               <select 
                 value={formData.current_semester} 
                 onChange={e => setFormData({...formData, current_semester: parseInt(e.target.value)})} 
-                className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                className="w-full px-3.5 py-2.5 border border-border text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 rounded-[var(--control-radius)]"
               >
                 {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(s => (
                   <option key={s} value={s}>Semestre {s}</option>
@@ -165,11 +165,11 @@ export default function AddStudentModal({
             </div>
           </div>
 
-          <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
+          <div className="pt-4 border-t border-border flex items-center justify-end gap-3">
             <button 
               type="button" 
               onClick={onClose} 
-              className="px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50 rounded-xl transition-colors"
+              className="px-4 py-2.5 text-xs font-bold text-muted-foreground hover:bg-muted/50 rounded-xl transition-colors"
             >
               Annuler
             </button>

@@ -247,15 +247,15 @@ export default function AdminParapheurPage() {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6 animate-in fade-in duration-300">
+    <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in duration-300">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white p-6 rounded-2xl shadow-xl">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 text-white p-6 erp-page-banner">
         <div>
           <div className="flex items-center gap-2 text-blue-300 font-semibold text-xs tracking-wider uppercase">
             <Stamp className="w-4 h-4" />
             Parapheur Électronique & Direction
           </div>
-          <h1 className="text-2xl font-black tracking-tight mt-1 flex items-center gap-3">
+          <h1 className="mt-1 flex items-center gap-3 erp-page-title">
             Circuit des Visas & Ordres de Mission
             <span className="bg-amber-400/20 text-amber-300 text-xs px-2.5 py-1 rounded-full border border-amber-400/30">
               Workflow à 3 Niveaux
@@ -306,7 +306,7 @@ export default function AdminParapheurPage() {
               <Building2 className="w-5 h-5" />
             </div>
           </div>
-          <div className="mt-3 text-3xl font-black tracking-tight text-foreground">
+          <div className="mt-3 text-3xl font-bold tracking-tight text-foreground">
             {counters.pending_dept}
           </div>
           <div className="text-xs text-muted-foreground mt-1">
@@ -318,19 +318,19 @@ export default function AdminParapheurPage() {
           onClick={() => setActiveStage('pending_direction')}
           className={`cursor-pointer p-5 rounded-2xl border transition-all duration-200 ${
             activeStage === 'pending_direction'
-              ? 'bg-blue-500/10 border-blue-500 ring-2 ring-blue-500/20 shadow-md'
+              ? "bg-blue-500/10 border-primary ring-2 ring-blue-500/20 shadow-md"
               : 'bg-card border-border hover:border-blue-400/60'
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
+            <span className="text-xs font-bold text-primary dark:text-blue-400 uppercase tracking-wider">
               2. Signature Direction
             </span>
-            <div className="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
+            <div className="p-2 rounded-xl bg-blue-500/10 text-primary dark:text-blue-400">
               <FileSignature className="w-5 h-5" />
             </div>
           </div>
-          <div className="mt-3 text-3xl font-black tracking-tight text-foreground">
+          <div className="mt-3 text-3xl font-bold tracking-tight text-foreground">
             {counters.pending_direction}
           </div>
           <div className="text-xs text-muted-foreground mt-1">
@@ -354,7 +354,7 @@ export default function AdminParapheurPage() {
               <ShieldCheck className="w-5 h-5" />
             </div>
           </div>
-          <div className="mt-3 text-3xl font-black tracking-tight text-foreground">
+          <div className="mt-3 text-3xl font-bold tracking-tight text-foreground">
             {counters.approved_ready}
           </div>
           <div className="text-xs text-muted-foreground mt-1">
@@ -378,7 +378,7 @@ export default function AdminParapheurPage() {
               <XCircle className="w-5 h-5" />
             </div>
           </div>
-          <div className="mt-3 text-3xl font-black tracking-tight text-foreground">
+          <div className="mt-3 text-3xl font-bold tracking-tight text-foreground">
             {counters.rejected}
           </div>
           <div className="text-xs text-muted-foreground mt-1">
@@ -410,7 +410,7 @@ export default function AdminParapheurPage() {
           <button
             onClick={() => setActiveStage('pending_direction')}
             className={`px-3 py-1.5 rounded-lg transition ${
-              activeStage === 'pending_direction' ? 'bg-background text-blue-600 font-bold shadow-sm' : 'text-muted-foreground hover:text-foreground'
+              activeStage === 'pending_direction' ? "bg-background text-primary font-bold shadow-sm" : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             Attente Direction ({counters.pending_direction})
@@ -438,7 +438,7 @@ export default function AdminParapheurPage() {
           <select
             value={selectedDocType}
             onChange={(e) => setSelectedDocType(e.target.value)}
-            className="px-3 py-2 text-xs font-medium bg-background border border-input rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20"
+            className="px-3 py-2 text-xs font-medium bg-background border border-input focus:outline-none focus:ring-2 focus:ring-primary/20 rounded-[var(--control-radius)]"
           >
             <option value="all">Tous les types</option>
             <option value="ordre_de_mission">Ordre de Mission</option>
@@ -454,7 +454,7 @@ export default function AdminParapheurPage() {
               placeholder="Réf, Enseignant, Ville..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 text-xs bg-background border border-input rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="w-full pl-9 pr-3 py-2 text-xs bg-background border border-input focus:outline-none focus:ring-2 focus:ring-primary/20 rounded-[var(--control-radius)]"
             />
           </form>
         </div>
@@ -516,12 +516,12 @@ export default function AdminParapheurPage() {
                       </td>
 
                       <td className="px-4 py-3.5">
-                        <div className="font-mono font-black text-xs text-primary">
+                        <div className="font-mono font-bold text-xs text-primary">
                           {item.tracking_code}
                         </div>
                         <div className="font-semibold text-xs text-foreground mt-0.5 flex items-center gap-1.5">
                           {item.document_type === 'ordre_de_mission' ? (
-                            <span className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400">
+                            <span className="inline-flex items-center gap-1 text-primary dark:text-blue-400">
                               <MapPin className="w-3 h-3" /> Ordre de Mission
                             </span>
                           ) : (
@@ -572,7 +572,7 @@ export default function AdminParapheurPage() {
 
                       <td className="px-4 py-3.5 text-center">
                         {item.direction_decision === 'approved' || item.status === 'ready' ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-black bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-300">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-primary/10 text-primary dark:bg-blue-950/60 dark:text-blue-300 border border-primary/20">
                             <ShieldCheck className="w-3 h-3" /> Scellé (SHA-256)
                           </span>
                         ) : item.direction_decision === 'rejected' || item.status === 'rejected' ? (
@@ -580,7 +580,7 @@ export default function AdminParapheurPage() {
                             <XCircle className="w-3 h-3" /> Refusé
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-300">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-muted text-slate-700 dark:bg-card dark:text-foreground border border-slate-300">
                             <Clock className="w-3 h-3" /> À signer
                           </span>
                         )}
@@ -602,7 +602,7 @@ export default function AdminParapheurPage() {
                           {item.department_visa === 'favorable' && item.status !== 'ready' && item.status !== 'rejected' && (
                             <button
                               onClick={() => handleOpenSignModal(item)}
-                              className="px-2.5 py-1 text-xs font-bold rounded-lg bg-blue-600 hover:bg-blue-500 text-white shadow-sm transition"
+                              className="px-2.5 py-1 text-xs font-bold rounded-lg bg-primary hover:bg-primary text-primary-foreground shadow-sm transition"
                             >
                               Signer
                             </button>
@@ -630,7 +630,7 @@ export default function AdminParapheurPage() {
       {/* Modal Visa Chef de Département */}
       {showVisaModal && activeItem && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-card border border-border rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-5 animate-in zoom-in-95">
+          <div className="bg-card border border-border rounded-2xl max-w-lg w-full p-6 shadow-sm space-y-5 animate-in zoom-in-95">
             <div className="flex items-center justify-between border-b border-border pb-3">
               <div className="flex items-center gap-2">
                 <div className="p-2 rounded-xl bg-amber-500/10 text-amber-600">
@@ -718,7 +718,7 @@ export default function AdminParapheurPage() {
                   onChange={(e) => setVisaNotes(e.target.value)}
                   placeholder="Mentionnez d'éventuelles conditions ou justification..."
                   rows={3}
-                  className="w-full text-xs p-3 bg-background border border-input rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  className="w-full text-xs p-3 bg-background border border-input focus:outline-none focus:ring-2 focus:ring-primary/20 rounded-[var(--control-radius)]"
                 />
               </div>
 
@@ -747,10 +747,10 @@ export default function AdminParapheurPage() {
       {/* Modal Signature Direction / SG */}
       {showSignModal && activeItem && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-card border border-border rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-5 animate-in zoom-in-95">
+          <div className="bg-card border border-border rounded-2xl max-w-lg w-full p-6 shadow-sm space-y-5 animate-in zoom-in-95">
             <div className="flex items-center justify-between border-b border-border pb-3">
               <div className="flex items-center gap-2">
-                <div className="p-2 rounded-xl bg-blue-500/10 text-blue-600">
+                <div className="p-2 rounded-xl bg-blue-500/10 text-primary">
                   <FileSignature className="w-5 h-5" />
                 </div>
                 <div>
@@ -788,7 +788,7 @@ export default function AdminParapheurPage() {
                   <label 
                     className={`flex items-center justify-center gap-2 p-3 rounded-xl border text-xs font-bold cursor-pointer transition ${
                       directionDecision === 'approved'
-                        ? 'bg-blue-500/10 border-blue-500 text-blue-700 dark:text-blue-300 ring-2 ring-blue-500/20'
+                        ? "bg-blue-500/10 border-primary text-primary dark:text-blue-300 ring-2 ring-blue-500/20"
                         : 'border-border text-muted-foreground hover:bg-muted/40'
                     }`}
                   >
@@ -832,7 +832,7 @@ export default function AdminParapheurPage() {
                 <select
                   value={signatoryTitle}
                   onChange={(e) => setSignatoryTitle(e.target.value)}
-                  className="w-full text-xs p-2.5 bg-background border border-input rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 font-medium"
+                  className="w-full text-xs p-2.5 bg-background border border-input focus:outline-none focus:ring-2 focus:ring-primary/20 font-medium rounded-[var(--control-radius)]"
                 >
                   <option value="LE DIRECTEUR DE L'ENCG FÈS">LE DIRECTEUR DE L'ENCG FÈS</option>
                   <option value="LE SECRÉTAIRE GÉNÉRAL DE L'ENCG FÈS">LE SECRÉTAIRE GÉNÉRAL DE L'ENCG FÈS</option>
@@ -849,7 +849,7 @@ export default function AdminParapheurPage() {
                   onChange={(e) => setDirectionNotes(e.target.value)}
                   placeholder="Notes de notification..."
                   rows={2}
-                  className="w-full text-xs p-3 bg-background border border-input rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  className="w-full text-xs p-3 bg-background border border-input focus:outline-none focus:ring-2 focus:ring-primary/20 rounded-[var(--control-radius)]"
                 />
               </div>
 
@@ -864,7 +864,7 @@ export default function AdminParapheurPage() {
                 <button
                   type="submit"
                   disabled={processingAction}
-                  className="px-4 py-2 text-xs font-bold rounded-xl bg-blue-600 text-white hover:bg-blue-500 transition flex items-center gap-2 shadow-lg"
+                  className="px-4 py-2 text-xs font-bold rounded-xl bg-primary text-primary-foreground hover:bg-primary transition flex items-center gap-2 shadow-lg"
                 >
                   {processingAction ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ShieldCheck className="w-3.5 h-3.5" />}
                   Confirmer le Scellement

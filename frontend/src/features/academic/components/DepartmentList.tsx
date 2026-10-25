@@ -235,21 +235,21 @@ export default function DepartmentList() {
     <div className="space-y-8 max-w-7xl mx-auto p-4 md:p-6 pb-24 animate-in fade-in">
       
       {/* 🚀 PREMIUM HERO HEADER */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-[#0f2863] via-[#1e3b8a] to-[#2563eb] text-white p-8 rounded-3xl shadow-2xl space-y-6">
+      <div className="relative overflow-hidden text-white p-8 space-y-6 erp-page-banner">
         <div className="absolute right-0 top-0 w-96 h-96 bg-white/5 rounded-full blur-3xl pointer-events-none" />
         
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20 text-amber-400 shadow-xl shrink-0">
+            <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20 text-amber-400 shadow-sm shrink-0">
               <Building2 className="w-9 h-9" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="px-3 py-1 bg-amber-400/20 text-amber-300 border border-amber-400/30 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1">
+                <span className="px-3 py-1 bg-amber-400/20 text-amber-300 border border-amber-400/30 rounded-full text-[10px] font-bold uppercase tracking-widest flex items-center gap-1">
                   <GraduationCap className="w-3.5 h-3.5" /> PÔLES ACADÉMIQUES & DEPARTEMENTS
                 </span>
               </div>
-              <h1 className="text-2xl md:text-3xl font-black tracking-tight mt-1">
+              <h1 className="mt-1 erp-page-title">
                 Départements & Structures Pédagogiques
               </h1>
               <p className="text-xs text-blue-100/80 mt-0.5 max-w-2xl">
@@ -261,7 +261,7 @@ export default function DepartmentList() {
           <div className="flex flex-wrap items-center gap-3">
             <button 
               onClick={() => handleOpenModal()}
-              className="px-5 py-3 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-[#0f2863] rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 shadow-lg hover:scale-105 cursor-pointer"
+              className="px-5 py-3 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-[#0f2863] rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 shadow-lg hover:scale-105 cursor-pointer"
             >
               <Plus className="w-4 h-4" /> Nouveau Département
             </button>
@@ -276,7 +276,7 @@ export default function DepartmentList() {
             </div>
             <div>
               <div className="text-[10px] uppercase font-bold tracking-wider text-blue-200/80">Départements</div>
-              <div className="text-lg font-black text-white">{departments.length} Pôles</div>
+              <div className="text-lg font-bold text-white">{departments.length} Pôles</div>
             </div>
           </div>
 
@@ -286,7 +286,7 @@ export default function DepartmentList() {
             </div>
             <div>
               <div className="text-[10px] uppercase font-bold tracking-wider text-amber-200/80">Chefs Nommés</div>
-              <div className="text-lg font-black text-white">{totalHeadNominated} / {departments.length}</div>
+              <div className="text-lg font-bold text-white">{totalHeadNominated} / {departments.length}</div>
             </div>
           </div>
 
@@ -296,7 +296,7 @@ export default function DepartmentList() {
             </div>
             <div>
               <div className="text-[10px] uppercase font-bold tracking-wider text-emerald-200/80">Enseignants</div>
-              <div className="text-lg font-black text-white">{totalProfessorsCount} Professeurs</div>
+              <div className="text-lg font-bold text-white">{totalProfessorsCount} Professeurs</div>
             </div>
           </div>
 
@@ -306,14 +306,14 @@ export default function DepartmentList() {
             </div>
             <div>
               <div className="text-[10px] uppercase font-bold tracking-wider text-purple-200/80">Filières Rattachées</div>
-              <div className="text-lg font-black text-white">{totalFilieresCount} Filières</div>
+              <div className="text-lg font-bold text-white">{totalFilieresCount} Filières</div>
             </div>
           </div>
         </div>
       </div>
 
       {/* SEARCH & FILTERS BAR */}
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-card dark:bg-card p-4 rounded-2xl border border-border dark:border-border shadow-sm">
         <div className="relative flex-1 w-full">
           <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
           <input
@@ -321,7 +321,7 @@ export default function DepartmentList() {
             placeholder="Rechercher par nom de département, code ou nom du chef de département..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/20"
+            className="w-full pl-10 pr-4 py-2.5 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-bold text-foreground dark:text-white outline-none focus:ring-2 focus:ring-blue-500/20 rounded-[var(--control-radius)]"
           />
         </div>
 
@@ -347,9 +347,9 @@ export default function DepartmentList() {
           <p className="text-xs font-bold">Chargement des départements académiques...</p>
         </div>
       ) : filteredDepartments.length === 0 ? (
-        <div className="py-16 text-center text-slate-400 space-y-2 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800">
+        <div className="py-16 text-center text-slate-400 space-y-2 bg-card dark:bg-card rounded-2xl border border-border dark:border-border">
           <Building2 className="w-12 h-12 mx-auto text-slate-300" />
-          <h4 className="text-base font-bold text-slate-700 dark:text-slate-200">Aucun département trouvé</h4>
+          <h4 className="text-base font-bold text-slate-700 dark:text-foreground">Aucun département trouvé</h4>
           <p className="text-xs text-slate-400">Essayez de réinitialiser la recherche ou de créer un nouveau département.</p>
         </div>
       ) : (
@@ -363,16 +363,16 @@ export default function DepartmentList() {
             return (
               <div 
                 key={dept.id} 
-                className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm hover:shadow-xl border border-slate-200/80 dark:border-slate-800 overflow-hidden flex flex-col transition-all duration-300 group hover:-translate-y-1"
+                className="bg-card dark:bg-card rounded-2xl shadow-sm hover:shadow-xl border border-slate-200/80 dark:border-border overflow-hidden flex flex-col transition-all duration-300 group hover:-translate-y-1"
               >
                 {/* Header Badge & Code */}
                 <div className="bg-gradient-to-br from-[#0f2863] via-[#11296b] to-[#1e3b8a] p-6 relative text-white">
                   <div className="flex justify-between items-start mb-3 relative z-10">
-                    <span className="px-3 py-1 bg-white/15 backdrop-blur-md text-amber-300 text-xs font-mono font-black rounded-lg border border-white/20 tracking-widest shadow-xs">
+                    <span className="px-3 py-1 bg-white/15 backdrop-blur-md text-amber-300 text-xs font-mono font-bold rounded-lg border border-white/20 tracking-widest shadow-xs">
                       CODE: {dept.code}
                     </span>
                     <span className={cn(
-                      "px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1",
+                      "px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1",
                       dept.is_active !== false 
                         ? "bg-emerald-500/20 text-emerald-300 border border-emerald-400/30" 
                         : "bg-rose-500/20 text-rose-300 border border-rose-400/30"
@@ -381,7 +381,7 @@ export default function DepartmentList() {
                     </span>
                   </div>
 
-                  <h3 className="text-xl font-black text-white leading-tight group-hover:text-amber-300 transition-colors">
+                  <h3 className="text-xl font-bold text-white leading-tight group-hover:text-amber-300 transition-colors">
                     {cleanUtf8Text(dept.name)}
                   </h3>
                   {dept.name_ar && (
@@ -392,32 +392,32 @@ export default function DepartmentList() {
                 </div>
 
                 {/* Body Content & Stats */}
-                <div className="p-6 space-y-5 flex-1 bg-white dark:bg-slate-900">
+                <div className="p-6 space-y-5 flex-1 bg-card dark:bg-card">
                   
                   {/* Chef de Département Box */}
-                  <div className="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 space-y-2">
+                  <div className="bg-muted/50 dark:bg-slate-800/60 p-4 rounded-2xl border border-border dark:border-border space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1">
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 flex items-center gap-1">
                         <Award className="w-3.5 h-3.5 text-amber-500" /> Chef de Département
                       </span>
-                      <span className="text-[9px] font-black text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
+                      <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
                         Nommé
                       </span>
                     </div>
 
                     <div className="flex items-center justify-between pt-1">
                       <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs text-white shadow-xs bg-gradient-to-tr from-[#0f2863] to-blue-600">
+                        <div className="w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs text-white shadow-xs bg-gradient-to-tr from-[#0f2863] to-blue-600">
                           {initial}
                         </div>
-                        <div className="font-black text-xs text-slate-800 dark:text-slate-200">
+                        <div className="font-bold text-xs text-foreground dark:text-foreground">
                           {headName}
                         </div>
                       </div>
 
                       <button
                         onClick={() => handleOpenAssignHeadModal(dept)}
-                        className="px-2.5 py-1 bg-blue-50 dark:bg-blue-950/50 hover:bg-blue-100 text-blue-700 dark:text-blue-300 rounded-lg text-[10px] font-black uppercase transition-colors cursor-pointer border border-blue-200 dark:border-blue-800"
+                        className="px-2.5 py-1 bg-primary/5 dark:bg-blue-950/50 hover:bg-primary/10 text-primary dark:text-blue-300 rounded-lg text-[10px] font-bold uppercase transition-colors cursor-pointer border border-primary/20 dark:border-primary"
                         title="Nommer ou changer le chef de département"
                       >
                         Changer
@@ -428,19 +428,19 @@ export default function DepartmentList() {
                   {/* Metrics Grid */}
                   <div className="grid grid-cols-2 gap-3">
                     <div className="bg-indigo-50/50 dark:bg-indigo-950/20 p-3 rounded-2xl border border-indigo-100/60 dark:border-indigo-900/40">
-                      <div className="text-[10px] font-black text-indigo-500 uppercase tracking-widest flex items-center gap-1">
+                      <div className="text-[10px] font-bold text-primary uppercase tracking-widest flex items-center gap-1">
                         <Users className="w-3.5 h-3.5" /> Enseignants
                       </div>
-                      <div className="text-base font-black text-indigo-900 dark:text-indigo-200 mt-1">
+                      <div className="text-base font-bold text-primary dark:text-indigo-200 mt-1">
                         {dept.professors_count} Professeurs
                       </div>
                     </div>
 
                     <div className="bg-purple-50/50 dark:bg-purple-950/20 p-3 rounded-2xl border border-purple-100/60 dark:border-purple-900/40">
-                      <div className="text-[10px] font-black text-purple-500 uppercase tracking-widest flex items-center gap-1">
+                      <div className="text-[10px] font-bold text-purple-500 uppercase tracking-widest flex items-center gap-1">
                         <BookOpen className="w-3.5 h-3.5" /> Filières
                       </div>
-                      <div className="text-base font-black text-purple-900 dark:text-purple-200 mt-1">
+                      <div className="text-base font-bold text-purple-900 dark:text-purple-200 mt-1">
                         {dept.filieres_count} Filières
                       </div>
                     </div>
@@ -449,11 +449,11 @@ export default function DepartmentList() {
                 </div>
 
                 {/* Card Footer Actions */}
-                <div className="p-4 bg-slate-50/80 dark:bg-slate-800/40 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2">
+                <div className="p-4 bg-slate-50/80 dark:bg-slate-800/40 border-t border-border dark:border-border flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <button 
                       onClick={() => setSelectedDeptForOrg(dept)}
-                      className="px-2.5 py-1.5 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 text-emerald-800 dark:text-emerald-300 rounded-xl text-[10px] font-black uppercase tracking-wider border border-emerald-200 dark:border-emerald-800 transition-colors flex items-center gap-1 cursor-pointer"
+                      className="px-2.5 py-1.5 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 text-emerald-800 dark:text-emerald-300 rounded-xl text-[10px] font-bold uppercase tracking-wider border border-emerald-200 dark:border-emerald-800 transition-colors flex items-center gap-1 cursor-pointer"
                       title="Visualiser l'organigramme pédagogique hiérarchique du pôle"
                     >
                       <Sparkles className="w-3 h-3 text-emerald-600" /> 🌳 Organigramme
@@ -461,7 +461,7 @@ export default function DepartmentList() {
 
                     <button 
                       onClick={() => handleExportArreteNominationPdf(dept)}
-                      className="px-2.5 py-1.5 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 text-amber-800 dark:text-amber-300 rounded-xl text-[10px] font-black uppercase tracking-wider border border-amber-200 dark:border-amber-800 transition-colors flex items-center gap-1 cursor-pointer"
+                      className="px-2.5 py-1.5 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 text-amber-800 dark:text-amber-300 rounded-xl text-[10px] font-bold uppercase tracking-wider border border-amber-200 dark:border-amber-800 transition-colors flex items-center gap-1 cursor-pointer"
                       title="Télécharger l'Arrêté Officiel de Nomination du Chef de Département (A4 PDF)"
                     >
                       <Printer className="w-3 h-3 text-amber-600" /> 📜 Arrêté Nomination
@@ -471,14 +471,14 @@ export default function DepartmentList() {
                   <div className="flex items-center gap-1 shrink-0">
                     <button 
                       onClick={() => setSelectedDeptForDetails(dept)}
-                      className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 rounded-lg transition-colors cursor-pointer"
+                      className="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/5 dark:hover:bg-blue-950 rounded-lg transition-colors cursor-pointer"
                       title="Voir les détails"
                     >
                       <Eye className="w-4 h-4" />
                     </button>
                     <button 
                       onClick={() => handleOpenModal(dept)}
-                      className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 rounded-lg transition-colors cursor-pointer"
+                      className="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/5 dark:hover:bg-blue-950 rounded-lg transition-colors cursor-pointer"
                       title="Modifier le département"
                     >
                       <Edit2 className="w-4 h-4" />
@@ -503,64 +503,64 @@ export default function DepartmentList() {
       {/* 👑 MODAL 1: CREATE / EDIT DEPARTMENT */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden">
-            <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40">
+          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl shadow-sm w-full max-w-md overflow-hidden">
+            <div className="flex items-center justify-between p-6 border-b border-border dark:border-border bg-slate-50/50 dark:bg-slate-800/40">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-[#0f2863] text-white flex items-center justify-center font-bold">
                   <Building2 className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-black text-base text-slate-800 dark:text-white">
+                  <h3 className="font-bold text-base text-foreground dark:text-white">
                     {editingId ? 'Modifier le Département' : 'Nouveau Département'}
                   </h3>
                   <p className="text-xs text-slate-400">Structure académique & administrative</p>
                 </div>
               </div>
-              <button onClick={handleCloseModal} className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"><X className="w-5 h-5"/></button>
+              <button onClick={handleCloseModal} className="p-1.5 text-slate-400 hover:text-muted-foreground hover:bg-muted rounded-full transition-colors"><X className="w-5 h-5"/></button>
             </div>
 
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div className="grid grid-cols-3 gap-3">
                 <div className="col-span-1">
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Code *</label>
+                  <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5">Code *</label>
                   <input 
                     type="text" required 
                     value={formData.code} 
                     onChange={e => setFormData({...formData, code: e.target.value})}
-                    className="w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-xs font-mono font-black text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500/20 outline-none uppercase" 
+                    className="w-full px-3.5 py-2.5 border border-border dark:border-border bg-muted/50 dark:bg-card text-xs font-mono font-bold text-foreground dark:text-white focus:ring-2 focus:ring-blue-500/20 outline-none uppercase rounded-[var(--control-radius)]"
                     placeholder="Ex: SG" 
                   />
                 </div>
                 <div className="col-span-2">
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Nom Officiel (Français) *</label>
+                  <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5">Nom Officiel (Français) *</label>
                   <input 
                     type="text" required 
                     value={formData.name} 
                     onChange={e => setFormData({...formData, name: e.target.value})}
-                    className="w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500/20 outline-none" 
+                    className="w-full px-3.5 py-2.5 border border-border dark:border-border bg-muted/50 dark:bg-card text-xs font-bold text-foreground dark:text-white focus:ring-2 focus:ring-blue-500/20 outline-none rounded-[var(--control-radius)]"
                     placeholder="Ex: Sciences de Gestion" 
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Nom en Arabe (الاسم بالعربية)</label>
+                <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5">Nom en Arabe (الاسم بالعربية)</label>
                 <input 
                   type="text" 
                   value={formData.name_ar} 
                   onChange={e => setFormData({...formData, name_ar: e.target.value})}
-                  className="w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500/20 outline-none text-right" 
+                  className="w-full px-3.5 py-2.5 border border-border dark:border-border bg-muted/50 dark:bg-card text-xs font-bold text-foreground dark:text-white focus:ring-2 focus:ring-blue-500/20 outline-none text-right rounded-[var(--control-radius)]"
                   dir="rtl"
                   placeholder="علوم التسيير" 
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Chef de Département (Professeur Permanent)</label>
+                <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5">Chef de Département (Professeur Permanent)</label>
                 <select
                   value={formData.head_name}
                   onChange={e => setFormData({...formData, head_name: e.target.value})}
-                  className="w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500/20 outline-none"
+                  className="w-full px-3.5 py-2.5 border border-border dark:border-border bg-muted/50 dark:bg-card text-xs font-bold text-foreground dark:text-white focus:ring-2 focus:ring-blue-500/20 outline-none rounded-[var(--control-radius)]"
                 >
                   <option value="">Sélectionner un enseignant chercheur...</option>
                   {professors.map((p: any) => (
@@ -571,9 +571,9 @@ export default function DepartmentList() {
                 </select>
               </div>
 
-              <div className="flex items-center justify-between p-3.5 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700">
+              <div className="flex items-center justify-between p-3.5 bg-muted/50 dark:bg-slate-800/50 rounded-2xl border border-border dark:border-border">
                 <div>
-                  <div className="text-xs font-bold text-slate-800 dark:text-white">Statut Opérationnel</div>
+                  <div className="text-xs font-bold text-foreground dark:text-white">Statut Opérationnel</div>
                   <div className="text-[10px] text-slate-400">Activer ou désactiver le département</div>
                 </div>
                 <input 
@@ -585,11 +585,11 @@ export default function DepartmentList() {
                 />
               </div>
               
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800 mt-6">
-                <button type="button" onClick={handleCloseModal} className="px-5 py-2.5 text-xs font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-border dark:border-border mt-6">
+                <button type="button" onClick={handleCloseModal} className="px-5 py-2.5 text-xs font-bold text-muted-foreground hover:bg-muted dark:hover:bg-slate-800 rounded-xl transition-colors">
                   ANNULER
                 </button>
-                <button type="submit" className="px-6 py-2.5 text-xs font-black uppercase tracking-wider bg-[#0f2863] text-white hover:bg-[#1a387e] rounded-xl shadow-lg transition-all cursor-pointer">
+                <button type="submit" className="px-6 py-2.5 text-xs font-bold uppercase tracking-wider bg-[#0f2863] text-white hover:bg-[#1a387e] rounded-xl shadow-lg transition-all cursor-pointer">
                   {editingId ? 'METTRE À JOUR' : 'ENREGISTRER'}
                 </button>
               </div>
@@ -602,26 +602,26 @@ export default function DepartmentList() {
       {/* 👑 MODAL 2: NOMMER CHEF DE DÉPARTEMENT 1-CLIC */}
       {showAssignHeadModal && selectedDeptForHead && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden space-y-5 p-6">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl shadow-sm w-full max-w-md overflow-hidden space-y-5 p-6">
+            <div className="flex items-center justify-between border-b border-border dark:border-border pb-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center font-bold">
                   <Award className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-black text-base text-slate-800 dark:text-white">Nommer le Chef de Département</h3>
+                  <h3 className="font-bold text-base text-foreground dark:text-white">Nommer le Chef de Département</h3>
                   <p className="text-xs text-slate-400">{selectedDeptForHead.name} ({selectedDeptForHead.code})</p>
                 </div>
               </div>
-              <button onClick={() => setShowAssignHeadModal(false)} className="text-slate-400 hover:text-slate-600 p-1">✕</button>
+              <button onClick={() => setShowAssignHeadModal(false)} className="text-slate-400 hover:text-muted-foreground p-1">✕</button>
             </div>
 
             <div className="space-y-3">
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">Sélectionner un Professeur Permanent *</label>
+              <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider">Sélectionner un Professeur Permanent *</label>
               <select
                 value={selectedHeadProfId}
                 onChange={e => setSelectedHeadProfId(e.target.value)}
-                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-white outline-none"
+                className="w-full px-4 py-3 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-bold text-foreground dark:text-white outline-none rounded-[var(--control-radius)]"
               >
                 <option value="">Sélectionner un enseignant chercheur...</option>
                 {professors.map((p: any) => (
@@ -632,16 +632,16 @@ export default function DepartmentList() {
               </select>
             </div>
 
-            <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+            <div className="flex justify-end gap-3 pt-4 border-t border-border dark:border-border">
               <button
                 onClick={() => setShowAssignHeadModal(false)}
-                className="px-4 py-2 text-xs font-bold text-slate-500 hover:bg-slate-100 rounded-xl"
+                className="px-4 py-2 text-xs font-bold text-muted-foreground hover:bg-muted rounded-xl"
               >
                 Annuler
               </button>
               <button
                 onClick={handleSaveAssignHead}
-                className="px-6 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-black rounded-xl text-xs uppercase tracking-wider shadow-lg hover:scale-105 transition-all cursor-pointer"
+                className="px-6 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold rounded-xl text-xs uppercase tracking-wider shadow-lg hover:scale-105 transition-all cursor-pointer"
               >
                 👑 Valider la Nomination
               </button>
@@ -653,61 +653,61 @@ export default function DepartmentList() {
       {/* 👁️ MODAL 3: VOIR DÉTAILS DU DÉPARTEMENT (FILIÈRES & ENSEIGNANTS) */}
       {selectedDeptForDetails && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-xl overflow-hidden space-y-6 p-6">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl shadow-sm w-full max-w-xl overflow-hidden space-y-6 p-6">
+            <div className="flex items-center justify-between border-b border-border dark:border-border pb-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-[#0f2863] text-white flex items-center justify-center font-bold">
                   <Building2 className="w-5 h-5 text-amber-300" />
                 </div>
                 <div>
-                  <h3 className="font-black text-base text-slate-800 dark:text-white">{selectedDeptForDetails.name}</h3>
+                  <h3 className="font-bold text-base text-foreground dark:text-white">{selectedDeptForDetails.name}</h3>
                   <p className="text-xs text-slate-400">Pôle Académique — Code: {selectedDeptForDetails.code}</p>
                 </div>
               </div>
-              <button onClick={() => setSelectedDeptForDetails(null)} className="text-slate-400 hover:text-slate-600 p-1">✕</button>
+              <button onClick={() => setSelectedDeptForDetails(null)} className="text-slate-400 hover:text-muted-foreground p-1">✕</button>
             </div>
 
             <div className="space-y-4 text-xs">
-              <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-2">
-                <div className="font-bold text-slate-700 dark:text-slate-200 flex items-center justify-between">
+              <div className="bg-muted/50 dark:bg-slate-800/50 p-4 rounded-2xl border border-border dark:border-border space-y-2">
+                <div className="font-bold text-slate-700 dark:text-foreground flex items-center justify-between">
                   <span>Chef de Département:</span>
-                  <span className="font-black text-[#0f2863] dark:text-amber-300">{selectedDeptForDetails.head_name || 'Non défini'}</span>
+                  <span className="font-bold text-[#0f2863] dark:text-amber-300">{selectedDeptForDetails.head_name || 'Non défini'}</span>
                 </div>
-                <div className="font-bold text-slate-700 dark:text-slate-200 flex items-center justify-between">
+                <div className="font-bold text-slate-700 dark:text-foreground flex items-center justify-between">
                   <span>Effectif Enseignants Rattachés:</span>
-                  <span className="font-mono font-black">{selectedDeptForDetails.professors_count} Professeurs</span>
+                  <span className="font-mono font-bold">{selectedDeptForDetails.professors_count} Professeurs</span>
                 </div>
-                <div className="font-bold text-slate-700 dark:text-slate-200 flex items-center justify-between">
+                <div className="font-bold text-slate-700 dark:text-foreground flex items-center justify-between">
                   <span>Filières Spécialisées:</span>
-                  <span className="font-mono font-black">{selectedDeptForDetails.filieres_count} Filières</span>
+                  <span className="font-mono font-bold">{selectedDeptForDetails.filieres_count} Filières</span>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <div className="font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider text-[10px]">
+                <div className="font-bold text-foreground dark:text-foreground uppercase tracking-wider text-[10px]">
                   Filières & Parcours Associés :
                 </div>
                 <div className="grid grid-cols-2 gap-2">
-                  <span className="p-2.5 bg-slate-100 dark:bg-slate-800 rounded-xl font-bold text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                  <span className="p-2.5 bg-muted dark:bg-card rounded-xl font-bold text-slate-700 dark:text-foreground border border-border dark:border-border">
                     🎓 Management & Audit
                   </span>
-                  <span className="p-2.5 bg-slate-100 dark:bg-slate-800 rounded-xl font-bold text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                  <span className="p-2.5 bg-muted dark:bg-card rounded-xl font-bold text-slate-700 dark:text-foreground border border-border dark:border-border">
                     🎓 Finance & Comptabilité
                   </span>
-                  <span className="p-2.5 bg-slate-100 dark:bg-slate-800 rounded-xl font-bold text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                  <span className="p-2.5 bg-muted dark:bg-card rounded-xl font-bold text-slate-700 dark:text-foreground border border-border dark:border-border">
                     🎓 Marketing & Commerce
                   </span>
-                  <span className="p-2.5 bg-slate-100 dark:bg-slate-800 rounded-xl font-bold text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                  <span className="p-2.5 bg-muted dark:bg-card rounded-xl font-bold text-slate-700 dark:text-foreground border border-border dark:border-border">
                     🎓 Tronct Commun S1-S4
                   </span>
                 </div>
               </div>
             </div>
 
-            <div className="flex justify-end pt-2 border-t border-slate-100 dark:border-slate-800">
+            <div className="flex justify-end pt-2 border-t border-border dark:border-border">
               <button
                 onClick={() => setSelectedDeptForDetails(null)}
-                className="px-6 py-2.5 bg-[#0f2863] text-white font-black rounded-xl text-xs uppercase tracking-wider"
+                className="px-6 py-2.5 bg-[#0f2863] text-white font-bold rounded-xl text-xs uppercase tracking-wider"
               >
                 Fermer
               </button>
@@ -719,18 +719,18 @@ export default function DepartmentList() {
       {/* 🌳 MODAL 4: ORGANIGRAMME PÉDAGOGIQUE HIÉRARCHIQUE DU DÉPARTEMENT */}
       {selectedDeptForOrg && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden space-y-6 p-6">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl shadow-sm w-full max-w-2xl overflow-hidden space-y-6 p-6">
+            <div className="flex items-center justify-between border-b border-border dark:border-border pb-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-600 text-white flex items-center justify-center font-bold">
                   <Sparkles className="w-5 h-5 text-amber-300" />
                 </div>
                 <div>
-                  <h3 className="font-black text-base text-slate-800 dark:text-white">Organigramme Pédagogique du Département</h3>
+                  <h3 className="font-bold text-base text-foreground dark:text-white">Organigramme Pédagogique du Département</h3>
                   <p className="text-xs text-slate-400">{selectedDeptForOrg.name} ({selectedDeptForOrg.code}) — Structure Hiérarchique</p>
                 </div>
               </div>
-              <button onClick={() => setSelectedDeptForOrg(null)} className="text-slate-400 hover:text-slate-600 p-1">✕</button>
+              <button onClick={() => setSelectedDeptForOrg(null)} className="text-slate-400 hover:text-muted-foreground p-1">✕</button>
             </div>
 
             {/* Tree View Structure */}
@@ -739,10 +739,10 @@ export default function DepartmentList() {
               {/* LEVEL 1: CHEF DE DÉPARTEMENT */}
               <div className="flex flex-col items-center">
                 <div className="px-5 py-3 bg-gradient-to-r from-[#0f2863] to-blue-700 text-white rounded-2xl shadow-lg border border-blue-400/30 text-center space-y-1 w-64 relative">
-                  <span className="px-2 py-0.5 bg-amber-400/20 text-amber-300 rounded-full text-[9px] font-black uppercase tracking-widest border border-amber-400/30 inline-block">
+                  <span className="px-2 py-0.5 bg-amber-400/20 text-amber-300 rounded-full text-[9px] font-bold uppercase tracking-widest border border-amber-400/30 inline-block">
                     👑 CHEF DE DÉPARTEMENT
                   </span>
-                  <div className="font-black text-sm">{selectedDeptForOrg.head_name || 'Non défini'}</div>
+                  <div className="font-bold text-sm">{selectedDeptForOrg.head_name || 'Non défini'}</div>
                   <div className="text-[10px] text-blue-200">Professeur Permanent • Supérieur Hiérarchique</div>
                 </div>
                 <div className="w-0.5 h-6 bg-slate-300 dark:bg-slate-700" />
@@ -750,7 +750,7 @@ export default function DepartmentList() {
 
               {/* LEVEL 2: RESPONSABLES DE FILIÈRES */}
               <div className="flex flex-col items-center">
-                <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">RESPONSABLES DE FILIÈRES & MASTERS</div>
+                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">RESPONSABLES DE FILIÈRES & MASTERS</div>
                 <div className="grid grid-cols-3 gap-3 w-full">
                   <div className="col-span-3 text-center text-xs text-slate-400 py-4">
                     Les responsables de filières s’affichent à partir des données académiques enregistrées.
@@ -760,10 +760,10 @@ export default function DepartmentList() {
               </div>
 
               {/* LEVEL 3: CORPS ENSEIGNANT CHERCHEUR */}
-              <div className="bg-indigo-50/50 dark:bg-indigo-950/20 p-4 rounded-2xl border border-indigo-100 dark:border-indigo-900/40 space-y-2">
-                <div className="flex items-center justify-between text-xs font-bold text-indigo-900 dark:text-indigo-200">
-                  <span className="flex items-center gap-1.5"><Users className="w-4 h-4 text-indigo-600" /> CORPS ENSEIGNANT DU DÉPARTEMENT ({selectedDeptForOrg.professors_count} PROFESSEURS)</span>
-                  <span className="text-[10px] font-mono text-indigo-600 font-black">ENCG FÈS</span>
+              <div className="bg-indigo-50/50 dark:bg-indigo-950/20 p-4 rounded-2xl border border-primary/20 dark:border-indigo-900/40 space-y-2">
+                <div className="flex items-center justify-between text-xs font-bold text-primary dark:text-indigo-200">
+                  <span className="flex items-center gap-1.5"><Users className="w-4 h-4 text-primary" /> CORPS ENSEIGNANT DU DÉPARTEMENT ({selectedDeptForOrg.professors_count} PROFESSEURS)</span>
+                  <span className="text-[10px] font-mono text-primary font-bold">ENCG FÈS</span>
                 </div>
                 <div className="flex flex-wrap gap-1.5 pt-1">
                   {professors.length === 0 ? (
@@ -771,7 +771,7 @@ export default function DepartmentList() {
                   ) : professors.slice(0, 12).map((p: any) => {
                     const name = p.user?.name || `${p.user?.first_name || ''} ${p.user?.last_name || ''}`.trim() || p.name;
                     return (
-                    <span key={p.id} className="px-2.5 py-1 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-[10px] font-bold border border-slate-200 dark:border-slate-700">
+                    <span key={p.id} className="px-2.5 py-1 bg-card dark:bg-card text-slate-700 dark:text-foreground rounded-lg text-[10px] font-bold border border-border dark:border-border">
                       {name}
                     </span>
                     );
@@ -781,10 +781,10 @@ export default function DepartmentList() {
 
             </div>
 
-            <div className="flex justify-end pt-2 border-t border-slate-100 dark:border-slate-800">
+            <div className="flex justify-end pt-2 border-t border-border dark:border-border">
               <button
                 onClick={() => setSelectedDeptForOrg(null)}
-                className="px-6 py-2.5 bg-[#0f2863] text-white font-black rounded-xl text-xs uppercase tracking-wider"
+                className="px-6 py-2.5 bg-[#0f2863] text-white font-bold rounded-xl text-xs uppercase tracking-wider"
               >
                 Fermer l'Organigramme
               </button>

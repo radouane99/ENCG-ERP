@@ -59,13 +59,13 @@ export default function AcademicYearsPage() {
   const labelCls = "block text-xs font-bold text-muted-foreground uppercase mb-1"
 
   return (
-    <div className="space-y-6 animate-in p-6 relative">
+    <div className="space-y-6 animate-in relative">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Années Académiques</h1>
+          <h1 className="text-foreground erp-page-title">Années Académiques</h1>
           <p className="text-muted-foreground mt-1 text-sm">Gérez le calendrier académique et les années scolaires.</p>
         </div>
-        <button onClick={openCreate} className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg font-medium shadow-sm hover:bg-primary/90 text-sm">
+        <button onClick={openCreate} className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium shadow-sm hover:bg-primary/90 text-sm">
           <Plus className="w-4 h-4" /> Nouvelle Année
         </button>
       </div>
@@ -112,7 +112,7 @@ export default function AcademicYearsPage() {
 
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-card border rounded-2xl shadow-xl w-full max-w-md">
+          <div className="bg-card border rounded-2xl shadow-sm w-full max-w-md">
             <div className="flex items-center justify-between p-4 border-b bg-muted/30">
               <h3 className="font-bold text-lg">{editingId ? 'Modifier l\'année' : 'Nouvelle Année Académique'}</h3>
               <button onClick={() => setShowModal(false)} className="p-1 text-muted-foreground hover:bg-muted rounded-md"><X className="w-5 h-5" /></button>
@@ -136,7 +136,7 @@ export default function AcademicYearsPage() {
               </div>
               <div className="flex items-center justify-end gap-3 pt-4 border-t">
                 <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 text-sm text-muted-foreground hover:bg-muted rounded-lg">Annuler</button>
-                <button type="submit" className="px-4 py-2 text-sm font-medium bg-primary text-white hover:bg-primary/90 rounded-lg shadow-sm">{editingId ? 'Mettre à jour' : 'Enregistrer'}</button>
+                <button type="submit" className="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg shadow-sm">{editingId ? 'Mettre à jour' : 'Enregistrer'}</button>
               </div>
             </form>
           </div>

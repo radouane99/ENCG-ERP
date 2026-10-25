@@ -91,20 +91,20 @@ export default function AdminAcademicCalendarPage() {
   const selectedDayEvents = selectedDay ? getEventsForDay(selectedDay) : []
 
   return (
-    <div className="max-w-[1500px] mx-auto p-4 md:p-8 space-y-8 font-sans animate-in fade-in pb-24">
+    <div className="max-w-[1500px] mx-auto space-y-8 font-sans animate-in fade-in pb-24">
       {/* Hero Banner */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] p-8 md:p-10 rounded-[2.5rem] shadow-2xl text-white border border-blue-800/40">
+      <div className="relative overflow-hidden p-8 md:p-10 text-white border border-blue-800/40 erp-page-banner">
         <div className="absolute top-0 right-0 w-96 h-96 bg-sky-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="flex items-center gap-6">
-            <div className="w-16 h-16 md:w-20 md:h-20 rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center shadow-2xl shrink-0">
+            <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center shadow-sm shrink-0">
               <Calendar className="w-8 h-8 md:w-10 md:h-10 text-amber-400" />
             </div>
             <div>
-              <div className="inline-flex items-center gap-2 bg-sky-500/20 text-sky-200 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-2 border border-sky-400/30">
+              <div className="inline-flex items-center gap-2 bg-sky-500/20 text-sky-200 px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mb-2 border border-sky-400/30">
                 <Sparkles className="w-4 h-4 text-amber-400" /> Connecté à la Base de Données Réelle
               </div>
-              <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight leading-tight">
+              <h1 className="text-white leading-tight erp-page-title">
                 Calendrier Académique Annuel
               </h1>
               <p className="text-blue-100/90 text-xs md:text-sm font-medium mt-1">
@@ -114,10 +114,10 @@ export default function AdminAcademicCalendarPage() {
           </div>
 
           <div className="flex items-center gap-3 flex-wrap shrink-0">
-            <button onClick={() => { refetch(); toast.success('Calendrier actualisé !') }} className="flex items-center gap-2 px-4 py-3 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-black rounded-2xl transition-all text-xs uppercase tracking-wider cursor-pointer">
+            <button onClick={() => { refetch(); toast.success('Calendrier actualisé !') }} className="flex items-center gap-2 px-4 py-3 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold rounded-2xl transition-all text-xs uppercase tracking-wider cursor-pointer">
               <RefreshCw className="w-4 h-4" /> Actualiser
             </button>
-            <button onClick={handleExportIcal} className="flex items-center gap-2 px-5 py-3 bg-amber-500 hover:bg-amber-600 text-white font-black rounded-2xl transition-all text-xs uppercase tracking-wider cursor-pointer">
+            <button onClick={handleExportIcal} className="flex items-center gap-2 px-5 py-3 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-2xl transition-all text-xs uppercase tracking-wider cursor-pointer">
               <Download className="w-4 h-4" /> Export iCal
             </button>
           </div>
@@ -131,10 +131,10 @@ export default function AdminAcademicCalendarPage() {
             key={f}
             onClick={() => setFilter(f)}
             className={cn(
-              'px-4 py-2 rounded-2xl text-xs font-black border transition-all cursor-pointer',
+              "px-4 py-2 rounded-2xl text-xs font-bold border transition-all cursor-pointer",
               filter === f
-                ? 'bg-indigo-600 text-white border-indigo-600'
-                : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-indigo-400'
+                ? "bg-primary text-primary-foreground border-primary"
+                : "bg-card dark:bg-card text-muted-foreground dark:text-foreground border-border dark:border-border hover:border-indigo-400"
             )}
           >
             {f === 'all' ? '📅 Tous' : f === 'exam' ? '📝 Examens' : f === 'holiday' ? '🏖️ Congés' : '🎓 Soutenances'}
@@ -147,30 +147,30 @@ export default function AdminAcademicCalendarPage() {
 
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Calendar Grid */}
-        <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+        <div className="lg:col-span-2 bg-card dark:bg-card rounded-2xl border border-border dark:border-border overflow-hidden shadow-sm">
           {/* Month nav */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-border dark:border-border">
             <button
               onClick={() => setCurrentDate(new Date(year, month - 1, 1))}
-              className="w-9 h-9 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors"
+              className="w-9 h-9 rounded-2xl border border-border dark:border-border flex items-center justify-center hover:bg-muted/50 dark:hover:bg-slate-800 cursor-pointer transition-colors"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <h2 className="font-black text-lg text-slate-900 dark:text-white">
+            <h2 className="font-bold text-lg text-foreground dark:text-white">
               {MONTHS_FR[month]} {year}
             </h2>
             <button
               onClick={() => setCurrentDate(new Date(year, month + 1, 1))}
-              className="w-9 h-9 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors"
+              className="w-9 h-9 rounded-2xl border border-border dark:border-border flex items-center justify-center hover:bg-muted/50 dark:hover:bg-slate-800 cursor-pointer transition-colors"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
 
           {/* Day headers */}
-          <div className="grid grid-cols-7 border-b border-slate-100 dark:border-slate-800">
+          <div className="grid grid-cols-7 border-b border-border dark:border-border">
             {DAYS.map(d => (
-              <div key={d} className="py-2 text-center text-[10px] font-black uppercase tracking-wider text-slate-400">{d}</div>
+              <div key={d} className="py-2 text-center text-[10px] font-bold uppercase tracking-wider text-slate-400">{d}</div>
             ))}
           </div>
 
@@ -187,24 +187,24 @@ export default function AdminAcademicCalendarPage() {
                   key={day.toISOString()}
                   onClick={() => setSelectedDay(isSelected ? null : day)}
                   className={cn(
-                    'border-b border-r border-slate-100 dark:border-slate-800 h-20 p-1.5 cursor-pointer transition-colors overflow-hidden',
-                    isSelected ? 'bg-indigo-50 dark:bg-indigo-950/40' : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                    "border-b border-r border-border dark:border-border h-20 p-1.5 cursor-pointer transition-colors overflow-hidden",
+                    isSelected ? "bg-primary/5 dark:bg-indigo-950/40" : "hover:bg-muted/50 dark:hover:bg-slate-800/50"
                   )}
                 >
                   <div className={cn(
-                    'w-6 h-6 rounded-full flex items-center justify-center text-xs font-black mb-1',
-                    isToday ? 'bg-indigo-600 text-white' : 'text-slate-700 dark:text-slate-300'
+                    "w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold mb-1",
+                    isToday ? "bg-primary text-primary-foreground" : "text-slate-700 dark:text-foreground"
                   )}>
                     {day.getDate()}
                   </div>
                   <div className="space-y-0.5">
                     {dayEvents.slice(0, 2).map(e => (
-                      <div key={e.id} className={cn('px-1.5 py-0.5 rounded-lg text-[9px] font-black truncate border', EVENT_COLORS[e.type] ?? EVENT_COLORS.default)}>
+                      <div key={e.id} className={cn("px-1.5 py-0.5 rounded-lg text-[9px] font-bold truncate border", EVENT_COLORS[e.type] ?? EVENT_COLORS.default)}>
                         {e.title}
                       </div>
                     ))}
                     {dayEvents.length > 2 && (
-                      <div className="text-[9px] font-black text-slate-400 pl-1">+{dayEvents.length - 2} autres</div>
+                      <div className="text-[9px] font-bold text-slate-400 pl-1">+{dayEvents.length - 2} autres</div>
                     )}
                   </div>
                 </div>
@@ -215,9 +215,9 @@ export default function AdminAcademicCalendarPage() {
 
         {/* Sidebar — selected day events or upcoming */}
         <div className="space-y-4">
-          <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
-            <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800">
-              <h3 className="font-black text-sm text-slate-900 dark:text-white">
+          <div className="bg-card dark:bg-card rounded-2xl border border-border dark:border-border overflow-hidden shadow-sm">
+            <div className="px-6 py-4 border-b border-border dark:border-border">
+              <h3 className="font-bold text-sm text-foreground dark:text-white">
                 {selectedDay
                   ? `📅 ${selectedDay.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}`
                   : '📅 Prochains Événements'}
@@ -225,10 +225,10 @@ export default function AdminAcademicCalendarPage() {
             </div>
             <div className="p-4 space-y-2 max-h-80 overflow-y-auto">
               {isLoading ? (
-                <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-indigo-600" /></div>
+                <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>
               ) : (selectedDay ? selectedDayEvents : events.filter(e => new Date(e.start) >= new Date()).slice(0, 10)).map(e => (
                 <div key={e.id} className={cn('p-3 rounded-2xl border', EVENT_COLORS[e.type] ?? EVENT_COLORS.default)}>
-                  <p className="font-black text-xs">{e.title}</p>
+                  <p className="font-bold text-xs">{e.title}</p>
                   <p className="text-[10px] font-bold opacity-70 mt-0.5">
                     {new Date(e.start).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
                   </p>
@@ -244,8 +244,8 @@ export default function AdminAcademicCalendarPage() {
           </div>
 
           {/* Legend */}
-          <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 p-4 space-y-2">
-            <h4 className="font-black text-xs uppercase tracking-wider text-slate-400">Légende</h4>
+          <div className="bg-card dark:bg-card rounded-2xl border border-border dark:border-border p-4 space-y-2">
+            <h4 className="font-bold text-xs uppercase tracking-wider text-slate-400">Légende</h4>
             {[
               { type: 'exam', label: 'Examens & Épreuves' },
               { type: 'holiday', label: 'Congés & Vacances' },

@@ -10,8 +10,8 @@ export default function AdminTafem() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-4">
-      <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
-      <p className="text-slate-500 font-bold text-sm">Redirection vers le hub Inscriptions & TAFEM...</p>
+      <div className="w-10 h-10 border-4 border-primary/20 border-t-blue-600 rounded-full animate-spin" />
+      <p className="text-muted-foreground font-bold text-sm">Redirection vers le hub Inscriptions & TAFEM...</p>
     </div>
   );
 }

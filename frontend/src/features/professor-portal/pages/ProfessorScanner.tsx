@@ -49,22 +49,22 @@ export default function ProfessorScanner() {
     void start();
     return () => { stopped = true; clearTimeout(timer); stream?.getTracks().forEach(t => t.stop()); };
   }, [camera]);
-  return <section className="mx-auto max-w-2xl space-y-5 p-4 text-foreground">
-    <h1 className="text-2xl font-semibold">Pointage des convocations</h1>
+  return <section className="mx-auto max-w-2xl space-y-5 text-foreground">
+    <h1 className="erp-page-title">Pointage des convocations</h1>
     <p className="text-muted-foreground">Scannez le jeton QR puis confirmez le pointage dans la salle affectée.</p>
     <label className="block" htmlFor="scan-exam">Examen</label>
-    <select id="scan-exam" value={exam} onChange={e => setExam(e.target.value)} className="w-full rounded-lg border border-input bg-background p-3">
+    <select id="scan-exam" value={exam} onChange={e => setExam(e.target.value)} className="w-full border border-input bg-background p-3 rounded-[var(--control-radius)]">
       <option value="">Sélectionner</option>{exams.map((e: any) => <option key={e.id} value={e.id}>{e.name || e.module?.name || `Examen ${e.id}`}</option>)}
     </select>
     <label className="block" htmlFor="scan-room">Salle</label>
-    <select id="scan-room" value={room} onChange={e => setRoom(e.target.value)} className="w-full rounded-lg border border-input bg-background p-3">
+    <select id="scan-room" value={room} onChange={e => setRoom(e.target.value)} className="w-full border border-input bg-background p-3 rounded-[var(--control-radius)]">
       <option value="">Sélectionner</option>{rooms.map((r: any) => <option key={r.id} value={r.id}>{r.name}</option>)}
     </select>
     <button type="button" disabled={!exam || !room} onClick={() => setCamera(v => !v)} className="min-h-11 rounded-lg border border-input p-3">{camera ? 'Arrêter la caméra' : 'Lire avec la caméra'}</button>
     {camera && <video ref={videoRef} muted playsInline className="w-full rounded-xl" aria-label="Aperçu caméra QR" />}
     <form onSubmit={e => { e.preventDefault(); void submit(token); }} className="space-y-3">
       <label htmlFor="scan-token" className="block">Jeton QR (lecteur ou saisie)</label>
-      <input id="scan-token" value={token} onChange={e => setToken(e.target.value)} required autoComplete="off" className="w-full rounded-lg border border-input bg-background p-3" />
+      <input id="scan-token" value={token} onChange={e => setToken(e.target.value)} required autoComplete="off" className="w-full border border-input bg-background p-3 rounded-[var(--control-radius)]" />
       <button disabled={busy || !exam || !room} className="min-h-11 rounded-lg bg-primary px-5 text-primary-foreground disabled:opacity-50">{busy ? 'Enregistrement…' : 'Confirmer la présence'}</button>
     </form>
     <p role="status" aria-live="polite">{result}</p>

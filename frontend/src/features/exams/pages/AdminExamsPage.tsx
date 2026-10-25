@@ -125,12 +125,12 @@ const { data: filieres } = useQuery({
 
   // Filter options
   const filiereOptions: SelectOption[] = useMemo(() => [
-    { value: '', label: 'Toutes les filières académiques', badge: 'Global', icon: <Layers className="w-3.5 h-3.5 text-indigo-500" /> },
+    { value: '', label: 'Toutes les filières académiques', badge: 'Global', icon: <Layers className="w-3.5 h-3.5 text-primary" /> },
     ...(filieres?.map((f: any) => ({
       value: String(f.id),
       label: `${f.code ? f.code + ' — ' : ''}${cleanUtf8Text(f.name)}`,
       badge: f.code || 'FIL',
-      icon: <Building2 className="w-3.5 h-3.5 text-indigo-500" />
+      icon: <Building2 className="w-3.5 h-3.5 text-primary" />
     })) || [])
   ], [filieres])
 
@@ -434,29 +434,28 @@ const { data: filieres } = useQuery({
   }
 
   return (
-    <div className="max-w-[1600px] mx-auto p-4 md:p-8 space-y-7 font-sans pb-28">
-      <ExamWorkflowPanel sessionId={selectedSessionId ? Number(selectedSessionId) : null} />
+    <div className="max-w-[1600px] mx-auto space-y-7 font-sans pb-28">
 
       {/* 🌟 Luxury ENCG Institutional Hero Banner */}
-      <div className="relative bg-gradient-to-r from-[#061126] via-[#0b1f4d] to-[#07132c] p-6 md:p-9 rounded-[2.5rem] shadow-2xl text-white border border-blue-800/40 overflow-hidden">
+      <div className="relative p-6 md:p-9 text-white border border-blue-800/40 overflow-hidden erp-page-banner">
         <div className="absolute top-0 right-0 w-[550px] h-[550px] bg-blue-500/15 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-[450px] h-[450px] bg-amber-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4 pointer-events-none" />
 
         <div className="relative z-10 flex flex-col xl:flex-row xl:items-center justify-between gap-6">
           <div className="flex items-start md:items-center gap-5">
-            <div className="w-16 h-16 md:w-20 md:h-20 rounded-3xl bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-xl border border-white/20 flex items-center justify-center text-amber-300 shadow-2xl shrink-0">
+            <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-xl border border-white/20 flex items-center justify-center text-amber-300 shadow-sm shrink-0">
               <Calendar className="w-8 h-8 md:w-10 md:h-10 text-amber-400" />
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap mb-2">
-                <span className="inline-flex items-center gap-1.5 bg-blue-500/20 text-blue-200 px-3.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-blue-400/30">
+                <span className="inline-flex items-center gap-1.5 bg-blue-500/20 text-blue-200 px-3.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border border-blue-400/30">
                   <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Organisation & Planification des Sessions ENCG Fès
                 </span>
-                <span className="inline-flex items-center gap-1.5 bg-emerald-500/20 text-emerald-300 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-emerald-400/30">
+                <span className="inline-flex items-center gap-1.5 bg-emerald-500/20 text-emerald-300 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border border-emerald-400/30">
                   <ShieldCheck className="w-3 h-3 text-emerald-300" /> Anti-Chevauchement IA
                 </span>
               </div>
-              <h1 className="text-2xl md:text-4xl font-black text-white tracking-tight leading-tight">
+              <h1 className="text-white leading-tight erp-page-title">
                 Gestion des Examens & Convocations
               </h1>
               <p className="text-blue-100/80 text-xs md:text-sm max-w-2xl font-medium mt-1">
@@ -469,7 +468,7 @@ const { data: filieres } = useQuery({
           <div className="flex items-center gap-3 shrink-0 flex-wrap">
             <Link
               to="/admin/exams/scan"
-              className="px-4 py-3 bg-gradient-to-r from-amber-400 to-amber-300 hover:from-amber-300 hover:to-amber-200 active:scale-95 text-[#091838] font-black rounded-2xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg hover:shadow-amber-400/30 shrink-0 cursor-pointer"
+              className="px-4 py-3 bg-gradient-to-r from-amber-400 to-amber-300 hover:from-amber-300 hover:to-amber-200 active:scale-95 text-[#091838] font-bold rounded-2xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg hover:shadow-amber-400/30 shrink-0 cursor-pointer"
               title="Ouvrir le scanner de code QR pour valider les présences en salle"
             >
               <ScanLine className="w-4 h-4" />
@@ -493,7 +492,7 @@ const { data: filieres } = useQuery({
               <span className="uppercase tracking-wider text-[10px]">Épreuves</span>
               <Calendar className="w-3.5 h-3.5 text-blue-300" />
             </div>
-            <div className="text-2xl md:text-3xl font-black text-white font-mono">{totalExams}</div>
+            <div className="text-2xl md:text-3xl font-bold text-white font-mono">{totalExams}</div>
             <div className="text-[10px] text-blue-200/80 font-medium mt-0.5">
               {filteredExams.length !== (exams || []).length ? `${filteredExams.length} filtrées sur ${(exams || []).length}` : 'Créneaux programmés'}
             </div>
@@ -504,7 +503,7 @@ const { data: filieres } = useQuery({
               <span className="uppercase tracking-wider text-[10px]">Amphis & Salles</span>
               <Building2 className="w-3.5 h-3.5 text-amber-400" />
             </div>
-            <div className="text-2xl md:text-3xl font-black text-amber-300 font-mono">{uniqueRooms}</div>
+            <div className="text-2xl md:text-3xl font-bold text-amber-300 font-mono">{uniqueRooms}</div>
             <div className="text-[10px] text-blue-200/80 font-medium mt-0.5">
               Locaux mobilisés
             </div>
@@ -515,7 +514,7 @@ const { data: filieres } = useQuery({
               <span className="uppercase tracking-wider text-[10px]">Étudiants Convoqués</span>
               <Users className="w-3.5 h-3.5 text-emerald-400" />
             </div>
-            <div className="text-2xl md:text-3xl font-black text-emerald-300 font-mono">{totalConvocations}</div>
+            <div className="text-2xl md:text-3xl font-bold text-emerald-300 font-mono">{totalConvocations}</div>
             <div className="text-[10px] text-blue-200/80 font-medium mt-0.5">
               Étudiants uniques inscrits
             </div>
@@ -527,7 +526,7 @@ const { data: filieres } = useQuery({
               <Mail className="w-3.5 h-3.5 text-cyan-400" />
             </div>
             <div className="flex items-baseline gap-2">
-              <div className="text-2xl md:text-3xl font-black text-cyan-300 font-mono">
+              <div className="text-2xl md:text-3xl font-bold text-cyan-300 font-mono">
                 {totalConvocations > 0 ? Math.round((totalSent / totalConvocations) * 100) : 0}%
               </div>
               <span className="text-[10px] text-cyan-200 font-bold">({totalSent}/{totalConvocations})</span>
@@ -540,12 +539,13 @@ const { data: filieres } = useQuery({
       </div>
 
       {/* 🔍 Dedicated Control & Filter Center */}
-      <div className="bg-white dark:bg-slate-900 p-6 md:p-7 rounded-[2.5rem] border border-slate-200/90 dark:border-slate-800 shadow-sm space-y-5">
+      <ExamWorkflowPanel sessionId={selectedSessionId ? Number(selectedSessionId) : null} />
+      <div className="bg-card dark:bg-card p-6 md:p-7 rounded-2xl border border-slate-200/90 dark:border-border shadow-sm space-y-5">
         
         {/* Row 1: Dropdown Filters */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">
               FILIÈRE ACADÉMIQUE
             </label>
             <CustomSelect
@@ -553,13 +553,13 @@ const { data: filieres } = useQuery({
               onChange={(val) => setSelectedFiliereId(val ? Number(val) : '')}
               options={filiereOptions}
               placeholder="Toutes les filières"
-              icon={<Layers className="w-4 h-4 text-indigo-500" />}
+              icon={<Layers className="w-4 h-4 text-primary" />}
               className="w-full"
             />
           </div>
 
           <div>
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">
               SESSION D'EXAMEN
             </label>
             <CustomSelect
@@ -573,7 +573,7 @@ const { data: filieres } = useQuery({
           </div>
 
           <div>
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">
               SEMESTRE
             </label>
             <CustomSelect
@@ -589,9 +589,9 @@ const { data: filieres } = useQuery({
 
         {/* Dynamic Day-by-Day Date Tabs (When available) */}
         {availableDates.length > 1 && (
-          <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80">
+          <div className="pt-2 border-t border-border dark:border-slate-800/80">
             <div className="flex items-center gap-2 overflow-x-auto pb-1.5 scrollbar-thin">
-              <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 shrink-0 flex items-center gap-1 mr-1">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 shrink-0 flex items-center gap-1 mr-1">
                 <Filter className="w-3 h-3" /> Filtrer par jour :
               </span>
               <button
@@ -600,8 +600,8 @@ const { data: filieres } = useQuery({
                 className={cn(
                   "px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1.5",
                   selectedDateFilter === ''
-                    ? "bg-[#0f2863] text-white shadow-xs font-black"
-                    : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200"
+                    ? "bg-[#0f2863] text-white shadow-xs font-bold"
+                    : "bg-muted dark:bg-card text-muted-foreground dark:text-muted-foreground hover:bg-slate-200"
                 )}
               >
                 Tous les jours <span className="text-[10px] opacity-75">({(exams || []).length})</span>
@@ -614,8 +614,8 @@ const { data: filieres } = useQuery({
                   className={cn(
                     "px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 border",
                     selectedDateFilter === d.dateStr
-                      ? "bg-indigo-600 text-white border-indigo-600 shadow-xs font-black"
-                      : "bg-slate-50 dark:bg-slate-800/70 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100"
+                      ? "bg-primary text-primary-foreground border-primary shadow-xs font-bold"
+                      : "bg-muted/50 dark:bg-slate-800/70 text-slate-700 dark:text-foreground border-border dark:border-border hover:bg-muted"
                   )}
                 >
                   <span>{d.label}</span>
@@ -629,7 +629,7 @@ const { data: filieres } = useQuery({
         )}
 
         {/* Row 2: Search Input + Actions & View Switcher */}
-        <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-4">
+        <div className="pt-3 border-t border-border dark:border-slate-800/80 flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-4">
           <div className="relative flex-1 max-w-lg">
             <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
@@ -637,12 +637,12 @@ const { data: filieres } = useQuery({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Rechercher par module, salle, surveillant, groupe..."
-              className="w-full pl-10 pr-10 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-bold text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-indigo-500 transition-all shadow-2xs"
+              className="w-full pl-10 pr-10 py-2.5 bg-muted/50 dark:bg-slate-800/80 border border-border dark:border-border text-xs font-bold text-foreground dark:text-white placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-ring transition-all shadow-2xs rounded-[var(--control-radius)]"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs font-bold p-1 cursor-pointer"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-muted-foreground dark:hover:text-slate-200 text-xs font-bold p-1 cursor-pointer"
               >
                 ✕
               </button>
@@ -655,7 +655,7 @@ const { data: filieres } = useQuery({
             <button
               onClick={handleAutoGenerateExams}
               disabled={isAutoGenerating}
-              className="px-4 py-2.5 bg-gradient-to-r from-[#0f2863] to-[#1e40af] hover:from-[#16357d] hover:to-[#2563eb] text-white font-black rounded-2xl text-xs uppercase tracking-wider transition-all shadow-md hover:shadow-indigo-500/20 flex items-center gap-2 cursor-pointer disabled:opacity-50 active:scale-95 border border-indigo-400/20"
+              className="px-4 py-2.5 bg-gradient-to-r from-[#0f2863] to-[#1e40af] hover:from-[#16357d] hover:to-[#2563eb] text-white font-bold rounded-2xl text-xs uppercase tracking-wider transition-all shadow-md hover:shadow-indigo-500/20 flex items-center gap-2 cursor-pointer disabled:opacity-50 active:scale-95 border border-indigo-400/20"
               title={selectedFiliereId ? "Générer automatiquement les examens de cette filière avec algorithme anti-chevauchement" : "Générer automatiquement les examens de TOUTES les filières en un seul clic"}
             >
               {isAutoGenerating ? <Loader2 className="w-4 h-4 animate-spin text-amber-300" /> : <Zap className="w-4 h-4 text-amber-300" />}
@@ -665,10 +665,10 @@ const { data: filieres } = useQuery({
             {/* Sur Mesure */}
             <button
               onClick={openCustomGenModal}
-              className="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold rounded-2xl text-xs uppercase tracking-wider transition-all border border-slate-200 dark:border-slate-700 shadow-2xs flex items-center gap-2 cursor-pointer active:scale-95"
+              className="px-3.5 py-2.5 bg-muted hover:bg-slate-200 dark:bg-card dark:hover:bg-slate-700 text-slate-700 dark:text-foreground font-bold rounded-2xl text-xs uppercase tracking-wider transition-all border border-border dark:border-border shadow-2xs flex items-center gap-2 cursor-pointer active:scale-95"
               title="Configurer l'ordre des modules, date de début et créneaux (2 examens par jour)"
             >
-              <Sliders className="w-3.5 h-3.5 text-indigo-500" />
+              <Sliders className="w-3.5 h-3.5 text-primary" />
               <span>Sur Mesure</span>
             </button>
 
@@ -689,7 +689,7 @@ const { data: filieres } = useQuery({
             {hasActiveFilters && (
               <button
                 onClick={clearAllFilters}
-                className="p-2.5 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1"
+                className="p-2.5 text-muted-foreground hover:text-foreground dark:hover:text-slate-200 hover:bg-muted dark:hover:bg-slate-800 rounded-2xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1"
                 title="Effacer tous les filtres"
               >
                 <X className="w-4 h-4" />
@@ -709,13 +709,13 @@ const { data: filieres } = useQuery({
             <div className="h-6 w-px bg-slate-200 dark:bg-slate-700 mx-1 hidden sm:block" />
 
             {/* View switcher */}
-            <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl border border-slate-200 dark:border-slate-700 shrink-0">
+            <div className="flex bg-muted dark:bg-card p-1 rounded-2xl border border-border dark:border-border shrink-0">
               <button
                 onClick={() => setViewMode('cards')}
                 className={cn(
                   "px-3 py-1.5 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center gap-1.5",
                   viewMode === 'cards'
-                    ? "bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-xs"
+                    ? "bg-card dark:bg-slate-700 text-primary dark:text-indigo-400 shadow-xs"
                     : "text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
                 )}
               >
@@ -726,7 +726,7 @@ const { data: filieres } = useQuery({
                 className={cn(
                   "px-3 py-1.5 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center gap-1.5",
                   viewMode === 'table'
-                    ? "bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-xs"
+                    ? "bg-card dark:bg-slate-700 text-primary dark:text-indigo-400 shadow-xs"
                     : "text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
                 )}
               >
@@ -739,17 +739,17 @@ const { data: filieres } = useQuery({
 
       {/* Main Content Area */}
       {isLoadingExams ? (
-        <div className="flex flex-col items-center justify-center p-20 bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
-          <Loader2 className="w-10 h-10 animate-spin text-indigo-600" />
-          <p className="text-xs font-black uppercase tracking-wider text-slate-400">Chargement de la planification des examens...</p>
+        <div className="flex flex-col items-center justify-center p-20 bg-card dark:bg-card rounded-2xl border border-border dark:border-border shadow-xs space-y-4">
+          <Loader2 className="w-10 h-10 animate-spin text-primary" />
+          <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Chargement de la planification des examens...</p>
         </div>
       ) : filteredExams.length === 0 ? (
-        <div className="text-center py-20 px-6 bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-xs space-y-6">
-          <div className="w-20 h-20 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 rounded-3xl flex items-center justify-center mx-auto shadow-inner">
+        <div className="text-center py-20 px-6 bg-card dark:bg-card rounded-2xl border border-border dark:border-border shadow-xs space-y-6">
+          <div className="w-20 h-20 bg-primary/5 dark:bg-indigo-950/60 text-primary dark:text-indigo-400 rounded-2xl flex items-center justify-center mx-auto shadow-inner">
             <Calendar className="w-10 h-10" />
           </div>
           <div className="max-w-md mx-auto space-y-2">
-            <h3 className="text-lg font-black text-slate-800 dark:text-slate-100">Aucun examen programmé pour ces critères</h3>
+            <h3 className="text-lg font-bold text-foreground dark:text-foreground">Aucun examen programmé pour ces critères</h3>
             <p className="text-xs text-slate-400 leading-relaxed">
               Sélectionnez une filière et une session dans les filtres ci-dessus, puis lancez la génération automatique ou sur mesure pour bâtir le calendrier d'épreuves.
             </p>
@@ -757,25 +757,25 @@ const { data: filieres } = useQuery({
           <div className="flex items-center justify-center gap-3 pt-2">
             <button
               onClick={handleAutoGenerateExams}
-              className="px-5 py-2.5 bg-[#0f2863] hover:bg-[#1a387e] text-white text-xs font-black rounded-2xl shadow-md uppercase tracking-wider flex items-center gap-2 cursor-pointer transition-all active:scale-95"
+              className="px-5 py-2.5 bg-[#0f2863] hover:bg-[#1a387e] text-white text-xs font-bold rounded-2xl shadow-md uppercase tracking-wider flex items-center gap-2 cursor-pointer transition-all active:scale-95"
             >
               <Zap className="w-4 h-4 text-amber-300" /> Lancer l'Auto-Générateur IA
             </button>
             <button
               onClick={openCustomGenModal}
-              className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-black rounded-2xl uppercase tracking-wider flex items-center gap-2 cursor-pointer transition-all"
+              className="px-5 py-2.5 bg-muted hover:bg-slate-200 dark:bg-card dark:hover:bg-slate-700 text-slate-700 dark:text-foreground text-xs font-bold rounded-2xl uppercase tracking-wider flex items-center gap-2 cursor-pointer transition-all"
             >
-              <Sliders className="w-4 h-4 text-indigo-500" /> Mode Sur Mesure
+              <Sliders className="w-4 h-4 text-primary" /> Mode Sur Mesure
             </button>
           </div>
         </div>
       ) : viewMode === 'table' ? (
         /* Synoptic Table View */
-        <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden">
+        <div className="bg-card dark:bg-card rounded-2xl border border-border dark:border-border shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-slate-50/90 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700 text-[11px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <tr className="bg-slate-50/90 dark:bg-slate-800/80 border-b border-border dark:border-border text-[11px] font-bold uppercase tracking-wider text-muted-foreground dark:text-muted-foreground">
                   <th className="p-4 pl-6">Date & Horaire</th>
                   <th className="p-4">Module & Filière</th>
                   <th className="p-4">Groupe</th>
@@ -792,13 +792,13 @@ const { data: filieres } = useQuery({
 
                   return (
                     <tr key={exam.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
-                      <td className="p-4 pl-6 font-mono font-bold text-slate-900 dark:text-white">
+                      <td className="p-4 pl-6 font-mono font-bold text-foreground dark:text-white">
                         <div className="flex items-center gap-2">
                           <span className={cn(
-                            "px-2 py-0.5 rounded-md text-[10px] font-black",
+                            "px-2 py-0.5 rounded-md text-[10px] font-bold",
                             dateInfo.isToday
                               ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
-                              : "bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300"
+                              : "bg-primary/5 dark:bg-indigo-950 text-primary dark:text-indigo-300"
                           )}>
                             {dateInfo.day}/{dateInfo.month}
                           </span>
@@ -806,11 +806,11 @@ const { data: filieres } = useQuery({
                         </div>
                       </td>
                       <td className="p-4">
-                        <div className="font-black text-slate-900 dark:text-white line-clamp-1">{cleanUtf8Text(exam.module?.name || exam.module)}</div>
+                        <div className="font-bold text-foreground dark:text-white line-clamp-1">{cleanUtf8Text(exam.module?.name || exam.module)}</div>
                         <div className="text-[10px] text-slate-400 font-bold">{exam.module?.filiere?.code || 'ENCG'} · Semestre S{exam.module?.semester_number || 1}</div>
                       </td>
                       <td className="p-4">
-                        <span className="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-[10px] font-bold">
+                        <span className="px-2.5 py-1 bg-muted dark:bg-card text-slate-700 dark:text-foreground rounded-lg text-[10px] font-bold">
                           {exam.group?.name || exam.group || 'Tous'}
                         </span>
                       </td>
@@ -821,12 +821,12 @@ const { data: filieres } = useQuery({
                         </span>
                       </td>
                       <td className="p-4">
-                        <span className="text-[11px] text-slate-600 dark:text-slate-300 line-clamp-1 font-medium">
+                        <span className="text-[11px] text-muted-foreground dark:text-foreground line-clamp-1 font-medium">
                           {cleanUtf8Text(Array.isArray(exam.proctors) && exam.proctors.length > 0 ? exam.proctors.join(', ') : exam.surveillants || 'À affecter')}
                         </span>
                       </td>
                       <td className="p-4 text-center">
-                        <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
                           {exam.sent_count || 0} / {exam.convocations_generated || exam.generated_count || 0}
                         </span>
                       </td>
@@ -845,14 +845,14 @@ const { data: filieres } = useQuery({
                             onClick={() => {
                               void openExamDoorSignPdf(exam.id)
                             }}
-                            className="p-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer active:scale-95"
+                            className="p-1.5 bg-muted hover:bg-slate-200 dark:bg-card text-slate-700 dark:text-foreground rounded-xl border border-border dark:border-border cursor-pointer active:scale-95"
                             title="Affiche de Porte Salle"
                           >
                             <DoorOpen className="w-3.5 h-3.5" />
                           </button>
                           <Link
                             to={`/admin/exams/${exam.id}/surveillance`}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#0f2863] hover:bg-[#1a387e] text-white rounded-xl text-[10px] font-black uppercase tracking-wider shadow-sm transition-all active:scale-95"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#0f2863] hover:bg-[#1a387e] text-white rounded-xl text-[10px] font-bold uppercase tracking-wider shadow-sm transition-all active:scale-95"
                           >
                             <ShieldCheck className="w-3 h-3 text-amber-400" /> Live
                           </Link>
@@ -910,14 +910,14 @@ const { data: filieres } = useQuery({
       {/* ⚙️ Modal Custom Planning 2 Exams / Day */}
       {showCustomGenModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl shadow-sm w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
             <div className="p-6 bg-gradient-to-r from-[#061126] via-[#0f2863] to-[#07132c] text-white flex items-center justify-between shrink-0">
               <div className="flex items-center gap-3">
                 <div className="w-11 h-11 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center font-bold text-amber-300 shadow-lg">
                   <Sliders className="w-5 h-5 text-amber-400" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-black tracking-tight">Génération Sur Mesure (Rythme 2 Ex/Jour)</h3>
+                  <h3 className="text-lg font-bold tracking-tight">Génération Sur Mesure (Rythme 2 Ex/Jour)</h3>
                   <p className="text-xs text-blue-200">Configuration fine du cadencement des épreuves</p>
                 </div>
               </div>
@@ -932,14 +932,14 @@ const { data: filieres } = useQuery({
             <div className="p-6 space-y-5 overflow-y-auto flex-1">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1.5">
+                  <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest block mb-1.5">
                     NOMBRE D'EXAMENS / JOUR
                   </label>
                   <CustomSelect
                     value={String(modulesPerDay)}
                     onChange={(val) => setModulesPerDay(Number(val))}
                     options={[
-                      { value: '1', label: '1 Examen / Jour (Allégé)', badge: '1 Ex/J', icon: <Calendar className="w-3.5 h-3.5 text-blue-500" /> },
+                      { value: '1', label: '1 Examen / Jour (Allégé)', badge: '1 Ex/J', icon: <Calendar className="w-3.5 h-3.5 text-primary" /> },
                       { value: '2', label: '2 Examens / Jour (Standard ENCG Fès)', badge: 'Recommandé', icon: <Zap className="w-3.5 h-3.5 text-amber-500" /> },
                       { value: '3', label: '3 Examens / Jour (Intensif)', badge: 'Intensif', icon: <Clock className="w-3.5 h-3.5 text-rose-500" /> },
                     ]}
@@ -948,20 +948,20 @@ const { data: filieres } = useQuery({
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1.5">
+                  <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest block mb-1.5">
                     DATE DE DÉBUT DES ÉPREUVES
                   </label>
                   <input
                     type="date"
                     value={customStartDate}
                     onChange={(e) => setCustomStartDate(e.target.value)}
-                    className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500 transition-all shadow-2xs"
+                    className="w-full p-3 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-bold text-foreground dark:text-white outline-none focus:ring-2 focus:ring-ring transition-all shadow-2xs rounded-[var(--control-radius)]"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1.5">Créneaux horaires par défaut</label>
+                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest block mb-1.5">Créneaux horaires par défaut</label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {[
                     { id: 'balanced', label: '⚖️ Équilibré (Matin / Soir)' },
@@ -976,8 +976,8 @@ const { data: filieres } = useQuery({
                       className={cn(
                         "p-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer text-center",
                         daySlotMode === slot.id
-                          ? "bg-indigo-50 dark:bg-indigo-950/60 border-indigo-500 text-indigo-700 dark:text-indigo-300 shadow-xs font-black"
-                          : "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100"
+                          ? "bg-primary/5 dark:bg-indigo-950/60 border-primary text-primary dark:text-indigo-300 shadow-xs font-bold"
+                          : "bg-muted/50 dark:bg-card border-border dark:border-border text-muted-foreground dark:text-muted-foreground hover:bg-muted"
                       )}
                     >
                       {slot.label}
@@ -989,13 +989,13 @@ const { data: filieres } = useQuery({
               <div className="pt-2">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
                       Ordre & Sélection des Modules ({selectedModuleIds.size}/{orderedModuleList.length})
                     </label>
                     <button
                       type="button"
                       onClick={toggleSelectAllModules}
-                      className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold hover:underline cursor-pointer"
+                      className="text-[10px] text-primary dark:text-indigo-400 font-bold hover:underline cursor-pointer"
                     >
                       {selectedModuleIds.size === orderedModuleList.length ? 'Tout désélectionner' : 'Tout sélectionner'}
                     </button>
@@ -1011,33 +1011,33 @@ const { data: filieres } = useQuery({
                       value={moduleSearchQuery}
                       onChange={(e) => setModuleSearchQuery(e.target.value)}
                       placeholder="Filtrer les modules..."
-                      className="w-full px-3 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white placeholder:text-slate-400 outline-none"
+                      className="w-full px-3 py-1.5 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-medium text-foreground dark:text-white placeholder:text-slate-400 outline-none rounded-[var(--control-radius)]"
                     />
                   </div>
                 )}
 
-                <div className="max-h-56 overflow-y-auto space-y-2 p-2 border border-slate-200 dark:border-slate-800 rounded-2xl bg-slate-50/50 dark:bg-slate-800/40">
+                <div className="max-h-56 overflow-y-auto space-y-2 p-2 border border-border dark:border-border rounded-2xl bg-slate-50/50 dark:bg-slate-800/40">
                   {orderedModuleList
                     .filter(mod => !moduleSearchQuery || (mod.name || '').toLowerCase().includes(moduleSearchQuery.toLowerCase()))
                     .map((mod, idx) => (
-                      <div key={mod.id} className="p-2.5 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-between text-xs shadow-2xs">
+                      <div key={mod.id} className="p-2.5 bg-card dark:bg-card rounded-xl border border-border dark:border-border flex items-center justify-between text-xs shadow-2xs">
                         <div className="flex items-center gap-3 min-w-0">
                           <input
                             type="checkbox"
                             checked={selectedModuleIds.has(mod.id)}
                             onChange={() => toggleModuleSelection(mod.id)}
-                            className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                            className="w-4 h-4 rounded text-primary focus:ring-ring cursor-pointer"
                           />
-                          <span className="w-5 h-5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-mono font-bold text-[10px] flex items-center justify-center shrink-0">
+                          <span className="w-5 h-5 rounded-full bg-muted dark:bg-slate-700 text-slate-700 dark:text-foreground font-mono font-bold text-[10px] flex items-center justify-center shrink-0">
                             {idx + 1}
                           </span>
-                          <span className="font-bold text-slate-800 dark:text-slate-200 truncate">{cleanUtf8Text(mod.name)}</span>
+                          <span className="font-bold text-foreground dark:text-foreground truncate">{cleanUtf8Text(mod.name)}</span>
                           {(mod.filiere?.code || filieres?.find((f: any) => f.id === mod.filiere_id)?.code) && (
-                            <span className="text-[9px] font-black text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/50 border border-indigo-200 dark:border-indigo-800 px-1.5 py-0.5 rounded uppercase shrink-0">
+                            <span className="text-[9px] font-bold text-primary dark:text-indigo-300 bg-primary/5 dark:bg-indigo-900/50 border border-primary/20 dark:border-primary px-1.5 py-0.5 rounded uppercase shrink-0">
                               {mod.filiere?.code || filieres?.find((f: any) => f.id === mod.filiere_id)?.code}
                             </span>
                           )}
-                          <span className="text-[9px] font-bold text-slate-400 bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded shrink-0">
+                          <span className="text-[9px] font-bold text-slate-400 bg-muted dark:bg-slate-700 px-1.5 py-0.5 rounded shrink-0">
                             S{mod.semester_number || 1}
                           </span>
                         </div>
@@ -1047,7 +1047,7 @@ const { data: filieres } = useQuery({
                             type="button"
                             disabled={idx === 0}
                             onClick={() => handleMoveModule(idx, 'up')}
-                            className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 disabled:opacity-30 cursor-pointer"
+                            className="p-1 rounded hover:bg-muted dark:hover:bg-slate-700 text-muted-foreground disabled:opacity-30 cursor-pointer"
                             title="Monter"
                           >
                             <ArrowUp className="w-3.5 h-3.5" />
@@ -1056,7 +1056,7 @@ const { data: filieres } = useQuery({
                             type="button"
                             disabled={idx === orderedModuleList.length - 1}
                             onClick={() => handleMoveModule(idx, 'down')}
-                            className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 disabled:opacity-30 cursor-pointer"
+                            className="p-1 rounded hover:bg-muted dark:hover:bg-slate-700 text-muted-foreground disabled:opacity-30 cursor-pointer"
                             title="Descendre"
                           >
                             <ArrowDown className="w-3.5 h-3.5" />
@@ -1068,15 +1068,15 @@ const { data: filieres } = useQuery({
               </div>
             </div>
 
-            <div className="p-5 bg-slate-50 dark:bg-slate-800/60 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3 shrink-0">
-              <span className="text-xs font-bold text-slate-500">
+            <div className="p-5 bg-muted/50 dark:bg-slate-800/60 border-t border-border dark:border-border flex items-center justify-between gap-3 shrink-0">
+              <span className="text-xs font-bold text-muted-foreground">
                 {selectedModuleIds.size} module(s) sélectionné(s)
               </span>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => setShowCustomGenModal(false)}
-                  className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-xl hover:bg-slate-100 cursor-pointer"
+                  className="px-4 py-2 bg-card dark:bg-card border border-border dark:border-border text-slate-700 dark:text-foreground text-xs font-bold rounded-xl hover:bg-muted cursor-pointer"
                 >
                   Annuler
                 </button>
@@ -1084,7 +1084,7 @@ const { data: filieres } = useQuery({
                   type="button"
                   disabled={isAutoGenerating || selectedModuleIds.size === 0}
                   onClick={handleRunCustomAutoGenerate}
-                  className="px-5 py-2 bg-[#0f2863] hover:bg-[#1a387e] text-white text-xs font-black rounded-xl uppercase tracking-wider shadow-lg flex items-center gap-2 cursor-pointer disabled:opacity-50 transition-all active:scale-95"
+                  className="px-5 py-2 bg-[#0f2863] hover:bg-[#1a387e] text-white text-xs font-bold rounded-xl uppercase tracking-wider shadow-lg flex items-center gap-2 cursor-pointer disabled:opacity-50 transition-all active:scale-95"
                 >
                   {isAutoGenerating ? <Loader2 className="w-4 h-4 animate-spin text-amber-300" /> : <Zap className="w-4 h-4 text-amber-400" />}
                   Lancer la Planification
@@ -1098,13 +1098,13 @@ const { data: filieres } = useQuery({
       {/* ⚠️ Reset Confirmation Modal */}
       {showResetConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-md p-6 space-y-5 animate-in zoom-in-95 duration-200">
+          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl shadow-sm w-full max-w-md p-6 space-y-5 animate-in zoom-in-95 duration-200">
             <div className="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 flex items-center justify-center mx-auto">
               <AlertTriangle className="w-6 h-6" />
             </div>
             <div className="text-center space-y-2">
-              <h3 className="text-base font-black text-slate-900 dark:text-white">Réinitialiser le Planning des Examens ?</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+              <h3 className="text-base font-bold text-foreground dark:text-white">Réinitialiser le Planning des Examens ?</h3>
+              <p className="text-xs text-muted-foreground dark:text-muted-foreground leading-relaxed">
                 Cette action supprimera tous les examens planifiés, les attributions de salles et les surveillances pour les filtres sélectionnés (Session / Filière). Cette action est irréversible.
               </p>
             </div>
@@ -1112,7 +1112,7 @@ const { data: filieres } = useQuery({
               <button
                 type="button"
                 onClick={() => setShowResetConfirm(false)}
-                className="flex-1 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-xl cursor-pointer transition-all"
+                className="flex-1 py-2.5 bg-muted dark:bg-card hover:bg-slate-200 text-slate-700 dark:text-foreground text-xs font-bold rounded-xl cursor-pointer transition-all"
               >
                 Annuler
               </button>
@@ -1120,7 +1120,7 @@ const { data: filieres } = useQuery({
                 type="button"
                 disabled={isResetting}
                 onClick={handleResetExams}
-                className="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-black uppercase tracking-wider rounded-xl cursor-pointer transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                className="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold uppercase tracking-wider rounded-xl cursor-pointer transition-all flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 {isResetting ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
                 <span>Confirmer la suppression</span>
@@ -1226,7 +1226,7 @@ function ExamCard({ id, title, group, filiereCode, semester, time, duration, roo
   const hasSurveillants = surveillants && surveillants !== 'À affecter' && !surveillants.toLowerCase().includes('inconnu') && surveillants.trim() !== 'Aucun'
 
   return (
-    <div className="group bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200/90 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col xl:flex-row hover:border-indigo-300 dark:hover:border-indigo-700/60">
+    <div className="group bg-card dark:bg-card rounded-2xl border border-slate-200/90 dark:border-border shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col xl:flex-row hover:border-primary/20 dark:hover:border-indigo-700/60">
       
       {/* 📅 Left Date Ribbon Badge */}
       <div className={cn(
@@ -1238,15 +1238,15 @@ function ExamCard({ id, title, group, filiereCode, semester, time, duration, roo
         <div className="absolute top-0 right-0 w-28 h-28 bg-blue-400/10 rounded-full blur-xl pointer-events-none" />
 
         {isToday && (
-          <span className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider bg-amber-400 text-[#091838]">
+          <span className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-wider bg-amber-400 text-[#091838]">
             Aujourd'hui
           </span>
         )}
 
-        <span className="text-[11px] font-black uppercase tracking-widest text-amber-400 mb-0.5">
+        <span className="text-[11px] font-bold uppercase tracking-widest text-amber-400 mb-0.5">
           {month}
         </span>
-        <span className="text-4xl xl:text-5xl font-black tracking-tight mb-0.5 font-mono text-white">
+        <span className="text-4xl xl:text-5xl font-bold tracking-tight mb-0.5 font-mono text-white">
           {day}
         </span>
         <span className="text-xs font-bold text-blue-200 mb-3 capitalize">
@@ -1255,7 +1255,7 @@ function ExamCard({ id, title, group, filiereCode, semester, time, duration, roo
 
         {/* Exam type pill */}
         <span className={cn(
-          "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider border shadow-2xs text-center",
+          "px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider border shadow-2xs text-center",
           isRetake
             ? "bg-amber-400/20 text-amber-300 border-amber-400/40"
             : "bg-white/15 text-blue-100 border-white/20"
@@ -1269,12 +1269,12 @@ function ExamCard({ id, title, group, filiereCode, semester, time, duration, roo
         <div className="space-y-2.5">
           {/* Top badges */}
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="px-3 py-1 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 rounded-full text-[10px] font-black uppercase tracking-wider border border-indigo-200 dark:border-indigo-800 flex items-center gap-1.5 shadow-2xs">
-              <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+            <span className="px-3 py-1 bg-primary/5 dark:bg-indigo-950/60 text-primary dark:text-indigo-300 rounded-full text-[10px] font-bold uppercase tracking-wider border border-primary/20 dark:border-primary flex items-center gap-1.5 shadow-2xs">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary" />
               {filiereCode && filiereCode !== '—' ? `${filiereCode} · ` : ''}S{semester}
             </span>
 
-            <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-full text-[10px] font-black uppercase tracking-wider border border-slate-200 dark:border-slate-700 shadow-2xs">
+            <span className="px-3 py-1 bg-muted dark:bg-card text-slate-700 dark:text-foreground rounded-full text-[10px] font-bold uppercase tracking-wider border border-border dark:border-border shadow-2xs">
               Groupe : {group}
             </span>
 
@@ -1287,19 +1287,19 @@ function ExamCard({ id, title, group, filiereCode, semester, time, duration, roo
           </div>
 
           {/* Module Title */}
-          <h2 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white tracking-tight leading-snug group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+          <h2 className="text-xl md:text-2xl font-bold text-foreground dark:text-white tracking-tight leading-snug group-hover:text-primary dark:group-hover:text-indigo-400 transition-colors">
             {cleanTitle}
           </h2>
 
           {/* Time & Room Meta */}
           <div className="flex flex-wrap items-center gap-2.5 pt-1">
-            <div className="inline-flex items-center gap-2 bg-slate-50 dark:bg-slate-800/90 text-slate-700 dark:text-slate-200 px-3.5 py-2 rounded-2xl border border-slate-200 dark:border-slate-700 text-xs font-bold shadow-2xs">
-              <Clock className="w-4 h-4 text-indigo-500 shrink-0" />
+            <div className="inline-flex items-center gap-2 bg-muted/50 dark:bg-slate-800/90 text-slate-700 dark:text-foreground px-3.5 py-2 rounded-2xl border border-border dark:border-border text-xs font-bold shadow-2xs">
+              <Clock className="w-4 h-4 text-primary shrink-0" />
               <span>{time}</span>
               <span className="text-slate-400 font-normal">({duration})</span>
             </div>
 
-            <div className="inline-flex items-center gap-2 bg-amber-50/80 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200 px-3.5 py-2 rounded-2xl border border-amber-200/90 dark:border-amber-800/80 text-xs font-black shadow-2xs">
+            <div className="inline-flex items-center gap-2 bg-amber-50/80 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200 px-3.5 py-2 rounded-2xl border border-amber-200/90 dark:border-amber-800/80 text-xs font-bold shadow-2xs">
               <Building2 className="w-4 h-4 text-amber-600 shrink-0" />
               <span>Salle / Amphi : {cleanRoom}</span>
             </div>
@@ -1307,14 +1307,14 @@ function ExamCard({ id, title, group, filiereCode, semester, time, duration, roo
         </div>
 
         {/* Proctors Row */}
-        <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2 flex-wrap text-xs">
-          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+        <div className="pt-3 border-t border-border dark:border-border flex items-center gap-2 flex-wrap text-xs">
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
             Surveillants :
           </span>
           {hasSurveillants ? (
             <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-xl font-bold flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 shadow-2xs">
-                <Users className="w-3.5 h-3.5 text-indigo-500" />
+              <span className="px-3 py-1 bg-muted dark:bg-card text-foreground dark:text-foreground rounded-xl font-bold flex items-center gap-1.5 border border-border dark:border-border shadow-2xs">
+                <Users className="w-3.5 h-3.5 text-primary" />
                 {surveillants}
               </span>
             </div>
@@ -1326,21 +1326,21 @@ function ExamCard({ id, title, group, filiereCode, semester, time, duration, roo
         </div>
 
         {/* Convocations Progress Tracker */}
-        <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 space-y-2">
+        <div className="bg-muted/50 dark:bg-slate-800/60 p-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 space-y-2">
           <div className="flex items-center justify-between text-xs font-bold">
             <div className="flex items-center gap-2">
-              <FileText className="w-4 h-4 text-indigo-500" />
-              <span className="text-slate-800 dark:text-slate-200 font-extrabold">{generated} convocations</span>
+              <FileText className="w-4 h-4 text-primary" />
+              <span className="text-foreground dark:text-foreground font-bold">{generated} convocations</span>
               <span className="text-slate-400 font-normal">({sent} transmises)</span>
             </div>
             <div className="flex items-center gap-2">
               <span className={cn(
-                "px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider",
+                "px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider",
                 percentSent === 100
                   ? "bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300"
                   : percentSent > 0
-                  ? "bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300"
-                  : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
+                  ? "bg-primary/10 dark:bg-blue-950 text-primary dark:text-blue-300"
+                  : "bg-slate-200 dark:bg-slate-700 text-muted-foreground dark:text-foreground"
               )}>
                 {percentSent}% Envoyées
               </span>
@@ -1353,7 +1353,7 @@ function ExamCard({ id, title, group, filiereCode, semester, time, duration, roo
                 percentSent === 100
                   ? "bg-emerald-500"
                   : percentSent > 0
-                  ? "bg-indigo-600"
+                  ? "bg-primary"
                   : "bg-slate-400"
               )}
               style={{ width: `${percentSent}%` }}
@@ -1363,11 +1363,11 @@ function ExamCard({ id, title, group, filiereCode, semester, time, duration, roo
       </div>
 
       {/* 🛠️ Right Action Suite */}
-      <div className="bg-slate-50/90 dark:bg-slate-800/50 p-6 flex flex-col gap-2.5 w-full xl:w-72 shrink-0 border-t xl:border-t-0 xl:border-l border-slate-200 dark:border-slate-800 justify-center">
+      <div className="bg-slate-50/90 dark:bg-slate-800/50 p-6 flex flex-col gap-2.5 w-full xl:w-72 shrink-0 border-t xl:border-t-0 xl:border-l border-border dark:border-border justify-center">
         {/* Primary CTA: Hub Surveillance Live */}
         <Link
           to={`/admin/exams/${id}/surveillance`}
-          className="w-full bg-gradient-to-r from-[#0f2863] to-[#1e40af] hover:from-[#16357d] hover:to-[#2563eb] text-white py-3 px-4 rounded-2xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-md hover:shadow-indigo-500/20 active:scale-95 text-center group border border-indigo-400/20"
+          className="w-full bg-gradient-to-r from-[#0f2863] to-[#1e40af] hover:from-[#16357d] hover:to-[#2563eb] text-white py-3 px-4 rounded-2xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-md hover:shadow-indigo-500/20 active:scale-95 text-center group border border-indigo-400/20"
         >
           <ShieldCheck className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform" />
           <span>Hub Surveillance Live</span>
@@ -1377,7 +1377,7 @@ function ExamCard({ id, title, group, filiereCode, semester, time, duration, roo
         <div className="grid grid-cols-2 gap-2">
           <button
             onClick={handleExportEmargementPdf}
-            className="bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-950/70 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 py-2.5 px-3 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95 shadow-2xs"
+            className="bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-950/70 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 py-2.5 px-3 rounded-xl text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95 shadow-2xs"
             title="Télécharger la feuille d'émargement officielle pour l'examen"
           >
             <Printer className="w-3.5 h-3.5 text-amber-600 shrink-0" />
@@ -1386,10 +1386,10 @@ function ExamCard({ id, title, group, filiereCode, semester, time, duration, roo
 
           <button
             onClick={handleExportDoorSignPdf}
-            className="bg-slate-100 hover:bg-slate-200 dark:bg-slate-700/60 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 py-2.5 px-3 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95 shadow-2xs"
+            className="bg-muted hover:bg-slate-200 dark:bg-slate-700/60 dark:hover:bg-slate-700 text-foreground dark:text-foreground border border-border dark:border-border py-2.5 px-3 rounded-xl text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95 shadow-2xs"
             title="Affiche de porte A4/A3 de la salle d'examen"
           >
-            <DoorOpen className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+            <DoorOpen className="w-3.5 h-3.5 text-primary shrink-0" />
             <span>Affiche Porte</span>
           </button>
         </div>
@@ -1399,16 +1399,16 @@ function ExamCard({ id, title, group, filiereCode, semester, time, duration, roo
           <button
             onClick={handleGenerateClick}
             disabled={isGenerating}
-            className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all cursor-pointer shadow-xs active:scale-95 disabled:opacity-50"
+            className="w-full bg-card dark:bg-card border border-border dark:border-border text-foreground dark:text-foreground py-2.5 rounded-xl text-[11px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-muted dark:hover:bg-slate-700 transition-all cursor-pointer shadow-xs active:scale-95 disabled:opacity-50"
           >
-            {isGenerating ? <Loader2 className="w-3.5 h-3.5 text-amber-500 animate-spin" /> : <FileText className="w-3.5 h-3.5 text-indigo-500" />}
+            {isGenerating ? <Loader2 className="w-3.5 h-3.5 text-amber-500 animate-spin" /> : <FileText className="w-3.5 h-3.5 text-primary" />}
             <span>Générer Convocations</span>
           </button>
         ) : (
           <button
             onClick={() => sendMutation.mutate(id)}
             disabled={sendMutation.isPending}
-            className="w-full bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 active:scale-95 shadow-2xs"
+            className="w-full bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 py-2.5 rounded-xl text-[11px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 active:scale-95 shadow-2xs"
           >
             {sendMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5 text-emerald-600" />}
             <span>Envoyer Convocations</span>
@@ -1419,7 +1419,7 @@ function ExamCard({ id, title, group, filiereCode, semester, time, duration, roo
         <div className="flex items-center justify-between pt-1 text-[10px] text-slate-400">
           <Link
             to={`/admin/exams/${id}/edit`}
-            className="text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 font-bold flex items-center gap-1 transition-colors"
+            className="text-muted-foreground hover:text-primary dark:hover:text-indigo-400 font-bold flex items-center gap-1 transition-colors"
           >
             <Edit3 className="w-3 h-3" />
             <span>Modifier</span>

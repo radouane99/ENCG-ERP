@@ -30,12 +30,12 @@ export default function VacataireContractPage() {
 
   const contract = vacataire?.vacation_contracts?.[0] || vacataire?.contract || {}
   return (
-    <div className="space-y-6 animate-in p-6 max-w-4xl mx-auto">
+    <div className="space-y-6 animate-in max-w-4xl mx-auto">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <button onClick={() => navigate('/hr/vacataires')} className="p-2 bg-card border rounded-lg hover:bg-muted"><ArrowLeft className="w-5 h-5" /></button>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Contrat de Vacation N° CT-{new Date().getFullYear()}-{id}</h1>
+            <h1 className="erp-page-title">Contrat de Vacation N° CT-{new Date().getFullYear()}-{id}</h1>
             <p className="text-muted-foreground text-sm mt-1">Génération et signature du contrat d'engagement.</p>
           </div>
         </div>
@@ -45,7 +45,7 @@ export default function VacataireContractPage() {
            </button>
            <button onClick={() => {
               openAuthenticatedUrl(api.defaults.baseURL?.replace('/api', '') + `/api/admin/hr/vacataires/${id}/contract-pdf`);
-           }} className="px-4 py-2 bg-primary text-white rounded-lg font-medium shadow-sm hover:bg-primary/90 text-sm flex items-center gap-2">
+           }} className="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium shadow-sm hover:bg-primary/90 text-sm flex items-center gap-2">
              <Download className="w-4 h-4" /> Télécharger PDF
            </button>
         </div>
@@ -100,16 +100,16 @@ export default function VacataireContractPage() {
          </div>
       </div>
       
-      <div className={cn("flex items-center justify-between border p-4 rounded-xl", contract?.status === 'signed' ? "bg-green-50 text-green-800 border-green-200" : "bg-blue-50 text-blue-800 border-blue-200")}>
+      <div className={cn("flex items-center justify-between border p-4 rounded-xl", contract?.status === 'signed' ? "bg-green-50 text-green-800 border-green-200" : "bg-primary/5 text-primary border-primary/20")}>
          <div className="flex items-center gap-3">
-            <CheckCircle className={cn("w-5 h-5", contract?.status === 'signed' ? "text-green-600" : "text-blue-600")} />
+            <CheckCircle className={cn("w-5 h-5", contract?.status === 'signed' ? "text-green-600" : "text-primary")} />
             <div>
                <p className="font-bold text-sm">Statut du contrat : {contract?.status === 'signed' ? 'Signé' : 'Généré et en attente de signature'}</p>
                <p className="text-xs mt-0.5 opacity-80">Généré le {new Date(contract?.created_at || Date.now()).toLocaleDateString()}</p>
             </div>
          </div>
          {contract?.status !== 'signed' && (
-           <button onClick={() => markSignedMutation.mutate()} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
+           <button onClick={() => markSignedMutation.mutate()} className="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary transition-colors">
               Marquer comme signé
            </button>
          )}

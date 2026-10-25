@@ -278,7 +278,7 @@ export default function TranscriptView() {
       case 'V':
         return <Badge className="bg-emerald-500 hover:bg-emerald-600">Validé</Badge>
       case 'VC':
-        return <Badge className="bg-blue-500 hover:bg-blue-600">Compensation</Badge>
+        return <Badge className="bg-primary hover:bg-primary">Compensation</Badge>
       case 'RAT':
         return <Badge className="bg-amber-500 hover:bg-amber-600">Rattrapage</Badge>
       case 'FRAUDE':
@@ -294,7 +294,7 @@ export default function TranscriptView() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Relevé de Notes</h1>
+          <h1 className="erp-page-title">Relevé de Notes</h1>
           <p className="text-muted-foreground">{subtitle}</p>
         </div>
       </div>

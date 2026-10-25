@@ -168,19 +168,19 @@ export default function AiAssistantPage() {
   }
 
   return (
-    <div className="space-y-8 max-w-[1600px] mx-auto p-4 md:p-6 pb-20 animate-in fade-in" dir={isRtl ? "rtl" : "ltr"}>
+    <div className="space-y-8 max-w-[1600px] mx-auto pb-20 animate-in fade-in" dir={isRtl ? "rtl" : "ltr"}>
       
       {/* Premium Header */}
-      <div className="bg-gradient-to-r from-[#0F172A] to-[#1E1B4B] rounded-[2rem] p-8 text-white shadow-xl shadow-indigo-900/20 relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6 border border-indigo-500/20">
+      <div className="p-8 text-white relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6 border border-indigo-500/20 erp-page-banner">
         <div className="absolute top-0 end-0 -mt-10 -me-10 w-64 h-64 bg-indigo-500/20 rounded-full blur-[80px] pointer-events-none"></div>
         <div className="absolute bottom-0 start-10 w-40 h-40 bg-purple-500/20 rounded-full blur-[60px] pointer-events-none"></div>
         
         <div className="flex items-center gap-4 relative z-10">
-          <div className="w-16 h-16 bg-white/5 backdrop-blur-md rounded-[1.2rem] flex items-center justify-center border border-indigo-400/30 shadow-[0_0_15px_rgba(99,102,241,0.5)]">
+          <div className="w-16 h-16 bg-white/5 backdrop-blur-md rounded-2xl flex items-center justify-center border border-indigo-400/30 shadow-[0_0_15px_rgba(99,102,241,0.5)]">
             <BrainCircuit className="w-8 h-8 text-indigo-400" />
           </div>
           <div>
-            <h1 className="text-3xl font-black mb-1 tracking-tight flex items-center gap-2">
+            <h1 className="mb-1 flex items-center gap-2 erp-page-title">
               <span className="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">ENCG AI Engine PRO</span>
               <Sparkles size={20} className="text-yellow-400" />
             </h1>
@@ -194,16 +194,16 @@ export default function AiAssistantPage() {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
         
         {/* Chatbot Section */}
-        <div className="xl:col-span-2 flex flex-col h-[700px] bg-[var(--card)] border border-[var(--border)] rounded-[2rem] shadow-lg overflow-hidden relative">
+        <div className="xl:col-span-2 flex flex-col h-[700px] bg-[var(--card)] border border-[var(--border)] rounded-2xl shadow-lg overflow-hidden relative">
           <div className="p-4 border-b border-[var(--border)] bg-gradient-to-r from-[color-mix(in srgb, var(--muted) 3000%, transparent)] to-transparent flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-indigo-500/10 flex items-center justify-center text-indigo-600 relative">
+              <div className="w-10 h-10 rounded-full bg-indigo-500/10 flex items-center justify-center text-primary relative">
                 <MessageSquareText size={20} />
                 <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-[var(--card)] rounded-full"></span>
               </div>
               <div>
                 <h2 className="font-bold text-[var(--foreground)] text-lg">{isRtl ? 'المساعد الافتراضي' : 'Assistant IA'}</h2>
-                <p className="text-xs text-slate-500 font-medium">
+                <p className="text-xs text-muted-foreground font-medium">
                   {isRtl ? 'جاهز للمساعدة' : 'Prêt à vous aider'}
                 </p>
               </div>
@@ -230,7 +230,7 @@ export default function AiAssistantPage() {
               </div>
             )}
             {transcribeMutation.isPending && (
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-indigo-500/10 text-indigo-500 rounded-full animate-pulse">
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-indigo-500/10 text-primary rounded-full animate-pulse">
                 <BrainCircuit size={14} />
                 <span className="text-xs font-bold uppercase">{isRtl ? 'جاري المعالجة...' : 'Traitement vocal...'}</span>
               </div>
@@ -241,17 +241,17 @@ export default function AiAssistantPage() {
             {messages.map((msg, idx) => (
               <div key={idx} className={cn("flex", msg.role === 'user' ? 'justify-end' : 'justify-start')}>
                 <div className={cn(
-                  "max-w-[85%] rounded-[1.5rem] p-5 shadow-sm relative group",
+                  "max-w-[85%] rounded-2xl p-5 shadow-sm relative group",
                   msg.role === 'user' 
                     ? "bg-gradient-to-br from-indigo-600 to-purple-600 text-white rounded-br-sm" 
                     : "bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] rounded-bl-sm"
                 )}>
                   {msg.role === 'assistant' && (
                     <div className="flex justify-between items-center mb-2">
-                      <BrainCircuit size={18} className="text-indigo-500" />
+                      <BrainCircuit size={18} className="text-primary" />
                       <button 
                         onClick={() => speakText(msg.content)}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md text-slate-400 hover:text-indigo-600"
+                        className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 hover:bg-muted dark:hover:bg-slate-800 rounded-md text-slate-400 hover:text-primary"
                         title={isRtl ? "استمع" : "Écouter"}
                       >
                         <Volume2 size={16} />
@@ -301,7 +301,7 @@ export default function AiAssistantPage() {
                     type="button"
                     onClick={startRecording}
                     variant="ghost"
-                    className="h-10 w-10 p-0 rounded-xl hover:bg-indigo-50 text-indigo-600 hover:text-indigo-700 transition-colors"
+                    className="h-10 w-10 p-0 rounded-xl hover:bg-primary/5 text-primary hover:text-primary transition-colors"
                     disabled={chatMutation.isPending || transcribeMutation.isPending}
                     title={isRtl ? 'تحدث' : 'Parler'}
                   >
@@ -323,7 +323,7 @@ export default function AiAssistantPage() {
 
         {/* QCM Generator Section */}
         <div className="xl:col-span-1 space-y-6">
-          <div className="bg-[var(--card)] border border-[var(--border)] rounded-[2rem] p-6 shadow-sm">
+          <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm">
             <h3 className="font-bold text-lg mb-4 text-[var(--foreground)] flex items-center gap-2">
               <div className="p-2 bg-purple-500/10 text-purple-600 rounded-lg"><FileQuestion size={18} /></div>
               {isRtl ? 'مولد الاختبارات (QCM)' : 'Générateur de QCM'}
@@ -356,7 +356,7 @@ export default function AiAssistantPage() {
 
           {/* QCM Result Area */}
           {qcmResult && (
-            <div className="bg-[var(--card)] border border-[var(--border)] rounded-[2rem] p-6 shadow-sm overflow-hidden relative group">
+            <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm overflow-hidden relative group">
               <div className="flex justify-between items-center mb-4 border-b border-[var(--border)] pb-3">
                 <h4 className="font-bold text-[var(--foreground)] flex items-center gap-2">
                   <Lightbulb size={16} className="text-amber-500" />
@@ -365,7 +365,7 @@ export default function AiAssistantPage() {
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  className="h-8 rounded-lg hover:bg-slate-100" 
+                  className="h-8 rounded-lg hover:bg-muted"
                   onClick={handleCopyQcm}
                   icon={isCopied ? <CheckCircle2 size={14} className="text-emerald-500"/> : <Copy size={14}/>}
                 >

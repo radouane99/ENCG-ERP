@@ -34,9 +34,9 @@ export const StudentRequestsList: React.FC = () => {
   if (isError) return <div className="p-4 text-red-600">Erreur lors du chargement des demandes.</div>;
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-      <div className="p-6 border-b border-gray-100">
-        <h2 className="text-xl font-semibold text-gray-800">Mes Demandes</h2>
+    <div className="bg-card rounded-lg shadow-sm border border-border overflow-hidden">
+      <div className="p-6 border-b border-border">
+        <h2 className="text-xl font-semibold text-foreground">Mes Demandes</h2>
       </div>
       
       {(!requests || requests.length === 0) ? (
@@ -48,7 +48,7 @@ export const StudentRequestsList: React.FC = () => {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-gray-50 text-gray-600 text-sm border-b">
+              <tr className="bg-muted/50 text-muted-foreground text-sm border-b">
                 <th className="p-4 font-medium">Document</th>
                 <th className="p-4 font-medium">Date de demande</th>
                 <th className="p-4 font-medium">Statut</th>
@@ -57,11 +57,11 @@ export const StudentRequestsList: React.FC = () => {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {requests.map((req) => (
-                <tr key={req.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="p-4 font-medium text-gray-800">
+                <tr key={req.id} className="hover:bg-muted/50 transition-colors">
+                  <td className="p-4 font-medium text-foreground">
                     {req.document_type?.name}
                   </td>
-                  <td className="p-4 text-sm text-gray-600">
+                  <td className="p-4 text-sm text-muted-foreground">
                     {new Date(req.requested_at).toLocaleDateString('fr-FR')}
                   </td>
                   <td className="p-4">
@@ -76,7 +76,7 @@ export const StudentRequestsList: React.FC = () => {
                         href={req.media[0].original_url}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-blue-600 hover:underline text-sm font-medium"
+                        className="text-primary hover:underline text-sm font-medium"
                       >
                         Télécharger
                       </a>

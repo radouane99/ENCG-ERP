@@ -197,21 +197,21 @@ export default function GroupsPage() {
   }
 
   return (
-    <div className="space-y-8 animate-in relative p-6 max-w-7xl mx-auto pb-24 font-sans">
+    <div className="space-y-8 animate-in relative max-w-7xl mx-auto pb-24 font-sans">
       {/* Hero Header Section */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] p-8 md:p-10 rounded-[2.5rem] shadow-2xl text-white border border-blue-800/40">
+      <div className="relative overflow-hidden p-8 md:p-10 text-white border border-blue-800/40 erp-page-banner">
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
 
         <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="flex items-center gap-6">
-            <div className="w-20 h-20 rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-amber-300 shadow-2xl shrink-0">
+            <div className="w-20 h-20 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-amber-300 shadow-sm shrink-0">
               <Users className="w-10 h-10 text-amber-400" />
             </div>
             <div>
-              <div className="inline-flex items-center gap-2 bg-blue-400/20 text-blue-200 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-2 border border-blue-400/30">
+              <div className="inline-flex items-center gap-2 bg-blue-400/20 text-blue-200 px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mb-2 border border-blue-400/30">
                 <Zap className="w-4 h-4 text-amber-400" /> Structure & Cohortes d'Élèves ENCG
               </div>
-              <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight">
+              <h1 className="text-white erp-page-title">
                 Groupes, Sections & Cohortes
               </h1>
               <p className="text-blue-100/90 text-sm max-w-2xl font-medium mt-1">
@@ -230,7 +230,7 @@ export default function GroupsPage() {
 
             <button 
               onClick={openCreate}
-              className="flex items-center gap-2 px-6 py-3.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-950 rounded-2xl font-black text-xs uppercase tracking-wider shadow-xl hover:scale-105 transition-all cursor-pointer"
+              className="flex items-center gap-2 px-6 py-3.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-950 rounded-2xl font-bold text-xs uppercase tracking-wider shadow-sm hover:scale-105 transition-all cursor-pointer"
             >
               <Plus className="w-4 h-4" /> Nouveau Groupe
             </button>
@@ -240,35 +240,35 @@ export default function GroupsPage() {
 
       {/* Analytics KPI Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2rem] p-6 shadow-md flex items-center justify-between">
+        <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-6 shadow-md flex items-center justify-between">
           <div>
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">TOTAL GROUPES & SECTIONS</span>
-            <h3 className="text-3xl font-black text-slate-900 dark:text-white mt-1">{groups.length} Groupes</h3>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">Classes Actives ENCG Fès</p>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">TOTAL GROUPES & SECTIONS</span>
+            <h3 className="text-3xl font-bold text-foreground dark:text-white mt-1">{groups.length} Groupes</h3>
+            <p className="text-xs text-muted-foreground font-medium mt-0.5">Classes Actives ENCG Fès</p>
           </div>
-          <div className="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 flex items-center justify-center font-black text-xl shadow-inner">
+          <div className="w-14 h-14 rounded-2xl bg-primary/5 dark:bg-indigo-950/40 text-primary flex items-center justify-center font-bold text-xl shadow-inner">
             <Users className="w-7 h-7" />
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2rem] p-6 shadow-md flex items-center justify-between">
+        <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-6 shadow-md flex items-center justify-between">
           <div>
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">CAPACITÉ TOTALE D'ACCUEIL</span>
-            <h3 className="text-3xl font-black text-emerald-600 mt-1">{groups.reduce((acc, g) => acc + (g.capacity || 35), 0)} Places</h3>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">Capacité entièrement personnalisable (Amphi / Salle TD)</p>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">CAPACITÉ TOTALE D'ACCUEIL</span>
+            <h3 className="text-3xl font-bold text-emerald-600 mt-1">{groups.reduce((acc, g) => acc + (g.capacity || 35), 0)} Places</h3>
+            <p className="text-xs text-muted-foreground font-medium mt-0.5">Capacité entièrement personnalisable (Amphi / Salle TD)</p>
           </div>
-          <div className="w-14 h-14 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 flex items-center justify-center font-black text-xl shadow-inner">
+          <div className="w-14 h-14 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 flex items-center justify-center font-bold text-xl shadow-inner">
             <Zap className="w-7 h-7" />
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2rem] p-6 shadow-md flex flex-col justify-between">
-          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">FILTRAGE PAR SEMESTRE</span>
+        <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-6 shadow-md flex flex-col justify-between">
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">FILTRAGE PAR SEMESTRE</span>
           <div className="relative mt-2">
             <select 
               value={semesterFilter}
               onChange={(e) => setSemesterFilter(e.target.value)}
-              className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-3.5 py-2 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-bold text-slate-700 dark:text-foreground outline-none focus:ring-2 focus:ring-ring rounded-[var(--control-radius)]"
             >
               <option value="">Tous les Semestres (S1 - S10)</option>
               <option value="1">Semestre S1 (Tronc Commun)</option>
@@ -283,15 +283,15 @@ export default function GroupsPage() {
       </div>
 
       {/* Filter & Search Bar with Quick Filiere Tabs */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 space-y-4">
+      <div className="bg-card dark:bg-card rounded-2xl shadow-sm border border-border dark:border-border p-4 space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
           {/* Quick Filiere Filter Tabs */}
           <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={() => { setFiliereFilter(''); setSemesterFilter(''); }}
               className={cn(
-                "px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer",
-                !filiereFilter && !semesterFilter ? "bg-[#0f2863] text-white shadow-md" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200"
+                "px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer",
+                !filiereFilter && !semesterFilter ? "bg-[#0f2863] text-white shadow-md" : "bg-muted dark:bg-card text-muted-foreground dark:text-foreground hover:bg-slate-200"
               )}
             >
               Tous ({groups.length})
@@ -299,8 +299,8 @@ export default function GroupsPage() {
             <button
               onClick={() => setFiliereFilter('TC')}
               className={cn(
-                "px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer",
-                filiereFilter === 'TC' ? "bg-[#0f2863] text-white shadow-md" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200"
+                "px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer",
+                filiereFilter === 'TC' ? "bg-[#0f2863] text-white shadow-md" : "bg-muted dark:bg-card text-muted-foreground dark:text-foreground hover:bg-slate-200"
               )}
             >
               Tronc Commun (TC)
@@ -308,8 +308,8 @@ export default function GroupsPage() {
             <button
               onClick={() => setFiliereFilter('GFC')}
               className={cn(
-                "px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer",
-                filiereFilter === 'GFC' ? "bg-[#0f2863] text-white shadow-md" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200"
+                "px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer",
+                filiereFilter === 'GFC' ? "bg-[#0f2863] text-white shadow-md" : "bg-muted dark:bg-card text-muted-foreground dark:text-foreground hover:bg-slate-200"
               )}
             >
               Finance (GFC)
@@ -317,8 +317,8 @@ export default function GroupsPage() {
             <button
               onClick={() => setFiliereFilter('MCM')}
               className={cn(
-                "px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer",
-                filiereFilter === 'MCM' ? "bg-[#0f2863] text-white shadow-md" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200"
+                "px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer",
+                filiereFilter === 'MCM' ? "bg-[#0f2863] text-white shadow-md" : "bg-muted dark:bg-card text-muted-foreground dark:text-foreground hover:bg-slate-200"
               )}
             >
               Marketing (MCM)
@@ -326,12 +326,12 @@ export default function GroupsPage() {
           </div>
 
           <div className="text-xs font-bold text-slate-400">
-            Affichage de <span className="text-slate-900 dark:text-white font-black">{filtered.length}</span> sur {groups.length} groupes
+            Affichage de <span className="text-foreground dark:text-white font-bold">{filtered.length}</span> sur {groups.length} groupes
           </div>
         </div>
 
         {/* Search and Semestre Filter Bar */}
-        <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+        <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-border dark:border-border">
           <div className="relative flex-1 min-w-[280px]">
             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
@@ -339,14 +339,14 @@ export default function GroupsPage() {
               placeholder="Rechercher par nom de groupe (ex: TC-S2-G1)..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-800 dark:text-slate-200 placeholder-slate-400 outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full pl-10 pr-4 py-2 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-semibold text-foreground dark:text-foreground placeholder-slate-400 outline-none focus:ring-2 focus:ring-ring rounded-[var(--control-radius)]"
             />
           </div>
 
           <select 
             value={semesterFilter}
             onChange={(e) => setSemesterFilter(e.target.value)}
-            className="px-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+            className="px-4 py-2 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-bold text-slate-700 dark:text-foreground outline-none focus:ring-2 focus:ring-ring cursor-pointer rounded-[var(--control-radius)]"
           >
             <option value="">Tous les Semestres</option>
             <option value="1">Semestre S1</option>
@@ -358,7 +358,7 @@ export default function GroupsPage() {
 
       {/* Table Section */}
 
-      <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-[2.5rem] shadow-xl overflow-hidden flex flex-col">
+      <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl shadow-sm overflow-hidden flex flex-col">
         <div className="overflow-x-auto min-h-[350px]">
           {loading ? (
             <div className="flex justify-center items-center py-24 text-slate-400">
@@ -366,13 +366,13 @@ export default function GroupsPage() {
             </div>
           ) : (
             <table className="w-full text-sm text-left">
-              <thead className="text-xs text-slate-400 uppercase tracking-wider bg-slate-50/80 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
+              <thead className="text-xs text-slate-400 uppercase tracking-wider bg-slate-50/80 dark:bg-slate-800/50 border-b border-border dark:border-border">
                 <tr>
-                  <th scope="col" className="px-6 py-4 font-black">Désignation Groupe</th>
-                  <th scope="col" className="px-6 py-4 font-black">Filière & Semestre</th>
-                  <th scope="col" className="px-6 py-4 font-black text-center">Délégué de Groupe</th>
-                  <th scope="col" className="px-6 py-4 font-black text-center">Capacité & Remplissage</th>
-                  <th scope="col" className="px-6 py-4 font-black text-right">Actions & Émargement</th>
+                  <th scope="col" className="px-6 py-4 font-bold">Désignation Groupe</th>
+                  <th scope="col" className="px-6 py-4 font-bold">Filière & Semestre</th>
+                  <th scope="col" className="px-6 py-4 font-bold text-center">Délégué de Groupe</th>
+                  <th scope="col" className="px-6 py-4 font-bold text-center">Capacité & Remplissage</th>
+                  <th scope="col" className="px-6 py-4 font-bold text-right">Actions & Émargement</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -387,26 +387,26 @@ export default function GroupsPage() {
                     const pct = maxCap > 0 ? Math.min(100, Math.round((currentCount / maxCap) * 100)) : 0;
 
                     return (
-                      <tr key={g.id} className="bg-white dark:bg-slate-900 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors group">
+                      <tr key={g.id} className="bg-card dark:bg-card hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors group">
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-[#0f2863] dark:text-blue-300 border border-blue-200 dark:border-blue-800 flex items-center justify-center font-black text-xs font-mono shrink-0 shadow-xs">
+                            <div className="w-9 h-9 rounded-2xl bg-primary/5 dark:bg-blue-950/60 text-[#0f2863] dark:text-blue-300 border border-primary/20 dark:border-primary flex items-center justify-center font-bold text-xs font-mono shrink-0 shadow-xs">
                               {g.name.charAt(0).toUpperCase()}
                             </div>
-                            <span className="font-extrabold text-slate-900 dark:text-white font-mono text-sm">
+                            <span className="font-bold text-foreground dark:text-white font-mono text-sm">
                               {g.name}
                             </span>
                           </div>
                         </td>
 
                         <td className="px-6 py-4">
-                          <span className="font-bold text-slate-900 dark:text-white text-xs block">{g.filiere || g.filiere_name || 'Grande École ENCG'}</span>
+                          <span className="font-bold text-foreground dark:text-white text-xs block">{g.filiere || g.filiere_name || 'Grande École ENCG'}</span>
                           <div className="flex items-center gap-1.5 mt-1">
-                            <span className="inline-block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-700">
+                            <span className="inline-block text-[10px] font-bold uppercase tracking-wider text-muted-foreground dark:text-muted-foreground bg-muted dark:bg-card px-2 py-0.5 rounded-md border border-border dark:border-border">
                               Semestre S{g.semester_number || 1}
                             </span>
                             {g.name.includes('TC') && (
-                              <span className="text-[10px] font-extrabold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded-md border border-indigo-200 dark:border-indigo-800">
+                              <span className="text-[10px] font-bold text-primary dark:text-indigo-300 bg-primary/5 dark:bg-indigo-950/60 px-2 py-0.5 rounded-md border border-primary/20 dark:border-primary">
                                 🔗 Cohorte S1 ➔ S2
                               </span>
                             )}
@@ -418,7 +418,7 @@ export default function GroupsPage() {
                           {delegatesMap[g.id] || (g as any).delegate_name ? (
                             <button
                               onClick={() => openDelegateModal(g)}
-                              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-black bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 transition-all cursor-pointer shadow-2xs"
+                              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 transition-all cursor-pointer shadow-2xs"
                               title="Cliquer pour changer le Délégué de Classe"
                             >
                               <UserCheck className="w-3.5 h-3.5 text-emerald-600" />
@@ -427,7 +427,7 @@ export default function GroupsPage() {
                           ) : (
                             <button
                               onClick={() => openDelegateModal(g)}
-                              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-extrabold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 hover:bg-amber-100 transition-all cursor-pointer shadow-2xs"
+                              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 hover:bg-amber-100 transition-all cursor-pointer shadow-2xs"
                               title="Cliquer pour nommer un Délégué parmi les étudiants de cette classe"
                             >
                               <UserCheck className="w-3.5 h-3.5 text-amber-600" />
@@ -439,16 +439,16 @@ export default function GroupsPage() {
 
                         <td className="px-6 py-4 text-center">
                           <div className="w-40 mx-auto space-y-1">
-                            <div className="flex items-center justify-between text-[11px] font-extrabold">
-                              <span className="text-slate-700 dark:text-slate-200">{currentCount} / {maxCap} Étudiants</span>
+                            <div className="flex items-center justify-between text-[11px] font-bold">
+                              <span className="text-slate-700 dark:text-foreground">{currentCount} / {maxCap} Étudiants</span>
                               <span className={cn(
-                                "font-black text-[10px]",
+                                "font-bold text-[10px]",
                                 pct >= 90 ? "text-amber-600" : "text-emerald-600"
                               )}>
                                 {pct}%
                               </span>
                             </div>
-                            <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700">
+                            <div className="h-2 w-full bg-muted dark:bg-card rounded-full overflow-hidden border border-border dark:border-border">
                               <div 
                                 style={{ width: `${pct}%` }} 
                                 className={cn(
@@ -464,10 +464,10 @@ export default function GroupsPage() {
                           <div className="flex items-center justify-end gap-2">
                             <button 
                               onClick={() => handleExportEmargementPdf(g)}
-                              className="px-3 py-1.5 bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 text-blue-700 dark:text-blue-300 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 border border-blue-200 dark:border-blue-800 cursor-pointer shadow-xs"
+                              className="px-3 py-1.5 bg-primary/5 dark:bg-blue-950/40 hover:bg-primary/10 text-primary dark:text-blue-300 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 border border-primary/20 dark:border-primary cursor-pointer shadow-xs"
                               title="Télécharger la Liste d'Émargement Officielle (PDF A4)"
                             >
-                              <Printer className="w-3.5 h-3.5 text-blue-600" /> Émargement (PDF)
+                              <Printer className="w-3.5 h-3.5 text-primary" /> Émargement (PDF)
                             </button>
 
                             <button 
@@ -500,14 +500,14 @@ export default function GroupsPage() {
       {/* Modal Add / Edit */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl shadow-sm w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="p-6 bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] border-b border-blue-800/40 flex items-center justify-between text-white">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center font-bold text-amber-300 shadow-lg">
                   <Users className="w-5 h-5 text-amber-400" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-black">{editingId ? 'Modifier le Groupe' : 'Créer un Nouveau Groupe'}</h3>
+                  <h3 className="text-lg font-bold">{editingId ? 'Modifier le Groupe' : 'Créer un Nouveau Groupe'}</h3>
                   <p className="text-xs text-blue-200">Définissez la filière, la désignation et la capacité d'accueil</p>
                 </div>
               </div>
@@ -518,32 +518,32 @@ export default function GroupsPage() {
 
             <form onSubmit={handleSubmit} className="p-6 space-y-6">
               <div>
-                <label className="block text-xs font-black text-slate-500 uppercase tracking-wider mb-2">Filière d'Appartenance (Requis)</label>
-                <select value={form.filiere_id} onChange={set('filiere_id')} className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500">
+                <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Filière d'Appartenance (Requis)</label>
+                <select value={form.filiere_id} onChange={set('filiere_id')} className="w-full px-4 py-3 bg-muted/50 dark:bg-card border border-border dark:border-border text-sm font-bold text-foreground dark:text-white outline-none focus:ring-2 focus:ring-ring rounded-[var(--control-radius)]">
                   <option value="">-- Sélectionner la Filière --</option>
                   {filieres.map(f => <option key={f.id} value={f.id}>{f.code} - {f.name}</option>)}
                 </select>
               </div>
 
               <div>
-                <label className="block text-xs font-black text-slate-500 uppercase tracking-wider mb-2">Désignation Officielle du Groupe</label>
-                <input required value={form.name} onChange={set('name')} className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500" placeholder="ex: GFC-S5-G1, TC-S1-G2" />
+                <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Désignation Officielle du Groupe</label>
+                <input required value={form.name} onChange={set('name')} className="w-full px-4 py-3 bg-muted/50 dark:bg-card border border-border dark:border-border text-sm font-bold text-foreground dark:text-white outline-none focus:ring-2 focus:ring-ring rounded-[var(--control-radius)]" placeholder="ex: GFC-S5-G1, TC-S1-G2" />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-black text-slate-500 uppercase tracking-wider mb-2">Numéro de Semestre (1-10)</label>
-                  <input required type="number" min={1} max={10} value={form.semester_number} onChange={set('semester_number')} className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500" placeholder="ex: 5" />
+                  <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Numéro de Semestre (1-10)</label>
+                  <input required type="number" min={1} max={10} value={form.semester_number} onChange={set('semester_number')} className="w-full px-4 py-3 bg-muted/50 dark:bg-card border border-border dark:border-border text-sm font-bold text-foreground dark:text-white outline-none focus:ring-2 focus:ring-ring rounded-[var(--control-radius)]" placeholder="ex: 5" />
                 </div>
                 <div>
-                  <label className="block text-xs font-black text-slate-500 uppercase tracking-wider mb-2">Capacité Maximale</label>
-                  <input required type="number" min={1} value={form.capacity} onChange={set('capacity')} className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500" placeholder="ex: 30, 60, 150..." />
+                  <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Capacité Maximale</label>
+                  <input required type="number" min={1} value={form.capacity} onChange={set('capacity')} className="w-full px-4 py-3 bg-muted/50 dark:bg-card border border-border dark:border-border text-sm font-bold text-foreground dark:text-white outline-none focus:ring-2 focus:ring-ring rounded-[var(--control-radius)]" placeholder="ex: 30, 60, 150..." />
                 </div>
               </div>
 
               
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
-                <button type="button" onClick={() => setShowModal(false)} className="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs uppercase tracking-wider hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-border dark:border-border">
+                <button type="button" onClick={() => setShowModal(false)} className="px-5 py-2.5 rounded-xl border border-border dark:border-border text-slate-700 dark:text-foreground font-bold text-xs uppercase tracking-wider hover:bg-muted/50 dark:hover:bg-slate-800 transition-colors">
                   Annuler
                 </button>
                 <button type="submit" className="px-6 py-2.5 font-bold bg-[#0f2863] text-white hover:bg-[#1a387e] rounded-xl shadow-md transition-colors uppercase text-xs tracking-wider">
@@ -559,14 +559,14 @@ export default function GroupsPage() {
       {selectedGroupForDelegate && (
 
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-xl overflow-hidden animate-in zoom-in-95 duration-200">
+          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl shadow-sm w-full max-w-xl overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="p-6 bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] text-white flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center font-bold text-amber-300 shadow-lg">
                   <UserCheck className="w-5 h-5 text-amber-400" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-black">Nommer le Délégué de Classe</h3>
+                  <h3 className="text-lg font-bold">Nommer le Délégué de Classe</h3>
                   <p className="text-xs text-blue-200">Étudiants inscrits dans le groupe {selectedGroupForDelegate.name}</p>
                 </div>
               </div>
@@ -588,23 +588,23 @@ export default function GroupsPage() {
                   const isCurrent = delegatesMap[selectedGroupForDelegate.id] === fullName || (selectedGroupForDelegate as any).delegate_name === fullName;
 
                   return (
-                    <div key={st.id} className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 flex items-center justify-between hover:bg-white dark:hover:bg-slate-800 transition-colors">
+                    <div key={st.id} className="p-4 rounded-2xl border border-border dark:border-border bg-muted/50 dark:bg-slate-800/60 flex items-center justify-between hover:bg-card dark:hover:bg-slate-800 transition-colors">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-2xl bg-blue-100 dark:bg-blue-900/60 text-[#0f2863] dark:text-blue-200 font-black flex items-center justify-center text-xs border border-blue-200 dark:border-blue-800">
+                        <div className="w-10 h-10 rounded-2xl bg-primary/10 dark:bg-blue-900/60 text-[#0f2863] dark:text-blue-200 font-bold flex items-center justify-center text-xs border border-primary/20 dark:border-primary">
                           {st.first_name.charAt(0)}{st.last_name.charAt(0)}
                         </div>
                         <div>
-                          <div className="font-extrabold text-slate-900 dark:text-white text-sm">
+                          <div className="font-bold text-foreground dark:text-white text-sm">
                             {fullName}
                           </div>
-                          <div className="text-xs font-mono text-slate-500">CNE : {st.cne}</div>
+                          <div className="text-xs font-mono text-muted-foreground">CNE : {st.cne}</div>
                         </div>
                       </div>
 
                       <button
                         onClick={() => handleAssignDelegate(st)}
                         className={cn(
-                          "px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer shadow-xs",
+                          "px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shadow-xs",
                           isCurrent
                             ? "bg-emerald-600 text-white shadow-md"
                             : "bg-[#0f2863] hover:bg-[#1a387e] text-white"
@@ -618,10 +618,10 @@ export default function GroupsPage() {
               )}
             </div>
 
-            <div className="p-4 bg-slate-50 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 flex justify-end">
+            <div className="p-4 bg-muted/50 dark:bg-card border-t border-border dark:border-border flex justify-end">
               <button
                 onClick={() => setSelectedGroupForDelegate(null)}
-                className="px-6 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl font-bold text-xs uppercase tracking-wider cursor-pointer"
+                className="px-6 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-foreground rounded-xl font-bold text-xs uppercase tracking-wider cursor-pointer"
               >
                 Fermer
               </button>

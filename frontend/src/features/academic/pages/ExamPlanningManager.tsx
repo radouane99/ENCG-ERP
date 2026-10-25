@@ -96,7 +96,7 @@ export default function ExamPlanningManager() {
   };
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto pb-10 p-6">
+    <div className="space-y-6 max-w-6xl mx-auto pb-10">
 
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-card p-6 rounded-2xl border border-border shadow-sm">
@@ -105,7 +105,7 @@ export default function ExamPlanningManager() {
             <Calendar className="w-6 h-6 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Gestion des Examens & Convocations</h1>
+            <h1 className="text-foreground erp-page-title">Gestion des Examens & Convocations</h1>
             <p className="text-muted-foreground text-sm">Planification des sessions et génération des convocations.</p>
           </div>
         </div>
@@ -134,7 +134,7 @@ export default function ExamPlanningManager() {
           <button 
             onClick={() => autoGenerateMutation.mutate()}
             disabled={!selectedFiliere || !selectedSession || autoGenerateMutation.isPending}
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg font-bold text-sm hover:bg-primary/90 transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-bold text-sm hover:bg-primary/90 transition-colors disabled:opacity-50"
           >
             <Zap className="w-4 h-4" /> {autoGenerateMutation.isPending ? 'Génération...' : 'Auto-Générer'}
           </button>
@@ -172,7 +172,7 @@ export default function ExamPlanningManager() {
             {/* Date Block */}
             <div className="bg-gradient-to-b from-primary to-secondary text-white p-6 flex flex-col items-center justify-center w-full md:w-28 shrink-0 gap-1">
               <div className="text-xs font-bold uppercase tracking-widest opacity-80">{exam.monthLabel}</div>
-              <div className="text-5xl font-black leading-none">{exam.dayLabel}</div>
+              <div className="text-5xl font-bold leading-none">{exam.dayLabel}</div>
               <div className="text-xs opacity-70">{exam.dayName}</div>
               <div className="mt-2 text-[10px] font-bold bg-white/20 px-2 py-1 rounded-full">{exam.sessionLabel}</div>
             </div>
@@ -215,7 +215,7 @@ export default function ExamPlanningManager() {
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Convocations</span>
                 <span className={cn(
-                  'text-xl font-black',
+                  "text-xl font-bold",
                   exam.convocations_generated > 0 ? 'text-green-500' : 'text-muted-foreground'
                 )}>
                   {exam.convocations_generated}

@@ -48,17 +48,17 @@ const { data: internships, isLoading } = useQuery({
   }
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto p-4 md:p-6 pb-20 animate-in fade-in" dir={isRtl ? "rtl" : "ltr"}>
+    <div className="space-y-8 max-w-7xl mx-auto pb-20 animate-in fade-in" dir={isRtl ? "rtl" : "ltr"}>
       
       {/* Premium Header */}
-      <div className="bg-gradient-to-r from-[#1F3A5F] to-[#2A4D7C] rounded-[2rem] p-8 text-white shadow-xl shadow-[#1F3A5F]/20 relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="absolute top-0 end-0 -mt-10 -me-10 w-40 h-40 bg-white opacity-5 rounded-full blur-3xl mix-blend-overlay pointer-events-none"></div>
+      <div className="p-8 text-white relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6 erp-page-banner">
+        <div className="absolute top-0 end-0 -mt-10 -me-10 w-40 h-40 bg-card opacity-5 rounded-full blur-3xl mix-blend-overlay pointer-events-none"></div>
         <div className="flex items-center gap-4 relative z-10">
-          <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-[1.2rem] flex items-center justify-center border border-white/20">
+          <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20">
             <Briefcase className="w-8 h-8 text-white" />
           </div>
           <div>
-            <h1 className="text-3xl font-black mb-1 tracking-tight">
+            <h1 className="mb-1 erp-page-title">
               {isRtl ? 'إدارة التداريب ومشاريع التخرج' : 'Gestion des Stages & PFE'}
             </h1>
             <p className="text-white/80 font-medium text-sm">
@@ -69,7 +69,7 @@ const { data: internships, isLoading } = useQuery({
       </div>
 
       {/* Main Content */}
-      <div className="bg-[var(--card)] border border-[var(--border)] rounded-[2rem] shadow-sm overflow-hidden flex flex-col">
+      <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl shadow-sm overflow-hidden flex flex-col">
         <div className="p-4 border-b border-[var(--border)] flex flex-wrap gap-4 items-center justify-between bg-[color-mix(in srgb, var(--muted) 3000%, transparent)]">
           <h2 className="font-bold text-lg flex items-center gap-2 text-[var(--foreground)] px-2">
             <div className="p-2 bg-[var(--color-primary)/10] rounded-lg text-[var(--color-primary)]"><Briefcase size={18} /></div>

@@ -9,12 +9,12 @@
 // ─────────────────────────────────────────────────────────────────
 export const colors = {
   brand: {
-    red:       '#A80A0B', // ENCG Primary Red
+    red:       '#A31F24', // ENCG accent
     redLight:  '#C41213',
     redDark:   '#8B0809',
-    navy:      '#1F3A5F', // ENCG Navy Blue
+    navy:      '#1A3673', // Matches --brand-navy
     navyLight: '#2A4D7C',
-    navyDark:  '#162B46',
+    navyDark:  '#142959',
   },
   status: {
     success: '#22C55E',

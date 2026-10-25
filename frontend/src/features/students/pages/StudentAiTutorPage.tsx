@@ -137,10 +137,10 @@ export default function StudentAiTutorPage() {
   };
 
   return (
-    <div className="max-w-[1200px] mx-auto p-4 md:p-8 space-y-6 font-sans animate-in fade-in pb-24">
+    <div className="max-w-[1200px] mx-auto space-y-6 font-sans animate-in fade-in pb-24">
       
       {/* ── Hero Header ────────────────────────────────────────────────────────── */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#002e5b] p-6 md:p-8 rounded-3xl shadow-xl text-white border border-blue-900/50">
+      <div className="relative overflow-hidden p-6 md:p-8 text-white border border-blue-900/50 erp-page-banner">
         <div className="absolute top-0 right-0 w-72 h-72 bg-sky-400/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -149,10 +149,10 @@ export default function StudentAiTutorPage() {
               <Bot className="w-8 h-8 text-white" />
             </div>
             <div>
-              <div className="inline-flex items-center gap-1.5 bg-sky-500/20 text-sky-200 px-3 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider mb-1 border border-sky-400/30">
+              <div className="inline-flex items-center gap-1.5 bg-sky-500/20 text-sky-200 px-3 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider mb-1 border border-sky-400/30">
                 <Sparkles className="w-3.5 h-3.5 text-amber-300" /> Tuteur IA RAG • Ancré sur Polycopiés ENCG
               </div>
-              <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight">
+              <h1 className="text-white erp-page-title">
                 Tuteur Pédagogique Virtuel & Entraînement
               </h1>
               <p className="text-xs md:text-sm text-blue-100/80 font-medium">
@@ -172,7 +172,7 @@ export default function StudentAiTutorPage() {
                   toast.info(`Module actif : ${mod.name}`);
                 }
               }}
-              className="bg-transparent text-white text-xs font-bold px-3 py-2 outline-none cursor-pointer"
+              className="bg-transparent text-white text-xs font-bold px-3 py-2 outline-none cursor-pointer rounded-[var(--control-radius)]"
             >
               {catalogModules.map((m: any) => (
                 <option key={m.key} value={m.key} className="bg-slate-900 text-white">
@@ -185,18 +185,18 @@ export default function StudentAiTutorPage() {
       </div>
 
       {/* ── Main Chat Area ────────────────────────────────────────────────────── */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl shadow-sm flex flex-col h-[650px] overflow-hidden">
+      <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl shadow-sm flex flex-col h-[650px] overflow-hidden">
         
         {/* Module Sub-bar */}
-        <div className="p-4 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-6">
+        <div className="p-4 bg-muted/50 dark:bg-slate-800/50 border-b border-border dark:border-border flex items-center justify-between px-6">
           <div className="flex items-center gap-2 text-xs">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="font-bold text-slate-800 dark:text-slate-200">{selectedModule?.name || 'Aucun module'}</span>
+            <span className="font-bold text-foreground dark:text-foreground">{selectedModule?.name || 'Aucun module'}</span>
             <span className="text-slate-400">{selectedModule?.prof ? `(${selectedModule.prof})` : ''}</span>
           </div>
           <button
             onClick={handleStartQuiz}
-            className="px-3.5 py-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-white rounded-xl text-xs font-black transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
+            className="px-3.5 py-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
           >
             <Flame className="w-3.5 h-3.5" />
             <span>Quiz 1-Clic</span>
@@ -216,7 +216,7 @@ export default function StudentAiTutorPage() {
             >
               {/* Avatar */}
               <div className={cn(
-                "w-9 h-9 rounded-2xl flex items-center justify-center shrink-0 shadow-xs font-black text-xs",
+                "w-9 h-9 rounded-2xl flex items-center justify-center shrink-0 shadow-xs font-bold text-xs",
                 msg.sender === 'user'
                   ? "bg-[#0f2863] text-white"
                   : "bg-gradient-to-br from-indigo-500 to-purple-600 text-white"
@@ -227,10 +227,10 @@ export default function StudentAiTutorPage() {
               {/* Message Content Bubble */}
               <div className="space-y-2">
                 <div className={cn(
-                  "p-5 rounded-3xl text-xs sm:text-sm leading-relaxed",
+                  "p-5 rounded-2xl text-xs sm:text-sm leading-relaxed",
                   msg.sender === 'user'
                     ? "bg-[#0f2863] text-white rounded-tr-xs shadow-md"
-                    : "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-tl-xs border border-slate-200/60 dark:border-slate-700/60 shadow-xs whitespace-pre-wrap"
+                    : "bg-muted dark:bg-card text-foreground dark:text-foreground rounded-tl-xs border border-slate-200/60 dark:border-slate-700/60 shadow-xs whitespace-pre-wrap"
                 )}>
                   {msg.text}
                 </div>
@@ -238,13 +238,13 @@ export default function StudentAiTutorPage() {
                 {/* Citation Pill */}
                 {msg.citation && (
                   <div className="flex items-center gap-2 pt-1">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200/80 dark:border-indigo-800 text-[11px] font-mono text-indigo-700 dark:text-indigo-300">
-                      <BookOpen className="w-3 h-3 text-indigo-500" />
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-primary/5 dark:bg-indigo-950/60 border border-indigo-200/80 dark:border-primary text-[11px] font-mono text-primary dark:text-indigo-300">
+                      <BookOpen className="w-3 h-3 text-primary" />
                       {msg.citation}
                     </span>
                     <button
                       onClick={() => handleCopyCitation(msg.citation!, msg.id)}
-                      className="p-1 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer"
+                      className="p-1 text-slate-400 hover:text-primary dark:hover:text-indigo-400 transition-colors cursor-pointer"
                       title="Copier la référence du cours"
                     >
                       {copiedId === msg.id ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
@@ -258,11 +258,11 @@ export default function StudentAiTutorPage() {
           {/* Loading Indicator */}
           {isLoading && (
             <div className="flex gap-3 max-w-xl mr-auto animate-pulse">
-              <div className="w-9 h-9 rounded-2xl bg-indigo-500 text-white flex items-center justify-center shrink-0">
+              <div className="w-9 h-9 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center shrink-0">
                 <Bot className="w-5 h-5" />
               </div>
-              <div className="p-4 rounded-3xl bg-slate-100 dark:bg-slate-800 text-xs font-bold text-slate-500 flex items-center gap-2">
-                <RefreshCw className="w-4 h-4 animate-spin text-indigo-600" />
+              <div className="p-4 rounded-2xl bg-muted dark:bg-card text-xs font-bold text-muted-foreground flex items-center gap-2">
+                <RefreshCw className="w-4 h-4 animate-spin text-primary" />
                 <span>Recherche dans les polycopiés et formulation de la réponse...</span>
               </div>
             </div>
@@ -272,15 +272,15 @@ export default function StudentAiTutorPage() {
         </div>
 
         {/* ── Quick Prompt Chips ─────────────────────────────────────────────── */}
-        <div className="p-3 bg-slate-50/80 dark:bg-slate-800/40 border-t border-slate-200/60 dark:border-slate-800 flex items-center gap-2 overflow-x-auto px-6">
-          <span className="text-[10px] font-black uppercase text-slate-400 shrink-0 flex items-center gap-1">
+        <div className="p-3 bg-slate-50/80 dark:bg-slate-800/40 border-t border-slate-200/60 dark:border-border flex items-center gap-2 overflow-x-auto px-6">
+          <span className="text-[10px] font-bold uppercase text-slate-400 shrink-0 flex items-center gap-1">
             <Lightbulb className="w-3 h-3 text-amber-500" /> Suggestions :
           </span>
           {QUICK_PROMPTS.map((prompt, idx) => (
             <button
               key={idx}
               onClick={() => handleSendMessage(prompt)}
-              className="shrink-0 px-3 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-indigo-400 dark:hover:border-indigo-500 text-[11px] font-medium text-slate-700 dark:text-slate-300 rounded-full transition-colors cursor-pointer"
+              className="shrink-0 px-3 py-1 bg-card dark:bg-card border border-border dark:border-border hover:border-indigo-400 dark:hover:border-primary text-[11px] font-medium text-slate-700 dark:text-foreground rounded-full transition-colors cursor-pointer"
             >
               {prompt}
             </button>
@@ -288,14 +288,14 @@ export default function StudentAiTutorPage() {
         </div>
 
         {/* ── Input Bar ──────────────────────────────────────────────────────── */}
-        <div className="p-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center gap-3 px-6">
+        <div className="p-4 bg-card dark:bg-card border-t border-border dark:border-border flex items-center gap-3 px-6">
           <input
             type="text"
             placeholder={`Posez votre question sur ${selectedModule?.name || 'votre module'}...`}
             value={inputQuery}
             onChange={(e) => setInputQuery(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-            className="flex-1 p-3 bg-slate-100 dark:bg-slate-800 rounded-2xl text-xs sm:text-sm font-semibold text-slate-900 dark:text-white outline-none border border-transparent focus:border-indigo-500 transition-all"
+            className="flex-1 p-3 bg-muted dark:bg-card text-xs sm:text-sm font-semibold text-foreground dark:text-white outline-none border border-transparent focus:border-primary transition-all rounded-[var(--control-radius)]"
           />
           <button
             onClick={() => handleSendMessage()}
@@ -311,12 +311,12 @@ export default function StudentAiTutorPage() {
       {/* ── Interactive Quiz Modal ────────────────────────────────────────────── */}
       {activeQuiz && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-3xl shadow-2xl w-full max-w-xl overflow-hidden border border-slate-200 dark:border-slate-800">
+          <div className="bg-card dark:bg-card text-foreground dark:text-white rounded-2xl shadow-sm w-full max-w-xl overflow-hidden border border-border dark:border-border">
             
             <div className="p-6 bg-gradient-to-r from-amber-500 to-amber-600 text-white flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Flame className="w-5 h-5" />
-                <span className="font-black text-sm uppercase tracking-wider">Quiz d'Entraînement Examen</span>
+                <span className="font-bold text-sm uppercase tracking-wider">Quiz d'Entraînement Examen</span>
               </div>
               <button
                 onClick={() => setActiveQuiz(null)}
@@ -327,7 +327,7 @@ export default function StudentAiTutorPage() {
             </div>
 
             <div className="p-6 space-y-6">
-              <h3 className="text-base font-black text-slate-900 dark:text-white">
+              <h3 className="text-base font-bold text-foreground dark:text-white">
                 {activeQuiz.question}
               </h3>
 
@@ -344,7 +344,7 @@ export default function StudentAiTutorPage() {
                       className={cn(
                         "p-4 rounded-2xl border text-xs font-bold cursor-pointer transition-all flex items-center justify-between",
                         !isAnswerSubmitted && isChosen && "border-amber-500 bg-amber-50 dark:bg-amber-950/50 text-amber-900 dark:text-amber-200",
-                        !isAnswerSubmitted && !isChosen && "border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800",
+                        !isAnswerSubmitted && !isChosen && "border-border dark:border-border hover:bg-muted/50 dark:hover:bg-slate-800",
                         isAnswerSubmitted && isCorrect && "border-emerald-500 bg-emerald-50 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-200",
                         isAnswerSubmitted && isChosen && !isCorrect && "border-rose-500 bg-rose-50 dark:bg-rose-950 text-rose-800 dark:text-rose-200"
                       )}
@@ -357,7 +357,7 @@ export default function StudentAiTutorPage() {
               </div>
 
               {isAnswerSubmitted && (
-                <div className="p-4 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800 text-xs font-medium text-indigo-900 dark:text-indigo-200">
+                <div className="p-4 rounded-2xl bg-primary/5 dark:bg-indigo-950/50 border border-primary/20 dark:border-primary text-xs font-medium text-primary dark:text-indigo-200">
                   <p className="font-bold">💡 Explication du Polycopié :</p>
                   <p className="mt-1">{activeQuiz.explanation}</p>
                 </div>
@@ -368,14 +368,14 @@ export default function StudentAiTutorPage() {
                   <button
                     onClick={() => setIsAnswerSubmitted(true)}
                     disabled={!selectedAnswer}
-                    className="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-white rounded-xl text-xs font-black uppercase transition-all shadow-md cursor-pointer disabled:opacity-50"
+                    className="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-white rounded-xl text-xs font-bold uppercase transition-all shadow-md cursor-pointer disabled:opacity-50"
                   >
                     Valider Ma Réponse
                   </button>
                 ) : (
                   <button
                     onClick={() => setActiveQuiz(null)}
-                    className="px-5 py-2.5 bg-[#0f2863] text-white rounded-xl text-xs font-black uppercase transition-all shadow-md cursor-pointer"
+                    className="px-5 py-2.5 bg-[#0f2863] text-white rounded-xl text-xs font-bold uppercase transition-all shadow-md cursor-pointer"
                   >
                     Terminer le Quiz
                   </button>

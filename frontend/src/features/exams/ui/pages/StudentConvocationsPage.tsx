@@ -131,9 +131,9 @@ export default function StudentConvocationsPage() {
   };
 
   return (
-    <div className={cn("p-4 sm:p-6 max-w-7xl mx-auto space-y-6 sm:space-y-8 pb-20", isRtl && "rtl")}>
+    <div className={cn("max-w-7xl mx-auto space-y-6 sm:space-y-8 pb-20", isRtl && "rtl")}>
       {/* Top Banner Header */}
-      <div className="bg-gradient-to-r from-[#001A4B] via-[#0f2863] to-[#1e3a8a] text-white p-6 sm:p-8 rounded-3xl shadow-xl relative overflow-hidden border border-blue-950/40">
+      <div className="text-white p-6 sm:p-8 relative overflow-hidden border border-blue-950/40 erp-page-banner">
         <div className="absolute -right-12 -top-12 w-64 h-64 bg-amber-400/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -left-12 -bottom-12 w-64 h-64 bg-blue-400/10 rounded-full blur-3xl pointer-events-none" />
 
@@ -144,7 +144,7 @@ export default function StudentConvocationsPage() {
               <span>{isRtl ? 'وثيقة رسمية مؤمنة — المدرسة الوطنية للتجارة والتسيير بفاس' : 'Document Officiel Sécurisé — ENCG Fès'}</span>
             </div>
 
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+            <h1 className="erp-page-title">
               {isRtl ? 'استدعاءات الامتحانات الرسمية' : 'Mes Convocations aux Examens'}
             </h1>
 
@@ -180,7 +180,7 @@ export default function StudentConvocationsPage() {
             <button
               onClick={handleDownloadPdf}
               disabled={isDownloadingPdf || isPreviewLoading}
-              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2.5 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white h-12 px-6 rounded-2xl font-bold text-xs sm:text-sm shadow-xl shadow-emerald-900/30 transition-all cursor-pointer disabled:opacity-75 disabled:cursor-not-allowed shrink-0"
+              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2.5 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white h-12 px-6 rounded-2xl font-bold text-xs sm:text-sm shadow-sm shadow-emerald-900/30 transition-all cursor-pointer disabled:opacity-75 disabled:cursor-not-allowed shrink-0"
             >
               {isDownloadingPdf ? (
                 <>
@@ -199,7 +199,7 @@ export default function StudentConvocationsPage() {
       </div>
 
       {/* Session Selector Tabs */}
-      <div className="flex items-center gap-3 border-b border-slate-200 pb-3">
+      <div className="flex items-center gap-3 border-b border-border pb-3">
         <button
           onClick={() => {
             setActiveSession('ORDINAIRE');
@@ -209,7 +209,7 @@ export default function StudentConvocationsPage() {
             "flex items-center gap-2.5 px-6 py-3 rounded-2xl font-bold text-sm transition-all cursor-pointer",
             activeSession === 'ORDINAIRE'
               ? "bg-[#002e5b] text-white shadow-lg shadow-[#002e5b]/25"
-              : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              : "bg-muted text-muted-foreground hover:bg-slate-200"
           )}
         >
           <Calendar className="w-4 h-4" />
@@ -225,7 +225,7 @@ export default function StudentConvocationsPage() {
             "flex items-center gap-2.5 px-6 py-3 rounded-2xl font-bold text-sm transition-all cursor-pointer",
             activeSession === 'RATTRAPAGE'
               ? "bg-[#002e5b] text-white shadow-lg shadow-[#002e5b]/25"
-              : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              : "bg-muted text-muted-foreground hover:bg-slate-200"
           )}
         >
           <Calendar className="w-4 h-4" />
@@ -237,12 +237,12 @@ export default function StudentConvocationsPage() {
       {isLoading ? (
         <div className="flex flex-col justify-center items-center py-20 space-y-3">
           <Loader2 className="w-10 h-10 animate-spin text-[#002e5b]" />
-          <p className="text-xs font-semibold text-slate-500">
+          <p className="text-xs font-semibold text-muted-foreground">
             {isRtl ? 'جاري تحميل جدول الاختبارات الرسمية...' : 'Chargement des convocations officielles...'}
           </p>
         </div>
       ) : convocations.length === 0 ? (
-        <div className="bg-white p-12 text-center rounded-3xl border border-slate-200 shadow-sm space-y-3">
+        <div className="bg-card p-12 text-center rounded-2xl border border-border shadow-sm space-y-3">
           <Calendar className="w-12 h-12 text-slate-300 mx-auto" />
           <h3 className="text-base font-bold text-slate-700">
             {isRtl ? 'لا توجد امتحانات مبرمجة في هذه الدورة' : 'Aucune convocation disponible pour cette session.'}
@@ -256,11 +256,11 @@ export default function StudentConvocationsPage() {
           {convocations.map((exam: any) => (
             <div 
               key={exam.id}
-              className="bg-white p-6 rounded-2xl border border-slate-200/90 shadow-sm hover:shadow-md hover:border-blue-200 transition-all flex flex-col md:flex-row md:items-center justify-between gap-6 group border-l-4 border-l-[#002e5b]"
+              className="bg-card p-6 rounded-2xl border border-slate-200/90 shadow-sm hover:shadow-md hover:border-primary/20 transition-all flex flex-col md:flex-row md:items-center justify-between gap-6 group border-l-4 border-l-[#002e5b]"
             >
               <div className="space-y-2.5">
                 <div className="flex items-center gap-3">
-                  <span className="px-3 py-1 bg-blue-50 text-[#002e5b] font-extrabold text-xs rounded-lg border border-blue-100 font-mono">
+                  <span className="px-3 py-1 bg-primary/5 text-[#002e5b] font-bold text-xs rounded-lg border border-primary/20 font-mono">
                     {exam.code}
                   </span>
                   <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
@@ -269,14 +269,14 @@ export default function StudentConvocationsPage() {
                   </span>
                 </div>
 
-                <h3 className="text-lg font-extrabold text-slate-900 group-hover:text-[#002e5b] transition-colors">
+                <h3 className="text-lg font-bold text-foreground group-hover:text-[#002e5b] transition-colors">
                   {exam.module}
                 </h3>
 
-                <div className="flex flex-wrap items-center gap-5 text-sm text-slate-600 pt-1">
+                <div className="flex flex-wrap items-center gap-5 text-sm text-muted-foreground pt-1">
                   <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-blue-600" />
-                    <span className="font-bold text-slate-800">{exam.date}</span>
+                    <Calendar className="w-4 h-4 text-primary" />
+                    <span className="font-bold text-foreground">{exam.date}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Clock className="w-4 h-4 text-amber-600" />
@@ -284,7 +284,7 @@ export default function StudentConvocationsPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <MapPin className="w-4 h-4 text-rose-600" />
-                    <span className="font-bold text-[#002e5b] bg-slate-100 px-2.5 py-0.5 rounded-md border border-slate-200">
+                    <span className="font-bold text-[#002e5b] bg-muted px-2.5 py-0.5 rounded-md border border-border">
                       {exam.room}
                     </span>
                   </div>
@@ -292,10 +292,10 @@ export default function StudentConvocationsPage() {
               </div>
 
               {/* Seat & Digital QR Ticket Actions */}
-              <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-200 md:self-center">
-                <div className="text-center px-4 border-r border-slate-200">
-                  <div className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">{isRtl ? 'المقعد' : 'Place'}</div>
-                  <div className="text-xl font-extrabold text-[#002e5b]">{exam.seat}</div>
+              <div className="flex items-center gap-4 bg-muted/50 p-4 rounded-2xl border border-border md:self-center">
+                <div className="text-center px-4 border-r border-border">
+                  <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{isRtl ? 'المقعد' : 'Place'}</div>
+                  <div className="text-xl font-bold text-[#002e5b]">{exam.seat}</div>
                 </div>
 
                 <button
@@ -333,45 +333,45 @@ export default function StudentConvocationsPage() {
       {/* QR Code Digital Entrance Pass Modal */}
       {showQrModal && selectedExam && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center space-y-6 shadow-2xl animate-in zoom-in-95 border border-slate-200 relative">
+          <div className="bg-card rounded-2xl p-8 max-w-sm w-full text-center space-y-6 shadow-sm animate-in zoom-in-95 border border-border relative">
             <button
               onClick={() => setShowQrModal(false)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1.5 rounded-full hover:bg-slate-100 transition-colors"
+              className="absolute top-4 right-4 text-slate-400 hover:text-muted-foreground p-1.5 rounded-full hover:bg-muted transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
 
-            <div className="w-14 h-14 bg-blue-50 text-[#002e5b] rounded-2xl flex items-center justify-center mx-auto border border-blue-100 shadow-sm">
+            <div className="w-14 h-14 bg-primary/5 text-[#002e5b] rounded-2xl flex items-center justify-center mx-auto border border-primary/20 shadow-sm">
               <Ticket className="w-7 h-7" />
             </div>
 
             <div>
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-100">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-primary bg-primary/5 px-2.5 py-0.5 rounded-full border border-primary/20">
                 ENCG Fès — Pass Numérique
               </span>
-              <h3 className="font-extrabold text-slate-900 text-base mt-2">{selectedExam.module}</h3>
-              <p className="text-xs font-bold text-slate-600 mt-1">
-                {selectedExam.room} &bull; <span className="text-emerald-700 font-extrabold">{selectedExam.seat}</span>
+              <h3 className="font-bold text-foreground text-base mt-2">{selectedExam.module}</h3>
+              <p className="text-xs font-bold text-muted-foreground mt-1">
+                {selectedExam.room} &bull; <span className="text-emerald-700 font-bold">{selectedExam.seat}</span>
               </p>
-              <p className="text-[11px] text-slate-500">{selectedExam.date} à {selectedExam.time}</p>
+              <p className="text-[11px] text-muted-foreground">{selectedExam.date} à {selectedExam.time}</p>
             </div>
 
-            <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl inline-block mx-auto shadow-inner">
+            <div className="p-4 bg-muted/50 border border-border rounded-2xl inline-block mx-auto shadow-inner">
               <img 
                 src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(selectedExam.qrToken || `CONV-${selectedExam.id}`)}`}
                 alt="QR Code Pass"
                 className="w-44 h-44 mx-auto rounded-lg"
               />
-              <p className="text-[10px] font-mono font-bold text-slate-500 mt-2">{selectedExam.qrToken || `CONV-${selectedExam.id}`}</p>
+              <p className="text-[10px] font-mono font-bold text-muted-foreground mt-2">{selectedExam.qrToken || `CONV-${selectedExam.id}`}</p>
             </div>
 
-            <p className="text-xs text-slate-500 leading-relaxed">
+            <p className="text-xs text-muted-foreground leading-relaxed">
               {isRtl ? 'امسح هذا الرمز عند باب القاعة لتسجيل الحضور وتأكيد مكان الجلوس.' : 'Scannez ce Pass QR à la porte de la salle pour contrôle d\'identité et émargement biométrique.'}
             </p>
 
             <button
               onClick={() => setShowQrModal(false)}
-              className="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-3 rounded-xl text-xs transition-colors cursor-pointer"
+              className="w-full bg-muted hover:bg-slate-200 text-foreground font-bold py-3 rounded-xl text-xs transition-colors cursor-pointer"
             >
               {isRtl ? 'إغلاق' : 'Fermer'}
             </button>
@@ -382,21 +382,21 @@ export default function StudentConvocationsPage() {
       {/* ── Modal Aperçu Convocation PDF ── */}
       {isPreviewModalOpen && previewPdfUrl && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-2 sm:p-4 lg:p-6 animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl w-full max-w-5xl max-h-[96vh] flex flex-col shadow-2xl overflow-hidden">
+          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl sm:rounded-3xl w-full max-w-5xl max-h-[96vh] flex flex-col shadow-sm overflow-hidden">
             {/* Modal Header */}
-            <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/80">
+            <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 border-b border-border dark:border-border bg-slate-50/80 dark:bg-slate-900/80">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold shrink-0">
                   <ShieldCheck className="w-5 h-5" />
                 </div>
                 <div className="min-w-0">
-                  <h3 className="text-xs sm:text-base font-black text-slate-900 dark:text-white flex items-center gap-2 truncate">
+                  <h3 className="text-xs sm:text-base font-bold text-foreground dark:text-white flex items-center gap-2 truncate">
                     <span>{isRtl ? 'معاينة استدعاء الامتحان الرسمي' : 'Aperçu Convocation Officielle aux Examens'}</span>
-                    <span className="hidden sm:inline-block px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                    <span className="hidden sm:inline-block px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                       {activeSession === 'ORDINAIRE' ? 'Session Normale' : 'Session Rattrapage'}
                     </span>
                   </h3>
-                  <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate">
+                  <p className="text-[10px] sm:text-[11px] text-muted-foreground dark:text-muted-foreground font-medium truncate">
                     {user?.name || 'Étudiant'} • {convocations.length} {isRtl ? 'اختبارات مبرمجة' : 'épreuves assignées'}
                   </p>
                 </div>
@@ -405,7 +405,7 @@ export default function StudentConvocationsPage() {
               <div className="flex items-center gap-2 shrink-0">
                 <button
                   onClick={() => window.open(previewPdfUrl, '_blank', 'noopener,noreferrer')}
-                  className="flex items-center gap-1.5 h-9 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition-all cursor-pointer"
+                  className="flex items-center gap-1.5 h-9 px-3 rounded-xl bg-muted hover:bg-slate-200 dark:bg-card dark:hover:bg-slate-700 text-slate-700 dark:text-foreground text-xs font-bold transition-all cursor-pointer"
                   title="Ouvrir en plein écran dans un nouvel onglet"
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
@@ -423,7 +423,7 @@ export default function StudentConvocationsPage() {
 
                 <button
                   onClick={() => setIsPreviewModalOpen(false)}
-                  className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center justify-center transition-all cursor-pointer"
+                  className="w-9 h-9 rounded-xl bg-muted hover:bg-slate-200 dark:bg-card dark:hover:bg-slate-700 text-muted-foreground hover:text-foreground dark:hover:text-white flex items-center justify-center transition-all cursor-pointer"
                   aria-label="Fermer l'aperçu"
                 >
                   <X className="w-4 h-4" />
@@ -435,7 +435,7 @@ export default function StudentConvocationsPage() {
             <div className="flex-1 p-2 sm:p-4 bg-slate-100/50 dark:bg-slate-950/50 overflow-hidden flex flex-col items-center justify-center">
               <iframe
                 src={`${previewPdfUrl}#toolbar=0&navpanes=0`}
-                className="w-full h-[65vh] sm:h-[75vh] rounded-xl sm:rounded-2xl border border-slate-200 dark:border-slate-800 bg-white shadow-inner"
+                className="w-full h-[65vh] sm:h-[75vh] rounded-xl sm:rounded-2xl border border-border dark:border-border bg-card shadow-inner"
                 title="Aperçu Convocation PDF"
               />
             </div>

@@ -82,7 +82,7 @@ export default function InteractiveCalendarPage({ isAdmin = false }: { isAdmin?:
           </div>
         </CardHeader>
         <CardContent className="p-0 sm:p-6">
-          <div className="bg-white rounded-lg p-4 shadow-inner min-h-[600px]">
+          <div className="bg-card rounded-lg p-4 shadow-inner min-h-[600px]">
             <FullCalendar
               plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
               initialView="timeGridWeek"
@@ -115,7 +115,7 @@ export default function InteractiveCalendarPage({ isAdmin = false }: { isAdmin?:
       {/* Legend */}
       <div className="flex flex-wrap gap-4 px-2 text-sm">
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded bg-blue-500"></div> Cours Magistral (CM)
+          <div className="w-4 h-4 rounded bg-primary"></div> Cours Magistral (CM)
         </div>
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 rounded bg-emerald-500"></div> Travaux Dirigés (TD)

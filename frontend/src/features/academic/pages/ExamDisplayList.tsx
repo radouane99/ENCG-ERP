@@ -16,11 +16,11 @@ export default function ExamDisplayList() {
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-10">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-pink-600 italic flex items-center gap-2">
+        <h1 className="text-pink-600 italic flex items-center gap-2 erp-page-title">
           <FileText className="w-6 h-6" /> Liste d'Affichage
         </h1>
         <div className="flex gap-3">
-          <Link to="/academic/exam-planning" className="bg-white hover:bg-white/5 border border-white/10 text-foreground px-4 py-2 rounded-lg font-bold text-sm uppercase flex items-center gap-2">
+          <Link to="/academic/exam-planning" className="bg-card hover:bg-white/5 border border-white/10 text-foreground px-4 py-2 rounded-lg font-bold text-sm uppercase flex items-center gap-2">
             <ArrowLeft className="w-4 h-4" /> Retour au Planning
           </Link>
           <button className="bg-[#e91e63] hover:bg-[#c2185b] text-white px-4 py-2 rounded-lg font-bold text-sm uppercase flex items-center gap-2">
@@ -29,7 +29,7 @@ export default function ExamDisplayList() {
         </div>
       </div>
 
-      <div className="bg-white border border-white/10 rounded-2xl shadow-sm p-6 mb-6">
+      <div className="bg-card border border-white/10 rounded-2xl shadow-sm p-6 mb-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <div>
             <div className="text-[10px] font-bold text-white/50 uppercase mb-1">Module</div>
@@ -54,7 +54,7 @@ export default function ExamDisplayList() {
         </div>
       </div>
 
-      <div className="bg-white border border-white/10 rounded-2xl shadow-sm overflow-hidden">
+      <div className="bg-card border border-white/10 rounded-2xl shadow-sm overflow-hidden">
         <div className="p-4 border-b border-white/10 bg-white/5/10">
           <h2 className="font-bold text-lg">Étudiants concernés ({students.length})</h2>
         </div>

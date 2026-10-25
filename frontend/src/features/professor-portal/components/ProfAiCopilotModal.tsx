@@ -29,7 +29,7 @@ export function ProfAiCopilotModal({ isOpen, onClose, moduleId }: ProfAiCopilotM
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="bg-white rounded-3xl w-full max-w-3xl overflow-hidden shadow-2xl border border-white/20 flex flex-col max-h-[90vh]"
+          className="bg-card rounded-2xl w-full max-w-3xl overflow-hidden shadow-sm border border-white/20 flex flex-col max-h-[90vh]"
         >
           {/* Header */}
           <div className="bg-gradient-to-r from-indigo-900 via-purple-900 to-indigo-900 p-6 flex justify-between items-center relative overflow-hidden">
@@ -39,7 +39,7 @@ export function ProfAiCopilotModal({ isOpen, onClose, moduleId }: ProfAiCopilotM
                 <Sparkles className="w-6 h-6 text-purple-200" />
               </div>
               <div>
-                <h2 className="text-xl font-black">Copilote IA : Analyse de Classe</h2>
+                <h2 className="text-xl font-bold">Copilote IA : Analyse de Classe</h2>
                 <p className="text-sm text-indigo-200 font-medium">{data?.module || 'Chargement...'}</p>
               </div>
             </div>
@@ -49,11 +49,11 @@ export function ProfAiCopilotModal({ isOpen, onClose, moduleId }: ProfAiCopilotM
           </div>
 
           {/* Content */}
-          <div className="p-6 overflow-y-auto flex-1 bg-slate-50">
+          <div className="p-6 overflow-y-auto flex-1 bg-muted/50">
             {isLoading ? (
               <div className="flex flex-col items-center justify-center py-20 space-y-4">
                 <Spinner className="w-10 h-10 text-purple-600" />
-                <p className="text-sm font-bold text-slate-500 animate-pulse">L'IA de l'ENCG analyse vos résultats...</p>
+                <p className="text-sm font-bold text-muted-foreground animate-pulse">L'IA de l'ENCG analyse vos résultats...</p>
               </div>
             ) : isError ? (
               <div className="text-center py-10 text-rose-500">
@@ -65,26 +65,26 @@ export function ProfAiCopilotModal({ isOpen, onClose, moduleId }: ProfAiCopilotM
                 
                 {/* KPIs */}
                 <div className="grid grid-cols-3 gap-4">
-                  <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center text-center">
+                  <div className="bg-card p-5 rounded-2xl shadow-sm border border-border flex flex-col items-center text-center">
                     <div className="bg-emerald-50 p-3 rounded-xl mb-3"><TrendingUp className="w-6 h-6 text-emerald-600" /></div>
                     <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Moyenne Globale</div>
-                    <div className="text-2xl font-black text-slate-800">{data.average_score}</div>
+                    <div className="text-2xl font-bold text-foreground">{data.average_score}</div>
                   </div>
-                  <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center text-center">
-                    <div className="bg-blue-50 p-3 rounded-xl mb-3"><BookOpen className="w-6 h-6 text-blue-600" /></div>
+                  <div className="bg-card p-5 rounded-2xl shadow-sm border border-border flex flex-col items-center text-center">
+                    <div className="bg-primary/5 p-3 rounded-xl mb-3"><BookOpen className="w-6 h-6 text-primary" /></div>
                     <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Taux de Réussite</div>
-                    <div className="text-2xl font-black text-slate-800">{data.pass_rate}</div>
+                    <div className="text-2xl font-bold text-foreground">{data.pass_rate}</div>
                   </div>
-                  <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center text-center">
+                  <div className="bg-card p-5 rounded-2xl shadow-sm border border-border flex flex-col items-center text-center">
                     <div className="bg-purple-50 p-3 rounded-xl mb-3"><Users className="w-6 h-6 text-purple-600" /></div>
                     <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Étudiants Évalués</div>
-                    <div className="text-2xl font-black text-slate-800">{data.total_students_graded}</div>
+                    <div className="text-2xl font-bold text-foreground">{data.total_students_graded}</div>
                   </div>
                 </div>
 
                 {/* Struggling Topics */}
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                  <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2 mb-4">
+                <div className="bg-card p-6 rounded-2xl shadow-sm border border-border">
+                  <h3 className="text-sm font-bold text-foreground uppercase tracking-wider flex items-center gap-2 mb-4">
                     <AlertTriangle className="w-4 h-4 text-amber-500" /> 
                     Concepts Mal Compris (Identifiés par l'IA)
                   </h3>
@@ -99,8 +99,8 @@ export function ProfAiCopilotModal({ isOpen, onClose, moduleId }: ProfAiCopilotM
                 </div>
 
                 {/* Recommendations */}
-                <div className="bg-gradient-to-br from-indigo-50 to-purple-50 p-6 rounded-2xl border border-indigo-100">
-                  <h3 className="text-sm font-black text-indigo-900 uppercase tracking-wider flex items-center gap-2 mb-4">
+                <div className="bg-gradient-to-br from-indigo-50 to-purple-50 p-6 rounded-2xl border border-primary/20">
+                  <h3 className="text-sm font-bold text-primary uppercase tracking-wider flex items-center gap-2 mb-4">
                     <Sparkles className="w-4 h-4 text-purple-500" /> 
                     Recommandations Pédagogiques
                   </h3>

@@ -23,14 +23,14 @@ export default function VerifyPv() {
   }, [moduleId, groupId]);
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6" data-testid="verify-pv-page">
-      <div className="w-full max-w-md bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-100">
+    <div className="min-h-screen bg-muted/50 flex flex-col items-center justify-center" data-testid="verify-pv-page">
+      <div className="w-full max-w-md bg-card rounded-2xl shadow-sm overflow-hidden border border-border">
         {/* Header */}
         <div className="bg-[#0f2863] p-6 text-center">
-          <div className="w-16 h-16 bg-white rounded-2xl mx-auto flex items-center justify-center mb-4 shadow-lg">
+          <div className="w-16 h-16 bg-card rounded-2xl mx-auto flex items-center justify-center mb-4 shadow-lg">
             <Building2 className="w-8 h-8 text-[#0f2863]" />
           </div>
-          <h1 className="text-white font-bold text-xl">ENCG Fès</h1>
+          <h1 className="text-white erp-page-title">ENCG Fès</h1>
           <p className="text-white/80 text-sm">Portail Public de Vérification</p>
         </div>
 
@@ -39,7 +39,7 @@ export default function VerifyPv() {
           {loading ? (
             <div className="space-y-4">
               <div className="w-16 h-16 border-4 border-[#0f2863]/20 border-t-[#0f2863] rounded-full animate-spin mx-auto" />
-              <p className="text-slate-500 font-medium animate-pulse">Validation de signature en cours...</p>
+              <p className="text-muted-foreground font-medium animate-pulse">Validation de signature en cours...</p>
             </div>
           ) : result?.success ? (
             <div className="space-y-6 animate-in fade-in duration-300">
@@ -48,13 +48,13 @@ export default function VerifyPv() {
               </div>
               
               <div>
-                <h2 className="text-2xl font-bold text-slate-800 mb-2">PV Signé & Authentique</h2>
-                <p className="text-slate-500 text-xs font-semibold">
+                <h2 className="text-2xl font-bold text-foreground mb-2">PV Signé & Authentique</h2>
+                <p className="text-muted-foreground text-xs font-semibold">
                   Ce procès-verbal de délibération a été certifié avec signature électronique et archivé.
                 </p>
               </div>
 
-              <div className="bg-slate-50 rounded-2xl p-5 text-left space-y-3 border border-slate-100 text-xs">
+              <div className="bg-muted/50 rounded-2xl p-5 text-left space-y-3 border border-border text-xs">
                 <div className="flex items-start gap-3">
                   <FileText className="w-4 h-4 text-slate-400 mt-0.5" />
                   <div>
@@ -63,25 +63,25 @@ export default function VerifyPv() {
                   </div>
                 </div>
 
-                <div className="pt-2.5 border-t border-slate-200 flex items-start gap-3">
+                <div className="pt-2.5 border-t border-border flex items-start gap-3">
                   <Layers className="w-4 h-4 text-slate-400 mt-0.5" />
                   <div>
                     <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-0.5">Détail du Module</p>
                     <p className="font-bold text-slate-700">{result.data.module}</p>
-                    <p className="text-[10px] text-slate-500 mt-0.5">Groupe: {result.data.group} | Filière: {result.data.filiere}</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">Groupe: {result.data.group} | Filière: {result.data.filiere}</p>
                   </div>
                 </div>
                 
-                <div className="pt-2.5 border-t border-slate-200 flex items-start gap-3">
+                <div className="pt-2.5 border-t border-border flex items-start gap-3">
                   <ShieldCheck className="w-4 h-4 text-slate-400 mt-0.5" />
                   <div>
                     <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-0.5">Signataire</p>
                     <p className="font-bold text-slate-700">{result.data.signed_by}</p>
-                    <p className="text-[10px] text-slate-500 mt-0.5">Adresse IP: {result.data.ip_address}</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">Adresse IP: {result.data.ip_address}</p>
                   </div>
                 </div>
                 
-                <div className="pt-2.5 border-t border-slate-200 flex items-start gap-3">
+                <div className="pt-2.5 border-t border-border flex items-start gap-3">
                   <Clock className="w-4 h-4 text-slate-400 mt-0.5" />
                   <div>
                     <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-0.5">Signé le</p>
@@ -89,9 +89,9 @@ export default function VerifyPv() {
                   </div>
                 </div>
 
-                <div className="pt-2.5 border-t border-slate-200">
+                <div className="pt-2.5 border-t border-border">
                   <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-0.5">Empreinte Digitale (SHA-256)</p>
-                  <p className="text-[9px] font-mono break-all text-slate-500">{result.data.fingerprint}</p>
+                  <p className="text-[9px] font-mono break-all text-muted-foreground">{result.data.fingerprint}</p>
                 </div>
               </div>
             </div>
@@ -102,8 +102,8 @@ export default function VerifyPv() {
               </div>
               
               <div>
-                <h2 className="text-2xl font-bold text-slate-800 mb-2">Non Vérifiable</h2>
-                <p className="text-slate-500 text-sm">
+                <h2 className="text-2xl font-bold text-foreground mb-2">Non Vérifiable</h2>
+                <p className="text-muted-foreground text-sm">
                   Ce procès-verbal de délibération n'a pas pu être authentifié. Il n'a pas encore été signé électroniquement ou a été modifié illégalement.
                 </p>
               </div>
@@ -111,8 +111,8 @@ export default function VerifyPv() {
           )}
         </div>
 
-        <div className="p-6 bg-slate-50 border-t border-slate-100 text-center">
-          <Link to="/login" className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-800 font-medium transition-colors">
+        <div className="p-6 bg-muted/50 border-t border-border text-center">
+          <Link to="/login" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground font-medium transition-colors">
             <ArrowLeft className="w-4 h-4" /> Retour à la plateforme
           </Link>
         </div>

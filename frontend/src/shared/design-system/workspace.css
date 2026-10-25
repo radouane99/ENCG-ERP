@@ -1,0 +1,67 @@
+/* ENCG workspace components. Semantic colors live in index.css. */
+@layer base {
+  :root {
+    --brand-navy: #1a3673;
+    --brand-navy-deep: #142959;
+    --surface-radius: 1rem;
+    --control-radius: 0.625rem;
+    --surface-shadow: 0 1px 3px rgb(15 23 42 / 0.04);
+    --warning-text: hsl(30 80% 28%);
+  }
+  .dark { --warning-text: hsl(43 96% 70%); }
+
+  .erp-workspace :where(input:not([type=checkbox], [type=radio], [type=range], [type=color], [type=file], [type=hidden]), select:not([multiple]), textarea) {
+    border-radius: var(--control-radius);
+    min-height: 2.75rem;
+    border-width: 1px;
+    border-color: var(--input);
+    background-color: var(--card);
+    color: var(--foreground);
+    font: inherit;
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+  .erp-workspace :where(input, textarea)::placeholder { color: var(--muted-foreground); opacity: 0.8; }
+  .erp-workspace :where(th) { text-align: start; font-weight: 600; }
+  .erp-workspace :where(td, th) { border-color: var(--border); }
+  .erp-workspace :where(button, a, input, textarea, select) { -webkit-tap-highlight-color: transparent; }
+  .erp-workspace :where(button:disabled, input:disabled, select:disabled, textarea:disabled) { cursor: not-allowed; }
+  .erp-workspace :where(details > summary) { min-height: 2.75rem; align-content: center; }
+  .erp-workspace :where(h1) { overflow-wrap: anywhere; }
+  .erp-workspace :where(input[type=checkbox], input[type=radio]) { accent-color: var(--primary); }
+  [dir=rtl] .erp-workspace :where(h1, h2, h3) { letter-spacing: normal; }
+}
+
+@layer components {
+  .erp-page-title {
+    font-size: clamp(1.375rem, 1.1rem + 0.8vw, 1.75rem);
+    font-weight: 700;
+    line-height: 1.3;
+    letter-spacing: -0.025em;
+  }
+  .erp-page-banner {
+    background: linear-gradient(120deg, var(--brand-navy-deep), var(--brand-navy));
+    color: #fff;
+    border-radius: var(--surface-radius);
+    box-shadow: var(--surface-shadow);
+  }
+  .erp-page-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-block-end: 1.5rem;
+  }
+  .erp-surface {
+    border: 1px solid var(--border);
+    border-radius: var(--surface-radius);
+    background: var(--card);
+    color: var(--card-foreground);
+    box-shadow: var(--surface-shadow);
+  }
+}
+
+@media (max-width: 767px) {
+  .erp-workspace :where(input:not([type=checkbox], [type=radio], [type=range], [type=color], [type=hidden]), textarea, select) { font-size: 1rem; }
+}

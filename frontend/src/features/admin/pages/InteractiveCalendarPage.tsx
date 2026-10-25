@@ -503,7 +503,7 @@ const [filieres, setFilieres] = useState<any[]>([]);
     })
 
     return (
-      <div className="p-4 md:p-6 bg-white dark:bg-slate-900">
+      <div className="p-4 md:p-6 bg-card dark:bg-card">
         {mappedEvents.length === 0 ? (
           <div className="py-16 text-center text-slate-400 text-sm">
             <Calendar className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
@@ -512,22 +512,22 @@ const [filieres, setFilieres] = useState<any[]>([]);
         ) : (
           <div className="space-y-4">
             {sortedDates.map((date) => (
-              <div key={date} className="rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden bg-slate-50/50 dark:bg-slate-900/50">
-                <div className="px-5 py-3 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-slate-900">
-                  <span className="font-black text-slate-900 dark:text-slate-100 capitalize text-sm">{date.split(' ')[0]}</span>
+              <div key={date} className="rounded-2xl border border-border dark:border-border overflow-hidden bg-slate-50/50 dark:bg-slate-900/50">
+                <div className="px-5 py-3 border-b border-border dark:border-border flex justify-between items-center bg-card dark:bg-card">
+                  <span className="font-bold text-foreground dark:text-foreground capitalize text-sm">{date.split(' ')[0]}</span>
                   <span className="text-xs font-bold text-slate-400">{date.split(' ').slice(1).join(' ')}</span>
                 </div>
                 <div className="divide-y divide-slate-100 dark:divide-slate-800">
                   {grouped[date].sort((a, b) => a.startTime.localeCompare(b.startTime)).map(event => {
                     const style = getFiliereStyle(event.title, event.extendedProps?.group)
                     return (
-                      <div key={event.id} className="px-5 py-3.5 flex items-center justify-between gap-4 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                      <div key={event.id} className="px-5 py-3.5 flex items-center justify-between gap-4 bg-card dark:bg-card hover:bg-muted/50 dark:hover:bg-slate-800/50 transition-colors">
                         <div className="flex items-center gap-3 min-w-0">
-                          <span className="px-2.5 py-1 rounded-lg text-xs font-black text-white shrink-0 shadow-xs" style={{ background: style.color }}>
+                          <span className="px-2.5 py-1 rounded-lg text-xs font-bold text-white shrink-0 shadow-xs" style={{ background: style.color }}>
                             {style.label}
                           </span>
                           <div className="min-w-0">
-                            <p className="font-black text-sm text-slate-900 dark:text-slate-100 truncate">{event.title}</p>
+                            <p className="font-bold text-sm text-foreground dark:text-foreground truncate">{event.title}</p>
                             <p className="text-xs text-slate-400 font-medium mt-0.5 flex items-center gap-3">
                               {event.professor && <span className="flex items-center gap-1"><User size={11} />{event.professor}</span>}
                               {event.room && <span className="flex items-center gap-1"><MapPin size={11} />{event.room}</span>}
@@ -535,7 +535,7 @@ const [filieres, setFilieres] = useState<any[]>([]);
                           </div>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
-                          <span className="px-3 py-1 rounded-lg text-xs font-mono font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                          <span className="px-3 py-1 rounded-lg text-xs font-mono font-bold text-muted-foreground dark:text-foreground bg-muted dark:bg-card border border-border dark:border-border">
                             {event.startTime} – {event.endTime}
                           </span>
                         </div>
@@ -566,18 +566,18 @@ const [filieres, setFilieres] = useState<any[]>([]);
 
     return (
       <div className="space-y-4">
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl flex overflow-x-auto relative shadow-xs">
+        <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl flex overflow-x-auto relative shadow-xs">
           {loading && (
             <div className="absolute inset-0 z-20 bg-white/70 dark:bg-slate-900/70 backdrop-blur-[2px] flex items-center justify-center">
-              <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
+              <Loader2 className="w-8 h-8 text-primary animate-spin" />
             </div>
           )}
 
           {/* Time column */}
-          <div className="w-18 shrink-0 border-r border-slate-100 dark:border-slate-800 pt-14 bg-slate-50/50 dark:bg-slate-900/50">
+          <div className="w-18 shrink-0 border-r border-border dark:border-border pt-14 bg-slate-50/50 dark:bg-slate-900/50">
             {hours.map(hour => (
-              <div key={hour} className="h-16 border-b border-slate-100 dark:border-slate-800/80 flex items-center justify-center text-[11px] font-extrabold text-slate-500 dark:text-slate-400 relative">
-                <span className="absolute -top-2.5 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-700 shadow-2xs">{hour}</span>
+              <div key={hour} className="h-16 border-b border-border dark:border-slate-800/80 flex items-center justify-center text-[11px] font-bold text-muted-foreground dark:text-muted-foreground relative">
+                <span className="absolute -top-2.5 bg-muted dark:bg-card px-2 py-0.5 rounded-md border border-border dark:border-border shadow-2xs">{hour}</span>
               </div>
             ))}
           </div>
@@ -622,12 +622,12 @@ const [filieres, setFilieres] = useState<any[]>([]);
               })
 
               return (
-                <div key={formatted} className="flex-1 border-r border-slate-100 dark:border-slate-800 relative last:border-r-0">
+                <div key={formatted} className="flex-1 border-r border-border dark:border-border relative last:border-r-0">
                   <div className={cn(
-                    "h-14 border-b border-slate-100 dark:border-slate-800 flex items-center justify-center font-black text-xs md:text-sm capitalize transition-colors",
-                    isToday ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-black border-b-2 border-b-indigo-500" : "text-slate-800 dark:text-slate-200"
+                    "h-14 border-b border-border dark:border-border flex items-center justify-center font-bold text-xs md:text-sm capitalize transition-colors",
+                    isToday ? "bg-primary/5 dark:bg-indigo-950/60 text-primary dark:text-indigo-300 font-bold border-b-2 border-b-indigo-500" : "text-foreground dark:text-foreground"
                   )}>
-                    {isToday && <span className="w-2 h-2 rounded-full bg-indigo-600 dark:bg-indigo-400 mr-2 animate-pulse" />}
+                    {isToday && <span className="w-2 h-2 rounded-full bg-primary dark:bg-indigo-400 mr-2 animate-pulse" />}
                     {formatted}
                   </div>
 
@@ -655,15 +655,15 @@ const [filieres, setFilieres] = useState<any[]>([]);
                         >
                           <div>
                             <div className="flex items-center justify-between gap-1 mb-1.5 flex-wrap">
-                              <span className={cn("px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider", style.badge)}>
+                              <span className={cn("px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider", style.badge)}>
                                 {style.label} {event.extendedProps?.group ? `· ${event.extendedProps.group}` : ''}
                               </span>
-                              <span className="text-[10px] opacity-95 font-mono font-black bg-black/30 px-2 py-0.5 rounded-full shrink-0">
+                              <span className="text-[10px] opacity-95 font-mono font-bold bg-black/30 px-2 py-0.5 rounded-full shrink-0">
                                 {event.startTime}–{event.endTime}
                               </span>
                             </div>
 
-                            <div className="font-black text-xs md:text-[13px] line-clamp-2 leading-snug tracking-tight">
+                            <div className="font-bold text-xs md:text-[13px] line-clamp-2 leading-snug tracking-tight">
                               {event.title}
                             </div>
                           </div>
@@ -674,7 +674,7 @@ const [filieres, setFilieres] = useState<any[]>([]);
                               <span className="truncate">{event.professor || 'Enseignant non assigné'}</span>
                             </span>
                             {event.room && (
-                              <span className="font-extrabold px-1.5 py-0.5 rounded-md bg-black/30 text-white shrink-0 flex items-center gap-1">
+                              <span className="font-bold px-1.5 py-0.5 rounded-md bg-black/30 text-white shrink-0 flex items-center gap-1">
                                 <MapPin size={10} className="shrink-0 opacity-80" />
                                 <span>{event.room}</span>
                               </span>
@@ -682,8 +682,8 @@ const [filieres, setFilieres] = useState<any[]>([]);
                           </div>
 
                           {event.hasConflict && (
-                            <div className="mt-1 bg-rose-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider flex items-center gap-1 shadow-sm animate-pulse">
-                              <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping"></span>
+                            <div className="mt-1 bg-rose-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider flex items-center gap-1 shadow-sm animate-pulse">
+                              <span className="w-1.5 h-1.5 rounded-full bg-card animate-ping"></span>
                               ⚠️ CONFLIT
                             </div>
                           )}
@@ -701,12 +701,12 @@ const [filieres, setFilieres] = useState<any[]>([]);
   }
 
   const filiereOptions: SelectOption[] = useMemo(() => [
-    { value: '', label: 'Toutes les Filières', badge: 'Global', icon: <Building2 className="w-3.5 h-3.5 text-indigo-500" /> },
+    { value: '', label: 'Toutes les Filières', badge: 'Global', icon: <Building2 className="w-3.5 h-3.5 text-primary" /> },
     ...filieres.map((f: any) => ({
       value: String(f.id),
       label: `${f.code ? f.code + ' — ' : ''}${f.name}`,
       badge: f.code || 'FIL',
-      icon: <Building2 className="w-3.5 h-3.5 text-indigo-500" />
+      icon: <Building2 className="w-3.5 h-3.5 text-primary" />
     }))
   ], [filieres])
 
@@ -721,12 +721,12 @@ const [filieres, setFilieres] = useState<any[]>([]);
   ], [groupes])
 
   const professorOptions: SelectOption[] = useMemo(() => [
-    { value: '', label: 'Tous les professeurs', badge: 'Tous', icon: <User className="w-3.5 h-3.5 text-blue-500" /> },
+    { value: '', label: 'Tous les professeurs', badge: 'Tous', icon: <User className="w-3.5 h-3.5 text-primary" /> },
     ...professors.map((p: any) => ({
       value: String(p.id),
       label: `${p.user?.first_name || ''} ${p.user?.last_name || ''}`.trim() || p.name || `Professeur #${p.id}`,
       badge: 'Prof',
-      icon: <User className="w-3.5 h-3.5 text-blue-500" />
+      icon: <User className="w-3.5 h-3.5 text-primary" />
     }))
   ], [professors])
 
@@ -751,7 +751,7 @@ const [filieres, setFilieres] = useState<any[]>([]);
                   <Sparkles className="w-3 h-3 text-amber-400" /> Emploi du Temps Intelligent · ENCG Fès
                 </span>
               </div>
-              <h1 className="text-2xl md:text-3xl font-black tracking-tight text-white">
+              <h1 className="text-white erp-page-title">
                 Emploi du Temps & Synchronisation
               </h1>
               <p className="text-xs md:text-sm text-blue-200/70 font-medium">
@@ -792,19 +792,19 @@ const [filieres, setFilieres] = useState<any[]>([]);
               </div>
               <div className="space-y-1">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="bg-rose-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
+                  <span className="bg-rose-600 text-white text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
                     Scanner IA Actif
                   </span>
-                  <h3 className="font-black text-base text-slate-900 dark:text-slate-100">
+                  <h3 className="font-bold text-base text-foreground dark:text-foreground">
                     {totalConflictingEventsCount} Séances en Chevauchement Détectées ({conflictClusters.length} Créneaux Surchargés)
                   </h3>
                 </div>
-                <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">
+                <p className="text-xs text-muted-foreground dark:text-muted-foreground font-medium">
                   CM : les 2 groupes ensemble. TD : par groupe. Un professeur ou une salle ne peut pas recevoir 2 créneaux qui se chevauchent.
                 </p>
                 <div className="flex flex-wrap items-center gap-1.5 pt-1">
                   {conflictClusters.map((c, idx) => (
-                    <span key={idx} className="px-2.5 py-1 bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-300 rounded-lg text-xs font-bold">
+                    <span key={idx} className="px-2.5 py-1 bg-card dark:bg-card border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-300 rounded-lg text-xs font-bold">
                       {c.day.toUpperCase()} ({c.time}) : <strong>{c.events.length} cours</strong>
                     </span>
                   ))}
@@ -816,7 +816,7 @@ const [filieres, setFilieres] = useState<any[]>([]);
             <div className="flex flex-wrap items-center gap-2.5 shrink-0">
               <button
                 onClick={() => setShowBatchModal(true)}
-                className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-amber-300 dark:border-amber-700 hover:bg-amber-100 text-amber-950 dark:text-amber-200 text-xs font-bold transition-all cursor-pointer shadow-xs"
+                className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-card dark:bg-card border border-amber-300 dark:border-amber-700 hover:bg-amber-100 text-amber-950 dark:text-amber-200 text-xs font-bold transition-all cursor-pointer shadow-xs"
               >
                 <Send className="w-3.5 h-3.5 text-amber-600" />
                 Déclarer en 1-Clic
@@ -844,12 +844,12 @@ const [filieres, setFilieres] = useState<any[]>([]);
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="bg-emerald-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
+                <span className="bg-emerald-600 text-white text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
                   CSP Zero-Conflit
                 </span>
-                <h3 className="font-black text-sm text-slate-900 dark:text-slate-100">Stratégie performance : 0 conflit dur validé</h3>
+                <h3 className="font-bold text-sm text-foreground dark:text-foreground">Stratégie performance : 0 conflit dur validé</h3>
               </div>
-              <p className="text-xs text-slate-600 dark:text-slate-400 font-medium mt-0.5">
+              <p className="text-xs text-muted-foreground dark:text-muted-foreground font-medium mt-0.5">
                 Un professeur, une salle, un groupe par créneau. Les groupes parallèles (G1 / G2) restent autorisés.
               </p>
             </div>
@@ -860,17 +860,17 @@ const [filieres, setFilieres] = useState<any[]>([]);
       {/* ══════════════════════════════════════════════════════
           FILTERS CARD
       ══════════════════════════════════════════════════════ */}
-      <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 space-y-4 shadow-xs">
-        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-          <h2 className="text-xs font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 flex items-center gap-2">
-            <Filter className="w-3.5 h-3.5 text-indigo-500" />
+      <div className="rounded-2xl border border-border dark:border-border bg-card dark:bg-card p-5 space-y-4 shadow-xs">
+        <div className="flex items-center justify-between border-b border-border dark:border-border pb-3">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-slate-700 dark:text-foreground flex items-center gap-2">
+            <Filter className="w-3.5 h-3.5 text-primary" />
             {!isAdmin ? "Filtres & Vue Enseignant" : "Filtres Globaux de Recherche"}
           </h2>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-end">
           <div>
-            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Filière</label>
+            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Filière</label>
             <CustomSelect
               value={selectedFiliere}
               onChange={(val) => setSelectedFiliere(String(val))}
@@ -880,7 +880,7 @@ const [filieres, setFilieres] = useState<any[]>([]);
             />
           </div>
           <div>
-            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Groupe</label>
+            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Groupe</label>
             <CustomSelect
               value={selectedGroupe}
               onChange={(val) => setSelectedGroupe(String(val))}
@@ -891,10 +891,10 @@ const [filieres, setFilieres] = useState<any[]>([]);
             />
           </div>
           <div>
-            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Professeur</label>
+            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Professeur</label>
             {!isAdmin ? (
-              <div className="px-4 py-2.5 rounded-2xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-500 flex items-center gap-2">
-                <User className="w-3.5 h-3.5 text-indigo-500" />
+              <div className="px-4 py-2.5 rounded-2xl bg-muted dark:bg-slate-800/80 border border-border dark:border-border text-xs font-bold text-muted-foreground flex items-center gap-2">
+                <User className="w-3.5 h-3.5 text-primary" />
                 <span className="truncate">{currentProfName} (Compte Enseignant)</span>
               </div>
             ) : (
@@ -924,20 +924,20 @@ const [filieres, setFilieres] = useState<any[]>([]);
       {/* ══════════════════════════════════════════════════════
           CALENDAR CONTROLS & HEADER
       ══════════════════════════════════════════════════════ */}
-      <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs overflow-hidden">
-        <div className="p-4 md:p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col md:flex-row items-center justify-between gap-4">
+      <div className="rounded-2xl border border-border dark:border-border bg-card dark:bg-card shadow-xs overflow-hidden">
+        <div className="p-4 md:p-5 border-b border-border dark:border-border flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-xl p-1 border border-slate-200 dark:border-slate-700">
+            <div className="flex items-center bg-muted dark:bg-card rounded-xl p-1 border border-border dark:border-border">
               <button
                 onClick={() => setCurrentDate(addWeeks(currentDate, -1))}
-                className="p-1.5 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer rounded-lg hover:bg-white dark:hover:bg-slate-700"
+                className="p-1.5 text-muted-foreground dark:text-foreground hover:text-primary dark:hover:text-indigo-400 transition-colors cursor-pointer rounded-lg hover:bg-card dark:hover:bg-slate-700"
                 title="Semaine précédente"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setCurrentDate(addWeeks(currentDate, 1))}
-                className="p-1.5 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer rounded-lg hover:bg-white dark:hover:bg-slate-700"
+                className="p-1.5 text-muted-foreground dark:text-foreground hover:text-primary dark:hover:text-indigo-400 transition-colors cursor-pointer rounded-lg hover:bg-card dark:hover:bg-slate-700"
                 title="Semaine suivante"
               >
                 <ChevronRight className="w-4 h-4" />
@@ -945,13 +945,13 @@ const [filieres, setFilieres] = useState<any[]>([]);
             </div>
             <button
               onClick={() => setCurrentDate(new Date())}
-              className="px-3.5 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-xl transition-all cursor-pointer border border-slate-200 dark:border-slate-700"
+              className="px-3.5 py-1.5 bg-muted dark:bg-card hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-foreground text-xs font-bold rounded-xl transition-all cursor-pointer border border-border dark:border-border"
             >
               Aujourd'hui
             </button>
           </div>
 
-          <h2 className="text-base md:text-lg font-black text-slate-800 dark:text-slate-100 capitalize">{weekLabel}</h2>
+          <h2 className="text-base md:text-lg font-bold text-foreground dark:text-foreground capitalize">{weekLabel}</h2>
 
           <div className="flex items-center gap-2">
             <button
@@ -959,14 +959,14 @@ const [filieres, setFilieres] = useState<any[]>([]);
               className={cn(
                 "px-3 py-1.5 rounded-xl text-xs font-bold transition-all border cursor-pointer",
                 showSaturday
-                  ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800"
-                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-200"
+                  ? "bg-primary/5 dark:bg-indigo-950/60 text-primary dark:text-indigo-300 border-primary/20 dark:border-primary"
+                  : "bg-muted dark:bg-card text-muted-foreground dark:text-muted-foreground border-border dark:border-border hover:bg-slate-200"
               )}
             >
               {showSaturday ? "📅 Lun–Sam (6J)" : "📅 Lun–Ven (5J)"}
             </button>
 
-            <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
+            <div className="flex bg-muted dark:bg-card p-1 rounded-xl border border-border dark:border-border">
               {(['Semaine', 'Jour', 'Liste'] as const).map(mode => (
                 <button
                   key={mode}
@@ -974,7 +974,7 @@ const [filieres, setFilieres] = useState<any[]>([]);
                   className={cn(
                     "px-4 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer",
                     viewMode === mode
-                      ? "bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-xs"
+                      ? "bg-card dark:bg-slate-700 text-primary dark:text-indigo-400 shadow-xs"
                       : "text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
                   )}
                 >
@@ -993,7 +993,7 @@ const [filieres, setFilieres] = useState<any[]>([]);
       ══════════════════════════════════════════════════════ */}
       {showBatchModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-xl overflow-hidden border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 space-y-6">
+          <div className="bg-card dark:bg-card rounded-2xl shadow-sm w-full max-w-xl overflow-hidden border border-border dark:border-border animate-in zoom-in-95 space-y-6">
 
             <div className="p-6 text-white relative" style={{ background: 'linear-gradient(135deg, #001A4B 0%, #003087 50%, #001A4B 100%)' }}>
               <button
@@ -1002,10 +1002,10 @@ const [filieres, setFilieres] = useState<any[]>([]);
               >
                 <X className="w-4 h-4" />
               </button>
-              <span className="bg-amber-500/20 text-amber-300 border border-amber-400/30 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest inline-flex items-center gap-1.5 mb-2">
+              <span className="bg-amber-500/20 text-amber-300 border border-amber-400/30 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest inline-flex items-center gap-1.5 mb-2">
                 <AlertTriangle className="w-3.5 h-3.5 text-amber-400" /> Déclaration Groupée Automatisée
               </span>
-              <h3 className="font-black text-xl tracking-tight">Signalement Pack de Conflits</h3>
+              <h3 className="font-bold text-xl tracking-tight">Signalement Pack de Conflits</h3>
               <p className="text-xs text-blue-200/80 font-medium mt-1">
                 Génération automatique du rapport récapitulatif pour le Service des Emplois du Temps.
               </p>
@@ -1013,12 +1013,12 @@ const [filieres, setFilieres] = useState<any[]>([]);
 
             <div className="p-6 space-y-4">
               <div className="p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-2xl space-y-2">
-                <span className="text-[10px] font-black uppercase text-amber-900 dark:text-amber-300 tracking-wider">
+                <span className="text-[10px] font-bold uppercase text-amber-900 dark:text-amber-300 tracking-wider">
                   Détail du Pack de Conflits ({totalConflictingEventsCount} Séances)
                 </span>
                 <div className="space-y-1.5 max-h-48 overflow-y-auto">
                   {conflictClusters.map((c, i) => (
-                    <div key={i} className="text-xs font-bold text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-amber-200 dark:border-amber-800">
+                    <div key={i} className="text-xs font-bold text-foreground dark:text-foreground bg-card dark:bg-card p-2.5 rounded-xl border border-amber-200 dark:border-amber-800">
                       <strong>{c.day.toUpperCase()} ({c.time}) :</strong> {c.events.length} cours simultanés
                       <div className="text-[11px] text-slate-400 font-normal mt-0.5">
                         {c.events.map(e => e.title).join(' • ')}
@@ -1028,11 +1028,11 @@ const [filieres, setFilieres] = useState<any[]>([]);
                 </div>
               </div>
 
-              <div className="pt-2 flex justify-end gap-2.5 border-t border-slate-100 dark:border-slate-800">
+              <div className="pt-2 flex justify-end gap-2.5 border-t border-border dark:border-border">
                 <button
                   type="button"
                   onClick={() => setShowBatchModal(false)}
-                  className="px-4 py-2.5 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 text-xs font-bold transition-colors cursor-pointer"
+                  className="px-4 py-2.5 text-muted-foreground hover:text-foreground dark:hover:text-slate-200 text-xs font-bold transition-colors cursor-pointer"
                 >
                   Annuler
                 </button>

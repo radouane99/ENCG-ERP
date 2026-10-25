@@ -121,20 +121,20 @@ export default function ReservationCreatePage() {
   }
 
   return (
-    <div className="space-y-8 animate-in p-6 max-w-[1000px] mx-auto">
+    <div className="space-y-8 animate-in max-w-[1000px] mx-auto">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-2xl font-bold text-[#0f2863] italic">Créer une Réservation de Salle</h1>
+          <h1 className="text-[#0f2863] italic erp-page-title">Créer une Réservation de Salle</h1>
         </div>
-        <Link to="/admin/reservations" className="px-5 py-2.5 bg-white border border-slate-200 text-[#0f2863] font-bold rounded-full hover:bg-slate-50 transition-colors text-xs uppercase tracking-wide shadow-sm">
+        <Link to="/admin/reservations" className="px-5 py-2.5 bg-card border border-border text-[#0f2863] font-bold rounded-full hover:bg-muted/50 transition-colors text-xs uppercase tracking-wide shadow-sm">
           Retour à la liste
         </Link>
       </div>
 
-      <div className="bg-white border border-slate-100 rounded-[2rem] shadow-sm overflow-hidden flex flex-col items-center">
+      <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden flex flex-col items-center">
         {/* Blue Banner */}
-        <div className="bg-[#0f2863] p-8 text-white m-4 rounded-[1.5rem] shadow-md relative overflow-hidden w-[calc(100%-2rem)] text-center">
+        <div className="bg-[#0f2863] p-8 text-white m-4 rounded-2xl shadow-md relative overflow-hidden w-[calc(100%-2rem)] text-center">
           <div className="absolute -right-12 -top-12 w-48 h-48 bg-blue-500/20 rounded-full blur-3xl"></div>
           <h2 className="text-2xl font-bold italic mb-2 relative z-10">Réservation Administrative</h2>
           <p className="text-blue-200 text-xs font-medium relative z-10 mx-auto">
@@ -152,7 +152,7 @@ export default function ReservationCreatePage() {
                 value={professorId}
                 onChange={(e) => setProfessorId(e.target.value)}
                 required
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-5 py-3.5 text-sm font-bold text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none"
+                className="w-full border border-border bg-slate-50/50 px-5 py-3.5 text-sm font-bold text-foreground focus:border-primary focus:ring-1 focus:ring-ring transition-all outline-none rounded-[var(--control-radius)]"
               >
                 {professors.map(prof => (
                   <option key={prof.id} value={prof.user_id}>
@@ -164,7 +164,7 @@ export default function ReservationCreatePage() {
             <div>
               <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Salle Allouée</label>
               <select 
-                className="w-full rounded-2xl border border-blue-500 bg-white px-5 py-3.5 text-sm font-bold text-[#0f2863] shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none"
+                className="w-full border border-primary bg-card px-5 py-3.5 text-sm font-bold text-[#0f2863] shadow-sm focus:border-primary focus:ring-1 focus:ring-ring transition-all outline-none rounded-[var(--control-radius)]"
                 value={roomId}
                 onChange={(e) => setRoomId(e.target.value)}
                 required
@@ -183,7 +183,7 @@ export default function ReservationCreatePage() {
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
                 required
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-5 py-3.5 text-sm font-bold text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none"
+                className="w-full border border-border bg-slate-50/50 px-5 py-3.5 text-sm font-bold text-foreground focus:border-primary focus:ring-1 focus:ring-ring transition-all outline-none rounded-[var(--control-radius)]"
               />
             </div>
             <div>
@@ -191,7 +191,7 @@ export default function ReservationCreatePage() {
               <select 
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-5 py-3.5 text-sm font-bold text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none"
+                className="w-full border border-border bg-slate-50/50 px-5 py-3.5 text-sm font-bold text-foreground focus:border-primary focus:ring-1 focus:ring-ring transition-all outline-none rounded-[var(--control-radius)]"
               >
                 <option value="approved">Approuvé</option>
                 <option value="pending">En attente</option>
@@ -204,7 +204,7 @@ export default function ReservationCreatePage() {
                 value={startTime}
                 onChange={(e) => setStartTime(e.target.value)}
                 required
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-5 py-3.5 text-sm font-bold text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none"
+                className="w-full border border-border bg-slate-50/50 px-5 py-3.5 text-sm font-bold text-foreground focus:border-primary focus:ring-1 focus:ring-ring transition-all outline-none rounded-[var(--control-radius)]"
               />
             </div>
             <div>
@@ -214,7 +214,7 @@ export default function ReservationCreatePage() {
                 value={endTime}
                 onChange={(e) => setEndTime(e.target.value)}
                 required
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-5 py-3.5 text-sm font-bold text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none"
+                className="w-full border border-border bg-slate-50/50 px-5 py-3.5 text-sm font-bold text-foreground focus:border-primary focus:ring-1 focus:ring-ring transition-all outline-none rounded-[var(--control-radius)]"
               />
             </div>
           </div>
@@ -228,8 +228,8 @@ export default function ReservationCreatePage() {
               required
               placeholder="ex : Soutenance de Master, Séance exceptionnelle de rattrapage..."
               className={cn(
-                "w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-5 py-4 text-sm font-bold text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none resize-none",
-                hasConflict && "border-red-300 bg-red-50/30"
+                "w-full border border-border bg-slate-50/50 px-5 py-4 text-sm font-bold text-foreground focus:border-primary focus:ring-1 focus:ring-ring transition-all outline-none resize-none rounded-[var(--control-radius)]",
+                hasConflict && "border-red-300 bg-red-50/30 rounded-[var(--control-radius)]"
               )}
             ></textarea>
           </div>
@@ -263,9 +263,9 @@ export default function ReservationCreatePage() {
           </h4>
           
           {checkingConflict ? (
-            <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6 text-center">
+            <div className="bg-muted/50 border border-border rounded-2xl p-6 text-center">
               <Loader2 className="w-6 h-6 text-slate-400 mx-auto mb-2 animate-spin" />
-              <h5 className="font-bold text-slate-600 mb-1">Vérification de la disponibilité...</h5>
+              <h5 className="font-bold text-muted-foreground mb-1">Vérification de la disponibilité...</h5>
             </div>
           ) : hasConflict ? (
             <div className="bg-red-50 border border-red-100 rounded-2xl p-6 text-center">

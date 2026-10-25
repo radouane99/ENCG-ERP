@@ -11,10 +11,10 @@ export default function LibraryPage() {
   ])
 
   return (
-    <div className="space-y-6 animate-in p-6">
+    <div className="space-y-6 animate-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t('title')}</h1>
+          <h1 className="erp-page-title">{t('title')}</h1>
           <p className="text-muted-foreground text-sm mt-1">{t('subtitle')}</p>
         </div>
       </div>
@@ -23,7 +23,7 @@ export default function LibraryPage() {
         <div className="p-4 border-b bg-muted/20 flex gap-4">
            <div className="relative w-full max-w-sm">
              <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-             <input type="text" placeholder={t('search')} className="w-full ps-9 pr-4 py-2 text-sm border rounded-lg" />
+             <input type="text" placeholder={t('search')} className="w-full ps-9 pr-4 py-2 text-sm border rounded-[var(--control-radius)]" />
            </div>
         </div>
         <table className="w-full text-sm text-left">

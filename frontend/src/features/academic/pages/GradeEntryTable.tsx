@@ -105,7 +105,7 @@ export default function GradeEntryTable() {
           <select
             value={sessionType}
             onChange={(e) => setSessionType(e.target.value as 'NORMALE' | 'RATTRAPAGE')}
-            className="w-[180px] p-2 border rounded"
+            className="w-[180px] p-2 border rounded rounded-[var(--control-radius)]"
           >
             <option value="NORMALE">Session Normale</option>
             <option value="RATTRAPAGE">Session Rattrapage</option>

@@ -42,13 +42,13 @@ export default function QRScannerPage() {
   return (
     <div className="max-w-md mx-auto space-y-6 pt-4">
       <div className="text-center space-y-2">
-        <h1 className="text-2xl font-bold text-foreground">{t('attendance:scanner.title')}</h1>
+        <h1 className="text-foreground erp-page-title">{t('attendance:scanner.title')}</h1>
         <p className="text-white/50 text-sm">
           {t('attendance:scanner.subtitle')}
         </p>
       </div>
 
-      <div className="bg-card border border-white/10 shadow-xl rounded-3xl overflow-hidden relative">
+      <div className="bg-card border border-white/10 shadow-sm rounded-2xl overflow-hidden relative">
         {/* Scanner Viewport */}
         <div className="relative aspect-[4/5] bg-slate-900 flex items-center justify-center overflow-hidden">
           {/* Scanning frame overlay */}
@@ -128,7 +128,7 @@ export default function QRScannerPage() {
               placeholder={t('attendance:scanner.simulation.placeholder')}
               value={manualToken}
               onChange={e => setManualToken(e.target.value)}
-              className="flex-1 bg-background border border-white/10 rounded-xl px-4 text-sm"
+              className="flex-1 bg-background border border-white/10 px-4 text-sm rounded-[var(--control-radius)]"
             />
             <button 
               onClick={() => submitScan(manualToken)}

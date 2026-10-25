@@ -27,7 +27,7 @@ export default function StudentGamification() {
         
         {/* Digital ENCG Card */}
         <div className="md:col-span-1">
-          <div className="w-full aspect-[1.586/1] rounded-[2rem] bg-gradient-to-br from-[#001A4B] via-[#003a8c] to-[#e6007e] p-6 text-white shadow-2xl relative overflow-hidden flex flex-col justify-between group cursor-pointer hover:scale-[1.02] transition-transform">
+          <div className="w-full aspect-[1.586/1] rounded-2xl bg-gradient-to-br from-[#001A4B] via-[#003a8c] to-[#e6007e] p-6 text-white shadow-sm relative overflow-hidden flex flex-col justify-between group cursor-pointer hover:scale-[1.02] transition-transform">
             
             {/* Holographic effect */}
             <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/20 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity transform -translate-x-full group-hover:translate-x-full duration-1000"></div>
@@ -38,14 +38,14 @@ export default function StudentGamification() {
             <div className="flex justify-between items-start relative z-10">
               <div>
                 <img src="/logo-encg.png" alt="ENCG" className="h-8 object-contain mb-2 brightness-0 invert" />
-                <div className="text-[8px] font-black uppercase tracking-widest text-blue-200">CARTE PRIVILÈGE</div>
+                <div className="text-[8px] font-bold uppercase tracking-widest text-blue-200">CARTE PRIVILÈGE</div>
               </div>
               <Zap className="w-6 h-6 text-yellow-400 fill-yellow-400" />
             </div>
 
             <div className="relative z-10">
               <div className="text-sm font-bold text-blue-200 mb-1">Solde Actuel</div>
-              <div className="text-4xl font-black flex items-baseline gap-2">
+              <div className="text-4xl font-bold flex items-baseline gap-2">
                 250 <span className="text-xl font-bold text-yellow-400">ENCG Coins</span>
               </div>
             </div>
@@ -60,17 +60,17 @@ export default function StudentGamification() {
         </div>
 
         {/* Level Progress */}
-        <div className="md:col-span-2 bg-white rounded-[2rem] p-8 shadow-sm border border-white/5 flex flex-col justify-center">
+        <div className="md:col-span-2 bg-card rounded-2xl p-8 shadow-sm border border-white/5 flex flex-col justify-center">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-2xl font-black text-white mb-1 flex items-center gap-2">
+              <h2 className="text-2xl font-bold text-white mb-1 flex items-center gap-2">
                 Niveau 4 <Flame className="w-6 h-6 text-rose-500 fill-rose-500" />
               </h2>
               <p className="text-white/50 text-sm font-medium">Encore 50 Coins pour atteindre le Niveau 5 !</p>
             </div>
             <div className="text-right">
               <div className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-1">RANG</div>
-              <div className="text-xl font-black text-[#003a8c]">Top 15%</div>
+              <div className="text-xl font-bold text-[#003a8c]">Top 15%</div>
             </div>
           </div>
 
@@ -95,12 +95,12 @@ export default function StudentGamification() {
         <div className="space-y-6">
           <div className="flex items-center gap-3 mb-2">
             <Target className="w-6 h-6 text-[#003a8c]" />
-            <h3 className="text-xl font-black text-white">Missions Actuelles</h3>
+            <h3 className="text-xl font-bold text-white">Missions Actuelles</h3>
           </div>
           
           <div className="space-y-4">
             {quests.map((quest, idx) => (
-              <div key={idx} className={cn("bg-white rounded-2xl p-6 border transition-all", quest.completed ? "border-emerald-200 shadow-sm" : "border-white/5 shadow-sm")}>
+              <div key={idx} className={cn("bg-card rounded-2xl p-6 border transition-all", quest.completed ? "border-emerald-200 shadow-sm" : "border-white/5 shadow-sm")}>
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center gap-3">
                     {quest.completed ? (
@@ -113,7 +113,7 @@ export default function StudentGamification() {
                       <p className="text-xs text-white/50 font-medium">{quest.desc}</p>
                     </div>
                   </div>
-                  <div className="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-lg text-xs font-black flex items-center gap-1 border border-yellow-200">
+                  <div className="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1 border border-yellow-200">
                     +{quest.points} <Zap className="w-3 h-3 fill-yellow-700" />
                   </div>
                 </div>
@@ -133,7 +133,7 @@ export default function StudentGamification() {
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-3">
               <Gift className="w-6 h-6 text-[#e6007e]" />
-              <h3 className="text-xl font-black text-white">Boutique ENCG</h3>
+              <h3 className="text-xl font-bold text-white">Boutique ENCG</h3>
             </div>
             <button className="text-[#003a8c] text-sm font-bold hover:underline">Voir tout</button>
           </div>
@@ -142,13 +142,13 @@ export default function StudentGamification() {
             {rewards.map((reward, idx) => (
               <div key={idx} className={cn(
                 "rounded-2xl p-6 border flex flex-col items-center justify-center text-center transition-all",
-                reward.available ? "bg-white border-blue-100 hover:shadow-md hover:border-blue-300 cursor-pointer" : "bg-white/[0.02] border-white/5 opacity-70 grayscale"
+                reward.available ? "bg-card border-primary/20 hover:shadow-md hover:border-primary/20 cursor-pointer" : "bg-white/[0.02] border-white/5 opacity-70 grayscale"
               )}>
                 <div className="text-4xl mb-4">{reward.icon}</div>
                 <h4 className="font-bold text-white text-sm mb-2">{reward.title}</h4>
                 <div className="mt-auto">
                   {reward.available ? (
-                    <span className="bg-yellow-100 text-yellow-700 px-3 py-1.5 rounded-lg text-xs font-black flex items-center justify-center gap-1 border border-yellow-200">
+                    <span className="bg-yellow-100 text-yellow-700 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 border border-yellow-200">
                       {reward.cost} Coins
                     </span>
                   ) : (

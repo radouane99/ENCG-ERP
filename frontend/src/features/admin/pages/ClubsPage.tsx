@@ -135,22 +135,22 @@ export default function AdminClubsPage() {
   ]
 
   return (
-    <div className="space-y-8 animate-in relative p-4 md:p-8 max-w-[1500px] mx-auto font-sans pb-24">
+    <div className="space-y-8 animate-in relative max-w-[1500px] mx-auto font-sans pb-24">
 
       {/* Deep Navy Hero Banner */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] p-8 md:p-10 rounded-[2.5rem] shadow-2xl text-white border border-blue-800/40 space-y-6">
+      <div className="relative overflow-hidden p-8 md:p-10 text-white border border-blue-800/40 space-y-6 erp-page-banner">
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
 
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="flex items-center gap-6">
-            <div className="w-16 h-16 md:w-20 md:h-20 rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center shadow-2xl shrink-0">
+            <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center shadow-sm shrink-0">
               <Tent className="w-8 h-8 md:w-10 md:h-10 text-amber-400" />
             </div>
             <div>
-              <div className="inline-flex items-center gap-2 bg-blue-500/20 text-blue-200 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-2 border border-blue-400/30">
+              <div className="inline-flex items-center gap-2 bg-blue-500/20 text-blue-200 px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mb-2 border border-blue-400/30">
                 <Sparkles className="w-4 h-4 text-amber-400" /> Vie Etudiante & Associations — ENCG Fes
               </div>
-              <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight leading-tight">
+              <h1 className="text-white leading-tight erp-page-title">
                 Annuaire des Clubs & BDE
               </h1>
               <p className="text-blue-100/90 text-xs md:text-sm font-medium mt-1 max-w-2xl">
@@ -162,7 +162,7 @@ export default function AdminClubsPage() {
           <div className="flex items-center gap-3 shrink-0">
             <button
               onClick={() => setShowCalendarModal(true)}
-              className="flex items-center gap-2 px-5 py-2.5 bg-white/10 hover:bg-white/20 text-white font-black rounded-2xl transition-all text-xs border border-white/20 cursor-pointer"
+              className="flex items-center gap-2 px-5 py-2.5 bg-white/10 hover:bg-white/20 text-white font-bold rounded-2xl transition-all text-xs border border-white/20 cursor-pointer"
             >
               <Calendar className="w-4 h-4 text-amber-300" /> Calendrier Inter-Clubs
             </button>
@@ -172,30 +172,30 @@ export default function AdminClubsPage() {
         {/* KPI Cards */}
         <div className="relative z-10 grid grid-cols-2 md:grid-cols-4 gap-4 pt-6 border-t border-white/10">
           <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15">
-            <span className="text-[10px] font-black uppercase tracking-wider text-blue-200 block">TOTAL CLUBS</span>
-            <span className="text-2xl font-black text-white font-mono mt-1 block">{displayedList.length} Clubs</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-blue-200 block">TOTAL CLUBS</span>
+            <span className="text-2xl font-bold text-white font-mono mt-1 block">{displayedList.length} Clubs</span>
           </div>
           <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15">
-            <span className="text-[10px] font-black uppercase tracking-wider text-emerald-300 block">CLUBS AGRÉÉS</span>
-            <span className="text-2xl font-black text-emerald-400 font-mono mt-1 block">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-300 block">CLUBS AGRÉÉS</span>
+            <span className="text-2xl font-bold text-emerald-400 font-mono mt-1 block">
               {displayedList.filter((c: any) => isClubActive(c)).length} Actifs
             </span>
           </div>
           <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15">
-            <span className="text-[10px] font-black uppercase tracking-wider text-amber-300 block">EN ATTENTE D'AGRÉMENT</span>
-            <span className="text-2xl font-black text-amber-300 font-mono mt-1 block">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-300 block">EN ATTENTE D'AGRÉMENT</span>
+            <span className="text-2xl font-bold text-amber-300 font-mono mt-1 block">
               {displayedList.filter((c: any) => !isClubActive(c)).length} Dossiers
             </span>
           </div>
           <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15">
-            <span className="text-[10px] font-black uppercase tracking-wider text-purple-300 block">BUDGET ALLOUÉ TOTAL</span>
-            <span className="text-2xl font-black text-purple-300 font-mono mt-1 block">55,000 DH</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-purple-300 block">BUDGET ALLOUÉ TOTAL</span>
+            <span className="text-2xl font-bold text-purple-300 font-mono mt-1 block">55,000 DH</span>
           </div>
         </div>
       </div>
 
       {/* Search & Filter Bar */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-[2rem] shadow-sm p-4 flex flex-col sm:flex-row gap-4 items-center justify-between">
+      <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl shadow-sm p-4 flex flex-col sm:flex-row gap-4 items-center justify-between">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
@@ -203,7 +203,7 @@ export default function AdminClubsPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Rechercher par nom de club ou president..."
-            className="w-full pl-11 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-bold focus:ring-4 focus:ring-indigo-500/15 outline-none transition-all"
+            className="w-full pl-11 pr-4 py-2.5 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-bold focus:ring-4 focus:ring-indigo-500/15 outline-none transition-all rounded-[var(--control-radius)]"
           />
         </div>
         <div className="flex items-center gap-2">
@@ -212,8 +212,8 @@ export default function AdminClubsPage() {
               key={st}
               onClick={() => setStatusFilter(st)}
               className={cn(
-                "px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer",
-                statusFilter === st ? "bg-[#0f2863] text-white shadow-md" : "bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200"
+                "px-4 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer",
+                statusFilter === st ? "bg-[#0f2863] text-white shadow-md" : "bg-muted dark:bg-card text-muted-foreground hover:bg-slate-200"
               )}
             >
               {st === 'all' ? 'Tous' : st === 'active' ? 'Agréés' : 'En Attente'}
@@ -226,7 +226,7 @@ export default function AdminClubsPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {isLoading ? (
           <div className="col-span-full flex justify-center py-16">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
           </div>
         ) : filteredList.length === 0 ? (
           <div className="col-span-full py-16 text-center space-y-2">
@@ -239,17 +239,17 @@ export default function AdminClubsPage() {
           const membersCount = club.members_count ?? club.members?.length ?? 30
 
           return (
-            <div key={club.id} className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-[2.5rem] p-6 shadow-sm hover:shadow-2xl transition-all flex flex-col justify-between space-y-5">
+            <div key={club.id} className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl p-6 shadow-sm hover:shadow-2xl transition-all flex flex-col justify-between space-y-5">
 
               {/* Club Header */}
               <div className="flex justify-between items-start">
                 <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#0f2863] to-blue-600 flex items-center justify-center text-amber-300 font-black text-2xl shadow-md shrink-0">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#0f2863] to-blue-600 flex items-center justify-center text-amber-300 font-bold text-2xl shadow-md shrink-0">
                     {club.name.charAt(0)}
                   </div>
                   <div>
-                    <h3 className="font-black text-base text-slate-900 dark:text-white leading-tight">{club.name}</h3>
-                    <p className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 mt-0.5">
+                    <h3 className="font-bold text-base text-foreground dark:text-white leading-tight">{club.name}</h3>
+                    <p className="text-[10px] font-bold text-primary dark:text-indigo-400 mt-0.5">
                       Pdt : {president}
                     </p>
                     {club.category && (
@@ -258,53 +258,53 @@ export default function AdminClubsPage() {
                   </div>
                 </div>
                 <span className={cn(
-                  "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border shrink-0",
+                  "px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border shrink-0",
                   active ? "bg-emerald-50 text-emerald-600 border-emerald-300" : "bg-amber-50 text-amber-600 border-amber-300"
                 )}>
                   {active ? '✅ Agréé' : '⏳ Attente'}
                 </span>
               </div>
 
-              <p className="text-xs font-medium text-slate-500 dark:text-slate-400 line-clamp-2">
+              <p className="text-xs font-medium text-muted-foreground dark:text-muted-foreground line-clamp-2">
                 {club.description}
               </p>
 
               {/* KPI Mini Row */}
               <div className="grid grid-cols-3 gap-2 text-center">
-                <div className="bg-indigo-50 dark:bg-indigo-950/60 rounded-2xl p-2.5 border border-indigo-100 dark:border-indigo-900/60">
-                  <p className="text-[10px] font-black text-indigo-400 uppercase">Membres</p>
-                  <p className="text-base font-black text-indigo-600 font-mono">{membersCount}</p>
+                <div className="bg-primary/5 dark:bg-indigo-950/60 rounded-2xl p-2.5 border border-primary/20 dark:border-indigo-900/60">
+                  <p className="text-[10px] font-bold text-indigo-400 uppercase">Membres</p>
+                  <p className="text-base font-bold text-primary font-mono">{membersCount}</p>
                 </div>
                 <div className="bg-amber-50 dark:bg-amber-950/60 rounded-2xl p-2.5 border border-amber-100 dark:border-amber-900/60">
-                  <p className="text-[10px] font-black text-amber-400 uppercase">Événements</p>
-                  <p className="text-base font-black text-amber-600 font-mono">{club.events ?? club.events_count ?? 0}</p>
+                  <p className="text-[10px] font-bold text-amber-400 uppercase">Événements</p>
+                  <p className="text-base font-bold text-amber-600 font-mono">{club.events ?? club.events_count ?? 0}</p>
                 </div>
                 <div className="bg-emerald-50 dark:bg-emerald-950/60 rounded-2xl p-2.5 border border-emerald-100 dark:border-emerald-900/60">
-                  <p className="text-[10px] font-black text-emerald-400 uppercase">Budget</p>
-                  <p className="text-sm font-black text-emerald-600">{club.budget || '15K'} DH</p>
+                  <p className="text-[10px] font-bold text-emerald-400 uppercase">Budget</p>
+                  <p className="text-sm font-bold text-emerald-600">{club.budget || '15K'} DH</p>
                 </div>
               </div>
 
               {/* Actions */}
-              <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-2">
+              <div className="pt-4 border-t border-border dark:border-border space-y-2">
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => handlePrintAgrement(club)}
                     title="Imprimer ou Aperçu de l'Attestation Officielle"
-                    className="flex-1 py-2 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 text-blue-600 dark:text-blue-400 font-black text-xs rounded-xl transition-all border border-blue-200 cursor-pointer flex items-center justify-center gap-1 shadow-sm"
+                    className="flex-1 py-2 bg-primary/5 dark:bg-blue-950/60 hover:bg-primary/10 text-primary dark:text-blue-400 font-bold text-xs rounded-xl transition-all border border-primary/20 cursor-pointer flex items-center justify-center gap-1 shadow-sm"
                   >
                     <ShieldCheck className="w-3.5 h-3.5" /> Agrément PDF
                   </button>
                   <button
                     onClick={() => handleDownloadAgrementPdf(club)}
                     title="Télécharger le fichier PDF certifié"
-                    className="p-2 bg-slate-100 dark:bg-slate-800 hover:bg-blue-600 hover:text-white text-slate-700 dark:text-slate-300 rounded-xl transition-all border border-slate-200 dark:border-slate-700 cursor-pointer"
+                    className="p-2 bg-muted dark:bg-card hover:bg-primary hover:text-white text-slate-700 dark:text-foreground rounded-xl transition-all border border-border dark:border-border cursor-pointer"
                   >
                     <Download className="w-3.5 h-3.5" />
                   </button>
                   <button
                     onClick={() => handlePrintRapportImpact(club)}
-                    className="flex-1 py-2 bg-purple-50 dark:bg-purple-950/60 hover:bg-purple-100 text-purple-600 dark:text-purple-400 font-black text-xs rounded-xl transition-all border border-purple-200 cursor-pointer flex items-center justify-center gap-1 shadow-sm"
+                    className="flex-1 py-2 bg-purple-50 dark:bg-purple-950/60 hover:bg-purple-100 text-purple-600 dark:text-purple-400 font-bold text-xs rounded-xl transition-all border border-purple-200 cursor-pointer flex items-center justify-center gap-1 shadow-sm"
                   >
                     <BarChart2 className="w-3.5 h-3.5" /> Rapport Impact
                   </button>
@@ -312,14 +312,14 @@ export default function AdminClubsPage() {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setShowBudgetModal(club)}
-                    className="flex-1 py-2 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 text-emerald-600 dark:text-emerald-400 font-black text-xs rounded-xl transition-all border border-emerald-200 cursor-pointer flex items-center justify-center gap-1"
+                    className="flex-1 py-2 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 text-emerald-600 dark:text-emerald-400 font-bold text-xs rounded-xl transition-all border border-emerald-200 cursor-pointer flex items-center justify-center gap-1"
                   >
                     <DollarSign className="w-3.5 h-3.5" /> Débloquer Budget
                   </button>
                   {!active && (
                     <button
                       onClick={() => updateStatusMutation.mutate({ id: club.id, is_active: true })}
-                      className="py-2 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs rounded-xl shadow-md cursor-pointer flex items-center gap-1"
+                      className="py-2 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md cursor-pointer flex items-center gap-1"
                     >
                       <Check className="w-3.5 h-3.5" /> Approuver
                     </button>
@@ -334,11 +334,11 @@ export default function AdminClubsPage() {
       {/* Modal Calendrier Inter-Clubs */}
       {showCalendarModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] w-full max-w-lg shadow-2xl overflow-hidden">
+          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl w-full max-w-lg shadow-sm overflow-hidden">
             <div className="p-6 bg-gradient-to-r from-[#0f2863] to-blue-900 text-white flex items-center justify-between">
               <div>
-                <span className="text-[10px] font-black uppercase tracking-widest text-blue-200">Détecteur Anti-Collision</span>
-                <h2 className="text-lg font-black">Calendrier Consolidé Inter-Clubs</h2>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-blue-200">Détecteur Anti-Collision</span>
+                <h2 className="text-lg font-bold">Calendrier Consolidé Inter-Clubs</h2>
               </div>
               <button onClick={() => setShowCalendarModal(false)} className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 cursor-pointer"><X className="w-4 h-4" /></button>
             </div>
@@ -348,16 +348,16 @@ export default function AdminClubsPage() {
               </div>
               <div className="space-y-3">
                 {calendarEvents.map((ev, idx) => (
-                  <div key={idx} className="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-center gap-4">
+                  <div key={idx} className="p-4 bg-muted/50 dark:bg-card rounded-2xl border border-border dark:border-border flex items-center gap-4">
                     <div className={cn("w-10 h-10 rounded-2xl flex items-center justify-center text-white shrink-0 shadow-md", ev.color)}>
                       <Calendar className="w-5 h-5" />
                     </div>
                     <div className="flex-1">
-                      <p className="font-black text-xs text-slate-900 dark:text-white">{ev.event}</p>
-                      <p className="text-[10px] font-bold text-indigo-600 mt-0.5">{ev.club}</p>
+                      <p className="font-bold text-xs text-foreground dark:text-white">{ev.event}</p>
+                      <p className="text-[10px] font-bold text-primary mt-0.5">{ev.club}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-[10px] font-black text-slate-800 dark:text-slate-200">{ev.date}</p>
+                      <p className="text-[10px] font-bold text-foreground dark:text-foreground">{ev.date}</p>
                       <p className="text-[10px] font-bold text-slate-400">{ev.room}</p>
                     </div>
                   </div>
@@ -371,33 +371,33 @@ export default function AdminClubsPage() {
       {/* Modal Déblocage Budget */}
       {showBudgetModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] w-full max-w-md shadow-2xl overflow-hidden">
+          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl w-full max-w-md shadow-sm overflow-hidden">
             <div className="p-6 bg-gradient-to-r from-[#0f2863] to-blue-900 text-white flex items-center justify-between">
               <div>
-                <span className="text-[10px] font-black uppercase tracking-widest text-blue-200">Guichet de Financement Associatif</span>
-                <h2 className="text-base font-black">Déblocage — {showBudgetModal.name}</h2>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-blue-200">Guichet de Financement Associatif</span>
+                <h2 className="text-base font-bold">Déblocage — {showBudgetModal.name}</h2>
               </div>
               <button onClick={() => setShowBudgetModal(null)} className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 cursor-pointer"><X className="w-4 h-4" /></button>
             </div>
             <form onSubmit={handleSubmitBudget} className="p-6 space-y-4">
               <div>
-                <label className="block text-xs font-black uppercase text-slate-400 tracking-wider mb-1.5">Montant de la Subvention (DH) *</label>
+                <label className="block text-xs font-bold uppercase text-slate-400 tracking-wider mb-1.5">Montant de la Subvention (DH) *</label>
                 <div className="relative">
                   <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <input required type="number" value={budgetAmount} onChange={(e) => setBudgetAmount(e.target.value)}
                     placeholder="Ex: 5000"
-                    className="w-full pl-11 pr-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50 dark:bg-slate-800 text-xs font-bold focus:ring-4 focus:ring-indigo-500/15 outline-none" />
+                    className="w-full pl-11 pr-4 py-2.5 border border-border dark:border-border bg-muted/50 dark:bg-card text-xs font-bold focus:ring-4 focus:ring-indigo-500/15 outline-none rounded-[var(--control-radius)]" />
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-black uppercase text-slate-400 tracking-wider mb-1.5">Motif & Justification *</label>
+                <label className="block text-xs font-bold uppercase text-slate-400 tracking-wider mb-1.5">Motif & Justification *</label>
                 <textarea required rows={3} value={budgetReason} onChange={(e) => setBudgetReason(e.target.value)}
                   placeholder="Ex: Organisation de la Semaine de l'Entrepreneuriat Social 2026..."
-                  className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50 dark:bg-slate-800 text-xs font-bold focus:ring-4 focus:ring-indigo-500/15 outline-none resize-none" />
+                  className="w-full px-4 py-2.5 border border-border dark:border-border bg-muted/50 dark:bg-card text-xs font-bold focus:ring-4 focus:ring-indigo-500/15 outline-none resize-none rounded-[var(--control-radius)]" />
               </div>
-              <div className="flex justify-end gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
-                <button type="button" onClick={() => setShowBudgetModal(null)} className="px-5 py-2.5 text-xs font-black text-slate-500 hover:bg-slate-100 rounded-xl cursor-pointer">ANNULER</button>
-                <button type="submit" className="px-6 py-2.5 text-xs font-black bg-emerald-600 text-white hover:bg-emerald-700 rounded-xl shadow-md cursor-pointer flex items-center gap-1.5">
+              <div className="flex justify-end gap-3 pt-2 border-t border-border dark:border-border">
+                <button type="button" onClick={() => setShowBudgetModal(null)} className="px-5 py-2.5 text-xs font-bold text-muted-foreground hover:bg-muted rounded-xl cursor-pointer">ANNULER</button>
+                <button type="submit" className="px-6 py-2.5 text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 rounded-xl shadow-md cursor-pointer flex items-center gap-1.5">
                   <Send className="w-3.5 h-3.5" /> SOUMETTRE À LA DAF
                 </button>
               </div>

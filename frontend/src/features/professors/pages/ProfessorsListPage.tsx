@@ -140,8 +140,8 @@ function CustomSelect({ label, icon: Icon, value, onChange, options, placeholder
   return (
     <div ref={ref} className={cn("relative space-y-1 w-full", open ? "z-[100]" : "z-10")}>
       {label && (
-        <label className="flex items-center gap-1.5 text-[11px] font-bold text-slate-700 dark:text-slate-300">
-          {Icon && <Icon className="w-3.5 h-3.5 text-indigo-500" />}
+        <label className="flex items-center gap-1.5 text-[11px] font-bold text-slate-700 dark:text-foreground">
+          {Icon && <Icon className="w-3.5 h-3.5 text-primary" />}
           {label}
         </label>
       )}
@@ -150,27 +150,27 @@ function CustomSelect({ label, icon: Icon, value, onChange, options, placeholder
         disabled={disabled}
         onClick={() => setOpen(!open)}
         className={cn(
-          "w-full px-3.5 py-2.5 bg-white dark:bg-slate-800/90 border rounded-xl text-xs font-bold flex items-center justify-between transition-all cursor-pointer shadow-xs text-left",
+          "w-full px-3.5 py-2.5 bg-card dark:bg-slate-800/90 border rounded-xl text-xs font-bold flex items-center justify-between transition-all cursor-pointer shadow-xs text-left",
           open 
-            ? "border-indigo-500 ring-4 ring-indigo-500/15 text-indigo-900 dark:text-indigo-200" 
-            : "border-slate-200 dark:border-slate-700 hover:border-indigo-400 dark:hover:border-indigo-500 text-slate-800 dark:text-slate-100",
+            ? "border-primary ring-4 ring-indigo-500/15 text-primary dark:text-indigo-200"
+            : "border-border dark:border-border hover:border-indigo-400 dark:hover:border-primary text-foreground dark:text-foreground",
           disabled && "opacity-40 cursor-not-allowed"
         )}
       >
         <span className={cn("truncate font-semibold", !selectedOption && "text-slate-400 font-normal")}>
           {selectedOption ? selectedOption.label : placeholder}
         </span>
-        <ChevronDown className={cn("w-3.5 h-3.5 text-slate-400 transition-transform duration-200 shrink-0 ml-1.5", open && "rotate-180 text-indigo-600")} />
+        <ChevronDown className={cn("w-3.5 h-3.5 text-slate-400 transition-transform duration-200 shrink-0 ml-1.5", open && "rotate-180 text-primary")} />
       </button>
 
       {open && !disabled && (
-        <div className="absolute z-[9999] top-full left-0 mt-1.5 w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 rounded-xl shadow-2xl py-1.5 max-h-60 overflow-y-auto animate-in fade-in zoom-in-95 duration-150 backdrop-blur-2xl">
+        <div className="absolute z-[9999] top-full left-0 mt-1.5 w-full bg-card dark:bg-card border border-border dark:border-slate-700/80 rounded-xl shadow-sm py-1.5 max-h-60 overflow-y-auto animate-in fade-in zoom-in-95 duration-150 backdrop-blur-2xl">
           <div
             onClick={() => {
               onChange('')
               setOpen(false)
             }}
-            className="px-3.5 py-2 text-xs font-medium text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer flex items-center justify-between"
+            className="px-3.5 py-2 text-xs font-medium text-slate-400 hover:bg-muted/50 dark:hover:bg-slate-800 cursor-pointer flex items-center justify-between"
           >
             <span>{placeholder}</span>
           </div>
@@ -186,19 +186,19 @@ function CustomSelect({ label, icon: Icon, value, onChange, options, placeholder
                 className={cn(
                   "px-3.5 py-2 text-xs font-semibold cursor-pointer flex items-center justify-between transition-colors group",
                   isSelected
-                    ? "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400"
-                    : "text-slate-700 dark:text-slate-200 hover:bg-indigo-50/50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-300"
+                    ? "bg-primary/5 dark:bg-indigo-900/30 text-primary dark:text-indigo-400"
+                    : "text-slate-700 dark:text-foreground hover:bg-indigo-50/50 dark:hover:bg-slate-800 hover:text-primary dark:hover:text-indigo-300"
                 )}
               >
                 <div className="flex items-center gap-2 truncate">
                   <span className="truncate">{opt.label}</span>
                   {opt.badge && (
-                    <span className="px-1.5 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+                    <span className="px-1.5 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider bg-muted dark:bg-slate-700 text-muted-foreground dark:text-foreground">
                       {opt.badge}
                     </span>
                   )}
                 </div>
-                {isSelected && <Check className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />}
+                {isSelected && <Check className="w-3.5 h-3.5 text-primary dark:text-indigo-400 shrink-0" />}
               </div>
             )
           })}
@@ -403,7 +403,7 @@ export default function ProfessorsListPage() {
       {/* ══════════════════════════════════════════════════════════════
           1. EXECUTIVE HERO BANNER & KPI STRIP
       ══════════════════════════════════════════════════════════════ */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 border border-indigo-900/30 p-6 sm:p-8 text-white shadow-xl">
+      <div className="relative overflow-hidden border border-indigo-900/30 p-6 sm:p-8 text-white erp-page-banner">
         {/* Ambient background orbs */}
         <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
         <div className="absolute bottom-0 left-1/4 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -411,11 +411,11 @@ export default function ProfessorsListPage() {
         {/* Top Header Row */}
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-widest bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">
               <Sparkles className="w-3 h-3 text-amber-400" />
               <span>ANNUAIRE OFFICIEL DU CORPS ENSEIGNANT • ENCG FÈS</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-white">
+            <h1 className="text-white erp-page-title">
               Corps Professoral & Enseignants
             </h1>
             <p className="text-xs sm:text-sm text-slate-300/90 font-medium max-w-2xl">
@@ -447,37 +447,37 @@ export default function ProfessorsListPage() {
           
           <div className="p-4 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 hover:border-white/20 transition-all">
             <div className="flex items-center justify-between text-indigo-300">
-              <span className="text-[11px] font-extrabold uppercase tracking-wider">Effectif Global</span>
+              <span className="text-[11px] font-bold uppercase tracking-wider">Effectif Global</span>
               <Users className="w-4 h-4 text-indigo-400" />
             </div>
-            <div className="text-2xl sm:text-3xl font-black text-white mt-1">{professors.length}</div>
+            <div className="text-2xl sm:text-3xl font-bold text-white mt-1">{professors.length}</div>
             <div className="text-[11px] text-slate-400 mt-0.5">Enseignants enregistrés</div>
           </div>
 
           <div className="p-4 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 hover:border-emerald-400/30 transition-all">
             <div className="flex items-center justify-between text-emerald-300">
-              <span className="text-[11px] font-extrabold uppercase tracking-wider">Titulaires d'État</span>
+              <span className="text-[11px] font-bold uppercase tracking-wider">Titulaires d'État</span>
               <Award className="w-4 h-4 text-emerald-400" />
             </div>
-            <div className="text-2xl sm:text-3xl font-black text-emerald-400 mt-1">{permanentCount}</div>
+            <div className="text-2xl sm:text-3xl font-bold text-emerald-400 mt-1">{permanentCount}</div>
             <div className="text-[11px] text-emerald-300/70 mt-0.5">Permanents (PES / PH / PA)</div>
           </div>
 
           <div className="p-4 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 hover:border-purple-400/30 transition-all">
             <div className="flex items-center justify-between text-purple-300">
-              <span className="text-[11px] font-extrabold uppercase tracking-wider">Vacataires & CDD</span>
+              <span className="text-[11px] font-bold uppercase tracking-wider">Vacataires & CDD</span>
               <Briefcase className="w-4 h-4 text-purple-400" />
             </div>
-            <div className="text-2xl sm:text-3xl font-black text-purple-300 mt-1">{vacataireCount + contractualCount}</div>
+            <div className="text-2xl sm:text-3xl font-bold text-purple-300 mt-1">{vacataireCount + contractualCount}</div>
             <div className="text-[11px] text-purple-300/70 mt-0.5">Sous contrat CGI Art. 73</div>
           </div>
 
           <div className="p-4 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 hover:border-teal-400/30 transition-all">
             <div className="flex items-center justify-between text-teal-300">
-              <span className="text-[11px] font-extrabold uppercase tracking-wider">Actifs & Synchronisés</span>
+              <span className="text-[11px] font-bold uppercase tracking-wider">Actifs & Synchronisés</span>
               <ShieldCheck className="w-4 h-4 text-teal-400" />
             </div>
-            <div className="text-2xl sm:text-3xl font-black text-teal-300 mt-1">{activeCount}</div>
+            <div className="text-2xl sm:text-3xl font-bold text-teal-300 mt-1">{activeCount}</div>
             <div className="text-[11px] text-teal-300/70 mt-0.5">Accès portail validé</div>
           </div>
 
@@ -494,14 +494,14 @@ export default function ProfessorsListPage() {
             "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 border",
             activeDeptTab === 'all'
               ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-transparent shadow-sm"
-              : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-indigo-400"
+              : "bg-card dark:bg-card text-muted-foreground dark:text-foreground border-border dark:border-border hover:border-indigo-400"
           )}
         >
           <Building2 className="w-3.5 h-3.5" />
           <span>Tous les départements</span>
           <span className={cn(
-            "px-1.5 py-0.2 rounded-full text-[10px] font-black",
-            activeDeptTab === 'all' ? "bg-white/20 dark:bg-black/20" : "bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
+            "px-1.5 py-0.2 rounded-full text-[10px] font-bold",
+            activeDeptTab === 'all' ? "bg-white/20 dark:bg-black/20" : "bg-muted dark:bg-slate-700 text-muted-foreground dark:text-foreground"
           )}>
             {professors.length}
           </span>
@@ -521,15 +521,15 @@ export default function ProfessorsListPage() {
               className={cn(
                 "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 border",
                 isSelected
-                  ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
-                  : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-indigo-400"
+                  ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                  : "bg-card dark:bg-card text-muted-foreground dark:text-foreground border-border dark:border-border hover:border-indigo-400"
               )}
             >
-              <span className={cn("w-2 h-2 rounded-full shrink-0", isSelected ? "bg-white" : theme.dot)} />
+              <span className={cn("w-2 h-2 rounded-full shrink-0", isSelected ? "bg-card" : theme.dot)} />
               <span>{d.name}</span>
               <span className={cn(
-                "px-1.5 py-0.2 rounded-full text-[10px] font-black",
-                isSelected ? "bg-white/20" : "bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
+                "px-1.5 py-0.2 rounded-full text-[10px] font-bold",
+                isSelected ? "bg-white/20" : "bg-muted dark:bg-slate-700 text-muted-foreground dark:text-foreground"
               )}>
                 {count}
               </span>
@@ -541,7 +541,7 @@ export default function ProfessorsListPage() {
       {/* ══════════════════════════════════════════════════════════════
           3. SEARCH, ADVANCED FILTERS & VIEW TOGGLE
       ══════════════════════════════════════════════════════════════ */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs p-3.5 sm:p-4 space-y-3">
+      <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl shadow-xs p-3.5 sm:p-4 space-y-3">
         <div className="flex flex-col lg:flex-row gap-3 items-center justify-between">
           
           {/* Search Bar */}
@@ -552,12 +552,12 @@ export default function ProfessorsListPage() {
               placeholder="Rechercher par nom (FR / AR), email, matricule, spécialité..." 
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full pl-10 pr-9 py-2 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-slate-400"
+              className="w-full pl-10 pr-9 py-2 bg-muted/50 dark:bg-slate-800/80 border border-border dark:border-border text-xs font-semibold text-foreground dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-primary transition-all placeholder:text-slate-400 rounded-[var(--control-radius)]"
             />
             {search && (
               <button 
                 onClick={() => setSearch('')} 
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded-full"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-muted-foreground p-0.5 rounded-full"
                 title="Effacer la recherche"
               >
                 <X className="w-3.5 h-3.5" />
@@ -583,15 +583,15 @@ export default function ProfessorsListPage() {
             </div>
 
             {/* View Mode Toggle */}
-            <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700 shrink-0">
+            <div className="flex items-center gap-1 bg-muted dark:bg-card p-1 rounded-xl border border-border dark:border-border shrink-0">
               <button
                 onClick={() => setViewMode('table')}
                 title="Vue Tableau Liste"
                 className={cn(
                   "p-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer",
                   viewMode === 'table'
-                    ? "bg-white dark:bg-slate-700 text-indigo-600 dark:text-white shadow-xs"
-                    : "text-slate-500 hover:text-slate-800 dark:hover:text-white"
+                    ? "bg-card dark:bg-slate-700 text-primary dark:text-white shadow-xs"
+                    : "text-muted-foreground hover:text-foreground dark:hover:text-white"
                 )}
               >
                 <TableIcon className="w-3.5 h-3.5" />
@@ -603,8 +603,8 @@ export default function ProfessorsListPage() {
                 className={cn(
                   "p-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer",
                   viewMode === 'grid'
-                    ? "bg-white dark:bg-slate-700 text-indigo-600 dark:text-white shadow-xs"
-                    : "text-slate-500 hover:text-slate-800 dark:hover:text-white"
+                    ? "bg-card dark:bg-slate-700 text-primary dark:text-white shadow-xs"
+                    : "text-muted-foreground hover:text-foreground dark:hover:text-white"
                 )}
               >
                 <LayoutGrid className="w-3.5 h-3.5" />
@@ -616,18 +616,18 @@ export default function ProfessorsListPage() {
             <button
               onClick={() => refetch()}
               title="Rafraîchir les données"
-              className="p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-white hover:border-indigo-300 transition-all cursor-pointer shrink-0"
+              className="p-2.5 bg-muted/50 dark:bg-card border border-border dark:border-border rounded-xl text-muted-foreground dark:text-foreground hover:text-primary dark:hover:text-white hover:border-primary/20 transition-all cursor-pointer shrink-0"
             >
-              <RefreshCw className={cn("w-3.5 h-3.5", isRefetching && "animate-spin text-indigo-600")} />
+              <RefreshCw className={cn("w-3.5 h-3.5", isRefetching && "animate-spin text-primary")} />
             </button>
 
           </div>
         </div>
 
         {/* Counter and Active Tag Strip */}
-        <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800/80">
+        <div className="flex items-center justify-between text-xs text-muted-foreground dark:text-muted-foreground pt-2 border-t border-border dark:border-slate-800/80">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-extrabold text-slate-900 dark:text-white">
+            <span className="font-bold text-foreground dark:text-white">
               {filtered.length} {filtered.length > 1 ? 'enseignants trouvés' : 'enseignant trouvé'}
             </span>
             {(search || contractFilter || departmentFilter || activeDeptTab !== 'all') && (
@@ -638,7 +638,7 @@ export default function ProfessorsListPage() {
                   setDepartmentFilter(''); 
                   setActiveDeptTab('all'); 
                 }}
-                className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer flex items-center gap-1 ml-2"
+                className="text-[11px] font-bold text-primary dark:text-indigo-400 hover:underline cursor-pointer flex items-center gap-1 ml-2"
               >
                 <X className="w-3 h-3" /> Réinitialiser les filtres
               </button>
@@ -654,30 +654,30 @@ export default function ProfessorsListPage() {
           4. MAIN VIEW: TABLE OR GRID
       ══════════════════════════════════════════════════════════════ */}
       {isLoading ? (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-16 text-center shadow-xs">
-          <Spinner size="lg" className="text-indigo-600 mx-auto mb-3" />
-          <p className="text-xs font-bold text-slate-500">Chargement de l'annuaire professoral...</p>
+        <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl p-16 text-center shadow-xs">
+          <Spinner size="lg" className="text-primary mx-auto mb-3" />
+          <p className="text-xs font-bold text-muted-foreground">Chargement de l'annuaire professoral...</p>
         </div>
       ) : filtered.length === 0 ? (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-16 text-center shadow-xs">
-          <div className="w-14 h-14 bg-indigo-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-3 text-indigo-600">
+        <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl p-16 text-center shadow-xs">
+          <div className="w-14 h-14 bg-primary/5 dark:bg-card rounded-2xl flex items-center justify-center mx-auto mb-3 text-primary">
             <GraduationCap className="w-7 h-7" />
           </div>
-          <h3 className="text-base font-black text-slate-800 dark:text-white">Aucun enseignant trouvé</h3>
+          <h3 className="text-base font-bold text-foreground dark:text-white">Aucun enseignant trouvé</h3>
           <p className="text-xs text-slate-400 mt-1 max-w-md mx-auto">
             Aucun membre du corps professoral ne correspond aux critères de recherche ou au département sélectionné.
           </p>
-          <Button variant="link" onClick={openCreate} className="mt-3 text-indigo-600 font-bold">
+          <Button variant="link" onClick={openCreate} className="mt-3 text-primary font-bold">
             + Ajouter un nouvel enseignant
           </Button>
         </div>
       ) : viewMode === 'table' ? (
         /* ── LUXURY TABLE VIEW ────────────────────────────────────── */
-        <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs overflow-hidden">
+        <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl shadow-xs overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-xs text-start border-collapse">
               <thead>
-                <tr className="bg-slate-50/90 dark:bg-slate-800/80 border-b border-slate-200/70 dark:border-slate-800 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                <tr className="bg-slate-50/90 dark:bg-slate-800/80 border-b border-slate-200/70 dark:border-border text-[10px] font-bold text-muted-foreground dark:text-muted-foreground uppercase tracking-wider">
                   <th className="px-5 py-3.5 text-start">Enseignant / Identité</th>
                   <th className="px-4 py-3.5 text-start">Grade & Spécialité</th>
                   <th className="px-4 py-3.5 text-start">Département d'Attache</th>
@@ -702,18 +702,18 @@ export default function ProfessorsListPage() {
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-3">
                           <div className={cn(
-                            "w-10 h-10 rounded-xl bg-gradient-to-br flex items-center justify-center text-white font-black text-xs shrink-0 shadow-xs relative",
+                            "w-10 h-10 rounded-xl bg-gradient-to-br flex items-center justify-center text-white font-bold text-xs shrink-0 shadow-xs relative",
                             deptTheme.lightBg
                           )}>
                             {initials}
                             {prof.is_active && (
-                              <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-white dark:border-slate-900" />
+                              <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-white dark:border-border" />
                             )}
                           </div>
 
                           <div className="min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <span className="font-extrabold text-slate-900 dark:text-white text-sm group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                              <span className="font-bold text-foreground dark:text-white text-sm group-hover:text-primary dark:group-hover:text-indigo-400 transition-colors">
                                 Pr. {prof.last_name} {prof.first_name}
                               </span>
                               
@@ -721,7 +721,7 @@ export default function ProfessorsListPage() {
                               {prof.name_ar && (
                                 <span 
                                   dir="rtl" 
-                                  className="px-2 py-0.5 rounded-md text-[11px] font-serif font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60"
+                                  className="px-2 py-0.5 rounded-md text-[11px] font-serif font-bold text-muted-foreground dark:text-foreground bg-muted dark:bg-card border border-border dark:border-slate-700/60"
                                 >
                                   {prof.name_ar}
                                 </span>
@@ -748,13 +748,13 @@ export default function ProfessorsListPage() {
                       <td className="px-4 py-3.5">
                         <div className="space-y-0.5">
                           <span className={cn(
-                            "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wider border",
+                            "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider border",
                             gradeInfo.badgeClass
                           )}>
                             <Award className="w-3 h-3 text-amber-500" />
                             {gradeInfo.label}
                           </span>
-                          <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate max-w-[180px]">
+                          <p className="text-[11px] font-medium text-muted-foreground dark:text-muted-foreground truncate max-w-[180px]">
                             {prof.specialty || 'Finance & Gestion'}
                           </p>
                         </div>
@@ -775,8 +775,8 @@ export default function ProfessorsListPage() {
                       {/* Column 4: Contract Type (Clean, compliant with Rule 6) */}
                       <td className="px-4 py-3.5">
                         {prof.contract_type === 'permanent' ? (
-                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-bold bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                            <Shield className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-bold bg-primary/5 dark:bg-blue-950/50 text-primary dark:text-blue-300 border border-primary/20 dark:border-primary">
+                            <Shield className="w-3 h-3 text-primary dark:text-blue-400" />
                             <span>Titulaire (PES/PH)</span>
                           </div>
                         ) : prof.contract_type === 'visiting' ? (
@@ -795,10 +795,10 @@ export default function ProfessorsListPage() {
                       {/* Column 5: Status */}
                       <td className="px-4 py-3.5 text-center">
                         <span className={cn(
-                          "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide",
+                          "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide",
                           prof.is_active
                             ? "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800"
-                            : "bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700"
+                            : "bg-muted dark:bg-card text-muted-foreground border border-border dark:border-border"
                         )}>
                           <span className={cn("w-1.5 h-1.5 rounded-full", prof.is_active ? "bg-emerald-500 animate-pulse" : "bg-slate-400")} />
                           {prof.is_active ? 'Actif' : 'Inactif'}
@@ -813,7 +813,7 @@ export default function ProfessorsListPage() {
                           <button
                             onClick={() => setSelectedProfForView(prof)}
                             title="Consulter la fiche complète"
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 transition-colors cursor-pointer"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-primary hover:bg-primary/5 dark:hover:bg-indigo-950/50 transition-colors cursor-pointer"
                           >
                             <Eye className="w-4 h-4" />
                           </button>
@@ -857,7 +857,7 @@ export default function ProfessorsListPage() {
               <div 
                 key={prof.id}
                 onClick={() => setSelectedProfForView(prof)}
-                className="group relative bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs hover:shadow-xl hover:border-indigo-500/40 dark:hover:border-indigo-500/40 transition-all flex flex-col justify-between cursor-pointer"
+                className="group relative bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl overflow-hidden shadow-xs hover:shadow-xl hover:border-indigo-500/40 dark:hover:border-indigo-500/40 transition-all flex flex-col justify-between cursor-pointer"
               >
                 {/* Department Accent Bar */}
                 <div className={cn("h-2 w-full bg-gradient-to-r", deptTheme.lightBg)} />
@@ -866,17 +866,17 @@ export default function ProfessorsListPage() {
                   {/* Top card identity */}
                   <div className="flex items-start justify-between gap-3">
                     <div className={cn(
-                      "w-12 h-12 rounded-xl bg-gradient-to-br flex items-center justify-center text-white font-black text-sm shadow-sm relative shrink-0",
+                      "w-12 h-12 rounded-xl bg-gradient-to-br flex items-center justify-center text-white font-bold text-sm shadow-sm relative shrink-0",
                       deptTheme.lightBg
                     )}>
                       {initials}
                       {prof.is_active && (
-                        <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-white dark:border-slate-900" />
+                        <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-white dark:border-border" />
                       )}
                     </div>
 
                     <span className={cn(
-                      "px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider border",
+                      "px-2 py-0.5 rounded-lg text-[9px] font-bold uppercase tracking-wider border",
                       gradeInfo.badgeClass
                     )}>
                       {gradeInfo.label}
@@ -885,11 +885,11 @@ export default function ProfessorsListPage() {
 
                   {/* Names */}
                   <div>
-                    <h3 className="font-extrabold text-slate-900 dark:text-white text-sm group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors leading-tight">
+                    <h3 className="font-bold text-foreground dark:text-white text-sm group-hover:text-primary dark:group-hover:text-indigo-400 transition-colors leading-tight">
                       Pr. {prof.last_name} {prof.first_name}
                     </h3>
                     {prof.name_ar && (
-                      <p dir="rtl" className="text-xs font-serif font-bold text-slate-500 dark:text-slate-400 mt-0.5">
+                      <p dir="rtl" className="text-xs font-serif font-bold text-muted-foreground dark:text-muted-foreground mt-0.5">
                         {prof.name_ar}
                       </p>
                     )}
@@ -899,19 +899,19 @@ export default function ProfessorsListPage() {
                   </div>
 
                   {/* Metadata Chips */}
-                  <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800 text-xs">
-                    <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-                      <Building2 className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                  <div className="space-y-2 pt-2 border-t border-border dark:border-border text-xs">
+                    <div className="flex items-center gap-2 text-muted-foreground dark:text-foreground">
+                      <Building2 className="w-3.5 h-3.5 text-primary shrink-0" />
                       <span className="truncate text-[11px] font-semibold">{prof.department || 'Sciences de Gestion'}</span>
                     </div>
 
-                    <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+                    <div className="flex items-center gap-2 text-muted-foreground dark:text-muted-foreground">
                       <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                       <span className="truncate text-[11px]">{prof.email}</span>
                     </div>
 
                     {prof.phone && (
-                      <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+                      <div className="flex items-center gap-2 text-muted-foreground dark:text-muted-foreground">
                         <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                         <span className="text-[11px]">{prof.phone}</span>
                       </div>
@@ -921,12 +921,12 @@ export default function ProfessorsListPage() {
 
                 {/* Card Footer Actions */}
                 <div 
-                  className="px-5 py-3 bg-slate-50/80 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between"
+                  className="px-5 py-3 bg-slate-50/80 dark:bg-slate-800/50 border-t border-border dark:border-border flex items-center justify-between"
                   onClick={e => e.stopPropagation()}
                 >
                   <span className={cn(
-                    "text-[10px] font-extrabold uppercase",
-                    prof.contract_type === 'permanent' ? "text-blue-600 dark:text-blue-400" : "text-purple-600 dark:text-purple-400"
+                    "text-[10px] font-bold uppercase",
+                    prof.contract_type === 'permanent' ? "text-primary dark:text-blue-400" : "text-purple-600 dark:text-purple-400"
                   )}>
                     {prof.contract_type === 'permanent' ? '🏛️ Titulaire' : '⏱️ Vacataire'}
                   </span>
@@ -935,21 +935,21 @@ export default function ProfessorsListPage() {
                     <button 
                       onClick={() => setSelectedProfForView(prof)}
                       title="Voir Profil"
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-white dark:hover:bg-slate-700 transition-colors"
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-primary hover:bg-card dark:hover:bg-slate-700 transition-colors"
                     >
                       <Eye className="w-3.5 h-3.5" />
                     </button>
                     <button 
                       onClick={() => openEdit(prof)}
                       title="Modifier"
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-white dark:hover:bg-slate-700 transition-colors"
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-card dark:hover:bg-slate-700 transition-colors"
                     >
                       <Edit2 className="w-3.5 h-3.5" />
                     </button>
                     <button 
                       onClick={() => handleDelete(prof)}
                       title="Supprimer"
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-white dark:hover:bg-slate-700 transition-colors"
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-card dark:hover:bg-slate-700 transition-colors"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -974,7 +974,7 @@ export default function ProfessorsListPage() {
           />
 
           {/* Drawer Panel */}
-          <div className="relative w-full max-w-lg bg-white dark:bg-slate-900 h-full shadow-2xl z-10 overflow-y-auto flex flex-col justify-between animate-in slide-in-from-right duration-250 border-s border-slate-200 dark:border-slate-800">
+          <div className="relative w-full max-w-lg bg-card dark:bg-card h-full shadow-sm z-10 overflow-y-auto flex flex-col justify-between animate-in slide-in-from-right duration-250 border-s border-border dark:border-border">
             
             {/* Drawer Header */}
             <div>
@@ -987,11 +987,11 @@ export default function ProfessorsListPage() {
                 </button>
 
                 <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center text-white font-black text-xl shadow-lg shrink-0">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center text-white font-bold text-xl shadow-lg shrink-0">
                     {`${selectedProfForView.first_name?.[0] || ''}${selectedProfForView.last_name?.[0] || ''}`.toUpperCase()}
                   </div>
                   <div>
-                    <h2 className="text-lg font-black text-white leading-tight">
+                    <h2 className="text-lg font-bold text-white leading-tight">
                       Pr. {selectedProfForView.first_name} {selectedProfForView.last_name}
                     </h2>
                     {selectedProfForView.name_ar && (
@@ -1000,7 +1000,7 @@ export default function ProfessorsListPage() {
                       </p>
                     )}
                     <div className="flex items-center gap-2 mt-2">
-                      <span className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase bg-indigo-500/30 text-indigo-200 border border-indigo-400/30">
+                      <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase bg-indigo-500/30 text-indigo-200 border border-indigo-400/30">
                         {selectedProfForView.grade || 'PES'}
                       </span>
                       <span className="text-xs text-slate-300 font-medium truncate">
@@ -1015,26 +1015,26 @@ export default function ProfessorsListPage() {
               <div className="p-6 space-y-6">
                 
                 {/* Department & Status Section */}
-                <div className="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 space-y-3">
-                  <div className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">
+                <div className="bg-muted/50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 space-y-3">
+                  <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
                     Affectation Académique & Statut
                   </div>
                   <div className="grid grid-cols-2 gap-3 text-xs">
                     <div>
                       <span className="text-slate-400 block text-[11px]">Département</span>
-                      <span className="font-bold text-slate-900 dark:text-white">
+                      <span className="font-bold text-foreground dark:text-white">
                         {selectedProfForView.department || 'Sciences de Gestion'}
                       </span>
                     </div>
                     <div>
                       <span className="text-slate-400 block text-[11px]">Régime Contractuel</span>
-                      <span className="font-bold text-slate-900 dark:text-white">
+                      <span className="font-bold text-foreground dark:text-white">
                         {selectedProfForView.contract_type === 'permanent' ? 'Titulaire Fonction Publique' : 'Vacataire Externe'}
                       </span>
                     </div>
                     <div>
                       <span className="text-slate-400 block text-[11px]">Date de Recrutement</span>
-                      <span className="font-bold text-slate-900 dark:text-white">
+                      <span className="font-bold text-foreground dark:text-white">
                         {selectedProfForView.hire_date ? new Date(selectedProfForView.hire_date).toLocaleDateString('fr-FR') : 'Non renseignée'}
                       </span>
                     </div>
@@ -1049,48 +1049,48 @@ export default function ProfessorsListPage() {
 
                 {/* Administrative Identifiers */}
                 <div className="space-y-3">
-                  <div className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">
+                  <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
                     Identifiants Administratifs & Contact
                   </div>
 
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700/70 text-xs">
+                    <div className="flex items-center justify-between p-3 rounded-xl bg-card dark:bg-card border border-slate-200/70 dark:border-slate-700/70 text-xs">
                       <span className="text-slate-400 flex items-center gap-2">
-                        <Mail className="w-3.5 h-3.5 text-indigo-500" /> Email Académique
+                        <Mail className="w-3.5 h-3.5 text-primary" /> Email Académique
                       </span>
-                      <a href={`mailto:${selectedProfForView.email}`} className="font-bold text-indigo-600 dark:text-indigo-400 hover:underline">
+                      <a href={`mailto:${selectedProfForView.email}`} className="font-bold text-primary dark:text-indigo-400 hover:underline">
                         {selectedProfForView.email}
                       </a>
                     </div>
 
                     {selectedProfForView.phone && (
-                      <div className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700/70 text-xs">
+                      <div className="flex items-center justify-between p-3 rounded-xl bg-card dark:bg-card border border-slate-200/70 dark:border-slate-700/70 text-xs">
                         <span className="text-slate-400 flex items-center gap-2">
                           <Phone className="w-3.5 h-3.5 text-emerald-500" /> Téléphone
                         </span>
-                        <span className="font-bold text-slate-800 dark:text-white font-mono">
+                        <span className="font-bold text-foreground dark:text-white font-mono">
                           {selectedProfForView.phone}
                         </span>
                       </div>
                     )}
 
                     {selectedProfForView.employee_number && (
-                      <div className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700/70 text-xs">
+                      <div className="flex items-center justify-between p-3 rounded-xl bg-card dark:bg-card border border-slate-200/70 dark:border-slate-700/70 text-xs">
                         <span className="text-slate-400 flex items-center gap-2">
                           <Hash className="w-3.5 h-3.5 text-amber-500" /> Matricule PPR / SOM
                         </span>
-                        <span className="font-bold text-slate-800 dark:text-white font-mono">
+                        <span className="font-bold text-foreground dark:text-white font-mono">
                           {selectedProfForView.employee_number}
                         </span>
                       </div>
                     )}
 
                     {selectedProfForView.cin && (
-                      <div className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700/70 text-xs">
+                      <div className="flex items-center justify-between p-3 rounded-xl bg-card dark:bg-card border border-slate-200/70 dark:border-slate-700/70 text-xs">
                         <span className="text-slate-400 flex items-center gap-2">
-                          <Award className="w-3.5 h-3.5 text-blue-500" /> Carte Nationale (CIN)
+                          <Award className="w-3.5 h-3.5 text-primary" /> Carte Nationale (CIN)
                         </span>
-                        <span className="font-bold text-slate-800 dark:text-white font-mono">
+                        <span className="font-bold text-foreground dark:text-white font-mono">
                           {selectedProfForView.cin}
                         </span>
                       </div>
@@ -1100,8 +1100,8 @@ export default function ProfessorsListPage() {
 
                 {/* Legal / Statutory Compliance Note (Rule 6) */}
                 <div className="p-3.5 rounded-2xl bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-200/70 dark:border-indigo-800/70 text-xs space-y-1">
-                  <div className="font-extrabold text-indigo-900 dark:text-indigo-300 flex items-center gap-1.5">
-                    <ShieldCheck className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                  <div className="font-bold text-primary dark:text-indigo-300 flex items-center gap-1.5">
+                    <ShieldCheck className="w-4 h-4 text-primary dark:text-indigo-400" />
                     <span>Conformité Statutaire & Droits Documentaires</span>
                   </div>
                   <p className="text-[11px] text-indigo-700/80 dark:text-indigo-300/70 leading-relaxed">
@@ -1115,7 +1115,7 @@ export default function ProfessorsListPage() {
             </div>
 
             {/* Drawer Footer Actions */}
-            <div className="p-6 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
+            <div className="p-6 bg-muted/50 dark:bg-slate-800/80 border-t border-border dark:border-border flex items-center justify-between gap-3">
               <Button
                 variant="outline"
                 onClick={() => {
@@ -1134,7 +1134,7 @@ export default function ProfessorsListPage() {
                 onClick={() => {
                   window.location.href = `mailto:${selectedProfForView.email}`
                 }}
-                className="flex-1 flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700"
+                className="flex-1 flex items-center justify-center gap-2 bg-primary hover:bg-primary"
               >
                 <Mail className="w-4 h-4" />
                 <span>Contacter par mail</span>
@@ -1155,56 +1155,56 @@ export default function ProfessorsListPage() {
         size="lg"
       >
         <form onSubmit={handleSubmit} className="space-y-5">
-          <div className="bg-indigo-50/70 dark:bg-slate-800/70 p-4 rounded-2xl border border-indigo-100 dark:border-slate-700 flex items-center gap-3.5">
-            <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold shrink-0 shadow-xs">
+          <div className="bg-indigo-50/70 dark:bg-slate-800/70 p-4 rounded-2xl border border-primary/20 dark:border-border flex items-center gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center font-bold shrink-0 shadow-xs">
               <GraduationCap className="w-5 h-5" />
             </div>
             <div>
-              <div className="text-xs font-black text-slate-800 dark:text-white uppercase tracking-wider">Identité & Statut Académique</div>
-              <div className="text-[11px] text-slate-500">Renseignez les données administratives et l'affectation départementale officielle.</div>
+              <div className="text-xs font-bold text-foreground dark:text-white uppercase tracking-wider">Identité & Statut Académique</div>
+              <div className="text-[11px] text-muted-foreground">Renseignez les données administratives et l'affectation départementale officielle.</div>
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Prénom (Français) *</label>
+              <label className="text-xs font-bold text-slate-700 dark:text-foreground">Prénom (Français) *</label>
               <Input required value={form.first_name} onChange={setF('first_name')} placeholder="ex: Mohammed" />
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Nom de Famille (Français) *</label>
+              <label className="text-xs font-bold text-slate-700 dark:text-foreground">Nom de Famille (Français) *</label>
               <Input required value={form.last_name} onChange={setF('last_name')} placeholder="ex: BENJELLOUN" />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Nom Complet en Arabe (بالعربية)</label>
+              <label className="text-xs font-bold text-slate-700 dark:text-foreground">Nom Complet en Arabe (بالعربية)</label>
               <Input dir="rtl" value={form.name_ar} onChange={setF('name_ar')} placeholder="مثال: محمد بنجلون" />
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Matricule PPR / SOM (Fonction Publique)</label>
+              <label className="text-xs font-bold text-slate-700 dark:text-foreground">Matricule PPR / SOM (Fonction Publique)</label>
               <Input value={form.employee_number} onChange={setF('employee_number')} placeholder="ex: 1849201" />
             </div>
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Email Académique (@encg-fes.ac.ma) *</label>
+              <label className="text-xs font-bold text-slate-700 dark:text-foreground">Email Académique (@encg-fes.ac.ma) *</label>
               <Input required type="email" value={form.email} onChange={setF('email')} placeholder="m.benjelloun@encg-fes.ac.ma" />
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Téléphone Mobile</label>
+              <label className="text-xs font-bold text-slate-700 dark:text-foreground">Téléphone Mobile</label>
               <Input value={form.phone} onChange={setF('phone')} placeholder="+212 6xx xxx xxx" />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Grade Académique *</label>
+              <label className="text-xs font-bold text-slate-700 dark:text-foreground">Grade Académique *</label>
               <Input value={form.grade} onChange={setF('grade')} placeholder="PES, Professeur Habilité, PA..." />
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Spécialité Principale</label>
+              <label className="text-xs font-bold text-slate-700 dark:text-foreground">Spécialité Principale</label>
               <Input value={form.specialty} onChange={setF('specialty')} placeholder="Finance d'entreprise, Marketing, Audit..." />
             </div>
           </div>
@@ -1224,7 +1224,7 @@ export default function ProfessorsListPage() {
             />
 
             <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Date d'Embauche / Recrutement</label>
+              <label className="text-xs font-bold text-slate-700 dark:text-foreground">Date d'Embauche / Recrutement</label>
               <Input type="date" value={form.hire_date} onChange={setF('hire_date')} />
             </div>
           </div>
@@ -1244,24 +1244,24 @@ export default function ProfessorsListPage() {
             />
           </div>
 
-          <div className="flex items-center gap-3 pt-2 bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-700">
+          <div className="flex items-center gap-3 pt-2 bg-muted/50 dark:bg-slate-800/60 p-3.5 rounded-2xl border border-slate-200/80 dark:border-border">
             <input 
               type="checkbox" 
               id="is_active" 
               checked={form.is_active as boolean}
               onChange={e => setForm(prev => ({ ...prev, is_active: e.target.checked }))}
-              className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer" 
+              className="w-4 h-4 rounded text-primary focus:ring-ring cursor-pointer"
             />
-            <label htmlFor="is_active" className="text-xs font-bold text-slate-800 dark:text-slate-200 cursor-pointer">
+            <label htmlFor="is_active" className="text-xs font-bold text-foreground dark:text-foreground cursor-pointer">
               Enseignant Actif & Autorisé à accéder aux relevés et fiches de notes
             </label>
           </div>
 
-          <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-200 dark:border-slate-800">
+          <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-border dark:border-border">
             <Button type="button" variant="ghost" onClick={() => setShowModal(false)}>
               Annuler
             </Button>
-            <Button type="submit" variant="primary" isLoading={saveMutation.isPending} className="bg-indigo-600 hover:bg-indigo-700">
+            <Button type="submit" variant="primary" isLoading={saveMutation.isPending} className="bg-primary hover:bg-primary">
               {editingId ? "Mettre à jour le Dossier" : "Enregistrer l'Enseignant"}
             </Button>
           </div>

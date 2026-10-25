@@ -5,11 +5,11 @@ export default function CourseDetailPage() {
   const navigate = useNavigate()
 
   return (
-    <div className="space-y-6 animate-in p-6 max-w-5xl mx-auto">
+    <div className="space-y-6 animate-in max-w-5xl mx-auto">
       <div className="flex items-center gap-4">
         <button onClick={() => navigate('/lms/courses')} className="p-2 bg-card border rounded-lg hover:bg-muted"><ArrowLeft className="w-5 h-5" /></button>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Comptabilité Analytique</h1>
+          <h1 className="erp-page-title">Comptabilité Analytique</h1>
           <p className="text-muted-foreground text-sm mt-1">Pr. Tazi • Semestre 3</p>
         </div>
       </div>
@@ -40,7 +40,7 @@ export default function CourseDetailPage() {
         <div className="space-y-6">
            <div className="bg-card border rounded-2xl shadow-sm p-6">
               <h3 className="font-bold mb-4">Progression</h3>
-              <div className="text-3xl font-black text-primary mb-2">45%</div>
+              <div className="text-3xl font-bold text-primary mb-2">45%</div>
               <div className="w-full bg-muted rounded-full h-2 mb-4">
                 <div className="bg-primary h-2 rounded-full shadow-[0_0_10px_rgba(var(--primary),0.5)]" style={{ width: '45%' }}></div>
               </div>

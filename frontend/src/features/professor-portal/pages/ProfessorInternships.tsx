@@ -2,18 +2,18 @@ import { Briefcase,FileText,Star } from 'lucide-react';
 
 export default function ProfessorInternships() {
   return (
-    <div className="max-w-6xl mx-auto p-6 space-y-8 font-sans animate-in fade-in zoom-in duration-500">
+    <div className="max-w-6xl mx-auto space-y-8 font-sans animate-in fade-in zoom-in duration-500">
       
-      <h1 className="text-2xl font-black text-[#001A4B] italic mb-6">Mes Encadrements & Tutorats (Stages)</h1>
+      <h1 className="text-[#001A4B] italic mb-6 erp-page-title">Mes Encadrements & Tutorats (Stages)</h1>
 
       {/* Banner */}
-      <div className="bg-[#001A4B] rounded-3xl p-8 text-white flex flex-col md:flex-row items-center justify-between gap-8 shadow-xl relative overflow-hidden">
+      <div className="bg-[#001A4B] rounded-2xl p-8 text-white flex flex-col md:flex-row items-center justify-between gap-8 shadow-sm relative overflow-hidden">
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
         <div className="relative z-10 max-w-2xl">
           <span className="bg-white/20 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider mb-4 inline-block border border-white/20">
             Espace Enseignant
           </span>
-          <h2 className="text-3xl font-black tracking-tight mb-3 flex items-center gap-3">
+          <h2 className="text-3xl font-bold tracking-tight mb-3 flex items-center gap-3">
             <Briefcase className="w-8 h-8 text-amber-600 fill-amber-600/20" /> Suivi des Stages Universitaires
           </h2>
           <p className="text-blue-100 text-sm leading-relaxed">
@@ -23,10 +23,10 @@ export default function ProfessorInternships() {
       </div>
 
       {/* Main Content */}
-      <div className="bg-white rounded-3xl p-8 shadow-sm border border-white/5">
+      <div className="bg-card rounded-2xl p-8 shadow-sm border border-white/5">
         
         <div className="mb-6 border-b border-white/5 pb-4">
-          <h3 className="text-lg font-black text-white flex items-center gap-2">
+          <h3 className="text-lg font-bold text-white flex items-center gap-2">
             <FileText className="w-5 h-5 text-[#e6007e]" /> Liste des stagiaires encadrés
           </h3>
           <p className="text-xs text-white/50 mt-1">Étudiants dont vous êtes désigné comme tuteur académique.</p>
@@ -50,7 +50,7 @@ export default function ProfessorInternships() {
               <tr className="border-b border-gray-50 hover:bg-white/[0.02]/50 transition-colors">
                 <td className="py-4 px-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center font-black text-sm">
+                    <div className="w-10 h-10 rounded-xl bg-primary/5 text-primary flex items-center justify-center font-bold text-sm">
                       A
                     </div>
                     <div>
@@ -72,7 +72,7 @@ export default function ProfessorInternships() {
                   <div className="text-xs text-white/70 font-medium mt-1">Fin : <span className="font-bold text-white">30/07/2026</span></div>
                 </td>
                 <td className="py-4 px-4 text-center">
-                  <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-50 text-blue-600 font-bold text-xs">
+                  <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary/5 text-primary font-bold text-xs">
                     1
                   </span>
                 </td>

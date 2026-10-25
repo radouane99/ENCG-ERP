@@ -131,21 +131,21 @@ const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const hasActiveFilters = !!(search || selectedFiliere || selectedSemester || selectedGroup || selectedSubGroup)
 
   return (
-    <div className="space-y-8 animate-in p-6 max-w-[1400px] mx-auto font-sans pb-24">
+    <div className="space-y-8 animate-in max-w-[1400px] mx-auto font-sans pb-24">
       {/* Hero Header */}
-      <div className="relative bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] p-8 md:p-10 rounded-[2.5rem] shadow-2xl text-white border border-blue-800/40">
+      <div className="relative p-8 md:p-10 text-white border border-blue-800/40 erp-page-banner">
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none overflow-hidden"></div>
 
         <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="flex items-center gap-6">
-            <div className="w-20 h-20 rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-amber-300 shadow-2xl shrink-0">
+            <div className="w-20 h-20 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-amber-300 shadow-sm shrink-0">
               <Users className="w-10 h-10 text-amber-400" />
             </div>
             <div>
-              <div className="inline-flex items-center gap-2 bg-blue-400/20 text-blue-200 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-2 border border-blue-400/30">
+              <div className="inline-flex items-center gap-2 bg-blue-400/20 text-blue-200 px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mb-2 border border-blue-400/30">
                 <Sparkles className="w-4 h-4 text-amber-400" /> Scolarité Grande École ENCG Fès
               </div>
-              <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight">
+              <h1 className="text-white erp-page-title">
                 Registre Général des Étudiants
               </h1>
               <p className="text-blue-100/90 text-sm max-w-2xl font-medium mt-1">
@@ -159,14 +159,14 @@ const [editingStudent, setEditingStudent] = useState<Student | null>(null);
             <div className="relative">
               <button 
                 onClick={() => setShowZipMenu(!showZipMenu)}
-                className="flex items-center gap-2 px-5 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-black transition-all text-xs uppercase tracking-wider cursor-pointer shadow-xl hover:scale-102"
+                className="flex items-center gap-2 px-5 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-bold transition-all text-xs uppercase tracking-wider cursor-pointer shadow-sm hover:scale-102"
               >
                 <Printer className="w-4 h-4 text-amber-300" /> Imprimer Tous (ZIP Filière)
               </button>
 
               {showZipMenu && (
                 <div className="absolute right-0 mt-3 w-80 bg-slate-900/95 backdrop-blur-2xl border border-slate-700/80 rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.8)] z-[100] p-2 text-xs font-semibold animate-in fade-in-50 zoom-in-95">
-                  <div className="px-3 py-2 text-[10px] font-black text-emerald-400 uppercase tracking-wider border-b border-slate-800/80 flex items-center justify-between">
+                  <div className="px-3 py-2 text-[10px] font-bold text-emerald-400 uppercase tracking-wider border-b border-slate-800/80 flex items-center justify-between">
                     <span>Exportation ZIP (Filière)</span>
                     <span className="bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full text-[9px]">ZIP</span>
                   </div>
@@ -174,7 +174,7 @@ const [editingStudent, setEditingStudent] = useState<Student | null>(null);
                     onClick={() => handleBulkZipExport('REL_NOTES')}
                     className="w-full text-left px-3 py-3 hover:bg-blue-600/20 hover:border-blue-500/30 border border-transparent rounded-xl text-white flex items-center gap-3 transition-all cursor-pointer mt-1 group"
                   >
-                    <div className="w-8 h-8 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0 group-hover:bg-blue-500 group-hover:text-white transition-all">
+                    <div className="w-8 h-8 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:text-white transition-all">
                       <FileText className="w-4 h-4" />
                     </div>
                     <div>
@@ -215,7 +215,7 @@ const [editingStudent, setEditingStudent] = useState<Student | null>(null);
             </button>
             <button 
               onClick={() => setShowAddModal(true)}
-              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-950 font-black rounded-2xl transition-all text-xs uppercase tracking-wider shadow-lg hover:scale-102 cursor-pointer"
+              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-950 font-bold rounded-2xl transition-all text-xs uppercase tracking-wider shadow-lg hover:scale-102 cursor-pointer"
             >
               <Plus className="w-4 h-4" /> Nouveau Profil Étudiant
             </button>
@@ -225,49 +225,49 @@ const [editingStudent, setEditingStudent] = useState<Student | null>(null);
 
       {/* KPI Section */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-5 rounded-2xl shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-[#0f2863] dark:text-blue-300 flex items-center justify-center font-black text-lg">
+        <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border p-5 rounded-2xl shadow-sm flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-primary/5 dark:bg-blue-950/60 text-[#0f2863] dark:text-blue-300 flex items-center justify-center font-bold text-lg">
             <Users className="w-6 h-6" />
           </div>
           <div>
-            <div className="text-2xl font-black text-slate-900 dark:text-white">{total || 72}</div>
+            <div className="text-2xl font-bold text-foreground dark:text-white">{total || 72}</div>
             <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Étudiants Inscrits</div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-5 rounded-2xl shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-black text-lg">
+        <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border p-5 rounded-2xl shadow-sm flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-primary/5 dark:bg-indigo-950/60 text-primary dark:text-indigo-400 flex items-center justify-center font-bold text-lg">
             <UserCheck className="w-6 h-6" />
           </div>
           <div>
-            <div className="text-2xl font-black text-indigo-600 dark:text-indigo-400">S1 - S4</div>
+            <div className="text-2xl font-bold text-primary dark:text-indigo-400">S1 - S4</div>
             <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Tronc Commun Commerce</div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-5 rounded-2xl shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-black text-lg">
+        <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border p-5 rounded-2xl shadow-sm flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-lg">
             <Award className="w-6 h-6" />
           </div>
           <div>
-            <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400">S5 - S10</div>
+            <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">S5 - S10</div>
             <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Master & Spécialités (GFC, MCM...)</div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-5 rounded-2xl shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center font-black text-lg">
+        <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border p-5 rounded-2xl shadow-sm flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold text-lg">
             <Printer className="w-6 h-6" />
           </div>
           <div>
-            <div className="text-2xl font-black text-amber-600 dark:text-amber-400">100% A4</div>
+            <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">100% A4</div>
             <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Exports Relevés & Attestations</div>
           </div>
         </div>
       </div>
 
       {/* Global Search & Filters */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl shadow-sm p-6 space-y-4">
+      <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl shadow-sm p-6 space-y-4">
         <div className="relative">
           <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
           <input 
@@ -278,12 +278,12 @@ const [editingStudent, setEditingStudent] = useState<Student | null>(null);
               setSearch(e.target.value)
               setPage(1)
             }}
-            className="w-full pl-12 pr-10 py-3.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm font-semibold text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full pl-12 pr-10 py-3.5 bg-muted/50 dark:bg-card border border-border dark:border-border text-sm font-semibold text-foreground dark:text-white placeholder-slate-400 outline-none focus:ring-2 focus:ring-ring rounded-[var(--control-radius)]"
           />
           {search && (
             <button 
               onClick={() => setSearch('')}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-muted-foreground p-1"
             >
               <X className="w-4 h-4" />
             </button>
@@ -292,7 +292,7 @@ const [editingStudent, setEditingStudent] = useState<Student | null>(null);
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
           <div>
-            <label className="block text-[10px] font-black uppercase text-slate-400 mb-1.5">Filière</label>
+            <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1.5">Filière</label>
             <CustomSelect
               value={selectedFiliere}
               onChange={(val) => {
@@ -313,7 +313,7 @@ const [editingStudent, setEditingStudent] = useState<Student | null>(null);
           </div>
 
           <div>
-            <label className="block text-[10px] font-black uppercase text-slate-400 mb-1.5">Semestre</label>
+            <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1.5">Semestre</label>
             <CustomSelect
               value={selectedSemester}
               onChange={(val) => {
@@ -334,7 +334,7 @@ const [editingStudent, setEditingStudent] = useState<Student | null>(null);
           </div>
 
           <div>
-            <label className="block text-[10px] font-black uppercase text-slate-400 mb-1.5">Groupe d'Étude (CM)</label>
+            <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1.5">Groupe d'Étude (CM)</label>
             <CustomSelect
               value={selectedGroup}
               onChange={(val) => {
@@ -355,7 +355,7 @@ const [editingStudent, setEditingStudent] = useState<Student | null>(null);
           </div>
 
           <div>
-            <label className="block text-[10px] font-black uppercase text-slate-400 mb-1.5">Sous-Groupe TD / TP</label>
+            <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1.5">Sous-Groupe TD / TP</label>
             <CustomSelect
               value={selectedSubGroup}
               onChange={(val) => {
@@ -383,7 +383,7 @@ const [editingStudent, setEditingStudent] = useState<Student | null>(null);
           <div className="flex justify-end pt-2">
             <button
               onClick={handleClearFilters}
-              className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl hover:bg-slate-200 transition-colors text-xs font-bold flex items-center gap-2 cursor-pointer"
+              className="px-4 py-2 bg-muted dark:bg-card text-muted-foreground dark:text-foreground rounded-xl hover:bg-slate-200 transition-colors text-xs font-bold flex items-center gap-2 cursor-pointer"
             >
               <RefreshCw className="w-3.5 h-3.5" /> Réinitialiser les filtres
             </button>
@@ -392,10 +392,10 @@ const [editingStudent, setEditingStudent] = useState<Student | null>(null);
       </div>
 
       {/* Table List */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-[2.5rem] shadow-xl overflow-hidden flex flex-col">
+      <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl shadow-sm overflow-hidden flex flex-col">
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
-            <thead className="text-[10px] font-black text-slate-400 uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50">
+            <thead className="text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-border dark:border-border bg-slate-50/50 dark:bg-slate-800/50">
               <tr>
                 <th className="px-8 py-5">Identité de l'Étudiant</th>
                 <th className="px-8 py-5">CIN & CNE / Massar</th>
@@ -421,21 +421,21 @@ const [editingStudent, setEditingStudent] = useState<Student | null>(null);
                 <tr key={s.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
                   <td className="px-8 py-5">
                     <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-2xl bg-blue-100 dark:bg-blue-950 text-[#0f2863] dark:text-blue-300 flex items-center justify-center font-black text-xs shrink-0 border border-blue-200 dark:border-blue-800">
+                      <div className="w-10 h-10 rounded-2xl bg-primary/10 dark:bg-blue-950 text-[#0f2863] dark:text-blue-300 flex items-center justify-center font-bold text-xs shrink-0 border border-primary/20 dark:border-primary">
                         {getInitials(s.first_name, s.last_name)}
                       </div>
                       <div>
-                        <div className="font-extrabold text-slate-900 dark:text-white text-sm">{s.first_name} {s.last_name}</div>
-                        <div className="text-[11px] text-slate-500 font-mono mt-0.5">{s.email}</div>
+                        <div className="font-bold text-foreground dark:text-white text-sm">{s.first_name} {s.last_name}</div>
+                        <div className="text-[11px] text-muted-foreground font-mono mt-0.5">{s.email}</div>
                       </div>
                     </div>
                   </td>
 
                   <td className="px-8 py-5">
-                    <div className="text-xs font-bold text-slate-900 dark:text-white font-mono">
+                    <div className="text-xs font-bold text-foreground dark:text-white font-mono">
                       CIN: {s.cin || s.user?.cin || 'CD729102'}
                     </div>
-                    <div className="text-[11px] font-medium text-slate-500 font-mono mt-0.5">
+                    <div className="text-[11px] font-medium text-muted-foreground font-mono mt-0.5">
                       CNE: {s.cne || s.massar_code || 'N13809281'}
                     </div>
                   </td>
@@ -446,10 +446,10 @@ const [editingStudent, setEditingStudent] = useState<Student | null>(null);
                       <div className="flex items-center gap-2 flex-wrap">
                         {s.current_filiere ? (
                           <>
-                            <span className="font-extrabold text-slate-900 dark:text-white text-xs">
+                            <span className="font-bold text-foreground dark:text-white text-xs">
                               {s.current_filiere}
                             </span>
-                            <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60">
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/5 text-primary dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60">
                               S{s.current_semester || 1}
                             </span>
                           </>
@@ -459,7 +459,7 @@ const [editingStudent, setEditingStudent] = useState<Student | null>(null);
                           </span>
                         )}
                         {s.current_group && (
-                          <span className="text-[11px] text-slate-600 dark:text-slate-300 font-bold truncate max-w-[140px]" title={s.current_group}>
+                          <span className="text-[11px] text-muted-foreground dark:text-foreground font-bold truncate max-w-[140px]" title={s.current_group}>
                             {s.current_group.split(' - ')[0]}
                           </span>
                         )}
@@ -472,17 +472,17 @@ const [editingStudent, setEditingStudent] = useState<Student | null>(null);
                             className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[11px] font-black tracking-wide border shadow-2xs ${
                               (s.sub_group || s.latest_pathway?.sub_group)?.includes('.1')
                                 ? 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800'
-                                : 'bg-indigo-50 text-indigo-700 border-indigo-300 dark:bg-indigo-950/60 dark:text-indigo-300 dark:border-indigo-800'
+                                : "bg-primary/5 text-primary border-primary/20 dark:bg-indigo-950/60 dark:text-indigo-300 dark:border-primary"
                             }`}
                             title={`Affectation officielle Travaux Dirigés / TP : ${s.sub_group || s.latest_pathway?.sub_group}`}
                           >
                             <span className={`w-1.5 h-1.5 rounded-full ${
-                              (s.sub_group || s.latest_pathway?.sub_group)?.includes('.1') ? 'bg-emerald-500' : 'bg-indigo-500'
+                              (s.sub_group || s.latest_pathway?.sub_group)?.includes('.1') ? 'bg-emerald-500' : "bg-primary"
                             }`} />
-                            TD : <strong className="font-black">{s.sub_group || s.latest_pathway?.sub_group}</strong>
+                            TD : <strong className="font-bold">{s.sub_group || s.latest_pathway?.sub_group}</strong>
                           </span>
                         ) : (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-muted text-muted-foreground dark:bg-card dark:text-muted-foreground">
                             Non scindé
                           </span>
                         )}
@@ -504,7 +504,7 @@ const [editingStudent, setEditingStudent] = useState<Student | null>(null);
                     <div className="flex items-center justify-end gap-2">
                       <button
                         onClick={() => setSelectedStudentForModal(s)}
-                        className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
+                        className="p-2 text-slate-400 hover:text-slate-700 hover:bg-muted dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
                         title="Fiche Individuelle Étudiant"
                       >
                         <Eye className="w-4 h-4" />
@@ -512,7 +512,7 @@ const [editingStudent, setEditingStudent] = useState<Student | null>(null);
 
                       <button
                         onClick={() => handleExportAttestationPdf(s)}
-                        className="px-2.5 py-1.5 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 rounded-xl text-xs font-bold hover:bg-blue-100 transition-colors flex items-center gap-1 border border-blue-200 dark:border-blue-800 cursor-pointer shadow-2xs"
+                        className="px-2.5 py-1.5 bg-primary/5 dark:bg-blue-950/40 text-primary dark:text-blue-300 rounded-xl text-xs font-bold hover:bg-primary/10 transition-colors flex items-center gap-1 border border-primary/20 dark:border-primary cursor-pointer shadow-2xs"
                         title="Télécharger l'Attestation de Scolarité A4"
                       >
                         <FileText className="w-3.5 h-3.5" /> Attestation
@@ -542,7 +542,7 @@ const [editingStudent, setEditingStudent] = useState<Student | null>(null);
         </div>
 
         {/* Pagination */}
-        <div className="p-6 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+        <div className="p-6 border-t border-border dark:border-border flex items-center justify-between">
           <p className="text-xs font-bold text-slate-400">
             Page {page} sur {totalPages} ({total} étudiants enregistrés)
           </p>
@@ -550,17 +550,17 @@ const [editingStudent, setEditingStudent] = useState<Student | null>(null);
             <button 
               disabled={page === 1} 
               onClick={() => setPage(p => p - 1)} 
-              className="px-3 py-1.5 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-50 text-xs font-bold disabled:opacity-50 cursor-pointer"
+              className="px-3 py-1.5 border border-border dark:border-border rounded-xl text-muted-foreground dark:text-foreground hover:bg-muted/50 text-xs font-bold disabled:opacity-50 cursor-pointer"
             >
               Précédent
             </button>
-            <button className="px-4 py-1.5 bg-[#0f2863] text-white rounded-xl shadow-md text-xs font-black">
+            <button className="px-4 py-1.5 bg-[#0f2863] text-white rounded-xl shadow-md text-xs font-bold">
               {page}
             </button>
             <button 
               disabled={page === totalPages || totalPages === 0} 
               onClick={() => setPage(p => p + 1)} 
-              className="px-3 py-1.5 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-50 text-xs font-bold disabled:opacity-50 cursor-pointer"
+              className="px-3 py-1.5 border border-border dark:border-border rounded-xl text-muted-foreground dark:text-foreground hover:bg-muted/50 text-xs font-bold disabled:opacity-50 cursor-pointer"
             >
               Suivant
             </button>
@@ -588,14 +588,14 @@ const [editingStudent, setEditingStudent] = useState<Student | null>(null);
       {/* Student Profile Drawer */}
       {selectedStudentForModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-xl overflow-hidden animate-in zoom-in-95 duration-200">
+          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl shadow-sm w-full max-w-xl overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="p-6 bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] text-white flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center font-bold text-amber-300 shadow-lg">
                   <Users className="w-5 h-5 text-amber-400" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-black">{selectedStudentForModal.first_name} {selectedStudentForModal.last_name}</h3>
+                  <h3 className="text-lg font-bold">{selectedStudentForModal.first_name} {selectedStudentForModal.last_name}</h3>
                   <p className="text-xs text-blue-200">Profil Académique ENCG Fès</p>
                 </div>
               </div>
@@ -605,42 +605,42 @@ const [editingStudent, setEditingStudent] = useState<Student | null>(null);
             </div>
 
             <div className="p-6 space-y-4 text-xs">
-              <div className="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-2">
+              <div className="bg-muted/50 dark:bg-slate-800/60 p-4 rounded-2xl border border-border dark:border-border space-y-2">
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Matricule Apogée :</span>
-                  <span className="font-mono font-bold text-slate-900 dark:text-white">{selectedStudentForModal.student_number || '20240043'}</span>
+                  <span className="text-muted-foreground">Matricule Apogée :</span>
+                  <span className="font-mono font-bold text-foreground dark:text-white">{selectedStudentForModal.student_number || '20240043'}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Code CNE / Massar :</span>
-                  <span className="font-mono font-bold text-slate-900 dark:text-white">{selectedStudentForModal.cne || 'N138000043'}</span>
+                  <span className="text-muted-foreground">Code CNE / Massar :</span>
+                  <span className="font-mono font-bold text-foreground dark:text-white">{selectedStudentForModal.cne || 'N138000043'}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Carte CIN :</span>
-                  <span className="font-mono font-bold text-slate-900 dark:text-white">{selectedStudentForModal.cin || 'CD58270'}</span>
+                  <span className="text-muted-foreground">Carte CIN :</span>
+                  <span className="font-mono font-bold text-foreground dark:text-white">{selectedStudentForModal.cin || 'CD58270'}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Email Académique :</span>
-                  <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400">{selectedStudentForModal.email}</span>
+                  <span className="text-muted-foreground">Email Académique :</span>
+                  <span className="font-mono font-bold text-primary dark:text-indigo-400">{selectedStudentForModal.email}</span>
                 </div>
-                <div className="flex justify-between border-t border-slate-200 dark:border-slate-700 pt-2">
-                  <span className="text-slate-500">Filière & Semestre :</span>
-                  <span className="font-bold text-slate-900 dark:text-white">
+                <div className="flex justify-between border-t border-border dark:border-border pt-2">
+                  <span className="text-muted-foreground">Filière & Semestre :</span>
+                  <span className="font-bold text-foreground dark:text-white">
                     {selectedStudentForModal.current_filiere || 'TC'} — Semestre {selectedStudentForModal.current_semester || 1}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Section Amphi (CM) :</span>
-                  <span className="font-bold text-slate-900 dark:text-white">
+                  <span className="text-muted-foreground">Section Amphi (CM) :</span>
+                  <span className="font-bold text-foreground dark:text-white">
                     {selectedStudentForModal.current_group || 'TC-S2-G1'}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-slate-500">Sous-Groupe TD / TP :</span>
+                  <span className="text-muted-foreground">Sous-Groupe TD / TP :</span>
                   {(selectedStudentForModal.sub_group || selectedStudentForModal.latest_pathway?.sub_group) ? (
                     <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-black border ${
                       (selectedStudentForModal.sub_group || selectedStudentForModal.latest_pathway?.sub_group)?.includes('.1')
                         ? 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300'
-                        : 'bg-indigo-50 text-indigo-700 border-indigo-300 dark:bg-indigo-950 dark:text-indigo-300'
+                        : "bg-primary/5 text-primary border-primary/20 dark:bg-indigo-950 dark:text-indigo-300"
                     }`}>
                       <span className="w-2 h-2 rounded-full bg-current" />
                       Sous-groupe {selectedStudentForModal.sub_group || selectedStudentForModal.latest_pathway?.sub_group}
@@ -654,7 +654,7 @@ const [editingStudent, setEditingStudent] = useState<Student | null>(null);
               <div className="flex justify-end gap-3 pt-2">
                 <button
                   onClick={() => handleExportAttestationPdf(selectedStudentForModal)}
-                  className="px-4 py-2 bg-blue-50 text-blue-700 border border-blue-200 rounded-xl font-bold flex items-center gap-1.5"
+                  className="px-4 py-2 bg-primary/5 text-primary border border-primary/20 rounded-xl font-bold flex items-center gap-1.5"
                 >
                   <FileText className="w-4 h-4" /> Attestation Scolarité
                 </button>

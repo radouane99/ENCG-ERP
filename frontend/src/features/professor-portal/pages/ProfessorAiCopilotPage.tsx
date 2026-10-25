@@ -127,21 +127,21 @@ export default function ProfessorAiCopilotPage() {
   }
 
   return (
-    <div className="max-w-[1500px] mx-auto p-4 md:p-8 space-y-8 animate-in fade-in duration-500 pb-32 font-sans">
+    <div className="max-w-[1500px] mx-auto space-y-8 animate-in fade-in duration-500 pb-32 font-sans">
       
       {/* Hero Header */}
-      <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-r from-indigo-950 via-purple-950 to-slate-900 p-8 md:p-10 text-white shadow-2xl border border-purple-800/40">
+      <div className="relative overflow-hidden p-8 md:p-10 text-white border border-purple-800/40 erp-page-banner">
         <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl pointer-events-none -translate-y-1/2 translate-x-1/3"></div>
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-center gap-6">
-            <div className="w-16 h-16 rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-amber-300 shadow-2xl shrink-0">
+            <div className="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-amber-300 shadow-sm shrink-0">
               <BrainCircuit className="w-8 h-8 text-amber-400 animate-pulse" />
             </div>
             <div>
-              <div className="inline-flex items-center gap-2 bg-purple-500/20 text-purple-200 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-2 border border-purple-400/30">
+              <div className="inline-flex items-center gap-2 bg-purple-500/20 text-purple-200 px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mb-2 border border-purple-400/30">
                 <Sparkles className="w-4 h-4 text-amber-400" /> Copilote Pédagogique ENCG — Gemini 1.5 Pro
               </div>
-              <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight leading-tight">
+              <h1 className="text-white leading-tight erp-page-title">
                 Assistant IA & Concepteur d'Épreuves
               </h1>
               <p className="text-purple-200/90 text-xs md:text-sm font-medium mt-1 max-w-2xl">
@@ -154,8 +154,8 @@ export default function ProfessorAiCopilotPage() {
             <button
               onClick={() => setActiveTab('textbook')}
               className={cn(
-                "px-4 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer",
-                activeTab === 'textbook' ? "bg-white text-indigo-950 shadow-lg" : "text-white/80 hover:text-white"
+                "px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer",
+                activeTab === 'textbook' ? "bg-card text-indigo-950 shadow-lg" : "text-white/80 hover:text-white"
               )}
             >
               📖 Trame Cahier de Texte
@@ -163,8 +163,8 @@ export default function ProfessorAiCopilotPage() {
             <button
               onClick={() => setActiveTab('exam')}
               className={cn(
-                "px-4 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer",
-                activeTab === 'exam' ? "bg-white text-indigo-950 shadow-lg" : "text-white/80 hover:text-white"
+                "px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer",
+                activeTab === 'exam' ? "bg-card text-indigo-950 shadow-lg" : "text-white/80 hover:text-white"
               )}
             >
               📝 Concepteur d'Examens
@@ -178,10 +178,10 @@ export default function ProfessorAiCopilotPage() {
         <div className="grid lg:grid-cols-3 gap-8">
           
           {/* Form Panel */}
-          <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-6 md:p-8 shadow-sm border border-slate-200 dark:border-slate-800 space-y-6 h-fit">
+          <div className="bg-card dark:bg-card rounded-2xl p-6 md:p-8 shadow-sm border border-border dark:border-border space-y-6 h-fit">
             <div>
-              <h3 className="font-extrabold text-lg text-slate-900 dark:text-white flex items-center gap-2">
-                <BookOpen className="w-5 h-5 text-indigo-600" /> Paramètres du Cahier de Texte
+              <h3 className="font-bold text-lg text-foreground dark:text-white flex items-center gap-2">
+                <BookOpen className="w-5 h-5 text-primary" /> Paramètres du Cahier de Texte
               </h3>
               <p className="text-xs text-slate-400 font-medium mt-1">
                 L'IA analyse le syllabus et les supports PDF de la Classroom.
@@ -190,11 +190,11 @@ export default function ProfessorAiCopilotPage() {
 
             <form onSubmit={handleGenerateOutline} className="space-y-4">
               <div>
-                <label className="block text-xs font-black uppercase text-slate-400 mb-1">Module d'Enseignement</label>
+                <label className="block text-xs font-bold uppercase text-slate-400 mb-1">Module d'Enseignement</label>
                 <select
                   value={selectedModuleOutline}
                   onChange={e => setSelectedModuleOutline(e.target.value)}
-                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-bold"
+                  className="w-full px-4 py-3 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-bold rounded-[var(--control-radius)]"
                   required
                 >
                   <option value="">-- Choisir un module ENCG --</option>
@@ -207,21 +207,21 @@ export default function ProfessorAiCopilotPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-black uppercase text-slate-400 mb-1">Nombre de Séances Prévues</label>
+                <label className="block text-xs font-bold uppercase text-slate-400 mb-1">Nombre de Séances Prévues</label>
                 <input
                   type="number"
                   value={sessionCount}
                   onChange={e => setSessionCount(Number(e.target.value))}
                   min={4}
                   max={24}
-                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-bold"
+                  className="w-full px-4 py-3 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-bold rounded-[var(--control-radius)]"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={textbookMutation.isPending}
-                className="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-2xl text-xs font-extrabold shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-2xl text-xs font-bold shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2 cursor-pointer"
               >
                 {textbookMutation.isPending ? <Spinner size="sm" /> : <Sparkles className="w-4 h-4 text-amber-300" />}
                 <span>Générer la Trame IA</span>
@@ -234,7 +234,7 @@ export default function ProfessorAiCopilotPage() {
             {textbookResult ? (
               <div className="space-y-4">
                 <div className="flex items-center justify-between bg-emerald-50 dark:bg-emerald-950/30 p-4 rounded-2xl border border-emerald-200 dark:border-emerald-800">
-                  <div className="flex items-center gap-2 text-xs font-extrabold text-emerald-800 dark:text-emerald-300">
+                  <div className="flex items-center gap-2 text-xs font-bold text-emerald-800 dark:text-emerald-300">
                     <CheckCircle2 className="w-5 h-5 text-emerald-600" />
                     <span>Trame pédagogique générée ({textbookResult.length} séances)</span>
                   </div>
@@ -242,23 +242,23 @@ export default function ProfessorAiCopilotPage() {
 
                 <div className="space-y-4">
                   {textbookResult.map((sess: any, idx: number) => (
-                    <div key={idx} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm hover:shadow-md transition-all space-y-2">
+                    <div key={idx} className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-6 shadow-sm hover:shadow-md transition-all space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="px-3 py-1 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 rounded-lg text-[10px] font-black uppercase tracking-wider">
+                        <span className="px-3 py-1 bg-primary/5 dark:bg-indigo-950/40 text-primary dark:text-indigo-300 rounded-lg text-[10px] font-bold uppercase tracking-wider">
                           SÉANCE {sess.session_number || idx + 1} ({sess.duration_hours || 3}H)
                         </span>
                       </div>
-                      <h4 className="font-extrabold text-slate-900 dark:text-white text-base">{sess.title}</h4>
-                      <p className="text-xs text-slate-600 dark:text-slate-300 font-medium"><strong>Objectifs :</strong> {sess.objectives}</p>
-                      <p className="text-xs text-slate-500 font-medium"><strong>Déroulement & Thèmes :</strong> {sess.topics}</p>
+                      <h4 className="font-bold text-foreground dark:text-white text-base">{sess.title}</h4>
+                      <p className="text-xs text-muted-foreground dark:text-foreground font-medium"><strong>Objectifs :</strong> {sess.objectives}</p>
+                      <p className="text-xs text-muted-foreground font-medium"><strong>Déroulement & Thèmes :</strong> {sess.topics}</p>
                     </div>
                   ))}
                 </div>
               </div>
             ) : (
-              <div className="bg-slate-50 dark:bg-slate-900/50 rounded-[2.5rem] border border-dashed border-slate-200 dark:border-slate-800 p-16 text-center space-y-3">
+              <div className="bg-muted/50 dark:bg-slate-900/50 rounded-2xl border border-dashed border-border dark:border-border p-16 text-center space-y-3">
                 <BrainCircuit className="w-12 h-12 text-indigo-300 mx-auto" />
-                <h4 className="font-extrabold text-slate-800 dark:text-slate-200">Prêt à générer la trame pédagogique</h4>
+                <h4 className="font-bold text-foreground dark:text-foreground">Prêt à générer la trame pédagogique</h4>
                 <p className="text-xs text-slate-400 max-w-sm mx-auto">
                   Sélectionnez un module pour créer un déroulement complet de cours adapté aux exigences ENCG.
                 </p>
@@ -273,9 +273,9 @@ export default function ProfessorAiCopilotPage() {
         <div className="grid lg:grid-cols-3 gap-8">
           
           {/* Form Panel */}
-          <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-6 md:p-8 shadow-sm border border-slate-200 dark:border-slate-800 space-y-6 h-fit">
+          <div className="bg-card dark:bg-card rounded-2xl p-6 md:p-8 shadow-sm border border-border dark:border-border space-y-6 h-fit">
             <div>
-              <h3 className="font-extrabold text-lg text-slate-900 dark:text-white flex items-center gap-2">
+              <h3 className="font-bold text-lg text-foreground dark:text-white flex items-center gap-2">
                 <FileText className="w-5 h-5 text-purple-600" /> Concepteur d'Examens
               </h3>
               <p className="text-xs text-slate-400 font-medium mt-1">
@@ -285,11 +285,11 @@ export default function ProfessorAiCopilotPage() {
 
             <form onSubmit={handleGenerateExam} className="space-y-4">
               <div>
-                <label className="block text-xs font-black uppercase text-slate-400 mb-1">Module d'Examen</label>
+                <label className="block text-xs font-bold uppercase text-slate-400 mb-1">Module d'Examen</label>
                 <select
                   value={selectedModuleExam}
                   onChange={e => setSelectedModuleExam(e.target.value)}
-                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-bold"
+                  className="w-full px-4 py-3 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-bold rounded-[var(--control-radius)]"
                   required
                 >
                   <option value="">-- Choisir le module --</option>
@@ -302,11 +302,11 @@ export default function ProfessorAiCopilotPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-black uppercase text-slate-400 mb-1">Format de l'Épreuve</label>
+                <label className="block text-xs font-bold uppercase text-slate-400 mb-1">Format de l'Épreuve</label>
                 <select
                   value={examType}
                   onChange={e => setExamType(e.target.value as any)}
-                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-bold"
+                  className="w-full px-4 py-3 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-bold rounded-[var(--control-radius)]"
                 >
                   <option value="case_study">Étude de Cas Réelle (Analyse Stratégique ENCG)</option>
                   <option value="qcm">QCM Rigoureux (20 Questions)</option>
@@ -316,11 +316,11 @@ export default function ProfessorAiCopilotPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-black uppercase text-slate-400 mb-1">Niveau d'Exigence</label>
+                <label className="block text-xs font-bold uppercase text-slate-400 mb-1">Niveau d'Exigence</label>
                 <select
                   value={difficulty}
                   onChange={e => setDifficulty(e.target.value as any)}
-                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-bold"
+                  className="w-full px-4 py-3 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-bold rounded-[var(--control-radius)]"
                 >
                   <option value="standard">Standard (Tronc Commun ENCG)</option>
                   <option value="advanced">Avancé (Spécialité Semestre 7/8)</option>
@@ -329,14 +329,14 @@ export default function ProfessorAiCopilotPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-black uppercase text-slate-400 mb-1">Consignes & Orientation</label>
+                <label className="block text-xs font-bold uppercase text-slate-400 mb-1">Consignes & Orientation</label>
                 <textarea
                   value={instructions}
                   onChange={e => setInstructions(e.target.value)}
                   rows={2}
-                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-semibold"
+                  className="w-full px-4 py-3 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-semibold rounded-[var(--control-radius)]"
                 />
-                <label className="mt-2 flex items-center gap-2 text-xs font-bold text-slate-600">
+                <label className="mt-2 flex items-center gap-2 text-xs font-bold text-muted-foreground">
                   <input type="checkbox" checked={localeFes} onChange={(e) => setLocaleFes(e.target.checked)} />
                   Cas Fès (agro, textile, logistique, artisanat) + barème LMD ≥ 6
                 </label>
@@ -345,7 +345,7 @@ export default function ProfessorAiCopilotPage() {
               <button
                 type="submit"
                 disabled={examMutation.isPending}
-                className="w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-2xl text-xs font-extrabold shadow-lg shadow-purple-600/30 flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-2xl text-xs font-bold shadow-lg shadow-purple-600/30 flex items-center justify-center gap-2 cursor-pointer"
               >
                 {examMutation.isPending ? <Spinner size="sm" /> : <Sparkles className="w-4 h-4 text-amber-300" />}
                 <span>Générer l'Épreuve & Barème sur 20</span>
@@ -356,25 +356,25 @@ export default function ProfessorAiCopilotPage() {
           {/* Exam Result Display */}
           <div className="lg:col-span-2 space-y-6">
             {examResult ? (
-              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-8 shadow-md space-y-6 print:shadow-none print:border-none">
+              <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-8 shadow-md space-y-6 print:shadow-none print:border-none">
                 
                 {/* Print action header */}
-                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4 print:hidden">
-                  <span className="px-3 py-1 bg-purple-50 text-purple-700 border border-purple-200 rounded-xl text-xs font-black uppercase">
+                <div className="flex items-center justify-between border-b border-border dark:border-border pb-4 print:hidden">
+                  <span className="px-3 py-1 bg-purple-50 text-purple-700 border border-purple-200 rounded-xl text-xs font-bold uppercase">
                     Sujet Officiel d'Examen sur 20 Points
                   </span>
                   <div className="flex items-center gap-2">
                     <button
                       onClick={handleDownloadExamPdf}
                       disabled={downloadingPdf}
-                      className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-black hover:bg-indigo-500 transition-all cursor-pointer shadow-md shadow-indigo-950/20 disabled:opacity-50"
+                      className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-xs font-bold hover:bg-primary transition-all cursor-pointer shadow-md shadow-indigo-950/20 disabled:opacity-50"
                     >
                       {downloadingPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
                       <span>{downloadingPdf ? 'Génération PDF…' : 'Télécharger PDF Officiel'}</span>
                     </button>
                     <button
                       onClick={handlePrintExam}
-                      className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-black hover:bg-slate-800 transition-all cursor-pointer"
+                      className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition-all cursor-pointer"
                     >
                       <Printer className="w-4 h-4" /> Imprimer
                     </button>
@@ -384,13 +384,13 @@ export default function ProfessorAiCopilotPage() {
                 {/* Exam Title & Context */}
                 <div className="space-y-3">
                   <div className="text-center space-y-1">
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">ÉCOLE NATIONALE DE COMMERCE ET DE GESTION DE FÈS</span>
-                    <h2 className="text-2xl font-black text-slate-900 dark:text-white leading-tight">{examResult.title}</h2>
-                    <span className="text-xs font-bold text-indigo-600">Durée : 2h00 — Barème Officiel : 20 / 20</span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">ÉCOLE NATIONALE DE COMMERCE ET DE GESTION DE FÈS</span>
+                    <h2 className="text-2xl font-bold text-foreground dark:text-white leading-tight">{examResult.title}</h2>
+                    <span className="text-xs font-bold text-primary">Durée : 2h00 — Barème Officiel : 20 / 20</span>
                   </div>
 
-                  <div className="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300 space-y-2">
-                    <span className="font-extrabold uppercase text-slate-400 text-[10px] block">Mise en Situation / Contexte Entreprise :</span>
+                  <div className="bg-muted/50 dark:bg-slate-800/50 p-6 rounded-2xl border border-border dark:border-border text-xs text-slate-700 dark:text-foreground space-y-2">
+                    <span className="font-bold uppercase text-slate-400 text-[10px] block">Mise en Situation / Contexte Entreprise :</span>
                     <p className="leading-relaxed italic">{examResult.context}</p>
                   </div>
                 </div>
@@ -398,17 +398,17 @@ export default function ProfessorAiCopilotPage() {
                 {/* Sections & Questions */}
                 <div className="space-y-6">
                   {examResult.sections?.map((sec: any, idx: number) => (
-                    <div key={idx} className="space-y-3 border-t border-slate-100 dark:border-slate-800 pt-4">
-                      <h4 className="font-extrabold text-indigo-900 dark:text-indigo-300 text-base">{sec.section_title}</h4>
+                    <div key={idx} className="space-y-3 border-t border-border dark:border-border pt-4">
+                      <h4 className="font-bold text-primary dark:text-indigo-300 text-base">{sec.section_title}</h4>
                       
                       <div className="space-y-3">
                         {sec.questions?.map((q: any, qIdx: number) => (
-                          <div key={qIdx} className="p-4 bg-slate-50/70 dark:bg-slate-800/40 rounded-2xl space-y-1 border border-slate-100 dark:border-slate-800">
+                          <div key={qIdx} className="p-4 bg-slate-50/70 dark:bg-slate-800/40 rounded-2xl space-y-1 border border-border dark:border-border">
                             <div className="flex items-center justify-between">
-                              <span className="font-black text-xs text-slate-900 dark:text-white">Question {q.num || qIdx + 1}</span>
-                              <span className="text-[11px] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md">({q.points} Pts)</span>
+                              <span className="font-bold text-xs text-foreground dark:text-white">Question {q.num || qIdx + 1}</span>
+                              <span className="text-[11px] font-bold text-primary bg-primary/5 px-2 py-0.5 rounded-md">({q.points} Pts)</span>
                             </div>
-                            <p className="text-xs text-slate-700 dark:text-slate-300 font-medium">{q.text}</p>
+                            <p className="text-xs text-slate-700 dark:text-foreground font-medium">{q.text}</p>
                             {q.expected_answer && (
                               <p className="text-[11px] text-slate-400 font-medium pt-1 italic">
                                 🔑 Éléments de réponse attendus : {q.expected_answer}
@@ -423,16 +423,16 @@ export default function ProfessorAiCopilotPage() {
 
                 {/* Evaluation Rubric */}
                 {examResult.rubric && (
-                  <div className="space-y-3 border-t border-slate-100 dark:border-slate-800 pt-6">
-                    <h4 className="font-black text-slate-900 dark:text-white text-sm uppercase tracking-wider">Grille d'Évaluation & Barème Détaillé</h4>
-                    <div className="border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+                  <div className="space-y-3 border-t border-border dark:border-border pt-6">
+                    <h4 className="font-bold text-foreground dark:text-white text-sm uppercase tracking-wider">Grille d'Évaluation & Barème Détaillé</h4>
+                    <div className="border border-border dark:border-border rounded-2xl overflow-hidden divide-y divide-slate-100 dark:divide-slate-800 text-xs">
                       {examResult.rubric.map((r: any, rIdx: number) => (
-                        <div key={rIdx} className="p-3 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                        <div key={rIdx} className="p-3 flex items-center justify-between hover:bg-muted/50 transition-colors">
                           <div>
-                            <span className="font-bold text-slate-800 dark:text-slate-200">{r.criteria}</span>
+                            <span className="font-bold text-foreground dark:text-foreground">{r.criteria}</span>
                             <p className="text-[10px] text-slate-400">{r.description}</p>
                           </div>
-                          <span className="font-black text-indigo-600 shrink-0 ms-4">{r.points} Pts</span>
+                          <span className="font-bold text-primary shrink-0 ms-4">{r.points} Pts</span>
                         </div>
                       ))}
                     </div>
@@ -441,9 +441,9 @@ export default function ProfessorAiCopilotPage() {
 
               </div>
             ) : (
-              <div className="bg-slate-50 dark:bg-slate-900/50 rounded-[2.5rem] border border-dashed border-slate-200 dark:border-slate-800 p-16 text-center space-y-3">
+              <div className="bg-muted/50 dark:bg-slate-900/50 rounded-2xl border border-dashed border-border dark:border-border p-16 text-center space-y-3">
                 <FileText className="w-12 h-12 text-purple-300 mx-auto" />
-                <h4 className="font-extrabold text-slate-800 dark:text-slate-200">Aucun sujet généré</h4>
+                <h4 className="font-bold text-foreground dark:text-foreground">Aucun sujet généré</h4>
                 <p className="text-xs text-slate-400 max-w-sm mx-auto">
                   Remplissez le formulaire de gauche pour concevoir une épreuve complète sur 20 points.
                 </p>

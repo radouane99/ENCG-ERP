@@ -39,7 +39,7 @@ export default function VacatairesManager() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+          <h1 className="text-foreground flex items-center gap-2 erp-page-title">
             <Briefcase className="w-6 h-6 text-primary" />{t('vacataires.title')}</h1>
           <p className="text-muted-foreground mt-1">{t('vacataires.subtitle')}</p>
         </div>
@@ -82,7 +82,7 @@ export default function VacatairesManager() {
                   <input
                     type="text"
                     placeholder={t('vacataires.search')}
-                    className="w-full pl-9 pr-4 py-2 rounded-xl border border-input bg-background text-sm"
+                    className="w-full pl-9 pr-4 py-2 border border-input bg-background text-sm rounded-[var(--control-radius)]"
                   />
                 </div>
                 <button className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-xl font-medium">

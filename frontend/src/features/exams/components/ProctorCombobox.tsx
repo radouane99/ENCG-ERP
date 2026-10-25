@@ -228,13 +228,13 @@ export function ProctorCombobox({
           'w-full min-h-[46px] px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-200 cursor-pointer flex items-center justify-between gap-2 outline-none select-none text-left',
           selectedProctor
             ? role === 'principal'
-              ? 'bg-amber-500/10 hover:bg-amber-500/15 border border-amber-300 dark:border-amber-800/80 text-slate-900 dark:text-white shadow-xs'
-              : 'bg-indigo-500/10 hover:bg-indigo-500/15 border border-indigo-300 dark:border-indigo-800/80 text-slate-900 dark:text-white shadow-xs'
-            : 'bg-white dark:bg-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-800 border border-dashed border-slate-300 dark:border-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200',
+              ? "bg-amber-500/10 hover:bg-amber-500/15 border border-amber-300 dark:border-amber-800/80 text-foreground dark:text-white shadow-xs"
+              : "bg-indigo-500/10 hover:bg-indigo-500/15 border border-primary/20 dark:border-indigo-800/80 text-foreground dark:text-white shadow-xs"
+            : "bg-card dark:bg-slate-800/80 hover:bg-muted/50 dark:hover:bg-slate-800 border border-dashed border-slate-300 dark:border-border text-slate-400 hover:text-muted-foreground dark:hover:text-slate-200",
           isOpen &&
             (role === 'principal'
               ? 'ring-2 ring-amber-500/30 border-amber-500 shadow-md'
-              : 'ring-2 ring-indigo-500/30 border-indigo-500 shadow-md')
+              : "ring-2 ring-indigo-500/30 border-primary shadow-md")
         )}
       >
         {selectedProctor && selectedTypeStyles ? (
@@ -242,7 +242,7 @@ export function ProctorCombobox({
             {/* Avatar */}
             <div
               className={cn(
-                'w-7 h-7 rounded-lg flex items-center justify-center font-black text-[10px] shrink-0 shadow-sm',
+                "w-7 h-7 rounded-lg flex items-center justify-center font-bold text-[10px] shrink-0 shadow-sm",
                 selectedTypeStyles.avatar
               )}
             >
@@ -252,19 +252,19 @@ export function ProctorCombobox({
             {/* Name and Info */}
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="font-bold text-slate-900 dark:text-white text-xs truncate max-w-[170px]">
+                <span className="font-bold text-foreground dark:text-white text-xs truncate max-w-[170px]">
                   {selectedProctor.name}
                 </span>
                 <span
                   className={cn(
-                    'text-[9px] font-black uppercase px-1.5 py-0.5 rounded-md border',
+                    "text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-md border",
                     selectedTypeStyles.badge
                   )}
                 >
                   {selectedProctor.type}
                 </span>
               </div>
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
+              <p className="text-[10px] text-muted-foreground dark:text-muted-foreground truncate">
                 {selectedProctor.department || 'ENCG Fès'}
               </p>
             </div>
@@ -294,11 +294,11 @@ export function ProctorCombobox({
           {selectedProctor && (
             <span
               className={cn(
-                'px-2 py-0.5 rounded-lg text-[10px] font-black',
+                "px-2 py-0.5 rounded-lg text-[10px] font-bold",
                 selectedLoad === 1
                   ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300'
                   : selectedLoad === 2
-                  ? 'bg-blue-100 text-blue-800 dark:bg-blue-950/80 dark:text-blue-300'
+                  ? "bg-primary/10 text-primary dark:bg-blue-950/80 dark:text-blue-300"
                   : 'bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300'
               )}
             >
@@ -331,9 +331,9 @@ export function ProctorCombobox({
 
       {/* FLOATING RICH DROPDOWN POPOVER */}
       {isOpen && (
-        <div className="absolute left-0 top-full mt-2 w-full min-w-[320px] max-w-[460px] max-h-[380px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl shadow-slate-900/30 overflow-hidden z-[100] flex flex-col animate-in fade-in zoom-in-95 duration-150">
+        <div className="absolute left-0 top-full mt-2 w-full min-w-[320px] max-w-[460px] max-h-[380px] bg-card dark:bg-card border border-border dark:border-border rounded-2xl shadow-sm shadow-slate-900/30 overflow-hidden z-[100] flex flex-col animate-in fade-in zoom-in-95 duration-150">
           {/* Search Header */}
-          <div className="p-2.5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/50 backdrop-blur-md shrink-0 space-y-2">
+          <div className="p-2.5 border-b border-border dark:border-border bg-slate-50/80 dark:bg-slate-800/50 backdrop-blur-md shrink-0 space-y-2">
             <div className="relative">
               <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
@@ -342,13 +342,13 @@ export function ProctorCombobox({
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Chercher nom, département..."
-                className="w-full pl-8 pr-7 py-1.5 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-hidden focus:ring-1 focus:ring-amber-500"
+                className="w-full pl-8 pr-7 py-1.5 text-xs bg-card dark:bg-card border border-border dark:border-border text-foreground dark:text-foreground placeholder-slate-400 focus:outline-hidden focus:ring-1 focus:ring-amber-500 rounded-[var(--control-radius)]"
               />
               {search && (
                 <button
                   type="button"
                   onClick={() => setSearch('')}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-muted-foreground cursor-pointer"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -373,7 +373,7 @@ export function ProctorCombobox({
                     'px-2 py-0.5 rounded-lg font-bold transition-all whitespace-nowrap cursor-pointer',
                     categoryFilter === tab.id
                       ? 'bg-amber-500 text-white shadow-xs'
-                      : 'bg-slate-200/60 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                      : "bg-slate-200/60 dark:bg-card text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-white"
                   )}
                 >
                   {tab.label}
@@ -388,7 +388,7 @@ export function ProctorCombobox({
               <div className="py-8 text-center text-slate-400">
                 <User className="w-7 h-7 mx-auto mb-1.5 opacity-40" />
                 <p className="text-xs font-semibold">Aucun enseignant trouvé</p>
-                <p className="text-[10px] text-slate-500">Essayez un autre terme de recherche.</p>
+                <p className="text-[10px] text-muted-foreground">Essayez un autre terme de recherche.</p>
               </div>
             ) : (
               filteredProctors.map((proctor) => {
@@ -410,14 +410,14 @@ export function ProctorCombobox({
                         ? 'bg-amber-50 dark:bg-amber-950/50 border border-amber-300 dark:border-amber-800'
                         : conflict
                         ? 'hover:bg-rose-50/50 dark:hover:bg-rose-950/20'
-                        : 'hover:bg-slate-50 dark:hover:bg-slate-800/60'
+                        : "hover:bg-muted/50 dark:hover:bg-slate-800/60"
                     )}
                   >
                     {/* Left: Avatar & Info */}
                     <div className="flex items-center gap-2.5 min-w-0 flex-1">
                       <div
                         className={cn(
-                          'w-7 h-7 rounded-lg flex items-center justify-center font-black text-[10px] shrink-0',
+                          "w-7 h-7 rounded-lg flex items-center justify-center font-bold text-[10px] shrink-0",
                           typeStyle.avatar
                         )}
                       >
@@ -431,14 +431,14 @@ export function ProctorCombobox({
                               'font-bold text-xs truncate',
                               isSelected
                                 ? 'text-amber-900 dark:text-amber-200'
-                                : 'text-slate-900 dark:text-white'
+                                : "text-foreground dark:text-white"
                             )}
                           >
                             {proctor.name}
                           </span>
                           <span
                             className={cn(
-                              'text-[9px] font-black uppercase px-1.5 py-0.5 rounded-md border',
+                              "text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-md border",
                               typeStyle.badge
                             )}
                           >
@@ -466,13 +466,13 @@ export function ProctorCombobox({
                     <div className="flex items-center gap-2 shrink-0">
                       <span
                         className={cn(
-                          'px-2 py-0.5 rounded-lg text-[10px] font-black text-center min-w-[54px]',
+                          "px-2 py-0.5 rounded-lg text-[10px] font-bold text-center min-w-[54px]",
                           count === 0
-                            ? 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
+                            ? "bg-muted text-muted-foreground dark:bg-card dark:text-muted-foreground"
                             : count === 1
                             ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300'
                             : count === 2
-                            ? 'bg-blue-100 text-blue-800 dark:bg-blue-950/80 dark:text-blue-300'
+                            ? "bg-primary/10 text-primary dark:bg-blue-950/80 dark:text-blue-300"
                             : 'bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300'
                         )}
                       >
@@ -492,9 +492,9 @@ export function ProctorCombobox({
           </div>
 
           {/* Quick footer with count hint */}
-          <div className="px-3 py-1.5 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-100 dark:border-slate-800 text-[10px] text-slate-500 flex items-center justify-between shrink-0">
+          <div className="px-3 py-1.5 bg-muted/50 dark:bg-slate-800/80 border-t border-border dark:border-border text-[10px] text-muted-foreground flex items-center justify-between shrink-0">
             <span>
-              <strong className="text-slate-700 dark:text-slate-300 font-bold">
+              <strong className="text-slate-700 dark:text-foreground font-bold">
                 {filteredProctors.length}
               </strong>{' '}
               surveillants

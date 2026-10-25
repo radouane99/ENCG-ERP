@@ -32,16 +32,16 @@ export default function ConvocationDashboard() {
   })
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto p-4 md:p-6 pb-20 animate-in">
+    <div className="space-y-6 max-w-7xl mx-auto pb-20 animate-in">
       {/* Header Banner */}
-      <div className="bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-secondary)] p-8 text-white rounded-[2rem] shadow-xl shadow-[var(--color-primary)/10] relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="absolute top-0 end-0 -mt-10 -me-10 w-40 h-40 bg-white opacity-5 rounded-full blur-3xl mix-blend-overlay"></div>
+      <div className="p-8 text-white relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6 erp-page-banner">
+        <div className="absolute top-0 end-0 -mt-10 -me-10 w-40 h-40 bg-card opacity-5 rounded-full blur-3xl mix-blend-overlay"></div>
         <div className="flex items-center gap-4 relative z-10">
           <div className="w-14 h-14 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20">
             <ClipboardList className="w-8 h-8 text-white" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold mb-1">
+            <h1 className="mb-1 erp-page-title">
               {isRtl ? 'إدارة الاستدعاءات' : 'Gestion des Convocations d\'Examens'}
             </h1>
             <p className="text-white/80 font-medium text-sm">
@@ -55,22 +55,22 @@ export default function ConvocationDashboard() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col md:flex-row gap-4 bg-[var(--card)] border border-[var(--border)] p-4 rounded-3xl shadow-sm">
+      <div className="flex flex-col md:flex-row gap-4 bg-[var(--card)] border border-[var(--border)] p-4 rounded-2xl shadow-sm">
         <div className="flex-1">
           <label className="text-[10px] font-bold text-[var(--muted-foreground)] uppercase mb-1.5 block">{isRtl ? 'دورة الامتحان' : 'Session d\'examens'}</label>
-          <select className="w-full border border-[var(--border)] rounded-xl px-4 py-2.5 text-sm font-semibold bg-[var(--background)] focus:ring-2 focus:ring-[var(--color-primary)/20] outline-none">
+          <select className="w-full border border-[var(--border)] px-4 py-2.5 text-sm font-semibold bg-[var(--background)] focus:ring-2 focus:ring-[var(--color-primary)/20] outline-none rounded-[var(--control-radius)]">
             <option>Normale Automne — 2025/2026</option>
           </select>
         </div>
         <div className="flex-1">
           <label className="text-[10px] font-bold text-[var(--muted-foreground)] uppercase mb-1.5 block">{isRtl ? 'الشعبة' : 'Filière'}</label>
-          <select className="w-full border border-[var(--border)] rounded-xl px-4 py-2.5 text-sm font-semibold bg-[var(--background)] focus:ring-2 focus:ring-[var(--color-primary)/20] outline-none">
+          <select className="w-full border border-[var(--border)] px-4 py-2.5 text-sm font-semibold bg-[var(--background)] focus:ring-2 focus:ring-[var(--color-primary)/20] outline-none rounded-[var(--control-radius)]">
             <option>{isRtl ? 'جميع الشعب' : 'Toutes les filières'}</option>
           </select>
         </div>
         <div className="flex-1">
           <label className="text-[10px] font-bold text-[var(--muted-foreground)] uppercase mb-1.5 block">{isRtl ? 'الحالة' : 'Statut'}</label>
-          <select className="w-full border border-[var(--border)] rounded-xl px-4 py-2.5 text-sm font-semibold bg-[var(--background)] focus:ring-2 focus:ring-[var(--color-primary)/20] outline-none">
+          <select className="w-full border border-[var(--border)] px-4 py-2.5 text-sm font-semibold bg-[var(--background)] focus:ring-2 focus:ring-[var(--color-primary)/20] outline-none rounded-[var(--control-radius)]">
             <option>{isRtl ? 'جميع الحالات' : 'Tous les statuts'}</option>
           </select>
         </div>
@@ -95,30 +95,30 @@ export default function ConvocationDashboard() {
       {/* KPIs depending on tab */}
       {activeTab === 'surveillants' ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-[#e91e63]/10 border border-[#e91e63]/20 text-[#e91e63] p-6 rounded-3xl shadow-sm flex items-center justify-between">
+          <div className="bg-[#e91e63]/10 border border-[#e91e63]/20 text-[#e91e63] p-6 rounded-2xl shadow-sm flex items-center justify-between">
             <div>
-              <div className="text-4xl font-black mb-1">{/* dynamic */ '-'} </div>
+              <div className="text-4xl font-bold mb-1">{/* dynamic */ '-'} </div>
               <div className="text-xs font-bold uppercase opacity-90">{isRtl ? 'إجمالي الأساتذة' : 'Total Profs'}</div>
             </div>
             <Users className="w-10 h-10 opacity-30" />
           </div>
-          <div className="bg-[#2979ff]/10 border border-[#2979ff]/20 text-[#2979ff] p-6 rounded-3xl shadow-sm flex items-center justify-between">
+          <div className="bg-[#2979ff]/10 border border-[#2979ff]/20 text-[#2979ff] p-6 rounded-2xl shadow-sm flex items-center justify-between">
             <div>
-              <div className="text-4xl font-black mb-1">{/* dynamic */ '-'} </div>
+              <div className="text-4xl font-bold mb-1">{/* dynamic */ '-'} </div>
               <div className="text-xs font-bold uppercase opacity-90">{isRtl ? 'مُولّدة' : 'Générées'}</div>
             </div>
             <FileText className="w-10 h-10 opacity-30" />
           </div>
-          <div className="bg-[#00bfa5]/10 border border-[#00bfa5]/20 text-[#00bfa5] p-6 rounded-3xl shadow-sm flex items-center justify-between">
+          <div className="bg-[#00bfa5]/10 border border-[#00bfa5]/20 text-[#00bfa5] p-6 rounded-2xl shadow-sm flex items-center justify-between">
             <div>
-              <div className="text-4xl font-black mb-1">{/* dynamic */ '-'} </div>
+              <div className="text-4xl font-bold mb-1">{/* dynamic */ '-'} </div>
               <div className="text-xs font-bold uppercase opacity-90">{isRtl ? 'مُرسلة' : 'Envoyées'}</div>
             </div>
             <Send className="w-10 h-10 opacity-30" />
           </div>
-          <div className="bg-[#4caf50]/10 border border-[#4caf50]/20 text-[#4caf50] p-6 rounded-3xl shadow-sm flex items-center justify-between">
+          <div className="bg-[#4caf50]/10 border border-[#4caf50]/20 text-[#4caf50] p-6 rounded-2xl shadow-sm flex items-center justify-between">
             <div>
-              <div className="text-4xl font-black mb-1">{/* dynamic */ '-'} </div>
+              <div className="text-4xl font-bold mb-1">{/* dynamic */ '-'} </div>
               <div className="text-xs font-bold uppercase opacity-90">{isRtl ? 'مُؤكدة' : 'Confirmées'}</div>
             </div>
             <CheckCircle2 className="w-10 h-10 opacity-30" />
@@ -126,30 +126,30 @@ export default function ConvocationDashboard() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 text-[var(--color-primary)] p-6 rounded-3xl shadow-sm flex items-center justify-between">
+          <div className="bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 text-[var(--color-primary)] p-6 rounded-2xl shadow-sm flex items-center justify-between">
             <div>
-              <div className="text-4xl font-black mb-1">{/* dynamic */ '-'} </div>
+              <div className="text-4xl font-bold mb-1">{/* dynamic */ '-'} </div>
               <div className="text-xs font-bold uppercase opacity-90">{isRtl ? 'إجمالي الطلاب' : 'Total Étudiants'}</div>
             </div>
             <GraduationCap className="w-10 h-10 opacity-30" />
           </div>
-          <div className="bg-[#2979ff]/10 border border-[#2979ff]/20 text-[#2979ff] p-6 rounded-3xl shadow-sm flex items-center justify-between">
+          <div className="bg-[#2979ff]/10 border border-[#2979ff]/20 text-[#2979ff] p-6 rounded-2xl shadow-sm flex items-center justify-between">
             <div>
-              <div className="text-4xl font-black mb-1">{/* dynamic */ '-'} </div>
+              <div className="text-4xl font-bold mb-1">{/* dynamic */ '-'} </div>
               <div className="text-xs font-bold uppercase opacity-90">{isRtl ? 'مُولّدة' : 'Générées'}</div>
             </div>
             <FileText className="w-10 h-10 opacity-30" />
           </div>
-          <div className="bg-[#00bfa5]/10 border border-[#00bfa5]/20 text-[#00bfa5] p-6 rounded-3xl shadow-sm flex items-center justify-between">
+          <div className="bg-[#00bfa5]/10 border border-[#00bfa5]/20 text-[#00bfa5] p-6 rounded-2xl shadow-sm flex items-center justify-between">
             <div>
-              <div className="text-4xl font-black mb-1">{/* dynamic */ '-'} </div>
+              <div className="text-4xl font-bold mb-1">{/* dynamic */ '-'} </div>
               <div className="text-xs font-bold uppercase opacity-90">{isRtl ? 'مُرسلة' : 'Envoyées'}</div>
             </div>
             <Send className="w-10 h-10 opacity-30" />
           </div>
-          <div className="bg-[#8e24aa]/10 border border-[#8e24aa]/20 text-[#8e24aa] p-6 rounded-3xl shadow-sm flex items-center justify-between">
+          <div className="bg-[#8e24aa]/10 border border-[#8e24aa]/20 text-[#8e24aa] p-6 rounded-2xl shadow-sm flex items-center justify-between">
             <div>
-              <div className="text-4xl font-black mb-1">{/* dynamic */ '-'} </div>
+              <div className="text-4xl font-bold mb-1">{/* dynamic */ '-'} </div>
               <div className="text-xs font-bold uppercase opacity-90">{isRtl ? 'تنزيلات' : 'Téléchargées'}</div>
             </div>
             <CheckCircle2 className="w-10 h-10 opacity-30" />
@@ -158,7 +158,7 @@ export default function ConvocationDashboard() {
       )}
 
       {/* Actions */}
-      <div className="bg-[var(--card)] border border-[var(--border)] p-6 rounded-3xl shadow-sm">
+      <div className="bg-[var(--card)] border border-[var(--border)] p-6 rounded-2xl shadow-sm">
         <h3 className="text-[var(--foreground)] font-bold text-lg mb-4">
           {isRtl ? 'إجراءات جماعية' : 'Actions Groupées'} — {activeTab === 'surveillants' ? (isRtl ? 'المراقبين' : 'Surveillance') : (isRtl ? 'الطلاب' : 'Étudiants')}
         </h3>
@@ -171,7 +171,7 @@ export default function ConvocationDashboard() {
             <Button variant="outline" icon={<FileText size={16} />} onClick={() => generateMutation.mutate(1)}>
               {isRtl ? 'توليد استدعاءات' : 'Générer Convocations Profs'}
             </Button>
-            <Button variant="outline" className="text-blue-600 border-blue-200 hover:bg-blue-50" icon={<Mail size={16} />} onClick={() => sendEmailMutation.mutate(1)}>
+            <Button variant="outline" className="text-primary border-primary/20 hover:bg-primary/5" icon={<Mail size={16} />} onClick={() => sendEmailMutation.mutate(1)}>
               {isRtl ? 'إرسال البريد' : 'Envoyer Emails Profs'}
             </Button>
           </div>
@@ -191,7 +191,7 @@ export default function ConvocationDashboard() {
       </div>
 
       {/* Data Table */}
-      <div className="bg-[var(--card)] border border-[var(--border)] rounded-3xl shadow-sm overflow-hidden">
+      <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl shadow-sm overflow-hidden">
         <div className="p-4 border-b border-[var(--border)] bg-[color-mix(in srgb, var(--muted) 3000%, transparent)]">
           <h3 className="font-bold text-[var(--foreground)] text-lg px-2">
             {isRtl ? 'قائمة الاستدعاءات' : 'Liste des convocations'}

@@ -56,7 +56,7 @@ export function SignaturePad({ onSave }: { onSave: (dataUrl: string) => void }) 
 
   return (
     <div className="space-y-2">
-      <div className="relative bg-white dark:bg-slate-800 border-2 border-dashed border-indigo-300 dark:border-indigo-700 rounded-2xl overflow-hidden touch-none shadow-inner">
+      <div className="relative bg-card dark:bg-card border-2 border-dashed border-primary/20 dark:border-primary rounded-2xl overflow-hidden touch-none shadow-inner">
         <canvas
           ref={canvasRef}
           width={440}
@@ -83,7 +83,7 @@ export function SignaturePad({ onSave }: { onSave: (dataUrl: string) => void }) 
         <button
           type="button"
           onClick={clearCanvas}
-          className="px-3 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-600 dark:text-slate-300 rounded-lg font-bold transition-all text-[11px] cursor-pointer"
+          className="px-3 py-1 bg-muted dark:bg-card hover:bg-slate-200 text-muted-foreground dark:text-foreground rounded-lg font-bold transition-all text-[11px] cursor-pointer"
         >
           Effacer
         </button>

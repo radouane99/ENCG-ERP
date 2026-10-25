@@ -22,7 +22,7 @@ export default function InternshipsPage() {
       <div className="p-6 max-w-4xl mx-auto text-center space-y-4">
         <AlertCircle className="w-12 h-12 text-red-500 mx-auto" />
         <h3 className="text-lg font-bold">Erreur de chargement</h3>
-        <p className="text-sm text-slate-500">Impossible de charger les stages.</p>
+        <p className="text-sm text-muted-foreground">Impossible de charger les stages.</p>
       </div>
     );
   }
@@ -30,13 +30,13 @@ export default function InternshipsPage() {
   const internships = Array.isArray(data) ? data : (data.data || data.internships || []);
 
   return (
-    <div className="space-y-6 animate-in p-6">
+    <div className="space-y-6 animate-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t('internships.title')}</h1>
+          <h1 className="erp-page-title">{t('internships.title')}</h1>
           <p className="text-muted-foreground text-sm mt-1">{t('internships.subtitle')}</p>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg font-medium shadow-sm hover:bg-primary/90 text-sm">
+        <button className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium shadow-sm hover:bg-primary/90 text-sm">
           <Plus className="w-4 h-4" /> {t('internships.new_btn')}
         </button>
       </div>
@@ -63,7 +63,7 @@ export default function InternshipsPage() {
                 <td className="px-6 py-4 text-muted-foreground font-medium">{i.type || 'Stage'}</td>
                 <td className="px-6 py-4 text-center">
                    <span className={cn("px-2.5 py-1 rounded-full text-xs font-medium border", 
-                     i.status === 'approved' ? 'bg-blue-50 text-blue-600 border-blue-200' : 
+                     i.status === 'approved' ? "bg-primary/5 text-primary border-primary/20" :
                      i.status === 'active' ? 'bg-green-50 text-green-600 border-green-200' : 
                      'bg-amber-50 text-amber-600 border-amber-200')}>
                       {i.status === 'approved' ? t('internships.status.approved') : i.status === 'active' ? t('internships.status.active') : t('internships.status.pending')}
@@ -78,7 +78,7 @@ export default function InternshipsPage() {
             ))}
             {internships.length === 0 && (
               <tr>
-                <td colSpan={5} className="py-8 text-center text-slate-500 font-medium">Aucun stage trouvé.</td>
+                <td colSpan={5} className="py-8 text-center text-muted-foreground font-medium">Aucun stage trouvé.</td>
               </tr>
             )}
           </tbody>

@@ -85,12 +85,12 @@ export default function AuthLayout() {
 
         {/* Logo and Campus Title */}
         <div className="flex items-center gap-4 relative z-10">
-          <div className="bg-white p-2.5 rounded-2xl flex items-center justify-center shadow-xl shadow-black/20 border border-white/20 hover:scale-105 transition-transform duration-300">
+          <div className="bg-card p-2.5 rounded-2xl flex items-center justify-center shadow-sm shadow-black/20 border border-white/20 hover:scale-105 transition-transform duration-300">
             <img src="/logo-encg.png" alt="ENCG Fès" className="h-11 object-contain" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <p className="text-white font-black text-xl tracking-tight">ENCG Fès</p>
+              <p className="text-white font-bold text-xl tracking-tight">ENCG Fès</p>
               <span className="bg-emerald-500/20 text-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-400/30">
                 USMBA
               </span>
@@ -109,7 +109,7 @@ export default function AuthLayout() {
           </div>
 
           <div className="space-y-4">
-            <h1 className="text-white text-3xl xl:text-4xl font-black leading-tight tracking-tight">
+            <h1 className="text-white leading-tight erp-page-title">
               {isAr ? (
                 <>
                   منصة الإدارة الجامعية <br />
@@ -128,7 +128,7 @@ export default function AuthLayout() {
             </h1>
             
             {/* Rotating Quote Banner */}
-            <div className="p-4 rounded-2xl bg-black/40 border border-white/15 backdrop-blur-md transition-all duration-500 animate-in fade-in duration-500">
+            <div className="p-4 rounded-2xl bg-black/40 border border-white/15 backdrop-blur-md transition-all duration-500 animate-in fade-in">
               <div className="flex items-center gap-2 text-amber-300 text-xs font-bold mb-1">
                 <Award className="w-4 h-4" /> {isAr ? 'رؤية التميز الأكاديمي' : 'Vision d\'Excellence ENCG'}
               </div>
@@ -166,7 +166,7 @@ export default function AuthLayout() {
               className="group backdrop-blur-md bg-black/30 border border-white/10 hover:border-white/25 hover:bg-black/45 rounded-2xl p-4 text-center cursor-default transition-all duration-300 hover:scale-[1.02] shadow-lg"
             >
               <div className="text-lg mb-1 group-hover:scale-110 transition-transform">{stat.icon}</div>
-              <p className="text-white font-black text-2xl tracking-tight font-mono">{stat.value}</p>
+              <p className="text-white font-bold text-2xl tracking-tight font-mono">{stat.value}</p>
               <p className="text-white/70 text-[10px] font-bold uppercase tracking-wider mt-1">{stat.label}</p>
             </div>
           ))}
@@ -180,7 +180,7 @@ export default function AuthLayout() {
         <div className="flex items-center justify-between w-full max-w-lg mx-auto mb-6 sm:mb-0">
           <Link 
             to="/inscription" 
-            className="flex items-center gap-2 text-xs font-black text-primary hover:text-primary/80 transition-all bg-primary/10 hover:bg-primary/15 border border-primary/20 px-3.5 py-2 rounded-xl shadow-sm hover:scale-[1.02]"
+            className="flex items-center gap-2 text-xs font-bold text-primary hover:text-primary/80 transition-all bg-primary/10 hover:bg-primary/15 border border-primary/20 px-3.5 py-2 rounded-xl shadow-sm hover:scale-[1.02]"
           >
             <span>{isAr ? 'التسجيل القبلي TAFEM' : 'Préinscription TAFEM'}</span>
             <ArrowRight className={cn("w-3.5 h-3.5", isAr && "rotate-180")} />
@@ -201,7 +201,7 @@ export default function AuthLayout() {
 
               {/* Floating Menu */}
               {langOpen && (
-                <div className="absolute right-0 mt-2 w-40 bg-card/95 backdrop-blur-2xl border border-border/80 shadow-2xl rounded-2xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-150 space-y-1">
+                <div className="absolute right-0 mt-2 w-40 bg-card/95 backdrop-blur-2xl border border-border/80 shadow-sm rounded-2xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-150 space-y-1">
                   {LANGUAGES.map((lang) => (
                     <button
                       key={lang.code}
@@ -248,17 +248,17 @@ export default function AuthLayout() {
           
           {/* Mobile Header Logo */}
           <div className="flex items-center justify-center gap-3 mb-6 lg:hidden">
-            <div className="bg-white p-2 rounded-xl border border-border shadow-sm flex items-center justify-center">
+            <div className="bg-card p-2 rounded-xl border border-border shadow-sm flex items-center justify-center">
               <img src="/logo-encg.png" alt="ENCG Fès" className="h-10 object-contain" />
             </div>
             <div>
-              <p className="text-foreground font-black text-lg leading-none">ENCG Fès</p>
+              <p className="text-foreground font-bold text-lg leading-none">ENCG Fès</p>
               <p className="text-muted-foreground text-xs mt-1">École Nationale de Commerce et de Gestion</p>
             </div>
           </div>
 
           {/* Frosted Glass Form Card */}
-          <div className="bg-card/90 dark:bg-card/80 backdrop-blur-2xl border border-border/80 p-8 sm:p-9 rounded-[2.5rem] shadow-2xl shadow-black/10 relative overflow-hidden transition-all duration-300 hover:shadow-primary/5">
+          <div className="bg-card/90 dark:bg-card/80 backdrop-blur-2xl border border-border/80 p-8 sm:p-9 rounded-2xl shadow-sm shadow-black/10 relative overflow-hidden transition-all duration-300 hover:shadow-primary/5">
             {/* Top Accent Gradient Bar */}
             <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-[#E60028]" />
             <Outlet />

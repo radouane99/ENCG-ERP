@@ -191,26 +191,26 @@ export default function AdminActivityLogsPage() {
     switch (severity) {
       case 'danger':
         return (
-          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border border-rose-300 flex items-center gap-1">
+          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border border-rose-300 flex items-center gap-1">
             <XCircle className="w-3 h-3 text-rose-600" /> Critique / Danger
           </span>
         );
       case 'warning':
         return (
-          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 flex items-center gap-1">
+          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 flex items-center gap-1">
             <AlertTriangle className="w-3 h-3 text-amber-600" /> Avertissement
           </span>
         );
       case 'success':
         return (
-          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300 flex items-center gap-1">
+          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300 flex items-center gap-1">
             <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Succès / Signé
           </span>
         );
       default:
         return (
-          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-50 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 border border-blue-200 flex items-center gap-1">
-            <Activity className="w-3 h-3 text-blue-600" /> Information
+          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-primary/5 dark:bg-blue-950/60 text-primary dark:text-blue-300 border border-primary/20 flex items-center gap-1">
+            <Activity className="w-3 h-3 text-primary" /> Information
           </span>
         );
     }
@@ -239,10 +239,10 @@ export default function AdminActivityLogsPage() {
   };
 
   return (
-    <div className="space-y-8 p-4 md:p-8 max-w-[1700px] mx-auto font-sans animate-in fade-in pb-28">
+    <div className="space-y-8 max-w-[1700px] mx-auto font-sans animate-in fade-in pb-28">
       
       {/* Hero Header Banner */}
-      <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-[#001A4B] rounded-3xl p-8 text-white shadow-xl border border-slate-800 flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative overflow-hidden">
+      <div className="p-8 text-white border border-slate-800 flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative overflow-hidden erp-page-banner">
         <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none -translate-y-1/2 translate-x-1/3"></div>
         <div className="flex items-center gap-5 relative z-10">
           <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 via-indigo-600 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/30 shrink-0">
@@ -250,14 +250,14 @@ export default function AdminActivityLogsPage() {
           </div>
           <div>
             <div className="flex flex-wrap items-center gap-2 mb-1">
-              <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest inline-flex items-center gap-1.5">
+              <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest inline-flex items-center gap-1.5">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> Conforme CNDP (Loi 09-08)
               </span>
-              <span className="bg-indigo-500/20 text-indigo-300 border border-indigo-400/30 px-3 py-0.5 rounded-full text-[10px] font-mono text-[10px] font-bold">
+              <span className="bg-indigo-500/20 text-indigo-300 border border-indigo-400/30 px-3 py-0.5 rounded-full text-[10px] font-mono font-bold">
                 Réf: D-W-2025/ENCG-FES-0908
               </span>
             </div>
-            <h1 className="text-2xl md:text-3xl font-black tracking-tight">Journal d'Audit Forensics & Traçabilité 360°</h1>
+            <h1 className="erp-page-title">Journal d'Audit Forensics & Traçabilité 360°</h1>
             <p className="text-xs md:text-sm text-slate-300 font-medium mt-0.5">
               Historique complet des mutations, saisies de notes, délibérations APOGEE et décisions avec scellement SHA-256.
             </p>
@@ -267,7 +267,7 @@ export default function AdminActivityLogsPage() {
         <div className="flex flex-wrap items-center gap-3 relative z-10">
           <button
             onClick={handleVerifyChain}
-            className="px-4 py-2.5 bg-indigo-600/40 hover:bg-indigo-600/60 border border-indigo-400/40 text-indigo-100 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer shadow-sm"
+            className="px-4 py-2.5 bg-indigo-600/40 hover:bg-indigo-600/60 border border-indigo-400/40 text-indigo-100 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer shadow-sm"
           >
             <Lock className="w-4 h-4 text-emerald-400" /> Vérifier Chaîne SHA-256
           </button>
@@ -281,7 +281,7 @@ export default function AdminActivityLogsPage() {
 
           <button
             onClick={handleExportPdf}
-            className="px-5 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:opacity-95 text-slate-950 font-black rounded-xl text-xs uppercase tracking-wider transition-all shadow-md flex items-center gap-2 cursor-pointer"
+            className="px-5 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:opacity-95 text-slate-950 font-bold rounded-xl text-xs uppercase tracking-wider transition-all shadow-md flex items-center gap-2 cursor-pointer"
           >
             <FileText className="w-4 h-4" /> Rapport PDF Officiel
           </button>
@@ -290,12 +290,12 @@ export default function AdminActivityLogsPage() {
 
       {/* 4 Key Forensic Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <div className="bg-card border border-border p-6 rounded-3xl shadow-sm space-y-2 relative overflow-hidden">
+        <div className="bg-card border border-border p-6 rounded-2xl shadow-sm space-y-2 relative overflow-hidden">
           <div className="flex items-center justify-between text-muted-foreground text-xs font-bold uppercase tracking-wider">
             <span>Total Mutations Auditées</span>
-            <Database className="w-5 h-5 text-indigo-600" />
+            <Database className="w-5 h-5 text-primary" />
           </div>
-          <div className="text-3xl font-black text-foreground">
+          <div className="text-3xl font-bold text-foreground">
             {stats?.total_logs ? stats.total_logs.toLocaleString('fr-FR') : totalLogsCount}
           </div>
           <div className="text-[11px] text-muted-foreground font-medium flex items-center gap-1.5">
@@ -304,12 +304,12 @@ export default function AdminActivityLogsPage() {
           </div>
         </div>
 
-        <div className="bg-card border border-border p-6 rounded-3xl shadow-sm space-y-2 relative overflow-hidden">
+        <div className="bg-card border border-border p-6 rounded-2xl shadow-sm space-y-2 relative overflow-hidden">
           <div className="flex items-center justify-between text-muted-foreground text-xs font-bold uppercase tracking-wider">
             <span>Activité des Dernières 24h</span>
-            <Activity className="w-5 h-5 text-blue-600" />
+            <Activity className="w-5 h-5 text-primary" />
           </div>
-          <div className="text-3xl font-black text-foreground">
+          <div className="text-3xl font-bold text-foreground">
             +{stats?.logs_last_24h || 0}
           </div>
           <div className="text-[11px] text-muted-foreground font-medium">
@@ -317,12 +317,12 @@ export default function AdminActivityLogsPage() {
           </div>
         </div>
 
-        <div className="bg-card border border-border p-6 rounded-3xl shadow-sm space-y-2 relative overflow-hidden">
+        <div className="bg-card border border-border p-6 rounded-2xl shadow-sm space-y-2 relative overflow-hidden">
           <div className="flex items-center justify-between text-muted-foreground text-xs font-bold uppercase tracking-wider">
             <span>Mutations Sensibles (24h)</span>
             <AlertTriangle className="w-5 h-5 text-amber-500" />
           </div>
-          <div className="text-3xl font-black text-amber-600 dark:text-amber-400">
+          <div className="text-3xl font-bold text-amber-600 dark:text-amber-400">
             {stats?.critical_events_last_24h || 0}
           </div>
           <div className="text-[11px] text-muted-foreground font-medium">
@@ -330,12 +330,12 @@ export default function AdminActivityLogsPage() {
           </div>
         </div>
 
-        <div className="bg-card border border-border p-6 rounded-3xl shadow-sm space-y-2 relative overflow-hidden">
+        <div className="bg-card border border-border p-6 rounded-2xl shadow-sm space-y-2 relative overflow-hidden">
           <div className="flex items-center justify-between text-muted-foreground text-xs font-bold uppercase tracking-wider">
             <span>Intégrité Chaîne SHA-256</span>
             <Lock className="w-5 h-5 text-emerald-500" />
           </div>
-          <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
+          <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
             100% Inviolable
           </div>
           <div className="text-[11px] text-muted-foreground font-medium flex items-center gap-1">
@@ -345,7 +345,7 @@ export default function AdminActivityLogsPage() {
       </div>
 
       {/* Main Filter & Table Card */}
-      <div className="bg-card border border-border rounded-3xl shadow-sm p-6 md:p-8 space-y-6">
+      <div className="bg-card border border-border rounded-2xl shadow-sm p-6 md:p-8 space-y-6">
         
         {/* Search & Select Filters */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -356,17 +356,17 @@ export default function AdminActivityLogsPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Rechercher par opérateur, e-mail, IP, mot-clé ou hash SHA-256..."
-              className="w-full pl-10 pr-4 py-2.5 bg-background border border-input rounded-xl text-xs font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="w-full pl-10 pr-4 py-2.5 bg-background border border-input text-xs font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 rounded-[var(--control-radius)]"
             />
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Sévérité :</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Sévérité :</span>
               <select
                 value={selectedSeverity}
                 onChange={(e) => setSelectedSeverity(e.target.value)}
-                className="px-3 py-2 bg-background border border-input rounded-xl text-xs font-bold text-foreground focus:outline-none"
+                className="px-3 py-2 bg-background border border-input text-xs font-bold text-foreground focus:outline-none rounded-[var(--control-radius)]"
               >
                 <option value="ALL">Toutes les sévérités</option>
                 <option value="info">ℹ️ Information</option>
@@ -408,7 +408,7 @@ export default function AdminActivityLogsPage() {
               }}
               className={`px-4 py-2 rounded-xl whitespace-nowrap transition-all cursor-pointer ${
                 selectedActionType === tab.id
-                  ? 'bg-primary text-primary-foreground font-black shadow-sm'
+                  ? "bg-primary text-primary-foreground font-bold shadow-sm"
                   : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
               }`}
             >
@@ -420,7 +420,7 @@ export default function AdminActivityLogsPage() {
         {/* Logs Table */}
         <div className="overflow-x-auto rounded-2xl border border-border">
           <table className="w-full text-left text-xs">
-            <thead className="bg-muted/60 text-muted-foreground uppercase text-[10px] font-black tracking-wider border-b border-border">
+            <thead className="bg-muted/60 text-muted-foreground uppercase text-[10px] font-bold tracking-wider border-b border-border">
               <tr>
                 <th className="px-4 py-3.5">ID / Code</th>
                 <th className="px-4 py-3.5">Horodatage</th>
@@ -436,7 +436,7 @@ export default function AdminActivityLogsPage() {
               {loading ? (
                 <tr>
                   <td colSpan={8} className="text-center py-16 text-muted-foreground">
-                    <RefreshCw className="w-6 h-6 animate-spin mx-auto text-indigo-600 mb-2" />
+                    <RefreshCw className="w-6 h-6 animate-spin mx-auto text-primary mb-2" />
                     Chargement sécurisé des journaux d'audit certifiés...
                   </td>
                 </tr>
@@ -450,7 +450,7 @@ export default function AdminActivityLogsPage() {
               ) : (
                 logs.map((log) => (
                   <tr key={log.id} className="hover:bg-muted/30 transition-colors">
-                    <td className="px-4 py-3 font-mono font-black text-indigo-600 dark:text-indigo-400">
+                    <td className="px-4 py-3 font-mono font-bold text-primary dark:text-indigo-400">
                       {log.log_code}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-muted-foreground">
@@ -459,7 +459,7 @@ export default function AdminActivityLogsPage() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="font-bold text-foreground flex items-center gap-1.5">
-                        <div className="w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 flex items-center justify-center text-[10px] font-black shrink-0">
+                        <div className="w-5 h-5 rounded-full bg-primary/10 dark:bg-indigo-950 text-primary dark:text-indigo-300 flex items-center justify-center text-[10px] font-bold shrink-0">
                           {log.user_name?.charAt(0) || 'U'}
                         </div>
                         <span className="truncate max-w-[140px]">{log.user_name}</span>
@@ -476,7 +476,7 @@ export default function AdminActivityLogsPage() {
                         {log.description}
                       </p>
                       {(log.old_values || log.new_values) && (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-black text-emerald-600 dark:text-emerald-400 mt-0.5">
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
                           <FileCheck2 className="w-3 h-3" /> Différence de valeurs enregistrée
                         </span>
                       )}
@@ -496,7 +496,7 @@ export default function AdminActivityLogsPage() {
                       <div className="flex items-center justify-end gap-1.5">
                         <button
                           onClick={() => setSelectedLogForDiff(log)}
-                          className="px-2.5 py-1.5 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 text-indigo-700 dark:text-indigo-300 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+                          className="px-2.5 py-1.5 bg-primary/5 dark:bg-indigo-950/60 hover:bg-primary/10 text-primary dark:text-indigo-300 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
                           title="Inspecter les métadonnées et diffs"
                         >
                           <Eye className="w-3.5 h-3.5" /> Diffs
@@ -553,7 +553,7 @@ export default function AdminActivityLogsPage() {
       {/* Visual Diff & Metadata Inspector Modal */}
       {selectedLogForDiff && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-card rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto border border-border animate-in zoom-in-95 space-y-6">
+          <div className="bg-card rounded-2xl shadow-sm w-full max-w-4xl max-h-[90vh] overflow-y-auto border border-border animate-in zoom-in-95 space-y-6">
             
             <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-[#001A4B] p-6 text-white relative">
               <button 
@@ -563,12 +563,12 @@ export default function AdminActivityLogsPage() {
                 <X className="w-5 h-5" />
               </button>
               <div className="flex items-center gap-2 mb-2">
-                <span className="bg-indigo-500/20 text-indigo-200 border border-indigo-400/30 px-3 py-0.5 rounded-full text-[10px] font-mono font-black">
+                <span className="bg-indigo-500/20 text-indigo-200 border border-indigo-400/30 px-3 py-0.5 rounded-full text-[10px] font-mono font-bold">
                   {selectedLogForDiff.log_code}
                 </span>
                 {getCategoryBadge(selectedLogForDiff.action_type)}
               </div>
-              <h3 className="font-black text-xl tracking-tight">{selectedLogForDiff.action}</h3>
+              <h3 className="font-bold text-xl tracking-tight">{selectedLogForDiff.action}</h3>
               <p className="text-xs text-slate-300 font-medium mt-1">
                 {selectedLogForDiff.description}
               </p>
@@ -580,7 +580,7 @@ export default function AdminActivityLogsPage() {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 rounded-2xl bg-muted/40 border border-border">
                 <div>
                   <span className="text-[10px] font-bold text-muted-foreground uppercase block">Opérateur</span>
-                  <strong className="text-foreground font-black">{selectedLogForDiff.user_name}</strong>
+                  <strong className="text-foreground font-bold">{selectedLogForDiff.user_name}</strong>
                   <span className="text-[10px] text-muted-foreground block">{selectedLogForDiff.user_role}</span>
                 </div>
                 <div>
@@ -599,7 +599,7 @@ export default function AdminActivityLogsPage() {
 
               {/* Cryptographic SHA-256 Hash Seal */}
               <div className="p-4 rounded-2xl bg-slate-900 text-slate-200 space-y-2 border border-slate-800">
-                <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-slate-400">
+                <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400">
                   <span className="flex items-center gap-1.5">
                     <Lock className="w-3.5 h-3.5 text-emerald-400" /> Sceau d'Intégrité Cryptographique SHA-256
                   </span>
@@ -618,17 +618,17 @@ export default function AdminActivityLogsPage() {
               {/* Visual Diff: Old Values vs New Values */}
               {(selectedLogForDiff.old_values || selectedLogForDiff.new_values) ? (
                 <div className="space-y-3">
-                  <h4 className="font-black text-sm text-foreground flex items-center gap-2">
-                    <FileCheck2 className="w-4 h-4 text-indigo-600" /> Comparatif des Mutations (Visual Diff)
+                  <h4 className="font-bold text-sm text-foreground flex items-center gap-2">
+                    <FileCheck2 className="w-4 h-4 text-primary" /> Comparatif des Mutations (Visual Diff)
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     
                     {/* Old Values */}
                     <div className="p-4 rounded-2xl bg-rose-500/5 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/40 space-y-2">
-                      <div className="font-black text-xs text-rose-700 dark:text-rose-400 uppercase tracking-wider">
+                      <div className="font-bold text-xs text-rose-700 dark:text-rose-400 uppercase tracking-wider">
                         🔴 Anciennes Valeurs (Avant Mutation)
                       </div>
-                      <pre className="font-mono text-[11px] text-slate-700 dark:text-slate-300 p-3 bg-card rounded-xl border border-border overflow-x-auto max-h-56">
+                      <pre className="font-mono text-[11px] text-slate-700 dark:text-foreground p-3 bg-card rounded-xl border border-border overflow-x-auto max-h-56">
                         {selectedLogForDiff.old_values 
                           ? JSON.stringify(selectedLogForDiff.old_values, null, 2) 
                           : '// Aucun état antérieur (Création initiale)'}
@@ -637,10 +637,10 @@ export default function AdminActivityLogsPage() {
 
                     {/* New Values */}
                     <div className="p-4 rounded-2xl bg-emerald-500/5 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/40 space-y-2">
-                      <div className="font-black text-xs text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
+                      <div className="font-bold text-xs text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
                         🟢 Nouvelles Valeurs (Après Mutation)
                       </div>
-                      <pre className="font-mono text-[11px] text-slate-700 dark:text-slate-300 p-3 bg-card rounded-xl border border-border overflow-x-auto max-h-56">
+                      <pre className="font-mono text-[11px] text-slate-700 dark:text-foreground p-3 bg-card rounded-xl border border-border overflow-x-auto max-h-56">
                         {selectedLogForDiff.new_values 
                           ? JSON.stringify(selectedLogForDiff.new_values, null, 2) 
                           : '// Aucune nouvelle valeur (Suppression définitive)'}
@@ -651,8 +651,8 @@ export default function AdminActivityLogsPage() {
                 </div>
               ) : selectedLogForDiff.payload ? (
                 <div className="space-y-2">
-                  <h4 className="font-black text-sm text-foreground">Payload de la Requête HTTP</h4>
-                  <pre className="font-mono text-[11px] text-slate-700 dark:text-slate-300 p-4 bg-muted/40 rounded-2xl border border-border overflow-x-auto max-h-60">
+                  <h4 className="font-bold text-sm text-foreground">Payload de la Requête HTTP</h4>
+                  <pre className="font-mono text-[11px] text-slate-700 dark:text-foreground p-4 bg-muted/40 rounded-2xl border border-border overflow-x-auto max-h-60">
                     {JSON.stringify(selectedLogForDiff.payload, null, 2)}
                   </pre>
                 </div>
@@ -670,7 +670,7 @@ export default function AdminActivityLogsPage() {
                 <button
                   type="button"
                   onClick={() => setSelectedLogForDiff(null)}
-                  className="px-6 py-2.5 bg-primary text-primary-foreground font-black rounded-xl text-xs uppercase tracking-wider cursor-pointer"
+                  className="px-6 py-2.5 bg-primary text-primary-foreground font-bold rounded-xl text-xs uppercase tracking-wider cursor-pointer"
                 >
                   Fermer l'Inspecteur
                 </button>
@@ -683,7 +683,7 @@ export default function AdminActivityLogsPage() {
       {/* Cryptographic Chain Integrity Modal */}
       {showChainModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-card rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden border border-border animate-in zoom-in-95 space-y-6">
+          <div className="bg-card rounded-2xl shadow-sm w-full max-w-2xl overflow-hidden border border-border animate-in zoom-in-95 space-y-6">
             <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-[#001A4B] p-6 text-white relative">
               <button 
                 onClick={() => setShowChainModal(false)}
@@ -692,11 +692,11 @@ export default function AdminActivityLogsPage() {
                 <X className="w-5 h-5" />
               </button>
               <div className="flex items-center gap-2 mb-2">
-                <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest inline-flex items-center gap-1">
+                <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest inline-flex items-center gap-1">
                   <Lock className="w-3.5 h-3.5 text-emerald-400" /> Algorithme de Preuve Merkle SHA-256
                 </span>
               </div>
-              <h3 className="font-black text-2xl tracking-tight">Audit d'Intégrité de la Chaîne</h3>
+              <h3 className="font-bold text-2xl tracking-tight">Audit d'Intégrité de la Chaîne</h3>
               <p className="text-xs text-slate-300 font-medium mt-1">
                 Vérification mathématique bloc par bloc de la non-altération de la base de données.
               </p>
@@ -705,9 +705,9 @@ export default function AdminActivityLogsPage() {
             <div className="p-6 md:p-8 space-y-6">
               {verifyingChain ? (
                 <div className="py-12 flex flex-col items-center justify-center space-y-4">
-                  <RefreshCw className="w-10 h-10 text-indigo-600 animate-spin" />
+                  <RefreshCw className="w-10 h-10 text-primary animate-spin" />
                   <div className="text-center space-y-1">
-                    <h4 className="font-black text-foreground text-sm">Calcul des empreintes SHA-256 en cours...</h4>
+                    <h4 className="font-bold text-foreground text-sm">Calcul des empreintes SHA-256 en cours...</h4>
                     <p className="text-xs text-muted-foreground">Parcours séquentiel de la chaîne de hachage.</p>
                   </div>
                 </div>
@@ -724,7 +724,7 @@ export default function AdminActivityLogsPage() {
                       {chainResult.intact ? <CheckCircle2 className="w-6 h-6" /> : <AlertTriangle className="w-6 h-6" />}
                     </div>
                     <div>
-                      <h4 className="font-black text-sm">
+                      <h4 className="font-bold text-sm">
                         {chainResult.intact 
                           ? 'Chaîne Cryptographique 100% Intègre et Conforme' 
                           : 'Alerte d\'Altération : Rupture de Chaîne Détectée'}
@@ -744,7 +744,7 @@ export default function AdminActivityLogsPage() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Blocs Audités :</span>
-                      <strong className="text-indigo-600 dark:text-indigo-400">{chainResult.verified_blocks} blocs</strong>
+                      <strong className="text-primary dark:text-indigo-400">{chainResult.verified_blocks} blocs</strong>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Horodatage de Contrôle :</span>
@@ -758,7 +758,7 @@ export default function AdminActivityLogsPage() {
                 <button
                   type="button"
                   onClick={() => setShowChainModal(false)}
-                  className="px-6 py-2.5 bg-primary text-primary-foreground font-black rounded-xl text-xs uppercase tracking-wider cursor-pointer"
+                  className="px-6 py-2.5 bg-primary text-primary-foreground font-bold rounded-xl text-xs uppercase tracking-wider cursor-pointer"
                 >
                   Terminé
                 </button>

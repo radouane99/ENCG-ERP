@@ -157,30 +157,30 @@ export default function AdminWorkflowBuilder() {
   };
 
   return (
-    <div className="max-w-[1600px] mx-auto p-4 md:p-8 space-y-6 font-sans animate-in fade-in zoom-in duration-500 pb-24 h-[calc(100vh-80px)] flex flex-col">
+    <div className="max-w-[1600px] mx-auto space-y-6 font-sans animate-in fade-in zoom-in duration-500 pb-24 h-[calc(100vh-80px)] flex flex-col">
       
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed top-6 right-6 z-50 bg-[#0f2863] text-white px-5 py-3 rounded-2xl shadow-2xl border border-blue-400/30 flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300">
+        <div className="fixed top-6 right-6 z-50 bg-[#0f2863] text-white px-5 py-3 rounded-2xl shadow-sm border border-blue-400/30 flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300">
           <Check className="w-5 h-5 text-emerald-400" />
           <span className="text-sm font-bold">{toastMessage}</span>
         </div>
       )}
 
       {/* Header */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shrink-0 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shrink-0 bg-card p-6 rounded-2xl border border-border shadow-sm">
         <div className="flex items-center gap-4">
           <div className="w-14 h-14 bg-[#0f2863]/10 text-[#0f2863] rounded-2xl flex items-center justify-center border border-[#0f2863]/20 shadow-sm">
             <Network className="w-7 h-7" />
           </div>
           <div>
             <div className="flex items-center gap-3 mb-1">
-              <h1 className="text-2xl md:text-3xl font-extrabold text-[#0f2863] tracking-tight">{workflowName}</h1>
-              <span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest border border-emerald-200">
+              <h1 className="text-[#0f2863] erp-page-title">{workflowName}</h1>
+              <span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest border border-emerald-200">
                 ACTIF
               </span>
             </div>
-            <p className="text-slate-500 font-medium text-sm">Déplacez les nœuds, ajoutez des actions et simulez l'exécution en temps réel</p>
+            <p className="text-muted-foreground font-medium text-sm">Déplacez les nœuds, ajoutez des actions et simulez l'exécution en temps réel</p>
           </div>
         </div>
         
@@ -196,9 +196,9 @@ export default function AdminWorkflowBuilder() {
           
           <button 
             onClick={() => setShowSettingsModal(true)}
-            className="flex items-center gap-2 bg-white border border-slate-200 text-slate-700 px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-slate-50 transition-colors shadow-sm"
+            className="flex items-center gap-2 bg-card border border-border text-slate-700 px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-muted/50 transition-colors shadow-sm"
           >
-            <Settings className="w-4 h-4 text-slate-500" /> Paramètres
+            <Settings className="w-4 h-4 text-muted-foreground" /> Paramètres
           </button>
           
           <button 
@@ -211,91 +211,91 @@ export default function AdminWorkflowBuilder() {
       </div>
 
       {/* Builder Workspace */}
-      <div className="flex-1 bg-slate-50 rounded-[2rem] border border-slate-200 overflow-hidden shadow-inner flex relative">
+      <div className="flex-1 bg-muted/50 rounded-2xl border border-border overflow-hidden shadow-inner flex relative">
         
         {/* Sidebar palette */}
-        <div className="w-80 bg-white border-r border-slate-200 p-5 flex flex-col h-full shadow-sm z-10 shrink-0 overflow-y-auto">
-          <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+        <div className="w-80 bg-card border-r border-border p-5 flex flex-col h-full shadow-sm z-10 shrink-0 overflow-y-auto">
+          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
             <Zap className="w-3.5 h-3.5 text-amber-500" /> DÉCLENCHEURS (TRIGGERS)
           </h3>
           <div className="space-y-3 mb-6">
             <button
               onClick={() => addNode('trigger', 'Justificatif Médical', 'blue')}
-              className="w-full text-left p-3.5 border border-slate-200 rounded-xl bg-slate-50 flex items-center gap-3 hover:border-blue-500 hover:bg-blue-50/50 transition-all shadow-sm group"
+              className="w-full text-left p-3.5 border border-border rounded-xl bg-muted/50 flex items-center gap-3 hover:border-primary hover:bg-blue-50/50 transition-all shadow-sm group"
             >
-              <div className="w-9 h-9 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center group-hover:scale-105 transition-transform">
+              <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center group-hover:scale-105 transition-transform">
                 <AlertCircle className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-xs font-bold text-slate-900">+ Justificatif Médical</p>
-                <p className="text-[10px] text-slate-500">Cliquer pour ajouter</p>
+                <p className="text-xs font-bold text-foreground">+ Justificatif Médical</p>
+                <p className="text-[10px] text-muted-foreground">Cliquer pour ajouter</p>
               </div>
             </button>
 
             <button
               onClick={() => addNode('trigger', 'Nouvelle Inscription', 'emerald')}
-              className="w-full text-left p-3.5 border border-slate-200 rounded-xl bg-slate-50 flex items-center gap-3 hover:border-emerald-500 hover:bg-emerald-50/50 transition-all shadow-sm group"
+              className="w-full text-left p-3.5 border border-border rounded-xl bg-muted/50 flex items-center gap-3 hover:border-emerald-500 hover:bg-emerald-50/50 transition-all shadow-sm group"
             >
               <div className="w-9 h-9 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center group-hover:scale-105 transition-transform">
                 <Plus className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-xs font-bold text-slate-900">+ Nouvelle Inscription</p>
-                <p className="text-[10px] text-slate-500">Cliquer pour ajouter</p>
+                <p className="text-xs font-bold text-foreground">+ Nouvelle Inscription</p>
+                <p className="text-[10px] text-muted-foreground">Cliquer pour ajouter</p>
               </div>
             </button>
           </div>
 
-          <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-            <GitBranch className="w-3.5 h-3.5 text-indigo-500" /> ACTIONS & CONDITIONS
+          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+            <GitBranch className="w-3.5 h-3.5 text-primary" /> ACTIONS & CONDITIONS
           </h3>
           <div className="space-y-3 mb-8">
             <button
               onClick={() => addNode('condition', 'Règle Conditionnelle', 'purple')}
-              className="w-full text-left p-3.5 border border-slate-200 rounded-xl bg-slate-50 flex items-center gap-3 hover:border-purple-500 hover:bg-purple-50/50 transition-all shadow-sm group"
+              className="w-full text-left p-3.5 border border-border rounded-xl bg-muted/50 flex items-center gap-3 hover:border-purple-500 hover:bg-purple-50/50 transition-all shadow-sm group"
             >
               <div className="w-9 h-9 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center group-hover:scale-105 transition-transform">
                 <GitBranch className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-xs font-bold text-slate-900">+ Condition (Si/Sinon)</p>
-                <p className="text-[10px] text-slate-500">Cliquer pour ajouter</p>
+                <p className="text-xs font-bold text-foreground">+ Condition (Si/Sinon)</p>
+                <p className="text-[10px] text-muted-foreground">Cliquer pour ajouter</p>
               </div>
             </button>
 
             <button
               onClick={() => addNode('action', 'Envoyer Notification', 'rose')}
-              className="w-full text-left p-3.5 border border-slate-200 rounded-xl bg-slate-50 flex items-center gap-3 hover:border-rose-500 hover:bg-rose-50/50 transition-all shadow-sm group"
+              className="w-full text-left p-3.5 border border-border rounded-xl bg-muted/50 flex items-center gap-3 hover:border-rose-500 hover:bg-rose-50/50 transition-all shadow-sm group"
             >
               <div className="w-9 h-9 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center group-hover:scale-105 transition-transform">
                 <Bell className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-xs font-bold text-slate-900">+ Notification Alert</p>
-                <p className="text-[10px] text-slate-500">Cliquer pour ajouter</p>
+                <p className="text-xs font-bold text-foreground">+ Notification Alert</p>
+                <p className="text-[10px] text-muted-foreground">Cliquer pour ajouter</p>
               </div>
             </button>
 
             <button
               onClick={() => addNode('action', 'Mise à jour BDD', 'indigo')}
-              className="w-full text-left p-3.5 border border-slate-200 rounded-xl bg-slate-50 flex items-center gap-3 hover:border-indigo-500 hover:bg-indigo-50/50 transition-all shadow-sm group"
+              className="w-full text-left p-3.5 border border-border rounded-xl bg-muted/50 flex items-center gap-3 hover:border-primary hover:bg-indigo-50/50 transition-all shadow-sm group"
             >
-              <div className="w-9 h-9 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center group-hover:scale-105 transition-transform">
+              <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center group-hover:scale-105 transition-transform">
                 <Database className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-xs font-bold text-slate-900">+ Action Base de Données</p>
-                <p className="text-[10px] text-slate-500">Cliquer pour ajouter</p>
+                <p className="text-xs font-bold text-foreground">+ Action Base de Données</p>
+                <p className="text-[10px] text-muted-foreground">Cliquer pour ajouter</p>
               </div>
             </button>
           </div>
 
           {/* Node Properties Editor Panel */}
           {selectedNode && (
-            <div className="mt-auto pt-4 border-t border-slate-200 space-y-3 bg-slate-50 p-4 rounded-2xl">
+            <div className="mt-auto pt-4 border-t border-border space-y-3 bg-muted/50 p-4 rounded-2xl">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-black text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                  <Sliders className="w-3.5 h-3.5 text-blue-600" /> Éditeur de Nœud
+                <span className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                  <Sliders className="w-3.5 h-3.5 text-primary" /> Éditeur de Nœud
                 </span>
                 <button onClick={deleteSelectedNode} className="text-rose-600 hover:bg-rose-100 p-1.5 rounded-lg transition-colors" title="Supprimer le nœud">
                   <Trash2 className="w-4 h-4" />
@@ -303,7 +303,7 @@ export default function AdminWorkflowBuilder() {
               </div>
 
               <div>
-                <label className="text-[10px] font-bold text-slate-500 uppercase">Titre du Nœud</label>
+                <label className="text-[10px] font-bold text-muted-foreground uppercase">Titre du Nœud</label>
                 <input
                   type="text"
                   value={selectedNode.title}
@@ -311,12 +311,12 @@ export default function AdminWorkflowBuilder() {
                     const val = e.target.value;
                     setNodes(prev => prev.map(n => n.id === selectedNode.id ? { ...n, title: val } : n));
                   }}
-                  className="w-full mt-1 px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-blue-500"
+                  className="w-full mt-1 px-3 py-2 bg-card border border-slate-300 text-xs font-bold text-foreground focus:outline-none focus:border-primary rounded-[var(--control-radius)]"
                 />
               </div>
 
               <div>
-                <label className="text-[10px] font-bold text-slate-500 uppercase">Expression / Payload</label>
+                <label className="text-[10px] font-bold text-muted-foreground uppercase">Expression / Payload</label>
                 <input
                   type="text"
                   value={selectedNode.expression}
@@ -324,7 +324,7 @@ export default function AdminWorkflowBuilder() {
                     const val = e.target.value;
                     setNodes(prev => prev.map(n => n.id === selectedNode.id ? { ...n, expression: val } : n));
                   }}
-                  className="w-full mt-1 px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-mono font-semibold text-slate-800 focus:outline-none focus:border-blue-500"
+                  className="w-full mt-1 px-3 py-2 bg-card border border-slate-300 text-xs font-mono font-semibold text-foreground focus:outline-none focus:border-primary rounded-[var(--control-radius)]"
                 />
               </div>
             </div>
@@ -378,26 +378,26 @@ export default function AdminWorkflowBuilder() {
                 onMouseDown={(e) => handleMouseDown(e, node.id)}
                 style={{ left: `${node.x}px`, top: `${node.y}px` }}
                 className={cn(
-                  "absolute w-80 bg-white rounded-2xl shadow-xl border-2 transition-all cursor-grab active:cursor-grabbing overflow-hidden",
+                  "absolute w-80 bg-card rounded-2xl shadow-sm border-2 transition-all cursor-grab active:cursor-grabbing overflow-hidden",
                   getNodeBorderColor(node.color),
-                  isSelected && "ring-4 ring-blue-500/20 shadow-2xl scale-[1.02]",
+                  isSelected && "ring-4 ring-blue-500/20 shadow-sm scale-[1.02]",
                   isSimActive && "ring-4 ring-emerald-500 scale-[1.03] shadow-emerald-500/20"
                 )}
               >
                 <div className={cn(
                   "px-4 py-3 border-b flex items-center justify-between",
-                  node.color === 'blue' && "bg-blue-50 border-blue-100",
+                  node.color === 'blue' && "bg-primary/5 border-primary/20",
                   node.color === 'purple' && "bg-purple-50 border-purple-100",
-                  node.color === 'indigo' && "bg-indigo-50 border-indigo-100",
+                  node.color === 'indigo' && "bg-primary/5 border-primary/20",
                   node.color === 'rose' && "bg-rose-50 border-rose-100",
                   node.color === 'emerald' && "bg-emerald-50 border-emerald-100"
                 )}>
                   <div className="flex items-center gap-3">
                     <div className={cn(
                       "w-8 h-8 rounded-lg text-white flex items-center justify-center font-bold text-xs shadow-sm",
-                      node.color === 'blue' && "bg-blue-600",
+                      node.color === 'blue' && "bg-primary",
                       node.color === 'purple' && "bg-purple-600",
-                      node.color === 'indigo' && "bg-indigo-600",
+                      node.color === 'indigo' && "bg-primary",
                       node.color === 'rose' && "bg-rose-600",
                       node.color === 'emerald' && "bg-emerald-600"
                     )}>
@@ -407,32 +407,32 @@ export default function AdminWorkflowBuilder() {
                     </div>
                     <div>
                       <span className={cn(
-                        "text-[10px] font-black uppercase tracking-widest",
-                        node.color === 'blue' && "text-blue-700",
+                        "text-[10px] font-bold uppercase tracking-widest",
+                        node.color === 'blue' && "text-primary",
                         node.color === 'purple' && "text-purple-700",
-                        node.color === 'indigo' && "text-indigo-700",
+                        node.color === 'indigo' && "text-primary",
                         node.color === 'rose' && "text-rose-700",
                         node.color === 'emerald' && "text-emerald-700"
                       )}>
                         {node.type}
                       </span>
-                      <h4 className="text-sm font-extrabold text-slate-900 leading-tight">{node.title}</h4>
+                      <h4 className="text-sm font-bold text-foreground leading-tight">{node.title}</h4>
                     </div>
                   </div>
                 </div>
 
-                <div className="p-4 bg-white space-y-2">
-                  <p className="text-xs font-semibold text-slate-600">{node.subtitle}</p>
-                  <div className="bg-slate-100 border border-slate-200 rounded-lg p-2 text-xs font-mono text-slate-800 font-semibold truncate">
+                <div className="p-4 bg-card space-y-2">
+                  <p className="text-xs font-semibold text-muted-foreground">{node.subtitle}</p>
+                  <div className="bg-muted border border-border rounded-lg p-2 text-xs font-mono text-foreground font-semibold truncate">
                     {node.expression}
                   </div>
                 </div>
 
                 {/* Input Connector */}
-                <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-4 h-4 bg-white border-2 border-slate-400 rounded-full z-10 shadow-sm"></div>
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-4 h-4 bg-card border-2 border-slate-400 rounded-full z-10 shadow-sm"></div>
 
                 {/* Output Connector */}
-                <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-4 h-4 bg-white border-2 border-blue-500 rounded-full z-10 shadow-sm"></div>
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-4 h-4 bg-card border-2 border-primary rounded-full z-10 shadow-sm"></div>
               </div>
             );
           })}
@@ -442,12 +442,12 @@ export default function AdminWorkflowBuilder() {
       {/* Settings Modal */}
       {showSettingsModal && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 md:p-8 max-w-lg w-full shadow-2xl border border-slate-200 space-y-6 animate-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-              <h3 className="text-xl font-extrabold text-[#0f2863] flex items-center gap-2">
-                <Settings className="w-5 h-5 text-blue-600" /> Paramètres du Workflow
+          <div className="bg-card rounded-2xl p-6 md:p-8 max-w-lg w-full shadow-sm border border-border space-y-6 animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between border-b border-border pb-4">
+              <h3 className="text-xl font-bold text-[#0f2863] flex items-center gap-2">
+                <Settings className="w-5 h-5 text-primary" /> Paramètres du Workflow
               </h3>
-              <button onClick={() => setShowSettingsModal(false)} className="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+              <button onClick={() => setShowSettingsModal(false)} className="text-slate-400 hover:text-muted-foreground p-1 rounded-lg">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -459,14 +459,14 @@ export default function AdminWorkflowBuilder() {
                   type="text"
                   value={workflowName}
                   onChange={(e) => setWorkflowName(e.target.value)}
-                  className="w-full mt-1 px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-bold text-slate-900 focus:outline-none focus:border-blue-500"
+                  className="w-full mt-1 px-4 py-2.5 bg-muted/50 border border-slate-300 text-sm font-bold text-foreground focus:outline-none focus:border-primary rounded-[var(--control-radius)]"
                 />
               </div>
 
-              <div className="flex items-center justify-between p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+              <div className="flex items-center justify-between p-4 bg-muted/50 border border-border rounded-2xl">
                 <div>
-                  <p className="text-sm font-bold text-slate-900">Exécution Automatique</p>
-                  <p className="text-xs text-slate-500">Déclencher automatiquement lors des événements système</p>
+                  <p className="text-sm font-bold text-foreground">Exécution Automatique</p>
+                  <p className="text-xs text-muted-foreground">Déclencher automatiquement lors des événements système</p>
                 </div>
                 <input
                   type="checkbox"
@@ -481,7 +481,7 @@ export default function AdminWorkflowBuilder() {
                 <select
                   value={logLevel}
                   onChange={(e) => setLogLevel(e.target.value)}
-                  className="w-full mt-1 px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-bold text-slate-900 focus:outline-none focus:border-blue-500"
+                  className="w-full mt-1 px-4 py-2.5 bg-muted/50 border border-slate-300 text-sm font-bold text-foreground focus:outline-none focus:border-primary rounded-[var(--control-radius)]"
                 >
                   <option value="basic">Minimal (Erreurs uniquement)</option>
                   <option value="detailed">Détaillé (Tous les événements)</option>
@@ -490,10 +490,10 @@ export default function AdminWorkflowBuilder() {
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
               <button
                 onClick={() => setShowSettingsModal(false)}
-                className="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-700 font-bold text-sm hover:bg-slate-50 transition-colors"
+                className="px-5 py-2.5 rounded-xl border border-border text-slate-700 font-bold text-sm hover:bg-muted/50 transition-colors"
               >
                 Annuler
               </button>

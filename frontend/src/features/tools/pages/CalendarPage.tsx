@@ -90,15 +90,15 @@ export default function CalendarPage() {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto p-6 space-y-8 font-sans animate-in fade-in zoom-in duration-500 pb-24">
+    <div className="max-w-7xl mx-auto space-y-8 font-sans animate-in fade-in zoom-in duration-500 pb-24">
       
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-black text-[#003a8c] italic flex items-center gap-3">
+        <h1 className="text-[#003a8c] italic flex items-center gap-3 erp-page-title">
           <CalendarIcon className="w-6 h-6 text-[#003a8c]" /> Calendrier Académique
         </h1>
         <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 bg-white border border-white/10 text-white/80 px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-white/[0.02] transition-colors shadow-sm">
+          <button className="flex items-center gap-2 bg-card border border-white/10 text-white/80 px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-white/[0.02] transition-colors shadow-sm">
             <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor"><path d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"/></svg>
             Google
           </button>
@@ -111,51 +111,51 @@ export default function CalendarPage() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white rounded-3xl p-6 shadow-sm border border-white/5 flex items-center gap-4">
-          <div className="w-12 h-12 bg-blue-50 text-blue-500 rounded-2xl flex items-center justify-center text-xl shadow-sm border border-blue-100">
+        <div className="bg-card rounded-2xl p-6 shadow-sm border border-white/5 flex items-center gap-4">
+          <div className="w-12 h-12 bg-primary/5 text-primary rounded-2xl flex items-center justify-center text-xl shadow-sm border border-primary/20">
             ðŸ“…
           </div>
           <div>
             <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">SÉANCES / SEMAINE</div>
-            <div className="text-2xl font-black text-[#003a8c]">9</div>
+            <div className="text-2xl font-bold text-[#003a8c]">9</div>
           </div>
         </div>
-        <div className="bg-white rounded-3xl p-6 shadow-sm border border-white/5 flex items-center gap-4">
+        <div className="bg-card rounded-2xl p-6 shadow-sm border border-white/5 flex items-center gap-4">
           <div className="w-12 h-12 bg-pink-50 text-pink-500 rounded-2xl flex items-center justify-center text-xl shadow-sm border border-pink-100">
             ðŸ“š
           </div>
           <div>
             <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">MODULES</div>
-            <div className="text-2xl font-black text-[#003a8c]">7</div>
+            <div className="text-2xl font-bold text-[#003a8c]">7</div>
           </div>
         </div>
-        <div className="bg-white rounded-3xl p-6 shadow-sm border border-white/5 flex items-center gap-4">
+        <div className="bg-card rounded-2xl p-6 shadow-sm border border-white/5 flex items-center gap-4">
           <div className="w-12 h-12 bg-purple-50 text-purple-500 rounded-2xl flex items-center justify-center text-xl shadow-sm border border-purple-100">
             â±ï¸
           </div>
           <div>
             <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">H / SEMAINE</div>
-            <div className="text-2xl font-black text-[#003a8c]">17h</div>
+            <div className="text-2xl font-bold text-[#003a8c]">17h</div>
           </div>
         </div>
-        <div className="bg-white rounded-3xl p-6 shadow-sm border border-white/5 flex items-center gap-4">
+        <div className="bg-card rounded-2xl p-6 shadow-sm border border-white/5 flex items-center gap-4">
           <div className="w-12 h-12 bg-amber-50 text-amber-500 rounded-2xl flex items-center justify-center text-xl shadow-sm border border-amber-100">
             ðŸ«
           </div>
           <div>
             <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">SALLES</div>
-            <div className="text-2xl font-black text-[#003a8c]">2</div>
+            <div className="text-2xl font-bold text-[#003a8c]">2</div>
           </div>
         </div>
       </div>
 
       {/* Calendar Grid */}
-      <div className="bg-white rounded-3xl p-8 shadow-sm border border-white/5">
+      <div className="bg-card rounded-2xl p-8 shadow-sm border border-white/5">
         
         {/* Calendar Header Controls */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h2 className="text-lg font-black text-[#003a8c] italic">Mon Emploi du Temps</h2>
+            <h2 className="text-lg font-bold text-[#003a8c] italic">Mon Emploi du Temps</h2>
             <p className="text-xs text-gray-400">Cliquez sur un cours pour voir les détails</p>
           </div>
           
@@ -172,7 +172,7 @@ export default function CalendarPage() {
               </button>
             </div>
             
-            <div className="text-xl font-black text-[#003a8c] px-8">
+            <div className="text-xl font-bold text-[#003a8c] px-8">
               22 - 28 JUIN 2026
             </div>
             
@@ -256,7 +256,7 @@ export default function CalendarPage() {
                   </div>
                   {event.room && (
                     <div className="text-[9px] font-medium opacity-80 flex items-center gap-1 mt-auto absolute bottom-2 left-2">
-                      <div className="w-1 h-1 rounded-full bg-white opacity-50"></div>
+                      <div className="w-1 h-1 rounded-full bg-card opacity-50"></div>
                       {event.room}
                     </div>
                   )}

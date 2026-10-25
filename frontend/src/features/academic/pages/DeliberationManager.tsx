@@ -48,7 +48,7 @@ export default function DeliberationManager() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+          <h1 className="text-foreground flex items-center gap-2 erp-page-title">
             <Calculator className="w-6 h-6 text-primary" />
             Moteur de Délibération APOGEE
           </h1>
@@ -87,7 +87,7 @@ export default function DeliberationManager() {
 
           <div className="bg-card border border-border rounded-2xl p-5 shadow-sm">
             <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
-              <FileText className="w-5 h-5 text-blue-500" />
+              <FileText className="w-5 h-5 text-primary" />
               Rapports Académiques
             </h3>
             <div className="space-y-2">
@@ -118,7 +118,7 @@ export default function DeliberationManager() {
               <h3 className="font-semibold text-lg">Lancement du Jury</h3>
               <div className="flex gap-2">
                 <select
-                  className="bg-muted text-sm border-none rounded-lg px-3 py-1.5 outline-none"
+                  className="bg-muted text-sm border-none px-3 py-1.5 outline-none rounded-[var(--control-radius)]"
                   value={selectedSemester}
                   onChange={(e) => setSelectedSemester(e.target.value)}
                 >
@@ -129,7 +129,7 @@ export default function DeliberationManager() {
                   <option value="5">Semestre 5</option>
                 </select>
                 <select
-                  className="bg-muted text-sm border-none rounded-lg px-3 py-1.5 outline-none"
+                  className="bg-muted text-sm border-none px-3 py-1.5 outline-none rounded-[var(--control-radius)]"
                   value={selectedSession}
                   onChange={(e) => setSelectedSession(e.target.value)}
                 >

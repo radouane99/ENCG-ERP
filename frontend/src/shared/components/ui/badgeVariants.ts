@@ -13,28 +13,28 @@ export const badgeVariants = cva(
     variants: {
       variant: {
         default: [
-          'bg-[color-mix(in srgb, var(--color-primary) 0.100%, transparent)]',
-          'text-[var(--color-primary)]',
-          'border-[color-mix(in srgb, var(--color-primary) 0.200%, transparent)]',
+          'bg-primary/10',
+          'text-primary',
+          'border-primary/20',
         ],
         secondary: [
           'bg-[var(--muted)]',
           'text-[var(--muted-foreground)]',
         ],
         success: [
-          'bg-[hsl(142_71%_45%/0.12)]',
-          'text-[hsl(142_71%_35%)]',
-          'border-[hsl(142_71%_45%/0.25)]',
+          'bg-success/10',
+          'text-success',
+          'border-success/25',
         ],
         warning: [
-          'bg-[hsl(38_92%_50%/0.12)]',
-          'text-[hsl(38_92%_38%)]',
-          'border-[hsl(38_92%_50%/0.25)]',
+          'bg-warning/10',
+          'text-[var(--warning-text)]',
+          'border-warning/25',
         ],
         destructive: [
-          'bg-[color-mix(in srgb, var(--color-destructive) 0.1200%, transparent)]',
-          'text-[var(--color-destructive)]',
-          'border-[color-mix(in srgb, var(--color-destructive) 0.2500%, transparent)]',
+          'bg-destructive/10',
+          'text-destructive',
+          'border-destructive/25',
         ],
         outline: [
           'bg-transparent',
@@ -42,9 +42,9 @@ export const badgeVariants = cva(
           'border-[var(--border)]',
         ],
         navy: [
-          'bg-[hsl(215_51%_25%/0.12)]',
-          'text-[hsl(215_51%_25%)]',
-          'border-[hsl(215_51%_25%/0.2)]',
+          'bg-primary/10',
+          'text-primary',
+          'border-primary/20',
         ],
       },
       size: {

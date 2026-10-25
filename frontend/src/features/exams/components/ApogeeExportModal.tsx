@@ -57,7 +57,7 @@ export default function ApogeeExportModal({ isOpen, onClose, defaultFiliereId }:
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl shadow-sm w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
         
         {/* Modal Header */}
         <div className="p-6 bg-gradient-to-r from-[#0f2863] via-[#11296b] to-[#1e3b8a] text-white flex items-center justify-between">
@@ -67,12 +67,12 @@ export default function ApogeeExportModal({ isOpen, onClose, defaultFiliereId }:
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 bg-white/20 text-amber-300 text-[10px] font-black uppercase rounded-md tracking-wider">
+                <span className="px-2.5 py-0.5 bg-white/20 text-amber-300 text-[10px] font-bold uppercase rounded-md tracking-wider">
                   MESRSFC • APOGEE
                 </span>
                 <span className="text-xs text-blue-200 font-bold">Code Établissement : 040</span>
               </div>
-              <h3 className="text-lg font-black text-white mt-0.5">
+              <h3 className="text-lg font-bold text-white mt-0.5">
                 Export Officiel des Délibérations APOGEE
               </h3>
             </div>
@@ -83,14 +83,14 @@ export default function ApogeeExportModal({ isOpen, onClose, defaultFiliereId }:
         </div>
 
         {/* Filter Bar */}
-        <div className="p-4 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-4">
+        <div className="p-4 bg-muted/50 dark:bg-slate-800/50 border-b border-border dark:border-border flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3 flex-wrap">
             <div>
               <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Filière</label>
               <select
                 value={selectedFiliere}
                 onChange={(e) => setSelectedFiliere(e.target.value)}
-                className="px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-white outline-none cursor-pointer"
+                className="px-3 py-1.5 bg-card dark:bg-card border border-border dark:border-border text-xs font-bold text-foreground dark:text-white outline-none cursor-pointer rounded-[var(--control-radius)]"
               >
                 <option value="">Toutes les Filières</option>
                 {filieres.map((f: any) => (
@@ -104,7 +104,7 @@ export default function ApogeeExportModal({ isOpen, onClose, defaultFiliereId }:
               <select
                 value={selectedSemester}
                 onChange={(e) => setSelectedSemester(e.target.value)}
-                className="px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-white outline-none cursor-pointer"
+                className="px-3 py-1.5 bg-card dark:bg-card border border-border dark:border-border text-xs font-bold text-foreground dark:text-white outline-none cursor-pointer rounded-[var(--control-radius)]"
               >
                 <option value="">Tous les Semestres</option>
                 {['S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8', 'S9', 'S10'].map((s, idx) => (
@@ -117,7 +117,7 @@ export default function ApogeeExportModal({ isOpen, onClose, defaultFiliereId }:
           <div className="flex items-center gap-3">
             <button
               onClick={() => refetch()}
-              className="p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors cursor-pointer"
+              className="p-2 text-muted-foreground dark:text-foreground hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors cursor-pointer"
               title="Rafraîchir"
             >
               <RefreshCw className={cn("w-4 h-4", isLoading && "animate-spin")} />
@@ -125,7 +125,7 @@ export default function ApogeeExportModal({ isOpen, onClose, defaultFiliereId }:
 
             <button
               onClick={handleDownloadCsv}
-              className="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-lg hover:scale-105 transition-all flex items-center gap-2 cursor-pointer"
+              className="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-lg hover:scale-105 transition-all flex items-center gap-2 cursor-pointer"
             >
               <Download className="w-4 h-4 text-white" /> Télécharger Fichier CSV APOGEE
             </button>
@@ -134,7 +134,7 @@ export default function ApogeeExportModal({ isOpen, onClose, defaultFiliereId }:
 
         {/* Records Preview Table */}
         <div className="p-6 flex-1 overflow-y-auto space-y-4">
-          <div className="flex items-center justify-between text-xs text-slate-500 font-bold">
+          <div className="flex items-center justify-between text-xs text-muted-foreground font-bold">
             <span>Aperçu des 50 premiers enregistrements prêts pour transmission ministérielle</span>
             <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 border border-emerald-200">
               Total : {previewData?.total_records || 0} lignes
@@ -143,13 +143,13 @@ export default function ApogeeExportModal({ isOpen, onClose, defaultFiliereId }:
 
           {isLoading ? (
             <div className="py-16 text-center text-slate-400 flex flex-col items-center gap-3">
-              <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
               <span>Génération du flux APOGEE en cours...</span>
             </div>
           ) : (
-            <div className="border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs">
+            <div className="border border-border dark:border-border rounded-2xl overflow-hidden shadow-xs">
               <table className="w-full text-left text-xs font-mono">
-                <thead className="bg-slate-100 dark:bg-slate-800/80 text-slate-500 uppercase tracking-wider text-[10px] font-black border-b border-slate-200 dark:border-slate-700">
+                <thead className="bg-muted dark:bg-slate-800/80 text-muted-foreground uppercase tracking-wider text-[10px] font-bold border-b border-border dark:border-border">
                   <tr>
                     <th className="p-3">COD_ETB</th>
                     <th className="p-3">COD_IND</th>
@@ -160,26 +160,26 @@ export default function ApogeeExportModal({ isOpen, onClose, defaultFiliereId }:
                     <th className="p-3 text-center">DÉCISION (COD_TRE)</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800 bg-card dark:bg-card">
                   {(previewData?.records || []).map((row: any, i: number) => (
                     <tr key={i} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
                       <td className="p-3 font-bold text-slate-400">{row.COD_ETB}</td>
-                      <td className="p-3 font-bold text-indigo-600 dark:text-indigo-400">{row.COD_IND}</td>
-                      <td className="p-3 font-bold text-slate-700 dark:text-slate-300">{row.COD_ETU}</td>
-                      <td className="p-3 font-sans font-bold text-slate-900 dark:text-white">
+                      <td className="p-3 font-bold text-primary dark:text-indigo-400">{row.COD_IND}</td>
+                      <td className="p-3 font-bold text-slate-700 dark:text-foreground">{row.COD_ETU}</td>
+                      <td className="p-3 font-sans font-bold text-foreground dark:text-white">
                         {row.NOM_ETU} {row.PRE_ETU}
                       </td>
                       <td className="p-3">
-                        <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded font-bold text-slate-700 dark:text-slate-300">
+                        <span className="px-2 py-0.5 bg-muted dark:bg-card rounded font-bold text-slate-700 dark:text-foreground">
                           {row.COD_ELP}
                         </span>
                       </td>
-                      <td className="p-3 text-center font-bold text-slate-900 dark:text-white">
+                      <td className="p-3 text-center font-bold text-foreground dark:text-white">
                         {row.NOT_ELP} / 20
                       </td>
                       <td className="p-3 text-center">
                         <span className={cn(
-                          "px-2 py-0.5 rounded-full text-[10px] font-black uppercase",
+                          "px-2 py-0.5 rounded-full text-[10px] font-bold uppercase",
                           row.COD_TRE === 'V' && "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
                           row.COD_TRE === 'RAT' && "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
                           row.COD_TRE === 'NV' && "bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300"
@@ -196,14 +196,14 @@ export default function ApogeeExportModal({ isOpen, onClose, defaultFiliereId }:
         </div>
 
         {/* Modal Footer */}
-        <div className="p-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
+        <div className="p-4 bg-muted/50 dark:bg-slate-800/50 border-t border-border dark:border-border flex items-center justify-between">
           <div className="text-[11px] text-slate-400 font-medium flex items-center gap-1.5">
             <ShieldCheck className="w-4 h-4 text-emerald-500" />
             Conforme à la circulaire ministérielle MESRSFC — Système LMD Marocain
           </div>
           <button
             onClick={onClose}
-            className="px-4 py-2 text-xs font-bold text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors cursor-pointer"
+            className="px-4 py-2 text-xs font-bold text-muted-foreground hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors cursor-pointer"
           >
             Fermer
           </button>

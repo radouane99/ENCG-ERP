@@ -176,7 +176,7 @@ export default function CandidatureList() {
   return (
     <div className="space-y-8 animate-in pb-24 p-6 max-w-7xl mx-auto font-sans">
       {/* Hero Header */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-[#0c1e4e] via-[#162e74] to-[#061230] p-6 md:p-10 rounded-[2.5rem] shadow-2xl text-white border border-blue-500/20 backdrop-blur-xl">
+      <div className="relative overflow-hidden p-6 md:p-10 text-white border border-blue-500/20 backdrop-blur-xl erp-page-banner">
         {/* Ambient Glows */}
         <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-br from-indigo-500/15 via-blue-600/10 to-transparent rounded-full blur-3xl -translate-y-1/3 translate-x-1/4 pointer-events-none"></div>
         <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-amber-500/10 via-amber-400/5 to-transparent rounded-full blur-2xl translate-y-1/3 -translate-x-1/4 pointer-events-none"></div>
@@ -185,14 +185,14 @@ export default function CandidatureList() {
           {/* Top Title Bar */}
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
             <div className="flex items-start gap-5">
-              <div className="w-16 h-16 md:w-20 md:h-20 rounded-3xl bg-gradient-to-br from-amber-400/20 to-blue-500/20 backdrop-blur-2xl border border-white/20 flex items-center justify-center text-amber-300 shadow-2xl shrink-0">
+              <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-gradient-to-br from-amber-400/20 to-blue-500/20 backdrop-blur-2xl border border-white/20 flex items-center justify-center text-amber-300 shadow-sm shrink-0">
                 <Sparkles className="w-8 h-8 md:w-10 md:h-10 text-amber-400 animate-pulse" />
               </div>
               <div className="space-y-1.5">
-                <div className="inline-flex items-center gap-2 bg-blue-400/15 text-blue-200 px-3.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-blue-400/30 backdrop-blur-md">
+                <div className="inline-flex items-center gap-2 bg-blue-400/15 text-blue-200 px-3.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border border-blue-400/30 backdrop-blur-md">
                   <Zap className="w-3.5 h-3.5 text-amber-400" /> Concours TAFSEM & Passerelles ENCG Fès
                 </div>
-                <h1 className="text-2xl md:text-4xl font-black text-white tracking-tight">
+                <h1 className="text-white erp-page-title">
                   Candidatures & Admissions
                 </h1>
                 <p className="text-blue-100/80 text-xs md:text-sm max-w-2xl font-medium leading-relaxed">
@@ -206,7 +206,7 @@ export default function CandidatureList() {
           <div className="pt-4 border-t border-white/10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
             <button
               onClick={() => setIsAddCandidateModalOpen(true)}
-              className="flex items-center justify-center gap-2.5 px-5 py-3.5 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-400 hover:to-teal-500 text-white font-black rounded-2xl transition-all text-xs uppercase tracking-wider shadow-lg hover:shadow-emerald-500/25 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer border border-emerald-300/40"
+              className="flex items-center justify-center gap-2.5 px-5 py-3.5 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-400 hover:to-teal-500 text-white font-bold rounded-2xl transition-all text-xs uppercase tracking-wider shadow-lg hover:shadow-emerald-500/25 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer border border-emerald-300/40"
             >
               <UserPlus className="w-4 h-4 shrink-0 text-emerald-100" />
               <span>Ajouter Candidat</span>
@@ -221,7 +221,7 @@ export default function CandidatureList() {
               <span>Modèle CSV TAFEM</span>
             </button>
 
-            <label className="flex items-center justify-center gap-2.5 px-4 py-3.5 bg-gradient-to-r from-indigo-600 via-indigo-500 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-black rounded-2xl transition-all text-xs uppercase tracking-wider shadow-lg hover:shadow-indigo-500/25 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer border border-indigo-400/40">
+            <label className="flex items-center justify-center gap-2.5 px-4 py-3.5 bg-gradient-to-r from-indigo-600 via-indigo-500 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-bold rounded-2xl transition-all text-xs uppercase tracking-wider shadow-lg hover:shadow-indigo-500/25 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer border border-indigo-400/40">
               <Upload className="w-4 h-4 text-indigo-200 shrink-0" />
               <span className="truncate">Import Liste Ministère</span>
               <input
@@ -261,7 +261,7 @@ export default function CandidatureList() {
 
             <button 
               onClick={() => setIsCampaignModalOpen(true)}
-              className="flex items-center justify-center gap-2.5 px-5 py-3.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-950 font-black rounded-2xl transition-all text-xs uppercase tracking-wider shadow-lg hover:shadow-amber-500/25 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
+              className="flex items-center justify-center gap-2.5 px-5 py-3.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-950 font-bold rounded-2xl transition-all text-xs uppercase tracking-wider shadow-lg hover:shadow-amber-500/25 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
             >
               <Plus className="w-4 h-4 shrink-0" />
               <span>Nouvelle Campagne</span>
@@ -274,24 +274,24 @@ export default function CandidatureList() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div 
           onClick={() => setStatusFilter('all')}
-          className={cn("p-6 rounded-[2rem] bg-white dark:bg-slate-900 border shadow-md flex items-center justify-between cursor-pointer transition-all hover:scale-102", statusFilter === 'all' && "ring-2 ring-indigo-500")}
+          className={cn("p-6 rounded-2xl bg-card dark:bg-card border shadow-md flex items-center justify-between cursor-pointer transition-all hover:scale-102", statusFilter === 'all' && "ring-2 ring-ring")}
         >
           <div>
-            <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Total Candidats</p>
-            <p className="text-3xl font-black text-slate-900 dark:text-white">{candidatures.length || stats.total}</p>
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Total Candidats</p>
+            <p className="text-3xl font-bold text-foreground dark:text-white">{candidatures.length || stats.total}</p>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/50 text-[#0f2863] dark:text-blue-300 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-2xl bg-primary/5 dark:bg-blue-950/50 text-[#0f2863] dark:text-blue-300 flex items-center justify-center">
             <Users className="w-6 h-6" />
           </div>
         </div>
 
         <div 
           onClick={() => setStatusFilter('pending')}
-          className={cn("p-6 rounded-[2rem] bg-white dark:bg-slate-900 border shadow-md flex items-center justify-between cursor-pointer transition-all hover:scale-102", statusFilter === 'pending' && "ring-2 ring-amber-500")}
+          className={cn("p-6 rounded-2xl bg-card dark:bg-card border shadow-md flex items-center justify-between cursor-pointer transition-all hover:scale-102", statusFilter === 'pending' && "ring-2 ring-amber-500")}
         >
           <div>
-            <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">En Attente</p>
-            <p className="text-3xl font-black text-amber-600">{stats.pending}</p>
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">En Attente</p>
+            <p className="text-3xl font-bold text-amber-600">{stats.pending}</p>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 flex items-center justify-center">
             <Clock className="w-6 h-6" />
@@ -300,11 +300,11 @@ export default function CandidatureList() {
 
         <div 
           onClick={() => setStatusFilter('accepted')}
-          className={cn("p-6 rounded-[2rem] bg-white dark:bg-slate-900 border shadow-md flex items-center justify-between cursor-pointer transition-all hover:scale-102", statusFilter === 'accepted' && "ring-2 ring-emerald-500")}
+          className={cn("p-6 rounded-2xl bg-card dark:bg-card border shadow-md flex items-center justify-between cursor-pointer transition-all hover:scale-102", statusFilter === 'accepted' && "ring-2 ring-emerald-500")}
         >
           <div>
-            <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Admis TAFSEM</p>
-            <p className="text-3xl font-black text-emerald-600">{stats.accepted}</p>
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Admis TAFSEM</p>
+            <p className="text-3xl font-bold text-emerald-600">{stats.accepted}</p>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 flex items-center justify-center">
             <CheckCircle2 className="w-6 h-6" />
@@ -313,11 +313,11 @@ export default function CandidatureList() {
 
         <div 
           onClick={() => setStatusFilter('rejected')}
-          className={cn("p-6 rounded-[2rem] bg-white dark:bg-slate-900 border shadow-md flex items-center justify-between cursor-pointer transition-all hover:scale-102", statusFilter === 'rejected' && "ring-2 ring-rose-500")}
+          className={cn("p-6 rounded-2xl bg-card dark:bg-card border shadow-md flex items-center justify-between cursor-pointer transition-all hover:scale-102", statusFilter === 'rejected' && "ring-2 ring-rose-500")}
         >
           <div>
-            <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Dossiers Rejetés</p>
-            <p className="text-3xl font-black text-rose-600">{stats.rejected}</p>
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Dossiers Rejetés</p>
+            <p className="text-3xl font-bold text-rose-600">{stats.rejected}</p>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 flex items-center justify-center">
             <XCircle className="w-6 h-6" />
@@ -326,9 +326,9 @@ export default function CandidatureList() {
       </div>
 
       {/* Filters & Table Container */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-[2.5rem] shadow-xl overflow-hidden flex flex-col">
+      <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl shadow-sm overflow-hidden flex flex-col">
         {/* Toolbar */}
-        <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row gap-4 items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
+        <div className="p-6 border-b border-border dark:border-border flex flex-col sm:flex-row gap-4 items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
           <div className="relative w-full sm:w-96">
             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input 
@@ -336,14 +336,14 @@ export default function CandidatureList() {
               placeholder="Rechercher par nom, CNE, CIN ou numéro de dossier..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-10 pr-4 py-2.5 bg-card dark:bg-card border border-border dark:border-border text-xs font-semibold text-foreground dark:text-foreground outline-none focus:ring-2 focus:ring-ring rounded-[var(--control-radius)]"
             />
           </div>
 
           <div className="flex items-center gap-3 w-full sm:w-auto">
             <button 
               onClick={fetchCandidatures}
-              className="px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 transition-colors flex items-center gap-2 cursor-pointer"
+              className="px-4 py-2.5 bg-card dark:bg-card border border-border dark:border-border rounded-xl text-xs font-bold text-slate-700 dark:text-foreground hover:bg-muted/50 transition-colors flex items-center gap-2 cursor-pointer"
             >
               <RefreshCw className="w-4 h-4" /> Actualiser
             </button>
@@ -358,7 +358,7 @@ export default function CandidatureList() {
             </div>
           ) : (
             <table className="w-full text-sm text-left">
-              <thead className="text-xs text-slate-400 uppercase tracking-wider bg-slate-50/80 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800 font-black">
+              <thead className="text-xs text-slate-400 uppercase tracking-wider bg-slate-50/80 dark:bg-slate-800/50 border-b border-border dark:border-border font-bold">
                 <tr>
                   <th scope="col" className="px-6 py-4">Candidat & Dossier</th>
                   <th scope="col" className="px-6 py-4">Filière Demandée</th>
@@ -372,14 +372,14 @@ export default function CandidatureList() {
                   <tr>
                     <td colSpan={5} className="px-6 py-20 text-center">
                       <div className="flex flex-col items-center justify-center space-y-3 max-w-md mx-auto">
-                        <div className="w-14 h-14 rounded-3xl bg-slate-100 dark:bg-slate-800 text-slate-400 flex items-center justify-center">
+                        <div className="w-14 h-14 rounded-2xl bg-muted dark:bg-card text-slate-400 flex items-center justify-center">
                           <Users className="w-7 h-7" />
                         </div>
-                        <p className="text-base font-extrabold text-slate-800 dark:text-slate-200">
+                        <p className="text-base font-bold text-foreground dark:text-foreground">
                           {searchQuery ? "Aucune candidature ne correspond à votre recherche." : "Aucune candidature enregistrée pour le moment."}
                         </p>
                         <p className="text-xs font-medium text-slate-400 leading-relaxed">
-                          Les candidatures soumises sur la page d'inscription (<code className="font-mono text-indigo-500">/inscription</code>), par import CSV Ministère TAFEM, ou ajoutées manuellement s'afficheront ici en temps réel.
+                          Les candidatures soumises sur la page d'inscription (<code className="font-mono text-primary">/inscription</code>), par import CSV Ministère TAFEM, ou ajoutées manuellement s'afficheront ici en temps réel.
                         </p>
                         <button
                           onClick={() => setIsAddCandidateModalOpen(true)}
@@ -396,23 +396,23 @@ export default function CandidatureList() {
                       <tr key={c.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-[#0f2863] dark:text-blue-300 border border-blue-200 dark:border-blue-800 flex items-center justify-center font-black text-xs shrink-0 shadow-xs">
+                            <div className="w-9 h-9 rounded-2xl bg-primary/5 dark:bg-blue-950/60 text-[#0f2863] dark:text-blue-300 border border-primary/20 dark:border-primary flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
                               {c.first_name?.charAt(0)}{c.last_name?.charAt(0)}
                             </div>
                             <div>
-                              <p className="font-extrabold text-slate-900 dark:text-white text-sm">{c.first_name} {c.last_name}</p>
-                              <p className="text-xs font-mono text-slate-500">CNE : {c.cne} | CIN : {c.cin || '—'}</p>
+                              <p className="font-bold text-foreground dark:text-white text-sm">{c.first_name} {c.last_name}</p>
+                              <p className="text-xs font-mono text-muted-foreground">CNE : {c.cne} | CIN : {c.cin || '—'}</p>
                             </div>
                           </div>
                         </td>
 
                         <td className="px-6 py-4">
-                          <span className="font-bold text-slate-900 dark:text-white text-xs block">{c.filiere || c.reference_number || 'Deux années préparatoires'}</span>
+                          <span className="font-bold text-foreground dark:text-white text-xs block">{c.filiere || c.reference_number || 'Deux années préparatoires'}</span>
                           <span className="text-[10px] text-slate-400 font-mono">Bac : {c.bac_type || 'Sciences Éco'}</span>
                         </td>
 
                         <td className="px-6 py-4 text-center font-mono">
-                          <div className="font-black text-xs text-indigo-600 dark:text-indigo-400">
+                          <div className="font-bold text-xs text-primary dark:text-indigo-400">
                             TAFEM : {c.selection_score ?? c.tafem_score ?? '—'} pts
                           </div>
                           <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold mt-0.5">
@@ -460,7 +460,7 @@ export default function CandidatureList() {
                               label = "🟣 Liste d'Attente 2";
                             } else if (isAttente3) {
                               badgeStyle = "bg-blue-50 text-blue-800 border-blue-300 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800 shadow-2xs";
-                              icon = <Clock className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />;
+                              icon = <Clock className="w-3.5 h-3.5 text-primary dark:text-blue-400" />;
                               label = "🔵 Liste d'Attente 3";
                             } else if (isPending) {
                               badgeStyle = "bg-sky-50 text-sky-800 border-sky-300 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800";
@@ -478,7 +478,7 @@ export default function CandidatureList() {
 
                             return (
                               <span className={cn(
-                                "px-3.5 py-1.5 rounded-xl text-xs font-black tracking-wide border inline-flex items-center gap-1.5 shadow-2xs transition-all",
+                                "px-3.5 py-1.5 rounded-xl text-xs font-bold tracking-wide border inline-flex items-center gap-1.5 shadow-2xs transition-all",
                                 badgeStyle
                               )}>
                                 {icon}
@@ -493,10 +493,10 @@ export default function CandidatureList() {
                             {/* Inspecter / Détails */}
                             <button
                               onClick={() => setSelectedCandidate(c)}
-                              className="px-2.5 py-1.5 bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 text-indigo-700 dark:text-indigo-300 rounded-xl text-xs font-bold transition-all flex items-center gap-1 border border-indigo-200 dark:border-indigo-800 cursor-pointer shadow-2xs hover:scale-102"
+                              className="px-2.5 py-1.5 bg-primary/5 dark:bg-indigo-950/40 hover:bg-primary/10 text-primary dark:text-indigo-300 rounded-xl text-xs font-bold transition-all flex items-center gap-1 border border-primary/20 dark:border-primary cursor-pointer shadow-2xs hover:scale-102"
                               title="Vue détaillée du dossier"
                             >
-                              <Eye className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                              <Eye className="w-3.5 h-3.5 text-primary dark:text-indigo-400" />
                               <span className="hidden sm:inline">Détails</span>
                             </button>
 
@@ -523,10 +523,10 @@ export default function CandidatureList() {
                             {/* Convocation PDF */}
                             <button
                               onClick={() => handleExportConvocationPdf(c)}
-                              className="px-2.5 py-1.5 bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 text-blue-700 dark:text-blue-300 rounded-xl text-xs font-bold transition-all flex items-center gap-1 border border-blue-200 dark:border-blue-800 cursor-pointer shadow-2xs hover:scale-102"
+                              className="px-2.5 py-1.5 bg-primary/5 dark:bg-blue-950/40 hover:bg-primary/10 text-primary dark:text-blue-300 rounded-xl text-xs font-bold transition-all flex items-center gap-1 border border-primary/20 dark:border-primary cursor-pointer shadow-2xs hover:scale-102"
                               title="Télécharger la Convocation d'Examen A4"
                             >
-                              <Printer className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                              <Printer className="w-3.5 h-3.5 text-primary dark:text-blue-400" />
                               <span className="hidden md:inline">Convocation</span>
                             </button>
                           </div>
@@ -544,9 +544,9 @@ export default function CandidatureList() {
       {/* Campaign Modal */}
       {isCampaignModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-xl overflow-hidden animate-in zoom-in-95 duration-200">
+          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl shadow-sm w-full max-w-xl overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="p-6 bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] text-white flex items-center justify-between">
-              <h3 className="text-lg font-black">Nouvelle Campagne TAFSEM</h3>
+              <h3 className="text-lg font-bold">Nouvelle Campagne TAFSEM</h3>
               <button onClick={() => setIsCampaignModalOpen(false)} className="text-white/70 hover:text-white p-2 rounded-full hover:bg-white/10">
                 <X className="w-5 h-5" />
               </button>
@@ -558,7 +558,7 @@ export default function CandidatureList() {
                   type="text" 
                   value={newCampaign.title}
                   onChange={(e) => setNewCampaign({ ...newCampaign, title: e.target.value })}
-                  className="w-full p-3 bg-slate-50 dark:bg-slate-800 border rounded-xl"
+                  className="w-full p-3 bg-muted/50 dark:bg-card border rounded-[var(--control-radius)]"
                   required
                 />
               </div>
@@ -569,7 +569,7 @@ export default function CandidatureList() {
                     type="number" 
                     value={newCampaign.quota}
                     onChange={(e) => setNewCampaign({ ...newCampaign, quota: parseInt(e.target.value) })}
-                    className="w-full p-3 bg-slate-50 dark:bg-slate-800 border rounded-xl"
+                    className="w-full p-3 bg-muted/50 dark:bg-card border rounded-[var(--control-radius)]"
                   />
                 </div>
                 <div>
@@ -578,7 +578,7 @@ export default function CandidatureList() {
                     type="date" 
                     value={newCampaign.deadline}
                     onChange={(e) => setNewCampaign({ ...newCampaign, deadline: e.target.value })}
-                    className="w-full p-3 bg-slate-50 dark:bg-slate-800 border rounded-xl"
+                    className="w-full p-3 bg-muted/50 dark:bg-card border rounded-[var(--control-radius)]"
                   />
                 </div>
               </div>
@@ -598,16 +598,16 @@ export default function CandidatureList() {
       {/* ── MODAL 1: INSPECTION / VUE DÉTAILLÉE ── */}
       {selectedCandidate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-3xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl shadow-sm w-full max-w-3xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
             
             {/* Header */}
             <div className="p-6 bg-gradient-to-r from-[#0c1e4e] via-[#162e74] to-[#081436] text-white flex items-center justify-between shrink-0">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-amber-300 font-black text-lg border border-white/20 shadow-md">
+                <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-amber-300 font-bold text-lg border border-white/20 shadow-md">
                   {selectedCandidate.first_name?.charAt(0)}{selectedCandidate.last_name?.charAt(0)}
                 </div>
                 <div>
-                  <h3 className="text-lg font-black text-white">{selectedCandidate.first_name} {selectedCandidate.last_name}</h3>
+                  <h3 className="text-lg font-bold text-white">{selectedCandidate.first_name} {selectedCandidate.last_name}</h3>
                   <p className="text-xs text-blue-200 font-mono">CNE: {selectedCandidate.cne} | CIN: {selectedCandidate.cin || '—'}</p>
                 </div>
               </div>
@@ -617,85 +617,85 @@ export default function CandidatureList() {
             </div>
 
             {/* Tabs */}
-            <div className="flex items-center gap-2 p-3 bg-slate-100 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 text-xs font-bold shrink-0 overflow-x-auto">
+            <div className="flex items-center gap-2 p-3 bg-muted dark:bg-slate-800/80 border-b border-border dark:border-border text-xs font-bold shrink-0 overflow-x-auto">
               <button
                 onClick={() => setDetailTab('identity')}
-                className={cn("px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap", detailTab === 'identity' ? "bg-[#0f2863] text-white shadow-md font-black" : "text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700")}
+                className={cn("px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap", detailTab === 'identity' ? "bg-[#0f2863] text-white shadow-md font-bold" : "text-muted-foreground dark:text-foreground hover:bg-card dark:hover:bg-slate-700")}
               >
                 <User className="w-3.5 h-3.5" /> Identité & Contact
               </button>
               <button
                 onClick={() => setDetailTab('parents')}
-                className={cn("px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap", detailTab === 'parents' ? "bg-[#0f2863] text-white shadow-md font-black" : "text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700")}
+                className={cn("px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap", detailTab === 'parents' ? "bg-[#0f2863] text-white shadow-md font-bold" : "text-muted-foreground dark:text-foreground hover:bg-card dark:hover:bg-slate-700")}
               >
                 <Users className="w-3.5 h-3.5" /> Tuteurs & Urgence
               </button>
               <button
                 onClick={() => setDetailTab('bac')}
-                className={cn("px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap", detailTab === 'bac' ? "bg-[#0f2863] text-white shadow-md font-black" : "text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700")}
+                className={cn("px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap", detailTab === 'bac' ? "bg-[#0f2863] text-white shadow-md font-bold" : "text-muted-foreground dark:text-foreground hover:bg-card dark:hover:bg-slate-700")}
               >
                 <GraduationCap className="w-3.5 h-3.5" /> Bac & Orientation
               </button>
               <button
                 onClick={() => setDetailTab('docs')}
-                className={cn("px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap", detailTab === 'docs' ? "bg-[#0f2863] text-white shadow-md font-black" : "text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700")}
+                className={cn("px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap", detailTab === 'docs' ? "bg-[#0f2863] text-white shadow-md font-bold" : "text-muted-foreground dark:text-foreground hover:bg-card dark:hover:bg-slate-700")}
               >
                 <FileText className="w-3.5 h-3.5" /> Documents Scannés
               </button>
             </div>
 
             {/* Tab Content */}
-            <div className="p-6 overflow-y-auto space-y-4 text-xs font-bold text-slate-800 dark:text-slate-200 flex-1">
+            <div className="p-6 overflow-y-auto space-y-4 text-xs font-bold text-foreground dark:text-foreground flex-1">
               {detailTab === 'identity' && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/60 space-y-2">
-                    <p className="text-[10px] font-black uppercase text-slate-400">Nom & Prénom (FR)</p>
-                    <p className="text-sm font-extrabold text-slate-900 dark:text-white">{selectedCandidate.first_name} {selectedCandidate.last_name}</p>
+                  <div className="bg-muted/50 dark:bg-slate-800/60 p-4 rounded-2xl border border-border dark:border-slate-700/60 space-y-2">
+                    <p className="text-[10px] font-bold uppercase text-slate-400">Nom & Prénom (FR)</p>
+                    <p className="text-sm font-bold text-foreground dark:text-white">{selectedCandidate.first_name} {selectedCandidate.last_name}</p>
                   </div>
-                  <div className="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/60 space-y-2">
-                    <p className="text-[10px] font-black uppercase text-slate-400">Nom & Prénom (AR)</p>
-                    <p className="text-sm font-serif font-extrabold text-slate-900 dark:text-white">{selectedCandidate.first_name_ar || '—'} {selectedCandidate.last_name_ar || '—'}</p>
+                  <div className="bg-muted/50 dark:bg-slate-800/60 p-4 rounded-2xl border border-border dark:border-slate-700/60 space-y-2">
+                    <p className="text-[10px] font-bold uppercase text-slate-400">Nom & Prénom (AR)</p>
+                    <p className="text-sm font-serif font-bold text-foreground dark:text-white">{selectedCandidate.first_name_ar || '—'} {selectedCandidate.last_name_ar || '—'}</p>
                   </div>
-                  <div className="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/60 space-y-2">
-                    <p className="text-[10px] font-black uppercase text-slate-400">CNE (Code Massar)</p>
-                    <p className="text-sm font-mono font-extrabold text-indigo-600 dark:text-indigo-400">{selectedCandidate.cne}</p>
+                  <div className="bg-muted/50 dark:bg-slate-800/60 p-4 rounded-2xl border border-border dark:border-slate-700/60 space-y-2">
+                    <p className="text-[10px] font-bold uppercase text-slate-400">CNE (Code Massar)</p>
+                    <p className="text-sm font-mono font-bold text-primary dark:text-indigo-400">{selectedCandidate.cne}</p>
                   </div>
-                  <div className="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/60 space-y-2">
-                    <p className="text-[10px] font-black uppercase text-slate-400">CNIE (Carte d'Identité)</p>
-                    <p className="text-sm font-mono font-extrabold text-slate-900 dark:text-white">{selectedCandidate.cin || '—'}</p>
+                  <div className="bg-muted/50 dark:bg-slate-800/60 p-4 rounded-2xl border border-border dark:border-slate-700/60 space-y-2">
+                    <p className="text-[10px] font-bold uppercase text-slate-400">CNIE (Carte d'Identité)</p>
+                    <p className="text-sm font-mono font-bold text-foreground dark:text-white">{selectedCandidate.cin || '—'}</p>
                   </div>
-                  <div className="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/60 space-y-2">
-                    <p className="text-[10px] font-black uppercase text-slate-400">E-mail</p>
-                    <p className="text-sm font-semibold text-slate-900 dark:text-white">{selectedCandidate.email || '—'}</p>
+                  <div className="bg-muted/50 dark:bg-slate-800/60 p-4 rounded-2xl border border-border dark:border-slate-700/60 space-y-2">
+                    <p className="text-[10px] font-bold uppercase text-slate-400">E-mail</p>
+                    <p className="text-sm font-semibold text-foreground dark:text-white">{selectedCandidate.email || '—'}</p>
                   </div>
-                  <div className="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/60 space-y-2">
-                    <p className="text-[10px] font-black uppercase text-slate-400">Téléphone</p>
-                    <p className="text-sm font-semibold text-slate-900 dark:text-white">{selectedCandidate.phone || '—'}</p>
+                  <div className="bg-muted/50 dark:bg-slate-800/60 p-4 rounded-2xl border border-border dark:border-slate-700/60 space-y-2">
+                    <p className="text-[10px] font-bold uppercase text-slate-400">Téléphone</p>
+                    <p className="text-sm font-semibold text-foreground dark:text-white">{selectedCandidate.phone || '—'}</p>
                   </div>
-                  <div className="sm:col-span-2 bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/60 space-y-2">
-                    <p className="text-[10px] font-black uppercase text-slate-400">Adresse Résidence</p>
-                    <p className="text-sm font-medium text-slate-900 dark:text-white">{selectedCandidate.address_fr || '—'}</p>
+                  <div className="sm:col-span-2 bg-muted/50 dark:bg-slate-800/60 p-4 rounded-2xl border border-border dark:border-slate-700/60 space-y-2">
+                    <p className="text-[10px] font-bold uppercase text-slate-400">Adresse Résidence</p>
+                    <p className="text-sm font-medium text-foreground dark:text-white">{selectedCandidate.address_fr || '—'}</p>
                   </div>
                 </div>
               )}
 
               {detailTab === 'parents' && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="bg-blue-50/50 dark:bg-blue-950/30 p-4 rounded-2xl border border-blue-200 dark:border-blue-800 space-y-2">
-                    <p className="text-[10px] font-black uppercase text-blue-600 dark:text-blue-400">Père</p>
-                    <p className="text-sm font-extrabold">{selectedCandidate.father_first_name_fr ? `${selectedCandidate.father_first_name_fr} ${selectedCandidate.father_last_name_fr || ''}` : '—'}</p>
-                    <p className="text-xs text-slate-500">CIN: {selectedCandidate.father_cin || '—'} | Job: {selectedCandidate.father_job || '—'}</p>
-                    <p className="text-xs text-slate-500">Tél: {selectedCandidate.father_phone || '—'}</p>
+                  <div className="bg-blue-50/50 dark:bg-blue-950/30 p-4 rounded-2xl border border-primary/20 dark:border-primary space-y-2">
+                    <p className="text-[10px] font-bold uppercase text-primary dark:text-blue-400">Père</p>
+                    <p className="text-sm font-bold">{selectedCandidate.father_first_name_fr ? `${selectedCandidate.father_first_name_fr} ${selectedCandidate.father_last_name_fr || ''}` : '—'}</p>
+                    <p className="text-xs text-muted-foreground">CIN: {selectedCandidate.father_cin || '—'} | Job: {selectedCandidate.father_job || '—'}</p>
+                    <p className="text-xs text-muted-foreground">Tél: {selectedCandidate.father_phone || '—'}</p>
                   </div>
                   <div className="bg-pink-50/50 dark:bg-pink-950/30 p-4 rounded-2xl border border-pink-200 dark:border-pink-800 space-y-2">
-                    <p className="text-[10px] font-black uppercase text-pink-600 dark:text-pink-400">Mère</p>
-                    <p className="text-sm font-extrabold">{selectedCandidate.mother_first_name_fr ? `${selectedCandidate.mother_first_name_fr} ${selectedCandidate.mother_last_name_fr || ''}` : '—'}</p>
-                    <p className="text-xs text-slate-500">CIN: {selectedCandidate.mother_cin || '—'} | Job: {selectedCandidate.mother_job || '—'}</p>
-                    <p className="text-xs text-slate-500">Tél: {selectedCandidate.mother_phone || '—'}</p>
+                    <p className="text-[10px] font-bold uppercase text-pink-600 dark:text-pink-400">Mère</p>
+                    <p className="text-sm font-bold">{selectedCandidate.mother_first_name_fr ? `${selectedCandidate.mother_first_name_fr} ${selectedCandidate.mother_last_name_fr || ''}` : '—'}</p>
+                    <p className="text-xs text-muted-foreground">CIN: {selectedCandidate.mother_cin || '—'} | Job: {selectedCandidate.mother_job || '—'}</p>
+                    <p className="text-xs text-muted-foreground">Tél: {selectedCandidate.mother_phone || '—'}</p>
                   </div>
                   <div className="sm:col-span-2 bg-amber-50/50 dark:bg-amber-950/30 p-4 rounded-2xl border border-amber-200 dark:border-amber-800 space-y-2">
-                    <p className="text-[10px] font-black uppercase text-amber-700 dark:text-amber-400">Personne à joindre en cas d'urgence</p>
-                    <p className="text-sm font-extrabold">{selectedCandidate.emergency_contact_name || '—'}</p>
+                    <p className="text-[10px] font-bold uppercase text-amber-700 dark:text-amber-400">Personne à joindre en cas d'urgence</p>
+                    <p className="text-sm font-bold">{selectedCandidate.emergency_contact_name || '—'}</p>
                     <p className="text-xs font-semibold text-amber-800 dark:text-amber-300">Téléphone Urgence: {selectedCandidate.emergency_contact_phone || '—'}</p>
                   </div>
                 </div>
@@ -703,24 +703,24 @@ export default function CandidatureList() {
 
               {detailTab === 'bac' && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/60 space-y-2">
-                    <p className="text-[10px] font-black uppercase text-slate-400">Série du Baccalauréat</p>
-                    <p className="text-sm font-extrabold text-indigo-600 dark:text-indigo-400">{selectedCandidate.bac_type || selectedCandidate.bac_name || '—'}</p>
+                  <div className="bg-muted/50 dark:bg-slate-800/60 p-4 rounded-2xl border border-border dark:border-slate-700/60 space-y-2">
+                    <p className="text-[10px] font-bold uppercase text-slate-400">Série du Baccalauréat</p>
+                    <p className="text-sm font-bold text-primary dark:text-indigo-400">{selectedCandidate.bac_type || selectedCandidate.bac_name || '—'}</p>
                   </div>
-                  <div className="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/60 space-y-2">
-                    <p className="text-[10px] font-black uppercase text-slate-400">Mention au Bac</p>
-                    <p className="text-sm font-extrabold text-emerald-600">{selectedCandidate.bac_mention || '—'}</p>
+                  <div className="bg-muted/50 dark:bg-slate-800/60 p-4 rounded-2xl border border-border dark:border-slate-700/60 space-y-2">
+                    <p className="text-[10px] font-bold uppercase text-slate-400">Mention au Bac</p>
+                    <p className="text-sm font-bold text-emerald-600">{selectedCandidate.bac_mention || '—'}</p>
                   </div>
-                  <div className="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/60 space-y-2">
-                    <p className="text-[10px] font-black uppercase text-slate-400">Moyenne Générale du Bac</p>
-                    <p className="text-base font-black font-mono text-indigo-600">{selectedCandidate.bac_average ? `${selectedCandidate.bac_average} / 20` : '—'}</p>
+                  <div className="bg-muted/50 dark:bg-slate-800/60 p-4 rounded-2xl border border-border dark:border-slate-700/60 space-y-2">
+                    <p className="text-[10px] font-bold uppercase text-slate-400">Moyenne Générale du Bac</p>
+                    <p className="text-base font-bold font-mono text-primary">{selectedCandidate.bac_average ? `${selectedCandidate.bac_average} / 20` : '—'}</p>
                   </div>
-                  <div className="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/60 space-y-2">
-                    <p className="text-[10px] font-black uppercase text-slate-400">Score Calculé TAFEM / TAFSEM</p>
-                    <p className="text-base font-black font-mono text-emerald-600">{selectedCandidate.selection_score || selectedCandidate.tafem_score ? `${selectedCandidate.selection_score || selectedCandidate.tafem_score} pts` : '—'}</p>
+                  <div className="bg-muted/50 dark:bg-slate-800/60 p-4 rounded-2xl border border-border dark:border-slate-700/60 space-y-2">
+                    <p className="text-[10px] font-bold uppercase text-slate-400">Score Calculé TAFEM / TAFSEM</p>
+                    <p className="text-base font-bold font-mono text-emerald-600">{selectedCandidate.selection_score || selectedCandidate.tafem_score ? `${selectedCandidate.selection_score || selectedCandidate.tafem_score} pts` : '—'}</p>
                   </div>
-                  <div className="sm:col-span-2 bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/60 space-y-2">
-                    <p className="text-[10px] font-black uppercase text-slate-400">Lycée d'origine & Académie</p>
+                  <div className="sm:col-span-2 bg-muted/50 dark:bg-slate-800/60 p-4 rounded-2xl border border-border dark:border-slate-700/60 space-y-2">
+                    <p className="text-[10px] font-bold uppercase text-slate-400">Lycée d'origine & Académie</p>
                     <p className="text-sm font-semibold">{selectedCandidate.high_school || '—'} {selectedCandidate.academy ? `— ${selectedCandidate.academy}` : ''}</p>
                   </div>
                 </div>
@@ -728,39 +728,39 @@ export default function CandidatureList() {
 
               {detailTab === 'docs' && (
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700/60">
+                  <div className="flex items-center justify-between p-4 bg-muted/50 dark:bg-slate-800/60 rounded-2xl border border-border dark:border-slate-700/60">
                     <div className="flex items-center gap-3">
-                      <FileText className="w-5 h-5 text-indigo-600" />
+                      <FileText className="w-5 h-5 text-primary" />
                       <div>
-                        <p className="font-extrabold text-sm">Diplôme du Baccalauréat (PDF)</p>
+                        <p className="font-bold text-sm">Diplôme du Baccalauréat (PDF)</p>
                         <p className="text-[10px] text-slate-400 font-mono">{selectedCandidate.bac_file || `BAC_${selectedCandidate.cne}.pdf`}</p>
                       </div>
                     </div>
-                    <span className={cn("px-3 py-1 rounded-full text-[10px] font-black border", selectedCandidate.bac_file ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-slate-100 text-slate-500 border-slate-200")}>
+                    <span className={cn("px-3 py-1 rounded-full text-[10px] font-bold border", selectedCandidate.bac_file ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-muted text-muted-foreground border-border")}>
                       {selectedCandidate.bac_file ? 'Certifié Conforme' : 'En attente dépôt'}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700/60">
+                  <div className="flex items-center justify-between p-4 bg-muted/50 dark:bg-slate-800/60 rounded-2xl border border-border dark:border-slate-700/60">
                     <div className="flex items-center gap-3">
-                      <FileText className="w-5 h-5 text-blue-600" />
+                      <FileText className="w-5 h-5 text-primary" />
                       <div>
-                        <p className="font-extrabold text-sm">Carte d'Identité Nationale (CNIE PDF)</p>
+                        <p className="font-bold text-sm">Carte d'Identité Nationale (CNIE PDF)</p>
                         <p className="text-[10px] text-slate-400 font-mono">{selectedCandidate.cin_file || `CIN_${selectedCandidate.cin || selectedCandidate.cne}.pdf`}</p>
                       </div>
                     </div>
-                    <span className={cn("px-3 py-1 rounded-full text-[10px] font-black border", selectedCandidate.cin_file ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-slate-100 text-slate-500 border-slate-200")}>
+                    <span className={cn("px-3 py-1 rounded-full text-[10px] font-bold border", selectedCandidate.cin_file ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-muted text-muted-foreground border-border")}>
                       {selectedCandidate.cin_file ? 'Certifié Conforme' : 'En attente dépôt'}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700/60">
+                  <div className="flex items-center justify-between p-4 bg-muted/50 dark:bg-slate-800/60 rounded-2xl border border-border dark:border-slate-700/60">
                     <div className="flex items-center gap-3">
                       <FileText className="w-5 h-5 text-amber-600" />
                       <div>
-                        <p className="font-extrabold text-sm">Relevé de Notes Officiel (PDF)</p>
+                        <p className="font-bold text-sm">Relevé de Notes Officiel (PDF)</p>
                         <p className="text-[10px] text-slate-400 font-mono">{selectedCandidate.releve_file || `RELEVE_${selectedCandidate.cne}.pdf`}</p>
                       </div>
                     </div>
-                    <span className={cn("px-3 py-1 rounded-full text-[10px] font-black border", selectedCandidate.releve_file ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-slate-100 text-slate-500 border-slate-200")}>
+                    <span className={cn("px-3 py-1 rounded-full text-[10px] font-bold border", selectedCandidate.releve_file ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-muted text-muted-foreground border-border")}>
                       {selectedCandidate.releve_file ? 'Certifié Conforme' : 'En attente dépôt'}
                     </span>
                   </div>
@@ -769,13 +769,13 @@ export default function CandidatureList() {
             </div>
 
             {/* Footer Status Update Bar */}
-            <div className="p-4 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
+            <div className="p-4 bg-muted/50 dark:bg-slate-800/80 border-t border-border dark:border-border flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
               <div className="flex items-center gap-2">
                 <span className="text-xs text-slate-400 font-bold">Statut Admissibilité :</span>
                 <select
                   value={selectedCandidate.status || 'pending'}
                   onChange={(e) => handleUpdateStatus(selectedCandidate.id, e.target.value)}
-                  className="px-3 py-1.5 bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700 rounded-xl text-xs font-black cursor-pointer text-slate-900 dark:text-white"
+                  className="px-3 py-1.5 bg-card dark:bg-card border-2 border-slate-300 dark:border-border text-xs font-bold cursor-pointer text-foreground dark:text-white rounded-[var(--control-radius)]"
                 >
                   <option value="accepted">🟢 Liste Principale (Admis)</option>
                   <option value="liste_attente_1">🟠 Liste d'Attente 1</option>
@@ -798,7 +798,7 @@ export default function CandidatureList() {
 
                 <button
                   onClick={() => handleExportConvocationPdf(selectedCandidate)}
-                  className="px-4 py-2 bg-[#0f2863] hover:bg-[#162e74] text-white rounded-xl text-xs font-black shadow-md cursor-pointer flex items-center gap-1.5 transition-all"
+                  className="px-4 py-2 bg-[#0f2863] hover:bg-[#162e74] text-white rounded-xl text-xs font-bold shadow-md cursor-pointer flex items-center gap-1.5 transition-all"
                 >
                   <Printer className="w-3.5 h-3.5 text-amber-400" /> Convocation (PDF)
                 </button>
@@ -812,7 +812,7 @@ export default function CandidatureList() {
       {/* ── MODAL 2: MODIFICATION / ÉDITION ── */}
       {editingCandidate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl shadow-sm w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
             
             {/* Header */}
             <div className="p-6 bg-gradient-to-r from-amber-600 via-amber-700 to-amber-900 text-white flex items-center justify-between shrink-0">
@@ -821,7 +821,7 @@ export default function CandidatureList() {
                   <Edit3 className="w-5 h-5 text-amber-300" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-black text-white">Modifier le Dossier de Candidature</h3>
+                  <h3 className="text-lg font-bold text-white">Modifier le Dossier de Candidature</h3>
                   <p className="text-xs text-amber-200 font-mono">CNE: {editingCandidate.cne} | ID: #{editingCandidate.id}</p>
                 </div>
               </div>
@@ -849,7 +849,7 @@ export default function CandidatureList() {
                     type="text"
                     value={editingCandidate.first_name || ''}
                     onChange={(e) => setEditingCandidate({ ...editingCandidate, first_name: e.target.value })}
-                    className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white"
+                    className="w-full p-3 bg-muted/50 dark:bg-card border border-slate-300 dark:border-border text-sm font-bold text-foreground dark:text-white rounded-[var(--control-radius)]"
                     required
                   />
                 </div>
@@ -859,7 +859,7 @@ export default function CandidatureList() {
                     type="text"
                     value={editingCandidate.last_name || ''}
                     onChange={(e) => setEditingCandidate({ ...editingCandidate, last_name: e.target.value })}
-                    className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white"
+                    className="w-full p-3 bg-muted/50 dark:bg-card border border-slate-300 dark:border-border text-sm font-bold text-foreground dark:text-white rounded-[var(--control-radius)]"
                     required
                   />
                 </div>
@@ -869,7 +869,7 @@ export default function CandidatureList() {
                     type="text"
                     value={editingCandidate.cne || ''}
                     onChange={(e) => setEditingCandidate({ ...editingCandidate, cne: e.target.value })}
-                    className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl font-mono text-sm font-bold text-indigo-600 dark:text-indigo-400"
+                    className="w-full p-3 bg-muted/50 dark:bg-card border border-slate-300 dark:border-border font-mono text-sm font-bold text-primary dark:text-indigo-400 rounded-[var(--control-radius)]"
                     required
                   />
                 </div>
@@ -879,7 +879,7 @@ export default function CandidatureList() {
                     type="text"
                     value={editingCandidate.cin || ''}
                     onChange={(e) => setEditingCandidate({ ...editingCandidate, cin: e.target.value })}
-                    className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl font-mono text-sm font-bold text-slate-900 dark:text-white"
+                    className="w-full p-3 bg-muted/50 dark:bg-card border border-slate-300 dark:border-border font-mono text-sm font-bold text-foreground dark:text-white rounded-[var(--control-radius)]"
                   />
                 </div>
                 <div>
@@ -888,7 +888,7 @@ export default function CandidatureList() {
                     type="text"
                     value={editingCandidate.bac_average || ''}
                     onChange={(e) => setEditingCandidate({ ...editingCandidate, bac_average: e.target.value })}
-                    className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-sm font-bold text-emerald-600"
+                    className="w-full p-3 bg-muted/50 dark:bg-card border border-slate-300 dark:border-border text-sm font-bold text-emerald-600 rounded-[var(--control-radius)]"
                   />
                 </div>
                 <div>
@@ -897,7 +897,7 @@ export default function CandidatureList() {
                     type="text"
                     value={editingCandidate.selection_score || editingCandidate.tafem_score || ''}
                     onChange={(e) => setEditingCandidate({ ...editingCandidate, selection_score: e.target.value })}
-                    className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-sm font-bold text-indigo-600"
+                    className="w-full p-3 bg-muted/50 dark:bg-card border border-slate-300 dark:border-border text-sm font-bold text-primary rounded-[var(--control-radius)]"
                   />
                 </div>
                 <div className="sm:col-span-2">
@@ -905,7 +905,7 @@ export default function CandidatureList() {
                   <select
                     value={editingCandidate.status || 'pending'}
                     onChange={(e) => setEditingCandidate({ ...editingCandidate, status: e.target.value })}
-                    className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white cursor-pointer"
+                    className="w-full p-3 bg-muted/50 dark:bg-card border border-slate-300 dark:border-border text-sm font-bold text-foreground dark:text-white cursor-pointer rounded-[var(--control-radius)]"
                   >
                     <option value="accepted">🟢 Liste Principale (Admis)</option>
                     <option value="liste_attente_1">🟠 Liste d'Attente 1</option>
@@ -916,17 +916,17 @@ export default function CandidatureList() {
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800 shrink-0">
+              <div className="flex justify-end gap-3 pt-4 border-t border-border dark:border-border shrink-0">
                 <button
                   type="button"
                   onClick={() => setEditingCandidate(null)}
-                  className="px-5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  className="px-5 py-2.5 rounded-xl border border-slate-300 dark:border-border text-slate-700 dark:text-foreground font-bold hover:bg-muted dark:hover:bg-slate-800 transition-colors cursor-pointer"
                 >
                   Annuler
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-black shadow-md transition-all cursor-pointer"
+                  className="px-6 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold shadow-md transition-all cursor-pointer"
                 >
                   Enregistrer les modifications
                 </button>
@@ -939,7 +939,7 @@ export default function CandidatureList() {
       {/* ── MODAL 3: SUPPRESSION / DANGER CONFIRM ── */}
       {deletingCandidate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-slate-900 border-2 border-rose-500/30 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+          <div className="bg-card dark:bg-card border-2 border-rose-500/30 rounded-2xl shadow-sm w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
             
             {/* Header */}
             <div className="p-6 bg-gradient-to-r from-rose-700 via-rose-800 to-rose-950 text-white flex items-center justify-between">
@@ -948,7 +948,7 @@ export default function CandidatureList() {
                   <AlertTriangle className="w-6 h-6 text-rose-300 animate-bounce" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-black text-white">Supprimer la Candidature</h3>
+                  <h3 className="text-lg font-bold text-white">Supprimer la Candidature</h3>
                   <p className="text-xs text-rose-200 font-mono">Action Irréversible</p>
                 </div>
               </div>
@@ -958,19 +958,19 @@ export default function CandidatureList() {
             </div>
 
             {/* Content */}
-            <div className="p-6 space-y-4 text-xs font-bold text-slate-800 dark:text-slate-200">
-              <p className="text-sm font-semibold text-slate-700 dark:text-slate-300 leading-relaxed">
+            <div className="p-6 space-y-4 text-xs font-bold text-foreground dark:text-foreground">
+              <p className="text-sm font-semibold text-slate-700 dark:text-foreground leading-relaxed">
                 Êtes-vous sûr de vouloir supprimer définitivement le dossier de candidature de :
               </p>
 
               <div className="bg-rose-50 dark:bg-rose-950/40 p-4 rounded-2xl border border-rose-200 dark:border-rose-800 space-y-1.5">
-                <p className="text-base font-black text-rose-900 dark:text-rose-200">
+                <p className="text-base font-bold text-rose-900 dark:text-rose-200">
                   {deletingCandidate.first_name} {deletingCandidate.last_name}
                 </p>
                 <p className="text-xs font-mono text-rose-700 dark:text-rose-400">
                   CNE: {deletingCandidate.cne} | CIN: {deletingCandidate.cin || '—'}
                 </p>
-                <p className="text-[11px] text-slate-500 font-medium">
+                <p className="text-[11px] text-muted-foreground font-medium">
                   Filière: {deletingCandidate.reference_number || 'Passerelle S5 TAFSEM'}
                 </p>
               </div>
@@ -980,11 +980,11 @@ export default function CandidatureList() {
               </p>
 
               {/* Action Buttons */}
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-border dark:border-border">
                 <button
                   type="button"
                   onClick={() => setDeletingCandidate(null)}
-                  className="px-5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  className="px-5 py-2.5 rounded-xl border border-slate-300 dark:border-border text-slate-700 dark:text-foreground font-bold hover:bg-muted dark:hover:bg-slate-800 transition-colors cursor-pointer"
                 >
                   Annuler
                 </button>
@@ -1000,7 +1000,7 @@ export default function CandidatureList() {
                     toast.success(`🗑️ Candidature de ${name} supprimée avec succès !`);
                     setDeletingCandidate(null);
                   }}
-                  className="px-6 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-black shadow-lg shadow-rose-600/30 transition-all cursor-pointer flex items-center gap-1.5"
+                  className="px-6 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold shadow-lg shadow-rose-600/30 transition-all cursor-pointer flex items-center gap-1.5"
                 >
                   <Trash2 className="w-4 h-4" /> Confirmer la suppression
                 </button>
@@ -1014,7 +1014,7 @@ export default function CandidatureList() {
       {/* ── MODAL 4: AJOUTER UN CANDIDAT ── */}
       {isAddCandidateModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl shadow-sm w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
             
             {/* Header */}
             <div className="p-6 bg-gradient-to-r from-emerald-600 via-teal-700 to-slate-900 text-white flex items-center justify-between shrink-0">
@@ -1023,7 +1023,7 @@ export default function CandidatureList() {
                   <UserPlus className="w-5 h-5 text-emerald-300" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-black text-white">Ajouter un Nouveau Candidat</h3>
+                  <h3 className="text-lg font-bold text-white">Ajouter un Nouveau Candidat</h3>
                   <p className="text-xs text-emerald-200">Saisie Manuelle Directe (Sans Import CSV)</p>
                 </div>
               </div>
@@ -1075,7 +1075,7 @@ export default function CandidatureList() {
                     placeholder="Ex: Youssef"
                     value={newCandidate.first_name}
                     onChange={(e) => setNewCandidate({ ...newCandidate, first_name: e.target.value })}
-                    className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500"
+                    className="w-full p-3 bg-muted/50 dark:bg-card border border-slate-300 dark:border-border text-sm font-bold text-foreground dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 rounded-[var(--control-radius)]"
                     required
                   />
                 </div>
@@ -1086,7 +1086,7 @@ export default function CandidatureList() {
                     placeholder="Ex: BENNANI"
                     value={newCandidate.last_name}
                     onChange={(e) => setNewCandidate({ ...newCandidate, last_name: e.target.value })}
-                    className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500"
+                    className="w-full p-3 bg-muted/50 dark:bg-card border border-slate-300 dark:border-border text-sm font-bold text-foreground dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 rounded-[var(--control-radius)]"
                     required
                   />
                 </div>
@@ -1097,7 +1097,7 @@ export default function CandidatureList() {
                     placeholder="Ex: N123456789"
                     value={newCandidate.cne}
                     onChange={(e) => setNewCandidate({ ...newCandidate, cne: e.target.value })}
-                    className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl font-mono text-sm font-bold text-indigo-600 dark:text-indigo-400 outline-none focus:ring-2 focus:ring-emerald-500"
+                    className="w-full p-3 bg-muted/50 dark:bg-card border border-slate-300 dark:border-border font-mono text-sm font-bold text-primary dark:text-indigo-400 outline-none focus:ring-2 focus:ring-emerald-500 rounded-[var(--control-radius)]"
                     required
                   />
                 </div>
@@ -1108,7 +1108,7 @@ export default function CandidatureList() {
                     placeholder="Ex: CD123456"
                     value={newCandidate.cin}
                     onChange={(e) => setNewCandidate({ ...newCandidate, cin: e.target.value })}
-                    className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl font-mono text-sm font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500"
+                    className="w-full p-3 bg-muted/50 dark:bg-card border border-slate-300 dark:border-border font-mono text-sm font-bold text-foreground dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 rounded-[var(--control-radius)]"
                   />
                 </div>
                 <div>
@@ -1118,7 +1118,7 @@ export default function CandidatureList() {
                     placeholder="Ex: etudiant@gmail.com"
                     value={newCandidate.email}
                     onChange={(e) => setNewCandidate({ ...newCandidate, email: e.target.value })}
-                    className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-sm font-semibold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500"
+                    className="w-full p-3 bg-muted/50 dark:bg-card border border-slate-300 dark:border-border text-sm font-semibold text-foreground dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 rounded-[var(--control-radius)]"
                   />
                 </div>
                 <div>
@@ -1128,7 +1128,7 @@ export default function CandidatureList() {
                     placeholder="Ex: 0612345678"
                     value={newCandidate.phone}
                     onChange={(e) => setNewCandidate({ ...newCandidate, phone: e.target.value })}
-                    className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-sm font-semibold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500"
+                    className="w-full p-3 bg-muted/50 dark:bg-card border border-slate-300 dark:border-border text-sm font-semibold text-foreground dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 rounded-[var(--control-radius)]"
                   />
                 </div>
                 <div>
@@ -1138,7 +1138,7 @@ export default function CandidatureList() {
                     placeholder="Ex: 16.50"
                     value={newCandidate.bac_average}
                     onChange={(e) => setNewCandidate({ ...newCandidate, bac_average: e.target.value })}
-                    className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-sm font-bold text-emerald-600 outline-none focus:ring-2 focus:ring-emerald-500"
+                    className="w-full p-3 bg-muted/50 dark:bg-card border border-slate-300 dark:border-border text-sm font-bold text-emerald-600 outline-none focus:ring-2 focus:ring-emerald-500 rounded-[var(--control-radius)]"
                   />
                 </div>
                 <div>
@@ -1148,7 +1148,7 @@ export default function CandidatureList() {
                     placeholder="Ex: 17.25"
                     value={newCandidate.selection_score}
                     onChange={(e) => setNewCandidate({ ...newCandidate, selection_score: e.target.value })}
-                    className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-sm font-bold text-indigo-600 outline-none focus:ring-2 focus:ring-emerald-500"
+                    className="w-full p-3 bg-muted/50 dark:bg-card border border-slate-300 dark:border-border text-sm font-bold text-primary outline-none focus:ring-2 focus:ring-emerald-500 rounded-[var(--control-radius)]"
                   />
                 </div>
                 <div>
@@ -1156,7 +1156,7 @@ export default function CandidatureList() {
                   <select
                     value={newCandidate.reference_number}
                     onChange={(e) => setNewCandidate({ ...newCandidate, reference_number: e.target.value })}
-                    className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white cursor-pointer outline-none focus:ring-2 focus:ring-emerald-500"
+                    className="w-full p-3 bg-muted/50 dark:bg-card border border-slate-300 dark:border-border text-sm font-bold text-foreground dark:text-white cursor-pointer outline-none focus:ring-2 focus:ring-emerald-500 rounded-[var(--control-radius)]"
                   >
                     <option value="Deux années préparatoires">Deux années préparatoires (TAFEM S1)</option>
                     <option value="Passerelle S5 TAFSEM">Passerelle S5 TAFSEM</option>
@@ -1168,7 +1168,7 @@ export default function CandidatureList() {
                   <select
                     value={newCandidate.status}
                     onChange={(e) => setNewCandidate({ ...newCandidate, status: e.target.value })}
-                    className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white cursor-pointer outline-none focus:ring-2 focus:ring-emerald-500"
+                    className="w-full p-3 bg-muted/50 dark:bg-card border border-slate-300 dark:border-border text-sm font-bold text-foreground dark:text-white cursor-pointer outline-none focus:ring-2 focus:ring-emerald-500 rounded-[var(--control-radius)]"
                   >
                     <option value="accepted">🟢 Liste Principale (Admis)</option>
                     <option value="liste_attente_1">🟠 Liste d'Attente 1</option>
@@ -1179,17 +1179,17 @@ export default function CandidatureList() {
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800 shrink-0">
+              <div className="flex justify-end gap-3 pt-4 border-t border-border dark:border-border shrink-0">
                 <button
                   type="button"
                   onClick={() => setIsAddCandidateModalOpen(false)}
-                  className="px-5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  className="px-5 py-2.5 rounded-xl border border-slate-300 dark:border-border text-slate-700 dark:text-foreground font-bold hover:bg-muted dark:hover:bg-slate-800 transition-colors cursor-pointer"
                 >
                   Annuler
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl font-black shadow-lg shadow-emerald-600/25 transition-all cursor-pointer flex items-center gap-1.5"
+                  className="px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl font-bold shadow-lg shadow-emerald-600/25 transition-all cursor-pointer flex items-center gap-1.5"
                 >
                   <UserPlus className="w-4 h-4" /> Créer le Candidat
                 </button>

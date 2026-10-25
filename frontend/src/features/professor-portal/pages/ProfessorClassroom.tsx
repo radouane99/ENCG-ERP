@@ -116,7 +116,7 @@ export default function ProfessorClassroom() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto p-6 space-y-8 font-sans animate-in fade-in zoom-in duration-500">
+    <div className="max-w-6xl mx-auto space-y-8 font-sans animate-in fade-in zoom-in duration-500">
       
       {/* Breadcrumbs */}
       <div className="flex items-center gap-2 text-sm font-bold text-[#003a8c]">
@@ -126,11 +126,11 @@ export default function ProfessorClassroom() {
         <span className="text-gray-400">/</span>
         <span className="text-white/90">Introduction - Génie Informatique</span>
         <span className="text-gray-400">Â·</span>
-        <span className="text-blue-600">Génie Informatique - Groupe 1</span>
+        <span className="text-primary">Génie Informatique - Groupe 1</span>
       </div>
 
       {/* Banner */}
-      <div className="bg-gradient-to-r from-[#001A4B] via-indigo-800 to-purple-800 rounded-3xl p-8 text-white flex items-center justify-between shadow-xl relative overflow-hidden">
+      <div className="p-8 text-white flex items-center justify-between relative overflow-hidden erp-page-banner">
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
         <div className="relative z-10 max-w-2xl">
           <div className="flex items-center gap-2 mb-3">
@@ -138,7 +138,7 @@ export default function ProfessorClassroom() {
               {course.code}
             </span>
           </div>
-          <h1 className="text-4xl font-black tracking-tight mb-2 flex items-center gap-3">
+          <h1 className="mb-2 flex items-center gap-3 erp-page-title">
             📚 {course.title}
           </h1>
           <p className="text-blue-100 text-sm">
@@ -148,11 +148,11 @@ export default function ProfessorClassroom() {
         
         <div className="relative z-10 flex gap-4">
           <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 text-center min-w-[100px] shadow-lg">
-            <div className="text-3xl font-black mb-1">{materials.length}</div>
+            <div className="text-3xl font-bold mb-1">{materials.length}</div>
             <div className="text-[9px] font-bold text-blue-200 uppercase tracking-widest">Publications</div>
           </div>
           <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 text-center min-w-[100px] shadow-lg">
-            <div className="text-3xl font-black mb-1">0</div>
+            <div className="text-3xl font-bold mb-1">0</div>
             <div className="text-[9px] font-bold text-blue-200 uppercase tracking-widest">Devoirs</div>
           </div>
         </div>
@@ -164,7 +164,7 @@ export default function ProfessorClassroom() {
           onClick={() => setActiveTab('annonces')}
           className={cn(
             "flex items-center gap-2 px-6 py-3 rounded-full text-[11px] font-bold uppercase tracking-widest transition-all",
-            activeTab === 'annonces' ? "bg-white text-orange-500 shadow-md border border-white/5" : "text-white/50 hover:bg-white hover:text-white/90"
+            activeTab === 'annonces' ? "bg-card text-orange-500 shadow-md border border-white/5" : "text-white/50 hover:bg-card hover:text-white/90"
           )}
         >
           <Megaphone className="w-4 h-4" /> Annonces & Cours
@@ -173,7 +173,7 @@ export default function ProfessorClassroom() {
           onClick={() => setActiveTab('devoirs')}
           className={cn(
             "flex items-center gap-2 px-6 py-3 rounded-full text-[11px] font-bold uppercase tracking-widest transition-all",
-            activeTab === 'devoirs' ? "bg-white text-emerald-600 shadow-md border border-white/5" : "text-white/50 hover:bg-white hover:text-white/90"
+            activeTab === 'devoirs' ? "bg-card text-emerald-600 shadow-md border border-white/5" : "text-white/50 hover:bg-card hover:text-white/90"
           )}
         >
           <BookOpen className="w-4 h-4" /> Devoirs & Soumissions
@@ -182,7 +182,7 @@ export default function ProfessorClassroom() {
           onClick={() => setActiveTab('discussion')}
           className={cn(
             "flex items-center gap-2 px-6 py-3 rounded-full text-[11px] font-bold uppercase tracking-widest transition-all",
-            activeTab === 'discussion' ? "bg-white text-blue-600 shadow-md border border-white/5" : "text-white/50 hover:bg-white hover:text-white/90"
+            activeTab === 'discussion' ? "bg-card text-primary shadow-md border border-white/5" : "text-white/50 hover:bg-card hover:text-white/90"
           )}
         >
           <MessageCircle className="w-4 h-4" /> Salon de discussion
@@ -191,7 +191,7 @@ export default function ProfessorClassroom() {
           onClick={() => setActiveTab('ia')}
           className={cn(
             "flex items-center gap-2 px-6 py-3 rounded-full text-[11px] font-bold uppercase tracking-widest transition-all",
-            activeTab === 'ia' ? "bg-white text-purple-600 shadow-md border border-white/5" : "text-white/50 hover:bg-white hover:text-white/90"
+            activeTab === 'ia' ? "bg-card text-purple-600 shadow-md border border-white/5" : "text-white/50 hover:bg-card hover:text-white/90"
           )}
         >
           <Bot className="w-4 h-4" /> Tuteur IA
@@ -206,13 +206,13 @@ export default function ProfessorClassroom() {
           {activeTab === 'annonces' && (
             <>
               {/* Publisher Card */}
-              <div className="bg-white rounded-3xl p-6 shadow-sm border border-white/5">
+              <div className="bg-card rounded-2xl p-6 shadow-sm border border-white/5">
                 <div className="flex items-center gap-4 mb-6">
                   <div className="w-10 h-10 bg-orange-50 text-orange-500 rounded-full flex items-center justify-center">
                     <Megaphone className="w-5 h-5" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-black text-white">Publier dans le Classroom</h2>
+                    <h2 className="text-lg font-bold text-white">Publier dans le Classroom</h2>
                     <p className="text-xs text-white/50">Partagez des cours ou annonces pour Génie Informatique - Groupe 1</p>
                   </div>
                 </div>
@@ -241,7 +241,7 @@ export default function ProfessorClassroom() {
                 <input 
                   type="text"
                   placeholder="Titre de l'annonce ou du support..."
-                  className="w-full bg-white/[0.02] border border-white/5 rounded-xl p-4 text-sm font-medium text-black focus:outline-none focus:ring-2 focus:ring-[#003a8c] mb-4"
+                  className="w-full bg-white/[0.02] border border-white/5 p-4 text-sm font-medium text-black focus:outline-none focus:ring-2 focus:ring-[#003a8c] mb-4 rounded-[var(--control-radius)]"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                 />
@@ -249,7 +249,7 @@ export default function ProfessorClassroom() {
                 <textarea 
                   rows={4}
                   placeholder="Rédigez votre annonce ou description du support..."
-                  className="w-full bg-white/[0.02] border border-white/5 rounded-2xl p-4 text-sm font-medium text-black focus:outline-none focus:ring-2 focus:ring-[#003a8c] resize-none mb-4"
+                  className="w-full bg-white/[0.02] border border-white/5 p-4 text-sm font-medium text-black focus:outline-none focus:ring-2 focus:ring-[#003a8c] resize-none mb-4 rounded-[var(--control-radius)]"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                 ></textarea>
@@ -288,30 +288,30 @@ export default function ProfessorClassroom() {
               </div>
 
               {materials.length === 0 ? (
-                <div className="bg-white rounded-3xl p-12 shadow-sm border border-white/5 flex flex-col items-center justify-center text-center">
+                <div className="bg-card rounded-2xl p-12 shadow-sm border border-white/5 flex flex-col items-center justify-center text-center">
                   <Megaphone className="w-12 h-12 text-orange-300 mb-4" />
-                  <h3 className="text-lg font-black text-black/90 mb-2">Aucune annonce pour le moment</h3>
+                  <h3 className="text-lg font-bold text-black/90 mb-2">Aucune annonce pour le moment</h3>
                   <p className="text-sm text-black/50">Vous n'avez pas encore publié d'annonces ou de cours.</p>
                 </div>
               ) : (
                 <div className="space-y-4">
                   {materials.map((mat) => (
-                    <div key={mat.id} className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex gap-4">
-                      <div className="w-10 h-10 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                    <div key={mat.id} className="bg-card rounded-2xl p-6 shadow-sm border border-border flex gap-4">
+                      <div className="w-10 h-10 bg-primary/5 text-primary rounded-full flex items-center justify-center flex-shrink-0">
                         {mat.type === 'document' ? <BookOpen className="w-5 h-5" /> : <Megaphone className="w-5 h-5" />}
                       </div>
                       <div className="flex-1">
                         <div className="flex justify-between items-start mb-1">
-                          <h3 className="text-sm font-bold text-gray-900">{mat.title}</h3>
+                          <h3 className="text-sm font-bold text-foreground">{mat.title}</h3>
                           <span className="text-xs text-gray-400">{new Date(mat.created_at).toLocaleDateString()}</span>
                         </div>
-                        <p className="text-sm text-gray-600 mb-3">{mat.description}</p>
+                        <p className="text-sm text-muted-foreground mb-3">{mat.description}</p>
                         {mat.file_path && (
                           <a 
                             href={`${(import.meta.env.VITE_API_URL || '').replace(/\/api\/?$/, '')}/storage/${mat.file_path}`} 
                             target="_blank" 
                             rel="noreferrer"
-                            className="inline-flex items-center gap-2 px-4 py-2 bg-slate-50 text-[#0f2863] text-xs font-bold rounded-lg border border-slate-200 hover:bg-slate-100 transition-colors"
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-muted/50 text-[#0f2863] text-xs font-bold rounded-lg border border-border hover:bg-muted transition-colors"
                           >
                             <Paperclip className="w-4 h-4" /> Télécharger la pièce jointe
                           </a>
@@ -327,13 +327,13 @@ export default function ProfessorClassroom() {
           {activeTab === 'devoirs' && (
             <>
               {/* Devoir Publisher Card */}
-              <div className="bg-white rounded-3xl p-6 shadow-sm border border-white/5">
+              <div className="bg-card rounded-2xl p-6 shadow-sm border border-white/5">
                 <div className="flex items-center gap-4 mb-6">
-                  <div className="w-10 h-10 bg-indigo-50 text-indigo-500 rounded-full flex items-center justify-center">
+                  <div className="w-10 h-10 bg-primary/5 text-primary rounded-full flex items-center justify-center">
                     <Calendar className="w-5 h-5" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-black text-white">Publier un Nouveau Devoir</h2>
+                    <h2 className="text-lg font-bold text-white">Publier un Nouveau Devoir</h2>
                     <p className="text-xs text-white/50">Fixez une date limite et fournissez les consignes de travail</p>
                   </div>
                 </div>
@@ -344,14 +344,14 @@ export default function ProfessorClassroom() {
                     <input 
                       type="text" 
                       placeholder="Ex: Devoir de Programmation NÂ°1"
-                      className="w-full bg-white/[0.02] border border-white/5 rounded-xl px-4 py-3 text-sm font-bold text-white focus:outline-none focus:ring-2 focus:ring-[#003a8c] focus:bg-white"
+                      className="w-full bg-white/[0.02] border border-white/5 px-4 py-3 text-sm font-bold text-white focus:outline-none focus:ring-2 focus:ring-[#003a8c] focus:bg-card rounded-[var(--control-radius)]"
                     />
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Date & Heure Limite (Deadline)</label>
                     <input 
                       type="datetime-local" 
-                      className="w-full bg-white/[0.02] border border-white/5 rounded-xl px-4 py-3 text-sm font-bold text-white focus:outline-none focus:ring-2 focus:ring-[#003a8c] focus:bg-white"
+                      className="w-full bg-white/[0.02] border border-white/5 px-4 py-3 text-sm font-bold text-white focus:outline-none focus:ring-2 focus:ring-[#003a8c] focus:bg-card rounded-[var(--control-radius)]"
                     />
                   </div>
                 </div>
@@ -361,7 +361,7 @@ export default function ProfessorClassroom() {
                   <textarea 
                     rows={4}
                     placeholder="Détaillez le travail Ã  accomplir..."
-                    className="w-full bg-white/[0.02] border border-white/5 rounded-2xl p-4 text-sm font-medium text-white/80 focus:outline-none focus:ring-2 focus:ring-[#003a8c] focus:bg-white resize-none"
+                    className="w-full bg-white/[0.02] border border-white/5 p-4 text-sm font-medium text-white/80 focus:outline-none focus:ring-2 focus:ring-[#003a8c] focus:bg-card resize-none rounded-[var(--control-radius)]"
                   ></textarea>
                 </div>
 
@@ -380,9 +380,9 @@ export default function ProfessorClassroom() {
               </div>
 
               {/* Empty State Devoirs */}
-              <div className="bg-white rounded-3xl p-12 shadow-sm border border-white/5 flex flex-col items-center justify-center text-center">
+              <div className="bg-card rounded-2xl p-12 shadow-sm border border-white/5 flex flex-col items-center justify-center text-center">
                 <BookOpen className="w-12 h-12 text-emerald-300 mb-4" />
-                <h3 className="text-lg font-black text-white/90 mb-2">Aucun devoir en cours</h3>
+                <h3 className="text-lg font-bold text-white/90 mb-2">Aucun devoir en cours</h3>
                 <p className="text-sm text-white/50">Créez un devoir pour évaluer vos étudiants.</p>
               </div>
             </>
@@ -391,14 +391,14 @@ export default function ProfessorClassroom() {
           {activeTab === 'ia' && (
             <>
               {/* IA QCM Generator Card */}
-              <div className="bg-white rounded-3xl p-6 shadow-sm border border-white/5">
+              <div className="bg-card rounded-2xl p-6 shadow-sm border border-white/5">
                 <div className="flex items-center gap-4 mb-6">
                   <div className="w-10 h-10 bg-purple-50 text-purple-500 rounded-full flex items-center justify-center">
                     <Bot className="w-5 h-5" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-black text-gray-900">Générateur de QCM par IA</h2>
-                    <p className="text-xs text-gray-500">Utilisez Gemini pour créer des évaluations automatiquement</p>
+                    <h2 className="text-lg font-bold text-foreground">Générateur de QCM par IA</h2>
+                    <p className="text-xs text-muted-foreground">Utilisez Gemini pour créer des évaluations automatiquement</p>
                   </div>
                 </div>
 
@@ -410,7 +410,7 @@ export default function ProfessorClassroom() {
                       placeholder="Ex: Les principes de la comptabilité générale..."
                       value={qcmTopic}
                       onChange={(e) => setQcmTopic(e.target.value)}
-                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      className="w-full bg-muted/50 border border-border px-4 py-3 text-sm font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-purple-500 rounded-[var(--control-radius)]"
                     />
                   </div>
                   <div className="space-y-2">
@@ -420,7 +420,7 @@ export default function ProfessorClassroom() {
                       min="1" max="20"
                       value={qcmCount}
                       onChange={(e) => setQcmCount(parseInt(e.target.value))}
-                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      className="w-full bg-muted/50 border border-border px-4 py-3 text-sm font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-purple-500 rounded-[var(--control-radius)]"
                     />
                   </div>
                 </div>
@@ -437,17 +437,17 @@ export default function ProfessorClassroom() {
 
                 {/* Generated QCM Display */}
                 {generatedQcm && (
-                  <div className="mt-8 space-y-4 border-t border-gray-100 pt-6">
-                    <h3 className="text-md font-bold text-gray-900 flex items-center gap-2 mb-4">
+                  <div className="mt-8 space-y-4 border-t border-border pt-6">
+                    <h3 className="text-md font-bold text-foreground flex items-center gap-2 mb-4">
                       <Sparkles className="w-5 h-5 text-yellow-500" /> Résultat de la génération
                     </h3>
                     
                     {generatedQcm.map((q, idx) => (
-                      <div key={idx} className="bg-gray-50 p-4 rounded-2xl border border-gray-200">
-                        <p className="font-bold text-sm text-gray-900 mb-3">{idx + 1}. {q.question}</p>
+                      <div key={idx} className="bg-muted/50 p-4 rounded-2xl border border-border">
+                        <p className="font-bold text-sm text-foreground mb-3">{idx + 1}. {q.question}</p>
                         <div className="space-y-2">
                           {q.options.map((opt: string, oIdx: number) => (
-                            <div key={oIdx} className={`px-3 py-2 rounded-lg text-xs font-medium border ${oIdx === q.correct_index ? 'bg-emerald-100 border-emerald-300 text-emerald-800' : 'bg-white border-gray-200 text-gray-600'}`}>
+                            <div key={oIdx} className={`px-3 py-2 rounded-lg text-xs font-medium border ${oIdx === q.correct_index ? 'bg-emerald-100 border-emerald-300 text-emerald-800' : "bg-card border-border text-muted-foreground"}`}>
                               {String.fromCharCode(65 + oIdx)}. {opt}
                             </div>
                           ))}
@@ -472,12 +472,12 @@ export default function ProfessorClassroom() {
         <div className="space-y-6">
           
           {/* Supports Card */}
-          <div className="bg-white rounded-3xl p-6 shadow-sm border border-white/5">
+          <div className="bg-card rounded-2xl p-6 shadow-sm border border-white/5">
             <div className="flex items-center justify-between mb-8">
-              <h3 className="text-sm font-black text-white flex items-center gap-2">
+              <h3 className="text-sm font-bold text-white flex items-center gap-2">
                 <Folder className="w-4 h-4 text-amber-500" /> Supports de Cours
               </h3>
-              <span className="bg-indigo-50 text-indigo-700 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">0</span>
+              <span className="bg-primary/5 text-primary w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">0</span>
             </div>
             
             <div className="flex flex-col items-center justify-center py-6 text-center">
@@ -489,8 +489,8 @@ export default function ProfessorClassroom() {
           </div>
 
           {/* Module Info */}
-          <div className="bg-white rounded-3xl p-6 shadow-sm border border-white/5">
-            <h3 className="text-sm font-black text-[#003a8c] flex items-center gap-2 mb-6">
+          <div className="bg-card rounded-2xl p-6 shadow-sm border border-white/5">
+            <h3 className="text-sm font-bold text-[#003a8c] flex items-center gap-2 mb-6">
               <Info className="w-4 h-4" /> Infos du Module
             </h3>
             
@@ -509,7 +509,7 @@ export default function ProfessorClassroom() {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Filière</span>
-                <span className="text-xs font-bold text-blue-600">Génie Informatique</span>
+                <span className="text-xs font-bold text-primary">Génie Informatique</span>
               </div>
             </div>
           </div>

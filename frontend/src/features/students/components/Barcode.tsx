@@ -63,7 +63,7 @@ export default function Barcode({ value, height = 40, className = '' }: BarcodeP
   return (
     <div className={`flex flex-col items-center justify-center ${className}`}>
       <div 
-        className="flex items-stretch bg-white p-1 rounded" 
+        className="flex items-stretch bg-card p-1 rounded"
         style={{ height: `${height}px` }}
       >
         {bits.split('').map((bit, idx) => (

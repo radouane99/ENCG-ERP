@@ -81,10 +81,10 @@ export default function TicketsPage() {
   }, [tickets, search, statusFilter])
 
   return (
-    <div className="space-y-6 animate-in p-6">
+    <div className="space-y-6 animate-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Centre de Support (Tickets)</h1>
+          <h1 className="erp-page-title">Centre de Support (Tickets)</h1>
           <p className="text-muted-foreground text-sm mt-1">
             Gérez les réclamations et requêtes des étudiants et professeurs.
           </p>
@@ -93,7 +93,7 @@ export default function TicketsPage() {
           <button
             type="button"
             onClick={() => setShowForm((v) => !v)}
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg font-medium shadow-sm hover:bg-primary/90 text-sm"
+            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium shadow-sm hover:bg-primary/90 text-sm"
           >
             <Plus className="w-4 h-4" /> Nouveau Ticket
           </button>
@@ -111,7 +111,7 @@ export default function TicketsPage() {
           <select
             value={type}
             onChange={(e) => setType(e.target.value)}
-            className="w-full border rounded-lg px-3 py-2 text-sm bg-background"
+            className="w-full border px-3 py-2 text-sm bg-background rounded-[var(--control-radius)]"
           >
             <option value="administrative">Administratif</option>
             <option value="grade">Note</option>
@@ -124,19 +124,19 @@ export default function TicketsPage() {
             value={subject}
             onChange={(e) => setSubject(e.target.value)}
             placeholder="Objet"
-            className="w-full border rounded-lg px-3 py-2 text-sm bg-background"
+            className="w-full border px-3 py-2 text-sm bg-background rounded-[var(--control-radius)]"
           />
           <textarea
             required
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Décrivez votre demande"
-            className="w-full border rounded-lg px-3 py-2 text-sm bg-background min-h-24"
+            className="w-full border px-3 py-2 text-sm bg-background min-h-24 rounded-[var(--control-radius)]"
           />
           <button
             type="submit"
             disabled={createTicket.isPending}
-            className="px-4 py-2 bg-primary text-white rounded-lg text-sm"
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm"
           >
             Envoyer
           </button>
@@ -173,7 +173,7 @@ export default function TicketsPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Rechercher un ticket..."
-              className="w-full bg-transparent outline-none text-sm py-1"
+              className="w-full bg-transparent outline-none text-sm py-1 rounded-[var(--control-radius)]"
             />
           </div>
 
@@ -215,7 +215,7 @@ export default function TicketsPage() {
                           uiStatus === 'open'
                             ? 'bg-red-50 text-red-600 border-red-200'
                             : uiStatus === 'in_progress'
-                              ? 'bg-blue-50 text-blue-600 border-blue-200'
+                              ? "bg-primary/5 text-primary border-primary/20"
                               : 'bg-green-50 text-green-600 border-green-200'
                         )}
                       >

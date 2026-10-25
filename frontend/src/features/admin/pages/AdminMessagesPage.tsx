@@ -5,15 +5,15 @@ export default function AdminMessagesPage() {
   const [messages] = useState([])
 
   return (
-    <div className="space-y-6 animate-in p-6 max-w-7xl mx-auto pb-20">
+    <div className="space-y-6 animate-in max-w-7xl mx-auto pb-20">
       <div className="flex items-center justify-center mb-8">
-        <h1 className="text-2xl font-bold text-[#0f2863] text-center">Boîte de Réception (Contact)</h1>
+        <h1 className="text-[#0f2863] text-center erp-page-title">Boîte de Réception (Contact)</h1>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
-            <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-[10px] tracking-wider border-b border-slate-200">
+            <thead className="bg-muted/50 text-muted-foreground font-bold uppercase text-[10px] tracking-wider border-b border-border">
               <tr>
                 <th className="px-6 py-4">EXPÉDITEUR</th>
                 <th className="px-6 py-4">SUJET</th>
@@ -26,7 +26,7 @@ export default function AdminMessagesPage() {
             <tbody className="divide-y divide-slate-100">
               {messages.length > 0 ? (
                 messages.map((msg: any) => (
-                  <tr key={msg.id} className="hover:bg-slate-50 transition-colors group">
+                  <tr key={msg.id} className="hover:bg-muted/50 transition-colors group">
                     {/* Render message row here if there are messages */}
                   </tr>
                 ))

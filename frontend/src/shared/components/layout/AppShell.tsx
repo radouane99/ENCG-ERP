@@ -56,7 +56,7 @@ export default function AppShell() {
         {/* Search Modal */}
         <GlobalSearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
         
-        <main className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6 pb-24 lg:pb-8 scroll-smooth">
+        <main data-design-system="encg" className="erp-workspace flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6 pb-24 lg:pb-8 scroll-smooth">
           <div className={cn("mx-auto animate-fade-in", isFullWidthPage ? "max-w-none w-full px-0" : "max-w-7xl")}>
             <ErrorBoundary>
               <Outlet />

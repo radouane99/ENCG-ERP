@@ -21,20 +21,20 @@ export const StatCard: React.FC<StatCardProps> = ({
   color = 'blue'
 }) => {
   const colorStyles: Record<string, string> = {
-    blue: 'bg-blue-50 text-blue-600',
-    amber: 'bg-amber-50 text-amber-600',
-    purple: 'bg-purple-50 text-purple-600',
-    emerald: 'bg-emerald-50 text-emerald-600',
+    blue: 'bg-primary/10 text-primary',
+    amber: 'bg-warning/10 text-[var(--warning-text)]',
+    purple: 'bg-primary/10 text-primary',
+    emerald: 'bg-success/10 text-success',
   };
 
-  const iconBg = colorStyles[color] || 'bg-gray-50 text-gray-600';
+  const iconBg = colorStyles[color] || 'bg-muted text-muted-foreground';
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
+    <div className="erp-surface p-5 sm:p-6">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-gray-500">{title}</p>
-          <h3 className="mt-2 text-3xl font-bold text-gray-900">{value}</h3>
+          <p className="text-sm font-medium text-muted-foreground">{title}</p>
+          <h3 className="mt-2 text-3xl font-bold tabular-nums text-foreground">{value}</h3>
         </div>
         <div className={`rounded-xl p-3 ${iconBg}`}>
           <Icon className="h-6 w-6" />
@@ -45,14 +45,14 @@ export const StatCard: React.FC<StatCardProps> = ({
           {trend && (
             <span
               className={`font-medium ${
-                trendUp ? 'text-emerald-600' : 'text-red-600'
+                trendUp ? 'text-success' : 'text-destructive'
               }`}
             >
               {trend}
             </span>
           )}
           {description && (
-            <span className={`${trend ? 'ml-2' : ''} text-gray-500`}>
+            <span className={`${trend ? 'ms-2' : ''} text-muted-foreground`}>
               {description}
             </span>
           )}

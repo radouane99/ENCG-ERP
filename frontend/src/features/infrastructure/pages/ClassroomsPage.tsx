@@ -132,7 +132,7 @@ const SLOT_OPTIONS: SelectOption[] = SLOTS.map((s, i) => ({
 
 const AVAIL_KIND_OPTIONS: SelectOption[] = [
   { value: 'all', label: 'Toutes (adaptées à l’effectif)', badge: 'TOUT', icon: <Building className="w-3.5 h-3.5 text-teal-500" /> },
-  { value: 'td', label: 'Salles TD (Travaux Dirigés)', badge: 'TD', icon: <DoorOpen className="w-3.5 h-3.5 text-blue-500" /> },
+  { value: 'td', label: 'Salles TD (Travaux Dirigés)', badge: 'TD', icon: <DoorOpen className="w-3.5 h-3.5 text-primary" /> },
   { value: 'amphi', label: 'Amphithéâtres (Grands Amphis)', badge: 'AMPHI', icon: <Sparkles className="w-3.5 h-3.5 text-purple-500" /> },
 ]
 
@@ -146,16 +146,16 @@ const MOTIFS = [
 const MOTIF_OPTIONS: SelectOption[] = [
   { value: 'extra', label: 'Séance extra / Complémentaire', badge: 'EXTRA', icon: <Sparkles className="w-3.5 h-3.5 text-emerald-500" /> },
   { value: 'rattrapage', label: 'Rattrapage de cours', badge: 'RATTRAPAGE', icon: <CalendarCheck className="w-3.5 h-3.5 text-amber-500" /> },
-  { value: 'soutenance', label: 'Soutenance / Jury PFE', badge: 'JURY', icon: <Ticket className="w-3.5 h-3.5 text-indigo-500" /> },
-  { value: 'autre', label: 'Autre motif ponctuel', badge: 'AUTRE', icon: <Building className="w-3.5 h-3.5 text-slate-500" /> },
+  { value: 'soutenance', label: 'Soutenance / Jury PFE', badge: 'JURY', icon: <Ticket className="w-3.5 h-3.5 text-primary" /> },
+  { value: 'autre', label: 'Autre motif ponctuel', badge: 'AUTRE', icon: <Building className="w-3.5 h-3.5 text-muted-foreground" /> },
 ]
 
 const ROOM_TYPE_OPTIONS: SelectOption[] = [
-  { value: 'classroom', label: 'Salle TD (Travaux Dirigés)', badge: 'TD', icon: <DoorOpen className="w-3.5 h-3.5 text-blue-500" /> },
+  { value: 'classroom', label: 'Salle TD (Travaux Dirigés)', badge: 'TD', icon: <DoorOpen className="w-3.5 h-3.5 text-primary" /> },
   { value: 'amphitheatre', label: 'Amphithéâtre de cours', badge: 'AMPHI', icon: <Sparkles className="w-3.5 h-3.5 text-purple-500" /> },
   { value: 'lab', label: 'Laboratoire Informatique & TP', badge: 'LABO', icon: <Monitor className="w-3.5 h-3.5 text-emerald-500" /> },
   { value: 'seminar', label: 'Salle de Séminaire / Master', badge: 'SÉMINAIRE', icon: <Building className="w-3.5 h-3.5 text-amber-500" /> },
-  { value: 'admin', label: 'Bureau Administratif', badge: 'ADMIN', icon: <Building className="w-3.5 h-3.5 text-slate-500" /> },
+  { value: 'admin', label: 'Bureau Administratif', badge: 'ADMIN', icon: <Building className="w-3.5 h-3.5 text-muted-foreground" /> },
 ]
 
 const CAPACITY_FILTER_OPTIONS: SelectOption[] = [
@@ -522,23 +522,23 @@ const [reservations, setReservations] = useState<any[]>([]);
   })
 
   return (
-    <div className="max-w-[1700px] mx-auto p-4 md:p-8 space-y-8 font-sans animate-in fade-in pb-24">
+    <div className="max-w-[1700px] mx-auto space-y-8 font-sans animate-in fade-in pb-24">
       
       {/* ── Hero Powerhouse Banner ────────────────────────────────────────────── */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-slate-950 via-[#001A4B] to-teal-950 p-8 md:p-10 rounded-[2.5rem] shadow-2xl text-white border border-teal-900/40">
+      <div className="relative overflow-hidden p-8 md:p-10 text-white border border-teal-900/40 erp-page-banner">
         <div className="absolute top-0 right-0 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="flex items-center gap-6">
-            <div className="w-16 h-16 md:w-20 md:h-20 rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center shadow-2xl shrink-0">
+            <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center shadow-sm shrink-0">
               <DoorOpen className="w-8 h-8 md:w-10 md:h-10 text-teal-300" />
             </div>
             <div>
-              <div className="inline-flex items-center gap-2 bg-teal-500/20 text-teal-200 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-2 border border-teal-400/30">
+              <div className="inline-flex items-center gap-2 bg-teal-500/20 text-teal-200 px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mb-2 border border-teal-400/30">
                 <Sparkles className="w-4 h-4 text-amber-300" /> Hub Campus &amp; Espaces Pédagogiques — ENCG Fès
               </div>
-              <h1 className="text-2xl md:text-4xl font-black text-white tracking-tight leading-tight">
+              <h1 className="text-white leading-tight erp-page-title">
                 Gestion des Salles, Amphithéâtres &amp; Réservations
               </h1>
               <p className="text-teal-100/90 text-xs md:text-sm font-medium mt-1 max-w-2xl">
@@ -567,7 +567,7 @@ const [reservations, setReservations] = useState<any[]>([]);
 
             <button
               onClick={openCreate}
-              className="px-6 py-3.5 bg-gradient-to-r from-teal-500 to-emerald-500 hover:opacity-95 text-slate-950 font-black text-xs uppercase tracking-wider rounded-2xl shadow-xl flex items-center gap-2 cursor-pointer transition-all active:scale-95"
+              className="px-6 py-3.5 bg-gradient-to-r from-teal-500 to-emerald-500 hover:opacity-95 text-slate-950 font-bold text-xs uppercase tracking-wider rounded-2xl shadow-sm flex items-center gap-2 cursor-pointer transition-all active:scale-95"
             >
               <Plus className="w-4 h-4 text-slate-950" />
               <span>Nouvelle Salle / Amphi</span>
@@ -584,8 +584,8 @@ const [reservations, setReservations] = useState<any[]>([]);
             { label: 'RÉSERVATIONS ACTIVES', value: reservations.length },
           ].map(s => (
             <div key={s.label} className="p-3.5 rounded-2xl bg-white/10 border border-white/15 text-center">
-              <span className="text-[9px] font-black uppercase tracking-wider text-teal-200 block">{s.label}</span>
-              <span className="text-2xl font-black text-white font-mono mt-1 block">{s.value}</span>
+              <span className="text-[9px] font-bold uppercase tracking-wider text-teal-200 block">{s.label}</span>
+              <span className="text-2xl font-bold text-white font-mono mt-1 block">{s.value}</span>
             </div>
           ))}
         </div>
@@ -596,7 +596,7 @@ const [reservations, setReservations] = useState<any[]>([]);
         <button
           onClick={() => setActiveTab('inventory')}
           className={cn(
-            "flex items-center gap-2.5 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap",
+            "flex items-center gap-2.5 px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap",
             activeTab === 'inventory'
               ? "bg-[#0f2863] text-white shadow-md"
               : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -609,7 +609,7 @@ const [reservations, setReservations] = useState<any[]>([]);
         <button
           onClick={() => setActiveTab('availability')}
           className={cn(
-            "flex items-center gap-2.5 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap",
+            "flex items-center gap-2.5 px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap",
             activeTab === 'availability'
               ? "bg-[#0f2863] text-white shadow-md"
               : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -622,7 +622,7 @@ const [reservations, setReservations] = useState<any[]>([]);
         <button
           onClick={() => setActiveTab('reservations')}
           className={cn(
-            "flex items-center gap-2.5 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap",
+            "flex items-center gap-2.5 px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap",
             activeTab === 'reservations'
               ? "bg-[#0f2863] text-white shadow-md"
               : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -643,10 +643,10 @@ const [reservations, setReservations] = useState<any[]>([]);
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             
             {/* KPI 1: Total Espaces */}
-            <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 to-indigo-950/80 border border-indigo-900/50 rounded-3xl p-5 shadow-lg text-white">
+            <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 to-indigo-950/80 border border-indigo-900/50 rounded-2xl p-5 shadow-lg text-white">
               <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-black uppercase tracking-widest text-indigo-300">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-300">
                   Parc Immobilier Homologué
                 </span>
                 <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center text-indigo-300 border border-white/15">
@@ -654,7 +654,7 @@ const [reservations, setReservations] = useState<any[]>([]);
                 </div>
               </div>
               <div className="mt-3 flex items-baseline gap-2">
-                <span className="text-3xl font-black font-mono tracking-tight text-white">
+                <span className="text-3xl font-bold font-mono tracking-tight text-white">
                   {computedStats.total}
                 </span>
                 <span className="text-xs font-bold text-indigo-200">Espaces Pédagogiques</span>
@@ -669,10 +669,10 @@ const [reservations, setReservations] = useState<any[]>([]);
             </div>
 
             {/* KPI 2: Capacité Globale */}
-            <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 to-sky-950/80 border border-sky-900/50 rounded-3xl p-5 shadow-lg text-white">
+            <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 to-sky-950/80 border border-sky-900/50 rounded-2xl p-5 shadow-lg text-white">
               <div className="absolute top-0 right-0 w-32 h-32 bg-sky-500/10 rounded-full blur-2xl pointer-events-none" />
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-black uppercase tracking-widest text-sky-300">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-sky-300">
                   Capacité Cours &amp; TD
                 </span>
                 <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center text-sky-300 border border-white/15">
@@ -680,7 +680,7 @@ const [reservations, setReservations] = useState<any[]>([]);
                 </div>
               </div>
               <div className="mt-3 flex items-baseline gap-2">
-                <span className="text-3xl font-black font-mono tracking-tight text-white">
+                <span className="text-3xl font-bold font-mono tracking-tight text-white">
                   {computedStats.total_capacity}
                 </span>
                 <span className="text-xs font-bold text-sky-200">Places Assises</span>
@@ -691,10 +691,10 @@ const [reservations, setReservations] = useState<any[]>([]);
             </div>
 
             {/* KPI 3: Capacité Examens */}
-            <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 to-rose-950/80 border border-rose-900/50 rounded-3xl p-5 shadow-lg text-white">
+            <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 to-rose-950/80 border border-rose-900/50 rounded-2xl p-5 shadow-lg text-white">
               <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/10 rounded-full blur-2xl pointer-events-none" />
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-black uppercase tracking-widest text-rose-300">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-rose-300">
                   Capacité Examens Sécurisée
                 </span>
                 <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center text-rose-300 border border-white/15">
@@ -702,7 +702,7 @@ const [reservations, setReservations] = useState<any[]>([]);
                 </div>
               </div>
               <div className="mt-3 flex items-baseline gap-2">
-                <span className="text-3xl font-black font-mono tracking-tight text-rose-300">
+                <span className="text-3xl font-bold font-mono tracking-tight text-rose-300">
                   {computedStats.total_exam_capacity}
                 </span>
                 <span className="text-xs font-bold text-rose-200">Candidats</span>
@@ -714,10 +714,10 @@ const [reservations, setReservations] = useState<any[]>([]);
             </div>
 
             {/* KPI 4: Taux d'Opérationnalité */}
-            <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 to-emerald-950/80 border border-emerald-900/50 rounded-3xl p-5 shadow-lg text-white">
+            <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 to-emerald-950/80 border border-emerald-900/50 rounded-2xl p-5 shadow-lg text-white">
               <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-black uppercase tracking-widest text-emerald-300">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-300">
                   Disponibilité Opérationnelle
                 </span>
                 <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center text-emerald-300 border border-white/15">
@@ -725,7 +725,7 @@ const [reservations, setReservations] = useState<any[]>([]);
                 </div>
               </div>
               <div className="mt-3 flex items-baseline gap-2">
-                <span className="text-3xl font-black font-mono tracking-tight text-emerald-400">
+                <span className="text-3xl font-bold font-mono tracking-tight text-emerald-400">
                   {computedStats.operationalRate}%
                 </span>
                 <span className="text-xs font-bold text-emerald-200">
@@ -745,7 +745,7 @@ const [reservations, setReservations] = useState<any[]>([]);
           </div>
 
           {/* ── Executive Command & Filter Ribbon ─────────────────────────────────── */}
-          <div className="bg-card border border-border/80 rounded-3xl p-5 shadow-sm space-y-4">
+          <div className="bg-card border border-border/80 rounded-2xl p-5 shadow-sm space-y-4">
             
             {/* Top Toolbar: Search + Category Pills + View Mode */}
             <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
@@ -758,7 +758,7 @@ const [reservations, setReservations] = useState<any[]>([]);
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                   placeholder="Rechercher par nom, code (ex: AMPH-A, S-101)..."
-                  className="w-full pl-10 pr-16 py-2.5 bg-background border border-input rounded-2xl text-xs font-bold text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/25 shadow-2xs transition-all"
+                  className="w-full pl-10 pr-16 py-2.5 bg-background border border-input text-xs font-bold text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/25 shadow-2xs transition-all rounded-[var(--control-radius)]"
                 />
                 <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded-lg border border-border">
                   ⌘K
@@ -778,7 +778,7 @@ const [reservations, setReservations] = useState<any[]>([]);
                     key={opt.value}
                     onClick={() => setTypeFilter(opt.value)}
                     className={cn(
-                      "px-3.5 py-2 rounded-2xl text-xs font-black transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 border shadow-2xs",
+                      "px-3.5 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 border shadow-2xs",
                       typeFilter === opt.value
                         ? "bg-[#0f2863] text-white border-[#0f2863] shadow-md shadow-indigo-950/20"
                         : "bg-muted/60 hover:bg-muted text-muted-foreground border-transparent hover:text-foreground"
@@ -802,7 +802,7 @@ const [reservations, setReservations] = useState<any[]>([]);
                   className={cn(
                     "px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer",
                     viewMode === 'grid' 
-                      ? "bg-background text-foreground shadow-xs font-black" 
+                      ? "bg-background text-foreground shadow-xs font-bold"
                       : "text-muted-foreground hover:text-foreground"
                   )}
                   title="Affichage en Grille Visuelle (Cartes de Prestige)"
@@ -815,7 +815,7 @@ const [reservations, setReservations] = useState<any[]>([]);
                   className={cn(
                     "px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer",
                     viewMode === 'table' 
-                      ? "bg-background text-foreground shadow-xs font-black" 
+                      ? "bg-background text-foreground shadow-xs font-bold"
                       : "text-muted-foreground hover:text-foreground"
                   )}
                   title="Affichage en Tableau Exécutif"
@@ -832,7 +832,7 @@ const [reservations, setReservations] = useState<any[]>([]);
               
               {/* Quick Equipment Filters */}
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground mr-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mr-1">
                   Équipements &amp; Disponibilité :
                 </span>
 
@@ -884,7 +884,7 @@ const [reservations, setReservations] = useState<any[]>([]);
                   <select
                     value={minCapacityFilter}
                     onChange={e => setMinCapacityFilter(Number(e.target.value))}
-                    className="bg-background border border-input rounded-xl px-2.5 py-1.5 text-xs font-bold text-foreground focus:outline-none shadow-2xs"
+                    className="bg-background border border-input px-2.5 py-1.5 text-xs font-bold text-foreground focus:outline-none shadow-2xs rounded-[var(--control-radius)]"
                   >
                     {CAPACITY_FILTER_OPTIONS.map(opt => (
                       <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -897,7 +897,7 @@ const [reservations, setReservations] = useState<any[]>([]);
                   <select
                     value={sortBy}
                     onChange={e => setSortBy(e.target.value)}
-                    className="bg-background border border-input rounded-xl px-2.5 py-1.5 text-xs font-bold text-foreground focus:outline-none shadow-2xs"
+                    className="bg-background border border-input px-2.5 py-1.5 text-xs font-bold text-foreground focus:outline-none shadow-2xs rounded-[var(--control-radius)]"
                   >
                     <option value="capacity-desc">Capacité (Décroissante)</option>
                     <option value="capacity-asc">Capacité (Croissante)</option>
@@ -909,7 +909,7 @@ const [reservations, setReservations] = useState<any[]>([]);
                 {/* Batch Print Door Signs Button */}
                 <button
                   onClick={handlePrintAllDoorSigns}
-                  className="px-3.5 py-1.5 bg-[#001A4B] hover:bg-[#0A2558] text-white rounded-xl text-xs font-black flex items-center gap-1.5 cursor-pointer shadow-md hover:shadow-indigo-500/20 transition-all active:scale-95"
+                  className="px-3.5 py-1.5 bg-[#001A4B] hover:bg-[#0A2558] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-md hover:shadow-indigo-500/20 transition-all active:scale-95"
                   title="Imprimer en continu toutes les affiches de porte filtrées"
                 >
                   <Printer className="w-3.5 h-3.5 text-amber-300" />
@@ -931,11 +931,11 @@ const [reservations, setReservations] = useState<any[]>([]);
               </p>
             </div>
           ) : filteredRooms.length === 0 ? (
-            <div className="bg-card border border-dashed border-border rounded-3xl p-12 text-center space-y-3">
-              <div className="w-16 h-16 rounded-3xl bg-muted/60 flex items-center justify-center mx-auto text-muted-foreground">
+            <div className="bg-card border border-dashed border-border rounded-2xl p-12 text-center space-y-3">
+              <div className="w-16 h-16 rounded-2xl bg-muted/60 flex items-center justify-center mx-auto text-muted-foreground">
                 <DoorOpen className="w-8 h-8" />
               </div>
-              <h3 className="text-base font-black text-foreground">Aucun espace ne correspond à ces critères</h3>
+              <h3 className="text-base font-bold text-foreground">Aucun espace ne correspond à ces critères</h3>
               <p className="text-xs text-muted-foreground max-w-md mx-auto">
                 Modifiez vos critères de recherche ou réinitialisez les filtres pour afficher l'ensemble des salles et amphithéâtres.
               </p>
@@ -967,7 +967,7 @@ const [reservations, setReservations] = useState<any[]>([]);
                   <div
                     key={r.id}
                     className={cn(
-                      "group relative bg-card border border-border/80 rounded-[2rem] overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-300 flex flex-col justify-between hover:-translate-y-1.5",
+                      "group relative bg-card border border-border/80 rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-300 flex flex-col justify-between hover:-translate-y-1.5",
                       theme.accentBorder,
                       theme.glow
                     )}
@@ -990,21 +990,21 @@ const [reservations, setReservations] = useState<any[]>([]);
                       {/* Header Row: Category Pill & Room Code */}
                       <div className="relative z-10 flex items-center justify-between gap-2 mb-3">
                         <span className={cn(
-                          "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border backdrop-blur-md shadow-2xs",
+                          "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border backdrop-blur-md shadow-2xs",
                           theme.badgeBg
                         )}>
                           <span>{theme.icon}</span>
                           <span>{theme.label}</span>
                         </span>
 
-                        <span className="font-mono text-xs font-black px-2.5 py-1 bg-black/35 border border-white/20 rounded-xl text-amber-200 tracking-wider shadow-inner">
+                        <span className="font-mono text-xs font-bold px-2.5 py-1 bg-black/35 border border-white/20 rounded-xl text-amber-200 tracking-wider shadow-inner">
                           {r.code || `SALLE-${r.id}`}
                         </span>
                       </div>
 
                       {/* Room Name & Classification Subtitle */}
                       <div className="relative z-10">
-                        <h3 className="text-xl font-black tracking-tight text-white line-clamp-1 group-hover:text-amber-200 transition-colors">
+                        <h3 className="text-xl font-bold tracking-tight text-white line-clamp-1 group-hover:text-amber-200 transition-colors">
                           {cleanUtf8Text(r.name)}
                         </h3>
                         <p className="text-xs text-white/70 font-medium mt-0.5 line-clamp-1">
@@ -1018,7 +1018,7 @@ const [reservations, setReservations] = useState<any[]>([]);
                       
                       {/* Live Status Toggle Pill */}
                       <div className="flex items-center justify-between pb-3 border-b border-border/70">
-                        <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                           Statut Opérationnel :
                         </span>
 
@@ -1026,7 +1026,7 @@ const [reservations, setReservations] = useState<any[]>([]);
                           onClick={() => handleToggleMaintenance(r)}
                           title="Cliquer pour basculer le statut opérationnel / maintenance"
                           className={cn(
-                            "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer border shadow-2xs",
+                            "px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer border shadow-2xs",
                             r.is_available
                               ? "bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-500/30"
                               : "bg-rose-500/10 hover:bg-rose-500/20 text-rose-700 dark:text-rose-300 border-rose-500/30"
@@ -1049,7 +1049,7 @@ const [reservations, setReservations] = useState<any[]>([]);
                             <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block flex items-center gap-1">
                               <Users className="w-3.5 h-3.5 text-sky-500" /> Cours / TD
                             </span>
-                            <div className="font-mono text-base font-black text-foreground mt-0.5">
+                            <div className="font-mono text-base font-bold text-foreground mt-0.5">
                               {r.capacity} <span className="text-xs font-normal text-muted-foreground">places</span>
                             </div>
                           </div>
@@ -1058,7 +1058,7 @@ const [reservations, setReservations] = useState<any[]>([]);
                             <span className="text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider block flex items-center gap-1">
                               <ShieldCheck className="w-3.5 h-3.5 text-rose-500" /> Examens
                             </span>
-                            <div className="font-mono text-base font-black text-rose-600 dark:text-rose-400 mt-0.5 flex items-baseline gap-1">
+                            <div className="font-mono text-base font-bold text-rose-600 dark:text-rose-400 mt-0.5 flex items-baseline gap-1">
                               <span>{examCap}</span>
                               <span className="text-[10px] font-bold text-muted-foreground">(1 pl./2)</span>
                             </div>
@@ -1109,7 +1109,7 @@ const [reservations, setReservations] = useState<any[]>([]);
                           <button
                             onClick={() => handlePrintDoorNotice(r)}
                             title="Imprimer l'Affiche de Porte Officielle A4"
-                            className="flex-1 py-2.5 px-3 bg-gradient-to-r from-[#001A4B] via-[#0A2558] to-[#113A7A] hover:opacity-95 text-white rounded-xl text-xs font-black tracking-wide cursor-pointer transition-all flex items-center justify-center gap-2 shadow-md hover:shadow-indigo-500/20 active:scale-[0.98]"
+                            className="flex-1 py-2.5 px-3 bg-gradient-to-r from-[#001A4B] via-[#0A2558] to-[#113A7A] hover:opacity-95 text-white rounded-xl text-xs font-bold tracking-wide cursor-pointer transition-all flex items-center justify-center gap-2 shadow-md hover:shadow-indigo-500/20 active:scale-[0.98]"
                           >
                             <Printer className="w-4 h-4 text-amber-300" />
                             <span>Affiche A4</span>
@@ -1120,12 +1120,12 @@ const [reservations, setReservations] = useState<any[]>([]);
                             onClick={() => handleDownloadDoorSignPdf(r)}
                             disabled={downloadingPdfId === r.id}
                             title="Télécharger le document PDF officiel signé électroniquement"
-                            className="p-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-foreground rounded-xl text-xs font-bold border border-border cursor-pointer transition-all shrink-0 disabled:opacity-50"
+                            className="p-2.5 bg-muted hover:bg-slate-200 dark:bg-card dark:hover:bg-slate-700 text-foreground rounded-xl text-xs font-bold border border-border cursor-pointer transition-all shrink-0 disabled:opacity-50"
                           >
                             {downloadingPdfId === r.id ? (
                               <Loader2 className="w-4 h-4 animate-spin text-primary" />
                             ) : (
-                              <Download className="w-4 h-4 text-slate-700 dark:text-slate-200" />
+                              <Download className="w-4 h-4 text-slate-700 dark:text-foreground" />
                             )}
                           </button>
 
@@ -1170,10 +1170,10 @@ const [reservations, setReservations] = useState<any[]>([]);
             /* ══════════════════════════════════════════════════════════════════════ */
             /* ── VIEW 2: EXECUTIVE DATA TABLE ──────────────────────────────────── */
             /* ══════════════════════════════════════════════════════════════════════ */
-            <div className="bg-card border border-border rounded-3xl overflow-hidden shadow-sm">
+            <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse text-xs">
-                  <thead className="bg-muted/60 text-muted-foreground uppercase text-[10px] font-black tracking-wider border-b border-border">
+                  <thead className="bg-muted/60 text-muted-foreground uppercase text-[10px] font-bold tracking-wider border-b border-border">
                     <tr>
                       <th className="p-4 text-left">Code</th>
                       <th className="p-4 text-left">Salle / Espace</th>
@@ -1192,26 +1192,26 @@ const [reservations, setReservations] = useState<any[]>([]);
 
                       return (
                         <tr key={r.id} className="hover:bg-muted/30 transition-colors">
-                          <td className="p-4 font-mono font-black text-amber-600 dark:text-amber-400">
+                          <td className="p-4 font-mono font-bold text-amber-600 dark:text-amber-400">
                             {r.code || `SALLE-${r.id}`}
                           </td>
                           <td className="p-4">
-                            <div className="font-black text-foreground text-sm">{cleanUtf8Text(r.name)}</div>
+                            <div className="font-bold text-foreground text-sm">{cleanUtf8Text(r.name)}</div>
                             <div className="text-[11px] text-muted-foreground">{r.building || theme.sublabel}</div>
                           </td>
                           <td className="p-4">
                             <span className={cn(
-                              "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border",
+                              "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border",
                               theme.badgeBg
                             )}>
                               <span>{theme.icon}</span>
                               <span>{theme.label}</span>
                             </span>
                           </td>
-                          <td className="p-4 text-center font-mono font-black text-foreground text-sm">
+                          <td className="p-4 text-center font-mono font-bold text-foreground text-sm">
                             {r.capacity} <span className="text-[10px] font-normal text-muted-foreground">pl.</span>
                           </td>
-                          <td className="p-4 text-center font-mono font-black text-rose-600 dark:text-rose-400 text-sm">
+                          <td className="p-4 text-center font-mono font-bold text-rose-600 dark:text-rose-400 text-sm">
                             {examCap} <span className="text-[10px] font-normal text-muted-foreground">(1 pl./2)</span>
                           </td>
                           <td className="p-4 text-center">
@@ -1222,7 +1222,7 @@ const [reservations, setReservations] = useState<any[]>([]);
                               <span title={r.has_ac ? "Climatiseur Inverter OK" : "Sans clim"} className={cn("p-1 rounded-md", r.has_ac ? "bg-sky-500/15 text-sky-600" : "bg-muted text-slate-400")}>
                                 <Thermometer className="w-3.5 h-3.5" />
                               </span>
-                              <span title="Wi-Fi Eduroam 1 Gbps" className="p-1 rounded-md bg-blue-500/15 text-blue-600">
+                              <span title="Wi-Fi Eduroam 1 Gbps" className="p-1 rounded-md bg-blue-500/15 text-primary">
                                 <Wifi className="w-3.5 h-3.5" />
                               </span>
                             </div>
@@ -1231,7 +1231,7 @@ const [reservations, setReservations] = useState<any[]>([]);
                             <button
                               onClick={() => handleToggleMaintenance(r)}
                               className={cn(
-                                "px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider inline-flex items-center gap-1.5 cursor-pointer border",
+                                "px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider inline-flex items-center gap-1.5 cursor-pointer border",
                                 r.is_available 
                                   ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30" 
                                   : "bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-500/30"
@@ -1245,7 +1245,7 @@ const [reservations, setReservations] = useState<any[]>([]);
                             <div className="flex items-center justify-end gap-1.5">
                               <button
                                 onClick={() => handlePrintDoorNotice(r)}
-                                className="px-2.5 py-1.5 bg-[#001A4B] hover:bg-[#0A2558] text-white rounded-xl text-xs font-black inline-flex items-center gap-1 cursor-pointer shadow-xs"
+                                className="px-2.5 py-1.5 bg-[#001A4B] hover:bg-[#0A2558] text-white rounded-xl text-xs font-bold inline-flex items-center gap-1 cursor-pointer shadow-xs"
                                 title="Imprimer Affiche de Porte A4"
                               >
                                 <Printer className="w-3.5 h-3.5 text-amber-300" />
@@ -1301,10 +1301,10 @@ const [reservations, setReservations] = useState<any[]>([]);
       {activeTab === 'availability' && (
         <div className="space-y-6 animate-in fade-in">
           {/* Search Controls */}
-          <div className="bg-card border border-border rounded-3xl p-6 shadow-sm space-y-5">
+          <div className="bg-card border border-border rounded-2xl p-6 shadow-sm space-y-5">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="space-y-1.5">
-                <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                   <Calendar className="w-3.5 h-3.5 text-teal-500" />
                   Date de la séance
                 </span>
@@ -1312,12 +1312,12 @@ const [reservations, setReservations] = useState<any[]>([]);
                   type="date"
                   value={date}
                   onChange={e => setDate(e.target.value)}
-                  className="w-full rounded-2xl border border-input bg-background px-4 py-2.5 text-xs font-bold text-foreground shadow-2xs hover:bg-muted/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all cursor-pointer"
+                  className="w-full border border-input bg-background px-4 py-2.5 text-xs font-bold text-foreground shadow-2xs hover:bg-muted/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all cursor-pointer rounded-[var(--control-radius)]"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                   <Clock className="w-3.5 h-3.5 text-amber-500" />
                   Créneau ENCG
                 </span>
@@ -1330,8 +1330,8 @@ const [reservations, setReservations] = useState<any[]>([]);
               </div>
 
               <div className="space-y-1.5">
-                <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                  <Users className="w-3.5 h-3.5 text-indigo-500" />
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                  <Users className="w-3.5 h-3.5 text-primary" />
                   Effectif Étudiant
                 </span>
                 <input
@@ -1340,12 +1340,12 @@ const [reservations, setReservations] = useState<any[]>([]);
                   value={headcount}
                   onChange={e => setHeadcount(e.target.value)}
                   placeholder="ex: 35"
-                  className="w-full rounded-2xl border border-input bg-background px-4 py-2.5 text-xs font-bold text-foreground shadow-2xs hover:bg-muted/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all"
+                  className="w-full border border-input bg-background px-4 py-2.5 text-xs font-bold text-foreground shadow-2xs hover:bg-muted/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all rounded-[var(--control-radius)]"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                   <Building className="w-3.5 h-3.5 text-teal-500" />
                   Type de salle
                 </span>
@@ -1360,7 +1360,7 @@ const [reservations, setReservations] = useState<any[]>([]);
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-border">
               <div className="space-y-1.5">
-                <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                   <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
                   Motif de réservation
                 </span>
@@ -1373,8 +1373,8 @@ const [reservations, setReservations] = useState<any[]>([]);
               </div>
 
               <div className="space-y-1.5">
-                <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                  <Edit2 className="w-3.5 h-3.5 text-slate-500" />
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                  <Edit2 className="w-3.5 h-3.5 text-muted-foreground" />
                   Remarque / Intitulé du cours
                 </span>
                 <input
@@ -1382,7 +1382,7 @@ const [reservations, setReservations] = useState<any[]>([]);
                   value={note}
                   onChange={e => setNote(e.target.value)}
                   placeholder="ex: Rattrapage Comptabilité S2 - Pr. Alami"
-                  className="w-full rounded-2xl border border-input bg-background px-4 py-2.5 text-xs font-bold text-foreground shadow-2xs hover:bg-muted/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all"
+                  className="w-full border border-input bg-background px-4 py-2.5 text-xs font-bold text-foreground shadow-2xs hover:bg-muted/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all rounded-[var(--control-radius)]"
                 />
               </div>
             </div>
@@ -1394,7 +1394,7 @@ const [reservations, setReservations] = useState<any[]>([]);
           ) : (
             <div className="space-y-6">
               <div>
-                <h3 className="text-sm font-black uppercase tracking-wider text-emerald-600 flex items-center gap-2 mb-3">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-emerald-600 flex items-center gap-2 mb-3">
                   <CheckCircle className="w-4 h-4" />
                   <span>Salles Libres ({availableRooms.length})</span>
                 </h3>
@@ -1403,14 +1403,14 @@ const [reservations, setReservations] = useState<any[]>([]);
                   {availableRooms.map((r: any) => (
                     <div key={r.id} className="p-5 bg-card border border-emerald-200 dark:border-emerald-800/60 rounded-2xl shadow-sm flex items-center justify-between gap-4">
                       <div>
-                        <h4 className="font-black text-sm text-foreground">{r.name}</h4>
+                        <h4 className="font-bold text-sm text-foreground">{r.name}</h4>
                         <p className="text-xs text-muted-foreground">{r.type} • Capacité : {r.capacity} places</p>
                       </div>
 
                       <button
                         onClick={() => bookMutation.mutate(r)}
                         disabled={bookMutation.isPending}
-                        className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer transition-colors shrink-0 shadow-sm"
+                        className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider cursor-pointer transition-colors shrink-0 shadow-sm"
                       >
                         {bookMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Réserver ⚡'}
                       </button>
@@ -1421,7 +1421,7 @@ const [reservations, setReservations] = useState<any[]>([]);
 
               {occupiedRooms.length > 0 && (
                 <div className="pt-4 border-t border-border">
-                  <h3 className="text-sm font-black uppercase tracking-wider text-rose-600 flex items-center gap-2 mb-3">
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-rose-600 flex items-center gap-2 mb-3">
                     <AlertTriangle className="w-4 h-4" />
                     <span>Salles Occupées sur ce Créneau ({occupiedRooms.length})</span>
                   </h3>
@@ -1446,7 +1446,7 @@ const [reservations, setReservations] = useState<any[]>([]);
       {/* ═════════════════════════════════════════════════════════════════════════ */}
       {activeTab === 'reservations' && (
         <div className="space-y-6 animate-in fade-in">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-card p-4 rounded-3xl border border-border shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-card p-4 rounded-2xl border border-border shadow-sm">
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
@@ -1454,7 +1454,7 @@ const [reservations, setReservations] = useState<any[]>([]);
                 value={reservationSearch}
                 onChange={e => setReservationSearch(e.target.value)}
                 placeholder="Rechercher par salle, motif ou demandeur..."
-                className="w-full pl-10 pr-4 py-2.5 bg-background border border-input rounded-xl text-xs font-bold text-foreground focus:outline-none"
+                className="w-full pl-10 pr-4 py-2.5 bg-background border border-input text-xs font-bold text-foreground focus:outline-none rounded-[var(--control-radius)]"
               />
             </div>
           </div>
@@ -1470,9 +1470,9 @@ const [reservations, setReservations] = useState<any[]>([]);
                 >
                   <div className="space-y-1">
                     <div className="flex items-center gap-3">
-                      <h4 className="font-black text-sm text-foreground">📍 {res.room_name || `Salle #${res.room_id}`}</h4>
+                      <h4 className="font-bold text-sm text-foreground">📍 {res.room_name || `Salle #${res.room_id}`}</h4>
                       <span className={cn(
-                        "px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider",
+                        "px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider",
                         res.status === 'approved' ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400" :
                         res.status === 'rejected' ? "bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-400" : "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400"
                       )}>
@@ -1514,21 +1514,21 @@ const [reservations, setReservations] = useState<any[]>([]);
       {/* ── Interactive Room Details & Live Timetable Modal ────────────────────── */}
       {selectedRoomForDetails && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-card border border-border rounded-3xl p-6 md:p-8 max-w-3xl w-full shadow-2xl space-y-6 animate-in zoom-in-95 max-h-[90vh] overflow-y-auto">
+          <div className="bg-card border border-border rounded-2xl p-6 md:p-8 max-w-3xl w-full shadow-sm space-y-6 animate-in zoom-in-95 max-h-[90vh] overflow-y-auto">
             <div className="flex items-start justify-between pb-4 border-b border-border">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-teal-50 text-teal-700 border border-teal-200">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-teal-50 text-teal-700 border border-teal-200">
                     {TYPE_LABELS[selectedRoomForDetails.type] || selectedRoomForDetails.type}
                   </span>
                   <span className={cn(
-                    "px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider",
+                    "px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider",
                     selectedRoomForDetails.is_available ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"
                   )}>
                     {selectedRoomForDetails.is_available ? 'Opérationnelle' : 'En Maintenance'}
                   </span>
                 </div>
-                <h3 className="text-xl font-black text-foreground">{cleanUtf8Text(selectedRoomForDetails.name)}</h3>
+                <h3 className="text-xl font-bold text-foreground">{cleanUtf8Text(selectedRoomForDetails.name)}</h3>
                 <p className="text-xs text-muted-foreground font-mono">CODE REPÈRE : {selectedRoomForDetails.code || 'ENCG-SALLE'}</p>
               </div>
 
@@ -1544,11 +1544,11 @@ const [reservations, setReservations] = useState<any[]>([]);
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
               <div className="p-3 bg-muted/40 rounded-2xl text-center">
                 <span className="text-[10px] text-muted-foreground font-bold uppercase block">Capacité Cours / TD</span>
-                <span className="text-lg font-black text-foreground font-mono">{selectedRoomForDetails.capacity} pl.</span>
+                <span className="text-lg font-bold text-foreground font-mono">{selectedRoomForDetails.capacity} pl.</span>
               </div>
-              <div className="p-3 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/50 rounded-2xl text-center">
-                <span className="text-[10px] text-indigo-700 dark:text-indigo-300 font-bold uppercase block">Capacité Examens</span>
-                <span className="text-lg font-black text-indigo-700 dark:text-indigo-300 font-mono">
+              <div className="p-3 bg-primary/5 dark:bg-indigo-950/40 border border-primary/20 dark:border-indigo-900/50 rounded-2xl text-center">
+                <span className="text-[10px] text-primary dark:text-indigo-300 font-bold uppercase block">Capacité Examens</span>
+                <span className="text-lg font-bold text-primary dark:text-indigo-300 font-mono">
                   {selectedRoomForDetails.exam_capacity || Math.floor(selectedRoomForDetails.capacity / 2)} pl.
                 </span>
               </div>
@@ -1569,7 +1569,7 @@ const [reservations, setReservations] = useState<any[]>([]);
             {/* Live Weekly Timetable Grid for this Room */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <h4 className="text-xs font-black uppercase tracking-wider text-foreground flex items-center gap-1.5">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
                   <Calendar className="w-4 h-4 text-teal-600" />
                   <span>Emploi du Temps Hebdomadaire Programmé</span>
                 </h4>
@@ -1597,7 +1597,7 @@ const [reservations, setReservations] = useState<any[]>([]);
                           <td className="p-2.5 font-bold text-foreground">{evt.title || 'Séance de cours'}</td>
                           <td className="p-2.5 text-muted-foreground">{evt.extendedProps?.professor || 'Pr. ENCG'}</td>
                           <td className="p-2.5">
-                            <span className="px-2 py-0.5 bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300 rounded-md font-bold text-[10px]">
+                            <span className="px-2 py-0.5 bg-primary/5 text-primary dark:bg-blue-950 dark:text-blue-300 rounded-md font-bold text-[10px]">
                               {evt.extendedProps?.group || 'Groupe'}
                             </span>
                           </td>
@@ -1618,7 +1618,7 @@ const [reservations, setReservations] = useState<any[]>([]);
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => handlePrintDoorNotice(selectedRoomForDetails)}
-                  className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-2 cursor-pointer shadow-sm"
+                  className="px-4 py-2.5 bg-primary hover:bg-primary text-primary-foreground rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-2 cursor-pointer shadow-sm"
                 >
                   <Printer className="w-4 h-4" />
                   <span>Imprimer Affiche A4</span>
@@ -1627,7 +1627,7 @@ const [reservations, setReservations] = useState<any[]>([]);
                 <button
                   onClick={() => handleDownloadDoorSignPdf(selectedRoomForDetails)}
                   disabled={downloadingPdfId === selectedRoomForDetails.id}
-                  className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-foreground rounded-xl text-xs font-bold flex items-center gap-2 cursor-pointer border border-border"
+                  className="px-4 py-2.5 bg-muted hover:bg-slate-200 dark:bg-card text-foreground rounded-xl text-xs font-bold flex items-center gap-2 cursor-pointer border border-border"
                 >
                   <Download className="w-4 h-4" />
                   <span>Télécharger PDF Officiel</span>
@@ -1648,9 +1648,9 @@ const [reservations, setReservations] = useState<any[]>([]);
       {/* Create / Edit Room Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-card border border-border rounded-3xl p-6 md:p-8 max-w-lg w-full shadow-2xl space-y-5 animate-in zoom-in-95">
+          <div className="bg-card border border-border rounded-2xl p-6 md:p-8 max-w-lg w-full shadow-sm space-y-5 animate-in zoom-in-95">
             <div className="flex items-center justify-between pb-3 border-b border-border">
-              <h3 className="font-black text-base text-foreground">
+              <h3 className="font-bold text-base text-foreground">
                 {editingId ? 'Modifier la Salle' : 'Nouvelle Salle / Amphi'}
               </h3>
               <button onClick={() => setShowModal(false)} className="p-1 text-muted-foreground hover:text-foreground cursor-pointer">
@@ -1667,7 +1667,7 @@ const [reservations, setReservations] = useState<any[]>([]);
                   value={form.name}
                   onChange={e => setForm({ ...form, name: e.target.value })}
                   placeholder="ex: Amphi Al Khwarizmi ou Salle 14"
-                  className="w-full px-4 py-2.5 bg-background border border-input rounded-xl text-xs font-bold text-foreground focus:outline-none"
+                  className="w-full px-4 py-2.5 bg-background border border-input text-xs font-bold text-foreground focus:outline-none rounded-[var(--control-radius)]"
                 />
               </div>
 
@@ -1689,7 +1689,7 @@ const [reservations, setReservations] = useState<any[]>([]);
                     value={form.code}
                     onChange={e => setForm({ ...form, code: e.target.value })}
                     placeholder="ex: AMPHI-1"
-                    className="w-full px-4 py-2.5 bg-background border border-input rounded-xl text-xs font-bold text-foreground focus:outline-none"
+                    className="w-full px-4 py-2.5 bg-background border border-input text-xs font-bold text-foreground focus:outline-none rounded-[var(--control-radius)]"
                   />
                 </div>
               </div>
@@ -1702,7 +1702,7 @@ const [reservations, setReservations] = useState<any[]>([]);
                     min={1}
                     value={form.capacity}
                     onChange={e => setForm({ ...form, capacity: Number(e.target.value) })}
-                    className="w-full px-4 py-2.5 bg-background border border-input rounded-xl text-xs font-bold text-foreground focus:outline-none"
+                    className="w-full px-4 py-2.5 bg-background border border-input text-xs font-bold text-foreground focus:outline-none rounded-[var(--control-radius)]"
                   />
                 </div>
 
@@ -1713,7 +1713,7 @@ const [reservations, setReservations] = useState<any[]>([]);
                     min={1}
                     value={form.exam_capacity}
                     onChange={e => setForm({ ...form, exam_capacity: Number(e.target.value) })}
-                    className="w-full px-4 py-2.5 bg-background border border-input rounded-xl text-xs font-bold text-foreground focus:outline-none"
+                    className="w-full px-4 py-2.5 bg-background border border-input text-xs font-bold text-foreground focus:outline-none rounded-[var(--control-radius)]"
                   />
                 </div>
               </div>
@@ -1750,7 +1750,7 @@ const [reservations, setReservations] = useState<any[]>([]);
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-black cursor-pointer shadow-sm"
+                  className="px-6 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold cursor-pointer shadow-sm"
                 >
                   Enregistrer 💾
                 </button>
@@ -1763,9 +1763,9 @@ const [reservations, setReservations] = useState<any[]>([]);
       {/* Mass Import Modal */}
       {isImporting && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-card border border-border rounded-3xl p-6 md:p-8 max-w-2xl w-full shadow-2xl space-y-4">
+          <div className="bg-card border border-border rounded-2xl p-6 md:p-8 max-w-2xl w-full shadow-sm space-y-4">
             <div className="flex justify-between items-center pb-3 border-b border-border">
-              <h3 className="font-black text-base text-foreground">Import Massif des Salles</h3>
+              <h3 className="font-bold text-base text-foreground">Import Massif des Salles</h3>
               <button onClick={() => setIsImporting(false)} className="text-muted-foreground hover:text-foreground cursor-pointer">
                 <X className="w-5 h-5" />
               </button>

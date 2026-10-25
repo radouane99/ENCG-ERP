@@ -68,4 +68,30 @@ test.describe('Suivi opérationnel', () => {
     await page.getByRole('button', { name: 'Page suivante', exact: true }).click()
     await expect(page.getByText('Notification page 2', { exact: true })).toBeVisible()
   })
+
+  test('une nouvelle tentative email refusée reste visible et un succès confirmé retire le bouton', async ({ page }) => {
+    await mockApi(page); await seedSession(page, 'admin')
+    const data = workspace() as ReturnType<typeof workspace> & { requests: (typeof requestRow & { email_state?: string })[] }
+    data.requests[0].email_state = 'failed'
+    let allow = false; let attempts = 0
+    await page.route(url => url.pathname === '/api/workspace/today', route => route.fulfill(json({ data })))
+    await page.route(url => url.pathname === '/api/admin/document-requests/41/send-email-notification', route => {
+      attempts++
+      if (!allow) return route.fulfill({ ...json({ message: 'Transport indisponible' }), status: 500 })
+      data.requests[0].email_state = 'accepted'
+      return route.fulfill(json({ message: 'Email accepté par le transport.' }))
+    })
+    await page.goto('/dashboard')
+    const panel = page.getByRole('region', { name: 'Mon travail à suivre' })
+    await panel.getByText('Centre de suivi des notifications', { exact: true }).click()
+    const retry = panel.getByRole('button', { name: 'Réessayer l’email de la demande #41', exact: true })
+    await retry.click()
+    await expect(page.getByText('Transport indisponible', { exact: true })).toBeVisible()
+    await expect(retry).toBeVisible()
+    allow = true
+    await retry.click()
+    await expect(page.getByText('Email accepté par le transport.', { exact: true })).toBeVisible()
+    await expect(retry).toHaveCount(0)
+    expect(attempts).toBe(2)
+  })
 })

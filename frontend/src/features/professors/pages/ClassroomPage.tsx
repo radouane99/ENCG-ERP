@@ -10,10 +10,10 @@ export default function ClassroomPage() {
   const [activeTab, setActiveTab] = useState<'attendance' | 'ai'>('attendance')
 
   return (
-    <div className="h-[calc(100vh-80px)] p-4 md:p-6 max-w-[1400px] mx-auto animate-in flex flex-col">
+    <div className="h-[calc(100vh-80px)] max-w-[1400px] mx-auto animate-in flex flex-col">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-[var(--foreground)]">{isRtl ? 'القسم الرقمي' : 'Espace Classroom'}</h1>
+          <h1 className="text-[var(--foreground)] erp-page-title">{isRtl ? 'القسم الرقمي' : 'Espace Classroom'}</h1>
           <p className="text-[var(--muted-foreground)] mt-1 font-medium text-sm">Management Stratégique (M12) • S6 • Amphi 1</p>
         </div>
         <div className="bg-[var(--card)] border border-[var(--border)] rounded-full p-1.5 flex shadow-sm">
@@ -37,7 +37,7 @@ export default function ClassroomPage() {
         {activeTab === 'attendance' && (
           <div className="h-full flex flex-col lg:flex-row gap-6 animate-in fade-in zoom-in-95 duration-300">
             {/* QR Code Presentation */}
-            <div className="flex-1 bg-[var(--card)] border border-[var(--border)] rounded-3xl p-10 flex flex-col items-center justify-center shadow-lg relative overflow-hidden">
+            <div className="flex-1 bg-[var(--card)] border border-[var(--border)] rounded-2xl p-10 flex flex-col items-center justify-center shadow-lg relative overflow-hidden">
               <div className="absolute top-0 end-0 p-8 opacity-5 text-[var(--color-primary)]">
                 <QrCode size={200} />
               </div>
@@ -46,7 +46,7 @@ export default function ClassroomPage() {
                 {t('modules:classroom.scan_desc')}
               </p>
               
-              <div className="relative z-10 bg-white p-6 rounded-[2rem] shadow-xl border-4 border-slate-100 mb-8 transform transition-transform hover:scale-105">
+              <div className="relative z-10 bg-card p-6 rounded-2xl shadow-sm border-4 border-border mb-8 transform transition-transform hover:scale-105">
                 {/* SVG mock for a beautiful QR Code */}
                 <svg width="240" height="240" viewBox="0 0 240 240" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <rect width="240" height="240" fill="white"/>
@@ -54,7 +54,7 @@ export default function ClassroomPage() {
                 </svg>
                 {/* Central ENCG Logo mock */}
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <div className="bg-white rounded-xl p-2 shadow-sm border border-slate-100">
+                  <div className="bg-card rounded-xl p-2 shadow-sm border border-border">
                     <div className="w-10 h-10 bg-gradient-to-br from-[#0f2863] to-[#a11162] rounded-lg"></div>
                   </div>
                 </div>
@@ -67,13 +67,13 @@ export default function ClassroomPage() {
             </div>
 
             {/* Live Stats */}
-            <div className="w-full lg:w-96 bg-[var(--card)] border border-[var(--border)] rounded-3xl flex flex-col overflow-hidden shadow-lg">
+            <div className="w-full lg:w-96 bg-[var(--card)] border border-[var(--border)] rounded-2xl flex flex-col overflow-hidden shadow-lg">
               <div className="p-6 border-b border-[var(--border)] bg-[color-mix(in srgb, var(--muted) 3000%, transparent)]">
                 <h3 className="font-bold flex items-center gap-2 text-[var(--foreground)]">
                   <Users className="w-5 h-5 text-[var(--color-primary)]" /> {t('modules:classroom.present_students')}
                 </h3>
                 <div className="mt-4 flex items-end gap-2">
-                  <span className="text-4xl font-black text-[var(--color-primary)]">42</span>
+                  <span className="text-4xl font-bold text-[var(--color-primary)]">42</span>
                   <span className="text-[var(--muted-foreground)] font-medium pb-1">/ 50 inscrits</span>
                 </div>
               </div>
@@ -96,7 +96,7 @@ export default function ClassroomPage() {
 
         {/* AI Tab */}
         {activeTab === 'ai' && (
-          <div className="h-full bg-[var(--card)] border border-[var(--border)] rounded-3xl shadow-lg flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-300">
+          <div className="h-full bg-[var(--card)] border border-[var(--border)] rounded-2xl shadow-lg flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-300">
             <div className="p-6 border-b border-[var(--border)] bg-gradient-to-r from-purple-900 to-[#14285e] text-white flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
@@ -172,7 +172,7 @@ export default function ClassroomPage() {
                 <input 
                   type="text" 
                   placeholder={t('modules:classroom.ask_ai')}
-                  className="flex-1 bg-transparent border-none focus:outline-none px-2 text-sm text-[var(--foreground)]"
+                  className="flex-1 bg-transparent border-none focus:outline-none px-2 text-sm text-[var(--foreground)] rounded-[var(--control-radius)]"
                 />
                 <button className="p-3 bg-purple-600 text-white rounded-full hover:bg-purple-700 transition-colors shadow-md transform hover:scale-105 active:scale-95">
                   <Send size={18} className={cn(isRtl && "rotate-180")} />

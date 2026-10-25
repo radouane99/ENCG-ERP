@@ -40,7 +40,7 @@ export default function ExecutiveDashboard() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Direction / Executive Dashboard</h1>
+          <h1 className="text-foreground erp-page-title">Direction / Executive Dashboard</h1>
           <p className="text-muted-foreground mt-1">Vue d'ensemble stratégique de l'institution.</p>
         </div>
         <button className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl font-medium shadow-lg hover:shadow-primary/20 transition-all">
@@ -49,30 +49,30 @@ export default function ExecutiveDashboard() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-gradient-to-br from-primary to-[#7D0809] rounded-3xl p-6 text-foreground shadow-xl shadow-primary/20">
+        <div className="bg-gradient-to-br from-primary to-[#7D0809] rounded-2xl p-6 text-foreground shadow-sm shadow-primary/20">
           <div className="flex justify-between items-start">
             <div>
               <p className="text-foreground/60 text-xs font-bold uppercase tracking-widest mb-1">Total Étudiants</p>
-              <h3 className="text-4xl font-black">{kpis.total_students || 0}</h3>
+              <h3 className="text-4xl font-bold">{kpis.total_students || 0}</h3>
             </div>
             <Users className="w-8 h-8 text-foreground/20" />
           </div>
         </div>
 
-        <div className="bg-card border border-border rounded-3xl p-6 shadow-sm hover:shadow-md transition-shadow">
+        <div className="bg-card border border-border rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex justify-between items-start">
             <div>
               <p className="text-muted-foreground text-xs font-bold uppercase tracking-widest mb-1">Corps Professoral</p>
               <h3 className="text-3xl font-bold text-foreground">{kpis.total_professors || 0}</h3>
             </div>
             <div className="p-3 bg-indigo-500/10 rounded-2xl">
-              <GraduationCap className="w-6 h-6 text-indigo-500" />
+              <GraduationCap className="w-6 h-6 text-primary" />
             </div>
           </div>
-          <p className="mt-4 text-sm font-medium text-indigo-500">Global</p>
+          <p className="mt-4 text-sm font-medium text-primary">Global</p>
         </div>
 
-        <div className="bg-card border border-border rounded-3xl p-6 shadow-sm hover:shadow-md transition-shadow">
+        <div className="bg-card border border-border rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex justify-between items-start">
             <div>
               <p className="text-muted-foreground text-xs font-bold uppercase tracking-widest mb-1">Taux de Réussite</p>
@@ -84,7 +84,7 @@ export default function ExecutiveDashboard() {
           </div>
         </div>
 
-        <div className="bg-card border border-border rounded-3xl p-6 shadow-sm hover:shadow-md transition-shadow">
+        <div className="bg-card border border-border rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex justify-between items-start">
             <div>
               <p className="text-muted-foreground text-xs font-bold uppercase tracking-widest mb-1">Taux d'Abandon</p>
@@ -98,7 +98,7 @@ export default function ExecutiveDashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-card border border-border rounded-3xl p-6 shadow-sm">
+        <div className="lg:col-span-2 bg-card border border-border rounded-2xl p-6 shadow-sm">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h3 className="font-bold text-lg text-foreground">Évolution de l'Insertion</h3>
@@ -128,7 +128,7 @@ export default function ExecutiveDashboard() {
         </div>
 
         <div className="space-y-6">
-          <div className="bg-card border border-border rounded-3xl p-6 shadow-sm">
+          <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
             <div className="flex items-center gap-2 mb-4 text-foreground">
               <Wallet className="w-5 h-5 text-emerald-500" />
               <h3 className="font-bold text-lg">Finances & Vacations</h3>
@@ -152,7 +152,7 @@ export default function ExecutiveDashboard() {
             </div>
           </div>
 
-          <div className="bg-card border border-border rounded-3xl p-6 shadow-sm">
+          <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
             <h3 className="font-bold text-lg text-foreground mb-4 flex items-center gap-2">
               <Users className="w-5 h-5 text-amber-500" />
               Répartition Étudiants

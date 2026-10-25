@@ -12,26 +12,26 @@ export default function CreditsAndDerogations() {
       
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
-        <Shield className="w-8 h-8 text-blue-500" fill="currentColor" />
+        <Shield className="w-8 h-8 text-primary" fill="currentColor" />
         <div>
-          <h1 className="text-2xl font-black text-white italic">Gestion des Crédits & Cas Spéciaux</h1>
+          <h1 className="text-white italic erp-page-title">Gestion des Crédits & Cas Spéciaux</h1>
           <p className="text-xs font-bold text-white/50 uppercase tracking-widest mt-1">RÉGULATION ACADÉMIQUE MAROCAINE, DÉROGATIONS ET SUIVI DES MODULES EN CRÉDIT</p>
         </div>
       </div>
 
       {/* Rules Box */}
-      <div className="bg-gradient-to-r from-[#4741d6] to-[#2979ff] rounded-3xl p-8 text-white shadow-lg">
+      <div className="bg-gradient-to-r from-[#4741d6] to-[#2979ff] rounded-2xl p-8 text-white shadow-lg">
         <div className="inline-flex items-center gap-2 bg-white/20 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mb-4">
           <Shield className="w-3 h-3" /> CADRE RÉGLEMENTAIRE MAROCAIN
         </div>
         <h2 className="text-xl font-bold mb-4">Règles Nationales de Progression & Cas Exceptionnels</h2>
         <ul className="space-y-3 text-sm text-blue-50 leading-relaxed">
           <li className="flex items-start gap-2">
-            <span className="mt-1.5 w-1.5 h-1.5 bg-white rounded-full shrink-0"></span>
+            <span className="mt-1.5 w-1.5 h-1.5 bg-card rounded-full shrink-0"></span>
             <p><strong>Crédit de Module :</strong> Un étudiant n'ayant pas validé un ou plusieurs modules (note &lt; 10) mais ayant une moyenne générale â‰¥ 10/20 (sans note éliminatoire &lt; 5) est autorisé Ã  s'inscrire en année supérieure avec crédit des modules restants.</p>
           </li>
           <li className="flex items-start gap-2">
-            <span className="mt-1.5 w-1.5 h-1.5 bg-white rounded-full shrink-0"></span>
+            <span className="mt-1.5 w-1.5 h-1.5 bg-card rounded-full shrink-0"></span>
             <p><strong>Dérogation Spéciale (Ajournements multiples) :</strong> Un étudiant ne peut normalement pas s'inscrire plus de deux fois dans le même niveau (double ajournement exclu). Une <strong>Dérogation Administrative</strong> exceptionnelle peut être accordée par le chef d'établissement pour accorder une <strong>Dernière Chance</strong> de réinscription.</p>
           </li>
         </ul>
@@ -39,40 +39,40 @@ export default function CreditsAndDerogations() {
 
       {/* KPI Cards Row */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-3xl p-6 shadow-sm border border-white/10 flex items-center justify-between">
+        <div className="bg-card rounded-2xl p-6 shadow-sm border border-white/10 flex items-center justify-between">
           <div>
             <div className="text-[10px] font-bold uppercase tracking-widest text-white/50 mb-1">EFFECTIF GLOBAL</div>
-            <div className="text-3xl font-black text-white">251</div>
+            <div className="text-3xl font-bold text-white">251</div>
           </div>
           <div className="p-3 bg-pink-100 rounded-2xl">
             <div className="w-6 h-6 text-pink-500">ðŸ¢</div>
           </div>
         </div>
 
-        <div className="bg-white rounded-3xl p-6 shadow-sm border border-white/10 flex items-center justify-between">
+        <div className="bg-card rounded-2xl p-6 shadow-sm border border-white/10 flex items-center justify-between">
           <div>
             <div className="text-[10px] font-bold uppercase tracking-widest text-white/50 mb-1">ÉTUDIANTS AVEC CRÉDITS</div>
-            <div className="text-3xl font-black text-[#2979ff]">0</div>
+            <div className="text-3xl font-bold text-[#2979ff]">0</div>
           </div>
-          <div className="p-3 bg-blue-100 rounded-2xl">
-            <div className="w-6 h-6 text-blue-500">ðŸ“š</div>
+          <div className="p-3 bg-primary/10 rounded-2xl">
+            <div className="w-6 h-6 text-primary">ðŸ“š</div>
           </div>
         </div>
 
-        <div className="bg-white rounded-3xl p-6 shadow-sm border border-white/10 flex items-center justify-between">
+        <div className="bg-card rounded-2xl p-6 shadow-sm border border-white/10 flex items-center justify-between">
           <div>
             <div className="text-[10px] font-bold uppercase tracking-widest text-white/50 mb-1">DÉROGATIONS ACCORDÉES</div>
-            <div className="text-3xl font-black text-[#00bfa5]">0</div>
+            <div className="text-3xl font-bold text-[#00bfa5]">0</div>
           </div>
           <div className="p-3 bg-emerald-100 rounded-2xl">
             <ShieldCheck className="w-6 h-6 text-emerald-500" />
           </div>
         </div>
 
-        <div className="bg-white rounded-3xl p-6 shadow-sm border border-white/10 flex items-center justify-between">
+        <div className="bg-card rounded-2xl p-6 shadow-sm border border-white/10 flex items-center justify-between">
           <div>
             <div className="text-[10px] font-bold uppercase tracking-widest text-white/50 mb-1">DERNIÈRE CHANCE</div>
-            <div className="text-3xl font-black text-red-500">0</div>
+            <div className="text-3xl font-bold text-red-500">0</div>
           </div>
           <div className="p-3 bg-red-100 rounded-2xl">
             <AlertTriangle className="w-6 h-6 text-red-500" />
@@ -81,19 +81,19 @@ export default function CreditsAndDerogations() {
       </div>
 
       {/* Filter Bar */}
-      <div className="bg-white rounded-3xl p-4 shadow-sm border border-white/10 flex items-center gap-4">
+      <div className="bg-card rounded-2xl p-4 shadow-sm border border-white/10 flex items-center gap-4">
         <div className="flex-1 relative">
           <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-white/50" />
           <input 
             type="text" 
             placeholder="Nom, Matricule, CIN..." 
-            className="w-full pl-10 pr-4 py-2.5 bg-white/[0.02] border border-white/10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full pl-10 pr-4 py-2.5 bg-white/[0.02] border border-white/10 text-sm focus:outline-none focus:ring-2 focus:ring-ring rounded-[var(--control-radius)]"
           />
         </div>
-        <select className="flex-1 border border-white/10 bg-white rounded-xl px-4 py-2.5 text-sm text-white/80 outline-none">
+        <select className="flex-1 border border-white/10 bg-card px-4 py-2.5 text-sm text-white/80 outline-none rounded-[var(--control-radius)]">
           <option>-- Toutes les Filières --</option>
         </select>
-        <select className="flex-1 border border-white/10 bg-white rounded-xl px-4 py-2.5 text-sm text-white/80 outline-none">
+        <select className="flex-1 border border-white/10 bg-card px-4 py-2.5 text-sm text-white/80 outline-none rounded-[var(--control-radius)]">
           <option>-- Tous les statuts --</option>
         </select>
         <button className="bg-[#2979ff] hover:bg-[#1565c0] text-white px-8 py-2.5 rounded-xl font-bold text-sm transition-colors shadow-sm">
@@ -105,7 +105,7 @@ export default function CreditsAndDerogations() {
       </div>
 
       {/* Table */}
-      <div className="bg-white/[0.04] rounded-3xl shadow-lg border border-white/10 overflow-hidden">
+      <div className="bg-white/[0.04] rounded-2xl shadow-lg border border-white/10 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
             <thead className="text-[10px] text-white/50 font-bold uppercase tracking-widest bg-white/[0.02] border-b border-white/10">

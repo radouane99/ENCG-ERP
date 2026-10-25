@@ -104,14 +104,14 @@ export default function StudentMyConvocationsPage() {
   }
 
   return (
-    <div className="space-y-6 animate-in p-6 max-w-5xl mx-auto pb-20 relative">
+    <div className="space-y-6 animate-in max-w-5xl mx-auto pb-20 relative">
       <div className="flex items-center gap-4 mb-8">
-        <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+        <div className="w-12 h-12 rounded-xl bg-primary/5 text-primary flex items-center justify-center">
           <FileText className="w-6 h-6" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-[#0f2863] italic">Mes Convocations Pro</h1>
-          <p className="text-xs text-slate-500">
+          <h1 className="text-[#0f2863] italic erp-page-title">Mes Convocations Pro</h1>
+          <p className="text-xs text-muted-foreground">
             Retrouvez vos convocations, alertez en cas d'absence et interagissez avec l'assistant IA
           </p>
         </div>
@@ -127,7 +127,7 @@ export default function StudentMyConvocationsPage() {
             <p className="text-rose-600 text-sm mt-1">
               Nous avons détecté que vous avez plusieurs examens programmés le même jour. Si les horaires se superposent (chevauchement), veuillez demander un aménagement.
             </p>
-            <button className="mt-3 bg-white border border-rose-200 text-rose-700 hover:bg-rose-100 px-4 py-2 rounded-lg text-xs font-bold transition-colors">
+            <button className="mt-3 bg-card border border-rose-200 text-rose-700 hover:bg-rose-100 px-4 py-2 rounded-lg text-xs font-bold transition-colors">
               DEMANDER UN AMÉNAGEMENT DE CHEVAUCHEMENT
             </button>
           </div>
@@ -136,34 +136,34 @@ export default function StudentMyConvocationsPage() {
 
       <div className="space-y-4">
         {isLoading ? (
-          <div className="text-center text-slate-500 py-8 bg-white rounded-[2rem] border border-slate-200 shadow-sm">
+          <div className="text-center text-muted-foreground py-8 bg-card rounded-2xl border border-border shadow-sm">
             Chargement...
           </div>
         ) : (
           convocations?.length === 0 ? (
-            <div className="text-center py-8 text-slate-500 bg-white rounded-[2rem] border border-slate-200 shadow-sm">
+            <div className="text-center py-8 text-muted-foreground bg-card rounded-2xl border border-border shadow-sm">
               Vous n'avez aucune convocation pour le moment.
             </div>
           ) : (
             convocations?.map((conv: any) => (
-              <div key={conv.id} className="bg-white rounded-[2rem] border border-slate-200 shadow-sm p-6 hover:border-indigo-300 transition-colors">
+              <div key={conv.id} className="bg-card rounded-2xl border border-border shadow-sm p-6 hover:border-primary/20 transition-colors">
                 
                 {/* Header Convocation */}
                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-6">
                   <div>
                     <div className="flex items-center gap-3 mb-2">
-                      <span className="text-xs font-bold text-indigo-600 tracking-wider uppercase bg-indigo-50 px-2 py-1 rounded">
+                      <span className="text-xs font-bold text-primary tracking-wider uppercase bg-primary/5 px-2 py-1 rounded">
                         {conv.code}
                       </span>
                       <LiveCountdown date={conv.date} time={conv.time} />
                     </div>
-                    <h3 className="text-xl font-bold text-slate-800 mb-4">{conv.module}</h3>
+                    <h3 className="text-xl font-bold text-foreground mb-4">{conv.module}</h3>
                     
-                    <div className="flex flex-wrap gap-3 text-sm font-medium text-slate-600">
-                      <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
+                    <div className="flex flex-wrap gap-3 text-sm font-medium text-muted-foreground">
+                      <div className="flex items-center gap-1.5 bg-muted/50 px-3 py-1.5 rounded-lg border border-border">
                         <CalendarDays className="w-4 h-4 text-slate-400" /> {conv.date}
                       </div>
-                      <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
+                      <div className="flex items-center gap-1.5 bg-muted/50 px-3 py-1.5 rounded-lg border border-border">
                         <Clock className="w-4 h-4 text-slate-400" /> {conv.time} ({conv.duration})
                       </div>
                       <div className="flex items-center gap-1.5 bg-amber-50 text-amber-700 px-3 py-1.5 rounded-lg border border-amber-200">
@@ -180,7 +180,7 @@ export default function StudentMyConvocationsPage() {
                       <Smartphone className="w-4 h-4" /> Ajouter au Wallet
                     </button>
                     <button 
-                      className="h-10 px-4 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors w-full"
+                      className="h-10 px-4 rounded-xl bg-primary/5 hover:bg-primary/10 text-primary border border-primary/20 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors w-full"
                       onClick={() => openAuthenticatedUrl(`/api/v1/student-portal/convocations/${conv.id}/download`)}
                     >
                       <Download className="w-4 h-4" /> PDF
@@ -189,7 +189,7 @@ export default function StudentMyConvocationsPage() {
                 </div>
 
                 {/* Toolbar (Absence & AI) */}
-                <div className="flex items-center gap-3 pt-4 border-t border-slate-100">
+                <div className="flex items-center gap-3 pt-4 border-t border-border">
                   <button 
                     onClick={() => setAbsenceExamId(conv.id)}
                     className="flex items-center gap-2 text-rose-600 hover:text-rose-700 text-sm font-semibold bg-rose-50 hover:bg-rose-100 px-3 py-1.5 rounded-lg transition-colors"
@@ -201,7 +201,7 @@ export default function StudentMyConvocationsPage() {
                       setActiveAiExamId(conv.id === activeAiExamId ? null : conv.id)
                       setAiResponse(null)
                     }}
-                    className="flex items-center gap-2 text-blue-600 hover:text-blue-700 text-sm font-semibold bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors ml-auto"
+                    className="flex items-center gap-2 text-primary hover:text-primary text-sm font-semibold bg-primary/5 hover:bg-primary/10 px-3 py-1.5 rounded-lg transition-colors ml-auto"
                   >
                     <Bot className="w-4 h-4" /> IA Assistant Examen
                   </button>
@@ -209,12 +209,12 @@ export default function StudentMyConvocationsPage() {
 
                 {/* AI Chat Popover for this specific convocation */}
                 {activeAiExamId === conv.id && (
-                  <div className="mt-4 bg-blue-50/50 border border-blue-100 rounded-xl p-4 animate-in fade-in slide-in-from-top-2">
+                  <div className="mt-4 bg-blue-50/50 border border-primary/20 rounded-xl p-4 animate-in fade-in slide-in-from-top-2">
                     <div className="flex items-start gap-3 mb-4">
-                      <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0">
+                      <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center shrink-0">
                         <Bot className="w-4 h-4" />
                       </div>
-                      <div className="bg-white border border-blue-100 p-3 rounded-2xl rounded-tl-sm text-sm text-slate-700 shadow-sm flex-1">
+                      <div className="bg-card border border-primary/20 p-3 rounded-2xl rounded-tl-sm text-sm text-slate-700 shadow-sm flex-1">
                         {aiResponse ? (
                           aiResponse
                         ) : (
@@ -229,13 +229,13 @@ export default function StudentMyConvocationsPage() {
                         value={aiQuery}
                         onChange={(e) => setAiQuery(e.target.value)}
                         placeholder="Posez votre question..."
-                        className="flex-1 rounded-xl border border-blue-200 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="flex-1 border border-primary/20 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring rounded-[var(--control-radius)]"
                         onKeyDown={(e) => e.key === 'Enter' && askAiMutation.mutate()}
                       />
                       <button 
                         onClick={() => askAiMutation.mutate()}
                         disabled={askAiMutation.isPending || !aiQuery}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 rounded-xl text-sm font-bold transition-colors disabled:opacity-50"
+                        className="bg-primary hover:bg-primary text-primary-foreground px-4 rounded-xl text-sm font-bold transition-colors disabled:opacity-50"
                       >
                         {askAiMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Envoyer'}
                       </button>
@@ -251,13 +251,13 @@ export default function StudentMyConvocationsPage() {
       {/* Absence Modal */}
       {absenceExamId && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95">
-            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+          <div className="bg-card rounded-2xl w-full max-w-md shadow-sm overflow-hidden animate-in zoom-in-95">
+            <div className="p-6 border-b border-border flex items-center justify-between">
+              <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
                 <AlertTriangle className="w-5 h-5 text-rose-500" />
                 Déclaration d'Absence
               </h2>
-              <button onClick={() => setAbsenceExamId(null)} className="text-slate-400 hover:text-slate-600">
+              <button onClick={() => setAbsenceExamId(null)} className="text-slate-400 hover:text-muted-foreground">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -267,16 +267,16 @@ export default function StudentMyConvocationsPage() {
                 <textarea 
                   value={absenceReason}
                   onChange={(e) => setAbsenceReason(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 min-h-[100px]"
+                  className="w-full border border-border p-3 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 min-h-[100px] rounded-[var(--control-radius)]"
                   placeholder="Expliquez brièvement la raison (ex: Maladie, problème de transport...)"
                 />
               </div>
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1">Certificat Médical / Justificatif (Photo ou PDF)</label>
-                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-200 border-dashed rounded-xl cursor-pointer bg-slate-50 hover:bg-slate-100 transition-colors">
+                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-border border-dashed rounded-xl cursor-pointer bg-muted/50 hover:bg-muted transition-colors">
                   <div className="flex flex-col items-center justify-center pt-5 pb-6">
                     <Upload className="w-8 h-8 text-slate-400 mb-2" />
-                    <p className="text-sm text-slate-500 font-medium">
+                    <p className="text-sm text-muted-foreground font-medium">
                       {absenceFile ? absenceFile.name : 'Cliquez pour uploader un fichier'}
                     </p>
                   </div>

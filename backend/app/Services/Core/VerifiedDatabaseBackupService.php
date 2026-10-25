@@ -50,6 +50,7 @@ class VerifiedDatabaseBackupService
             $manifest = ['file' => $name, 'database' => config('database.connections.pgsql.database'), 'created_at' => now()->toIso8601String(), 'bytes' => filesize($path), 'sha256' => hash_file('sha256', $path), 'archive_readable' => true, 'restore_verified' => false];
             File::put($path.'.json', json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
             chmod($path.'.json', 0600);
+            $this->pruneOldArchives($name);
 
             return $manifest;
         } catch (\Throwable $e) {
@@ -57,6 +58,25 @@ class VerifiedDatabaseBackupService
                 unlink($path);
             }
             throw $e;
+        }
+    }
+
+    private function pruneOldArchives(string $current): void
+    {
+        $directory = storage_path('app/private/database-backups');
+        $manifests = glob($directory.'/encg_*.dump.json') ?: [];
+        rsort($manifests);
+        $lastVerified = null;
+        foreach ($manifests as $file) {
+            $data = json_decode(File::get($file), true);
+            if (($data['restore_verified'] ?? false) === true) { $lastVerified = basename($file, '.json'); break; }
+        }
+        if (! $lastVerified) { return; }
+        foreach ($manifests as $file) {
+            $name = basename($file, '.json');
+            if (! preg_match('/^encg_[0-9]{8}_[0-9]{6}_[a-f0-9]{8}\.dump$/D', $name) || $name === $current || $name === $lastVerified) { continue; }
+            $dump = $directory.'/'.$name;
+            if (is_file($dump) && filemtime($dump) < time() - 30 * 86400) { File::delete($dump, $file); }
         }
     }
 

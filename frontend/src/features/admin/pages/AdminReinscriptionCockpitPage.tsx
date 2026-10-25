@@ -131,7 +131,7 @@ export default function AdminReinscriptionCockpitPage() {
       />
 
       <RenewalCampaignPanel />
-      <p className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-xs md:text-sm text-blue-950 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-100">
+      <p className="rounded-2xl border border-primary/20 bg-primary/5 p-4 text-xs md:text-sm text-blue-950 dark:border-primary dark:bg-blue-950 dark:text-blue-100">
         Le niveau provient de la délibération et du parcours préparé par la scolarité. Les étudiants admis direct ou
         avec module(s) en réserve (dette) sont habilités à confirmer leur réinscription dans leur espace étudiant. La
         confirmation en ligne et le contrôle physique au guichet sont deux étapes distinctes et traçables.
@@ -162,7 +162,7 @@ export default function AdminReinscriptionCockpitPage() {
               ].map(([label, value]) => (
                 <div key={String(label)} className="rounded-2xl border border-border bg-card p-5 shadow-xs">
                   <p className="text-xs font-bold text-muted-foreground uppercase">{label}</p>
-                  <p className="mt-2 text-2xl font-black text-slate-900 dark:text-white">{value}</p>
+                  <p className="mt-2 text-2xl font-bold text-foreground dark:text-white">{value}</p>
                 </div>
               ))}
             </div>
@@ -177,7 +177,7 @@ export default function AdminReinscriptionCockpitPage() {
             {/* Tableau et Filtres */}
             <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-xs">
               <div className="grid gap-3 border-b border-border p-4 md:grid-cols-[1fr_200px_270px]">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                <label className="text-xs font-bold text-slate-700 dark:text-foreground">
                   Rechercher
                   <input
                     className={field}
@@ -189,7 +189,7 @@ export default function AdminReinscriptionCockpitPage() {
                     placeholder="Nom, CNE ou CIN"
                   />
                 </label>
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                <label className="text-xs font-bold text-slate-700 dark:text-foreground">
                   Niveau cible
                   <select
                     className={field}
@@ -207,7 +207,7 @@ export default function AdminReinscriptionCockpitPage() {
                     ))}
                   </select>
                 </label>
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                <label className="text-xs font-bold text-slate-700 dark:text-foreground">
                   État du dossier
                   <select
                     className={field}
@@ -229,7 +229,7 @@ export default function AdminReinscriptionCockpitPage() {
 
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
-                  <thead className="bg-muted/40 font-black uppercase text-[10px] text-slate-500">
+                  <thead className="bg-muted/40 font-bold uppercase text-[10px] text-muted-foreground">
                     <tr>
                       {['Étudiant', 'Passage & Filière', 'État du dossier', 'Confirmation', 'Contrôle guichet'].map(
                         (label) => (
@@ -243,19 +243,19 @@ export default function AdminReinscriptionCockpitPage() {
                   <tbody className="divide-y divide-border">
                     {data.students.map((s) => (
                       <tr key={s.id} className="hover:bg-muted/30 transition-colors">
-                        <td className="p-4 font-semibold text-slate-900 dark:text-white">
+                        <td className="p-4 font-semibold text-foreground dark:text-white">
                           <p>{s.name}</p>
                           <p className="text-[10px] text-muted-foreground font-mono font-normal">{s.cne}</p>
                         </td>
                         <td className="p-4">
-                          <span className="font-bold text-indigo-600 dark:text-indigo-400">
+                          <span className="font-bold text-primary dark:text-indigo-400">
                             {s.origin_level ? `${s.origin_level} ➔ ` : ''}
                             {s.current_level}
                           </span>
                           <p className="text-[10px] text-muted-foreground">{s.filiere}</p>
                         </td>
                         <td className="p-4">
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-muted dark:bg-card text-slate-700 dark:text-foreground">
                             {labels[s.status] || s.status}
                           </span>
                         </td>
@@ -302,11 +302,11 @@ export default function AdminReinscriptionCockpitPage() {
 
                 {!data.students.length && (
                   <div className="p-12 text-center space-y-4">
-                    <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 dark:bg-blue-950 dark:text-blue-300 flex items-center justify-center mx-auto text-xl font-black">
+                    <div className="w-12 h-12 rounded-2xl bg-primary/5 text-primary dark:bg-blue-950 dark:text-blue-300 flex items-center justify-center mx-auto text-xl font-bold">
                       🎓
                     </div>
                     <div className="max-w-md mx-auto space-y-1">
-                      <h3 className="font-bold text-sm text-slate-800 dark:text-slate-200">
+                      <h3 className="font-bold text-sm text-foreground dark:text-foreground">
                         Aucun dossier ne correspond aux filtres
                       </h3>
                       <p className="text-xs text-muted-foreground">
@@ -370,7 +370,7 @@ export default function AdminReinscriptionCockpitPage() {
             </label>
           ))}
         </div>
-        <label className="mt-4 block text-xs font-bold text-slate-700 dark:text-slate-300">
+        <label className="mt-4 block text-xs font-bold text-slate-700 dark:text-foreground">
           Observation de l’agent
           <textarea
             className={field}
@@ -413,7 +413,7 @@ export default function AdminReinscriptionCockpitPage() {
         title="Confirmer les relances annuelles"
         preventBackdropClose={busy}
       >
-        <p className="text-xs md:text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+        <p className="text-xs md:text-sm leading-relaxed text-muted-foreground dark:text-foreground">
           Les filtres actuels seront appliqués. Seuls les étudiants avec une décision académique validée et sans
           confirmation recevront une notification portail et un email d’invitation. Une seule relance par jour et par
           étudiant est autorisée pour respecter les quotas de communication.

@@ -10,10 +10,10 @@ export default function BorrowingsPage() {
   ])
 
   return (
-    <div className="space-y-6 animate-in p-6">
+    <div className="space-y-6 animate-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Suivi des Emprunts (Bibliothèque)</h1>
+          <h1 className="erp-page-title">Suivi des Emprunts (Bibliothèque)</h1>
           <p className="text-muted-foreground text-sm mt-1">Gérez les prêts de livres, les retours et les retards.</p>
         </div>
       </div>
@@ -22,7 +22,7 @@ export default function BorrowingsPage() {
         <div className="p-4 border-b bg-muted/20 flex gap-4">
            <div className="relative w-full max-w-sm">
              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-             <input type="text" placeholder="Rechercher par étudiant ou livre..." className="w-full pl-9 pr-4 py-2 text-sm border rounded-lg" />
+             <input type="text" placeholder="Rechercher par étudiant ou livre..." className="w-full pl-9 pr-4 py-2 text-sm border rounded-[var(--control-radius)]" />
            </div>
         </div>
         <table className="w-full text-sm text-left">
@@ -45,7 +45,7 @@ export default function BorrowingsPage() {
                 <td className="px-6 py-4 font-medium">{b.returnDate}</td>
                 <td className="px-6 py-4 text-center">
                    <span className={cn("px-2.5 py-1 rounded-full text-xs font-medium border flex items-center gap-1 w-max mx-auto", 
-                     b.status === 'active' ? 'bg-blue-50 text-blue-600 border-blue-200' :
+                     b.status === 'active' ? "bg-primary/5 text-primary border-primary/20" :
                      b.status === 'overdue' ? 'bg-red-50 text-red-600 border-red-200' :
                      'bg-green-50 text-green-600 border-green-200'
                    )}>

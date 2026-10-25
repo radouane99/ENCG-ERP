@@ -15,14 +15,14 @@ export default function AdminDocumentRequestsPage() {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Gestion des Demandes</h1>
+          <h1 className="erp-page-title">Gestion des Demandes</h1>
           <p className="text-muted-foreground text-sm">Traitez les demandes de documents des étudiants.</p>
         </div>
         <select 
-          className="border rounded-lg p-2 bg-background text-sm"
+          className="border p-2 bg-background text-sm rounded-[var(--control-radius)]"
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
         >
@@ -70,7 +70,7 @@ export default function AdminDocumentRequestsPage() {
                       {r.status === 'processing' && (
                         <>
                           <select 
-                            className="border rounded-lg p-1 text-xs bg-background mr-2"
+                            className="border p-1 text-xs bg-background mr-2 rounded-[var(--control-radius)]"
                             id={`signatory-${r.id}`}
                             defaultValue="LE DIRECTEUR DE L'ENCG FÈS"
                           >

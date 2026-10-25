@@ -25,7 +25,7 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#02060D] flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-muted/50 dark:bg-[#02060D] flex items-center justify-center relative overflow-hidden">
       {/* Decorative Background */}
       <div className="absolute inset-0 z-0 pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-[#E60028]/10 blur-[100px]" />
@@ -34,30 +34,30 @@ export default function ForgotPasswordPage() {
 
       <div className="relative z-10 w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 shadow-sm mb-6">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-card dark:bg-white/5 border border-border dark:border-white/10 shadow-sm mb-6">
             <ShieldCheck className="w-8 h-8 text-[#A80A0B]" />
           </div>
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
+          <h1 className="text-foreground dark:text-white erp-page-title">
             Mot de passe oublié
           </h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-2">
+          <p className="text-muted-foreground dark:text-muted-foreground mt-2">
             Entrez votre adresse email pour recevoir un lien de réinitialisation.
           </p>
         </div>
 
-        <div className="bg-white/80 dark:bg-[#0f172a]/80 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-2xl shadow-xl p-8">
+        <div className="bg-white/80 dark:bg-[#0f172a]/80 backdrop-blur-xl border border-border dark:border-white/10 rounded-2xl shadow-sm p-8">
           {success ? (
             <div className="text-center py-6">
               <CheckCircle2 className="w-16 h-16 text-emerald-500 mx-auto mb-4" />
-              <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
+              <h2 className="text-xl font-semibold text-foreground dark:text-white mb-2">
                 Email envoyé !
               </h2>
-              <p className="text-slate-600 dark:text-slate-400 mb-8">
+              <p className="text-muted-foreground dark:text-muted-foreground mb-8">
                 Si un compte correspond à <strong>{email}</strong>, un email avec les instructions a été envoyé.
               </p>
               <Link 
                 to="/login"
-                className="inline-flex items-center justify-center w-full py-3 rounded-xl bg-slate-100 dark:bg-white/5 text-slate-900 dark:text-white font-medium hover:bg-slate-200 dark:hover:bg-white/10 transition-colors"
+                className="inline-flex items-center justify-center w-full py-3 rounded-xl bg-muted dark:bg-white/5 text-foreground dark:text-white font-medium hover:bg-slate-200 dark:hover:bg-white/10 transition-colors"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Retour à la connexion
@@ -72,7 +72,7 @@ export default function ForgotPasswordPage() {
               )}
 
               <div className="space-y-2">
-                <label htmlFor="email" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                <label htmlFor="email" className="block text-sm font-medium text-slate-700 dark:text-foreground">
                   Adresse Email Universitaire
                 </label>
                 <div className="relative">
@@ -83,7 +83,7 @@ export default function ForgotPasswordPage() {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-white dark:bg-[#02060D] border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-[#A80A0B] focus:border-transparent transition-all text-slate-900 dark:text-white"
+                    className="w-full pl-10 pr-4 py-3 bg-card dark:bg-[#02060D] border border-border dark:border-white/10 focus:ring-2 focus:ring-[#A80A0B] focus:border-transparent transition-all text-foreground dark:text-white rounded-[var(--control-radius)]"
                     placeholder="prenom.nom@usmba.ac.ma"
                   />
                 </div>
@@ -98,7 +98,7 @@ export default function ForgotPasswordPage() {
               </button>
 
               <div className="text-center pt-2">
-                <Link to="/login" className="inline-flex items-center text-sm font-medium text-slate-500 hover:text-[#A80A0B] dark:text-slate-400 dark:hover:text-white transition-colors">
+                <Link to="/login" className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-[#A80A0B] dark:text-muted-foreground dark:hover:text-white transition-colors">
                   <ArrowLeft className="w-4 h-4 mr-1" />
                   Retour à la connexion
                 </Link>

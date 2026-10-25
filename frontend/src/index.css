@@ -5,6 +5,7 @@
    ──────────────────────────────────────────────────────────────── */
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800&family=Noto+Sans+Arabic:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 @import "tailwindcss";
+@import "./shared/design-system/workspace.css";
 
 /* ── Enable class-based dark mode for Tailwind v4 ── */
 @variant dark (&:where(.dark, .dark *));
@@ -60,8 +61,9 @@
   --radius-sm: calc(var(--radius) - 2px);
   --radius-md: var(--radius);
   --radius-lg: calc(var(--radius) + 2px);
-  --radius-xl: calc(var(--radius) + 6px);
-  --radius-2xl: calc(var(--radius) + 10px);
+  --radius-xl: 1rem;
+  --radius-2xl: 1rem;
+  --radius-3xl: 1rem;
 
   /* Typography */
   --font-sans: 'Inter', 'Noto Sans Arabic', system-ui, sans-serif;
@@ -78,7 +80,7 @@
   :root {
     /* ── Brand (ENCG) ── complete hsl() values for Tailwind v4 ── */
     /* Primary: ENCG Blue #1a3673 */
-    --primary:                      hsl(221 63% 28%);
+    --primary:                      var(--brand-navy);
     --primary-foreground:           hsl(0 0% 100%);
 
     /* Accent/Destructive: ENCG Red #a31f24 */
@@ -90,10 +92,10 @@
     --secondary:                    hsl(215 51% 25%);
     --secondary-foreground:         hsl(0 0% 100%);
 
-    --success:                      hsl(142 71% 45%);
+    --success:                      hsl(142 71% 30%);
     --success-foreground:           hsl(0 0% 100%);
     --warning:                      hsl(38 92% 50%);
-    --warning-foreground:           hsl(0 0% 100%);
+    --warning-foreground:           hsl(25 80% 12%);
 
     /* ── Surfaces ── */
     --background:        hsl(210 40% 98%);  /* Clean premium light gray-blue background */
@@ -103,7 +105,7 @@
     --popover:           hsl(0 0% 100%);
     --popover-foreground: hsl(222 47% 11%);
     --muted:             hsl(210 40% 96%);
-    --muted-foreground:  hsl(215.4 16.3% 46.9%);
+    --muted-foreground:  hsl(215 20% 40%);
     --border:            hsl(214.3 31.8% 91.4%);
     --input:             hsl(214.3 31.8% 91.4%);
     --ring:              hsl(221 63% 28%);
@@ -129,18 +131,18 @@
      Dark Mode Overrides — SaaS Navy Deep Theme
      ──────────────────────────────────────────────────────────────── */
   .dark {
-    --primary:                      hsl(221 83% 58%); /* Vibrant accessible primary blue */
-    --primary-foreground:           hsl(210 40% 98%);
+    --primary:                      hsl(221 83% 70%); /* Vibrant accessible primary blue */
+    --primary-foreground:           hsl(222 47% 7%);
     --secondary:                    hsl(222 47% 15%); /* Elegant secondary dark buttons */
     --secondary-foreground:         hsl(210 40% 98%);
     --accent:                       hsl(358 85% 60%); /* High-contrast ENCG Red */
-    --accent-foreground:            hsl(0 0% 100%);
+    --accent-foreground:            hsl(222 47% 7%);
     --destructive:                  hsl(358 85% 60%);
-    --destructive-foreground:       hsl(0 0% 100%);
-    --success:                      hsl(142 80% 45%);
-    --success-foreground:           hsl(0 0% 100%);
+    --destructive-foreground:       hsl(222 47% 7%);
+    --success:                      hsl(142 70% 60%);
+    --success-foreground:           hsl(222 47% 7%);
     --warning:                      hsl(38 92% 55%);
-    --warning-foreground:           hsl(0 0% 100%);
+    --warning-foreground:           hsl(25 80% 12%);
 
     --background:        hsl(222 47% 7%);   /* Beautiful SaaS dark blue-gray */
     --foreground:        hsl(210 40% 98%);
@@ -230,49 +232,21 @@
     line-height: 1.25;
   }
 
-  /* ── Global Luxury Dropdown & Select Elements (ENCG ERP V2) ── */
-  select {
-    appearance: none !important;
-    -webkit-appearance: none !important;
-    -moz-appearance: none !important;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23475569' stroke-width='2.5'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19.5 8.25l-7.5 7.5-7.5-7.5'/%3E%3C/svg%3E") !important;
-    background-repeat: no-repeat !important;
-    background-position: right 1rem center !important;
-    background-size: 1.15rem !important;
-    padding-right: 2.75rem !important;
-    cursor: pointer !important;
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
-    border-radius: 0.875rem !important;
-    font-weight: 600 !important;
+  /* Native selects share the same control geometry as Input and textarea. */
+  select:not([multiple]) {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.875rem center;
+    background-size: 1rem;
+    padding-inline-end: 2.5rem;
+    cursor: pointer;
+    border-radius: var(--control-radius);
+    font-weight: 500;
   }
-
-  [dir="rtl"] select {
-    background-position: left 1rem center !important;
-    padding-right: 1rem !important;
-    padding-left: 2.75rem !important;
-  }
-
-  .dark select {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23a5b4fc' stroke-width='2.5'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19.5 8.25l-7.5 7.5-7.5-7.5'/%3E%3C/svg%3E") !important;
-  }
-
-  select:focus {
-    outline: none !important;
-    border-color: var(--primary) !important;
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 20%, transparent), 0 10px 25px -5px rgba(0, 0, 0, 0.08) !important;
-  }
-
-  select option {
-    background-color: #ffffff;
-    color: #0f172a;
-    font-weight: 600;
-    padding: 10px 14px;
-  }
-
-  .dark select option {
-    background-color: #0f172a;
-    color: #f8fafc;
-  }
+  [dir="rtl"] select:not([multiple]) { background-position: left 0.875rem center; }
+  select:focus-visible { border-color: var(--ring); }
+  select option { background: var(--card); color: var(--foreground); }
 }
 
 /* ────────────────────────────────────────────────────────────────

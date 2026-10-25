@@ -204,7 +204,7 @@ export default function StudentCardCreator({ studentId, isAdmin = false, onSucce
                     type="date" 
                     value={customExpiresAt}
                     onChange={(e) => setCustomExpiresAt(e.target.value)}
-                    className="w-full pl-10 pr-3 py-2 text-sm bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-foreground"
+                    className="w-full pl-10 pr-3 py-2 text-sm bg-card border border-border focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-foreground rounded-[var(--control-radius)]"
                   />
                 </div>
                 <p className="text-[10px] text-muted-foreground mt-1">
@@ -299,7 +299,7 @@ export default function StudentCardCreator({ studentId, isAdmin = false, onSucce
                 {/* QR Section */}
                 <div className="border-t border-dashed border-border pt-3 flex flex-col items-center">
                   <Barcode value={previewData.card_number} className="mb-2 bg-white/5 p-1 rounded-xl border border-border w-full" />
-                  <div className="bg-white p-1 rounded-lg border border-border mb-1">
+                  <div className="bg-card p-1 rounded-lg border border-border mb-1">
                     <QRCodeSVG value={`${window.location.origin}/verify/card/${previewData.qr_token}`} size={70} level="M" />
                   </div>
                   <p className="text-[8px] text-muted-foreground font-medium uppercase tracking-widest text-center">

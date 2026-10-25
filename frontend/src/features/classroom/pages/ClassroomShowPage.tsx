@@ -255,27 +255,27 @@ export default function ClassroomShowPage() {
   const backUrl = isStudent ? '/student/classroom' : '/classroom'
 
   return (
-    <div className="space-y-6 animate-in p-4 sm:p-6 md:p-8 max-w-7xl mx-auto pb-24 font-sans text-slate-900 dark:text-slate-100">
+    <div className="space-y-6 animate-in max-w-7xl mx-auto pb-24 font-sans text-foreground dark:text-foreground">
       
       {/* Top Breadcrumb Navigation */}
       <div className="flex items-center gap-2 mb-4">
         <Link 
           to={backUrl} 
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-bold text-[#001A4B] dark:text-white transition-all shadow-2xs"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-muted dark:bg-card hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-bold text-[#001A4B] dark:text-white transition-all shadow-2xs"
         >
           <ChevronLeft className="w-3.5 h-3.5" />
           <span>Retour aux Classes</span>
         </Link>
         <span className="text-slate-300 dark:text-slate-600">/</span>
-        <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{courseCode}</span>
+        <span className="text-xs font-bold text-muted-foreground dark:text-muted-foreground uppercase tracking-wider">{courseCode}</span>
         <span className="text-slate-300 dark:text-slate-600">/</span>
-        <h1 className="text-sm sm:text-base font-extrabold text-slate-800 dark:text-slate-200 truncate">
+        <h1 className="text-foreground dark:text-foreground truncate erp-page-title">
           {courseTitle}
         </h1>
       </div>
 
       {/* Hero Header Banner */}
-      <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-r from-[#001A4B] via-[#0A2A66] to-[#1E3A8A] text-white p-6 sm:p-10 shadow-xl border border-white/10">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#001A4B] via-[#0A2A66] to-[#1E3A8A] text-white p-6 sm:p-10 shadow-sm border border-white/10">
         <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none -translate-y-1/2 translate-x-1/3" />
         <div className="absolute bottom-0 left-1/4 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
@@ -285,7 +285,7 @@ export default function ClassroomShowPage() {
               <GraduationCap className="w-3.5 h-3.5" />
               <span>{filiereName} • ENCG FÈS</span>
             </div>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-white flex items-center gap-3">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-white flex items-center gap-3">
               📚 {courseTitle}
             </h2>
             <p className="text-blue-200/90 text-xs sm:text-sm max-w-2xl font-medium">
@@ -303,16 +303,16 @@ export default function ClassroomShowPage() {
 
           <div className="flex items-center gap-3 self-start lg:self-center">
             <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 text-center min-w-[100px] shadow-sm">
-              <p className="text-2xl sm:text-3xl font-black text-white">{announcements.length}</p>
-              <p className="text-[9px] font-extrabold uppercase tracking-widest text-blue-200">ANNONCES</p>
+              <p className="text-2xl sm:text-3xl font-bold text-white">{announcements.length}</p>
+              <p className="text-[9px] font-bold uppercase tracking-widest text-blue-200">ANNONCES</p>
             </div>
             <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 text-center min-w-[100px] shadow-sm">
-              <p className="text-2xl sm:text-3xl font-black text-amber-300">{materials.length}</p>
-              <p className="text-[9px] font-extrabold uppercase tracking-widest text-blue-200">SUPPORTS</p>
+              <p className="text-2xl sm:text-3xl font-bold text-amber-300">{materials.length}</p>
+              <p className="text-[9px] font-bold uppercase tracking-widest text-blue-200">SUPPORTS</p>
             </div>
             <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 text-center min-w-[100px] shadow-sm">
-              <p className="text-2xl sm:text-3xl font-black text-emerald-300">{assignments.length}</p>
-              <p className="text-[9px] font-extrabold uppercase tracking-widest text-blue-200">DEVOIRS</p>
+              <p className="text-2xl sm:text-3xl font-bold text-emerald-300">{assignments.length}</p>
+              <p className="text-[9px] font-bold uppercase tracking-widest text-blue-200">DEVOIRS</p>
             </div>
           </div>
         </div>
@@ -320,7 +320,7 @@ export default function ClassroomShowPage() {
 
       {isProfessorOrAdmin && courseId && <CourseWorkPanel courseId={courseId} assignments={assignments} refresh={fetchCourseDetails} />}
       {/* Tabs Navigation */}
-      <div className="flex flex-wrap items-center gap-2 p-1.5 rounded-2xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700">
+      <div className="flex flex-wrap items-center gap-2 p-1.5 rounded-2xl bg-muted dark:bg-slate-800/80 border border-slate-200/80 dark:border-border">
         <TabButton 
           active={activeTab === 'annonces'} 
           onClick={() => setActiveTab('annonces')} 
@@ -368,13 +368,13 @@ export default function ClassroomShowPage() {
           {activeTab === 'annonces' && (
             <div className="space-y-6">
               {isProfessorOrAdmin && (
-                <form onSubmit={handlePublishAnnouncement} className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+                <form onSubmit={handlePublishAnnouncement} className="bg-card dark:bg-card rounded-2xl p-6 border border-border dark:border-border shadow-sm space-y-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center font-bold">
                       <Megaphone className="w-5 h-5" />
                     </div>
                     <div>
-                      <h3 className="text-sm font-extrabold text-slate-800 dark:text-slate-100">Publier une annonce officielle</h3>
+                      <h3 className="text-sm font-bold text-foreground dark:text-foreground">Publier une annonce officielle</h3>
                       <p className="text-xs text-slate-400">Diffusion instantanée et persistée pour {filiereName}</p>
                     </div>
                   </div>
@@ -384,7 +384,7 @@ export default function ClassroomShowPage() {
                     value={announcementTitle}
                     onChange={(e) => setAnnouncementTitle(e.target.value)}
                     placeholder="Titre de l'annonce (ex: Consignes pour la séance de TD)..."
-                    className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full p-3 border border-border dark:border-border bg-muted/50 dark:bg-slate-800/50 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary rounded-[var(--control-radius)]"
                   />
 
                   <textarea
@@ -392,7 +392,7 @@ export default function ClassroomShowPage() {
                     value={announcementText}
                     onChange={(e) => setAnnouncementText(e.target.value)}
                     placeholder="Rédigez votre annonce pédagogique ou consigne de cours..."
-                    className="w-full p-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full p-4 border border-border dark:border-border bg-muted/50 dark:bg-slate-800/50 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary rounded-[var(--control-radius)]"
                   />
                   <div className="flex justify-end">
                     <button
@@ -408,32 +408,32 @@ export default function ClassroomShowPage() {
 
               {/* Announcements Feed */}
               {announcements.length === 0 ? (
-                <div className="bg-white dark:bg-slate-900 rounded-3xl p-10 border border-slate-200 dark:border-slate-800 text-center space-y-2">
+                <div className="bg-card dark:bg-card rounded-2xl p-10 border border-border dark:border-border text-center space-y-2">
                   <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center mx-auto">
                     <Megaphone className="w-6 h-6" />
                   </div>
-                  <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300">Aucune annonce publiée</h4>
+                  <h4 className="text-sm font-bold text-slate-700 dark:text-foreground">Aucune annonce publiée</h4>
                   <p className="text-xs text-slate-400">Les communications officielles de l'enseignant apparaîtront ici.</p>
                 </div>
               ) : (
                 <div className="space-y-4">
                   {announcements.map((ann) => (
-                    <div key={ann.id} className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-all">
+                    <div key={ann.id} className="bg-card dark:bg-card rounded-2xl p-6 border border-border dark:border-border shadow-sm hover:shadow-md transition-all">
                       <div className="flex items-start justify-between gap-4 mb-3">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-2xl bg-[#001A4B] text-white font-black text-xs flex items-center justify-center shadow-sm">
+                          <div className="w-10 h-10 rounded-2xl bg-[#001A4B] text-white font-bold text-xs flex items-center justify-center shadow-sm">
                             {ann.author.slice(0, 2).toUpperCase()}
                           </div>
                           <div>
-                            <h4 className="text-sm font-black text-slate-900 dark:text-white">{cleanMojibake(ann.title)}</h4>
+                            <h4 className="text-sm font-bold text-foreground dark:text-white">{cleanMojibake(ann.title)}</h4>
                             <p className="text-xs text-slate-400">{ann.author} • {ann.date}</p>
                           </div>
                         </div>
-                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-500/10 text-blue-600 border border-blue-500/20">
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-primary border border-blue-500/20">
                           OFFICIEL
                         </span>
                       </div>
-                      <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed pl-13">
+                      <p className="text-xs sm:text-sm text-muted-foreground dark:text-foreground leading-relaxed pl-13">
                         {cleanMojibake(ann.content)}
                       </p>
                     </div>
@@ -445,10 +445,10 @@ export default function ClassroomShowPage() {
 
           {/* 2. Tab Supports & Polycopiés (Real Database Records) */}
           {activeTab === 'supports' && (
-            <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
+            <div className="bg-card dark:bg-card rounded-2xl p-6 border border-border dark:border-border shadow-sm space-y-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+                  <h3 className="text-base font-bold text-foreground dark:text-white flex items-center gap-2">
                     <Folder className="w-5 h-5 text-amber-500" />
                     Polycopiés, Séries TD & Diaporamas
                   </h3>
@@ -461,7 +461,7 @@ export default function ClassroomShowPage() {
                   <div className="w-14 h-14 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center mx-auto mb-3">
                     <Folder className="w-7 h-7" />
                   </div>
-                  <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300">Aucun fichier déposé pour l'instant</h4>
+                  <h4 className="text-sm font-bold text-slate-700 dark:text-foreground">Aucun fichier déposé pour l'instant</h4>
                   <p className="text-xs text-slate-400 mt-1 max-w-md mx-auto">
                     L'enseignant déposera les diaporamas et séries de TD prochainement. Vous recevrez une notification automatique.
                   </p>
@@ -471,15 +471,15 @@ export default function ClassroomShowPage() {
                   {materials.map((mat) => (
                     <div key={mat.id} className="py-4 flex items-center justify-between gap-4 group">
                       <div className="flex items-center gap-3.5 min-w-0">
-                        <div className="w-10 h-10 rounded-2xl bg-blue-500/10 text-blue-600 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+                        <div className="w-10 h-10 rounded-2xl bg-blue-500/10 text-primary flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
                           <FileText className="w-5 h-5" />
                         </div>
                         <div className="min-w-0">
-                          <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate">
+                          <h4 className="text-xs sm:text-sm font-bold text-foreground dark:text-white truncate">
                             {cleanMojibake(mat.title)}
                           </h4>
                           {mat.description && (
-                            <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">
+                            <p className="text-xs text-muted-foreground dark:text-muted-foreground line-clamp-1 mt-0.5">
                               {cleanMojibake(mat.description)}
                             </p>
                           )}
@@ -496,7 +496,7 @@ export default function ClassroomShowPage() {
                         target="_blank"
                         rel="noreferrer"
                         download
-                        className="px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-[#001A4B] hover:text-white text-xs font-bold text-slate-700 dark:text-slate-200 transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer flex-shrink-0"
+                        className="px-3.5 py-2 rounded-xl bg-muted dark:bg-card hover:bg-[#001A4B] hover:text-white text-xs font-bold text-slate-700 dark:text-foreground transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer flex-shrink-0"
                       >
                         <Download className="w-3.5 h-3.5" />
                         <span>Télécharger</span>
@@ -510,10 +510,10 @@ export default function ClassroomShowPage() {
 
           {/* 3. Tab Devoirs & Travaux (Real Database Records) */}
           {activeTab === 'devoirs' && (
-            <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
+            <div className="bg-card dark:bg-card rounded-2xl p-6 border border-border dark:border-border shadow-sm space-y-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+                  <h3 className="text-base font-bold text-foreground dark:text-white flex items-center gap-2">
                     <BookOpen className="w-5 h-5 text-emerald-500" />
                     Travaux Dirigés & Devoirs à Rendre
                   </h3>
@@ -526,7 +526,7 @@ export default function ClassroomShowPage() {
                   <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center mx-auto mb-3">
                     <CheckCircle2 className="w-7 h-7" />
                   </div>
-                  <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300">Aucun devoir en attente de soumission</h4>
+                  <h4 className="text-sm font-bold text-slate-700 dark:text-foreground">Aucun devoir en attente de soumission</h4>
                   <p className="text-xs text-slate-400 mt-1 max-w-md mx-auto">
                     Toutes vos obligations pédagogiques pour ce module sont à jour.
                   </p>
@@ -534,16 +534,16 @@ export default function ClassroomShowPage() {
               ) : (
                 <div className="space-y-4">
                   {assignments.map((assign) => (
-                    <div key={assign.id} className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 space-y-4">
+                    <div key={assign.id} className="p-5 rounded-2xl bg-muted/50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 space-y-4">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
-                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-500/10 text-indigo-600 border border-indigo-500/20 uppercase">
+                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/10 text-primary border border-indigo-500/20 uppercase">
                               {assign.type === 'group' ? 'Travail de Groupe' : 'Individuel'}
                             </span>
                             <span className="text-xs font-bold text-slate-400">Barème : /{assign.max_score}</span>
                           </div>
-                          <h4 className="text-sm font-black text-slate-900 dark:text-white">
+                          <h4 className="text-sm font-bold text-foreground dark:text-white">
                             {cleanMojibake(assign.title)}
                           </h4>
                         </div>
@@ -564,13 +564,13 @@ export default function ClassroomShowPage() {
                       </div>
 
                       {assign.description && (
-                        <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                        <p className="text-xs text-muted-foreground dark:text-foreground leading-relaxed">
                           {cleanMojibake(assign.description)}
                         </p>
                       )}
 
                       <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-200/60 dark:border-slate-700/60">
-                        <div className="flex items-center gap-2 text-xs text-slate-500">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           <Calendar className="w-3.5 h-3.5 text-slate-400" />
                           <span>Échéance : {assign.due_date ? new Date(assign.due_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : 'À configurer'}</span>
                         </div>
@@ -582,9 +582,9 @@ export default function ClassroomShowPage() {
                               target="_blank"
                               rel="noreferrer"
                               download
-                              className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 text-xs font-bold text-slate-700 dark:text-slate-200 transition-all inline-flex items-center gap-1"
+                              className="px-3 py-1.5 rounded-xl bg-card dark:bg-card border border-border dark:border-border hover:bg-muted text-xs font-bold text-slate-700 dark:text-foreground transition-all inline-flex items-center gap-1"
                             >
-                              <FileText className="w-3.5 h-3.5 text-blue-500" />
+                              <FileText className="w-3.5 h-3.5 text-primary" />
                               <span>Sujet PDF</span>
                             </a>
                           )}
@@ -603,14 +603,14 @@ export default function ClassroomShowPage() {
 
                       {/* Inline Submission Box */}
                       {submittingAssignmentId === assign.id && (
-                        <div className="pt-3 border-t border-slate-200 dark:border-slate-700 space-y-3 animate-in">
+                        <div className="pt-3 border-t border-border dark:border-border space-y-3 animate-in">
                           <textarea
                             rows={2}
                             value={submissionText}
                             onChange={(e) => setSubmissionText(e.target.value)}
                             placeholder="Votre travail ou lien du rendu..."
                             aria-label="Texte de votre travail"
-                            className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs focus:outline-none focus:ring-2 focus:ring-primary"
+                            className="w-full p-3 border border-border dark:border-border bg-card dark:bg-card text-xs focus:outline-none focus:ring-2 focus:ring-primary rounded-[var(--control-radius)]"
                           />
                           <label className="block text-sm">Fichier du rendu<input type="file" accept=".pdf,.doc,.docx,.zip" onChange={event => setSubmissionFile(event.target.files?.[0] ?? null)} /></label>
                           <div className="flex items-center justify-between">
@@ -621,7 +621,7 @@ export default function ClassroomShowPage() {
                             <div className="flex items-center gap-2">
                               <button
                                 onClick={() => setSubmittingAssignmentId(null)}
-                                className="px-3 py-1.5 rounded-xl bg-slate-200 dark:bg-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300"
+                                className="px-3 py-1.5 rounded-xl bg-slate-200 dark:bg-slate-700 text-xs font-bold text-slate-700 dark:text-foreground"
                               >
                                 Annuler
                               </button>
@@ -645,11 +645,11 @@ export default function ClassroomShowPage() {
 
           {/* 4. Tab Chat (Real Database Messages) */}
           {activeTab === 'chat' && (
-            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm h-[560px] flex flex-col overflow-hidden">
-              <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-800/50">
+            <div className="bg-card dark:bg-card rounded-2xl border border-border dark:border-border shadow-sm h-[560px] flex flex-col overflow-hidden">
+              <div className="p-4 border-b border-border dark:border-border flex items-center justify-between bg-slate-50/70 dark:bg-slate-800/50">
                 <div className="flex items-center gap-2">
                   <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                  <h3 className="text-xs sm:text-sm font-extrabold text-slate-800 dark:text-slate-100">
+                  <h3 className="text-xs sm:text-sm font-bold text-foreground dark:text-foreground">
                     Salon d'Échange Académique — {filiereName}
                   </h3>
                 </div>
@@ -662,21 +662,21 @@ export default function ClassroomShowPage() {
                 {chatMessages.length === 0 ? (
                   <div className="py-12 text-center space-y-2">
                     <MessageSquare className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto" />
-                    <p className="text-xs font-bold text-slate-500">Aucun message pour le moment dans le salon.</p>
+                    <p className="text-xs font-bold text-muted-foreground">Aucun message pour le moment dans le salon.</p>
                     <p className="text-[11px] text-slate-400">Posez la première question à votre enseignant et vos collègues.</p>
                   </div>
                 ) : (
                   chatMessages.map((msg) => (
                     <div key={msg.id} className={cn("flex flex-col", msg.isMe ? "items-end" : "items-start")}>
                       <div className="flex items-baseline gap-2 mb-1">
-                        <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">{msg.sender}</span>
+                        <span className="text-[11px] font-bold text-muted-foreground dark:text-muted-foreground">{msg.sender}</span>
                         <span className="text-[10px] text-slate-400">{msg.time}</span>
                       </div>
                       <div className={cn(
                         "p-3.5 rounded-2xl max-w-md text-xs sm:text-sm leading-relaxed shadow-2xs",
                         msg.isMe 
                           ? "bg-[#001A4B] text-white rounded-tr-xs" 
-                          : "bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-tl-xs"
+                          : "bg-muted dark:bg-card text-foreground dark:text-foreground rounded-tl-xs"
                       )}>
                         {cleanMojibake(msg.text)}
                       </div>
@@ -685,13 +685,13 @@ export default function ClassroomShowPage() {
                 )}
               </div>
 
-              <form onSubmit={handleSendChat} className="p-3 sm:p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 flex items-center gap-2">
+              <form onSubmit={handleSendChat} className="p-3 sm:p-4 border-t border-border dark:border-border bg-slate-50/50 dark:bg-slate-800/30 flex items-center gap-2">
                 <input
                   type="text"
                   value={newChatMessage}
                   onChange={(e) => setNewChatMessage(e.target.value)}
                   placeholder="Écrire un message pour le groupe..."
-                  className="flex-1 h-11 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="flex-1 h-11 px-4 border border-border dark:border-border bg-card dark:bg-card text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary rounded-[var(--control-radius)]"
                 />
                 <button
                   type="submit"
@@ -706,18 +706,18 @@ export default function ClassroomShowPage() {
 
           {/* 5. Tab IA Tutor */}
           {activeTab === 'ia' && (
-            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm h-[560px] flex flex-col overflow-hidden">
+            <div className="bg-card dark:bg-card rounded-2xl border border-border dark:border-border shadow-sm h-[560px] flex flex-col overflow-hidden">
               <div className="p-4 bg-gradient-to-r from-violet-700 to-indigo-700 text-white flex items-center justify-between shadow-xs">
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center">
                     <Sparkles className="w-5 h-5 text-amber-300" />
                   </div>
                   <div>
-                    <h3 className="text-xs sm:text-sm font-black">Tuteur Virtuel IA Gemini 1.5</h3>
+                    <h3 className="text-xs sm:text-sm font-bold">Tuteur Virtuel IA Gemini 1.5</h3>
                     <p className="text-[10px] text-blue-200 font-medium">Assistance pédagogique personnalisée pour {courseTitle}</p>
                   </div>
                 </div>
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-white/20 text-white">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-white/20 text-white">
                   24h/7j
                 </span>
               </div>
@@ -734,7 +734,7 @@ export default function ClassroomShowPage() {
                       "p-4 rounded-2xl max-w-lg text-xs sm:text-sm leading-relaxed shadow-2xs",
                       msg.role === 'user'
                         ? "bg-[#001A4B] text-white rounded-tr-xs"
-                        : "bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-tl-xs"
+                        : "bg-card dark:bg-card border border-slate-200/80 dark:border-border text-foreground dark:text-foreground rounded-tl-xs"
                     )}>
                       {msg.text}
                     </div>
@@ -748,13 +748,13 @@ export default function ClassroomShowPage() {
                 )}
               </div>
 
-              <form onSubmit={handleAskIa} className="p-3 sm:p-4 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center gap-2">
+              <form onSubmit={handleAskIa} className="p-3 sm:p-4 border-t border-border dark:border-border bg-card dark:bg-card flex items-center gap-2">
                 <input
                   type="text"
                   value={iaPrompt}
                   onChange={(e) => setIaPrompt(e.target.value)}
                   placeholder="Posez une question sur le cours, les TD ou les examens..."
-                  className="flex-1 h-11 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+                  className="flex-1 h-11 px-4 border border-border dark:border-border bg-muted/50 dark:bg-card text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 rounded-[var(--control-radius)]"
                 />
                 <button
                   type="submit"
@@ -774,13 +774,13 @@ export default function ClassroomShowPage() {
         <div className="space-y-6">
           
           {/* Quick Supports Card */}
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="bg-card dark:bg-card rounded-2xl p-6 border border-border dark:border-border shadow-sm">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-extrabold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-2">
+              <h3 className="font-bold text-sm text-foreground dark:text-foreground flex items-center gap-2">
                 <Folder className="w-4 h-4 text-amber-500" />
                 <span>Documents Récents</span>
               </h3>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-500/10 text-blue-600">
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-primary">
                 {materials.length}
               </span>
             </div>
@@ -790,9 +790,9 @@ export default function ClassroomShowPage() {
             ) : (
               <div className="space-y-2.5">
                 {materials.slice(0, 4).map((m) => (
-                  <div key={m.id} className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700 flex items-center justify-between text-xs">
-                    <span className="font-bold text-slate-700 dark:text-slate-200 truncate pr-2">{cleanMojibake(m.title)}</span>
-                    <a href={m.file_url || '#'} target="_blank" rel="noreferrer" download className="text-blue-600 hover:underline flex-shrink-0">
+                  <div key={m.id} className="p-2.5 rounded-xl bg-muted/50 dark:bg-slate-800/60 border border-border dark:border-border flex items-center justify-between text-xs">
+                    <span className="font-bold text-slate-700 dark:text-foreground truncate pr-2">{cleanMojibake(m.title)}</span>
+                    <a href={m.file_url || '#'} target="_blank" rel="noreferrer" download className="text-primary hover:underline flex-shrink-0">
                       <Download className="w-3.5 h-3.5" />
                     </a>
                   </div>
@@ -802,43 +802,43 @@ export default function ClassroomShowPage() {
           </div>
 
           {/* Academic Info Card */}
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
-            <h3 className="font-extrabold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-2">
-              <Info className="w-4 h-4 text-blue-500" />
+          <div className="bg-card dark:bg-card rounded-2xl p-6 border border-border dark:border-border shadow-sm space-y-4">
+            <h3 className="font-bold text-sm text-foreground dark:text-foreground flex items-center gap-2">
+              <Info className="w-4 h-4 text-primary" />
               <span>Fiche Technique du Module</span>
             </h3>
             
             <div className="space-y-3 text-xs">
-              <div className="flex justify-between items-center pb-2.5 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex justify-between items-center pb-2.5 border-b border-border dark:border-border">
                 <span className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">CODE OFFICIEL</span>
-                <span className="font-black text-[#001A4B] dark:text-blue-400">{courseCode}</span>
+                <span className="font-bold text-[#001A4B] dark:text-blue-400">{courseCode}</span>
               </div>
-              <div className="flex justify-between items-center pb-2.5 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex justify-between items-center pb-2.5 border-b border-border dark:border-border">
                 <span className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">COEFFICIENT</span>
-                <span className="font-black text-slate-700 dark:text-slate-200">{course?.coefficient || '2.00'}</span>
+                <span className="font-bold text-slate-700 dark:text-foreground">{course?.coefficient || '2.00'}</span>
               </div>
-              <div className="flex justify-between items-center pb-2.5 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex justify-between items-center pb-2.5 border-b border-border dark:border-border">
                 <span className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">CRÉDITS (ECTS)</span>
-                <span className="font-black text-slate-700 dark:text-slate-200">{course?.credits || 4} ECTS</span>
+                <span className="font-bold text-slate-700 dark:text-foreground">{course?.credits || 4} ECTS</span>
               </div>
-              <div className="flex justify-between items-center pb-2.5 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex justify-between items-center pb-2.5 border-b border-border dark:border-border">
                 <span className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">FILIÈRE</span>
-                <span className="font-black text-blue-600 dark:text-blue-400 truncate max-w-[150px] text-right">{filiereName}</span>
+                <span className="font-bold text-primary dark:text-blue-400 truncate max-w-[150px] text-right">{filiereName}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">ÉVALUATIONS</span>
-                <span className="font-black text-emerald-600 dark:text-emerald-400">CC (50%) • Examen (50%)</span>
+                <span className="font-bold text-emerald-600 dark:text-emerald-400">CC (50%) • Examen (50%)</span>
               </div>
             </div>
           </div>
 
           {/* Quick Help Card */}
-          <div className="rounded-3xl p-5 bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-slate-800 dark:to-slate-850 border border-indigo-100 dark:border-slate-700 text-xs space-y-2">
-            <div className="flex items-center gap-2 font-bold text-indigo-900 dark:text-indigo-300">
+          <div className="rounded-2xl p-5 bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-slate-800 dark:to-slate-850 border border-primary/20 dark:border-border text-xs space-y-2">
+            <div className="flex items-center gap-2 font-bold text-primary dark:text-indigo-300">
               <HelpCircle className="w-4 h-4" />
               <span>Assistance Pédagogique</span>
             </div>
-            <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-[11px]">
+            <p className="text-muted-foreground dark:text-muted-foreground leading-relaxed text-[11px]">
               En cas de question relative au déroulement des séances ou aux supports, vous pouvez contacter directement votre enseignant ou utiliser le salon interactif ci-contre.
             </p>
           </div>
@@ -870,10 +870,10 @@ function TabButton({
     <button
       onClick={onClick}
       className={cn(
-        "flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer",
+        "flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer",
         active
-          ? "bg-white dark:bg-slate-900 text-[#001A4B] dark:text-white shadow-xs border border-slate-200/80 dark:border-slate-700"
-          : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-750",
+          ? "bg-card dark:bg-card text-[#001A4B] dark:text-white shadow-xs border border-slate-200/80 dark:border-border"
+          : "text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-750",
         highlight && !active && "text-violet-600 dark:text-violet-400"
       )}
     >
@@ -881,8 +881,8 @@ function TabButton({
       <span>{label}</span>
       {typeof count === 'number' && (
         <span className={cn(
-          "px-1.5 py-0.2 rounded-md text-[10px] font-black",
-          active ? "bg-primary/10 text-primary" : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
+          "px-1.5 py-0.2 rounded-md text-[10px] font-bold",
+          active ? "bg-primary/10 text-primary" : "bg-slate-200 dark:bg-slate-700 text-muted-foreground dark:text-foreground"
         )}>
           {count}
         </span>

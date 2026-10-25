@@ -60,7 +60,7 @@ export default function ProfessorAttendanceView() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">{t('attendance:title')}</h1>
+        <h1 className="text-foreground erp-page-title">{t('attendance:title')}</h1>
         <p className="text-white/50 mt-1">{t('attendance:professor_view.subtitle')}</p>
       </div>
 
@@ -74,7 +74,7 @@ export default function ProfessorAttendanceView() {
                 type="text" 
                 value={moduleName}
                 onChange={e => setModuleName(e.target.value)}
-                className="w-full bg-background border border-white/10 rounded-lg px-3 py-2"
+                className="w-full bg-background border border-white/10 px-3 py-2 rounded-[var(--control-radius)]"
               />
             </div>
             <div>
@@ -83,7 +83,7 @@ export default function ProfessorAttendanceView() {
                 type="text" 
                 value={groupName}
                 onChange={e => setGroupName(e.target.value)}
-                className="w-full bg-background border border-white/10 rounded-lg px-3 py-2"
+                className="w-full bg-background border border-white/10 px-3 py-2 rounded-[var(--control-radius)]"
               />
             </div>
             <div>
@@ -92,7 +92,7 @@ export default function ProfessorAttendanceView() {
                 type="text" 
                 value={roomName}
                 onChange={e => setRoomName(e.target.value)}
-                className="w-full bg-background border border-white/10 rounded-lg px-3 py-2"
+                className="w-full bg-background border border-white/10 px-3 py-2 rounded-[var(--control-radius)]"
               />
             </div>
             <div>
@@ -100,7 +100,7 @@ export default function ProfessorAttendanceView() {
               <select 
                 value={duration}
                 onChange={e => setDuration(e.target.value)}
-                className="w-full bg-background border border-white/10 rounded-lg px-3 py-2"
+                className="w-full bg-background border border-white/10 px-3 py-2 rounded-[var(--control-radius)]"
               >
                 <option value="5">5 {t('attendance:professor_view.minutes')}</option>
                 <option value="10">10 {t('attendance:professor_view.minutes')}</option>
@@ -134,7 +134,7 @@ export default function ProfessorAttendanceView() {
               <span className="flex items-center gap-1"><Clock className="w-4 h-4" /> {t('attendance:professor_view.expires_at')} {new Date(session.expires_at).toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'})}</span>
             </div>
 
-            <div className="bg-white p-6 rounded-3xl shadow-xl border border-slate-100 mb-6 transition-transform hover:scale-105 duration-300">
+            <div className="bg-card p-6 rounded-2xl shadow-sm border border-border mb-6 transition-transform hover:scale-105 duration-300">
               <QRCode value={session.qr_token} size={300} level="H" />
             </div>
             

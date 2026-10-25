@@ -255,10 +255,10 @@ const { data: studentDossier } = useQuery({
   const subGroup = studentDossier?.registrations?.[0]?.sub_group || 'G1.1'
 
   return (
-    <div className="max-w-6xl mx-auto p-4 md:p-8 space-y-8 animate-in fade-in duration-300">
+    <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-300">
       
       {/* ── Top Executive Hero Banner ── */}
-      <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-r from-[#021833] via-[#052954] to-[#0a356c] p-8 md:p-10 text-white shadow-2xl border border-white/10">
+      <div className="relative overflow-hidden p-8 md:p-10 text-white border border-white/10 erp-page-banner">
         {/* Subtle Decorative Glows */}
         <div className="absolute top-0 right-0 -mt-12 -mr-12 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-0 left-1/4 -mb-16 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -268,11 +268,11 @@ const { data: studentDossier } = useQuery({
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 text-center sm:text-left">
             {/* Interactive Portrait */}
             <div className="relative group shrink-0">
-              <div className="w-28 h-28 md:w-32 md:h-32 rounded-3xl overflow-hidden bg-white/10 backdrop-blur-md p-1 border-2 border-white/20 shadow-2xl flex items-center justify-center text-4xl text-white font-black relative z-10">
+              <div className="w-28 h-28 md:w-32 md:h-32 rounded-2xl overflow-hidden bg-white/10 backdrop-blur-md p-1 border-2 border-white/20 shadow-sm flex items-center justify-center text-4xl text-white font-bold relative z-10">
                 {avatarPreview ? (
                   <img src={avatarPreview} alt="Avatar" className="w-full h-full object-cover rounded-2xl" />
                 ) : (
-                  <div className="bg-gradient-to-br from-blue-500 via-indigo-600 to-[#002e5b] w-full h-full rounded-2xl flex items-center justify-center text-white shadow-inner font-black text-4xl tracking-wider">
+                  <div className="bg-gradient-to-br from-blue-500 via-indigo-600 to-[#002e5b] w-full h-full rounded-2xl flex items-center justify-center text-white shadow-inner font-bold text-4xl tracking-wider">
                     {user?.name?.charAt(0).toUpperCase() || 'U'}
                   </div>
                 )}
@@ -281,11 +281,11 @@ const { data: studentDossier } = useQuery({
               {/* Camera Hover Overlay */}
               <label 
                 htmlFor="avatar-upload" 
-                className="absolute inset-0 rounded-3xl bg-black/60 backdrop-blur-xs flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 cursor-pointer z-20"
+                className="absolute inset-0 rounded-2xl bg-black/60 backdrop-blur-xs flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 cursor-pointer z-20"
                 title="Changer la photo de profil"
               >
                 <Camera className="w-8 h-8 text-white mb-1 drop-shadow-md" />
-                <span className="text-[10px] font-extrabold text-white uppercase tracking-wider">Modifier</span>
+                <span className="text-[10px] font-bold text-white uppercase tracking-wider">Modifier</span>
               </label>
               <input 
                 id="avatar-upload"
@@ -305,7 +305,7 @@ const { data: studentDossier } = useQuery({
             <div className="space-y-3">
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
                 <span className={cn(
-                  "px-3.5 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider border backdrop-blur-md shadow-xs",
+                  "px-3.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider border backdrop-blur-md shadow-xs",
                   isSuperAdmin 
                     ? "bg-amber-500/20 text-amber-200 border-amber-400/40"
                     : isAdmin 
@@ -335,7 +335,7 @@ const { data: studentDossier } = useQuery({
                 )}
               </div>
 
-              <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight">
+              <h1 className="text-white erp-page-title">
                 {user?.name || 'Utilisateur ENCG'}
               </h1>
               
@@ -384,11 +384,11 @@ const { data: studentDossier } = useQuery({
 
           {/* Quick Info Box / Widget Établissement */}
           <div className="shrink-0 bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-white/15 text-xs text-white/90 space-y-2 max-w-sm text-center sm:text-left lg:text-right shadow-inner">
-            <div className="text-[11px] uppercase tracking-wider text-blue-200 font-extrabold flex items-center justify-center sm:justify-start lg:justify-end gap-1.5">
+            <div className="text-[11px] uppercase tracking-wider text-blue-200 font-bold flex items-center justify-center sm:justify-start lg:justify-end gap-1.5">
               <Building2 className="w-3.5 h-3.5 text-blue-300" />
               Établissement Officiel
             </div>
-            <div className="font-black text-white text-sm">
+            <div className="font-bold text-white text-sm">
               ENCG de Fès — USMBA
             </div>
             <div className="text-[11px] text-blue-100/70">
@@ -403,7 +403,7 @@ const { data: studentDossier } = useQuery({
       </div>
 
       {/* ── Modern Navigation Tabs ── */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-slate-200 scrollbar-none">
+      <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-border scrollbar-none">
         <button
           type="button"
           onClick={() => setActiveTab('general')}
@@ -411,7 +411,7 @@ const { data: studentDossier } = useQuery({
             "flex items-center gap-2 px-5 py-3 rounded-2xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer",
             activeTab === 'general'
               ? "bg-[#002e5b] text-white shadow-md shadow-[#002e5b]/20"
-              : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/80"
+              : "bg-card text-muted-foreground hover:bg-muted border border-slate-200/80"
           )}
         >
           <User className="w-4 h-4" />
@@ -425,7 +425,7 @@ const { data: studentDossier } = useQuery({
             "flex items-center gap-2 px-5 py-3 rounded-2xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer",
             activeTab === 'security'
               ? "bg-[#002e5b] text-white shadow-md shadow-[#002e5b]/20"
-              : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/80"
+              : "bg-card text-muted-foreground hover:bg-muted border border-slate-200/80"
           )}
         >
           <KeyRound className="w-4 h-4" />
@@ -439,7 +439,7 @@ const { data: studentDossier } = useQuery({
             "flex items-center gap-2 px-5 py-3 rounded-2xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer",
             activeTab === '2fa'
               ? "bg-[#002e5b] text-white shadow-md shadow-[#002e5b]/20"
-              : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/80"
+              : "bg-card text-muted-foreground hover:bg-muted border border-slate-200/80"
           )}
         >
           <ShieldCheck className="w-4 h-4" />
@@ -456,7 +456,7 @@ const { data: studentDossier } = useQuery({
             "flex items-center gap-2 px-5 py-3 rounded-2xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer relative",
             activeTab === 'cndp'
               ? "bg-[#002e5b] text-white shadow-md shadow-[#002e5b]/20"
-              : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/80"
+              : "bg-card text-muted-foreground hover:bg-muted border border-slate-200/80"
           )}
         >
           <FileText className="w-4 h-4 text-emerald-500" />
@@ -471,7 +471,7 @@ const { data: studentDossier } = useQuery({
             "flex items-center gap-2 px-5 py-3 rounded-2xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ml-auto",
             activeTab === 'sessions'
               ? "bg-slate-800 text-white shadow-md"
-              : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+              : "bg-card text-muted-foreground hover:bg-muted border border-border"
           )}
         >
           <Laptop className="w-4 h-4" />
@@ -485,18 +485,18 @@ const { data: studentDossier } = useQuery({
           
           {/* Form Informations Personnelles */}
           <form onSubmit={handleProfileSubmit} className="space-y-8">
-            <div className="bg-white border border-slate-200/80 rounded-3xl shadow-sm p-6 md:p-10 space-y-6">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+            <div className="bg-card border border-slate-200/80 rounded-2xl shadow-sm p-6 md:p-10 space-y-6">
+              <div className="flex items-center justify-between border-b border-border pb-4">
                 <div>
-                  <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                  <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
                     <User className="w-5 h-5 text-[#002e5b]" />
                     {isAdmin ? 'Informations Personnelles & Administratives' : isProfessor ? 'Informations de l\'Enseignant-Chercheur' : 'Informations Générales de l\'Étudiant'}
                   </h3>
-                  <p className="text-xs text-slate-500 mt-0.5">
+                  <p className="text-xs text-muted-foreground mt-0.5">
                     Modifiez vos informations usuelles de contact et d'identité légale.
                   </p>
                 </div>
-                <span className="text-[11px] font-bold text-slate-500 bg-slate-100 border border-slate-200 px-3 py-1 rounded-full">
+                <span className="text-[11px] font-bold text-muted-foreground bg-muted border border-border px-3 py-1 rounded-full">
                   Édition Protégée
                 </span>
               </div>
@@ -504,7 +504,7 @@ const { data: studentDossier } = useQuery({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Full Legal Name */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
+                  <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
                     Nom & Prénom Officiel (Français)
                   </label>
                   <input
@@ -512,14 +512,14 @@ const { data: studentDossier } = useQuery({
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-800 focus:border-[#002e5b] focus:ring-1 focus:ring-[#002e5b] outline-none transition-all shadow-xs"
+                    className="w-full border border-border bg-card px-4 py-3 text-sm font-bold text-foreground focus:border-[#002e5b] focus:ring-1 focus:ring-[#002e5b] outline-none transition-all shadow-xs rounded-[var(--control-radius)]"
                     required
                   />
                 </div>
 
                 {/* Nom en Arabe */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
+                  <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
                     الاسم الكامل بالعربية (Nom complet en Arabe)
                   </label>
                   <input
@@ -529,13 +529,13 @@ const { data: studentDossier } = useQuery({
                     value={formData.name_ar}
                     onChange={handleChange}
                     placeholder="مثال : ياسين البناني"
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-800 focus:border-[#002e5b] focus:ring-1 focus:ring-[#002e5b] outline-none transition-all shadow-xs"
+                    className="w-full border border-border bg-card px-4 py-3 text-sm font-bold text-foreground focus:border-[#002e5b] focus:ring-1 focus:ring-[#002e5b] outline-none transition-all shadow-xs rounded-[var(--control-radius)]"
                   />
                 </div>
 
                 {/* Academic Email (Readonly) */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center justify-between">
+                  <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center justify-between">
                     <span>Email Académique Institutionnel</span>
                     <span className="text-[10px] text-slate-400 font-normal">Fourni par l'Université</span>
                   </label>
@@ -545,7 +545,7 @@ const { data: studentDossier } = useQuery({
                       name="email"
                       value={formData.email}
                       readOnly
-                      className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-500 outline-none cursor-not-allowed"
+                      className="w-full border border-border bg-muted/50 px-4 py-3 text-sm font-bold text-muted-foreground outline-none cursor-not-allowed rounded-[var(--control-radius)]"
                     />
                     <Lock className="w-4 h-4 text-slate-400 absolute right-4 top-3.5" />
                   </div>
@@ -553,7 +553,7 @@ const { data: studentDossier } = useQuery({
 
                 {/* Phone */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
+                  <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
                     Numéro de Téléphone Portable
                   </label>
                   <input
@@ -562,13 +562,13 @@ const { data: studentDossier } = useQuery({
                     value={formData.phone}
                     onChange={handleChange}
                     placeholder="+212 6..."
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-800 focus:border-[#002e5b] focus:ring-1 focus:ring-[#002e5b] outline-none transition-all shadow-xs font-mono"
+                    className="w-full border border-border bg-card px-4 py-3 text-sm font-bold text-foreground focus:border-[#002e5b] focus:ring-1 focus:ring-[#002e5b] outline-none transition-all shadow-xs font-mono rounded-[var(--control-radius)]"
                   />
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <p className="text-xs text-slate-500 text-center sm:text-left">
+              <div className="pt-4 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
+                <p className="text-xs text-muted-foreground text-center sm:text-left">
                   Votre photo de portrait et vos données d'identité sont transmises automatiquement sur vos documents officiels.
                 </p>
                 <button
@@ -587,67 +587,67 @@ const { data: studentDossier } = useQuery({
 
           {/* 1. ADMIN / SUPER-ADMIN DOSSIER */}
           {isAdmin && (
-            <div className="bg-slate-50/90 border border-slate-200/90 rounded-3xl p-6 md:p-10 space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-4">
+            <div className="bg-slate-50/90 border border-slate-200/90 rounded-2xl p-6 md:p-10 space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center">
                     <Shield className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="text-base font-bold text-slate-800">
+                    <h3 className="text-base font-bold text-foreground">
                       Dossier Administratif & Rôles Institutionnels (Accréditation Officielle)
                     </h3>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-muted-foreground">
                       Accréditations RBAC et habilitations exécutives au sein de l'ERP ENCG Fès.
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1.5 text-xs font-bold text-blue-800 bg-blue-100/70 border border-blue-200 px-3 py-1.5 rounded-xl">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-primary bg-blue-100/70 border border-primary/20 px-3 py-1.5 rounded-xl">
                   <Lock className="w-3.5 h-3.5" />
                   <span>Accréditation Système Scellée</span>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+                <div className="bg-card p-4 rounded-2xl border border-border shadow-xs">
                   <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Matricule Administrateur</span>
-                  <span className="text-base font-black font-mono text-amber-700 mt-1 block">
+                  <span className="text-base font-bold font-mono text-amber-700 mt-1 block">
                     ADM-ENCG-{String(user?.id || 1).padStart(4, '0')}
                   </span>
                 </div>
 
-                <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+                <div className="bg-card p-4 rounded-2xl border border-border shadow-xs">
                   <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Rôle Principal RBAC</span>
-                  <span className="text-base font-black text-slate-800 mt-1 block">
+                  <span className="text-base font-bold text-foreground mt-1 block">
                     {isSuperAdmin ? 'Super-Administrateur (Niveau 1)' : 'Administrateur Central'}
                   </span>
                 </div>
 
-                <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+                <div className="bg-card p-4 rounded-2xl border border-border shadow-xs">
                   <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Direction de Rattachement</span>
                   <span className="text-sm font-bold text-[#002e5b] mt-1 block">
                     Direction Générale & Systèmes d'Information
                   </span>
                 </div>
 
-                <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs sm:col-span-2">
+                <div className="bg-card p-4 rounded-2xl border border-border shadow-xs sm:col-span-2">
                   <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Établissement & Tutelle</span>
-                  <span className="text-sm font-bold text-slate-800 mt-1 block">
+                  <span className="text-sm font-bold text-foreground mt-1 block">
                     École Nationale de Commerce et de Gestion de Fès — Université Sidi Mohamed Ben Abdellah
                   </span>
                 </div>
 
-                <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+                <div className="bg-card p-4 rounded-2xl border border-border shadow-xs">
                   <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Habilitation de Signature</span>
-                  <span className="text-sm font-black text-emerald-700 mt-1 block">
+                  <span className="text-sm font-bold text-emerald-700 mt-1 block">
                     Parapheur Numérique Certifié
                   </span>
                 </div>
               </div>
 
-              <div className="bg-blue-50/80 border border-blue-200/80 rounded-2xl p-4 text-xs text-blue-900 flex items-start gap-3">
-                <Info className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+              <div className="bg-blue-50/80 border border-blue-200/80 rounded-2xl p-4 text-xs text-primary flex items-start gap-3">
+                <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                 <div>
                   <strong>Sécurité & Traçabilité des Actions Administratives :</strong><br />
                   Chaque opération d'archivage, de bascule annuelle ou de modification de notes est enregistrée dans le journal d'audit immuable conformément à la réglementation CNDP et aux directives ministérielles MESRSFC.
@@ -658,17 +658,17 @@ const { data: studentDossier } = useQuery({
 
           {/* 2. PROFESSOR DOSSIER */}
           {isProfessor && !isAdmin && (
-            <div className="bg-slate-50/90 border border-slate-200/90 rounded-3xl p-6 md:p-10 space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-4">
+            <div className="bg-slate-50/90 border border-slate-200/90 rounded-2xl p-6 md:p-10 space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-2xl bg-purple-500/10 text-purple-600 flex items-center justify-center">
                     <Briefcase className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="text-base font-bold text-slate-800">
+                    <h3 className="text-base font-bold text-foreground">
                       Dossier Académique & Statut d'Enseignement (Lecture Seule)
                     </h3>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-muted-foreground">
                       Données pédagogiques vérifiées par la Direction Pédagogique de l'ENCG Fès.
                     </p>
                   </div>
@@ -681,37 +681,37 @@ const { data: studentDossier } = useQuery({
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+                <div className="bg-card p-4 rounded-2xl border border-border shadow-xs">
                   <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Matricule PPR / Somme</span>
-                  <span className="text-base font-black font-mono text-purple-700 mt-1 block">
+                  <span className="text-base font-bold font-mono text-purple-700 mt-1 block">
                     PPR-{String(user?.id || 9021).padStart(5, '0')}
                   </span>
                 </div>
 
-                <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+                <div className="bg-card p-4 rounded-2xl border border-border shadow-xs">
                   <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Statut Réglementaire</span>
-                  <span className="text-base font-black text-slate-800 mt-1 block">
+                  <span className="text-base font-bold text-foreground mt-1 block">
                     Professeur de l'Enseignement Supérieur (PES)
                   </span>
                 </div>
 
-                <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+                <div className="bg-card p-4 rounded-2xl border border-border shadow-xs">
                   <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Département d'Enseignement</span>
                   <span className="text-sm font-bold text-[#002e5b] mt-1 block">
                     Management, Finance & Audit
                   </span>
                 </div>
 
-                <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs sm:col-span-2">
+                <div className="bg-card p-4 rounded-2xl border border-border shadow-xs sm:col-span-2">
                   <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Établissement Universitaire</span>
-                  <span className="text-sm font-bold text-slate-800 mt-1 block">
+                  <span className="text-sm font-bold text-foreground mt-1 block">
                     École Nationale de Commerce et de Gestion de Fès (USMBA)
                   </span>
                 </div>
 
-                <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+                <div className="bg-card p-4 rounded-2xl border border-border shadow-xs">
                   <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Habilitation d'Évaluation</span>
-                  <span className="text-sm font-black text-emerald-700 mt-1 block">
+                  <span className="text-sm font-bold text-emerald-700 mt-1 block">
                     Saisie & Validation des PVs
                   </span>
                 </div>
@@ -721,17 +721,17 @@ const { data: studentDossier } = useQuery({
 
           {/* 3. STUDENT DOSSIER */}
           {isStudent && (
-            <div className="bg-slate-50/90 border border-slate-200/90 rounded-3xl p-6 md:p-10 space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-4">
+            <div className="bg-slate-50/90 border border-slate-200/90 rounded-2xl p-6 md:p-10 space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-2xl bg-[#002e5b]/10 text-[#002e5b] flex items-center justify-center">
                     <GraduationCap className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="text-base font-bold text-slate-800">
+                    <h3 className="text-base font-bold text-foreground">
                       Dossier Pédagogique & Inscription Certifiée (Lecture Seule)
                     </h3>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-muted-foreground">
                       Données vérifiées et certifiées par le Service de la Scolarité & Apogée.
                     </p>
                   </div>
@@ -744,41 +744,41 @@ const { data: studentDossier } = useQuery({
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+                <div className="bg-card p-4 rounded-2xl border border-border shadow-xs">
                   <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Code Massar / CNE</span>
-                  <span className="text-base font-black font-mono text-emerald-700 mt-1 block">{cne}</span>
+                  <span className="text-base font-bold font-mono text-emerald-700 mt-1 block">{cne}</span>
                 </div>
 
-                <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+                <div className="bg-card p-4 rounded-2xl border border-border shadow-xs">
                   <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Carte Nationale (CIN)</span>
-                  <span className="text-base font-black font-mono text-slate-800 mt-1 block">{cin}</span>
+                  <span className="text-base font-bold font-mono text-foreground mt-1 block">{cin}</span>
                 </div>
 
-                <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+                <div className="bg-card p-4 rounded-2xl border border-border shadow-xs">
                   <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Identifiant Apogée</span>
-                  <span className="text-base font-black font-mono text-[#002e5b] mt-1 block">{apogee}</span>
+                  <span className="text-base font-bold font-mono text-[#002e5b] mt-1 block">{apogee}</span>
                 </div>
 
-                <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs sm:col-span-2">
+                <div className="bg-card p-4 rounded-2xl border border-border shadow-xs sm:col-span-2">
                   <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Filière / Parcours Actuel</span>
-                  <span className="text-sm font-bold text-slate-800 mt-1 block">{filiereName}</span>
+                  <span className="text-sm font-bold text-foreground mt-1 block">{filiereName}</span>
                 </div>
 
-                <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+                <div className="bg-card p-4 rounded-2xl border border-border shadow-xs">
                   <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Semestre & Sous-Groupe</span>
-                  <span className="text-sm font-black text-slate-800 mt-1 block">{semester} — Section G1 ({subGroup})</span>
+                  <span className="text-sm font-bold text-foreground mt-1 block">{semester} — Section G1 ({subGroup})</span>
                 </div>
               </div>
 
-              <div className="bg-blue-50/80 border border-blue-200/80 rounded-2xl p-4 text-xs text-blue-900 flex items-start gap-3">
-                <Info className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+              <div className="bg-blue-50/80 border border-blue-200/80 rounded-2xl p-4 text-xs text-primary flex items-start gap-3">
+                <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                 <div>
                   <strong>Une erreur figure sur vos données académiques ?</strong><br />
                   En vertu de la Loi 09-08 CNDP, vous pouvez formuler une demande officielle de rectification dans l'onglet 
                   <button 
                     type="button" 
                     onClick={() => setActiveTab('cndp')}
-                    className="font-bold underline ml-1 text-[#002e5b] hover:text-blue-700 cursor-pointer"
+                    className="font-bold underline ml-1 text-[#002e5b] hover:text-primary cursor-pointer"
                   >
                     Droits CNDP (Art. 8)
                   </button> pour transmission directe aux agents de la scolarité.
@@ -792,13 +792,13 @@ const { data: studentDossier } = useQuery({
 
       {/* ── TAB 2: SÉCURITÉ & MOT DE PASSE ── */}
       {activeTab === 'security' && (
-        <div className="bg-white border border-slate-200/80 rounded-3xl shadow-sm p-6 md:p-10 space-y-8 max-w-3xl animate-in fade-in duration-200">
-          <div className="border-b border-slate-100 pb-4">
-            <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+        <div className="bg-card border border-slate-200/80 rounded-2xl shadow-sm p-6 md:p-10 space-y-8 max-w-3xl animate-in fade-in duration-200">
+          <div className="border-b border-border pb-4">
+            <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
               <KeyRound className="w-5 h-5 text-[#002e5b]" />
               Mise à Jour du Mot de Passe
             </h3>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-muted-foreground mt-0.5">
               Choisissez un mot de passe robuste conforme aux normes de sécurité informatique de l'ENCG Fès.
             </p>
           </div>
@@ -806,7 +806,7 @@ const { data: studentDossier } = useQuery({
           <form onSubmit={handlePasswordSubmit} className="space-y-6">
             {/* Current Password */}
             <div>
-              <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
+              <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
                 Mot de Passe Actuel
               </label>
               <div className="relative">
@@ -817,13 +817,13 @@ const { data: studentDossier } = useQuery({
                   onChange={handleChange}
                   placeholder="••••••••"
                   autoComplete="current-password"
-                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-800 focus:border-[#002e5b] focus:ring-1 focus:ring-[#002e5b] outline-none transition-all shadow-xs pr-11"
+                  className="w-full border border-border bg-card px-4 py-3 text-sm font-bold text-foreground focus:border-[#002e5b] focus:ring-1 focus:ring-[#002e5b] outline-none transition-all shadow-xs pr-11 rounded-[var(--control-radius)]"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                  className="absolute right-3.5 top-3.5 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+                  className="absolute right-3.5 top-3.5 text-slate-400 hover:text-muted-foreground transition-colors cursor-pointer"
                 >
                   {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -833,7 +833,7 @@ const { data: studentDossier } = useQuery({
             {/* New Password & Confirmation */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
+                <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
                   Nouveau Mot de Passe
                 </label>
                 <div className="relative">
@@ -844,13 +844,13 @@ const { data: studentDossier } = useQuery({
                     onChange={handleChange}
                     placeholder="••••••••"
                     minLength={8}
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-800 focus:border-[#002e5b] focus:ring-1 focus:ring-[#002e5b] outline-none transition-all shadow-xs pr-11"
+                    className="w-full border border-border bg-card px-4 py-3 text-sm font-bold text-foreground focus:border-[#002e5b] focus:ring-1 focus:ring-[#002e5b] outline-none transition-all shadow-xs pr-11 rounded-[var(--control-radius)]"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowNewPassword(!showNewPassword)}
-                    className="absolute right-3.5 top-3.5 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+                    className="absolute right-3.5 top-3.5 text-slate-400 hover:text-muted-foreground transition-colors cursor-pointer"
                   >
                     {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -858,7 +858,7 @@ const { data: studentDossier } = useQuery({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
+                <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
                   Confirmer le Nouveau Mot de Passe
                 </label>
                 <div className="relative">
@@ -868,13 +868,13 @@ const { data: studentDossier } = useQuery({
                     value={formData.password_confirmation}
                     onChange={handleChange}
                     placeholder="••••••••"
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-800 focus:border-[#002e5b] focus:ring-1 focus:ring-[#002e5b] outline-none transition-all shadow-xs pr-11"
+                    className="w-full border border-border bg-card px-4 py-3 text-sm font-bold text-foreground focus:border-[#002e5b] focus:ring-1 focus:ring-[#002e5b] outline-none transition-all shadow-xs pr-11 rounded-[var(--control-radius)]"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3.5 top-3.5 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+                    className="absolute right-3.5 top-3.5 text-slate-400 hover:text-muted-foreground transition-colors cursor-pointer"
                   >
                     {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -884,10 +884,10 @@ const { data: studentDossier } = useQuery({
 
             {/* Password Strength Meter */}
             {formData.password && (
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+              <div className="p-4 rounded-2xl bg-muted/50 border border-border space-y-3">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="font-bold text-slate-600">Niveau de robustesse :</span>
-                  <span className={cn("font-black", passwordStrength.text)}>{passwordStrength.label}</span>
+                  <span className="font-bold text-muted-foreground">Niveau de robustesse :</span>
+                  <span className={cn("font-bold", passwordStrength.text)}>{passwordStrength.label}</span>
                 </div>
                 <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
                   <div className={cn("h-full transition-all duration-300", passwordStrength.color, passwordStrength.width)} />
@@ -914,7 +914,7 @@ const { data: studentDossier } = useQuery({
               </div>
             )}
 
-            <div className="pt-4 border-t border-slate-100 flex items-center justify-end">
+            <div className="pt-4 border-t border-border flex items-center justify-end">
               <button
                 type="submit"
                 disabled={isLoading || !formData.password || !formData.current_password}
@@ -930,15 +930,15 @@ const { data: studentDossier } = useQuery({
 
       {/* ── TAB 3: DOUBLE AUTHENTIFICATION (2FA) ── */}
       {activeTab === '2fa' && (
-        <div className="bg-white border border-slate-200/80 rounded-3xl shadow-sm p-6 md:p-10 space-y-6 max-w-3xl animate-in fade-in duration-200">
-          <div className="border-b border-slate-100 pb-4">
+        <div className="bg-card border border-slate-200/80 rounded-2xl shadow-sm p-6 md:p-10 space-y-6 max-w-3xl animate-in fade-in duration-200">
+          <div className="border-b border-border pb-4">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
                   <ShieldCheck className="w-5 h-5 text-emerald-600" />
                   Double Authentification (TOTP 2FA)
                 </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <p className="text-xs text-muted-foreground mt-0.5">
                   Protégez votre compte avec Google Authenticator, Microsoft Authenticator ou Authy.
                 </p>
               </div>
@@ -946,7 +946,7 @@ const { data: studentDossier } = useQuery({
               <span className={`px-3 py-1 rounded-full text-xs font-bold ${
                 user?.two_factor_enabled 
                   ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' 
-                  : 'bg-slate-100 text-slate-600 border border-slate-200'
+                  : "bg-muted text-muted-foreground border border-border"
               }`}>
                 {user?.two_factor_enabled ? '✓ 2FA Activée' : 'Désactivée'}
               </span>
@@ -971,7 +971,7 @@ const { data: studentDossier } = useQuery({
                 <button
                   type="button"
                   onClick={handleDisable2FA}
-                  className="px-4 py-2.5 bg-white text-red-600 font-bold rounded-xl text-xs border border-red-200 hover:bg-red-50 transition-colors shadow-xs cursor-pointer"
+                  className="px-4 py-2.5 bg-card text-red-600 font-bold rounded-xl text-xs border border-red-200 hover:bg-red-50 transition-colors shadow-xs cursor-pointer"
                 >
                   Désactiver la Double Authentification
                 </button>
@@ -980,10 +980,10 @@ const { data: studentDossier } = useQuery({
           ) : (
             <div className="space-y-6">
               {!setupData ? (
-                <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 space-y-4">
+                <div className="p-6 rounded-2xl bg-muted/50 border border-border space-y-4">
                   <div className="flex items-start gap-3">
                     <Shield className="w-5 h-5 text-[#002e5b] mt-0.5 shrink-0" />
-                    <p className="text-xs text-slate-600 leading-relaxed">
+                    <p className="text-xs text-muted-foreground leading-relaxed">
                       L'activation de l'authentification à deux facteurs renforce considérablement la sécurité de votre accès. Même si quelqu'un découvre votre mot de passe, l'accès restera impossible sans votre application d'authentification mobile.
                     </p>
                   </div>
@@ -999,21 +999,21 @@ const { data: studentDossier } = useQuery({
                   </button>
                 </div>
               ) : (
-                <div className="space-y-6 p-6 rounded-2xl bg-slate-50 border border-slate-200">
+                <div className="space-y-6 p-6 rounded-2xl bg-muted/50 border border-border">
                   <div>
-                    <h4 className="text-sm font-bold text-slate-800 mb-1">1. Scannez le QR Code officiel</h4>
-                    <p className="text-xs text-slate-500 mb-4">
+                    <h4 className="text-sm font-bold text-foreground mb-1">1. Scannez le QR Code officiel</h4>
+                    <p className="text-xs text-muted-foreground mb-4">
                       Ouvrez votre application d'authentification et scannez ce code, ou saisissez la clé manuelle.
                     </p>
 
                     <div className="flex flex-col sm:flex-row items-center gap-6">
-                      <div className="p-3 bg-white border border-slate-200 rounded-2xl shadow-sm">
+                      <div className="p-3 bg-card border border-border rounded-2xl shadow-sm">
                         <QRCodeSVG value={setupData.qr_code_url} size={150} level="M" />
                       </div>
 
                       <div className="space-y-2 max-w-sm">
-                        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Clé de configuration secrète :</span>
-                        <div className="flex items-center gap-2 p-2.5 bg-white border border-slate-200 rounded-xl font-mono text-xs font-bold text-slate-800">
+                        <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block">Clé de configuration secrète :</span>
+                        <div className="flex items-center gap-2 p-2.5 bg-card border border-border rounded-xl font-mono text-xs font-bold text-foreground">
                           <span className="select-all break-all">{setupData.secret}</span>
                           <button
                             type="button"
@@ -1031,9 +1031,9 @@ const { data: studentDossier } = useQuery({
                     </div>
                   </div>
 
-                  <div className="pt-4 border-t border-slate-200">
-                    <h4 className="text-sm font-bold text-slate-800 mb-1">2. Saisissez le code à 6 chiffres</h4>
-                    <p className="text-xs text-slate-500 mb-3">
+                  <div className="pt-4 border-t border-border">
+                    <h4 className="text-sm font-bold text-foreground mb-1">2. Saisissez le code à 6 chiffres</h4>
+                    <p className="text-xs text-muted-foreground mb-3">
                       Entrez le code temporaire généré par l'application pour valider et finaliser la configuration.
                     </p>
                     <div className="flex items-center gap-3">
@@ -1043,7 +1043,7 @@ const { data: studentDossier } = useQuery({
                         onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                         placeholder="123456" 
                         maxLength={6}
-                        className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-lg font-mono tracking-widest text-center font-bold text-slate-800 w-36 outline-none focus:border-blue-600"
+                        className="border border-slate-300 bg-card px-4 py-2.5 text-lg font-mono tracking-widest text-center font-bold text-foreground w-36 outline-none focus:border-primary rounded-[var(--control-radius)]"
                       />
                       <button 
                         type="button" 
@@ -1072,13 +1072,13 @@ const { data: studentDossier } = useQuery({
 
       {/* ── TAB 5: SESSIONS & SÉCURITÉ DU COMPTE ── */}
       {activeTab === 'sessions' && (
-        <div className="bg-white border border-slate-200/80 rounded-3xl shadow-sm p-6 md:p-10 space-y-6 max-w-4xl animate-in fade-in duration-200">
-          <div className="border-b border-slate-100 pb-4">
-            <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+        <div className="bg-card border border-slate-200/80 rounded-2xl shadow-sm p-6 md:p-10 space-y-6 max-w-4xl animate-in fade-in duration-200">
+          <div className="border-b border-border pb-4">
+            <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
               <Laptop className="w-5 h-5 text-[#002e5b]" />
               Sessions Actives & Sécurité du Compte
             </h3>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-muted-foreground mt-0.5">
               Consultez les appareils et navigateurs connectés à votre compte ENCG Fès.
             </p>
           </div>
@@ -1092,30 +1092,30 @@ const { data: studentDossier } = useQuery({
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-slate-800">Navigateur Web Actuel (Session Active)</span>
+                    <span className="text-sm font-bold text-foreground">Navigateur Web Actuel (Session Active)</span>
                     <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
                       Cet appareil
                     </span>
                   </div>
-                  <p className="text-xs text-slate-500 mt-0.5">
+                  <p className="text-xs text-muted-foreground mt-0.5">
                     Fès, Maroc • IP : 196.200.xxx.xxx • Chiffrement TLS 1.3
                   </p>
                 </div>
               </div>
 
-              <span className="text-xs font-bold text-emerald-700 bg-white px-3 py-1.5 rounded-xl border border-emerald-200">
+              <span className="text-xs font-bold text-emerald-700 bg-card px-3 py-1.5 rounded-xl border border-emerald-200">
                 En ligne maintenant
               </span>
             </div>
 
-            <div className="p-4 rounded-2xl border border-slate-200 bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="p-4 rounded-2xl border border-border bg-card flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-muted text-muted-foreground flex items-center justify-center">
                   <Smartphone className="w-5 h-5" />
                 </div>
                 <div>
-                  <span className="text-sm font-bold text-slate-800">Application Mobile ENCG / PWA</span>
-                  <p className="text-xs text-slate-500 mt-0.5">
+                  <span className="text-sm font-bold text-foreground">Application Mobile ENCG / PWA</span>
+                  <p className="text-xs text-muted-foreground mt-0.5">
                     Dernière synchronisation il y a 2 heures
                   </p>
                 </div>
@@ -1135,7 +1135,7 @@ const { data: studentDossier } = useQuery({
             <button
               type="button"
               onClick={() => toast.success('Toutes les autres sessions distantes ont été révoquées avec succès.')}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs font-bold transition-colors cursor-pointer"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-slate-300 text-slate-700 hover:bg-muted/50 text-xs font-bold transition-colors cursor-pointer"
             >
               <LogOut className="w-4 h-4" />
               Déconnecter toutes les autres sessions

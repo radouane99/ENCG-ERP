@@ -15,7 +15,7 @@ export function ActivityTimeline() {
       case 'created':
         return { icon: <Plus className="w-4 h-4 text-emerald-500" />, text: `Création de ${type}`, color: 'bg-emerald-500/10 border-emerald-500/20' };
       case 'updated':
-        return { icon: <Edit2 className="w-4 h-4 text-blue-500" />, text: `Mise Ã  jour de ${type}`, color: 'bg-blue-500/10 border-blue-500/20' };
+        return { icon: <Edit2 className="w-4 h-4 text-primary" />, text: `Mise Ã  jour de ${type}`, color: 'bg-blue-500/10 border-blue-500/20' };
       case 'deleted':
         return { icon: <Trash2 className="w-4 h-4 text-red-500" />, text: `Suppression de ${type}`, color: 'bg-red-500/10 border-red-500/20' };
       default:
@@ -27,8 +27,8 @@ export function ActivityTimeline() {
     if (!roles || roles.length === 0) return null;
     const role = roles[0].name;
     if (role === 'admin') return <span className="px-1.5 py-0.5 rounded text-[10px] bg-red-500/10 text-red-600 font-bold uppercase">Admin</span>;
-    if (role === 'professor') return <span className="px-1.5 py-0.5 rounded text-[10px] bg-blue-500/10 text-blue-600 font-bold uppercase">Prof</span>;
-    return <span className="px-1.5 py-0.5 rounded text-[10px] bg-slate-500/10 text-slate-600 font-bold uppercase">Étudiant</span>;
+    if (role === 'professor') return <span className="px-1.5 py-0.5 rounded text-[10px] bg-blue-500/10 text-primary font-bold uppercase">Prof</span>;
+    return <span className="px-1.5 py-0.5 rounded text-[10px] bg-slate-500/10 text-muted-foreground font-bold uppercase">Étudiant</span>;
   };
 
   if (isLoading) {

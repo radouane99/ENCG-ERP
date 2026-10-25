@@ -18,17 +18,17 @@ export default function DeliberationPage() {
   });
 
   return (
-    <div className="space-y-6 animate-in p-6">
+    <div className="space-y-6 animate-in">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t('title')}</h1>
+          <h1 className="erp-page-title">{t('title')}</h1>
           <p className="text-muted-foreground text-sm mt-1">{t('subtitle')}</p>
         </div>
 
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate('/admin/grades/pv')}
-            className="px-5 py-2.5 bg-gradient-to-r from-[#0f2863] to-[#1e40af] hover:from-[#15347d] text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-md hover:scale-105 transition-all flex items-center gap-2 cursor-pointer"
+            className="px-5 py-2.5 bg-gradient-to-r from-[#0f2863] to-[#1e40af] hover:from-[#15347d] text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-md hover:scale-105 transition-all flex items-center gap-2 cursor-pointer"
           >
             <FileText className="w-4 h-4 text-amber-300" />
             📜 Voir & Imprimer les PVs Officiels
@@ -59,9 +59,9 @@ export default function DeliberationPage() {
               <tr>
                 <td colSpan={6} className="px-6 py-12 text-center">
                   <div className="max-w-md mx-auto space-y-3">
-                    <Calculator className="w-12 h-12 text-indigo-500 mx-auto" />
-                    <h3 className="font-bold text-slate-800 dark:text-slate-100">Aucune session de délibération enregistrée</h3>
-                    <p className="text-xs text-slate-500">
+                    <Calculator className="w-12 h-12 text-primary mx-auto" />
+                    <h3 className="font-bold text-foreground dark:text-foreground">Aucune session de délibération enregistrée</h3>
+                    <p className="text-xs text-muted-foreground">
                       Consultez la matrice des délibérations et générez les Procès-Verbaux officiels directement depuis le hub des PVs.
                     </p>
                     <button

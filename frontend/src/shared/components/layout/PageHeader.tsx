@@ -15,14 +15,14 @@ export default function PageHeader({
   titleLang?: string
 }) {
   return (
-    <div className={cn('flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between mb-6', className)}>
+    <div className={cn('erp-page-header', className)}>
       <div className="min-w-0">
-        <h1 lang={titleLang} className="text-2xl font-black text-primary dark:text-white tracking-tight">{title}</h1>
+        <h1 lang={titleLang} className="erp-page-title text-foreground">{title}</h1>
         {subtitle ? (
           <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>
         ) : null}
       </div>
-      {actions ? <div className="shrink-0 flex flex-wrap gap-2">{actions}</div> : null}
+      {actions ? <div className="flex min-w-0 flex-wrap items-center gap-2">{actions}</div> : null}
     </div>
   )
 }

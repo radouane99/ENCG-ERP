@@ -49,7 +49,7 @@ export default function DigitalCardPage() {
     return (
       <div className="space-y-6 max-w-4xl mx-auto">
         <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+          <h1 className="text-foreground flex items-center gap-2 erp-page-title">
             <IdCard className="w-6 h-6 text-primary" />
             Carte d'Étudiant Digitale
           </h1>
@@ -70,7 +70,7 @@ export default function DigitalCardPage() {
     <div className="space-y-6 max-w-4xl mx-auto">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+          <h1 className="text-foreground flex items-center gap-2 erp-page-title">
             <IdCard className="w-6 h-6 text-primary" />
             Carte d'Étudiant Digitale
           </h1>
@@ -91,7 +91,7 @@ export default function DigitalCardPage() {
         {/* Card Container */}
         <div
           ref={cardRef}
-          className="relative w-full max-w-[340px] bg-card border border-white/10 shadow-2xl rounded-3xl overflow-hidden print:shadow-none print:border-slate-300"
+          className="relative w-full max-w-[340px] bg-card border border-white/10 shadow-sm rounded-2xl overflow-hidden print:shadow-none print:border-slate-300"
         >
           {/* Header Area */}
           <div className="bg-primary p-6 text-center relative overflow-hidden">
@@ -99,7 +99,7 @@ export default function DigitalCardPage() {
             <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '16px 16px' }} />
             
             <div className="relative z-10">
-              <div className="w-16 h-16 bg-white rounded-2xl mx-auto flex items-center justify-center mb-3 shadow-lg">
+              <div className="w-16 h-16 bg-card rounded-2xl mx-auto flex items-center justify-center mb-3 shadow-lg">
                 <Building2 className="w-8 h-8 text-primary" />
               </div>
               <h2 className="text-white font-bold text-lg leading-tight uppercase tracking-wide">
@@ -164,7 +164,7 @@ export default function DigitalCardPage() {
             {/* QR Code with Dynamic TOTP Protection */}
             <div className="pt-4 pb-2 flex flex-col items-center border-t border-dashed border-white/10">
               <Barcode value={cardData.card_number} className="mb-4 bg-white/5 p-2 rounded-xl border border-white/10 w-full" />
-              <div className="bg-white p-2 rounded-xl shadow-sm border border-slate-100 mb-2 relative">
+              <div className="bg-card p-2 rounded-xl shadow-sm border border-border mb-2 relative">
                 <QRCode value={verificationUrl} size={100} level="H" />
               </div>
               

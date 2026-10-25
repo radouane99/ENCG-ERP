@@ -119,20 +119,20 @@ export default function ProfessorSchedulePage() {
   };
 
   return (
-    <div className="space-y-8 font-sans animate-in fade-in duration-500 text-slate-900 dark:text-slate-100 pb-16">
+    <div className="space-y-8 font-sans animate-in fade-in duration-500 text-foreground dark:text-foreground pb-16">
       
       {/* ── Executive Page Header ── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800/80 pb-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border dark:border-slate-800/80 pb-6">
         <div>
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-2xl bg-[#001A4B] text-white flex items-center justify-center font-bold shadow-md">
               <CalendarDays className="w-6 h-6 text-amber-300" />
             </div>
             <div>
-              <h1 className="text-2xl font-black tracking-tight text-[#001A4B] dark:text-white">
+              <h1 className="text-[#001A4B] dark:text-white erp-page-title">
                 Mon Emploi du Temps Officiel
               </h1>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
+              <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-0.5 font-medium">
                 Planning synchronisé en direct avec la matrice officielle de l'Administration · ENCG Fès
               </p>
             </div>
@@ -143,22 +143,22 @@ export default function ProfessorSchedulePage() {
           <button
             onClick={handleRefetchAll}
             disabled={isMatrixFetching}
-            className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 shadow-xs hover:bg-slate-50 transition-all cursor-pointer"
+            className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-card dark:bg-card border border-border dark:border-border text-xs font-bold text-slate-700 dark:text-foreground shadow-xs hover:bg-muted/50 transition-all cursor-pointer"
           >
-            <RefreshCcw className={cn("w-3.5 h-3.5 text-blue-600", isMatrixFetching && "animate-spin")} />
+            <RefreshCcw className={cn("w-3.5 h-3.5 text-primary", isMatrixFetching && "animate-spin")} />
             Actualiser
           </button>
 
           <button
             onClick={handleExportIcs}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100 shadow-xs hover:bg-slate-50 transition-all cursor-pointer"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-card dark:bg-card border border-border dark:border-border text-xs font-bold uppercase tracking-wider text-foreground dark:text-foreground shadow-xs hover:bg-muted/50 transition-all cursor-pointer"
           >
-            <Calendar className="w-4 h-4 text-blue-600" /> Exporter (.ics)
+            <Calendar className="w-4 h-4 text-primary" /> Exporter (.ics)
           </button>
 
           <button
             onClick={handleDownloadPdf}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#001A4B] hover:bg-[#082663] text-white text-xs font-black uppercase tracking-wider shadow-md transition-all cursor-pointer"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#001A4B] hover:bg-[#082663] text-white text-xs font-bold uppercase tracking-wider shadow-md transition-all cursor-pointer"
           >
             <Download className="w-4 h-4 text-amber-300" /> Télécharger PDF A4
           </button>
@@ -167,59 +167,59 @@ export default function ProfessorSchedulePage() {
 
       {/* ── Summary Key Indicator Strip ── */}
       {scheduleError && <div role="alert" className="rounded-xl border border-red-200 p-4 text-red-700">Votre emploi du temps est indisponible. <button onClick={() => refetchSchedule()} className="underline">Réessayer</button></div>}
-      {proposals.length > 0 && <section className="rounded-2xl border border-indigo-200 bg-white p-5 space-y-3 dark:bg-slate-900 dark:border-indigo-800" aria-labelledby="schedule-proposals">
+      {proposals.length > 0 && <section className="rounded-2xl border border-primary/20 bg-card p-5 space-y-3 dark:bg-card dark:border-primary" aria-labelledby="schedule-proposals">
         <h2 id="schedule-proposals" className="text-lg font-bold">Planning proposé : votre avis est attendu</h2>
-        <p className="text-sm text-slate-500">Ces séances restent provisoires jusqu’à leur publication par la scolarité.</p>
+        <p className="text-sm text-muted-foreground">Ces séances restent provisoires jusqu’à leur publication par la scolarité.</p>
         {proposals.map((session: any) => <div key={session.id} className="rounded-xl border p-3 space-y-2">
-          <p className="font-semibold">{session.module_name} · {session.group_code}</p><p className="text-sm text-slate-500">{session.day_name} · {session.time} · {session.room}</p>
+          <p className="font-semibold">{session.module_name} · {session.group_code}</p><p className="text-sm text-muted-foreground">{session.day_name} · {session.time} · {session.room}</p>
           <p className="text-sm">Réponse : {session.confirmation_status === 'confirmed' ? 'Confirmée' : session.confirmation_status === 'refused' ? 'Indisponibilité signalée' : 'En attente'}</p>
-          <input aria-label={`Motif pour ${session.module_name}`} value={refusalNotes[session.id] || ''} onChange={event => setRefusalNotes(notes => ({ ...notes, [session.id]: event.target.value }))} placeholder="Précision ou motif d’indisponibilité" maxLength={500} className="w-full rounded-lg border p-2 text-sm dark:bg-slate-800" />
+          <input aria-label={`Motif pour ${session.module_name}`} value={refusalNotes[session.id] || ''} onChange={event => setRefusalNotes(notes => ({ ...notes, [session.id]: event.target.value }))} placeholder="Précision ou motif d’indisponibilité" maxLength={500} className="w-full border p-2 text-sm dark:bg-card rounded-[var(--control-radius)]" />
           <div className="flex flex-wrap gap-2"><button disabled={confirmation.isPending || session.confirmation_status === 'confirmed'} onClick={() => confirmation.mutate({ id: session.id, decision: 'confirmed' })} className="rounded-lg bg-emerald-700 px-3 py-2 text-sm text-white disabled:opacity-50">Confirmer ce créneau</button><button disabled={confirmation.isPending} onClick={() => confirmation.mutate({ id: session.id, decision: 'refused' })} className="rounded-lg border px-3 py-2 text-sm">Signaler une indisponibilité</button></div>
         </div>)}
       </section>}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 shadow-sm border border-slate-200 dark:border-slate-800">
-          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-1">Enseignant</span>
-          <div className="text-base font-black text-[#001A4B] dark:text-white truncate">{profFullName}</div>
-          <div className="text-[10px] font-bold text-slate-500 mt-1">Corps Enseignant-Chercheur</div>
+        <div className="bg-card dark:bg-card rounded-2xl p-5 shadow-sm border border-border dark:border-border">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 block mb-1">Enseignant</span>
+          <div className="text-base font-bold text-[#001A4B] dark:text-white truncate">{profFullName}</div>
+          <div className="text-[10px] font-bold text-muted-foreground mt-1">Corps Enseignant-Chercheur</div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 shadow-sm border border-slate-200 dark:border-slate-800">
-          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-1">Séances Programmées</span>
-          <div className="text-2xl font-black text-[#001A4B] dark:text-white">{activeSessions.length} séances / sem</div>
-          <div className="text-[10px] font-black text-emerald-600 uppercase tracking-wider mt-1 flex items-center gap-1">
+        <div className="bg-card dark:bg-card rounded-2xl p-5 shadow-sm border border-border dark:border-border">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 block mb-1">Séances Programmées</span>
+          <div className="text-2xl font-bold text-[#001A4B] dark:text-white">{activeSessions.length} séances / sem</div>
+          <div className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mt-1 flex items-center gap-1">
             <CheckCircle2 className="w-3 h-3" /> Synchronisé en direct
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 shadow-sm border border-slate-200 dark:border-slate-800">
-          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-1">Volume Hebdomadaire</span>
-          <div className="text-2xl font-black text-amber-600 dark:text-amber-400">{Math.round(activeSessions.reduce((sum: number, item: any) => { const minutes = (time: string) => { const parts = time.split(":" ).map(Number); return parts[0] * 60 + parts[1] }; return sum + (minutes(item.end_time) - minutes(item.start_time)) / 60 }, 0) * 100) / 100} heures</div>
-          <div className="text-[10px] font-bold text-slate-500 mt-1">Créneaux d'enseignement</div>
+        <div className="bg-card dark:bg-card rounded-2xl p-5 shadow-sm border border-border dark:border-border">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 block mb-1">Volume Hebdomadaire</span>
+          <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">{Math.round(activeSessions.reduce((sum: number, item: any) => { const minutes = (time: string) => { const parts = time.split(":" ).map(Number); return parts[0] * 60 + parts[1] }; return sum + (minutes(item.end_time) - minutes(item.start_time)) / 60 }, 0) * 100) / 100} heures</div>
+          <div className="text-[10px] font-bold text-muted-foreground mt-1">Créneaux d'enseignement</div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 shadow-sm border border-slate-200 dark:border-slate-800">
-          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-1">Semestre & Année</span>
-          <div className="text-base font-black text-[#001A4B] dark:text-white">Semestre Courant</div>
-          <div className="text-[10px] font-bold text-indigo-600 mt-1">Année Universitaire 2026/2027</div>
+        <div className="bg-card dark:bg-card rounded-2xl p-5 shadow-sm border border-border dark:border-border">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 block mb-1">Semestre & Année</span>
+          <div className="text-base font-bold text-[#001A4B] dark:text-white">Semestre Courant</div>
+          <div className="text-[10px] font-bold text-primary mt-1">Année Universitaire 2026/2027</div>
         </div>
       </div>
 
       {/* ── Exam Surveillance Alert (If assigned) ── */}
       {surveillances.length > 0 && (
-        <div className="bg-gradient-to-r from-[#001A4B] via-[#092868] to-[#001A4B] rounded-3xl p-6 text-white shadow-xl border border-blue-900/40 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="bg-gradient-to-r from-[#001A4B] via-[#092868] to-[#001A4B] rounded-2xl p-6 text-white shadow-sm border border-blue-900/40 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 bg-amber-400/20 text-amber-300 rounded-2xl flex items-center justify-center font-black shrink-0 border border-amber-400/30">
+            <div className="w-12 h-12 bg-amber-400/20 text-amber-300 rounded-2xl flex items-center justify-center font-bold shrink-0 border border-amber-400/30">
               <Shield className="w-6 h-6" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 bg-amber-400 text-[#001A4B] rounded-full text-[10px] font-black uppercase tracking-wider">
+                <span className="px-2.5 py-0.5 bg-amber-400 text-[#001A4B] rounded-full text-[10px] font-bold uppercase tracking-wider">
                   Missions de Surveillance
                 </span>
                 <span className="text-xs text-blue-200 font-bold">{surveillances.length} séance(s)</span>
               </div>
-              <h3 className="text-base font-black text-white mt-1">
+              <h3 className="text-base font-bold text-white mt-1">
                 {surveillances[0]?.session_name || "Session d'Examens"}
               </h3>
               <p className="text-xs text-blue-100/80 mt-0.5">
@@ -230,7 +230,7 @@ export default function ProfessorSchedulePage() {
 
           <Link
             to="/professor/proctoring"
-            className="px-4 py-2.5 bg-amber-400 hover:bg-amber-300 text-[#001A4B] rounded-xl text-xs font-black uppercase tracking-wider shadow-md transition-all shrink-0 flex items-center gap-1.5"
+            className="px-4 py-2.5 bg-amber-400 hover:bg-amber-300 text-[#001A4B] rounded-xl text-xs font-bold uppercase tracking-wider shadow-md transition-all shrink-0 flex items-center gap-1.5"
           >
             <Eye className="w-4 h-4" /> Voir mes Convocations
           </Link>
@@ -243,10 +243,10 @@ export default function ProfessorSchedulePage() {
           <button
             onClick={() => setViewMode('matrix')}
             className={cn(
-              "px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer",
+              "px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer",
               viewMode === 'matrix'
                 ? "bg-[#001A4B] text-white shadow-sm"
-                : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-slate-50"
+                : "bg-card dark:bg-card text-muted-foreground dark:text-foreground border border-border dark:border-border hover:bg-muted/50"
             )}
           >
             Vue Grille Hebdomadaire
@@ -254,10 +254,10 @@ export default function ProfessorSchedulePage() {
           <button
             onClick={() => setViewMode('official')}
             className={cn(
-              "px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer",
+              "px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer",
               viewMode === 'official'
                 ? "bg-[#001A4B] text-white shadow-sm"
-                : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-slate-50"
+                : "bg-card dark:bg-card text-muted-foreground dark:text-foreground border border-border dark:border-border hover:bg-muted/50"
             )}
           >
             Vue Matrice Officielle (ENCG)
@@ -265,32 +265,32 @@ export default function ProfessorSchedulePage() {
           <button
             onClick={() => setViewMode('list')}
             className={cn(
-              "px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer",
+              "px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer",
               viewMode === 'list'
                 ? "bg-[#001A4B] text-white shadow-sm"
-                : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-slate-50"
+                : "bg-card dark:bg-card text-muted-foreground dark:text-foreground border border-border dark:border-border hover:bg-muted/50"
             )}
           >
             Vue Liste Détaillée
           </button>
         </div>
 
-        <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
+        <span className="text-xs font-bold text-muted-foreground dark:text-muted-foreground">
           {activeSessions.length} séance(s) hebdomadaire(s)
         </span>
       </div>
 
       {/* ── 1. WEEKLY MATRIX VIEW (GRID) ── */}
       {viewMode === 'matrix' && (
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 overflow-x-auto">
+        <div className="bg-card dark:bg-card rounded-2xl p-6 shadow-sm border border-border dark:border-border overflow-x-auto">
           <table className="w-full min-w-[900px] border-collapse">
             <thead>
-              <tr className="border-b border-slate-200 dark:border-slate-800">
-                <th className="p-3 text-left text-xs font-black text-slate-400 uppercase tracking-widest w-36">
+              <tr className="border-b border-border dark:border-border">
+                <th className="p-3 text-left text-xs font-bold text-slate-400 uppercase tracking-widest w-36">
                   Créneau Horaire
                 </th>
                 {DAYS.map((day) => (
-                  <th key={day.key} className="p-3 text-center text-xs font-black text-slate-700 dark:text-slate-200 uppercase tracking-wider">
+                  <th key={day.key} className="p-3 text-center text-xs font-bold text-slate-700 dark:text-foreground uppercase tracking-wider">
                     {day.name}
                   </th>
                 ))}
@@ -301,7 +301,7 @@ export default function ProfessorSchedulePage() {
                 <tr key={slotIdx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
                   <td className="p-4 align-top">
                     <div className="space-y-0.5">
-                      <div className="flex items-center gap-1.5 text-xs font-black text-blue-900 dark:text-blue-300">
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-primary dark:text-blue-300">
                         <Clock className="w-3.5 h-3.5 text-amber-500 shrink-0" />
                         {slot.label}
                       </div>
@@ -320,23 +320,23 @@ export default function ProfessorSchedulePage() {
                             {matchedClasses.map((session: any, sIdx: number) => (
                               <div
                                 key={sIdx}
-                                className="p-3.5 rounded-2xl bg-gradient-to-br from-blue-50/90 via-indigo-50/50 to-white dark:from-slate-800 dark:to-slate-800/60 border border-blue-200 dark:border-slate-700 shadow-2xs hover:shadow-md transition-all space-y-2 group"
+                                className="p-3.5 rounded-2xl bg-gradient-to-br from-blue-50/90 via-indigo-50/50 to-white dark:from-slate-800 dark:to-slate-800/60 border border-primary/20 dark:border-border shadow-2xs hover:shadow-md transition-all space-y-2 group"
                               >
                                 <div className="flex items-center justify-between">
-                                  <span className="font-mono text-[9px] font-black uppercase bg-[#001A4B] text-white px-2 py-0.5 rounded">
+                                  <span className="font-mono text-[9px] font-bold uppercase bg-[#001A4B] text-white px-2 py-0.5 rounded">
                                     {session.code || 'CM'}
                                   </span>
-                                  <span className="text-[10px] font-black text-blue-900 dark:text-blue-300 font-mono">
+                                  <span className="text-[10px] font-bold text-primary dark:text-blue-300 font-mono">
                                     {session.time}
                                   </span>
                                 </div>
 
-                                <h4 className="font-black text-xs text-slate-900 dark:text-white leading-tight">
+                                <h4 className="font-bold text-xs text-foreground dark:text-white leading-tight">
                                   {session.title}
                                 </h4>
 
-                                <div className="space-y-1 text-[11px] text-slate-600 dark:text-slate-300">
-                                  <div className="flex items-center gap-1 font-bold text-indigo-700 dark:text-indigo-300">
+                                <div className="space-y-1 text-[11px] text-muted-foreground dark:text-foreground">
+                                  <div className="flex items-center gap-1 font-bold text-primary dark:text-indigo-300">
                                     <Users className="w-3 h-3" /> {session.group}
                                   </div>
                                   <div className="flex items-center gap-1 font-bold text-rose-600 dark:text-rose-400">
@@ -346,7 +346,7 @@ export default function ProfessorSchedulePage() {
 
                                 <button
                                   onClick={() => startCall.mutate(session)} disabled={startCall.isPending}
-                                  className="w-full mt-2 py-1.5 bg-[#001A4B] hover:bg-[#082663] text-white rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-1 shadow-xs cursor-pointer transition-colors"
+                                  className="w-full mt-2 py-1.5 bg-[#001A4B] hover:bg-[#082663] text-white rounded-xl text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1 shadow-xs cursor-pointer transition-colors"
                                 >
                                   <QrCode className="w-3 h-3 text-amber-300" /> Faire l'Appel (QR / Liste)
                                 </button>
@@ -354,7 +354,7 @@ export default function ProfessorSchedulePage() {
                             ))}
                           </div>
                         ) : (
-                          <div className="h-28 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800/80 flex items-center justify-center text-[11px] text-slate-300 dark:text-slate-700 font-medium">
+                          <div className="h-28 rounded-2xl border border-dashed border-border dark:border-slate-800/80 flex items-center justify-center text-[11px] text-slate-300 dark:text-slate-700 font-medium">
                             Libre
                           </div>
                         )}
@@ -372,57 +372,57 @@ export default function ProfessorSchedulePage() {
       {viewMode === 'official' && (
         <div className="space-y-6">
           {profMatrixSections.length === 0 ? (
-            <div className="bg-white dark:bg-slate-900 rounded-3xl p-10 text-center border border-slate-200 dark:border-slate-800 text-slate-400 text-xs">
+            <div className="bg-card dark:bg-card rounded-2xl p-10 text-center border border-border dark:border-border text-slate-400 text-xs">
               Aucune affectation trouvée dans la matrice officielle.
             </div>
           ) : (
             profMatrixSections.map((section: any, idx: number) => (
-              <div key={idx} className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 space-y-4">
-                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <div key={idx} className="bg-card dark:bg-card rounded-2xl p-6 shadow-sm border border-border dark:border-border space-y-4">
+                <div className="flex items-center justify-between border-b border-border dark:border-border pb-3">
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="px-2.5 py-0.5 rounded-md bg-[#001A4B] text-white text-[10px] font-black uppercase">
+                      <span className="px-2.5 py-0.5 rounded-md bg-[#001A4B] text-white text-[10px] font-bold uppercase">
                         {section.filiere_code || 'FILIÈRE'}
                       </span>
-                      <h3 className="text-base font-black text-slate-900 dark:text-white">{section.title}</h3>
+                      <h3 className="text-base font-bold text-foreground dark:text-white">{section.title}</h3>
                     </div>
-                    <p className="text-xs text-slate-500 mt-0.5">{section.filiere_name} · {section.semester_label}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{section.filiere_name} · {section.semester_label}</p>
                   </div>
                 </div>
 
-                <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900">
+                <div className="overflow-x-auto border border-border dark:border-border rounded-2xl bg-card dark:bg-card">
                   <table className="w-full min-w-[850px] border-collapse text-xs">
                     <thead>
-                      <tr className="bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300">
-                        <th className="border border-slate-200 dark:border-slate-800 p-2.5 font-black text-left">Module & Élément</th>
-                        <th className="border border-slate-200 dark:border-slate-800 p-2.5 font-black text-left">Intervenant</th>
-                        <th className="border border-slate-200 dark:border-slate-800 p-2.5 font-black text-center">Lundi</th>
-                        <th className="border border-slate-200 dark:border-slate-800 p-2.5 font-black text-center">Mardi</th>
-                        <th className="border border-slate-200 dark:border-slate-800 p-2.5 font-black text-center">Mercredi</th>
-                        <th className="border border-slate-200 dark:border-slate-800 p-2.5 font-black text-center">Jeudi</th>
-                        <th className="border border-slate-200 dark:border-slate-800 p-2.5 font-black text-center">Vendredi</th>
-                        <th className="border border-slate-200 dark:border-slate-800 p-2.5 font-black text-center">Salles</th>
+                      <tr className="bg-muted/50 dark:bg-slate-800/60 text-muted-foreground dark:text-foreground">
+                        <th className="border border-border dark:border-border p-2.5 font-bold text-left">Module & Élément</th>
+                        <th className="border border-border dark:border-border p-2.5 font-bold text-left">Intervenant</th>
+                        <th className="border border-border dark:border-border p-2.5 font-bold text-center">Lundi</th>
+                        <th className="border border-border dark:border-border p-2.5 font-bold text-center">Mardi</th>
+                        <th className="border border-border dark:border-border p-2.5 font-bold text-center">Mercredi</th>
+                        <th className="border border-border dark:border-border p-2.5 font-bold text-center">Jeudi</th>
+                        <th className="border border-border dark:border-border p-2.5 font-bold text-center">Vendredi</th>
+                        <th className="border border-border dark:border-border p-2.5 font-bold text-center">Salles</th>
                       </tr>
                     </thead>
                     <tbody>
                       {section.rows.map((row: any, rIdx: number) => (
                         <tr key={rIdx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
-                          <td className="border border-slate-200 dark:border-slate-800 p-3 font-bold text-slate-900 dark:text-white">
+                          <td className="border border-border dark:border-border p-3 font-bold text-foreground dark:text-white">
                             {row.element_name || row.module_name}
                           </td>
-                          <td className="border border-slate-200 dark:border-slate-800 p-3 font-black text-[#001A4B] dark:text-amber-300">
+                          <td className="border border-border dark:border-border p-3 font-bold text-[#001A4B] dark:text-amber-300">
                             {row.professor_name}
                           </td>
                           {[1, 2, 3, 4, 5].map((day) => (
-                            <td key={day} className="border border-slate-200 dark:border-slate-800 p-2 text-center align-middle">
+                            <td key={day} className="border border-border dark:border-border p-2 text-center align-middle">
                               {(row.days?.[day] || []).map((slot: string, sIdx: number) => (
-                                <span key={sIdx} className="inline-block font-black text-[11px] text-blue-900 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/80 px-2 py-1 rounded-md border border-blue-200 dark:border-blue-800">
+                                <span key={sIdx} className="inline-block font-bold text-[11px] text-primary dark:text-blue-300 bg-primary/5 dark:bg-blue-950/80 px-2 py-1 rounded-md border border-primary/20 dark:border-primary">
                                   {slot}
                                 </span>
                               ))}
                             </td>
                           ))}
-                          <td className="border border-slate-200 dark:border-slate-800 p-3 text-center font-bold text-rose-600 dark:text-rose-400">
+                          <td className="border border-border dark:border-border p-3 text-center font-bold text-rose-600 dark:text-rose-400">
                             {row.room_label}
                           </td>
                         </tr>
@@ -445,10 +445,10 @@ export default function ProfessorSchedulePage() {
                 key={day.key}
                 onClick={() => setSelectedDay(day.key)}
                 className={cn(
-                  "px-5 py-2.5 rounded-2xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer",
+                  "px-5 py-2.5 rounded-2xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer",
                   selectedDay === day.key
                     ? "bg-[#001A4B] text-white shadow-md"
-                    : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-slate-50"
+                    : "bg-card dark:bg-card text-muted-foreground dark:text-foreground border border-border dark:border-border hover:bg-muted/50"
                 )}
               >
                 {day.name}
@@ -456,9 +456,9 @@ export default function ProfessorSchedulePage() {
             ))}
           </div>
 
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-200 dark:border-slate-800 space-y-4">
-            <h3 className="text-base font-black text-[#001A4B] dark:text-white flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-blue-600" />
+          <div className="bg-card dark:bg-card rounded-2xl p-6 sm:p-8 shadow-sm border border-border dark:border-border space-y-4">
+            <h3 className="text-base font-bold text-[#001A4B] dark:text-white flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-primary" />
               Séances du {DAYS.find((d) => d.key === selectedDay)?.name}
             </h3>
 
@@ -471,9 +471,9 @@ export default function ProfessorSchedulePage() {
 
               if (dayClasses.length === 0) {
                 return (
-                  <div className="py-12 text-center rounded-2xl bg-slate-50 dark:bg-slate-800/30 border border-dashed border-slate-200 dark:border-slate-800">
+                  <div className="py-12 text-center rounded-2xl bg-muted/50 dark:bg-slate-800/30 border border-dashed border-border dark:border-border">
                     <Clock className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
-                    <p className="text-xs font-bold text-slate-500">Aucun cours programmé pour ce jour.</p>
+                    <p className="text-xs font-bold text-muted-foreground">Aucun cours programmé pour ce jour.</p>
                     <p className="text-[11px] text-slate-400 mt-0.5">Journée réservée aux travaux de recherche ou consultations.</p>
                   </div>
                 );
@@ -484,24 +484,24 @@ export default function ProfessorSchedulePage() {
                   {dayClasses.map((cls: any, idx: number) => (
                     <div
                       key={idx}
-                      className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 hover:border-blue-300 transition-all"
+                      className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-muted/50 dark:bg-slate-800/40 border border-border dark:border-border hover:border-primary/20 transition-all"
                     >
                       <div className="flex items-start gap-4">
-                        <div className="w-16 h-16 rounded-2xl bg-[#001A4B] text-white flex flex-col items-center justify-center font-black shrink-0 shadow-sm">
+                        <div className="w-16 h-16 rounded-2xl bg-[#001A4B] text-white flex flex-col items-center justify-center font-bold shrink-0 shadow-sm">
                           <span className="text-xs text-amber-300">{cls.time?.split(' - ')[0] || cls.time}</span>
                           <span className="text-[8px] uppercase tracking-wider text-slate-300 mt-0.5">HORAIRE</span>
                         </div>
 
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
-                            <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 text-[10px] font-black rounded uppercase">
+                            <span className="px-2 py-0.5 bg-primary/10 dark:bg-blue-950 text-primary dark:text-blue-300 text-[10px] font-bold rounded uppercase">
                               {cls.code || 'CM'}
                             </span>
                             <span className="text-xs font-bold text-slate-400">Horaire : {cls.time}</span>
                           </div>
-                          <h4 className="text-sm font-black text-slate-900 dark:text-white">{cls.title}</h4>
-                          <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 font-medium">
-                            <span className="flex items-center gap-1 text-indigo-600 dark:text-indigo-400 font-bold">
+                          <h4 className="text-sm font-bold text-foreground dark:text-white">{cls.title}</h4>
+                          <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground font-medium">
+                            <span className="flex items-center gap-1 text-primary dark:text-indigo-400 font-bold">
                               <Users className="w-3.5 h-3.5" /> {cls.group}
                             </span>
                             <span className="flex items-center gap-1 text-rose-600 dark:text-rose-400 font-bold">
@@ -514,7 +514,7 @@ export default function ProfessorSchedulePage() {
                       <div className="flex items-center gap-2 shrink-0">
                         <button
                           onClick={() => startCall.mutate(cls)} disabled={startCall.isPending}
-                          className="px-5 py-2.5 bg-[#001A4B] hover:bg-[#082663] text-white font-black text-xs rounded-xl uppercase tracking-wider shadow-sm flex items-center gap-2 cursor-pointer transition-colors"
+                          className="px-5 py-2.5 bg-[#001A4B] hover:bg-[#082663] text-white font-bold text-xs rounded-xl uppercase tracking-wider shadow-sm flex items-center gap-2 cursor-pointer transition-colors"
                         >
                           <QrCode className="w-4 h-4 text-amber-300" /> Faire l'Appel (QR / Liste)
                         </button>

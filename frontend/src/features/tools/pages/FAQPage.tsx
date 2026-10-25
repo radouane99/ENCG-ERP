@@ -37,23 +37,23 @@ export default function FAQPage() {
   }
 
   return (
-    <div className="space-y-6 animate-in p-6 max-w-4xl mx-auto pb-20">
+    <div className="space-y-6 animate-in max-w-4xl mx-auto pb-20">
       <div className="flex items-center justify-center mb-12">
-        <h1 className="text-xl font-bold text-[#0f2863] italic">
+        <h1 className="text-[#0f2863] italic erp-page-title">
           Questions Fréquentes (FAQ)
         </h1>
       </div>
 
       <div className="text-center mb-12">
-        <h2 className="text-3xl font-bold text-slate-800 italic mb-2">Besoin d'aide ?</h2>
-        <p className="text-sm text-slate-500">Trouvez rapidement les réponses aux questions les plus courantes.</p>
+        <h2 className="text-3xl font-bold text-foreground italic mb-2">Besoin d'aide ?</h2>
+        <p className="text-sm text-muted-foreground">Trouvez rapidement les réponses aux questions les plus courantes.</p>
       </div>
 
       <div className="space-y-4">
         {faqs.map((faq, index) => (
           <div 
             key={index} 
-            className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm transition-all duration-200 hover:border-blue-200"
+            className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm transition-all duration-200 hover:border-primary/20"
           >
             <button 
               onClick={() => toggleAccordion(index)}
@@ -62,7 +62,7 @@ export default function FAQPage() {
               <span className="font-bold text-slate-700 text-sm">{faq.question}</span>
               <ChevronDown 
                 className={cn(
-                  "w-5 h-5 text-blue-500 transition-transform duration-300",
+                  "w-5 h-5 text-primary transition-transform duration-300",
                   openIndex === index ? "rotate-180" : ""
                 )} 
               />
@@ -73,7 +73,7 @@ export default function FAQPage() {
                 openIndex === index ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
               )}
             >
-              <div className="p-6 pt-0 text-slate-500 text-sm leading-relaxed border-t border-slate-50 mt-2">
+              <div className="p-6 pt-0 text-muted-foreground text-sm leading-relaxed border-t border-slate-50 mt-2">
                 {faq.answer}
               </div>
             </div>

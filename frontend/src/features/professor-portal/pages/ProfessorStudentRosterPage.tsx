@@ -1592,17 +1592,17 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
   };
 
   return (
-    <div className="space-y-6 font-sans animate-in fade-in duration-500 text-slate-900 dark:text-slate-100 pb-20 max-w-[1600px] mx-auto p-2 sm:p-4">
+    <div className="space-y-6 font-sans animate-in fade-in duration-500 text-foreground dark:text-foreground pb-20 max-w-[1600px] mx-auto p-2">
       {/* ── Top Role & Institution Header Pill ── */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xs">
-        <div className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-200 pl-1">
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-card dark:bg-card p-3 rounded-2xl border border-border dark:border-border shadow-2xs">
+        <div className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-foreground pl-1">
           <GraduationCap className="w-4 h-4 text-[#001A4B] dark:text-blue-400 shrink-0" />
           <span>Espace Enseignant :</span>
-          <span className="px-2.5 py-0.5 rounded-lg text-[11px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300/60">
+          <span className="px-2.5 py-0.5 rounded-lg text-[11px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300/60">
             Listes d'Étudiants & Émargement Officiel
           </span>
           <span className="text-slate-300 dark:text-slate-700">•</span>
-          <span className="text-slate-600 dark:text-slate-400">{profName || 'Professeur ENCG'}</span>
+          <span className="text-muted-foreground dark:text-muted-foreground">{profName || 'Professeur ENCG'}</span>
           {isLocked && (
             <span className="flex items-center gap-1 text-[11px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-700 px-2 py-0.5 rounded-full ml-1">
               <Lock className="w-3 h-3 text-amber-500" /> Verrouillé
@@ -1615,17 +1615,17 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
       </div>
 
       {/* ── Hero Banner (Unified ENCG Design System) ── */}
-      <div className="rounded-3xl p-6 sm:p-8 text-white shadow-xl border bg-gradient-to-r from-slate-900 via-indigo-950 to-[#001A4B] border-indigo-900/60 relative overflow-hidden flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+      <div className="p-6 sm:p-8 text-white border border-indigo-900/60 relative overflow-hidden flex flex-col lg:flex-row lg:items-center justify-between gap-6 erp-page-banner">
         <div className="absolute top-0 right-0 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl pointer-events-none -translate-y-1/2 translate-x-1/3"></div>
         <div className="flex items-center gap-4 relative z-10">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-emerald-500/30 text-white font-black flex items-center justify-center shadow-lg shrink-0">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-emerald-500/30 text-white font-bold flex items-center justify-center shadow-lg shrink-0">
             <ClipboardList className="w-7 h-7" />
           </div>
           <div>
-            <span className="px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest inline-flex items-center gap-1 mb-1 border bg-emerald-500/20 text-emerald-300 border-emerald-400/30">
+            <span className="px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest inline-flex items-center gap-1 mb-1 border bg-emerald-500/20 text-emerald-300 border-emerald-400/30">
               <Sparkles className="w-3 h-3 text-emerald-400" /> Module Apogée & LMD
             </span>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
+            <h1 className="erp-page-title">
               Listes d'Étudiants & Feuille d'Émargement
             </h1>
             <p className="text-xs sm:text-sm text-slate-300 font-medium mt-0.5">
@@ -1643,7 +1643,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
               title="Vue Tableau Officiel"
               className={cn(
                 'p-2 rounded-lg transition-all',
-                viewMode === 'table' ? 'bg-white text-[#001A4B] shadow font-bold' : 'text-slate-300 hover:text-white'
+                viewMode === 'table' ? "bg-card text-[#001A4B] shadow font-bold" : 'text-slate-300 hover:text-white'
               )}
             >
               <LayoutList className="w-4 h-4" />
@@ -1653,7 +1653,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
               title="Vue Cartes / Trombinoscope"
               className={cn(
                 'p-2 rounded-lg transition-all',
-                viewMode === 'cards' ? 'bg-white text-[#001A4B] shadow font-bold' : 'text-slate-300 hover:text-white'
+                viewMode === 'cards' ? "bg-card text-[#001A4B] shadow font-bold" : 'text-slate-300 hover:text-white'
               )}
             >
               <LayoutGrid className="w-4 h-4" />
@@ -1718,7 +1718,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
           <button
             onClick={() => setShowPdfModal(true)}
             disabled={!selectedGroupId || students.length === 0}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-black uppercase tracking-wider shadow-md transition-all cursor-pointer disabled:opacity-40"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-bold uppercase tracking-wider shadow-md transition-all cursor-pointer disabled:opacity-40"
           >
             <Printer className="w-4 h-4" />
             <span>Imprimer</span>
@@ -1746,14 +1746,14 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
           <>
             {/* ─── Exam Week Neutralization Banner (ENCG Academic Rule) ─── */}
             {activeExamPeriodForSeance && (
-              <div className="rounded-3xl p-5 bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-amber-500/5 border-2 border-amber-500/35 text-amber-900 dark:text-amber-200 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4 animate-in fade-in slide-in-from-top-2">
+              <div className="rounded-2xl p-5 bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-amber-500/5 border-2 border-amber-500/35 text-amber-900 dark:text-amber-200 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4 animate-in fade-in slide-in-from-top-2">
                 <div className="flex items-start gap-3.5">
                   <div className="p-3 rounded-2xl bg-amber-500/20 text-amber-700 dark:text-amber-300 shrink-0 shadow-inner">
                     <Calendar className="w-6 h-6" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-xs font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-amber-500/25 text-amber-900 dark:text-amber-100 border border-amber-500/40">
+                      <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-amber-500/25 text-amber-900 dark:text-amber-100 border border-amber-500/40">
                         Semaine d'Examens · {activeExamPeriodForSeance.name}
                       </span>
                       <span className="text-xs font-bold text-amber-800 dark:text-amber-300 font-mono">
@@ -1794,30 +1794,30 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                   <div>
                     <div className="flex items-center gap-2 flex-wrap mb-1">
                       <span className={cn(
-                        "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider",
+                        "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider",
                         isLiveSessionNow
                           ? "bg-rose-100 text-rose-700 dark:bg-rose-950/80 dark:text-rose-300 border border-rose-300 dark:border-rose-800"
-                          : "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 border border-blue-300 dark:border-blue-800"
+                          : "bg-primary/10 text-primary dark:bg-blue-950 dark:text-blue-300 border border-primary/20 dark:border-primary"
                       )}>
-                        <span className={cn("w-2 h-2 rounded-full", isLiveSessionNow ? "bg-rose-500 animate-ping" : "bg-blue-500")}></span>
+                        <span className={cn("w-2 h-2 rounded-full", isLiveSessionNow ? "bg-rose-500 animate-ping" : "bg-primary")}></span>
                         {isLiveSessionNow ? "Cours en direct en ce moment" : "Créneau Officiel Détecté"}
                       </span>
 
                       {selectedSchedule && (
-                        <span className="text-xs font-bold text-slate-700 dark:text-slate-300 font-mono">
+                        <span className="text-xs font-bold text-slate-700 dark:text-foreground font-mono">
                           {selectedSchedule.day_name} {selectedSchedule.start_time} - {selectedSchedule.end_time} • {selectedSchedule.room || 'Salle Dédiée'}
                         </span>
                       )}
                     </div>
 
-                    <h2 className="text-sm sm:text-base font-black text-[#001A4B] dark:text-white flex items-center gap-2">
+                    <h2 className="text-sm sm:text-base font-bold text-[#001A4B] dark:text-white flex items-center gap-2">
                       <span>{selectedModule?.module_name || 'Module Pédagogique'}</span>
-                      <span className="text-xs font-semibold px-2 py-0.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300">
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-lg bg-card dark:bg-card border border-border dark:border-border text-muted-foreground dark:text-foreground">
                         {selectedSection?.group_code || 'Filière'}
                       </span>
                     </h2>
 
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-0.5">
                       Suggestion IA : <span className="font-bold text-emerald-600 dark:text-emerald-400">Séance {selectedSeance}</span> ({completedSeances.length} validée{completedSeances.length > 1 ? 's' : ''} sur 12 • {students.length} inscrits).
                     </p>
                   </div>
@@ -1830,7 +1830,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                     type="button"
                     onClick={() => setShowLiveQrModal(true)}
                     disabled={students.length === 0}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-black uppercase tracking-wider shadow-md hover:shadow-lg transition-all cursor-pointer disabled:opacity-50"
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold uppercase tracking-wider shadow-md hover:shadow-lg transition-all cursor-pointer disabled:opacity-50"
                     title="Lancer le QR Code dynamique en direct pour l'amphi"
                   >
                     <Smartphone className="w-4 h-4 text-amber-300 animate-bounce" />
@@ -1859,7 +1859,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                     <RotateCcw className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
                     <span>Rattrapage</span>
                     {absentIds.size > 0 && (
-                      <span className="px-1.5 py-0.2 rounded-full bg-purple-600 text-white text-[10px] font-black">
+                      <span className="px-1.5 py-0.2 rounded-full bg-purple-600 text-white text-[10px] font-bold">
                         {absentIds.size}
                       </span>
                     )}
@@ -1880,16 +1880,16 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
             </div>
 
             {/* ─── Solution 2: Interactive Semester Timeline (Progression S1 → S12) ─── */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xs space-y-4">
+            <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-4 sm:p-5 shadow-xs space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                   <div className="flex items-center gap-2">
                     <Calendar className="w-4 h-4 text-[#001A4B] dark:text-blue-400" />
-                    <h3 className="text-sm font-black text-slate-900 dark:text-white">
+                    <h3 className="text-sm font-bold text-foreground dark:text-white">
                       Progression Pédagogique du Semestre (12 Séances)
                     </h3>
                   </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-0.5">
                     Cliquez sur une séance pour naviguer dans l'historique ou pointer le créneau actuel.
                   </p>
                 </div>
@@ -1897,14 +1897,14 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                 {/* Progress Stats Badge */}
                 <div className="flex items-center gap-3">
                   <div className="text-right">
-                    <span className="text-xs font-black text-[#001A4B] dark:text-white">
+                    <span className="text-xs font-bold text-[#001A4B] dark:text-white">
                       {completedSeances.length} / 12 validées
                     </span>
                     <span className="text-[11px] text-slate-400 ml-1">
                       ({Math.round((completedSeances.length / 12) * 100)}%)
                     </span>
                   </div>
-                  <div className="w-24 sm:w-32 bg-slate-100 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700">
+                  <div className="w-24 sm:w-32 bg-muted dark:bg-card h-2.5 rounded-full overflow-hidden border border-border dark:border-border">
                     <div
                       className="bg-gradient-to-r from-emerald-500 to-teal-500 h-full rounded-full transition-all duration-500"
                       style={{ width: `${Math.min(100, Math.round((completedSeances.length / 12) * 100))}%` }}
@@ -1932,8 +1932,8 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                           isSelected
                             ? "bg-[#001A4B] text-white border-[#001A4B] shadow-md ring-2 ring-blue-500/30 scale-[1.02]"
                             : isCompleted
-                              ? "bg-emerald-50/70 dark:bg-emerald-950/20 border-emerald-300 dark:border-emerald-800 text-slate-900 dark:text-white hover:border-emerald-400"
-                              : "bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700/80 text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600"
+                              ? "bg-emerald-50/70 dark:bg-emerald-950/20 border-emerald-300 dark:border-emerald-800 text-foreground dark:text-white hover:border-emerald-400"
+                              : "bg-muted/50 dark:bg-slate-800/50 border-border dark:border-slate-700/80 text-muted-foreground dark:text-muted-foreground hover:border-slate-300 dark:hover:border-slate-600"
                         )}
                       >
                         {/* Status Icon Indicator */}
@@ -1949,8 +1949,8 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
 
                         {/* Séance Label */}
                         <span className={cn(
-                          "text-xs font-black",
-                          isSelected ? "text-amber-300" : isCompleted ? "text-emerald-800 dark:text-emerald-300" : "text-slate-700 dark:text-slate-300"
+                          "text-xs font-bold",
+                          isSelected ? "text-amber-300" : isCompleted ? "text-emerald-800 dark:text-emerald-300" : "text-slate-700 dark:text-foreground"
                         )}>
                           {s}
                         </span>
@@ -1979,13 +1979,13 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
               </div>
 
               {/* Date & Quick Status Controls Bar */}
-              <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-border dark:border-border">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                  <span className="text-xs font-bold text-slate-700 dark:text-foreground flex items-center gap-1.5">
                     <span>Date effective de {selectedSeance} :</span>
                   </span>
 
-                  <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-2.5 py-1">
+                  <div className="flex items-center gap-2 bg-muted dark:bg-card border border-border dark:border-border rounded-xl px-2.5 py-1">
                     <input
                       type="date"
                       value={seanceDate}
@@ -1995,7 +1995,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                         setSeanceDate(d);
                         persistCurrentSeance(absentIds, annotations, isLocked, d);
                       }}
-                      className="bg-transparent text-xs text-slate-900 dark:text-white font-bold focus:outline-none disabled:opacity-60 cursor-pointer"
+                      className="bg-transparent text-xs text-foreground dark:text-white font-bold focus:outline-none disabled:opacity-60 cursor-pointer rounded-[var(--control-radius)]"
                     />
                     {selectedSchedule && (
                       <button
@@ -2006,7 +2006,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                           setSeanceDate(schedDate);
                           persistCurrentSeance(absentIds, annotations, isLocked, schedDate);
                         }}
-                        className="text-[11px] text-blue-600 dark:text-sky-400 hover:underline font-bold ml-1 disabled:opacity-40 cursor-pointer"
+                        className="text-[11px] text-primary dark:text-sky-400 hover:underline font-bold ml-1 disabled:opacity-40 cursor-pointer"
                         title="Réinitialiser à la date du créneau de l'emploi pour cette semaine"
                       >
                         Date créneau
@@ -2029,7 +2029,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
 
                 {/* Effectif Status Badge & Rattrapage Button */}
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-xs px-3 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-mono">
+                  <span className="text-xs px-3 py-1 rounded-xl bg-muted dark:bg-card border border-border dark:border-border text-slate-700 dark:text-foreground font-mono">
                     {absentIds.size === 0 ? (
                       <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
                         <CheckCheck className="w-3.5 h-3.5" /> Plein effectif (0 absent)
@@ -2051,11 +2051,11 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                     <RotateCcw className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
                     <span>Appel Rattrapage</span>
                     {absentIds.size > 0 ? (
-                      <span className="px-1.5 py-0.2 rounded-full bg-purple-600 text-white text-[10px] font-black">
+                      <span className="px-1.5 py-0.2 rounded-full bg-purple-600 text-white text-[10px] font-bold">
                         {absentIds.size} absents
                       </span>
                     ) : (seanceStore[selectedSeance]?.rattrapages?.length ?? 0) > 0 ? (
-                      <span className="px-1.5 py-0.2 rounded-full bg-emerald-600 text-white text-[10px] font-black">
+                      <span className="px-1.5 py-0.2 rounded-full bg-emerald-600 text-white text-[10px] font-bold">
                         {seanceStore[selectedSeance]?.rattrapages?.length} effectué
                       </span>
                     ) : null}
@@ -2065,18 +2065,18 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
             </div>
 
             {/* ─── Schedule-based Group Selector ───────────────────────── */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xs">
+            <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-5 shadow-xs">
               <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
                 <div className="flex items-center gap-2">
                   <BookOpen className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                  <span className="text-sm font-bold text-slate-900 dark:text-white">Mes Créneaux d'Enseignement & Groupes</span>
-                  <span className="text-[10px] text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2.5 py-0.5 rounded-full font-mono font-bold">
+                  <span className="text-sm font-bold text-foreground dark:text-white">Mes Créneaux d'Enseignement & Groupes</span>
+                  <span className="text-[10px] text-muted-foreground dark:text-foreground bg-muted dark:bg-card border border-border dark:border-border px-2.5 py-0.5 rounded-full font-mono font-bold">
                     {schedules.length} créneau{schedules.length > 1 ? 'x' : ''} officiel{schedules.length > 1 ? 's' : ''}
                   </span>
                 </div>
                 <button
                   onClick={() => { fetchSchedules(); fetchOptions(true); }}
-                  className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400 font-bold transition-colors cursor-pointer"
+                  className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-emerald-600 dark:hover:text-emerald-400 font-bold transition-colors cursor-pointer"
                 >
                   <RefreshCw className="w-3.5 h-3.5" /> <span>Actualiser</span>
                 </button>
@@ -2085,42 +2085,42 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
               {loadingSchedules ? (
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="w-5 h-5 text-emerald-600 animate-spin" />
-                  <span className="ml-2 text-sm text-slate-500">Chargement des créneaux officiels...</span>
+                  <span className="ml-2 text-sm text-muted-foreground">Chargement des créneaux officiels...</span>
                 </div>
               ) : schedules.length === 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div>
-                    <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1.5 font-bold uppercase tracking-wider">Module / Matière</label>
+                    <label className="block text-xs text-muted-foreground dark:text-muted-foreground mb-1.5 font-bold uppercase tracking-wider">Module / Matière</label>
                     <div className="relative">
                       <BookOpen className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                      <select value={selectedModuleId ?? ''} onChange={e => setSelectedModuleId(Number(e.target.value))} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-8 py-2.5 text-sm text-slate-900 dark:text-white font-medium appearance-none focus:outline-none focus:border-emerald-500 transition-colors">
+                      <select value={selectedModuleId ?? ''} onChange={e => setSelectedModuleId(Number(e.target.value))} className="w-full bg-muted/50 dark:bg-card border border-border dark:border-border pl-9 pr-8 py-2.5 text-sm text-foreground dark:text-white font-medium appearance-none focus:outline-none focus:border-emerald-500 transition-colors rounded-[var(--control-radius)]">
                         {options.modules.map(m => (<option key={m.module_id} value={m.module_id}>{m.module_code} -- {m.module_name}</option>))}
                       </select>
                       <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1.5 font-bold uppercase tracking-wider">Section (Amphi / Filière)</label>
+                    <label className="block text-xs text-muted-foreground dark:text-muted-foreground mb-1.5 font-bold uppercase tracking-wider">Section (Amphi / Filière)</label>
                     <div className="relative">
                       <GraduationCap className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                      <select value={selectedGroupId ?? ''} onChange={e => setSelectedGroupId(Number(e.target.value))} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-8 py-2.5 text-sm text-slate-900 dark:text-white font-medium appearance-none focus:outline-none focus:border-emerald-500 transition-colors">
+                      <select value={selectedGroupId ?? ''} onChange={e => setSelectedGroupId(Number(e.target.value))} className="w-full bg-muted/50 dark:bg-card border border-border dark:border-border pl-9 pr-8 py-2.5 text-sm text-foreground dark:text-white font-medium appearance-none focus:outline-none focus:border-emerald-500 transition-colors rounded-[var(--control-radius)]">
                         {selectedModule?.sections.map(s => (<option key={s.group_id} value={s.group_id}>{s.group_code} -- {s.filiere_name} ({s.semester})</option>))}
                       </select>
                       <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1.5 font-bold uppercase tracking-wider">Format</label>
-                    <div className="flex rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 p-0.5">
-                      <button onClick={() => setListMode('section')} className={cn('flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-bold rounded-lg transition-all', listMode === 'section' ? 'bg-[#001A4B] text-white shadow dark:bg-emerald-600' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900')}><Layers className="w-3.5 h-3.5" /><span>CM</span></button>
-                      <button onClick={() => setListMode('subgroup')} disabled={availableSubGroups.length === 0} className={cn('flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-bold rounded-lg transition-all disabled:opacity-40', listMode === 'subgroup' ? 'bg-[#001A4B] text-white shadow dark:bg-violet-600' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900')}><Users className="w-3.5 h-3.5" /><span>TD / TP</span></button>
+                    <label className="block text-xs text-muted-foreground dark:text-muted-foreground mb-1.5 font-bold uppercase tracking-wider">Format</label>
+                    <div className="flex rounded-xl overflow-hidden border border-border dark:border-border bg-muted dark:bg-card p-0.5">
+                      <button onClick={() => setListMode('section')} className={cn('flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-bold rounded-lg transition-all', listMode === 'section' ? 'bg-[#001A4B] text-white shadow dark:bg-emerald-600' : "text-muted-foreground dark:text-muted-foreground hover:text-foreground")}><Layers className="w-3.5 h-3.5" /><span>CM</span></button>
+                      <button onClick={() => setListMode('subgroup')} disabled={availableSubGroups.length === 0} className={cn('flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-bold rounded-lg transition-all disabled:opacity-40', listMode === 'subgroup' ? 'bg-[#001A4B] text-white shadow dark:bg-violet-600' : "text-muted-foreground dark:text-muted-foreground hover:text-foreground")}><Users className="w-3.5 h-3.5" /><span>TD / TP</span></button>
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1.5 font-bold uppercase tracking-wider">Sous-groupe TD</label>
+                    <label className="block text-xs text-muted-foreground dark:text-muted-foreground mb-1.5 font-bold uppercase tracking-wider">Sous-groupe TD</label>
                     {listMode === 'subgroup' && availableSubGroups.length > 0 ? (
                       <div className="flex gap-2 flex-wrap">
-                        {availableSubGroups.map(sg => (<button key={sg} onClick={() => setSelectedSubGroup(sg)} className={cn('px-3.5 py-1.5 rounded-lg text-sm font-bold border transition-all cursor-pointer', selectedSubGroup === sg ? 'bg-[#001A4B] border-[#001A4B] text-white dark:bg-violet-600 dark:border-violet-500' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-[#001A4B]')}>{sg}</button>))}
+                        {availableSubGroups.map(sg => (<button key={sg} onClick={() => setSelectedSubGroup(sg)} className={cn('px-3.5 py-1.5 rounded-lg text-sm font-bold border transition-all cursor-pointer', selectedSubGroup === sg ? 'bg-[#001A4B] border-[#001A4B] text-white dark:bg-violet-600 dark:border-violet-500' : "bg-muted dark:bg-card border-border dark:border-border text-slate-700 dark:text-foreground hover:border-[#001A4B]")}>{sg}</button>))}
                       </div>
                     ) : (
                       <div className="h-10 flex items-center"><span className="text-slate-400 text-xs italic">{listMode === 'section' ? 'Section complète (Amphithéâtre)' : 'Aucun sous-groupe'}</span></div>
@@ -2150,34 +2150,34 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                           'relative text-left p-4 rounded-2xl border transition-all duration-200 hover:scale-[1.01] cursor-pointer overflow-hidden shadow-2xs',
                           isSelected
                             ? 'bg-blue-50/80 dark:bg-emerald-950/30 border-2 border-[#001A4B] dark:border-emerald-500 shadow-md ring-2 ring-[#001A4B]/10'
-                            : 'bg-slate-50/80 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700/80 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-100/70'
+                            : "bg-slate-50/80 dark:bg-slate-800/40 border-border dark:border-slate-700/80 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-100/70"
                         )}
                       >
                         {isSelected && <div className="absolute top-2.5 right-2.5 w-2.5 h-2.5 rounded-full bg-[#001A4B] dark:bg-emerald-400 animate-pulse" />}
                         <div className="flex items-center gap-2 mb-2">
-                          <span className={cn('text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border', isTd ? 'bg-violet-100 text-violet-800 border-violet-200 dark:bg-violet-950 dark:text-violet-300 dark:border-violet-800' : 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800')}>{sch.type || 'CM'}</span>
-                          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono font-bold bg-white dark:bg-slate-800 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700">{sch.module_code}</span>
+                          <span className={cn("text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border", isTd ? 'bg-violet-100 text-violet-800 border-violet-200 dark:bg-violet-950 dark:text-violet-300 dark:border-violet-800' : 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800')}>{sch.type || 'CM'}</span>
+                          <span className="text-[10px] text-muted-foreground dark:text-muted-foreground font-mono font-bold bg-card dark:bg-card px-1.5 py-0.5 rounded border border-border dark:border-border">{sch.module_code}</span>
                         </div>
-                        <div className="font-bold text-slate-900 dark:text-white text-sm leading-tight mb-1.5 truncate" title={sch.module_name}>{sch.module_name}</div>
+                        <div className="font-bold text-foreground dark:text-white text-sm leading-tight mb-1.5 truncate" title={sch.module_name}>{sch.module_name}</div>
                         <div className="flex items-center gap-1.5 mb-2.5">
-                          <GraduationCap className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                          <span className="text-xs font-bold text-slate-800 dark:text-slate-200">{sch.group_code}</span>
-                          {sch.filiere_name && <span className="text-[11px] text-slate-500 truncate">• {sch.filiere_name}</span>}
+                          <GraduationCap className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                          <span className="text-xs font-bold text-foreground dark:text-foreground">{sch.group_code}</span>
+                          {sch.filiere_name && <span className="text-[11px] text-muted-foreground truncate">• {sch.filiere_name}</span>}
                         </div>
-                        <div className={cn('flex items-center gap-2 text-xs rounded-xl px-2.5 py-1.5 flex-wrap border', isSelected ? 'bg-white dark:bg-slate-800 border-[#001A4B]/20' : 'bg-white dark:bg-slate-800/80 border-slate-200 dark:border-slate-700')}>
-                          <span className={cn('font-bold', isSelected ? 'text-[#001A4B] dark:text-emerald-300' : 'text-slate-700 dark:text-slate-200')}>{sch.day_name}</span>
+                        <div className={cn('flex items-center gap-2 text-xs rounded-xl px-2.5 py-1.5 flex-wrap border', isSelected ? "bg-card dark:bg-card border-[#001A4B]/20" : "bg-card dark:bg-slate-800/80 border-border dark:border-border")}>
+                          <span className={cn('font-bold', isSelected ? 'text-[#001A4B] dark:text-emerald-300' : "text-slate-700 dark:text-foreground")}>{sch.day_name}</span>
                           <span className="text-slate-300 dark:text-slate-600">|</span>
-                          <span className="font-mono text-slate-600 dark:text-slate-300">{sch.start_time} - {sch.end_time}</span>
-                          {sch.room && <><span className="text-slate-300 dark:text-slate-600">|</span><span className="text-slate-600 dark:text-slate-400 font-medium truncate">📍 {sch.room}</span></>}
+                          <span className="font-mono text-muted-foreground dark:text-foreground">{sch.start_time} - {sch.end_time}</span>
+                          {sch.room && <><span className="text-slate-300 dark:text-slate-600">|</span><span className="text-muted-foreground dark:text-muted-foreground font-medium truncate">📍 {sch.room}</span></>}
                         </div>
                         <div className="mt-2 flex items-center gap-1.5">
                           <Calendar className="w-3 h-3 text-slate-400" />
-                          <span className="text-[11px] text-slate-500 dark:text-slate-400 capitalize">{dateLabel}</span>
+                          <span className="text-[11px] text-muted-foreground dark:text-muted-foreground capitalize">{dateLabel}</span>
                         </div>
                         {isTd && sch.sub_groups && sch.sub_groups.length > 0 && (
                           <div className="mt-2.5 flex gap-1.5 flex-wrap">
                             {sch.sub_groups.map(sg => (
-                              <span key={sg} onClick={e => { e.stopPropagation(); if (isSelected) setSelectedSubGroup(sg); }} className={cn('text-[10px] font-bold px-2 py-0.5 rounded-full border cursor-pointer transition-all', isSelected && selectedSubGroup === sg ? 'bg-[#001A4B] border-[#001A4B] text-white dark:bg-violet-600 dark:border-violet-500' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-[#001A4B]')}>{sg}</span>
+                              <span key={sg} onClick={e => { e.stopPropagation(); if (isSelected) setSelectedSubGroup(sg); }} className={cn('text-[10px] font-bold px-2 py-0.5 rounded-full border cursor-pointer transition-all', isSelected && selectedSubGroup === sg ? 'bg-[#001A4B] border-[#001A4B] text-white dark:bg-violet-600 dark:border-violet-500' : "bg-card dark:bg-card border-border dark:border-border text-muted-foreground dark:text-foreground hover:border-[#001A4B]")}>{sg}</span>
                             ))}
                           </div>
                         )}
@@ -2203,14 +2203,14 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
             <div className="flex items-center justify-between gap-4 flex-wrap">
               <div className="flex items-center gap-2 flex-wrap">
                 {/* Quick Attendance Filter Buttons */}
-                <div className="flex rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 p-0.5 text-xs shadow-2xs">
+                <div className="flex rounded-xl overflow-hidden border border-border dark:border-border bg-muted dark:bg-card p-0.5 text-xs shadow-2xs">
                   <button
                     onClick={() => setAttendanceFilter('all')}
                     className={cn(
                       'px-3 py-1.5 font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer',
                       attendanceFilter === 'all'
-                        ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-2xs'
-                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                        ? "bg-card dark:bg-slate-700 text-foreground dark:text-white shadow-2xs"
+                        : "text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-white"
                     )}
                   >
                     <span>Tous</span>
@@ -2222,7 +2222,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                       'px-3 py-1.5 font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer',
                       attendanceFilter === 'present'
                         ? 'bg-emerald-600 text-white shadow-2xs'
-                        : 'text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-300'
+                        : "text-muted-foreground dark:text-muted-foreground hover:text-emerald-600 dark:hover:text-emerald-300"
                     )}
                   >
                     <span>✅ Présents</span>
@@ -2234,7 +2234,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                       'px-3 py-1.5 font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer',
                       attendanceFilter === 'absent'
                         ? 'bg-rose-600 text-white shadow-2xs'
-                        : 'text-slate-600 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-300'
+                        : "text-muted-foreground dark:text-muted-foreground hover:text-rose-600 dark:hover:text-rose-300"
                     )}
                   >
                     <span>❌ Absents</span>
@@ -2246,7 +2246,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                       'px-3 py-1.5 font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer',
                       attendanceFilter === 'annotated'
                         ? 'bg-amber-600 text-white shadow-2xs'
-                        : 'text-slate-600 dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-300'
+                        : "text-muted-foreground dark:text-muted-foreground hover:text-amber-600 dark:hover:text-amber-300"
                     )}
                   >
                     <span>📝 Avec Note</span>
@@ -2258,7 +2258,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                   <button
                     onClick={resetAbsences}
                     disabled={isLocked}
-                    className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-rose-600 font-semibold transition-colors disabled:opacity-40 ml-2 cursor-pointer"
+                    className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-rose-600 font-semibold transition-colors disabled:opacity-40 ml-2 cursor-pointer"
                   >
                     <RotateCcw className="w-3.5 h-3.5" />
                     <span>Reset séance {selectedSeance}</span>
@@ -2275,10 +2275,10 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                     placeholder="Nom, Matricule, CNE…"
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
-                    className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-8 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-emerald-500 transition-colors w-48 shadow-2xs"
+                    className="bg-card dark:bg-card border border-border dark:border-border pl-9 pr-8 py-2 text-xs text-foreground dark:text-white placeholder-slate-400 focus:outline-none focus:border-emerald-500 transition-colors w-48 shadow-2xs rounded-[var(--control-radius)]"
                   />
                   {searchQuery && (
-                    <button onClick={() => setSearchQuery('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                    <button onClick={() => setSearchQuery('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-muted-foreground">
                       <X className="w-3.5 h-3.5" />
                     </button>
                   )}
@@ -2287,17 +2287,17 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                 <button
                   onClick={handleCopyList}
                   disabled={filteredStudents.length === 0}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition-all disabled:opacity-40 shadow-2xs cursor-pointer"
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-card dark:bg-card hover:bg-muted/50 dark:hover:bg-slate-700 border border-border dark:border-border text-slate-700 dark:text-foreground text-xs font-bold transition-all disabled:opacity-40 shadow-2xs cursor-pointer"
                   title="Copier la liste filtrée dans le presse-papiers"
                 >
-                  <Copy className="w-3.5 h-3.5 text-blue-600 dark:text-sky-400" />
+                  <Copy className="w-3.5 h-3.5 text-primary dark:text-sky-400" />
                   <span className="hidden sm:inline">Copier</span>
                 </button>
 
                 <button
                   onClick={handleDownloadExcel}
                   disabled={downloadingExcel || students.length === 0}
-                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition-all disabled:opacity-40 shadow-2xs cursor-pointer"
+                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-card dark:bg-card hover:bg-muted/50 dark:hover:bg-slate-700 border border-border dark:border-border text-slate-700 dark:text-foreground text-xs font-bold transition-all disabled:opacity-40 shadow-2xs cursor-pointer"
                 >
                   {downloadingExcel ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />}
                   <span className="hidden sm:inline">Excel</span>
@@ -2306,20 +2306,20 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
             </div>
 
             {/* ─── Student List Section ────────────────────────────────── */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs">
+            <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl overflow-hidden shadow-xs">
               {loadingStudents ? (
                 <div className="flex flex-col items-center justify-center py-24 gap-3">
                   <Loader2 className="w-8 h-8 text-emerald-600 dark:text-emerald-400 animate-spin" />
-                  <p className="text-slate-500 text-sm font-medium">Chargement de la liste officielle…</p>
+                  <p className="text-muted-foreground text-sm font-medium">Chargement de la liste officielle…</p>
                 </div>
               ) : filteredStudents.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 gap-3">
                   <UserCheck className="w-12 h-12 text-slate-300 dark:text-slate-700" />
-                  <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">Aucun étudiant ne correspond aux filtres sélectionnés</p>
+                  <p className="text-muted-foreground dark:text-muted-foreground text-sm font-medium">Aucun étudiant ne correspond aux filtres sélectionnés</p>
                   {(searchQuery || attendanceFilter !== 'all') && (
                     <button
                       onClick={() => { setSearchQuery(''); setAttendanceFilter('all'); }}
-                      className="text-blue-600 dark:text-emerald-400 text-xs hover:underline font-bold cursor-pointer"
+                      className="text-primary dark:text-emerald-400 text-xs hover:underline font-bold cursor-pointer"
                     >
                       Réinitialiser les filtres
                     </button>
@@ -2334,20 +2334,20 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                     <div className="p-5 space-y-4">
                       <div className="flex items-center justify-between flex-wrap gap-3">
                         <div className="flex items-center gap-2.5">
-                          <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">
+                          <div className="p-2 rounded-xl bg-primary/5 dark:bg-indigo-950/60 text-primary dark:text-indigo-400">
                             <CalendarDays size={20} />
                           </div>
                           <div>
-                            <h3 className="text-sm font-black text-slate-900 dark:text-white">Planning de la Semaine — Démarrage 1-Clic</h3>
-                            <p className="text-[11px] text-slate-500 font-medium">Cliquez sur ⚡ pour charger les étudiants et lancer l'appel immédiatement</p>
+                            <h3 className="text-sm font-bold text-foreground dark:text-white">Planning de la Semaine — Démarrage 1-Clic</h3>
+                            <p className="text-[11px] text-muted-foreground font-medium">Cliquez sur ⚡ pour charger les étudiants et lancer l'appel immédiatement</p>
                           </div>
                         </div>
                         {/* Day filter pills */}
-                        <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl overflow-x-auto text-xs font-black">
+                        <div className="flex items-center gap-1 p-1 bg-muted dark:bg-card rounded-2xl overflow-x-auto text-xs font-bold">
                           {['all', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'].map(d => (
                             <button key={d} onClick={() => setSelectedDayFilter(d)}
                               className={cn('px-3 py-1.5 rounded-xl transition-all cursor-pointer whitespace-nowrap',
-                                selectedDayFilter === d ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                                selectedDayFilter === d ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground dark:hover:text-slate-200"
                               )}>{d === 'all' ? 'Toute la Semaine' : d.slice(0, 3)}</button>
                           ))}
                         </div>
@@ -2366,29 +2366,29 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                                   onClick={() => { setSelectedModuleId(session.module_id); setSelectedGroupId(session.group_id); }}
                                   className={cn('p-4 rounded-2xl border transition-all cursor-pointer flex flex-col gap-2.5 group hover:-translate-y-0.5',
                                     selectedModuleId === session.module_id && selectedGroupId === session.group_id
-                                      ? 'bg-indigo-50 dark:bg-indigo-950/40 border-indigo-500 ring-2 ring-indigo-400/20 shadow-md'
+                                      ? "bg-primary/5 dark:bg-indigo-950/40 border-primary ring-2 ring-indigo-400/20 shadow-md"
                                       : isToday
                                         ? 'bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-300 dark:border-emerald-800 hover:border-emerald-500'
-                                        : 'bg-white dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 hover:border-indigo-300'
+                                        : "bg-card dark:bg-slate-800/50 border-border dark:border-border hover:border-primary/20"
                                   )}>
                                   <div className="flex items-center justify-between">
-                                    <span className="flex items-center gap-1 text-xs font-black text-slate-700 dark:text-slate-200">
-                                      <Clock size={12} className="text-indigo-500" />{session.day_name} · {session.start_time}–{session.end_time}
+                                    <span className="flex items-center gap-1 text-xs font-bold text-slate-700 dark:text-foreground">
+                                      <Clock size={12} className="text-primary" />{session.day_name} · {session.start_time}–{session.end_time}
                                     </span>
-                                    {isToday && <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-emerald-500 text-white animate-pulse">Aujourd'hui</span>}
+                                    {isToday && <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500 text-white animate-pulse">Aujourd'hui</span>}
                                   </div>
                                   <div>
-                                    <p className="font-black text-sm text-slate-900 dark:text-white group-hover:text-indigo-600 transition-colors truncate">{session.module_name}</p>
+                                    <p className="font-bold text-sm text-foreground dark:text-white group-hover:text-primary transition-colors truncate">{session.module_name}</p>
                                     <div className="flex gap-2 mt-1 flex-wrap">
-                                      <span className="px-2 py-0.5 text-[10px] font-mono font-black rounded bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300">{session.group_code}</span>
-                                      {session.room && <span className="text-[11px] text-slate-500">📍 {session.room}</span>}
-                                      <span className={cn('px-2 py-0.5 text-[9px] font-black rounded', session.type === 'CM' ? 'bg-blue-100 text-blue-700' : session.type === 'TD' ? 'bg-violet-100 text-violet-700' : 'bg-amber-100 text-amber-700')}>{session.type}</span>
+                                      <span className="px-2 py-0.5 text-[10px] font-mono font-bold rounded bg-primary/10 dark:bg-indigo-950 text-primary dark:text-indigo-300">{session.group_code}</span>
+                                      {session.room && <span className="text-[11px] text-muted-foreground">📍 {session.room}</span>}
+                                      <span className={cn("px-2 py-0.5 text-[9px] font-bold rounded", session.type === 'CM' ? "bg-primary/10 text-primary" : session.type === 'TD' ? 'bg-violet-100 text-violet-700' : 'bg-amber-100 text-amber-700')}>{session.type}</span>
                                     </div>
                                   </div>
                                   <div className="flex items-center justify-end pt-1 border-t border-slate-200/60 dark:border-slate-700/60">
                                     <button onClick={e => { e.stopPropagation(); handleStartLiveSession(session.group_id, session.module_id); }}
                                       disabled={savingLive}
-                                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-black cursor-pointer transition-all active:scale-95 disabled:opacity-60">
+                                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary hover:bg-primary text-primary-foreground text-[11px] font-bold cursor-pointer transition-all active:scale-95 disabled:opacity-60">
                                       <Zap size={12} className="text-amber-300" /> Faire l'Appel
                                     </button>
                                   </div>
@@ -2397,16 +2397,16 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                             })}
                         </div>
                       ) : (
-                        <div className="py-8 text-center rounded-2xl bg-slate-50 dark:bg-slate-800/30 border border-dashed border-slate-200 dark:border-slate-700">
+                        <div className="py-8 text-center rounded-2xl bg-muted/50 dark:bg-slate-800/30 border border-dashed border-border dark:border-border">
                           <Clock className="w-8 h-8 mx-auto text-slate-300 dark:text-slate-600 mb-2" />
-                          <p className="text-sm font-bold text-slate-500">Aucune séance trouvée pour ce filtre</p>
+                          <p className="text-sm font-bold text-muted-foreground">Aucune séance trouvée pour ce filtre</p>
                           <p className="text-xs text-slate-400">Sélectionnez un autre jour ou choisissez un module manuellement ci-dessous</p>
                         </div>
                       )}
                       {/* Manual start */}
                       <div className="flex items-center justify-center pt-2">
                         <button onClick={() => handleStartLiveSession()} disabled={savingLive || !selectedGroupId || !selectedModuleId}
-                          className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-[#001A4B] hover:bg-indigo-900 text-white font-black text-sm shadow-lg transition-all disabled:opacity-40 cursor-pointer">
+                          className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-[#001A4B] hover:bg-secondary text-white font-bold text-sm shadow-lg transition-all disabled:opacity-40 cursor-pointer">
                           {savingLive ? <Loader2 size={16} className="animate-spin" /> : <Play size={16} className="text-amber-300" />}
                           Démarrer l'Appel (Sélection Manuelle)
                         </button>
@@ -2418,7 +2418,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                   {isSessionActive && (
                     <div className="space-y-0">
                       {/* Live stats bar */}
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-0 border-b border-slate-100 dark:border-slate-800">
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-0 border-b border-border dark:border-border">
                         {[
                           { label: 'Total', val: liveStudents.length, color: 'text-slate-900 dark:text-white', bg: '' },
                           { label: 'Présents', val: liveStudents.filter(s => s.status === 'present').length, color: 'text-emerald-700 dark:text-emerald-400', bg: 'bg-emerald-50/50 dark:bg-emerald-950/20' },
@@ -2426,19 +2426,19 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                           { label: 'Retard/Excusé', val: liveStudents.filter(s => s.status === 'retard' || s.status === 'excuse').length, color: 'text-amber-700 dark:text-amber-400', bg: 'bg-amber-50/50 dark:bg-amber-950/20' },
                         ].map(stat => (
                           <div key={stat.label} className={cn('p-4 text-center', stat.bg)}>
-                            <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">{stat.label}</p>
-                            <p className={cn('text-2xl font-black font-mono', stat.color)}>{stat.val}</p>
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">{stat.label}</p>
+                            <p className={cn("text-2xl font-bold font-mono", stat.color)}>{stat.val}</p>
                           </div>
                         ))}
                       </div>
 
                       {/* Tab selector + toolbar */}
-                      <div className="px-5 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800">
-                        <div className="flex gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl text-xs font-black">
+                      <div className="px-5 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border dark:border-border">
+                        <div className="flex gap-1 p-1 bg-muted dark:bg-card rounded-2xl text-xs font-bold">
                           {([['trombi', Users, 'Trombinoscope'], ['qr', QrCode, 'QR Projecteur'], ['voice', Mic, 'Appel Vocal IA']] as const).map(([tab, Icon, label]) => (
                             <button key={tab} onClick={() => setActiveVoiceTab(tab)}
                               className={cn('flex items-center gap-1.5 px-4 py-2 rounded-xl transition-all cursor-pointer',
-                                activeVoiceTab === tab ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'
+                                activeVoiceTab === tab ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground dark:text-foreground hover:text-foreground"
                               )}>
                               <Icon size={14} />{label}
                             </button>
@@ -2456,7 +2456,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                       {activeVoiceTab === 'trombi' && (
                         <div className="p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
                           <p className="col-span-full text-[10px] text-slate-400 font-bold mb-1">
-                            💡 Cliquez pour cycler : <span className="text-emerald-600">Présent</span> → <span className="text-rose-600">Absent</span> → <span className="text-amber-600">Retard</span> → <span className="text-blue-600">Excusé</span>
+                            💡 Cliquez pour cycler : <span className="text-emerald-600">Présent</span> → <span className="text-rose-600">Absent</span> → <span className="text-amber-600">Retard</span> → <span className="text-primary">Excusé</span>
                           </p>
                           {liveStudents.map(s => {
                             const statusMap = {
@@ -2470,17 +2470,17 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                               <div key={s.id} onClick={() => handleToggleLiveStatus(s.id)}
                                 className={cn('p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 select-none hover:scale-[1.01] active:scale-[0.98]', st.bg)}>
                                 <div className="flex items-center gap-3 min-w-0">
-                                  <div className={cn('w-9 h-9 rounded-xl flex items-center justify-center font-black text-xs text-white shrink-0', st.avatar)}>
+                                  <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs text-white shrink-0", st.avatar)}>
                                     {s.last_name?.[0]?.toUpperCase() ?? '?'}
                                   </div>
                                   <div className="min-w-0">
-                                    <p className="font-bold text-xs text-slate-900 dark:text-white truncate">
+                                    <p className="font-bold text-xs text-foreground dark:text-white truncate">
                                       {(s.last_name || '').toUpperCase()} {s.first_name}
                                     </p>
                                     <p className="text-[10px] text-slate-400 font-mono truncate">{s.cne}</p>
                                   </div>
                                 </div>
-                                <span className={cn('px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider shrink-0', st.badge)}>
+                                <span className={cn("px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider shrink-0", st.badge)}>
                                   {st.label}
                                 </span>
                               </div>
@@ -2493,15 +2493,15 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                       {activeVoiceTab === 'qr' && (
                         <div className="p-8 text-center space-y-6 max-w-sm mx-auto">
                           <div>
-                            <h3 className="text-lg font-black text-slate-900 dark:text-white">QR Code Projecteur</h3>
-                            <p className="text-xs text-slate-500 mt-1">Les étudiants scannent ce QR depuis l'app ENCG pour s'enregistrer instantanément</p>
+                            <h3 className="text-lg font-bold text-foreground dark:text-white">QR Code Projecteur</h3>
+                            <p className="text-xs text-muted-foreground mt-1">Les étudiants scannent ce QR depuis l'app ENCG pour s'enregistrer instantanément</p>
                           </div>
-                          <div className="relative p-6 bg-white dark:bg-slate-800 rounded-3xl border-2 border-dashed border-indigo-500 inline-block shadow-2xl mx-auto">
+                          <div className="relative p-6 bg-card dark:bg-card rounded-2xl border-2 border-dashed border-primary inline-block shadow-sm mx-auto">
                             {liveQrToken && liveQrCountdown > 0
-                              ? <QRCodeSVG value={liveQrToken} size={220} className="mx-auto rounded-xl bg-white p-2" />
+                              ? <QRCodeSVG value={liveQrToken} size={220} className="mx-auto rounded-xl bg-card p-2" />
                               : <div className="w-[220px] h-[220px] flex items-center justify-center text-slate-400 text-xs font-bold">Token expiré — relancez la session</div>
                             }
-                            <div className="mt-4 flex items-center justify-center gap-2 text-xs font-black text-indigo-600 dark:text-indigo-300">
+                            <div className="mt-4 flex items-center justify-center gap-2 text-xs font-bold text-primary dark:text-indigo-300">
                               <Clock size={14} className="animate-spin" />
                               <span>Validité : {liveQrCountdown}s</span>
                             </div>
@@ -2514,38 +2514,38 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                         <div className="p-8 text-center space-y-6 max-w-lg mx-auto">
                           <div
                             onClick={handleVoiceLive}
-                            className={cn('w-24 h-24 rounded-full flex items-center justify-center mx-auto shadow-2xl transition-all cursor-pointer',
-                              isListening ? 'bg-rose-600 text-white animate-pulse ring-8 ring-rose-500/30' : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                            className={cn("w-24 h-24 rounded-full flex items-center justify-center mx-auto shadow-sm transition-all cursor-pointer",
+                              isListening ? 'bg-rose-600 text-white animate-pulse ring-8 ring-rose-500/30' : "bg-primary hover:bg-primary text-primary-foreground"
                             )}>
                             {isListening ? <Mic size={40} /> : <MicOff size={40} />}
                           </div>
                           <div>
-                            <h3 className="text-xl font-black text-slate-900 dark:text-white">
+                            <h3 className="text-xl font-bold text-foreground dark:text-white">
                               {isListening ? '🎙️ En écoute...' : 'Appel Vocal IA'}
                             </h3>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
+                            <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-1 max-w-sm mx-auto">
                               {isListening
                                 ? 'Prononcez clairement les noms de famille. L\'IA coche automatiquement les absences.'
                                 : 'Cliquez sur le micro et dictez les noms des absents. L\'IA les marque dans la liste.'}
                             </p>
                           </div>
                           <button onClick={handleVoiceLive}
-                            className={cn('flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-black transition-all shadow-lg cursor-pointer mx-auto',
-                              isListening ? 'bg-rose-600 hover:bg-rose-700 text-white' : 'bg-[#001A4B] hover:bg-indigo-900 text-white'
+                            className={cn("flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-bold transition-all shadow-lg cursor-pointer mx-auto",
+                              isListening ? 'bg-rose-600 hover:bg-rose-700 text-white' : "bg-[#001A4B] hover:bg-secondary text-white"
                             )}>
                             {isListening ? <><MicOff size={18} /> Arrêter</> : <><Mic size={18} /> Démarrer</>}
                           </button>
                           {voiceTranscript && (
-                            <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 text-left">
+                            <div className="p-4 bg-muted/50 dark:bg-card rounded-2xl border border-border dark:border-border text-left">
                               <p className="text-[10px] font-bold text-slate-400 uppercase flex items-center gap-1 mb-1"><Volume2 size={11} /> Dictée :</p>
-                              <p className="text-sm text-slate-700 dark:text-slate-300 italic">"{voiceTranscript}"</p>
+                              <p className="text-sm text-slate-700 dark:text-foreground italic">"{voiceTranscript}"</p>
                             </div>
                           )}
                         </div>
                       )}
 
                       {/* ── Sticky Save Bar ── */}
-                      <div className="sticky bottom-0 z-30 border-t border-slate-200 dark:border-slate-700 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-5 py-3 flex items-center justify-between gap-3">
+                      <div className="sticky bottom-0 z-30 border-t border-border dark:border-border bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-5 py-3 flex items-center justify-between gap-3">
                         <div className="flex items-center gap-2 text-xs">
                           {window.navigator.onLine
                             ? <span className="flex items-center gap-1 text-emerald-600 font-bold"><Wifi size={13} /> En ligne</span>
@@ -2555,11 +2555,11 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                         </div>
                         <div className="flex items-center gap-2">
                           <button onClick={() => setIsSessionActive(false)}
-                            className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-bold hover:bg-slate-200 cursor-pointer transition-all">
+                            className="px-4 py-2 rounded-xl bg-muted dark:bg-card text-muted-foreground dark:text-foreground text-xs font-bold hover:bg-slate-200 cursor-pointer transition-all">
                             Annuler
                           </button>
                           <button onClick={handleSaveLiveSession} disabled={savingLive}
-                            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black shadow-md cursor-pointer transition-all disabled:opacity-60">
+                            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md cursor-pointer transition-all disabled:opacity-60">
                             {savingLive ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
                             Clôturer &amp; Certifier l'Appel
                           </button>
@@ -2583,7 +2583,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                           'rounded-2xl border p-4 flex flex-col justify-between gap-3 transition-all relative',
                           isAbsent
                             ? 'bg-rose-50/70 dark:bg-rose-950/25 border-rose-300 dark:border-rose-700/50 shadow-inner'
-                            : 'bg-white dark:bg-slate-800/60 border-slate-200 dark:border-slate-700/80 hover:border-slate-300 dark:hover:border-slate-600 shadow-2xs hover:shadow-md'
+                            : "bg-card dark:bg-slate-800/60 border-border dark:border-slate-700/80 hover:border-slate-300 dark:hover:border-slate-600 shadow-2xs hover:shadow-md"
                         )}
                       >
                         <div>
@@ -2591,23 +2591,23 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                             <div className="flex items-center gap-2.5">
                               <div
                                 className={cn(
-                                  'w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-white font-black text-xs shadow-xs',
+                                  "w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-white font-bold text-xs shadow-xs",
                                   isAbsent ? 'bg-rose-600' : 'bg-gradient-to-br from-emerald-600 to-teal-600'
                                 )}
                               >
                                 {(s.last_name?.[0] || '?').toUpperCase()}
                               </div>
                               <div>
-                                <p className={cn('font-bold text-sm leading-tight', isAbsent ? 'text-rose-900 dark:text-rose-200' : 'text-slate-900 dark:text-white')}>
+                                <p className={cn('font-bold text-sm leading-tight', isAbsent ? 'text-rose-900 dark:text-rose-200' : "text-foreground dark:text-white")}>
                                   {(s.last_name || '').toUpperCase()} {s.first_name}
                                 </p>
                                 <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                                  <span className="text-slate-500 text-xs font-mono font-medium">{s.matricule || '—'}</span>
+                                  <span className="text-muted-foreground text-xs font-mono font-medium">{s.matricule || '—'}</span>
                                   {(() => {
                                     const unexcused = studentAbsenceCounts[s.id] || 0;
                                     if (unexcused >= 3) {
                                       return (
-                                        <span className="px-1.5 py-0.2 rounded-full bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 text-[10px] font-black border border-rose-300" title="Article 14 : Seuil d'exclusion atteint">
+                                        <span className="px-1.5 py-0.2 rounded-full bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 text-[10px] font-bold border border-rose-300" title="Article 14 : Seuil d'exclusion atteint">
                                           🚨 {unexcused} abs. (Art. 14)
                                         </span>
                                       );
@@ -2627,13 +2627,13 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                           </div>
 
                           <div className="grid grid-cols-2 gap-1.5 text-[11px] mb-2">
-                            <div className="bg-slate-50 dark:bg-slate-900/60 rounded-xl p-2 border border-slate-200 dark:border-slate-700/60">
+                            <div className="bg-muted/50 dark:bg-slate-900/60 rounded-xl p-2 border border-border dark:border-slate-700/60">
                               <p className="text-slate-400 text-[9px] uppercase font-bold">CNE / Massar</p>
-                              <p className="text-slate-800 dark:text-slate-200 font-mono font-medium truncate">{s.cne || s.massar_code || '—'}</p>
+                              <p className="text-foreground dark:text-foreground font-mono font-medium truncate">{s.cne || s.massar_code || '—'}</p>
                             </div>
-                            <div className="bg-slate-50 dark:bg-slate-900/60 rounded-xl p-2 border border-slate-200 dark:border-slate-700/60">
+                            <div className="bg-muted/50 dark:bg-slate-900/60 rounded-xl p-2 border border-border dark:border-slate-700/60">
                               <p className="text-slate-400 text-[9px] uppercase font-bold">CIN</p>
-                              <p className="text-slate-800 dark:text-slate-200 font-mono font-medium truncate">{s.cin || '—'}</p>
+                              <p className="text-foreground dark:text-foreground font-mono font-medium truncate">{s.cin || '—'}</p>
                             </div>
                           </div>
 
@@ -2643,7 +2643,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                               onClick={() => openAnnotationEditor(s)}
                               className={cn(
                                 'cursor-pointer mb-2 px-2.5 py-1 rounded-xl border text-[11px] flex items-center justify-between gap-1.5 transition-all',
-                                tagStyle ? `${tagStyle.bg} ${tagStyle.text} ${tagStyle.border}` : 'bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800'
+                                tagStyle ? `${tagStyle.bg} ${tagStyle.text} ${tagStyle.border}` : "bg-primary/5 border-primary/20 text-primary dark:bg-blue-950/40 dark:text-blue-300 dark:border-primary"
                               )}
                               title="Cliquer pour modifier la note"
                             >
@@ -2657,21 +2657,21 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                         </div>
 
                         {/* Card bottom actions */}
-                        <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-700/60">
+                        <div className="flex items-center justify-between pt-2 border-t border-border dark:border-slate-700/60">
                           <div className="flex items-center gap-1.5">
                             {/* Individual Sheet button */}
                             <button
                               onClick={() => setIndividualStudent(s)}
-                              className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-700/80 hover:bg-slate-200 text-slate-600 dark:text-slate-300 hover:text-slate-900 transition-colors cursor-pointer"
+                              className="p-1.5 rounded-lg bg-muted dark:bg-slate-700/80 hover:bg-slate-200 text-muted-foreground dark:text-foreground hover:text-foreground transition-colors cursor-pointer"
                               title="Fiche individuelle d'émargement / rattrapage"
                             >
-                              <FileText className="w-3.5 h-3.5 text-blue-600 dark:text-cyan-400" />
+                              <FileText className="w-3.5 h-3.5 text-primary dark:text-cyan-400" />
                             </button>
 
                             {/* Annotation trigger */}
                             <button
                               onClick={() => openAnnotationEditor(s)}
-                              className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-700/80 hover:bg-slate-200 text-slate-600 dark:text-slate-300 hover:text-amber-600 transition-colors cursor-pointer"
+                              className="p-1.5 rounded-lg bg-muted dark:bg-slate-700/80 hover:bg-slate-200 text-muted-foreground dark:text-foreground hover:text-amber-600 transition-colors cursor-pointer"
                               title="Ajouter / éditer une note"
                             >
                               <Pencil className="w-3.5 h-3.5" />
@@ -2705,19 +2705,19 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80">
-                        <th className="text-left px-4 py-3 text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider w-10">N°</th>
-                        <th className="text-left px-4 py-3 text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">Matricule</th>
-                        <th className="text-left px-4 py-3 text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">CNE / Massar</th>
-                        <th className="text-left px-4 py-3 text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">CIN</th>
-                        <th className="text-left px-4 py-3 text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">Nom & Prénom</th>
-                        <th className="text-center px-4 py-3 text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">Section / TD</th>
+                      <tr className="border-b border-border dark:border-border bg-muted/50 dark:bg-slate-800/80">
+                        <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground dark:text-foreground uppercase tracking-wider w-10">N°</th>
+                        <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground dark:text-foreground uppercase tracking-wider">Matricule</th>
+                        <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground dark:text-foreground uppercase tracking-wider">CNE / Massar</th>
+                        <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground dark:text-foreground uppercase tracking-wider">CIN</th>
+                        <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground dark:text-foreground uppercase tracking-wider">Nom & Prénom</th>
+                        <th className="text-center px-4 py-3 text-xs font-bold text-muted-foreground dark:text-foreground uppercase tracking-wider">Section / TD</th>
                         {showQrCol && (
-                          <th className="text-center px-4 py-3 text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider w-20">QR</th>
+                          <th className="text-center px-4 py-3 text-xs font-bold text-muted-foreground dark:text-foreground uppercase tracking-wider w-20">QR</th>
                         )}
-                        <th className="text-center px-4 py-3 text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">Note / Justificatif</th>
-                        <th className="text-center px-4 py-3 text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider w-36">Émargement ({selectedSeance})</th>
-                        <th className="text-center px-4 py-3 text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider w-12">Fiche</th>
+                        <th className="text-center px-4 py-3 text-xs font-bold text-muted-foreground dark:text-foreground uppercase tracking-wider">Note / Justificatif</th>
+                        <th className="text-center px-4 py-3 text-xs font-bold text-muted-foreground dark:text-foreground uppercase tracking-wider w-36">Émargement ({selectedSeance})</th>
+                        <th className="text-center px-4 py-3 text-xs font-bold text-muted-foreground dark:text-foreground uppercase tracking-wider w-12">Fiche</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -2733,24 +2733,24 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                               'border-b transition-colors',
                               isAbsent
                                 ? 'bg-rose-50/60 dark:bg-rose-950/20 text-rose-950 dark:text-rose-200 border-rose-100 dark:border-rose-900/40 hover:bg-rose-100/60'
-                                : 'border-slate-100 dark:border-slate-800/60 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 text-slate-900 dark:text-slate-100'
+                                : "border-border dark:border-slate-800/60 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 text-foreground dark:text-foreground"
                             )}
                           >
                             <td className="px-4 py-3 text-slate-400 font-mono text-xs">{idx + 1}</td>
                             <td className="px-4 py-3">
-                              <span className="font-mono text-xs bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-0.5 text-slate-700 dark:text-slate-200 font-bold">
+                              <span className="font-mono text-xs bg-muted dark:bg-card border border-border dark:border-border rounded-lg px-2 py-0.5 text-slate-700 dark:text-foreground font-bold">
                                 {s.matricule || '—'}
                               </span>
                             </td>
                             <td className="px-4 py-3">
                               <div className="flex flex-col gap-0.5">
-                                <span className="text-slate-800 dark:text-slate-200 text-xs font-mono font-medium">{s.cne || '—'}</span>
+                                <span className="text-foreground dark:text-foreground text-xs font-mono font-medium">{s.cne || '—'}</span>
                                 {s.massar_code && s.massar_code !== s.cne && (
                                   <span className="text-slate-400 text-[10px] font-mono">{s.massar_code}</span>
                                 )}
                               </div>
                             </td>
-                            <td className="px-4 py-3 text-slate-500 dark:text-slate-400 text-xs font-mono">{s.cin || '—'}</td>
+                            <td className="px-4 py-3 text-muted-foreground dark:text-muted-foreground text-xs font-mono">{s.cin || '—'}</td>
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-2.5">
                                 <div
@@ -2762,14 +2762,14 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                                   {(s.last_name?.[0] || '?').toUpperCase()}
                                 </div>
                                 <div className="flex items-center gap-1.5 flex-wrap">
-                                  <p className={cn('font-bold text-sm', isAbsent ? 'text-rose-800 dark:text-rose-300 line-through' : 'text-slate-900 dark:text-white')}>
+                                  <p className={cn('font-bold text-sm', isAbsent ? 'text-rose-800 dark:text-rose-300 line-through' : "text-foreground dark:text-white")}>
                                     {(s.last_name || '').toUpperCase()} {s.first_name}
                                   </p>
                                   {(() => {
                                     const unexcused = studentAbsenceCounts[s.id] || 0;
                                     if (unexcused >= 3) {
                                       return (
-                                        <span className="inline-flex items-center px-1.5 py-0.2 rounded-full bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 text-[10px] font-black border border-rose-300" title="Article 14 : Seuil d'exclusion atteint">
+                                        <span className="inline-flex items-center px-1.5 py-0.2 rounded-full bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 text-[10px] font-bold border border-rose-300" title="Article 14 : Seuil d'exclusion atteint">
                                           🚨 {unexcused} abs.
                                         </span>
                                       );
@@ -2787,7 +2787,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                             </td>
                             <td className="px-4 py-3 text-center">
                               <div className="flex items-center justify-center gap-1.5 flex-wrap">
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800 text-xs font-bold">
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-primary/5 text-primary border border-primary/20 dark:bg-blue-950 dark:text-blue-300 dark:border-primary text-xs font-bold">
                                   {s.section || selectedSection?.group_code || '—'}
                                 </span>
                                 {s.sub_group && (
@@ -2811,7 +2811,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                                   onClick={() => openAnnotationEditor(s)}
                                   className={cn(
                                     'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border text-xs font-semibold transition-all max-w-[130px] truncate cursor-pointer',
-                                    tagStyle ? `${tagStyle.bg} ${tagStyle.text} ${tagStyle.border}` : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'
+                                    tagStyle ? `${tagStyle.bg} ${tagStyle.text} ${tagStyle.border}` : "bg-muted dark:bg-card border-border dark:border-border text-slate-700 dark:text-foreground"
                                   )}
                                   title={`${tagStyle?.label || 'Note'} : ${ann.text || ''}`}
                                 >
@@ -2868,7 +2868,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                             <td className="px-2 py-3 text-center">
                               <button
                                 onClick={() => setIndividualStudent(s)}
-                                className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 dark:hover:text-cyan-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-primary dark:hover:text-cyan-400 hover:bg-muted dark:hover:bg-slate-800 transition-colors cursor-pointer"
                                 title="Générer la fiche d'émargement individuelle"
                               >
                                 <FileText className="w-4 h-4" />
@@ -2881,9 +2881,9 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                   </table>
 
                   {/* Table Footer */}
-                  <div className="px-4 py-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex items-center justify-between flex-wrap gap-2 text-xs">
-                    <p className="text-slate-600 dark:text-slate-400 font-medium">
-                      Affichage de <span className="text-slate-900 dark:text-white font-bold">{filteredStudents.length}</span> étudiant{filteredStudents.length !== 1 ? 's' : ''}
+                  <div className="px-4 py-3 border-t border-border dark:border-border bg-muted/50 dark:bg-slate-800/50 flex items-center justify-between flex-wrap gap-2 text-xs">
+                    <p className="text-muted-foreground dark:text-muted-foreground font-medium">
+                      Affichage de <span className="text-foreground dark:text-white font-bold">{filteredStudents.length}</span> étudiant{filteredStudents.length !== 1 ? 's' : ''}
                       {searchQuery && ` (sur un total de ${students.length})`}
                       {listMode === 'subgroup' && selectedSubGroup ? ` — Sous-groupe officiel ${selectedSubGroup}` : ' — Section Complète (Amphithéâtre)'}
                       {absentIds.size > 0 && (
@@ -2905,40 +2905,40 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
       {/* ─── 5. PDF Modal (Config & Options) ─────────────────────────── */}
       {showPdfModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
-            <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-800">
+          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl w-full max-w-lg shadow-sm overflow-hidden">
+            <div className="flex items-center justify-between p-5 border-b border-border dark:border-border">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400">
                   <FileText className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-slate-900 dark:text-white font-bold text-base">Fiche d'Émargement Officielle</h2>
-                  <p className="text-slate-500 dark:text-slate-400 text-xs">Format PDF A4 conforme — ENCG Fès / USMBA</p>
+                  <h2 className="text-foreground dark:text-white font-bold text-base">Fiche d'Émargement Officielle</h2>
+                  <p className="text-muted-foreground dark:text-muted-foreground text-xs">Format PDF A4 conforme — ENCG Fès / USMBA</p>
                 </div>
               </div>
-              <button onClick={() => setShowPdfModal(false)} className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+              <button onClick={() => setShowPdfModal(false)} className="p-1 rounded-lg text-slate-400 hover:text-muted-foreground dark:hover:text-white hover:bg-muted dark:hover:bg-slate-800 transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="p-5 space-y-4 text-sm">
               {/* Summary info */}
-              <div className="bg-slate-50 dark:bg-slate-800/60 rounded-xl p-4 space-y-2 border border-slate-200 dark:border-slate-700/60">
+              <div className="bg-muted/50 dark:bg-slate-800/60 rounded-xl p-4 space-y-2 border border-border dark:border-slate-700/60">
                 <div className="flex justify-between">
-                  <span className="text-slate-500 dark:text-slate-400 text-xs">Section / Groupe</span>
-                  <span className="text-slate-900 dark:text-white font-semibold text-xs">{selectedSection?.group_code} — {selectedSection?.filiere_name}</span>
+                  <span className="text-muted-foreground dark:text-muted-foreground text-xs">Section / Groupe</span>
+                  <span className="text-foreground dark:text-white font-semibold text-xs">{selectedSection?.group_code} — {selectedSection?.filiere_name}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500 dark:text-slate-400 text-xs">Format d'enseignement</span>
-                  <span className="text-slate-900 dark:text-white font-semibold text-xs">{listMode === 'section' ? 'Cours Magistral (Amphi)' : `TD — Sous-groupe ${selectedSubGroup}`}</span>
+                  <span className="text-muted-foreground dark:text-muted-foreground text-xs">Format d'enseignement</span>
+                  <span className="text-foreground dark:text-white font-semibold text-xs">{listMode === 'section' ? 'Cours Magistral (Amphi)' : `TD — Sous-groupe ${selectedSubGroup}`}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500 dark:text-slate-400 text-xs">Effectif à exporter</span>
+                  <span className="text-muted-foreground dark:text-muted-foreground text-xs">Effectif à exporter</span>
                   <span className="text-emerald-600 dark:text-emerald-400 font-bold text-xs">{students.length} étudiants</span>
                 </div>
                 {absentIds.size > 0 && (
                   <div className="flex justify-between">
-                    <span className="text-slate-500 dark:text-slate-400 text-xs">Absents actuels ({selectedSeance})</span>
+                    <span className="text-muted-foreground dark:text-muted-foreground text-xs">Absents actuels ({selectedSeance})</span>
                     <span className="text-rose-600 dark:text-rose-400 font-bold text-xs">{absentIds.size} absent(s) marqués</span>
                   </div>
                 )}
@@ -2946,7 +2946,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
 
               {/* Mode picker */}
               <div>
-                <p className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold tracking-wider mb-2.5">Type de document</p>
+                <p className="text-xs text-muted-foreground dark:text-muted-foreground uppercase font-bold tracking-wider mb-2.5">Type de document</p>
                 <div className="grid grid-cols-2 gap-3">
                   <PdfModeCard
                     active={pdfMode === 'emargement'}
@@ -2967,7 +2967,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
 
               {/* Orientation picker */}
               <div>
-                <p className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold tracking-wider mb-2.5">Orientation A4</p>
+                <p className="text-xs text-muted-foreground dark:text-muted-foreground uppercase font-bold tracking-wider mb-2.5">Orientation A4</p>
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     onClick={() => setPdfOrientation('portrait')}
@@ -2975,13 +2975,13 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                       'flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer',
                       pdfOrientation === 'portrait'
                         ? 'bg-blue-50/80 dark:bg-emerald-600/15 border-[#001A4B] dark:border-emerald-500/60 ring-1 ring-[#001A4B]/20 dark:ring-emerald-500/40'
-                        : 'bg-white dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 hover:border-slate-300'
+                        : "bg-card dark:bg-slate-800/60 border-border dark:border-border hover:border-slate-300"
                     )}
                   >
-                    <div className={cn('w-6 h-8 rounded border-2 flex-shrink-0', pdfOrientation === 'portrait' ? 'border-[#001A4B] dark:border-emerald-400' : 'border-slate-400 dark:border-slate-600')} />
+                    <div className={cn('w-6 h-8 rounded border-2 flex-shrink-0', pdfOrientation === 'portrait' ? 'border-[#001A4B] dark:border-emerald-400' : "border-slate-400 dark:border-border")} />
                     <div className="text-left">
-                      <p className={cn('text-xs font-bold', pdfOrientation === 'portrait' ? 'text-[#001A4B] dark:text-white' : 'text-slate-700 dark:text-slate-300')}>Portrait</p>
-                      <p className="text-[11px] text-slate-500">Vertical (Standard)</p>
+                      <p className={cn('text-xs font-bold', pdfOrientation === 'portrait' ? 'text-[#001A4B] dark:text-white' : "text-slate-700 dark:text-foreground")}>Portrait</p>
+                      <p className="text-[11px] text-muted-foreground">Vertical (Standard)</p>
                     </div>
                   </button>
 
@@ -2991,26 +2991,26 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                       'flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer',
                       pdfOrientation === 'paysage'
                         ? 'bg-blue-50/80 dark:bg-emerald-600/15 border-[#001A4B] dark:border-emerald-500/60 ring-1 ring-[#001A4B]/20 dark:ring-emerald-500/40'
-                        : 'bg-white dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 hover:border-slate-300'
+                        : "bg-card dark:bg-slate-800/60 border-border dark:border-border hover:border-slate-300"
                     )}
                   >
-                    <div className={cn('w-8 h-6 rounded border-2 flex-shrink-0', pdfOrientation === 'paysage' ? 'border-[#001A4B] dark:border-emerald-400' : 'border-slate-400 dark:border-slate-600')} />
+                    <div className={cn('w-8 h-6 rounded border-2 flex-shrink-0', pdfOrientation === 'paysage' ? 'border-[#001A4B] dark:border-emerald-400' : "border-slate-400 dark:border-border")} />
                     <div className="text-left">
-                      <p className={cn('text-xs font-bold', pdfOrientation === 'paysage' ? 'text-[#001A4B] dark:text-white' : 'text-slate-700 dark:text-slate-300')}>Paysage</p>
-                      <p className="text-[11px] text-slate-500">Horizontal (Idéal grille)</p>
+                      <p className={cn('text-xs font-bold', pdfOrientation === 'paysage' ? 'text-[#001A4B] dark:text-white' : "text-slate-700 dark:text-foreground")}>Paysage</p>
+                      <p className="text-[11px] text-muted-foreground">Horizontal (Idéal grille)</p>
                     </div>
                   </button>
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center justify-between p-5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/90">
+            <div className="flex items-center justify-between p-5 border-t border-border dark:border-border bg-slate-50/50 dark:bg-slate-900/90">
               <button
                 onClick={() => {
                   setShowPdfModal(false);
                   handleOpenPdfPreview();
                 }}
-                className="flex items-center gap-1.5 text-xs text-blue-600 dark:text-cyan-400 hover:underline font-bold cursor-pointer"
+                className="flex items-center gap-1.5 text-xs text-primary dark:text-cyan-400 hover:underline font-bold cursor-pointer"
               >
                 <Eye className="w-4 h-4" />
                 <span>Voir l'aperçu d'abord</span>
@@ -3019,7 +3019,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setShowPdfModal(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition-colors cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-muted hover:bg-slate-200 dark:bg-card dark:hover:bg-slate-700 text-slate-700 dark:text-foreground text-xs font-bold transition-colors cursor-pointer"
                 >
                   Annuler
                 </button>
@@ -3102,18 +3102,18 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
       {/* ─── 6. WhatsApp Share Modal ─────────────────────────────────── */}
       {showWhatsAppModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
-            <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-800">
+          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl w-full max-w-lg shadow-sm overflow-hidden">
+            <div className="flex items-center justify-between p-5 border-b border-border dark:border-border">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400">
                   <MessageCircle className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-slate-900 dark:text-white font-bold text-base">Partage Rapport WhatsApp</h2>
-                  <p className="text-slate-500 dark:text-slate-400 text-xs">Transmission immédiate aux délégués ou à la scolarité</p>
+                  <h2 className="text-foreground dark:text-white font-bold text-base">Partage Rapport WhatsApp</h2>
+                  <p className="text-muted-foreground dark:text-muted-foreground text-xs">Transmission immédiate aux délégués ou à la scolarité</p>
                 </div>
               </div>
-              <button onClick={() => setShowWhatsAppModal(false)} className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+              <button onClick={() => setShowWhatsAppModal(false)} className="p-1 rounded-lg text-slate-400 hover:text-muted-foreground dark:hover:text-white hover:bg-muted dark:hover:bg-slate-800 transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -3121,7 +3121,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
             <div className="p-5 space-y-4 text-sm">
               {/* Format selection */}
               <div>
-                <label className="block text-xs text-slate-500 dark:text-slate-400 uppercase font-bold tracking-wider mb-2">
+                <label className="block text-xs text-muted-foreground dark:text-muted-foreground uppercase font-bold tracking-wider mb-2">
                   Format du rapport
                 </label>
                 <div className="grid grid-cols-2 gap-2">
@@ -3131,11 +3131,11 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                       'p-3.5 rounded-xl border text-left transition-all cursor-pointer',
                       whatsAppType === 'absents_only'
                         ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-500 text-emerald-950 dark:text-white ring-1 ring-emerald-500/40'
-                        : 'bg-white dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-300'
+                        : "bg-card dark:bg-slate-800/60 border-border dark:border-border text-muted-foreground dark:text-muted-foreground hover:border-slate-300"
                     )}
                   >
-                    <p className="font-bold text-xs text-slate-900 dark:text-white">Rapport des Absents</p>
-                    <p className="text-[11px] text-slate-500 mt-0.5">Idéal pour le délégué ({absentIds.size} absents)</p>
+                    <p className="font-bold text-xs text-foreground dark:text-white">Rapport des Absents</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">Idéal pour le délégué ({absentIds.size} absents)</p>
                   </button>
 
                   <button
@@ -3144,39 +3144,39 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                       'p-3.5 rounded-xl border text-left transition-all cursor-pointer',
                       whatsAppType === 'full_roster'
                         ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-500 text-emerald-950 dark:text-white ring-1 ring-emerald-500/40'
-                        : 'bg-white dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-300'
+                        : "bg-card dark:bg-slate-800/60 border-border dark:border-border text-muted-foreground dark:text-muted-foreground hover:border-slate-300"
                     )}
                   >
-                    <p className="font-bold text-xs text-slate-900 dark:text-white">Appel Complet</p>
-                    <p className="text-[11px] text-slate-500 mt-0.5">Tous les étudiants (✅ & ❌)</p>
+                    <p className="font-bold text-xs text-foreground dark:text-white">Appel Complet</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">Tous les étudiants (✅ & ❌)</p>
                   </button>
                 </div>
               </div>
 
               {/* Message preview */}
               <div>
-                <label className="block text-xs text-slate-500 dark:text-slate-400 uppercase font-bold tracking-wider mb-1.5">
+                <label className="block text-xs text-muted-foreground dark:text-muted-foreground uppercase font-bold tracking-wider mb-1.5">
                   Aperçu du message formaté
                 </label>
-                <div className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-xs font-mono text-slate-800 dark:text-slate-300 max-h-52 overflow-y-auto whitespace-pre-wrap select-all">
+                <div className="bg-muted/50 dark:bg-background border border-border dark:border-border rounded-xl p-3 text-xs font-mono text-foreground dark:text-foreground max-h-52 overflow-y-auto whitespace-pre-wrap select-all">
                   {generatedWhatsAppText}
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center justify-between p-5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/90">
+            <div className="flex items-center justify-between p-5 border-t border-border dark:border-border bg-slate-50/50 dark:bg-slate-900/90">
               <button
                 onClick={handleCopyWhatsApp}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition-colors cursor-pointer"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-card dark:bg-card hover:bg-muted dark:hover:bg-slate-700 border border-border dark:border-border text-slate-700 dark:text-foreground text-xs font-bold transition-colors cursor-pointer"
               >
-                <Copy className="w-3.5 h-3.5 text-blue-600 dark:text-sky-400" />
+                <Copy className="w-3.5 h-3.5 text-primary dark:text-sky-400" />
                 <span>Copier le texte</span>
               </button>
 
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setShowWhatsAppModal(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition-colors cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-muted hover:bg-slate-200 dark:bg-card dark:hover:bg-slate-700 text-slate-700 dark:text-foreground text-xs font-bold transition-colors cursor-pointer"
                 >
                   Fermer
                 </button>
@@ -3196,25 +3196,25 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
       {/* ─── 3. Annotation Editor Modal ─────────────────────────────── */}
       {editingStudentId !== null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-md shadow-2xl p-5 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl w-full max-w-md shadow-sm p-5 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-border dark:border-border">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400">
                   <Tag className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-slate-900 dark:text-white font-bold text-sm">Annotation Étudiant</h3>
-                  <p className="text-slate-500 dark:text-slate-400 text-xs">Séance {selectedSeance} — {seanceDate}</p>
+                  <h3 className="text-foreground dark:text-white font-bold text-sm">Annotation Étudiant</h3>
+                  <p className="text-muted-foreground dark:text-muted-foreground text-xs">Séance {selectedSeance} — {seanceDate}</p>
                 </div>
               </div>
-              <button onClick={() => setEditingStudentId(null)} className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800">
+              <button onClick={() => setEditingStudentId(null)} className="p-1 rounded-lg text-slate-400 hover:text-muted-foreground dark:hover:text-white hover:bg-muted dark:hover:bg-slate-800">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Tag Quick Select */}
             <div>
-              <label className="block text-xs text-slate-500 dark:text-slate-400 uppercase font-bold tracking-wider mb-2">
+              <label className="block text-xs text-muted-foreground dark:text-muted-foreground uppercase font-bold tracking-wider mb-2">
                 Catégorie rapide
               </label>
               <div className="grid grid-cols-3 gap-2">
@@ -3227,7 +3227,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                       'px-2.5 py-1.5 rounded-lg border text-xs font-bold transition-all text-center cursor-pointer',
                       editNoteTag === t
                         ? `${cfg.bg} ${cfg.text} ${cfg.border} ring-1 ring-amber-500/40`
-                        : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-300'
+                        : "bg-card dark:bg-card border-border dark:border-border text-muted-foreground dark:text-muted-foreground hover:border-slate-300"
                     )}
                   >
                     {cfg.label}
@@ -3238,7 +3238,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
 
             {/* Note text */}
             <div>
-              <label className="block text-xs text-slate-500 dark:text-slate-400 uppercase font-bold tracking-wider mb-1.5">
+              <label className="block text-xs text-muted-foreground dark:text-muted-foreground uppercase font-bold tracking-wider mb-1.5">
                 Remarque ou motif (justificatif, retard…)
               </label>
               <textarea
@@ -3246,12 +3246,12 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                 value={editNoteText}
                 onChange={e => setEditNoteText(e.target.value)}
                 placeholder="Ex: Certificat médical déposé, retard de 20min autorisé, dispense exceptionnelle…"
-                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                className="w-full bg-muted/50 dark:bg-card border border-border dark:border-border p-3 text-xs text-foreground dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-amber-500 rounded-[var(--control-radius)]"
               />
             </div>
 
             {/* Actions */}
-            <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
+            <div className="flex items-center justify-between pt-2 border-t border-border dark:border-border">
               {annotations[editingStudentId] ? (
                 <button
                   type="button"
@@ -3266,7 +3266,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                 <button
                   type="button"
                   onClick={() => setEditingStudentId(null)}
-                  className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold cursor-pointer"
+                  className="px-3.5 py-1.5 rounded-xl bg-muted hover:bg-slate-200 dark:bg-card dark:hover:bg-slate-700 text-slate-700 dark:text-foreground text-xs font-bold cursor-pointer"
                 >
                   Annuler
                 </button>
@@ -3286,17 +3286,17 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
       {/* ─── 7. Individual Student Sheet Modal (Export Individuel) ───── */}
       {individualStudent && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
+          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl w-full max-w-2xl shadow-sm overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="flex items-center justify-between p-5 border-b border-border dark:border-border bg-card dark:bg-card">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-600 dark:text-cyan-400">
                   <FileText className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-slate-900 dark:text-white font-bold text-sm">
+                  <h2 className="text-foreground dark:text-white font-bold text-sm">
                     Fiche Individuelle d'Émargement & Rattrapage
                   </h2>
-                  <p className="text-slate-500 dark:text-slate-400 text-xs">
+                  <p className="text-muted-foreground dark:text-muted-foreground text-xs">
                     {(individualStudent.last_name || '').toUpperCase()} {individualStudent.first_name} — Matricule: {individualStudent.matricule || '—'}
                   </p>
                 </div>
@@ -3312,7 +3312,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                 </button>
                 <button
                   onClick={() => setIndividualStudent(null)}
-                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
+                  className="p-1 rounded-lg text-slate-400 hover:text-muted-foreground dark:hover:text-white hover:bg-muted dark:hover:bg-slate-800"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -3320,42 +3320,42 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
             </div>
 
             {/* Printable Document Area */}
-            <div id="individual-printable-sheet" className="p-6 overflow-y-auto bg-slate-50 dark:bg-slate-950/60 text-slate-800 dark:text-slate-200 space-y-5">
+            <div id="individual-printable-sheet" className="p-6 overflow-y-auto bg-muted/50 dark:bg-slate-950/60 text-foreground dark:text-foreground space-y-5">
               {/* Document Header (ENCG Fès Style) */}
-              <div className="text-center pb-4 border-b border-slate-200 dark:border-slate-800">
-                <p className="text-xs uppercase tracking-widest text-slate-500 dark:text-slate-400 font-bold">Royaume du Maroc</p>
-                <p className="text-xs text-slate-600 dark:text-slate-300 font-medium">Université Sidi Mohamed Ben Abdellah — Fès</p>
-                <h3 className="text-sm font-black text-[#001A4B] dark:text-emerald-400 mt-1">
+              <div className="text-center pb-4 border-b border-border dark:border-border">
+                <p className="text-xs uppercase tracking-widest text-muted-foreground dark:text-muted-foreground font-bold">Royaume du Maroc</p>
+                <p className="text-xs text-muted-foreground dark:text-foreground font-medium">Université Sidi Mohamed Ben Abdellah — Fès</p>
+                <h3 className="text-sm font-bold text-[#001A4B] dark:text-emerald-400 mt-1">
                   École Nationale de Commerce et de Gestion de Fès
                 </h3>
-                <div className="inline-block mt-2 px-3 py-1 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-black text-[#001A4B] dark:text-white uppercase tracking-wider shadow-2xs">
+                <div className="inline-block mt-2 px-3 py-1 rounded-full bg-card dark:bg-card border border-border dark:border-border text-xs font-bold text-[#001A4B] dark:text-white uppercase tracking-wider shadow-2xs">
                   Fiche Individuelle de Présence & d'Émargement
                 </div>
               </div>
 
               {/* Student & Course Details */}
               <div className="grid grid-cols-2 gap-4 text-xs">
-                <div className="bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 space-y-2 shadow-2xs">
+                <div className="bg-card dark:bg-slate-900/90 border border-border dark:border-border rounded-xl p-3.5 space-y-2 shadow-2xs">
                   <p className="text-[11px] uppercase tracking-wider font-bold text-emerald-600 dark:text-emerald-400 mb-1">Identité Étudiant</p>
-                  <div><span className="text-slate-500 dark:text-slate-400">Nom & Prénom :</span> <span className="text-slate-900 dark:text-white font-bold">{(individualStudent.last_name || '').toUpperCase()} {individualStudent.first_name}</span></div>
-                  <div><span className="text-slate-500 dark:text-slate-400">Matricule :</span> <span className="text-slate-900 dark:text-white font-mono font-bold">{individualStudent.matricule || '—'}</span></div>
-                  <div><span className="text-slate-500 dark:text-slate-400">CNE / Massar :</span> <span className="text-slate-900 dark:text-white font-mono">{individualStudent.cne || individualStudent.massar_code || '—'}</span></div>
-                  <div><span className="text-slate-500 dark:text-slate-400">CIN :</span> <span className="text-slate-900 dark:text-white font-mono">{individualStudent.cin || '—'}</span></div>
+                  <div><span className="text-muted-foreground dark:text-muted-foreground">Nom & Prénom :</span> <span className="text-foreground dark:text-white font-bold">{(individualStudent.last_name || '').toUpperCase()} {individualStudent.first_name}</span></div>
+                  <div><span className="text-muted-foreground dark:text-muted-foreground">Matricule :</span> <span className="text-foreground dark:text-white font-mono font-bold">{individualStudent.matricule || '—'}</span></div>
+                  <div><span className="text-muted-foreground dark:text-muted-foreground">CNE / Massar :</span> <span className="text-foreground dark:text-white font-mono">{individualStudent.cne || individualStudent.massar_code || '—'}</span></div>
+                  <div><span className="text-muted-foreground dark:text-muted-foreground">CIN :</span> <span className="text-foreground dark:text-white font-mono">{individualStudent.cin || '—'}</span></div>
                 </div>
 
-                <div className="bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 space-y-2 shadow-2xs">
+                <div className="bg-card dark:bg-slate-900/90 border border-border dark:border-border rounded-xl p-3.5 space-y-2 shadow-2xs">
                   <p className="text-[11px] uppercase tracking-wider font-bold text-emerald-600 dark:text-emerald-400 mb-1">Affectation Pédagogique</p>
-                  <div><span className="text-slate-500 dark:text-slate-400">Module :</span> <span className="text-slate-900 dark:text-white font-semibold">{selectedModule?.module_code} — {selectedModule?.module_name}</span></div>
-                  <div><span className="text-slate-500 dark:text-slate-400">Section :</span> <span className="text-slate-900 dark:text-white font-medium">{selectedSection?.group_code} ({selectedSection?.filiere_name})</span></div>
-                  <div><span className="text-slate-500 dark:text-slate-400">Sous-groupe TD :</span> <span className="text-slate-900 dark:text-white font-medium">{individualStudent.sub_group || selectedSubGroup || 'Section Complète'}</span></div>
-                  <div><span className="text-slate-500 dark:text-slate-400">Enseignant :</span> <span className="text-slate-900 dark:text-white font-medium">Pr. {profName || 'ENCG Fès'}</span></div>
+                  <div><span className="text-muted-foreground dark:text-muted-foreground">Module :</span> <span className="text-foreground dark:text-white font-semibold">{selectedModule?.module_code} — {selectedModule?.module_name}</span></div>
+                  <div><span className="text-muted-foreground dark:text-muted-foreground">Section :</span> <span className="text-foreground dark:text-white font-medium">{selectedSection?.group_code} ({selectedSection?.filiere_name})</span></div>
+                  <div><span className="text-muted-foreground dark:text-muted-foreground">Sous-groupe TD :</span> <span className="text-foreground dark:text-white font-medium">{individualStudent.sub_group || selectedSubGroup || 'Section Complète'}</span></div>
+                  <div><span className="text-muted-foreground dark:text-muted-foreground">Enseignant :</span> <span className="text-foreground dark:text-white font-medium">Pr. {profName || 'ENCG Fès'}</span></div>
                 </div>
               </div>
 
               {/* Status on current session */}
-              <div className="bg-white dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex items-center justify-between shadow-2xs">
+              <div className="bg-card dark:bg-slate-900/70 border border-border dark:border-border rounded-xl p-4 flex items-center justify-between shadow-2xs">
                 <div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Statut actuel ({selectedSeance} — {seanceDate}) :</p>
+                  <p className="text-xs text-muted-foreground dark:text-muted-foreground">Statut actuel ({selectedSeance} — {seanceDate}) :</p>
                   <p className="text-sm font-bold mt-0.5">
                     {absentIds.has(individualStudent.id) ? (
                       <span className="text-rose-600 dark:text-rose-400">❌ Absent non justifié</span>
@@ -3374,7 +3374,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
 
               {/* Grid 10 Sessions Emargement / Rattrapage Table */}
               <div>
-                <p className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">Grille de validation des séances (1 à 10) :</p>
+                <p className="text-xs font-bold text-slate-700 dark:text-foreground mb-2">Grille de validation des séances (1 à 10) :</p>
                 <div className="grid grid-cols-5 gap-2 text-center text-xs">
                   {SEANCES.slice(0, 10).map(s => {
                     const seanceData = seanceStore[s];
@@ -3382,8 +3382,8 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                     const isPassed = !!seanceData;
 
                     return (
-                      <div key={s} className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/80 rounded-xl p-2 flex flex-col justify-between h-20 shadow-2xs">
-                        <span className="font-bold text-slate-700 dark:text-slate-300">{s}</span>
+                      <div key={s} className="border border-border dark:border-border bg-card dark:bg-slate-900/80 rounded-xl p-2 flex flex-col justify-between h-20 shadow-2xs">
+                        <span className="font-bold text-slate-700 dark:text-foreground">{s}</span>
                         <div className="text-[10px]">
                           {isPassed ? (
                             isAbs ? <span className="text-rose-600 dark:text-rose-400 font-bold">ABS</span> : <span className="text-emerald-600 dark:text-emerald-400 font-bold">PRÉSENT</span>
@@ -3391,7 +3391,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                             <span className="text-slate-400 dark:text-slate-600">—</span>
                           )}
                         </div>
-                        <div className="border-t border-slate-100 dark:border-slate-800/80 pt-1 text-[9px] text-slate-400 dark:text-slate-500 italic">
+                        <div className="border-t border-border dark:border-slate-800/80 pt-1 text-[9px] text-slate-400 dark:text-slate-500 italic">
                           Émargement
                         </div>
                       </div>
@@ -3401,22 +3401,22 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
               </div>
 
               {/* Signatures & Seal Zone */}
-              <div className="pt-4 border-t border-slate-200 dark:border-slate-800 grid grid-cols-2 gap-8 text-xs text-center">
+              <div className="pt-4 border-t border-border dark:border-border grid grid-cols-2 gap-8 text-xs text-center">
                 <div>
-                  <p className="font-bold text-slate-600 dark:text-slate-400 mb-10">Signature de l'Étudiant(e)</p>
+                  <p className="font-bold text-muted-foreground dark:text-muted-foreground mb-10">Signature de l'Étudiant(e)</p>
                   <p className="text-[10px] text-slate-400 dark:text-slate-500">Précédé de la mention « Lu et approuvé »</p>
                 </div>
                 <div>
-                  <p className="font-bold text-slate-600 dark:text-slate-400 mb-10">Visa & Cachet de l'Enseignant</p>
+                  <p className="font-bold text-muted-foreground dark:text-muted-foreground mb-10">Visa & Cachet de l'Enseignant</p>
                   <p className="text-[10px] text-slate-400 dark:text-slate-500">Fait à Fès, le {seanceDate}</p>
                 </div>
               </div>
             </div>
 
-            <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/90 flex justify-end">
+            <div className="p-4 border-t border-border dark:border-border bg-slate-50/50 dark:bg-slate-900/90 flex justify-end">
               <button
                 onClick={() => setIndividualStudent(null)}
-                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition-colors cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-muted hover:bg-slate-200 dark:bg-card dark:hover:bg-slate-700 text-slate-700 dark:text-foreground text-xs font-bold transition-colors cursor-pointer"
               >
                 Fermer
               </button>
@@ -3428,21 +3428,21 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
       {/* ─── Modal: Save to DB & Sync Textbook ─────────────────────────── */}
       {showSaveModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
-          <div className="relative w-full max-w-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+          <div className="relative w-full max-w-xl bg-card dark:bg-card border border-border dark:border-border rounded-2xl shadow-sm overflow-hidden flex flex-col">
             {/* Header */}
-            <div className="p-5 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900/90 flex items-center justify-between">
+            <div className="p-5 border-b border-border dark:border-border bg-card dark:bg-slate-900/90 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400">
                   <BookOpen className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-slate-900 dark:text-white">Enregistrement & Synergie Pédagogique</h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Sauvegarde de la présence et liaison avec le Cahier de Texte</p>
+                  <h3 className="text-base font-bold text-foreground dark:text-white">Enregistrement & Synergie Pédagogique</h3>
+                  <p className="text-xs text-muted-foreground dark:text-muted-foreground">Sauvegarde de la présence et liaison avec le Cahier de Texte</p>
                 </div>
               </div>
               <button
                 onClick={() => setShowSaveModal(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                className="p-1 rounded-lg text-slate-400 hover:text-muted-foreground dark:hover:text-white hover:bg-muted dark:hover:bg-slate-800 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -3451,28 +3451,28 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
             {/* Body */}
             <div className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
               {/* Session Recap */}
-              <div className="bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl p-4 space-y-2">
+              <div className="bg-muted/50 dark:bg-slate-950/60 border border-border dark:border-border rounded-xl p-4 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-slate-500 dark:text-slate-400">Séance & Date :</span>
+                  <span className="text-xs text-muted-foreground dark:text-muted-foreground">Séance & Date :</span>
                   <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 px-2 py-0.5 rounded">
                     {selectedSeance} • {seanceDate}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-slate-500 dark:text-slate-400">Module :</span>
-                  <span className="text-xs font-bold text-slate-900 dark:text-white truncate max-w-[280px]">
+                  <span className="text-xs text-muted-foreground dark:text-muted-foreground">Module :</span>
+                  <span className="text-xs font-bold text-foreground dark:text-white truncate max-w-[280px]">
                     {selectedModule?.module_code} - {selectedModule?.module_name}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-slate-500 dark:text-slate-400">Groupe / Section :</span>
-                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  <span className="text-xs text-muted-foreground dark:text-muted-foreground">Groupe / Section :</span>
+                  <span className="text-xs font-semibold text-slate-700 dark:text-foreground">
                     {selectedSection?.group_code} {listMode === 'subgroup' && selectedSubGroup ? `(${selectedSubGroup})` : ''}
                   </span>
                 </div>
-                <div className="flex items-center justify-between pt-1 border-t border-slate-200 dark:border-slate-800/80">
-                  <span className="text-xs text-slate-500 dark:text-slate-400">Effectif présent :</span>
-                  <span className="text-xs font-bold text-slate-900 dark:text-white">
+                <div className="flex items-center justify-between pt-1 border-t border-border dark:border-slate-800/80">
+                  <span className="text-xs text-muted-foreground dark:text-muted-foreground">Effectif présent :</span>
+                  <span className="text-xs font-bold text-foreground dark:text-white">
                     {students.length - absentIds.size} / {students.length} ({absentIds.size} absent{absentIds.size > 1 ? 's' : ''})
                   </span>
                 </div>
@@ -3483,20 +3483,20 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                 'rounded-xl border p-4 transition-all',
                 syncTextbook
                   ? 'bg-emerald-50/60 dark:bg-emerald-950/20 border-emerald-300 dark:border-emerald-500/40 ring-1 ring-emerald-500/20'
-                  : 'bg-slate-50 dark:bg-slate-950/40 border-slate-200 dark:border-slate-800'
+                  : "bg-muted/50 dark:bg-slate-950/40 border-border dark:border-border"
               )}>
                 <label className="flex items-start gap-3 cursor-pointer select-none">
                   <input
                     type="checkbox"
                     checked={syncTextbook}
                     onChange={(e) => setSyncTextbook(e.target.checked)}
-                    className="mt-1 h-4 w-4 rounded border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-emerald-600 focus:ring-emerald-400 cursor-pointer"
+                    className="mt-1 h-4 w-4 rounded border-slate-300 dark:border-border bg-card dark:bg-card text-emerald-600 focus:ring-emerald-400 cursor-pointer"
                   />
                   <div className="flex-1">
-                    <p className="text-sm font-bold text-slate-900 dark:text-white">
+                    <p className="text-sm font-bold text-foreground dark:text-white">
                       Enregistrer en même temps dans le Cahier de Texte Numérique
                     </p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
+                    <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-0.5 leading-relaxed">
                       Crée automatiquement une séance de 2.0h avec statut « Réalisé » dans votre cahier de texte officiel ENCG Fès.
                     </p>
                   </div>
@@ -3507,7 +3507,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                   <div className="mt-4 pt-3 border-t border-emerald-200 dark:border-emerald-500/20 space-y-3 animate-in fade-in">
                     <div>
                       <div className="flex items-center justify-between mb-1">
-                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                        <label className="block text-xs font-bold text-slate-700 dark:text-foreground">
                           Intitulé du Chapitre / Séance <span className="text-slate-400">(optionnel)</span>
                         </label>
                         <button
@@ -3530,12 +3530,12 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                         value={customChapterTitle}
                         onChange={(e) => setCustomChapterTitle(e.target.value)}
                         placeholder={`Ex: Séance ${selectedSeance} — Concepts fondamentaux & Études de cas`}
-                        className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                        className="w-full bg-card dark:bg-card border border-border dark:border-border px-3 py-2 text-xs text-foreground dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-[var(--control-radius)]"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      <label className="block text-xs font-bold text-slate-700 dark:text-foreground mb-1">
                         Notions abordées & Activités <span className="text-slate-400">(optionnel)</span>
                       </label>
                       <textarea
@@ -3543,7 +3543,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                         value={customKeyConcepts}
                         onChange={(e) => setCustomKeyConcepts(e.target.value)}
                         placeholder="Ex: Présentation du cours magistral, exercices d'application en sous-groupes..."
-                        className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 resize-none"
+                        className="w-full bg-card dark:bg-card border border-border dark:border-border px-3 py-2 text-xs text-foreground dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 resize-none rounded-[var(--control-radius)]"
                       />
                     </div>
                   </div>
@@ -3552,12 +3552,12 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
             </div>
 
             {/* Footer */}
-            <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/90 flex items-center justify-end gap-3">
+            <div className="p-4 border-t border-border dark:border-border bg-slate-50/50 dark:bg-slate-900/90 flex items-center justify-end gap-3">
               <button
                 type="button"
                 onClick={() => setShowSaveModal(false)}
                 disabled={savingAttendance}
-                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition-colors disabled:opacity-50 cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-muted hover:bg-slate-200 dark:bg-card dark:hover:bg-slate-700 text-slate-700 dark:text-foreground text-xs font-bold transition-colors disabled:opacity-50 cursor-pointer"
               >
                 Annuler
               </button>
@@ -3578,24 +3578,24 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
       {/* ─── Modal: AI Attendance Risk & Early Warning ─────────────────── */}
       {showRiskModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
-          <div className="relative w-full max-w-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+          <div className="relative w-full max-w-2xl bg-card dark:bg-card border border-border dark:border-border rounded-2xl shadow-sm overflow-hidden flex flex-col max-h-[85vh]">
             {/* Header */}
-            <div className="p-5 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900/90 flex items-center justify-between">
+            <div className="p-5 border-b border-border dark:border-border bg-card dark:bg-slate-900/90 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400">
                   <Sparkles className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <h3 className="text-base font-bold text-foreground dark:text-white flex items-center gap-2">
                     <span>Détection Prédictive Décrochage & Risque d'Absence (IA)</span>
                     <span className="text-[10px] bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300 border border-amber-300 dark:border-amber-500/30 px-2 py-0.5 rounded-full font-bold">Art. 14 ENCG Fès</span>
                   </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Analyse de conformité réglementaire LMD & Alerte d'assiduité précoce</p>
+                  <p className="text-xs text-muted-foreground dark:text-muted-foreground">Analyse de conformité réglementaire LMD & Alerte d'assiduité précoce</p>
                 </div>
               </div>
               <button
                 onClick={() => setShowRiskModal(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                className="p-1 rounded-lg text-slate-400 hover:text-muted-foreground dark:hover:text-white hover:bg-muted dark:hover:bg-slate-800 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -3606,8 +3606,8 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
               {loadingRiskAnalysis ? (
                 <div className="flex flex-col items-center justify-center py-16 gap-3">
                   <Loader2 className="w-8 h-8 text-amber-500 animate-spin" />
-                  <p className="text-sm font-bold text-slate-700 dark:text-slate-300">Analyse de l'assiduité par l'IA en cours…</p>
-                  <p className="text-xs text-slate-500">Examen des 12 séances d'émargement et seuils légaux ENCG</p>
+                  <p className="text-sm font-bold text-slate-700 dark:text-foreground">Analyse de l'assiduité par l'IA en cours…</p>
+                  <p className="text-xs text-muted-foreground">Examen des 12 séances d'émargement et seuils légaux ENCG</p>
                 </div>
               ) : riskData ? (
                 <>
@@ -3618,8 +3618,8 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                         <span>Risque Critique</span>
                         <AlertTriangle className="w-4 h-4" />
                       </div>
-                      <p className="text-2xl font-black text-rose-950 dark:text-white">{riskData.critical_count ?? 0}</p>
-                      <p className="text-[11px] text-rose-600/80 dark:text-slate-400 font-medium">≥ 3 absences (Exclusion Art. 14)</p>
+                      <p className="text-2xl font-bold text-rose-950 dark:text-white">{riskData.critical_count ?? 0}</p>
+                      <p className="text-[11px] text-rose-600/80 dark:text-muted-foreground font-medium">≥ 3 absences (Exclusion Art. 14)</p>
                     </div>
 
                     <div className="bg-amber-50/70 dark:bg-slate-950/60 border border-amber-200 dark:border-amber-500/30 rounded-2xl p-4 flex flex-col gap-1">
@@ -3627,8 +3627,8 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                         <span>Zone Vigilance</span>
                         <Info className="w-4 h-4" />
                       </div>
-                      <p className="text-2xl font-black text-amber-950 dark:text-white">{riskData.warning_count ?? 0}</p>
-                      <p className="text-[11px] text-amber-600/80 dark:text-slate-400 font-medium">2 absences non justifiées</p>
+                      <p className="text-2xl font-bold text-amber-950 dark:text-white">{riskData.warning_count ?? 0}</p>
+                      <p className="text-[11px] text-amber-600/80 dark:text-muted-foreground font-medium">2 absences non justifiées</p>
                     </div>
 
                     <div className="bg-emerald-50/70 dark:bg-slate-950/60 border border-emerald-200 dark:border-emerald-500/30 rounded-2xl p-4 flex flex-col gap-1">
@@ -3636,8 +3636,8 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                         <span>Assiduité Globale</span>
                         <CheckCircle2 className="w-4 h-4" />
                       </div>
-                      <p className="text-2xl font-black text-emerald-950 dark:text-white">{riskData.global_attendance_rate ?? 100}%</p>
-                      <p className="text-[11px] text-emerald-600/80 dark:text-slate-400 font-medium">{riskData.total_sessions_evaluated ?? 1} séances évaluées</p>
+                      <p className="text-2xl font-bold text-emerald-950 dark:text-white">{riskData.global_attendance_rate ?? 100}%</p>
+                      <p className="text-[11px] text-emerald-600/80 dark:text-muted-foreground font-medium">{riskData.total_sessions_evaluated ?? 1} séances évaluées</p>
                     </div>
                   </div>
 
@@ -3647,7 +3647,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                       <Sparkles className="w-4 h-4 text-purple-600 dark:text-purple-400" />
                       <span>Diagnostic Synthétique du Copilote IA</span>
                     </div>
-                    <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
+                    <p className="text-xs text-slate-700 dark:text-foreground leading-relaxed font-medium">
                       {riskData.ai_summary}
                     </p>
                   </div>
@@ -3659,13 +3659,13 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                       <span>Étudiants exposés à l'élimination ({riskData.critical_students?.length ?? 0})</span>
                     </h4>
                     {riskData.critical_students?.length === 0 ? (
-                      <div className="bg-emerald-50 dark:bg-slate-950/40 border border-emerald-200 dark:border-slate-800 rounded-xl p-4 text-center text-xs text-emerald-700 dark:text-emerald-400 font-bold">
+                      <div className="bg-emerald-50 dark:bg-slate-950/40 border border-emerald-200 dark:border-border rounded-xl p-4 text-center text-xs text-emerald-700 dark:text-emerald-400 font-bold">
                         ✅ Aucun étudiant en situation critique d'exclusion pour ce groupe.
                       </div>
                     ) : (
-                      <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-2xs">
+                      <div className="border border-border dark:border-border rounded-xl overflow-hidden shadow-2xs">
                         <table className="w-full text-left text-xs">
-                          <thead className="bg-slate-50 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 font-bold uppercase text-[10px]">
+                          <thead className="bg-muted/50 dark:bg-slate-800/80 text-muted-foreground dark:text-muted-foreground font-bold uppercase text-[10px]">
                             <tr>
                               <th className="p-2.5">Étudiant(e)</th>
                               <th className="p-2.5">Matricule / CNE</th>
@@ -3674,13 +3674,13 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                               <th className="p-2.5">Statut Légal</th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900/60">
+                          <tbody className="divide-y divide-slate-100 dark:divide-slate-800 bg-card dark:bg-slate-900/60">
                             {riskData.critical_students.map((st: any) => (
-                              <tr key={st.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
-                                <td className="p-2.5 font-bold text-slate-900 dark:text-white">{st.name}</td>
-                                <td className="p-2.5 text-slate-500 dark:text-slate-400 font-mono text-[11px]">{st.matricule} • {st.cne}</td>
+                              <tr key={st.id} className="hover:bg-muted/50 dark:hover:bg-slate-800/40 transition-colors">
+                                <td className="p-2.5 font-bold text-foreground dark:text-white">{st.name}</td>
+                                <td className="p-2.5 text-muted-foreground dark:text-muted-foreground font-mono text-[11px]">{st.matricule} • {st.cne}</td>
                                 <td className="p-2.5 text-center font-bold text-rose-600 dark:text-rose-400">{st.unexcused_absences} séance{st.unexcused_absences > 1 ? 's' : ''}</td>
-                                <td className="p-2.5 text-center font-bold text-slate-900 dark:text-white">{st.attendance_rate}%</td>
+                                <td className="p-2.5 text-center font-bold text-foreground dark:text-white">{st.attendance_rate}%</td>
                                 <td className="p-2.5">
                                   <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300 border border-rose-200 dark:border-rose-500/30">
                                     Éliminatoire Art. 14
@@ -3696,11 +3696,11 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
 
                   {/* AI Recommendations */}
                   {riskData.ai_recommendations?.length > 0 && (
-                    <div className="bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl p-4 space-y-2">
+                    <div className="bg-muted/50 dark:bg-slate-950/60 border border-border dark:border-border rounded-xl p-4 space-y-2">
                       <div className="text-xs font-bold text-amber-600 dark:text-amber-300 uppercase tracking-wider">
                         💡 Recommandations Opérationnelles du Modèle IA :
                       </div>
-                      <ul className="space-y-1 text-xs text-slate-700 dark:text-slate-300 list-disc list-inside font-medium">
+                      <ul className="space-y-1 text-xs text-slate-700 dark:text-foreground list-disc list-inside font-medium">
                         {riskData.ai_recommendations.map((rec: string, idx: number) => (
                           <li key={idx} className="leading-relaxed">{rec}</li>
                         ))}
@@ -3709,19 +3709,19 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                   )}
                 </>
               ) : (
-                <div className="text-center py-10 text-xs text-slate-500">
+                <div className="text-center py-10 text-xs text-muted-foreground">
                   Aucune donnée d'assiduité disponible pour ce groupe.
                 </div>
               )}
             </div>
 
             {/* Footer */}
-            <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/90 flex items-center justify-between">
+            <div className="p-4 border-t border-border dark:border-border bg-slate-50/50 dark:bg-slate-900/90 flex items-center justify-between">
               <span className="text-[11px] text-slate-400 font-medium">Conforme à la Charte des Études ENCG Fès</span>
               <button
                 type="button"
                 onClick={() => setShowRiskModal(false)}
-                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition-colors cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-muted hover:bg-slate-200 dark:bg-card dark:hover:bg-slate-700 text-slate-700 dark:text-foreground text-xs font-bold transition-colors cursor-pointer"
               >
                 Fermer
               </button>
@@ -3733,23 +3733,23 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
       {/* ─── Solution 3: Dynamic Live QR Code Check-in Modal (Amphi & Salle) ───── */}
       {showLiveQrModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in">
-          <div className="relative w-full max-w-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+          <div className="relative w-full max-w-3xl bg-card dark:bg-card border border-border dark:border-border rounded-2xl shadow-sm overflow-hidden flex flex-col max-h-[92vh]">
             {/* Modal Header */}
-            <div className="p-5 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between">
+            <div className="p-5 border-b border-border dark:border-border bg-card dark:bg-card flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md shadow-emerald-500/20">
                   <Smartphone className="w-5 h-5" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="text-base font-black text-slate-900 dark:text-white">
+                    <h3 className="text-base font-bold text-foreground dark:text-white">
                       Flash Émargement Live (Amphi & Salle)
                     </h3>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300/60">
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300/60">
                       Séance {selectedSeance}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                  <p className="text-xs text-muted-foreground dark:text-muted-foreground">
                     Les étudiants scannent ce QR Code avec leur smartphone pour pointer leur présence en direct.
                   </p>
                 </div>
@@ -3768,7 +3768,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                       setIsFullscreenQr(false);
                     }
                   }}
-                  className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
+                  className="p-2 rounded-xl bg-muted hover:bg-slate-200 dark:bg-card dark:hover:bg-slate-700 text-muted-foreground dark:text-foreground transition-colors cursor-pointer"
                   title="Plein écran (Idéal pour Vidéoprojecteur d'Amphithéâtre)"
                 >
                   {isFullscreenQr ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
@@ -3776,7 +3776,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                 <button
                   type="button"
                   onClick={() => setShowLiveQrModal(false)}
-                  className="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  className="p-2 rounded-xl text-slate-400 hover:text-muted-foreground dark:hover:text-white hover:bg-muted dark:hover:bg-slate-800 transition-colors cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -3788,8 +3788,8 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
               {/* Dynamic QR Display & Live Metrics */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
                 {/* QR Code Centerpiece */}
-                <div className="flex flex-col items-center justify-center p-6 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl relative shadow-inner">
-                  <div className="p-4 bg-white rounded-2xl shadow-lg border border-slate-200">
+                <div className="flex flex-col items-center justify-center p-6 bg-muted/50 dark:bg-background border border-border dark:border-border rounded-2xl relative shadow-inner">
+                  <div className="p-4 bg-card rounded-2xl shadow-lg border border-border">
                     <QRCodeSVG
                       value={qrPayloadUrl}
                       size={240}
@@ -3818,16 +3818,16 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                     </div>
 
                     <div className="flex items-baseline gap-2">
-                      <span className="text-3xl font-black text-slate-900 dark:text-white">
+                      <span className="text-3xl font-bold text-foreground dark:text-white">
                         {students.length - absentIds.size + qrCheckedInIds.size}
                       </span>
-                      <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">
+                      <span className="text-sm font-semibold text-muted-foreground dark:text-muted-foreground">
                         / {students.length} étudiants ({Math.round(((students.length - absentIds.size + qrCheckedInIds.size) / Math.max(1, students.length)) * 100)}%)
                       </span>
                     </div>
 
                     {/* Progress Bar */}
-                    <div className="w-full bg-slate-200 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+                    <div className="w-full bg-slate-200 dark:bg-card h-2 rounded-full overflow-hidden">
                       <div
                         className="bg-emerald-500 h-full rounded-full transition-all duration-500"
                         style={{
@@ -3838,12 +3838,12 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                   </div>
 
                   {/* Projection Instructions for students */}
-                  <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-2xl p-4 text-xs space-y-2">
-                    <p className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                      <Info className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  <div className="bg-muted/50 dark:bg-slate-800/60 border border-border dark:border-slate-700/80 rounded-2xl p-4 text-xs space-y-2">
+                    <p className="font-bold text-foreground dark:text-white flex items-center gap-1.5">
+                      <Info className="w-4 h-4 text-primary dark:text-blue-400" />
                       <span>Consigne de projection en Amphi :</span>
                     </p>
-                    <ol className="list-decimal list-inside space-y-1 text-slate-600 dark:text-slate-300 leading-relaxed">
+                    <ol className="list-decimal list-inside space-y-1 text-muted-foreground dark:text-foreground leading-relaxed">
                       <li>Affichez cette fenêtre en plein écran sur le vidéoprojecteur.</li>
                       <li>Les étudiants ouvrent leur appareil photo ou l'application ENCG.</li>
                       <li>La présence est enregistrée instantanément sur votre écran.</li>
@@ -3867,8 +3867,8 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/90 flex items-center justify-between">
-              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+            <div className="p-4 border-t border-border dark:border-border bg-slate-50/50 dark:bg-slate-900/90 flex items-center justify-between">
+              <span className="text-xs text-muted-foreground dark:text-muted-foreground font-medium">
                 {qrCheckedInIds.size} pointage(s) live effectué(s) pendant cette session
               </span>
 
@@ -3876,7 +3876,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                 <button
                   type="button"
                   onClick={() => setShowLiveQrModal(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition-colors cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-muted hover:bg-slate-200 dark:bg-card dark:hover:bg-slate-700 text-slate-700 dark:text-foreground text-xs font-bold transition-colors cursor-pointer"
                 >
                   Fermer
                 </button>
@@ -3897,7 +3897,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
       {/* ─── Modal: Séance de Rattrapage & Appel des Absents ──────────── */}
       {showRattrapageModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
-          <div className="relative w-full max-w-4xl bg-white dark:bg-slate-900 border border-purple-200 dark:border-purple-900/60 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+          <div className="relative w-full max-w-4xl bg-card dark:bg-card border border-purple-200 dark:border-purple-900/60 rounded-2xl shadow-sm overflow-hidden flex flex-col max-h-[92vh]">
 
             {/* Header */}
             <div className="p-5 border-b border-purple-100 dark:border-purple-950/60 bg-gradient-to-r from-purple-50 via-indigo-50/50 to-white dark:from-purple-950/30 dark:via-slate-900 dark:to-slate-900 flex items-center justify-between gap-3">
@@ -3907,14 +3907,14 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                 </div>
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="text-base font-black text-slate-900 dark:text-white">
+                    <h3 className="text-base font-bold text-foreground dark:text-white">
                       Séance de Rattrapage & Appel des Absents
                     </h3>
-                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300 border border-purple-300 dark:border-purple-700">
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300 border border-purple-300 dark:border-purple-700">
                       Régularisation Officielle
                     </span>
                   </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-0.5">
                     Séance d'origine : <strong className="text-purple-700 dark:text-purple-300">{rattrapageTargetSeance}</strong> • {selectedModule?.module_name || 'Module'} ({selectedSection?.group_code || 'Groupe'})
                   </p>
                 </div>
@@ -3922,15 +3922,15 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
 
               {/* Quick Séance Selector & Close */}
               <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-2 py-1 text-xs font-bold">
+                <div className="flex items-center gap-1.5 bg-card dark:bg-card border border-border dark:border-border rounded-xl px-2 py-1 text-xs font-bold">
                   <span className="text-slate-400 text-[11px]">Cible :</span>
                   <select
                     value={rattrapageTargetSeance}
                     onChange={e => handleOpenRattrapageModal(e.target.value)}
-                    className="bg-transparent text-purple-700 dark:text-purple-300 font-black focus:outline-none cursor-pointer"
+                    className="bg-transparent text-purple-700 dark:text-purple-300 font-bold focus:outline-none cursor-pointer rounded-[var(--control-radius)]"
                   >
                     {SEANCES.map(s => (
-                      <option key={s} value={s} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
+                      <option key={s} value={s} className="bg-card dark:bg-card text-foreground dark:text-white">
                         {s} ({seanceStore[s]?.absentIds?.length ?? 0} abs.)
                       </option>
                     ))}
@@ -3940,7 +3940,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                 <button
                   type="button"
                   onClick={() => setShowRattrapageModal(false)}
-                  className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  className="p-1.5 rounded-xl text-slate-400 hover:text-muted-foreground dark:hover:text-white hover:bg-muted dark:hover:bg-slate-800 transition-colors cursor-pointer"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -3948,21 +3948,21 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
             </div>
 
             {/* Sub-Header & Metadata Configuration Ribbon */}
-            <div className="p-4 bg-slate-50/80 dark:bg-slate-900/60 border-b border-slate-100 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="p-4 bg-slate-50/80 dark:bg-slate-900/60 border-b border-border dark:border-border grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               <div>
-                <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+                <label className="block text-[11px] font-bold text-muted-foreground dark:text-muted-foreground uppercase tracking-wider mb-1">
                   Date du Rattrapage
                 </label>
                 <input
                   type="date"
                   value={rattrapageDate}
                   onChange={e => setRattrapageDate(e.target.value)}
-                  className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-1.5 text-xs text-slate-900 dark:text-white font-bold focus:outline-none focus:border-purple-500"
+                  className="w-full bg-card dark:bg-card border border-border dark:border-border px-3 py-1.5 text-xs text-foreground dark:text-white font-bold focus:outline-none focus:border-purple-500 rounded-[var(--control-radius)]"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+                <label className="block text-[11px] font-bold text-muted-foreground dark:text-muted-foreground uppercase tracking-wider mb-1">
                   Créneau Horaire
                 </label>
                 <input
@@ -3970,12 +3970,12 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                   value={rattrapageTime}
                   onChange={e => setRattrapageTime(e.target.value)}
                   placeholder="ex: 14:00 - 16:00"
-                  className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-1.5 text-xs text-slate-900 dark:text-white font-bold focus:outline-none focus:border-purple-500"
+                  className="w-full bg-card dark:bg-card border border-border dark:border-border px-3 py-1.5 text-xs text-foreground dark:text-white font-bold focus:outline-none focus:border-purple-500 rounded-[var(--control-radius)]"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+                <label className="block text-[11px] font-bold text-muted-foreground dark:text-muted-foreground uppercase tracking-wider mb-1">
                   Salle / Local
                 </label>
                 <input
@@ -3983,12 +3983,12 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                   value={rattrapageRoom}
                   onChange={e => setRattrapageRoom(e.target.value)}
                   placeholder="ex: Salle 14 ou Amphi 2"
-                  className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-1.5 text-xs text-slate-900 dark:text-white font-bold focus:outline-none focus:border-purple-500"
+                  className="w-full bg-card dark:bg-card border border-border dark:border-border px-3 py-1.5 text-xs text-foreground dark:text-white font-bold focus:outline-none focus:border-purple-500 rounded-[var(--control-radius)]"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+                <label className="block text-[11px] font-bold text-muted-foreground dark:text-muted-foreground uppercase tracking-wider mb-1">
                   Intitulé / Motif
                 </label>
                 <input
@@ -3996,21 +3996,21 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                   value={rattrapageTitle}
                   onChange={e => setRattrapageTitle(e.target.value)}
                   placeholder="ex: Rattrapage TD / Chapitre 3"
-                  className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-1.5 text-xs text-slate-900 dark:text-white font-bold focus:outline-none focus:border-purple-500"
+                  className="w-full bg-card dark:bg-card border border-border dark:border-border px-3 py-1.5 text-xs text-foreground dark:text-white font-bold focus:outline-none focus:border-purple-500 rounded-[var(--control-radius)]"
                 />
               </div>
             </div>
 
             {/* Mode Tabs (Feuille d'Appel / QR Code Flash / Historique) */}
-            <div className="flex items-center gap-2 px-5 pt-3 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
+            <div className="flex items-center gap-2 px-5 pt-3 border-b border-border dark:border-border bg-card dark:bg-card">
               <button
                 type="button"
                 onClick={() => setRattrapageTab('call')}
                 className={cn(
                   "flex items-center gap-2 pb-2.5 px-3 text-xs font-bold border-b-2 transition-all cursor-pointer",
                   rattrapageTab === 'call'
-                    ? "border-purple-600 text-purple-700 dark:text-purple-300 font-black"
-                    : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                    ? "border-purple-600 text-purple-700 dark:text-purple-300 font-bold"
+                    : "border-transparent text-muted-foreground hover:text-slate-700 dark:hover:text-slate-300"
                 )}
               >
                 <ClipboardList className="w-4 h-4" />
@@ -4023,8 +4023,8 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                 className={cn(
                   "flex items-center gap-2 pb-2.5 px-3 text-xs font-bold border-b-2 transition-all cursor-pointer",
                   rattrapageTab === 'qr'
-                    ? "border-purple-600 text-purple-700 dark:text-purple-300 font-black"
-                    : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                    ? "border-purple-600 text-purple-700 dark:text-purple-300 font-bold"
+                    : "border-transparent text-muted-foreground hover:text-slate-700 dark:hover:text-slate-300"
                 )}
               >
                 <Smartphone className="w-4 h-4" />
@@ -4037,8 +4037,8 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                 className={cn(
                   "flex items-center gap-2 pb-2.5 px-3 text-xs font-bold border-b-2 transition-all cursor-pointer",
                   rattrapageTab === 'history'
-                    ? "border-purple-600 text-purple-700 dark:text-purple-300 font-black"
-                    : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                    ? "border-purple-600 text-purple-700 dark:text-purple-300 font-bold"
+                    : "border-transparent text-muted-foreground hover:text-slate-700 dark:hover:text-slate-300"
                 )}
               >
                 <History className="w-4 h-4" />
@@ -4064,21 +4064,21 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                           </div>
                           <div>
                             <div className="flex items-center gap-2 flex-wrap">
-                              <span className="text-xs font-black text-slate-900 dark:text-white">
+                              <span className="text-xs font-bold text-foreground dark:text-white">
                                 Impact Réglementaire (Article 14 ENCG Fès)
                               </span>
-                              <span className="px-2 py-0.2 rounded-full text-[10px] font-extrabold bg-purple-200 dark:bg-purple-900/80 text-purple-900 dark:text-purple-200">
+                              <span className="px-2 py-0.2 rounded-full text-[10px] font-bold bg-purple-200 dark:bg-purple-900/80 text-purple-900 dark:text-purple-200">
                                 Seuil d'Exclusion : 3 Absences
                               </span>
                             </div>
-                            <p className="text-[11px] text-slate-600 dark:text-slate-300 mt-0.5">
-                              En validant ce rattrapage, <strong className="text-emerald-700 dark:text-emerald-400 font-black">{savedFromExclusion.length} étudiant(s)</strong> évitent l'exclusion directe des examens finaux, et <strong className="text-amber-700 dark:text-amber-400 font-bold">{pulledFromDanger.length}</strong> sortent de la zone rouge critique.
+                            <p className="text-[11px] text-muted-foreground dark:text-foreground mt-0.5">
+                              En validant ce rattrapage, <strong className="text-emerald-700 dark:text-emerald-400 font-bold">{savedFromExclusion.length} étudiant(s)</strong> évitent l'exclusion directe des examens finaux, et <strong className="text-amber-700 dark:text-amber-400 font-bold">{pulledFromDanger.length}</strong> sortent de la zone rouge critique.
                             </p>
                           </div>
                         </div>
 
                         {savedFromExclusion.length > 0 && (
-                          <span className="shrink-0 text-xs font-black px-2.5 py-1 rounded-xl bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 border border-rose-300 dark:border-rose-800">
+                          <span className="shrink-0 text-xs font-bold px-2.5 py-1 rounded-xl bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 border border-rose-300 dark:border-rose-800">
                             🚨 {savedFromExclusion.length} en danger d'exclusion
                           </span>
                         )}
@@ -4088,35 +4088,35 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
 
                   {/* KPI Summary Cards */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
-                      <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">Convoqués</span>
-                      <p className="text-xl font-black text-slate-900 dark:text-white mt-0.5">{rattrapageStudents.length}</p>
+                    <div className="p-3 rounded-2xl bg-muted/50 dark:bg-slate-800/60 border border-border dark:border-border">
+                      <span className="text-[10px] font-bold text-muted-foreground dark:text-muted-foreground uppercase">Convoqués</span>
+                      <p className="text-xl font-bold text-foreground dark:text-white mt-0.5">{rattrapageStudents.length}</p>
                     </div>
 
                     <div className="p-3 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800">
                       <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-300 uppercase">Présents (Rattrapés)</span>
-                      <p className="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5">
+                      <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
                         {rattrapageStudents.filter(s => s.status === 'present').length}
                       </p>
                     </div>
 
                     <div className="p-3 rounded-2xl bg-rose-50/70 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800">
                       <span className="text-[10px] font-bold text-rose-700 dark:text-rose-300 uppercase">Toujours Absents</span>
-                      <p className="text-xl font-black text-rose-600 dark:text-rose-400 mt-0.5">
+                      <p className="text-xl font-bold text-rose-600 dark:text-rose-400 mt-0.5">
                         {rattrapageStudents.filter(s => s.status === 'absent').length}
                       </p>
                     </div>
 
                     <div className="p-3 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
                       <span className="text-[10px] font-bold text-amber-700 dark:text-amber-300 uppercase">Retards / Excusés</span>
-                      <p className="text-xl font-black text-amber-600 dark:text-amber-400 mt-0.5">
+                      <p className="text-xl font-bold text-amber-600 dark:text-amber-400 mt-0.5">
                         {rattrapageStudents.filter(s => s.status === 'retard' || s.status === 'excuse').length}
                       </p>
                     </div>
                   </div>
 
                   {/* Actions & Filters Ribbon */}
-                  <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-50/60 dark:bg-slate-800/40 p-3 rounded-2xl border border-slate-200 dark:border-slate-700/70">
+                  <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-50/60 dark:bg-slate-800/40 p-3 rounded-2xl border border-border dark:border-slate-700/70">
                     <div className="flex items-center gap-2 flex-wrap">
                       <button
                         type="button"
@@ -4130,7 +4130,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                       <button
                         type="button"
                         onClick={() => handleSetAllRattrapageStatus('absent')}
-                        className="px-3 py-1.5 rounded-xl bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-xs font-bold transition-all cursor-pointer"
+                        className="px-3 py-1.5 rounded-xl bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-foreground text-xs font-bold transition-all cursor-pointer"
                       >
                         <span>Tous Absents</span>
                       </button>
@@ -4152,7 +4152,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                       </button>
 
                       {/* Status Filter */}
-                      <div className="flex items-center bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-0.5 text-xs font-bold">
+                      <div className="flex items-center bg-card dark:bg-card border border-border dark:border-border rounded-xl p-0.5 text-xs font-bold">
                         <button
                           type="button"
                           onClick={() => setRattrapageStatusFilter('all')}
@@ -4186,7 +4186,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                           value={rattrapageSearchQuery}
                           onChange={e => setRattrapageSearchQuery(e.target.value)}
                           placeholder="Rechercher étudiant..."
-                          className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-8 pr-3 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-purple-500"
+                          className="w-full bg-card dark:bg-card border border-border dark:border-border pl-8 pr-3 py-1.5 text-xs text-foreground dark:text-white focus:outline-none focus:border-purple-500 rounded-[var(--control-radius)]"
                         />
                       </div>
 
@@ -4198,7 +4198,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                             const val = e.target.value ? Number(e.target.value) : null;
                             if (val) handleAddStudentToRattrapage(val);
                           }}
-                          className="bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 rounded-xl px-2.5 py-1.5 text-xs font-bold focus:outline-none cursor-pointer max-w-[160px] truncate"
+                          className="bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 px-2.5 py-1.5 text-xs font-bold focus:outline-none cursor-pointer max-w-[160px] truncate rounded-[var(--control-radius)]"
                         >
                           <option value="">+ Ajouter étudiant...</option>
                           {students
@@ -4215,10 +4215,10 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
 
                   {/* Student List */}
                   {rattrapageStudents.length === 0 ? (
-                    <div className="text-center py-12 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl p-6">
+                    <div className="text-center py-12 border-2 border-dashed border-border dark:border-border rounded-2xl p-6">
                       <UserCheck className="w-12 h-12 text-emerald-500 mx-auto mb-3" />
-                      <h4 className="text-sm font-bold text-slate-900 dark:text-white">Aucun absent sur la séance {rattrapageTargetSeance}</h4>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-md mx-auto">
+                      <h4 className="text-sm font-bold text-foreground dark:text-white">Aucun absent sur la séance {rattrapageTargetSeance}</h4>
+                      <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-1 max-w-md mx-auto">
                         Tous les étudiants étaient présents lors de cette séance principale. Vous pouvez néanmoins ajouter manuellement un étudiant qui souhaite rattraper un cours.
                       </p>
                     </div>
@@ -4249,7 +4249,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                                   ? "bg-emerald-50/60 dark:bg-emerald-950/20 border-emerald-300 dark:border-emerald-800/80"
                                   : isAbs
                                     ? "bg-rose-50/40 dark:bg-rose-950/20 border-rose-200 dark:border-rose-900/60"
-                                    : "bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700"
+                                    : "bg-muted/50 dark:bg-slate-800/50 border-border dark:border-border"
                               )}
                             >
                               {/* Student Info */}
@@ -4263,11 +4263,11 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
 
                                 <div>
                                   <div className="flex items-center gap-2 flex-wrap">
-                                    <span className="text-xs font-bold text-slate-900 dark:text-white">
+                                    <span className="text-xs font-bold text-foreground dark:text-white">
                                       {item.student.last_name} {item.student.first_name}
                                     </span>
                                     {item.student.sub_group && (
-                                      <span className="px-1.5 py-0.2 rounded bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-[10px] font-mono font-bold">
+                                      <span className="px-1.5 py-0.2 rounded bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-foreground text-[10px] font-mono font-bold">
                                         {item.student.sub_group}
                                       </span>
                                     )}
@@ -4275,7 +4275,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                                       const unexcused = studentAbsenceCounts[item.student.id] || 0;
                                       if (unexcused >= 3) {
                                         return (
-                                          <span className="px-1.5 py-0.2 rounded-full bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 text-[10px] font-black border border-rose-300" title="Article 14 : Seuil d'exclusion atteint">
+                                          <span className="px-1.5 py-0.2 rounded-full bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 text-[10px] font-bold border border-rose-300" title="Article 14 : Seuil d'exclusion atteint">
                                             🚨 Seuil Art. 14 Dépassé ({unexcused} abs.)
                                           </span>
                                         );
@@ -4287,7 +4287,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                                         );
                                       }
                                       return (
-                                        <span className="px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 text-[10px] font-mono">
+                                        <span className="px-1.5 py-0.2 rounded bg-muted text-muted-foreground dark:bg-card dark:text-muted-foreground text-[10px] font-mono">
                                           {unexcused}/3 abs.
                                         </span>
                                       );
@@ -4319,8 +4319,8 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                                   className={cn(
                                     "px-2.5 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1",
                                     isPres
-                                      ? "bg-emerald-600 text-white shadow-xs font-black ring-2 ring-emerald-500/30"
-                                      : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-emerald-400"
+                                      ? "bg-emerald-600 text-white shadow-xs font-bold ring-2 ring-emerald-500/30"
+                                      : "bg-card dark:bg-card text-muted-foreground dark:text-foreground border border-border dark:border-border hover:border-emerald-400"
                                   )}
                                 >
                                   <Check className="w-3.5 h-3.5" />
@@ -4333,8 +4333,8 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                                   className={cn(
                                     "px-2.5 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1",
                                     isAbs
-                                      ? "bg-rose-600 text-white shadow-xs font-black ring-2 ring-rose-500/30"
-                                      : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-rose-400"
+                                      ? "bg-rose-600 text-white shadow-xs font-bold ring-2 ring-rose-500/30"
+                                      : "bg-card dark:bg-card text-muted-foreground dark:text-foreground border border-border dark:border-border hover:border-rose-400"
                                   )}
                                 >
                                   <UserX className="w-3.5 h-3.5" />
@@ -4347,8 +4347,8 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                                   className={cn(
                                     "px-2 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer",
                                     isRet
-                                      ? "bg-amber-500 text-white shadow-xs font-black"
-                                      : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-amber-400"
+                                      ? "bg-amber-500 text-white shadow-xs font-bold"
+                                      : "bg-card dark:bg-card text-muted-foreground dark:text-foreground border border-border dark:border-border hover:border-amber-400"
                                   )}
                                 >
                                   Retard
@@ -4360,8 +4360,8 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                                   className={cn(
                                     "px-2 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer",
                                     isExc
-                                      ? "bg-sky-600 text-white shadow-xs font-black"
-                                      : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-sky-400"
+                                      ? "bg-sky-600 text-white shadow-xs font-bold"
+                                      : "bg-card dark:bg-card text-muted-foreground dark:text-foreground border border-border dark:border-border hover:border-sky-400"
                                   )}
                                 >
                                   Excusé
@@ -4373,7 +4373,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                                   value={item.note}
                                   onChange={e => handleUpdateRattrapageNote(item.student.id, e.target.value)}
                                   placeholder="Note / Observation..."
-                                  className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-2.5 py-1 text-xs text-slate-900 dark:text-white max-w-[140px] focus:outline-none focus:border-purple-500"
+                                  className="bg-card dark:bg-card border border-border dark:border-border px-2.5 py-1 text-xs text-foreground dark:text-white max-w-[140px] focus:outline-none focus:border-purple-500 rounded-[var(--control-radius)]"
                                 />
 
                                 {/* Remove Button */}
@@ -4393,8 +4393,8 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                   )}
 
                   {/* Regularization & Textbook Options Checkboxes */}
-                  <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700 dark:text-slate-300">
+                  <div className="pt-2 border-t border-border dark:border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700 dark:text-foreground">
                       <input
                         type="checkbox"
                         checked={autoRegularizeOriginal}
@@ -4424,8 +4424,8 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
               {/* TAB 2: FLASH QR PRÉSENCE (RATTRAPAGE) */}
               {rattrapageTab === 'qr' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center p-2">
-                  <div className="flex flex-col items-center justify-center p-6 bg-slate-50 dark:bg-slate-950 border border-purple-200 dark:border-purple-900/60 rounded-3xl relative shadow-inner">
-                    <div className="p-4 bg-white rounded-2xl shadow-lg border border-purple-200">
+                  <div className="flex flex-col items-center justify-center p-6 bg-muted/50 dark:bg-background border border-purple-200 dark:border-purple-900/60 rounded-2xl relative shadow-inner">
+                    <div className="p-4 bg-card rounded-2xl shadow-lg border border-purple-200">
                       <QRCodeSVG
                         value={`${window.location.origin}/student/attendance/check-in?seance=${rattrapageTargetSeance}-RAT&group=${selectedGroupId}&date=${rattrapageDate}&time=${Date.now()}`}
                         size={220}
@@ -4451,21 +4451,21 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                       </div>
 
                       <div className="flex items-baseline gap-2">
-                        <span className="text-3xl font-black text-slate-900 dark:text-white">
+                        <span className="text-3xl font-bold text-foreground dark:text-white">
                           {rattrapageStudents.filter(s => s.status === 'present').length}
                         </span>
-                        <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">
+                        <span className="text-sm font-semibold text-muted-foreground dark:text-muted-foreground">
                           / {rattrapageStudents.length} étudiants convoqués
                         </span>
                       </div>
                     </div>
 
-                    <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 text-xs space-y-2">
-                      <p className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                    <div className="bg-muted/50 dark:bg-slate-800/60 border border-border dark:border-border rounded-2xl p-4 text-xs space-y-2">
+                      <p className="font-bold text-foreground dark:text-white flex items-center gap-1.5">
                         <Info className="w-4 h-4 text-purple-600 dark:text-purple-400" />
                         <span>Consignes pour les étudiants en rattrapage :</span>
                       </p>
-                      <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
+                      <p className="text-muted-foreground dark:text-foreground leading-relaxed">
                         Projetez ce QR Code dans la salle de rattrapage ({rattrapageRoom || 'Salle dédiée'}). Les étudiants absents le scannent pour valider leur présence et régulariser automatiquement leur absence de {rattrapageTargetSeance}.
                       </p>
                     </div>
@@ -4486,10 +4486,10 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
               {rattrapageTab === 'history' && (
                 <div className="space-y-3">
                   {(!seanceStore[rattrapageTargetSeance]?.rattrapages || seanceStore[rattrapageTargetSeance]?.rattrapages?.length === 0) ? (
-                    <div className="text-center py-12 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl p-6">
+                    <div className="text-center py-12 border-2 border-dashed border-border dark:border-border rounded-2xl p-6">
                       <History className="w-10 h-10 text-slate-400 mx-auto mb-2" />
-                      <h4 className="text-sm font-bold text-slate-900 dark:text-white">Aucun rattrapage enregistré pour {rattrapageTargetSeance}</h4>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                      <h4 className="text-sm font-bold text-foreground dark:text-white">Aucun rattrapage enregistré pour {rattrapageTargetSeance}</h4>
+                      <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-1">
                         Les séances de rattrapage effectuées pour cette séance seront archivées ici avec la liste des étudiants régularisés.
                       </p>
                     </div>
@@ -4499,25 +4499,25 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                       return (
                         <div
                           key={rat.id || idx}
-                          className="p-4 rounded-2xl bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 space-y-2 shadow-2xs"
+                          className="p-4 rounded-2xl bg-card dark:bg-slate-800/80 border border-border dark:border-border space-y-2 shadow-2xs"
                         >
                           <div className="flex items-center justify-between gap-2 flex-wrap">
                             <div className="flex items-center gap-2">
                               <span className="p-1.5 rounded-lg bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 font-bold text-xs">
                                 Rattrapage #{idx + 1}
                               </span>
-                              <span className="text-xs font-black text-slate-900 dark:text-white">
+                              <span className="text-xs font-bold text-foreground dark:text-white">
                                 {rat.title || `Rattrapage ${rat.originalSeance}`}
                               </span>
                             </div>
 
-                            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 font-mono">
+                            <span className="text-xs font-bold text-muted-foreground dark:text-muted-foreground font-mono">
                               Date : {rat.date} • {rat.timeSlot} • {rat.room}
                             </span>
                           </div>
 
                           <div className="flex items-center justify-between text-xs pt-1 flex-wrap gap-2">
-                            <span className="font-semibold text-slate-600 dark:text-slate-300">
+                            <span className="font-semibold text-muted-foreground dark:text-foreground">
                               Bilan de présence : <strong className="text-emerald-600 dark:text-emerald-400">{presentCount} régularisé(s)</strong> sur {rat.records.length} convoqué(s)
                             </span>
                             <div className="flex items-center gap-2">
@@ -4546,7 +4546,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
 
             {/* Modal Footer */}
             <div className="p-4 border-t border-purple-100 dark:border-purple-950/60 bg-slate-50/50 dark:bg-slate-900/90 flex items-center justify-between flex-wrap gap-2">
-              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+              <span className="text-xs text-muted-foreground dark:text-muted-foreground font-medium">
                 {rattrapageStudents.filter(s => s.status === 'present').length} présence(s) à régulariser
               </span>
 
@@ -4569,7 +4569,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                 <button
                   type="button"
                   onClick={() => setShowRattrapageModal(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition-colors cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-muted hover:bg-slate-200 dark:bg-card dark:hover:bg-slate-700 text-slate-700 dark:text-foreground text-xs font-bold transition-colors cursor-pointer"
                 >
                   Annuler
                 </button>
@@ -4615,10 +4615,10 @@ function StatCard({ label, value, icon, color }: {
   return (
     <div className={cn('border rounded-2xl p-4 flex flex-col gap-2 shadow-2xs transition-all', colorMap[color])}>
       <div className="flex items-center justify-between">
-        <span className="text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider font-bold">{label}</span>
+        <span className="text-muted-foreground dark:text-muted-foreground text-xs uppercase tracking-wider font-bold">{label}</span>
         <span className="text-base">{icon}</span>
       </div>
-      <p className="text-2xl font-black">{value}</p>
+      <p className="text-2xl font-bold">{value}</p>
     </div>
   );
 }
@@ -4637,14 +4637,14 @@ function PdfModeCard({ active, onClick, icon, title, subtitle }: {
         'relative flex flex-col items-start gap-2 p-3.5 rounded-2xl border text-left transition-all cursor-pointer',
         active
           ? 'bg-blue-50/80 dark:bg-emerald-950/30 border-[#001A4B] dark:border-emerald-500 ring-2 ring-[#001A4B]/20 dark:ring-emerald-500/40 shadow-sm'
-          : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-slate-300'
+          : "bg-card dark:bg-card border-border dark:border-border hover:border-slate-300"
       )}
     >
       {active && <CheckCircle2 className="absolute top-2.5 right-2.5 w-4 h-4 text-[#001A4B] dark:text-emerald-400" />}
       <div className={cn('p-1.5 rounded-lg', active ? 'text-[#001A4B] dark:text-emerald-400' : 'text-slate-400')}>{icon}</div>
       <div>
-        <p className={cn('text-sm font-bold', active ? 'text-[#001A4B] dark:text-white' : 'text-slate-700 dark:text-slate-300')}>{title}</p>
-        <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">{subtitle}</p>
+        <p className={cn('text-sm font-bold', active ? 'text-[#001A4B] dark:text-white' : "text-slate-700 dark:text-foreground")}>{title}</p>
+        <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">{subtitle}</p>
       </div>
     </button>
   );
@@ -4657,8 +4657,8 @@ function NoModulesPlaceholder() {
         <ShieldAlert className="w-12 h-12 text-amber-600 dark:text-amber-400" />
       </div>
       <div className="text-center max-w-md">
-        <h3 className="text-slate-900 dark:text-white font-bold text-lg mb-2">Aucun module affecté</h3>
-        <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">
+        <h3 className="text-foreground dark:text-white font-bold text-lg mb-2">Aucun module affecté</h3>
+        <p className="text-muted-foreground dark:text-muted-foreground text-sm leading-relaxed">
           Vous n'avez pas encore de modules pédagogiques affectés pour cette année universitaire. Veuillez contacter la direction des études de l'ENCG Fès.
         </p>
       </div>

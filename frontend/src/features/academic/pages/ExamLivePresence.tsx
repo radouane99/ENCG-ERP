@@ -32,7 +32,7 @@ export default function ExamLivePresence() {
             <Eye className="w-6 h-6 text-pink-600" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-pink-600 italic">Dashboard Live Présences</h1>
+            <h1 className="text-pink-600 italic erp-page-title">Dashboard Live Présences</h1>
             <p className="text-white/50 text-xs">Suivi en temps réel : Avancé - Génie Informatique â€” Groupe 2</p>
           </div>
         </div>
@@ -41,7 +41,7 @@ export default function ExamLivePresence() {
           <button className="bg-[#e91e63] hover:bg-[#c2185b] text-white px-4 py-2 rounded-lg font-bold text-sm uppercase tracking-wide flex items-center gap-2">
             <Download className="w-4 h-4" /> Télécharger Rapport PDF
           </button>
-          <Link to="/academic/exam-planning" className="bg-white hover:bg-white/5 border border-white/10 text-foreground px-4 py-2 rounded-lg font-bold text-sm uppercase tracking-wide flex items-center gap-2">
+          <Link to="/academic/exam-planning" className="bg-card hover:bg-white/5 border border-white/10 text-foreground px-4 py-2 rounded-lg font-bold text-sm uppercase tracking-wide flex items-center gap-2">
             <ArrowLeft className="w-4 h-4" /> Retour aux examens
           </Link>
         </div>
@@ -59,27 +59,27 @@ export default function ExamLivePresence() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <div className="bg-white/5/30 border border-white/10 rounded-xl p-5 relative overflow-hidden">
             <div className="text-xs font-bold text-white/50 uppercase mb-1">Total Étudiants</div>
-            <div className="text-4xl font-black">{stats?.total_students || 0}</div>
+            <div className="text-4xl font-bold">{stats?.total_students || 0}</div>
             <Users className="absolute right-[-10px] bottom-[-10px] w-24 h-24 text-white/50/10" />
           </div>
 
           <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-5 relative overflow-hidden">
             <div className="text-xs font-bold text-emerald-600 uppercase mb-1">Présents</div>
-            <div className="text-4xl font-black text-emerald-700">{stats?.present || 0}</div>
+            <div className="text-4xl font-bold text-emerald-700">{stats?.present || 0}</div>
             <CheckCircle2 className="absolute right-[-10px] bottom-[-10px] w-24 h-24 text-emerald-600/10" />
           </div>
 
           <div className="bg-red-50 border border-red-100 rounded-xl p-5 relative overflow-hidden">
             <div className="text-xs font-bold text-red-600 uppercase mb-1">Absents / En attente</div>
-            <div className="text-4xl font-black text-red-700">
+            <div className="text-4xl font-bold text-red-700">
               {stats ? stats.total_students - stats.present : 0}
             </div>
             <XCircle className="absolute right-[-10px] bottom-[-10px] w-24 h-24 text-red-600/10" />
           </div>
 
-          <div className="bg-blue-50 border border-blue-100 rounded-xl p-5 relative overflow-hidden flex flex-col justify-center">
-            <div className="text-xs font-bold text-blue-600 uppercase mb-1">Taux de présence</div>
-            <div className="text-4xl font-black text-blue-700">{percentage}%</div>
+          <div className="bg-primary/5 border border-primary/20 rounded-xl p-5 relative overflow-hidden flex flex-col justify-center">
+            <div className="text-xs font-bold text-primary uppercase mb-1">Taux de présence</div>
+            <div className="text-4xl font-bold text-primary">{percentage}%</div>
           </div>
         </div>
 
@@ -96,7 +96,7 @@ export default function ExamLivePresence() {
           </div>
         </div>
 
-        <div className="bg-white border border-white/10 rounded-xl shadow-sm overflow-hidden">
+        <div className="bg-card border border-white/10 rounded-xl shadow-sm overflow-hidden">
           <div className="p-4 border-b border-white/10 flex justify-between items-center bg-white/5/10">
             <h3 className="font-bold">Journal des scans (Flux en direct)</h3>
             <button className="text-pink-600 text-xs font-bold flex items-center gap-1 bg-pink-50 px-2 py-1 rounded">

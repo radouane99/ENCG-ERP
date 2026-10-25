@@ -13,10 +13,10 @@ export default function ClubsPage() {
   ])
 
   return (
-    <div className="space-y-6 animate-in p-6">
+    <div className="space-y-6 animate-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t('clubs.title')}</h1>
+          <h1 className="erp-page-title">{t('clubs.title')}</h1>
           <p className="text-muted-foreground text-sm mt-1">{t('clubs.subtitle')}</p>
         </div>
       </div>

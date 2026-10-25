@@ -36,19 +36,19 @@ export default function StudentProjectsMarket() {
   }
 
   return (
-    <div className="max-w-[1200px] mx-auto p-4 md:p-8 space-y-8 font-sans animate-in fade-in zoom-in duration-500 pb-24">
+    <div className="max-w-[1200px] mx-auto space-y-8 font-sans animate-in fade-in zoom-in duration-500 pb-24">
       
       {/* Header Banner */}
-      <div className="bg-[#0b1021] rounded-[2rem] p-8 md:p-12 relative overflow-hidden shadow-2xl border border-white/10">
+      <div className="bg-[#0b1021] rounded-2xl p-8 md:p-12 relative overflow-hidden shadow-sm border border-white/10">
         <div className="absolute inset-0 opacity-20 pointer-events-none" 
              style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '24px 24px' }}>
         </div>
         
         <div className="relative z-10">
-          <div className="inline-flex items-center gap-2 bg-[#e6007e]/20 text-[#ff66b2] px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-4 border border-[#e6007e]/30">
+          <div className="inline-flex items-center gap-2 bg-[#e6007e]/20 text-[#ff66b2] px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mb-4 border border-[#e6007e]/30">
             <Briefcase className="w-3.5 h-3.5" /> Réseau Partenaires ENCG
           </div>
-          <h1 className="text-4xl font-black text-white mb-2">Bourse aux Projets & PFE</h1>
+          <h1 className="text-white mb-2 erp-page-title">Bourse aux Projets & PFE</h1>
           <p className="text-gray-400 text-lg max-w-2xl">
             Découvrez les offres exclusives de nos entreprises partenaires et postulez en un clic avec votre profil vérifié.
           </p>
@@ -61,7 +61,7 @@ export default function StudentProjectsMarket() {
             <input 
               type="text" 
               placeholder="Rechercher une offre, une entreprise, un mot-clé..." 
-              className="w-full bg-white/10 border border-white/20 rounded-xl py-3 pl-12 pr-4 text-white placeholder:text-white/50 focus:outline-none focus:border-[#e6007e] focus:bg-white/15 transition-all"
+              className="w-full bg-white/10 border border-white/20 py-3 pl-12 pr-4 text-white placeholder:text-white/50 focus:outline-none focus:border-[#e6007e] focus:bg-white/15 transition-all rounded-[var(--control-radius)]"
             />
           </div>
           <button className="bg-[#e6007e] text-white px-6 py-3 rounded-xl font-bold hover:bg-[#c4006c] transition-colors shadow-lg">
@@ -76,7 +76,7 @@ export default function StudentProjectsMarket() {
         {/* Sidebar Filters */}
         <div className="w-full md:w-64 shrink-0 space-y-6">
           <div className="bg-card rounded-2xl p-6 shadow-sm border border-border">
-            <h3 className="text-sm font-black text-foreground uppercase tracking-widest mb-4 flex items-center gap-2">
+            <h3 className="text-sm font-bold text-foreground uppercase tracking-widest mb-4 flex items-center gap-2">
               <Filter className="w-4 h-4" /> Type d'Offre
             </h3>
             <div className="space-y-2">
@@ -105,7 +105,7 @@ export default function StudentProjectsMarket() {
         {/* Job Cards */}
         <div className="flex-1 space-y-4">
           {filteredOffers.map((offer) => (
-            <div key={offer.id} className="bg-card rounded-[1.5rem] p-6 shadow-sm border border-border hover:shadow-md hover:border-primary/20 transition-all group flex flex-col md:flex-row gap-6">
+            <div key={offer.id} className="bg-card rounded-2xl p-6 shadow-sm border border-border hover:shadow-md hover:border-primary/20 transition-all group flex flex-col md:flex-row gap-6">
               
               <div className="w-16 h-16 rounded-2xl bg-muted border border-border flex items-center justify-center shrink-0 p-2 overflow-hidden">
                 <img src={offer.logo} alt={offer.company} className="max-w-full max-h-full object-contain" />
@@ -114,7 +114,7 @@ export default function StudentProjectsMarket() {
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
                   <span className={cn(
-                    "px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider",
+                    "px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider",
                     offer.type === 'PFE' ? "bg-purple-500/10 text-purple-500 border border-purple-500/20" : "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20"
                   )}>
                     {offer.type}
@@ -122,7 +122,7 @@ export default function StudentProjectsMarket() {
                   <span className="text-muted-foreground text-xs font-bold">• {offer.company}</span>
                 </div>
                 
-                <h3 className="text-xl font-black text-foreground group-hover:text-primary transition-colors mb-3">
+                <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors mb-3">
                   {offer.title}
                 </h3>
                 

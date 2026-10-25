@@ -328,7 +328,7 @@ export default function AdminTimetableEnginePage() {
   const STEP_ICONS = [Clock, Sparkles, Sliders, Users, Check]
 
   return (
-    <div className="max-w-[1440px] mx-auto p-4 md:p-6 space-y-5 font-sans pb-28">
+    <div className="max-w-[1440px] mx-auto space-y-5 font-sans pb-28">
 
       {/* ══════════════════════════════════════════════════════
           HERO HEADER
@@ -342,7 +342,7 @@ export default function AdminTimetableEnginePage() {
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-bold uppercase tracking-widest text-blue-300/80">Direction des études · ENCG Fès</span>
             </div>
-            <h1 className="text-2xl md:text-3xl font-black tracking-tight text-white">
+            <h1 className="text-white erp-page-title">
               Génération des Emplois du Temps
             </h1>
             <p className="text-sm text-blue-200/70 font-medium max-w-xl">
@@ -382,10 +382,10 @@ export default function AdminTimetableEnginePage() {
       {workspace?.readiness && <SemesterReadinessPanel data={workspace.readiness} />}
       {!!simResult?.input_issues?.length && <div role="alert" className="rounded-xl border border-amber-300 p-4 text-sm text-amber-800 dark:text-amber-300"><p className="font-bold">Données à compléter avant génération</p><ul className="list-disc pl-5">{simResult.input_issues.slice(0, 10).map(issue => <li key={issue}>{issue}</li>)}</ul></div>}
       {!!simResult?.unplaced_count && <p role="status" className="text-sm text-amber-800 dark:text-amber-300">{simResult.unplaced_count} séances non placées : revoir les disponibilités, capacités et plafonds de charge.</p>}
-      <div className="rounded-xl border border-slate-200 bg-white p-4 text-sm dark:border-slate-700 dark:bg-slate-900">
+      <div className="rounded-xl border border-border bg-card p-4 text-sm dark:border-border dark:bg-card">
         <label htmlFor="teaching-weeks" className="font-semibold">Semaines d’enseignement prévues</label>
-        <input id="teaching-weeks" type="number" min={1} max={30} value={teachingWeeks} onChange={event => setTeachingWeeks(Math.min(30, Math.max(1, Number(event.target.value) || 1)))} className="ml-3 w-20 rounded-lg border p-2 dark:bg-slate-800" />
-        <p className="mt-2 text-xs text-slate-500">La génération propose une semaine type en créneaux de 2 h. Ajustez les séances ponctuelles pour respecter les volumes affectés.</p>
+        <input id="teaching-weeks" type="number" min={1} max={30} value={teachingWeeks} onChange={event => setTeachingWeeks(Math.min(30, Math.max(1, Number(event.target.value) || 1)))} className="ml-3 w-20 border p-2 dark:bg-card rounded-[var(--control-radius)]" />
+        <p className="mt-2 text-xs text-muted-foreground">La génération propose une semaine type en créneaux de 2 h. Ajustez les séances ponctuelles pour respecter les volumes affectés.</p>
       </div>
 
       {/* ══════════════════════════════════════════════════════
@@ -400,18 +400,18 @@ export default function AdminTimetableEnginePage() {
             <React.Fragment key={step.id}>
               <div className={cn(
                 'flex flex-col items-center flex-1 min-w-0 px-2 py-3 rounded-2xl transition-all',
-                isActive ? 'bg-white dark:bg-slate-900 border border-indigo-200 dark:border-indigo-800 shadow-sm' : ''
+                isActive ? "bg-card dark:bg-card border border-primary/20 dark:border-primary shadow-sm" : ''
               )}>
                 <div className={cn(
-                  'w-8 h-8 rounded-xl flex items-center justify-center mb-2 text-xs font-black transition-all',
-                  isActive ? 'text-white' : isDone ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-600' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'
+                  "w-8 h-8 rounded-xl flex items-center justify-center mb-2 text-xs font-bold transition-all",
+                  isActive ? 'text-white' : isDone ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-600' : "bg-muted dark:bg-card text-slate-400"
                 )} style={isActive ? { background: 'linear-gradient(135deg, #4f46e5, #7c3aed)' } : {}}>
                   {isDone ? <Check size={14} /> : <StepIcon size={14} />}
                 </div>
-                <p className={cn('text-[9px] font-bold uppercase tracking-widest mb-0.5', isActive ? 'text-indigo-500' : isDone ? 'text-emerald-500' : 'text-slate-400')}>
+                <p className={cn('text-[9px] font-bold uppercase tracking-widest mb-0.5', isActive ? "text-primary" : isDone ? 'text-emerald-500' : 'text-slate-400')}>
                   Étape {step.id}
                 </p>
-                <p className={cn('text-xs font-black text-center leading-tight', isActive ? 'text-slate-900 dark:text-slate-100' : isDone ? 'text-slate-600 dark:text-slate-400' : 'text-slate-400')}>
+                <p className={cn("text-xs font-bold text-center leading-tight", isActive ? "text-foreground dark:text-foreground" : isDone ? "text-muted-foreground dark:text-muted-foreground" : 'text-slate-400')}>
                   {step.label}
                 </p>
                 <p className={cn('text-[10px] text-center mt-0.5 hidden md:block', isActive ? 'text-indigo-400' : 'text-slate-300 dark:text-slate-600')}>
@@ -431,7 +431,7 @@ export default function AdminTimetableEnginePage() {
       {/* ══════════════════════════════════════════════════════
           TAB SWITCHER
       ══════════════════════════════════════════════════════ */}
-      <div className="flex gap-1 p-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 w-full md:w-fit">
+      <div className="flex gap-1 p-1 rounded-xl bg-muted dark:bg-card border border-border dark:border-border w-full md:w-fit">
         {([
           { id: 'filieres' as const, label: 'Filières à traiter', icon: Filter },
           { id: 'official' as const, label: 'Grille officielle', icon: FileText },
@@ -444,8 +444,8 @@ export default function AdminTimetableEnginePage() {
             className={cn(
               'flex items-center gap-1.5 flex-1 md:flex-none h-9 px-4 rounded-lg text-xs font-bold transition-all cursor-pointer',
               workMode === tab.id
-                ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
-                : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                ? "bg-card dark:bg-slate-700 text-primary dark:text-indigo-400 shadow-sm"
+                : "text-muted-foreground hover:text-foreground dark:hover:text-slate-200"
             )}
           >
             <tab.icon size={13} />
@@ -457,13 +457,13 @@ export default function AdminTimetableEnginePage() {
       {/* ══════════════════════════════════════════════════════
           FILTER BAR
       ══════════════════════════════════════════════════════ */}
-      <section className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 space-y-4">
+      <section className="rounded-2xl border border-border dark:border-border bg-card dark:bg-card p-5 space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-sm font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
-            <Filter className="w-4 h-4 text-indigo-500" />
+          <h2 className="text-sm font-bold text-foreground dark:text-foreground flex items-center gap-2">
+            <Filter className="w-4 h-4 text-primary" />
             Périmètre de travail
           </h2>
-          <button type="button" onClick={handleResetAll} className="flex items-center gap-1.5 h-8 px-3 rounded-xl text-xs font-bold text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer">
+          <button type="button" onClick={handleResetAll} className="flex items-center gap-1.5 h-8 px-3 rounded-xl text-xs font-bold text-muted-foreground hover:text-foreground dark:hover:text-slate-200 hover:bg-muted/50 dark:hover:bg-slate-800 transition-all cursor-pointer">
             <RotateCcw className="w-3.5 h-3.5" /> Tout réinitialiser
           </button>
         </div>
@@ -475,7 +475,7 @@ export default function AdminTimetableEnginePage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="TC, GFC, MCM…"
-              className={cn(selectClass, 'pl-9')}
+              className={cn(selectClass, "pl-9 rounded-[var(--control-radius)]")}
             />
           </div>
           <select value={selectedFiliere} onChange={(e) => setSelectedFiliere(e.target.value)} className={selectClass}>
@@ -527,8 +527,8 @@ export default function AdminTimetableEnginePage() {
       {workMode === 'filieres' && (
         <section className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-              <span className="font-black text-slate-700 dark:text-slate-300">{filteredCards.length}</span> filière{filteredCards.length > 1 ? 's' : ''} · action principale selon l'étape
+            <p className="text-xs text-muted-foreground dark:text-muted-foreground font-medium">
+              <span className="font-bold text-slate-700 dark:text-foreground">{filteredCards.length}</span> filière{filteredCards.length > 1 ? 's' : ''} · action principale selon l'étape
             </p>
             <div className="flex flex-wrap gap-2">
               <button
@@ -545,7 +545,7 @@ export default function AdminTimetableEnginePage() {
                 type="button"
                 onClick={() => simulateMutation.mutate()}
                 disabled={simulateMutation.isPending}
-                className="flex items-center gap-2 h-9 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold text-slate-700 dark:text-slate-300 hover:border-indigo-300 transition-all cursor-pointer"
+                className="flex items-center gap-2 h-9 px-4 rounded-xl border border-border dark:border-border bg-card dark:bg-card text-xs font-bold text-slate-700 dark:text-foreground hover:border-primary/20 transition-all cursor-pointer"
               >
                 {simulateMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
                 Tester sans enregistrer
@@ -554,25 +554,25 @@ export default function AdminTimetableEnginePage() {
           </div>
 
           {filteredCards.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 p-12 text-center">
-              <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-3">
+            <div className="rounded-2xl border border-dashed border-slate-300 dark:border-border p-12 text-center">
+              <div className="w-12 h-12 rounded-2xl bg-muted dark:bg-card flex items-center justify-center mx-auto mb-3">
                 <Filter className="w-5 h-5 text-slate-400" />
               </div>
-              <p className="text-sm text-slate-500 dark:text-slate-400">Aucune filière pour ce filtre.</p>
-              <button type="button" onClick={handleResetAll} className="mt-2 text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer">
+              <p className="text-sm text-muted-foreground dark:text-muted-foreground">Aucune filière pour ce filtre.</p>
+              <button type="button" onClick={handleResetAll} className="mt-2 text-xs font-bold text-primary dark:text-indigo-400 hover:underline cursor-pointer">
                 Tout réinitialiser
               </button>
             </div>
           ) : (
-            <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden">
+            <div className="rounded-2xl border border-border dark:border-border bg-card dark:bg-card overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[760px]">
                   <thead>
-                    <tr className="border-b border-slate-100 dark:border-slate-800" style={{ background: 'rgba(248,250,252,0.8)' }}>
-                      <th className="px-5 py-3 text-left text-[10px] font-black uppercase tracking-widest text-slate-400">Filière</th>
-                      <th className="px-5 py-3 text-left text-[10px] font-black uppercase tracking-widest text-slate-400">État</th>
-                      <th className="px-5 py-3 text-left text-[10px] font-black uppercase tracking-widest text-slate-400">Profs (confirmés)</th>
-                      <th className="px-5 py-3 text-right text-[10px] font-black uppercase tracking-widest text-slate-400">Actions</th>
+                    <tr className="border-b border-border dark:border-border" style={{ background: 'rgba(248,250,252,0.8)' }}>
+                      <th className="px-5 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400">Filière</th>
+                      <th className="px-5 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400">État</th>
+                      <th className="px-5 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400">Profs (confirmés)</th>
+                      <th className="px-5 py-3 text-right text-[10px] font-bold uppercase tracking-widest text-slate-400">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -587,12 +587,12 @@ export default function AdminTimetableEnginePage() {
                         <tr key={card.filiere_id} className="group hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
                           <td className="px-5 py-4">
                             <div className="flex items-center gap-3">
-                              <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-xs font-black shrink-0"
+                              <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-xs font-bold shrink-0"
                                 style={{ background: avatarColor }}>
                                 {(card.filiere_code || '??').substring(0, 2).toUpperCase()}
                               </div>
                               <div>
-                                <p className="text-sm font-black text-slate-900 dark:text-slate-100">{card.filiere_code}</p>
+                                <p className="text-sm font-bold text-foreground dark:text-foreground">{card.filiere_code}</p>
                                 <p className="text-[11px] text-slate-400 font-medium">{card.filiere_name}</p>
                               </div>
                             </div>
@@ -601,13 +601,13 @@ export default function AdminTimetableEnginePage() {
                             <span className={cn(
                               'inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full border',
                               card.status === 'PUBLISHED' ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'
-                              : card.status === 'PROPOSED' ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800'
+                              : card.status === 'PROPOSED' ? "bg-primary/5 dark:bg-indigo-950/40 text-primary dark:text-indigo-400 border-primary/20 dark:border-primary"
                               : card.status === 'DRAFT' ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800'
-                              : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700'
+                              : "bg-muted dark:bg-card text-muted-foreground dark:text-muted-foreground border-border dark:border-border"
                             )}>
                               <span className={cn('w-1.5 h-1.5 rounded-full',
                                 card.status === 'PUBLISHED' ? 'bg-emerald-500'
-                                : card.status === 'PROPOSED' ? 'bg-indigo-500'
+                                : card.status === 'PROPOSED' ? "bg-primary"
                                 : card.status === 'DRAFT' ? 'bg-amber-500'
                                 : 'bg-slate-400'
                               )} />
@@ -615,7 +615,7 @@ export default function AdminTimetableEnginePage() {
                             </span>
                           </td>
                           <td className="px-5 py-4">
-                            <p className="text-sm font-black text-slate-800 dark:text-slate-200">
+                            <p className="text-sm font-bold text-foreground dark:text-foreground">
                               {card.confirmations?.confirmed || 0}
                               <span className="font-medium text-slate-400">/{card.confirmations?.total || 0}</span>
                             </p>
@@ -637,7 +637,7 @@ export default function AdminTimetableEnginePage() {
                               {card.version_id && card.status === 'DRAFT' && (
                                 <button
                                   onClick={() => proposeMutation.mutate(card.version_id)}
-                                  className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-bold bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 transition-all cursor-pointer border border-indigo-200 dark:border-indigo-800"
+                                  className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-bold bg-primary/5 dark:bg-indigo-950/50 text-primary dark:text-indigo-300 hover:bg-primary/10 transition-all cursor-pointer border border-primary/20 dark:border-primary"
                                 >
                                   <Send className="w-3 h-3" /> Aux profs
                                 </button>
@@ -646,7 +646,7 @@ export default function AdminTimetableEnginePage() {
                                 confirmPublishId === card.version_id ? (
                                   <span className="inline-flex items-center gap-1">
                                     <button onClick={() => publishVersionMutation.mutate(card.version_id)} className="h-8 px-3 rounded-lg bg-emerald-600 text-white text-xs font-bold cursor-pointer">Confirmer</button>
-                                    <button onClick={() => setConfirmPublishId(null)} className="h-8 px-3 rounded-lg text-xs font-bold text-slate-500 hover:bg-slate-100 cursor-pointer">Non</button>
+                                    <button onClick={() => setConfirmPublishId(null)} className="h-8 px-3 rounded-lg text-xs font-bold text-muted-foreground hover:bg-muted cursor-pointer">Non</button>
                                   </span>
                                 ) : (
                                   <button
@@ -661,7 +661,7 @@ export default function AdminTimetableEnginePage() {
                                 type="button"
                                 onClick={() => openManual(card)}
                                 disabled={emptyDraftMutation.isPending || (!card.version_id && !workspace?.campaign_open)}
-                                className="flex items-center gap-1.5 h-8 px-3 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-600 dark:text-slate-400 hover:border-slate-300 transition-all disabled:opacity-40 cursor-pointer"
+                                className="flex items-center gap-1.5 h-8 px-3 rounded-lg border border-border dark:border-border text-xs font-bold text-muted-foreground dark:text-muted-foreground hover:border-slate-300 transition-all disabled:opacity-40 cursor-pointer"
                               >
                                 <GripVertical className="w-3 h-3" />
                                 {card.version_id ? 'Ajuster' : 'Manuel'}
@@ -669,7 +669,7 @@ export default function AdminTimetableEnginePage() {
                               <button
                                 type="button"
                                 onClick={() => { setSelectedFiliere(String(card.filiere_id)); setWorkMode('official') }}
-                                className="flex items-center gap-1 h-8 px-3 rounded-lg text-xs font-bold text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all cursor-pointer"
+                                className="flex items-center gap-1 h-8 px-3 rounded-lg text-xs font-bold text-slate-400 hover:text-primary dark:hover:text-indigo-400 transition-all cursor-pointer"
                               >
                                 Voir <ChevronRight size={12} />
                               </button>
@@ -688,26 +688,26 @@ export default function AdminTimetableEnginePage() {
           <button
             type="button"
             onClick={() => setShowAdvanced(!showAdvanced)}
-            className="flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer"
+            className="flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-primary dark:hover:text-indigo-400 transition-colors cursor-pointer"
           >
             <Sliders className="w-3.5 h-3.5" />
             {showAdvanced ? 'Masquer les options IA' : 'Options IA avancées (énergie, disponibilités)'}
           </button>
 
           {showAdvanced && (
-            <div className="rounded-2xl border border-indigo-200/60 dark:border-indigo-800/60 bg-white dark:bg-slate-900 p-5 grid grid-cols-1 md:grid-cols-2 gap-6"
+            <div className="rounded-2xl border border-indigo-200/60 dark:border-indigo-800/60 bg-card dark:bg-card p-5 grid grid-cols-1 md:grid-cols-2 gap-6"
               style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.02), rgba(139,92,246,0.02))' }}>
               <div className="space-y-2">
                 <div className="flex justify-between items-center text-xs font-bold">
                   <span className="flex items-center gap-1.5 text-teal-600 dark:text-teal-400"><Leaf className="w-3.5 h-3.5" /> Énergie campus</span>
-                  <span className="font-black text-slate-700 dark:text-slate-300">{energyWeight}%</span>
+                  <span className="font-bold text-slate-700 dark:text-foreground">{energyWeight}%</span>
                 </div>
                 <input type="range" min="0" max="100" value={energyWeight} onChange={(e) => setEnergyWeight(Number(e.target.value))} className="w-full accent-teal-600 h-1.5" />
               </div>
               <div className="space-y-2">
                 <div className="flex justify-between items-center text-xs font-bold">
-                  <span className="flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400"><Users className="w-3.5 h-3.5" /> Disponibilités profs</span>
-                  <span className="font-black text-slate-700 dark:text-slate-300">{profAvailWeight}%</span>
+                  <span className="flex items-center gap-1.5 text-primary dark:text-indigo-400"><Users className="w-3.5 h-3.5" /> Disponibilités profs</span>
+                  <span className="font-bold text-slate-700 dark:text-foreground">{profAvailWeight}%</span>
                 </div>
                 <input type="range" min="0" max="100" value={profAvailWeight} onChange={(e) => setProfAvailWeight(Number(e.target.value))} className="w-full accent-indigo-600 h-1.5" />
               </div>
@@ -720,11 +720,11 @@ export default function AdminTimetableEnginePage() {
           OFFICIAL TIMETABLE VIEW
       ══════════════════════════════════════════════════════ */}
       {workMode === 'official' && (
-        <section className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 space-y-4">
+        <section className="rounded-2xl border border-border dark:border-border bg-card dark:bg-card p-5 space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="text-base font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                <FileText className="w-4 h-4 text-indigo-500" />
+              <h2 className="text-base font-bold text-foreground dark:text-foreground flex items-center gap-2">
+                <FileText className="w-4 h-4 text-primary" />
                 Grille Officielle PDF · ENCG
               </h2>
               <p className="text-xs text-slate-400 font-medium mt-0.5">Une page par filière et semestre. Filtrez ci-dessus, puis exportez.</p>
@@ -761,33 +761,33 @@ export default function AdminTimetableEnginePage() {
               { label: 'Score énergie', value: simResult ? `${simResult.energy_efficiency_score}%` : '—', sub: 'Clustering bâtiments', color: '#06b6d4', accent: 'rgba(6,182,212,0.08)' },
               { label: 'Temps calcul', value: simResult ? `${simResult.execution_time_ms} ms` : '—', sub: 'Heuristiques IA', color: '#f59e0b', accent: 'rgba(245,158,11,0.08)' },
             ].map(({ label, value, sub, color }) => (
-              <div key={label} className="relative overflow-hidden rounded-2xl p-4 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+              <div key={label} className="relative overflow-hidden rounded-2xl p-4 border border-border dark:border-border bg-card dark:bg-card">
                 <div className="absolute top-0 left-0 right-0 h-0.5 rounded-t-2xl" style={{ background: `linear-gradient(90deg, ${color}80, ${color}00)` }} />
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{label}</p>
-                <p className="text-2xl font-black mt-1" style={{ color }}>{value}</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{label}</p>
+                <p className="text-2xl font-bold mt-1" style={{ color }}>{value}</p>
                 <p className="text-[11px] text-slate-400 font-medium mt-0.5">{sub}</p>
               </div>
             ))}
           </div>
 
           {suggestedSlots.length > 0 && (
-            <div data-testid="suggested-slots" className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 space-y-3">
-              <h2 className="text-sm font-black text-slate-900 dark:text-slate-100">Créneaux suggérés</h2>
+            <div data-testid="suggested-slots" className="rounded-2xl border border-border dark:border-border bg-card dark:bg-card p-5 space-y-3">
+              <h2 className="text-sm font-bold text-foreground dark:text-foreground">Créneaux suggérés</h2>
               {suggestedSlots.map((slot, i) => (
-                <p key={i} className="text-sm text-slate-600 dark:text-slate-400">Jour {slot.day} · {slot.start_time}–{slot.end_time} · {slot.room_name}</p>
+                <p key={i} className="text-sm text-muted-foreground dark:text-muted-foreground">Jour {slot.day} · {slot.start_time}–{slot.end_time} · {slot.room_name}</p>
               ))}
             </div>
           )}
 
-          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 space-y-4">
-            <div className="flex gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl w-fit">
+          <div className="rounded-2xl border border-border dark:border-border bg-card dark:bg-card p-5 space-y-4">
+            <div className="flex gap-1 p-1 bg-muted dark:bg-card rounded-xl w-fit">
               {(['grid', 'energy', 'audit'] as const).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setViewTab(tab)}
                   className={cn(
                     'h-8 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer',
-                    viewTab === tab ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                    viewTab === tab ? "bg-card dark:bg-slate-700 text-primary dark:text-indigo-400 shadow-sm" : 'text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
                   )}
                 >
                   {tab === 'grid' ? 'Séances' : tab === 'energy' ? 'Bâtiments' : 'Audit'}
@@ -827,12 +827,12 @@ export default function AdminTimetableEnginePage() {
                         : session.filiere_code?.toUpperCase().includes('GRH') ? '#d97706'
                         : '#2563eb'
                       return (
-                        <div key={session.id} className="rounded-xl p-4 border-l-4 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 space-y-2 hover:shadow-sm transition-all" style={{ borderLeftColor: color }}>
-                          <div className="flex justify-between text-[10px] font-black uppercase tracking-wide" style={{ color }}>
+                        <div key={session.id} className="rounded-xl p-4 border-l-4 bg-card dark:bg-card border border-border dark:border-border space-y-2 hover:shadow-sm transition-all" style={{ borderLeftColor: color }}>
+                          <div className="flex justify-between text-[10px] font-bold uppercase tracking-wide" style={{ color }}>
                             <span>{session.day_name} {session.start_time?.substring(0, 5)}–{session.end_time?.substring(0, 5)}</span>
-                            <span className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500">{session.session_type?.toUpperCase()}</span>
+                            <span className="px-1.5 py-0.5 rounded bg-muted dark:bg-card text-muted-foreground">{session.session_type?.toUpperCase()}</span>
                           </div>
-                          <p className="font-black text-sm text-slate-900 dark:text-slate-100 line-clamp-2">{session.module_name}</p>
+                          <p className="font-bold text-sm text-foreground dark:text-foreground line-clamp-2">{session.module_name}</p>
                           <p className="text-[11px] text-slate-400 font-medium">{session.group_name} · {session.room_name} · {session.professor_name}</p>
                         </div>
                       )
@@ -847,8 +847,8 @@ export default function AdminTimetableEnginePage() {
                 {simResult?.building_clustering && Object.entries(simResult.building_clustering).map(([building, count]) => (
                   <div key={building} className="p-4 rounded-xl border border-teal-200 dark:border-teal-800" style={{ background: 'rgba(20,184,166,0.05)' }}>
                     <Building2 className="w-5 h-5 text-teal-600 dark:text-teal-400 mb-2" />
-                    <p className="text-sm font-black text-slate-800 dark:text-slate-200">{building}</p>
-                    <p className="text-2xl font-black text-teal-600 dark:text-teal-400">{Number(count)}</p>
+                    <p className="text-sm font-bold text-foreground dark:text-foreground">{building}</p>
+                    <p className="text-2xl font-bold text-teal-600 dark:text-teal-400">{Number(count)}</p>
                     <p className="text-[10px] text-slate-400 font-medium">séances groupées</p>
                   </div>
                 ))}
@@ -857,10 +857,10 @@ export default function AdminTimetableEnginePage() {
 
             {viewTab === 'audit' && simResult && (
               <div className="rounded-xl border border-slate-800 bg-slate-950 text-slate-300 p-4 font-mono text-xs space-y-1.5">
-                <p><span className="text-slate-500">séances :</span> <span className="text-emerald-400 font-bold">{simResult.total_placed}</span><span className="text-slate-500">/{simResult.total_variables}</span></p>
-                <p><span className="text-slate-500">conflits évités :</span> <span className="text-emerald-400 font-bold">{simResult.conflicts_prevented}</span></p>
-                <p><span className="text-slate-500">stratégie :</span> <span className="text-indigo-400">{simResult.strategy}</span></p>
-                {simResult.heuristics && <p><span className="text-slate-500">heuristiques :</span> <span className="text-amber-400">{simResult.heuristics.join(', ')}</span></p>}
+                <p><span className="text-muted-foreground">séances :</span> <span className="text-emerald-400 font-bold">{simResult.total_placed}</span><span className="text-muted-foreground">/{simResult.total_variables}</span></p>
+                <p><span className="text-muted-foreground">conflits évités :</span> <span className="text-emerald-400 font-bold">{simResult.conflicts_prevented}</span></p>
+                <p><span className="text-muted-foreground">stratégie :</span> <span className="text-indigo-400">{simResult.strategy}</span></p>
+                {simResult.heuristics && <p><span className="text-muted-foreground">heuristiques :</span> <span className="text-amber-400">{simResult.heuristics.join(', ')}</span></p>}
               </div>
             )}
           </div>

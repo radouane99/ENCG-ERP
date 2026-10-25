@@ -33,19 +33,19 @@ export default function AdminTextbooksPage() {
   ]
 
   return (
-    <div className="space-y-8 animate-in fade-in p-4 md:p-8 max-w-[1500px] mx-auto pb-24 font-sans">
+    <div className="space-y-8 animate-in fade-in max-w-[1500px] mx-auto pb-24 font-sans">
       {/* Hero Banner */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-slate-950 via-[#001A4B] to-blue-950 p-8 md:p-10 rounded-[2.5rem] shadow-2xl text-white border border-blue-900/40">
+      <div className="relative overflow-hidden p-8 md:p-10 text-white border border-blue-900/40 erp-page-banner">
         <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="relative z-10 flex items-center gap-6">
-          <div className="w-16 h-16 md:w-20 md:h-20 rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center shadow-2xl shrink-0">
+          <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center shadow-sm shrink-0">
             <Book className="w-8 h-8 md:w-10 md:h-10 text-amber-300" />
           </div>
           <div>
-            <div className="inline-flex items-center gap-2 bg-blue-500/20 text-blue-200 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-2 border border-blue-400/30">
+            <div className="inline-flex items-center gap-2 bg-blue-500/20 text-blue-200 px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mb-2 border border-blue-400/30">
               <Sparkles className="w-4 h-4 text-amber-300" /> Supervision Pédagogique — ENCG Fès
             </div>
-            <h1 className="text-2xl md:text-4xl font-black text-white tracking-tight leading-tight">
+            <h1 className="text-white leading-tight erp-page-title">
               Cahiers de Textes Universitaires
             </h1>
             <p className="text-blue-100/90 text-xs md:text-sm font-medium mt-1 max-w-2xl">
@@ -56,15 +56,15 @@ export default function AdminTextbooksPage() {
       </div>
 
       {/* Filters Bar with CustomSelect */}
-      <div className="bg-card border border-border p-6 rounded-3xl shadow-sm space-y-4">
-        <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-muted-foreground pb-2 border-b border-border">
+      <div className="bg-card border border-border p-6 rounded-2xl shadow-sm space-y-4">
+        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground pb-2 border-b border-border">
           <Filter className="w-4 h-4 text-primary" />
           <span>Filtres de Supervision</span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
-            <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground block mb-1.5">Enseignant</label>
+            <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">Enseignant</label>
             <CustomSelect
               value={teacher}
               onChange={setTeacher}
@@ -80,7 +80,7 @@ export default function AdminTextbooksPage() {
           </div>
 
           <div>
-            <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground block mb-1.5">Groupe / Section</label>
+            <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">Groupe / Section</label>
             <CustomSelect
               value={group}
               onChange={setGroup}
@@ -96,7 +96,7 @@ export default function AdminTextbooksPage() {
           </div>
 
           <div>
-            <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground block mb-1.5">Nature de Séance</label>
+            <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">Nature de Séance</label>
             <CustomSelect
               value={nature}
               onChange={setNature}
@@ -115,14 +115,14 @@ export default function AdminTextbooksPage() {
       </div>
 
       {/* Table Card */}
-      <div className="bg-card border border-border rounded-[2.5rem] shadow-xl overflow-hidden p-6 md:p-8">
-        <h3 className="text-lg font-black text-foreground mb-6 flex items-center gap-2">
+      <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden p-6 md:p-8">
+        <h3 className="text-lg font-bold text-foreground mb-6 flex items-center gap-2">
           <span>Historique des Séances Enregistrées</span>
         </h3>
         
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left border-collapse">
-            <thead className="text-[10px] font-black text-muted-foreground uppercase tracking-wider border-b border-border">
+            <thead className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider border-b border-border">
               <tr>
                 <th className="px-5 py-4">Date & Créneau</th>
                 <th className="px-5 py-4">Enseignant & Département</th>
@@ -135,7 +135,7 @@ export default function AdminTextbooksPage() {
               {textbooks.map((row) => (
                 <tr key={row.id} className="hover:bg-muted/40 transition-colors">
                   <td className="px-5 py-5">
-                    <div className="font-black text-foreground text-sm">{row.date}</div>
+                    <div className="font-bold text-foreground text-sm">{row.date}</div>
                     <div className="text-[11px] text-muted-foreground font-mono">{row.time}</div>
                   </td>
                   <td className="px-5 py-5">
@@ -144,10 +144,10 @@ export default function AdminTextbooksPage() {
                   </td>
                   <td className="px-5 py-5">
                     <div className="font-bold text-primary text-sm">{row.module}</div>
-                    <div className="text-[11px] text-indigo-600 dark:text-indigo-400 font-bold">{row.group}</div>
+                    <div className="text-[11px] text-primary dark:text-indigo-400 font-bold">{row.group}</div>
                   </td>
                   <td className="px-5 py-5">
-                    <span className="px-2.5 py-1 bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 rounded-xl text-[10px] font-black uppercase">
+                    <span className="px-2.5 py-1 bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 rounded-xl text-[10px] font-bold uppercase">
                       {row.nature}
                     </span>
                   </td>

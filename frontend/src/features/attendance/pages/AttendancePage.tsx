@@ -57,10 +57,10 @@ export default function AttendancePage() {
   }
 
   return (
-    <div className="space-y-6 animate-in p-6 relative">
+    <div className="space-y-6 animate-in relative">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">{t('attendance:title')}</h1>
+          <h1 className="text-foreground erp-page-title">{t('attendance:title')}</h1>
           <p className="text-muted-foreground mt-1 text-sm">{t('attendance:subtitle')}</p>
         </div>
       </div>
@@ -82,7 +82,7 @@ export default function AttendancePage() {
           <div className="relative w-full sm:w-80">
             <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input type="text" placeholder={t('attendance:search')} value={search} onChange={e => setSearch(e.target.value)}
-              className="w-full ps-9 pr-4 py-2 text-sm bg-background border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20" />
+              className="w-full ps-9 pr-4 py-2 text-sm bg-background border focus:outline-none focus:ring-2 focus:ring-primary/20 rounded-[var(--control-radius)]" />
           </div>
         </div>
         

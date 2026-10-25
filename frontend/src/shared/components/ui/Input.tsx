@@ -50,9 +50,9 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
 
 // ── Size maps ────────────────────────────────────────────────────
 const sizeMap: Record<InputSize, string> = {
-  sm: 'min-h-[36px] text-xs px-3 rounded-md',
-  md: 'min-h-[44px] text-sm px-3 rounded-md',
-  lg: 'min-h-[48px] text-base px-4 rounded-lg',
+  sm: 'min-h-[36px] text-xs px-3 rounded-[var(--control-radius)]',
+  md: 'min-h-[44px] text-sm px-3 rounded-[var(--control-radius)]',
+  lg: 'min-h-[48px] text-base px-4 rounded-[var(--control-radius)]',
 }
 
 const iconSizeMap: Record<InputSize, string> = {
@@ -169,14 +169,14 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
               !hasError && [
                 'border-[var(--border)]',
                 'focus-visible:border-[var(--ring)]',
-                'focus-visible:ring-[color-mix(in srgb, var(--ring) 0.200%, transparent)]',
+                'focus-visible:ring-[var(--ring)]',
               ],
               // Error state
               hasError && [
                 'border-[var(--color-destructive)]',
                 'focus-visible:border-[var(--color-destructive)]',
-                'focus-visible:ring-[color-mix(in srgb, var(--color-destructive) 0.200%, transparent)]',
-                'bg-[color-mix(in srgb, var(--color-destructive) 0.0300%, transparent)]',
+                'focus-visible:ring-[var(--destructive)]',
+                'bg-[var(--muted)]',
               ],
               // Disabled
               'disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-[var(--muted)]',

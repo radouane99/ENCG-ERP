@@ -10,10 +10,10 @@ export default function DocumentRequestsPage() {
   ])
 
   return (
-    <div className="space-y-6 animate-in p-6">
+    <div className="space-y-6 animate-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Demandes de Documents</h1>
+          <h1 className="erp-page-title">Demandes de Documents</h1>
           <p className="text-muted-foreground text-sm mt-1">Gérez les demandes d'attestations et de relevés des étudiants.</p>
         </div>
       </div>
@@ -22,7 +22,7 @@ export default function DocumentRequestsPage() {
         <div className="p-4 border-b bg-muted/20 flex gap-4">
            <div className="relative w-full max-w-sm">
              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-             <input type="text" placeholder="Rechercher une demande..." className="w-full pl-9 pr-4 py-2 text-sm border rounded-lg" />
+             <input type="text" placeholder="Rechercher une demande..." className="w-full pl-9 pr-4 py-2 text-sm border rounded-[var(--control-radius)]" />
            </div>
         </div>
         <table className="w-full text-sm text-left">

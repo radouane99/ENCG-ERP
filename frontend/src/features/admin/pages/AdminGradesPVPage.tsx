@@ -870,10 +870,10 @@ const { data: aiAuditData } = useQuery({
   const renderSelectorBar = () => (
     <div className="space-y-6" data-testid="admin-pv-page">
       {showGroupCompareModal && <PvGroupComparison groups={groupes} moduleId={pvType === 'module' ? moduleId : null} semester={selectedSemester} filiere={selectedFiliere} year={Number(currentAcademicYearId)} session={session} onClose={() => setShowGroupCompareModal(false)}/>}
-      {showShareModal && <Modal open title="Lien interne du PV" onClose={() => setShowShareModal(false)}><p className="text-sm">Le destinataire doit se connecter et disposer des droits du PV. Ce lien ne donne aucun droit supplémentaire.</p><label className="mt-4 block text-sm">Adresse du PV<input readOnly value={shareLink} className="mt-1 min-h-11 w-full rounded-lg border p-3"/></label><button className="mt-4 min-h-11 rounded-lg border px-4" onClick={() => void navigator.clipboard.writeText(shareLink).then(() => setShareCopied(true)).catch(() => toast.error('Copie impossible. Sélectionnez le lien manuellement.'))}>{shareCopied ? 'Lien copié' : 'Copier le lien'}</button></Modal>}
+      {showShareModal && <Modal open title="Lien interne du PV" onClose={() => setShowShareModal(false)}><p className="text-sm">Le destinataire doit se connecter et disposer des droits du PV. Ce lien ne donne aucun droit supplémentaire.</p><label className="mt-4 block text-sm">Adresse du PV<input readOnly value={shareLink} className="mt-1 min-h-11 w-full border p-3 rounded-[var(--control-radius)]"/></label><button className="mt-4 min-h-11 rounded-lg border px-4" onClick={() => void navigator.clipboard.writeText(shareLink).then(() => setShareCopied(true)).catch(() => toast.error('Copie impossible. Sélectionnez le lien manuellement.'))}>{shareCopied ? 'Lien copié' : 'Copier le lien'}</button></Modal>}
       {showSignatureModal && <PvSignatureDialog onClose={() => setShowSignatureModal(false)} onConfirm={confirmOfficialSignature}/>}
       {showSchedulerModal && <PvMeetingForm context={workflowContext} onClose={() => { setShowSchedulerModal(false); void officialWorkflow.refetch() }}/>}
-      {showLockModal && <Modal open title="Sceller le PV enregistré" onClose={() => !isLocking && setShowLockModal(false)} preventBackdropClose={isLocking}><p className="text-sm">Le scellé porte sur les décisions persistées. Une réouverture requiert le circuit de validation prévu.</p><label className="mt-4 block text-sm">Motif<textarea className="mt-1 w-full rounded-lg border p-3" value={lockReason} onChange={e => setLockReason(e.target.value)} maxLength={500}/></label><button disabled={isLocking || !officialWorkflow.data?.deliberation || !lockReason.trim()} className="mt-4 min-h-11 rounded-lg bg-blue-900 px-4 text-white disabled:opacity-50" onClick={() => void handleLockPV()}>{isLocking ? 'Enregistrement…' : 'Confirmer le scellé serveur'}</button></Modal>}
+      {showLockModal && <Modal open title="Sceller le PV enregistré" onClose={() => !isLocking && setShowLockModal(false)} preventBackdropClose={isLocking}><p className="text-sm">Le scellé porte sur les décisions persistées. Une réouverture requiert le circuit de validation prévu.</p><label className="mt-4 block text-sm">Motif<textarea className="mt-1 w-full border p-3 rounded-[var(--control-radius)]" value={lockReason} onChange={e => setLockReason(e.target.value)} maxLength={500}/></label><button disabled={isLocking || !officialWorkflow.data?.deliberation || !lockReason.trim()} className="mt-4 min-h-11 rounded-lg bg-secondary px-4 text-white disabled:opacity-50" onClick={() => void handleLockPV()}>{isLocking ? 'Enregistrement…' : 'Confirmer le scellé serveur'}</button></Modal>}
       {officialWorkflow.isError && <p role="alert" className="rounded-xl border border-red-200 p-4 text-sm">État officiel du PV indisponible. <button className="underline" onClick={() => void officialWorkflow.refetch()}>Réessayer</button></p>}
       {moduleId && pvType === 'module' && hasAnyRole(['super-admin', 'admin', 'institution-admin', 'director']) && <form className="flex flex-wrap items-end gap-3 rounded-xl border border-border bg-card p-4" onSubmit={async event => {
         event.preventDefault(); const fields = new FormData(event.currentTarget); setPublishingGrades(true)
@@ -881,23 +881,23 @@ const { data: aiAuditData } = useQuery({
         catch (err: any) { toast.error(err.response?.data?.message ?? 'Publication non enregistrée.') }
         finally { setPublishingGrades(false) }
       }}>
-        <label className="flex-1 text-sm font-medium">Évaluation à publier<select name="assessment_id" required className="mt-1 w-full rounded-lg border border-border bg-background p-2"><option value="">Choisir une évaluation</option>{pvData?.assessments?.map((assessment: any) => <option key={assessment.id} value={assessment.id}>{assessment.type}</option>)}</select></label>
-        <label className="text-sm font-medium">Délai de recours (heures)<input name="duration_hours" type="number" min={1} max={168} defaultValue={48} required className="mt-1 block w-36 rounded-lg border border-border bg-background p-2" /></label>
+        <label className="flex-1 text-sm font-medium">Évaluation à publier<select name="assessment_id" required className="mt-1 w-full border border-border bg-background p-2 rounded-[var(--control-radius)]"><option value="">Choisir une évaluation</option>{pvData?.assessments?.map((assessment: any) => <option key={assessment.id} value={assessment.id}>{assessment.type}</option>)}</select></label>
+        <label className="text-sm font-medium">Délai de recours (heures)<input name="duration_hours" type="number" min={1} max={168} defaultValue={48} required className="mt-1 block w-36 border border-border bg-background p-2 rounded-[var(--control-radius)]" /></label>
         <Button type="submit" disabled={publishingGrades}>{publishingGrades ? 'Publication…' : 'Publier les résultats'}</Button>
       </form>}      {/* Top Deep Navy Hero Banner */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-[#0c1e48] via-[#0f2863] to-[#07132e] p-6 md:p-8 rounded-[2rem] shadow-xl text-white border border-blue-900/40 space-y-5">
+      <div className="relative overflow-hidden p-6 md:p-8 text-white border border-blue-900/40 space-y-5 erp-page-banner">
         <div className="absolute top-0 right-0 w-[450px] h-[450px] bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
 
         {/* Row 1: Title & Subtitle */}
         <div className="relative z-10 flex items-center gap-5">
-          <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-amber-300 shadow-xl shrink-0">
+          <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-amber-300 shadow-sm shrink-0">
             <Calculator className="w-7 h-7 md:w-8 md:h-8 text-amber-400" />
           </div>
           <div>
-            <div className="inline-flex items-center gap-1.5 bg-blue-500/20 text-blue-200 px-3.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest mb-1.5 border border-blue-400/30">
+            <div className="inline-flex items-center gap-1.5 bg-blue-500/20 text-blue-200 px-3.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest mb-1.5 border border-blue-400/30">
               <Sparkles className="w-3.5 h-3.5 text-amber-400" /> {isPureProfessor ? 'Espace Enseignant • ENCG Fès' : 'Jury Officiel & Délibérations ENCG Fès'}
             </div>
-            <h1 className="text-xl md:text-3xl font-black text-white tracking-tight leading-tight">
+            <h1 className="text-white leading-tight erp-page-title">
               {isRtl ? 'محاضر النقاط الرسمية' : 'Procès-Verbaux de Notes Officiels'}
             </h1>
             <p className="text-blue-100/80 text-xs md:text-sm font-medium mt-0.5">
@@ -917,9 +917,9 @@ const { data: aiAuditData } = useQuery({
                 type="button"
                 onClick={() => setPvType('module')}
                 className={cn(
-                  "px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-2 uppercase tracking-wider",
+                  "px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 uppercase tracking-wider",
                   pvType === 'module'
-                    ? "bg-white text-[#0f2863] shadow-md"
+                    ? "bg-card text-[#0f2863] shadow-md"
                     : "text-blue-100 hover:text-white hover:bg-white/10"
                 )}
               >
@@ -931,9 +931,9 @@ const { data: aiAuditData } = useQuery({
                 type="button"
                 onClick={() => setPvType('semestriel')}
                 className={cn(
-                  "px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-2 uppercase tracking-wider",
+                  "px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 uppercase tracking-wider",
                   pvType === 'semestriel'
-                    ? "bg-white text-[#0f2863] shadow-md"
+                    ? "bg-card text-[#0f2863] shadow-md"
                     : "text-blue-100 hover:text-white hover:bg-white/10"
                 )}
               >
@@ -945,9 +945,9 @@ const { data: aiAuditData } = useQuery({
                 type="button"
                 onClick={() => setPvType('annuel')}
                 className={cn(
-                  "px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-2 uppercase tracking-wider",
+                  "px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 uppercase tracking-wider",
                   pvType === 'annuel'
-                    ? "bg-white text-[#0f2863] shadow-md"
+                    ? "bg-card text-[#0f2863] shadow-md"
                     : "text-blue-100 hover:text-white hover:bg-white/10"
                 )}
               >
@@ -970,7 +970,7 @@ const { data: aiAuditData } = useQuery({
                 type="button"
                 onClick={handleRunDeliberation}
                 disabled={isCalculating}
-                className="px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white shadow-md uppercase tracking-wider"
+                className="px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white shadow-md uppercase tracking-wider"
               >
                 {isCalculating ? <Spinner className="w-3.5 h-3.5 text-white" /> : <Zap className="w-3.5 h-3.5 text-amber-200" />}
                 Calculer Délibération
@@ -979,7 +979,7 @@ const { data: aiAuditData } = useQuery({
               <button
                 type="button"
                 onClick={() => setShowSignatureModal(true)}
-                className="px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white shadow-md uppercase tracking-wider border border-purple-400/30"
+                className="px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white shadow-md uppercase tracking-wider border border-purple-400/30"
               >
                 <ShieldCheck className="w-3.5 h-3.5 text-amber-300" />
                 {signatureDataUrl ? '✓ PV Signé' : 'Signer le PV (Tactile)'}
@@ -1042,12 +1042,12 @@ const { data: aiAuditData } = useQuery({
       return (
         <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
           {renderSelectorBar()}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-10 text-center max-w-xl mx-auto shadow-sm space-y-4">
+          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-10 text-center max-w-xl mx-auto shadow-sm space-y-4">
             <div className="w-16 h-16 rounded-2xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 flex items-center justify-center text-3xl mx-auto">
               📚
             </div>
-            <h3 className="text-lg font-black text-slate-900 dark:text-white">Aucun Module Affecté</h3>
-            <p className="text-xs text-slate-500 font-medium">
+            <h3 className="text-lg font-bold text-foreground dark:text-white">Aucun Module Affecté</h3>
+            <p className="text-xs text-muted-foreground font-medium">
               Aucun module d’enseignement ne vous est actuellement attribué pour cette année universitaire. Veuillez vous adresser à la Scolarité ou au Chef de Département pour l’affectation de vos modules.
             </p>
           </div>
@@ -1059,12 +1059,12 @@ const { data: aiAuditData } = useQuery({
       return (
         <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
           {renderSelectorBar()}
-          <div className="bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/60 rounded-3xl p-10 text-center max-w-xl mx-auto shadow-sm space-y-4">
-            <div className="w-16 h-16 rounded-2xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 flex items-center justify-center text-3xl mx-auto font-black">
+          <div className="bg-card dark:bg-card border border-rose-200 dark:border-rose-900/60 rounded-2xl p-10 text-center max-w-xl mx-auto shadow-sm space-y-4">
+            <div className="w-16 h-16 rounded-2xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 flex items-center justify-center text-3xl mx-auto font-bold">
               ⛔
             </div>
-            <h3 className="text-lg font-black text-slate-900 dark:text-white">Accès Restreint au Procès-Verbal</h3>
-            <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">
+            <h3 className="text-lg font-bold text-foreground dark:text-white">Accès Restreint au Procès-Verbal</h3>
+            <p className="text-xs text-muted-foreground dark:text-muted-foreground font-medium">
               Vous n’êtes pas affecté(e) à ce module. Conformément aux règles pédagogiques de l'ENCG, chaque enseignant n'a accès qu'aux procès-verbaux de ses propres modules. La consultation générale ou inter-modules est réservée à l’Administration.
             </p>
             {myModulesList.length > 0 && (
@@ -1073,7 +1073,7 @@ const { data: aiAuditData } = useQuery({
                   const first = myModulesList[0]
                   navigate(`/admin/grades/pv?module_id=${first.id}&filiere_id=${first.filiere_id || ''}&semester=${first.semester_number || ''}`)
                 }}
-                className="bg-[#0f2863] text-white hover:bg-blue-900 rounded-xl text-xs font-bold px-5 py-2.5 shadow-md"
+                className="bg-[#0f2863] text-white hover:bg-secondary rounded-xl text-xs font-bold px-5 py-2.5 shadow-md"
               >
                 Accéder à mon module ({myModulesList[0].name || myModulesList[0].code})
               </Button>
@@ -1105,27 +1105,27 @@ const { data: aiAuditData } = useQuery({
           {renderSelectorBar()}
 
           {/* Executive Control Header: Replaces the electric blue banner with a sleek, unified card */}
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200/90 dark:border-slate-800 shadow-sm space-y-5 print:hidden">
+          <div className="bg-card dark:bg-card rounded-2xl p-6 border border-slate-200/90 dark:border-border shadow-sm space-y-5 print:hidden">
             {/* Top Row: Semester Identity + Juridical Signature & Lock Actions */}
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-5 border-b border-slate-100 dark:border-slate-800">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-5 border-b border-border dark:border-border">
               {/* Left Identity */}
               <div className="space-y-1.5">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="px-2.5 py-0.5 bg-[#0f2863]/10 text-[#0f2863] dark:bg-blue-900/40 dark:text-blue-300 font-extrabold text-[10px] rounded-lg border border-[#0f2863]/20 uppercase tracking-wider">
+                  <span className="px-2.5 py-0.5 bg-[#0f2863]/10 text-[#0f2863] dark:bg-blue-900/40 dark:text-blue-300 font-bold text-[10px] rounded-lg border border-[#0f2863]/20 uppercase tracking-wider">
                     {semesterPvData.filiere?.name || 'Tronc Commun ENCG'}
                   </span>
-                  <span className="px-2.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-extrabold text-[10px] rounded-lg border border-slate-200 dark:border-slate-700 uppercase tracking-wider">
+                  <span className="px-2.5 py-0.5 bg-muted dark:bg-card text-slate-700 dark:text-foreground font-bold text-[10px] rounded-lg border border-border dark:border-border uppercase tracking-wider">
                     Semestre {semesterPvData.semester || selectedSemester} • {semesterPvData.modules?.length || 7} Modules
                   </span>
-                  <span className="px-2.5 py-0.5 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 font-extrabold text-[10px] rounded-lg border border-emerald-200 dark:border-emerald-800 uppercase tracking-wider">
+                  <span className="px-2.5 py-0.5 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 font-bold text-[10px] rounded-lg border border-emerald-200 dark:border-emerald-800 uppercase tracking-wider">
                     Session {session === 'normale' ? 'Ordinaire (Normale)' : 'de Rattrapage'}
                   </span>
                 </div>
 
-                <h2 className="text-xl md:text-2xl font-black text-[#0f2863] dark:text-white tracking-tight">
+                <h2 className="text-xl md:text-2xl font-bold text-[#0f2863] dark:text-white tracking-tight">
                   Procès-Verbal Semestriel Consolidé
                 </h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium max-w-2xl">
+                <p className="text-xs text-muted-foreground dark:text-muted-foreground font-medium max-w-2xl">
                   Matrice officielle de délibération des {semesterPvData.modules?.length || 7} modules avec calcul automatique des compensations (≥ 10/20) et éliminations APOGEE.
                 </p>
               </div>
@@ -1136,7 +1136,7 @@ const { data: aiAuditData } = useQuery({
                   <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 px-3 py-2 rounded-xl text-xs font-bold text-emerald-800 dark:text-emerald-300 shadow-xs">
                     <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
                     <div className="flex flex-col leading-tight">
-                      <span className="font-extrabold text-[11px]">PV Semestriel Signé</span>
+                      <span className="font-bold text-[11px]">PV Semestriel Signé</span>
                       <span className="text-[9px] text-emerald-600/90 font-mono">Scellé SHA-256</span>
                     </div>
                   </div>
@@ -1162,7 +1162,7 @@ const { data: aiAuditData } = useQuery({
                   className={cn(
                     "rounded-xl text-xs font-bold px-3.5 py-2.5 transition-all flex items-center gap-1.5",
                     pvLocked
-                      ? "border-slate-200 bg-slate-100 text-slate-400 cursor-not-allowed"
+                      ? "border-border bg-muted text-slate-400 cursor-not-allowed"
                       : "border-rose-200 text-rose-700 hover:bg-rose-50 hover:border-rose-300 dark:border-rose-900 dark:text-rose-400"
                   )}
                 >
@@ -1175,7 +1175,7 @@ const { data: aiAuditData } = useQuery({
             {/* Middle Row: Primary Official Exports & Transmissions */}
             <div className="space-y-3">
               <div className="flex items-center justify-between flex-wrap gap-2">
-                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                   Exports & Transmissions Officielles
                 </span>
                 <span className="text-[10px] text-slate-400 font-medium">
@@ -1188,16 +1188,16 @@ const { data: aiAuditData } = useQuery({
                 <Button
                   variant="outline"
                   onClick={() => handleExportPdf(true)}
-                  className="rounded-xl border-slate-200 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 text-xs font-bold px-3.5 py-2 shadow-xs flex items-center gap-1.5"
+                  className="rounded-xl border-border text-slate-700 hover:bg-muted/50 dark:border-border dark:text-foreground text-xs font-bold px-3.5 py-2 shadow-xs flex items-center gap-1.5"
                 >
-                  <Eye className="w-3.5 h-3.5 text-slate-500" />
+                  <Eye className="w-3.5 h-3.5 text-muted-foreground" />
                   <span>Aperçu PDF (Voir)</span>
                 </Button>
 
                 {/* Télécharger PDF Officiel */}
                 <Button
                   onClick={() => handleExportPdf(false)}
-                  className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-black rounded-xl text-xs px-4 py-2 shadow-xs transition-all flex items-center gap-1.5"
+                  className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl text-xs px-4 py-2 shadow-xs transition-all flex items-center gap-1.5"
                 >
                   <Download className="w-3.5 h-3.5 text-slate-950" />
                   <span>Télécharger PDF Officiel</span>
@@ -1218,9 +1218,9 @@ const { data: aiAuditData } = useQuery({
                   variant="outline"
                   onClick={handleDownloadZipBundle}
                   disabled={isExportingZip}
-                  className="rounded-xl border-indigo-200 text-indigo-800 bg-indigo-50/70 hover:bg-indigo-100/70 dark:bg-indigo-950/30 dark:border-indigo-800 dark:text-indigo-300 text-xs font-bold px-3.5 py-2 shadow-xs flex items-center gap-1.5"
+                  className="rounded-xl border-primary/20 text-primary bg-indigo-50/70 hover:bg-indigo-100/70 dark:bg-indigo-950/30 dark:border-primary dark:text-indigo-300 text-xs font-bold px-3.5 py-2 shadow-xs flex items-center gap-1.5"
                 >
-                  {isExportingZip ? <Spinner className="w-3.5 h-3.5 text-indigo-600" /> : <Archive className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />}
+                  {isExportingZip ? <Spinner className="w-3.5 h-3.5 text-primary" /> : <Archive className="w-3.5 h-3.5 text-primary dark:text-indigo-400" />}
                   <span>Pack PV (ZIP)</span>
                 </Button>
 
@@ -1229,9 +1229,9 @@ const { data: aiAuditData } = useQuery({
                   variant="outline"
                   onClick={handleBroadcastTranscripts}
                   disabled={isSendingBulk}
-                  className="rounded-xl border-blue-200 text-blue-800 bg-blue-50/70 hover:bg-blue-100/70 dark:bg-blue-950/30 dark:border-blue-800 dark:text-blue-300 text-xs font-bold px-3.5 py-2 shadow-xs flex items-center gap-1.5"
+                  className="rounded-xl border-primary/20 text-primary bg-blue-50/70 hover:bg-blue-100/70 dark:bg-blue-950/30 dark:border-primary dark:text-blue-300 text-xs font-bold px-3.5 py-2 shadow-xs flex items-center gap-1.5"
                 >
-                  {isSendingBulk ? <Spinner className="w-3.5 h-3.5 text-blue-600" /> : <Mail className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />}
+                  {isSendingBulk ? <Spinner className="w-3.5 h-3.5 text-primary" /> : <Mail className="w-3.5 h-3.5 text-primary dark:text-blue-400" />}
                   <span>Préparer les relevés</span>
                 </Button>
 
@@ -1248,7 +1248,7 @@ const { data: aiAuditData } = useQuery({
             </div>
 
             {/* Bottom Row: Decision Support & Pedagogical Tools Toolbar */}
-            <div className="bg-slate-50 dark:bg-slate-800/40 p-2.5 rounded-2xl border border-slate-200/70 dark:border-slate-800 flex items-center justify-between flex-wrap gap-2 text-xs">
+            <div className="bg-muted/50 dark:bg-slate-800/40 p-2.5 rounded-2xl border border-slate-200/70 dark:border-border flex items-center justify-between flex-wrap gap-2 text-xs">
               <div className="flex items-center gap-1.5 flex-wrap">
                 <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase px-1.5">
                   Outils d'Aide :
@@ -1262,7 +1262,7 @@ const { data: aiAuditData } = useQuery({
                     "rounded-xl text-xs font-semibold px-2.5 py-1.5 h-auto transition-all flex items-center gap-1.5",
                     showStatsDashboard
                       ? "bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300"
-                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:text-slate-300"
+                      : "text-muted-foreground hover:text-foreground hover:bg-slate-200/60 dark:text-foreground"
                   )}
                 >
                   <BarChart2 className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
@@ -1273,7 +1273,7 @@ const { data: aiAuditData } = useQuery({
                 <Button
                   variant="ghost"
                   onClick={() => setShowSimulatorModal(true)}
-                  className="rounded-xl text-xs font-semibold px-2.5 py-1.5 h-auto text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:text-slate-300 transition-all flex items-center gap-1.5"
+                  className="rounded-xl text-xs font-semibold px-2.5 py-1.5 h-auto text-muted-foreground hover:text-foreground hover:bg-slate-200/60 dark:text-foreground transition-all flex items-center gap-1.5"
                 >
                   <Sparkles className="w-3.5 h-3.5 text-amber-500" />
                   <span>Simulateur What-If</span>
@@ -1283,9 +1283,9 @@ const { data: aiAuditData } = useQuery({
                 <Button
                   variant="ghost"
                   onClick={() => setShowAuditModal(true)}
-                  className="rounded-xl text-xs font-semibold px-2.5 py-1.5 h-auto text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:text-slate-300 transition-all flex items-center gap-1.5"
+                  className="rounded-xl text-xs font-semibold px-2.5 py-1.5 h-auto text-muted-foreground hover:text-foreground hover:bg-slate-200/60 dark:text-foreground transition-all flex items-center gap-1.5"
                 >
-                  <History className="w-3.5 h-3.5 text-slate-500" />
+                  <History className="w-3.5 h-3.5 text-muted-foreground" />
                   <span>Journal d'Audit</span>
                 </Button>
 
@@ -1293,7 +1293,7 @@ const { data: aiAuditData } = useQuery({
                 <Button
                   variant="ghost"
                   onClick={() => setShowGroupCompareModal(true)}
-                  className="rounded-xl text-xs font-semibold px-2.5 py-1.5 h-auto text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:text-slate-300 transition-all flex items-center gap-1.5"
+                  className="rounded-xl text-xs font-semibold px-2.5 py-1.5 h-auto text-muted-foreground hover:text-foreground hover:bg-slate-200/60 dark:text-foreground transition-all flex items-center gap-1.5"
                 >
                   <Layers className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
                   <span>Comparer Groupes</span>
@@ -1303,9 +1303,9 @@ const { data: aiAuditData } = useQuery({
                 <Button
                   variant="ghost"
                   onClick={handleExportDocx}
-                  className="rounded-xl text-xs font-semibold px-2.5 py-1.5 h-auto text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:text-slate-300 transition-all flex items-center gap-1.5"
+                  className="rounded-xl text-xs font-semibold px-2.5 py-1.5 h-auto text-muted-foreground hover:text-foreground hover:bg-slate-200/60 dark:text-foreground transition-all flex items-center gap-1.5"
                 >
-                  <FileText className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                  <FileText className="w-3.5 h-3.5 text-primary dark:text-blue-400" />
                   <span>Export Word (.docx)</span>
                 </Button>
 
@@ -1313,7 +1313,7 @@ const { data: aiAuditData } = useQuery({
                 <Button
                   variant="ghost"
                   onClick={handleGenerateShareLink}
-                  className="rounded-xl text-xs font-semibold px-2.5 py-1.5 h-auto text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:text-slate-300 transition-all flex items-center gap-1.5"
+                  className="rounded-xl text-xs font-semibold px-2.5 py-1.5 h-auto text-muted-foreground hover:text-foreground hover:bg-slate-200/60 dark:text-foreground transition-all flex items-center gap-1.5"
                 >
                   <Link2 className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
                   <span>Lien interne</span>
@@ -1323,7 +1323,7 @@ const { data: aiAuditData } = useQuery({
                 <Button
                   variant="ghost"
                   onClick={() => setShowSchedulerModal(true)}
-                  className="rounded-xl text-xs font-semibold px-2.5 py-1.5 h-auto text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:text-slate-300 transition-all flex items-center gap-1.5"
+                  className="rounded-xl text-xs font-semibold px-2.5 py-1.5 h-auto text-muted-foreground hover:text-foreground hover:bg-slate-200/60 dark:text-foreground transition-all flex items-center gap-1.5"
                 >
                   <Calendar className="w-3.5 h-3.5 text-orange-500" />
                   <span>Planifier Séance</span>
@@ -1334,9 +1334,9 @@ const { data: aiAuditData } = useQuery({
               <Button
                 variant="ghost"
                 onClick={() => window.print()}
-                className="rounded-xl text-xs font-semibold px-3 py-1.5 h-auto text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:text-slate-300 transition-all flex items-center gap-1.5 ml-auto"
+                className="rounded-xl text-xs font-semibold px-3 py-1.5 h-auto text-muted-foreground hover:text-foreground hover:bg-slate-200/60 dark:text-foreground transition-all flex items-center gap-1.5 ml-auto"
               >
-                <Printer className="w-3.5 h-3.5 text-slate-500" />
+                <Printer className="w-3.5 h-3.5 text-muted-foreground" />
                 <span>Imprimer</span>
               </Button>
             </div>
@@ -1344,17 +1344,17 @@ const { data: aiAuditData } = useQuery({
 
           {/* 🔒 PV LOCK BANNER — shown when PV is officially sealed */}
           {pvLocked && pvLockDetails && (
-            <div className="relative overflow-hidden bg-gradient-to-r from-red-950 to-red-900 border-2 border-red-500/60 p-5 rounded-3xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-xl animate-in fade-in">
+            <div className="relative overflow-hidden bg-gradient-to-r from-red-950 to-red-900 border-2 border-red-500/60 p-5 rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm animate-in fade-in">
               {/* Animated diagonal stripes background */}
               <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'repeating-linear-gradient(45deg, #dc2626 0px, #dc2626 2px, transparent 2px, transparent 12px)' }} />
               <div className="relative flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl bg-red-600 text-white flex items-center justify-center shadow-xl shadow-red-900/60 shrink-0 ring-4 ring-red-400/30">
+                <div className="w-14 h-14 rounded-2xl bg-red-600 text-white flex items-center justify-center shadow-sm shadow-red-900/60 shrink-0 ring-4 ring-red-400/30">
                   <Lock className="w-7 h-7" />
                 </div>
                 <div className="space-y-1.5">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-black text-red-100">🔒 PV OFFICIEL SCELLÉ — VERROUILLAGE DÉFINITIF</span>
-                    <span className="px-2 py-0.5 bg-red-500 text-white text-[9px] font-black uppercase rounded-full tracking-widest animate-pulse">Immutable</span>
+                    <span className="text-sm font-bold text-red-100">🔒 PV OFFICIEL SCELLÉ — VERROUILLAGE DÉFINITIF</span>
+                    <span className="px-2 py-0.5 bg-red-500 text-white text-[9px] font-bold uppercase rounded-full tracking-widest animate-pulse">Immutable</span>
                   </div>
                   <div className="text-xs text-red-300 font-medium">
                     Verrouillé par <strong className="text-red-100">{pvLockDetails.lockedBy}</strong> ({pvLockDetails.role}) — {pvLockDetails.lockedAt}
@@ -1366,7 +1366,7 @@ const { data: aiAuditData } = useQuery({
                 </div>
               </div>
               <div className="relative shrink-0">
-                <span className="px-4 py-2 bg-red-600/80 border border-red-400/50 text-red-100 text-[10px] font-black uppercase rounded-xl tracking-widest shadow-inner">
+                <span className="px-4 py-2 bg-red-600/80 border border-red-400/50 text-red-100 text-[10px] font-bold uppercase rounded-xl tracking-widest shadow-inner">
                   ⛔ Modifications Désactivées
                 </span>
               </div>
@@ -1375,13 +1375,13 @@ const { data: aiAuditData } = useQuery({
 
           {/* SIGNATURE STATUS BANNER IF SIGNED */}
           {signatureDone && signatureDetails && (
-            <div className="bg-emerald-50 dark:bg-emerald-950/30 border-2 border-emerald-500/40 p-5 rounded-3xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm animate-in fade-in">
+            <div className="bg-emerald-50 dark:bg-emerald-950/30 border-2 border-emerald-500/40 p-5 rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm animate-in fade-in">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-600 text-white flex items-center justify-center font-bold shadow-md shadow-emerald-500/20 shrink-0">
                   <ShieldCheck className="w-7 h-7" />
                 </div>
                 <div className="space-y-1">
-                  <div className="text-sm font-black text-emerald-950 dark:text-emerald-200">
+                  <div className="text-sm font-bold text-emerald-950 dark:text-emerald-200">
                     PV Officiel Signé par le {signatureDetails.role} — {signatureDetails.date}
                   </div>
                   <div className="text-xs font-mono text-emerald-700 dark:text-emerald-400 font-medium">
@@ -1392,11 +1392,11 @@ const { data: aiAuditData } = useQuery({
 
               <div className="flex items-center gap-4">
                 {signatureDataUrl && (
-                  <div className="bg-white dark:bg-slate-900 p-2 rounded-xl border border-emerald-300 dark:border-emerald-800 shadow-inner">
+                  <div className="bg-card dark:bg-card p-2 rounded-xl border border-emerald-300 dark:border-emerald-800 shadow-inner">
                     <img src={signatureDataUrl} alt="Signature Manuelle" className="h-10 object-contain" />
                   </div>
                 )}
-                <span className="px-3.5 py-1.5 bg-emerald-600 text-white text-[10px] font-black uppercase rounded-full tracking-widest shadow-xs">
+                <span className="px-3.5 py-1.5 bg-emerald-600 text-white text-[10px] font-bold uppercase rounded-full tracking-widest shadow-xs">
                   Certifié Authentique (SHA-256)
                 </span>
               </div>
@@ -1407,30 +1407,30 @@ const { data: aiAuditData } = useQuery({
 
           {/* KPI Analytics Stats Cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-sm">
-              <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Effectif Total</span>
-              <div className="text-2xl font-black text-slate-800 dark:text-white mt-1">
+            <div className="bg-card dark:bg-card border border-border dark:border-border p-5 rounded-2xl shadow-sm">
+              <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Effectif Total</span>
+              <div className="text-2xl font-bold text-foreground dark:text-white mt-1">
                 {semesterPvData.stats?.total_students || 0} <span className="text-xs font-bold text-slate-400">Étudiants</span>
               </div>
             </div>
 
             <div className="bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 p-5 rounded-2xl shadow-sm">
-              <span className="text-[10px] font-black uppercase text-emerald-600 dark:text-emerald-400 tracking-wider">Taux de Réussite</span>
-              <div className="text-2xl font-black text-emerald-700 dark:text-emerald-300 mt-1">
+              <span className="text-[10px] font-bold uppercase text-emerald-600 dark:text-emerald-400 tracking-wider">Taux de Réussite</span>
+              <div className="text-2xl font-bold text-emerald-700 dark:text-emerald-300 mt-1">
                 {semesterPvData.stats?.success_rate || 0}% <span className="text-xs font-bold text-emerald-600/70">Validés</span>
               </div>
             </div>
 
             <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 p-5 rounded-2xl shadow-sm">
-              <span className="text-[10px] font-black uppercase text-amber-600 dark:text-amber-400 tracking-wider">Session Rattrapage</span>
-              <div className="text-2xl font-black text-amber-700 dark:text-amber-300 mt-1">
+              <span className="text-[10px] font-bold uppercase text-amber-600 dark:text-amber-400 tracking-wider">Session Rattrapage</span>
+              <div className="text-2xl font-bold text-amber-700 dark:text-amber-300 mt-1">
                 {semesterPvData.stats?.rattrapages || 0} <span className="text-xs font-bold text-amber-600/70">Candidats</span>
               </div>
             </div>
 
             <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 p-5 rounded-2xl shadow-sm">
-              <span className="text-[10px] font-black uppercase text-red-600 dark:text-red-400 tracking-wider">Non Validés / Éliminés</span>
-              <div className="text-2xl font-black text-red-700 dark:text-red-300 mt-1">
+              <span className="text-[10px] font-bold uppercase text-red-600 dark:text-red-400 tracking-wider">Non Validés / Éliminés</span>
+              <div className="text-2xl font-bold text-red-700 dark:text-red-300 mt-1">
                 {semesterPvData.stats?.elimines || 0} <span className="text-xs font-bold text-red-600/70">Étudiants</span>
               </div>
             </div>
@@ -1452,9 +1452,9 @@ const { data: aiAuditData } = useQuery({
             ]
             const moduleBarData = moduleSuccessRates(semesterPvData?.modules || [], students)
             return (
-              <div className="bg-white dark:bg-slate-900 border border-violet-200 dark:border-violet-900/50 rounded-3xl p-6 shadow-xl space-y-6 animate-in slide-in-from-top-2 duration-300">
+              <div className="bg-card dark:bg-card border border-violet-200 dark:border-violet-900/50 rounded-2xl p-6 shadow-sm space-y-6 animate-in slide-in-from-top-2 duration-300">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+                  <h3 className="text-base font-bold text-foreground dark:text-white flex items-center gap-2">
                     <BarChart2 className="w-5 h-5 text-violet-500" />
                     Dashboard Statistiques de la Promotion
                   </h3>
@@ -1465,8 +1465,8 @@ const { data: aiAuditData } = useQuery({
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   {/* Pie Chart */}
-                  <div className="bg-slate-50 dark:bg-slate-800/60 rounded-2xl p-4 space-y-3">
-                    <h4 className="text-xs font-black text-slate-600 dark:text-slate-300 uppercase tracking-wider">Distribution des Décisions</h4>
+                  <div className="bg-muted/50 dark:bg-slate-800/60 rounded-2xl p-4 space-y-3">
+                    <h4 className="text-xs font-bold text-muted-foreground dark:text-foreground uppercase tracking-wider">Distribution des Décisions</h4>
                     <div className="flex justify-center">
                       <ResponsiveContainer width={180} height={180}>
                         <PieChart>
@@ -1482,17 +1482,17 @@ const { data: aiAuditData } = useQuery({
                         <div key={i} className="flex items-center justify-between text-xs">
                           <div className="flex items-center gap-2">
                             <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: d.color }} />
-                            <span className="font-medium text-slate-600 dark:text-slate-300">{d.name}</span>
+                            <span className="font-medium text-muted-foreground dark:text-foreground">{d.name}</span>
                           </div>
-                          <span className="font-black text-slate-800 dark:text-white">{d.value} <span className="text-[10px] font-normal text-slate-400">({total > 0 ? Math.round(d.value / total * 100) : 0}%)</span></span>
+                          <span className="font-bold text-foreground dark:text-white">{d.value} <span className="text-[10px] font-normal text-slate-400">({total > 0 ? Math.round(d.value / total * 100) : 0}%)</span></span>
                         </div>
                       ))}
                     </div>
                   </div>
 
                   {/* Bar Chart — Module Success Rates */}
-                  <div className="bg-slate-50 dark:bg-slate-800/60 rounded-2xl p-4 space-y-3">
-                    <h4 className="text-xs font-black text-slate-600 dark:text-slate-300 uppercase tracking-wider">Taux de Réussite par Module</h4>
+                  <div className="bg-muted/50 dark:bg-slate-800/60 rounded-2xl p-4 space-y-3">
+                    <h4 className="text-xs font-bold text-muted-foreground dark:text-foreground uppercase tracking-wider">Taux de Réussite par Module</h4>
                     <ResponsiveContainer width="100%" height={170}>
                       <ReBarChart data={moduleBarData} barSize={16}>
                         <XAxis dataKey="name" tick={{ fontSize: 9, fill: '#94a3b8' }} />
@@ -1504,25 +1504,25 @@ const { data: aiAuditData } = useQuery({
                   </div>
 
                   {/* Top 5 + KPIs */}
-                  <div className="bg-slate-50 dark:bg-slate-800/60 rounded-2xl p-4 space-y-3">
-                    <h4 className="text-xs font-black text-slate-600 dark:text-slate-300 uppercase tracking-wider">🏆 Top 5 Étudiants — Promotion</h4>
+                  <div className="bg-muted/50 dark:bg-slate-800/60 rounded-2xl p-4 space-y-3">
+                    <h4 className="text-xs font-bold text-muted-foreground dark:text-foreground uppercase tracking-wider">🏆 Top 5 Étudiants — Promotion</h4>
                     <div className="space-y-2">
                       {topStudents.map((s: any, i: number) => (
                         <div key={i} className="flex items-center gap-2 text-xs">
-                          <span className={cn("w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black shrink-0", i === 0 ? 'bg-amber-400 text-amber-900' : i === 1 ? 'bg-slate-300 text-slate-700' : i === 2 ? 'bg-amber-700 text-amber-100' : 'bg-slate-100 dark:bg-slate-700 text-slate-500')}>{i + 1}</span>
-                          <span className="font-semibold text-slate-700 dark:text-slate-200 truncate flex-1">{s.last_name?.toUpperCase()} {s.first_name}</span>
-                          <span className="font-black text-indigo-600 dark:text-indigo-400 shrink-0">{parseFloat(s.moyenne_semestrielle || 0).toFixed(2)}</span>
+                          <span className={cn("w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0", i === 0 ? 'bg-amber-400 text-amber-900' : i === 1 ? 'bg-slate-300 text-slate-700' : i === 2 ? 'bg-amber-700 text-amber-100' : "bg-muted dark:bg-slate-700 text-muted-foreground")}>{i + 1}</span>
+                          <span className="font-semibold text-slate-700 dark:text-foreground truncate flex-1">{s.last_name?.toUpperCase()} {s.first_name}</span>
+                          <span className="font-bold text-primary dark:text-indigo-400 shrink-0">{parseFloat(s.moyenne_semestrielle || 0).toFixed(2)}</span>
                         </div>
                       ))}
                     </div>
-                    <div className="pt-3 border-t border-slate-200 dark:border-slate-700 space-y-1.5">
+                    <div className="pt-3 border-t border-border dark:border-border space-y-1.5">
                       <div className="flex justify-between text-xs">
-                        <span className="text-slate-500">Moyenne Promo</span>
-                        <span className="font-black text-indigo-600">{avgMoy}/20</span>
+                        <span className="text-muted-foreground">Moyenne Promo</span>
+                        <span className="font-bold text-primary">{avgMoy}/20</span>
                       </div>
                       <div className="flex justify-between text-xs">
-                        <span className="text-slate-500">Effectif Total</span>
-                        <span className="font-black text-slate-700 dark:text-white">{students.length} étudiants</span>
+                        <span className="text-muted-foreground">Effectif Total</span>
+                        <span className="font-bold text-slate-700 dark:text-white">{students.length} étudiants</span>
                       </div>
                     </div>
                   </div>
@@ -1568,7 +1568,7 @@ const { data: aiAuditData } = useQuery({
                         <AlertTriangle className="w-5 h-5" />
                       </div>
                       <div>
-                        <div className="font-extrabold text-rose-900 dark:text-rose-200 text-xs">
+                        <div className="font-bold text-rose-900 dark:text-rose-200 text-xs">
                           Anomalie Pédagogique Détectée — {failingModules.length} module(s) avec taux d'échec &gt; 35%
                         </div>
                         <div className="text-rose-700/80 dark:text-rose-300/80 mt-0.5 text-[11px] font-medium">
@@ -1612,23 +1612,23 @@ const { data: aiAuditData } = useQuery({
             const fraudBlockedCandidates = studentsList.filter((s: any) => checkFraud(s))
 
             return (
-              <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200/90 dark:border-slate-800 shadow-sm space-y-5">
+              <div className="bg-card dark:bg-card rounded-2xl p-6 border border-slate-200/90 dark:border-border shadow-sm space-y-5">
                 {/* Header Row: Title + Status Pills + Toggle */}
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-border dark:border-border">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-2xl bg-[#0f2863]/10 dark:bg-blue-900/30 text-[#0f2863] dark:text-blue-300 flex items-center justify-center shadow-xs shrink-0">
                       <Sparkles className="w-5 h-5" />
                     </div>
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="text-base md:text-lg font-black tracking-tight text-[#0f2863] dark:text-white">
+                        <h3 className="text-base md:text-lg font-bold tracking-tight text-[#0f2863] dark:text-white">
                           Assistant IA de Délibération
                         </h3>
-                        <span className="px-2 py-0.5 bg-[#0f2863]/10 text-[#0f2863] dark:bg-blue-900/40 dark:text-blue-300 rounded-md text-[10px] font-black uppercase tracking-wider">
+                        <span className="px-2 py-0.5 bg-[#0f2863]/10 text-[#0f2863] dark:bg-blue-900/40 dark:text-blue-300 rounded-md text-[10px] font-bold uppercase tracking-wider">
                           Analyse Prédictive
                         </span>
                       </div>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                      <p className="text-xs text-muted-foreground dark:text-muted-foreground font-medium">
                         Détection automatique des candidats au rachat jury (9.50–9.99), blocages éliminatoires et exclusions réglementaires.
                       </p>
                     </div>
@@ -1641,7 +1641,7 @@ const { data: aiAuditData } = useQuery({
                     <span className="px-2.5 py-1 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-300 text-xs font-bold rounded-xl">
                       {eliminatoireBlockers.length} Note &lt; 6
                     </span>
-                    <span className="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-xl">
+                    <span className="px-2.5 py-1 bg-muted dark:bg-card border border-border dark:border-border text-slate-700 dark:text-foreground text-xs font-bold rounded-xl">
                       {fraudBlockedCandidates.length} Fraude
                     </span>
 
@@ -1649,7 +1649,7 @@ const { data: aiAuditData } = useQuery({
                       variant="outline"
                       size="sm"
                       onClick={() => setShowAiAnalysis(v => !v)}
-                      className="rounded-xl text-xs font-bold gap-1.5 h-8 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                      className="rounded-xl text-xs font-bold gap-1.5 h-8 border-border dark:border-border text-slate-700 dark:text-foreground hover:bg-muted/50 dark:hover:bg-slate-800"
                     >
                       {showAiAnalysis ? (
                         <>
@@ -1672,7 +1672,7 @@ const { data: aiAuditData } = useQuery({
                     {/* Category 1: Candidates for Rachat */}
                     <div className="bg-amber-50/40 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-800/40 rounded-2xl p-4 space-y-3">
                       <div className="flex items-center justify-between">
-                        <h4 className="text-xs font-black uppercase tracking-wider text-amber-900 dark:text-amber-300 flex items-center gap-1.5">
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-amber-900 dark:text-amber-300 flex items-center gap-1.5">
                           <Sparkles className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
                           <span>Candidats au Rachat ({rachatCandidates.length})</span>
                         </h4>
@@ -1692,13 +1692,13 @@ const { data: aiAuditData } = useQuery({
                             return (
                               <div
                                 key={s.student_id}
-                                className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-amber-200/70 dark:border-slate-700 shadow-2xs flex items-center justify-between gap-2"
+                                className="p-3 bg-card dark:bg-card rounded-xl border border-amber-200/70 dark:border-border shadow-2xs flex items-center justify-between gap-2"
                               >
                                 <div className="space-y-0.5">
-                                  <div className="font-extrabold text-slate-900 dark:text-white text-xs">
+                                  <div className="font-bold text-foreground dark:text-white text-xs">
                                     {s.last_name?.toUpperCase()} {s.first_name}
                                   </div>
-                                  <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                                  <div className="text-[10px] text-muted-foreground dark:text-muted-foreground">
                                     Apogée: {s.apogee} • Moyenne: <span className="font-mono text-amber-700 dark:text-amber-300 font-bold">{Number(s.moyenne_semestrielle).toFixed(2)}/20</span>
                                   </div>
                                 </div>
@@ -1719,7 +1719,7 @@ const { data: aiAuditData } = useQuery({
                                       text: `Rachat jury de +${needed} pt sur la moyenne pour validation du semestre`,
                                     })
                                   }}
-                                  className="px-2.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black rounded-lg text-[10px] uppercase tracking-wider shadow-2xs hover:scale-105 transition-all cursor-pointer flex items-center gap-1 shrink-0"
+                                  className="px-2.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-lg text-[10px] uppercase tracking-wider shadow-2xs hover:scale-105 transition-all cursor-pointer flex items-center gap-1 shrink-0"
                                 >
                                   <Sparkles className="w-3 h-3 text-slate-950" />
                                   <span>+{needed} pt pour Valider</span>
@@ -1734,7 +1734,7 @@ const { data: aiAuditData } = useQuery({
                     {/* Category 2: Eliminatoire Blockers */}
                     <div className="bg-rose-50/40 dark:bg-rose-950/20 border border-rose-200/80 dark:border-rose-800/40 rounded-2xl p-4 space-y-3">
                       <div className="flex items-center justify-between">
-                        <h4 className="text-xs font-black uppercase tracking-wider text-rose-900 dark:text-rose-300 flex items-center gap-1.5">
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-rose-900 dark:text-rose-300 flex items-center gap-1.5">
                           <AlertCircle className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
                           <span>Bloqués Note Éliminatoire ({eliminatoireBlockers.length})</span>
                         </h4>
@@ -1758,13 +1758,13 @@ const { data: aiAuditData } = useQuery({
                             return (
                               <div
                                 key={s.student_id}
-                                className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-rose-200/70 dark:border-slate-700 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+                                className="p-3 bg-card dark:bg-card rounded-xl border border-rose-200/70 dark:border-border shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-2"
                               >
                                 <div className="space-y-0.5">
-                                  <div className="font-extrabold text-slate-900 dark:text-white text-xs">
+                                  <div className="font-bold text-foreground dark:text-white text-xs">
                                     {s.last_name?.toUpperCase()} {s.first_name}
                                   </div>
-                                  <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                                  <div className="text-[10px] text-muted-foreground dark:text-muted-foreground">
                                     Moyenne: <span className="font-mono text-emerald-700 dark:text-emerald-400 font-bold">{Number(s.moyenne_semestrielle).toFixed(2)}/20</span>
                                     {failingModuleEntry && (
                                       <> • <span className="font-bold">{failingModuleEntry.module_code}</span>: <span className="font-mono text-rose-600 font-bold">{failingNote?.toFixed(2)}/20</span></>
@@ -1790,7 +1790,7 @@ const { data: aiAuditData } = useQuery({
                                           text: `Rachat jury de +${pointsNeeded} pt sur ${failingModuleEntry.module_code} (${failingNote?.toFixed(2)} ➔ 6.00) pour éligibilité à la compensation semestrielle`,
                                         })
                                       }}
-                                      className="px-2.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-black rounded-lg text-[10px] uppercase tracking-wider shadow-2xs hover:scale-105 transition-all cursor-pointer flex items-center gap-1 shrink-0"
+                                      className="px-2.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-lg text-[10px] uppercase tracking-wider shadow-2xs hover:scale-105 transition-all cursor-pointer flex items-center gap-1 shrink-0"
                                       title="Accorder le rachat pour lever la note éliminatoire et valider par compensation"
                                     >
                                       <Sparkles className="w-3 h-3 text-white" />
@@ -1810,19 +1810,19 @@ const { data: aiAuditData } = useQuery({
                     </div>
 
                     {/* Category 3: Fraud Exclusion */}
-                    <div className="bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700 rounded-2xl p-4 space-y-3">
+                    <div className="bg-muted/50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-border rounded-2xl p-4 space-y-3">
                       <div className="flex items-center justify-between">
-                        <h4 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                          <ShieldAlert className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-foreground dark:text-foreground flex items-center gap-1.5">
+                          <ShieldAlert className="w-3.5 h-3.5 text-muted-foreground dark:text-muted-foreground" />
                           <span>Exclus du Rachat ({fraudBlockedCandidates.length})</span>
                         </h4>
-                        <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold bg-slate-200/60 dark:bg-slate-700 px-2 py-0.5 rounded-md">
+                        <span className="text-[10px] text-muted-foreground dark:text-muted-foreground font-bold bg-slate-200/60 dark:bg-slate-700 px-2 py-0.5 rounded-md">
                           Discipline & Fraude
                         </span>
                       </div>
 
                       {fraudBlockedCandidates.length === 0 ? (
-                        <p className="text-xs text-slate-400 dark:text-slate-500 italic p-3 bg-white/60 dark:bg-slate-800/60 rounded-xl border border-dashed border-slate-200 dark:border-slate-700 text-center">
+                        <p className="text-xs text-slate-400 dark:text-slate-500 italic p-3 bg-white/60 dark:bg-slate-800/60 rounded-xl border border-dashed border-border dark:border-border text-center">
                           Aucun dossier disciplinaire ou de fraude dans cette promotion.
                         </p>
                       ) : (
@@ -1830,17 +1830,17 @@ const { data: aiAuditData } = useQuery({
                           {fraudBlockedCandidates.map((s: any) => (
                             <div
                               key={s.student_id}
-                              className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xs flex items-center justify-between gap-2"
+                              className="p-3 bg-card dark:bg-card rounded-xl border border-border dark:border-border shadow-2xs flex items-center justify-between gap-2"
                             >
                               <div className="space-y-0.5">
-                                <div className="font-extrabold text-slate-900 dark:text-white text-xs">
+                                <div className="font-bold text-foreground dark:text-white text-xs">
                                   {s.last_name?.toUpperCase()} {s.first_name}
                                 </div>
                                 <div className="text-[10px] text-rose-600 dark:text-rose-400 font-bold">
                                   Dossier: FRAUDE (Note 0.00)
                                 </div>
                               </div>
-                              <span className="px-2.5 py-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600 rounded-lg text-[9px] font-black uppercase tracking-wider shrink-0">
+                              <span className="px-2.5 py-1 bg-muted dark:bg-slate-700 text-muted-foreground dark:text-foreground border border-border dark:border-border rounded-lg text-[9px] font-bold uppercase tracking-wider shrink-0">
                                 Inéligible Rachat
                               </span>
                             </div>
@@ -1857,23 +1857,23 @@ const { data: aiAuditData } = useQuery({
 
           {/* GRAND MATRIX TABLE FOR ALL 7 MODULES */}
           <div className={cn(
-            "bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-3xl overflow-hidden shadow-sm space-y-0 transition-all",
-            isFullscreenTable && "fixed inset-0 z-50 rounded-none border-0 p-4 md:p-6 flex flex-col h-screen w-screen bg-white dark:bg-slate-950 overflow-hidden"
+            "bg-card dark:bg-card border border-slate-200/90 dark:border-border rounded-2xl overflow-hidden shadow-sm space-y-0 transition-all",
+            isFullscreenTable && "fixed inset-0 z-50 rounded-none border-0 p-4 md:p-6 flex flex-col h-screen w-screen bg-card dark:bg-background overflow-hidden"
           )}>
 
             {/* Header Toolbar: Search & Filters + View Switcher + Fullscreen */}
-            <div className="p-4 md:p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-4 bg-slate-50/70 dark:bg-slate-850 shrink-0">
+            <div className="p-4 md:p-5 border-b border-border dark:border-border flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-4 bg-slate-50/70 dark:bg-card shrink-0">
               <div className="space-y-0.5">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="text-base font-black text-[#0f2863] dark:text-white flex items-center gap-2">
+                  <h3 className="text-base font-bold text-[#0f2863] dark:text-white flex items-center gap-2">
                     <Sparkles className="w-4 h-4 text-amber-500" />
                     Matrice Globale des {semesterPvData.modules?.length || 7} Modules
                   </h3>
-                  <span className="px-2 py-0.5 bg-[#0f2863]/10 text-[#0f2863] dark:bg-blue-900/40 dark:text-blue-300 rounded-md text-[10px] font-black uppercase">
+                  <span className="px-2 py-0.5 bg-[#0f2863]/10 text-[#0f2863] dark:bg-blue-900/40 dark:text-blue-300 rounded-md text-[10px] font-bold uppercase">
                     Compensation APOGEE
                   </span>
                 </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-xs text-muted-foreground dark:text-muted-foreground">
                   Moyenne semestrielle ≥ 10/20 • Max 2 modules &lt; 10/20 pour compensation (Code VPC) • Note éliminatoire &lt; 6.00/20.
                 </p>
               </div>
@@ -1887,12 +1887,12 @@ const { data: aiAuditData } = useQuery({
                     placeholder="Rechercher nom, Apogée, CIN..."
                     value={matrixSearchQuery}
                     onChange={(e) => setMatrixSearchQuery(e.target.value)}
-                    className="pl-8.5 pr-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-[#0f2863] w-full"
+                    className="pl-8.5 pr-3 py-1.5 bg-card dark:bg-card border border-border dark:border-border text-xs font-medium text-foreground dark:text-foreground focus:ring-2 focus:ring-[#0f2863] w-full rounded-[var(--control-radius)]"
                   />
                 </div>
 
                 {/* Filter Tabs */}
-                <div className="flex items-center gap-1 bg-white dark:bg-slate-800 p-1 border border-slate-200 dark:border-slate-700 rounded-xl text-xs">
+                <div className="flex items-center gap-1 bg-card dark:bg-card p-1 border border-border dark:border-border rounded-xl text-xs">
                   {(() => {
                     const allStudents = semesterPvData.students || []
                     const valCleanCount = allStudents.filter((s: any) => s.decision_global === 'V' || s.decision_global === 'VAR').length
@@ -1904,10 +1904,10 @@ const { data: aiAuditData } = useQuery({
                         <button
                           onClick={() => setMatrixDecisionFilter('all')}
                           className={cn(
-                            "px-2.5 py-1 rounded-lg font-extrabold text-[11px] transition-all cursor-pointer",
+                            "px-2.5 py-1 rounded-lg font-bold text-[11px] transition-all cursor-pointer",
                             matrixDecisionFilter === 'all'
                               ? "bg-[#0f2863] text-white shadow-xs"
-                              : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
+                              : "text-muted-foreground dark:text-foreground hover:bg-muted dark:hover:bg-slate-700"
                           )}
                         >
                           Tous ({allStudents.length})
@@ -1915,7 +1915,7 @@ const { data: aiAuditData } = useQuery({
                         <button
                           onClick={() => setMatrixDecisionFilter('V')}
                           className={cn(
-                            "px-2.5 py-1 rounded-lg font-extrabold text-[11px] transition-all cursor-pointer",
+                            "px-2.5 py-1 rounded-lg font-bold text-[11px] transition-all cursor-pointer",
                             matrixDecisionFilter === 'V'
                               ? "bg-emerald-600 text-white shadow-xs"
                               : "text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
@@ -1926,10 +1926,10 @@ const { data: aiAuditData } = useQuery({
                         <button
                           onClick={() => setMatrixDecisionFilter('VPC')}
                           className={cn(
-                            "px-2.5 py-1 rounded-lg font-extrabold text-[11px] transition-all cursor-pointer",
+                            "px-2.5 py-1 rounded-lg font-bold text-[11px] transition-all cursor-pointer",
                             matrixDecisionFilter === 'VPC'
-                              ? "bg-indigo-600 text-white shadow-xs"
-                              : "text-indigo-700 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/30"
+                              ? "bg-primary text-primary-foreground shadow-xs"
+                              : "text-primary dark:text-indigo-400 hover:bg-primary/5 dark:hover:bg-indigo-950/30"
                           )}
                         >
                           Compensés ({vpcCount})
@@ -1937,7 +1937,7 @@ const { data: aiAuditData } = useQuery({
                         <button
                           onClick={() => setMatrixDecisionFilter('NV')}
                           className={cn(
-                            "px-2.5 py-1 rounded-lg font-extrabold text-[11px] transition-all cursor-pointer",
+                            "px-2.5 py-1 rounded-lg font-bold text-[11px] transition-all cursor-pointer",
                             matrixDecisionFilter === 'NV'
                               ? "bg-rose-600 text-white shadow-xs"
                               : "text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30"
@@ -1951,15 +1951,15 @@ const { data: aiAuditData } = useQuery({
                 </div>
 
                 {/* Mode Switcher: Compact vs Detailed */}
-                <div className="flex items-center gap-1 bg-white dark:bg-slate-800 p-1 border border-slate-200 dark:border-slate-700 rounded-xl text-xs">
+                <div className="flex items-center gap-1 bg-card dark:bg-card p-1 border border-border dark:border-border rounded-xl text-xs">
                   <button
                     onClick={() => setMatrixViewMode('compact')}
                     title="Affichage compact : 1 colonne par module avec note et décision (Recommandé)"
                     className={cn(
-                      "px-2.5 py-1 rounded-lg font-extrabold text-[11px] transition-all cursor-pointer flex items-center gap-1",
+                      "px-2.5 py-1 rounded-lg font-bold text-[11px] transition-all cursor-pointer flex items-center gap-1",
                       matrixViewMode === 'compact'
                         ? "bg-[#0f2863] text-white shadow-xs"
-                        : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
+                        : "text-muted-foreground dark:text-foreground hover:bg-muted dark:hover:bg-slate-700"
                     )}
                   >
                     <Table className="w-3.5 h-3.5" />
@@ -1969,10 +1969,10 @@ const { data: aiAuditData } = useQuery({
                     onClick={() => setMatrixViewMode('detailed')}
                     title="Affichage détaillé : 3 sous-colonnes (Note, Décision, Année) par module"
                     className={cn(
-                      "px-2.5 py-1 rounded-lg font-extrabold text-[11px] transition-all cursor-pointer flex items-center gap-1",
+                      "px-2.5 py-1 rounded-lg font-bold text-[11px] transition-all cursor-pointer flex items-center gap-1",
                       matrixViewMode === 'detailed'
                         ? "bg-[#0f2863] text-white shadow-xs"
-                        : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
+                        : "text-muted-foreground dark:text-foreground hover:bg-muted dark:hover:bg-slate-700"
                     )}
                   >
                     <SlidersHorizontal className="w-3.5 h-3.5" />
@@ -1985,7 +1985,7 @@ const { data: aiAuditData } = useQuery({
                   variant="outline"
                   size="sm"
                   onClick={() => setIsFullscreenTable(v => !v)}
-                  className="rounded-xl font-bold text-xs gap-1.5 h-8 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                  className="rounded-xl font-bold text-xs gap-1.5 h-8 border-border dark:border-border text-slate-700 dark:text-foreground hover:bg-muted dark:hover:bg-slate-800"
                 >
                   {isFullscreenTable ? (
                     <>
@@ -2022,7 +2022,7 @@ const { data: aiAuditData } = useQuery({
 
               return (
                 <div className={cn(
-                  "overflow-x-auto bg-white dark:bg-slate-900",
+                  "overflow-x-auto bg-card dark:bg-card",
                   isFullscreenTable ? "flex-1 overflow-y-auto" : "max-h-[680px] overflow-y-auto"
                 )}>
                   <table className="w-full text-xs text-left border-collapse">
@@ -2030,19 +2030,19 @@ const { data: aiAuditData } = useQuery({
                       <tr className="bg-[#0f2863] text-white">
                         <th
                           rowSpan={matrixViewMode === 'detailed' ? 2 : 1}
-                          className="py-2.5 px-2 font-black uppercase tracking-wider sm:sticky sm:left-0 z-30 bg-[#0f2863] text-white border-r border-slate-700/80 min-w-[85px] w-[85px] text-center text-[11px]"
+                          className="py-2.5 px-2 font-bold uppercase tracking-wider sm:sticky sm:left-0 z-30 bg-[#0f2863] text-white border-r border-slate-700/80 min-w-[85px] w-[85px] text-center text-[11px]"
                         >
                           Apogée
                         </th>
                         <th
                           rowSpan={matrixViewMode === 'detailed' ? 2 : 1}
-                          className="py-2.5 px-2 font-black uppercase tracking-wider sm:sticky sm:left-[85px] z-30 bg-[#0f2863] text-amber-200 border-r border-slate-700/80 min-w-[75px] w-[75px] text-center text-[11px]"
+                          className="py-2.5 px-2 font-bold uppercase tracking-wider sm:sticky sm:left-[85px] z-30 bg-[#0f2863] text-amber-200 border-r border-slate-700/80 min-w-[75px] w-[75px] text-center text-[11px]"
                         >
                           CIN
                         </th>
                         <th
                           rowSpan={matrixViewMode === 'detailed' ? 2 : 1}
-                          className="py-2.5 px-3 font-black uppercase tracking-wider sticky left-0 sm:left-[160px] z-30 bg-[#0f2863] text-white border-r-2 border-slate-300 dark:border-slate-700 shadow-[4px_0_8px_-2px_rgba(0,0,0,0.08)] min-w-[140px] max-w-[155px] text-[11px]"
+                          className="py-2.5 px-3 font-bold uppercase tracking-wider sticky left-0 sm:left-[160px] z-30 bg-[#0f2863] text-white border-r-2 border-slate-300 dark:border-border shadow-[4px_0_8px_-2px_rgba(0,0,0,0.08)] min-w-[140px] max-w-[155px] text-[11px]"
                         >
                           Nom & Prénom
                         </th>
@@ -2054,7 +2054,7 @@ const { data: aiAuditData } = useQuery({
                             colSpan={matrixViewMode === 'detailed' ? 3 : 1}
                             className="py-3 px-2 font-bold text-center border-r border-slate-700/80 bg-[#0f2863] text-white min-w-[95px]"
                           >
-                            <div className="text-[11px] font-black uppercase tracking-tight text-white line-clamp-1" title={m.name}>
+                            <div className="text-[11px] font-bold uppercase tracking-tight text-white line-clamp-1" title={m.name}>
                               M0{idx+1} • {m.name}
                             </div>
                             <div className="font-mono text-[9px] text-blue-200/90 font-medium">
@@ -2065,19 +2065,19 @@ const { data: aiAuditData } = useQuery({
 
                         <th
                           rowSpan={matrixViewMode === 'detailed' ? 2 : 1}
-                          className="py-3 px-3 font-black text-center bg-[#0a1c47] text-amber-300 border-r border-slate-700 min-w-[90px]"
+                          className="py-3 px-3 font-bold text-center bg-[#0a1c47] text-amber-300 border-r border-slate-700 min-w-[90px]"
                         >
                           Moyenne
                         </th>
                         <th
                           rowSpan={matrixViewMode === 'detailed' ? 2 : 1}
-                          className="py-3 px-2 font-black text-center bg-[#0a1c47] text-white border-r border-slate-700 min-w-[70px]"
+                          className="py-3 px-2 font-bold text-center bg-[#0a1c47] text-white border-r border-slate-700 min-w-[70px]"
                         >
                           Crédits
                         </th>
                         <th
                           rowSpan={matrixViewMode === 'detailed' ? 2 : 1}
-                          className="py-3 px-4 font-black text-center bg-[#0a1c47] text-white min-w-[130px]"
+                          className="py-3 px-4 font-bold text-center bg-[#0a1c47] text-white min-w-[130px]"
                         >
                           Décision
                         </th>
@@ -2088,13 +2088,13 @@ const { data: aiAuditData } = useQuery({
                         <tr className="bg-[#153478] text-blue-100 border-b border-slate-700">
                           {semesterPvData.modules?.map((m: any) => (
                             <React.Fragment key={`sub-${m.id}`}>
-                              <th className="py-1.5 px-2 font-extrabold text-[10px] text-center bg-[#153478] border-r border-slate-700 text-amber-200 min-w-[50px]">
+                              <th className="py-1.5 px-2 font-bold text-[10px] text-center bg-[#153478] border-r border-slate-700 text-amber-200 min-w-[50px]">
                                 Note
                               </th>
-                              <th className="py-1.5 px-2 font-extrabold text-[10px] text-center bg-[#153478] border-r border-slate-700 text-amber-200 min-w-[50px]">
+                              <th className="py-1.5 px-2 font-bold text-[10px] text-center bg-[#153478] border-r border-slate-700 text-amber-200 min-w-[50px]">
                                 Déc.
                               </th>
-                              <th className="py-1.5 px-2 font-extrabold text-[10px] text-center bg-[#153478] border-r-2 border-slate-700 text-amber-200 min-w-[65px]">
+                              <th className="py-1.5 px-2 font-bold text-[10px] text-center bg-[#153478] border-r-2 border-slate-700 text-amber-200 min-w-[65px]">
                                 Année
                               </th>
                             </React.Fragment>
@@ -2140,7 +2140,7 @@ const { data: aiAuditData } = useQuery({
                             <tr key={s.student_id} className={cn("transition-colors", rowOpaqueBg, rowHoverBg)}>
                               {/* Apogee: 100% Solid background to completely prevent bleed-through */}
                               <td className={cn(
-                                "py-2 px-2 font-mono font-bold text-xs text-slate-800 dark:text-slate-200 border-r border-b border-slate-200 dark:border-slate-800 sm:sticky sm:left-0 z-20 text-center shadow-xs min-w-[85px] w-[85px]",
+                                "py-2 px-2 font-mono font-bold text-xs text-foreground dark:text-foreground border-r border-b border-border dark:border-border sm:sticky sm:left-0 z-20 text-center shadow-xs min-w-[85px] w-[85px]",
                                 rowOpaqueBg
                               )}>
                                 {s.apogee}
@@ -2148,7 +2148,7 @@ const { data: aiAuditData } = useQuery({
 
                               {/* CIN: Dedicated column */}
                               <td className={cn(
-                                "py-2 px-2 font-mono font-black text-xs text-indigo-950 dark:text-indigo-200 border-r border-b border-slate-200 dark:border-slate-800 sm:sticky sm:left-[85px] z-20 text-center shadow-xs min-w-[75px] w-[75px]",
+                                "py-2 px-2 font-mono font-bold text-xs text-indigo-950 dark:text-indigo-200 border-r border-b border-border dark:border-border sm:sticky sm:left-[85px] z-20 text-center shadow-xs min-w-[75px] w-[75px]",
                                 rowOpaqueBg
                               )}>
                                 {s.cin || '–'}
@@ -2156,15 +2156,15 @@ const { data: aiAuditData } = useQuery({
 
                               {/* Student Name: Reduced width and compact font size */}
                               <td className={cn(
-                                "py-2 px-3 border-r-2 border-b border-slate-300 dark:border-slate-700 sticky left-0 sm:left-[160px] z-20 shadow-[4px_0_8px_-2px_rgba(0,0,0,0.08)] min-w-[140px] max-w-[155px]",
+                                "py-2 px-3 border-r-2 border-b border-slate-300 dark:border-border sticky left-0 sm:left-[160px] z-20 shadow-[4px_0_8px_-2px_rgba(0,0,0,0.08)] min-w-[140px] max-w-[155px]",
                                 rowOpaqueBg
                               )}>
                                 <div className="flex items-center gap-1 min-w-0" title={`${s.last_name?.toUpperCase()} ${s.first_name}`}>
-                                  <span className="font-extrabold text-[11px] text-slate-900 dark:text-white truncate">
+                                  <span className="font-bold text-[11px] text-foreground dark:text-white truncate">
                                     {s.last_name?.toUpperCase()} {s.first_name}
                                   </span>
                                   {hasStudentFraud && (
-                                    <span className="px-1 py-0.2 bg-rose-600 text-white rounded text-[8.5px] font-black uppercase shrink-0">
+                                    <span className="px-1 py-0.2 bg-rose-600 text-white rounded text-[8.5px] font-bold uppercase shrink-0">
                                       FRAUDE
                                     </span>
                                   )}
@@ -2201,14 +2201,14 @@ const { data: aiAuditData } = useQuery({
                                   return (
                                     <td
                                       key={m.id}
-                                      className={cn("py-2 px-1.5 text-center border-r border-b border-slate-200 dark:border-slate-800", noteBg)}
+                                      className={cn("py-2 px-1.5 text-center border-r border-b border-border dark:border-border", noteBg)}
                                     >
                                       <div className="flex flex-col items-center justify-center gap-0.5">
-                                        <span className={cn("font-mono text-xs font-black", noteColor)}>
+                                        <span className={cn("font-mono text-xs font-bold", noteColor)}>
                                           {isFraud ? '0.00' : (note !== null && note !== undefined ? Number(note).toFixed(2) : '–')}
                                         </span>
                                         <div className="flex items-center gap-1">
-                                          <span className={cn("text-[9px] px-1.5 py-0.2 rounded font-black uppercase tracking-wider border", decBadgeClass)}>
+                                          <span className={cn("text-[9px] px-1.5 py-0.2 rounded font-bold uppercase tracking-wider border", decBadgeClass)}>
                                             {isFraud ? 'FRAUDE' : (dec || 'NV')}
                                           </span>
                                           {mInfo?.is_historical && (
@@ -2228,20 +2228,20 @@ const { data: aiAuditData } = useQuery({
                                 // Detailed Mode (3 Columns per Module)
                                 return (
                                   <React.Fragment key={m.id}>
-                                    <td className={cn("py-2 px-2 text-center border-r border-b border-slate-200 dark:border-slate-800 font-mono text-xs font-black", noteColor, noteBg)}>
+                                    <td className={cn("py-2 px-2 text-center border-r border-b border-border dark:border-border font-mono text-xs font-bold", noteColor, noteBg)}>
                                       {isFraud ? '0.00' : (note !== null && note !== undefined ? Number(note).toFixed(2) : '–')}
                                     </td>
-                                    <td className="py-2 px-1.5 text-center border-r border-b border-slate-200 dark:border-slate-800">
-                                      <span className={cn("text-[9px] px-1.5 py-0.5 rounded font-black uppercase tracking-wider border", decBadgeClass)}>
+                                    <td className="py-2 px-1.5 text-center border-r border-b border-border dark:border-border">
+                                      <span className={cn("text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider border", decBadgeClass)}>
                                         {isFraud ? 'FRAUDE' : (dec || 'NV')}
                                       </span>
                                     </td>
-                                    <td className="py-2 px-1.5 text-center border-r-2 border-b border-slate-200 dark:border-slate-800">
+                                    <td className="py-2 px-1.5 text-center border-r-2 border-b border-border dark:border-border">
                                       <span className={cn(
                                         "text-[9px] px-1.5 py-0.5 rounded font-mono font-medium whitespace-nowrap",
                                         mInfo?.is_historical
                                           ? "bg-purple-100 text-purple-900 font-bold dark:bg-purple-950 dark:text-purple-300"
-                                          : "text-slate-500 dark:text-slate-400"
+                                          : "text-muted-foreground dark:text-muted-foreground"
                                       )}>
                                         {mInfo?.is_historical ? `🏛️ ${mInfo?.validation_year || '25-26'}` : (mInfo?.validation_year || '26-27')}
                                       </span>
@@ -2251,14 +2251,14 @@ const { data: aiAuditData } = useQuery({
                               })}
 
                               {/* Moyenne Semestrielle Cell */}
-                              <td className="py-2.5 px-3 text-center border-r border-b border-slate-200 dark:border-slate-800 font-mono font-black text-sm bg-blue-50/40 dark:bg-blue-950/20 text-[#0f2863] dark:text-blue-300">
+                              <td className="py-2.5 px-3 text-center border-r border-b border-border dark:border-border font-mono font-bold text-sm bg-blue-50/40 dark:bg-blue-950/20 text-[#0f2863] dark:text-blue-300">
                                 {hasStudentFraud ? (
-                                  <span className="px-2 py-0.5 rounded-lg text-xs font-black font-mono bg-rose-600 text-white">
+                                  <span className="px-2 py-0.5 rounded-lg text-xs font-bold font-mono bg-rose-600 text-white">
                                     0.00
                                   </span>
                                 ) : (
                                   s.moyenne_semestrielle !== null ? (
-                                    <span className="font-mono font-black text-sm">
+                                    <span className="font-mono font-bold text-sm">
                                       {Number(s.moyenne_semestrielle).toFixed(2)}
                                     </span>
                                   ) : '–'
@@ -2266,19 +2266,19 @@ const { data: aiAuditData } = useQuery({
                               </td>
 
                               {/* Credits Cell */}
-                              <td className="py-2.5 px-2 text-center border-r border-b border-slate-200 dark:border-slate-800 font-bold text-xs">
-                                <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded-md text-slate-700 dark:text-slate-300 font-mono font-bold">
+                              <td className="py-2.5 px-2 text-center border-r border-b border-border dark:border-border font-bold text-xs">
+                                <span className="px-2 py-0.5 bg-muted dark:bg-card rounded-md text-slate-700 dark:text-foreground font-mono font-bold">
                                   {hasStudentFraud ? '0' : s.credits}/{semesterPvData.modules?.length || 7}
                                 </span>
                               </td>
 
                               {/* Décision Semestrielle Cell */}
-                              <td className="py-2.5 px-3 text-center border-b border-slate-200 dark:border-slate-800">
+                              <td className="py-2.5 px-3 text-center border-b border-border dark:border-border">
                                 <span className={cn(
-                                  "px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider border inline-block",
+                                  "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border inline-block",
                                   hasStudentFraud ? "bg-rose-600 text-white border-rose-700 shadow-xs" :
                                   s.decision_global === 'V' ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800" :
-                                  s.decision_global === 'VPC' ? "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800" :
+                                  s.decision_global === 'VPC' ? "bg-primary/5 text-primary border-primary/20 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-primary" :
                                   s.decision_global === 'VAR' ? "bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800" :
                                   "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800"
                                 )}>
@@ -2302,25 +2302,25 @@ const { data: aiAuditData } = useQuery({
 
           {/* JURY COMMITTEE STATUS HUB (Commission Jury Semestrielle) */}
           {juryStatus && (
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-md space-y-5 print:hidden">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
+            <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-6 shadow-md space-y-5 print:hidden">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border dark:border-border pb-4">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="px-3 py-1 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-900 dark:text-indigo-200 rounded-full text-[10px] font-black uppercase tracking-wider">
+                    <span className="px-3 py-1 bg-primary/10 dark:bg-indigo-900/50 text-primary dark:text-indigo-200 rounded-full text-[10px] font-bold uppercase tracking-wider">
                       Commission Jury Semestrielle S{selectedSemester || 1} ({semesterPvData?.modules?.length || 7} Modules)
                     </span>
                   </div>
-                  <h3 className="text-xl font-black text-slate-900 dark:text-white mt-1">
+                  <h3 className="text-xl font-bold text-foreground dark:text-white mt-1">
                     Suivi des Signatures du Jury de Délibération
                   </h3>
                 </div>
 
                 <div className="flex items-center gap-3">
                   <div className="text-right">
-                    <span className="block text-xs font-black text-slate-700 dark:text-slate-200">
+                    <span className="block text-xs font-bold text-slate-700 dark:text-foreground">
                       {juryStatus.signed_count} / {juryStatus.total_members} Signatures Récoltées
                     </span>
-                    <div className="w-36 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden mt-1">
+                    <div className="w-36 h-2 bg-muted dark:bg-card rounded-full overflow-hidden mt-1">
                       <div
                         className="h-full bg-gradient-to-r from-indigo-500 to-emerald-500 rounded-full transition-all duration-500"
                         style={{ width: `${juryStatus.total_members > 0 ? (juryStatus.signed_count / juryStatus.total_members) * 100 : 0}%` }}
@@ -2354,27 +2354,27 @@ const { data: aiAuditData } = useQuery({
                       "p-4 rounded-2xl border transition-all flex flex-col justify-between space-y-3",
                       member.status === 'signed'
                         ? "bg-emerald-50/50 border-emerald-200 dark:bg-emerald-950/20"
-                        : "bg-slate-50 border-slate-200 dark:bg-slate-800/50"
+                        : "bg-muted/50 border-border dark:bg-slate-800/50"
                     )}
                   >
                     <div>
-                      <div className="flex items-center justify-between text-[10px] font-black uppercase text-slate-400">
+                      <div className="flex items-center justify-between text-[10px] font-bold uppercase text-slate-400">
                         <span>{member.module_code || 'CHEF'}</span>
-                        <span className={cn("px-2 py-0.5 rounded-md text-[9px]", member.role === 'chef_filiere' ? "bg-purple-100 text-purple-900" : "bg-blue-100 text-blue-900")}>
+                        <span className={cn("px-2 py-0.5 rounded-md text-[9px]", member.role === 'chef_filiere' ? "bg-purple-100 text-purple-900" : "bg-primary/10 text-primary")}>
                           {member.role === 'chef_filiere' ? 'Président' : 'Professeur'}
                         </span>
                       </div>
-                      <h4 className="text-xs font-black text-slate-800 dark:text-slate-100 mt-1 line-clamp-1">
+                      <h4 className="text-xs font-bold text-foreground dark:text-foreground mt-1 line-clamp-1">
                         {member.user_name}
                       </h4>
-                      <p className="text-[11px] text-slate-500 font-medium line-clamp-1 mt-0.5">
+                      <p className="text-[11px] text-muted-foreground font-medium line-clamp-1 mt-0.5">
                         {member.module_name}
                       </p>
                     </div>
 
                     <div>
                       {member.status === 'signed' ? (
-                        <div className="flex items-center justify-between text-[10px] text-emerald-700 font-extrabold bg-emerald-100/70 px-2.5 py-1 rounded-lg">
+                        <div className="flex items-center justify-between text-[10px] text-emerald-700 font-bold bg-emerald-100/70 px-2.5 py-1 rounded-lg">
                           <span className="flex items-center gap-1"><ShieldCheck className="w-3.5 h-3.5" /> Signé</span>
                           <span className="font-mono text-[9px]">{member.digital_seal ? member.digital_seal.substring(0, 6) : 'OK'}</span>
                         </div>
@@ -2398,57 +2398,57 @@ const { data: aiAuditData } = useQuery({
           {/* RACHAT CONFIRMATION MODAL WITH LEGAL TRACEABILITY */}
           {selectedRachatStudent && (
             <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
-              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl space-y-6 animate-in zoom-in-95 duration-200 text-left">
-                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+              <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-6 md:p-8 max-w-md w-full shadow-sm space-y-6 animate-in zoom-in-95 duration-200 text-left">
+                <div className="flex items-center justify-between border-b border-border dark:border-border pb-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-2xl bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-300 flex items-center justify-center">
                       <Sparkles className="w-5 h-5" />
                     </div>
                     <div>
-                      <h3 className="text-base font-black text-slate-900 dark:text-white">Validation par Rachat Jury</h3>
-                      <p className="text-xs text-slate-500">Procès-Verbal Officiel de Délibération S1</p>
+                      <h3 className="text-base font-bold text-foreground dark:text-white">Validation par Rachat Jury</h3>
+                      <p className="text-xs text-muted-foreground">Procès-Verbal Officiel de Délibération S1</p>
                     </div>
                   </div>
                   <button
                     onClick={() => setSelectedRachatStudent(null)}
-                    className="text-slate-400 hover:text-slate-600 text-xl font-bold cursor-pointer"
+                    className="text-slate-400 hover:text-muted-foreground text-xl font-bold cursor-pointer"
                   >
                     ×
                   </button>
                 </div>
 
-                <div className="space-y-3 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 text-xs">
+                <div className="space-y-3 bg-muted/50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 text-xs">
                   <div className="flex justify-between">
-                    <span className="text-slate-500 font-medium">Étudiant :</span>
-                    <span className="font-black text-slate-900 dark:text-white">{selectedRachatStudent.name}</span>
+                    <span className="text-muted-foreground font-medium">Étudiant :</span>
+                    <span className="font-bold text-foreground dark:text-white">{selectedRachatStudent.name}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-500 font-medium">Code Apogée :</span>
-                    <span className="font-mono font-bold text-slate-700 dark:text-slate-300">{selectedRachatStudent.apogee}</span>
+                    <span className="text-muted-foreground font-medium">Code Apogée :</span>
+                    <span className="font-mono font-bold text-slate-700 dark:text-foreground">{selectedRachatStudent.apogee}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-500 font-medium">Moyenne Actuelle :</span>
-                    <span className="font-mono font-black text-amber-600">{selectedRachatStudent.current_note}/20</span>
+                    <span className="text-muted-foreground font-medium">Moyenne Actuelle :</span>
+                    <span className="font-mono font-bold text-amber-600">{selectedRachatStudent.current_note}/20</span>
                   </div>
-                  <div className="flex justify-between border-t border-slate-200 dark:border-slate-700 pt-2 font-bold">
-                    <span className="text-slate-600 dark:text-slate-300">Rachat Accordé :</span>
-                    <span className="font-mono font-black text-emerald-600">+ {selectedRachatStudent.needed_points} pt</span>
+                  <div className="flex justify-between border-t border-border dark:border-border pt-2 font-bold">
+                    <span className="text-muted-foreground dark:text-foreground">Rachat Accordé :</span>
+                    <span className="font-mono font-bold text-emerald-600">+ {selectedRachatStudent.needed_points} pt</span>
                   </div>
                   <div className="flex justify-between font-bold">
-                    <span className="text-slate-900 dark:text-white font-black">Nouvelle Moyenne :</span>
-                    <span className="font-mono font-black text-emerald-600 text-sm">10.00/20 (Validé V)</span>
+                    <span className="text-foreground dark:text-white font-bold">Nouvelle Moyenne :</span>
+                    <span className="font-mono font-bold text-emerald-600 text-sm">10.00/20 (Validé V)</span>
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="block text-xs font-black uppercase text-slate-500">
+                  <label className="block text-xs font-bold uppercase text-muted-foreground">
                     Motif / Remarque du Jury (Traçabilité Officielle)
                   </label>
                   <textarea
                     value={rachatReason}
                     onChange={(e) => setRachatReason(e.target.value)}
                     placeholder="Ex: Rachat accordé par le Chef de Filière et le Président du Jury..."
-                    className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-amber-500 min-h-[70px]"
+                    className="w-full px-3.5 py-2.5 bg-card dark:bg-card border border-border dark:border-border text-xs text-foreground dark:text-foreground focus:ring-2 focus:ring-amber-500 min-h-[70px] rounded-[var(--control-radius)]"
                   />
                   <p className="text-[10px] text-slate-400 italic">
                     🔒 Enregistrement légal dans l'historique d'audit avec IP, horodatage et identité de l'utilisateur.
@@ -2459,7 +2459,7 @@ const { data: aiAuditData } = useQuery({
                 <div className="bg-amber-50 dark:bg-amber-950/30 border-2 border-amber-400 dark:border-amber-600 rounded-2xl p-3.5 space-y-2">
                   <div className="flex items-center gap-2">
                     <span className="text-amber-600 text-sm">📋</span>
-                    <span className="text-xs font-black text-amber-900 dark:text-amber-300 uppercase tracking-wide">PV de Rachat — Signatures Requises</span>
+                    <span className="text-xs font-bold text-amber-900 dark:text-amber-300 uppercase tracking-wide">PV de Rachat — Signatures Requises</span>
                   </div>
                   <p className="text-[10px] text-amber-800 dark:text-amber-300 font-bold leading-relaxed">
                     La confirmation génère automatiquement un <strong>PV de Rachat officiel</strong> qui devra être signé par :
@@ -2478,7 +2478,7 @@ const { data: aiAuditData } = useQuery({
                   <button
                     type="button"
                     onClick={() => setSelectedRachatStudent(null)}
-                    className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                    className="px-4 py-2.5 bg-muted hover:bg-slate-200 dark:bg-card dark:hover:bg-slate-700 text-slate-700 dark:text-foreground rounded-xl text-xs font-bold transition-all cursor-pointer"
                   >
                     Annuler
                   </button>
@@ -2494,7 +2494,7 @@ const { data: aiAuditData } = useQuery({
                       })
                     }}
                     disabled={applyRachatMutation.isPending}
-                    className="px-5 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-lg hover:scale-105 transition-all cursor-pointer disabled:opacity-50"
+                    className="px-5 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-lg hover:scale-105 transition-all cursor-pointer disabled:opacity-50"
                   >
                     {applyRachatMutation.isPending ? 'Application...' : `Confirmer & Générer PV de Rachat (+${selectedRachatStudent?.needed_points || 0} pt)`}
                   </button>
@@ -2675,14 +2675,14 @@ const { data: aiAuditData } = useQuery({
         </div>
 
         {/* Year Level Selector Tabs */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-2.5 rounded-2xl flex items-center justify-between gap-3 flex-wrap shadow-xs print:hidden">
+        <div className="bg-card dark:bg-card border border-slate-200/90 dark:border-border p-2.5 rounded-2xl flex items-center justify-between gap-3 flex-wrap shadow-xs print:hidden">
           <div className="flex items-center gap-2.5 ps-2">
             <div className="w-8 h-8 rounded-xl bg-[#0f2863]/10 dark:bg-blue-900/30 text-[#0f2863] dark:text-blue-300 flex items-center justify-center font-bold">
               <Calendar className="w-4 h-4 text-[#0f2863] dark:text-blue-300" />
             </div>
             <div>
-              <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 block leading-none">Palier Académique</span>
-              <span className="text-xs font-black text-slate-800 dark:text-slate-100">Niveau d'Études LMD</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block leading-none">Palier Académique</span>
+              <span className="text-xs font-bold text-foreground dark:text-foreground">Niveau d'Études LMD</span>
             </div>
           </div>
 
@@ -2698,10 +2698,10 @@ const { data: aiAuditData } = useQuery({
                 key={yr.level}
                 onClick={() => setSelectedYearLevel(yr.level)}
                 className={cn(
-                  "px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer",
+                  "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer",
                   selectedYearLevel === yr.level
                     ? "bg-[#0f2863] text-white shadow-xs"
-                    : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-700"
+                    : "bg-muted dark:bg-card text-muted-foreground dark:text-foreground hover:bg-slate-200/70 dark:hover:bg-slate-700"
                 )}
               >
                 {yr.label}
@@ -2711,27 +2711,27 @@ const { data: aiAuditData } = useQuery({
         </div>
 
         {/* Executive Control Header: Replaces the electric blue banner with a sleek, unified card */}
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200/90 dark:border-slate-800 shadow-sm space-y-5 print:hidden">
+        <div className="bg-card dark:bg-card rounded-2xl p-6 border border-slate-200/90 dark:border-border shadow-sm space-y-5 print:hidden">
           {/* Top Row: Annual Identity + Juridical Signature & Actions */}
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-5 border-b border-slate-100 dark:border-slate-800">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-5 border-b border-border dark:border-border">
             {/* Left Identity */}
             <div className="space-y-1.5">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="px-2.5 py-0.5 bg-[#0f2863]/10 text-[#0f2863] dark:bg-blue-900/40 dark:text-blue-300 font-extrabold text-[10px] rounded-lg border border-[#0f2863]/20 uppercase tracking-wider">
+                <span className="px-2.5 py-0.5 bg-[#0f2863]/10 text-[#0f2863] dark:bg-blue-900/40 dark:text-blue-300 font-bold text-[10px] rounded-lg border border-[#0f2863]/20 uppercase tracking-wider">
                   {filiereName}
                 </span>
-                <span className="px-2.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-extrabold text-[10px] rounded-lg border border-slate-200 dark:border-slate-700 uppercase tracking-wider">
+                <span className="px-2.5 py-0.5 bg-muted dark:bg-card text-slate-700 dark:text-foreground font-bold text-[10px] rounded-lg border border-border dark:border-border uppercase tracking-wider">
                   {oddSemLabel} + {evenSemLabel} • 14 Modules
                 </span>
-                <span className="px-2.5 py-0.5 bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 font-extrabold text-[10px] rounded-lg border border-amber-200 dark:border-amber-800 uppercase tracking-wider">
+                <span className="px-2.5 py-0.5 bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 font-bold text-[10px] rounded-lg border border-amber-200 dark:border-amber-800 uppercase tracking-wider">
                   Délibération Annuelle Finale
                 </span>
               </div>
 
-              <h2 className="text-xl md:text-2xl font-black text-[#0f2863] dark:text-white tracking-tight">
+              <h2 className="text-xl md:text-2xl font-bold text-[#0f2863] dark:text-white tracking-tight">
                 Matrice Consolidée d'Année ({filiereName} — {oddSemLabel} + {evenSemLabel})
               </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium max-w-3xl">
+              <p className="text-xs text-muted-foreground dark:text-muted-foreground font-medium max-w-3xl">
                 Fusion complète des notes des 14 modules, moyennes semestrielles et délibération annuelle finale selon le règlement des études ENCG.
               </p>
             </div>
@@ -2742,7 +2742,7 @@ const { data: aiAuditData } = useQuery({
                 <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 px-3 py-2 rounded-xl text-xs font-bold text-emerald-800 dark:text-emerald-300 shadow-xs">
                   <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
                   <div className="flex flex-col leading-tight">
-                    <span className="font-extrabold text-[11px]">{juryStatus.signed_count} / {juryStatus.total_members} Signatures</span>
+                    <span className="font-bold text-[11px]">{juryStatus.signed_count} / {juryStatus.total_members} Signatures</span>
                     <span className="text-[9px] text-emerald-600/90 font-mono">Commission Active</span>
                   </div>
                 </div>
@@ -2773,7 +2773,7 @@ const { data: aiAuditData } = useQuery({
           {/* Middle Row: Exports & Actions */}
           <div className="space-y-3">
             <div className="flex items-center justify-between flex-wrap gap-2">
-              <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                 Exports & Actions Officielles
               </span>
               <span className="text-[10px] text-slate-400 font-medium">
@@ -2785,9 +2785,9 @@ const { data: aiAuditData } = useQuery({
               <Button
                 variant="outline"
                 onClick={() => handleExportPdf(true)}
-                className="rounded-xl border-slate-200 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 text-xs font-bold px-3.5 py-2 shadow-xs flex items-center gap-1.5 cursor-pointer"
+                className="rounded-xl border-border text-slate-700 hover:bg-muted/50 dark:border-border dark:text-foreground text-xs font-bold px-3.5 py-2 shadow-xs flex items-center gap-1.5 cursor-pointer"
               >
-                <Eye className="w-3.5 h-3.5 text-slate-500" />
+                <Eye className="w-3.5 h-3.5 text-muted-foreground" />
                 <span>Aperçu PDF (Voir)</span>
               </Button>
 
@@ -2801,7 +2801,7 @@ const { data: aiAuditData } = useQuery({
                     `PV_Annuel_Filiere${filiereId}_Annee${yearLevel}.pdf`
                   ).then(() => toast.dismiss('pdf-export'))
                 }}
-                className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-black rounded-xl text-xs px-4 py-2 shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl text-xs px-4 py-2 shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
               >
                 <Download className="w-3.5 h-3.5 text-slate-950" />
                 <span>Télécharger PDF Officiel (Tampons)</span>
@@ -2810,9 +2810,9 @@ const { data: aiAuditData } = useQuery({
               <Button
                 variant="outline"
                 onClick={() => fetchAnnualCompensation()}
-                className="rounded-xl border-slate-200 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 text-xs font-bold px-3.5 py-2 shadow-xs flex items-center gap-1.5 cursor-pointer"
+                className="rounded-xl border-border text-slate-700 hover:bg-muted/50 dark:border-border dark:text-foreground text-xs font-bold px-3.5 py-2 shadow-xs flex items-center gap-1.5 cursor-pointer"
               >
-                <RefreshCw className="w-3.5 h-3.5 text-slate-500" />
+                <RefreshCw className="w-3.5 h-3.5 text-muted-foreground" />
                 <span>Recalculer</span>
               </Button>
 
@@ -2823,13 +2823,13 @@ const { data: aiAuditData } = useQuery({
                   "rounded-xl text-xs font-bold px-3.5 py-2 shadow-xs flex items-center gap-1.5 transition-all cursor-pointer",
                   showAiAnalysis
                     ? "bg-amber-50 text-amber-800 border-amber-300 dark:bg-amber-950/40 dark:text-amber-300"
-                    : "border-slate-200 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200"
+                    : "border-border text-slate-700 hover:bg-muted/50 dark:border-border dark:text-foreground"
                 )}
               >
                 <Sparkles className="w-3.5 h-3.5 text-amber-500" />
                 <span>{showAiAnalysis ? "Masquer l'Analyse IA" : "Copilote IA (Rachats Jury)"}</span>
                 {aiSuggestions.length > 0 && (
-                  <span className="px-1.5 py-0.2 rounded-md bg-amber-500 text-slate-950 text-[9px] font-black">
+                  <span className="px-1.5 py-0.2 rounded-md bg-amber-500 text-slate-950 text-[9px] font-bold">
                     {aiSuggestions.length}
                   </span>
                 )}
@@ -2838,7 +2838,7 @@ const { data: aiAuditData } = useQuery({
               <Button
                 variant="outline"
                 onClick={() => setIsFullscreenTable(v => !v)}
-                className="rounded-xl border-slate-200 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 text-xs font-bold px-3.5 py-2 shadow-xs flex items-center gap-1.5 cursor-pointer ml-auto"
+                className="rounded-xl border-border text-slate-700 hover:bg-muted/50 dark:border-border dark:text-foreground text-xs font-bold px-3.5 py-2 shadow-xs flex items-center gap-1.5 cursor-pointer ml-auto"
               >
                 {isFullscreenTable ? <Minimize2 className="w-3.5 h-3.5 text-[#0f2863]" /> : <Maximize2 className="w-3.5 h-3.5 text-[#0f2863]" />}
                 <span>{isFullscreenTable ? 'Réduire' : 'Plein Écran'}</span>
@@ -2849,22 +2849,22 @@ const { data: aiAuditData } = useQuery({
 
         {/* AI DELIBERATION ADVISOR WIDGET (Copilote IA) */}
         {showAiAnalysis && (
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200/90 dark:border-slate-800 shadow-sm space-y-5 animate-in fade-in duration-300 print:hidden">
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
+          <div className="bg-card dark:bg-card rounded-2xl p-6 border border-slate-200/90 dark:border-border shadow-sm space-y-5 animate-in fade-in duration-300 print:hidden">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-border dark:border-border">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-amber-500/10 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 flex items-center justify-center shadow-xs shrink-0">
                   <Sparkles className="w-5 h-5" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="text-base md:text-lg font-black tracking-tight text-[#0f2863] dark:text-white">
+                    <h3 className="text-base md:text-lg font-bold tracking-tight text-[#0f2863] dark:text-white">
                       Copilote IA : Recommandations de Rachat par le Jury
                     </h3>
-                    <span className="px-2 py-0.5 bg-amber-500/10 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 rounded-md text-[10px] font-black uppercase tracking-wider">
+                    <span className="px-2 py-0.5 bg-amber-500/10 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 rounded-md text-[10px] font-bold uppercase tracking-wider">
                       {aiSuggestions.length} Éligibles au Rachat
                     </span>
                   </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                  <p className="text-xs text-muted-foreground dark:text-muted-foreground font-medium">
                     Détection automatique des seuils de compensation (6.00/20), validation de modules et moyennes annuelles selon le règlement ENCG.
                   </p>
                 </div>
@@ -2876,29 +2876,29 @@ const { data: aiAuditData } = useQuery({
             </div>
 
             {aiSuggestions.length === 0 ? (
-              <div className="p-6 text-center text-slate-400 dark:text-slate-500 italic text-xs bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
+              <div className="p-6 text-center text-slate-400 dark:text-slate-500 italic text-xs bg-muted/50 dark:bg-slate-800/40 rounded-2xl border border-dashed border-border dark:border-border">
                 ✨ Aucune opportunité de rachat critique détectée pour cette promotion. Tous les dossiers sont en règle selon la réglementation ENCG !
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {aiSuggestions.map((sug: any, idx: number) => (
-                  <div key={idx} className="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-3 flex flex-col justify-between hover:border-amber-300 transition-all shadow-xs">
+                  <div key={idx} className="bg-muted/50 dark:bg-slate-800/60 p-4 rounded-2xl border border-border dark:border-border space-y-3 flex flex-col justify-between hover:border-amber-300 transition-all shadow-xs">
                     <div className="space-y-2">
                       <div className="flex items-center justify-between gap-2 flex-wrap">
-                        <span className="text-xs font-black text-slate-800 dark:text-white flex items-center gap-1.5">
-                          <span>👤</span> {sug.student_name} <span className="font-mono text-slate-500">({sug.cne})</span>
+                        <span className="text-xs font-bold text-foreground dark:text-white flex items-center gap-1.5">
+                          <span>👤</span> {sug.student_name} <span className="font-mono text-muted-foreground">({sug.cne})</span>
                         </span>
-                        <span className="px-2 py-0.5 rounded-lg text-[9px] font-black uppercase bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                        <span className="px-2 py-0.5 rounded-lg text-[9px] font-bold uppercase bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
                           {sug.impact}
                         </span>
                       </div>
-                      <p className="text-xs font-medium text-slate-600 dark:text-slate-300 leading-relaxed bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
+                      <p className="text-xs font-medium text-muted-foreground dark:text-foreground leading-relaxed bg-card dark:bg-card p-3 rounded-xl border border-border dark:border-border">
                         {sug.text}
                       </p>
                     </div>
 
-                    <div className="flex items-center justify-between pt-3 border-t border-slate-200 dark:border-slate-700">
-                      <span className="text-[11px] font-mono text-indigo-700 dark:text-indigo-300 font-bold bg-indigo-50 dark:bg-indigo-950/60 px-2.5 py-1 rounded-lg border border-indigo-200 dark:border-indigo-800">
+                    <div className="flex items-center justify-between pt-3 border-t border-border dark:border-border">
+                      <span className="text-[11px] font-mono text-primary dark:text-indigo-300 font-bold bg-primary/5 dark:bg-indigo-950/60 px-2.5 py-1 rounded-lg border border-primary/20 dark:border-primary">
                         Rachat conseillé : +{sug.needed_points} pt sur {sug.module_code}
                       </span>
                       <button
@@ -2906,7 +2906,7 @@ const { data: aiAuditData } = useQuery({
                           setSelectedRachatStudent(sug)
                           setSelectedRachatReason(sug.text)
                         }}
-                        className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black rounded-lg text-xs transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+                        className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-lg text-xs transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
                       >
                         <Sparkles className="w-3.5 h-3.5 text-slate-950" />
                         <span>Appliquer (+{sug.needed_points} pt)</span>
@@ -2921,41 +2921,41 @@ const { data: aiAuditData } = useQuery({
 
         {/* Annual KPI Dashboard */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 print:hidden">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-sm">
-            <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Moyenne Promotion</span>
-            <div className="text-2xl font-black text-[#0f2863] dark:text-blue-300 mt-1">
+          <div className="bg-card dark:bg-card border border-border dark:border-border p-5 rounded-2xl shadow-sm">
+            <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Moyenne Promotion</span>
+            <div className="text-2xl font-bold text-[#0f2863] dark:text-blue-300 mt-1">
               {avgAnn} <span className="text-xs font-bold text-slate-400">/20</span>
             </div>
-            <span className="text-[10px] text-slate-500 font-medium">Bilan {oddSemLabel} + {evenSemLabel}</span>
+            <span className="text-[10px] text-muted-foreground font-medium">Bilan {oddSemLabel} + {evenSemLabel}</span>
           </div>
 
           <div className="bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 p-5 rounded-2xl shadow-sm">
-            <span className="text-[10px] font-black uppercase text-emerald-600 dark:text-emerald-400 tracking-wider">Taux d'Admission</span>
-            <div className="text-2xl font-black text-emerald-700 dark:text-emerald-300 mt-1">
+            <span className="text-[10px] font-bold uppercase text-emerald-600 dark:text-emerald-400 tracking-wider">Taux d'Admission</span>
+            <div className="text-2xl font-bold text-emerald-700 dark:text-emerald-300 mt-1">
               {passRateAnn}%
             </div>
             <span className="text-[10px] text-emerald-700/80 dark:text-emerald-400 font-bold">{validsAnn + compsAnn + dettesAnn} admis sur {totalAnnStudents}</span>
           </div>
 
-          <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 p-5 rounded-2xl shadow-sm">
-            <span className="text-[10px] font-black uppercase text-blue-600 dark:text-blue-400 tracking-wider">Validés Directs</span>
-            <div className="text-2xl font-black text-blue-700 dark:text-blue-300 mt-1">
+          <div className="bg-primary/5 dark:bg-blue-950/20 border border-primary/20 dark:border-primary p-5 rounded-2xl shadow-sm">
+            <span className="text-[10px] font-bold uppercase text-primary dark:text-blue-400 tracking-wider">Validés Directs</span>
+            <div className="text-2xl font-bold text-primary dark:text-blue-300 mt-1">
               {validsAnn}
             </div>
             <span className="text-[10px] text-blue-700/80 dark:text-blue-400 font-bold">{totalAnnStudents > 0 ? Math.round((validsAnn / totalAnnStudents) * 100) : 0}% admis directs</span>
           </div>
 
           <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 p-5 rounded-2xl shadow-sm">
-            <span className="text-[10px] font-black uppercase text-amber-600 dark:text-amber-400 tracking-wider">Passage avec Dettes</span>
-            <div className="text-2xl font-black text-amber-700 dark:text-amber-300 mt-1">
+            <span className="text-[10px] font-bold uppercase text-amber-600 dark:text-amber-400 tracking-wider">Passage avec Dettes</span>
+            <div className="text-2xl font-bold text-amber-700 dark:text-amber-300 mt-1">
               {dettesAnn}
             </div>
             <span className="text-[10px] text-amber-700/80 dark:text-amber-400 font-bold">Max 1 seul mod. NV par an</span>
           </div>
 
           <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 p-5 rounded-2xl shadow-sm">
-            <span className="text-[10px] font-black uppercase text-red-600 dark:text-red-400 tracking-wider">Redoublement / Ajournés</span>
-            <div className="text-2xl font-black text-red-700 dark:text-red-300 mt-1">
+            <span className="text-[10px] font-bold uppercase text-red-600 dark:text-red-400 tracking-wider">Redoublement / Ajournés</span>
+            <div className="text-2xl font-bold text-red-700 dark:text-red-300 mt-1">
               {ajsAnn}
             </div>
             <span className="text-[10px] text-red-700/80 dark:text-red-400 font-bold">&gt; 1 mod. NV par an</span>
@@ -2964,22 +2964,22 @@ const { data: aiAuditData } = useQuery({
 
         {/* GRAND MATRIX TABLE FOR ALL 14 MODULES */}
         <div className={cn(
-          "bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-3xl overflow-hidden shadow-sm space-y-0 transition-all",
-          isFullscreenTable && "fixed inset-0 z-50 rounded-none border-0 p-4 md:p-6 flex flex-col h-screen w-screen bg-white dark:bg-slate-950 overflow-hidden"
+          "bg-card dark:bg-card border border-slate-200/90 dark:border-border rounded-2xl overflow-hidden shadow-sm space-y-0 transition-all",
+          isFullscreenTable && "fixed inset-0 z-50 rounded-none border-0 p-4 md:p-6 flex flex-col h-screen w-screen bg-card dark:bg-background overflow-hidden"
         )}>
           {/* Header Toolbar: Search & Filters + Fullscreen */}
-          <div className="p-4 md:p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-4 bg-slate-50/70 dark:bg-slate-850 shrink-0">
+          <div className="p-4 md:p-5 border-b border-border dark:border-border flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-4 bg-slate-50/70 dark:bg-card shrink-0">
             <div className="space-y-0.5">
               <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="text-base font-black text-[#0f2863] dark:text-white flex items-center gap-2">
+                <h3 className="text-base font-bold text-[#0f2863] dark:text-white flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-amber-500" />
                   Matrice Globale des 14 Modules ({oddSemLabel} + {evenSemLabel})
                 </h3>
-                <span className="px-2 py-0.5 bg-[#0f2863]/10 text-[#0f2863] dark:bg-blue-900/40 dark:text-blue-300 rounded-md text-[10px] font-black uppercase">
+                <span className="px-2 py-0.5 bg-[#0f2863]/10 text-[#0f2863] dark:bg-blue-900/40 dark:text-blue-300 rounded-md text-[10px] font-bold uppercase">
                   Compensation Annuelle APOGEE
                 </span>
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-muted-foreground dark:text-muted-foreground">
                 Moyenne annuelle ≥ 10.00/20 • Max 1 module &lt; 10.00 pour passage avec dettes • Note éliminatoire &lt; 6.00/20.
               </p>
             </div>
@@ -2993,33 +2993,33 @@ const { data: aiAuditData } = useQuery({
                   placeholder="Rechercher nom, Apogée, CIN..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-8.5 pr-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-[#0f2863] w-full"
+                  className="pl-8.5 pr-3 py-1.5 bg-card dark:bg-card border border-border dark:border-border text-xs font-medium text-foreground dark:text-foreground focus:ring-2 focus:ring-[#0f2863] w-full rounded-[var(--control-radius)]"
                 />
               </div>
 
               {/* Filter Tabs */}
-              <div className="flex items-center gap-1 bg-white dark:bg-slate-800 p-1 border border-slate-200 dark:border-slate-700 rounded-xl text-xs">
+              <div className="flex items-center gap-1 bg-card dark:bg-card p-1 border border-border dark:border-border rounded-xl text-xs">
                 <button
                   onClick={() => setStatusFilter('all')}
-                  className={cn("px-2.5 py-1 rounded-lg font-extrabold text-[11px] transition-all cursor-pointer", statusFilter === 'all' ? "bg-[#0f2863] text-white shadow-xs" : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700")}
+                  className={cn("px-2.5 py-1 rounded-lg font-bold text-[11px] transition-all cursor-pointer", statusFilter === 'all' ? "bg-[#0f2863] text-white shadow-xs" : "text-muted-foreground dark:text-foreground hover:bg-muted dark:hover:bg-slate-700")}
                 >
                   Tous ({totalAnnStudents})
                 </button>
                 <button
                   onClick={() => setStatusFilter('v')}
-                  className={cn("px-2.5 py-1 rounded-lg font-extrabold text-[11px] transition-all cursor-pointer", statusFilter === 'v' ? "bg-emerald-600 text-white shadow-xs" : "text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30")}
+                  className={cn("px-2.5 py-1 rounded-lg font-bold text-[11px] transition-all cursor-pointer", statusFilter === 'v' ? "bg-emerald-600 text-white shadow-xs" : "text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30")}
                 >
                   Validés ({validsAnn + compsAnn})
                 </button>
                 <button
                   onClick={() => setStatusFilter('r')}
-                  className={cn("px-2.5 py-1 rounded-lg font-extrabold text-[11px] transition-all cursor-pointer", statusFilter === 'r' ? "bg-amber-500 text-slate-950 shadow-xs" : "text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30")}
+                  className={cn("px-2.5 py-1 rounded-lg font-bold text-[11px] transition-all cursor-pointer", statusFilter === 'r' ? "bg-amber-500 text-slate-950 shadow-xs" : "text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30")}
                 >
                   Passage Dettes ({dettesAnn})
                 </button>
                 <button
                   onClick={() => setStatusFilter('nv')}
-                  className={cn("px-2.5 py-1 rounded-lg font-extrabold text-[11px] transition-all cursor-pointer", statusFilter === 'nv' ? "bg-rose-600 text-white shadow-xs" : "text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30")}
+                  className={cn("px-2.5 py-1 rounded-lg font-bold text-[11px] transition-all cursor-pointer", statusFilter === 'nv' ? "bg-rose-600 text-white shadow-xs" : "text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30")}
                 >
                   Redoublement ({ajsAnn})
                 </button>
@@ -3030,7 +3030,7 @@ const { data: aiAuditData } = useQuery({
                 variant="outline"
                 size="sm"
                 onClick={() => setIsFullscreenTable(v => !v)}
-                className="rounded-xl font-bold text-xs gap-1.5 h-8 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                className="rounded-xl font-bold text-xs gap-1.5 h-8 border-border dark:border-border text-slate-700 dark:text-foreground hover:bg-muted dark:hover:bg-slate-800"
               >
                 {isFullscreenTable ? (
                   <>
@@ -3049,7 +3049,7 @@ const { data: aiAuditData } = useQuery({
 
           {/* Filtered Students Table */}
           <div className={cn(
-            "overflow-x-auto bg-white dark:bg-slate-900",
+            "overflow-x-auto bg-card dark:bg-card",
             isFullscreenTable ? "flex-1 overflow-y-auto" : "max-h-[680px] overflow-y-auto"
           )}>
             <table className="w-full text-xs text-left border-collapse">
@@ -3057,19 +3057,19 @@ const { data: aiAuditData } = useQuery({
                 <tr className="bg-[#0f2863] text-white">
                   <th
                     rowSpan={annualModules.length > 0 ? 2 : 1}
-                    className="py-2.5 px-2 font-black uppercase tracking-wider sm:sticky sm:left-0 z-30 bg-[#0f2863] text-white border-r border-slate-700/80 min-w-[85px] w-[85px] text-center text-[11px]"
+                    className="py-2.5 px-2 font-bold uppercase tracking-wider sm:sticky sm:left-0 z-30 bg-[#0f2863] text-white border-r border-slate-700/80 min-w-[85px] w-[85px] text-center text-[11px]"
                   >
                     Apogée
                   </th>
                   <th
                     rowSpan={annualModules.length > 0 ? 2 : 1}
-                    className="py-2.5 px-2 font-black uppercase tracking-wider sm:sticky sm:left-[85px] z-30 bg-[#0f2863] text-amber-200 border-r border-slate-700/80 min-w-[75px] w-[75px] text-center text-[11px]"
+                    className="py-2.5 px-2 font-bold uppercase tracking-wider sm:sticky sm:left-[85px] z-30 bg-[#0f2863] text-amber-200 border-r border-slate-700/80 min-w-[75px] w-[75px] text-center text-[11px]"
                   >
                     CIN
                   </th>
                   <th
                     rowSpan={annualModules.length > 0 ? 2 : 1}
-                    className="py-2.5 px-2.5 font-black uppercase tracking-wider sticky left-0 sm:left-[160px] z-30 bg-[#0f2863] text-white border-r-2 border-slate-300 dark:border-slate-700 shadow-[4px_0_8px_-2px_rgba(0,0,0,0.08)] min-w-[125px] max-w-[135px] text-[11px]"
+                    className="py-2.5 px-2.5 font-bold uppercase tracking-wider sticky left-0 sm:left-[160px] z-30 bg-[#0f2863] text-white border-r-2 border-slate-300 dark:border-border shadow-[4px_0_8px_-2px_rgba(0,0,0,0.08)] min-w-[125px] max-w-[135px] text-[11px]"
                   >
                     Nom & Prénom
                   </th>
@@ -3077,13 +3077,13 @@ const { data: aiAuditData } = useQuery({
                   {annualModules.length > 0 ? (
                     <>
                       <th
-                        className="py-2 px-2 text-center border-r border-slate-700/80 bg-[#0f2863] text-amber-200 font-black text-xs tracking-wider"
+                        className="py-2 px-2 text-center border-r border-slate-700/80 bg-[#0f2863] text-amber-200 font-bold text-xs tracking-wider"
                         colSpan={annualModules.filter((m: any) => m.semester_number % 2 !== 0).length * 3 + 2}
                       >
                         MODULES {oddSemLabel}
                       </th>
                       <th
-                        className="py-2 px-2 text-center border-r border-slate-700/80 bg-[#0a1c47] text-blue-200 font-black text-xs tracking-wider"
+                        className="py-2 px-2 text-center border-r border-slate-700/80 bg-[#0a1c47] text-blue-200 font-bold text-xs tracking-wider"
                         colSpan={annualModules.filter((m: any) => m.semester_number % 2 === 0).length * 3 + 2}
                       >
                         MODULES {evenSemLabel}
@@ -3098,13 +3098,13 @@ const { data: aiAuditData } = useQuery({
 
                   <th
                     rowSpan={annualModules.length > 0 ? 3 : 1}
-                    className="py-3 px-3 font-black text-center bg-[#0a1c47] text-amber-300 border-r border-slate-700 min-w-[85px]"
+                    className="py-3 px-3 font-bold text-center bg-[#0a1c47] text-amber-300 border-r border-slate-700 min-w-[85px]"
                   >
                     Moyenne Annuelle
                   </th>
                   <th
                     rowSpan={annualModules.length > 0 ? 3 : 1}
-                    className="py-3 px-4 font-black text-center bg-[#0a1c47] text-white min-w-[155px]"
+                    className="py-3 px-4 font-bold text-center bg-[#0a1c47] text-white min-w-[155px]"
                   >
                     Décision Finale (Année)
                   </th>
@@ -3115,20 +3115,20 @@ const { data: aiAuditData } = useQuery({
                     {/* Row 2: Module Codes */}
                     <tr className="bg-[#153478] text-blue-100 border-b border-slate-700">
                       {annualModules.filter((m: any) => m.semester_number % 2 !== 0).map((m: any, idx: number) => (
-                        <th key={m.id} colSpan={3} className="py-1 px-1 font-mono text-[10px] font-black text-center bg-[#153478] border-r border-slate-700/80 text-white" title={m.name}>
+                        <th key={m.id} colSpan={3} className="py-1 px-1 font-mono text-[10px] font-bold text-center bg-[#153478] border-r border-slate-700/80 text-white" title={m.name}>
                           {m.code || `M0${idx+1}`}
                         </th>
                       ))}
-                      <th rowSpan={2} className="py-1.5 px-2 font-black text-[10px] text-center bg-[#0f2863] border-r border-slate-700 text-amber-200 min-w-[55px]">MOY {oddSemLabel}</th>
-                      <th rowSpan={2} className="py-1.5 px-2 font-black text-[10px] text-center bg-[#0a1c47] border-r-2 border-slate-700 text-amber-300 min-w-[55px]">DÉC. {oddSemLabel}</th>
+                      <th rowSpan={2} className="py-1.5 px-2 font-bold text-[10px] text-center bg-[#0f2863] border-r border-slate-700 text-amber-200 min-w-[55px]">MOY {oddSemLabel}</th>
+                      <th rowSpan={2} className="py-1.5 px-2 font-bold text-[10px] text-center bg-[#0a1c47] border-r-2 border-slate-700 text-amber-300 min-w-[55px]">DÉC. {oddSemLabel}</th>
 
                       {annualModules.filter((m: any) => m.semester_number % 2 === 0).map((m: any, idx: number) => (
-                        <th key={m.id} colSpan={3} className="py-1 px-1 font-mono text-[10px] font-black text-center bg-[#153478] border-r border-slate-700/80 text-white" title={m.name}>
+                        <th key={m.id} colSpan={3} className="py-1 px-1 font-mono text-[10px] font-bold text-center bg-[#153478] border-r border-slate-700/80 text-white" title={m.name}>
                           {m.code || `M0${idx+8}`}
                         </th>
                       ))}
-                      <th rowSpan={2} className="py-1.5 px-2 font-black text-[10px] text-center bg-[#0f2863] border-r border-slate-700 text-blue-200 min-w-[55px]">MOY {evenSemLabel}</th>
-                      <th rowSpan={2} className="py-1.5 px-2 font-black text-[10px] text-center bg-[#0a1c47] border-r-2 border-slate-700 text-amber-300 min-w-[55px]">DÉC. {evenSemLabel}</th>
+                      <th rowSpan={2} className="py-1.5 px-2 font-bold text-[10px] text-center bg-[#0f2863] border-r border-slate-700 text-blue-200 min-w-[55px]">MOY {evenSemLabel}</th>
+                      <th rowSpan={2} className="py-1.5 px-2 font-bold text-[10px] text-center bg-[#0a1c47] border-r-2 border-slate-700 text-amber-300 min-w-[55px]">DÉC. {evenSemLabel}</th>
                     </tr>
 
                     {/* Row 3: Sub-Headers (note | déc. | année) */}
@@ -3172,7 +3172,7 @@ const { data: aiAuditData } = useQuery({
                       <tr key={row.student_id} className={cn("transition-colors", rowOpaqueBg, rowHoverBg)}>
                         {/* Apogee: 100% Solid background to completely prevent bleed-through */}
                         <td className={cn(
-                          "py-2 px-2 font-mono font-bold text-xs text-slate-800 dark:text-slate-200 border-r border-b border-slate-200 dark:border-slate-800 sm:sticky sm:left-0 z-20 text-center shadow-xs min-w-[85px] w-[85px]",
+                          "py-2 px-2 font-mono font-bold text-xs text-foreground dark:text-foreground border-r border-b border-border dark:border-border sm:sticky sm:left-0 z-20 text-center shadow-xs min-w-[85px] w-[85px]",
                           rowOpaqueBg
                         )}>
                           {row.cne}
@@ -3180,7 +3180,7 @@ const { data: aiAuditData } = useQuery({
 
                         {/* CIN: Dedicated column */}
                         <td className={cn(
-                          "py-2 px-2 font-mono font-black text-xs text-indigo-950 dark:text-indigo-200 border-r border-b border-slate-200 dark:border-slate-800 sm:sticky sm:left-[85px] z-20 text-center shadow-xs min-w-[75px] w-[75px]",
+                          "py-2 px-2 font-mono font-bold text-xs text-indigo-950 dark:text-indigo-200 border-r border-b border-border dark:border-border sm:sticky sm:left-[85px] z-20 text-center shadow-xs min-w-[75px] w-[75px]",
                           rowOpaqueBg
                         )}>
                           {row.cin || '–'}
@@ -3188,15 +3188,15 @@ const { data: aiAuditData } = useQuery({
 
                         {/* Student Name */}
                         <td className={cn(
-                          "py-2 px-2.5 border-r-2 border-b border-slate-300 dark:border-slate-700 sticky left-0 sm:left-[160px] z-20 shadow-[4px_0_8px_-2px_rgba(0,0,0,0.08)] min-w-[125px] max-w-[135px]",
+                          "py-2 px-2.5 border-r-2 border-b border-slate-300 dark:border-border sticky left-0 sm:left-[160px] z-20 shadow-[4px_0_8px_-2px_rgba(0,0,0,0.08)] min-w-[125px] max-w-[135px]",
                           rowOpaqueBg
                         )}>
                           <div className="flex items-center gap-1 min-w-0" title={row.student_name}>
-                            <span className="font-extrabold text-[11px] text-slate-900 dark:text-white truncate">
+                            <span className="font-bold text-[11px] text-foreground dark:text-white truncate">
                               {row.student_name}
                             </span>
                             {(row.has_fraud || row.decision === 'FRAUDE') && (
-                              <span className="px-1 py-0.2 bg-rose-600 text-white rounded text-[8.5px] font-black uppercase shrink-0">
+                              <span className="px-1 py-0.2 bg-rose-600 text-white rounded text-[8.5px] font-bold uppercase shrink-0">
                                 FRAUDE
                               </span>
                             )}
@@ -3236,13 +3236,13 @@ const { data: aiAuditData } = useQuery({
 
                               return (
                                 <React.Fragment key={m.id}>
-                                  <td className={cn("py-1.5 px-1 text-center border-r border-b border-slate-200 dark:border-slate-800 font-mono text-xs", bgElim, noteColor)}>
+                                  <td className={cn("py-1.5 px-1 text-center border-r border-b border-border dark:border-border font-mono text-xs", bgElim, noteColor)}>
                                     {gradeVal !== null && !isNaN(gradeVal) ? Number(gradeVal).toFixed(2) : '–'}
                                   </td>
-                                  <td className={cn("py-1.5 px-1 text-center border-r border-b border-slate-200 dark:border-slate-800 font-mono text-[11px]", bgElim, decColor)}>
+                                  <td className={cn("py-1.5 px-1 text-center border-r border-b border-border dark:border-border font-mono text-[11px]", bgElim, decColor)}>
                                     {decText}
                                   </td>
-                                  <td className={cn("py-1.5 px-1 text-center border-r-2 border-b border-slate-300 dark:border-slate-700 font-mono text-[10px] text-slate-500 dark:text-slate-400 font-bold", bgElim)}>
+                                  <td className={cn("py-1.5 px-1 text-center border-r-2 border-b border-slate-300 dark:border-border font-mono text-[10px] text-muted-foreground dark:text-muted-foreground font-bold", bgElim)}>
                                     {shortYear}
                                   </td>
                                 </React.Fragment>
@@ -3250,16 +3250,16 @@ const { data: aiAuditData } = useQuery({
                             })}
 
                             {/* Odd Sem Average */}
-                            <td className="py-2.5 px-2 text-center border-r border-b border-slate-200 dark:border-slate-800 font-mono font-black text-xs bg-blue-50/40 dark:bg-blue-950/20 text-[#0f2863] dark:text-blue-300">
+                            <td className="py-2.5 px-2 text-center border-r border-b border-border dark:border-border font-mono font-bold text-xs bg-blue-50/40 dark:bg-blue-950/20 text-[#0f2863] dark:text-blue-300">
                               {row.odd_semester_avg !== null && row.odd_semester_avg !== undefined ? Number(row.odd_semester_avg).toFixed(2) : '–'}
                             </td>
 
                             {/* Odd Sem Decision */}
-                            <td className="py-2.5 px-2 text-center border-r-2 border-b border-slate-200 dark:border-slate-800">
+                            <td className="py-2.5 px-2 text-center border-r-2 border-b border-border dark:border-border">
                               <span className={cn(
-                                "text-[9px] px-1.5 py-0.5 rounded font-black uppercase tracking-wider border",
+                                "text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider border",
                                 row.odd_semester_decision === 'V' ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800" :
-                                row.odd_semester_decision === 'V.Comp' ? "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800" :
+                                row.odd_semester_decision === 'V.Comp' ? "bg-primary/5 text-primary border-primary/20 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-primary" :
                                 row.odd_semester_decision === 'PASS_DETTES' ? "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800" :
                                 "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800"
                               )}>
@@ -3298,13 +3298,13 @@ const { data: aiAuditData } = useQuery({
 
                               return (
                                 <React.Fragment key={m.id}>
-                                  <td className={cn("py-1.5 px-1 text-center border-r border-b border-slate-200 dark:border-slate-800 font-mono text-xs", bgElim, noteColor)}>
+                                  <td className={cn("py-1.5 px-1 text-center border-r border-b border-border dark:border-border font-mono text-xs", bgElim, noteColor)}>
                                     {gradeVal !== null && !isNaN(gradeVal) ? Number(gradeVal).toFixed(2) : '–'}
                                   </td>
-                                  <td className={cn("py-1.5 px-1 text-center border-r border-b border-slate-200 dark:border-slate-800 font-mono text-[11px]", bgElim, decColor)}>
+                                  <td className={cn("py-1.5 px-1 text-center border-r border-b border-border dark:border-border font-mono text-[11px]", bgElim, decColor)}>
                                     {decText}
                                   </td>
-                                  <td className={cn("py-1.5 px-1 text-center border-r-2 border-b border-slate-300 dark:border-slate-700 font-mono text-[10px] text-slate-500 dark:text-slate-400 font-bold", bgElim)}>
+                                  <td className={cn("py-1.5 px-1 text-center border-r-2 border-b border-slate-300 dark:border-border font-mono text-[10px] text-muted-foreground dark:text-muted-foreground font-bold", bgElim)}>
                                     {shortYear}
                                   </td>
                                 </React.Fragment>
@@ -3312,16 +3312,16 @@ const { data: aiAuditData } = useQuery({
                             })}
 
                             {/* Even Sem Average */}
-                            <td className="py-2.5 px-2 text-center border-r border-b border-slate-200 dark:border-slate-800 font-mono font-black text-xs bg-blue-50/40 dark:bg-blue-950/20 text-[#0f2863] dark:text-blue-300">
+                            <td className="py-2.5 px-2 text-center border-r border-b border-border dark:border-border font-mono font-bold text-xs bg-blue-50/40 dark:bg-blue-950/20 text-[#0f2863] dark:text-blue-300">
                               {row.even_semester_avg !== null && row.even_semester_avg !== undefined ? Number(row.even_semester_avg).toFixed(2) : '–'}
                             </td>
 
                             {/* Even Sem Decision */}
-                            <td className="py-2.5 px-2 text-center border-r-2 border-b border-slate-200 dark:border-slate-800">
+                            <td className="py-2.5 px-2 text-center border-r-2 border-b border-border dark:border-border">
                               <span className={cn(
-                                "text-[9px] px-1.5 py-0.5 rounded font-black uppercase tracking-wider border",
+                                "text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider border",
                                 row.even_semester_decision === 'V' ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800" :
-                                row.even_semester_decision === 'V.Comp' ? "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800" :
+                                row.even_semester_decision === 'V.Comp' ? "bg-primary/5 text-primary border-primary/20 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-primary" :
                                 row.even_semester_decision === 'PASS_DETTES' ? "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800" :
                                 "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800"
                               )}>
@@ -3331,28 +3331,28 @@ const { data: aiAuditData } = useQuery({
                           </>
                         ) : (
                           <>
-                            <td className="py-2.5 px-3 text-center border-r border-b border-slate-200 dark:border-slate-800 font-mono font-black text-xs">
+                            <td className="py-2.5 px-3 text-center border-r border-b border-border dark:border-border font-mono font-bold text-xs">
                               {row.odd_semester_avg} /20
                             </td>
-                            <td className="py-2.5 px-3 text-center border-r border-b border-slate-200 dark:border-slate-800 font-mono font-black text-xs">
+                            <td className="py-2.5 px-3 text-center border-r border-b border-border dark:border-border font-mono font-bold text-xs">
                               {row.even_semester_avg} /20
                             </td>
                           </>
                         )}
 
                         {/* Annual Average */}
-                        <td className="py-2.5 px-3 text-center border-r border-b border-slate-200 dark:border-slate-800 font-mono font-black text-sm bg-blue-50/40 dark:bg-blue-950/20 text-[#0f2863] dark:text-blue-300">
+                        <td className="py-2.5 px-3 text-center border-r border-b border-border dark:border-border font-mono font-bold text-sm bg-blue-50/40 dark:bg-blue-950/20 text-[#0f2863] dark:text-blue-300">
                           {row.annual_average !== null && row.annual_average !== undefined ? Number(row.annual_average).toFixed(2) : '–'}
                         </td>
 
                         {/* Annual Decision */}
-                        <td className="py-2.5 px-3 text-center border-b border-slate-200 dark:border-slate-800">
+                        <td className="py-2.5 px-3 text-center border-b border-border dark:border-border">
                           <div className="flex flex-col items-center justify-center gap-1">
                             <span className={cn(
-                              "px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider border inline-block shadow-xs",
+                              "px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider border inline-block shadow-xs",
                               row.has_fraud || row.decision === 'FRAUDE' ? "bg-rose-600 text-white border-rose-700" :
                               row.decision === 'V' ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800" :
-                              row.decision === 'V.Comp' ? "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800" :
+                              row.decision === 'V.Comp' ? "bg-primary/5 text-primary border-primary/20 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-primary" :
                               row.decision === 'PASS_DETTES' ? "bg-amber-50 text-amber-800 border-amber-300 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800" :
                               row.decision === 'REDOUBLE' ? "bg-red-100 text-red-900 border-red-300 dark:bg-red-950/60 dark:text-red-300 dark:border-red-800" :
                               "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800"
@@ -3364,7 +3364,7 @@ const { data: aiAuditData } = useQuery({
                                row.decision === 'REDOUBLE' ? 'REDOUBLEMENT' :
                                'AJOURNÉ'}
                             </span>
-                            <span className="text-[9.5px] text-slate-500 font-semibold tracking-tight">
+                            <span className="text-[9.5px] text-muted-foreground font-semibold tracking-tight">
                               {row.has_fraud || row.decision === 'FRAUDE' ? 'Sanction Disciplinaire' :
                                row.decision === 'V' ? 'Admis en Année Supérieure' :
                                row.decision === 'V.Comp' ? 'Admis par Compensation' :
@@ -3385,25 +3385,25 @@ const { data: aiAuditData } = useQuery({
 
         {/* JURY COMMITTEE STATUS HUB (Commission Jury Annuelle) */}
         {juryStatus && (
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-md space-y-5 print:hidden">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
+          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-6 shadow-md space-y-5 print:hidden">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border dark:border-border pb-4">
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="px-3 py-1 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-900 dark:text-indigo-200 rounded-full text-[10px] font-black uppercase tracking-wider">
+                  <span className="px-3 py-1 bg-primary/10 dark:bg-indigo-900/50 text-primary dark:text-indigo-200 rounded-full text-[10px] font-bold uppercase tracking-wider">
                     Commission Jury Annuelle ({oddSemLabel} + {evenSemLabel} • 14 Modules)
                   </span>
                 </div>
-                <h3 className="text-xl font-black text-slate-900 dark:text-white mt-1">
+                <h3 className="text-xl font-bold text-foreground dark:text-white mt-1">
                   Suivi des Signatures du Jury de Délibération Annuelle
                 </h3>
               </div>
 
               <div className="flex items-center gap-3">
                 <div className="text-right">
-                  <span className="block text-xs font-black text-slate-700 dark:text-slate-200">
+                  <span className="block text-xs font-bold text-slate-700 dark:text-foreground">
                     {juryStatus.signed_count} / {juryStatus.total_members} Signatures Récoltées
                   </span>
-                  <div className="w-36 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden mt-1">
+                  <div className="w-36 h-2 bg-muted dark:bg-card rounded-full overflow-hidden mt-1">
                     <div
                       className="h-full bg-gradient-to-r from-indigo-500 to-emerald-500 rounded-full transition-all duration-500"
                       style={{ width: `${juryStatus.total_members > 0 ? (juryStatus.signed_count / juryStatus.total_members) * 100 : 0}%` }}
@@ -3437,27 +3437,27 @@ const { data: aiAuditData } = useQuery({
                     "p-4 rounded-2xl border transition-all flex flex-col justify-between space-y-3",
                     member.status === 'signed'
                       ? "bg-emerald-50/50 border-emerald-200 dark:bg-emerald-950/20"
-                      : "bg-slate-50 border-slate-200 dark:bg-slate-800/50"
+                      : "bg-muted/50 border-border dark:bg-slate-800/50"
                   )}
                 >
                   <div>
-                    <div className="flex items-center justify-between text-[10px] font-black uppercase text-slate-400">
+                    <div className="flex items-center justify-between text-[10px] font-bold uppercase text-slate-400">
                       <span>{member.module_code || 'CHEF'}</span>
-                      <span className={cn("px-2 py-0.5 rounded-md text-[9px]", member.role === 'chef_filiere' ? "bg-purple-100 text-purple-900" : "bg-blue-100 text-blue-900")}>
+                      <span className={cn("px-2 py-0.5 rounded-md text-[9px]", member.role === 'chef_filiere' ? "bg-purple-100 text-purple-900" : "bg-primary/10 text-primary")}>
                         {member.role === 'chef_filiere' ? 'Président' : 'Professeur'}
                       </span>
                     </div>
-                    <h4 className="text-xs font-black text-slate-800 dark:text-slate-100 mt-1 line-clamp-1">
+                    <h4 className="text-xs font-bold text-foreground dark:text-foreground mt-1 line-clamp-1">
                       {member.user_name}
                     </h4>
-                    <p className="text-[11px] text-slate-500 font-medium line-clamp-1 mt-0.5">
+                    <p className="text-[11px] text-muted-foreground font-medium line-clamp-1 mt-0.5">
                       {member.module_name}
                     </p>
                   </div>
 
                   <div>
                     {member.status === 'signed' ? (
-                      <div className="flex items-center justify-between text-[10px] text-emerald-700 font-extrabold bg-emerald-100/70 px-2.5 py-1 rounded-lg">
+                      <div className="flex items-center justify-between text-[10px] text-emerald-700 font-bold bg-emerald-100/70 px-2.5 py-1 rounded-lg">
                         <span className="flex items-center gap-1"><ShieldCheck className="w-3.5 h-3.5" /> Signé</span>
                         <span className="font-mono text-[9px]">{member.digital_seal ? member.digital_seal.substring(0, 6) : 'OK'}</span>
                       </div>
@@ -3492,14 +3492,14 @@ const { data: aiAuditData } = useQuery({
     return (
       <div className="p-6 max-w-7xl mx-auto space-y-6">
         {renderSelectorBar()}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-12 text-center space-y-4 shadow-sm">
-          <div className="w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mx-auto">
+        <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-12 text-center space-y-4 shadow-sm">
+          <div className="w-16 h-16 rounded-2xl bg-primary/5 dark:bg-indigo-900/30 text-primary dark:text-indigo-400 flex items-center justify-center mx-auto">
             <FileText className="w-8 h-8" />
           </div>
-          <h3 className="text-xl font-bold text-slate-800 dark:text-white">
+          <h3 className="text-xl font-bold text-foreground dark:text-white">
             {isRtl ? 'اختر وحدة لعرض المحضر الرسمي' : 'Sélectionnez un Module pour afficher le PV Officiel'}
           </h3>
-          <p className="text-sm text-slate-500 max-w-md mx-auto">
+          <p className="text-sm text-muted-foreground max-w-md mx-auto">
             {isRtl ? 'الرجاء اختيار الشعبة والدورة ثم الوحدة من القائمة أعلاه لتحميل وحساب المحضر.' : 'Veuillez sélectionner la filière, le semestre puis le module dans la barre ci-dessus pour charger et exporter le PV d\'évaluation.'}
           </p>
         </div>
@@ -3598,35 +3598,35 @@ const { data: aiAuditData } = useQuery({
   const barData = computedDistribution
 
   return (
-    <div className="space-y-6 p-4 md:p-6 max-w-7xl mx-auto pb-24">
+    <div className="space-y-6 max-w-7xl mx-auto pb-24">
       {/* Selector Bar */}
       <div className="print:hidden">
         {renderSelectorBar()}
       </div>
 
       {/* Module PV Header & Action Card: Hidden during print */}
-      <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 md:p-6 border border-slate-200/90 dark:border-slate-800 shadow-sm space-y-4 print:hidden">
+      <div className="bg-card dark:bg-card rounded-2xl p-5 md:p-6 border border-slate-200/90 dark:border-border shadow-sm space-y-4 print:hidden">
         {/* Top Row: Module Identity + Signature Status + Sign Action */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-border dark:border-border">
           {/* Left: Back button + Title & Module Identity */}
           <div className="flex items-center gap-3.5">
             <Link
               to="/admin/grades"
-              className="w-10 h-10 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 flex items-center justify-center text-slate-700 dark:text-slate-200 transition-all shadow-xs shrink-0"
+              className="w-10 h-10 rounded-2xl bg-muted hover:bg-slate-200 dark:bg-card dark:hover:bg-slate-700 flex items-center justify-center text-slate-700 dark:text-foreground transition-all shadow-xs shrink-0"
               title="Retour aux notes"
             >
               <ArrowLeft className="w-5 h-5" />
             </Link>
             <div>
               <div className="flex items-center gap-2.5 flex-wrap">
-                <h1 className="text-xl md:text-2xl font-black text-[#0f2863] dark:text-blue-300 tracking-tight">
+                <h1 className="text-[#0f2863] dark:text-blue-300 erp-page-title">
                   PV de Délibération de Module
                 </h1>
-                <span className="px-2.5 py-0.5 rounded-lg text-[10px] font-extrabold uppercase tracking-wider bg-blue-50 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800">
+                <span className="px-2.5 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-primary/5 text-primary dark:bg-blue-900/40 dark:text-blue-300 border border-blue-200/60 dark:border-primary">
                   {pvData.module.code}
                 </span>
               </div>
-              <p className="text-slate-600 dark:text-slate-400 text-xs font-bold mt-0.5">
+              <p className="text-muted-foreground dark:text-muted-foreground text-xs font-bold mt-0.5">
                 {pvData.module.name}
               </p>
             </div>
@@ -3638,7 +3638,7 @@ const { data: aiAuditData } = useQuery({
               <div className="flex items-center gap-2.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 px-3.5 py-2 rounded-2xl text-xs font-bold text-emerald-800 dark:text-emerald-300 shadow-xs">
                 <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
                 <div className="flex flex-col leading-tight">
-                  <span className="text-[11px] font-extrabold flex items-center gap-1 text-emerald-800 dark:text-emerald-300">
+                  <span className="text-[11px] font-bold flex items-center gap-1 text-emerald-800 dark:text-emerald-300">
                     <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                     Signé : {pvData.signature.signed_by || 'Enseignant'}
                   </span>
@@ -3667,7 +3667,7 @@ const { data: aiAuditData } = useQuery({
                 setShowSignatureModal(true)
               }}
               className={cn(
-                "rounded-2xl flex items-center gap-2 text-xs font-black shadow-md hover:-translate-y-0.5 transition-all px-4 py-2.5 text-white shrink-0",
+                "rounded-2xl flex items-center gap-2 text-xs font-bold shadow-md hover:-translate-y-0.5 transition-all px-4 py-2.5 text-white shrink-0",
                 pvData.signature
                   ? "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20"
                   : "bg-[#0f2863] hover:bg-[#1a387e] shadow-blue-900/20"
@@ -3699,9 +3699,9 @@ const { data: aiAuditData } = useQuery({
             <Button
               variant="outline"
               onClick={handlePrint}
-              className="rounded-xl flex items-center gap-1.5 text-xs font-bold border-slate-200 hover:bg-slate-50 text-slate-700 px-3.5 py-2 shadow-xs"
+              className="rounded-xl flex items-center gap-1.5 text-xs font-bold border-border hover:bg-muted/50 text-slate-700 px-3.5 py-2 shadow-xs"
             >
-              <Printer className="w-3.5 h-3.5 text-slate-500" />
+              <Printer className="w-3.5 h-3.5 text-muted-foreground" />
               <span>Aperçu Web</span>
             </Button>
 
@@ -3709,9 +3709,9 @@ const { data: aiAuditData } = useQuery({
               onClick={handleDownloadZipBundle}
               disabled={isExportingZip}
               variant="outline"
-              className="border-indigo-200 text-indigo-700 hover:bg-indigo-50/70 rounded-xl flex items-center gap-1.5 text-xs font-bold shadow-xs px-3.5 py-2"
+              className="border-primary/20 text-primary hover:bg-indigo-50/70 rounded-xl flex items-center gap-1.5 text-xs font-bold shadow-xs px-3.5 py-2"
             >
-              {isExportingZip ? <Spinner className="text-indigo-600 w-3.5 h-3.5" /> : <Archive className="w-3.5 h-3.5 text-indigo-500" />}
+              {isExportingZip ? <Spinner className="text-primary w-3.5 h-3.5" /> : <Archive className="w-3.5 h-3.5 text-primary" />}
               <span>Pack PV (ZIP)</span>
             </Button>
 
@@ -3732,10 +3732,10 @@ const { data: aiAuditData } = useQuery({
                 "rounded-xl flex items-center gap-1.5 text-xs font-bold transition-all px-3.5 py-2",
                 showAnalytics
                   ? "bg-purple-100/90 text-purple-800 border-purple-300 dark:bg-purple-950/60 dark:text-purple-300 dark:border-purple-800 shadow-xs"
-                  : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-300"
+                  : "bg-card text-slate-700 border-border hover:bg-muted/50 dark:bg-card dark:border-border dark:text-foreground"
               )}
             >
-              <BarChart2 className={cn("w-3.5 h-3.5", showAnalytics ? "text-purple-600 dark:text-purple-400" : "text-slate-500")} />
+              <BarChart2 className={cn("w-3.5 h-3.5", showAnalytics ? "text-purple-600 dark:text-purple-400" : "text-muted-foreground")} />
               <span>{showAnalytics ? "Masquer Stats & IA" : "Statistiques & IA"}</span>
               <ChevronDown className={cn("w-3.5 h-3.5 transition-transform duration-200", showAnalytics && "rotate-180")} />
             </Button>
@@ -3745,7 +3745,7 @@ const { data: aiAuditData } = useQuery({
           <Button
             variant="ghost"
             onClick={() => refetchPV()}
-            className="text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl flex items-center gap-1.5 text-xs font-semibold px-3 py-2"
+            className="text-muted-foreground hover:text-foreground hover:bg-muted rounded-xl flex items-center gap-1.5 text-xs font-semibold px-3 py-2"
             title="Actualiser les données"
           >
             <RefreshCw className={cn("w-3.5 h-3.5", isLoadingPV && "animate-spin")} />
@@ -3758,27 +3758,27 @@ const { data: aiAuditData } = useQuery({
       {!showAnalytics && (
         <div
           onClick={() => setShowAnalytics(true)}
-          className="cursor-pointer bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-purple-300 dark:hover:border-purple-800 rounded-2xl px-4 py-3 flex items-center justify-between transition-all shadow-xs group print:hidden hover:shadow-sm"
+          className="cursor-pointer bg-card dark:bg-card border border-slate-200/90 dark:border-border hover:border-purple-300 dark:hover:border-purple-800 rounded-2xl px-4 py-3 flex items-center justify-between transition-all shadow-xs group print:hidden hover:shadow-sm"
         >
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950/50 border border-purple-200/60 dark:border-purple-800/60 text-purple-700 dark:text-purple-300 flex items-center justify-center font-bold text-sm shrink-0">
               📊
             </div>
             <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
-              <span className="font-bold text-xs sm:text-sm text-slate-800 dark:text-white flex items-center gap-1.5">
+              <span className="font-bold text-xs sm:text-sm text-foreground dark:text-white flex items-center gap-1.5">
                 Statistiques Promo & Copilote IA
               </span>
               <span className="text-slate-300 dark:text-slate-700 hidden sm:inline">•</span>
-              <span className="text-xs text-slate-600 dark:text-slate-400 font-medium">
-                Moyenne : <strong className="text-blue-700 dark:text-blue-400 font-black">{avgGrade}</strong>/20
+              <span className="text-xs text-muted-foreground dark:text-muted-foreground font-medium">
+                Moyenne : <strong className="text-primary dark:text-blue-400 font-bold">{avgGrade}</strong>/20
               </span>
               <span className="text-slate-300 dark:text-slate-700 hidden sm:inline">•</span>
-              <span className="text-xs text-slate-600 dark:text-slate-400 font-medium">
-                Réussite : <strong className="text-emerald-700 dark:text-emerald-400 font-black">{passRate}%</strong> ({valCount}/{totalStudents})
+              <span className="text-xs text-muted-foreground dark:text-muted-foreground font-medium">
+                Réussite : <strong className="text-emerald-700 dark:text-emerald-400 font-bold">{passRate}%</strong> ({valCount}/{totalStudents})
               </span>
               {aiAuditData && (
                 <span className={cn(
-                  "text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border",
+                  "text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border",
                   aiAuditData.anomalies_detected
                     ? "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800"
                     : "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800"
@@ -3800,7 +3800,7 @@ const { data: aiAuditData } = useQuery({
         <div className="space-y-4 print:hidden animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="flex items-center justify-between px-1">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-foreground flex items-center gap-1.5">
                 <BarChart2 className="w-4 h-4 text-purple-600" />
                 Tableau de Bord Statistique & Copilote IA
               </span>
@@ -3808,7 +3808,7 @@ const { data: aiAuditData } = useQuery({
             </div>
             <button
               onClick={() => setShowAnalytics(false)}
-              className="text-xs font-bold text-slate-500 hover:text-purple-700 dark:hover:text-purple-400 flex items-center gap-1 transition-colors"
+              className="text-xs font-bold text-muted-foreground hover:text-purple-700 dark:hover:text-purple-400 flex items-center gap-1 transition-colors"
             >
               <span>Masquer l'analyse</span>
               <ChevronDown className="w-3.5 h-3.5 rotate-180" />
@@ -3820,11 +3820,11 @@ const { data: aiAuditData } = useQuery({
             <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 text-white p-5 rounded-2xl shadow-lg border border-indigo-500/30 space-y-3">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-indigo-500/20 text-indigo-300 border border-indigo-400/30 flex items-center justify-center font-black text-lg shrink-0">
+                  <div className="w-9 h-9 rounded-xl bg-indigo-500/20 text-indigo-300 border border-indigo-400/30 flex items-center justify-center font-bold text-lg shrink-0">
                     🧠
                   </div>
                   <div>
-                    <h4 className="text-xs sm:text-sm font-black text-white uppercase tracking-wider flex items-center gap-2">
+                    <h4 className="text-xs sm:text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
                       <span>Copilote IA Délibération & Audit Académique</span>
                     </h4>
                     <p className="text-[11px] text-indigo-200/80 font-medium">Analyse statistique de la promotion et conformité aux règles pédagogiques.</p>
@@ -3832,7 +3832,7 @@ const { data: aiAuditData } = useQuery({
                 </div>
 
                 <span className={cn(
-                  "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border shrink-0 flex items-center gap-1.5",
+                  "px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border shrink-0 flex items-center gap-1.5",
                   aiAuditData.anomalies_detected
                     ? "bg-rose-500/20 text-rose-300 border-rose-500/30 animate-pulse"
                     : "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
@@ -3858,70 +3858,70 @@ const { data: aiAuditData } = useQuery({
           {/* Analytics Dashboard (Jury Analytics 5 KPI Cards) */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
             {/* Card 1: Moyenne */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-4 rounded-2xl shadow-xs flex flex-col justify-between hover:-translate-y-0.5 hover:shadow-md transition-all relative overflow-hidden group">
-              <div className="absolute top-0 left-0 right-0 h-1 bg-blue-600 rounded-t-2xl" />
+            <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border p-4 rounded-2xl shadow-xs flex flex-col justify-between hover:-translate-y-0.5 hover:shadow-md transition-all relative overflow-hidden group">
+              <div className="absolute top-0 left-0 right-0 h-1 bg-primary rounded-t-2xl" />
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Moyenne Générale</span>
-                <span className="w-2 h-2 rounded-full bg-blue-500" />
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Moyenne Générale</span>
+                <span className="w-2 h-2 rounded-full bg-primary" />
               </div>
               <div className="mt-2.5 mb-1">
-                <span className="text-2xl lg:text-3xl font-black text-[#0f2863] dark:text-blue-300 tracking-tight">{avgGrade}</span>
+                <span className="text-2xl lg:text-3xl font-bold text-[#0f2863] dark:text-blue-300 tracking-tight">{avgGrade}</span>
                 <span className="text-xs text-slate-400 font-semibold ms-1">/20</span>
               </div>
-              <span className="text-[10px] text-blue-700 dark:text-blue-400 font-bold truncate">
+              <span className="text-[10px] text-primary dark:text-blue-400 font-bold truncate">
                 {session === 'normale' ? 'Session Ordinaire' : session === 'rattrapage' ? 'Session Rattrapage' : 'Bilan Global'}
               </span>
             </div>
 
             {/* Card 2: Médiane */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-4 rounded-2xl shadow-xs flex flex-col justify-between hover:-translate-y-0.5 hover:shadow-md transition-all relative overflow-hidden group">
+            <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border p-4 rounded-2xl shadow-xs flex flex-col justify-between hover:-translate-y-0.5 hover:shadow-md transition-all relative overflow-hidden group">
               <div className="absolute top-0 left-0 right-0 h-1 bg-violet-600 rounded-t-2xl" />
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Médiane Promo</span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Médiane Promo</span>
                 <span className="w-2 h-2 rounded-full bg-violet-500" />
               </div>
               <div className="mt-2.5 mb-1">
-                <span className="text-2xl lg:text-3xl font-black text-violet-600 dark:text-violet-400 tracking-tight">{medianGrade}</span>
+                <span className="text-2xl lg:text-3xl font-bold text-violet-600 dark:text-violet-400 tracking-tight">{medianGrade}</span>
                 <span className="text-xs text-slate-400 font-semibold ms-1">/20</span>
               </div>
-              <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">Note médiane de la promo</span>
+              <span className="text-[10px] text-muted-foreground dark:text-muted-foreground font-semibold">Note médiane de la promo</span>
             </div>
 
             {/* Card 3: Taux de Réussite */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-4 rounded-2xl shadow-xs flex flex-col justify-between hover:-translate-y-0.5 hover:shadow-md transition-all relative overflow-hidden group">
+            <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border p-4 rounded-2xl shadow-xs flex flex-col justify-between hover:-translate-y-0.5 hover:shadow-md transition-all relative overflow-hidden group">
               <div className="absolute top-0 left-0 right-0 h-1 bg-emerald-600 rounded-t-2xl" />
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Taux de Réussite</span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Taux de Réussite</span>
                 <span className="w-2 h-2 rounded-full bg-emerald-500" />
               </div>
               <div className="mt-2.5 mb-1">
-                <span className="text-2xl lg:text-3xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">{passRate}%</span>
+                <span className="text-2xl lg:text-3xl font-bold text-emerald-600 dark:text-emerald-400 tracking-tight">{passRate}%</span>
               </div>
               <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold">{valCount} validés sur {totalStudents}</span>
             </div>
 
             {/* Card 4: Rattrapage */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-4 rounded-2xl shadow-xs flex flex-col justify-between hover:-translate-y-0.5 hover:shadow-md transition-all relative overflow-hidden group">
+            <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border p-4 rounded-2xl shadow-xs flex flex-col justify-between hover:-translate-y-0.5 hover:shadow-md transition-all relative overflow-hidden group">
               <div className="absolute top-0 left-0 right-0 h-1 bg-amber-500 rounded-t-2xl" />
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Au Rattrapage</span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Au Rattrapage</span>
                 <span className="w-2 h-2 rounded-full bg-amber-500" />
               </div>
               <div className="mt-2.5 mb-1">
-                <span className="text-2xl lg:text-3xl font-black text-amber-500 tracking-tight">{ratCount}</span>
+                <span className="text-2xl lg:text-3xl font-bold text-amber-500 tracking-tight">{ratCount}</span>
               </div>
               <span className="text-[10px] text-amber-700 dark:text-amber-400 font-bold">{totalStudents > 0 ? ((ratCount / totalStudents) * 100).toFixed(1) : 0}% de la promotion</span>
             </div>
 
             {/* Card 5: Non Validés */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-4 rounded-2xl shadow-xs flex flex-col justify-between hover:-translate-y-0.5 hover:shadow-md transition-all relative overflow-hidden group col-span-2 sm:col-span-1">
+            <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border p-4 rounded-2xl shadow-xs flex flex-col justify-between hover:-translate-y-0.5 hover:shadow-md transition-all relative overflow-hidden group col-span-2 sm:col-span-1">
               <div className="absolute top-0 left-0 right-0 h-1 bg-rose-500 rounded-t-2xl" />
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Non Validés (Exclus)</span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Non Validés (Exclus)</span>
                 <span className="w-2 h-2 rounded-full bg-rose-500" />
               </div>
               <div className="mt-2.5 mb-1">
-                <span className="text-2xl lg:text-3xl font-black text-rose-500 tracking-tight">{nvCount}</span>
+                <span className="text-2xl lg:text-3xl font-bold text-rose-500 tracking-tight">{nvCount}</span>
               </div>
               <span className="text-[10px] text-rose-700 dark:text-rose-400 font-bold">{totalStudents > 0 ? ((nvCount / totalStudents) * 100).toFixed(1) : 0}% éliminés (&lt; 6.00)</span>
             </div>
@@ -3930,9 +3930,9 @@ const { data: aiAuditData } = useQuery({
           {/* Charts Row */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {/* Decisions breakdown */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-xs flex flex-col justify-between h-[280px]">
+            <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl p-5 shadow-xs flex flex-col justify-between h-[280px]">
               <div>
-                <h3 className="text-xs font-black text-[#0f2863] dark:text-blue-300 uppercase tracking-wider flex items-center gap-1.5">
+                <h3 className="text-xs font-bold text-[#0f2863] dark:text-blue-300 uppercase tracking-wider flex items-center gap-1.5">
                   <span>Statut des Décisions</span>
                 </h3>
                 <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Répartition des réussites et échecs ({session === 'normale' ? 'S. Ordinaire' : session === 'rattrapage' ? 'S. Rattrapage' : 'Bilan Global'})</p>
@@ -3961,13 +3961,13 @@ const { data: aiAuditData } = useQuery({
                       </PieChart>
                     </ResponsiveContainer>
                     <div className="absolute flex flex-col items-center pointer-events-none">
-                      <span className="text-xl font-black text-slate-800 dark:text-white">{passRate}%</span>
-                      <span className="text-[8px] font-black text-slate-400 tracking-widest uppercase">RÉUSSITE</span>
+                      <span className="text-xl font-bold text-foreground dark:text-white">{passRate}%</span>
+                      <span className="text-[8px] font-bold text-slate-400 tracking-widest uppercase">RÉUSSITE</span>
                     </div>
                   </>
                 )}
               </div>
-              <div className="flex justify-center gap-3 text-[10px] font-bold text-slate-600 dark:text-slate-300 pt-1 border-t border-slate-100 dark:border-slate-800">
+              <div className="flex justify-center gap-3 text-[10px] font-bold text-muted-foreground dark:text-foreground pt-1 border-t border-border dark:border-border">
                 <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500" /> Validés ({valCount})</span>
                 <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500" /> Rattrapage ({ratCount})</span>
                 <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-rose-500" /> Éliminés ({nvCount})</span>
@@ -3975,13 +3975,13 @@ const { data: aiAuditData } = useQuery({
             </div>
 
             {/* Gauss Distribution curve */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-xs col-span-1 lg:col-span-2 flex flex-col justify-between h-[280px]">
+            <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl p-5 shadow-xs col-span-1 lg:col-span-2 flex flex-col justify-between h-[280px]">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-xs font-black text-[#0f2863] dark:text-blue-300 uppercase tracking-wider">Distribution des Moyennes</h3>
+                  <h3 className="text-xs font-bold text-[#0f2863] dark:text-blue-300 uppercase tracking-wider">Distribution des Moyennes</h3>
                   <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Nombre d'étudiants par tranche de note (Courbe de Gauss - {session === 'normale' ? 'S. Ordinaire' : session === 'rattrapage' ? 'S. Rattrapage' : 'Bilan Global'})</p>
                 </div>
-                <span className="text-[10px] font-bold text-slate-400 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg">
+                <span className="text-[10px] font-bold text-slate-400 bg-muted dark:bg-card px-2.5 py-1 rounded-lg">
                   10 tranches
                 </span>
               </div>
@@ -4004,22 +4004,22 @@ const { data: aiAuditData } = useQuery({
       )}
 
       {/* Session Navigation & Scope Toolbar: Hidden during print */}
-      <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-3 bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-xs print:hidden">
+      <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-3 bg-card dark:bg-card p-2 rounded-2xl border border-slate-200/90 dark:border-border shadow-xs print:hidden">
         {/* Left: Session Tabs */}
-        <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl overflow-x-auto">
+        <div className="flex items-center gap-1.5 p-1 bg-muted dark:bg-slate-800/80 rounded-xl overflow-x-auto">
           <button
             onClick={() => { setSession('normale'); setSignatureDataUrl(''); }}
             className={cn(
               "px-3.5 py-2 rounded-lg text-xs font-bold transition-all uppercase tracking-wider flex items-center gap-2 whitespace-nowrap shrink-0",
               session === 'normale'
                 ? "bg-[#0f2863] text-white shadow-xs"
-                : "text-slate-600 dark:text-slate-300 hover:text-slate-900 hover:bg-slate-200/60"
+                : "text-muted-foreground dark:text-foreground hover:text-foreground hover:bg-slate-200/60"
             )}
           >
             <span>Session Ordinaire (Normale)</span>
             {pvData?.signatures?.normale ? (
               <span className={cn(
-                "px-2 py-0.5 rounded-full text-[9px] font-black tracking-normal normal-case flex items-center gap-1",
+                "px-2 py-0.5 rounded-full text-[9px] font-bold tracking-normal normal-case flex items-center gap-1",
                 session === 'normale' ? "bg-emerald-500 text-white" : "bg-emerald-100 text-emerald-800"
               )}>
                 ✓ Signé
@@ -4027,7 +4027,7 @@ const { data: aiAuditData } = useQuery({
             ) : (
               <span className={cn(
                 "px-2 py-0.5 rounded-full text-[9px] font-normal tracking-normal normal-case",
-                session === 'normale' ? "bg-white/20 text-white" : "bg-slate-200 text-slate-500"
+                session === 'normale' ? "bg-white/20 text-white" : "bg-slate-200 text-muted-foreground"
               )}>
                 En attente
               </span>
@@ -4040,13 +4040,13 @@ const { data: aiAuditData } = useQuery({
               "px-3.5 py-2 rounded-lg text-xs font-bold transition-all uppercase tracking-wider flex items-center gap-2 whitespace-nowrap shrink-0",
               session === 'rattrapage'
                 ? "bg-amber-600 text-white shadow-xs"
-                : "text-slate-600 dark:text-slate-300 hover:text-slate-900 hover:bg-slate-200/60"
+                : "text-muted-foreground dark:text-foreground hover:text-foreground hover:bg-slate-200/60"
             )}
           >
             <span>Session de Rattrapage</span>
             {pvData?.signatures?.rattrapage ? (
               <span className={cn(
-                "px-2 py-0.5 rounded-full text-[9px] font-black tracking-normal normal-case flex items-center gap-1",
+                "px-2 py-0.5 rounded-full text-[9px] font-bold tracking-normal normal-case flex items-center gap-1",
                 session === 'rattrapage' ? "bg-emerald-500 text-white" : "bg-emerald-100 text-emerald-800"
               )}>
                 ✓ Signé
@@ -4054,7 +4054,7 @@ const { data: aiAuditData } = useQuery({
             ) : (
               <span className={cn(
                 "px-2 py-0.5 rounded-full text-[9px] font-normal tracking-normal normal-case",
-                session === 'rattrapage' ? "bg-white/20 text-white" : "bg-slate-200 text-slate-500"
+                session === 'rattrapage' ? "bg-white/20 text-white" : "bg-slate-200 text-muted-foreground"
               )}>
                 Non signée
               </span>
@@ -4066,14 +4066,14 @@ const { data: aiAuditData } = useQuery({
             className={cn(
               "px-3.5 py-2 rounded-lg text-xs font-bold transition-all uppercase tracking-wider flex items-center gap-2 whitespace-nowrap shrink-0",
               session === 'totale'
-                ? "bg-indigo-600 text-white shadow-xs"
-                : "text-slate-600 dark:text-slate-300 hover:text-slate-900 hover:bg-slate-200/60"
+                ? "bg-primary text-primary-foreground shadow-xs"
+                : "text-muted-foreground dark:text-foreground hover:text-foreground hover:bg-slate-200/60"
             )}
           >
             <span>Vue Totale (S.O + S.R)</span>
             {pvData?.signatures?.totale ? (
               <span className={cn(
-                "px-2 py-0.5 rounded-full text-[9px] font-black tracking-normal normal-case flex items-center gap-1",
+                "px-2 py-0.5 rounded-full text-[9px] font-bold tracking-normal normal-case flex items-center gap-1",
                 session === 'totale' ? "bg-emerald-500 text-white" : "bg-emerald-100 text-emerald-800"
               )}>
                 ✓ Signé
@@ -4081,7 +4081,7 @@ const { data: aiAuditData } = useQuery({
             ) : (
               <span className={cn(
                 "px-2 py-0.5 rounded-full text-[9px] font-normal tracking-normal normal-case",
-                session === 'totale' ? "bg-white/20 text-white" : "bg-slate-200 text-slate-500"
+                session === 'totale' ? "bg-white/20 text-white" : "bg-slate-200 text-muted-foreground"
               )}>
                 Non signée
               </span>
@@ -4091,18 +4091,18 @@ const { data: aiAuditData } = useQuery({
 
         {/* Right: View Scope Toggle */}
         <div className="flex items-center gap-2.5 px-2 self-end lg:self-center shrink-0">
-          <span className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap flex items-center gap-1.5">
-            <Users className="w-3.5 h-3.5 text-indigo-500" />
+          <span className="text-[11px] font-bold text-muted-foreground dark:text-muted-foreground uppercase tracking-wider whitespace-nowrap flex items-center gap-1.5">
+            <Users className="w-3.5 h-3.5 text-primary" />
             Périmètre :
           </span>
-          <div className="flex gap-1 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl">
+          <div className="flex gap-1 bg-muted dark:bg-slate-800/80 p-1 rounded-xl">
             <button
               onClick={() => setViewAllGroups(false)}
               className={cn(
                 "px-3.5 py-1.5 rounded-lg text-xs font-bold uppercase transition-all whitespace-nowrap",
                 !viewAllGroups
                   ? "bg-[#0f2863] text-white shadow-xs"
-                  : "text-slate-600 dark:text-slate-300 hover:text-slate-900"
+                  : "text-muted-foreground dark:text-foreground hover:text-foreground"
               )}
             >
               {groupId && groupId !== 'all' ? `Groupe ${groupId}` : 'Ce Groupe'}
@@ -4113,7 +4113,7 @@ const { data: aiAuditData } = useQuery({
                 "px-3.5 py-1.5 rounded-lg text-xs font-bold uppercase transition-all whitespace-nowrap",
                 viewAllGroups
                   ? "bg-[#0f2863] text-white shadow-xs"
-                  : "text-slate-600 dark:text-slate-300 hover:text-slate-900"
+                  : "text-muted-foreground dark:text-foreground hover:text-foreground"
               )}
             >
               Module Complet
@@ -4172,7 +4172,7 @@ const { data: aiAuditData } = useQuery({
       `}</style>
 
       {/* PV Printable Document Container */}
-      <div className="bg-white rounded-3xl border border-slate-200 p-8 shadow-sm print:border-none print:shadow-none print:p-0 pv-print-card">
+      <div className="bg-card rounded-2xl border border-border p-8 shadow-sm print:border-none print:shadow-none print:p-0 pv-print-card">
 
         {/* Official Institution Header (Visible on Web & Print) */}
         <div className="border-b-2 border-[#0f2863] pb-4 mb-6 official-header">
@@ -4181,9 +4181,9 @@ const { data: aiAuditData } = useQuery({
             <div className="flex items-center gap-4">
               <img src="/logo-encg.png" alt="Logo ENCG Fès" className="h-16 w-auto object-contain shrink-0" />
               <div className="text-left leading-tight">
-                <p className="font-bold text-[10px] uppercase text-slate-500 tracking-wider">Royaume du Maroc</p>
-                <p className="font-extrabold text-xs uppercase text-[#0f2863]">Université Sidi Mohamed Ben Abdellah de Fès</p>
-                <p className="font-bold text-xs uppercase text-slate-800">École Nationale de Commerce et de Gestion de Fès</p>
+                <p className="font-bold text-[10px] uppercase text-muted-foreground tracking-wider">Royaume du Maroc</p>
+                <p className="font-bold text-xs uppercase text-[#0f2863]">Université Sidi Mohamed Ben Abdellah de Fès</p>
+                <p className="font-bold text-xs uppercase text-foreground">École Nationale de Commerce et de Gestion de Fès</p>
                 <p className="text-[9px] text-slate-400 font-medium italic mt-0.5">ENCG-Fès — Portail ERP Académique</p>
               </div>
             </div>
@@ -4193,7 +4193,7 @@ const { data: aiAuditData } = useQuery({
               <span className="px-3 py-1 bg-[#0f2863] text-white text-[10px] font-bold rounded-md uppercase tracking-wider print:border print:border-[#0f2863] print:text-[#0f2863] print:bg-transparent">
                 Document Officiel
               </span>
-              <p className="text-[10px] text-slate-500 font-semibold mt-1">
+              <p className="text-[10px] text-muted-foreground font-semibold mt-1">
                 Session : {session === 'normale' ? 'Ordinaire (Normale)' : 'de Rattrapage'}
               </p>
             </div>
@@ -4215,7 +4215,7 @@ const { data: aiAuditData } = useQuery({
                   value={`${window.location.origin}/verify/pv/${moduleId}/${groupId || 'all'}`}
                   size={58}
                   level="H"
-                  className="border border-slate-200 p-1 bg-white rounded-md shadow-sm"
+                  className="border border-border p-1 bg-card rounded-md shadow-sm"
                 />
                 <span className="text-[7px] text-slate-400 font-mono tracking-widest uppercase mt-0.5">VERIFICATION</span>
               </div>
@@ -4223,14 +4223,14 @@ const { data: aiAuditData } = useQuery({
           </div>
 
           {/* Banner Title */}
-          <div className="mt-4 pt-3 border-t border-slate-200 text-center">
-            <h2 className="text-xl font-black uppercase tracking-wider text-[#0f2863]">
+          <div className="mt-4 pt-3 border-t border-border text-center">
+            <h2 className="text-xl font-bold uppercase tracking-wider text-[#0f2863]">
               PROCES-VERBAL DE DELIBERATION -{' '}
               {session === 'normale' && 'SESSION ORDINAIRE (NORMALE)'}
               {session === 'rattrapage' && 'SESSION DE RATTRAPAGE'}
               {session === 'totale' && 'VUE TOTALE — SESSION ORDINAIRE & RATTRAPAGE'}
             </h2>
-            <p className="text-xs font-bold text-slate-600 mt-1 uppercase tracking-wide">
+            <p className="text-xs font-bold text-muted-foreground mt-1 uppercase tracking-wide">
               MODULE : {pvData.module.code} - {pvData.module.name}
             </p>
           </div>
@@ -4240,7 +4240,7 @@ const { data: aiAuditData } = useQuery({
         <form onSubmit={handleSave}>
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse border border-slate-300 text-xs">
-              <thead className="bg-slate-50 text-slate-700 uppercase font-bold text-center">
+              <thead className="bg-muted/50 text-slate-700 uppercase font-bold text-center">
                 <tr>
                   <th className="border border-slate-300 p-3 text-left">Code Apogée</th>
                   <th className="border border-slate-300 p-3 text-left">Nom & Prénom</th>
@@ -4248,7 +4248,7 @@ const { data: aiAuditData } = useQuery({
                   {/* Dynamic assessment columns — hide rattrapage from header */}
                   {displayAssessments.map((a: any) => (
                     <th key={a.id} className="border border-slate-300 p-3 w-20">
-                      {a.type} <span className="block text-[10px] font-medium text-slate-500">({a.weight}%)</span>
+                      {a.type} <span className="block text-[10px] font-medium text-muted-foreground">({a.weight}%)</span>
                     </th>
                   ))}
 
@@ -4323,17 +4323,17 @@ const { data: aiAuditData } = useQuery({
                     <tr
                       key={student.student_id || student.id}
                       className={cn(
-                        "hover:bg-slate-50 transition-colors text-center font-medium",
+                        "hover:bg-muted/50 transition-colors text-center font-medium",
                         hasFraud && "bg-rose-50/50 border-l-4 border-l-rose-600",
                         session === 'totale' && isRattrapage && !hasFraud && "bg-amber-50/30",
                         session === 'totale' && student.decision_normale === 'NV' && !hasFraud && "bg-red-50/20 opacity-60"
                       )}
                     >
-                      <td className="border border-slate-300 p-3 text-left font-bold text-slate-500">{student.apogee || student.student_number}</td>
-                      <td className="border border-slate-300 p-3 text-left font-bold text-slate-800 uppercase">
+                      <td className="border border-slate-300 p-3 text-left font-bold text-muted-foreground">{student.apogee || student.student_number}</td>
+                      <td className="border border-slate-300 p-3 text-left font-bold text-foreground uppercase">
                         {student.last_name} {student.first_name}
                         {hasFraud && (
-                          <span className="ml-2 px-1.5 py-0.5 bg-rose-600 text-white rounded font-black text-[9px]">
+                          <span className="ml-2 px-1.5 py-0.5 bg-rose-600 text-white rounded font-bold text-[9px]">
                             🚨 FRAUDE
                           </span>
                         )}
@@ -4345,9 +4345,9 @@ const { data: aiAuditData } = useQuery({
                         const isExamAssessment = typeLower.includes('exam') || typeLower.includes('examen') || typeLower.includes('final') || typeLower.includes('rattrapage');
                         const gradeInfo = rowGrades[a.type] || rowGrades[a.id] || {}
                         return (
-                          <td key={a.id} className={cn("border border-slate-300 p-3 font-semibold", hasFraud && isExamAssessment && "bg-rose-100 text-rose-700 font-black")}>
+                          <td key={a.id} className={cn("border border-slate-300 p-3 font-semibold", hasFraud && isExamAssessment && "bg-rose-100 text-rose-700 font-bold")}>
                             {hasFraud && isExamAssessment ? (
-                              <span className="text-rose-700 font-black">0.00 (FRAUDE)</span>
+                              <span className="text-rose-700 font-bold">0.00 (FRAUDE)</span>
                             ) : gradeInfo.is_absent ? (
                               <span className="text-red-500 font-bold uppercase">ABI</span>
                             ) : (
@@ -4360,7 +4360,7 @@ const { data: aiAuditData } = useQuery({
                       {/* Moyenne Normale */}
                       <td className="border border-slate-300 p-3 bg-slate-100/20 font-bold text-sm text-[#0f2863]">
                         {hasFraud ? (
-                          <span className="text-rose-700 font-black">0.00</span>
+                          <span className="text-rose-700 font-bold">0.00</span>
                         ) : (
                           student.moyenne_normale !== null ? parseFloat(student.moyenne_normale).toFixed(2) : '-'
                         )}
@@ -4370,7 +4370,7 @@ const { data: aiAuditData } = useQuery({
                       <td className="border border-slate-300 p-3 bg-slate-100/20">
                         <span className={cn(
                           "px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider",
-                          hasFraud ? "bg-rose-600 text-white font-black animate-pulse shadow-xs" :
+                          hasFraud ? "bg-rose-600 text-white font-bold animate-pulse shadow-xs" :
                           student.decision_normale === 'V' && "bg-green-50 text-green-700 border border-green-200",
                           student.decision_normale === 'R' && "bg-amber-50 text-amber-700 border border-amber-200",
                           student.decision_normale === 'NV' && "bg-red-50 text-red-700 border border-red-200"
@@ -4393,7 +4393,7 @@ const { data: aiAuditData } = useQuery({
                                     value={rattrapageGrades[student.student_id]?.value || ''}
                                     disabled={rattrapageGrades[student.student_id]?.absent || session === 'totale' || Boolean(pvData?.is_rattrapage_locked)}
                                     onChange={(e) => handleInputChange(student.student_id, 'value', e.target.value)}
-                                    className="w-16 p-1 border rounded-lg text-center font-bold text-slate-800 focus:border-amber-500 outline-none disabled:bg-slate-100 disabled:text-slate-400"
+                                    className="w-16 p-1 border text-center font-bold text-foreground focus:border-amber-500 outline-none disabled:bg-muted disabled:text-slate-400 rounded-[var(--control-radius)]"
                                   />
                                   {session === 'rattrapage' && (
                                     <label className="flex items-center gap-1 cursor-pointer">
@@ -4453,7 +4453,7 @@ const { data: aiAuditData } = useQuery({
             <div className="mt-4 p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border-2 border-amber-400 text-amber-900 dark:text-amber-200 flex items-center gap-3 print:hidden">
               <Lock className="w-5 h-5 text-amber-600 shrink-0" />
               <div>
-                <p className="font-black text-xs uppercase tracking-wider">Session de Rattrapage Actuellement Verrouillée 🔒</p>
+                <p className="font-bold text-xs uppercase tracking-wider">Session de Rattrapage Actuellement Verrouillée 🔒</p>
                 <p className="text-xs font-medium">{pvData?.rattrapage_lock_reason || "La session de rattrapage est actuellement fermée par l'administration (Phase active : Ordinaire Automne)."}</p>
               </div>
             </div>
@@ -4485,18 +4485,18 @@ const { data: aiAuditData } = useQuery({
         </form>
 
         {/* Official Signatures section */}
-        <div className="mt-12 pt-6 border-t border-slate-200 grid grid-cols-2 text-center text-xs font-bold text-slate-800 gap-8">
-          <div className="flex flex-col items-center justify-between p-4 bg-slate-50/50 rounded-2xl border border-slate-200 print:bg-transparent print:border-slate-400 min-h-[140px]">
+        <div className="mt-12 pt-6 border-t border-border grid grid-cols-2 text-center text-xs font-bold text-foreground gap-8">
+          <div className="flex flex-col items-center justify-between p-4 bg-slate-50/50 rounded-2xl border border-border print:bg-transparent print:border-slate-400 min-h-[140px]">
             <div>
               <p className="uppercase text-[11px] text-[#0f2863]">Signature de l'Enseignant Responsable du Module</p>
-              <p className="text-[9px] text-slate-500 font-semibold tracking-wider uppercase mt-0.5">
+              <p className="text-[9px] text-muted-foreground font-semibold tracking-wider uppercase mt-0.5">
                 ({session === 'normale' ? 'Session Ordinaire' : session === 'rattrapage' ? 'Session de Rattrapage' : 'Bilan Complet (Vue Totale)'})
               </p>
             </div>
             {pvData?.signature?.signature_data ? (
               <div className="flex flex-col items-center my-2">
-                <img src={pvData.signature.signature_data} alt="Signature" className="h-16 object-contain border border-slate-200 rounded-lg p-1 bg-white" />
-                <p className="text-[9px] text-slate-600 font-bold uppercase tracking-wider mt-1">{pvData.signature.signed_by || 'Enseignant Responsable'}</p>
+                <img src={pvData.signature.signature_data} alt="Signature" className="h-16 object-contain border border-border rounded-lg p-1 bg-card" />
+                <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-wider mt-1">{pvData.signature.signed_by || 'Enseignant Responsable'}</p>
                 <p className="text-[8px] text-emerald-700 font-mono font-bold mt-0.5">
                   ✓ Signé le {new Date(pvData.signature.signed_at).toLocaleDateString('fr-FR')} à {new Date(pvData.signature.signed_at).toLocaleTimeString('fr-FR')}
                 </p>
@@ -4511,10 +4511,10 @@ const { data: aiAuditData } = useQuery({
             )}
           </div>
 
-          <div className="flex flex-col items-center justify-between p-4 bg-slate-50/50 rounded-2xl border border-slate-200 print:bg-transparent print:border-slate-400 min-h-[140px]">
+          <div className="flex flex-col items-center justify-between p-4 bg-slate-50/50 rounded-2xl border border-border print:bg-transparent print:border-slate-400 min-h-[140px]">
             <div>
               <p className="uppercase text-[11px] text-[#0f2863]">Signature du Président du Jury & Cachet de l'Établissement</p>
-              <p className="text-[9px] text-slate-500 font-semibold tracking-wider uppercase mt-0.5">
+              <p className="text-[9px] text-muted-foreground font-semibold tracking-wider uppercase mt-0.5">
                 (École Nationale de Commerce et de Gestion de Fès)
               </p>
             </div>
@@ -4526,7 +4526,7 @@ const { data: aiAuditData } = useQuery({
 
         {/* Digital Certification SHA-256 Seal Footer */}
         {pvData.signature && pvData.signature.digital_seal && (
-          <div className="mt-6 pt-3 border-t border-slate-200 flex justify-between items-center text-[8px] font-mono text-slate-500">
+          <div className="mt-6 pt-3 border-t border-border flex justify-between items-center text-[8px] font-mono text-muted-foreground">
             <div className="flex items-center gap-3">
               <QRCodeSVG
                 value={`${window.location.origin}/verify-pv?seal=${pvData.signature.digital_seal}`}
@@ -4534,10 +4534,10 @@ const { data: aiAuditData } = useQuery({
                 level="M"
               />
               <div>
-                <p className="font-bold text-slate-800 text-[9px] uppercase">
+                <p className="font-bold text-foreground text-[9px] uppercase">
                   Empreinte Numérique Cryptographique SHA-256 ({session === 'normale' ? 'Session Ordinaire' : session === 'rattrapage' ? 'Session Rattrapage' : 'Vue Totale'})
                 </p>
-                <p className="text-slate-500 font-mono text-[8px]">{pvData.signature.digital_seal}</p>
+                <p className="text-muted-foreground font-mono text-[8px]">{pvData.signature.digital_seal}</p>
                 <p className="text-emerald-700 font-semibold text-[8px]">
                   Horodatage Certifié : {new Date(pvData.signature.signed_at).toLocaleDateString('fr-FR')} à {new Date(pvData.signature.signed_at).toLocaleTimeString('fr-FR')}
                 </p>
@@ -4548,7 +4548,7 @@ const { data: aiAuditData } = useQuery({
         )}
 
         {/* Official Institutional Footer for Printed Pages */}
-        <div className="mt-8 pt-3 border-t border-slate-300 text-center text-[9px] text-slate-500 space-y-0.5">
+        <div className="mt-8 pt-3 border-t border-slate-300 text-center text-[9px] text-muted-foreground space-y-0.5">
           <p className="font-bold text-slate-700">
             École Nationale de Commerce et de Gestion de Fès (ENCG-Fès) — Université Sidi Mohamed Ben Abdellah
           </p>
@@ -4572,18 +4572,18 @@ const { data: aiAuditData } = useQuery({
         const projectedPassed = eligibleCandidates.filter((s: any) => parseFloat(s.moyenne_semestrielle) + simBonusPoints >= 10.0)
         return (
           <div className="fixed inset-0 z-[9999] bg-slate-950/75 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-5">
-              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+            <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-6 max-w-lg w-full shadow-sm space-y-5">
+              <div className="flex items-center justify-between border-b border-border dark:border-border pb-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center font-bold">
                     <Sparkles className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="text-base font-black text-slate-900 dark:text-white">Simulateur Jury "What-If"</h3>
-                    <p className="text-xs text-slate-500">Testez l'impact d'une bonification sur les taux de validation</p>
+                    <h3 className="text-base font-bold text-foreground dark:text-white">Simulateur Jury "What-If"</h3>
+                    <p className="text-xs text-muted-foreground">Testez l'impact d'une bonification sur les taux de validation</p>
                   </div>
                 </div>
-                <button onClick={() => setShowSimulatorModal(false)} className="p-2 text-slate-400 hover:text-slate-600 rounded-xl">
+                <button onClick={() => setShowSimulatorModal(false)} className="p-2 text-slate-400 hover:text-muted-foreground rounded-xl">
                   <X className="w-5 h-5" />
                 </button>
               </div>
@@ -4591,8 +4591,8 @@ const { data: aiAuditData } = useQuery({
               {/* Controls */}
               <div className="space-y-4 bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-800/60 rounded-2xl p-4">
                 <div className="flex justify-between items-center">
-                  <label className="text-xs font-black text-amber-900 dark:text-amber-200 uppercase tracking-wide">Bonus à appliquer au Jury :</label>
-                  <span className="px-3 py-1 bg-amber-500 text-white rounded-xl text-xs font-black">+{simBonusPoints} pt(s)</span>
+                  <label className="text-xs font-bold text-amber-900 dark:text-amber-200 uppercase tracking-wide">Bonus à appliquer au Jury :</label>
+                  <span className="px-3 py-1 bg-amber-500 text-white rounded-xl text-xs font-bold">+{simBonusPoints} pt(s)</span>
                 </div>
                 <input
                   type="range"
@@ -4613,22 +4613,22 @@ const { data: aiAuditData } = useQuery({
 
               {/* Projected Results */}
               <div className="grid grid-cols-2 gap-3 text-center">
-                <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700">
-                  <span className="text-[10px] text-slate-400 uppercase font-black">Candidats Éligibles (9.0–9.99)</span>
-                  <div className="text-xl font-black text-slate-800 dark:text-white mt-1">{eligibleCandidates.length}</div>
+                <div className="p-3 bg-muted/50 dark:bg-card rounded-2xl border border-border dark:border-border">
+                  <span className="text-[10px] text-slate-400 uppercase font-bold">Candidats Éligibles (9.0–9.99)</span>
+                  <div className="text-xl font-bold text-foreground dark:text-white mt-1">{eligibleCandidates.length}</div>
                 </div>
                 <div className="p-3 bg-emerald-50 dark:bg-emerald-950/30 rounded-2xl border border-emerald-200 dark:border-emerald-800">
-                  <span className="text-[10px] text-emerald-600 dark:text-emerald-400 uppercase font-black">Validations Projetées</span>
-                  <div className="text-xl font-black text-emerald-700 dark:text-emerald-300 mt-1">+{projectedPassed.length} Admis</div>
+                  <span className="text-[10px] text-emerald-600 dark:text-emerald-400 uppercase font-bold">Validations Projetées</span>
+                  <div className="text-xl font-bold text-emerald-700 dark:text-emerald-300 mt-1">+{projectedPassed.length} Admis</div>
                 </div>
               </div>
 
               <div className="space-y-2 max-h-36 overflow-y-auto">
-                <span className="text-[10px] font-black text-slate-400 uppercase">Étudiants impactés par ce bonus :</span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase">Étudiants impactés par ce bonus :</span>
                 {projectedPassed.map((s: any, i: number) => (
-                  <div key={i} className="flex justify-between items-center text-xs p-2 bg-slate-50 dark:bg-slate-800 rounded-xl">
-                    <span className="font-semibold text-slate-700 dark:text-slate-200">{s.last_name?.toUpperCase()} {s.first_name}</span>
-                    <span className="font-black text-emerald-600">
+                  <div key={i} className="flex justify-between items-center text-xs p-2 bg-muted/50 dark:bg-card rounded-xl">
+                    <span className="font-semibold text-slate-700 dark:text-foreground">{s.last_name?.toUpperCase()} {s.first_name}</span>
+                    <span className="font-bold text-emerald-600">
                       {parseFloat(s.moyenne_semestrielle).toFixed(2)} ➔ {(parseFloat(s.moyenne_semestrielle) + simBonusPoints).toFixed(2)} (V)
                     </span>
                   </div>
@@ -4638,7 +4638,7 @@ const { data: aiAuditData } = useQuery({
                 )}
               </div>
 
-              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
+              <div className="pt-3 border-t border-border dark:border-border flex justify-between items-center">
                 <span className="text-[10px] text-slate-400 italic">Simulations sans modification de la base de données</span>
                 <Button onClick={() => setShowSimulatorModal(false)} className="rounded-xl font-bold bg-amber-600 hover:bg-amber-700 text-white text-xs">
                   Fermer Simulation
@@ -4662,15 +4662,15 @@ const { data: aiAuditData } = useQuery({
         const validatedStudents = students.filter((s: any) => s.decision_global === 'V' || s.decision_global === 'VAR' || s.decision_global === 'VPC')
         return (
           <div className="fixed inset-0 z-[9999] bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-5">
-              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+            <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-6 max-w-lg w-full shadow-sm space-y-5">
+              <div className="flex items-center justify-between border-b border-border dark:border-border pb-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-600 text-white flex items-center justify-center">
                     <Trophy className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="text-base font-black text-slate-900 dark:text-white">Génération d'Attestations de Réussite</h3>
-                    <p className="text-xs text-slate-500">Génération par lot pour tous les étudiants validés</p>
+                    <h3 className="text-base font-bold text-foreground dark:text-white">Génération d'Attestations de Réussite</h3>
+                    <p className="text-xs text-muted-foreground">Génération par lot pour tous les étudiants validés</p>
                   </div>
                 </div>
                 <button onClick={() => setShowAttestationModal(false)} className="p-2 text-slate-400 hover:text-slate-700 rounded-xl">
@@ -4679,27 +4679,27 @@ const { data: aiAuditData } = useQuery({
               </div>
 
               <div className="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-700/50 rounded-2xl p-4 text-sm">
-                <div className="font-black text-emerald-800 dark:text-emerald-300 text-base">{validatedStudents.length} étudiants éligibles</div>
+                <div className="font-bold text-emerald-800 dark:text-emerald-300 text-base">{validatedStudents.length} étudiants éligibles</div>
                 <div className="text-emerald-700 dark:text-emerald-400 text-xs mt-1">Tous les étudiants avec décision V, VAR ou VPC pour le Semestre {selectedSemester || 1}</div>
               </div>
 
               <div className="space-y-2 max-h-40 overflow-y-auto">
                 {validatedStudents.slice(0, 8).map((s: any, i: number) => (
-                  <div key={i} className="flex items-center justify-between text-xs p-2 bg-slate-50 dark:bg-slate-800 rounded-xl">
-                    <span className="font-semibold text-slate-700 dark:text-slate-200">{s.last_name?.toUpperCase()} {s.first_name}</span>
-                    <span className="font-black text-emerald-600">{s.decision_global} — {parseFloat(s.moyenne_semestrielle || 0).toFixed(2)}/20</span>
+                  <div key={i} className="flex items-center justify-between text-xs p-2 bg-muted/50 dark:bg-card rounded-xl">
+                    <span className="font-semibold text-slate-700 dark:text-foreground">{s.last_name?.toUpperCase()} {s.first_name}</span>
+                    <span className="font-bold text-emerald-600">{s.decision_global} — {parseFloat(s.moyenne_semestrielle || 0).toFixed(2)}/20</span>
                   </div>
                 ))}
                 {validatedStudents.length > 8 && <p className="text-xs text-slate-400 text-center py-1">... et {validatedStudents.length - 8} autres</p>}
-                {validatedStudents.length === 0 && <p className="text-xs text-slate-500 text-center italic py-2">Aucun étudiant validé pour ce semestre.</p>}
+                {validatedStudents.length === 0 && <p className="text-xs text-muted-foreground text-center italic py-2">Aucun étudiant validé pour ce semestre.</p>}
               </div>
 
-              <div className="flex justify-end gap-3 border-t border-slate-100 dark:border-slate-800 pt-4">
+              <div className="flex justify-end gap-3 border-t border-border dark:border-border pt-4">
                 <Button variant="outline" onClick={() => setShowAttestationModal(false)} className="rounded-xl font-bold text-xs">Annuler</Button>
                 <Button
                   onClick={handleGenerateBatchAttestations}
                   disabled={isGeneratingAttestations || validatedStudents.length === 0}
-                  className="bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-xl font-black text-xs px-6 shadow-lg hover:scale-105 transition-all"
+                  className="bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-xl font-bold text-xs px-6 shadow-lg hover:scale-105 transition-all"
                 >
                   {isGeneratingAttestations ? <Spinner className="text-white" /> : `🎓 Générer ${validatedStudents.length} Attestation(s)`}
                 </Button>
@@ -4721,30 +4721,30 @@ const { data: aiAuditData } = useQuery({
         const nvCount = _students.filter((s: any) => s.decision_global === 'NV').length
         return (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 w-full max-w-lg shadow-2xl relative space-y-6">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
-              <h3 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-6 w-full max-w-lg shadow-sm relative space-y-6">
+            <div className="flex items-center justify-between border-b border-border dark:border-border pb-4">
+              <h3 className="text-xl font-bold text-foreground dark:text-white flex items-center gap-2">
                 🚀 Diffusion des Résultats par Email
               </h3>
               <button
                 onClick={() => setShowBulkEmailModal(false)}
-                className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center font-bold text-sm hover:bg-slate-200"
+                className="w-8 h-8 rounded-full bg-muted text-muted-foreground flex items-center justify-center font-bold text-sm hover:bg-slate-200"
               >
                 ✕
               </button>
             </div>
 
-            <p className="text-xs text-slate-500 font-medium">
+            <p className="text-xs text-muted-foreground font-medium">
               Sélectionnez le groupe cible d'étudiants pour l'expédition automatique du relevé de notes certifié par email via Resend API.
             </p>
 
             <div className="space-y-3">
-              <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">Filtre des Destinataires</label>
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest">Filtre des Destinataires</label>
               <div className="grid grid-cols-2 gap-2.5">
                 <button
                   type="button"
                   onClick={() => setBulkFilter('all')}
-                  className={cn("p-3 rounded-2xl border text-xs font-black text-left cursor-pointer transition-all", bulkFilter === 'all' ? "bg-[#0f2863] text-white border-[#0f2863]" : "bg-slate-50 border-slate-200 text-slate-700")}
+                  className={cn("p-3 rounded-2xl border text-xs font-bold text-left cursor-pointer transition-all", bulkFilter === 'all' ? "bg-[#0f2863] text-white border-[#0f2863]" : "bg-muted/50 border-border text-slate-700")}
                 >
                   🎓 Tous les Étudiants ({totalStudents})
                 </button>
@@ -4752,7 +4752,7 @@ const { data: aiAuditData } = useQuery({
                 <button
                   type="button"
                   onClick={() => setBulkFilter('admis')}
-                  className={cn("p-3 rounded-2xl border text-xs font-black text-left cursor-pointer transition-all", bulkFilter === 'admis' ? "bg-emerald-600 text-white border-emerald-600" : "bg-slate-50 border-slate-200 text-slate-700")}
+                  className={cn("p-3 rounded-2xl border text-xs font-bold text-left cursor-pointer transition-all", bulkFilter === 'admis' ? "bg-emerald-600 text-white border-emerald-600" : "bg-muted/50 border-border text-slate-700")}
                 >
                   ✅ Admis Uniquement ({valCount})
                 </button>
@@ -4760,7 +4760,7 @@ const { data: aiAuditData } = useQuery({
                 <button
                   type="button"
                   onClick={() => setBulkFilter('rattrapage')}
-                  className={cn("p-3 rounded-2xl border text-xs font-black text-left cursor-pointer transition-all", bulkFilter === 'rattrapage' ? "bg-amber-600 text-white border-amber-600" : "bg-slate-50 border-slate-200 text-slate-700")}
+                  className={cn("p-3 rounded-2xl border text-xs font-bold text-left cursor-pointer transition-all", bulkFilter === 'rattrapage' ? "bg-amber-600 text-white border-amber-600" : "bg-muted/50 border-border text-slate-700")}
                 >
                   ⚠️ Rattrapage ({ratCount})
                 </button>
@@ -4768,18 +4768,18 @@ const { data: aiAuditData } = useQuery({
                 <button
                   type="button"
                   onClick={() => setBulkFilter('ajournes')}
-                  className={cn("p-3 rounded-2xl border text-xs font-black text-left cursor-pointer transition-all", bulkFilter === 'ajournes' ? "bg-rose-600 text-white border-rose-600" : "bg-slate-50 border-slate-200 text-slate-700")}
+                  className={cn("p-3 rounded-2xl border text-xs font-bold text-left cursor-pointer transition-all", bulkFilter === 'ajournes' ? "bg-rose-600 text-white border-rose-600" : "bg-muted/50 border-border text-slate-700")}
                 >
                   ❌ Non Validés ({nvCount})
                 </button>
               </div>
             </div>
 
-            <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3">
+            <div className="pt-4 border-t border-border dark:border-border flex items-center justify-end gap-3">
               <Button variant="outline" onClick={() => setShowBulkEmailModal(false)} className="rounded-xl font-bold text-xs">
                 Annuler
               </Button>
-              <Button onClick={handleBroadcastTranscripts} disabled={isSendingBulk} className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs shadow-lg">
+              <Button onClick={handleBroadcastTranscripts} disabled={isSendingBulk} className="bg-primary hover:bg-primary text-primary-foreground rounded-xl font-bold text-xs shadow-lg">
                 {isSendingBulk ? <Spinner className="text-white" /> : '🚀 Lancer l\'Expédition'}
               </Button>
             </div>
@@ -4792,66 +4792,66 @@ const { data: aiAuditData } = useQuery({
       {/* 📋 PV de Rachat Confirmation & Export Modal */}
       {selectedRachatStudent && (
         <div className="fixed inset-0 z-[9999] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-white dark:bg-slate-900 border-4 border-slate-950 dark:border-slate-800 rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b-2 border-slate-950 dark:border-slate-800 pb-4">
+          <div className="bg-card dark:bg-card border-4 border-slate-950 dark:border-border rounded-2xl p-6 max-w-lg w-full shadow-sm space-y-4">
+            <div className="flex items-center justify-between border-b-2 border-slate-950 dark:border-border pb-4">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-500 border-2 border-amber-400 flex items-center justify-center font-black text-2xl shadow-md">
+                <div className="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-500 border-2 border-amber-400 flex items-center justify-center font-bold text-2xl shadow-md">
                   ⚖️
                 </div>
                 <div>
-                  <h3 className="text-lg font-black text-slate-950 dark:text-white">Validation du PV de Rachat (Jury)</h3>
-                  <p className="text-xs text-slate-500 font-bold">Filière : {filieres.find((f: any) => String(f.id) === String(selectedFiliere))?.name || 'Filière ENCG'} • Année Académique 2026/2027</p>
+                  <h3 className="text-lg font-bold text-slate-950 dark:text-white">Validation du PV de Rachat (Jury)</h3>
+                  <p className="text-xs text-muted-foreground font-bold">Filière : {filieres.find((f: any) => String(f.id) === String(selectedFiliere))?.name || 'Filière ENCG'} • Année Académique 2026/2027</p>
                 </div>
               </div>
-              <button onClick={() => setSelectedRachatStudent(null)} className="p-2 text-slate-400 hover:text-slate-600 rounded-xl cursor-pointer">
+              <button onClick={() => setSelectedRachatStudent(null)} className="p-2 text-slate-400 hover:text-muted-foreground rounded-xl cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="p-4 bg-amber-50 dark:bg-amber-950/40 border-2 border-amber-400 dark:border-amber-800 rounded-2xl space-y-2">
-              <div className="flex justify-between text-xs font-black text-slate-900 dark:text-slate-100">
+              <div className="flex justify-between text-xs font-bold text-foreground dark:text-foreground">
                 <span>Étudiant :</span>
-                <span className="text-amber-900 dark:text-amber-300 font-extrabold">{selectedRachatStudent.student_name} ({selectedRachatStudent.cne})</span>
+                <span className="text-amber-900 dark:text-amber-300 font-bold">{selectedRachatStudent.student_name} ({selectedRachatStudent.cne})</span>
               </div>
-              <div className="flex justify-between text-xs font-black text-slate-900 dark:text-slate-100">
+              <div className="flex justify-between text-xs font-bold text-foreground dark:text-foreground">
                 <span>CIN :</span>
-                <span className="font-mono text-indigo-900 dark:text-indigo-300 font-bold">{selectedRachatStudent.cin || '-'}</span>
+                <span className="font-mono text-primary dark:text-indigo-300 font-bold">{selectedRachatStudent.cin || '-'}</span>
               </div>
-              <div className="flex justify-between text-xs font-black text-slate-900 dark:text-slate-100">
+              <div className="flex justify-between text-xs font-bold text-foreground dark:text-foreground">
                 <span>Module Concerné :</span>
                 <span className="font-mono">{selectedRachatStudent.module_code}</span>
               </div>
-              <div className="flex justify-between text-xs font-black text-slate-900 dark:text-slate-100">
+              <div className="flex justify-between text-xs font-bold text-foreground dark:text-foreground">
                 <span>Points de Rachat Accordés :</span>
-                <span className="text-amber-700 dark:text-amber-400 font-extrabold text-sm">+{selectedRachatStudent.needed_points} pt</span>
+                <span className="text-amber-700 dark:text-amber-400 font-bold text-sm">+{selectedRachatStudent.needed_points} pt</span>
               </div>
-              <div className="flex justify-between text-xs font-black text-slate-900 dark:text-slate-100">
+              <div className="flex justify-between text-xs font-bold text-foreground dark:text-foreground">
                 <span>Nouvelle Note Module :</span>
-                <span className="text-emerald-600 font-mono font-extrabold text-sm">{selectedRachatStudent.target_grade} / 20</span>
+                <span className="text-emerald-600 font-mono font-bold text-sm">{selectedRachatStudent.target_grade} / 20</span>
               </div>
-              <div className="pt-2 border-t border-amber-200 dark:border-amber-800 flex justify-between text-xs font-black">
+              <div className="pt-2 border-t border-amber-200 dark:border-amber-800 flex justify-between text-xs font-bold">
                 <span>Impact sur l'Année :</span>
-                <span className="text-indigo-700 dark:text-indigo-300">{selectedRachatStudent.impact}</span>
+                <span className="text-primary dark:text-indigo-300">{selectedRachatStudent.impact}</span>
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-black text-slate-900 dark:text-slate-100 uppercase tracking-wider">
+              <label className="text-xs font-bold text-foreground dark:text-foreground uppercase tracking-wider">
                 Motif & Justification Officielle du Jury :
               </label>
               <textarea
                 value={selectedRachatReason}
                 onChange={(e) => setSelectedRachatReason(e.target.value)}
                 rows={3}
-                className="w-full p-3 text-xs font-bold rounded-xl border-2 border-slate-950 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                className="w-full p-3 text-xs font-bold border-2 border-slate-950 bg-muted/50 dark:bg-card text-foreground dark:text-foreground focus:outline-none focus:ring-2 focus:ring-amber-500 rounded-[var(--control-radius)]"
               />
             </div>
 
-            <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-xl text-[10px] text-slate-600 dark:text-slate-300 font-medium flex items-center gap-2 border border-slate-300">
+            <div className="p-3 bg-muted dark:bg-card rounded-xl text-[10px] text-muted-foreground dark:text-foreground font-medium flex items-center gap-2 border border-slate-300">
               <span>📋 La validation génère automatiquement le Procès-Verbal de Rachat (PDF) à faire signer par le Professeur du Module, le Chef de Filière et le Chef de Département.</span>
             </div>
 
-            <div className="pt-3 border-t-2 border-slate-950 dark:border-slate-800 flex justify-end gap-2">
+            <div className="pt-3 border-t-2 border-slate-950 dark:border-border flex justify-end gap-2">
               <Button
                 variant="outline"
                 onClick={() => setSelectedRachatStudent(null)}
@@ -4872,7 +4872,7 @@ const { data: aiAuditData } = useQuery({
                   })
                 }}
                 disabled={applyRachatMutation.isPending}
-                className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-black rounded-xl text-xs px-5 py-2.5 shadow-lg border-2 border-slate-950 cursor-pointer flex items-center gap-2"
+                className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl text-xs px-5 py-2.5 shadow-lg border-2 border-slate-950 cursor-pointer flex items-center gap-2"
               >
                 {applyRachatMutation.isPending ? <Spinner /> : <Sparkles className="w-4 h-4" />}
                 ⚡ Confirmer & Générer le PV de Rachat (PDF)
@@ -4886,18 +4886,18 @@ const { data: aiAuditData } = useQuery({
       {showAuditModal && (
 
         <div className="fixed inset-0 z-[9999] bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-2xl w-full shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-6 max-w-2xl w-full shadow-sm space-y-4">
+            <div className="flex items-center justify-between border-b border-border dark:border-border pb-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center font-bold">
                   <History className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-base font-black text-slate-900 dark:text-white">Journal d'Audit du PV & Traçabilité</h3>
-                  <p className="text-xs text-slate-500">Historique des modifications de notes, signatures et validations cryptographiques.</p>
+                  <h3 className="text-base font-bold text-foreground dark:text-white">Journal d'Audit du PV & Traçabilité</h3>
+                  <p className="text-xs text-muted-foreground">Historique des modifications de notes, signatures et validations cryptographiques.</p>
                 </div>
               </div>
-              <button onClick={() => setShowAuditModal(false)} className="p-2 text-slate-400 hover:text-slate-600 rounded-xl">
+              <button onClick={() => setShowAuditModal(false)} className="p-2 text-slate-400 hover:text-muted-foreground rounded-xl">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -4909,12 +4909,12 @@ const { data: aiAuditData } = useQuery({
                 { user: 'Prof. BENNANI Farouk', action: 'Modification Note Rattrapage (12.50 → 14.00)', time: 'Aujourd\'hui 11:15', ip: '196.200.42.88', type: 'grade' },
                 { user: 'Président du Jury', action: 'Scellé Cryptographique SHA-256 Appliqué', time: 'Hier 18:00', ip: '192.168.1.10', type: 'seal' },
               ].map((log, i) => (
-                <div key={i} className="p-3.5 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between text-xs">
+                <div key={i} className="p-3.5 bg-muted/50 dark:bg-slate-800/50 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between text-xs">
                   <div className="flex items-center gap-3">
                     <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
                     <div>
-                      <div className="font-bold text-slate-800 dark:text-slate-200">{log.action}</div>
-                      <div className="text-[10px] text-slate-500">Par {log.user} • IP: {log.ip}</div>
+                      <div className="font-bold text-foreground dark:text-foreground">{log.action}</div>
+                      <div className="text-[10px] text-muted-foreground">Par {log.user} • IP: {log.ip}</div>
                     </div>
                   </div>
                   <span className="text-[10px] font-mono text-slate-400">{log.time}</span>
@@ -4922,7 +4922,7 @@ const { data: aiAuditData } = useQuery({
               ))}
             </div>
 
-            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center text-xs">
+            <div className="pt-3 border-t border-border dark:border-border flex justify-between items-center text-xs">
               <span className="text-[10px] text-slate-400 font-mono">Registre Cryptographique Verrouillé (Immutable Audit)</span>
               <Button onClick={() => setShowAuditModal(false)} className="rounded-xl font-bold bg-slate-900 text-white hover:bg-slate-800">
                 Fermer

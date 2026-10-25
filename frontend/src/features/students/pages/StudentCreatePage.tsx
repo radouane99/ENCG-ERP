@@ -58,12 +58,12 @@ export default function StudentCreatePage() {
   const labelCls = "block text-xs font-bold text-muted-foreground uppercase mb-1.5"
 
   return (
-    <div className="space-y-6 animate-in p-6 max-w-5xl mx-auto">
+    <div className="space-y-6 animate-in max-w-5xl mx-auto">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <button onClick={() => navigate(-1)} className="p-2 bg-card border rounded-lg hover:bg-muted"><ArrowLeft className="w-5 h-5" /></button>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">{t('create.title')}</h1>
+            <h1 className="erp-page-title">{t('create.title')}</h1>
             <p className="text-sm text-muted-foreground mt-1">{t('create.subtitle')}</p>
           </div>
         </div>
@@ -181,7 +181,7 @@ export default function StudentCreatePage() {
 
         <div className="flex items-center justify-end gap-4 pt-4">
           <button type="button" onClick={() => navigate(-1)} className="px-6 py-2.5 font-medium text-muted-foreground hover:bg-muted rounded-lg">{t('create.cancel')}</button>
-          <button type="submit" disabled={loading} className="px-6 py-2.5 font-medium bg-primary text-white hover:bg-primary/90 rounded-lg shadow-sm flex items-center gap-2">
+          <button type="submit" disabled={loading} className="px-6 py-2.5 font-medium bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg shadow-sm flex items-center gap-2">
             <Save className="w-4 h-4" /> {loading ? t('create.saving') : t('create.save')}
           </button>
         </div>

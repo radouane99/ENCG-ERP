@@ -261,13 +261,13 @@ export default function StudentSchedule() {
   };
 
   return (
-    <div className="space-y-6 font-sans animate-in fade-in duration-500 text-slate-900 dark:text-slate-100 pb-20">
+    <div className="space-y-6 font-sans animate-in fade-in duration-500 text-foreground dark:text-foreground pb-20">
       
       {/* ── Executive Top Cockpit Header (Fully Responsive) ── */}
-      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 border-b border-slate-200/80 dark:border-slate-800 pb-5">
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 border-b border-slate-200/80 dark:border-border pb-5">
         <div className="space-y-1.5">
           <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-[#001A4B] dark:text-white">
+            <h1 className="text-[#001A4B] dark:text-white erp-page-title">
               Cockpit Étudiant · Emploi du Temps
             </h1>
             <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[10px] sm:text-[11px] font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 shadow-2xs">
@@ -275,13 +275,13 @@ export default function StudentSchedule() {
               Planning Validé & Publié
             </span>
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium flex items-center gap-1.5 sm:gap-2 flex-wrap">
+          <p className="text-xs text-muted-foreground dark:text-muted-foreground font-medium flex items-center gap-1.5 sm:gap-2 flex-wrap">
             <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
             <span>École Nationale de Commerce et de Gestion de Fès</span>
             <span className="text-slate-300 dark:text-slate-700 hidden sm:inline">•</span>
             <span>Année 2026-2027</span>
             <span className="text-slate-300 dark:text-slate-700 hidden sm:inline">•</span>
-            <span className="font-semibold text-slate-700 dark:text-slate-300 capitalize">{currentDate.toLowerCase()}</span>
+            <span className="font-semibold text-slate-700 dark:text-foreground capitalize">{currentDate.toLowerCase()}</span>
           </p>
         </div>
 
@@ -290,19 +290,19 @@ export default function StudentSchedule() {
           <button
             onClick={() => refetch()}
             disabled={isFetching}
-            className="inline-flex items-center justify-center gap-2 h-10 px-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-300 transition-all cursor-pointer disabled:opacity-50 shadow-2xs"
+            className="inline-flex items-center justify-center gap-2 h-10 px-3.5 rounded-xl bg-card dark:bg-card border border-border dark:border-border text-xs font-bold text-slate-700 dark:text-foreground hover:bg-muted/50 dark:hover:bg-slate-800 hover:border-slate-300 transition-all cursor-pointer disabled:opacity-50 shadow-2xs"
             title="Rafraîchir les données de l'emploi du temps"
           >
-            <RefreshCcw className={cn("w-3.5 h-3.5 text-slate-500", isFetching && "animate-spin text-blue-600")} />
+            <RefreshCcw className={cn("w-3.5 h-3.5 text-muted-foreground", isFetching && "animate-spin text-primary")} />
             <span>Actualiser</span>
           </button>
 
           <button
             onClick={handlePreviewPdf}
             disabled={isPreviewLoading}
-            className="inline-flex items-center justify-center gap-2 h-10 px-4 rounded-xl bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-xs font-bold transition-all cursor-pointer disabled:opacity-50 shadow-2xs hover:shadow-sm"
+            className="inline-flex items-center justify-center gap-2 h-10 px-4 rounded-xl bg-primary/5 dark:bg-blue-950/40 hover:bg-primary/10 dark:hover:bg-blue-900/50 text-primary dark:text-blue-300 border border-primary/20 dark:border-primary text-xs font-bold transition-all cursor-pointer disabled:opacity-50 shadow-2xs hover:shadow-sm"
           >
-            <Eye className={cn("w-4 h-4 text-blue-600 dark:text-blue-400", isPreviewLoading && "animate-pulse")} />
+            <Eye className={cn("w-4 h-4 text-primary dark:text-blue-400", isPreviewLoading && "animate-pulse")} />
             <span>{isPreviewLoading ? 'Chargement...' : 'Aperçu PDF'}</span>
           </button>
 
@@ -317,7 +317,7 @@ export default function StudentSchedule() {
 
           <button
             onClick={handleExportIcs}
-            className="inline-flex items-center justify-center gap-2 h-10 px-3 sm:px-4 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 text-amber-300 border border-amber-400/20 text-xs font-bold transition-all cursor-pointer shadow-2xs hover:shadow-sm"
+            className="inline-flex items-center justify-center gap-2 h-10 px-3 sm:px-4 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-card dark:hover:bg-slate-700 text-amber-300 border border-amber-400/20 text-xs font-bold transition-all cursor-pointer shadow-2xs hover:shadow-sm"
             title="Synchroniser avec Google Calendar, Apple Calendar, Outlook"
           >
             <CalendarIcon className="w-4 h-4 text-amber-300 shrink-0" />
@@ -327,7 +327,7 @@ export default function StudentSchedule() {
       </div>
 
       {/* ── Executive Hero Banner (Responsive Grid & Cards) ── */}
-      <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-[#001A4B] via-[#082663] to-[#001338] text-white p-4 sm:p-7 lg:p-8 shadow-xl border border-blue-900/40">
+      <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-[#001A4B] via-[#082663] to-[#001338] text-white p-4 sm:p-7 lg:p-8 shadow-sm border border-blue-900/40">
         <div className="absolute top-0 right-0 w-80 sm:w-96 h-80 sm:h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
         <div className="absolute bottom-0 left-1/3 w-64 sm:w-80 h-64 sm:h-80 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
 
@@ -337,7 +337,7 @@ export default function StudentSchedule() {
             
             {/* Top context badges */}
             <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-              <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-lg text-[9.5px] sm:text-[10px] font-black uppercase tracking-wider bg-amber-400/15 text-amber-300 border border-amber-400/30">
+              <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-lg text-[9.5px] sm:text-[10px] font-bold uppercase tracking-wider bg-amber-400/15 text-amber-300 border border-amber-400/30">
                 <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
                 Planning Pédagogique Officiel
               </span>
@@ -351,7 +351,7 @@ export default function StudentSchedule() {
 
             {/* Title & Description */}
             <div>
-              <h2 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-white flex items-center gap-2.5 sm:gap-3">
+              <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight text-white flex items-center gap-2.5 sm:gap-3">
                 <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-amber-300 shrink-0">
                   <CalendarIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                 </div>
@@ -371,7 +371,7 @@ export default function StudentSchedule() {
                 </div>
                 <div className="min-w-0">
                   <div className="text-[10px] font-bold uppercase tracking-wider text-blue-300">Amphithéâtre (CM)</div>
-                  <div className="text-xs font-black text-white truncate">{studentSection} <span className="text-[10px] font-normal text-amber-300/90">(~100 étud.)</span></div>
+                  <div className="text-xs font-bold text-white truncate">{studentSection} <span className="text-[10px] font-normal text-amber-300/90">(~100 étud.)</span></div>
                 </div>
               </div>
 
@@ -382,7 +382,7 @@ export default function StudentSchedule() {
                 </div>
                 <div className="min-w-0">
                   <div className="text-[10px] font-bold uppercase tracking-wider text-violet-300">Sous-Groupe TD</div>
-                  <div className="text-xs font-black text-white truncate">{studentSubGroup} <span className="text-[10px] font-normal text-violet-200/80">(Ordre Alpha)</span></div>
+                  <div className="text-xs font-bold text-white truncate">{studentSubGroup} <span className="text-[10px] font-normal text-violet-200/80">(Ordre Alpha)</span></div>
                 </div>
               </div>
 
@@ -393,7 +393,7 @@ export default function StudentSchedule() {
                 </div>
                 <div className="min-w-0">
                   <div className="text-[10px] font-bold uppercase tracking-wider text-blue-300">Filière & Spécialité</div>
-                  <div className="text-xs font-black text-white truncate" title={filiereRaw}>{filiereRaw}</div>
+                  <div className="text-xs font-bold text-white truncate" title={filiereRaw}>{filiereRaw}</div>
                 </div>
               </div>
             </div>
@@ -401,7 +401,7 @@ export default function StudentSchedule() {
           </div>
 
           {/* Right Column: Glassmorphism KPI Stats Card */}
-          <div className="w-full lg:w-72 bg-white/[0.07] backdrop-blur-xl p-4 sm:p-5 rounded-2xl border border-white/15 shadow-xl flex flex-col justify-between shrink-0">
+          <div className="w-full lg:w-72 bg-white/[0.07] backdrop-blur-xl p-4 sm:p-5 rounded-2xl border border-white/15 shadow-sm flex flex-col justify-between shrink-0">
             <div className="text-[11px] font-bold uppercase tracking-wider text-blue-300 pb-2.5 sm:pb-3 border-b border-white/10 flex items-center justify-between">
               <span>Synthèse Hebdomadaire</span>
               <span className="w-2 h-2 rounded-full bg-emerald-400" />
@@ -409,15 +409,15 @@ export default function StudentSchedule() {
 
             <div className="grid grid-cols-3 gap-1 sm:gap-2 py-3 sm:py-4 text-center">
               <div>
-                <div className="text-xl sm:text-2xl font-black text-amber-300">{stats.totalSessions}</div>
+                <div className="text-xl sm:text-2xl font-bold text-amber-300">{stats.totalSessions}</div>
                 <div className="text-[9px] sm:text-[9.5px] font-bold uppercase tracking-wide text-blue-200 mt-1 leading-tight">Séances / sem.</div>
               </div>
               <div className="border-x border-white/10 px-1">
-                <div className="text-xl sm:text-2xl font-black text-emerald-300">{stats.totalHours}h</div>
+                <div className="text-xl sm:text-2xl font-bold text-emerald-300">{stats.totalHours}h</div>
                 <div className="text-[9px] sm:text-[9.5px] font-bold uppercase tracking-wide text-blue-200 mt-1 leading-tight">Volume Heures</div>
               </div>
               <div>
-                <div className="text-xl sm:text-2xl font-black text-white">{stats.tdTpCount}</div>
+                <div className="text-xl sm:text-2xl font-bold text-white">{stats.tdTpCount}</div>
                 <div className="text-[9px] sm:text-[9.5px] font-bold uppercase tracking-wide text-blue-200 mt-1 leading-tight">Séances TD/TP</div>
               </div>
             </div>
@@ -435,39 +435,39 @@ export default function StudentSchedule() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
         {/* CM Notice Card */}
         <div className="flex items-start gap-3 sm:gap-3.5 p-3.5 sm:p-4 rounded-2xl bg-blue-50/70 dark:bg-blue-950/20 border border-blue-200/80 dark:border-blue-900/40 shadow-2xs">
-          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-sm font-black text-xs">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shrink-0 shadow-sm font-bold text-xs">
             CM
           </div>
           <div className="space-y-1 min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-              <span className="text-xs font-black text-blue-950 dark:text-blue-200">
+              <span className="text-xs font-bold text-blue-950 dark:text-blue-200">
                 Démarrage officiel des Cours Magistraux
               </span>
-              <span className="px-2 py-0.5 rounded-md bg-blue-600 text-white text-[10.5px] sm:text-[11px] font-black">
+              <span className="px-2 py-0.5 rounded-md bg-primary text-primary-foreground text-[10.5px] sm:text-[11px] font-bold">
                 15 Septembre 2026
               </span>
             </div>
-            <p className="text-[11px] sm:text-[11.5px] text-slate-600 dark:text-slate-400 font-medium leading-relaxed">
-              Dispensés en <strong className="text-slate-800 dark:text-slate-200">Amphithéâtre</strong> regroupant l'ensemble de la section ({studentSection}, ~100 étudiants).
+            <p className="text-[11px] sm:text-[11.5px] text-muted-foreground dark:text-muted-foreground font-medium leading-relaxed">
+              Dispensés en <strong className="text-foreground dark:text-foreground">Amphithéâtre</strong> regroupant l'ensemble de la section ({studentSection}, ~100 étudiants).
             </p>
           </div>
         </div>
 
         {/* TD/TP Notice Card */}
         <div className="flex items-start gap-3 sm:gap-3.5 p-3.5 sm:p-4 rounded-2xl bg-violet-50/70 dark:bg-violet-950/20 border border-violet-200/80 dark:border-violet-900/40 shadow-2xs">
-          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-violet-600 text-white flex items-center justify-center shrink-0 shadow-sm font-black text-xs">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-violet-600 text-white flex items-center justify-center shrink-0 shadow-sm font-bold text-xs">
             TD
           </div>
           <div className="space-y-1 min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-              <span className="text-xs font-black text-violet-950 dark:text-violet-200">
+              <span className="text-xs font-bold text-violet-950 dark:text-violet-200">
                 Démarrage officiel des Travaux Dirigés & TP
               </span>
-              <span className="px-2 py-0.5 rounded-md bg-violet-600 text-white text-[10.5px] sm:text-[11px] font-black">
+              <span className="px-2 py-0.5 rounded-md bg-violet-600 text-white text-[10.5px] sm:text-[11px] font-bold">
                 22 Septembre 2026
               </span>
             </div>
-            <p className="text-[11px] sm:text-[11.5px] text-slate-600 dark:text-slate-400 font-medium leading-relaxed">
+            <p className="text-[11px] sm:text-[11.5px] text-muted-foreground dark:text-muted-foreground font-medium leading-relaxed">
               Dispensés en salles de cours par sous-groupe officiel (<strong className="text-violet-700 dark:text-violet-300">{studentSubGroup}</strong>, scission alphabétique A à K).
             </p>
           </div>
@@ -475,16 +475,16 @@ export default function StudentSchedule() {
       </div>
 
       {/* ── View Controls Bar & Filter (Responsive & Horizontal Scroll for Days) ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 bg-white dark:bg-slate-900 p-3 sm:p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-2xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 bg-card dark:bg-card p-3 sm:p-4 rounded-2xl border border-slate-200/80 dark:border-border shadow-2xs">
         {/* View Mode Toggle */}
-        <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl w-full sm:w-auto">
+        <div className="flex items-center gap-1 bg-muted dark:bg-slate-800/80 p-1 rounded-xl w-full sm:w-auto">
           <button
             onClick={() => setViewMode('matrix')}
             className={cn(
               "flex-1 sm:flex-initial flex items-center justify-center gap-2 px-3 sm:px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer",
               viewMode === 'matrix'
                 ? "bg-[#001A4B] text-white shadow-xs"
-                : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
+                : "text-muted-foreground dark:text-foreground hover:text-foreground dark:hover:text-white"
             )}
           >
             <LayoutGrid className="w-3.5 h-3.5" />
@@ -496,7 +496,7 @@ export default function StudentSchedule() {
               "flex-1 sm:flex-initial flex items-center justify-center gap-2 px-3 sm:px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer",
               viewMode === 'cards'
                 ? "bg-[#001A4B] text-white shadow-xs"
-                : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
+                : "text-muted-foreground dark:text-foreground hover:text-foreground dark:hover:text-white"
             )}
           >
             <ListFilter className="w-3.5 h-3.5" />
@@ -513,7 +513,7 @@ export default function StudentSchedule() {
                 "px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0",
                 selectedDay === 'all'
                   ? "bg-[#001A4B] text-white"
-                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200"
+                  : "bg-muted dark:bg-card text-muted-foreground dark:text-foreground hover:bg-slate-200"
               )}
             >
               Toute la Semaine
@@ -526,7 +526,7 @@ export default function StudentSchedule() {
                   "px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0",
                   selectedDay.toLowerCase() === d.name.toLowerCase()
                     ? "bg-[#001A4B] text-white"
-                    : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200"
+                    : "bg-muted dark:bg-card text-muted-foreground dark:text-foreground hover:bg-slate-200"
                 )}
               >
                 {d.name}
@@ -535,7 +535,7 @@ export default function StudentSchedule() {
           </div>
         )}
 
-        <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400 shrink-0">
+        <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground dark:text-muted-foreground shrink-0">
           <span className="w-2 h-2 rounded-full bg-emerald-500" />
           <span>{filteredSchedule.length} séance(s) trouvée(s)</span>
         </div>
@@ -546,10 +546,10 @@ export default function StudentSchedule() {
           <Spinner size="lg" />
         </div>
       ) : schedule.length === 0 ? (
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 sm:p-12 text-center shadow-sm border border-slate-200 dark:border-slate-800 space-y-3">
+        <div className="bg-card dark:bg-card rounded-2xl p-8 sm:p-12 text-center shadow-sm border border-border dark:border-border space-y-3">
           <CalendarIcon className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto" />
-          <h3 className="text-base font-black text-slate-800 dark:text-slate-100">Aucun cours programmé</h3>
-          <p className="text-xs text-slate-500 max-w-md mx-auto">
+          <h3 className="text-base font-bold text-foreground dark:text-foreground">Aucun cours programmé</h3>
+          <p className="text-xs text-muted-foreground max-w-md mx-auto">
             L'emploi du temps officiel pour votre groupe ({studentGroupName} • {studentSubGroup}) n'a pas encore de séances enregistrées dans la base de données.
           </p>
         </div>
@@ -557,19 +557,19 @@ export default function StudentSchedule() {
         /* ══════════════════════════════════════════════════════════════
            1. VUE GRILLE HEBDOMADAIRE (MATRIX TIMETABLE WITH STICKY TIME)
         ══════════════════════════════════════════════════════════════ */
-        <div className="bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl p-3 sm:p-6 shadow-sm border border-slate-200/80 dark:border-slate-800 overflow-x-auto relative">
+        <div className="bg-card dark:bg-card rounded-2xl sm:rounded-3xl p-3 sm:p-6 shadow-sm border border-slate-200/80 dark:border-border overflow-x-auto relative">
           <table className="w-full border-collapse min-w-[780px] sm:min-w-[850px]">
             <thead>
               <tr>
-                <th className="sticky left-0 bg-white dark:bg-slate-900 z-10 p-3 text-left text-xs font-black uppercase tracking-wider text-slate-400 border-b border-slate-200 dark:border-slate-800 w-32 sm:w-36 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
+                <th className="sticky left-0 bg-card dark:bg-card z-10 p-3 text-left text-xs font-bold uppercase tracking-wider text-slate-400 border-b border-border dark:border-border w-32 sm:w-36 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
                   Créneau Horaire
                 </th>
                 {DAYS.map((day) => (
                   <th
                     key={day.key}
-                    className="p-3 text-center border-b border-slate-200 dark:border-slate-800"
+                    className="p-3 text-center border-b border-border dark:border-border"
                   >
-                    <div className="font-black text-sm text-[#001A4B] dark:text-white uppercase tracking-wider">
+                    <div className="font-bold text-sm text-[#001A4B] dark:text-white uppercase tracking-wider">
                       {day.name}
                     </div>
                     <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
@@ -583,9 +583,9 @@ export default function StudentSchedule() {
               {TIME_SLOTS.map((slot, slotIdx) => (
                 <tr key={slotIdx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
                   {/* Slot Header (Sticky Column for Mobile/Tablet) */}
-                  <td className="sticky left-0 bg-white dark:bg-slate-900 z-10 p-2.5 sm:p-3.5 align-top shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
-                    <div className="flex items-center gap-1.5 font-mono text-xs font-black text-slate-800 dark:text-slate-200">
-                      <Clock className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                  <td className="sticky left-0 bg-card dark:bg-card z-10 p-2.5 sm:p-3.5 align-top shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
+                    <div className="flex items-center gap-1.5 font-mono text-xs font-bold text-foreground dark:text-foreground">
+                      <Clock className="w-3.5 h-3.5 text-primary shrink-0" />
                       <span>{slot.label}</span>
                     </div>
                     <div className="text-[10px] font-bold text-slate-400 mt-0.5">
@@ -604,7 +604,7 @@ export default function StudentSchedule() {
                     if (!session) {
                       return (
                         <td key={day.key} className="p-2 sm:p-2.5 align-top">
-                          <div className="h-28 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800/80 flex items-center justify-center text-[11px] font-bold text-slate-300 dark:text-slate-700 select-none">
+                          <div className="h-28 rounded-2xl border border-dashed border-border dark:border-slate-800/80 flex items-center justify-center text-[11px] font-bold text-slate-300 dark:text-slate-700 select-none">
                             —
                           </div>
                         </td>
@@ -630,7 +630,7 @@ export default function StudentSchedule() {
                             <div className="flex items-center justify-between gap-1 mb-1">
                               <span
                                 className={cn(
-                                  "px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider",
+                                  "px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider",
                                   isCm
                                     ? "bg-[#001A4B] text-white"
                                     : isTd
@@ -640,21 +640,21 @@ export default function StudentSchedule() {
                               >
                                 {isCm ? 'CM' : isTd ? 'TD' : 'TP'}
                               </span>
-                              <span className="font-mono text-[9px] font-black text-slate-500 dark:text-slate-400">
+                              <span className="font-mono text-[9px] font-bold text-muted-foreground dark:text-muted-foreground">
                                 {session.time}
                               </span>
                             </div>
 
-                            <div className="font-black text-xs text-slate-900 dark:text-white line-clamp-2 leading-snug">
+                            <div className="font-bold text-xs text-foreground dark:text-white line-clamp-2 leading-snug">
                               {session.title}
                             </div>
                           </div>
 
                           <div className="space-y-0.5 pt-1">
-                            <div className="text-[10px] font-bold text-slate-600 dark:text-slate-300 truncate">
+                            <div className="text-[10px] font-bold text-muted-foreground dark:text-foreground truncate">
                               {session.professor}
                             </div>
-                            <div className="flex items-center gap-1 text-[9.5px] font-black text-blue-700 dark:text-blue-300 truncate">
+                            <div className="flex items-center gap-1 text-[9.5px] font-bold text-primary dark:text-blue-300 truncate">
                               <MapPin className="w-3 h-3 text-rose-500 shrink-0" />
                               <span className="truncate">{session.location}</span>
                             </div>
@@ -683,19 +683,19 @@ export default function StudentSchedule() {
                 className={cn(
                   "p-4 sm:p-5 rounded-2xl border transition-all duration-300 hover:shadow-lg flex flex-col justify-between space-y-4 group",
                   isCm
-                    ? "bg-white dark:bg-slate-900 border-blue-200 dark:border-blue-900/50 hover:border-blue-500"
+                    ? "bg-card dark:bg-card border-primary/20 dark:border-blue-900/50 hover:border-primary"
                     : isTd
-                    ? "bg-white dark:bg-slate-900 border-violet-200 dark:border-violet-900/50 hover:border-violet-500"
-                    : "bg-white dark:bg-slate-900 border-emerald-200 dark:border-emerald-900/50 hover:border-emerald-500"
+                    ? "bg-card dark:bg-card border-violet-200 dark:border-violet-900/50 hover:border-violet-500"
+                    : "bg-card dark:bg-card border-emerald-200 dark:border-emerald-900/50 hover:border-emerald-500"
                 )}
               >
                 <div className="space-y-2.5">
                   <div className="flex items-center justify-between">
-                    <span className="px-2.5 py-1 rounded-lg text-xs font-black bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                    <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-muted dark:bg-card text-slate-700 dark:text-foreground">
                       {item.day}
                     </span>
                     <span className={cn(
-                      "px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider",
+                      "px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider",
                       isCm
                         ? "bg-[#001A4B] text-white"
                         : isTd
@@ -707,21 +707,21 @@ export default function StudentSchedule() {
                   </div>
 
                   <div>
-                    <h3 className="font-black text-sm sm:text-base text-slate-900 dark:text-white leading-snug group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                    <h3 className="font-bold text-sm sm:text-base text-foreground dark:text-white leading-snug group-hover:text-primary dark:group-hover:text-blue-400 transition-colors">
                       {item.title}
                     </h3>
-                    <p className="text-xs text-slate-500 font-bold mt-1.5 flex items-center gap-1.5">
-                      <Users className="w-3.5 h-3.5 text-blue-600 shrink-0" /> 
+                    <p className="text-xs text-muted-foreground font-bold mt-1.5 flex items-center gap-1.5">
+                      <Users className="w-3.5 h-3.5 text-primary shrink-0" />
                       <span className="truncate">{item.professor}</span>
                     </p>
                   </div>
                 </div>
 
-                <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs font-bold">
-                  <span className="font-mono text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                <div className="pt-3 border-t border-border dark:border-border flex items-center justify-between text-xs font-bold">
+                  <span className="font-mono text-slate-700 dark:text-foreground flex items-center gap-1.5">
                     <Clock className="w-4 h-4 text-slate-400 shrink-0" /> {item.time}
                   </span>
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-muted dark:bg-card text-foreground dark:text-foreground text-xs font-bold">
                     <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0" /> {item.location}
                   </span>
                 </div>
@@ -734,21 +734,21 @@ export default function StudentSchedule() {
       {/* ── Modal Aperçu Emploi du Temps PDF (Responsive A4 Paysage) ── */}
       {isPreviewModalOpen && previewPdfUrl && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-2 sm:p-4 lg:p-6 animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl w-full max-w-6xl max-h-[96vh] flex flex-col shadow-2xl overflow-hidden">
+          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl sm:rounded-3xl w-full max-w-6xl max-h-[96vh] flex flex-col shadow-sm overflow-hidden">
             {/* Modal Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/80">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 sm:px-6 py-3 sm:py-4 border-b border-border dark:border-border bg-slate-50/80 dark:bg-slate-900/80">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold shrink-0">
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-blue-500/10 dark:bg-blue-500/20 text-primary dark:text-blue-400 flex items-center justify-center font-bold shrink-0">
                   <Eye className="w-5 h-5" />
                 </div>
                 <div className="min-w-0">
-                  <h3 className="text-xs sm:text-base font-black text-slate-900 dark:text-white flex items-center gap-2 truncate">
+                  <h3 className="text-xs sm:text-base font-bold text-foreground dark:text-white flex items-center gap-2 truncate">
                     <span>Aperçu Officiel · Emploi du Temps</span>
-                    <span className="hidden md:inline-block px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                    <span className="hidden md:inline-block px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                       A4 Paysage
                     </span>
                   </h3>
-                  <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate">
+                  <p className="text-[10px] sm:text-[11px] text-muted-foreground dark:text-muted-foreground font-medium truncate">
                     {studentGroupName} • Sous-groupe {studentSubGroup} • {studentFiliereName}
                   </p>
                 </div>
@@ -757,7 +757,7 @@ export default function StudentSchedule() {
               <div className="flex items-center justify-end gap-2 shrink-0">
                 <button
                   onClick={() => window.open(previewPdfUrl, '_blank', 'noopener,noreferrer')}
-                  className="flex items-center gap-1.5 h-9 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition-all cursor-pointer"
+                  className="flex items-center gap-1.5 h-9 px-3 rounded-xl bg-muted hover:bg-slate-200 dark:bg-card dark:hover:bg-slate-700 text-slate-700 dark:text-foreground text-xs font-bold transition-all cursor-pointer"
                   title="Ouvrir en plein écran dans un nouvel onglet"
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
@@ -775,7 +775,7 @@ export default function StudentSchedule() {
 
                 <button
                   onClick={() => setIsPreviewModalOpen(false)}
-                  className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center justify-center transition-all cursor-pointer"
+                  className="w-9 h-9 rounded-xl bg-muted hover:bg-slate-200 dark:bg-card dark:hover:bg-slate-700 text-muted-foreground hover:text-foreground dark:hover:text-white flex items-center justify-center transition-all cursor-pointer"
                   aria-label="Fermer l'aperçu"
                 >
                   <X className="w-4 h-4" />
@@ -787,7 +787,7 @@ export default function StudentSchedule() {
             <div className="flex-1 p-2 sm:p-4 bg-slate-100/50 dark:bg-slate-950/50 overflow-hidden flex flex-col items-center justify-center">
               <iframe
                 src={`${previewPdfUrl}#toolbar=0&navpanes=0`}
-                className="w-full h-[65vh] sm:h-[75vh] rounded-xl sm:rounded-2xl border border-slate-200 dark:border-slate-800 bg-white shadow-inner"
+                className="w-full h-[65vh] sm:h-[75vh] rounded-xl sm:rounded-2xl border border-border dark:border-border bg-card shadow-inner"
                 title="Aperçu Emploi du Temps PDF"
               />
             </div>

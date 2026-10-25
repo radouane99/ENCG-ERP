@@ -10,10 +10,10 @@ export default function AssignmentsPage() {
   ])
 
   return (
-    <div className="space-y-6 animate-in p-6">
+    <div className="space-y-6 animate-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Devoirs & Évaluations Continues</h1>
+          <h1 className="erp-page-title">Devoirs & Évaluations Continues</h1>
           <p className="text-muted-foreground text-sm mt-1">Consultez vos devoirs à rendre et vos notes d'évaluation.</p>
         </div>
       </div>
@@ -27,7 +27,7 @@ export default function AssignmentsPage() {
                 </div>
                 <span className={cn("text-xs font-bold px-2 py-1 rounded-full border", 
                   a.status === 'pending' ? 'bg-amber-50 text-amber-600 border-amber-200' :
-                  a.status === 'submitted' ? 'bg-blue-50 text-blue-600 border-blue-200' :
+                  a.status === 'submitted' ? "bg-primary/5 text-primary border-primary/20" :
                   'bg-green-50 text-green-600 border-green-200'
                 )}>
                   {a.status === 'pending' ? 'À rendre' : a.status === 'submitted' ? 'Soumis' : 'Noté'}
@@ -53,7 +53,7 @@ export default function AssignmentsPage() {
                </div>
              )}
              {a.status === 'graded' && (
-               <div className="w-full text-center py-2 bg-green-50 text-green-700 border border-green-200 rounded-lg text-lg font-black">
+               <div className="w-full text-center py-2 bg-green-50 text-green-700 border border-green-200 rounded-lg text-lg font-bold">
                  {a.grade}
                </div>
              )}

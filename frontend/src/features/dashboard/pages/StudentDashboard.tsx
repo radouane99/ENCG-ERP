@@ -201,22 +201,22 @@ export default function StudentDashboard() {
   ];
 
   return (
-    <div data-testid="student-dashboard" className="space-y-8 font-sans animate-in fade-in duration-500 text-slate-900 dark:text-slate-100 pb-12">
+    <div data-testid="student-dashboard" className="space-y-8 font-sans animate-in fade-in duration-500 text-foreground dark:text-foreground pb-12">
       
       <UserActionCenter actor="student"/>
       {/* ── Executive Top Cockpit Header (Matching Admin & Professor Cockpit) ── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800/80 pb-5">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border dark:border-slate-800/80 pb-5">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-black tracking-tight text-[#001A4B] dark:text-white">
+            <h1 className="text-[#001A4B] dark:text-white erp-page-title">
               Cockpit Étudiant · Espace Académique
             </h1>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
               Système Opérationnel
             </span>
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
+          <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-1 font-medium">
             École Nationale de Commerce et de Gestion de Fès · Année Universitaire 2026-2027 · {currentDate}
           </p>
         </div>
@@ -225,15 +225,15 @@ export default function StudentDashboard() {
           <button
             onClick={() => refetch()}
             disabled={isFetching}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 shadow-2xs hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer"
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-card dark:bg-card border border-border dark:border-border text-xs font-bold text-slate-700 dark:text-foreground shadow-2xs hover:bg-muted/50 dark:hover:bg-slate-800 transition-all cursor-pointer"
           >
-            <RefreshCcw className={cn("w-3.5 h-3.5 text-blue-600", isFetching && "animate-spin")} />
+            <RefreshCcw className={cn("w-3.5 h-3.5 text-primary", isFetching && "animate-spin")} />
             Actualiser
           </button>
 
           <Link
             to="/student/schedule"
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#001A4B] hover:bg-[#082663] text-white text-xs font-black uppercase tracking-wider shadow-md transition-all"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#001A4B] hover:bg-[#082663] text-white text-xs font-bold uppercase tracking-wider shadow-md transition-all"
           >
             <CalendarIcon className="w-3.5 h-3.5 text-amber-300" /> Mon Emploi du Temps
           </Link>
@@ -241,7 +241,7 @@ export default function StudentDashboard() {
       </div>
 
       {/* ── Executive Hero Profile Card ── */}
-      <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-[#001A4B] via-[#092868] to-[#041233] text-white p-6 sm:p-8 shadow-2xl border border-white/10">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#001A4B] via-[#092868] to-[#041233] text-white p-6 sm:p-8 shadow-sm border border-white/10">
         <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
         <div className="absolute bottom-0 left-1/3 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
@@ -249,8 +249,8 @@ export default function StudentDashboard() {
           <div className="flex items-center gap-5">
             {/* Avatar Initials Badge */}
             <div className="relative shrink-0">
-              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-gradient-to-tr from-amber-400 via-amber-500 to-amber-300 p-0.5 shadow-xl flex items-center justify-center">
-                <div className="w-full h-full bg-[#001A4B] rounded-[22px] flex items-center justify-center font-black text-2xl sm:text-3xl text-amber-300 tracking-wider">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-tr from-amber-400 via-amber-500 to-amber-300 p-0.5 shadow-sm flex items-center justify-center">
+                <div className="w-full h-full bg-[#001A4B] rounded-2xl flex items-center justify-center font-bold text-2xl sm:text-3xl text-amber-300 tracking-wider">
                   {studentInitials}
                 </div>
               </div>
@@ -259,18 +259,18 @@ export default function StudentDashboard() {
 
             <div className="space-y-1.5">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-white/10 backdrop-blur-md text-amber-300 border border-white/10">
+                <span className="px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest bg-white/10 backdrop-blur-md text-amber-300 border border-white/10">
                   Étudiant ENCG Fès
                 </span>
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                   Année 2026/2027
                 </span>
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">
                   {studentGroupName}
                 </span>
               </div>
               
-              <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
                 {user?.name || 'Étudiant ENCG'}
               </h2>
               
@@ -284,14 +284,14 @@ export default function StudentDashboard() {
                 {/* Section Amphi badge */}
                 <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-amber-400/15 border border-amber-400/30 backdrop-blur-sm shadow-sm">
                   <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse shrink-0" />
-                  <span className="text-[10.5px] font-black text-amber-300 uppercase tracking-wide">Amphi</span>
-                  <span className="text-xs font-black text-amber-200">{studentSection}</span>
+                  <span className="text-[10.5px] font-bold text-amber-300 uppercase tracking-wide">Amphi</span>
+                  <span className="text-xs font-bold text-amber-200">{studentSection}</span>
                 </div>
                 {/* Sub-group TD badge */}
                 <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-violet-500/20 border border-violet-400/30 backdrop-blur-sm shadow-sm">
                   <span className="w-2 h-2 rounded-full bg-violet-400 shrink-0" />
-                  <span className="text-[10.5px] font-black text-violet-300 uppercase tracking-wide">TD/TP</span>
-                  <span className="text-xs font-black text-violet-200">{studentSubGroup}</span>
+                  <span className="text-[10.5px] font-bold text-violet-300 uppercase tracking-wide">TD/TP</span>
+                  <span className="text-xs font-bold text-violet-200">{studentSubGroup}</span>
                 </div>
                 {/* CNE & CIN */}
                 <div className="flex items-center gap-2 text-xs text-slate-300 font-mono font-bold">
@@ -303,9 +303,9 @@ export default function StudentDashboard() {
           </div>
 
           {/* Pass Digital QR Fast Access Card */}
-          <div className="w-full lg:w-auto bg-white/10 backdrop-blur-xl p-4 sm:p-5 rounded-3xl border border-white/15 shadow-xl flex items-center justify-between lg:justify-start gap-4">
+          <div className="w-full lg:w-auto bg-white/10 backdrop-blur-xl p-4 sm:p-5 rounded-2xl border border-white/15 shadow-sm flex items-center justify-between lg:justify-start gap-4">
             <div
-              className="bg-white p-2 rounded-2xl shadow-md shrink-0 cursor-pointer hover:scale-105 transition-transform"
+              className="bg-card p-2 rounded-2xl shadow-md shrink-0 cursor-pointer hover:scale-105 transition-transform"
               onClick={() => setShowPassModal(true)}
               title="Agrandir le QR Pass"
             >
@@ -316,7 +316,7 @@ export default function StudentDashboard() {
               />
             </div>
             <div className="space-y-1">
-              <span className="text-[10px] font-black tracking-widest text-amber-300 uppercase block">Pass Digital Campus</span>
+              <span className="text-[10px] font-bold tracking-widest text-amber-300 uppercase block">Pass Digital Campus</span>
               <p className="text-xs font-bold text-white">Accès Examens & Bibliothèque</p>
               <button 
                 onClick={() => setShowPassModal(true)}
@@ -340,7 +340,7 @@ export default function StudentDashboard() {
               data-testid={action.testId}
               className={cn(
                 "group relative flex flex-col justify-between p-4 rounded-2xl border transition-all duration-200 hover:-translate-y-1 hover:shadow-lg",
-                "bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-slate-200/80 dark:border-slate-800 shadow-2xs",
+                "bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-slate-200/80 dark:border-border shadow-2xs",
                 action.border
               )}
             >
@@ -348,12 +348,12 @@ export default function StudentDashboard() {
                 <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center transition-transform duration-200 group-hover:scale-110", action.iconBg)}>
                   <Icon size={20} />
                 </div>
-                <span className="text-[9.5px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
+                <span className="text-[9.5px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-muted dark:bg-card text-muted-foreground dark:text-muted-foreground">
                   {action.tag}
                 </span>
               </div>
               <div>
-                <div className="text-xs font-black text-slate-800 dark:text-white group-hover:text-[#001A4B] dark:group-hover:text-blue-300 transition-colors">
+                <div className="text-xs font-bold text-foreground dark:text-white group-hover:text-[#001A4B] dark:group-hover:text-blue-300 transition-colors">
                   {action.label}
                 </div>
                 <div className="text-[10px] font-bold text-slate-400 mt-0.5">
@@ -366,16 +366,16 @@ export default function StudentDashboard() {
       </div>
 
       {/* ── Official Pedagogical Affectation Architecture Card ── */}
-      <div className="relative overflow-hidden rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 sm:p-6 shadow-sm">
+      <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 dark:border-border bg-card dark:bg-card p-5 sm:p-6 shadow-sm">
         <div className="flex items-center gap-2 mb-4">
           <div className="p-2 rounded-xl bg-[#001A4B]/8 dark:bg-blue-500/10 border border-[#001A4B]/10 dark:border-blue-500/20">
             <GraduationCap className="w-4 h-4 text-[#001A4B] dark:text-blue-400" />
           </div>
           <div>
-            <h3 className="text-sm font-black text-[#001A4B] dark:text-white">Affectation Pédagogique Officielle</h3>
+            <h3 className="text-sm font-bold text-[#001A4B] dark:text-white">Affectation Pédagogique Officielle</h3>
             <p className="text-[10.5px] text-slate-400 font-medium">Architecture ENCG Fès — Année Universitaire 2026/2027</p>
           </div>
-          <div className="ml-auto inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/40 text-emerald-700 dark:text-emerald-300 text-[10px] font-black uppercase tracking-wider">
+          <div className="ml-auto inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/40 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold uppercase tracking-wider">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
             Statut Actif
           </div>
@@ -387,13 +387,13 @@ export default function StudentDashboard() {
           <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600/5 via-blue-500/5 to-indigo-500/5 dark:from-blue-500/10 dark:to-indigo-500/10 border border-blue-200/60 dark:border-blue-800/50 p-4 hover:shadow-xs transition-all">
             <div className="flex items-center gap-2 mb-2">
               <div className="w-7 h-7 rounded-xl bg-blue-600/10 dark:bg-blue-500/20 border border-blue-300/40 dark:border-blue-700/50 flex items-center justify-center">
-                <Building2 className="w-3.5 h-3.5 text-blue-700 dark:text-blue-300" />
+                <Building2 className="w-3.5 h-3.5 text-primary dark:text-blue-300" />
               </div>
-              <span className="text-[10px] font-black uppercase tracking-wider text-blue-600 dark:text-blue-400">Cours Magistraux (CM)</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-primary dark:text-blue-400">Cours Magistraux (CM)</span>
             </div>
-            <div className="text-xl font-black text-[#001A4B] dark:text-white">{studentSection}</div>
-            <p className="text-[10.5px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">Section réunie en Amphithéâtre</p>
-            <div className="mt-2.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 text-[9.5px] font-black uppercase tracking-wide">
+            <div className="text-xl font-bold text-[#001A4B] dark:text-white">{studentSection}</div>
+            <p className="text-[10.5px] text-muted-foreground dark:text-muted-foreground font-medium mt-0.5">Section réunie en Amphithéâtre</p>
+            <div className="mt-2.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-primary/10 dark:bg-blue-900/40 text-primary dark:text-blue-300 text-[9.5px] font-bold uppercase tracking-wide">
               ~100 étudiants
             </div>
           </div>
@@ -404,11 +404,11 @@ export default function StudentDashboard() {
               <div className="w-7 h-7 rounded-xl bg-violet-600/10 dark:bg-violet-500/20 border border-violet-300/40 dark:border-violet-700/50 flex items-center justify-center">
                 <Layers className="w-3.5 h-3.5 text-violet-700 dark:text-violet-300" />
               </div>
-              <span className="text-[10px] font-black uppercase tracking-wider text-violet-600 dark:text-violet-400">Sous-Groupe TD/TP</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-violet-600 dark:text-violet-400">Sous-Groupe TD/TP</span>
             </div>
-            <div className="text-xl font-black text-violet-900 dark:text-violet-100">{studentSubGroup}</div>
-            <p className="text-[10.5px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">Salle de Travaux Dirigés</p>
-            <div className="mt-2.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 text-[9.5px] font-black uppercase tracking-wide">
+            <div className="text-xl font-bold text-violet-900 dark:text-violet-100">{studentSubGroup}</div>
+            <p className="text-[10.5px] text-muted-foreground dark:text-muted-foreground font-medium mt-0.5">Salle de Travaux Dirigés</p>
+            <div className="mt-2.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 text-[9.5px] font-bold uppercase tracking-wide">
               Ordre alphabétique
             </div>
           </div>
@@ -419,21 +419,21 @@ export default function StudentDashboard() {
               <div className="w-7 h-7 rounded-xl bg-amber-500/10 dark:bg-amber-500/20 border border-amber-300/40 dark:border-amber-700/50 flex items-center justify-center">
                 <Users className="w-3.5 h-3.5 text-amber-700 dark:text-amber-300" />
               </div>
-              <span className="text-[10px] font-black uppercase tracking-wider text-amber-600 dark:text-amber-400">Groupe Filière</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">Groupe Filière</span>
             </div>
-            <div className="text-xl font-black text-amber-900 dark:text-amber-100 font-mono">{studentGroupName}</div>
-            <p className="text-[10.5px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">{studentFiliere.split('•')[1]?.trim() || 'Filière Active'}</p>
-            <div className="mt-2.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 text-[9.5px] font-black uppercase tracking-wide">
+            <div className="text-xl font-bold text-amber-900 dark:text-amber-100 font-mono">{studentGroupName}</div>
+            <p className="text-[10.5px] text-muted-foreground dark:text-muted-foreground font-medium mt-0.5">{studentFiliere.split('•')[1]?.trim() || 'Filière Active'}</p>
+            <div className="mt-2.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 text-[9.5px] font-bold uppercase tracking-wide">
               2026 / 2027
             </div>
           </div>
         </div>
 
         {/* Info pedagogical note */}
-        <div className="mt-3 flex items-start gap-2 px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/40">
+        <div className="mt-3 flex items-start gap-2 px-3.5 py-2.5 rounded-xl bg-muted/50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/40">
           <Info className="w-3.5 h-3.5 text-slate-400 mt-0.5 shrink-0" />
-          <p className="text-[10.5px] text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
-            Votre sous-groupe TD (<span className="font-black text-violet-600 dark:text-violet-300">{studentSubGroup}</span>) est attribué automatiquement par ordre alphabétique officiel.
+          <p className="text-[10.5px] text-muted-foreground dark:text-muted-foreground font-medium leading-relaxed">
+            Votre sous-groupe TD (<span className="font-bold text-violet-600 dark:text-violet-300">{studentSubGroup}</span>) est attribué automatiquement par ordre alphabétique officiel.
             Pour les <span className="font-bold">Cours Magistraux (CM)</span> : toute votre section se réunit en Amphithéâtre.
             Pour les <span className="font-bold">TD/TP</span> : votre sous-groupe occupe une salle dédiée.
           </p>
@@ -453,41 +453,41 @@ export default function StudentDashboard() {
             {/* KPI Performance Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               {/* GPA */}
-              <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 shadow-sm border border-slate-200 dark:border-slate-800 relative overflow-hidden group hover:shadow-md transition-all">
+              <div className="bg-card dark:bg-card rounded-2xl p-5 shadow-sm border border-border dark:border-border relative overflow-hidden group hover:shadow-md transition-all">
                 <div className="absolute top-0 right-0 p-3 opacity-5 group-hover:opacity-10 transition-opacity">
                   <GraduationCap className="w-14 h-14" />
                 </div>
-                <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 block mb-2">Moyenne (GPA)</span>
-                <div className="text-3xl font-black text-[#001A4B] dark:text-white">{stats.gpa}/20</div>
-                <div className={cn("inline-flex items-center gap-1 text-[9px] font-black px-2 py-0.5 rounded-full border mt-2 uppercase tracking-wider", mention.color)}>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-2">Moyenne (GPA)</span>
+                <div className="text-3xl font-bold text-[#001A4B] dark:text-white">{stats.gpa}/20</div>
+                <div className={cn("inline-flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full border mt-2 uppercase tracking-wider", mention.color)}>
                   <Award className="w-3 h-3" /> {mention.label}
                 </div>
               </div>
 
               {/* Assiduité */}
-              <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 shadow-sm border border-slate-200 dark:border-slate-800 relative overflow-hidden group hover:shadow-md transition-all">
+              <div className="bg-card dark:bg-card rounded-2xl p-5 shadow-sm border border-border dark:border-border relative overflow-hidden group hover:shadow-md transition-all">
                 <div className="absolute top-0 right-0 p-3 opacity-5 group-hover:opacity-10 transition-opacity">
                   <Clock className="w-14 h-14" />
                 </div>
-                <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 block mb-2">Assiduité</span>
-                <div className="text-3xl font-black text-emerald-600">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-2">Assiduité</span>
+                <div className="text-3xl font-bold text-emerald-600">
                   {stats.absences.unjustified === 0 ? '100%' : `${Math.max(0, 100 - stats.absences.unjustified * 5)}%`}
                 </div>
-                <p className="text-[10px] font-bold text-slate-500 mt-2">
+                <p className="text-[10px] font-bold text-muted-foreground mt-2">
                   {stats.absences.unjustified} non justifiée(s)
                 </p>
               </div>
 
               {/* Examens */}
-              <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 shadow-sm border border-slate-200 dark:border-slate-800 relative overflow-hidden group hover:shadow-md transition-all">
+              <div className="bg-card dark:bg-card rounded-2xl p-5 shadow-sm border border-border dark:border-border relative overflow-hidden group hover:shadow-md transition-all">
                 <div className="absolute top-0 right-0 p-3 opacity-5 group-hover:opacity-10 transition-opacity">
-                  <CalendarIcon className="w-14 h-14 text-indigo-500" />
+                  <CalendarIcon className="w-14 h-14 text-primary" />
                 </div>
-                <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 block mb-2">Examens</span>
-                <div className="text-3xl font-black text-indigo-600 dark:text-indigo-400">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-2">Examens</span>
+                <div className="text-3xl font-bold text-primary dark:text-indigo-400">
                   {stats.upcoming_exams || 3}
                 </div>
-                <Link to="/student/convocations" className="text-[10px] font-black text-indigo-600 hover:underline mt-2 inline-flex items-center gap-1">
+                <Link to="/student/convocations" className="text-[10px] font-bold text-primary hover:underline mt-2 inline-flex items-center gap-1">
                   Convocations PDF →
                 </Link>
               </div>
@@ -495,31 +495,31 @@ export default function StudentDashboard() {
 
             {/* ── Active Strategic Academic Campaigns Banner ── */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="p-5 rounded-3xl bg-gradient-to-br from-[#001A4B] to-[#0a2f77] text-white shadow-md relative overflow-hidden flex flex-col justify-between">
+              <div className="p-5 rounded-2xl bg-gradient-to-br from-[#001A4B] to-[#0a2f77] text-white shadow-md relative overflow-hidden flex flex-col justify-between">
                 <div className="space-y-1.5 z-10">
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-400/20 text-amber-300 text-[10px] font-black uppercase tracking-wider">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-400/20 text-amber-300 text-[10px] font-bold uppercase tracking-wider">
                     <Compass className="w-3.5 h-3.5" /> Tronc Commun → S6/S7
                   </div>
-                  <h3 className="text-sm font-black pt-1">Choix de Spécialité au Mérite</h3>
+                  <h3 className="text-sm font-bold pt-1">Choix de Spécialité au Mérite</h3>
                   <p className="text-xs text-blue-200 leading-relaxed">GFC, MACG, MCI, MRH, MLOG. Classement automatique au mérite et numerus clausus.</p>
                 </div>
                 <div className="pt-4 z-10">
-                  <Link to="/student/specialty-choices" className="inline-flex items-center gap-1.5 px-4 py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-xl text-xs font-black uppercase tracking-wider transition-colors shadow-sm">
+                  <Link to="/student/specialty-choices" className="inline-flex items-center gap-1.5 px-4 py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors shadow-sm">
                     Déposer mes 5 vœux →
                   </Link>
                 </div>
               </div>
 
-              <div className="p-5 rounded-3xl bg-gradient-to-br from-emerald-950 to-teal-900 text-white shadow-md relative overflow-hidden flex flex-col justify-between">
+              <div className="p-5 rounded-2xl bg-gradient-to-br from-emerald-950 to-teal-900 text-white shadow-md relative overflow-hidden flex flex-col justify-between">
                 <div className="space-y-1.5 z-10">
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-400/20 text-emerald-300 text-[10px] font-black uppercase tracking-wider">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-400/20 text-emerald-300 text-[10px] font-bold uppercase tracking-wider">
                     <Scale className="w-3.5 h-3.5" /> Délibérations & Affichages
                   </div>
-                  <h3 className="text-sm font-black pt-1">Guichet Recours & Réclamations</h3>
+                  <h3 className="text-sm font-bold pt-1">Guichet Recours & Réclamations</h3>
                   <p className="text-xs text-emerald-200 leading-relaxed">Délai légal LMD 48h pour vérification de sommation ou report de note d'examen.</p>
                 </div>
                 <div className="pt-4 z-10">
-                  <Link to="/student/grades" className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-400 hover:bg-emerald-300 text-slate-950 rounded-xl text-xs font-black uppercase tracking-wider transition-colors shadow-sm">
+                  <Link to="/student/grades" className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-400 hover:bg-emerald-300 text-slate-950 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors shadow-sm">
                     Consulter mes notes & Recours →
                   </Link>
                 </div>
@@ -527,15 +527,15 @@ export default function StudentDashboard() {
             </div>
 
             {/* ── Today's Interactive Timetable Timeline ── */}
-            <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-7 shadow-sm border border-slate-200 dark:border-slate-800 space-y-5">
+            <div className="bg-card dark:bg-card rounded-2xl p-6 sm:p-7 shadow-sm border border-border dark:border-border space-y-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-base font-black text-[#001A4B] dark:text-white flex items-center gap-2">
-                    <CalendarIcon className="w-5 h-5 text-blue-600" /> Emploi du Temps du Jour
+                  <h2 className="text-base font-bold text-[#001A4B] dark:text-white flex items-center gap-2">
+                    <CalendarIcon className="w-5 h-5 text-primary" /> Emploi du Temps du Jour
                   </h2>
                   <p className="text-xs text-slate-400 mt-0.5">Séances et salles en temps réel pour votre groupe ({studentGroupName} • {studentSubGroup})</p>
                 </div>
-                <Link to="/student/schedule" className="px-3.5 py-1.5 bg-blue-50 dark:bg-blue-950/50 hover:bg-blue-100 text-blue-700 dark:text-blue-300 rounded-xl text-xs font-black uppercase tracking-wider transition-colors">
+                <Link to="/student/schedule" className="px-3.5 py-1.5 bg-primary/5 dark:bg-blue-950/50 hover:bg-primary/10 text-primary dark:text-blue-300 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors">
                   Planning Complet →
                 </Link>
               </div>
@@ -551,35 +551,35 @@ export default function StudentDashboard() {
                         className={cn(
                           "p-4 rounded-2xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4",
                           isCurrent 
-                            ? "bg-blue-50/80 dark:bg-blue-950/40 border-blue-300 dark:border-blue-700 shadow-sm" 
+                            ? "bg-blue-50/80 dark:bg-blue-950/40 border-primary/20 dark:border-primary shadow-sm"
                             : isDone 
-                            ? "bg-slate-50/60 dark:bg-slate-800/30 border-slate-200 dark:border-slate-800 opacity-75"
-                            : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
+                            ? "bg-slate-50/60 dark:bg-slate-800/30 border-border dark:border-border opacity-75"
+                            : "bg-card dark:bg-card border-border dark:border-border"
                         )}
                       >
                         <div className="flex items-start gap-3.5">
                           <div className={cn(
-                            "w-10 h-10 rounded-xl flex items-center justify-center font-black text-xs shrink-0",
-                            isCurrent ? "bg-blue-600 text-white shadow-md shadow-blue-500/20" : isDone ? "bg-slate-200 dark:bg-slate-800 text-slate-600" : "bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300"
+                            "w-10 h-10 rounded-xl flex items-center justify-center font-bold text-xs shrink-0",
+                            isCurrent ? "bg-primary text-primary-foreground shadow-md shadow-blue-500/20" : isDone ? "bg-slate-200 dark:bg-card text-muted-foreground" : "bg-primary/5 text-primary dark:bg-indigo-950/40 dark:text-indigo-300"
                           )}>
                             {isDone ? <CheckCircle className="w-5 h-5 text-emerald-600" /> : <Clock className="w-5 h-5" />}
                           </div>
                           <div>
                             <div className="flex items-center gap-2">
-                              <span className="font-mono text-xs font-black text-blue-900 dark:text-blue-300">{cls.time}</span>
+                              <span className="font-mono text-xs font-bold text-primary dark:text-blue-300">{cls.time}</span>
                               {isCurrent && (
-                                <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-blue-600 text-white animate-pulse">
+                                <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-primary text-primary-foreground animate-pulse">
                                   En Cours
                                 </span>
                               )}
                             </div>
-                            <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100 mt-0.5">{cls.title}</h3>
-                            <p className="text-xs text-slate-500 font-medium">{cls.professor}</p>
+                            <h3 className="font-bold text-sm text-foreground dark:text-foreground mt-0.5">{cls.title}</h3>
+                            <p className="text-xs text-muted-foreground font-medium">{cls.professor}</p>
                           </div>
                         </div>
 
                         <div className="flex items-center gap-2 sm:self-center shrink-0">
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-black">
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-muted dark:bg-card text-slate-700 dark:text-foreground text-xs font-bold">
                             <MapPin className="w-3.5 h-3.5 text-rose-500" /> {cls.location}
                           </span>
                         </div>
@@ -587,9 +587,9 @@ export default function StudentDashboard() {
                     );
                   })
                 ) : (
-                  <div className="p-8 text-center rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 space-y-2">
+                  <div className="p-8 text-center rounded-2xl bg-muted/50 dark:bg-slate-800/40 border border-border dark:border-border space-y-2">
                     <Clock className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto" />
-                    <p className="text-xs font-bold text-slate-700 dark:text-slate-200">Aucun cours programmé aujourd'hui</p>
+                    <p className="text-xs font-bold text-slate-700 dark:text-foreground">Aucun cours programmé aujourd'hui</p>
                     <p className="text-[11px] text-slate-400">Consultez votre emploi du temps hebdomadaire complet pour voir vos prochaines séances.</p>
                   </div>
                 )}
@@ -597,26 +597,26 @@ export default function StudentDashboard() {
             </div>
 
             {/* ── Secrétariat Numérique & Guichet Express ── */}
-            <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-7 shadow-sm border border-slate-200 dark:border-slate-800 space-y-6">
+            <div className="bg-card dark:bg-card rounded-2xl p-6 sm:p-7 shadow-sm border border-border dark:border-border space-y-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-base font-black text-[#001A4B] dark:text-white flex items-center gap-2">
-                    <FileText className="w-5 h-5 text-indigo-600" /> Secrétariat Numérique & Guichet Express
+                  <h2 className="text-base font-bold text-[#001A4B] dark:text-white flex items-center gap-2">
+                    <FileText className="w-5 h-5 text-primary" /> Secrétariat Numérique & Guichet Express
                   </h2>
                   <p className="text-xs text-slate-400 mt-0.5">Documents officiels avec cachet électronique et QR code de vérification</p>
                 </div>
-                <Link to="/student/documents" className="text-xs font-black text-[#001A4B] dark:text-blue-300 hover:underline">
+                <Link to="/student/documents" className="text-xs font-bold text-[#001A4B] dark:text-blue-300 hover:underline">
                   Voir toutes mes demandes →
                 </Link>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* 1-Click Request Box */}
-                <div className="bg-gradient-to-br from-slate-50 to-blue-50/40 dark:from-slate-800/40 dark:to-blue-950/20 p-5 rounded-2xl border border-blue-100 dark:border-blue-900/40 space-y-4">
-                  <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-blue-900 dark:text-blue-300">
-                    <Plus className="w-4 h-4 text-blue-600" /> Demande Rapide 1-Clic
+                <div className="bg-gradient-to-br from-slate-50 to-blue-50/40 dark:from-slate-800/40 dark:to-blue-950/20 p-5 rounded-2xl border border-primary/20 dark:border-blue-900/40 space-y-4">
+                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-primary dark:text-blue-300">
+                    <Plus className="w-4 h-4 text-primary" /> Demande Rapide 1-Clic
                   </div>
-                  <p className="text-xs text-slate-600 dark:text-slate-300">
+                  <p className="text-xs text-muted-foreground dark:text-foreground">
                     Générez instantanément votre document officiel certifié par l'administration de l'ENCG Fès.
                   </p>
                   <div className="flex flex-wrap gap-2 pt-1">
@@ -625,7 +625,7 @@ export default function StudentDashboard() {
                       data-testid="cta-request-attestation"
                       disabled={createRequest.isPending}
                       onClick={() => requestDocument('attestation')}
-                      className="px-4 py-2.5 bg-[#001A4B] hover:bg-[#07255e] text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-sm transition-all cursor-pointer flex items-center gap-1.5"
+                      className="px-4 py-2.5 bg-[#001A4B] hover:bg-[#07255e] text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-sm transition-all cursor-pointer flex items-center gap-1.5"
                     >
                       <Stamp className="w-3.5 h-3.5 text-amber-300" /> Attestation de Scolarité
                     </button>
@@ -634,28 +634,28 @@ export default function StudentDashboard() {
                       data-testid="cta-request-transcript"
                       disabled={createRequest.isPending}
                       onClick={() => requestDocument('releve')}
-                      className="px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-100 hover:bg-slate-50 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5"
+                      className="px-4 py-2.5 bg-card dark:bg-card border border-slate-300 dark:border-border text-foreground dark:text-foreground hover:bg-muted/50 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5"
                     >
-                      <FileText className="w-3.5 h-3.5 text-blue-600" /> Relevé de Notes
+                      <FileText className="w-3.5 h-3.5 text-primary" /> Relevé de Notes
                     </button>
                   </div>
                 </div>
 
                 {/* Recent Signed Documents */}
-                <div className="bg-slate-50 dark:bg-slate-800/50 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block">Dernières Pièces Signées</span>
+                <div className="bg-muted/50 dark:bg-slate-800/50 p-5 rounded-2xl border border-border dark:border-border space-y-3">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 block">Dernières Pièces Signées</span>
                   {stats.recent_documents.length > 0 ? (
                     stats.recent_documents.map((doc: RecentDocument, i: number) => (
-                      <div key={i} className="flex items-center justify-between bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-100 dark:border-slate-800 shadow-2xs">
+                      <div key={i} className="flex items-center justify-between bg-card dark:bg-card p-3 rounded-xl border border-border dark:border-border shadow-2xs">
                         <div className="space-y-0.5">
-                          <p className="text-xs font-bold text-slate-800 dark:text-slate-200">{doc.title}</p>
+                          <p className="text-xs font-bold text-foreground dark:text-foreground">{doc.title}</p>
                           <span className="text-[9px] font-mono text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
                             <ShieldCheck className="w-3 h-3" /> Certifié SHA-256
                           </span>
                         </div>
                         <button 
                           onClick={() => openAuthenticatedUrl(`/api/v1/student-portal/document-requests/${doc.id}/download`)}
-                          className="p-2 bg-blue-50 dark:bg-blue-950 hover:bg-blue-100 text-blue-700 dark:text-blue-300 rounded-xl transition-colors cursor-pointer"
+                          className="p-2 bg-primary/5 dark:bg-blue-950 hover:bg-primary/10 text-primary dark:text-blue-300 rounded-xl transition-colors cursor-pointer"
                           title="Télécharger le document PDF"
                         >
                           <Download className="w-4 h-4" />
@@ -663,9 +663,9 @@ export default function StudentDashboard() {
                       </div>
                     ))
                   ) : (
-                    <div className="p-4 text-center rounded-xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 space-y-1">
+                    <div className="p-4 text-center rounded-xl bg-card dark:bg-card border border-border dark:border-border space-y-1">
                       <FileText className="w-5 h-5 text-slate-300 dark:text-slate-600 mx-auto" />
-                      <p className="text-xs font-bold text-slate-600 dark:text-slate-400">Aucun document demandé récemment</p>
+                      <p className="text-xs font-bold text-muted-foreground dark:text-muted-foreground">Aucun document demandé récemment</p>
                       <p className="text-[10px] text-slate-400">Utilisez la demande 1-Clic pour commander une attestation ou un relevé officiel.</p>
                     </div>
                   )}
@@ -679,14 +679,14 @@ export default function StudentDashboard() {
           <div className="space-y-8">
             
             {/* AI Academic Tutor Banner Card */}
-            <div className="bg-gradient-to-br from-indigo-900 via-purple-950 to-slate-950 text-white rounded-3xl p-6 shadow-xl border border-indigo-500/20 relative overflow-hidden space-y-4">
+            <div className="bg-gradient-to-br from-indigo-900 via-purple-950 to-slate-950 text-white rounded-2xl p-6 shadow-sm border border-indigo-500/20 relative overflow-hidden space-y-4">
               <div className="flex items-center justify-between">
-                <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-purple-500/30 text-purple-200 border border-purple-400/30 flex items-center gap-1.5">
+                <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-purple-500/30 text-purple-200 border border-purple-400/30 flex items-center gap-1.5">
                   <Sparkles className="w-3 h-3 text-amber-300" /> Assistant IA Tuteur
                 </span>
                 <BrainCircuit className="w-6 h-6 text-purple-400" />
               </div>
-              <h3 className="text-base font-black leading-snug text-white">
+              <h3 className="text-base font-bold leading-snug text-white">
                 Préparez vos révisions et posez vos questions aux supports de cours
               </h3>
               <p className="text-xs text-purple-200">
@@ -694,30 +694,30 @@ export default function StudentDashboard() {
               </p>
               <Link 
                 to="/student/ai-tutor"
-                className="inline-flex items-center justify-center gap-2 w-full py-3 bg-white text-indigo-950 font-black text-xs uppercase tracking-wider rounded-xl hover:bg-purple-50 transition-all shadow-md"
+                className="inline-flex items-center justify-center gap-2 w-full py-3 bg-card text-indigo-950 font-bold text-xs uppercase tracking-wider rounded-xl hover:bg-purple-50 transition-all shadow-md"
               >
                 Ouvrir le Tuteur IA →
               </Link>
             </div>
 
             {/* Assiduité & Absences Detail Card */}
-            <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 space-y-5">
+            <div className="bg-card dark:bg-card rounded-2xl p-6 shadow-sm border border-border dark:border-border space-y-5">
               <div className="flex items-center justify-between">
-                <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">Assiduité & Absences</h3>
-                <span className="text-xs font-bold text-slate-500">Semestre Actif</span>
+                <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400">Assiduité & Absences</h3>
+                <span className="text-xs font-bold text-muted-foreground">Semestre Actif</span>
               </div>
 
               <div className="grid grid-cols-3 gap-2 text-center">
-                <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl border border-slate-100 dark:border-slate-800">
-                  <span className="text-xl font-black text-slate-800 dark:text-white">{stats.absences.total}</span>
+                <div className="bg-muted/50 dark:bg-slate-800/60 p-3 rounded-2xl border border-border dark:border-border">
+                  <span className="text-xl font-bold text-foreground dark:text-white">{stats.absences.total}</span>
                   <span className="text-[9px] font-bold text-slate-400 block mt-0.5">TOTAL</span>
                 </div>
                 <div className="bg-emerald-50 dark:bg-emerald-950/40 p-3 rounded-2xl border border-emerald-100 dark:border-emerald-800">
-                  <span className="text-xl font-black text-emerald-600 dark:text-emerald-400">{stats.absences.justified}</span>
+                  <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{stats.absences.justified}</span>
                   <span className="text-[9px] font-bold text-emerald-600/70 block mt-0.5">JUSTIFIÉES</span>
                 </div>
                 <div className="bg-rose-50 dark:bg-rose-950/40 p-3 rounded-2xl border border-rose-100 dark:border-rose-800">
-                  <span className="text-xl font-black text-rose-600 dark:text-rose-400">{stats.absences.unjustified}</span>
+                  <span className="text-xl font-bold text-rose-600 dark:text-rose-400">{stats.absences.unjustified}</span>
                   <span className="text-[9px] font-bold text-rose-600/70 block mt-0.5">NON JUST.</span>
                 </div>
               </div>
@@ -736,23 +736,23 @@ export default function StudentDashboard() {
 
               <Link
                 to="/student/absences"
-                className="block w-full text-center bg-[#001A4B] hover:bg-[#07255e] text-white font-black text-xs py-3.5 rounded-xl uppercase tracking-widest transition-colors shadow-sm"
+                className="block w-full text-center bg-[#001A4B] hover:bg-[#07255e] text-white font-bold text-xs py-3.5 rounded-xl uppercase tracking-widest transition-colors shadow-sm"
               >
                 Déposer un Justificatif →
               </Link>
             </div>
 
             {/* Fast Access to Convocations */}
-            <div className="bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent rounded-3xl p-6 border border-amber-500/20 space-y-3">
-              <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-amber-700 dark:text-amber-400">
+            <div className="bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent rounded-2xl p-6 border border-amber-500/20 space-y-3">
+              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">
                 <MailCheck className="w-4 h-4" /> Convocations aux Examens
               </div>
-              <p className="text-xs text-slate-600 dark:text-slate-300">
+              <p className="text-xs text-muted-foreground dark:text-foreground">
                 Téléchargez votre convocation officielle avec numéro de table et QR code d'émargement.
               </p>
               <Link 
                 to="/student/convocations"
-                className="inline-flex items-center gap-1.5 text-xs font-black text-amber-700 dark:text-amber-400 hover:underline"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-700 dark:text-amber-400 hover:underline"
               >
                 Voir mes convocations PDF <ArrowRight className="w-3.5 h-3.5" />
               </Link>
@@ -766,11 +766,11 @@ export default function StudentDashboard() {
       {/* ── Pass Digital QR Fullscreen Modal ── */}
       {showPassModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md animate-in fade-in">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] w-full max-w-sm shadow-2xl overflow-hidden text-center">
+          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl w-full max-w-sm shadow-sm overflow-hidden text-center">
             <div className="p-6 bg-gradient-to-r from-[#001A4B] to-blue-900 text-white flex items-center justify-between">
               <div>
-                <span className="text-[10px] font-black uppercase tracking-widest text-amber-300">Pass Numérique Étudiant</span>
-                <h2 className="text-base font-black">Carte de Contrôle Campus</h2>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-amber-300">Pass Numérique Étudiant</span>
+                <h2 className="text-base font-bold">Carte de Contrôle Campus</h2>
               </div>
               <button 
                 onClick={() => setShowPassModal(false)}
@@ -781,7 +781,7 @@ export default function StudentDashboard() {
             </div>
 
             <div className="p-6 space-y-4">
-              <div className="w-48 h-48 mx-auto bg-white p-3 rounded-3xl border-4 border-indigo-500/20 flex flex-col items-center justify-center shadow-lg">
+              <div className="w-48 h-48 mx-auto bg-card p-3 rounded-2xl border-4 border-indigo-500/20 flex flex-col items-center justify-center shadow-lg">
                 <img 
                   src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://encg-fes.ac.ma/verify-document/student-pass-${studentCne}`} 
                   alt="QR Pass Grand" 
@@ -790,24 +790,24 @@ export default function StudentDashboard() {
               </div>
 
               <div className="space-y-1">
-                <h3 className="text-base font-black text-slate-900 dark:text-white">{user?.name || 'Étudiant ENCG'}</h3>
-                <p className="text-xs font-mono font-bold text-slate-500">CNE: {studentCne} • CIN: {studentCin}</p>
-                <span className="inline-block mt-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 text-[10px] font-black uppercase tracking-wider border border-emerald-200">
+                <h3 className="text-base font-bold text-foreground dark:text-white">{user?.name || 'Étudiant ENCG'}</h3>
+                <p className="text-xs font-mono font-bold text-muted-foreground">CNE: {studentCne} • CIN: {studentCin}</p>
+                <span className="inline-block mt-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 text-[10px] font-bold uppercase tracking-wider border border-emerald-200">
                   ✓ Statut Certifié ENCG Fès
                 </span>
               </div>
             </div>
 
-            <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 flex justify-between items-center">
+            <div className="p-4 border-t border-border dark:border-border bg-muted/50 dark:bg-card flex justify-between items-center">
               <Link 
                 to="/profile/card"
-                className="text-xs font-black text-blue-600 hover:underline"
+                className="text-xs font-bold text-primary hover:underline"
               >
                 Voir Carte Complète →
               </Link>
               <button 
                 onClick={() => setShowPassModal(false)}
-                className="px-5 py-2 bg-slate-900 text-white font-black rounded-xl text-xs hover:bg-slate-800 transition-colors cursor-pointer"
+                className="px-5 py-2 bg-slate-900 text-white font-bold rounded-xl text-xs hover:bg-slate-800 transition-colors cursor-pointer"
               >
                 Fermer
               </button>

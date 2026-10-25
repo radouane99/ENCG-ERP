@@ -106,17 +106,17 @@ export default function VacatairesListPage() {
     setForm(prev => ({ ...prev, [key]: e.target.type === 'checkbox' ? (e.target as HTMLInputElement).checked : e.target.value }))
 
   return (
-    <div className="space-y-8 max-w-[1600px] mx-auto p-4 md:p-6 pb-20 animate-in fade-in" dir={isRtl ? "rtl" : "ltr"}>
+    <div className="space-y-8 max-w-[1600px] mx-auto pb-20 animate-in fade-in" dir={isRtl ? "rtl" : "ltr"}>
 
       {/* Premium Header */}
-      <div className="bg-gradient-to-r from-[#1F3A5F] to-[#2A4D7C] rounded-[2rem] p-8 text-white shadow-xl shadow-[#1F3A5F]/20 relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="absolute top-0 end-0 -mt-10 -me-10 w-40 h-40 bg-white opacity-5 rounded-full blur-3xl mix-blend-overlay"></div>
+      <div className="p-8 text-white relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6 erp-page-banner">
+        <div className="absolute top-0 end-0 -mt-10 -me-10 w-40 h-40 bg-card opacity-5 rounded-full blur-3xl mix-blend-overlay"></div>
         <div className="flex items-center gap-4 relative z-10">
-          <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-[1.2rem] flex items-center justify-center border border-white/20">
+          <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20">
             <Briefcase className="w-8 h-8 text-white" />
           </div>
           <div>
-            <h1 className="text-3xl font-black mb-1 tracking-tight">
+            <h1 className="mb-1 erp-page-title">
               {t('modules:vacataires_list.title')}
             </h1>
             <p className="text-white/80 font-medium text-sm">
@@ -137,16 +137,16 @@ export default function VacatairesListPage() {
         <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm flex items-center justify-between">
           <div>
             <p className="text-xs font-bold text-[var(--muted-foreground)] uppercase tracking-wider mb-1">{t('modules:vacataires_list.kpi_total')}</p>
-            <p className="text-3xl font-black text-[var(--foreground)]">{vacatairesData?.length || 0}</p>
+            <p className="text-3xl font-bold text-[var(--foreground)]">{vacatairesData?.length || 0}</p>
           </div>
-          <div className="w-12 h-12 bg-blue-500/10 text-blue-500 rounded-xl flex items-center justify-center">
+          <div className="w-12 h-12 bg-blue-500/10 text-primary rounded-xl flex items-center justify-center">
             <Users size={24} />
           </div>
         </div>
         <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm flex items-center justify-between">
           <div>
             <p className="text-xs font-bold text-[var(--muted-foreground)] uppercase tracking-wider mb-1">{t('modules:vacataires_list.kpi_active')}</p>
-            <p className="text-3xl font-black text-[var(--foreground)]">{vacatairesData?.filter((v: any) => v.vacation_contracts?.length > 0)?.length || 0}</p>
+            <p className="text-3xl font-bold text-[var(--foreground)]">{vacatairesData?.filter((v: any) => v.vacation_contracts?.length > 0)?.length || 0}</p>
           </div>
           <div className="w-12 h-12 bg-emerald-500/10 text-emerald-500 rounded-xl flex items-center justify-center">
             <FileText size={24} />
@@ -155,7 +155,7 @@ export default function VacatairesListPage() {
         <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm flex items-center justify-between">
           <div>
             <p className="text-xs font-bold text-[var(--muted-foreground)] uppercase tracking-wider mb-1">{t('modules:vacataires_list.kpi_pending')}</p>
-            <p className="text-3xl font-black text-[var(--foreground)] text-amber-600">3</p>
+            <p className="text-3xl font-bold text-[var(--foreground)] text-amber-600">3</p>
           </div>
           <div className="w-12 h-12 bg-amber-500/10 text-amber-600 rounded-xl flex items-center justify-center">
             <AlertCircle size={24} />
@@ -164,7 +164,7 @@ export default function VacatairesListPage() {
       </div>
 
       {/* Main List */}
-      <div className="bg-[var(--card)] border border-[var(--border)] rounded-[2rem] shadow-sm overflow-hidden">
+      <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl shadow-sm overflow-hidden">
         <div className="p-4 border-b border-[var(--border)] flex items-center justify-between bg-[color-mix(in srgb, var(--muted) 3000%, transparent)]">
           <h2 className="font-bold text-[var(--foreground)] text-lg px-2">
             {t('modules:vacataires_list.list_title')}
@@ -238,10 +238,10 @@ export default function VacatairesListPage() {
                       </td>
                       <td className="px-6 py-4 text-end">
                         <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button className="p-2 text-[var(--muted-foreground)] hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors">
+                          <button className="p-2 text-[var(--muted-foreground)] hover:text-primary hover:bg-primary/5 rounded-lg transition-colors">
                             <FileText size={16} />
                           </button>
-                          <button onClick={() => openEdit(v)} className="p-2 text-[var(--muted-foreground)] hover:text-indigo-500 hover:bg-indigo-50 rounded-lg transition-colors">
+                          <button onClick={() => openEdit(v)} className="p-2 text-[var(--muted-foreground)] hover:text-primary hover:bg-primary/5 rounded-lg transition-colors">
                             <Edit2 size={16} />
                           </button>
                           <button onClick={() => handleDelete(v.id)} className="p-2 text-[var(--muted-foreground)] hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
@@ -313,7 +313,7 @@ export default function VacatairesListPage() {
               <select 
                 value={form.department_id} 
                 onChange={setF('department_id')} 
-                className="flex h-10 w-full rounded-xl border border-[var(--input)] bg-[var(--background)] px-3 py-2 text-sm ring-offset-[var(--background)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
+                className="flex h-10 w-full border border-[var(--input)] bg-[var(--background)] px-3 py-2 text-sm ring-offset-[var(--background)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] rounded-[var(--control-radius)]"
               >
                 <option value="">{t('modules:vacataires_list.modal.dept_placeholder')}</option>
                 {departments.map((dept: any) => (

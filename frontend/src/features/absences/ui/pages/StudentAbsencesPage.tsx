@@ -287,22 +287,22 @@ export default function StudentAbsencesPage() {
     return (
       <div className="flex flex-col h-[60vh] items-center justify-center gap-3">
         <div className="w-10 h-10 border-4 border-[#001A4B]/20 border-t-[#001A4B] rounded-full animate-spin" />
-        <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Chargement de votre relevé d'assiduité...</p>
+        <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Chargement de votre relevé d'assiduité...</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 sm:space-y-8 font-sans animate-in fade-in duration-500 text-slate-900 dark:text-slate-100 max-w-7xl mx-auto pb-12">
+    <div className="space-y-6 sm:space-y-8 font-sans animate-in fade-in duration-500 text-foreground dark:text-foreground max-w-7xl mx-auto pb-12">
       {/* ── Page Header ── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl sm:text-3xl font-black text-[#001A4B] dark:text-white tracking-tight flex items-center gap-2.5">
-              <Calendar className="w-7 h-7 text-blue-600" /> Suivi d'Assiduité & Justificatifs
+            <h1 className="text-[#001A4B] dark:text-white flex items-center gap-2.5 erp-page-title">
+              <Calendar className="w-7 h-7 text-primary" /> Suivi d'Assiduité & Justificatifs
             </h1>
           </div>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-xs sm:text-sm text-muted-foreground dark:text-muted-foreground mt-1">
             Régime Pédagogique ENCG Fès • Présence obligatoire en CM & TD • Seuil d'exclusion fixé à 3 absences non justifiées
           </p>
         </div>
@@ -310,40 +310,40 @@ export default function StudentAbsencesPage() {
         {/* Regulations button */}
         <button
           onClick={() => setRegulationsModalOpen(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs hover:bg-slate-50 dark:hover:bg-slate-800/60 text-xs font-black text-slate-700 dark:text-slate-300 transition-all cursor-pointer self-start md:self-auto"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl border border-border dark:border-border bg-card dark:bg-card shadow-xs hover:bg-muted/50 dark:hover:bg-slate-800/60 text-xs font-bold text-slate-700 dark:text-foreground transition-all cursor-pointer self-start md:self-auto"
         >
-          <Info className="w-4 h-4 text-blue-600" />
+          <Info className="w-4 h-4 text-primary" />
           <span>Règlement d'Assiduité (48h)</span>
         </button>
       </div>
 
       {/* ── Executive Hero Banner (Royal Navy #001A4B) ── */}
-      <div className="bg-gradient-to-br from-[#001A4B] via-[#082663] to-[#04122d] rounded-[2.5rem] p-6 sm:p-9 text-white shadow-2xl border border-white/10 relative overflow-hidden flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+      <div className="bg-gradient-to-br from-[#001A4B] via-[#082663] to-[#04122d] rounded-2xl p-6 sm:p-9 text-white shadow-sm border border-white/10 relative overflow-hidden flex flex-col lg:flex-row lg:items-center justify-between gap-8">
         <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/15 rounded-full blur-3xl pointer-events-none -mr-16 -mt-16" />
         <div className="absolute bottom-0 left-1/3 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10 space-y-4 max-w-2xl">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-white/10 backdrop-blur-md text-amber-300 border border-white/10 flex items-center gap-1.5 shadow-xs">
+            <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white/10 backdrop-blur-md text-amber-300 border border-white/10 flex items-center gap-1.5 shadow-xs">
               <Sparkles className="w-3 h-3 text-amber-400" /> Assiduité Académique Certifiée
             </span>
             {studentMeta?.academic_year && (
-              <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+              <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                 Année {studentMeta.academic_year}
               </span>
             )}
             {studentMeta?.filiere && (
-              <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-white/10 text-white border border-white/15">
+              <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-white/10 text-white border border-white/15">
                 {studentMeta.filiere}{studentMeta.group ? ` • ${studentMeta.group}` : ''}
               </span>
             )}
-            <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-blue-500/20 text-blue-300 border border-blue-500/30 flex items-center gap-1">
+            <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30 flex items-center gap-1">
               <Clock className="w-3 h-3" /> Délai Dépôt : 48h
             </span>
           </div>
 
           <div>
-            <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+            <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
               Registre Officiel des Présences
             </h2>
             <p className="text-xs sm:text-sm text-blue-200 font-medium leading-relaxed mt-1.5">
@@ -361,7 +361,7 @@ export default function StudentAbsencesPage() {
                   toast.info('Toutes vos absences sont déjà justifiées ou vous n\'avez aucune absence à justifier.');
                 }
               }}
-              className="bg-amber-400 hover:bg-amber-300 text-[#001A4B] px-4 py-2.5 rounded-xl font-black text-xs shadow-md flex items-center gap-2 transition-all cursor-pointer active:scale-95"
+              className="bg-amber-400 hover:bg-amber-300 text-[#001A4B] px-4 py-2.5 rounded-xl font-bold text-xs shadow-md flex items-center gap-2 transition-all cursor-pointer active:scale-95"
             >
               <UploadCloud className="w-4 h-4 text-[#001A4B]" /> Déposer un Justificatif
             </button>
@@ -375,9 +375,9 @@ export default function StudentAbsencesPage() {
         </div>
 
         {/* Hero Right Widget: Attendance Gauge */}
-        <div className="relative z-10 bg-white/10 backdrop-blur-xl p-6 sm:p-7 rounded-3xl border border-white/20 text-center sm:text-right shrink-0 min-w-[280px]">
+        <div className="relative z-10 bg-white/10 backdrop-blur-xl p-6 sm:p-7 rounded-2xl border border-white/20 text-center sm:text-right shrink-0 min-w-[280px]">
           <div className="flex items-center justify-between sm:justify-end gap-2 mb-1">
-            <span className="text-[10px] font-black text-amber-300 uppercase tracking-widest">
+            <span className="text-[10px] font-bold text-amber-300 uppercase tracking-widest">
               Taux de Présence Global
             </span>
             <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-white/10 text-white border border-white/10">
@@ -386,14 +386,14 @@ export default function StudentAbsencesPage() {
           </div>
 
           <div className="flex items-baseline justify-center sm:justify-end gap-1.5 my-1">
-            <span className="text-5xl sm:text-6xl font-black text-white tracking-tight">
+            <span className="text-5xl sm:text-6xl font-bold text-white tracking-tight">
               {stats.attendanceRate}
             </span>
-            <span className="text-xl font-black text-blue-200">%</span>
+            <span className="text-xl font-bold text-blue-200">%</span>
           </div>
 
           <div className={cn(
-            "mt-3 inline-flex items-center gap-2 text-xs font-black px-3.5 py-1.5 rounded-full border shadow-sm",
+            "mt-3 inline-flex items-center gap-2 text-xs font-bold px-3.5 py-1.5 rounded-full border shadow-sm",
             stats.attendanceRate >= 85
               ? "bg-emerald-500/20 border-emerald-400/40 text-emerald-300"
               : stats.attendanceRate >= 70
@@ -416,7 +416,7 @@ export default function StudentAbsencesPage() {
 
           <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between text-[11px] text-blue-200">
             <span>Bilan Séances :</span>
-            <span className="font-black text-white">{stats.presentCount} Présent(s) • {stats.absentCount} Absent(s)</span>
+            <span className="font-bold text-white">{stats.presentCount} Présent(s) • {stats.absentCount} Absent(s)</span>
           </div>
         </div>
       </div>
@@ -424,21 +424,21 @@ export default function StudentAbsencesPage() {
       {/* ── 4 Executive KPI Metric Cards ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Taux d'Assiduité */}
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-3">
+        <div className="bg-card dark:bg-card rounded-2xl p-5 border border-slate-200/80 dark:border-border shadow-xs space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-black uppercase text-slate-400 tracking-wider">Taux d'Assiduité</span>
-            <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 flex items-center justify-center">
+            <span className="text-[11px] font-bold uppercase text-slate-400 tracking-wider">Taux d'Assiduité</span>
+            <div className="w-8 h-8 rounded-xl bg-primary/5 dark:bg-blue-950/50 text-primary flex items-center justify-center">
               <CheckCircle2 className="w-4 h-4" />
             </div>
           </div>
           <div className="flex items-baseline gap-1.5">
-            <span className="text-2xl sm:text-3xl font-black text-[#001A4B] dark:text-white">
+            <span className="text-2xl sm:text-3xl font-bold text-[#001A4B] dark:text-white">
               {stats.attendanceRate}%
             </span>
             <span className="text-xs font-bold text-slate-400">global</span>
           </div>
-          <div className="space-y-1 pt-1 border-t border-slate-100 dark:border-slate-800">
-            <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
+          <div className="space-y-1 pt-1 border-t border-border dark:border-border">
+            <div className="w-full bg-muted dark:bg-card rounded-full h-1.5 overflow-hidden">
               <div 
                 className={cn(
                   "h-full rounded-full transition-all duration-500",
@@ -455,42 +455,42 @@ export default function StudentAbsencesPage() {
         </div>
 
         {/* Card 2: Total Séances Enregistrées */}
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-3">
+        <div className="bg-card dark:bg-card rounded-2xl p-5 border border-slate-200/80 dark:border-border shadow-xs space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-black uppercase text-slate-400 tracking-wider">Total Séances</span>
+            <span className="text-[11px] font-bold uppercase text-slate-400 tracking-wider">Total Séances</span>
             <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 flex items-center justify-center">
               <Calendar className="w-4 h-4" />
             </div>
           </div>
           <div className="flex items-baseline gap-1.5">
-            <span className="text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400">
+            <span className="text-2xl sm:text-3xl font-bold text-emerald-600 dark:text-emerald-400">
               {stats.totalSessions}
             </span>
             <span className="text-xs font-bold text-slate-400">séances pointées</span>
           </div>
-          <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-100 dark:border-slate-800">
-            <span className="text-slate-500 font-bold">Retards constatés :</span>
-            <span className={cn("font-black px-2 py-0.5 rounded-full text-[10px]", stats.lateCount > 0 ? "bg-amber-100 text-amber-800" : "bg-slate-100 text-slate-600")}>
+          <div className="flex items-center justify-between text-xs pt-1 border-t border-border dark:border-border">
+            <span className="text-muted-foreground font-bold">Retards constatés :</span>
+            <span className={cn("font-bold px-2 py-0.5 rounded-full text-[10px]", stats.lateCount > 0 ? "bg-amber-100 text-amber-800" : "bg-muted text-muted-foreground")}>
               {stats.lateCount} retard(s)
             </span>
           </div>
         </div>
 
         {/* Card 3: Absences & Justificatifs */}
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-3">
+        <div className="bg-card dark:bg-card rounded-2xl p-5 border border-slate-200/80 dark:border-border shadow-xs space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-black uppercase text-slate-400 tracking-wider">Statut Justifications</span>
+            <span className="text-[11px] font-bold uppercase text-slate-400 tracking-wider">Statut Justifications</span>
             <div className="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 flex items-center justify-center">
               <FileText className="w-4 h-4" />
             </div>
           </div>
           <div className="flex items-baseline gap-1.5">
-            <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
+            <span className="text-2xl sm:text-3xl font-bold text-foreground dark:text-white">
               {stats.absentCount}
             </span>
             <span className="text-xs font-bold text-slate-400">absence(s) au total</span>
           </div>
-          <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-100 dark:border-slate-800">
+          <div className="flex items-center justify-between text-xs pt-1 border-t border-border dark:border-border">
             <span className="font-bold text-emerald-600">{stats.justifiedCount} Justifiée(s)</span>
             <span className="text-slate-300">•</span>
             <span className="font-bold text-amber-600">{stats.pendingCount} En attente</span>
@@ -500,9 +500,9 @@ export default function StudentAbsencesPage() {
         </div>
 
         {/* Card 4: Alerte Pédagogique (Règle des 3 absences) */}
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-3">
+        <div className="bg-card dark:bg-card rounded-2xl p-5 border border-slate-200/80 dark:border-border shadow-xs space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-black uppercase text-slate-400 tracking-wider">Règle des 3 Absences</span>
+            <span className="text-[11px] font-bold uppercase text-slate-400 tracking-wider">Règle des 3 Absences</span>
             <div className={cn(
               "w-8 h-8 rounded-xl flex items-center justify-center",
               stats.maxAbsencesInSingleModule >= 3 
@@ -522,7 +522,7 @@ export default function StudentAbsencesPage() {
           </div>
           <div>
             <span className={cn(
-              "text-base font-black block tracking-tight",
+              "text-base font-bold block tracking-tight",
               stats.maxAbsencesInSingleModule >= 3 
                 ? "text-rose-600"
                 : stats.maxAbsencesInSingleModule === 2
@@ -535,25 +535,25 @@ export default function StudentAbsencesPage() {
                   ? "Alerte : 2/3 Absences"
                   : "Situation Conforme"}
             </span>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 line-clamp-1">
+            <p className="text-[11px] text-muted-foreground dark:text-muted-foreground mt-1 line-clamp-1">
               {stats.highestRiskModule
                 ? `Max : ${stats.highestRiskModule.count}/3 dans ${stats.highestRiskModule.name}`
                 : "Aucun risque d'exclusion identifié"}
             </p>
           </div>
-          <div className="pt-1 border-t border-slate-100 dark:border-slate-800 text-[10px] font-bold text-slate-400">
+          <div className="pt-1 border-t border-border dark:border-border text-[10px] font-bold text-slate-400">
             Article 24 Règlement Pédagogique
           </div>
         </div>
       </div>
 
       {/* ── Main Absences & Sessions Container ── */}
-      <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 shadow-xs border border-slate-200/80 dark:border-slate-800 space-y-6">
+      <div className="bg-card dark:bg-card rounded-2xl p-6 sm:p-8 shadow-xs border border-slate-200/80 dark:border-border space-y-6">
         {/* Controls: Title + Search & Filter */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-5 border-b border-slate-100 dark:border-slate-800">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-5 border-b border-border dark:border-border">
           <div>
-            <h2 className="text-lg font-black text-[#001A4B] dark:text-white flex items-center gap-2.5">
-              <Calendar className="w-5 h-5 text-blue-600" /> Historique Détaillé des Séances & Feuilles de Présence
+            <h2 className="text-lg font-bold text-[#001A4B] dark:text-white flex items-center gap-2.5">
+              <Calendar className="w-5 h-5 text-primary" /> Historique Détaillé des Séances & Feuilles de Présence
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">
               Pointages QR Code dynamique, émargements numériques et validation officielle des justificatifs médicaux
@@ -570,10 +570,10 @@ export default function StudentAbsencesPage() {
                 placeholder="Rechercher un module..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 rounded-xl text-xs font-bold border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-[#001A4B]"
+                className="w-full pl-9 pr-3 py-2 text-xs font-bold border border-border dark:border-border bg-muted/50 dark:bg-card text-foreground dark:text-foreground focus:outline-hidden focus:ring-2 focus:ring-[#001A4B] rounded-[var(--control-radius)]"
               />
               {searchQuery && (
-                <button onClick={() => setSearchQuery('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                <button onClick={() => setSearchQuery('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-muted-foreground">
                   <X className="w-3.5 h-3.5" />
                 </button>
               )}
@@ -584,7 +584,7 @@ export default function StudentAbsencesPage() {
               <select
                 value={selectedModuleFilter}
                 onChange={(e) => setSelectedModuleFilter(e.target.value)}
-                className="px-3 py-2 rounded-xl text-xs font-bold border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 focus:outline-hidden focus:ring-2 focus:ring-[#001A4B]"
+                className="px-3 py-2 text-xs font-bold border border-border dark:border-border bg-muted/50 dark:bg-card text-slate-700 dark:text-foreground focus:outline-hidden focus:ring-2 focus:ring-[#001A4B] rounded-[var(--control-radius)]"
               >
                 <option value="all">Tous les modules ({modulesList.length})</option>
                 {modulesList.map((m) => (
@@ -599,7 +599,7 @@ export default function StudentAbsencesPage() {
             <select
               value={justificationFilter}
               onChange={(e: any) => setJustificationFilter(e.target.value)}
-              className="px-3 py-2 rounded-xl text-xs font-bold border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 focus:outline-hidden focus:ring-2 focus:ring-[#001A4B]"
+              className="px-3 py-2 text-xs font-bold border border-border dark:border-border bg-muted/50 dark:bg-card text-slate-700 dark:text-foreground focus:outline-hidden focus:ring-2 focus:ring-[#001A4B] rounded-[var(--control-radius)]"
             >
               <option value="all">Tous les justificatifs</option>
               <option value="unjustified">Non justifiées (action requise)</option>
@@ -611,14 +611,14 @@ export default function StudentAbsencesPage() {
 
         {/* Status Filter Tabs */}
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs font-black text-slate-400 uppercase tracking-wider mr-1">Statut :</span>
+          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mr-1">Statut :</span>
           <button
             onClick={() => setStatusFilter('all')}
             className={cn(
-              "px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer",
+              "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer",
               statusFilter === 'all'
                 ? "bg-[#001A4B] text-white shadow-sm"
-                : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200"
+                : "bg-muted dark:bg-card text-muted-foreground dark:text-muted-foreground hover:bg-slate-200"
             )}
           >
             Toutes les séances ({absencesList.length})
@@ -626,7 +626,7 @@ export default function StudentAbsencesPage() {
           <button
             onClick={() => setStatusFilter('absent')}
             className={cn(
-              "px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5",
+              "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5",
               statusFilter === 'absent'
                 ? "bg-rose-600 text-white shadow-sm"
                 : "bg-rose-50 text-rose-700 hover:bg-rose-100"
@@ -637,7 +637,7 @@ export default function StudentAbsencesPage() {
           <button
             onClick={() => setStatusFilter('present')}
             className={cn(
-              "px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5",
+              "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5",
               statusFilter === 'present'
                 ? "bg-emerald-600 text-white shadow-sm"
                 : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
@@ -648,7 +648,7 @@ export default function StudentAbsencesPage() {
           <button
             onClick={() => setStatusFilter('late')}
             className={cn(
-              "px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5",
+              "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5",
               statusFilter === 'late'
                 ? "bg-amber-600 text-white shadow-sm"
                 : "bg-amber-50 text-amber-700 hover:bg-amber-100"
@@ -659,10 +659,10 @@ export default function StudentAbsencesPage() {
         </div>
 
         {/* ── Records Table ── */}
-        <div className="overflow-x-auto rounded-2xl border border-slate-200/80 dark:border-slate-800">
+        <div className="overflow-x-auto rounded-2xl border border-slate-200/80 dark:border-border">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
-              <tr className="bg-slate-50/80 dark:bg-slate-800/50 text-[11px] font-black uppercase text-slate-500 dark:text-slate-400 tracking-wider border-b border-slate-200/80 dark:border-slate-800">
+              <tr className="bg-slate-50/80 dark:bg-slate-800/50 text-[11px] font-bold uppercase text-muted-foreground dark:text-muted-foreground tracking-wider border-b border-slate-200/80 dark:border-border">
                 <th className="py-3.5 pl-4 pr-3">Séance & Module</th>
                 <th className="py-3.5 px-3">Date & Horaire</th>
                 <th className="py-3.5 px-3 text-center">Statut de Présence</th>
@@ -699,22 +699,22 @@ export default function StudentAbsencesPage() {
                     <tr key={record.id || idx} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors group">
                       {/* Module & Session info */}
                       <td className="py-3.5 pl-4 pr-3">
-                        <div className="font-black text-slate-900 dark:text-white text-sm">
+                        <div className="font-bold text-foreground dark:text-white text-sm">
                           {moduleName}
                         </div>
                         <div className="flex flex-wrap items-center gap-2 mt-1">
                           {moduleCode && (
-                            <span className="text-[10px] font-mono font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">
+                            <span className="text-[10px] font-mono font-bold text-muted-foreground bg-muted dark:bg-card px-2 py-0.5 rounded-md">
                               {moduleCode}
                             </span>
                           )}
                           {room && (
-                            <span className="text-[10px] font-bold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950 px-2 py-0.5 rounded-md flex items-center gap-1">
+                            <span className="text-[10px] font-bold text-primary dark:text-blue-300 bg-primary/5 dark:bg-blue-950 px-2 py-0.5 rounded-md flex items-center gap-1">
                               <Building2 className="w-3 h-3" /> {room}
                             </span>
                           )}
                           {sessionType && (
-                            <span className="text-[10px] font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">
+                            <span className="text-[10px] font-bold text-muted-foreground bg-muted dark:bg-card px-2 py-0.5 rounded-md">
                               {sessionType}
                             </span>
                           )}
@@ -728,7 +728,7 @@ export default function StudentAbsencesPage() {
 
                       {/* Date & Time */}
                       <td className="py-3.5 px-3">
-                        <div className="font-bold text-slate-800 dark:text-slate-200">
+                        <div className="font-bold text-foreground dark:text-foreground">
                           {dateFormatted}
                         </div>
                         {timeSchedule && (
@@ -742,17 +742,17 @@ export default function StudentAbsencesPage() {
                       <td className="py-3.5 px-3 text-center">
                         <div className="flex justify-center">
                           {isPresent && (
-                            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-black bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 border border-emerald-200 dark:border-emerald-800">
+                            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 border border-emerald-200 dark:border-emerald-800">
                               <CheckCircle2 className="w-3.5 h-3.5" /> Présent
                             </span>
                           )}
                           {isAbsent && (
-                            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-black bg-rose-50 dark:bg-rose-950/40 text-rose-600 border border-rose-200 dark:border-rose-800">
+                            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 dark:bg-rose-950/40 text-rose-600 border border-rose-200 dark:border-rose-800">
                               <XCircle className="w-3.5 h-3.5" /> Absent
                             </span>
                           )}
                           {isLate && (
-                            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-black bg-amber-50 dark:bg-amber-950/40 text-amber-600 border border-amber-200 dark:border-amber-800">
+                            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-600 border border-amber-200 dark:border-amber-800">
                               <Clock className="w-3.5 h-3.5" /> En Retard
                             </span>
                           )}
@@ -763,16 +763,16 @@ export default function StudentAbsencesPage() {
                       <td className="py-3.5 px-3 text-center">
                         <div className="flex flex-col items-center justify-center gap-1">
                           {isJustifiedApproved ? (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                               <ShieldCheck className="w-3 h-3 text-emerald-600" /> Justifié • Accepté
                             </span>
                           ) : isJustifiedPending ? (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-black bg-amber-50 text-amber-800 border border-amber-200">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
                               <Clock className="w-3 h-3 text-amber-600" /> En cours d'examen
                             </span>
                           ) : isJustifiedRejected ? (
                             <div className="flex flex-col items-center">
-                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-black bg-rose-50 text-rose-700 border border-rose-200">
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
                                 <AlertCircle className="w-3 h-3 text-rose-600" /> Rejeté
                               </span>
                               {justif?.rejection_reason && (
@@ -782,7 +782,7 @@ export default function StudentAbsencesPage() {
                               )}
                             </div>
                           ) : isAbsent ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold text-slate-400 bg-slate-100 dark:bg-slate-800">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold text-slate-400 bg-muted dark:bg-card">
                               Non justifié
                             </span>
                           ) : (
@@ -797,7 +797,7 @@ export default function StudentAbsencesPage() {
                           {isAbsent && !isJustifiedApproved && !isJustifiedPending && (
                             <button
                               onClick={() => setSelectedRecord(record)}
-                              className="px-3.5 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 text-blue-700 dark:text-blue-300 font-black text-xs border border-blue-200 dark:border-blue-900 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 shadow-2xs"
+                              className="px-3.5 py-1.5 rounded-xl bg-primary/5 dark:bg-blue-950/60 hover:bg-primary/10 text-primary dark:text-blue-300 font-bold text-xs border border-primary/20 dark:border-primary transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 shadow-2xs"
                             >
                               <UploadCloud className="w-3.5 h-3.5" /> Justifier
                             </button>
@@ -808,7 +808,7 @@ export default function StudentAbsencesPage() {
                               href={justif.media[0].original_url || justif.media[0].url}
                               target="_blank"
                               rel="noreferrer"
-                              className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 font-bold text-xs transition-all flex items-center gap-1 cursor-pointer"
+                              className="px-3 py-1.5 rounded-xl bg-muted dark:bg-card hover:bg-slate-200 text-slate-700 dark:text-foreground font-bold text-xs transition-all flex items-center gap-1 cursor-pointer"
                               title="Consulter le document justificatif déposé"
                             >
                               <ExternalLink className="w-3.5 h-3.5" /> Voir PJ
@@ -823,7 +823,7 @@ export default function StudentAbsencesPage() {
                 <tr>
                   <td colSpan={5} className="py-12 text-center text-slate-400 space-y-2">
                     <Calendar className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-700" />
-                    <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                    <p className="text-sm font-bold text-slate-700 dark:text-foreground">
                       {absencesList.length === 0
                         ? "Aucun enregistrement d'assiduité trouvé dans la base de données"
                         : "Aucune séance ne correspond aux filtres sélectionnés"}
@@ -850,25 +850,25 @@ export default function StudentAbsencesPage() {
 
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
-            <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl border border-slate-200 dark:border-slate-800 space-y-5">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-                <div className="flex items-center gap-2 text-blue-600">
+            <div className="bg-card dark:bg-card rounded-2xl p-6 sm:p-8 max-w-lg w-full shadow-sm border border-border dark:border-border space-y-5">
+              <div className="flex items-center justify-between pb-3 border-b border-border dark:border-border">
+                <div className="flex items-center gap-2 text-primary">
                   <UploadCloud className="w-5 h-5" />
-                  <h3 className="text-base font-black text-slate-900 dark:text-white">Déposer un Justificatif d'Absence</h3>
+                  <h3 className="text-base font-bold text-foreground dark:text-white">Déposer un Justificatif d'Absence</h3>
                 </div>
                 <button 
                   onClick={() => setSelectedRecord(null)}
-                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer"
+                  className="p-1 rounded-lg text-slate-400 hover:text-muted-foreground cursor-pointer"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
               {/* Session Recap */}
-              <div className="p-4 rounded-2xl bg-blue-50/60 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900 text-xs space-y-1">
-                <span className="text-[10px] font-black uppercase text-blue-700 dark:text-blue-300 tracking-wider">Séance concernée</span>
-                <p className="font-black text-sm text-slate-900 dark:text-white">{moduleName}</p>
-                <div className="text-slate-500 flex items-center gap-2 font-medium">
+              <div className="p-4 rounded-2xl bg-blue-50/60 dark:bg-blue-950/40 border border-primary/20 dark:border-primary text-xs space-y-1">
+                <span className="text-[10px] font-bold uppercase text-primary dark:text-blue-300 tracking-wider">Séance concernée</span>
+                <p className="font-bold text-sm text-foreground dark:text-white">{moduleName}</p>
+                <div className="text-muted-foreground flex items-center gap-2 font-medium">
                   <span>{sessionDate}</span>
                   {sessionTime && <span>• {sessionTime}</span>}
                   <span>• {session.room_name || session.room || 'Salle de cours'}</span>
@@ -877,21 +877,21 @@ export default function StudentAbsencesPage() {
 
               {/* 48h Alert Notice */}
               <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-300 text-xs space-y-1">
-                <p className="font-black flex items-center gap-1.5">
+                <p className="font-bold flex items-center gap-1.5">
                   <Clock className="w-3.5 h-3.5 text-amber-600" /> Délai Réglementaire : 48 Heures Ouvrées
                 </p>
-                <p className="text-[11px] leading-relaxed text-slate-600 dark:text-slate-300">
+                <p className="text-[11px] leading-relaxed text-muted-foreground dark:text-foreground">
                   Conformément au règlement pédagogique de l'ENCG, le certificat médical ou la pièce justificative doit être délivré par une autorité médicale assermentée ou un organisme officiel.
                 </p>
               </div>
 
               <form onSubmit={handleJustifySubmit} className="space-y-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Motif de l'absence</label>
+                  <label className="text-xs font-bold text-slate-700 dark:text-foreground">Motif de l'absence</label>
                   <select
                     value={reason}
                     onChange={(e) => setReason(e.target.value)}
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-800 dark:text-slate-200 focus:outline-hidden focus:ring-2 focus:ring-[#001A4B]"
+                    className="w-full px-3 py-2.5 border border-border dark:border-border bg-muted/50 dark:bg-card text-xs font-bold text-foreground dark:text-foreground focus:outline-hidden focus:ring-2 focus:ring-[#001A4B] rounded-[var(--control-radius)]"
                   >
                     <option value="medical">Certificat Médical / Raison de Santé</option>
                     <option value="family">Événement Familial Majeur (Cas de force majeure)</option>
@@ -902,20 +902,20 @@ export default function StudentAbsencesPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Précisions & Description</label>
+                  <label className="text-xs font-bold text-slate-700 dark:text-foreground">Précisions & Description</label>
                   <textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     rows={2}
                     placeholder="Précisez la date de consultation, le nom du praticien ou les circonstances..."
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-800 dark:text-slate-200 focus:outline-hidden focus:ring-2 focus:ring-[#001A4B]"
+                    className="w-full px-3 py-2.5 border border-border dark:border-border bg-muted/50 dark:bg-card text-xs text-foreground dark:text-foreground focus:outline-hidden focus:ring-2 focus:ring-[#001A4B] rounded-[var(--control-radius)]"
                   />
                 </div>
 
                 {/* File Upload Zone */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Pièce Justificative (PDF, JPG, PNG - Max 5Mo)</label>
-                  <div className="relative border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl p-4 text-center hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                  <label className="text-xs font-bold text-slate-700 dark:text-foreground">Pièce Justificative (PDF, JPG, PNG - Max 5Mo)</label>
+                  <div className="relative border-2 border-dashed border-border dark:border-border rounded-2xl p-4 text-center hover:bg-muted/50 dark:hover:bg-slate-800/50 transition-colors">
                     <input
                       type="file"
                       accept=".pdf,.jpg,.jpeg,.png"
@@ -924,15 +924,15 @@ export default function StudentAbsencesPage() {
                       required
                     />
                     <div className="flex flex-col items-center justify-center gap-1.5 pointer-events-none">
-                      <UploadCloud className="w-7 h-7 text-blue-600" />
+                      <UploadCloud className="w-7 h-7 text-primary" />
                       {file ? (
                         <div>
-                          <p className="text-xs font-black text-slate-800 dark:text-white">{file.name}</p>
+                          <p className="text-xs font-bold text-foreground dark:text-white">{file.name}</p>
                           <p className="text-[10px] text-slate-400">{(file.size / 1024).toFixed(0)} Ko • Cliquez pour remplacer</p>
                         </div>
                       ) : (
                         <div>
-                          <p className="text-xs font-bold text-slate-700 dark:text-slate-300">Cliquez ou glissez-déposez votre document</p>
+                          <p className="text-xs font-bold text-slate-700 dark:text-foreground">Cliquez ou glissez-déposez votre document</p>
                           <p className="text-[10px] text-slate-400">Formats acceptés : PDF, JPEG, PNG (5 Mo max)</p>
                         </div>
                       )}
@@ -940,18 +940,18 @@ export default function StudentAbsencesPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+                <div className="flex items-center justify-end gap-3 pt-3 border-t border-border dark:border-border">
                   <button
                     type="button"
                     onClick={() => setSelectedRecord(null)}
-                    className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 cursor-pointer"
+                    className="px-4 py-2.5 rounded-xl border border-border dark:border-border text-xs font-bold text-muted-foreground dark:text-foreground hover:bg-muted/50 cursor-pointer"
                   >
                     Annuler
                   </button>
                   <button
                     type="submit"
                     disabled={!file || isSubmittingJustification}
-                    className="px-5 py-2.5 rounded-xl bg-[#001A4B] hover:bg-[#082663] text-white text-xs font-black shadow-md flex items-center gap-2 cursor-pointer transition-all disabled:opacity-50"
+                    className="px-5 py-2.5 rounded-xl bg-[#001A4B] hover:bg-[#082663] text-white text-xs font-bold shadow-md flex items-center gap-2 cursor-pointer transition-all disabled:opacity-50"
                   >
                     {isSubmittingJustification ? (
                       <>
@@ -975,23 +975,23 @@ export default function StudentAbsencesPage() {
       {/* ── Regulations & Attendance Charter Modal ── */}
       {regulationsModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 max-w-xl w-full shadow-2xl border border-slate-200 dark:border-slate-800 space-y-5">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+          <div className="bg-card dark:bg-card rounded-2xl p-6 sm:p-8 max-w-xl w-full shadow-sm border border-border dark:border-border space-y-5">
+            <div className="flex items-center justify-between pb-3 border-b border-border dark:border-border">
               <div className="flex items-center gap-2 text-[#001A4B] dark:text-white">
-                <FileText className="w-5 h-5 text-blue-600" />
-                <h3 className="text-base font-black">Règlement Pédagogique Relatif à l'Assiduité</h3>
+                <FileText className="w-5 h-5 text-primary" />
+                <h3 className="text-base font-bold">Règlement Pédagogique Relatif à l'Assiduité</h3>
               </div>
               <button 
                 onClick={() => setRegulationsModalOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer"
+                className="p-1 rounded-lg text-slate-400 hover:text-muted-foreground cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="space-y-3 text-xs leading-relaxed text-slate-600 dark:text-slate-300">
-              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-1.5">
-                <h4 className="font-black text-slate-800 dark:text-white flex items-center gap-1.5">
+            <div className="space-y-3 text-xs leading-relaxed text-muted-foreground dark:text-foreground">
+              <div className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/50 border border-border dark:border-border space-y-1.5">
+                <h4 className="font-bold text-foreground dark:text-white flex items-center gap-1.5">
                   <ShieldAlert className="w-4 h-4 text-rose-500" /> Article 24 — Seuil d'Exclusion aux Examens
                 </h4>
                 <p>
@@ -999,8 +999,8 @@ export default function StudentAbsencesPage() {
                 </p>
               </div>
 
-              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-1.5">
-                <h4 className="font-black text-slate-800 dark:text-white flex items-center gap-1.5">
+              <div className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/50 border border-border dark:border-border space-y-1.5">
+                <h4 className="font-bold text-foreground dark:text-white flex items-center gap-1.5">
                   <Clock className="w-4 h-4 text-amber-500" /> Article 25 — Procédure et Délais de Justification (48h)
                 </h4>
                 <p>
@@ -1008,8 +1008,8 @@ export default function StudentAbsencesPage() {
                 </p>
               </div>
 
-              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-1.5">
-                <h4 className="font-black text-slate-800 dark:text-white flex items-center gap-1.5">
+              <div className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/50 border border-border dark:border-border space-y-1.5">
+                <h4 className="font-bold text-foreground dark:text-white flex items-center gap-1.5">
                   <CheckCircle2 className="w-4 h-4 text-emerald-500" /> Émargement Numérique & Anti-Fraude
                 </h4>
                 <p>
@@ -1021,7 +1021,7 @@ export default function StudentAbsencesPage() {
             <div className="flex justify-end pt-2">
               <button
                 onClick={() => setRegulationsModalOpen(false)}
-                className="px-5 py-2.5 rounded-xl bg-[#001A4B] text-white font-black text-xs cursor-pointer shadow-md hover:bg-[#082663]"
+                className="px-5 py-2.5 rounded-xl bg-[#001A4B] text-white font-bold text-xs cursor-pointer shadow-md hover:bg-[#082663]"
               >
                 J'ai pris connaissance du règlement
               </button>

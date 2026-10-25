@@ -72,21 +72,21 @@ export default function CreateSchedulePage() {
   }
 
   return (
-    <div className="space-y-8 animate-in p-6 max-w-[1000px] mx-auto">
+    <div className="space-y-8 animate-in max-w-[1000px] mx-auto">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-2xl font-bold text-[#0f2863] italic">Planifier une Nouvelle Séance</h1>
-          <p className="text-slate-500 mt-1 text-sm font-medium">Vérification des conflits en temps réel</p>
+          <h1 className="text-[#0f2863] italic erp-page-title">Planifier une Nouvelle Séance</h1>
+          <p className="text-muted-foreground mt-1 text-sm font-medium">Vérification des conflits en temps réel</p>
         </div>
-        <Link to="/admin/timetable/calendar" className="px-5 py-2.5 bg-white border border-slate-200 text-slate-700 font-bold rounded-xl hover:bg-slate-50 transition-colors text-xs uppercase tracking-wide">
+        <Link to="/admin/timetable/calendar" className="px-5 py-2.5 bg-card border border-border text-slate-700 font-bold rounded-xl hover:bg-muted/50 transition-colors text-xs uppercase tracking-wide">
           Retour
         </Link>
       </div>
 
-      <div className="bg-white border border-slate-100 rounded-[2rem] shadow-sm overflow-hidden flex flex-col">
+      <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden flex flex-col">
         {/* Dark Blue Banner */}
-        <div className="bg-[#0f2863] p-10 text-white m-4 rounded-[1.5rem] shadow-md relative overflow-hidden">
+        <div className="bg-[#0f2863] p-10 text-white m-4 rounded-2xl shadow-md relative overflow-hidden">
           <div className="absolute -right-12 -top-12 w-48 h-48 bg-blue-500/20 rounded-full blur-3xl"></div>
           <h2 className="text-3xl font-bold italic mb-2 relative z-10">Nouvelle Affectation</h2>
           <p className="text-blue-200 text-sm font-medium max-w-lg relative z-10">
@@ -102,7 +102,7 @@ export default function CreateSchedulePage() {
               <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Groupe / Promotion</label>
               <select 
                 value={groupId} onChange={e => setGroupId(e.target.value)}
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-5 py-4 text-sm font-bold text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none"
+                className="w-full border border-border bg-slate-50/50 px-5 py-4 text-sm font-bold text-foreground focus:border-primary focus:ring-1 focus:ring-ring transition-all outline-none rounded-[var(--control-radius)]"
               >
                 <option value="">— Sélectionner —</option>
                 {groups?.map((g: any) => <option key={g.id} value={g.id}>{g.name}</option>)}
@@ -112,7 +112,7 @@ export default function CreateSchedulePage() {
               <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Module Enseigné</label>
               <select 
                 value={moduleId} onChange={e => setModuleId(e.target.value)}
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-5 py-4 text-sm font-bold text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none"
+                className="w-full border border-border bg-slate-50/50 px-5 py-4 text-sm font-bold text-foreground focus:border-primary focus:ring-1 focus:ring-ring transition-all outline-none rounded-[var(--control-radius)]"
               >
                 <option value="">— Sélectionner —</option>
                 {modules?.map((m: any) => <option key={m.id} value={m.id}>{m.name}</option>)}
@@ -122,7 +122,7 @@ export default function CreateSchedulePage() {
               <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Professeur En Charge</label>
               <select 
                 value={professorId} onChange={e => setProfessorId(e.target.value)}
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-5 py-4 text-sm font-bold text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none"
+                className="w-full border border-border bg-slate-50/50 px-5 py-4 text-sm font-bold text-foreground focus:border-primary focus:ring-1 focus:ring-ring transition-all outline-none rounded-[var(--control-radius)]"
               >
                 <option value="">— Sélectionner —</option>
                 {professors?.map((p: any) => <option key={p.id} value={p.id}>{p.user?.first_name} {p.user?.last_name}</option>)}
@@ -132,7 +132,7 @@ export default function CreateSchedulePage() {
               <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Salle Allouée</label>
               <select 
                 value={roomId} onChange={e => setRoomId(e.target.value)}
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-5 py-4 text-sm font-bold text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none"
+                className="w-full border border-border bg-slate-50/50 px-5 py-4 text-sm font-bold text-foreground focus:border-primary focus:ring-1 focus:ring-ring transition-all outline-none rounded-[var(--control-radius)]"
               >
                 <option value="">— Sélectionner —</option>
                 {rooms?.map((r: any) => <option key={r.id} value={r.id}>{r.name} ({r.capacity} places)</option>)}
@@ -143,7 +143,7 @@ export default function CreateSchedulePage() {
               <input 
                 type="date"
                 value={date} onChange={e => setDate(e.target.value)}
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-5 py-4 text-sm font-bold text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none"
+                className="w-full border border-border bg-slate-50/50 px-5 py-4 text-sm font-bold text-foreground focus:border-primary focus:ring-1 focus:ring-ring transition-all outline-none rounded-[var(--control-radius)]"
               />
             </div>
             <div>
@@ -152,13 +152,13 @@ export default function CreateSchedulePage() {
                 <input 
                   type="time"
                   value={startTime} onChange={e => setStartTime(e.target.value)}
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-5 py-4 text-sm font-bold text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none"
+                  className="w-full border border-border bg-slate-50/50 px-5 py-4 text-sm font-bold text-foreground focus:border-primary focus:ring-1 focus:ring-ring transition-all outline-none rounded-[var(--control-radius)]"
                 />
                 <span className="text-slate-400 font-bold">-</span>
                 <input 
                   type="time"
                   value={endTime} onChange={e => setEndTime(e.target.value)}
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-5 py-4 text-sm font-bold text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none"
+                  className="w-full border border-border bg-slate-50/50 px-5 py-4 text-sm font-bold text-foreground focus:border-primary focus:ring-1 focus:ring-ring transition-all outline-none rounded-[var(--control-radius)]"
                 />
               </div>
             </div>

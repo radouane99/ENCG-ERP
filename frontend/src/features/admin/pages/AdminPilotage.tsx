@@ -53,10 +53,10 @@ export default function AdminPilotage() {
   ]
 
   return (
-    <div className="space-y-6 max-w-[1600px] mx-auto p-4 md:p-6 pb-20 animate-in fade-in" dir={isRtl ? "rtl" : "ltr"}>
+    <div className="space-y-6 max-w-[1600px] mx-auto pb-20 animate-in fade-in" dir={isRtl ? "rtl" : "ltr"}>
       
       {/* Premium Header */}
-      <div className="bg-[var(--card)] border border-[var(--border)] rounded-[2rem] p-6 md:p-8 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
+      <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 md:p-8 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
         <div className="absolute -top-10 -end-10 w-40 h-40 bg-[var(--color-primary)/5] rounded-full blur-3xl pointer-events-none"></div>
         
         <div className="flex items-center gap-4 relative z-10">
@@ -64,7 +64,7 @@ export default function AdminPilotage() {
             <Activity className="w-8 h-8 text-[var(--color-primary)]" />
           </div>
           <div>
-            <h1 className="text-3xl font-black text-[var(--foreground)] mb-1 tracking-tight">
+            <h1 className="text-[var(--foreground)] mb-1 erp-page-title">
               {isRtl ? 'لوحة القيادة الإستراتيجية' : 'Centre de Commandement (BI)'}
             </h1>
             <p className="text-[var(--muted-foreground)] font-medium text-sm">
@@ -90,12 +90,12 @@ export default function AdminPilotage() {
       {/* Primary KPIs - Glassmorphism Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
         {KPI_CARDS.map((kpi, i) => (
-          <div key={i} className="p-6 rounded-[2rem] bg-[var(--card)] border border-[var(--border)] shadow-sm flex items-center justify-between hover:shadow-md hover:border-[var(--color-primary)/30] transition-all group">
+          <div key={i} className="p-6 rounded-2xl bg-[var(--card)] border border-[var(--border)] shadow-sm flex items-center justify-between hover:shadow-md hover:border-[var(--color-primary)/30] transition-all group">
             <div>
               <p className="text-xs font-bold text-[var(--muted-foreground)] mb-2 uppercase tracking-widest">{kpi.title}</p>
-              <p className="text-4xl font-black text-[var(--foreground)] tracking-tight">{kpi.value}</p>
+              <p className="text-4xl font-bold text-[var(--foreground)] tracking-tight">{kpi.value}</p>
             </div>
-            <div className={cn("w-14 h-14 rounded-[1.2rem] flex items-center justify-center transition-transform group-hover:scale-110", kpi.bg, kpi.color)}>
+            <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110", kpi.bg, kpi.color)}>
               {kpi.icon}
             </div>
           </div>
@@ -106,9 +106,9 @@ export default function AdminPilotage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
         {/* Chart 1: Répartition par Filière */}
-        <div className="p-6 bg-[var(--card)] border border-[var(--border)] rounded-[2rem] shadow-sm">
+        <div className="p-6 bg-[var(--card)] border border-[var(--border)] rounded-2xl shadow-sm">
           <h3 className="font-bold text-lg mb-6 flex items-center gap-2 text-[var(--foreground)]">
-            <div className="p-2 bg-blue-500/10 text-blue-500 rounded-lg"><Building size={18} /></div>
+            <div className="p-2 bg-blue-500/10 text-primary rounded-lg"><Building size={18} /></div>
             {isRtl ? 'توزيع الطلاب حسب الشعبة' : 'Répartition des étudiants par filière'}
           </h3>
           <div className="h-[300px] w-full">
@@ -133,7 +133,7 @@ export default function AdminPilotage() {
         </div>
 
         {/* Chart 2: Admissions & Candidatures */}
-        <div className="p-6 bg-[var(--card)] border border-[var(--border)] rounded-[2rem] shadow-sm">
+        <div className="p-6 bg-[var(--card)] border border-[var(--border)] rounded-2xl shadow-sm">
           <h3 className="font-bold text-lg mb-6 flex items-center gap-2 text-[var(--foreground)]">
             <div className="p-2 bg-emerald-500/10 text-emerald-500 rounded-lg"><TrendingUp size={18} /></div>
             {isRtl ? 'حالة القبول والترشيحات' : 'Statuts des Admissions'}
@@ -168,7 +168,7 @@ export default function AdminPilotage() {
         </div>
 
         {/* Chart 3: Ressources Humaines (Dynamic CSS Progress) */}
-        <div className="p-6 bg-[var(--card)] border border-[var(--border)] rounded-[2rem] shadow-sm">
+        <div className="p-6 bg-[var(--card)] border border-[var(--border)] rounded-2xl shadow-sm">
           <h3 className="font-bold text-lg mb-6 flex items-center gap-2 text-[var(--foreground)]">
             <div className="p-2 bg-purple-500/10 text-purple-500 rounded-lg"><BrainCircuit size={18} /></div>
             {isRtl ? 'طاقة التأطير (أساتذة vs زائرون)' : 'Charge d\'Encadrement (Permanents vs Vacataires)'}
@@ -178,7 +178,7 @@ export default function AdminPilotage() {
             <div>
               <div className="flex justify-between items-end mb-2">
                 <span className="font-bold text-[var(--foreground)]">{isRtl ? 'الأساتذة الدائمون' : 'Professeurs Permanents'}</span>
-                <span className="text-xl font-black text-purple-600">{charts.hr?.permanents || 0}</span>
+                <span className="text-xl font-bold text-purple-600">{charts.hr?.permanents || 0}</span>
               </div>
               <div className="h-4 w-full bg-[var(--muted)] rounded-full overflow-hidden">
                 <div className="h-full bg-purple-500 rounded-full transition-all duration-1000" style={{ width: '60%' }}></div>
@@ -188,17 +188,17 @@ export default function AdminPilotage() {
             <div>
               <div className="flex justify-between items-end mb-2">
                 <span className="font-bold text-[var(--foreground)]">{isRtl ? 'الأساتذة الزائرون (نشطون)' : 'Professeurs Vacataires (Actifs)'}</span>
-                <span className="text-xl font-black text-blue-600">{charts.hr?.vacataires || 0}</span>
+                <span className="text-xl font-bold text-primary">{charts.hr?.vacataires || 0}</span>
               </div>
               <div className="h-4 w-full bg-[var(--muted)] rounded-full overflow-hidden">
-                <div className="h-full bg-blue-500 rounded-full transition-all duration-1000" style={{ width: '40%' }}></div>
+                <div className="h-full bg-primary rounded-full transition-all duration-1000" style={{ width: '40%' }}></div>
               </div>
             </div>
           </div>
         </div>
 
         {/* Chart 4: Exécution Budgétaire */}
-        <div className="p-6 bg-gradient-to-br from-[#1F3A5F] to-[#2A4D7C] border border-[#1F3A5F] rounded-[2rem] shadow-lg text-white relative overflow-hidden">
+        <div className="p-6 bg-gradient-to-br from-[#1F3A5F] to-[#2A4D7C] border border-[#1F3A5F] rounded-2xl shadow-lg text-white relative overflow-hidden">
           <div className="absolute top-0 end-0 opacity-10 pointer-events-none p-6">
             <DollarSign size={150} />
           </div>
@@ -210,7 +210,7 @@ export default function AdminPilotage() {
           <div className="mt-8 relative z-10">
             <div className="mb-4">
               <p className="text-white/70 text-sm font-bold uppercase tracking-wider mb-1">{isRtl ? 'الميزانية الإجمالية المخصصة' : 'Budget Global Alloué'}</p>
-              <p className="text-4xl font-black">{new Intl.NumberFormat('fr-MA', { style: 'currency', currency: 'MAD' }).format(charts.finances?.budget_alloue || 0)}</p>
+              <p className="text-4xl font-bold">{new Intl.NumberFormat('fr-MA', { style: 'currency', currency: 'MAD' }).format(charts.finances?.budget_alloue || 0)}</p>
             </div>
             
             <div className="space-y-4 mt-8">
@@ -219,7 +219,7 @@ export default function AdminPilotage() {
                   <div className="w-3 h-3 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.8)]"></div>
                   <span className="font-bold">{isRtl ? 'المدفوعات المنجزة' : 'Montant Consommé (Payé)'}</span>
                 </div>
-                <span className="font-black text-emerald-400">{new Intl.NumberFormat('fr-MA', { style: 'currency', currency: 'MAD' }).format(charts.finances?.budget_consomme || 0)}</span>
+                <span className="font-bold text-emerald-400">{new Intl.NumberFormat('fr-MA', { style: 'currency', currency: 'MAD' }).format(charts.finances?.budget_consomme || 0)}</span>
               </div>
               
               <div className="bg-white/10 p-4 rounded-2xl border border-white/10 flex items-center justify-between backdrop-blur-sm">
@@ -227,7 +227,7 @@ export default function AdminPilotage() {
                   <div className="w-3 h-3 rounded-full bg-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.8)]"></div>
                   <span className="font-bold">{isRtl ? 'في انتظار الدفع' : 'En attente de paiement'}</span>
                 </div>
-                <span className="font-black text-amber-400">{new Intl.NumberFormat('fr-MA', { style: 'currency', currency: 'MAD' }).format(charts.finances?.en_attente || 0)}</span>
+                <span className="font-bold text-amber-400">{new Intl.NumberFormat('fr-MA', { style: 'currency', currency: 'MAD' }).format(charts.finances?.en_attente || 0)}</span>
               </div>
             </div>
           </div>

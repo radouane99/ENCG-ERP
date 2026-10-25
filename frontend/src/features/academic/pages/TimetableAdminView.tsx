@@ -188,17 +188,17 @@ export default function TimetableAdminView() {
   `
 
   return (
-    <div className="space-y-6 p-4 md:p-6 max-w-[1400px] mx-auto animate-in">
+    <div className="space-y-6 max-w-[1400px] mx-auto animate-in">
       <style>{customCalendarStyles}</style>
       
       {/* Header Panel */}
-      <div className="bg-[var(--card)] border border-[var(--border)] p-6 rounded-[2rem] shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative overflow-hidden">
+      <div className="bg-[var(--card)] border border-[var(--border)] p-6 rounded-2xl shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative overflow-hidden">
         <div className="absolute top-0 end-0 p-8 opacity-5 text-[var(--color-primary)] pointer-events-none">
           <CalendarIcon size={120} />
         </div>
         
         <div className="relative z-10">
-          <h1 className="text-2xl font-bold text-[var(--foreground)] flex items-center gap-3">
+          <h1 className="text-[var(--foreground)] flex items-center gap-3 erp-page-title">
             <div className="w-10 h-10 bg-[var(--color-primary)/10] rounded-xl flex items-center justify-center text-[var(--color-primary)]">
               <CalendarIcon className="w-5 h-5" />
             </div>
@@ -214,7 +214,7 @@ export default function TimetableAdminView() {
             <select 
               value={filiereId}
               onChange={(e) => setFiliereId(Number(e.target.value))}
-              className="bg-transparent border-none text-sm font-bold focus:ring-0 text-[var(--foreground)] pe-8"
+              className="bg-transparent border-none text-sm font-bold focus:ring-0 text-[var(--foreground)] pe-8 rounded-[var(--control-radius)]"
             >
               <option value={1}>S6 - Génie Info</option>
               <option value={2}>S4 - Tronc Commun</option>
@@ -223,7 +223,7 @@ export default function TimetableAdminView() {
             <select 
               value={semesterId}
               onChange={(e) => setSemesterId(Number(e.target.value))}
-              className="bg-transparent border-none text-sm font-bold focus:ring-0 text-[var(--foreground)] pe-8"
+              className="bg-transparent border-none text-sm font-bold focus:ring-0 text-[var(--foreground)] pe-8 rounded-[var(--control-radius)]"
             >
               <option value={1}>Semestre 1</option>
               <option value={2}>Semestre 2</option>
@@ -253,7 +253,7 @@ export default function TimetableAdminView() {
       </div>
 
       {/* Calendar Area */}
-      <div className="bg-[var(--card)] border border-[var(--border)] rounded-3xl p-6 shadow-sm overflow-hidden" dir={isRtl ? "rtl" : "ltr"}>
+      <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm overflow-hidden" dir={isRtl ? "rtl" : "ltr"}>
         <FullCalendar
           ref={calendarRef}
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}

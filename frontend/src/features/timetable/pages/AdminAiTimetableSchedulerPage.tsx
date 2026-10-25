@@ -16,7 +16,7 @@ function highlightMatch(text: string, query: string) {
     <>
       {parts.map((part, i) =>
         part.toLowerCase() === query.toLowerCase() ? (
-          <mark key={i} className="bg-amber-300 dark:bg-amber-500/40 text-amber-950 dark:text-amber-100 rounded px-0.5 font-black">
+          <mark key={i} className="bg-amber-300 dark:bg-amber-500/40 text-amber-950 dark:text-amber-100 rounded px-0.5 font-bold">
             {part}
           </mark>
         ) : (
@@ -500,11 +500,11 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
   const semesterOptions: SelectOption[] = [
     { value: 'odd', label: '🍂 Semestre 1 / Automne (S1, S3, S5, S7, S9)', badge: 'Impairs', icon: <Sparkles className="w-4 h-4 text-amber-500" /> },
     { value: 'even', label: '🌸 Semestre 2 / Printemps (S2, S4, S6, S8, S10)', badge: 'Pairs', icon: <Sparkles className="w-4 h-4 text-purple-500" /> },
-    { value: 'all', label: '🎓 Année Complète (Tous les semestres S1 à S10)', badge: 'Global', icon: <GraduationCap className="w-4 h-4 text-indigo-500" /> },
-    { value: 1, label: 'Semestre 1 (S1 - Tronc Commun S1)', badge: 'TC1', icon: <BookOpen className="w-4 h-4 text-indigo-500" /> },
-    { value: 2, label: 'Semestre 2 (S2 - Tronc Commun S2)', badge: 'TC1', icon: <BookOpen className="w-4 h-4 text-indigo-500" /> },
-    { value: 3, label: 'Semestre 3 (S3 - Tronc Commun S3)', badge: 'TC2', icon: <BookOpen className="w-4 h-4 text-blue-500" /> },
-    { value: 4, label: 'Semestre 4 (S4 - Tronc Commun S4)', badge: 'TC2', icon: <BookOpen className="w-4 h-4 text-blue-500" /> },
+    { value: 'all', label: '🎓 Année Complète (Tous les semestres S1 à S10)', badge: 'Global', icon: <GraduationCap className="w-4 h-4 text-primary" /> },
+    { value: 1, label: 'Semestre 1 (S1 - Tronc Commun S1)', badge: 'TC1', icon: <BookOpen className="w-4 h-4 text-primary" /> },
+    { value: 2, label: 'Semestre 2 (S2 - Tronc Commun S2)', badge: 'TC1', icon: <BookOpen className="w-4 h-4 text-primary" /> },
+    { value: 3, label: 'Semestre 3 (S3 - Tronc Commun S3)', badge: 'TC2', icon: <BookOpen className="w-4 h-4 text-primary" /> },
+    { value: 4, label: 'Semestre 4 (S4 - Tronc Commun S4)', badge: 'TC2', icon: <BookOpen className="w-4 h-4 text-primary" /> },
     { value: 5, label: 'Semestre 5 (S5 - Filières GFC & MCM)', badge: 'Licence', icon: <GraduationCap className="w-4 h-4 text-purple-500" /> },
     { value: 6, label: 'Semestre 6 (S6 - Filières GFC & MCM)', badge: 'Licence', icon: <GraduationCap className="w-4 h-4 text-purple-500" /> },
     { value: 7, label: 'Semestre 7 (S7 - Spécialités Master)', badge: 'Master 1', icon: <Sparkles className="w-4 h-4 text-amber-500" /> },
@@ -515,7 +515,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
 
   const filiereOptions: SelectOption[] = useMemo(() => {
     const list: SelectOption[] = [
-      { value: 'all', label: 'Toutes les filières (TC & Spécialités)', badge: 'Global', icon: <Building2 className="w-4 h-4 text-indigo-500" /> },
+      { value: 'all', label: 'Toutes les filières (TC & Spécialités)', badge: 'Global', icon: <Building2 className="w-4 h-4 text-primary" /> },
     ];
     if (resourcesData?.filieres && Array.isArray(resourcesData.filieres)) {
       resourcesData.filieres.forEach((f: any) => {
@@ -523,7 +523,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
           value: String(f.id),
           label: `${f.name} (${f.code})`,
           badge: f.code || 'FIL',
-          icon: <Building2 className="w-4 h-4 text-blue-500" />,
+          icon: <Building2 className="w-4 h-4 text-primary" />,
         });
       });
     }
@@ -532,12 +532,12 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
 
   const strategyOptions: SelectOption[] = [
     { value: 'mrv_degree_lcv', label: 'MRV + Degree + LCV (Optimal & Recommandé)', badge: 'Recommandé', icon: <Cpu className="w-4 h-4 text-emerald-500" /> },
-    { value: 'forward_checking', label: 'Forward Checking Déterministe', badge: 'Standard', icon: <Cpu className="w-4 h-4 text-indigo-500" /> },
+    { value: 'forward_checking', label: 'Forward Checking Déterministe', badge: 'Standard', icon: <Cpu className="w-4 h-4 text-primary" /> },
     { value: 'min_conflicts', label: 'Min-Conflicts Local Search (Grandes Sections)', badge: 'Rapide', icon: <Cpu className="w-4 h-4 text-amber-500" /> },
   ];
 
   const dayFilterOptions: SelectOption[] = [
-    { value: 'all', label: 'Tous les jours (Lundi-Samedi)', icon: <Calendar className="w-4 h-4 text-indigo-500" /> },
+    { value: 'all', label: 'Tous les jours (Lundi-Samedi)', icon: <Calendar className="w-4 h-4 text-primary" /> },
     { value: 1, label: 'Lundi' },
     { value: 2, label: 'Mardi' },
     { value: 3, label: 'Mercredi' },
@@ -548,48 +548,48 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
 
   const groupFilterOptions: SelectOption[] = useMemo(() => {
     return [
-      { value: 'all', label: 'Tous les groupes d\'étudiants', icon: <Users className="w-4 h-4 text-indigo-500" /> },
-      ...uniqueGroups.map((g) => ({ value: String(g), label: String(g), icon: <Users className="w-3.5 h-3.5 text-slate-500" /> })),
+      { value: 'all', label: 'Tous les groupes d\'étudiants', icon: <Users className="w-4 h-4 text-primary" /> },
+      ...uniqueGroups.map((g) => ({ value: String(g), label: String(g), icon: <Users className="w-3.5 h-3.5 text-muted-foreground" /> })),
     ];
   }, [uniqueGroups]);
 
   const profFilterOptions: SelectOption[] = useMemo(() => {
     return [
-      { value: 'all', label: 'Tous les professeurs', icon: <User className="w-4 h-4 text-indigo-500" /> },
-      ...uniqueProfessors.map((p) => ({ value: String(p), label: String(p), icon: <User className="w-3.5 h-3.5 text-slate-500" /> })),
+      { value: 'all', label: 'Tous les professeurs', icon: <User className="w-4 h-4 text-primary" /> },
+      ...uniqueProfessors.map((p) => ({ value: String(p), label: String(p), icon: <User className="w-3.5 h-3.5 text-muted-foreground" /> })),
     ];
   }, [uniqueProfessors]);
 
   const roomFilterOptions: SelectOption[] = useMemo(() => {
     return [
-      { value: 'all', label: 'Toutes les salles & amphis', icon: <Building2 className="w-4 h-4 text-indigo-500" /> },
-      ...uniqueRooms.map((r) => ({ value: String(r), label: String(r), icon: <MapPin className="w-3.5 h-3.5 text-slate-500" /> })),
+      { value: 'all', label: 'Toutes les salles & amphis', icon: <Building2 className="w-4 h-4 text-primary" /> },
+      ...uniqueRooms.map((r) => ({ value: String(r), label: String(r), icon: <MapPin className="w-3.5 h-3.5 text-muted-foreground" /> })),
     ];
   }, [uniqueRooms]);
 
   const sortOptions: SelectOption[] = [
-    { value: 'chrono', label: '⏱️ Triage Chronologique (Lundi 08:30 ➔ Vendredi)', badge: 'Défaut', icon: <Clock className="w-4 h-4 text-indigo-500" /> },
+    { value: 'chrono', label: '⏱️ Triage Chronologique (Lundi 08:30 ➔ Vendredi)', badge: 'Défaut', icon: <Clock className="w-4 h-4 text-primary" /> },
     { value: 'module', label: '📚 Par Module (A-Z)', badge: 'Module', icon: <BookOpen className="w-4 h-4 text-emerald-500" /> },
-    { value: 'professor', label: '👨‍🏫 Par Enseignant (A-Z)', badge: 'Prof', icon: <User className="w-4 h-4 text-blue-500" /> },
+    { value: 'professor', label: '👨‍🏫 Par Enseignant (A-Z)', badge: 'Prof', icon: <User className="w-4 h-4 text-primary" /> },
     { value: 'group', label: '👥 Par Groupe (A-Z)', badge: 'Groupe', icon: <Users className="w-4 h-4 text-purple-500" /> },
     { value: 'room', label: '🏛️ Par Salle (A-Z)', badge: 'Salle', icon: <Building2 className="w-4 h-4 text-amber-500" /> },
   ];
 
   return (
-    <div className="space-y-6 pb-24 animate-in fade-in max-w-[1700px] mx-auto p-4 md:p-8 font-sans">
+    <div className="space-y-6 pb-24 animate-in fade-in max-w-[1700px] mx-auto font-sans">
 
       {/* ── 🌟 Hero Executive Banner (ENCG Deep Navy Branding) ─────────────────────── */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#061330] via-[#0f2863] to-[#1e3a8a] p-6 md:p-8 text-white shadow-xl border border-blue-900/40">
+      <div className="relative overflow-hidden p-6 md:p-8 text-white border border-blue-900/40 erp-page-banner">
         <div className="absolute -top-24 -end-24 w-96 h-96 rounded-full bg-blue-500/10 blur-3xl pointer-events-none" />
         <div className="absolute -bottom-20 -start-20 w-80 h-80 rounded-full bg-indigo-500/15 blur-3xl pointer-events-none" />
 
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
           <div className="space-y-2.5 max-w-3xl">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/20 border border-blue-400/30 text-blue-200 text-[11px] font-black uppercase tracking-wider backdrop-blur-md">
+              <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/20 border border-blue-400/30 text-blue-200 text-[11px] font-bold uppercase tracking-wider backdrop-blur-md">
                 <Cpu className="w-3.5 h-3.5 text-blue-400" /> Solveur CSP & Optimisation IA
               </span>
-              <span className="flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-[11px] font-extrabold uppercase tracking-wider">
+              <span className="flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-[11px] font-bold uppercase tracking-wider">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> Zéro Conflit Garanti
               </span>
               <span className="px-2.5 py-0.5 rounded-full bg-white/10 text-slate-300 text-[10px] font-bold">
@@ -597,7 +597,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
               </span>
             </div>
 
-            <h1 className="text-xl md:text-3xl font-black tracking-tight text-white flex items-center gap-2.5">
+            <h1 className="text-white flex items-center gap-2.5 erp-page-title">
               <span>Générateur Intelligent des Emplois du Temps</span>
               <Sparkles className="w-6 h-6 text-amber-300 animate-pulse hidden sm:inline" />
             </h1>
@@ -631,14 +631,14 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
       </div>
 
       {/* ── 🧭 Segmented Navigation Tabs ────────────────────────────────────────── */}
-      <div className="flex items-center gap-2 bg-white dark:bg-slate-900 p-1.5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs overflow-x-auto">
+      <div className="flex items-center gap-2 bg-card dark:bg-card p-1.5 rounded-2xl border border-slate-200/80 dark:border-border shadow-xs overflow-x-auto">
         <button
           onClick={() => setActiveTab('generator')}
           className={cn(
-            "flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap",
+            "flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap",
             activeTab === 'generator'
               ? "bg-[#0f2863] text-white shadow-sm"
-              : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900"
+              : "text-muted-foreground dark:text-muted-foreground hover:bg-muted dark:hover:bg-slate-800 hover:text-foreground"
           )}
         >
           <Cpu className="w-4 h-4 text-blue-400" />
@@ -648,10 +648,10 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
         <button
           onClick={() => setActiveTab('manual_board')}
           className={cn(
-            "flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap",
+            "flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap",
             activeTab === 'manual_board'
               ? "bg-[#0f2863] text-white shadow-sm"
-              : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900"
+              : "text-muted-foreground dark:text-muted-foreground hover:bg-muted dark:hover:bg-slate-800 hover:text-foreground"
           )}
         >
           <Hand className="w-4 h-4 text-amber-400" />
@@ -661,10 +661,10 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
         <button
           onClick={() => setActiveTab('matrix')}
           className={cn(
-            "flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap",
+            "flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap",
             activeTab === 'matrix'
               ? "bg-[#0f2863] text-white shadow-sm"
-              : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900"
+              : "text-muted-foreground dark:text-muted-foreground hover:bg-muted dark:hover:bg-slate-800 hover:text-foreground"
           )}
         >
           <Grid className="w-4 h-4 text-emerald-400" />
@@ -680,26 +680,26 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
 
           {/* 📊 High-End KPI Metric Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-xs flex items-center justify-between">
+            <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl p-5 shadow-xs flex items-center justify-between">
               <div className="space-y-1">
-                <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider">Séances Programmées</p>
-                <p className="text-2xl font-black text-slate-900 dark:text-white">
+                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Séances Programmées</p>
+                <p className="text-2xl font-bold text-foreground dark:text-white">
                   {scheduledSessions.length > 0 ? scheduledSessions.length : (conflictData?.total_scanned ?? 0)}
                   <span className="text-xs font-bold text-slate-400 ml-1.5">séances</span>
                 </p>
-                <p className="text-[10px] text-blue-600 dark:text-blue-400 font-bold">
+                <p className="text-[10px] text-primary dark:text-blue-400 font-bold">
                   {selectedSemester === 'odd' ? '🍂 Automne S1/S3/S5/S7' : selectedSemester === 'even' ? '🌸 Printemps S2/S4/S6/S8' : '🎓 Période active'}
                 </p>
               </div>
-              <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 border border-blue-100 dark:border-blue-900/40">
+              <div className="w-12 h-12 rounded-2xl bg-primary/5 dark:bg-blue-950/60 text-primary dark:text-blue-400 flex items-center justify-center shrink-0 border border-primary/20 dark:border-blue-900/40">
                 <Calendar className="w-6 h-6" />
               </div>
             </div>
 
-            <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-xs flex items-center justify-between">
+            <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl p-5 shadow-xs flex items-center justify-between">
               <div className="space-y-1">
-                <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider">Score d'Optimisation</p>
-                <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
+                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Score d'Optimisation</p>
+                <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
                   {generatedData?.optimization_score ?? (conflictsCount === 0 ? 100 : Math.max(65, 100 - conflictsCount * 2))}%
                 </p>
                 <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
@@ -711,24 +711,24 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
               </div>
             </div>
 
-            <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-xs flex items-center justify-between">
+            <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl p-5 shadow-xs flex items-center justify-between">
               <div className="space-y-1">
-                <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider">Salles & Amphis</p>
-                <p className="text-2xl font-black text-indigo-600 dark:text-indigo-400">
+                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Salles & Amphis</p>
+                <p className="text-2xl font-bold text-primary dark:text-indigo-400">
                   {generatedData?.rooms_utilized_count ?? 18}
                   <span className="text-xs font-bold text-slate-400 ml-1.5">salles</span>
                 </p>
-                <p className="text-[10px] text-slate-500 font-semibold">Amphis, TD & Salles info</p>
+                <p className="text-[10px] text-muted-foreground font-semibold">Amphis, TD & Salles info</p>
               </div>
-              <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 border border-indigo-100 dark:border-indigo-900/40">
+              <div className="w-12 h-12 rounded-2xl bg-primary/5 dark:bg-indigo-950/60 text-primary dark:text-indigo-400 flex items-center justify-center shrink-0 border border-primary/20 dark:border-indigo-900/40">
                 <Building2 className="w-6 h-6" />
               </div>
             </div>
 
-            <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-xs flex items-center justify-between">
+            <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl p-5 shadow-xs flex items-center justify-between">
               <div className="space-y-1">
-                <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider">Conflits d'Horaires</p>
-                <p className={cn("text-2xl font-black", conflictsCount === 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600")}>
+                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Conflits d'Horaires</p>
+                <p className={cn("text-2xl font-bold", conflictsCount === 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600")}>
                   {conflictsCount}
                   <span className="text-xs font-bold text-slate-400 ml-1.5">{conflictsCount <= 1 ? 'conflit' : 'conflits'}</span>
                 </p>
@@ -751,20 +751,20 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
             {/* Left Column: Paramètres du Solveur IA (5 Cols) with CustomSelect */}
-            <div className="lg:col-span-5 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-xs space-y-5">
-              <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 dark:border-slate-800">
+            <div className="lg:col-span-5 bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl p-6 shadow-xs space-y-5">
+              <div className="flex items-center justify-between pb-3.5 border-b border-border dark:border-border">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-[#0f2863] text-white flex items-center justify-center font-black">
+                  <div className="w-8 h-8 rounded-xl bg-[#0f2863] text-white flex items-center justify-center font-bold">
                     <Sliders className="w-4 h-4 text-blue-300" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-black text-slate-900 dark:text-white">
+                    <h3 className="text-sm font-bold text-foreground dark:text-white">
                       Paramètres du Solveur CSP
                     </h3>
                     <p className="text-[10px] text-slate-400">Règles académiques et heuristiques</p>
                   </div>
                 </div>
-                <span className="px-2 py-0.5 bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 rounded-lg text-[9px] font-black uppercase">
+                <span className="px-2 py-0.5 bg-primary/5 dark:bg-blue-950/60 text-primary dark:text-blue-300 border border-primary/20 dark:border-primary rounded-lg text-[9px] font-bold uppercase">
                   LMD Maroc
                 </span>
               </div>
@@ -773,10 +773,10 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                 {/* 1. Semestre & Période */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <label className="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                    <label className="block text-[10px] font-bold text-muted-foreground dark:text-muted-foreground uppercase tracking-wider">
                       1. Période & Semestre Cible :
                     </label>
-                    <span className="text-[10px] font-extrabold text-blue-600 dark:text-blue-400">
+                    <span className="text-[10px] font-bold text-primary dark:text-blue-400">
                       {selectedSemester === 'odd' ? '🍂 Automne S1/S3/S5/S7' :
                        selectedSemester === 'even' ? '🌸 Printemps S2/S4/S6/S8' :
                        selectedSemester === 'all' ? '🎓 Année Complète' :
@@ -793,7 +793,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                         "py-2 px-2 rounded-xl text-xs font-bold border transition-all cursor-pointer text-center",
                         selectedSemester === 'odd'
                           ? "bg-[#0f2863] text-white border-[#0f2863] shadow-xs"
-                          : "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100"
+                          : "bg-muted/50 dark:bg-card border-border dark:border-border text-slate-700 dark:text-foreground hover:bg-muted"
                       )}
                     >
                       🍂 Automne
@@ -806,7 +806,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                         "py-2 px-2 rounded-xl text-xs font-bold border transition-all cursor-pointer text-center",
                         selectedSemester === 'even'
                           ? "bg-[#0f2863] text-white border-[#0f2863] shadow-xs"
-                          : "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100"
+                          : "bg-muted/50 dark:bg-card border-border dark:border-border text-slate-700 dark:text-foreground hover:bg-muted"
                       )}
                     >
                       🌸 Printemps
@@ -819,7 +819,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                         "py-2 px-2 rounded-xl text-xs font-bold border transition-all cursor-pointer text-center",
                         selectedSemester === 'all'
                           ? "bg-[#0f2863] text-white border-[#0f2863] shadow-xs"
-                          : "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100"
+                          : "bg-muted/50 dark:bg-card border-border dark:border-border text-slate-700 dark:text-foreground hover:bg-muted"
                       )}
                     >
                       🎓 Annuel
@@ -837,7 +837,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
 
                 {/* 2. Filière Cible */}
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+                  <label className="block text-[10px] font-bold text-muted-foreground dark:text-muted-foreground uppercase tracking-wider mb-1.5">
                     2. Filière Académique :
                   </label>
                   <CustomSelect
@@ -851,7 +851,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
 
                 {/* 3. Stratégie Heuristique */}
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+                  <label className="block text-[10px] font-bold text-muted-foreground dark:text-muted-foreground uppercase tracking-wider mb-1.5">
                     3. Stratégie Heuristique (Solveur) :
                   </label>
                   <CustomSelect
@@ -864,13 +864,13 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                 </div>
 
                 {/* CSP Weight Sliders */}
-                <div className="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl space-y-3.5 border border-slate-200/80 dark:border-slate-700">
-                  <div className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                <div className="p-4 bg-muted/50 dark:bg-slate-800/60 rounded-2xl space-y-3.5 border border-slate-200/80 dark:border-border">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                     4. Poids d'Optimisation des Ressources :
                   </div>
 
                   <div>
-                    <div className="flex items-center justify-between text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
+                    <div className="flex items-center justify-between text-xs font-bold text-foreground dark:text-foreground mb-1">
                       <span className="flex items-center gap-1.5"><Leaf className="w-3.5 h-3.5 text-emerald-500" /> Économie d'Énergie Bâtiments</span>
                       <span className="font-mono text-emerald-600 font-bold bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded text-[11px]">{energyWeight}%</span>
                     </div>
@@ -885,9 +885,9 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                   </div>
 
                   <div>
-                    <div className="flex items-center justify-between text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
-                      <span className="flex items-center gap-1.5"><User className="w-3.5 h-3.5 text-indigo-500" /> Disponibilité des Professeurs</span>
-                      <span className="font-mono text-indigo-600 font-bold bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded text-[11px]">{profAvailWeight}%</span>
+                    <div className="flex items-center justify-between text-xs font-bold text-foreground dark:text-foreground mb-1">
+                      <span className="flex items-center gap-1.5"><User className="w-3.5 h-3.5 text-primary" /> Disponibilité des Professeurs</span>
+                      <span className="font-mono text-primary font-bold bg-primary/5 dark:bg-indigo-950/60 px-2 py-0.5 rounded text-[11px]">{profAvailWeight}%</span>
                     </div>
                     <input
                       type="range"
@@ -900,7 +900,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                   </div>
 
                   <div>
-                    <div className="flex items-center justify-between text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
+                    <div className="flex items-center justify-between text-xs font-bold text-foreground dark:text-foreground mb-1">
                       <span className="flex items-center gap-1.5"><Building2 className="w-3.5 h-3.5 text-purple-500" /> Regroupement Bâtiments</span>
                       <span className="font-mono text-purple-600 font-bold bg-purple-50 dark:bg-purple-950/60 px-2 py-0.5 rounded text-[11px]">{buildingWeight}%</span>
                     </div>
@@ -917,37 +917,37 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
 
                 {/* Heuristic Toggles */}
                 <div className="space-y-2 pt-0.5">
-                  <label className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl cursor-pointer border border-slate-200/80 dark:border-slate-700 hover:bg-slate-100 transition-colors">
+                  <label className="flex items-center gap-3 p-3 bg-muted/50 dark:bg-slate-800/60 rounded-xl cursor-pointer border border-slate-200/80 dark:border-border hover:bg-muted transition-colors">
                     <input
                       type="checkbox"
                       checked={avoidSaturday}
                       onChange={(e) => setAvoidSaturday(e.target.checked)}
-                      className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500"
+                      className="w-4 h-4 rounded text-primary focus:ring-ring"
                     />
                     <div className="text-xs">
-                      <span className="font-bold text-slate-800 dark:text-slate-200 block">Samedi Après-Midi Libre</span>
+                      <span className="font-bold text-foreground dark:text-foreground block">Samedi Après-Midi Libre</span>
                       <span className="text-[10px] text-slate-400">Préservation des week-ends étudiants et profs</span>
                     </div>
                   </label>
 
-                  <label className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl cursor-pointer border border-slate-200/80 dark:border-slate-700 hover:bg-slate-100 transition-colors">
+                  <label className="flex items-center gap-3 p-3 bg-muted/50 dark:bg-slate-800/60 rounded-xl cursor-pointer border border-slate-200/80 dark:border-border hover:bg-muted transition-colors">
                     <input
                       type="checkbox"
                       checked={preferMorning}
                       onChange={(e) => setPreferMorning(e.target.checked)}
-                      className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500"
+                      className="w-4 h-4 rounded text-primary focus:ring-ring"
                     />
                     <div className="text-xs">
-                      <span className="font-bold text-slate-800 dark:text-slate-200 block">Priorité Cours Magistraux le Matin</span>
+                      <span className="font-bold text-foreground dark:text-foreground block">Priorité Cours Magistraux le Matin</span>
                       <span className="text-[10px] text-slate-400">Amphis programmés de 08h30 à 12h15</span>
                     </div>
                   </label>
                 </div>
 
                 {/* 5. Affectation des Salles Dédiées par Département / Filière */}
-                <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                <div className="space-y-2 pt-2 border-t border-border dark:border-border">
                   <div className="flex items-center justify-between">
-                    <label className="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                    <label className="block text-[10px] font-bold text-muted-foreground dark:text-muted-foreground uppercase tracking-wider">
                       5. Salles Dédiées par Filière :
                     </label>
                     <button
@@ -956,24 +956,24 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                         setResourceModalTab('rooms');
                         setShowDedicatedRoomsModal(true);
                       }}
-                      className="text-[10px] font-black text-blue-600 dark:text-blue-400 hover:underline cursor-pointer flex items-center gap-1"
+                      className="text-[10px] font-bold text-primary dark:text-blue-400 hover:underline cursor-pointer flex items-center gap-1"
                     >
                       <Sliders className="w-3 h-3" /> Configurer
                     </button>
                   </div>
 
-                  <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200/80 dark:border-slate-700">
+                  <div className="p-3 bg-muted/50 dark:bg-slate-800/60 rounded-xl border border-slate-200/80 dark:border-border">
                     {Object.keys(dedicatedRooms).length > 0 ? (
                       <div className="space-y-1.5">
                         {Object.entries(dedicatedRooms).map(([filCode, rNames]) => (
                           <div key={filCode} className="flex items-center justify-between text-xs">
-                            <span className="font-black text-slate-800 dark:text-slate-200 px-2 py-0.5 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-[10px]">
+                            <span className="font-bold text-foreground dark:text-foreground px-2 py-0.5 rounded bg-card dark:bg-card border border-border dark:border-border text-[10px]">
                               {filCode}
                             </span>
                             <div className="flex items-center gap-1 flex-wrap justify-end">
                               {rNames.length > 0 ? (
                                 rNames.map(rName => (
-                                  <span key={rName} className="px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 font-extrabold text-[10px] border border-blue-200/60 dark:border-blue-900/40">
+                                  <span key={rName} className="px-2 py-0.5 rounded-md bg-primary/5 dark:bg-blue-950/60 text-primary dark:text-blue-300 font-bold text-[10px] border border-blue-200/60 dark:border-blue-900/40">
                                     🏛️ {rName}
                                   </span>
                                 ))
@@ -985,7 +985,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                         ))}
                       </div>
                     ) : (
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400 italic leading-relaxed">
+                      <p className="text-[11px] text-muted-foreground dark:text-muted-foreground italic leading-relaxed">
                         ✨ Attribution automatique : Le solveur sélectionne directement les amphis et salles de cours de la base selon les effectifs et capacités réelles.
                       </p>
                     )}
@@ -993,9 +993,9 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                 </div>
 
                 {/* 6. Affectation des Professeurs par Filière */}
-                <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                <div className="space-y-2 pt-2 border-t border-border dark:border-border">
                   <div className="flex items-center justify-between">
-                    <label className="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                    <label className="block text-[10px] font-bold text-muted-foreground dark:text-muted-foreground uppercase tracking-wider">
                       6. Professeurs par Filière :
                     </label>
                     <button
@@ -1004,18 +1004,18 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                         setResourceModalTab('professors');
                         setShowDedicatedRoomsModal(true);
                       }}
-                      className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer flex items-center gap-1"
+                      className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer flex items-center gap-1"
                     >
                       <Sliders className="w-3 h-3" /> Configurer
                     </button>
                   </div>
 
-                  <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200/80 dark:border-slate-700">
+                  <div className="p-3 bg-muted/50 dark:bg-slate-800/60 rounded-xl border border-slate-200/80 dark:border-border">
                     {Object.keys(dedicatedProfessors).length > 0 ? (
                       <div className="space-y-1.5">
                         {Object.entries(dedicatedProfessors).map(([filCode, pNames]) => (
                           <div key={filCode} className="flex items-center justify-between text-xs">
-                            <span className="font-black text-slate-800 dark:text-slate-200 px-2 py-0.5 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-[10px]">
+                            <span className="font-bold text-foreground dark:text-foreground px-2 py-0.5 rounded bg-card dark:bg-card border border-border dark:border-border text-[10px]">
                               {filCode}
                             </span>
                             <div className="flex items-center gap-1 flex-wrap justify-end">
@@ -1023,7 +1023,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                                 pNames.map(pName => {
                                   const shortName = pName.split(' ')[0] + ' ' + (pName.split(' ')[1] ? pName.split(' ')[1][0] + '.' : '');
                                   return (
-                                    <span key={pName} className="px-1.5 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-extrabold text-[10px] border border-emerald-200/60 dark:border-emerald-900/40" title={pName}>
+                                    <span key={pName} className="px-1.5 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-bold text-[10px] border border-emerald-200/60 dark:border-emerald-900/40" title={pName}>
                                       👨‍🏫 {shortName}
                                     </span>
                                   );
@@ -1036,7 +1036,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                         ))}
                       </div>
                     ) : (
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400 italic leading-relaxed">
+                      <p className="text-[11px] text-muted-foreground dark:text-muted-foreground italic leading-relaxed">
                         ✨ Attribution automatique : L'ensemble des enseignants de la base de données sont affectés selon leurs départements et modules associés.
                       </p>
                     )}
@@ -1044,12 +1044,12 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                 </div>
 
                 {/* ─── 🚀 ACTION BUTTONS (GENERATE & RESET) ─────────────────── */}
-                <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-2.5">
+                <div className="pt-3 border-t border-border dark:border-border flex flex-col gap-2.5">
                   <button
                     type="button"
                     onClick={() => generateMutation.mutate()}
                     disabled={generateMutation.isPending}
-                    className="w-full py-3 px-5 bg-gradient-to-r from-indigo-600 via-blue-700 to-[#0f2863] hover:from-indigo-700 hover:to-blue-800 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-md hover:shadow-indigo-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                    className="w-full py-3 px-5 bg-gradient-to-r from-indigo-600 via-blue-700 to-[#0f2863] hover:from-indigo-700 hover:to-blue-800 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-md hover:shadow-indigo-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                   >
                     {generateMutation.isPending ? (
                       <RefreshCw className="w-4 h-4 animate-spin text-white" />
@@ -1063,15 +1063,15 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
             </div>
 
             {/* Right Column: Live Conflict Scanner & Campus Room Radar (7 Cols) */}
-            <div className="lg:col-span-7 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-xs flex flex-col justify-between space-y-6">
+            <div className="lg:col-span-7 bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl p-6 shadow-xs flex flex-col justify-between space-y-6">
 
               <div className="space-y-4">
                 {/* Header with status badge & Refresh button */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-border dark:border-border">
                   <div className="flex items-center gap-3">
                     <div className={cn("w-3 h-3 rounded-full", conflictsCount === 0 ? "bg-emerald-500 animate-pulse" : "bg-rose-500 animate-ping")} />
                     <div>
-                      <h3 className="text-sm font-black text-slate-900 dark:text-white">
+                      <h3 className="text-sm font-bold text-foreground dark:text-white">
                         Scanner de Conflits & Disponibilité en Temps Réel
                       </h3>
                       <p className="text-[11px] text-slate-400">
@@ -1083,7 +1083,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                   <button
                     onClick={() => refetchConflicts()}
                     disabled={isScanning}
-                    className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 transition-all flex items-center gap-1.5 self-end sm:self-auto cursor-pointer"
+                    className="px-3.5 py-1.5 bg-muted hover:bg-slate-200 dark:bg-card rounded-xl text-xs font-bold text-slate-700 dark:text-foreground transition-all flex items-center gap-1.5 self-end sm:self-auto cursor-pointer"
                   >
                     <RefreshCw className={cn("w-3.5 h-3.5", isScanning && "animate-spin")} />
                     <span>Actualiser</span>
@@ -1098,60 +1098,60 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                         <ShieldCheck className="w-6 h-6 text-emerald-600" />
                       </div>
                       <div className="space-y-0.5">
-                        <h4 className="font-black text-slate-900 dark:text-white text-sm">
+                        <h4 className="font-bold text-foreground dark:text-white text-sm">
                           Zéro Conflit Détecté dans la Base de Données
                         </h4>
-                        <p className="text-xs text-slate-500 max-w-md mx-auto">
+                        <p className="text-xs text-muted-foreground max-w-md mx-auto">
                           Toutes les salles, professeurs et groupes sont synchronisés sans aucun chevauchement horaire.
                         </p>
                       </div>
                     </div>
 
                     {/* Live Campus Room Occupancy Radar (100% Réel de la BDD) */}
-                    <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200/80 dark:border-slate-700 space-y-3">
-                      <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
-                        <span className="flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-slate-500 font-black">
+                    <div className="p-4 bg-muted/50 dark:bg-slate-800/50 rounded-2xl border border-slate-200/80 dark:border-border space-y-3">
+                      <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-foreground">
+                        <span className="flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-muted-foreground font-bold">
                           🏛️ Radar des Espaces & Salles (BDD) :
                         </span>
-                        <span className="text-[10px] font-extrabold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded">
+                        <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded">
                           {campusRoomsList.length} Salle{campusRoomsList.length > 1 ? 's' : ''} en Base de Données
                         </span>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                        <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-700 space-y-1">
+                        <div className="p-3 bg-card dark:bg-card rounded-xl border border-slate-200/80 dark:border-border space-y-1">
                           <div className="text-[10px] font-bold text-slate-400 uppercase">Amphithéâtres ({campusAmphis.length})</div>
-                          <div className="text-xs font-black text-slate-900 dark:text-white flex items-center justify-between">
+                          <div className="text-xs font-bold text-foreground dark:text-white flex items-center justify-between">
                             <span className="truncate" title={campusAmphis.map((r: any) => r.name).join(', ')}>
                               {campusAmphis.length > 0 ? campusAmphis.map((r: any) => r.name).slice(0, 2).join(', ') + (campusAmphis.length > 2 ? '...' : '') : 'Aucun amphi'}
                             </span>
                             <span className="text-emerald-600 text-[10px] shrink-0 ml-1">Opérationnel</span>
                           </div>
-                          <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                          <div className="w-full h-1.5 bg-muted dark:bg-card rounded-full overflow-hidden">
                             <div className="h-full bg-amber-500 rounded-full w-full" />
                           </div>
                         </div>
 
-                        <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-700 space-y-1">
+                        <div className="p-3 bg-card dark:bg-card rounded-xl border border-slate-200/80 dark:border-border space-y-1">
                           <div className="text-[10px] font-bold text-slate-400 uppercase">Salles de TD & Cours ({campusClassrooms.length})</div>
-                          <div className="text-xs font-black text-slate-900 dark:text-white flex items-center justify-between">
+                          <div className="text-xs font-bold text-foreground dark:text-white flex items-center justify-between">
                             <span>{campusClassrooms.length} Salles de cours</span>
                             <span className="text-emerald-600 text-[10px]">Disponible</span>
                           </div>
-                          <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                            <div className="h-full bg-blue-500 rounded-full w-full" />
+                          <div className="w-full h-1.5 bg-muted dark:bg-card rounded-full overflow-hidden">
+                            <div className="h-full bg-primary rounded-full w-full" />
                           </div>
                         </div>
 
-                        <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-700 space-y-1">
+                        <div className="p-3 bg-card dark:bg-card rounded-xl border border-slate-200/80 dark:border-border space-y-1">
                           <div className="text-[10px] font-bold text-slate-400 uppercase">Labos Informatique ({campusLabs.length})</div>
-                          <div className="text-xs font-black text-slate-900 dark:text-white flex items-center justify-between">
+                          <div className="text-xs font-bold text-foreground dark:text-white flex items-center justify-between">
                             <span className="truncate" title={campusLabs.map((r: any) => r.name).join(', ')}>
                               {campusLabs.length > 0 ? campusLabs.map((r: any) => r.name).slice(0, 2).join(', ') + (campusLabs.length > 2 ? '...' : '') : 'Aucun labo'}
                             </span>
                             <span className="text-emerald-600 text-[10px] shrink-0 ml-1">Prêt</span>
                           </div>
-                          <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                          <div className="w-full h-1.5 bg-muted dark:bg-card rounded-full overflow-hidden">
                             <div className="h-full bg-purple-500 rounded-full w-full" />
                           </div>
                         </div>
@@ -1167,10 +1167,10 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                           <AlertTriangle className="w-5 h-5" />
                         </div>
                         <div>
-                          <h4 className="font-black text-xs text-slate-900 dark:text-white">
+                          <h4 className="font-bold text-xs text-foreground dark:text-white">
                             {conflictsCount} Anomalies de Planification Détectées
                           </h4>
-                          <p className="text-[11px] text-slate-500 mt-0.5">
+                          <p className="text-[11px] text-muted-foreground mt-0.5">
                             Des séances partagent le même créneau horaire ou la même salle physique.
                           </p>
                         </div>
@@ -1179,7 +1179,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                       <button
                         onClick={() => resolveAllMutation.mutate()}
                         disabled={resolveAllMutation.isPending}
-                        className="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:opacity-95 text-slate-950 font-black rounded-xl text-xs uppercase tracking-wider shadow-sm flex items-center gap-1.5 shrink-0 cursor-pointer self-end sm:self-auto"
+                        className="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:opacity-95 text-slate-950 font-bold rounded-xl text-xs uppercase tracking-wider shadow-sm flex items-center gap-1.5 shrink-0 cursor-pointer self-end sm:self-auto"
                       >
                         {resolveAllMutation.isPending ? (
                           <RefreshCw className="w-3.5 h-3.5 animate-spin text-slate-950" />
@@ -1199,19 +1199,19 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                             className="p-3.5 bg-rose-50/60 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/60 rounded-xl space-y-1.5 hover:shadow-xs transition-all"
                           >
                             <div className="flex items-center justify-between">
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-rose-100 dark:bg-rose-900/60 text-rose-800 dark:text-rose-200 text-[10px] font-black uppercase">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-rose-100 dark:bg-rose-900/60 text-rose-800 dark:text-rose-200 text-[10px] font-bold uppercase">
                                 <AlertTriangle className="w-3 h-3 text-rose-600" />
                                 {conf.type_label || 'Conflit Horaire'}
                               </span>
 
-                              <div className="text-[10px] font-bold text-slate-500">
+                              <div className="text-[10px] font-bold text-muted-foreground">
                                 🕒 {conf.day_name || DAY_NAMES_MAP[conf.day_of_week] || 'Jour'} • {conf.start_time} - {conf.end_time}
                               </div>
 
                               <button
                                 onClick={() => resolveMutation.mutate(conf.schedule_id)}
                                 disabled={resolveMutation.isPending}
-                                className="px-2.5 py-1 bg-white dark:bg-slate-900 border border-rose-300 dark:border-rose-700 text-rose-700 dark:text-rose-300 rounded-lg text-[10px] font-bold hover:bg-rose-50 transition-colors flex items-center gap-1 cursor-pointer"
+                                className="px-2.5 py-1 bg-card dark:bg-card border border-rose-300 dark:border-rose-700 text-rose-700 dark:text-rose-300 rounded-lg text-[10px] font-bold hover:bg-rose-50 transition-colors flex items-center gap-1 cursor-pointer"
                               >
                                 <Wand2 className="w-3 h-3" />
                                 <span>Résoudre</span>
@@ -1219,10 +1219,10 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                             </div>
 
                             <div className="space-y-0.5">
-                              <div className="text-xs font-black text-slate-900 dark:text-white">
-                                📚 {conf.module_name || 'Module Pédagogique'} • <span className="text-blue-600 dark:text-blue-400 font-bold">{conf.group_name || 'Section / Groupe'}</span>
+                              <div className="text-xs font-bold text-foreground dark:text-white">
+                                📚 {conf.module_name || 'Module Pédagogique'} • <span className="text-primary dark:text-blue-400 font-bold">{conf.group_name || 'Section / Groupe'}</span>
                               </div>
-                              <div className="text-[10px] text-slate-500 flex flex-wrap items-center gap-3">
+                              <div className="text-[10px] text-muted-foreground flex flex-wrap items-center gap-3">
                                 <span>📍 <strong>Salle :</strong> {conf.room_name || 'Non assignée'}</span>
                                 <span>👤 <strong>Professeur :</strong> {conf.professor_name || 'Non assigné'}</span>
                               </div>
@@ -1240,15 +1240,15 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
 
               {/* Action Save to Database */}
               {scheduledSessions.length > 0 && (
-                <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-emerald-500/5 dark:bg-emerald-950/20 p-4 rounded-2xl border border-emerald-200/60 dark:border-emerald-900/40">
-                  <div className="text-xs text-slate-700 dark:text-slate-300">
-                    Grille calculée : <strong className="text-emerald-700 dark:text-emerald-400 font-black">{scheduledSessions.length} séances prêtes à être déployées</strong> en base de données.
+                <div className="pt-4 border-t border-border dark:border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-emerald-500/5 dark:bg-emerald-950/20 p-4 rounded-2xl border border-emerald-200/60 dark:border-emerald-900/40">
+                  <div className="text-xs text-slate-700 dark:text-foreground">
+                    Grille calculée : <strong className="text-emerald-700 dark:text-emerald-400 font-bold">{scheduledSessions.length} séances prêtes à être déployées</strong> en base de données.
                   </div>
                   <button
                     type="button"
                     onClick={() => applyMutation.mutate(scheduledSessions)}
                     disabled={applyMutation.isPending}
-                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-800 text-white font-black text-xs uppercase tracking-wider shadow-md hover:shadow-emerald-500/25 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-800 text-white font-bold text-xs uppercase tracking-wider shadow-md hover:shadow-emerald-500/25 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
                   >
                     {applyMutation.isPending ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4 text-emerald-200" />}
                     <span>{applyMutation.isPending ? 'Déploiement en cours...' : 'Déployer en Base de Données 💾'}</span>
@@ -1260,16 +1260,16 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
 
           {/* Schedule Preview Grid (When AI has generated a proposal OR active database schedules exist) */}
           {scheduledSessions.length > 0 && (
-            <div className="bg-card border border-border rounded-3xl p-6 md:p-8 shadow-sm space-y-6">
+            <div className="bg-card border border-border rounded-2xl p-6 md:p-8 shadow-sm space-y-6">
               {/* Header */}
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-border">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="text-lg font-black text-foreground">
+                    <h3 className="text-lg font-bold text-foreground">
                       Aperçu de la Grille Optimisée par l'IA
                     </h3>
                     <span className={cn(
-                      "px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wide border",
+                      "px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide border",
                       generatedData
                         ? "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-300"
                         : "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-300"
@@ -1288,7 +1288,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                       type="button"
                       onClick={() => applyMutation.mutate(scheduledSessions)}
                       disabled={applyMutation.isPending}
-                      className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-wider shadow-sm transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                      className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider shadow-sm transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                     >
                       {applyMutation.isPending ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
                       <span>Déployer ({scheduledSessions.length})</span>
@@ -1305,34 +1305,34 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                   </div>
                   <div className="space-y-0.5">
                     <div className="flex items-center gap-2">
-                      <span className="font-black text-slate-900 dark:text-white uppercase tracking-wider text-[11px]">
+                      <span className="font-bold text-foreground dark:text-white uppercase tracking-wider text-[11px]">
                         Règle Pédagogique ENCG Fès (Structure & Calendrier Officiel)
                       </span>
-                      <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-200 rounded text-[9px] font-black uppercase">
+                      <span className="px-2 py-0.5 bg-primary/10 dark:bg-blue-950 text-primary dark:text-blue-200 rounded text-[9px] font-bold uppercase">
                         Norme USMBA
                       </span>
                     </div>
-                    <p className="text-slate-600 dark:text-slate-400 text-[11px] leading-relaxed">
+                    <p className="text-muted-foreground dark:text-muted-foreground text-[11px] leading-relaxed">
                       Démarrage des <strong>Cours Magistraux (CM • Section en Amphithéâtre)</strong> dès la semaine <strong>S1</strong> (mi-septembre) • Démarrage des <strong>Travaux Dirigés (TD • Sous-groupes en Salle de classe)</strong> à partir de la semaine <strong>S4</strong> (+3 semaines).
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
-                  <span className="px-2.5 py-1 rounded-lg bg-amber-500/15 text-amber-800 dark:text-amber-300 font-extrabold text-[10px] border border-amber-300/40">
+                  <span className="px-2.5 py-1 rounded-lg bg-amber-500/15 text-amber-800 dark:text-amber-300 font-bold text-[10px] border border-amber-300/40">
                     🏛️ CM • Section entière
                   </span>
-                  <span className="px-2.5 py-1 rounded-lg bg-blue-500/15 text-blue-800 dark:text-blue-300 font-extrabold text-[10px] border border-blue-300/40">
+                  <span className="px-2.5 py-1 rounded-lg bg-blue-500/15 text-primary dark:text-blue-300 font-bold text-[10px] border border-blue-300/40">
                     📝 TD • Sous-groupe
                   </span>
-                  <span className="px-2.5 py-1 rounded-lg bg-purple-500/15 text-purple-800 dark:text-purple-300 font-extrabold text-[10px] border border-purple-300/40">
+                  <span className="px-2.5 py-1 rounded-lg bg-purple-500/15 text-purple-800 dark:text-purple-300 font-bold text-[10px] border border-purple-300/40">
                     💻 TP • Labo PC
                   </span>
                 </div>
               </div>
 
               {/* ── 🔍 Barre de Recherche Multi-Critères (Module / Professeur / Groupe / Salle) ── */}
-              <div className="bg-slate-50/80 dark:bg-slate-900/60 p-4 sm:p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 space-y-3.5">
+              <div className="bg-slate-50/80 dark:bg-slate-900/60 p-4 sm:p-5 rounded-2xl border border-slate-200/80 dark:border-border space-y-3.5">
                 {/* Search Omnibox */}
                 <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
                   <div className="relative flex-1">
@@ -1354,7 +1354,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                           ? "Rechercher par salle ou amphithéâtre..."
                           : "Recherche rapide : module, enseignant, section, salle..."
                       }
-                      className="w-full pl-10 pr-24 py-2.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-xs sm:text-sm font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 shadow-xs transition-all"
+                      className="w-full pl-10 pr-24 py-2.5 bg-card dark:bg-card border border-slate-300 dark:border-border text-xs sm:text-sm font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-primary shadow-xs transition-all rounded-[var(--control-radius)]"
                     />
 
                     {/* Clear X button & result badge inside search input */}
@@ -1363,13 +1363,13 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                         <button
                           type="button"
                           onClick={() => setSearchQuery('')}
-                          className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all cursor-pointer"
+                          className="p-1 rounded-md text-slate-400 hover:text-muted-foreground dark:hover:text-slate-200 hover:bg-muted dark:hover:bg-slate-700 transition-all cursor-pointer"
                           title="Effacer la recherche"
                         >
                           <X className="w-3.5 h-3.5" />
                         </button>
                       )}
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-700 text-[10px] font-bold text-slate-600 dark:text-slate-300">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-muted dark:bg-slate-700 text-[10px] font-bold text-muted-foreground dark:text-foreground">
                         {filteredSessions.length}/{scheduledSessions.length}
                       </span>
                     </div>
@@ -1390,18 +1390,18 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
 
                 {/* ── 🎓 Filtres Rapides par Format Pédagogique (CM / TD / TP) ── */}
                 <div className="flex items-center gap-2 flex-wrap pt-1">
-                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-muted-foreground mr-1 flex items-center gap-1">
-                    <GraduationCap className="w-3.5 h-3.5 text-indigo-500" /> Format :
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mr-1 flex items-center gap-1">
+                    <GraduationCap className="w-3.5 h-3.5 text-primary" /> Format :
                   </span>
 
                   <button
                     type="button"
                     onClick={() => setFormatFilter('all')}
                     className={cn(
-                      "px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5",
+                      "px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5",
                       formatFilter === 'all'
                         ? "bg-[#0f2863] text-white shadow-xs"
-                        : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-100"
+                        : "bg-card dark:bg-card text-muted-foreground dark:text-muted-foreground border border-border dark:border-border hover:bg-muted"
                     )}
                   >
                     <span>Tous les formats</span>
@@ -1412,10 +1412,10 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                     type="button"
                     onClick={() => setFormatFilter('cm')}
                     className={cn(
-                      "px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5",
+                      "px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5",
                       formatFilter === 'cm'
                         ? "bg-amber-600 text-white shadow-xs"
-                        : "bg-white dark:bg-slate-800 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-900/50 hover:bg-amber-50"
+                        : "bg-card dark:bg-card text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-900/50 hover:bg-amber-50"
                     )}
                   >
                     <span>🏛️ CM • Section</span>
@@ -1426,10 +1426,10 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                     type="button"
                     onClick={() => setFormatFilter('td')}
                     className={cn(
-                      "px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5",
+                      "px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5",
                       formatFilter === 'td'
-                        ? "bg-blue-600 text-white shadow-xs"
-                        : "bg-white dark:bg-slate-800 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-900/50 hover:bg-blue-50"
+                        ? "bg-primary text-primary-foreground shadow-xs"
+                        : "bg-card dark:bg-card text-primary dark:text-blue-400 border border-primary/20 dark:border-blue-900/50 hover:bg-primary/5"
                     )}
                   >
                     <span>📝 TD • Sous-groupe</span>
@@ -1440,10 +1440,10 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                     type="button"
                     onClick={() => setFormatFilter('tp')}
                     className={cn(
-                      "px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5",
+                      "px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5",
                       formatFilter === 'tp'
                         ? "bg-purple-600 text-white shadow-xs"
-                        : "bg-white dark:bg-slate-800 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-900/50 hover:bg-purple-50"
+                        : "bg-card dark:bg-card text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-900/50 hover:bg-purple-50"
                     )}
                   >
                     <span>💻 TP • Machine</span>
@@ -1453,8 +1453,8 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
 
                 {/* Scope selector tabs */}
                 <div className="flex items-center gap-1.5 flex-wrap pt-1 border-t border-slate-200/60 dark:border-slate-800/80">
-                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-muted-foreground mr-1 flex items-center gap-1">
-                    <Filter className="w-3 h-3 text-indigo-500" /> Critère ciblé :
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mr-1 flex items-center gap-1">
+                    <Filter className="w-3 h-3 text-primary" /> Critère ciblé :
                   </span>
 
                   <button
@@ -1464,7 +1464,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                       "px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5",
                       searchScope === 'all'
                         ? "bg-[#0f2863] text-white shadow-xs"
-                        : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-100"
+                        : "bg-card dark:bg-card text-muted-foreground dark:text-muted-foreground border border-border dark:border-border hover:bg-muted"
                     )}
                   >
                     <span>Tous les critères</span>
@@ -1476,8 +1476,8 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                     className={cn(
                       "px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5",
                       searchScope === 'module'
-                        ? "bg-indigo-600 text-white shadow-xs"
-                        : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-100"
+                        ? "bg-primary text-primary-foreground shadow-xs"
+                        : "bg-card dark:bg-card text-muted-foreground dark:text-muted-foreground border border-border dark:border-border hover:bg-muted"
                     )}
                   >
                     <BookOpen className="w-3 h-3" />
@@ -1491,7 +1491,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                       "px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5",
                       searchScope === 'professor'
                         ? "bg-emerald-600 text-white shadow-xs"
-                        : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-100"
+                        : "bg-card dark:bg-card text-muted-foreground dark:text-muted-foreground border border-border dark:border-border hover:bg-muted"
                     )}
                   >
                     <User className="w-3 h-3" />
@@ -1505,7 +1505,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                       "px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5",
                       searchScope === 'group'
                         ? "bg-purple-600 text-white shadow-xs"
-                        : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-100"
+                        : "bg-card dark:bg-card text-muted-foreground dark:text-muted-foreground border border-border dark:border-border hover:bg-muted"
                     )}
                   >
                     <Users className="w-3 h-3" />
@@ -1519,7 +1519,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                       "px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5",
                       searchScope === 'room'
                         ? "bg-amber-600 text-white shadow-xs"
-                        : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-100"
+                        : "bg-card dark:bg-card text-muted-foreground dark:text-muted-foreground border border-border dark:border-border hover:bg-muted"
                     )}
                   >
                     <Building2 className="w-3 h-3" />
@@ -1569,12 +1569,12 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
               {/* Filière filter chips */}
               {uniqueFilieres.length > 1 && (
                 <div className="flex items-center gap-2 pt-2 border-t border-border flex-wrap">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground mr-1">Filières :</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mr-1">Filières :</span>
                   <button
                     type="button"
                     onClick={() => setFiliereFilter('all')}
                     className={cn(
-                      "px-3 py-1 rounded-xl text-xs font-black transition-all cursor-pointer",
+                      "px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer",
                       filiereFilter === 'all'
                         ? "bg-[#0f2863] text-white shadow-xs"
                         : "bg-muted text-muted-foreground hover:bg-muted/80"
@@ -1590,9 +1590,9 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                         type="button"
                         onClick={() => setFiliereFilter(fCode)}
                         className={cn(
-                          "px-3 py-1 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5",
+                          "px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5",
                           filiereFilter === fCode
-                            ? "bg-blue-600 text-white shadow-xs"
+                            ? "bg-primary text-primary-foreground shadow-xs"
                             : "bg-muted text-muted-foreground hover:bg-muted/80"
                         )}
                       >
@@ -1606,11 +1606,11 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
 
               {/* Sessions Cards Grid OR Empty State */}
               {filteredSessions.length === 0 ? (
-                <div className="p-12 text-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-3xl space-y-3 bg-muted/20 animate-in fade-in">
+                <div className="p-12 text-center border-2 border-dashed border-border dark:border-border rounded-2xl space-y-3 bg-muted/20 animate-in fade-in">
                   <div className="w-14 h-14 mx-auto rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
                     <SearchX className="w-7 h-7" />
                   </div>
-                  <h4 className="text-base font-black text-foreground">
+                  <h4 className="text-base font-bold text-foreground">
                     Aucune séance ne correspond aux critères
                   </h4>
                   <p className="text-xs text-muted-foreground max-w-md mx-auto leading-relaxed">
@@ -1621,7 +1621,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                   <button
                     type="button"
                     onClick={resetAllFilters}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#0f2863] hover:bg-[#1a3d8f] text-white font-black text-xs uppercase tracking-wider transition-all cursor-pointer shadow-sm"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#0f2863] hover:bg-[#1a3d8f] text-white font-bold text-xs uppercase tracking-wider transition-all cursor-pointer shadow-sm"
                   >
                     <RotateCcw className="w-3.5 h-3.5" />
                     <span>Réinitialiser la recherche & les filtres</span>
@@ -1659,53 +1659,53 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                             ? "border-purple-500/30 hover:border-purple-500"
                             : isLanguage
                             ? "border-emerald-500/30 hover:border-emerald-500"
-                            : "border-blue-500/30 hover:border-blue-500"
+                            : "border-blue-500/30 hover:border-primary"
                         )}
                       >
                         {/* Card Header: Day, Time & Nature Badge */}
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200">
+                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-primary/5 dark:bg-indigo-950/60 text-primary dark:text-indigo-300 border border-primary/20">
                               {session.day_name}
                             </span>
                             {/* Format Badge (CM / TD / TP) */}
                             {isCM ? (
-                              <span className="px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wide border bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-200 border-amber-300">
+                              <span className="px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wide border bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-200 border-amber-300">
                                 🏛️ CM • Section
                               </span>
                             ) : isTP ? (
-                              <span className="px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wide border bg-purple-50 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 border-purple-200">
+                              <span className="px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wide border bg-purple-50 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 border-purple-200">
                                 💻 TP • Labo PC
                               </span>
                             ) : (
-                              <span className="px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wide border bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border-blue-200">
+                              <span className="px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wide border bg-primary/5 dark:bg-blue-950/50 text-primary dark:text-blue-300 border-primary/20">
                                 📝 TD • Sous-groupe
                               </span>
                             )}
                           </div>
 
-                          <span className="text-xs font-black text-foreground font-mono flex items-center gap-1 shrink-0">
-                            <Clock className="w-3.5 h-3.5 text-indigo-600" />
+                          <span className="text-xs font-bold text-foreground font-mono flex items-center gap-1 shrink-0">
+                            <Clock className="w-3.5 h-3.5 text-primary" />
                             {session.start_time} - {session.end_time}
                           </span>
                         </div>
 
                         {/* Module Title & Group Info */}
                         <div>
-                          <h4 className="font-black text-sm text-foreground line-clamp-1">
+                          <h4 className="font-bold text-sm text-foreground line-clamp-1">
                             {highlightMatch(session.module_name, searchQuery)}
                           </h4>
                           <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                            <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400">
+                            <span className="text-[11px] font-bold text-primary dark:text-indigo-400">
                               {highlightMatch(session.group_name, searchQuery)} • {session.filiere_code}
                             </span>
                             <span className={cn(
-                              "text-[10px] font-extrabold px-2 py-0.5 rounded-md flex items-center gap-1 border",
+                              "text-[10px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1 border",
                               isCM
                                 ? "bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 border-amber-200 dark:border-amber-900/50"
                                 : isTP
                                 ? "bg-purple-50 dark:bg-purple-950/40 text-purple-900 dark:text-purple-200 border-purple-200 dark:border-purple-900/50"
-                                : "bg-blue-50 dark:bg-blue-950/40 text-blue-900 dark:text-blue-200 border-blue-200 dark:border-blue-900/50"
+                                : "bg-primary/5 dark:bg-blue-950/40 text-primary dark:text-blue-200 border-primary/20 dark:border-blue-900/50"
                             )}>
                               <Users className="w-3 h-3" />
                               {studentLabel}
@@ -1726,14 +1726,14 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                               ? "bg-purple-50 text-purple-800 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300"
                               : isAmphi
                               ? "bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300"
-                              : "bg-blue-50 text-blue-800 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300"
+                              : "bg-primary/5 text-primary border-primary/20 dark:bg-blue-950/40 dark:text-blue-300"
                           )}>
                             {isLab ? (
                               <Monitor className="w-3.5 h-3.5 text-purple-600" />
                             ) : isAmphi ? (
                               <Building2 className="w-3.5 h-3.5 text-amber-600" />
                             ) : (
-                              <MapPin className="w-3.5 h-3.5 text-blue-600" />
+                              <MapPin className="w-3.5 h-3.5 text-primary" />
                             )}
                             <span>{highlightMatch(session.room_name, searchQuery)}</span>
                           </span>
@@ -1758,7 +1758,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
             <div className="flex items-center gap-3">
               <Hand className="w-6 h-6 text-amber-600 shrink-0" />
               <div>
-                <h4 className="font-black text-xs text-amber-950 dark:text-amber-200">
+                <h4 className="font-bold text-xs text-amber-950 dark:text-amber-200">
                   Studio d'Ajustement Manuel par Glisser-Déposer (Drag & Drop)
                 </h4>
                 <p className="text-[11px] text-amber-800/80 dark:text-amber-400/80">
@@ -1771,9 +1771,9 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
               <button
                 type="button"
                 onClick={() => refetchConflicts()}
-                className="px-3.5 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+                className="px-3.5 py-1.5 rounded-xl bg-card dark:bg-card border border-border dark:border-border text-xs font-bold text-slate-700 dark:text-foreground hover:bg-muted/50 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
               >
-                <RefreshCw className="w-3.5 h-3.5 text-blue-600" />
+                <RefreshCw className="w-3.5 h-3.5 text-primary" />
                 <span>Actualiser la Grille</span>
               </button>
             </div>
@@ -1797,7 +1797,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
             <div className="flex items-center gap-3">
               <Grid className="w-6 h-6 text-emerald-600 shrink-0" />
               <div>
-                <h4 className="font-black text-xs text-emerald-950 dark:text-emerald-200">
+                <h4 className="font-bold text-xs text-emerald-950 dark:text-emerald-200">
                   Matrice Officielle d'Affichage & d'Occupation des Salles
                 </h4>
                 <p className="text-[11px] text-emerald-800/80 dark:text-emerald-400/80">
@@ -1810,9 +1810,9 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
               <button
                 type="button"
                 onClick={() => refetchMatrix()}
-                className="px-3.5 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+                className="px-3.5 py-2 rounded-xl bg-card dark:bg-card border border-border dark:border-border text-xs font-bold text-slate-700 dark:text-foreground hover:bg-muted/50 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
               >
-                <RefreshCw className={cn("w-3.5 h-3.5 text-blue-600", isMatrixFetching && "animate-spin")} />
+                <RefreshCw className={cn("w-3.5 h-3.5 text-primary", isMatrixFetching && "animate-spin")} />
                 <span>Actualiser</span>
               </button>
 
@@ -1821,7 +1821,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                   href={`/api/timetable/export/filiere/${selectedFiliere}/pdf${typeof selectedSemester === 'number' ? `?semester_number=${selectedSemester}` : ''}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="px-3.5 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-xs"
+                  className="px-3.5 py-2 rounded-xl bg-primary/5 hover:bg-primary/10 text-primary dark:bg-indigo-950/60 dark:text-indigo-300 border border-primary/20 dark:border-primary text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-xs"
                 >
                   <FileText className="w-3.5 h-3.5" />
                   <span>Télécharger Filière Active (PDF)</span>
@@ -1832,7 +1832,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                 href={`/api/timetable/export/all/0/pdf${typeof selectedSemester === 'number' ? `?semester_number=${selectedSemester}` : ''}`}
                 target="_blank"
                 rel="noreferrer"
-                className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm"
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm"
               >
                 <FileText className="w-3.5 h-3.5" />
                 <span>📄 Télécharger Toutes les Filières (PDF Global)</span>
@@ -1847,13 +1847,13 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
       {/* ─── 🔴 MODAL CONFIRMATION REMISE À ZÉRO DE L'EMPLOI DU TEMPS ───────── */}
       {showClearModal && (
         <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in">
-          <div className="bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/60 rounded-3xl p-6 md:p-8 max-w-xl w-full shadow-2xl space-y-6">
+          <div className="bg-card dark:bg-card border border-rose-200 dark:border-rose-900/60 rounded-2xl p-6 md:p-8 max-w-xl w-full shadow-sm space-y-6">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 border border-rose-200 dark:border-rose-800">
                 <Trash2 className="w-6 h-6 animate-pulse" />
               </div>
               <div>
-                <h3 className="text-base font-black text-slate-900 dark:text-white">
+                <h3 className="text-base font-bold text-foreground dark:text-white">
                   Remise à Zéro de l'Emploi du Temps
                 </h3>
                 <p className="text-xs text-rose-600 dark:text-rose-400 font-medium">
@@ -1863,15 +1863,15 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
             </div>
 
             {/* Mode Switcher Tabs */}
-            <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700">
+            <div className="flex p-1 bg-muted dark:bg-card rounded-2xl border border-border dark:border-border">
               <button
                 type="button"
                 onClick={() => setClearMode('period')}
                 className={cn(
                   "flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer",
                   clearMode === 'period'
-                    ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs"
-                    : "text-slate-500 hover:text-slate-800 dark:text-slate-400"
+                    ? "bg-card dark:bg-card text-foreground dark:text-white shadow-xs"
+                    : "text-muted-foreground hover:text-foreground dark:text-muted-foreground"
                 )}
               >
                 🍂 Par Période
@@ -1883,8 +1883,8 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                 className={cn(
                   "flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer",
                   clearMode === 'single'
-                    ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs"
-                    : "text-slate-500 hover:text-slate-800 dark:text-slate-400"
+                    ? "bg-card dark:bg-card text-foreground dark:text-white shadow-xs"
+                    : "text-muted-foreground hover:text-foreground dark:text-muted-foreground"
                 )}
               >
                 🎯 Par Semestre (S1 à S10)
@@ -1896,8 +1896,8 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                 className={cn(
                   "flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer",
                   clearMode === 'all'
-                    ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs"
-                    : "text-slate-500 hover:text-slate-800 dark:text-slate-400"
+                    ? "bg-card dark:bg-card text-foreground dark:text-white shadow-xs"
+                    : "text-muted-foreground hover:text-foreground dark:text-muted-foreground"
                 )}
               >
                 🎓 Toute l'Année
@@ -1907,7 +1907,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
             {/* 1. Mode Par Période */}
             {clearMode === 'period' && (
               <div className="space-y-2">
-                <label className="block text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground dark:text-muted-foreground">
                   Sélectionnez la période académique à réinitialiser :
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1917,14 +1917,14 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                     className={cn(
                       "p-3.5 rounded-2xl border text-left transition-all cursor-pointer",
                       clearPeriod === 'odd'
-                        ? "border-blue-600 bg-blue-50/80 dark:bg-blue-950/40 text-blue-950 dark:text-blue-300 ring-2 ring-blue-500/20"
-                        : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 text-slate-700 dark:text-slate-300"
+                        ? "border-primary bg-blue-50/80 dark:bg-blue-950/40 text-blue-950 dark:text-blue-300 ring-2 ring-blue-500/20"
+                        : "border-border dark:border-border bg-card dark:bg-card text-slate-700 dark:text-foreground"
                     )}
                   >
-                    <div className="text-xs font-black flex items-center gap-1.5">
+                    <div className="text-xs font-bold flex items-center gap-1.5">
                       <span>🍂 Semestre 1 / Automne</span>
                     </div>
-                    <div className="text-[10px] text-slate-500 mt-1">
+                    <div className="text-[10px] text-muted-foreground mt-1">
                       Semestres Impairs (S1, S3, S5, S7, S9)
                     </div>
                   </button>
@@ -1936,13 +1936,13 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                       "p-3.5 rounded-2xl border text-left transition-all cursor-pointer",
                       clearPeriod === 'even'
                         ? "border-purple-600 bg-purple-50/80 dark:bg-purple-950/40 text-purple-950 dark:text-purple-300 ring-2 ring-purple-500/20"
-                        : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 text-slate-700 dark:text-slate-300"
+                        : "border-border dark:border-border bg-card dark:bg-card text-slate-700 dark:text-foreground"
                     )}
                   >
-                    <div className="text-xs font-black flex items-center gap-1.5">
+                    <div className="text-xs font-bold flex items-center gap-1.5">
                       <span>🌸 Semestre 2 / Printemps</span>
                     </div>
-                    <div className="text-[10px] text-slate-500 mt-1">
+                    <div className="text-[10px] text-muted-foreground mt-1">
                       Semestres Pairs (S2, S4, S6, S8, S10)
                     </div>
                   </button>
@@ -1953,7 +1953,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
             {/* 2. Mode Par Semestre Précis (S1 à S10) */}
             {clearMode === 'single' && (
               <div className="space-y-2.5">
-                <label className="block text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground dark:text-muted-foreground">
                   Choisissez le semestre exact à remettre à zéro :
                 </label>
                 <div className="grid grid-cols-5 gap-2">
@@ -1967,11 +1967,11 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                         className={cn(
                           "py-3 px-2 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1",
                           isSelected
-                            ? "border-rose-600 bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 ring-2 ring-rose-500/20 font-black shadow-xs"
-                            : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 hover:bg-slate-50 text-slate-700 dark:text-slate-300"
+                            ? "border-rose-600 bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 ring-2 ring-rose-500/20 font-bold shadow-xs"
+                            : "border-border dark:border-border bg-card dark:bg-card hover:bg-muted/50 text-slate-700 dark:text-foreground"
                         )}
                       >
-                        <span className="text-xs font-black">S{sNum}</span>
+                        <span className="text-xs font-bold">S{sNum}</span>
                         <span className="text-[9px] text-slate-400 font-semibold">
                           {sNum <= 4 ? 'TC' : sNum <= 6 ? 'Licence' : 'Master'}
                         </span>
@@ -1979,30 +1979,30 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                     )
                   })}
                 </div>
-                <div className="p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl text-center text-xs font-bold text-slate-700 dark:text-slate-300">
-                  Semestre ciblé : <span className="text-rose-600 dark:text-rose-400 font-extrabold">Semestre S{clearSemesterNumber} ({clearSemesterNumber % 2 === 1 ? 'Automne' : 'Printemps'})</span>
+                <div className="p-2.5 bg-muted/50 dark:bg-slate-800/60 rounded-xl text-center text-xs font-bold text-slate-700 dark:text-foreground">
+                  Semestre ciblé : <span className="text-rose-600 dark:text-rose-400 font-bold">Semestre S{clearSemesterNumber} ({clearSemesterNumber % 2 === 1 ? 'Automne' : 'Printemps'})</span>
                 </div>
               </div>
             )}
 
             {/* 3. Mode Toute l'Année */}
             {clearMode === 'all' && (
-              <div className="p-4 bg-rose-50/70 dark:bg-rose-950/30 rounded-2xl border border-rose-200 dark:border-rose-800/60 text-xs text-slate-700 dark:text-slate-300 space-y-1.5">
-                <p className="font-black text-rose-900 dark:text-rose-200">
+              <div className="p-4 bg-rose-50/70 dark:bg-rose-950/30 rounded-2xl border border-rose-200 dark:border-rose-800/60 text-xs text-slate-700 dark:text-foreground space-y-1.5">
+                <p className="font-bold text-rose-900 dark:text-rose-200">
                   🎓 Réinitialisation globale de toute l'année universitaire
                 </p>
-                <p className="text-[11px] text-slate-600 dark:text-slate-400">
+                <p className="text-[11px] text-muted-foreground dark:text-muted-foreground">
                   Toutes les séances de tous les semestres (S1 à S10), toutes filières confondues, seront effacées pour repartir sur une page 100% vierge.
                 </p>
               </div>
             )}
 
-            <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200/80 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 space-y-1.5">
-              <p className="font-bold text-slate-900 dark:text-slate-200 flex items-center gap-1.5">
+            <div className="p-4 bg-muted/50 dark:bg-slate-800/50 rounded-2xl border border-slate-200/80 dark:border-border text-xs text-muted-foreground dark:text-foreground space-y-1.5">
+              <p className="font-bold text-foreground dark:text-foreground flex items-center gap-1.5">
                 <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
                 Action immédiate
               </p>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+              <p className="text-[11px] text-muted-foreground dark:text-muted-foreground">
                 Les créneaux de séances concernés seront supprimés de la base de données. Vous pourrez ensuite relancer le <strong>Solveur IA</strong> sur le semestre de votre choix.
               </p>
             </div>
@@ -2011,7 +2011,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
               <button
                 onClick={() => clearMutation.mutate()}
                 disabled={clearMutation.isPending}
-                className="w-full py-3.5 px-4 bg-rose-600 hover:bg-rose-700 text-white font-black rounded-2xl text-xs uppercase tracking-wider transition-all shadow-lg cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
+                className="w-full py-3.5 px-4 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-2xl text-xs uppercase tracking-wider transition-all shadow-lg cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 {clearMutation.isPending ? (
                   <RefreshCw className="w-4 h-4 animate-spin text-white" />
@@ -2028,7 +2028,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
 
               <button
                 onClick={() => setShowClearModal(false)}
-                className="w-full py-2.5 text-center text-xs font-bold text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                className="w-full py-2.5 text-center text-xs font-bold text-slate-400 hover:text-muted-foreground dark:hover:text-slate-200 cursor-pointer"
               >
                 Annuler
               </button>
@@ -2040,20 +2040,20 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
       {/* ── 🏛️ Modal: Affectation des Ressources Dédiées (Salles & Professeurs) par Filière ── */}
       {showDedicatedRoomsModal && (
         <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl max-w-3xl w-full p-6 md:p-8 space-y-5 animate-in zoom-in-95">
+          <div className="bg-card dark:bg-card rounded-2xl border border-border dark:border-border shadow-sm max-w-3xl w-full p-6 md:p-8 space-y-5 animate-in zoom-in-95">
 
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+            <div className="flex items-center justify-between pb-4 border-b border-border dark:border-border">
               <div className="flex items-center gap-3">
                 <div className={cn(
-                  "w-10 h-10 rounded-2xl flex items-center justify-center font-black border transition-all",
+                  "w-10 h-10 rounded-2xl flex items-center justify-center font-bold border transition-all",
                   resourceModalTab === 'professors'
                     ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/40"
-                    : "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border-indigo-100 dark:border-indigo-900/40"
+                    : "bg-primary/5 dark:bg-indigo-950/60 text-primary dark:text-indigo-400 border-primary/20 dark:border-indigo-900/40"
                 )}>
                   {resourceModalTab === 'professors' ? <GraduationCap className="w-5 h-5" /> : <Building2 className="w-5 h-5" />}
                 </div>
                 <div>
-                  <h3 className="text-base font-black text-slate-900 dark:text-white">
+                  <h3 className="text-base font-bold text-foreground dark:text-white">
                     Affectation des Ressources par Filière & Département
                   </h3>
                   <p className="text-xs text-slate-400">
@@ -2064,27 +2064,27 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
               <button
                 type="button"
                 onClick={() => setShowDedicatedRoomsModal(false)}
-                className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center justify-center hover:bg-slate-200 cursor-pointer"
+                className="w-8 h-8 rounded-full bg-muted dark:bg-card text-muted-foreground flex items-center justify-center hover:bg-slate-200 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* 📑 Segmented Tabs: Salles vs Professeurs */}
-            <div className="flex items-center gap-2 p-1.5 bg-slate-100 dark:bg-slate-800/80 rounded-2xl border border-slate-200/80 dark:border-slate-700/80">
+            <div className="flex items-center gap-2 p-1.5 bg-muted dark:bg-slate-800/80 rounded-2xl border border-slate-200/80 dark:border-slate-700/80">
               <button
                 type="button"
                 onClick={() => setResourceModalTab('rooms')}
                 className={cn(
-                  "flex-1 py-2 px-4 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer",
+                  "flex-1 py-2 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer",
                   resourceModalTab === 'rooms'
-                    ? "bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-300 shadow-sm border border-slate-200/60 dark:border-slate-700"
-                    : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                    ? "bg-card dark:bg-card text-primary dark:text-indigo-300 shadow-sm border border-slate-200/60 dark:border-border"
+                    : "text-muted-foreground hover:text-foreground dark:hover:text-slate-200"
                 )}
               >
-                <Building2 className="w-4 h-4 text-indigo-500" />
+                <Building2 className="w-4 h-4 text-primary" />
                 <span>1. Salles Dédiées par Filière</span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 font-extrabold">
+                <span className="px-2 py-0.5 rounded-full text-[10px] bg-primary/5 dark:bg-indigo-950/80 text-primary dark:text-indigo-400 font-bold">
                   {Object.values(dedicatedRooms).reduce((acc, curr) => acc + curr.length, 0)}
                 </span>
               </button>
@@ -2093,15 +2093,15 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                 type="button"
                 onClick={() => setResourceModalTab('professors')}
                 className={cn(
-                  "flex-1 py-2 px-4 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer",
+                  "flex-1 py-2 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer",
                   resourceModalTab === 'professors'
-                    ? "bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-300 shadow-sm border border-slate-200/60 dark:border-slate-700"
-                    : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                    ? "bg-card dark:bg-card text-emerald-700 dark:text-emerald-300 shadow-sm border border-slate-200/60 dark:border-border"
+                    : "text-muted-foreground hover:text-foreground dark:hover:text-slate-200"
                 )}
               >
                 <GraduationCap className="w-4 h-4 text-emerald-500" />
                 <span>2. Professeurs Affectés par Filière</span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] bg-emerald-50 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 font-extrabold">
+                <span className="px-2 py-0.5 rounded-full text-[10px] bg-emerald-50 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 font-bold">
                   {Object.values(dedicatedProfessors).reduce((acc, curr) => acc + curr.length, 0)}
                 </span>
               </button>
@@ -2111,8 +2111,8 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
             {resourceModalTab === 'rooms' && (
               <div className="space-y-4">
                 {/* Quick Auto-preset button */}
-                <div className="flex items-center justify-between bg-blue-500/10 dark:bg-blue-950/30 p-3.5 rounded-2xl border border-blue-200 dark:border-blue-800">
-                  <div className="text-xs text-blue-900 dark:text-blue-200">
+                <div className="flex items-center justify-between bg-blue-500/10 dark:bg-blue-950/30 p-3.5 rounded-2xl border border-primary/20 dark:border-primary">
+                  <div className="text-xs text-primary dark:text-blue-200">
                     <strong className="font-bold">Astuce académique :</strong> Attribuer des salles fixes évite les déplacements d'étudiants entre bâtiments.
                   </div>
                   <button
@@ -2130,7 +2130,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                       setDedicatedRooms(newMap);
                       toast.success("Répartition équilibrée appliquée selon vos salles réelles !");
                     }}
-                    className="px-3 py-1.5 rounded-xl bg-[#0f2863] text-white text-[11px] font-black whitespace-nowrap cursor-pointer hover:bg-blue-900 transition-all shadow-xs"
+                    className="px-3 py-1.5 rounded-xl bg-[#0f2863] text-white text-[11px] font-bold whitespace-nowrap cursor-pointer hover:bg-secondary transition-all shadow-xs"
                   >
                     ⚡ Répartition Équilibrée Réelle
                   </button>
@@ -2139,7 +2139,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                 {/* Filières mapping list (100% Dynamique depuis la base de données) */}
                 <div className="space-y-3.5 max-h-[50vh] overflow-y-auto pr-1">
                   {availableFilieresList.length === 0 ? (
-                    <div className="p-8 text-center bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-200/80 dark:border-slate-700 text-xs text-slate-500">
+                    <div className="p-8 text-center bg-muted/50 dark:bg-slate-800/40 rounded-2xl border border-slate-200/80 dark:border-border text-xs text-muted-foreground">
                       Chargement des filières réelles depuis la base de données...
                     </div>
                   ) : (
@@ -2148,10 +2148,10 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                       const fLabel = `${fil.name} (${fil.code})`;
                       const assigned = dedicatedRooms[fCode] || [];
                       return (
-                        <div key={fCode} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700 space-y-2.5">
+                        <div key={fCode} className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-border space-y-2.5">
                           <div className="flex items-center justify-between">
                             <div>
-                              <span className="font-black text-xs text-slate-900 dark:text-white">{fLabel}</span>
+                              <span className="font-bold text-xs text-foreground dark:text-white">{fLabel}</span>
                               <span className="text-[10px] font-bold text-muted-foreground ml-2">
                                 ({assigned.length} salle{assigned.length > 1 ? 's' : ''} dédiée{assigned.length > 1 ? 's' : ''})
                               </span>
@@ -2177,8 +2177,8 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                                   className={cn(
                                     "px-2.5 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1 border",
                                     isSelected
-                                      ? "bg-indigo-600 text-white border-indigo-700 shadow-xs"
-                                      : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100"
+                                      ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                                      : "bg-card dark:bg-card text-muted-foreground dark:text-muted-foreground border-border dark:border-border hover:bg-muted"
                                   )}
                                 >
                                   <span>{isSelected ? '✓' : '+'}</span>
@@ -2222,7 +2222,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                       setDedicatedProfessors(newMap);
                       toast.success("Affectation automatique par département appliquée selon vos enseignants réels !");
                     }}
-                    className="px-3 py-1.5 rounded-xl bg-emerald-700 text-white text-[11px] font-black whitespace-nowrap cursor-pointer hover:bg-emerald-800 transition-all shadow-xs"
+                    className="px-3 py-1.5 rounded-xl bg-emerald-700 text-white text-[11px] font-bold whitespace-nowrap cursor-pointer hover:bg-emerald-800 transition-all shadow-xs"
                   >
                     ⚡ Affectation par Département Réelle
                   </button>
@@ -2231,7 +2231,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                 {/* Filières mapping list for Professors (100% Dynamique depuis la base de données) */}
                 <div className="space-y-3.5 max-h-[50vh] overflow-y-auto pr-1">
                   {availableFilieresList.length === 0 ? (
-                    <div className="p-8 text-center bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-200/80 dark:border-slate-700 text-xs text-slate-500">
+                    <div className="p-8 text-center bg-muted/50 dark:bg-slate-800/40 rounded-2xl border border-slate-200/80 dark:border-border text-xs text-muted-foreground">
                       Chargement des filières réelles depuis la base de données...
                     </div>
                   ) : (
@@ -2240,12 +2240,12 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                       const fLabel = `${fil.name} (${fil.code})`;
                       const assigned = dedicatedProfessors[fCode] || [];
                       return (
-                        <div key={fCode} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700 space-y-2.5">
+                        <div key={fCode} className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-border space-y-2.5">
                           <div className="flex items-center justify-between flex-wrap gap-2">
                             <div>
                               <div className="flex items-center gap-2">
-                                <span className="font-black text-xs text-slate-900 dark:text-white">{fLabel}</span>
-                                <span className="px-2 py-0.5 rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-[10px] font-black text-emerald-600 dark:text-emerald-400">
+                                <span className="font-bold text-xs text-foreground dark:text-white">{fLabel}</span>
+                                <span className="px-2 py-0.5 rounded-md bg-card dark:bg-card border border-border dark:border-border text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
                                   {assigned.length} prof{assigned.length > 1 ? 's' : ''} affecté{assigned.length > 1 ? 's' : ''}
                                 </span>
                               </div>
@@ -2260,7 +2260,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                                     [fCode]: availableProfessorsList.map((p: any) => p.name)
                                   }));
                                 }}
-                                className="px-2 py-0.5 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-bold text-slate-600 dark:text-slate-300 hover:text-emerald-600 cursor-pointer"
+                                className="px-2 py-0.5 rounded bg-card dark:bg-card border border-border dark:border-border font-bold text-muted-foreground dark:text-foreground hover:text-emerald-600 cursor-pointer"
                               >
                                 Tout cocher
                               </button>
@@ -2272,7 +2272,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                                     [fCode]: []
                                   }));
                                 }}
-                                className="px-2 py-0.5 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-bold text-slate-400 hover:text-rose-600 cursor-pointer"
+                                className="px-2 py-0.5 rounded bg-card dark:bg-card border border-border dark:border-border font-bold text-slate-400 hover:text-rose-600 cursor-pointer"
                               >
                                 Vider
                               </button>
@@ -2300,10 +2300,10 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                                     "px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 border text-left",
                                     isSelected
                                       ? "bg-emerald-600 text-white border-emerald-700 shadow-sm"
-                                      : "bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-emerald-500 hover:bg-emerald-50/40"
+                                      : "bg-card dark:bg-card text-slate-700 dark:text-foreground border-border dark:border-border hover:border-emerald-500 hover:bg-emerald-50/40"
                                   )}
                                 >
-                                  <span className="font-black text-xs">{isSelected ? '✓' : '+'}</span>
+                                  <span className="font-bold text-xs">{isSelected ? '✓' : '+'}</span>
                                   <div className="flex flex-col">
                                     <span className="font-bold leading-tight">{pName}</span>
                                     <span className={cn(
@@ -2325,7 +2325,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
               </div>
             )}
 
-            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
+            <div className="pt-3 border-t border-border dark:border-border flex items-center justify-between gap-3">
               <div className="text-[11px] text-slate-400">
                 {resourceModalTab === 'professors' ? (
                   <span>Ces choix définiront les priorités d'assignation du <strong>Solveur IA</strong> par filière.</span>
@@ -2339,7 +2339,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                   setShowDedicatedRoomsModal(false);
                   toast.success("Affectations enregistrées et prêtes pour la génération !");
                 }}
-                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 via-blue-700 to-[#0f2863] text-white font-black text-xs uppercase tracking-wider shadow-md hover:shadow-indigo-500/20 transition-all cursor-pointer"
+                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 via-blue-700 to-[#0f2863] text-white font-bold text-xs uppercase tracking-wider shadow-md hover:shadow-indigo-500/20 transition-all cursor-pointer"
               >
                 Enregistrer & Appliquer au Solveur
               </button>

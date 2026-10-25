@@ -52,11 +52,11 @@ export default function ResetPasswordPage() {
 
   if (!token || !email) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-[#02060D] flex items-center justify-center p-4">
-        <div className="bg-white dark:bg-[#0f172a] p-8 rounded-2xl shadow-xl text-center max-w-md w-full border border-slate-200 dark:border-white/10">
+      <div className="min-h-screen bg-muted/50 dark:bg-[#02060D] flex items-center justify-center p-4">
+        <div className="bg-card dark:bg-[#0f172a] p-8 rounded-2xl shadow-sm text-center max-w-md w-full border border-border dark:border-white/10">
           <div className="text-red-500 mb-4 text-5xl">⚠️</div>
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Lien invalide</h2>
-          <p className="text-slate-500 dark:text-slate-400 mb-6">Le lien de réinitialisation est incomplet ou expiré.</p>
+          <h2 className="text-xl font-bold text-foreground dark:text-white mb-2">Lien invalide</h2>
+          <p className="text-muted-foreground dark:text-muted-foreground mb-6">Le lien de réinitialisation est incomplet ou expiré.</p>
           <Link to="/forgot-password" className="text-[#A80A0B] hover:underline font-medium">Demander un nouveau lien</Link>
         </div>
       </div>
@@ -64,7 +64,7 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#02060D] flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-muted/50 dark:bg-[#02060D] flex items-center justify-center relative overflow-hidden">
       <div className="absolute inset-0 z-0 pointer-events-none">
         <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-[#E60028]/10 blur-[100px]" />
         <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-[#1F3A5F]/20 blur-[120px]" />
@@ -72,19 +72,19 @@ export default function ResetPasswordPage() {
 
       <div className="relative z-10 w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 shadow-sm mb-6">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-card dark:bg-white/5 border border-border dark:border-white/10 shadow-sm mb-6">
             <ShieldCheck className="w-8 h-8 text-[#A80A0B]" />
           </div>
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Nouveau Mot de passe</h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-2">Définissez un nouveau mot de passe pour {email}</p>
+          <h1 className="text-foreground dark:text-white erp-page-title">Nouveau Mot de passe</h1>
+          <p className="text-muted-foreground dark:text-muted-foreground mt-2">Définissez un nouveau mot de passe pour {email}</p>
         </div>
 
-        <div className="bg-white/80 dark:bg-[#0f172a]/80 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-2xl shadow-xl p-8">
+        <div className="bg-white/80 dark:bg-[#0f172a]/80 backdrop-blur-xl border border-border dark:border-white/10 rounded-2xl shadow-sm p-8">
           {success ? (
             <div className="text-center py-6">
               <CheckCircle2 className="w-16 h-16 text-emerald-500 mx-auto mb-4" />
-              <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">Réinitialisation réussie !</h2>
-              <p className="text-slate-600 dark:text-slate-400 mb-8">Votre mot de passe a été mis à jour avec succès.</p>
+              <h2 className="text-xl font-semibold text-foreground dark:text-white mb-2">Réinitialisation réussie !</h2>
+              <p className="text-muted-foreground dark:text-muted-foreground mb-8">Votre mot de passe a été mis à jour avec succès.</p>
               <Link to="/login" className="inline-flex items-center justify-center w-full py-3 rounded-xl bg-gradient-to-r from-[#1F3A5F] to-[#0f172a] text-white font-medium hover:shadow-lg transition-all">
                 Se connecter maintenant
               </Link>
@@ -99,8 +99,8 @@ export default function ResetPasswordPage() {
 
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Nouveau mot de passe</label>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">{PASSWORD_POLICY_HINT}</p>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-foreground">Nouveau mot de passe</label>
+                  <p className="text-xs text-muted-foreground dark:text-muted-foreground">{PASSWORD_POLICY_HINT}</p>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                     <input
@@ -109,14 +109,14 @@ export default function ResetPasswordPage() {
                       minLength={8}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 bg-white dark:bg-[#02060D] border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-[#A80A0B] focus:border-transparent transition-all text-slate-900 dark:text-white"
+                      className="w-full pl-10 pr-4 py-3 bg-card dark:bg-[#02060D] border border-border dark:border-white/10 focus:ring-2 focus:ring-[#A80A0B] focus:border-transparent transition-all text-foreground dark:text-white rounded-[var(--control-radius)]"
                       placeholder={PASSWORD_POLICY_HINT}
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Confirmer le mot de passe</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-foreground">Confirmer le mot de passe</label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                     <input
@@ -125,7 +125,7 @@ export default function ResetPasswordPage() {
                       minLength={8}
                       value={passwordConfirmation}
                       onChange={(e) => setPasswordConfirmation(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 bg-white dark:bg-[#02060D] border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-[#A80A0B] focus:border-transparent transition-all text-slate-900 dark:text-white"
+                      className="w-full pl-10 pr-4 py-3 bg-card dark:bg-[#02060D] border border-border dark:border-white/10 focus:ring-2 focus:ring-[#A80A0B] focus:border-transparent transition-all text-foreground dark:text-white rounded-[var(--control-radius)]"
                       placeholder="Confirmez le mot de passe"
                     />
                   </div>

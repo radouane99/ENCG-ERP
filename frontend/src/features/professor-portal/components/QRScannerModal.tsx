@@ -454,14 +454,14 @@ export function QRScannerModal({ isOpen, onClose, sessionId, sessionData, attend
       <div className="space-y-5 -mt-2">
         
         {/* ── Top Institutional Header ── */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-border dark:border-border">
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#001A4B] to-[#0a327d] text-white flex items-center justify-center shadow-md shadow-blue-950/20 shrink-0">
               <Users className="w-5 h-5 text-amber-300" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-base font-black text-slate-900 dark:text-white">
+                <h2 className="text-base font-bold text-foreground dark:text-white">
                   Feuille d'Appel & Émargement
                 </h2>
                 {activeId ? (
@@ -470,7 +470,7 @@ export function QRScannerModal({ isOpen, onClose, sessionId, sessionData, attend
                     Session #{activeId} en cours
                   </span>
                 ) : (
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-muted text-muted-foreground dark:bg-card dark:text-foreground">
                     Configuration
                   </span>
                 )}
@@ -487,13 +487,13 @@ export function QRScannerModal({ isOpen, onClose, sessionId, sessionData, attend
               <Calendar className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
               <span>{formatFrenchCompactDate(sessionDate)}</span>
             </span>
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-blue-50 dark:bg-blue-950/50 text-blue-800 dark:text-blue-300 font-bold border border-blue-200 dark:border-blue-900/60">
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-primary/5 dark:bg-blue-950/50 text-primary dark:text-blue-300 font-bold border border-primary/20 dark:border-blue-900/60">
               <GraduationCap className="w-3.5 h-3.5" /> {groupLabel}
             </span>
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold">
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-muted dark:bg-card text-slate-700 dark:text-foreground font-bold">
               <MapPin className="w-3.5 h-3.5 text-rose-500" /> {roomLabel}
             </span>
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-mono text-[11px]">
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-muted dark:bg-card text-muted-foreground dark:text-foreground font-mono text-[11px]">
               <Clock className="w-3 h-3 text-amber-500" /> {timeLabel}
             </span>
           </div>
@@ -516,13 +516,13 @@ export function QRScannerModal({ isOpen, onClose, sessionId, sessionData, attend
         {/* ── Step 1: Pre-Session Configuration (Clean Course Card) ── */}
         {!activeId ? (
           <div className="space-y-5 py-2">
-            <div className="p-5 rounded-3xl bg-gradient-to-br from-slate-50 via-white to-blue-50/40 dark:from-slate-900 dark:via-slate-900 dark:to-blue-950/20 border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+            <div className="p-5 rounded-2xl bg-gradient-to-br from-slate-50 via-white to-blue-50/40 dark:from-slate-900 dark:via-slate-900 dark:to-blue-950/20 border border-border dark:border-border shadow-xs space-y-4">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <span className="text-[11px] font-black uppercase tracking-wider text-blue-600 dark:text-blue-400">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-primary dark:text-blue-400">
                     Séance Sélectionnée
                   </span>
-                  <h3 className="text-lg font-black text-[#001A4B] dark:text-white mt-1">
+                  <h3 className="text-lg font-bold text-[#001A4B] dark:text-white mt-1">
                     {courseTitle}
                   </h3>
                   
@@ -535,10 +535,10 @@ export function QRScannerModal({ isOpen, onClose, sessionId, sessionData, attend
                     <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 font-bold text-xs border border-emerald-200 dark:border-emerald-800">
                       Groupe : {groupLabel}
                     </span>
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-xs">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-muted dark:bg-card text-slate-700 dark:text-foreground font-semibold text-xs">
                       Salle : {roomLabel}
                     </span>
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-xs">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-muted dark:bg-card text-slate-700 dark:text-foreground font-semibold text-xs">
                       Horaires : {timeLabel}
                     </span>
                   </div>
@@ -550,9 +550,9 @@ export function QRScannerModal({ isOpen, onClose, sessionId, sessionData, attend
               </div>
 
               {/* Date Picker & Schedule Options */}
-              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="pt-3 border-t border-border dark:border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex flex-wrap items-center gap-2.5 text-xs">
-                  <label htmlFor="session-date-input" className="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 cursor-pointer">
+                  <label htmlFor="session-date-input" className="font-bold text-slate-700 dark:text-foreground flex items-center gap-1.5 cursor-pointer">
                     <Calendar className="w-4 h-4 text-amber-600" />
                     <span>Date effective de l'appel :</span>
                   </label>
@@ -561,11 +561,11 @@ export function QRScannerModal({ isOpen, onClose, sessionId, sessionData, attend
                     type="date"
                     value={sessionDate}
                     onChange={e => setSessionDate(e.target.value)}
-                    className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-900 dark:text-white shadow-2xs focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                    className="px-3 py-1.5 border border-border dark:border-border bg-card dark:bg-card text-xs font-bold text-foreground dark:text-white shadow-2xs focus:outline-none focus:ring-2 focus:ring-ring cursor-pointer rounded-[var(--control-radius)]"
                   />
                   {selectedSchedule?.day && (
-                    <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg">
-                      Créneau d'emploi du temps : <strong className="text-slate-800 dark:text-slate-200 capitalize">{selectedSchedule.day}</strong>
+                    <span className="text-[11px] font-semibold text-muted-foreground bg-muted dark:bg-card px-2.5 py-1 rounded-lg">
+                      Créneau d'emploi du temps : <strong className="text-foreground dark:text-foreground capitalize">{selectedSchedule.day}</strong>
                     </span>
                   )}
                 </div>
@@ -573,15 +573,15 @@ export function QRScannerModal({ isOpen, onClose, sessionId, sessionData, attend
                 <button
                   type="button"
                   onClick={() => setShowSchedulePicker(!showSchedulePicker)}
-                  className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer self-start sm:self-auto"
+                  className="text-xs font-bold text-primary dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer self-start sm:self-auto"
                 >
                   <span>{showSchedulePicker ? 'Masquer la liste des séances' : 'Changer de cours ou de groupe...'}</span>
                 </button>
               </div>
 
               {showSchedulePicker && (
-                <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-2">
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                <div className="pt-2 border-t border-border dark:border-border space-y-2">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-foreground">
                     Toutes mes séances programmées :
                   </label>
                   {context.isPending ? (
@@ -591,7 +591,7 @@ export function QRScannerModal({ isOpen, onClose, sessionId, sessionData, attend
                   ) : (
                     <select
                       aria-label="Sélectionner une séance officielle"
-                      className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-3 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full border border-border dark:border-border bg-card dark:bg-card p-3 text-xs font-semibold text-foreground dark:text-white focus:outline-none focus:ring-2 focus:ring-ring rounded-[var(--control-radius)]"
                       value={scheduleId}
                       onChange={e => {
                         const newId = e.target.value
@@ -625,7 +625,7 @@ export function QRScannerModal({ isOpen, onClose, sessionId, sessionData, attend
                 onClick={handleStartSession}
                 disabled={!selectedSchedule?.groupId || busy}
                 isLoading={busy}
-                className="w-full sm:w-auto px-7 py-3 bg-gradient-to-r from-[#001A4B] to-[#09296b] hover:opacity-95 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-blue-950/20 cursor-pointer flex items-center justify-center gap-2"
+                className="w-full sm:w-auto px-7 py-3 bg-gradient-to-r from-[#001A4B] to-[#09296b] hover:opacity-95 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-blue-950/20 cursor-pointer flex items-center justify-center gap-2"
               >
                 <Zap className="w-4 h-4 text-amber-300" />
                 <span>Démarrer l'Appel de la Séance</span>
@@ -639,27 +639,27 @@ export function QRScannerModal({ isOpen, onClose, sessionId, sessionData, attend
             {/* Active Session Date & Course Recap Bar */}
             <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 rounded-2xl bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-900/40 text-xs">
               <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 font-black text-amber-950 dark:text-amber-200">
+                <span className="inline-flex items-center gap-1.5 font-bold text-amber-950 dark:text-amber-200">
                   <Calendar className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                   {formatFrenchFullDate(sessionDate)}
                 </span>
                 <span className="text-amber-800/80 dark:text-amber-300/80 font-mono">• {timeLabel}</span>
               </div>
-              <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300 font-medium">
-                <span>Groupe : <strong className="text-slate-900 dark:text-white">{groupLabel}</strong></span>
-                <span>• Salle : <strong className="text-slate-900 dark:text-white">{roomLabel}</strong></span>
+              <div className="flex items-center gap-2 text-muted-foreground dark:text-foreground font-medium">
+                <span>Groupe : <strong className="text-foreground dark:text-white">{groupLabel}</strong></span>
+                <span>• Salle : <strong className="text-foreground dark:text-white">{roomLabel}</strong></span>
               </div>
             </div>
 
             {/* 1. Real-Time KPI Stats Banner */}
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
-              <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-slate-200/70 dark:bg-slate-700 text-slate-700 dark:text-slate-300 flex items-center justify-center shrink-0">
+              <div className="p-3 rounded-2xl bg-muted/50 dark:bg-slate-800/50 border border-border dark:border-border flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-slate-200/70 dark:bg-slate-700 text-slate-700 dark:text-foreground flex items-center justify-center shrink-0">
                   <Users className="w-4 h-4" />
                 </div>
                 <div>
                   <div className="text-[10px] uppercase font-bold text-slate-400">Total</div>
-                  <div className="text-base font-black text-slate-900 dark:text-white">
+                  <div className="text-base font-bold text-foreground dark:text-white">
                     {totalStudents} <span className="text-[11px] font-normal text-slate-400">inscrits</span>
                   </div>
                 </div>
@@ -671,7 +671,7 @@ export function QRScannerModal({ isOpen, onClose, sessionId, sessionData, attend
                 </div>
                 <div>
                   <div className="text-[10px] uppercase font-bold text-emerald-700 dark:text-emerald-400">Présents</div>
-                  <div className="text-base font-black text-emerald-800 dark:text-emerald-300">
+                  <div className="text-base font-bold text-emerald-800 dark:text-emerald-300">
                     {statsSummary.present}{' '}
                     <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
                       ({statsSummary.attendanceRate}%)
@@ -686,7 +686,7 @@ export function QRScannerModal({ isOpen, onClose, sessionId, sessionData, attend
                 </div>
                 <div>
                   <div className="text-[10px] uppercase font-bold text-rose-700 dark:text-rose-400">Absents</div>
-                  <div className="text-base font-black text-rose-800 dark:text-rose-300">
+                  <div className="text-base font-bold text-rose-800 dark:text-rose-300">
                     {statsSummary.absent}
                   </div>
                 </div>
@@ -698,7 +698,7 @@ export function QRScannerModal({ isOpen, onClose, sessionId, sessionData, attend
                 </div>
                 <div>
                   <div className="text-[10px] uppercase font-bold text-amber-700 dark:text-amber-400">Retards</div>
-                  <div className="text-base font-black text-amber-800 dark:text-amber-300">
+                  <div className="text-base font-bold text-amber-800 dark:text-amber-300">
                     {statsSummary.late}
                   </div>
                 </div>
@@ -710,7 +710,7 @@ export function QRScannerModal({ isOpen, onClose, sessionId, sessionData, attend
                 </div>
                 <div>
                   <div className="text-[10px] uppercase font-bold text-sky-700 dark:text-sky-400">Justifiés</div>
-                  <div className="text-base font-black text-sky-800 dark:text-sky-300">
+                  <div className="text-base font-bold text-sky-800 dark:text-sky-300">
                     {statsSummary.excused}
                   </div>
                 </div>
@@ -720,9 +720,9 @@ export function QRScannerModal({ isOpen, onClose, sessionId, sessionData, attend
             {/* 2. Fast Scan Bar (Barcode / RFID / CNE) */}
             <form
               onSubmit={handleScanSubmit}
-              className="relative flex items-center gap-2 p-2 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 shadow-2xs"
+              className="relative flex items-center gap-2 p-2 rounded-2xl bg-muted/50 dark:bg-slate-800/60 border border-border dark:border-border shadow-2xs"
             >
-              <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 flex items-center justify-center shrink-0">
+              <div className="w-8 h-8 rounded-xl bg-primary/10 dark:bg-blue-950 text-primary dark:text-blue-300 flex items-center justify-center shrink-0">
                 <Barcode className="w-4 h-4" />
               </div>
               <input
@@ -731,7 +731,7 @@ export function QRScannerModal({ isOpen, onClose, sessionId, sessionData, attend
                 value={code}
                 onChange={e => setCode(e.target.value)}
                 placeholder="Scanner carte étudiante / Douchette USB / Taper CNE..."
-                className="flex-1 bg-transparent border-0 text-xs font-mono placeholder:text-slate-400 focus:outline-none focus:ring-0 text-slate-800 dark:text-white"
+                className="flex-1 bg-transparent border-0 text-xs font-mono placeholder:text-slate-400 focus:outline-none focus:ring-0 text-foreground dark:text-white rounded-[var(--control-radius)]"
               />
               <button
                 type="submit"
@@ -777,7 +777,7 @@ export function QRScannerModal({ isOpen, onClose, sessionId, sessionData, attend
                   type="button"
                   onClick={() => handleMarkAll('absent')}
                   disabled={busy || !roster.data?.length}
-                  className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1"
+                  className="px-3 py-1.5 bg-muted hover:bg-slate-200 text-slate-700 dark:bg-card dark:hover:bg-slate-700 dark:text-foreground rounded-xl text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1"
                 >
                   <RotateCcw className="w-3 h-3 text-slate-400" />
                   <span>Tout Absent</span>
@@ -793,7 +793,7 @@ export function QRScannerModal({ isOpen, onClose, sessionId, sessionData, attend
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
                     placeholder="Chercher étudiant..."
-                    className="w-full pl-8 pr-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-800 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full pl-8 pr-2.5 py-1.5 border border-border dark:border-border bg-card dark:bg-card text-xs text-foreground dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-ring rounded-[var(--control-radius)]"
                   />
                 </div>
 
@@ -802,7 +802,7 @@ export function QRScannerModal({ isOpen, onClose, sessionId, sessionData, attend
                   aria-label="Filtrer par statut de présence"
                   value={statusFilter}
                   onChange={e => setStatusFilter(e.target.value as 'all' | Status)}
-                  className="px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 focus:outline-none cursor-pointer"
+                  className="px-2.5 py-1.5 border border-border dark:border-border bg-card dark:bg-card text-xs font-bold text-slate-700 dark:text-foreground focus:outline-none cursor-pointer rounded-[var(--control-radius)]"
                 >
                   <option value="all">Tous ({totalStudents})</option>
                   <option value="present">Présents ({statsSummary.present})</option>
@@ -816,7 +816,7 @@ export function QRScannerModal({ isOpen, onClose, sessionId, sessionData, attend
             {/* 4. Student Roster (Instant 1-Click Status Buttons) */}
             {roster.isPending ? (
               <div className="py-12 text-center text-slate-400 text-xs">
-                <div className="inline-block w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mb-2" />
+                <div className="inline-block w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mb-2" />
                 <p>Chargement des étudiants inscrits...</p>
               </div>
             ) : roster.isError ? (
@@ -825,14 +825,14 @@ export function QRScannerModal({ isOpen, onClose, sessionId, sessionData, attend
                 <button
                   type="button"
                   onClick={() => roster.refetch()}
-                  className="mt-2 text-blue-600 underline font-bold"
+                  className="mt-2 text-primary underline font-bold"
                 >
                   Réessayer
                 </button>
               </div>
             ) : filteredStudents.length === 0 ? (
-              <div className="py-10 text-center rounded-2xl bg-slate-50 dark:bg-slate-800/30 border border-dashed border-slate-200 dark:border-slate-700">
-                <p className="text-xs font-bold text-slate-500">Aucun étudiant ne correspond aux critères.</p>
+              <div className="py-10 text-center rounded-2xl bg-muted/50 dark:bg-slate-800/30 border border-dashed border-border dark:border-border">
+                <p className="text-xs font-bold text-muted-foreground">Aucun étudiant ne correspond aux critères.</p>
                 <p className="text-[11px] text-slate-400 mt-0.5">Vérifiez vos filtres de recherche.</p>
               </div>
             ) : (
@@ -864,13 +864,13 @@ export function QRScannerModal({ isOpen, onClose, sessionId, sessionData, attend
                               ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
                               : currentStatus === 'excused'
                               ? 'bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300'
-                              : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                              : "bg-muted text-muted-foreground dark:bg-card dark:text-muted-foreground"
                           }`}
                         >
                           {initials || 'ET'}
                         </div>
                         <div className="min-w-0">
-                          <p className="font-extrabold text-xs text-slate-900 dark:text-white truncate">
+                          <p className="font-bold text-xs text-foreground dark:text-white truncate">
                             {student.name}
                           </p>
                           <div className="flex items-center gap-2 text-[11px] text-slate-400 font-mono">
@@ -883,7 +883,7 @@ export function QRScannerModal({ isOpen, onClose, sessionId, sessionData, attend
                       </div>
 
                       {/* 4 Direct 1-Click Status Pill Buttons */}
-                      <div className="flex items-center gap-1 self-end sm:self-center shrink-0 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl">
+                      <div className="flex items-center gap-1 self-end sm:self-center shrink-0 bg-muted dark:bg-slate-800/80 p-1 rounded-xl">
                         {/* Présent */}
                         <button
                           type="button"
@@ -891,7 +891,7 @@ export function QRScannerModal({ isOpen, onClose, sessionId, sessionData, attend
                           className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer flex items-center gap-1 ${
                             currentStatus === 'present'
                               ? 'bg-emerald-600 text-white shadow-xs'
-                              : 'text-slate-500 dark:text-slate-400 hover:text-emerald-600 hover:bg-white dark:hover:bg-slate-700'
+                              : "text-muted-foreground dark:text-muted-foreground hover:text-emerald-600 hover:bg-card dark:hover:bg-slate-700"
                           }`}
                         >
                           <CheckCircle2 className="w-3.5 h-3.5" />
@@ -905,7 +905,7 @@ export function QRScannerModal({ isOpen, onClose, sessionId, sessionData, attend
                           className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer flex items-center gap-1 ${
                             currentStatus === 'absent'
                               ? 'bg-rose-600 text-white shadow-xs'
-                              : 'text-slate-500 dark:text-slate-400 hover:text-rose-600 hover:bg-white dark:hover:bg-slate-700'
+                              : "text-muted-foreground dark:text-muted-foreground hover:text-rose-600 hover:bg-card dark:hover:bg-slate-700"
                           }`}
                         >
                           <XCircle className="w-3.5 h-3.5" />
@@ -919,7 +919,7 @@ export function QRScannerModal({ isOpen, onClose, sessionId, sessionData, attend
                           className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
                             currentStatus === 'late'
                               ? 'bg-amber-500 text-white shadow-xs'
-                              : 'text-slate-500 dark:text-slate-400 hover:text-amber-600 hover:bg-white dark:hover:bg-slate-700'
+                              : "text-muted-foreground dark:text-muted-foreground hover:text-amber-600 hover:bg-card dark:hover:bg-slate-700"
                           }`}
                         >
                           <Clock className="w-3.5 h-3.5" />
@@ -933,7 +933,7 @@ export function QRScannerModal({ isOpen, onClose, sessionId, sessionData, attend
                           className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
                             currentStatus === 'excused'
                               ? 'bg-sky-600 text-white shadow-xs'
-                              : 'text-slate-500 dark:text-slate-400 hover:text-sky-600 hover:bg-white dark:hover:bg-slate-700'
+                              : "text-muted-foreground dark:text-muted-foreground hover:text-sky-600 hover:bg-card dark:hover:bg-slate-700"
                           }`}
                         >
                           <FileCheck2 className="w-3.5 h-3.5" />
@@ -947,12 +947,12 @@ export function QRScannerModal({ isOpen, onClose, sessionId, sessionData, attend
             )}
 
             {/* 5. Sticky Footer Bar */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-border dark:border-border">
               <div className="flex items-center gap-2 text-xs">
-                <span className="font-bold text-slate-700 dark:text-slate-300">
+                <span className="font-bold text-slate-700 dark:text-foreground">
                   Taux d'assiduité :
                 </span>
-                <span className="font-extrabold text-emerald-600 dark:text-emerald-400">
+                <span className="font-bold text-emerald-600 dark:text-emerald-400">
                   {statsSummary.attendanceRate}% ({statsSummary.present}/{totalStudents})
                 </span>
               </div>
@@ -962,7 +962,7 @@ export function QRScannerModal({ isOpen, onClose, sessionId, sessionData, attend
                   type="button"
                   onClick={handleCloseModal}
                   disabled={busy}
-                  className="px-4 py-2.5 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                  className="px-4 py-2.5 text-muted-foreground hover:bg-muted dark:hover:bg-slate-800 rounded-xl text-xs font-bold transition-colors cursor-pointer"
                 >
                   Fermer
                 </button>
@@ -970,7 +970,7 @@ export function QRScannerModal({ isOpen, onClose, sessionId, sessionData, attend
                   onClick={handleSaveSession}
                   isLoading={busy}
                   disabled={!roster.data?.length}
-                  className="px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-700 hover:opacity-95 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-emerald-950/20 transition-all cursor-pointer flex items-center gap-2"
+                  className="px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-700 hover:opacity-95 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-emerald-950/20 transition-all cursor-pointer flex items-center gap-2"
                 >
                   <Save className="w-4 h-4" />
                   <span>Enregistrer & Clôturer l'Appel</span>

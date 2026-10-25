@@ -103,22 +103,22 @@ export default function ReservationsPage() {
   const filteredReservations = reservations.filter(r => statusFilter === 'all' || r.status === statusFilter)
 
   return (
-    <div className="space-y-8 animate-in relative p-4 md:p-8 max-w-[1500px] mx-auto font-sans pb-24">
+    <div className="space-y-8 animate-in relative max-w-[1500px] mx-auto font-sans pb-24">
       {/* Deep Navy Hero Header Banner */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] p-8 md:p-10 rounded-[2.5rem] shadow-2xl text-white border border-blue-800/40 space-y-6">
+      <div className="relative overflow-hidden p-8 md:p-10 text-white border border-blue-800/40 space-y-6 erp-page-banner">
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
 
         {/* Top Header Content */}
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="flex items-center gap-6">
-            <div className="w-16 h-16 md:w-20 md:h-20 rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-amber-300 shadow-2xl shrink-0">
+            <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-amber-300 shadow-sm shrink-0">
               <Building2 className="w-8 h-8 md:w-10 md:h-10 text-amber-400" />
             </div>
             <div>
-              <div className="inline-flex items-center gap-2 bg-blue-500/20 text-blue-200 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-2 border border-blue-400/30">
+              <div className="inline-flex items-center gap-2 bg-blue-500/20 text-blue-200 px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mb-2 border border-blue-400/30">
                 <Sparkles className="w-4 h-4 text-amber-400" /> Service Logistique & Affectation des Amphis ENCG
               </div>
-              <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight leading-tight">
+              <h1 className="text-white leading-tight erp-page-title">
                 Gestion des Réservations de Salles
               </h1>
               <p className="text-blue-100/90 text-xs md:text-sm font-medium mt-1 max-w-2xl">
@@ -130,13 +130,13 @@ export default function ReservationsPage() {
           <div className="flex items-center gap-3 flex-wrap shrink-0">
             <Link
               to="/admin/rooms/availability"
-              className="flex items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-black rounded-2xl transition-all text-xs uppercase tracking-wider"
+              className="flex items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold rounded-2xl transition-all text-xs uppercase tracking-wider"
             >
               Salles libres
             </Link>
             <Link 
               to="/admin/reservations/create"
-              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-black rounded-2xl transition-all text-xs uppercase tracking-wider shadow-lg cursor-pointer"
+              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold rounded-2xl transition-all text-xs uppercase tracking-wider shadow-lg cursor-pointer"
             >
               <Plus className="w-4 h-4 text-white" /> Créer une Réservation
             </Link>
@@ -146,27 +146,27 @@ export default function ReservationsPage() {
         {/* KPI Cards Row */}
         <div className="relative z-10 grid grid-cols-2 md:grid-cols-4 gap-4 pt-6 border-t border-white/10">
           <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15">
-            <span className="text-[10px] font-black uppercase tracking-wider text-blue-200 block">TOTAL RÉRSERVATIONS</span>
-            <span className="text-2xl font-black text-white font-mono mt-1 block">{reservations.length}</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-blue-200 block">TOTAL RÉRSERVATIONS</span>
+            <span className="text-2xl font-bold text-white font-mono mt-1 block">{reservations.length}</span>
           </div>
 
           <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15">
-            <span className="text-[10px] font-black uppercase tracking-wider text-emerald-300 block">APPROUVÉES</span>
-            <span className="text-2xl font-black text-emerald-400 font-mono mt-1 block">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-300 block">APPROUVÉES</span>
+            <span className="text-2xl font-bold text-emerald-400 font-mono mt-1 block">
               {reservations.filter(r => r.status === 'approved').length}
             </span>
           </div>
 
           <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15">
-            <span className="text-[10px] font-black uppercase tracking-wider text-amber-300 block">EN ATTENTE</span>
-            <span className="text-2xl font-black text-amber-300 font-mono mt-1 block">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-300 block">EN ATTENTE</span>
+            <span className="text-2xl font-bold text-amber-300 font-mono mt-1 block">
               {reservations.filter(r => !r.status || r.status === 'pending').length}
             </span>
           </div>
 
           <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15">
-            <span className="text-[10px] font-black uppercase tracking-wider text-rose-300 block">REJETÉES / ANNULÉES</span>
-            <span className="text-2xl font-black text-rose-300 font-mono mt-1 block">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-rose-300 block">REJETÉES / ANNULÉES</span>
+            <span className="text-2xl font-bold text-rose-300 font-mono mt-1 block">
               {reservations.filter(r => r.status === 'rejected' || r.status === 'cancelled').length}
             </span>
           </div>
@@ -174,11 +174,11 @@ export default function ReservationsPage() {
       </div>
 
       {/* Main Table Card */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-[2.5rem] shadow-xl p-6 space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
+      <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl shadow-sm p-6 space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border dark:border-border pb-4">
           <div className="flex items-center gap-3">
-            <h3 className="text-base font-black text-slate-900 dark:text-white">Demandes & Affectations Actives</h3>
-            <span className="px-3 py-1 bg-emerald-50 text-emerald-600 border border-emerald-300 text-[10px] font-black uppercase rounded-full">
+            <h3 className="text-base font-bold text-foreground dark:text-white">Demandes & Affectations Actives</h3>
+            <span className="px-3 py-1 bg-emerald-50 text-emerald-600 border border-emerald-300 text-[10px] font-bold uppercase rounded-full">
               🛡️ Détecteur Anti-Conflit Actif
             </span>
           </div>
@@ -189,8 +189,8 @@ export default function ReservationsPage() {
                 key={st}
                 onClick={() => setStatusFilter(st)}
                 className={cn(
-                  "px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer",
-                  statusFilter === st ? "bg-[#0f2863] text-white shadow-md" : "bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200"
+                  "px-4 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer",
+                  statusFilter === st ? "bg-[#0f2863] text-white shadow-md" : "bg-muted dark:bg-card text-muted-foreground hover:bg-slate-200"
                 )}
               >
                 {st === 'all' ? 'Toutes' : st === 'approved' ? 'Approuvées' : st === 'pending' ? 'En Attente' : 'Rejetées'}
@@ -199,9 +199,9 @@ export default function ReservationsPage() {
           </div>
         </div>
 
-        <div className="overflow-x-auto min-h-[300px] border border-slate-100 dark:border-slate-800 rounded-2xl">
+        <div className="overflow-x-auto min-h-[300px] border border-border dark:border-border rounded-2xl">
           <table className="w-full text-sm text-left">
-            <thead className="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 dark:bg-slate-800/80 border-b border-slate-100 dark:border-slate-800">
+            <thead className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-muted/50 dark:bg-slate-800/80 border-b border-border dark:border-border">
               <tr>
                 <th className="px-6 py-4">SALLE RÉSERVÉE</th>
                 <th className="px-6 py-4">DEMANDEUR</th>
@@ -214,7 +214,7 @@ export default function ReservationsPage() {
               {loading ? (
                 <tr>
                   <td colSpan={5} className="text-center py-16">
-                    <Loader2 className="w-8 h-8 animate-spin mx-auto text-indigo-600 mb-2" />
+                    <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary mb-2" />
                     <p className="text-xs font-bold text-slate-400">Chargement des réservations...</p>
                   </td>
                 </tr>
@@ -233,11 +233,11 @@ export default function ReservationsPage() {
                   <tr key={res.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition-colors group">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#0f2863] to-blue-600 flex items-center justify-center text-amber-300 font-black text-xs shrink-0 shadow-md">
+                        <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#0f2863] to-blue-600 flex items-center justify-center text-amber-300 font-bold text-xs shrink-0 shadow-md">
                           <Building2 className="w-5 h-5 text-amber-300" />
                         </div>
                         <div>
-                          <p className="font-black text-slate-900 dark:text-white text-xs">{res.room_name || 'Salle ENCG'}</p>
+                          <p className="font-bold text-foreground dark:text-white text-xs">{res.room_name || 'Salle ENCG'}</p>
                           <p className="text-[10px] font-bold text-slate-400 max-w-[200px] truncate" title={res.purpose}>{res.purpose || 'Événement académique'}</p>
                         </div>
                       </div>
@@ -245,19 +245,19 @@ export default function ReservationsPage() {
 
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-xs font-black shrink-0">
+                        <div className="w-8 h-8 rounded-full bg-primary/5 dark:bg-indigo-950/60 text-primary dark:text-indigo-400 flex items-center justify-center text-xs font-bold shrink-0">
                           {bookerName.charAt(0).toUpperCase()}
                         </div>
-                        <span className="font-bold text-slate-800 dark:text-slate-200 text-xs">{bookerName}</span>
+                        <span className="font-bold text-foreground dark:text-foreground text-xs">{bookerName}</span>
                       </div>
                     </td>
 
                     <td className="px-6 py-4">
-                      <div className="font-bold text-slate-800 dark:text-slate-200 text-xs capitalize">
+                      <div className="font-bold text-foreground dark:text-foreground text-xs capitalize">
                         {format(startDate, 'EEEE d MMM yyyy', { locale: fr })}
                       </div>
                       <div className="text-[10px] text-slate-400 font-bold flex items-center gap-1 mt-0.5">
-                        <Clock className="w-3 h-3 text-indigo-500" />
+                        <Clock className="w-3 h-3 text-primary" />
                         {format(startDate, 'HH:mm')} - {format(endDate, 'HH:mm')}
                       </div>
                     </td>
@@ -265,13 +265,13 @@ export default function ReservationsPage() {
                     <td className="px-6 py-4 text-center">
                       <div className="flex flex-col items-center gap-1">
                         <span className={cn(
-                          "px-3.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border inline-flex items-center gap-1",
+                          "px-3.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border inline-flex items-center gap-1",
                           res.status === 'approved' ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 border-emerald-300' : 
                           res.status === 'rejected' ? 'bg-rose-50 dark:bg-rose-950/60 text-rose-600 border-rose-300' : 'bg-amber-50 dark:bg-amber-950/60 text-amber-600 border-amber-300'
                         )}>
                           <CheckCircle2 className="w-3.5 h-3.5" /> {res.status?.toUpperCase() || 'EN ATTENTE'}
                         </span>
-                        <span className="text-[9px] font-black text-emerald-600 dark:text-emerald-400">
+                        <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400">
                           🛡️ Créneau Libre (Sans Conflit)
                         </span>
                       </div>
@@ -281,14 +281,14 @@ export default function ReservationsPage() {
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => setSelectedPassModal(res)}
-                          className="px-3 py-2 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 text-indigo-600 dark:text-indigo-400 font-black text-xs rounded-xl transition-all border border-indigo-200 cursor-pointer shadow-xs flex items-center gap-1"
+                          className="px-3 py-2 bg-primary/5 dark:bg-indigo-950/60 hover:bg-primary/10 text-primary dark:text-indigo-400 font-bold text-xs rounded-xl transition-all border border-primary/20 cursor-pointer shadow-xs flex items-center gap-1"
                           title="Générer Pass QR Clés de la Salle"
                         >
                           <Key className="w-3.5 h-3.5" /> Pass QR
                         </button>
                         <button
                           onClick={() => handlePrintBookingSlip(res)}
-                          className="px-3 py-2 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 text-blue-600 dark:text-blue-400 font-black text-xs rounded-xl transition-all border border-blue-200 cursor-pointer shadow-xs flex items-center gap-1"
+                          className="px-3 py-2 bg-primary/5 dark:bg-blue-950/60 hover:bg-primary/10 text-primary dark:text-blue-400 font-bold text-xs rounded-xl transition-all border border-primary/20 cursor-pointer shadow-xs flex items-center gap-1"
                           title="Imprimer Attestation A4"
                         >
                           <Printer className="w-3.5 h-3.5" /> Attestation
@@ -313,7 +313,7 @@ export default function ReservationsPage() {
                         )}
                         <button 
                           onClick={() => handleDelete(res.id)} 
-                          className="p-2 bg-slate-100 hover:bg-rose-100 text-rose-600 rounded-xl transition-colors cursor-pointer"
+                          className="p-2 bg-muted hover:bg-rose-100 text-rose-600 rounded-xl transition-colors cursor-pointer"
                           title="Supprimer"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -331,11 +331,11 @@ export default function ReservationsPage() {
       {/* Modal Pass QR Clés */}
       {selectedPassModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] w-full max-w-md shadow-2xl overflow-hidden text-center">
+          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl w-full max-w-md shadow-sm overflow-hidden text-center">
             <div className="p-6 bg-gradient-to-r from-[#0f2863] to-blue-900 text-white flex items-center justify-between">
               <div>
-                <span className="text-[10px] font-black uppercase tracking-widest text-blue-200">Pass Numérique Securisé</span>
-                <h2 className="text-base font-black">Remise des Clés de la Salle</h2>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-blue-200">Pass Numérique Securisé</span>
+                <h2 className="text-base font-bold">Remise des Clés de la Salle</h2>
               </div>
               <button 
                 onClick={() => setSelectedPassModal(null)}
@@ -346,24 +346,24 @@ export default function ReservationsPage() {
             </div>
 
             <div className="p-6 space-y-4">
-              <div className="p-4 bg-indigo-50 dark:bg-indigo-950/60 rounded-2xl border border-indigo-200">
-                <p className="text-xs font-black text-indigo-950 dark:text-indigo-200">{selectedPassModal.room_name || 'Salle ENCG'}</p>
-                <p className="text-[10px] font-bold text-slate-500 mt-0.5">Autorisé pour : {selectedPassModal.booker ? `${selectedPassModal.booker.first_name} ${selectedPassModal.booker.last_name}` : 'Demandeur ENCG'}</p>
+              <div className="p-4 bg-primary/5 dark:bg-indigo-950/60 rounded-2xl border border-primary/20">
+                <p className="text-xs font-bold text-indigo-950 dark:text-indigo-200">{selectedPassModal.room_name || 'Salle ENCG'}</p>
+                <p className="text-[10px] font-bold text-muted-foreground mt-0.5">Autorisé pour : {selectedPassModal.booker ? `${selectedPassModal.booker.first_name} ${selectedPassModal.booker.last_name}` : 'Demandeur ENCG'}</p>
               </div>
 
               {/* QR Code Placeholder Box */}
-              <div className="w-48 h-48 mx-auto bg-slate-900 rounded-3xl border-4 border-indigo-500/30 flex flex-col items-center justify-center text-white p-4 shadow-xl">
+              <div className="w-48 h-48 mx-auto bg-slate-900 rounded-2xl border-4 border-indigo-500/30 flex flex-col items-center justify-center text-white p-4 shadow-sm">
                 <QrCode className="w-28 h-28 text-indigo-400 mb-2" />
                 <span className="text-[9px] font-mono font-bold tracking-widest">PASS-KEY-{selectedPassModal.id}-2026</span>
               </div>
 
-              <p className="text-[11px] text-slate-500 font-medium">À présenter à l'agent de sécurité au poste central d'accueil pour récupérer le trousseau de clés du local.</p>
+              <p className="text-[11px] text-muted-foreground font-medium">À présenter à l'agent de sécurité au poste central d'accueil pour récupérer le trousseau de clés du local.</p>
             </div>
 
-            <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 flex justify-end">
+            <div className="p-4 border-t border-border dark:border-border bg-muted/50 dark:bg-card flex justify-end">
               <button 
                 onClick={() => setSelectedPassModal(null)}
-                className="px-6 py-2.5 bg-slate-900 text-white font-black rounded-xl text-xs hover:bg-slate-800 transition-colors cursor-pointer"
+                className="px-6 py-2.5 bg-slate-900 text-white font-bold rounded-xl text-xs hover:bg-slate-800 transition-colors cursor-pointer"
               >
                 Fermer
               </button>

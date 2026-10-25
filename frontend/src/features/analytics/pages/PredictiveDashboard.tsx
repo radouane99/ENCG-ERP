@@ -40,7 +40,7 @@ export default function PredictiveDashboard() {
         </div>
       )}
       <div>
-        <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+        <h1 className="text-foreground flex items-center gap-2 erp-page-title">
           <BrainCircuit className="w-6 h-6 text-primary" />
           IA Prédictive & Risque d'Échec
         </h1>

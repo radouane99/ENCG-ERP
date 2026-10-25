@@ -47,7 +47,7 @@ export default function PublicDocumentVerification() {
     return (
       <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-4 text-white">
         <div className="w-12 h-12 border-4 border-amber-400/30 border-t-amber-400 rounded-full animate-spin mb-4" />
-        <h2 className="text-lg font-black tracking-wide">Déchiffrement et vérification cryptographique en cours...</h2>
+        <h2 className="text-lg font-bold tracking-wide">Déchiffrement et vérification cryptographique en cours...</h2>
         <p className="text-xs text-slate-400 mt-1">Interrogation du registre central sécurisé de l'ENCG Fès</p>
       </div>
     );
@@ -62,15 +62,15 @@ export default function PublicDocumentVerification() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 py-12 font-sans">
-      <div className="w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] shadow-2xl overflow-hidden animate-in fade-in">
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center py-12 font-sans">
+      <div className="w-full max-w-lg bg-card dark:bg-card border border-border dark:border-border rounded-2xl shadow-sm overflow-hidden animate-in fade-in">
         
         {/* Header */}
-        <div className="bg-gradient-to-r from-[#001A4B] via-[#082663] to-[#001A4B] p-8 text-center text-white relative">
+        <div className="p-8 text-center text-white relative erp-page-banner">
           <div className="w-14 h-14 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center mx-auto mb-3 border border-white/20 text-amber-300 shadow-lg">
             <Stamp className="w-7 h-7" />
           </div>
-          <h1 className="text-xl font-black uppercase tracking-wider">Portail de Vérification Officielle</h1>
+          <h1 className="erp-page-title">Portail de Vérification Officielle</h1>
           <p className="text-blue-200 text-xs font-bold mt-1">
             École Nationale de Commerce et de Gestion — Université Sidi Mohamed Ben Abdellah (Fès)
           </p>
@@ -93,74 +93,74 @@ export default function PublicDocumentVerification() {
                   <ShieldCheck className="w-8 h-8" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-black text-emerald-700 dark:text-emerald-400">
+                  <h2 className="text-xl font-bold text-emerald-700 dark:text-emerald-400">
                     Document Officiel Authentique
                   </h2>
-                  <p className="text-xs text-slate-500 font-medium mt-0.5">
+                  <p className="text-xs text-muted-foreground font-medium mt-0.5">
                     Acte certifié conforme et scellé électroniquement dans le registre académique de l'ENCG Fès.
                   </p>
                 </div>
               </div>
 
               {/* Verified Details Card */}
-              <div className="bg-slate-50 dark:bg-slate-800/60 rounded-2xl p-5 border border-slate-200 dark:border-slate-700 space-y-3.5 text-xs">
-                <div className="flex justify-between items-center pb-2.5 border-b border-slate-200 dark:border-slate-700">
+              <div className="bg-muted/50 dark:bg-slate-800/60 rounded-2xl p-5 border border-border dark:border-border space-y-3.5 text-xs">
+                <div className="flex justify-between items-center pb-2.5 border-b border-border dark:border-border">
                   <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Type d'Acte</span>
-                  <span className="font-black text-[#001A4B] dark:text-blue-300 text-right">
+                  <span className="font-bold text-[#001A4B] dark:text-blue-300 text-right">
                     {result.document_type || 'Acte Officiel Homologué'}
                   </span>
                 </div>
 
-                <div className="flex justify-between items-center pb-2.5 border-b border-slate-200 dark:border-slate-700">
+                <div className="flex justify-between items-center pb-2.5 border-b border-border dark:border-border">
                   <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">
                     {isRoom ? "Espace Pédagogique" : "Titulaire / Bénéficiaire"}
                   </span>
-                  <span className="font-bold text-slate-800 dark:text-white text-right">
+                  <span className="font-bold text-foreground dark:text-white text-right">
                     {result.beneficiary || result.student_name || result.club_name}
                   </span>
                 </div>
 
-                <div className="flex justify-between items-center pb-2.5 border-b border-slate-200 dark:border-slate-700">
+                <div className="flex justify-between items-center pb-2.5 border-b border-border dark:border-border">
                   <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">
                     {isRoom ? "Code Repère / Salle" : "Numéro d'Enregistrement"}
                   </span>
-                  <span className="font-mono font-bold text-slate-800 dark:text-slate-200">
+                  <span className="font-mono font-bold text-foreground dark:text-foreground">
                     {result.student_number || result.cne || result.tracking_code}
                   </span>
                 </div>
 
                 {(result.filiere || result.category) && (
-                  <div className="flex justify-between items-center pb-2.5 border-b border-slate-200 dark:border-slate-700">
+                  <div className="flex justify-between items-center pb-2.5 border-b border-border dark:border-border">
                     <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">
                       {isRoom ? "Capacités d'Accueil" : "Pôle / Domaine"}
                     </span>
-                    <span className="font-medium text-slate-700 dark:text-slate-300 text-right">
+                    <span className="font-medium text-slate-700 dark:text-foreground text-right">
                       {result.filiere}
                     </span>
                   </div>
                 )}
 
                 {isRoom && result.category && (
-                  <div className="flex justify-between items-center pb-2.5 border-b border-slate-200 dark:border-slate-700">
+                  <div className="flex justify-between items-center pb-2.5 border-b border-border dark:border-border">
                     <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">
                       Équipements &amp; Réseau
                     </span>
-                    <span className="font-medium text-slate-700 dark:text-slate-300 text-right text-[11px]">
+                    <span className="font-medium text-slate-700 dark:text-foreground text-right text-[11px]">
                       {result.category}
                     </span>
                   </div>
                 )}
 
-                <div className="flex justify-between items-center pb-2.5 border-b border-slate-200 dark:border-slate-700">
+                <div className="flex justify-between items-center pb-2.5 border-b border-border dark:border-border">
                   <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">
                     {isRoom ? "Date de Certification" : "Date d'Émission / Octroi"}
                   </span>
-                  <span className="font-bold text-slate-800 dark:text-slate-200">
+                  <span className="font-bold text-foreground dark:text-foreground">
                     {result.issued_at}
                   </span>
                 </div>
 
-                <div className="flex justify-between items-center pb-2.5 border-b border-slate-200 dark:border-slate-700">
+                <div className="flex justify-between items-center pb-2.5 border-b border-border dark:border-border">
                   <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">
                     {isRoom ? "Homologation Sécurité" : "Statut Juridique"}
                   </span>
@@ -171,9 +171,9 @@ export default function PublicDocumentVerification() {
 
                 <div className="pt-1">
                   <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1 flex items-center gap-1">
-                    <Lock className="w-3 h-3 text-indigo-500" /> Empreinte Numérique (SHA-256)
+                    <Lock className="w-3 h-3 text-primary" /> Empreinte Numérique (SHA-256)
                   </div>
-                  <div className="font-mono text-[10px] bg-white dark:bg-slate-900 p-2 rounded-lg border border-slate-200 dark:border-slate-700 text-indigo-700 dark:text-indigo-300 break-all select-all font-bold">
+                  <div className="font-mono text-[10px] bg-card dark:bg-card p-2 rounded-lg border border-border dark:border-border text-primary dark:text-indigo-300 break-all select-all font-bold">
                     {result.hash || result.security_hash || `SHA256-${token || '8F9A2B4C1E0D3F7A'}`}
                   </div>
                 </div>
@@ -204,7 +204,7 @@ export default function PublicDocumentVerification() {
           )}
         </div>
 
-        <div className="p-4 bg-slate-50 dark:bg-slate-800/60 border-t border-slate-100 dark:border-slate-800 text-center">
+        <div className="p-4 bg-muted/50 dark:bg-slate-800/60 border-t border-border dark:border-border text-center">
           <p className="text-[10px] text-slate-400 font-medium">
             Direction de l'Établissement &amp; Systèmes d'Information • ENCG Fès © 2026
           </p>

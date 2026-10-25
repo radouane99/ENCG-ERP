@@ -73,7 +73,7 @@ const { data } = useQuery({
     return (
       <div className="p-2 h-full flex flex-col gap-1 overflow-hidden text-white drop-shadow-sm w-full">
         <div className="flex flex-row items-center justify-between w-full">
-          <span className="text-[10px] font-black px-2 py-0.5 rounded bg-black/20 uppercase tracking-widest backdrop-blur-sm shrink-0">
+          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-black/20 uppercase tracking-widest backdrop-blur-sm shrink-0">
             {eventInfo.event.extendedProps.type}
           </span>
           <span className="text-[10px] font-bold opacity-90 truncate">{eventInfo.timeText}</span>
@@ -105,13 +105,13 @@ const { data } = useQuery({
   `
 
   return (
-    <div className="space-y-6 p-4 md:p-6 max-w-[1400px] mx-auto animate-in flex flex-col h-[calc(100vh-80px)]">
+    <div className="space-y-6 max-w-[1400px] mx-auto animate-in flex flex-col h-[calc(100vh-80px)]">
       <style>{customStyles}</style>
       
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
         <div>
-          <h1 className="text-2xl font-bold text-[var(--foreground)] flex items-center gap-3">
+          <h1 className="text-[var(--foreground)] flex items-center gap-3 erp-page-title">
             <div className="w-10 h-10 bg-[var(--color-primary)/10] rounded-xl flex items-center justify-center text-[var(--color-primary)]">
               <CalendarIcon className="w-5 h-5" />
             </div>
@@ -129,14 +129,14 @@ const { data } = useQuery({
       </div>
 
       {/* Toolbar */}
-      <div className="flex flex-wrap gap-4 bg-[var(--card)] border border-[var(--border)] p-4 rounded-3xl shrink-0 shadow-sm items-center">
+      <div className="flex flex-wrap gap-4 bg-[var(--card)] border border-[var(--border)] p-4 rounded-2xl shrink-0 shadow-sm items-center">
         <div className="flex items-center gap-2 text-[var(--muted-foreground)] font-bold text-sm bg-[color-mix(in srgb, var(--muted) 3000%, transparent)] px-4 py-2 rounded-xl">
           <Filter size={16} /> {t('modules:timetable.filter')}
         </div>
         <select 
           value={targetType} 
           onChange={e => setTargetType(e.target.value as any)}
-          className="bg-[var(--background)] border border-[var(--border)] rounded-xl text-sm font-bold text-[var(--foreground)] px-4 py-2 outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)/20] transition-all min-w-[160px]"
+          className="bg-[var(--background)] border border-[var(--border)] text-sm font-bold text-[var(--foreground)] px-4 py-2 outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)/20] transition-all min-w-[160px] rounded-[var(--control-radius)]"
         >
           <option value="group">{t('modules:timetable.type_group')}</option>
           <option value="professor">{t('modules:timetable.type_prof')}</option>
@@ -155,7 +155,7 @@ const { data } = useQuery({
       </div>
 
       {/* FullCalendar Container */}
-      <div className="flex-1 bg-[var(--card)] border border-[var(--border)] rounded-3xl p-6 shadow-sm overflow-hidden" dir={isRtl ? "rtl" : "ltr"}>
+      <div className="flex-1 bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm overflow-hidden" dir={isRtl ? "rtl" : "ltr"}>
         <FullCalendar
           ref={calendarRef}
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}

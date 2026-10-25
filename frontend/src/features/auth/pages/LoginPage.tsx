@@ -96,10 +96,10 @@ export default function LoginPage() {
     <div data-testid="login-page" dir={isAr ? 'rtl' : 'ltr'} className={cn("space-y-6 font-sans", isAr && "text-right")}>
       {/* Header Title */}
       <div>
-        <div className="inline-flex items-center gap-1.5 bg-primary/10 text-primary px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider mb-2 border border-primary/20">
+        <div className="inline-flex items-center gap-1.5 bg-primary/10 text-primary px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider mb-2 border border-primary/20">
           <UserCheck className="w-3 h-3" /> {isAr ? 'مدخل آمن — المدرسة الوطنية للتجارة والتسيير بفاس' : 'Portail Officiel ENCG Fès'}
         </div>
-        <h1 className="text-2xl font-black tracking-tight text-foreground">
+        <h1 className="text-foreground erp-page-title">
           {t('login_title')}
         </h1>
         <p className="text-muted-foreground text-xs mt-1 font-medium">
@@ -109,7 +109,7 @@ export default function LoginPage() {
 
       {import.meta.env.DEV && (
       <div className="p-3 bg-muted/50 dark:bg-muted/30 border border-border/70 rounded-2xl space-y-2">
-        <div className="flex items-center justify-between text-[10px] font-black uppercase text-muted-foreground tracking-wider">
+        <div className="flex items-center justify-between text-[10px] font-bold uppercase text-muted-foreground tracking-wider">
           <span className="flex items-center gap-1"><Sparkles className="w-3 h-3 text-amber-500" /> {isAr ? 'حسابات التجربة السريعة' : 'Comptes Démo Rapides'}</span>
           <span className="text-[9px] text-primary">{isAr ? 'تعبئة تلقائية' : '1-Click AutoFill'}</span>
         </div>
@@ -229,7 +229,7 @@ export default function LoginPage() {
           data-testid="login-submit"
           type="submit"
           isLoading={isSubmitting}
-          className="w-full mt-2 py-3 rounded-xl font-black text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-[#E60028] hover:opacity-95 shadow-lg shadow-primary/20 hover:scale-[1.01] active:scale-[0.99] transition-all duration-200 cursor-pointer uppercase text-xs tracking-wider"
+          className="w-full mt-2 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-[#E60028] hover:opacity-95 shadow-lg shadow-primary/20 hover:scale-[1.01] active:scale-[0.99] transition-all duration-200 cursor-pointer uppercase text-xs tracking-wider"
         >
           {!isSubmitting && <LogIn className="w-4 h-4 me-2" />}
           {isSubmitting ? t('logging_in') : t('login_button')}
@@ -241,7 +241,7 @@ export default function LoginPage() {
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t border-border/80"></span>
               </div>
-              <div className="relative flex justify-center text-[10px] uppercase font-black tracking-wider text-muted-foreground">
+              <div className="relative flex justify-center text-[10px] uppercase font-bold tracking-wider text-muted-foreground">
                 <span className="bg-card px-3 py-0.5 rounded-full border border-border/60">
                   {t('sso_divider')}
                 </span>

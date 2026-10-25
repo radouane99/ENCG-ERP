@@ -226,19 +226,19 @@ const { data: cardResponse, isLoading, refetch } = useQuery({
       <div className="space-y-8 p-6 max-w-7xl mx-auto no-print font-sans pb-24">
 
       {/* Hero Header */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] p-8 md:p-10 rounded-[2.5rem] shadow-2xl text-white border border-blue-800/40">
+      <div className="relative overflow-hidden p-8 md:p-10 text-white border border-blue-800/40 erp-page-banner">
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
 
         <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="flex items-center gap-6">
-            <div className="w-20 h-20 rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-amber-300 shadow-2xl shrink-0">
+            <div className="w-20 h-20 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-amber-300 shadow-sm shrink-0">
               <IdCard className="w-10 h-10 text-amber-400" />
             </div>
             <div>
-              <div className="inline-flex items-center gap-2 bg-blue-400/20 text-blue-200 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-2 border border-blue-400/30">
+              <div className="inline-flex items-center gap-2 bg-blue-400/20 text-blue-200 px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mb-2 border border-blue-400/30">
                 <ShieldAlert className="w-4 h-4 text-amber-400" /> Cartes Électroniques PVC & QR Code Certifiés ENCG
               </div>
-              <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight">
+              <h1 className="text-white erp-page-title">
                 Gestion des Cartes Étudiants
               </h1>
               <p className="text-blue-100/90 text-sm max-w-2xl font-medium mt-1">
@@ -318,7 +318,7 @@ const { data: cardResponse, isLoading, refetch } = useQuery({
             placeholder="Rechercher par nom, email, CNE, CNI ou N° de carte..."
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            className="w-full pl-10 pr-3 py-2 text-sm bg-muted/30 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-foreground"
+            className="w-full pl-10 pr-3 py-2 text-sm bg-muted/30 border border-border focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-foreground rounded-[var(--control-radius)]"
           />
         </div>
 
@@ -488,7 +488,7 @@ const { data: cardResponse, isLoading, refetch } = useQuery({
                         <select 
                           value={item.status}
                           onChange={(e) => updateStatusMutation.mutate({ cardId: item.id!, newStatus: e.target.value })}
-                          className="px-2 py-1 text-xs bg-muted border border-border rounded focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
+                          className="px-2 py-1 text-xs bg-muted border border-border rounded focus:outline-none focus:ring-2 focus:ring-primary text-foreground rounded-[var(--control-radius)]"
                         >
                           <option value="active">Activer</option>
                           <option value="suspended">Suspendre</option>
@@ -547,7 +547,7 @@ const { data: cardResponse, isLoading, refetch } = useQuery({
       {/* Admin bulk generation override modal */}
       {showBulkModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
-          <div className="bg-card border border-border w-full max-w-md rounded-2xl p-6 shadow-2xl space-y-4">
+          <div className="bg-card border border-border w-full max-w-md rounded-2xl p-6 shadow-sm space-y-4">
             <div className="flex justify-between items-start">
               <div>
                 <h3 className="text-lg font-bold text-foreground">Génération de cartes en masse</h3>
@@ -571,7 +571,7 @@ const { data: cardResponse, isLoading, refetch } = useQuery({
                 type="date"
                 value={bulkExpiresAt}
                 onChange={(e) => setBulkExpiresAt(e.target.value)}
-                className="w-full px-3 py-2 text-sm bg-muted/40 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
+                className="w-full px-3 py-2 text-sm bg-muted/40 border border-border focus:outline-none focus:ring-2 focus:ring-primary text-foreground rounded-[var(--control-radius)]"
               />
               <p className="text-[10px] text-muted-foreground">
                 Laisse vide pour appliquer la date d'expiration par défaut calculée selon leur niveau d'étude.
@@ -610,7 +610,7 @@ const { data: cardResponse, isLoading, refetch } = useQuery({
             return (
               <div 
                 key={cardData.student_id}
-                className="relative bg-white border border-slate-300 rounded-[14px] overflow-hidden flex flex-col justify-between shadow-md font-sans mx-auto box-border"
+                className="relative bg-card border border-slate-300 rounded-[14px] overflow-hidden flex flex-col justify-between shadow-md font-sans mx-auto box-border"
                 style={{ pageBreakInside: 'avoid', width: '86mm', height: '54mm' }}
               >
                 {/* Top Gradient Banner Header */}
@@ -621,11 +621,11 @@ const { data: cardResponse, isLoading, refetch } = useQuery({
                   </div>
 
                   <div className="flex items-center gap-1.5 z-10">
-                    <div className="bg-white p-0.5 rounded-md shadow-sm shrink-0">
+                    <div className="bg-card p-0.5 rounded-md shadow-sm shrink-0">
                       <img src="/logo-encg.png" alt="ENCG Fès" className="h-5 w-auto object-contain" />
                     </div>
                     <div>
-                      <h2 className="text-[7.5px] font-black text-amber-300 uppercase tracking-wide leading-none">
+                      <h2 className="text-[7.5px] font-bold text-amber-300 uppercase tracking-wide leading-none">
                         ÉCOLE NATIONALE DE COMMERCE ET DE GESTION
                       </h2>
                       <p className="text-[5.5px] text-slate-200 font-bold uppercase tracking-wider leading-none mt-0.5">
@@ -635,10 +635,10 @@ const { data: cardResponse, isLoading, refetch } = useQuery({
                   </div>
 
                   <div className="z-10 text-right shrink-0">
-                    <span className="bg-amber-400 text-[#0f2863] text-[6px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider shadow-xs">
+                    <span className="bg-amber-400 text-[#0f2863] text-[6px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider shadow-xs">
                       {academicYear}
                     </span>
-                    <p className="text-[4.5px] text-slate-300 font-extrabold uppercase mt-0.5">CARTE ÉTUDIANT</p>
+                    <p className="text-[4.5px] text-slate-300 font-bold uppercase mt-0.5">CARTE ÉTUDIANT</p>
                   </div>
                 </div>
 
@@ -646,16 +646,16 @@ const { data: cardResponse, isLoading, refetch } = useQuery({
                 <div className="px-2.5 py-1 flex items-center gap-2.5 flex-1 min-h-0 bg-gradient-to-b from-slate-50/50 to-white">
                   {/* Photo Container */}
                   <div className="relative shrink-0">
-                    <div className="w-[19mm] h-[23mm] bg-white rounded-lg border-2 border-[#0f2863] flex items-center justify-center overflow-hidden shadow-sm">
+                    <div className="w-[19mm] h-[23mm] bg-card rounded-lg border-2 border-[#0f2863] flex items-center justify-center overflow-hidden shadow-sm">
                       {cardData.photo_url ? (
                         <img src={cardData.photo_url} alt="Photo" className="w-full h-full object-cover" />
                       ) : (
-                        <div className="w-8 h-8 rounded-full bg-[#0f2863] text-amber-300 flex items-center justify-center font-black text-xs">
+                        <div className="w-8 h-8 rounded-full bg-[#0f2863] text-amber-300 flex items-center justify-center font-bold text-xs">
                           {cardData.student.name.charAt(0)}
                         </div>
                       )}
                     </div>
-                    <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-[#0f2863] text-amber-300 text-[4.5px] font-black px-1 rounded uppercase tracking-tighter whitespace-nowrap shadow-2xs">
+                    <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-[#0f2863] text-amber-300 text-[4.5px] font-bold px-1 rounded uppercase tracking-tighter whitespace-nowrap shadow-2xs">
                       OFFICIEL
                     </span>
                   </div>
@@ -663,22 +663,22 @@ const { data: cardResponse, isLoading, refetch } = useQuery({
                   {/* Metadata Details */}
                   <div className="flex-1 min-w-0 space-y-0.5">
                     <div>
-                      <span className="text-[4.5px] text-slate-400 font-extrabold uppercase tracking-wider leading-none block">Nom & Prénom / Full Name</span>
-                      <h3 className="text-[9.5px] font-black text-slate-900 leading-tight truncate">{cardData.student.name}</h3>
+                      <span className="text-[4.5px] text-slate-400 font-bold uppercase tracking-wider leading-none block">Nom & Prénom / Full Name</span>
+                      <h3 className="text-[9.5px] font-bold text-foreground leading-tight truncate">{cardData.student.name}</h3>
                     </div>
 
                     <div className="grid grid-cols-2 gap-1 text-[6px] font-mono font-bold text-slate-700 bg-slate-100/80 px-1.5 py-0.5 rounded border border-slate-200/80">
-                      <span>CNE: <strong className="text-slate-900">{cardData.student.cne}</strong></span>
-                      <span>CIN: <strong className="text-slate-900">{cardData.student.cin || 'N/A'}</strong></span>
+                      <span>CNE: <strong className="text-foreground">{cardData.student.cne}</strong></span>
+                      <span>CIN: <strong className="text-foreground">{cardData.student.cin || 'N/A'}</strong></span>
                     </div>
 
                     {/* Filière & Option */}
                     <div className="space-y-0.2">
-                      <div className="flex items-center justify-between text-[6px] font-extrabold">
+                      <div className="flex items-center justify-between text-[6px] font-bold">
                         <span className="text-[#0f2863] truncate max-w-[110px]" title={cardData.student.filiere}>
                           📚 {cardData.student.filiere}
                         </span>
-                        <span className="bg-amber-100 text-amber-900 px-1 rounded font-black text-[5.5px] shrink-0 border border-amber-200">
+                        <span className="bg-amber-100 text-amber-900 px-1 rounded font-bold text-[5.5px] shrink-0 border border-amber-200">
                           {cardData.student.group}
                         </span>
                       </div>
@@ -686,11 +686,11 @@ const { data: cardResponse, isLoading, refetch } = useQuery({
                   </div>
 
                   {/* Holographic Verification QR */}
-                  <div className="flex flex-col items-center justify-center shrink-0 space-y-0.5 border-l border-slate-200 pl-1.5">
-                    <div className="bg-white p-0.5 rounded-md border border-slate-300 shadow-2xs">
+                  <div className="flex flex-col items-center justify-center shrink-0 space-y-0.5 border-l border-border pl-1.5">
+                    <div className="bg-card p-0.5 rounded-md border border-slate-300 shadow-2xs">
                       <QRCode value={verificationUrl} size={32} level="H" />
                     </div>
-                    <span className="text-[4px] font-extrabold text-blue-900 uppercase tracking-tighter text-center leading-none">
+                    <span className="text-[4px] font-bold text-primary uppercase tracking-tighter text-center leading-none">
                       SÉCURITÉ QR
                     </span>
                   </div>
@@ -699,7 +699,7 @@ const { data: cardResponse, isLoading, refetch } = useQuery({
                 {/* Footer Barcode & Legal Disclaimer */}
                 <div className="bg-[#0f2863] text-white px-2 py-0.5 flex items-center justify-between text-[5px] border-t border-amber-400/80">
                   <div className="flex items-center gap-1.5">
-                    <div className="bg-white px-1 py-0.2 rounded shrink-0">
+                    <div className="bg-card px-1 py-0.2 rounded shrink-0">
                       <Barcode value={cardNumber} height={12} className="w-[50px]" />
                     </div>
                     <span className="font-mono text-amber-300 font-bold tracking-wider">{cardNumber}</span>

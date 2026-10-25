@@ -298,23 +298,23 @@ const { data: examStudents = [], isLoading: isLoadingExamStudents } = useQuery({
   const examAbsentCount = Object.values(studentStatuses).filter(s => s === 'absent').length;
 
   return (
-    <div className="space-y-8 font-sans animate-in fade-in duration-500 text-slate-900 dark:text-slate-100 pb-28">
+    <div className="space-y-8 font-sans animate-in fade-in duration-500 text-foreground dark:text-foreground pb-28">
         {isError && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-900">Les surveillances ne peuvent pas être chargées. <button className="underline" onClick={() => refetch()}>Réessayer</button></div>}
       
       {/* ── Executive Header Banner ── */}
-      <div className="bg-gradient-to-br from-[#001A4B] via-[#082663] to-[#0d1d3d] rounded-[2.5rem] p-8 md:p-10 text-white shadow-2xl border border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
+      <div className="p-8 md:p-10 text-white border border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden erp-page-banner">
         <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
         <div className="absolute bottom-0 left-1/3 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
         <div className="flex items-center gap-5 relative z-10">
-          <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-amber-600 rounded-3xl flex items-center justify-center shadow-xl shadow-amber-500/20 text-[#001A4B] shrink-0 font-black">
+          <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-amber-600 rounded-2xl flex items-center justify-center shadow-sm shadow-amber-500/20 text-[#001A4B] shrink-0 font-bold">
             <Eye className="w-8 h-8" />
           </div>
           <div className="space-y-1">
-            <span className="bg-amber-400/20 text-amber-300 border border-amber-400/30 px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest inline-flex items-center gap-1">
+            <span className="bg-amber-400/20 text-amber-300 border border-amber-400/30 px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest inline-flex items-center gap-1">
               <ShieldCheck className="w-3.5 h-3.5" /> Charte des Examens & Surveillance Officielle
             </span>
-            <h1 className="text-2xl md:text-3xl font-black tracking-tight">Mes Convocations de Surveillance</h1>
+            <h1 className="erp-page-title">Mes Convocations de Surveillance</h1>
             <p className="text-xs md:text-sm text-blue-200 font-medium">
               Planning des surveillances d'épreuves, accusé de réception et signature électronique du PV d'examen.
             </p>
@@ -326,7 +326,7 @@ const { data: examStudents = [], isLoading: isLoadingExamStudents } = useQuery({
             <button
               onClick={handleConfirmAll}
               disabled={confirmingRef === 'all'}
-              className="px-5 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-white font-black text-xs uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-emerald-500/20 transition-all cursor-pointer disabled:opacity-50"
+              className="px-5 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-white font-bold text-xs uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-emerald-500/20 transition-all cursor-pointer disabled:opacity-50"
             >
               {confirmingRef === 'all' ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -342,7 +342,7 @@ const { data: examStudents = [], isLoading: isLoadingExamStudents } = useQuery({
               '/professor/surveillances/all-pdf', 
               `Ordre_Mission_Surveillance_Global_Pr_${teacherSlug}_2026-2027.pdf`
             )}
-            className="px-5 py-3 rounded-2xl bg-amber-400 hover:bg-amber-300 text-[#001A4B] font-black text-xs uppercase tracking-wider flex items-center gap-2 shadow-lg transition-all cursor-pointer"
+            className="px-5 py-3 rounded-2xl bg-amber-400 hover:bg-amber-300 text-[#001A4B] font-bold text-xs uppercase tracking-wider flex items-center gap-2 shadow-lg transition-all cursor-pointer"
           >
             <Download className="w-4 h-4" /> Ordre de Surveillance Global (PDF A4)
           </button>
@@ -351,47 +351,47 @@ const { data: examStudents = [], isLoading: isLoadingExamStudents } = useQuery({
 
       {/* KPI Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 flex items-center justify-center font-black shrink-0">
+        <div className="bg-card dark:bg-card rounded-2xl p-6 shadow-sm border border-border dark:border-border flex items-center gap-4">
+          <div className="w-14 h-14 rounded-2xl bg-primary/5 dark:bg-blue-950 text-primary dark:text-blue-400 flex items-center justify-center font-bold shrink-0">
             <CalendarDays className="w-7 h-7" />
           </div>
           <div>
-            <div className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Total Surveillances</div>
-            <div className="text-2xl font-black text-slate-900 dark:text-white">{totalCount} Séances</div>
-            <div className="text-[11px] font-bold text-slate-500">Session Automne 2026/2027</div>
+            <div className="text-[10px] font-bold uppercase text-slate-400 tracking-widest">Total Surveillances</div>
+            <div className="text-2xl font-bold text-foreground dark:text-white">{totalCount} Séances</div>
+            <div className="text-[11px] font-bold text-muted-foreground">Session Automne 2026/2027</div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-black shrink-0">
+        <div className="bg-card dark:bg-card rounded-2xl p-6 shadow-sm border border-border dark:border-border flex items-center gap-4">
+          <div className="w-14 h-14 rounded-2xl bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold shrink-0">
             <CheckCircle2 className="w-7 h-7" />
           </div>
           <div>
-            <div className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Surveillances Confirmées</div>
-            <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400">{confirmedCount} Validées</div>
-            <div className="text-[11px] font-bold text-slate-500">Accusé de réception transmis</div>
+            <div className="text-[10px] font-bold uppercase text-slate-400 tracking-widest">Surveillances Confirmées</div>
+            <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{confirmedCount} Validées</div>
+            <div className="text-[11px] font-bold text-muted-foreground">Accusé de réception transmis</div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400 flex items-center justify-center font-black shrink-0">
+        <div className="bg-card dark:bg-card rounded-2xl p-6 shadow-sm border border-border dark:border-border flex items-center gap-4">
+          <div className="w-14 h-14 rounded-2xl bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold shrink-0">
             <Clock className="w-7 h-7" />
           </div>
           <div>
-            <div className="text-[10px] font-black uppercase text-slate-400 tracking-widest">En Attente de Confirmation</div>
-            <div className="text-2xl font-black text-amber-600 dark:text-amber-400">{pendingCount} Séances</div>
-            <div className="text-[11px] font-bold text-slate-500">Confirmation obligatoire avant l'épreuve</div>
+            <div className="text-[10px] font-bold uppercase text-slate-400 tracking-widest">En Attente de Confirmation</div>
+            <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">{pendingCount} Séances</div>
+            <div className="text-[11px] font-bold text-muted-foreground">Confirmation obligatoire avant l'épreuve</div>
           </div>
         </div>
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex items-center gap-2 bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200 dark:border-slate-800 w-fit">
+      <div className="flex items-center gap-2 bg-card dark:bg-card p-2 rounded-2xl border border-border dark:border-border w-fit">
         <button
           onClick={() => setFilter('all')}
           className={cn(
-            "px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer",
-            filter === 'all' ? "bg-[#001A4B] text-white shadow-sm" : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+            "px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer",
+            filter === 'all' ? "bg-[#001A4B] text-white shadow-sm" : "text-muted-foreground dark:text-foreground hover:bg-muted dark:hover:bg-slate-800"
           )}
         >
           Toutes ({totalCount})
@@ -399,8 +399,8 @@ const { data: examStudents = [], isLoading: isLoadingExamStudents } = useQuery({
         <button
           onClick={() => setFilter('confirmed')}
           className={cn(
-            "px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer",
-            filter === 'confirmed' ? "bg-[#001A4B] text-white shadow-sm" : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+            "px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer",
+            filter === 'confirmed' ? "bg-[#001A4B] text-white shadow-sm" : "text-muted-foreground dark:text-foreground hover:bg-muted dark:hover:bg-slate-800"
           )}
         >
           Confirmées ({confirmedCount})
@@ -408,8 +408,8 @@ const { data: examStudents = [], isLoading: isLoadingExamStudents } = useQuery({
         <button
           onClick={() => setFilter('pending')}
           className={cn(
-            "px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer",
-            filter === 'pending' ? "bg-[#001A4B] text-white shadow-sm" : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+            "px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer",
+            filter === 'pending' ? "bg-[#001A4B] text-white shadow-sm" : "text-muted-foreground dark:text-foreground hover:bg-muted dark:hover:bg-slate-800"
           )}
         >
           En Attente ({pendingCount})
@@ -421,7 +421,7 @@ const { data: examStudents = [], isLoading: isLoadingExamStudents } = useQuery({
         {isLoading ? (
           <div className="py-20 text-center text-slate-400 font-bold animate-pulse">Chargement de votre planning de surveillance...</div>
         ) : filteredItems.length === 0 ? (
-          <div className="p-12 text-center bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 text-slate-400 font-bold">
+          <div className="p-12 text-center bg-card dark:bg-card rounded-2xl border border-border dark:border-border text-slate-400 font-bold">
             Aucune séance de surveillance trouvée pour ce filtre.
           </div>
         ) : (
@@ -432,36 +432,36 @@ const { data: examStudents = [], isLoading: isLoadingExamStudents } = useQuery({
               <div
                 key={item.id}
                 className={cn(
-                  "p-6 rounded-3xl border transition-all flex flex-col xl:flex-row xl:items-center justify-between gap-6",
+                  "p-6 rounded-2xl border transition-all flex flex-col xl:flex-row xl:items-center justify-between gap-6",
                   isConfirmed 
-                    ? "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-sm" 
+                    ? "bg-card dark:bg-card border-border dark:border-border shadow-sm"
                     : "bg-amber-50/50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800 shadow-sm"
                 )}
               >
                 <div className="flex items-start gap-5">
                   {/* Date Badge */}
                   <div className="w-16 h-16 rounded-2xl bg-[#001A4B] text-white flex flex-col items-center justify-center shrink-0 shadow-md">
-                    <span className="text-[10px] font-black text-amber-300 uppercase tracking-widest">{item.date_month}</span>
-                    <span className="text-xl font-black">{item.date_day}</span>
+                    <span className="text-[10px] font-bold text-amber-300 uppercase tracking-widest">{item.date_month}</span>
+                    <span className="text-xl font-bold">{item.date_day}</span>
                   </div>
 
                   <div className="space-y-1.5">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-mono text-xs font-black text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950 px-2.5 py-0.5 rounded-lg border border-indigo-200 dark:border-indigo-800">
+                      <span className="font-mono text-xs font-bold text-primary dark:text-indigo-300 bg-primary/5 dark:bg-indigo-950 px-2.5 py-0.5 rounded-lg border border-primary/20 dark:border-primary">
                         {item.reference}
                       </span>
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-muted dark:bg-card text-slate-700 dark:text-foreground">
                         {item.session_type}
                       </span>
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
                         {item.role}
                       </span>
                     </div>
 
-                    <h3 className="font-black text-base text-slate-900 dark:text-white leading-snug">{item.module_name}</h3>
+                    <h3 className="font-bold text-base text-foreground dark:text-white leading-snug">{item.module_name}</h3>
                     
-                    <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 font-bold pt-1">
-                      <span className="flex items-center gap-1.5"><Clock className="w-4 h-4 text-blue-600" /> {item.time}</span>
+                    <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground font-bold pt-1">
+                      <span className="flex items-center gap-1.5"><Clock className="w-4 h-4 text-primary" /> {item.time}</span>
                       <span className="flex items-center gap-1.5"><MapPin className="w-4 h-4 text-rose-500" /> {item.room}</span>
                       <span className="flex items-center gap-1.5"><Users className="w-4 h-4 text-emerald-600" /> {item.group_name}</span>
                     </div>
@@ -475,7 +475,7 @@ const { data: examStudents = [], isLoading: isLoadingExamStudents } = useQuery({
                       const examId = (item as any).exam_id;
                       navigate(`/professor/exams/${examId}/surveillance`);
                     }}
-                    className="px-4 py-2.5 bg-[#001A4B] hover:bg-[#082663] text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 shadow-sm cursor-pointer"
+                    className="px-4 py-2.5 bg-[#001A4B] hover:bg-[#082663] text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 shadow-sm cursor-pointer"
                   >
                     <Building2 className="w-4 h-4 text-amber-300" /> Saisie Absences Examen (PV)
                   </button>
@@ -483,20 +483,20 @@ const { data: examStudents = [], isLoading: isLoadingExamStudents } = useQuery({
                   {/* Télécharger la Convocation Individuelle */}
                   <button
                     onClick={() => handleDownloadSingleConvocation(item)}
-                    className="px-3.5 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
+                    className="px-3.5 py-2.5 bg-muted dark:bg-card hover:bg-slate-200 text-foreground dark:text-foreground rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
                   >
-                    <Download className="w-4 h-4 text-slate-600" /> Convocation PDF
+                    <Download className="w-4 h-4 text-muted-foreground" /> Convocation PDF
                   </button>
 
                   {isConfirmed ? (
-                    <span className="px-4 py-2.5 bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-1.5">
+                    <span className="px-4 py-2.5 bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
                       <CheckCircle2 className="w-4 h-4" /> Présence Confirmée ✓
                     </span>
                   ) : (
                     <button
                       onClick={() => handleConfirm(item)}
                       disabled={confirmingRef === item.reference}
-                      className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-md transition-all flex items-center gap-2 cursor-pointer disabled:opacity-60"
+                      className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-md transition-all flex items-center gap-2 cursor-pointer disabled:opacity-60"
                     >
                       {confirmingRef === item.reference ? (
                         <>
@@ -524,18 +524,18 @@ const { data: examStudents = [], isLoading: isLoadingExamStudents } = useQuery({
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-[#001A4B] rounded-[2.5rem] w-full max-w-4xl overflow-hidden shadow-2xl border border-white/10 flex flex-col text-white max-h-[92vh]"
+              className="bg-[#001A4B] rounded-2xl w-full max-w-4xl overflow-hidden shadow-sm border border-white/10 flex flex-col text-white max-h-[92vh]"
             >
               {/* Modal Header */}
               <div className="p-6 pb-4 border-b border-white/10 flex items-start justify-between bg-white/5">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="px-2.5 py-0.5 rounded-full bg-amber-400 text-[#001A4B] text-[10px] font-black uppercase tracking-wider">
+                    <span className="px-2.5 py-0.5 rounded-full bg-amber-400 text-[#001A4B] text-[10px] font-bold uppercase tracking-wider">
                       PV d'Examen & Émargement Numérique
                     </span>
                     <span className="text-xs font-bold text-blue-200 font-mono">{activeExamAttendance.reference}</span>
                   </div>
-                  <h2 className="text-lg sm:text-xl font-black text-white mt-1">
+                  <h2 className="text-lg sm:text-xl font-bold text-white mt-1">
                     {activeExamAttendance.module_name}
                   </h2>
                   <div className="flex flex-wrap items-center gap-4 text-xs text-blue-200/80 mt-1">
@@ -559,12 +559,12 @@ const { data: examStudents = [], isLoading: isLoadingExamStudents } = useQuery({
                 {/* Metrics */}
                 <div className="grid grid-cols-3 gap-3">
                   <div className="bg-emerald-500/15 border border-emerald-400/30 rounded-2xl p-3 text-center">
-                    <div className="text-xl font-black text-emerald-400">{examPresentCount}</div>
-                    <div className="text-[10px] font-black uppercase text-emerald-300">Présents (Ayant Émargé)</div>
+                    <div className="text-xl font-bold text-emerald-400">{examPresentCount}</div>
+                    <div className="text-[10px] font-bold uppercase text-emerald-300">Présents (Ayant Émargé)</div>
                   </div>
                   <div className="bg-rose-500/15 border border-rose-400/30 rounded-2xl p-3 text-center">
-                    <div className="text-xl font-black text-rose-400">{examAbsentCount}</div>
-                    <div className="text-[10px] font-black uppercase text-rose-300">Absents (Note: ABS)</div>
+                    <div className="text-xl font-bold text-rose-400">{examAbsentCount}</div>
+                    <div className="text-[10px] font-bold uppercase text-rose-300">Absents (Note: ABS)</div>
                   </div>
                 </div>
 
@@ -576,7 +576,7 @@ const { data: examStudents = [], isLoading: isLoadingExamStudents } = useQuery({
                     placeholder="Rechercher étudiant par Nom, CNE ou N° de Table..."
                     value={searchStudent}
                     onChange={(e) => setSearchStudent(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder:text-white/40 focus:outline-none focus:border-amber-400 transition-colors"
+                    className="w-full bg-white/5 border border-white/10 pl-10 pr-4 py-2.5 text-xs text-white placeholder:text-white/40 focus:outline-none focus:border-amber-400 transition-colors rounded-[var(--control-radius)]"
                   />
                 </div>
 
@@ -600,11 +600,11 @@ const { data: examStudents = [], isLoading: isLoadingExamStudents } = useQuery({
                           className="p-3 rounded-xl bg-white/5 border border-white/10 hover:border-white/20 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                         >
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-amber-400 text-[#001A4B] font-black text-xs flex items-center justify-center shrink-0">
+                            <div className="w-8 h-8 rounded-lg bg-amber-400 text-[#001A4B] font-bold text-xs flex items-center justify-center shrink-0">
                               #{idx + 1}
                             </div>
                             <div>
-                              <div className="text-xs font-black text-white">{st.name}</div>
+                              <div className="text-xs font-bold text-white">{st.name}</div>
                               <div className="text-[10px] text-blue-200/70 font-mono">
                                 CNE: {st.cne} · Apogée: {st.apogee}
                               </div>
@@ -616,7 +616,7 @@ const { data: examStudents = [], isLoading: isLoadingExamStudents } = useQuery({
                             <button
                               onClick={() => setStudentStatuses(prev => ({ ...prev, [st.id]: 'present' }))}
                               className={cn(
-                                "px-3 py-1 rounded-lg text-[10px] font-black uppercase transition-all cursor-pointer",
+                                "px-3 py-1 rounded-lg text-[10px] font-bold uppercase transition-all cursor-pointer",
                                 status === 'present' ? "bg-emerald-500 text-white shadow-xs" : "text-white/40 hover:text-white"
                               )}
                             >
@@ -625,7 +625,7 @@ const { data: examStudents = [], isLoading: isLoadingExamStudents } = useQuery({
                             <button
                               onClick={() => setStudentStatuses(prev => ({ ...prev, [st.id]: 'absent' }))}
                               className={cn(
-                                "px-3 py-1 rounded-lg text-[10px] font-black uppercase transition-all cursor-pointer",
+                                "px-3 py-1 rounded-lg text-[10px] font-bold uppercase transition-all cursor-pointer",
                                 status === 'absent' ? "bg-rose-500 text-white shadow-xs" : "text-white/40 hover:text-white"
                               )}
                             >
@@ -643,7 +643,7 @@ const { data: examStudents = [], isLoading: isLoadingExamStudents } = useQuery({
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
                       <PenTool className="w-4 h-4 text-amber-300" />
-                      <span className="text-xs font-black text-white uppercase tracking-wider">
+                      <span className="text-xs font-bold text-white uppercase tracking-wider">
                         Signature Électronique du Surveillant
                       </span>
                     </div>
@@ -684,8 +684,8 @@ const { data: examStudents = [], isLoading: isLoadingExamStudents } = useQuery({
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="text-xs font-black text-emerald-300">{signatureStamp.signer}</span>
-                            <span className="px-2 py-0.5 rounded-full bg-emerald-400/20 text-emerald-300 text-[9px] font-black uppercase">
+                            <span className="text-xs font-bold text-emerald-300">{signatureStamp.signer}</span>
+                            <span className="px-2 py-0.5 rounded-full bg-emerald-400/20 text-emerald-300 text-[9px] font-bold uppercase">
                               ✓ {signatureStamp.role}
                             </span>
                           </div>
@@ -700,7 +700,7 @@ const { data: examStudents = [], isLoading: isLoadingExamStudents } = useQuery({
 
                       <button
                         onClick={() => window.open('/api/exams/1/pv-pdf', '_blank')}
-                        className="px-4 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-md transition-all flex items-center gap-2 cursor-pointer shrink-0"
+                        className="px-4 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-md transition-all flex items-center gap-2 cursor-pointer shrink-0"
                       >
                         <Printer className="w-4 h-4" /> Voir PV Signé (PDF)
                       </button>
@@ -718,7 +718,7 @@ const { data: examStudents = [], isLoading: isLoadingExamStudents } = useQuery({
                         </div>
                       ) : (
                         <div className="space-y-2">
-                          <div className="relative bg-white rounded-xl p-2">
+                          <div className="relative bg-card rounded-xl p-2">
                             <canvas
                               ref={canvasRef}
                               width={550}
@@ -730,7 +730,7 @@ const { data: examStudents = [], isLoading: isLoadingExamStudents } = useQuery({
                               onTouchStart={startDrawing}
                               onTouchMove={draw}
                               onTouchEnd={stopDrawing}
-                              className="w-full h-[110px] bg-white cursor-crosshair rounded-lg touch-none"
+                              className="w-full h-[110px] bg-card cursor-crosshair rounded-lg touch-none"
                             />
                             {!hasDrawn && (
                               <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-slate-400 text-xs font-bold">
@@ -764,7 +764,7 @@ const { data: examStudents = [], isLoading: isLoadingExamStudents } = useQuery({
                       <button
                         onClick={handleSignExamPv}
                         disabled={isSavingSignature}
-                        className="px-6 py-3 bg-amber-400 hover:bg-amber-300 text-[#001A4B] rounded-xl text-xs font-black uppercase tracking-wider shadow-lg transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                        className="px-6 py-3 bg-amber-400 hover:bg-amber-300 text-[#001A4B] rounded-xl text-xs font-bold uppercase tracking-wider shadow-lg transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
                       >
                         {isSavingSignature ? <Spinner className="w-4 h-4" /> : <Stamp className="w-4 h-4" />}
                         Valider & Signer Électroniquement le PV
@@ -772,7 +772,7 @@ const { data: examStudents = [], isLoading: isLoadingExamStudents } = useQuery({
                     ) : (
                       <button
                         onClick={() => setActiveExamAttendance(null)}
-                        className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer"
+                        className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer"
                       >
                         Fermer la Session
                       </button>

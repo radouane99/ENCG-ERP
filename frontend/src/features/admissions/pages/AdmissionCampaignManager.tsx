@@ -65,17 +65,17 @@ export default function AdmissionCampaignManager() {
   ) || []
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto p-4 md:p-6 pb-20 animate-in fade-in" dir={isRtl ? "rtl" : "ltr"}>
+    <div className="space-y-8 max-w-7xl mx-auto pb-20 animate-in fade-in" dir={isRtl ? "rtl" : "ltr"}>
       
       {/* Premium Header */}
-      <div className="bg-gradient-to-r from-[#1F3A5F] to-[#2A4D7C] rounded-[2rem] p-8 text-white shadow-xl shadow-[#1F3A5F]/20 relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="absolute top-0 end-0 -mt-10 -me-10 w-40 h-40 bg-white opacity-5 rounded-full blur-3xl mix-blend-overlay"></div>
+      <div className="p-8 text-white relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6 erp-page-banner">
+        <div className="absolute top-0 end-0 -mt-10 -me-10 w-40 h-40 bg-card opacity-5 rounded-full blur-3xl mix-blend-overlay"></div>
         <div className="flex items-center gap-4 relative z-10">
-          <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-[1.2rem] flex items-center justify-center border border-white/20">
+          <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20">
             <Target className="w-8 h-8 text-white" />
           </div>
           <div>
-            <h1 className="text-3xl font-black mb-1 tracking-tight">
+            <h1 className="mb-1 erp-page-title">
               {t('admissions:campaign.title')}
             </h1>
             <p className="text-white/80 font-medium text-sm">
@@ -88,9 +88,9 @@ export default function AdmissionCampaignManager() {
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
         {/* Sidebar Status / Actions */}
         <div className="xl:col-span-1 space-y-6">
-          <div className="bg-[var(--card)] border border-[var(--border)] rounded-[2rem] p-6 shadow-sm relative overflow-hidden group">
+          <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm relative overflow-hidden group">
             <div className="absolute -end-6 -top-6 w-24 h-24 bg-[var(--color-primary)/5] rounded-full blur-2xl transition-transform group-hover:scale-150"></div>
-            <h2 className="font-black text-lg mb-6 text-[var(--foreground)] relative z-10">
+            <h2 className="font-bold text-lg mb-6 text-[var(--foreground)] relative z-10">
               {t('admissions:campaign.card.title')}
             </h2>
             
@@ -101,11 +101,11 @@ export default function AdmissionCampaignManager() {
               </div>
               <div className="flex justify-between items-center bg-[color-mix(in srgb, var(--muted) 3000%, transparent)] p-3 rounded-xl border border-[var(--border)]">
                 <span className="font-bold">{t('admissions:campaign.card.capacity')}</span>
-                <span className="font-black text-[var(--foreground)]">450 {t('admissions:campaign.card.places')}</span>
+                <span className="font-bold text-[var(--foreground)]">450 {t('admissions:campaign.card.places')}</span>
               </div>
               <div className="flex justify-between items-center bg-[color-mix(in srgb, var(--muted) 3000%, transparent)] p-3 rounded-xl border border-[var(--border)]">
                 <span className="font-bold">{t('admissions:campaign.card.enrolled')}</span>
-                <span className="font-black text-[var(--foreground)]">12,500</span>
+                <span className="font-bold text-[var(--foreground)]">12,500</span>
               </div>
             </div>
 
@@ -117,7 +117,7 @@ export default function AdmissionCampaignManager() {
 
         {/* Main Content: Ranking List */}
         <div className="xl:col-span-3">
-          <div className="bg-[var(--card)] border border-[var(--border)] rounded-[2rem] shadow-sm overflow-hidden flex flex-col h-full">
+          <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl shadow-sm overflow-hidden flex flex-col h-full">
             <div className="p-4 border-b border-[var(--border)] flex flex-wrap gap-4 items-center justify-between bg-[color-mix(in srgb, var(--muted) 3000%, transparent)]">
               <h2 className="font-bold text-lg flex items-center gap-2 text-[var(--foreground)] px-2">
                 <div className="p-2 bg-[var(--color-primary)/10] rounded-lg text-[var(--color-primary)]"><Users size={18} /></div>
@@ -158,14 +158,14 @@ export default function AdmissionCampaignManager() {
                   <tbody className="divide-y divide-[var(--border)]">
                     {filteredApps?.length > 0 ? filteredApps.map((app: any, idx: number) => (
                       <tr key={app.id} className="hover:bg-[color-mix(in srgb, var(--muted) 3000%, transparent)] transition-colors group">
-                        <td className="px-6 py-4 font-black text-[var(--foreground)] opacity-70">
+                        <td className="px-6 py-4 font-bold text-[var(--foreground)] opacity-70">
                           #{idx + 1}
                         </td>
                         <td className="px-6 py-4">
                           <p className="font-bold text-[var(--foreground)]">{app.candidate?.last_name || 'Candidat'} {app.candidate?.first_name || 'Anonyme'}</p>
                           <p className="text-[11px] text-[var(--muted-foreground)] font-medium">CNE: {app.candidate?.cne || 'N/A'}</p>
                         </td>
-                        <td className="px-6 py-4 text-center font-black text-lg text-[var(--color-primary)]">
+                        <td className="px-6 py-4 text-center font-bold text-lg text-[var(--color-primary)]">
                           {(app.score || 14.5).toFixed(2)}
                         </td>
                         <td className="px-6 py-4 text-center">

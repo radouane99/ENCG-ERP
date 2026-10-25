@@ -8,6 +8,7 @@ use App\Providers\TelescopeServiceProvider;
 $providers = [
     AiServiceProvider::class,
     AppServiceProvider::class,
+    \App\Providers\PdfDocumentServiceProvider::class,
     HorizonServiceProvider::class,
 ];
 

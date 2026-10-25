@@ -88,7 +88,7 @@ export default function TwoFactorPage() {
         <div className="w-16 h-16 bg-primary/10 text-primary mx-auto rounded-2xl flex items-center justify-center mb-4 ring-4 ring-primary/20">
           <ShieldCheck className="w-8 h-8" />
         </div>
-        <h1 className="text-2xl font-bold tracking-tight">Vérification en deux étapes</h1>
+        <h1 className="erp-page-title">Vérification en deux étapes</h1>
         <p className="text-muted-foreground text-sm max-w-xs mx-auto">
           Entrez le code à 6 chiffres généré par votre application <strong>Google Authenticator</strong> ou <strong>Authy</strong>.
         </p>
@@ -110,7 +110,7 @@ export default function TwoFactorPage() {
               onKeyDown={(e) => handleKeyDown(index, e)}
               onPaste={index === 0 ? handlePaste : undefined}
               disabled={isLoading}
-              className="w-12 h-14 text-center text-xl font-bold bg-background border-2 rounded-xl focus:border-primary focus:ring-4 focus:ring-primary/20 outline-none transition-all disabled:opacity-50"
+              className="w-12 h-14 text-center text-xl font-bold bg-background border-2 focus:border-primary focus:ring-4 focus:ring-primary/20 outline-none transition-all disabled:opacity-50 rounded-[var(--control-radius)]"
             />
           ))}
         </div>
@@ -118,7 +118,7 @@ export default function TwoFactorPage() {
         <button
           type="submit"
           disabled={isLoading || code.join('').length < 6}
-          className="w-full bg-primary text-white hover:bg-primary/90 h-11 rounded-lg font-medium shadow-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full bg-primary text-primary-foreground hover:bg-primary/90 h-11 rounded-lg font-medium shadow-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isLoading ? (
             <Loader2 className="w-4 h-4 animate-spin" />

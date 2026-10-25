@@ -9,10 +9,10 @@ export default function CoursesPage() {
   ])
 
   return (
-    <div className="space-y-6 animate-in p-6">
+    <div className="space-y-6 animate-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Plateforme E-Learning (LMS)</h1>
+          <h1 className="erp-page-title">Plateforme E-Learning (LMS)</h1>
           <p className="text-muted-foreground text-sm mt-1">Accédez aux supports de cours, vidéos et ressources pédagogiques.</p>
         </div>
       </div>
@@ -20,9 +20,9 @@ export default function CoursesPage() {
       <div className="flex gap-4 mb-6">
         <div className="relative w-full max-w-md">
            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-           <input type="text" placeholder="Rechercher un cours ou un module..." className="w-full bg-card border pl-9 pr-4 py-2 text-sm rounded-lg" />
+           <input type="text" placeholder="Rechercher un cours ou un module..." className="w-full bg-card border pl-9 pr-4 py-2 text-sm rounded-[var(--control-radius)]" />
         </div>
-        <select className="bg-card border px-4 py-2 text-sm rounded-lg outline-none">
+        <select className="bg-card border px-4 py-2 text-sm outline-none rounded-[var(--control-radius)]">
            <option>Tous les semestres</option>
            <option>S1</option>
            <option>S3</option>

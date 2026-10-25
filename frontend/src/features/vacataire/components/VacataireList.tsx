@@ -34,8 +34,8 @@ function CustomSelect({ label, icon: Icon, value, onChange, options, placeholder
   return (
     <div ref={ref} className={cn("relative space-y-1.5 w-full", open ? "z-[100]" : "z-10")}>
       {label && (
-        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-          {Icon && <Icon className="inline w-3.5 h-3.5 mr-1 text-indigo-500" />}
+        <label className="block text-xs font-bold text-slate-700 dark:text-foreground uppercase tracking-wider">
+          {Icon && <Icon className="inline w-3.5 h-3.5 mr-1 text-primary" />}
           {label}
         </label>
       )}
@@ -44,27 +44,27 @@ function CustomSelect({ label, icon: Icon, value, onChange, options, placeholder
         disabled={disabled}
         onClick={() => setOpen(!open)}
         className={cn(
-          "w-full px-4 py-3 bg-white dark:bg-slate-800 border rounded-2xl text-xs font-bold flex items-center justify-between transition-all cursor-pointer shadow-xs text-left",
+          "w-full px-4 py-3 bg-card dark:bg-card border rounded-2xl text-xs font-bold flex items-center justify-between transition-all cursor-pointer shadow-xs text-left",
           open 
-            ? "border-indigo-500 ring-4 ring-indigo-500/15 text-indigo-900 dark:text-indigo-200" 
-            : "border-slate-200 dark:border-slate-700/80 hover:border-indigo-400 dark:hover:border-indigo-500 text-slate-800 dark:text-slate-100",
+            ? "border-primary ring-4 ring-indigo-500/15 text-primary dark:text-indigo-200"
+            : "border-border dark:border-slate-700/80 hover:border-indigo-400 dark:hover:border-primary text-foreground dark:text-foreground",
           disabled && "opacity-40 cursor-not-allowed"
         )}
       >
         <span className={cn("truncate font-bold", !selectedOption && "text-slate-400 font-medium")}>
           {selectedOption ? selectedOption.label : placeholder}
         </span>
-        <ChevronDown className={cn("w-4 h-4 text-slate-400 transition-transform duration-200 shrink-0 ml-2", open && "rotate-180 text-indigo-600")} />
+        <ChevronDown className={cn("w-4 h-4 text-slate-400 transition-transform duration-200 shrink-0 ml-2", open && "rotate-180 text-primary")} />
       </button>
 
       {open && !disabled && (
-        <div className="absolute z-[9999] top-full left-0 mt-2 w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl py-2 max-h-60 overflow-y-auto animate-in fade-in zoom-in-95 duration-150 backdrop-blur-2xl">
+        <div className="absolute z-[9999] top-full left-0 mt-2 w-full bg-card dark:bg-card border border-border dark:border-border rounded-2xl shadow-sm py-2 max-h-60 overflow-y-auto animate-in fade-in zoom-in-95 duration-150 backdrop-blur-2xl">
           <div
             onClick={() => {
               onChange('')
               setOpen(false)
             }}
-            className="px-4 py-2.5 text-xs font-medium text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer flex items-center justify-between"
+            className="px-4 py-2.5 text-xs font-medium text-slate-400 hover:bg-muted/50 dark:hover:bg-slate-800 cursor-pointer flex items-center justify-between"
           >
             <span>{placeholder}</span>
           </div>
@@ -80,19 +80,19 @@ function CustomSelect({ label, icon: Icon, value, onChange, options, placeholder
                 className={cn(
                   "px-4 py-2.5 text-xs font-bold cursor-pointer flex items-center justify-between transition-colors group",
                   isSelected
-                    ? "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400"
-                    : "text-slate-700 dark:text-slate-200 hover:bg-indigo-50/50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-300"
+                    ? "bg-primary/5 dark:bg-indigo-900/30 text-primary dark:text-indigo-400"
+                    : "text-slate-700 dark:text-foreground hover:bg-indigo-50/50 dark:hover:bg-slate-800 hover:text-primary dark:hover:text-indigo-300"
                 )}
               >
                 <div className="flex items-center gap-2 truncate">
                   <span className="truncate">{opt.label}</span>
                   {opt.badge && (
-                    <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+                    <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-muted dark:bg-slate-700 text-muted-foreground dark:text-foreground">
                       {opt.badge}
                     </span>
                   )}
                 </div>
-                {isSelected && <Check className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />}
+                {isSelected && <Check className="w-4 h-4 text-primary dark:text-indigo-400 shrink-0" />}
               </div>
             )
           })}
@@ -399,20 +399,20 @@ export default function VacataireList() {
   return (
     <div className="space-y-8 animate-in relative p-4 md:p-8 max-w-[1500px] mx-auto font-sans pb-24">
       {/* Deep Navy Hero Header Banner */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] p-8 md:p-10 rounded-[2.5rem] shadow-2xl text-white border border-blue-800/40 space-y-6">
+      <div className="relative overflow-hidden p-8 md:p-10 text-white border border-blue-800/40 space-y-6 erp-page-banner">
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
 
         {/* Top Header Content */}
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="flex items-center gap-6">
-            <div className="w-16 h-16 md:w-20 md:h-20 rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-amber-300 shadow-2xl shrink-0">
+            <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-amber-300 shadow-sm shrink-0">
               <UserCheck className="w-8 h-8 md:w-10 md:h-10 text-amber-400" />
             </div>
             <div>
-              <div className="inline-flex items-center gap-2 bg-blue-500/20 text-blue-200 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-2 border border-blue-400/30">
+              <div className="inline-flex items-center gap-2 bg-blue-500/20 text-blue-200 px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mb-2 border border-blue-400/30">
                 <Sparkles className="w-4 h-4 text-amber-400" /> Corps Enseignant Vacataire & HR ENCG Fès
               </div>
-              <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight leading-tight">
+              <h1 className="text-white leading-tight erp-page-title">
                 Gestion des Vacataires
               </h1>
               <p className="text-blue-100/90 text-xs md:text-sm font-medium mt-1 max-w-2xl">
@@ -424,19 +424,19 @@ export default function VacataireList() {
           <div className="flex items-center gap-3 flex-wrap shrink-0">
             <button
               onClick={downloadTemplate}
-              className="flex items-center gap-2 px-5 py-3 bg-white/10 hover:bg-white/20 text-white font-black rounded-2xl transition-all text-xs uppercase tracking-wider border border-white/20 cursor-pointer shadow-md"
+              className="flex items-center gap-2 px-5 py-3 bg-white/10 hover:bg-white/20 text-white font-bold rounded-2xl transition-all text-xs uppercase tracking-wider border border-white/20 cursor-pointer shadow-md"
             >
               Modèle Import
             </button>
             <button
               onClick={exportData}
-              className="flex items-center gap-2 px-5 py-3 bg-white/10 hover:bg-white/20 text-white font-black rounded-2xl transition-all text-xs uppercase tracking-wider border border-white/20 cursor-pointer shadow-md"
+              className="flex items-center gap-2 px-5 py-3 bg-white/10 hover:bg-white/20 text-white font-bold rounded-2xl transition-all text-xs uppercase tracking-wider border border-white/20 cursor-pointer shadow-md"
             >
               <Download className="w-4 h-4 text-amber-300" /> Exporter
             </button>
             <button
               onClick={openCreate}
-              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-black rounded-2xl transition-all text-xs uppercase tracking-wider shadow-lg cursor-pointer"
+              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold rounded-2xl transition-all text-xs uppercase tracking-wider shadow-lg cursor-pointer"
             >
               <Plus className="w-4 h-4 text-white" /> Nouveau Vacataire
             </button>
@@ -446,23 +446,23 @@ export default function VacataireList() {
         {/* KPI Cards Row */}
         <div className="relative z-10 grid grid-cols-2 md:grid-cols-4 gap-4 pt-6 border-t border-white/10">
           <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15">
-            <span className="text-[10px] font-black uppercase tracking-wider text-blue-200 block">Total Vacataires</span>
-            <span className="text-2xl font-black text-white font-mono mt-1 block">{stats.total}</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-blue-200 block">Total Vacataires</span>
+            <span className="text-2xl font-bold text-white font-mono mt-1 block">{stats.total}</span>
           </div>
 
           <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15">
-            <span className="text-[10px] font-black uppercase tracking-wider text-orange-300 block">En Attente</span>
-            <span className="text-2xl font-black text-orange-300 font-mono mt-1 block">{stats.pending}</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-orange-300 block">En Attente</span>
+            <span className="text-2xl font-bold text-orange-300 font-mono mt-1 block">{stats.pending}</span>
           </div>
 
           <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15">
-            <span className="text-[10px] font-black uppercase tracking-wider text-emerald-300 block">Heures Effectuées</span>
-            <span className="text-2xl font-black text-emerald-400 font-mono mt-1 block">{stats.total_hours}h</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-300 block">Heures Effectuées</span>
+            <span className="text-2xl font-bold text-emerald-400 font-mono mt-1 block">{stats.total_hours}h</span>
           </div>
 
           <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15">
-            <span className="text-[10px] font-black uppercase tracking-wider text-amber-300 block">Paiements En Règle</span>
-            <span className="text-xs font-black text-amber-300 mt-2 block flex items-center gap-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-300 block">Paiements En Règle</span>
+            <span className="text-xs font-bold text-amber-300 mt-2 block flex items-center gap-1">
               <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Taux Horaire 400 MAD/h
             </span>
           </div>
@@ -490,7 +490,7 @@ export default function VacataireList() {
         <div className="p-5 rounded-xl bg-card border shadow-sm flex items-center justify-between">
           <div><p className="text-sm font-medium text-muted-foreground mb-1">Non payés</p>
             <p className="text-2xl font-bold text-foreground">{stats.unpaid_contracts}</p></div>
-          <div className="w-10 h-10 rounded-full bg-blue-500/10 text-blue-500 flex items-center justify-center"><Banknote className="w-5 h-5" /></div>
+          <div className="w-10 h-10 rounded-full bg-blue-500/10 text-primary flex items-center justify-center"><Banknote className="w-5 h-5" /></div>
         </div>
       </div>
 
@@ -501,7 +501,7 @@ export default function VacataireList() {
           <input
             type="text" placeholder="Rechercher (Nom, Module)..."
             value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-sm bg-muted/50 border-none rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+            className="w-full pl-9 pr-4 py-2 text-sm bg-muted/50 border-none focus:outline-none focus:ring-2 focus:ring-primary/20 rounded-[var(--control-radius)]"
           />
         </div>
         <div className="flex items-center gap-1 bg-muted p-1 rounded-lg">
@@ -567,17 +567,17 @@ export default function VacataireList() {
                                                             </div>
                                                         </div>
                                                         <div className="flex flex-wrap items-center gap-1.5 pt-3 border-t">
-                                                            <button onClick={() => handleDownloadPdf(vac.id)} title="Contrat PDF" className="flex items-center gap-1 text-[10px] font-black text-blue-600 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 px-2 py-1 rounded-lg transition-colors border border-blue-200 dark:border-blue-800">
+                                                            <button onClick={() => handleDownloadPdf(vac.id)} title="Contrat PDF" className="flex items-center gap-1 text-[10px] font-bold text-primary bg-primary/5 dark:bg-blue-950/60 hover:bg-primary/10 px-2 py-1 rounded-lg transition-colors border border-primary/20 dark:border-primary">
                                                                 <FileText className="w-3 h-3" /> Contrat
                                                             </button>
-                                                            <button onClick={() => handleGeneratePaySlipPdf(vac)} title="Bordereau de Règlement" className="flex items-center gap-1 text-[10px] font-black text-emerald-600 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 px-2 py-1 rounded-lg transition-colors border border-emerald-200 dark:border-emerald-800">
+                                                            <button onClick={() => handleGeneratePaySlipPdf(vac)} title="Bordereau de Règlement" className="flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 px-2 py-1 rounded-lg transition-colors border border-emerald-200 dark:border-emerald-800">
                                                                 <Banknote className="w-3 h-3" /> Paie
                                                             </button>
-                                                            <button onClick={() => handleWhatsAppRelance(vac)} title="Relance WhatsApp" className="flex items-center gap-1 text-[10px] font-black text-emerald-700 bg-emerald-100 hover:bg-emerald-200 px-2 py-1 rounded-lg transition-colors">
+                                                            <button onClick={() => handleWhatsAppRelance(vac)} title="Relance WhatsApp" className="flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-100 hover:bg-emerald-200 px-2 py-1 rounded-lg transition-colors">
                                                                 📱 WhatsApp
                                                             </button>
                                                             <div className="flex items-center gap-1 ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                <button onClick={() => openEdit(vac)} className="p-1 text-slate-400 hover:text-indigo-600 rounded-md" title="Modifier">
+                                                                <button onClick={() => openEdit(vac)} className="p-1 text-slate-400 hover:text-primary rounded-md" title="Modifier">
                                                                     <Edit2 className="w-3.5 h-3.5" />
                                                                 </button>
                                                                 <button onClick={() => handleDelete(vac.id)} className="p-1 text-slate-400 hover:text-red-600 rounded-md" title="Supprimer">
@@ -667,7 +667,7 @@ export default function VacataireList() {
                                 <XCircle className="w-3.5 h-3.5" /> Refusé
                             </span>
                             ) : vac.status === 'completed' ? (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-500/10 text-blue-600 border border-blue-500/20">
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-500/10 text-primary border border-blue-500/20">
                                 <Clock className="w-3.5 h-3.5" /> Terminé
                             </span>
                             ) : (
@@ -681,7 +681,7 @@ export default function VacataireList() {
                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-500/10 text-green-600 border border-green-500/20">Réglé</span>
                             )}
                             {vac.payment_status === 'partial' && (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-500/10 text-blue-600 border border-blue-500/20">Partiel</span>
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-500/10 text-primary border border-blue-500/20">Partiel</span>
                             )}
                             {vac.payment_status === 'unpaid' && (
                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground border border-border">Non calculé</span>
@@ -689,7 +689,7 @@ export default function VacataireList() {
                         </td>
                         <td className="px-6 py-4 text-right">
                             <div className="flex items-center justify-end gap-2">
-                            <button onClick={() => handleDownloadPdf(vac.id)} className="flex items-center gap-1 px-2.5 py-1 text-xs font-bold text-blue-600 bg-blue-50 dark:bg-blue-950/50 hover:bg-blue-100 rounded-xl transition-colors border border-blue-200 dark:border-blue-800" title="Télécharger le Contrat (PDF)">
+                            <button onClick={() => handleDownloadPdf(vac.id)} className="flex items-center gap-1 px-2.5 py-1 text-xs font-bold text-primary bg-primary/5 dark:bg-blue-950/50 hover:bg-primary/10 rounded-xl transition-colors border border-primary/20 dark:border-primary" title="Télécharger le Contrat (PDF)">
                                 <FileText className="w-3.5 h-3.5" /> Contrat
                             </button>
                             <button onClick={() => handleGeneratePaySlipPdf(vac)} className="flex items-center gap-1 px-2.5 py-1 text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 rounded-xl transition-colors border border-emerald-200 dark:border-emerald-800" title="Générer Bordereau de Paie (PDF)">
@@ -698,7 +698,7 @@ export default function VacataireList() {
                             <button onClick={() => handleWhatsAppRelance(vac)} className="flex items-center gap-1 px-2.5 py-1 text-xs font-bold text-emerald-700 bg-emerald-100 hover:bg-emerald-200 rounded-xl transition-colors shadow-xs" title="Relance WhatsApp Pièces Manquantes">
                                 📱 WhatsApp
                             </button>
-                            <button onClick={() => openEdit(vac)} className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="Modifier">
+                            <button onClick={() => openEdit(vac)} className="p-1.5 text-slate-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-colors" title="Modifier">
                                 <Edit2 className="w-4 h-4" />
                             </button>
                             <button onClick={() => handleDelete(vac.id)} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Supprimer">
@@ -720,7 +720,7 @@ export default function VacataireList() {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-card border rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+          <div className="bg-card border rounded-2xl shadow-sm w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-4 border-b bg-muted/30">
               <h3 className="font-bold text-lg">{editingId ? 'Modifier le contrat' : 'Nouveau Vacataire'}</h3>
               <button onClick={() => setShowModal(false)} className="p-1 text-muted-foreground hover:bg-muted rounded-md"><X className="w-5 h-5" /></button>
@@ -799,7 +799,7 @@ export default function VacataireList() {
 
               <div className="flex items-center justify-end gap-3 pt-4 border-t">
                 <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 text-sm text-muted-foreground hover:bg-muted rounded-lg">Annuler</button>
-                <button type="submit" className="px-4 py-2 text-sm font-medium bg-primary text-white hover:bg-primary/90 rounded-lg shadow-sm">
+                <button type="submit" className="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg shadow-sm">
                   {editingId ? 'Mettre à jour' : 'Enregistrer'}
                 </button>
               </div>

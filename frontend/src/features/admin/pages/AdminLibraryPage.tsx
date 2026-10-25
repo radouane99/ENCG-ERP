@@ -258,18 +258,18 @@ export default function AdminLibraryPage() {
   };
 
   return (
-    <div className="max-w-[1500px] mx-auto p-4 sm:p-6 lg:p-8 space-y-8 font-sans pb-24 text-slate-900 dark:text-white">
+    <div className="max-w-[1500px] mx-auto space-y-8 font-sans pb-24 text-foreground dark:text-white">
       
       {/* ── 1. Header & Actions ── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border dark:border-border pb-6">
         <div className="space-y-1">
-          <div className="inline-flex items-center gap-2 bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 px-3 py-0.5 rounded-full text-xs font-black uppercase tracking-wider border border-blue-200 dark:border-blue-900">
+          <div className="inline-flex items-center gap-2 bg-primary/5 dark:bg-blue-950/60 text-primary dark:text-blue-300 px-3 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider border border-primary/20 dark:border-primary">
             <BookOpen className="w-3.5 h-3.5" /> Administration du Fonds Documentaire
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+          <h1 className="text-foreground dark:text-white erp-page-title">
             Bibliothèque Universitaire & Prêts
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+          <p className="text-xs sm:text-sm text-muted-foreground dark:text-muted-foreground">
             Catalogue général de l'ENCG, gestion des cotes de rangement, inventaire physique et régulation des retards.
           </p>
         </div>
@@ -277,14 +277,14 @@ export default function AdminLibraryPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => setNewBorrowingModalOpen(true)}
-            className="bg-white dark:bg-slate-800 hover:bg-slate-50 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 px-4 py-2.5 rounded-xl font-bold text-xs shadow-sm flex items-center gap-2 transition-all cursor-pointer"
+            className="bg-card dark:bg-card hover:bg-muted/50 border border-slate-300 dark:border-border text-foreground dark:text-foreground px-4 py-2.5 rounded-xl font-bold text-xs shadow-sm flex items-center gap-2 transition-all cursor-pointer"
           >
-            <BookmarkCheck className="w-4 h-4 text-indigo-600" /> Nouvel Emprunt Guichet
+            <BookmarkCheck className="w-4 h-4 text-primary" /> Nouvel Emprunt Guichet
           </button>
 
           <button
             onClick={openCreateBookModal}
-            className="bg-[#001A4B] hover:bg-[#082663] text-white px-4 py-2.5 rounded-xl font-black text-xs shadow-md flex items-center gap-2 transition-all cursor-pointer active:scale-95"
+            className="bg-[#001A4B] hover:bg-[#082663] text-white px-4 py-2.5 rounded-xl font-bold text-xs shadow-md flex items-center gap-2 transition-all cursor-pointer active:scale-95"
           >
             <Plus className="w-4 h-4" /> Ajouter un Ouvrage
           </button>
@@ -293,27 +293,27 @@ export default function AdminLibraryPage() {
 
       {/* ── 2. KPI Summary Cards ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-2">
-          <div className="flex items-center justify-between text-slate-500">
+        <div className="bg-card dark:bg-card p-5 rounded-2xl border border-border dark:border-border shadow-sm space-y-2">
+          <div className="flex items-center justify-between text-muted-foreground">
             <span className="text-xs font-bold uppercase tracking-wider">Total Titres</span>
-            <div className="p-2 rounded-xl bg-blue-50 dark:bg-blue-950 text-blue-600">
+            <div className="p-2 rounded-xl bg-primary/5 dark:bg-blue-950 text-primary">
               <Book className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl font-black font-mono text-slate-900 dark:text-white">
+          <div className="text-2xl font-bold font-mono text-foreground dark:text-white">
             {statsData?.total_books ?? books.length}
           </div>
           <p className="text-[11px] text-slate-400 font-medium">Ouvrages uniques répertoriés</p>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-2">
-          <div className="flex items-center justify-between text-slate-500">
+        <div className="bg-card dark:bg-card p-5 rounded-2xl border border-border dark:border-border shadow-sm space-y-2">
+          <div className="flex items-center justify-between text-muted-foreground">
             <span className="text-xs font-bold uppercase tracking-wider">Exemplaires Physiques</span>
             <div className="p-2 rounded-xl bg-teal-50 dark:bg-teal-950 text-teal-600">
               <Layers className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl font-black font-mono text-slate-900 dark:text-white">
+          <div className="text-2xl font-bold font-mono text-foreground dark:text-white">
             {statsData?.total_copies ?? '-'}
           </div>
           <p className="text-[11px] text-emerald-600 font-bold">
@@ -321,27 +321,27 @@ export default function AdminLibraryPage() {
           </p>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-2">
-          <div className="flex items-center justify-between text-slate-500">
+        <div className="bg-card dark:bg-card p-5 rounded-2xl border border-border dark:border-border shadow-sm space-y-2">
+          <div className="flex items-center justify-between text-muted-foreground">
             <span className="text-xs font-bold uppercase tracking-wider">Prêts Actifs</span>
-            <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600">
+            <div className="p-2 rounded-xl bg-primary/5 dark:bg-indigo-950 text-primary">
               <Clock className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl font-black font-mono text-slate-900 dark:text-white">
+          <div className="text-2xl font-bold font-mono text-foreground dark:text-white">
             {statsData?.active_borrowings ?? borrowings.filter(b => b.status === 'borrowed').length}
           </div>
           <p className="text-[11px] text-slate-400 font-medium">Livres actuellement empruntés</p>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-2">
-          <div className="flex items-center justify-between text-slate-500">
+        <div className="bg-card dark:bg-card p-5 rounded-2xl border border-border dark:border-border shadow-sm space-y-2">
+          <div className="flex items-center justify-between text-muted-foreground">
             <span className="text-xs font-bold uppercase tracking-wider">Retards Critiques</span>
             <div className="p-2 rounded-xl bg-rose-50 dark:bg-rose-950 text-rose-600">
               <AlertTriangle className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl font-black font-mono text-rose-600">
+          <div className="text-2xl font-bold font-mono text-rose-600">
             {statsData?.overdue_borrowings ?? 0}
           </div>
           <p className="text-[11px] text-rose-500 font-bold">Date d'échéance dépassée</p>
@@ -349,14 +349,14 @@ export default function AdminLibraryPage() {
       </div>
 
       {/* ── 3. Tabs Navigation ── */}
-      <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
+      <div className="flex items-center gap-2 border-b border-border dark:border-border pb-2">
         <button
           onClick={() => setActiveTab('CATALOG')}
           className={cn(
-            "px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer flex items-center gap-2",
+            "px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-2",
             activeTab === 'CATALOG'
-              ? "bg-[#001A4B] text-white dark:bg-blue-600 shadow"
-              : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+              ? "bg-[#001A4B] text-white dark:bg-primary shadow"
+              : "text-muted-foreground dark:text-muted-foreground hover:bg-muted dark:hover:bg-slate-800"
           )}
         >
           <Book className="w-4 h-4" /> Catalogue Général ({books.length})
@@ -365,10 +365,10 @@ export default function AdminLibraryPage() {
         <button
           onClick={() => setActiveTab('BORROWINGS')}
           className={cn(
-            "px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer flex items-center gap-2",
+            "px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-2",
             activeTab === 'BORROWINGS'
-              ? "bg-[#001A4B] text-white dark:bg-blue-600 shadow"
-              : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+              ? "bg-[#001A4B] text-white dark:bg-primary shadow"
+              : "text-muted-foreground dark:text-muted-foreground hover:bg-muted dark:hover:bg-slate-800"
           )}
         >
           <ArrowRightLeft className="w-4 h-4" /> Suivi des Prêts & Retours ({borrowings.length})
@@ -379,7 +379,7 @@ export default function AdminLibraryPage() {
       {activeTab === 'CATALOG' && (
         <div className="space-y-4">
           {/* Filters Bar */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-card dark:bg-card p-4 rounded-2xl border border-border dark:border-border shadow-sm">
             <div className="relative w-full sm:max-w-md">
               <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
@@ -387,16 +387,16 @@ export default function AdminLibraryPage() {
                 value={searchCatalog}
                 onChange={(e) => setSearchCatalog(e.target.value)}
                 placeholder="Rechercher par titre, auteur, ISBN ou cote..."
-                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-2 pl-10 pr-4 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#001A4B]"
+                className="w-full bg-muted/50 dark:bg-card border border-border dark:border-border py-2 pl-10 pr-4 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#001A4B] rounded-[var(--control-radius)]"
               />
             </div>
 
             <div className="flex items-center gap-2 w-full sm:w-auto">
-              <span className="text-xs font-bold text-slate-500 whitespace-nowrap">Discipline :</span>
+              <span className="text-xs font-bold text-muted-foreground whitespace-nowrap">Discipline :</span>
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-bold"
+                className="bg-muted/50 dark:bg-card border border-border dark:border-border px-3 py-2 text-xs font-bold rounded-[var(--control-radius)]"
               >
                 <option value="all">Toutes les disciplines</option>
                 {categories.map((c) => (
@@ -407,10 +407,10 @@ export default function AdminLibraryPage() {
           </div>
 
           {/* Books Table */}
-          <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+          <div className="overflow-x-auto rounded-2xl border border-border dark:border-border bg-card dark:bg-card shadow-sm">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="bg-slate-50 dark:bg-slate-800/60 text-[10px] font-black text-slate-500 uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">
+                <tr className="bg-muted/50 dark:bg-slate-800/60 text-[10px] font-bold text-muted-foreground uppercase tracking-wider border-b border-border dark:border-border">
                   <th className="py-3.5 pl-4 pr-3">Ouvrage & Auteur</th>
                   <th className="py-3.5 px-3">ISBN</th>
                   <th className="py-3.5 px-3">Catégorie</th>
@@ -437,26 +437,26 @@ export default function AdminLibraryPage() {
                   books.map((book) => (
                     <tr key={book.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
                       <td className="py-3.5 pl-4 pr-3">
-                        <div className="font-bold text-sm text-slate-900 dark:text-white">
+                        <div className="font-bold text-sm text-foreground dark:text-white">
                           {book.title}
                         </div>
-                        <div className="text-[11px] text-slate-500 font-medium">
+                        <div className="text-[11px] text-muted-foreground font-medium">
                           {book.author} {book.publisher ? `• ${book.publisher}` : ''} {book.publication_year ? `(${book.publication_year})` : ''}
                         </div>
                       </td>
 
-                      <td className="py-3.5 px-3 font-mono text-[11px] text-slate-500">
+                      <td className="py-3.5 px-3 font-mono text-[11px] text-muted-foreground">
                         {book.isbn || '—'}
                       </td>
 
                       <td className="py-3.5 px-3">
-                        <span className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded text-[10px] font-bold">
+                        <span className="bg-muted dark:bg-card text-slate-700 dark:text-foreground px-2 py-0.5 rounded text-[10px] font-bold">
                           {book.category || 'Général'}
                         </span>
                       </td>
 
-                      <td className="py-3.5 px-3 font-mono font-bold text-indigo-700 dark:text-indigo-300">
-                        <span className="bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded flex items-center gap-1 w-max">
+                      <td className="py-3.5 px-3 font-mono font-bold text-primary dark:text-indigo-300">
+                        <span className="bg-primary/5 dark:bg-indigo-950/60 px-2 py-0.5 rounded flex items-center gap-1 w-max">
                           <MapPin className="w-3 h-3" /> {book.location_code}
                         </span>
                       </td>
@@ -479,7 +479,7 @@ export default function AdminLibraryPage() {
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             onClick={() => openEditBookModal(book)}
-                            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-900 cursor-pointer"
+                            className="p-1.5 rounded-lg hover:bg-muted dark:hover:bg-slate-800 text-muted-foreground hover:text-foreground cursor-pointer"
                             title="Modifier"
                           >
                             <Edit className="w-4 h-4" />
@@ -510,7 +510,7 @@ export default function AdminLibraryPage() {
       {activeTab === 'BORROWINGS' && (
         <div className="space-y-4">
           {/* Borrowing Filters */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-card dark:bg-card p-4 rounded-2xl border border-border dark:border-border shadow-sm">
             <div className="relative w-full sm:max-w-md">
               <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
@@ -518,16 +518,16 @@ export default function AdminLibraryPage() {
                 value={searchBorrowings}
                 onChange={(e) => setSearchBorrowings(e.target.value)}
                 placeholder="Rechercher par étudiant, CNE, livre ou code-barres..."
-                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-2 pl-10 pr-4 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#001A4B]"
+                className="w-full bg-muted/50 dark:bg-card border border-border dark:border-border py-2 pl-10 pr-4 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#001A4B] rounded-[var(--control-radius)]"
               />
             </div>
 
             <div className="flex items-center gap-2 w-full sm:w-auto">
-              <span className="text-xs font-bold text-slate-500 whitespace-nowrap">Statut du prêt :</span>
+              <span className="text-xs font-bold text-muted-foreground whitespace-nowrap">Statut du prêt :</span>
               <select
                 value={statusBorrowings}
                 onChange={(e) => setStatusBorrowings(e.target.value)}
-                className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-bold"
+                className="bg-muted/50 dark:bg-card border border-border dark:border-border px-3 py-2 text-xs font-bold rounded-[var(--control-radius)]"
               >
                 <option value="all">Tous les statuts</option>
                 <option value="borrowed">En cours</option>
@@ -538,10 +538,10 @@ export default function AdminLibraryPage() {
           </div>
 
           {/* Borrowings Table */}
-          <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+          <div className="overflow-x-auto rounded-2xl border border-border dark:border-border bg-card dark:bg-card shadow-sm">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="bg-slate-50 dark:bg-slate-800/60 text-[10px] font-black text-slate-500 uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">
+                <tr className="bg-muted/50 dark:bg-slate-800/60 text-[10px] font-bold text-muted-foreground uppercase tracking-wider border-b border-border dark:border-border">
                   <th className="py-3.5 pl-4 pr-3">Étudiant & Matricule</th>
                   <th className="py-3.5 px-3">Livre Emprunté</th>
                   <th className="py-3.5 px-3">Date de prêt</th>
@@ -571,7 +571,7 @@ export default function AdminLibraryPage() {
                     return (
                       <tr key={b.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
                         <td className="py-3.5 pl-4 pr-3">
-                          <div className="font-bold text-slate-900 dark:text-white">
+                          <div className="font-bold text-foreground dark:text-white">
                             {b.user ? `${b.user.first_name} ${b.user.last_name}` : 'Étudiant Inconnu'}
                           </div>
                           <div className="text-[10px] text-slate-400 font-mono">
@@ -580,7 +580,7 @@ export default function AdminLibraryPage() {
                         </td>
 
                         <td className="py-3.5 px-3">
-                          <div className="font-bold text-slate-800 dark:text-slate-200">
+                          <div className="font-bold text-foreground dark:text-foreground">
                             {b.book_copy?.book?.title || 'Ouvrage ENCG'}
                           </div>
                           <div className="text-[10px] font-mono text-slate-400">
@@ -588,22 +588,22 @@ export default function AdminLibraryPage() {
                           </div>
                         </td>
 
-                        <td className="py-3.5 px-3 text-slate-600 dark:text-slate-400 font-medium">
+                        <td className="py-3.5 px-3 text-muted-foreground dark:text-muted-foreground font-medium">
                           {b.borrow_date}
                         </td>
 
-                        <td className="py-3.5 px-3 font-bold text-slate-800 dark:text-slate-200">
+                        <td className="py-3.5 px-3 font-bold text-foreground dark:text-foreground">
                           {b.due_date}
                         </td>
 
                         <td className="py-3.5 px-3 text-center">
                           <span className={cn(
-                            "px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border",
+                            "px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border",
                             b.status === 'returned'
                               ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300"
                               : isOverdue
                               ? "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/60 dark:text-rose-300"
-                              : "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/60 dark:text-blue-300"
+                              : "bg-primary/5 text-primary border-primary/20 dark:bg-blue-950/60 dark:text-blue-300"
                           )}>
                             {b.status === 'returned' ? 'Retourné' : (isOverdue ? 'En retard' : 'En cours')}
                           </span>
@@ -637,19 +637,19 @@ export default function AdminLibraryPage() {
       {/* ── 6. Modal: Ajouter / Modifier un Livre ── */}
       {bookModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full p-6 sm:p-8 space-y-6 shadow-2xl border border-slate-200 dark:border-slate-800 relative max-h-[90vh] overflow-y-auto">
+          <div className="bg-card dark:bg-card rounded-2xl max-w-lg w-full p-6 sm:p-8 space-y-6 shadow-sm border border-border dark:border-border relative max-h-[90vh] overflow-y-auto">
             <button
               onClick={() => setBookModalOpen(false)}
-              className="absolute top-5 right-5 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 cursor-pointer"
+              className="absolute top-5 right-5 p-2 rounded-full hover:bg-muted dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
 
             <div>
-              <h3 className="text-xl font-black text-slate-900 dark:text-white">
+              <h3 className="text-xl font-bold text-foreground dark:text-white">
                 {editingBook ? 'Modifier l\'Ouvrage' : 'Ajouter un Nouvel Ouvrage'}
               </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-muted-foreground mt-0.5">
                 Renseignez les métadonnées officielles pour l'indexation au catalogue ENCG.
               </p>
             </div>
@@ -662,7 +662,7 @@ export default function AdminLibraryPage() {
               className="space-y-4"
             >
               <div>
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                <label className="text-xs font-bold text-slate-700 dark:text-foreground block mb-1">
                   Titre de l'ouvrage *
                 </label>
                 <input
@@ -670,14 +670,14 @@ export default function AdminLibraryPage() {
                   required
                   value={bookForm.title}
                   onChange={(e) => setBookForm({ ...bookForm, title: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold"
+                  className="w-full px-3 py-2 border border-border dark:border-border bg-card dark:bg-card text-xs font-bold rounded-[var(--control-radius)]"
                   placeholder="ex: Finance d'Entreprise"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                  <label className="text-xs font-bold text-slate-700 dark:text-foreground block mb-1">
                     Auteur(s) *
                   </label>
                   <input
@@ -685,20 +685,20 @@ export default function AdminLibraryPage() {
                     required
                     value={bookForm.author}
                     onChange={(e) => setBookForm({ ...bookForm, author: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold"
+                    className="w-full px-3 py-2 border border-border dark:border-border bg-card dark:bg-card text-xs font-bold rounded-[var(--control-radius)]"
                     placeholder="ex: Pierre Vernimmen"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                  <label className="text-xs font-bold text-slate-700 dark:text-foreground block mb-1">
                     ISBN
                   </label>
                   <input
                     type="text"
                     value={bookForm.isbn}
                     onChange={(e) => setBookForm({ ...bookForm, isbn: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold"
+                    className="w-full px-3 py-2 border border-border dark:border-border bg-card dark:bg-card text-xs font-bold rounded-[var(--control-radius)]"
                     placeholder="978-..."
                   />
                 </div>
@@ -706,13 +706,13 @@ export default function AdminLibraryPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                  <label className="text-xs font-bold text-slate-700 dark:text-foreground block mb-1">
                     Discipline / Catégorie
                   </label>
                   <select
                     value={bookForm.category}
                     onChange={(e) => setBookForm({ ...bookForm, category: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold"
+                    className="w-full px-3 py-2 border border-border dark:border-border bg-card dark:bg-card text-xs font-bold rounded-[var(--control-radius)]"
                   >
                     <option value="Finance">Finance</option>
                     <option value="Comptabilité & Audit">Comptabilité & Audit</option>
@@ -726,14 +726,14 @@ export default function AdminLibraryPage() {
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                  <label className="text-xs font-bold text-slate-700 dark:text-foreground block mb-1">
                     Cote / Rayon de rangement
                   </label>
                   <input
                     type="text"
                     value={bookForm.location_code}
                     onChange={(e) => setBookForm({ ...bookForm, location_code: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold font-mono"
+                    className="w-full px-3 py-2 border border-border dark:border-border bg-card dark:bg-card text-xs font-bold font-mono rounded-[var(--control-radius)]"
                     placeholder="ex: RAYON-FIN-01"
                   />
                 </div>
@@ -741,7 +741,7 @@ export default function AdminLibraryPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                  <label className="text-xs font-bold text-slate-700 dark:text-foreground block mb-1">
                     Éditeur & Année
                   </label>
                   <div className="flex gap-2">
@@ -749,20 +749,20 @@ export default function AdminLibraryPage() {
                       type="text"
                       value={bookForm.publisher}
                       onChange={(e) => setBookForm({ ...bookForm, publisher: e.target.value })}
-                      className="w-2/3 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold"
+                      className="w-2/3 px-3 py-2 border border-border dark:border-border bg-card dark:bg-card text-xs font-bold rounded-[var(--control-radius)]"
                       placeholder="Dunod, Dalloz"
                     />
                     <input
                       type="number"
                       value={bookForm.publication_year}
                       onChange={(e) => setBookForm({ ...bookForm, publication_year: Number(e.target.value) })}
-                      className="w-1/3 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold"
+                      className="w-1/3 px-3 py-2 border border-border dark:border-border bg-card dark:bg-card text-xs font-bold rounded-[var(--control-radius)]"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                  <label className="text-xs font-bold text-slate-700 dark:text-foreground block mb-1">
                     Total Exemplaires Physiques
                   </label>
                   <input
@@ -772,23 +772,23 @@ export default function AdminLibraryPage() {
                     required
                     value={bookForm.total_copies}
                     onChange={(e) => setBookForm({ ...bookForm, total_copies: Number(e.target.value) })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold font-mono"
+                    className="w-full px-3 py-2 border border-border dark:border-border bg-card dark:bg-card text-xs font-bold font-mono rounded-[var(--control-radius)]"
                   />
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3">
+              <div className="pt-4 border-t border-border dark:border-border flex items-center justify-end gap-3">
                 <button
                   type="button"
                   onClick={() => setBookModalOpen(false)}
-                  className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer"
+                  className="px-4 py-2.5 rounded-xl border border-border dark:border-border text-xs font-bold text-muted-foreground hover:bg-muted/50 cursor-pointer"
                 >
                   Annuler
                 </button>
                 <button
                   type="submit"
                   disabled={saveBookMutation.isPending}
-                  className="bg-[#001A4B] hover:bg-[#082663] text-white px-5 py-2.5 rounded-xl text-xs font-black shadow-md flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                  className="bg-[#001A4B] hover:bg-[#082663] text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-md flex items-center gap-2 cursor-pointer disabled:opacity-50"
                 >
                   {saveBookMutation.isPending ? <Spinner className="w-4 h-4 text-white" /> : (editingBook ? 'Enregistrer les Modifications' : 'Créer l\'Ouvrage')}
                 </button>
@@ -801,22 +801,22 @@ export default function AdminLibraryPage() {
       {/* ── 7. Modal: Nouvel Emprunt Express (Guichet) ── */}
       {newBorrowingModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full p-6 sm:p-8 space-y-6 shadow-2xl border border-slate-200 dark:border-slate-800 relative">
+          <div className="bg-card dark:bg-card rounded-2xl max-w-md w-full p-6 sm:p-8 space-y-6 shadow-sm border border-border dark:border-border relative">
             <button
               onClick={() => setNewBorrowingModalOpen(false)}
-              className="absolute top-5 right-5 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 cursor-pointer"
+              className="absolute top-5 right-5 p-2 rounded-full hover:bg-muted dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
 
             <div>
-              <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 flex items-center justify-center mb-3">
+              <div className="w-12 h-12 rounded-2xl bg-primary/5 dark:bg-indigo-950/60 text-primary flex items-center justify-center mb-3">
                 <BookmarkCheck className="w-6 h-6" />
               </div>
-              <h3 className="text-xl font-black text-slate-900 dark:text-white">
+              <h3 className="text-xl font-bold text-foreground dark:text-white">
                 Enregistrer un Emprunt (Guichet)
               </h3>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-muted-foreground">
                 Attribuez un exemplaire physique disponible à un étudiant.
               </p>
             </div>
@@ -833,14 +833,14 @@ export default function AdminLibraryPage() {
               className="space-y-4"
             >
               <div>
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                <label className="text-xs font-bold text-slate-700 dark:text-foreground block mb-1">
                   Ouvrage à prêter *
                 </label>
                 <select
                   required
                   value={selectedBookId}
                   onChange={(e) => setSelectedBookId(Number(e.target.value))}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold"
+                  className="w-full px-3 py-2 border border-border dark:border-border bg-card dark:bg-card text-xs font-bold rounded-[var(--control-radius)]"
                 >
                   <option value="">Sélectionner un livre en rayon...</option>
                   {books.filter(b => b.available_copies > 0).map((b) => (
@@ -852,7 +852,7 @@ export default function AdminLibraryPage() {
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                <label className="text-xs font-bold text-slate-700 dark:text-foreground block mb-1">
                   Email de l'Étudiant *
                 </label>
                 <input
@@ -860,13 +860,13 @@ export default function AdminLibraryPage() {
                   required
                   value={borrowingStudentEmail}
                   onChange={(e) => setBorrowingStudentEmail(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold"
+                  className="w-full px-3 py-2 border border-border dark:border-border bg-card dark:bg-card text-xs font-bold rounded-[var(--control-radius)]"
                   placeholder="student@encg-fes.ma"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                <label className="text-xs font-bold text-slate-700 dark:text-foreground block mb-1">
                   Date limite de retour (14 jours standard)
                 </label>
                 <input
@@ -874,22 +874,22 @@ export default function AdminLibraryPage() {
                   required
                   value={borrowingDueDate}
                   onChange={(e) => setBorrowingDueDate(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold"
+                  className="w-full px-3 py-2 border border-border dark:border-border bg-card dark:bg-card text-xs font-bold rounded-[var(--control-radius)]"
                 />
               </div>
 
-              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3">
+              <div className="pt-3 border-t border-border dark:border-border flex items-center justify-end gap-3">
                 <button
                   type="button"
                   onClick={() => setNewBorrowingModalOpen(false)}
-                  className="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer"
+                  className="px-4 py-2.5 rounded-xl border border-border text-xs font-bold text-muted-foreground hover:bg-muted/50 cursor-pointer"
                 >
                   Annuler
                 </button>
                 <button
                   type="submit"
                   disabled={createBorrowingMutation.isPending}
-                  className="bg-[#001A4B] hover:bg-[#082663] text-white px-5 py-2.5 rounded-xl text-xs font-black shadow-md flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                  className="bg-[#001A4B] hover:bg-[#082663] text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-md flex items-center gap-2 cursor-pointer disabled:opacity-50"
                 >
                   {createBorrowingMutation.isPending ? <Spinner className="w-4 h-4 text-white" /> : "Valider l'Emprunt"}
                 </button>

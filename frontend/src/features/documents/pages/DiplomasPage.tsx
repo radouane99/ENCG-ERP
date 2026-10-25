@@ -10,10 +10,10 @@ export default function DiplomasPage() {
   ])
 
   return (
-    <div className="space-y-6 animate-in p-6">
+    <div className="space-y-6 animate-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-amber-600 flex items-center gap-2">
+          <h1 className="text-amber-600 flex items-center gap-2 erp-page-title">
             <Award className="w-7 h-7" /> Édition des Diplômes
           </h1>
           <p className="text-muted-foreground text-sm mt-1">Génération, impression et suivi de la remise des diplômes.</p>
@@ -27,7 +27,7 @@ export default function DiplomasPage() {
         <div className="p-4 border-b bg-muted/20 flex gap-4">
            <div className="relative w-full max-w-sm">
              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-             <input type="text" placeholder="Rechercher un lauréat..." className="w-full pl-9 pr-4 py-2 text-sm border rounded-lg" />
+             <input type="text" placeholder="Rechercher un lauréat..." className="w-full pl-9 pr-4 py-2 text-sm border rounded-[var(--control-radius)]" />
            </div>
         </div>
         <table className="w-full text-sm text-left">
@@ -50,7 +50,7 @@ export default function DiplomasPage() {
                 <td className="px-6 py-4 text-center font-medium">{d.mention}</td>
                 <td className="px-6 py-4 text-center">
                    <span className={cn("px-2.5 py-1 rounded-full text-xs font-medium border w-max mx-auto", 
-                     d.status === 'ready' ? 'bg-blue-50 text-blue-600 border-blue-200' :
+                     d.status === 'ready' ? "bg-primary/5 text-primary border-primary/20" :
                      d.status === 'printed' ? 'bg-amber-50 text-amber-600 border-amber-200' :
                      'bg-green-50 text-green-600 border-green-200'
                    )}>

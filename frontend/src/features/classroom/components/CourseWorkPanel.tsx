@@ -17,13 +17,13 @@ export function CourseWorkPanel({courseId, assignments, refresh}: {courseId: str
       catch (error: any) { toast.error(error.response?.data?.message || 'Publication impossible.'); }
       finally { setBusy(false); }
     }}>
-      <label className="text-sm">Titre<input name="title" required maxLength={255} className="block w-full rounded border border-input bg-background p-2" /></label>
-      <label className="text-sm">Type<select name="type" className="block w-full rounded border border-input bg-background p-2"><option value="document">Support</option><option value="assignment">Devoir</option></select></label>
-      <label className="text-sm sm:col-span-2">Consignes<textarea name="description" className="block w-full rounded border border-input bg-background p-2" /></label>
-      <label className="text-sm">Échéance du devoir<input name="due_date" type="datetime-local" className="block w-full rounded border border-input bg-background p-2" /></label>
-      <label className="text-sm">Barème<input name="max_score" type="number" min={1} max={100} defaultValue={20} className="block w-full rounded border border-input bg-background p-2" /></label>
+      <label className="text-sm">Titre<input name="title" required maxLength={255} className="block w-full rounded border border-input bg-background p-2 rounded-[var(--control-radius)]" /></label>
+      <label className="text-sm">Type<select name="type" className="block w-full rounded border border-input bg-background p-2 rounded-[var(--control-radius)]"><option value="document">Support</option><option value="assignment">Devoir</option></select></label>
+      <label className="text-sm sm:col-span-2">Consignes<textarea name="description" className="block w-full rounded border border-input bg-background p-2 rounded-[var(--control-radius)]" /></label>
+      <label className="text-sm">Échéance du devoir<input name="due_date" type="datetime-local" className="block w-full rounded border border-input bg-background p-2 rounded-[var(--control-radius)]" /></label>
+      <label className="text-sm">Barème<input name="max_score" type="number" min={1} max={100} defaultValue={20} className="block w-full rounded border border-input bg-background p-2 rounded-[var(--control-radius)]" /></label>
       <label className="text-sm">Pièce jointe<input name="file" type="file" accept=".pdf,.doc,.docx,.ppt,.pptx" className="block w-full" /></label>
-      <label className="text-sm">Lien HTTPS<input name="external_url" type="url" className="block w-full rounded border border-input bg-background p-2" /></label>
+      <label className="text-sm">Lien HTTPS<input name="external_url" type="url" className="block w-full rounded border border-input bg-background p-2 rounded-[var(--control-radius)]" /></label>
       <button disabled={busy} className="min-h-11 rounded-lg bg-primary px-4 text-primary-foreground">{busy ? 'Publication…' : 'Publier'}</button>
     </form>
     <div className="mt-5 flex flex-wrap gap-2">{assignments.map(a => <button key={a.id} type="button" className="min-h-11 rounded-lg border border-input px-3" onClick={async () => {

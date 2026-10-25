@@ -36,7 +36,7 @@ export default function AlumniDashboard() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       <div>
-        <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+        <h1 className="text-foreground flex items-center gap-2 erp-page-title">
           <Briefcase className="w-6 h-6 text-primary" />
           Lauréats & insertion professionnelle
         </h1>
@@ -86,7 +86,7 @@ export default function AlumniDashboard() {
           <div className="flex justify-between items-start mb-2">
             <div className="text-muted-foreground text-sm font-medium">Répondants</div>
             <div className="p-2 bg-blue-500/10 rounded-lg">
-              <GraduationCap className="w-4 h-4 text-blue-600" />
+              <GraduationCap className="w-4 h-4 text-primary" />
             </div>
           </div>
           <div className="text-2xl font-bold text-foreground">{stats?.total_responses}</div>
@@ -151,7 +151,7 @@ export default function AlumniDashboard() {
             <input 
               type="text" 
               placeholder="Rechercher une entreprise..." 
-              className="pl-9 pr-4 py-2 bg-background border border-input rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none"
+              className="pl-9 pr-4 py-2 bg-background border border-input text-sm focus:ring-2 focus:ring-primary/20 outline-none rounded-[var(--control-radius)]"
             />
           </div>
         </div>

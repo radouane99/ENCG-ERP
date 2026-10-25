@@ -11,7 +11,7 @@ export const AbsenceStatsCard: React.FC<Props> = ({ stats }) => {
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-slate-500">Présents</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">Présents</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold text-green-600">{stats.present}</div>
@@ -19,7 +19,7 @@ export const AbsenceStatsCard: React.FC<Props> = ({ stats }) => {
       </Card>
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-slate-500">Absents (Injustifiés)</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">Absents (Injustifiés)</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold text-red-600">{stats.absent}</div>
@@ -27,7 +27,7 @@ export const AbsenceStatsCard: React.FC<Props> = ({ stats }) => {
       </Card>
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-slate-500">Retards</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">Retards</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold text-orange-500">{stats.late}</div>
@@ -35,10 +35,10 @@ export const AbsenceStatsCard: React.FC<Props> = ({ stats }) => {
       </Card>
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-slate-500">Absences Justifiées</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">Absences Justifiées</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-blue-600">{stats.excused}</div>
+          <div className="text-2xl font-bold text-primary">{stats.excused}</div>
         </CardContent>
       </Card>
     </div>

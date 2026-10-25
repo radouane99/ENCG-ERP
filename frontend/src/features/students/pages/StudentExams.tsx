@@ -27,16 +27,16 @@ export default function StudentExams() {
   }
 
   return (
-    <div className="max-w-[1200px] mx-auto p-4 md:p-8 space-y-8 font-sans animate-in fade-in zoom-in duration-500 pb-24">
+    <div className="max-w-[1200px] mx-auto space-y-8 font-sans animate-in fade-in zoom-in duration-500 pb-24">
       
       {/* Header Banner */}
-      <div className="bg-[#2563eb] rounded-[2rem] p-8 md:p-10 flex flex-col justify-center relative overflow-hidden shadow-lg">
+      <div className="bg-[#2563eb] rounded-2xl p-8 md:p-10 flex flex-col justify-center relative overflow-hidden shadow-lg">
         <div className="absolute inset-0 opacity-10 pointer-events-none" 
              style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '24px 24px' }}>
         </div>
         
         <div className="relative z-10">
-          <h1 className="text-3xl font-black text-white italic mb-2">Mes Examens & Présences</h1>
+          <h1 className="text-white italic mb-2 erp-page-title">Mes Examens & Présences</h1>
           <p className="text-blue-100 mb-6">Consultez vos statuts de présence aux examens et gérez vos justifications.</p>
           <button className="bg-white/20 hover:bg-white/30 text-white border border-white/30 px-5 py-2.5 rounded-xl font-bold text-sm transition-colors flex items-center gap-2 w-max shadow-sm backdrop-blur-sm">
             Session de Rattrapage
@@ -46,20 +46,20 @@ export default function StudentExams() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 text-center flex flex-col justify-center items-center">
-          <div className="text-3xl font-black text-slate-800 dark:text-white">{exams.length}</div>
+        <div className="bg-card dark:bg-card rounded-2xl p-6 shadow-sm border border-border dark:border-border text-center flex flex-col justify-center items-center">
+          <div className="text-3xl font-bold text-foreground dark:text-white">{exams.length}</div>
           <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">TOTAL EXAMENS</div>
         </div>
         <div className="bg-emerald-50 dark:bg-emerald-950/40 rounded-2xl p-6 shadow-sm border border-emerald-100 dark:border-emerald-800 text-center flex flex-col justify-center items-center">
-          <div className="text-3xl font-black text-emerald-600">{exams.filter((e: any) => e.status === 'Présent').length}</div>
+          <div className="text-3xl font-bold text-emerald-600">{exams.filter((e: any) => e.status === 'Présent').length}</div>
           <div className="text-[10px] font-bold text-emerald-600/80 uppercase tracking-widest mt-1">PRÉSENT</div>
         </div>
         <div className="bg-rose-50 dark:bg-rose-950/40 rounded-2xl p-6 shadow-sm border border-rose-100 dark:border-rose-800 text-center flex flex-col justify-center items-center">
-          <div className="text-3xl font-black text-rose-600">{exams.filter((e: any) => e.status === 'Absent').length}</div>
+          <div className="text-3xl font-bold text-rose-600">{exams.filter((e: any) => e.status === 'Absent').length}</div>
           <div className="text-[10px] font-bold text-rose-600/80 uppercase tracking-widest mt-1">ABSENT</div>
         </div>
         <div className="bg-amber-50 dark:bg-amber-950/40 rounded-2xl p-6 shadow-sm border border-amber-100 dark:border-amber-800 text-center flex flex-col justify-center items-center">
-          <div className="text-3xl font-black text-amber-600">{exams.filter((e: any) => e.status !== 'Présent' && e.status !== 'Absent').length}</div>
+          <div className="text-3xl font-bold text-amber-600">{exams.filter((e: any) => e.status !== 'Présent' && e.status !== 'Absent').length}</div>
           <div className="text-[10px] font-bold text-amber-600/80 uppercase tracking-widest mt-1">PLANIFIÉ / EN ATTENTE</div>
         </div>
       </div>
@@ -67,16 +67,16 @@ export default function StudentExams() {
       {/* Exams List */}
       <div className="space-y-4">
         {exams.length === 0 ? (
-          <div className="bg-white dark:bg-slate-900 rounded-2xl p-10 text-center border border-slate-200 dark:border-slate-800 text-slate-400 text-sm font-bold">
+          <div className="bg-card dark:bg-card rounded-2xl p-10 text-center border border-border dark:border-border text-slate-400 text-sm font-bold">
             Aucun examen programmé pour le moment.
           </div>
         ) : exams.map((exam: { name: string; type: string; date?: string; time?: string; duration?: string; status?: string; action?: string }, idx: number) => (
-          <div key={idx} className="bg-white rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm border border-white/5 hover:shadow-md transition-shadow">
+          <div key={idx} className="bg-card rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm border border-white/5 hover:shadow-md transition-shadow">
             
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-3">
-                <h3 className="font-black text-lg text-white">{exam.name}</h3>
-                <span className="bg-blue-50 text-blue-600 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider border border-blue-100">
+                <h3 className="font-bold text-lg text-white">{exam.name}</h3>
+                <span className="bg-primary/5 text-primary px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border border-primary/20">
                   {exam.type}
                 </span>
               </div>
@@ -89,12 +89,12 @@ export default function StudentExams() {
 
             <div className="flex flex-col items-end gap-2 shrink-0">
               {exam.status === 'Présent' && (
-                <div className="bg-emerald-100 text-emerald-700 px-4 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest flex items-center gap-2 border border-emerald-200">
+                <div className="bg-emerald-100 text-emerald-700 px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-widest flex items-center gap-2 border border-emerald-200">
                   <Check className="w-4 h-4" /> Présent
                 </div>
               )}
               {exam.status === 'Non renseigné' && (
-                <div className="bg-white/[0.05] text-white/50 px-4 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest flex items-center gap-2 border border-white/10">
+                <div className="bg-white/[0.05] text-white/50 px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-widest flex items-center gap-2 border border-white/10">
                   <HelpCircle className="w-4 h-4" /> Non renseigné
                 </div>
               )}

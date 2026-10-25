@@ -81,9 +81,9 @@ export default function AdminClubsRoomRequestsPage() {
   }
 
   return (
-    <div className="space-y-8 animate-in relative p-4 md:p-8 max-w-[1500px] mx-auto font-sans pb-24">
+    <div className="space-y-8 animate-in relative max-w-[1500px] mx-auto font-sans pb-24">
       {/* Deep Navy Hero Header Banner */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] p-8 md:p-10 rounded-[2.5rem] shadow-2xl text-white border border-blue-800/40 space-y-6">
+      <div className="relative overflow-hidden p-8 md:p-10 text-white border border-blue-800/40 space-y-6 erp-page-banner">
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
 
         {/* Top Header Content */}
@@ -93,10 +93,10 @@ export default function AdminClubsRoomRequestsPage() {
               <ArrowLeft className="w-6 h-6" />
             </Link>
             <div>
-              <div className="inline-flex items-center gap-2 bg-blue-500/20 text-blue-200 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-2 border border-blue-400/30">
+              <div className="inline-flex items-center gap-2 bg-blue-500/20 text-blue-200 px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mb-2 border border-blue-400/30">
                 <Sparkles className="w-4 h-4 text-amber-400" /> Service Logistique Vie Étudiante ENCG Fès
               </div>
-              <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight leading-tight">
+              <h1 className="text-white leading-tight erp-page-title">
                 Demandes de Salles par les Clubs
               </h1>
               <p className="text-blue-100/90 text-xs md:text-sm font-medium mt-1 max-w-2xl">
@@ -109,31 +109,31 @@ export default function AdminClubsRoomRequestsPage() {
         {/* KPI Cards Row */}
         <div className="relative z-10 grid grid-cols-2 md:grid-cols-4 gap-4 pt-6 border-t border-white/10">
           <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15">
-            <span className="text-[10px] font-black uppercase tracking-wider text-blue-200 block">TOTAL DEMANDES</span>
-            <span className="text-2xl font-black text-white font-mono mt-1 block">{displayList.length}</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-blue-200 block">TOTAL DEMANDES</span>
+            <span className="text-2xl font-bold text-white font-mono mt-1 block">{displayList.length}</span>
           </div>
 
           <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15">
-            <span className="text-[10px] font-black uppercase tracking-wider text-emerald-300 block">RÉSERVATIONS APPROUVÉES</span>
-            <span className="text-2xl font-black text-emerald-400 font-mono mt-1 block">{counts.approved}</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-300 block">RÉSERVATIONS APPROUVÉES</span>
+            <span className="text-2xl font-bold text-emerald-400 font-mono mt-1 block">{counts.approved}</span>
           </div>
 
           <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15">
-            <span className="text-[10px] font-black uppercase tracking-wider text-amber-300 block">EN ATTENTE</span>
-            <span className="text-2xl font-black text-amber-300 font-mono mt-1 block">{counts.pending}</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-300 block">EN ATTENTE</span>
+            <span className="text-2xl font-bold text-amber-300 font-mono mt-1 block">{counts.pending}</span>
           </div>
 
           <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15">
-            <span className="text-[10px] font-black uppercase tracking-wider text-rose-300 block">REFUSÉES</span>
-            <span className="text-2xl font-black text-rose-300 font-mono mt-1 block">{counts.rejected}</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-rose-300 block">REFUSÉES</span>
+            <span className="text-2xl font-bold text-rose-300 font-mono mt-1 block">{counts.rejected}</span>
           </div>
         </div>
       </div>
 
       {/* Main Table Card */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-[2.5rem] shadow-xl p-6 space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
-          <h3 className="text-base font-black text-slate-900 dark:text-white">Réservations d'Espaces Événementiels</h3>
+      <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl shadow-sm p-6 space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border dark:border-border pb-4">
+          <h3 className="text-base font-bold text-foreground dark:text-white">Réservations d'Espaces Événementiels</h3>
           
           <div className="flex items-center gap-2">
             {['pending', 'approved', 'rejected', 'all'].map((st) => (
@@ -141,8 +141,8 @@ export default function AdminClubsRoomRequestsPage() {
                 key={st}
                 onClick={() => setFilter(st as any)}
                 className={cn(
-                  "px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer",
-                  filter === st ? "bg-[#0f2863] text-white shadow-md" : "bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200"
+                  "px-4 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer",
+                  filter === st ? "bg-[#0f2863] text-white shadow-md" : "bg-muted dark:bg-card text-muted-foreground hover:bg-slate-200"
                 )}
               >
                 {st === 'pending' ? `En attente (${counts.pending})` : st === 'approved' ? `Approuvées (${counts.approved})` : st === 'rejected' ? `Refusées (${counts.rejected})` : 'Toutes'}
@@ -151,9 +151,9 @@ export default function AdminClubsRoomRequestsPage() {
           </div>
         </div>
 
-        <div className="overflow-x-auto min-h-[300px] border border-slate-100 dark:border-slate-800 rounded-2xl">
+        <div className="overflow-x-auto min-h-[300px] border border-border dark:border-border rounded-2xl">
           <table className="w-full text-sm text-left">
-            <thead className="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 dark:bg-slate-800/80 border-b border-slate-100 dark:border-slate-800">
+            <thead className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-muted/50 dark:bg-slate-800/80 border-b border-border dark:border-border">
               <tr>
                 <th className="px-6 py-4">SALLE / ESPACE</th>
                 <th className="px-6 py-4">CLUB DEMANDEUR</th>
@@ -178,33 +178,33 @@ export default function AdminClubsRoomRequestsPage() {
                   <tr key={req.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition-colors group">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#0f2863] to-blue-600 flex items-center justify-center text-amber-300 font-black text-xs shrink-0 shadow-md">
+                        <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#0f2863] to-blue-600 flex items-center justify-center text-amber-300 font-bold text-xs shrink-0 shadow-md">
                           <Building className="w-5 h-5 text-amber-300" />
                         </div>
                         <div>
-                          <p className="font-black text-slate-900 dark:text-white text-xs">{req.room_name || 'Amphi ENCG'}</p>
+                          <p className="font-bold text-foreground dark:text-white text-xs">{req.room_name || 'Amphi ENCG'}</p>
                           <p className="text-[10px] font-bold text-slate-400 max-w-[220px] truncate" title={req.purpose}>{req.purpose || 'Événement Club'}</p>
                         </div>
                       </div>
                     </td>
 
-                    <td className="px-6 py-4 font-bold text-indigo-600 dark:text-indigo-400 text-xs">
+                    <td className="px-6 py-4 font-bold text-primary dark:text-indigo-400 text-xs">
                       {bookerName}
                     </td>
 
                     <td className="px-6 py-4">
-                      <div className="font-bold text-slate-800 dark:text-slate-200 text-xs capitalize">
+                      <div className="font-bold text-foreground dark:text-foreground text-xs capitalize">
                         {format(startDate, 'EEEE d MMM yyyy', { locale: fr })}
                       </div>
                       <div className="text-[10px] text-slate-400 font-bold flex items-center gap-1 mt-0.5">
-                        <Clock className="w-3 h-3 text-indigo-500" />
+                        <Clock className="w-3 h-3 text-primary" />
                         {format(startDate, 'HH:mm')} - {format(endDate, 'HH:mm')}
                       </div>
                     </td>
 
                     <td className="px-6 py-4 text-center">
                       <span className={cn(
-                        "px-3.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border inline-flex items-center gap-1",
+                        "px-3.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border inline-flex items-center gap-1",
                         req.status === 'approved' ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 border-emerald-300' : 
                         req.status === 'rejected' ? 'bg-rose-50 dark:bg-rose-950/60 text-rose-600 border-rose-300' : 'bg-amber-50 dark:bg-amber-950/60 text-amber-600 border-amber-300'
                       )}>
@@ -216,7 +216,7 @@ export default function AdminClubsRoomRequestsPage() {
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => setSelectedPassModal(req)}
-                          className="px-3 py-2 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 text-indigo-600 dark:text-indigo-400 font-black text-xs rounded-xl transition-all border border-indigo-200 cursor-pointer shadow-xs flex items-center gap-1"
+                          className="px-3 py-2 bg-primary/5 dark:bg-indigo-950/60 hover:bg-primary/10 text-primary dark:text-indigo-400 font-bold text-xs rounded-xl transition-all border border-primary/20 cursor-pointer shadow-xs flex items-center gap-1"
                           title="Pass QR Clés Salle"
                         >
                           <Key className="w-3.5 h-3.5" /> Pass QR
@@ -224,7 +224,7 @@ export default function AdminClubsRoomRequestsPage() {
 
                         <button
                           onClick={() => handlePrintEventNotice(req)}
-                          className="px-3 py-2 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 text-blue-600 dark:text-blue-400 font-black text-xs rounded-xl transition-all border border-blue-200 cursor-pointer shadow-xs flex items-center gap-1"
+                          className="px-3 py-2 bg-primary/5 dark:bg-blue-950/60 hover:bg-primary/10 text-primary dark:text-blue-400 font-bold text-xs rounded-xl transition-all border border-primary/20 cursor-pointer shadow-xs flex items-center gap-1"
                           title="Autorisation d'Événement PDF"
                         >
                           <Printer className="w-3.5 h-3.5" /> Autorisation
@@ -261,11 +261,11 @@ export default function AdminClubsRoomRequestsPage() {
       {/* Modal Pass QR Clés Salle Club */}
       {selectedPassModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] w-full max-w-md shadow-2xl overflow-hidden text-center">
+          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl w-full max-w-md shadow-sm overflow-hidden text-center">
             <div className="p-6 bg-gradient-to-r from-[#0f2863] to-blue-900 text-white flex items-center justify-between">
               <div>
-                <span className="text-[10px] font-black uppercase tracking-widest text-blue-200">Pass Matériel & Clés Salle</span>
-                <h2 className="text-base font-black">Accès Événement Club</h2>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-blue-200">Pass Matériel & Clés Salle</span>
+                <h2 className="text-base font-bold">Accès Événement Club</h2>
               </div>
               <button 
                 onClick={() => setSelectedPassModal(null)}
@@ -276,23 +276,23 @@ export default function AdminClubsRoomRequestsPage() {
             </div>
 
             <div className="p-6 space-y-4">
-              <div className="p-4 bg-indigo-50 dark:bg-indigo-950/60 rounded-2xl border border-indigo-200">
-                <p className="text-xs font-black text-indigo-950 dark:text-indigo-200">{selectedPassModal.room_name || 'Amphi ENCG'}</p>
-                <p className="text-[10px] font-bold text-slate-500 mt-0.5">Club : {selectedPassModal.booker ? `${selectedPassModal.booker.first_name} ${selectedPassModal.booker.last_name}` : 'Club Étudiant'}</p>
+              <div className="p-4 bg-primary/5 dark:bg-indigo-950/60 rounded-2xl border border-primary/20">
+                <p className="text-xs font-bold text-indigo-950 dark:text-indigo-200">{selectedPassModal.room_name || 'Amphi ENCG'}</p>
+                <p className="text-[10px] font-bold text-muted-foreground mt-0.5">Club : {selectedPassModal.booker ? `${selectedPassModal.booker.first_name} ${selectedPassModal.booker.last_name}` : 'Club Étudiant'}</p>
               </div>
 
-              <div className="w-48 h-48 mx-auto bg-slate-900 rounded-3xl border-4 border-indigo-500/30 flex flex-col items-center justify-center text-white p-4 shadow-xl">
+              <div className="w-48 h-48 mx-auto bg-slate-900 rounded-2xl border-4 border-indigo-500/30 flex flex-col items-center justify-center text-white p-4 shadow-sm">
                 <QrCode className="w-28 h-28 text-amber-400 mb-2" />
                 <span className="text-[9px] font-mono font-bold tracking-widest text-amber-300">PASS-CLUB-{selectedPassModal.id}-2026</span>
               </div>
 
-              <p className="text-[11px] text-slate-500 font-medium">À présenter à l'agent de sécurité au poste central d'accueil pour la remise des micros, vidéoprojecteur et trousseau de clés.</p>
+              <p className="text-[11px] text-muted-foreground font-medium">À présenter à l'agent de sécurité au poste central d'accueil pour la remise des micros, vidéoprojecteur et trousseau de clés.</p>
             </div>
 
-            <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 flex justify-end">
+            <div className="p-4 border-t border-border dark:border-border bg-muted/50 dark:bg-card flex justify-end">
               <button 
                 onClick={() => setSelectedPassModal(null)}
-                className="px-6 py-2.5 bg-slate-900 text-white font-black rounded-xl text-xs hover:bg-slate-800 transition-colors cursor-pointer"
+                className="px-6 py-2.5 bg-slate-900 text-white font-bold rounded-xl text-xs hover:bg-slate-800 transition-colors cursor-pointer"
               >
                 Fermer
               </button>

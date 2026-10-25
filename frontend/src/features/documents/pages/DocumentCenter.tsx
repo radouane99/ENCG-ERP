@@ -28,7 +28,7 @@ export default function DocumentCenter() {
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
       <div>
-        <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+        <h1 className="text-foreground flex items-center gap-2 erp-page-title">
           <FileText className="w-6 h-6 text-primary" />
           Centre de Documents Sécurisés
         </h1>
@@ -45,7 +45,7 @@ export default function DocumentCenter() {
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium mb-1">Type de document</label>
-              <select value={docType} onChange={e => setDocType(e.target.value)} className="w-full border-input bg-background rounded-lg p-2.5 text-sm">
+              <select value={docType} onChange={e => setDocType(e.target.value)} className="w-full border-input bg-background p-2.5 text-sm rounded-[var(--control-radius)]">
                 <option>Certificat de Scolarité</option>
                 <option>Relevé de Notes</option>
                 <option>Attestation de Réussite</option>
@@ -54,7 +54,7 @@ export default function DocumentCenter() {
             
             <div>
               <label className="block text-sm font-medium mb-1">ID Étudiant</label>
-              <input type="number" value={studentId} onChange={e => setStudentId(e.target.value)} placeholder="ID de l'étudiant (ex: 1)" className="w-full border-input bg-background rounded-lg p-2.5 text-sm" />
+              <input type="number" value={studentId} onChange={e => setStudentId(e.target.value)} placeholder="ID de l'étudiant (ex: 1)" className="w-full border-input bg-background p-2.5 text-sm rounded-[var(--control-radius)]" />
             </div>
 
             <button

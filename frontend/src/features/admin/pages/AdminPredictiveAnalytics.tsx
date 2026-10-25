@@ -78,23 +78,23 @@ export default function AdminPredictiveAnalytics() {
     <div className="space-y-8 pb-12 animate-fade-in">
 
       {/* ── Premium AI Hero Banner ───────────────────────────────────────────── */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-indigo-950 via-slate-900 to-purple-950 p-6 md:p-10 text-white shadow-2xl border border-indigo-700/50">
+      <div className="relative overflow-hidden p-6 md:p-10 text-white border border-indigo-700/50 erp-page-banner">
         <div className="absolute -top-24 -end-24 w-80 h-80 rounded-full bg-indigo-500/20 blur-3xl pointer-events-none" />
         <div className="absolute -bottom-20 -start-20 w-72 h-72 rounded-full bg-purple-500/20 blur-3xl pointer-events-none" />
 
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
           <div className="space-y-3 max-w-3xl">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-xs font-black uppercase tracking-wider backdrop-blur-md">
+              <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-xs font-bold uppercase tracking-wider backdrop-blur-md">
                 <Sparkles className="w-3.5 h-3.5 animate-pulse text-emerald-400" />
                 Moteur IA Gemini 1.5 Flash • Prédictions Temps Réel
               </span>
-              <span className="px-3 py-1 rounded-full bg-white/10 border border-white/15 text-indigo-200 text-xs font-extrabold uppercase tracking-wider">
+              <span className="px-3 py-1 rounded-full bg-white/10 border border-white/15 text-indigo-200 text-xs font-bold uppercase tracking-wider">
                 ENCG Fès ERP
               </span>
             </div>
 
-            <h1 className="text-3xl md:text-4xl font-black tracking-tight text-white">
+            <h1 className="text-white erp-page-title">
               Centre de Contrôle IA & Prédictions
             </h1>
 
@@ -112,17 +112,17 @@ export default function AdminPredictiveAnalytics() {
           {/* Model Controls */}
           <div className="flex flex-col sm:flex-row lg:flex-col gap-3 shrink-0">
             <div className="p-3.5 rounded-2xl bg-white/10 border border-white/15 backdrop-blur-md space-y-2">
-              <div className="flex items-center justify-between text-xs font-extrabold text-indigo-200">
+              <div className="flex items-center justify-between text-xs font-bold text-indigo-200">
                 <span className="flex items-center gap-1.5">
                   <Cpu className="w-4 h-4 text-emerald-400" /> Modèle Actif :
                 </span>
-                <span className="text-emerald-400 font-black">Gemini 1.5</span>
+                <span className="text-emerald-400 font-bold">Gemini 1.5</span>
               </div>
 
               <select
                 value={selectedModel}
                 onChange={(e) => setSelectedModel(e.target.value)}
-                className="w-full px-3 py-1.5 rounded-xl bg-slate-900/80 border border-white/20 text-xs font-bold text-white focus:ring-2 focus:ring-emerald-400 outline-none cursor-pointer"
+                className="w-full px-3 py-1.5 bg-slate-900/80 border border-white/20 text-xs font-bold text-white focus:ring-2 focus:ring-emerald-400 outline-none cursor-pointer rounded-[var(--control-radius)]"
               >
                 <option value="gemini-1.5">Gemini 1.5 Flash (Recommandé)</option>
                 <option value="groq-llama3">Groq Llama-3 70B (Ultra-Fast)</option>
@@ -132,7 +132,7 @@ export default function AdminPredictiveAnalytics() {
             <button
               onClick={() => refreshMutation.mutate()}
               disabled={refreshMutation.isPending || isLoading}
-              className="flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white text-xs font-black transition-all shadow-lg active:scale-95 cursor-pointer disabled:opacity-60"
+              className="flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white text-xs font-bold transition-all shadow-lg active:scale-95 cursor-pointer disabled:opacity-60"
             >
               <RefreshCw className={refreshMutation.isPending ? "w-4 h-4 animate-spin" : "w-4 h-4"} />
               <span>{refreshMutation.isPending ? "Calcul IA..." : "Actualiser l'IA"}</span>
@@ -142,7 +142,7 @@ export default function AdminPredictiveAnalytics() {
       </div>
 
       {/* ── AI Executive Summary ────────────────────────────────────────────── */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-purple-900/90 via-indigo-900 to-slate-900 border border-purple-500/30 p-6 md:p-8 text-white shadow-xl">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-purple-900/90 via-indigo-900 to-slate-900 border border-purple-500/30 p-6 md:p-8 text-white shadow-sm">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 rounded-2xl bg-purple-500/20 border border-purple-400/30 flex items-center justify-center text-purple-300 shrink-0 shadow-inner">
@@ -150,10 +150,10 @@ export default function AdminPredictiveAnalytics() {
             </div>
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-black text-purple-300 uppercase tracking-widest">
+                <span className="text-xs font-bold text-purple-300 uppercase tracking-widest">
                   Synthèse Exécutive — Gemini IA
                 </span>
-                <span className="px-2 py-0.5 text-[10px] font-black rounded-full bg-purple-500/20 text-purple-200 border border-purple-400/30">
+                <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-purple-500/20 text-purple-200 border border-purple-400/30">
                   Rapport Direction
                 </span>
               </div>
@@ -189,20 +189,20 @@ export default function AdminPredictiveAnalytics() {
             className={`rounded-3xl p-6 border shadow-sm hover:shadow-xl transition-all duration-300 bg-white dark:bg-slate-900 flex flex-col justify-between ${pred.color}`}
           >
             <div className="flex justify-between items-start mb-4">
-              <div className="p-3 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">
+              <div className="p-3 rounded-2xl bg-primary/5 dark:bg-indigo-950/60 text-primary dark:text-indigo-400">
                 <Activity className="w-5 h-5" />
               </div>
-              <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-muted dark:bg-card text-muted-foreground dark:text-foreground">
                 IA Prédictive
               </span>
             </div>
 
             <div>
-              <div className="text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight leading-none mb-1">
+              <div className="text-3xl font-bold text-foreground dark:text-foreground tracking-tight leading-none mb-1">
                 {pred.value}
               </div>
-              <p className="text-sm font-extrabold text-slate-800 dark:text-slate-200 mb-1">{pred.label}</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">{pred.subtext}</p>
+              <p className="text-sm font-bold text-foreground dark:text-foreground mb-1">{pred.label}</p>
+              <p className="text-xs text-muted-foreground dark:text-muted-foreground font-medium">{pred.subtext}</p>
             </div>
           </div>
         ))}
@@ -212,7 +212,7 @@ export default function AdminPredictiveAnalytics() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
         {/* Dropout Risk Alerts Card */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+        <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl p-6 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
@@ -220,12 +220,12 @@ export default function AdminPredictiveAnalytics() {
                   <AlertTriangle className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-black text-slate-900 dark:text-slate-100">Alertes Décrochage IA</h2>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Algorithme de calcul : (Notes CC + Absences cumulées)</p>
+                  <h2 className="text-lg font-bold text-foreground dark:text-foreground">Alertes Décrochage IA</h2>
+                  <p className="text-xs text-muted-foreground dark:text-muted-foreground font-medium">Algorithme de calcul : (Notes CC + Absences cumulées)</p>
                 </div>
               </div>
 
-              <span className="px-3 py-1 rounded-full text-xs font-black bg-rose-100 dark:bg-rose-950 text-rose-600 dark:text-rose-400">
+              <span className="px-3 py-1 rounded-full text-xs font-bold bg-rose-100 dark:bg-rose-950 text-rose-600 dark:text-rose-400">
                 {dropoutRisks.length} cas sous surveillance
               </span>
             </div>
@@ -236,7 +236,7 @@ export default function AdminPredictiveAnalytics() {
                 return (
                   <div
                     key={idx}
-                    className="p-4 rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 hover:border-slate-300 dark:hover:border-slate-700 transition-all space-y-3"
+                    className="p-4 rounded-2xl border border-border dark:border-border bg-slate-50/60 dark:bg-slate-800/40 hover:border-slate-300 dark:hover:border-slate-700 transition-all space-y-3"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3">
@@ -245,15 +245,15 @@ export default function AdminPredictiveAnalytics() {
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <h4 className="font-extrabold text-sm text-slate-900 dark:text-slate-100">{student.name}</h4>
+                            <h4 className="font-bold text-sm text-foreground dark:text-foreground">{student.name}</h4>
                             {student.filiere && (
-                              <span className="px-2 py-0.5 text-[9px] font-black rounded bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-300">
+                              <span className="px-2 py-0.5 text-[9px] font-bold rounded bg-primary/10 dark:bg-indigo-950 text-primary dark:text-indigo-300">
                                 {student.filiere}
                               </span>
                             )}
                           </div>
-                          <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mt-0.5">
-                            Moyenne : <span className="text-slate-900 dark:text-slate-100 font-black">{student.avg_grade}/20</span> · Absences : <span className="text-rose-500 font-black">{student.absences}h</span>
+                          <p className="text-xs font-bold text-muted-foreground dark:text-muted-foreground mt-0.5">
+                            Moyenne : <span className="text-foreground dark:text-foreground font-bold">{student.avg_grade}/20</span> · Absences : <span className="text-rose-500 font-bold">{student.absences}h</span>
                           </p>
                         </div>
                       </div>
@@ -282,13 +282,13 @@ export default function AdminPredictiveAnalytics() {
                     <div className="flex items-center gap-2 pt-1">
                       <button
                         onClick={() => handleContactStudent(student.name)}
-                        className="flex-1 py-2 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold transition-all shadow-xs cursor-pointer"
+                        className="flex-1 py-2 px-3 rounded-xl bg-primary hover:bg-primary text-primary-foreground text-xs font-bold transition-all shadow-xs cursor-pointer"
                       >
                         Contacter Étudiant
                       </button>
                       <button
                         onClick={() => handleAlertTutor(student.name)}
-                        className="flex-1 py-2 px-3 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-xs font-extrabold transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                        className="flex-1 py-2 px-3 rounded-xl bg-muted dark:bg-card hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-foreground border border-border dark:border-border text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
                       >
                         <BellRing className="w-3.5 h-3.5 text-amber-500" />
                         <span>Alerter Tuteur</span>
@@ -302,23 +302,23 @@ export default function AdminPredictiveAnalytics() {
         </div>
 
         {/* Model Architecture & Sources Card */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-6">
+        <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl p-6 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-6">
           <div>
             <div className="flex items-center gap-3 mb-6">
-              <div className="p-2.5 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">
+              <div className="p-2.5 rounded-2xl bg-primary/5 dark:bg-indigo-950/60 text-primary dark:text-indigo-400">
                 <BrainCircuit className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-lg font-black text-slate-900 dark:text-slate-100">Modèle Prédictif ENCG</h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Hybride : Algorithme Heuristique + LLM Gemini 1.5</p>
+                <h2 className="text-lg font-bold text-foreground dark:text-foreground">Modèle Prédictif ENCG</h2>
+                <p className="text-xs text-muted-foreground dark:text-muted-foreground font-medium">Hybride : Algorithme Heuristique + LLM Gemini 1.5</p>
               </div>
             </div>
 
             <div className="space-y-4">
               {/* Data Sources */}
-              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2.5">Sources de Données en Direct</p>
-                <ul className="space-y-2 text-xs font-bold text-slate-700 dark:text-slate-300">
+              <div className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/60 border border-border dark:border-slate-700/60">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2.5">Sources de Données en Direct</p>
+                <ul className="space-y-2 text-xs font-bold text-slate-700 dark:text-foreground">
                   {[
                     'Évaluations et notes de Contrôle Continu (grades)',
                     'Feuilles de présence scannées et saisies (attendances)',
@@ -334,12 +334,12 @@ export default function AdminPredictiveAnalytics() {
               </div>
 
               {/* Risk Formula */}
-              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Formule de Calcul du Score de Risque</p>
-                <div className="font-mono text-xs text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-950/40 p-3 rounded-xl border border-indigo-200 dark:border-indigo-800/60 leading-relaxed font-bold">
+              <div className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/60 border border-border dark:border-slate-700/60">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Formule de Calcul du Score de Risque</p>
+                <div className="font-mono text-xs text-primary dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-950/40 p-3 rounded-xl border border-primary/20 dark:border-indigo-800/60 leading-relaxed font-bold">
                   Score = max(0, (10 - Moyenne_CC) × 6) <br />
                   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ min(40, Absences_Non_Justifiées × 4) <br />
-                  <span className="text-[10px] text-slate-500 dark:text-slate-400 font-sans font-medium mt-1 block">
+                  <span className="text-[10px] text-muted-foreground dark:text-muted-foreground font-sans font-medium mt-1 block">
                     • Seuil Risque Élevé : ≥ 70% | • Seuil Risque Modéré : ≥ 40%
                   </span>
                 </div>
@@ -347,21 +347,21 @@ export default function AdminPredictiveAnalytics() {
 
               {/* Real Counters */}
               <div className="grid grid-cols-3 gap-3 pt-2">
-                <div className="text-center p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60">
-                  <p className="text-2xl font-black text-indigo-600 dark:text-indigo-400">{analyticsData?.total_students ?? 72}</p>
-                  <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mt-0.5">Étudiants Analysés</p>
+                <div className="text-center p-3 rounded-2xl bg-muted/50 dark:bg-slate-800/60 border border-border dark:border-slate-700/60">
+                  <p className="text-2xl font-bold text-primary dark:text-indigo-400">{analyticsData?.total_students ?? 72}</p>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Étudiants Analysés</p>
                 </div>
-                <div className="text-center p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60">
-                  <p className="text-2xl font-black text-rose-600 dark:text-rose-400">
+                <div className="text-center p-3 rounded-2xl bg-muted/50 dark:bg-slate-800/60 border border-border dark:border-slate-700/60">
+                  <p className="text-2xl font-bold text-rose-600 dark:text-rose-400">
                     {dropoutRisks.filter((s: any) => s.risk_level === 'high').length}
                   </p>
-                  <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mt-0.5">Risque Élevé</p>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Risque Élevé</p>
                 </div>
-                <div className="text-center p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60">
-                  <p className="text-2xl font-black text-amber-600 dark:text-amber-400">
+                <div className="text-center p-3 rounded-2xl bg-muted/50 dark:bg-slate-800/60 border border-border dark:border-slate-700/60">
+                  <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">
                     {dropoutRisks.filter((s: any) => s.risk_level === 'medium').length}
                   </p>
-                  <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mt-0.5">Risque Modéré</p>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Risque Modéré</p>
                 </div>
               </div>
             </div>

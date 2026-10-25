@@ -84,7 +84,7 @@ export function InternshipApplyForm() {
               <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input 
                 {...register('company_name')} 
-                className={cn(inputCls, "pl-10", errors.company_name && inputErrorCls)} 
+                className={cn(inputCls, "pl-10 rounded-[var(--control-radius)]", errors.company_name && inputErrorCls)}
                 placeholder={t('apply.company_placeholder')} 
               />
             </div>
@@ -107,7 +107,7 @@ export function InternshipApplyForm() {
             <label className={labelCls}>{t('apply.type')} *</label>
             <div className="relative">
               <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <select {...register('type')} className={cn(inputCls, "pl-10 appearance-none", errors.type && inputErrorCls)}>
+              <select {...register('type')} className={cn(inputCls, "pl-10 appearance-none rounded-[var(--control-radius)]", errors.type && inputErrorCls)}>
                 <option value="initiation">{t('apply.type_initiation')}</option>
                 <option value="application">{t('apply.type_application')}</option>
                 <option value="fin_etudes">{t('apply.type_fin_etudes')}</option>
@@ -122,7 +122,7 @@ export function InternshipApplyForm() {
               <input 
                 type="date" 
                 {...register('start_date')} 
-                className={cn(inputCls, "pl-10", errors.start_date && inputErrorCls)} 
+                className={cn(inputCls, "pl-10 rounded-[var(--control-radius)]", errors.start_date && inputErrorCls)}
               />
             </div>
             {errors.start_date && <p className="text-xs text-red-500 mt-1">{errors.start_date.message}</p>}
@@ -134,7 +134,7 @@ export function InternshipApplyForm() {
               <input 
                 type="date" 
                 {...register('end_date')} 
-                className={cn(inputCls, "pl-10", errors.end_date && inputErrorCls)} 
+                className={cn(inputCls, "pl-10 rounded-[var(--control-radius)]", errors.end_date && inputErrorCls)}
               />
             </div>
             {errors.end_date && <p className="text-xs text-red-500 mt-1">{errors.end_date.message}</p>}

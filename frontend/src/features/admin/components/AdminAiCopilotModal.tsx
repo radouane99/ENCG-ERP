@@ -70,15 +70,15 @@ export default function AdminAiCopilotModal({ isOpen, onClose }: AdminAiCopilotM
 
   return (
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className={cn("bg-white rounded-3xl w-full max-w-2xl shadow-2xl overflow-hidden flex flex-col h-[650px] border border-slate-200 animate-in zoom-in-95", isRtl && "rtl")}>
+      <div className={cn("bg-card rounded-2xl w-full max-w-2xl shadow-sm overflow-hidden flex flex-col h-[650px] border border-border animate-in zoom-in-95", isRtl && "rtl")}>
         {/* Header */}
         <div className="bg-gradient-to-r from-[#0f2863] to-[#002e5b] text-white p-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-amber-400 text-slate-900 rounded-2xl flex items-center justify-center font-bold shadow-md">
+            <div className="w-10 h-10 bg-amber-400 text-foreground rounded-2xl flex items-center justify-center font-bold shadow-md">
               <Bot className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="font-extrabold text-base flex items-center gap-2">
+              <h3 className="font-bold text-base flex items-center gap-2">
                 <span>Copilote IA Administratif</span>
                 <span className="px-2 py-0.5 bg-white/10 text-amber-300 text-[10px] rounded-full font-mono">v2.4 ENCG</span>
               </h3>
@@ -92,14 +92,14 @@ export default function AdminAiCopilotModal({ isOpen, onClose }: AdminAiCopilotM
         </div>
 
         {/* Quick Prompts Bar */}
-        <div className="bg-slate-50 border-b border-slate-200 p-3 flex gap-2 overflow-x-auto text-xs">
+        <div className="bg-muted/50 border-b border-border p-3 flex gap-2 overflow-x-auto text-xs">
           {quickPrompts.map((prompt, idx) => (
             <button
               key={idx}
               onClick={() => {
                 setInputQuery(prompt);
               }}
-              className="px-3 py-1.5 bg-white border border-slate-200 rounded-xl hover:border-blue-500 hover:text-blue-600 font-semibold text-slate-600 transition-colors whitespace-nowrap shrink-0"
+              className="px-3 py-1.5 bg-card border border-border rounded-xl hover:border-primary hover:text-primary font-semibold text-muted-foreground transition-colors whitespace-nowrap shrink-0"
             >
               ✨ {prompt}
             </button>
@@ -115,14 +115,14 @@ export default function AdminAiCopilotModal({ isOpen, onClose }: AdminAiCopilotM
             >
               <div className={cn(
                 "w-8 h-8 rounded-xl flex items-center justify-center shrink-0 text-xs font-bold",
-                msg.sender === 'user' ? "bg-slate-900 text-white" : "bg-blue-100 text-[#0f2863]"
+                msg.sender === 'user' ? "bg-slate-900 text-white" : "bg-primary/10 text-[#0f2863]"
               )}>
                 {msg.sender === 'user' ? 'Admin' : <Bot className="w-4 h-4" />}
               </div>
 
               <div className={cn(
                 "p-4 rounded-2xl text-xs leading-relaxed shadow-sm space-y-3",
-                msg.sender === 'user' ? "bg-[#0f2863] text-white rounded-tr-none" : "bg-slate-50 border border-slate-200 text-slate-800 rounded-tl-none"
+                msg.sender === 'user' ? "bg-[#0f2863] text-white rounded-tr-none" : "bg-muted/50 border border-border text-foreground rounded-tl-none"
               )}>
                 <p>{msg.text}</p>
 
@@ -130,9 +130,9 @@ export default function AdminAiCopilotModal({ isOpen, onClose }: AdminAiCopilotM
                 {msg.data?.kpis && (
                   <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-200/60">
                     {msg.data.kpis.map((kpi: any, kIdx: number) => (
-                      <div key={kIdx} className="bg-white p-2.5 rounded-xl border border-slate-200 text-center">
+                      <div key={kIdx} className="bg-card p-2.5 rounded-xl border border-border text-center">
                         <div className="text-[10px] text-slate-400 font-bold uppercase">{kpi.label}</div>
-                        <div className="text-sm font-extrabold text-[#0f2863] mt-0.5">{kpi.value}</div>
+                        <div className="text-sm font-bold text-[#0f2863] mt-0.5">{kpi.value}</div>
                       </div>
                     ))}
                   </div>
@@ -143,20 +143,20 @@ export default function AdminAiCopilotModal({ isOpen, onClose }: AdminAiCopilotM
 
           {loading && (
             <div className="flex gap-3 items-center text-xs text-slate-400 italic">
-              <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+              <Loader2 className="w-4 h-4 animate-spin text-primary" />
               <span>L'IA analyse la base de données...</span>
             </div>
           )}
         </div>
 
         {/* Input Bar */}
-        <form onSubmit={handleSend} className="p-4 bg-white border-t border-slate-200 flex items-center gap-3">
+        <form onSubmit={handleSend} className="p-4 bg-card border-t border-border flex items-center gap-3">
           <input
             type="text"
             value={inputQuery}
             onChange={e => setInputQuery(e.target.value)}
             placeholder="Posez votre question (Français, Arabe, Darija)..."
-            className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 px-4 py-3 bg-muted/50 border border-border text-xs font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-ring rounded-[var(--control-radius)]"
           />
           <button
             type="submit"

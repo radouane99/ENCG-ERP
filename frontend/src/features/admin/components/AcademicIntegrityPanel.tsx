@@ -19,9 +19,9 @@ export function AcademicIntegrityPanel() {
         } catch (error: any) { toast.error(error.response?.data?.message || 'Réconciliation impossible.'); }
       }}>
         <p className="w-full text-sm">Évaluation #{assessment.id} · Module #{assessment.module_id} · {assessment.date?.slice(0,10) || 'Sans date'}</p>
-        <label className="text-sm">Année<select name="year" required defaultValue="" className="block rounded border border-input bg-background p-2"><option value="">Choisir</option>{data.years.map((year: any) => <option key={year.id} value={year.id}>{year.label}</option>)}</select></label>
-        <label className="text-sm">Type<input name="type" required maxLength={50} defaultValue={assessment.type} className="block w-28 rounded border border-input bg-background p-2" /></label>
-        <label className="text-sm">Poids %<input name="weight" type="number" min={0} max={100} step="0.01" required className="block w-24 rounded border border-input bg-background p-2" /></label>
+        <label className="text-sm">Année<select name="year" required defaultValue="" className="block rounded border border-input bg-background p-2 rounded-[var(--control-radius)]"><option value="">Choisir</option>{data.years.map((year: any) => <option key={year.id} value={year.id}>{year.label}</option>)}</select></label>
+        <label className="text-sm">Type<input name="type" required maxLength={50} defaultValue={assessment.type} className="block w-28 rounded border border-input bg-background p-2 rounded-[var(--control-radius)]" /></label>
+        <label className="text-sm">Poids %<input name="weight" type="number" min={0} max={100} step="0.01" required className="block w-24 rounded border border-input bg-background p-2 rounded-[var(--control-radius)]" /></label>
         <button className="min-h-11 rounded-lg bg-primary px-3 text-primary-foreground">Valider la réconciliation</button>
       </form>)}
       {(data.data?.data || []).filter((issue: any) => issue.entity === 'students').map((issue: any) => <form key={issue.id} className="flex flex-wrap items-end gap-3 border-t border-border py-3" onSubmit={async event => {
@@ -30,7 +30,7 @@ export function AcademicIntegrityPanel() {
         catch (error: any) { toast.error(error.response?.data?.message || 'Correction impossible.'); }
       }}>
         <label className="text-sm">Étudiant #{issue.entity_id} · {issue.reason.replace('identity_conflict_', '')}
-          <input name="value" type={issue.reason.endsWith('birth_date') ? 'date' : 'text'} required aria-label={`Valeur vérifiée pour étudiant ${issue.entity_id}`} className="ms-3 rounded border border-input bg-background p-2" />
+          <input name="value" type={issue.reason.endsWith('birth_date') ? 'date' : 'text'} required aria-label={`Valeur vérifiée pour étudiant ${issue.entity_id}`} className="ms-3 rounded border border-input bg-background p-2 rounded-[var(--control-radius)]" />
         </label>
         <button className="min-h-11 rounded-lg border border-input px-3">Enregistrer la valeur vérifiée sur pièces</button>
       </form>)}

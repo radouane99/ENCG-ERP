@@ -22,7 +22,7 @@ export default function ExamAttendanceSheet() {
     <div className="max-w-6xl mx-auto pb-10 print:max-w-none print:p-0">
       {/* Non-printable controls */}
       <div className="flex justify-between items-center mb-6 print:hidden">
-        <Link to="/academic/exam-planning" className="bg-white hover:bg-white/5 border border-white/10 text-foreground px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2">
+        <Link to="/academic/exam-planning" className="bg-card hover:bg-white/5 border border-white/10 text-foreground px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2">
           <ArrowLeft className="w-4 h-4" /> Retour au Planning
         </Link>
         <button onClick={handlePrint} className="bg-[#1F3A5F] hover:bg-[#152842] text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2">
@@ -31,12 +31,12 @@ export default function ExamAttendanceSheet() {
       </div>
 
       {/* Printable Area - A4 size simulation */}
-      <div className="bg-white border border-white/10 shadow-sm print:border-none print:shadow-none p-10 print:p-0 mx-auto w-full max-w-[210mm] min-h-[297mm]">
+      <div className="bg-card border border-white/10 shadow-sm print:border-none print:shadow-none p-10 print:p-0 mx-auto w-full max-w-[210mm] min-h-[297mm]">
         
         {/* Header */}
         <div className="flex justify-between items-start mb-8 border-b-2 border-[#1F3A5F] pb-4">
           <div>
-            <h1 className="text-xl font-black text-slate-900 tracking-wide uppercase">ÉCOLE NATIONALE DE COMMERCE ET DE GESTION DE FÈS</h1>
+            <h1 className="text-foreground erp-page-title">ÉCOLE NATIONALE DE COMMERCE ET DE GESTION DE FÈS</h1>
             <p className="text-xs text-white/50">Direction des Affaires Académiques</p>
           </div>
           <h2 className="text-lg font-bold text-white uppercase">FICHE D'ÉMARGEMENT DES EXAMENS</h2>

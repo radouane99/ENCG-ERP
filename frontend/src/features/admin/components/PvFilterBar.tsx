@@ -33,7 +33,7 @@ export function PvFilterBar({
   onGroupChange,
 }: PvFilterBarProps) {
   return (
-    <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-6 rounded-[2rem] shadow-xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border p-6 rounded-2xl shadow-sm grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <PvFilterSelect
         label={isRtl ? 'الشعبة' : 'Filière'}
         icon={GraduationCap}

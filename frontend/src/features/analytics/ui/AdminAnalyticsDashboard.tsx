@@ -41,9 +41,9 @@ const AdminAnalyticsDashboard: React.FC = () => {
   if (loading && !data) {
     return (
       <div className="flex h-[calc(100vh-200px)] items-center justify-center">
-        <div className="flex flex-col items-center gap-3 text-slate-500">
-          <RefreshCw className="h-8 w-8 animate-spin text-indigo-600" />
-          <p className="text-xs font-extrabold">Chargement des statistiques en temps réel...</p>
+        <div className="flex flex-col items-center gap-3 text-muted-foreground">
+          <RefreshCw className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-xs font-bold">Chargement des statistiques en temps réel...</p>
         </div>
       </div>
     );
@@ -85,17 +85,17 @@ const AdminAnalyticsDashboard: React.FC = () => {
     <div className="space-y-6 pb-12 animate-fade-in">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
+          <h1 className="text-foreground dark:text-foreground erp-page-title">
             Tableau de Bord Analytique Global
           </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold mt-0.5">
+          <p className="text-xs text-muted-foreground dark:text-muted-foreground font-semibold mt-0.5">
             Vue d'ensemble des métriques d'inscriptions, projets et demandes administratives de l'établissement
           </p>
         </div>
         <button
           onClick={fetchData}
           disabled={loading}
-          className="flex items-center gap-2 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-2.5 text-xs font-extrabold text-slate-700 dark:text-slate-200 shadow-xs transition-all hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 cursor-pointer active:scale-95"
+          className="flex items-center gap-2 rounded-2xl border border-border dark:border-border bg-card dark:bg-card px-4 py-2.5 text-xs font-bold text-slate-700 dark:text-foreground shadow-xs transition-all hover:bg-muted/50 dark:hover:bg-slate-800 disabled:opacity-50 cursor-pointer active:scale-95"
         >
           <RefreshCw className={`h-4 w-4 text-indigo-600 dark:text-indigo-400 ${loading ? 'animate-spin' : ''}`} />
           <span>Rafraîchir les données</span>
@@ -145,10 +145,10 @@ const AdminAnalyticsDashboard: React.FC = () => {
       {/* Charts Grid */}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Document Requests Trend */}
-        <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+        <div className="rounded-2xl border border-slate-200/80 dark:border-border bg-card dark:bg-card p-6 shadow-sm">
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-base font-extrabold text-slate-900 dark:text-slate-100">Tendance des Demandes (Docs)</h3>
-            <div className="rounded-2xl bg-blue-50 dark:bg-blue-950/60 p-2 text-blue-600 dark:text-blue-400">
+            <h3 className="text-base font-bold text-foreground dark:text-foreground">Tendance des Demandes (Docs)</h3>
+            <div className="rounded-2xl bg-primary/5 dark:bg-blue-950/60 p-2 text-primary dark:text-blue-400">
               <Activity className="h-5 w-5" />
             </div>
           </div>
@@ -176,9 +176,9 @@ const AdminAnalyticsDashboard: React.FC = () => {
         </div>
 
         {/* Academic Projects Distribution */}
-        <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+        <div className="rounded-2xl border border-slate-200/80 dark:border-border bg-card dark:bg-card p-6 shadow-sm">
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-base font-extrabold text-slate-900 dark:text-slate-100">Répartition des Projets</h3>
+            <h3 className="text-base font-bold text-foreground dark:text-foreground">Répartition des Projets</h3>
             <div className="rounded-2xl bg-purple-50 dark:bg-purple-950/60 p-2 text-purple-600 dark:text-purple-400">
               <Briefcase className="h-5 w-5" />
             </div>
@@ -209,10 +209,10 @@ const AdminAnalyticsDashboard: React.FC = () => {
         </div>
 
         {/* Students by Filiere */}
-        <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm lg:col-span-2">
+        <div className="rounded-2xl border border-slate-200/80 dark:border-border bg-card dark:bg-card p-6 shadow-sm lg:col-span-2">
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-base font-extrabold text-slate-900 dark:text-slate-100">Répartition des Étudiants par Filière</h3>
-            <div className="rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 p-2 text-indigo-600 dark:text-indigo-400">
+            <h3 className="text-base font-bold text-foreground dark:text-foreground">Répartition des Étudiants par Filière</h3>
+            <div className="rounded-2xl bg-primary/5 dark:bg-indigo-950/60 p-2 text-primary dark:text-indigo-400">
               <Users className="h-5 w-5" />
             </div>
           </div>

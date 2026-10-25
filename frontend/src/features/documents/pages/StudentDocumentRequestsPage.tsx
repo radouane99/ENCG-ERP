@@ -25,10 +25,10 @@ export default function StudentDocumentRequestsPage() {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Mes Documents</h1>
+          <h1 className="erp-page-title">Mes Documents</h1>
           <p className="text-muted-foreground text-sm">Demandez et téléchargez vos attestations.</p>
         </div>
         <Button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2">
@@ -93,7 +93,7 @@ export default function StudentDocumentRequestsPage() {
               <div>
                 <label className="text-sm font-medium">Type de document</label>
                 <select 
-                  className="w-full mt-1 border rounded-lg p-2 bg-background"
+                  className="w-full mt-1 border p-2 bg-background rounded-[var(--control-radius)]"
                   value={selectedType}
                   onChange={(e) => setSelectedType(e.target.value)}
                 >

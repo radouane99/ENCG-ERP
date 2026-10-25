@@ -25,15 +25,15 @@ export default function AdminExamGlobalLiveDashboardPage() {
   const profConfirmProgress = stats.professors.total > 0 ? Math.round((stats.professors.confirmed / stats.professors.total) * 100) : 0
 
   return (
-    <div className="space-y-6 animate-in p-6 max-w-7xl mx-auto pb-20">
+    <div className="space-y-6 animate-in max-w-7xl mx-auto pb-20">
       <div className="flex flex-wrap gap-4 items-center justify-between mb-8">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-xl bg-primary/5 text-primary flex items-center justify-center">
             <BarChart3 className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-[#0f2863]">Supervision de la session</h1>
-            <p className="text-xs text-slate-500">
+            <h1 className="text-[#0f2863] erp-page-title">Supervision de la session</h1>
+            <p className="text-xs text-muted-foreground">
               Supervision en temps réel : {stats?.session_name || 'Chargement...'}
             </p>
           </div>
@@ -43,10 +43,10 @@ export default function AdminExamGlobalLiveDashboardPage() {
           <button 
             onClick={() => refetch()}
             disabled={isFetching}
-            className="h-10 px-4 rounded-xl border border-slate-200 bg-white text-slate-600 text-xs font-bold uppercase tracking-wider flex items-center gap-2 hover:bg-slate-50 transition-colors shadow-sm disabled:opacity-50">
+            className="h-10 px-4 rounded-xl border border-border bg-card text-muted-foreground text-xs font-bold uppercase tracking-wider flex items-center gap-2 hover:bg-muted/50 transition-colors shadow-sm disabled:opacity-50">
             <RefreshCw className={cn("w-4 h-4", isFetching && "animate-spin")} /> ACTUALISER
           </button>
-          <Link to="/admin/exams/sessions" className="h-10 px-4 rounded-xl border border-slate-200 bg-white text-slate-600 text-xs font-bold uppercase tracking-wider flex items-center gap-2 hover:bg-slate-50 transition-colors shadow-sm">
+          <Link to="/admin/exams/sessions" className="h-10 px-4 rounded-xl border border-border bg-card text-muted-foreground text-xs font-bold uppercase tracking-wider flex items-center gap-2 hover:bg-muted/50 transition-colors shadow-sm">
             <ArrowLeft className="w-4 h-4" /> RETOUR
           </Link>
         </div>
@@ -54,17 +54,17 @@ export default function AdminExamGlobalLiveDashboardPage() {
 
       {isPending && <p role="status">Chargement des pointages…</p>}
       {isError && <p role="alert" className="rounded-xl border border-destructive p-4 text-destructive">Suivi indisponible. Les valeurs précédentes ne confirment pas l’état actuel; actualisez.</p>}
-      {!isPending && <p className="text-sm text-slate-600">{stats.students.unrecorded ?? 0} pointage(s) encore à saisir. Les totaux comptent les convocations par épreuve, un étudiant peut avoir plusieurs épreuves.</p>}
+      {!isPending && <p className="text-sm text-muted-foreground">{stats.students.unrecorded ?? 0} pointage(s) encore à saisir. Les totaux comptent les convocations par épreuve, un étudiant peut avoir plusieurs épreuves.</p>}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Etudiants */}
-        <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm p-6">
+        <div className="bg-card rounded-2xl border border-border shadow-sm p-6">
           <h2 className="text-lg font-bold text-[#0f2863] mb-6 flex items-center gap-2">
-            <Users className="w-5 h-5 text-indigo-500" /> Présence Étudiants
+            <Users className="w-5 h-5 text-primary" /> Présence Étudiants
           </h2>
           <div className="grid grid-cols-3 gap-4 mb-8">
-            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-              <div className="text-sm text-slate-500 font-medium mb-1">Total Convoqués</div>
-              <div className="text-3xl font-bold text-slate-800">{stats.students.total}</div>
+            <div className="bg-muted/50 p-4 rounded-2xl border border-border">
+              <div className="text-sm text-muted-foreground font-medium mb-1">Total Convoqués</div>
+              <div className="text-3xl font-bold text-foreground">{stats.students.total}</div>
             </div>
             <div className="bg-emerald-50 p-4 rounded-2xl border border-emerald-100">
               <div className="text-sm text-emerald-600 font-medium mb-1">Présents</div>
@@ -77,23 +77,23 @@ export default function AdminExamGlobalLiveDashboardPage() {
           </div>
           
           <div className="mb-2 flex justify-between text-sm font-medium">
-            <span className="text-slate-600">Taux de présence</span>
-            <span className="text-indigo-600">{studentProgress}%</span>
+            <span className="text-muted-foreground">Taux de présence</span>
+            <span className="text-primary">{studentProgress}%</span>
           </div>
-          <div className="w-full bg-slate-100 rounded-full h-3 mb-8 overflow-hidden">
-            <div className="bg-indigo-500 h-3 rounded-full transition-all duration-1000 ease-out" style={{ width: `${studentProgress}%` }}></div>
+          <div className="w-full bg-muted rounded-full h-3 mb-8 overflow-hidden">
+            <div className="bg-primary h-3 rounded-full transition-all duration-1000 ease-out" style={{ width: `${studentProgress}%` }}></div>
           </div>
         </div>
 
         {/* Professeurs */}
-        <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm p-6">
+        <div className="bg-card rounded-2xl border border-border shadow-sm p-6">
           <h2 className="text-lg font-bold text-[#0f2863] mb-6 flex items-center gap-2">
             <CheckCircle2 className="w-5 h-5 text-teal-500" /> Surveillants (Professeurs)
           </h2>
           <div className="grid grid-cols-3 gap-4 mb-8">
-            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-              <div className="text-sm text-slate-500 font-medium mb-1">Total Affectés</div>
-              <div className="text-3xl font-bold text-slate-800">{stats.professors.total}</div>
+            <div className="bg-muted/50 p-4 rounded-2xl border border-border">
+              <div className="text-sm text-muted-foreground font-medium mb-1">Total Affectés</div>
+              <div className="text-3xl font-bold text-foreground">{stats.professors.total}</div>
             </div>
             <div className="bg-teal-50 p-4 rounded-2xl border border-teal-100">
               <div className="text-sm text-teal-600 font-medium mb-1">Réception Confirmée</div>
@@ -106,10 +106,10 @@ export default function AdminExamGlobalLiveDashboardPage() {
           </div>
 
           <div className="mb-2 flex justify-between text-sm font-medium">
-            <span className="text-slate-600">Taux de confirmation</span>
+            <span className="text-muted-foreground">Taux de confirmation</span>
             <span className="text-teal-600">{profConfirmProgress}%</span>
           </div>
-          <div className="w-full bg-slate-100 rounded-full h-3 mb-8 overflow-hidden">
+          <div className="w-full bg-muted rounded-full h-3 mb-8 overflow-hidden">
             <div className="bg-teal-500 h-3 rounded-full transition-all duration-1000 ease-out" style={{ width: `${profConfirmProgress}%` }}></div>
           </div>
         </div>

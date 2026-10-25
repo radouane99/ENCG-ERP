@@ -110,22 +110,22 @@ export default function AdminScheduleChangeRequestsPage() {
   const filteredRequests = requests.filter(r => activeFilter === 'all' || r.status === activeFilter)
 
   return (
-    <div className="space-y-8 animate-in relative p-4 md:p-8 max-w-[1500px] mx-auto font-sans pb-24">
+    <div className="space-y-8 animate-in relative max-w-[1500px] mx-auto font-sans pb-24">
       {/* Deep Navy Hero Header Banner */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] p-8 md:p-10 rounded-[2.5rem] shadow-2xl text-white border border-blue-800/40 space-y-6">
+      <div className="relative overflow-hidden p-8 md:p-10 text-white border border-blue-800/40 space-y-6 erp-page-banner">
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
 
         {/* Top Header Content */}
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="flex items-center gap-6">
-            <div className="w-16 h-16 md:w-20 md:h-20 rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-amber-300 shadow-2xl shrink-0">
+            <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-amber-300 shadow-sm shrink-0">
               <CalendarDays className="w-8 h-8 md:w-10 md:h-10 text-amber-400" />
             </div>
             <div>
-              <div className="inline-flex items-center gap-2 bg-blue-500/20 text-blue-200 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-2 border border-blue-400/30">
+              <div className="inline-flex items-center gap-2 bg-blue-500/20 text-blue-200 px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mb-2 border border-blue-400/30">
                 <Sparkles className="w-4 h-4 text-amber-400" /> Guichet Officiel des Permutations & Modifications
               </div>
-              <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight leading-tight">
+              <h1 className="text-white leading-tight erp-page-title">
                 Changements Emploi du Temps
               </h1>
               <p className="text-blue-100/90 text-xs md:text-sm font-medium mt-1 max-w-2xl">
@@ -137,14 +137,14 @@ export default function AdminScheduleChangeRequestsPage() {
           <div className="flex items-center gap-3 flex-wrap shrink-0">
             <Link
               to="/admin/schedules/engine"
-              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 hover:opacity-95 text-white font-black rounded-2xl transition-all text-xs uppercase tracking-wider shadow-lg cursor-pointer"
+              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 hover:opacity-95 text-white font-bold rounded-2xl transition-all text-xs uppercase tracking-wider shadow-lg cursor-pointer"
             >
               <Cpu className="w-4 h-4 text-amber-300" /> ⚡ Solveur CSP (IA)
             </Link>
 
             <button
               onClick={handleExportAuditPdf}
-              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-black rounded-2xl transition-all text-xs uppercase tracking-wider shadow-lg cursor-pointer"
+              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold rounded-2xl transition-all text-xs uppercase tracking-wider shadow-lg cursor-pointer"
             >
               <Download className="w-4 h-4 text-white" /> Rapport d'Audit (PDF)
             </button>
@@ -154,36 +154,36 @@ export default function AdminScheduleChangeRequestsPage() {
         {/* KPI Cards Row (Computed from Real DB Records) */}
         <div className="relative z-10 grid grid-cols-2 md:grid-cols-4 gap-4 pt-6 border-t border-white/10">
           <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15">
-            <span className="text-[10px] font-black uppercase tracking-wider text-blue-200 block">TOTAL REQUÊTES</span>
-            <span className="text-2xl font-black text-white font-mono mt-1 block">{requests.length}</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-blue-200 block">TOTAL REQUÊTES</span>
+            <span className="text-2xl font-bold text-white font-mono mt-1 block">{requests.length}</span>
           </div>
 
           <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15">
-            <span className="text-[10px] font-black uppercase tracking-wider text-amber-300 block">EN ATTENTE</span>
-            <span className="text-2xl font-black text-amber-300 font-mono mt-1 block">{requests.filter(r => r.status === 'pending').length}</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-300 block">EN ATTENTE</span>
+            <span className="text-2xl font-bold text-amber-300 font-mono mt-1 block">{requests.filter(r => r.status === 'pending').length}</span>
           </div>
 
           <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15">
-            <span className="text-[10px] font-black uppercase tracking-wider text-emerald-300 block">APPROUVÉES</span>
-            <span className="text-2xl font-black text-emerald-400 font-mono mt-1 block">{requests.filter(r => r.status === 'approved').length}</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-300 block">APPROUVÉES</span>
+            <span className="text-2xl font-bold text-emerald-400 font-mono mt-1 block">{requests.filter(r => r.status === 'approved').length}</span>
           </div>
 
           <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15">
-            <span className="text-[10px] font-black uppercase tracking-wider text-rose-300 block">REJETÉES</span>
-            <span className="text-2xl font-black text-rose-300 font-mono mt-1 block">{requests.filter(r => r.status === 'rejected').length}</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-rose-300 block">REJETÉES</span>
+            <span className="text-2xl font-bold text-rose-300 font-mono mt-1 block">{requests.filter(r => r.status === 'rejected').length}</span>
           </div>
         </div>
       </div>
 
       {/* Main Card */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-[2.5rem] shadow-xl p-6 space-y-6">
+      <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl shadow-sm p-6 space-y-6">
         {/* Filter Tabs Bar */}
-        <div className="flex flex-wrap gap-2 p-1.5 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700/80 w-fit">
+        <div className="flex flex-wrap gap-2 p-1.5 bg-muted/50 dark:bg-card rounded-2xl border border-border dark:border-slate-700/80 w-fit">
           <button 
             onClick={() => setActiveFilter('all')}
             className={cn(
-              "px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer",
-              activeFilter === 'all' ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-md" : "text-slate-500 hover:text-slate-800"
+              "px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer",
+              activeFilter === 'all' ? "bg-card dark:bg-card text-primary dark:text-indigo-400 shadow-md" : "text-muted-foreground hover:text-foreground"
             )}
           >
             <List className="w-4 h-4" /> Toutes ({requests.length})
@@ -192,8 +192,8 @@ export default function AdminScheduleChangeRequestsPage() {
           <button 
             onClick={() => setActiveFilter('pending')}
             className={cn(
-              "px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer",
-              activeFilter === 'pending' ? "bg-white dark:bg-slate-900 text-amber-600 shadow-md" : "text-slate-500 hover:text-slate-800"
+              "px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer",
+              activeFilter === 'pending' ? "bg-card dark:bg-card text-amber-600 shadow-md" : "text-muted-foreground hover:text-foreground"
             )}
           >
             <Hourglass className="w-4 h-4 text-amber-500" /> En Attente ({requests.filter(r => r.status === 'pending').length})
@@ -202,8 +202,8 @@ export default function AdminScheduleChangeRequestsPage() {
           <button 
             onClick={() => setActiveFilter('approved')}
             className={cn(
-              "px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer",
-              activeFilter === 'approved' ? "bg-white dark:bg-slate-900 text-emerald-600 shadow-md" : "text-slate-500 hover:text-slate-800"
+              "px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer",
+              activeFilter === 'approved' ? "bg-card dark:bg-card text-emerald-600 shadow-md" : "text-muted-foreground hover:text-foreground"
             )}
           >
             <CheckSquare className="w-4 h-4 text-emerald-500" /> Approuvées ({requests.filter(r => r.status === 'approved').length})
@@ -212,8 +212,8 @@ export default function AdminScheduleChangeRequestsPage() {
           <button 
             onClick={() => setActiveFilter('rejected')}
             className={cn(
-              "px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer",
-              activeFilter === 'rejected' ? "bg-white dark:bg-slate-900 text-rose-600 shadow-md" : "text-slate-500 hover:text-slate-800"
+              "px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer",
+              activeFilter === 'rejected' ? "bg-card dark:bg-card text-rose-600 shadow-md" : "text-muted-foreground hover:text-foreground"
             )}
           >
             <XCircle className="w-4 h-4 text-rose-500" /> Rejetées ({requests.filter(r => r.status === 'rejected').length})
@@ -223,14 +223,14 @@ export default function AdminScheduleChangeRequestsPage() {
         {/* Requests List Content (100% Real DB Records) */}
         {isLoading ? (
           <div className="flex justify-center p-16">
-            <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
+            <Loader2 className="w-8 h-8 text-primary animate-spin" />
           </div>
         ) : filteredRequests.length === 0 ? (
-          <div className="bg-slate-50 dark:bg-slate-800/40 rounded-3xl border border-slate-200/80 dark:border-slate-800 p-16 flex flex-col items-center justify-center text-center">
-            <div className="w-20 h-20 bg-indigo-50 dark:bg-indigo-950/60 rounded-full flex items-center justify-center mb-4">
-              <Mailbox className="w-10 h-10 text-indigo-600 dark:text-indigo-400" />
+          <div className="bg-muted/50 dark:bg-slate-800/40 rounded-2xl border border-slate-200/80 dark:border-border p-16 flex flex-col items-center justify-center text-center">
+            <div className="w-20 h-20 bg-primary/5 dark:bg-indigo-950/60 rounded-full flex items-center justify-center mb-4">
+              <Mailbox className="w-10 h-10 text-primary dark:text-indigo-400" />
             </div>
-            <p className="text-base font-black text-slate-800 dark:text-white">
+            <p className="text-base font-bold text-foreground dark:text-white">
               Aucune demande enregistrée en base de données
             </p>
             <p className="text-xs text-slate-400 mt-1 max-w-sm">Toutes les requêtes de modification ont été traitées ou aucune demande n'a encore été soumise par les enseignants.</p>
@@ -241,7 +241,7 @@ export default function AdminScheduleChangeRequestsPage() {
               <div 
                 key={req.id} 
                 onClick={() => setSelectedReqModal(req)}
-                className="bg-white dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-3xl p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-6 hover:shadow-lg transition-all cursor-pointer group"
+                className="bg-card dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-2xl p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-6 hover:shadow-lg transition-all cursor-pointer group"
               >
                 <div className="flex items-start gap-4 flex-1">
                   <div className={cn(
@@ -255,11 +255,11 @@ export default function AdminScheduleChangeRequestsPage() {
 
                   <div className="space-y-2 flex-1">
                     <div className="flex flex-wrap items-center gap-3">
-                      <h3 className="font-black text-slate-900 dark:text-white text-base">
+                      <h3 className="font-bold text-foreground dark:text-white text-base">
                         Changement de Créneau : {req.module_name}
                       </h3>
                       <span className={cn(
-                        "px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider border",
+                        "px-3 py-1 rounded-xl text-[10px] font-bold uppercase tracking-wider border",
                         req.status === 'approved' ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 border-emerald-300" :
                         req.status === 'rejected' ? "bg-rose-50 dark:bg-rose-950/60 text-rose-600 border-rose-300" : "bg-amber-50 dark:bg-amber-950/60 text-amber-600 border-amber-300"
                       )}>
@@ -267,37 +267,37 @@ export default function AdminScheduleChangeRequestsPage() {
                       </span>
                     </div>
 
-                    <p className="text-xs font-bold text-slate-500 dark:text-slate-400 flex items-center gap-2">
-                      <User className="w-3.5 h-3.5 text-indigo-500" /> {req.professor_name} 
+                    <p className="text-xs font-bold text-muted-foreground dark:text-muted-foreground flex items-center gap-2">
+                      <User className="w-3.5 h-3.5 text-primary" /> {req.professor_name}
                       <span className="text-slate-300">•</span>
-                      <Building2 className="w-3.5 h-3.5 text-indigo-500" /> Dép. {req.department}
+                      <Building2 className="w-3.5 h-3.5 text-primary" /> Dép. {req.department}
                     </p>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2">
-                      <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700/80">
-                        <span className="text-[9px] font-black uppercase tracking-wider text-slate-400 block">ANCIEN CRÉNEAU</span>
-                        <span className="text-xs font-bold text-slate-600 dark:text-slate-300 line-through mt-0.5 block">{req.old_date} ({req.old_start_time})</span>
+                      <div className="p-3 bg-muted/50 dark:bg-card rounded-2xl border border-border dark:border-slate-700/80">
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 block">ANCIEN CRÉNEAU</span>
+                        <span className="text-xs font-bold text-muted-foreground dark:text-foreground line-through mt-0.5 block">{req.old_date} ({req.old_start_time})</span>
                       </div>
 
-                      <div className="p-3 bg-indigo-50/60 dark:bg-indigo-950/40 rounded-2xl border border-indigo-200 dark:border-indigo-800">
-                        <span className="text-[9px] font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-400 block">NOUVEAU CRÉNEAU SOULLICITÉ</span>
-                        <span className="text-xs font-black text-indigo-900 dark:text-indigo-200 mt-0.5 block">{req.proposed_date} ({req.proposed_start_time})</span>
+                      <div className="p-3 bg-indigo-50/60 dark:bg-indigo-950/40 rounded-2xl border border-primary/20 dark:border-primary">
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-primary dark:text-indigo-400 block">NOUVEAU CRÉNEAU SOULLICITÉ</span>
+                        <span className="text-xs font-bold text-primary dark:text-indigo-200 mt-0.5 block">{req.proposed_date} ({req.proposed_start_time})</span>
                       </div>
 
-                      <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700/80">
-                        <span className="text-[9px] font-black uppercase tracking-wider text-slate-400 block">MOTIF DE PERMUTATION</span>
-                        <span className="text-xs font-bold text-slate-700 dark:text-slate-200 truncate mt-0.5 block" title={req.reason}>{req.reason}</span>
+                      <div className="p-3 bg-muted/50 dark:bg-card rounded-2xl border border-border dark:border-slate-700/80">
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 block">MOTIF DE PERMUTATION</span>
+                        <span className="text-xs font-bold text-slate-700 dark:text-foreground truncate mt-0.5 block" title={req.reason}>{req.reason}</span>
                       </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Actions */}
-                <div className="flex flex-wrap items-center gap-2 shrink-0 border-t lg:border-t-0 pt-4 lg:pt-0 border-slate-100 dark:border-slate-700">
+                <div className="flex flex-wrap items-center gap-2 shrink-0 border-t lg:border-t-0 pt-4 lg:pt-0 border-border dark:border-border">
                   {req.status === 'approved' && (
                     <button
                       onClick={(e) => { e.stopPropagation(); handleWhatsAppDelegateAlert(req) }}
-                      className="px-4 py-2 bg-emerald-100 dark:bg-emerald-950/80 hover:bg-emerald-200 text-emerald-800 dark:text-emerald-300 text-xs font-black rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+                      className="px-4 py-2 bg-emerald-100 dark:bg-emerald-950/80 hover:bg-emerald-200 text-emerald-800 dark:text-emerald-300 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
                       title="Prévenir le Délégué de Classe par WhatsApp"
                     >
                       📱 Alerter Délégué
@@ -308,20 +308,20 @@ export default function AdminScheduleChangeRequestsPage() {
                     <>
                       <button 
                         onClick={(e) => { e.stopPropagation(); handleSuggestSubstitutes(req) }}
-                        className="px-4 py-2 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 hover:bg-indigo-100 border border-indigo-200 text-xs font-black rounded-xl transition-all flex items-center gap-1.5 cursor-pointer"
+                        className="px-4 py-2 bg-primary/5 dark:bg-indigo-950/60 text-primary hover:bg-primary/10 border border-primary/20 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer"
                         title="Trouver un Enseignant Remplaçant Disponibles"
                       >
                         <Users className="w-3.5 h-3.5" /> Remplaçants
                       </button>
                       <button 
                         onClick={(e) => { e.stopPropagation(); handleUpdateStatus(req.id, 'approved') }}
-                        className="px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white text-xs font-black uppercase tracking-wider rounded-2xl transition-all shadow-md flex items-center gap-2 cursor-pointer"
+                        className="px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white text-xs font-bold uppercase tracking-wider rounded-2xl transition-all shadow-md flex items-center gap-2 cursor-pointer"
                       >
                         <Check className="w-4 h-4" /> Approuver
                       </button>
                       <button 
                         onClick={(e) => { e.stopPropagation(); handleUpdateStatus(req.id, 'rejected') }}
-                        className="px-5 py-2.5 bg-rose-50 dark:bg-rose-950/60 text-rose-600 hover:bg-rose-100 border border-rose-200 text-xs font-black uppercase tracking-wider rounded-2xl transition-all flex items-center gap-2 cursor-pointer"
+                        className="px-5 py-2.5 bg-rose-50 dark:bg-rose-950/60 text-rose-600 hover:bg-rose-100 border border-rose-200 text-xs font-bold uppercase tracking-wider rounded-2xl transition-all flex items-center gap-2 cursor-pointer"
                       >
                         <X className="w-4 h-4" /> Rejeter
                       </button>
@@ -337,11 +337,11 @@ export default function AdminScheduleChangeRequestsPage() {
       {/* Details Modal */}
       {selectedReqModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] w-full max-w-xl shadow-2xl overflow-hidden">
+          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl w-full max-w-xl shadow-sm overflow-hidden">
             <div className="p-6 bg-gradient-to-r from-[#0f2863] to-blue-900 text-white flex items-center justify-between">
               <div>
-                <span className="text-[10px] font-black uppercase tracking-widest text-blue-200">Détails de la Requête</span>
-                <h2 className="text-lg font-black">{selectedReqModal.module_name}</h2>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-blue-200">Détails de la Requête</span>
+                <h2 className="text-lg font-bold">{selectedReqModal.module_name}</h2>
               </div>
               <button 
                 onClick={() => setSelectedReqModal(null)}
@@ -351,40 +351,40 @@ export default function AdminScheduleChangeRequestsPage() {
               </button>
             </div>
             <div className="p-6 space-y-6">
-              <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-2xl space-y-2">
-                <p className="text-xs font-bold text-slate-500">Professeur demandeur : <span className="text-slate-900 dark:text-white font-black">{selectedReqModal.professor_name}</span></p>
-                <p className="text-xs font-bold text-slate-500">Département : <span className="text-slate-900 dark:text-white font-black">{selectedReqModal.department}</span></p>
+              <div className="bg-muted/50 dark:bg-card p-4 rounded-2xl space-y-2">
+                <p className="text-xs font-bold text-muted-foreground">Professeur demandeur : <span className="text-foreground dark:text-white font-bold">{selectedReqModal.professor_name}</span></p>
+                <p className="text-xs font-bold text-muted-foreground">Département : <span className="text-foreground dark:text-white font-bold">{selectedReqModal.department}</span></p>
               </div>
 
               <div className="space-y-2">
-                <h4 className="text-xs font-black uppercase tracking-wider text-slate-400">Justificatif Officiel</h4>
-                <div className="p-4 bg-indigo-50/50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 rounded-2xl text-xs font-bold text-indigo-900 dark:text-indigo-200 leading-relaxed">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Justificatif Officiel</h4>
+                <div className="p-4 bg-indigo-50/50 dark:bg-indigo-950/40 border border-primary/20 dark:border-primary rounded-2xl text-xs font-bold text-primary dark:text-indigo-200 leading-relaxed">
                   "{selectedReqModal.reason}"
                 </div>
               </div>
             </div>
-            <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 flex justify-between items-center">
+            <div className="p-4 border-t border-border dark:border-border bg-muted/50 dark:bg-card flex justify-between items-center">
               {selectedReqModal.status === 'pending' ? (
                 <div className="flex items-center gap-2">
                   <button 
                     onClick={() => handleUpdateStatus(selectedReqModal.id, 'approved')}
-                    className="px-5 py-2.5 bg-emerald-600 text-white font-black rounded-xl text-xs hover:bg-emerald-700 transition-colors cursor-pointer flex items-center gap-2"
+                    className="px-5 py-2.5 bg-emerald-600 text-white font-bold rounded-xl text-xs hover:bg-emerald-700 transition-colors cursor-pointer flex items-center gap-2"
                   >
                     <Check className="w-4 h-4" /> Valider la Requête
                   </button>
                   <button 
                     onClick={() => handleUpdateStatus(selectedReqModal.id, 'rejected')}
-                    className="px-5 py-2.5 bg-rose-600 text-white font-black rounded-xl text-xs hover:bg-rose-700 transition-colors cursor-pointer flex items-center gap-2"
+                    className="px-5 py-2.5 bg-rose-600 text-white font-bold rounded-xl text-xs hover:bg-rose-700 transition-colors cursor-pointer flex items-center gap-2"
                   >
                     <X className="w-4 h-4" /> Rejeter
                   </button>
                 </div>
               ) : (
-                <span className="text-xs font-black text-slate-500">Statut : {selectedReqModal.status.toUpperCase()}</span>
+                <span className="text-xs font-bold text-muted-foreground">Statut : {selectedReqModal.status.toUpperCase()}</span>
               )}
               <button 
                 onClick={() => setSelectedReqModal(null)}
-                className="px-6 py-2.5 bg-slate-900 dark:bg-slate-700 text-white font-black rounded-xl text-xs hover:bg-slate-800 transition-colors cursor-pointer"
+                className="px-6 py-2.5 bg-slate-900 dark:bg-slate-700 text-white font-bold rounded-xl text-xs hover:bg-slate-800 transition-colors cursor-pointer"
               >
                 Fermer
               </button>

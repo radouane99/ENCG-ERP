@@ -329,21 +329,21 @@ export default function ModulesListPage() {
 
   return (
 
-    <div className="space-y-8 animate-in relative p-6 max-w-7xl mx-auto pb-24 font-sans">
+    <div className="space-y-8 animate-in relative max-w-7xl mx-auto pb-24 font-sans">
       {/* Hero Header Section */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] p-8 md:p-10 rounded-[2.5rem] shadow-2xl text-white border border-blue-800/40">
+      <div className="relative overflow-hidden p-8 md:p-10 text-white border border-blue-800/40 erp-page-banner">
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
 
         <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="flex items-center gap-6">
-            <div className="w-20 h-20 rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-amber-300 shadow-2xl shrink-0">
+            <div className="w-20 h-20 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-amber-300 shadow-sm shrink-0">
               <BookOpen className="w-10 h-10 text-amber-400" />
             </div>
             <div>
-              <div className="inline-flex items-center gap-2 bg-blue-400/20 text-blue-200 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-2 border border-blue-400/30">
+              <div className="inline-flex items-center gap-2 bg-blue-400/20 text-blue-200 px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mb-2 border border-blue-400/30">
                 <Zap className="w-4 h-4 text-amber-400" /> Cartographie Pédagogique & Syllabus ENCG
               </div>
-              <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight">
+              <h1 className="text-white erp-page-title">
                 Catalogue des Modules & Modalités
               </h1>
               <p className="text-blue-100/90 text-sm max-w-2xl font-medium mt-1">
@@ -370,7 +370,7 @@ export default function ModulesListPage() {
 
             <button 
               onClick={() => handleOpenModal()}
-              className="flex items-center gap-2 px-6 py-3.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-950 rounded-2xl font-black text-xs uppercase tracking-wider shadow-xl hover:scale-105 transition-all cursor-pointer"
+              className="flex items-center gap-2 px-6 py-3.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-950 rounded-2xl font-bold text-xs uppercase tracking-wider shadow-sm hover:scale-105 transition-all cursor-pointer"
             >
               <Plus className="w-4 h-4" /> Nouveau Module
             </button>
@@ -380,30 +380,30 @@ export default function ModulesListPage() {
 
       {/* Analytics KPI & Filter Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2rem] p-6 shadow-md flex items-center justify-between">
+        <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-6 shadow-md flex items-center justify-between">
           <div>
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">MODULES CATALOGUÉS</span>
-            <h3 className="text-3xl font-black text-slate-900 dark:text-white mt-1">{modules.length} Modules</h3>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">Structure Pédagogique Active</p>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">MODULES CATALOGUÉS</span>
+            <h3 className="text-3xl font-bold text-foreground dark:text-white mt-1">{modules.length} Modules</h3>
+            <p className="text-xs text-muted-foreground font-medium mt-0.5">Structure Pédagogique Active</p>
           </div>
-          <div className="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 flex items-center justify-center font-black text-xl shadow-inner">
+          <div className="w-14 h-14 rounded-2xl bg-primary/5 dark:bg-indigo-950/40 text-primary flex items-center justify-center font-bold text-xl shadow-inner">
             <BookOpen className="w-7 h-7" />
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2rem] p-6 shadow-md flex items-center justify-between">
+        <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-6 shadow-md flex items-center justify-between">
           <div>
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">VOLUME HORAIRE TOTAL</span>
-            <h3 className="text-3xl font-black text-emerald-600 mt-1">{modules.length * 45} Heures</h3>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">Enseignement Présentiel (CM/TD)</p>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">VOLUME HORAIRE TOTAL</span>
+            <h3 className="text-3xl font-bold text-emerald-600 mt-1">{modules.length * 45} Heures</h3>
+            <p className="text-xs text-muted-foreground font-medium mt-0.5">Enseignement Présentiel (CM/TD)</p>
           </div>
-          <div className="w-14 h-14 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 flex items-center justify-center font-black text-xl shadow-inner">
+          <div className="w-14 h-14 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 flex items-center justify-center font-bold text-xl shadow-inner">
             <Zap className="w-7 h-7" />
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2rem] p-6 shadow-md flex flex-col justify-between">
-          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">RECHERCHE INSTANTANÉE</span>
+        <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-6 shadow-md flex flex-col justify-between">
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">RECHERCHE INSTANTANÉE</span>
           <div className="relative mt-2">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
             <input
@@ -411,19 +411,19 @@ export default function ModulesListPage() {
               placeholder="Code, désignation ou filière..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full pl-9 pr-4 py-2 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-bold outline-none focus:ring-2 focus:ring-ring rounded-[var(--control-radius)]"
             />
           </div>
         </div>
       </div>
 
       {/* Filter Dropdowns Bar */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 flex flex-wrap items-center justify-between gap-4">
+      <div className="bg-card dark:bg-card rounded-2xl shadow-sm border border-border dark:border-border p-4 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-4 flex-wrap">
           <div className="flex items-center gap-2">
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Filière :</label>
+            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Filière :</label>
             <select 
-              className="px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-indigo-500"
+              className="px-3.5 py-2 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-bold text-slate-700 dark:text-foreground outline-none focus:ring-2 focus:ring-ring rounded-[var(--control-radius)]"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             >
@@ -435,9 +435,9 @@ export default function ModulesListPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Semestre :</label>
+            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Semestre :</label>
             <select 
-              className="px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-indigo-500"
+              className="px-3.5 py-2 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-bold text-slate-700 dark:text-foreground outline-none focus:ring-2 focus:ring-ring rounded-[var(--control-radius)]"
               value={semesterFilter}
               onChange={(e) => setSemesterFilter(e.target.value)}
             >
@@ -450,12 +450,12 @@ export default function ModulesListPage() {
         </div>
 
         <div className="text-xs font-bold text-slate-400">
-          Affichage de <span className="text-slate-900 dark:text-white font-black">{filteredModules.length}</span> sur {modules.length} modules
+          Affichage de <span className="text-foreground dark:text-white font-bold">{filteredModules.length}</span> sur {modules.length} modules
         </div>
       </div>
 
       {/* Table Section */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-[2.5rem] shadow-xl overflow-hidden flex flex-col">
+      <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl shadow-sm overflow-hidden flex flex-col">
         <div className="overflow-x-auto min-h-[350px]">
           {loading ? (
             <div className="flex justify-center items-center py-24 text-slate-400">
@@ -463,13 +463,13 @@ export default function ModulesListPage() {
             </div>
           ) : (
             <table className="w-full text-sm text-left">
-              <thead className="text-xs text-slate-400 uppercase tracking-wider bg-slate-50/80 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
+              <thead className="text-xs text-slate-400 uppercase tracking-wider bg-slate-50/80 dark:bg-slate-800/50 border-b border-border dark:border-border">
                 <tr>
-                  <th scope="col" className="px-6 py-4 font-black">Code Module</th>
-                  <th scope="col" className="px-6 py-4 font-black">Désignation & Filière</th>
-                  <th scope="col" className="px-6 py-4 font-black text-center">Coeff. & Heures</th>
-                  <th scope="col" className="px-6 py-4 font-black text-center">Barème d'Évaluation (100%)</th>
-                  <th scope="col" className="px-6 py-4 font-black text-right">Actions & Accréditations</th>
+                  <th scope="col" className="px-6 py-4 font-bold">Code Module</th>
+                  <th scope="col" className="px-6 py-4 font-bold">Désignation & Filière</th>
+                  <th scope="col" className="px-6 py-4 font-bold text-center">Coeff. & Heures</th>
+                  <th scope="col" className="px-6 py-4 font-bold text-center">Barème d'Évaluation (100%)</th>
+                  <th scope="col" className="px-6 py-4 font-bold text-right">Actions & Accréditations</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -479,39 +479,39 @@ export default function ModulesListPage() {
                   </tr>
                 ) : (
                   filteredModules.map((mod) => (
-                    <tr key={mod.id} className="bg-white dark:bg-slate-900 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors group">
+                    <tr key={mod.id} className="bg-card dark:bg-card hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors group">
                       <td className="px-6 py-4">
-                        <span className="font-extrabold text-[#0f2863] dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 px-3 py-1.5 rounded-xl text-xs font-mono">
+                        <span className="font-bold text-[#0f2863] dark:text-blue-300 bg-primary/5 dark:bg-blue-950/60 border border-primary/20 dark:border-primary px-3 py-1.5 rounded-xl text-xs font-mono">
                           {mod.code}
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="font-bold text-slate-900 dark:text-white text-sm block">{mod.name}</span>
+                        <span className="font-bold text-foreground dark:text-white text-sm block">{mod.name}</span>
                         {mod.filiere && (
-                          <span className="inline-block mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-700">
+                          <span className="inline-block mt-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground dark:text-muted-foreground bg-muted dark:bg-card px-2 py-0.5 rounded-md border border-border dark:border-border">
                             {mod.filiere} — Semestre S{mod.semester_number}
                           </span>
                         )}
                       </td>
                       <td className="px-6 py-4 text-center">
                         <div className="flex flex-col items-center gap-1">
-                          <span className="inline-flex items-center px-3 py-0.5 rounded-xl text-xs font-black bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                          <span className="inline-flex items-center px-3 py-0.5 rounded-xl text-xs font-bold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
                             Coeff. x{mod.coefficient.toFixed(2)}
                           </span>
-                          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-500 font-mono">
+                          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-muted-foreground font-mono">
                             <BookOpen className="w-3 h-3 text-slate-400" /> {mod.credit_hours || 45} Heures
                           </span>
                         </div>
                       </td>
                       <td className="px-6 py-4 text-center">
                         <div className="w-48 mx-auto space-y-1">
-                          <div className="flex items-center justify-between text-[10px] font-extrabold text-slate-600 dark:text-slate-300">
-                            <span className="text-blue-600 font-bold">CC1 25%</span>
+                          <div className="flex items-center justify-between text-[10px] font-bold text-muted-foreground dark:text-foreground">
+                            <span className="text-primary font-bold">CC1 25%</span>
                             <span className="text-emerald-600 font-bold">CC2 25%</span>
                             <span className="text-purple-600 font-bold">Exam 50%</span>
                           </div>
-                          <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden flex border border-slate-200 dark:border-slate-700">
-                            <div style={{ width: '25%' }} className="bg-blue-500 h-full" title="CC1 25%"></div>
+                          <div className="h-2 w-full bg-muted dark:bg-card rounded-full overflow-hidden flex border border-border dark:border-border">
+                            <div style={{ width: '25%' }} className="bg-primary h-full" title="CC1 25%"></div>
                             <div style={{ width: '25%' }} className="bg-emerald-500 h-full" title="CC2 25%"></div>
                             <div style={{ width: '50%' }} className="bg-purple-600 h-full" title="Examen Final 50%"></div>
                           </div>
@@ -521,18 +521,18 @@ export default function ModulesListPage() {
                         <div className="flex items-center justify-end gap-1.5 flex-wrap">
                           <button 
                             onClick={() => setSelectedModuleEcm(mod)}
-                            className="px-2.5 py-1.5 bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 text-indigo-700 dark:text-indigo-300 rounded-xl text-xs font-bold transition-colors flex items-center gap-1 border border-indigo-200 dark:border-indigo-800 cursor-pointer"
+                            className="px-2.5 py-1.5 bg-primary/5 dark:bg-indigo-950/40 hover:bg-primary/10 text-primary dark:text-indigo-300 rounded-xl text-xs font-bold transition-colors flex items-center gap-1 border border-primary/20 dark:border-primary cursor-pointer"
                             title="Inspecter les Éléments Constitutifs du Module (ECM)"
                           >
-                            <Layers className="w-3.5 h-3.5 text-indigo-600" /> Éléments (ECM)
+                            <Layers className="w-3.5 h-3.5 text-primary" /> Éléments (ECM)
                           </button>
 
                           <button 
                             onClick={() => handleExportSyllabiquePdf(mod)}
-                            className="px-2.5 py-1.5 bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 text-blue-700 dark:text-blue-300 rounded-xl text-xs font-bold transition-colors flex items-center gap-1 border border-blue-200 dark:border-blue-800 cursor-pointer"
+                            className="px-2.5 py-1.5 bg-primary/5 dark:bg-blue-950/40 hover:bg-primary/10 text-primary dark:text-blue-300 rounded-xl text-xs font-bold transition-colors flex items-center gap-1 border border-primary/20 dark:border-primary cursor-pointer"
                             title="Télécharger la Fiche Syllabique (PDF A4)"
                           >
-                            <Printer className="w-3.5 h-3.5 text-blue-600" /> Syllabique
+                            <Printer className="w-3.5 h-3.5 text-primary" /> Syllabique
                           </button>
 
                           <button 
@@ -573,7 +573,7 @@ export default function ModulesListPage() {
       {/* Modal CRUD with Presets */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-3xl overflow-hidden border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col">
+          <div className="bg-card dark:bg-card rounded-2xl shadow-sm w-full max-w-3xl overflow-hidden border border-border dark:border-border animate-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col">
             {/* Modal Header */}
             <div className="p-6 bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] border-b border-blue-800/40 flex items-center justify-between shrink-0 text-white">
               <div className="flex items-center gap-3">
@@ -581,7 +581,7 @@ export default function ModulesListPage() {
                   <BookOpen className="w-5 h-5 text-amber-400" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-black text-white tracking-tight">
+                  <h3 className="text-lg font-bold text-white tracking-tight">
                     {editingId ? 'Modifier le Module & Modalités d\'Évaluation' : 'Ajouter un Nouveau Module'}
                   </h3>
                   <p className="text-xs text-blue-200/90 font-medium">Configurez les coefficients et sélectionnez un barème d'évaluation (CC/Exam)</p>
@@ -604,7 +604,7 @@ export default function ModulesListPage() {
                   <select 
                     value={formData.filiere_id} 
                     onChange={e => setFormData({...formData, filiere_id: e.target.value})}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold text-slate-800 outline-none focus:border-blue-500"
+                    className="w-full px-4 py-2.5 bg-muted/50 border border-slate-300 text-sm font-semibold text-foreground outline-none focus:border-primary rounded-[var(--control-radius)]"
                   >
                     <option value="">Tronc Commun / Toutes Filières</option>
                     {filieres.map(f => (
@@ -618,7 +618,7 @@ export default function ModulesListPage() {
                   <select 
                     value={formData.semester_number} 
                     onChange={e => setFormData({...formData, semester_number: parseInt(e.target.value)})}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold text-slate-800 outline-none focus:border-blue-500"
+                    className="w-full px-4 py-2.5 bg-muted/50 border border-slate-300 text-sm font-semibold text-foreground outline-none focus:border-primary rounded-[var(--control-radius)]"
                     required
                   >
                     {[1,2,3,4,5,6,7,8,9,10].map(s => (
@@ -634,7 +634,7 @@ export default function ModulesListPage() {
                     placeholder="ex: TC-S1-M01"
                     value={formData.code} 
                     onChange={e => setFormData({...formData, code: e.target.value})}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-bold text-slate-900 outline-none focus:border-blue-500" 
+                    className="w-full px-4 py-2.5 bg-muted/50 border border-slate-300 text-sm font-bold text-foreground outline-none focus:border-primary rounded-[var(--control-radius)]"
                   />
                 </div>
 
@@ -645,7 +645,7 @@ export default function ModulesListPage() {
                     placeholder="ex: Comptabilité Générale I"
                     value={formData.name} 
                     onChange={e => setFormData({...formData, name: e.target.value})}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-bold text-slate-900 outline-none focus:border-blue-500" 
+                    className="w-full px-4 py-2.5 bg-muted/50 border border-slate-300 text-sm font-bold text-foreground outline-none focus:border-primary rounded-[var(--control-radius)]"
                   />
                 </div>
 
@@ -655,7 +655,7 @@ export default function ModulesListPage() {
                     type="number" step="0.5" min="0" required 
                     value={Number.isNaN(formData.coefficient) ? '' : formData.coefficient} 
                     onChange={e => setFormData({...formData, coefficient: e.target.value === '' ? ('' as any) : parseFloat(e.target.value)})}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-bold text-slate-900 outline-none focus:border-blue-500" 
+                    className="w-full px-4 py-2.5 bg-muted/50 border border-slate-300 text-sm font-bold text-foreground outline-none focus:border-primary rounded-[var(--control-radius)]"
                   />
                 </div>
 
@@ -665,18 +665,18 @@ export default function ModulesListPage() {
                     type="number" step="1" min="0" required 
                     value={Number.isNaN(formData.credit_hours) ? '' : formData.credit_hours} 
                     onChange={e => setFormData({...formData, credit_hours: e.target.value === '' ? ('' as any) : parseFloat(e.target.value)})}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-bold text-slate-900 outline-none focus:border-blue-500" 
+                    className="w-full px-4 py-2.5 bg-muted/50 border border-slate-300 text-sm font-bold text-foreground outline-none focus:border-primary rounded-[var(--control-radius)]"
                   />
                 </div>
               </div>
 
               {/* Presets & Modalities Block */}
-              <div className="border-t border-slate-200 pt-6 space-y-4">
+              <div className="border-t border-border pt-6 space-y-4">
                 <div className="flex items-center justify-between flex-wrap gap-2">
-                  <span className="text-xs font-black text-[#0f2863] uppercase tracking-wider flex items-center gap-2">
+                  <span className="text-xs font-bold text-[#0f2863] uppercase tracking-wider flex items-center gap-2">
                     <Zap className="w-4 h-4 text-amber-500" /> Modèles Pré-définis de Modalités
                   </span>
-                  <span className="text-[11px] font-bold text-slate-500">
+                  <span className="text-[11px] font-bold text-muted-foreground">
                     Cliquez sur un modèle pré-configuré :
                   </span>
                 </div>
@@ -688,15 +688,15 @@ export default function ModulesListPage() {
                       key={idx}
                       type="button"
                       onClick={() => applyPreset(preset.items)}
-                      className="p-3 text-left rounded-2xl border border-slate-200 bg-slate-50 hover:bg-blue-50/70 hover:border-blue-400 transition-all shadow-sm group"
+                      className="p-3 text-left rounded-2xl border border-border bg-muted/50 hover:bg-blue-50/70 hover:border-blue-400 transition-all shadow-sm group"
                     >
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs font-extrabold text-slate-900 group-hover:text-blue-700">
+                        <span className="text-xs font-bold text-foreground group-hover:text-primary">
                           {preset.name}
                         </span>
                         <Zap className="w-3.5 h-3.5 text-amber-500 opacity-70 group-hover:opacity-100" />
                       </div>
-                      <span className="text-[10px] font-bold text-blue-600 bg-white border border-blue-100 px-2 py-0.5 rounded-md inline-block">
+                      <span className="text-[10px] font-bold text-primary bg-card border border-primary/20 px-2 py-0.5 rounded-md inline-block">
                         {preset.badge}
                       </span>
                     </button>
@@ -704,15 +704,15 @@ export default function ModulesListPage() {
                 </div>
 
                 {/* Modality Custom Rows */}
-                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3 mt-4">
+                <div className="bg-muted/50 p-4 rounded-2xl border border-border space-y-3 mt-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-extrabold text-slate-800">
+                    <span className="text-xs font-bold text-foreground">
                       Modalités d'Évaluation Sélectionnées
                     </span>
 
                     {/* Weight Gauge */}
                     <div className={cn(
-                      "px-3 py-1 rounded-xl text-xs font-black flex items-center gap-1.5 border shadow-sm",
+                      "px-3 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5 border shadow-sm",
                       Math.abs(totalWeight - 100) < 0.01 
                         ? "bg-emerald-100 text-emerald-700 border-emerald-300" 
                         : "bg-amber-100 text-amber-800 border-amber-300"
@@ -733,12 +733,12 @@ export default function ModulesListPage() {
 
                   <div className="space-y-2.5">
                     {assessmentsList.map((item, index) => (
-                      <div key={index} className="flex items-center gap-3 bg-white p-2.5 rounded-xl border border-slate-200 shadow-sm">
+                      <div key={index} className="flex items-center gap-3 bg-card p-2.5 rounded-xl border border-border shadow-sm">
                         <div className="flex-1">
                           <select
                             value={item.type}
                             onChange={(e) => updateAssessmentRow(index, 'type', e.target.value)}
-                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-800 outline-none focus:border-blue-500"
+                            className="w-full px-3 py-2 bg-muted/50 border border-border text-xs font-bold text-foreground outline-none focus:border-primary rounded-[var(--control-radius)]"
                           >
                             <option value="CC">Contrôle Continu (CC)</option>
                             <option value="CC1">Contrôle 1 (CC1)</option>
@@ -756,10 +756,10 @@ export default function ModulesListPage() {
                             placeholder="Poids %"
                             value={Number.isNaN(item.weight) ? '' : item.weight}
                             onChange={(e) => updateAssessmentRow(index, 'weight', e.target.value === '' ? ('' as any) : parseFloat(e.target.value))}
-                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-extrabold text-slate-900 text-center outline-none focus:border-blue-500"
+                            className="w-full px-3 py-2 bg-muted/50 border border-border text-xs font-bold text-foreground text-center outline-none focus:border-primary rounded-[var(--control-radius)]"
                             required
                           />
-                          <span className="text-xs font-bold text-slate-500">%</span>
+                          <span className="text-xs font-bold text-muted-foreground">%</span>
                         </div>
 
                         <button
@@ -777,7 +777,7 @@ export default function ModulesListPage() {
                   <button
                     type="button"
                     onClick={addAssessmentRow}
-                    className="text-xs font-extrabold text-[#0f2863] hover:underline flex items-center gap-1.5 pt-2"
+                    className="text-xs font-bold text-[#0f2863] hover:underline flex items-center gap-1.5 pt-2"
                   >
                     <Plus className="w-3.5 h-3.5" /> Ajouter une évaluation personnalisée
                   </button>
@@ -785,11 +785,11 @@ export default function ModulesListPage() {
               </div>
 
               {/* Modal Footer Actions */}
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 shrink-0">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-border shrink-0">
                 <button
                   type="button"
                   onClick={handleCloseModal}
-                  className="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-700 font-bold text-xs uppercase tracking-wider hover:bg-slate-50 transition-colors"
+                  className="px-5 py-2.5 rounded-xl border border-border text-slate-700 font-bold text-xs uppercase tracking-wider hover:bg-muted/50 transition-colors"
                 >
                   Annuler
                 </button>
@@ -810,7 +810,7 @@ export default function ModulesListPage() {
 
       {selectedModuleEcm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 duration-200">
+          <div className="bg-card dark:bg-card rounded-2xl shadow-sm w-full max-w-2xl overflow-hidden border border-border dark:border-border animate-in zoom-in-95 duration-200">
             {/* Modal Header */}
             <div className="p-6 bg-gradient-to-r from-[#0f2863] to-[#1a387e] text-white flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -818,7 +818,7 @@ export default function ModulesListPage() {
                   <Layers className="w-5 h-5 text-amber-400" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-black">{selectedModuleEcm.name}</h3>
+                  <h3 className="text-lg font-bold">{selectedModuleEcm.name}</h3>
                   <p className="text-xs text-blue-200">Éléments Constitutifs du Module (ECM) — Code : {selectedModuleEcm.code}</p>
                 </div>
               </div>
@@ -828,48 +828,48 @@ export default function ModulesListPage() {
             </div>
 
             <div className="p-6 space-y-4">
-              <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+              <div className="bg-muted/50 dark:bg-card p-4 rounded-2xl border border-border dark:border-border flex items-center justify-between">
                 <div>
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">STRUCTURE DU MODULE</span>
-                  <div className="font-bold text-slate-900 dark:text-white text-sm">2 Éléments d'Enseignement (ECM 1 + ECM 2)</div>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">STRUCTURE DU MODULE</span>
+                  <div className="font-bold text-foreground dark:text-white text-sm">2 Éléments d'Enseignement (ECM 1 + ECM 2)</div>
                 </div>
                 <div className="text-right">
-                  <span className="text-xs font-black text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-xl border border-emerald-200">
+                  <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-xl border border-emerald-200">
                     Volume : {selectedModuleEcm.credit_hours || 45} Heures
                   </span>
                 </div>
               </div>
 
               <div className="space-y-3">
-                <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-between shadow-xs">
+                <div className="p-4 rounded-2xl bg-card dark:bg-card border border-border dark:border-border flex items-center justify-between shadow-xs">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 font-black flex items-center justify-center text-xs">
+                    <div className="w-8 h-8 rounded-xl bg-primary/5 text-primary font-bold flex items-center justify-center text-xs">
                       1
                     </div>
                     <div>
-                      <div className="font-extrabold text-slate-900 dark:text-white text-sm">ECM 1 : Cours Magistral & Diagnostic (60%)</div>
-                      <div className="text-xs text-slate-500 font-medium">Enseignant : {selectedModuleEcm.professor || '—'}</div>
+                      <div className="font-bold text-foreground dark:text-white text-sm">ECM 1 : Cours Magistral & Diagnostic (60%)</div>
+                      <div className="text-xs text-muted-foreground font-medium">Enseignant : {selectedModuleEcm.professor || '—'}</div>
                     </div>
                   </div>
-                  <span className="text-xs font-mono font-bold text-slate-700 dark:text-slate-300">27 Heures (60%)</span>
+                  <span className="text-xs font-mono font-bold text-slate-700 dark:text-foreground">27 Heures (60%)</span>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-between shadow-xs">
+                <div className="p-4 rounded-2xl bg-card dark:bg-card border border-border dark:border-border flex items-center justify-between shadow-xs">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 font-black flex items-center justify-center text-xs">
+                    <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 font-bold flex items-center justify-center text-xs">
                       2
                     </div>
                     <div>
-                      <div className="font-extrabold text-slate-900 dark:text-white text-sm">ECM 2 : Travaux Dirigés & Cas Pratiques (40%)</div>
-                      <div className="text-xs text-slate-500 font-medium">Enseignant : {selectedModuleEcm.td_professor || selectedModuleEcm.professor || '—'}</div>
+                      <div className="font-bold text-foreground dark:text-white text-sm">ECM 2 : Travaux Dirigés & Cas Pratiques (40%)</div>
+                      <div className="text-xs text-muted-foreground font-medium">Enseignant : {selectedModuleEcm.td_professor || selectedModuleEcm.professor || '—'}</div>
                     </div>
                   </div>
-                  <span className="text-xs font-mono font-bold text-slate-700 dark:text-slate-300">18 Heures (40%)</span>
+                  <span className="text-xs font-mono font-bold text-slate-700 dark:text-foreground">18 Heures (40%)</span>
                 </div>
               </div>
             </div>
 
-            <div className="p-4 bg-slate-50 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 flex justify-end">
+            <div className="p-4 bg-muted/50 dark:bg-card border-t border-border dark:border-border flex justify-end">
               <button
                 onClick={() => setSelectedModuleEcm(null)}
                 className="px-6 py-2 bg-[#0f2863] text-white rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-[#091b44] transition-colors"

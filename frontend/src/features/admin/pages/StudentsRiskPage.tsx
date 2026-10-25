@@ -42,21 +42,21 @@ export default function StudentsRiskPage() {
   }
 
   return (
-    <div className="space-y-8 animate-in p-6 max-w-[1400px] mx-auto font-sans pb-24">
+    <div className="space-y-8 animate-in max-w-[1400px] mx-auto font-sans pb-24">
       {/* Hero Header */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] p-8 md:p-10 rounded-[2.5rem] shadow-2xl text-white border border-blue-800/40">
+      <div className="relative overflow-hidden p-8 md:p-10 text-white border border-blue-800/40 erp-page-banner">
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-red-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
 
         <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="flex items-center gap-6">
-            <div className="w-20 h-20 rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-rose-300 shadow-2xl shrink-0">
+            <div className="w-20 h-20 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-rose-300 shadow-sm shrink-0">
               <ShieldAlert className="w-10 h-10 text-rose-400" />
             </div>
             <div>
-              <div className="inline-flex items-center gap-2 bg-rose-500/20 text-rose-200 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-2 border border-rose-400/30">
+              <div className="inline-flex items-center gap-2 bg-rose-500/20 text-rose-200 px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mb-2 border border-rose-400/30">
                 <Zap className="w-4 h-4 text-rose-400" /> Moteur d'Alerte Précoce & Monitoring Prédictif ENCG
               </div>
-              <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight">
+              <h1 className="text-white erp-page-title">
                 Étudiants sous Surveillance Académique
               </h1>
               <p className="text-blue-100/90 text-sm max-w-2xl font-medium mt-1">
@@ -78,33 +78,33 @@ export default function StudentsRiskPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm flex flex-col items-center justify-center text-center">
-          <span className="text-3xl font-black text-slate-900 dark:text-white mb-1">{stats?.total_analyzed || 72}</span>
-          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">TOTAL ÉTUDIANTS ANALYSÉS</span>
+        <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-6 shadow-sm flex flex-col items-center justify-center text-center">
+          <span className="text-3xl font-bold text-foreground dark:text-white mb-1">{stats?.total_analyzed || 72}</span>
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">TOTAL ÉTUDIANTS ANALYSÉS</span>
         </div>
         
-        <div className="bg-emerald-50/60 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-3xl p-6 flex flex-col items-center justify-center text-center">
-          <span className="text-3xl font-black text-emerald-600 mb-1">{stats ? stats.total_analyzed - stats.total_at_risk : 64}</span>
-          <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">SITUATION REGULIÈRE</span>
+        <div className="bg-emerald-50/60 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-2xl p-6 flex flex-col items-center justify-center text-center">
+          <span className="text-3xl font-bold text-emerald-600 mb-1">{stats ? stats.total_analyzed - stats.total_at_risk : 64}</span>
+          <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">SITUATION REGULIÈRE</span>
         </div>
         
-        <div className="bg-amber-50/60 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-3xl p-6 flex flex-col items-center justify-center text-center">
-          <span className="text-3xl font-black text-amber-600 mb-1">{stats ? stats.total_at_risk - stats.critical_count : 5}</span>
-          <span className="text-[10px] font-black text-amber-600 uppercase tracking-widest">AVERTISSEMENT (WARNING)</span>
+        <div className="bg-amber-50/60 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-2xl p-6 flex flex-col items-center justify-center text-center">
+          <span className="text-3xl font-bold text-amber-600 mb-1">{stats ? stats.total_at_risk - stats.critical_count : 5}</span>
+          <span className="text-[10px] font-bold text-amber-600 uppercase tracking-widest">AVERTISSEMENT (WARNING)</span>
         </div>
         
-        <div className="bg-rose-50/60 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded-3xl p-6 flex flex-col items-center justify-center text-center">
-          <span className="text-3xl font-black text-rose-600 mb-1">{stats?.critical_count || 3}</span>
-          <span className="text-[10px] font-black text-rose-600 uppercase tracking-widest">RISQUE CRITIQUE</span>
+        <div className="bg-rose-50/60 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded-2xl p-6 flex flex-col items-center justify-center text-center">
+          <span className="text-3xl font-bold text-rose-600 mb-1">{stats?.critical_count || 3}</span>
+          <span className="text-[10px] font-bold text-rose-600 uppercase tracking-widest">RISQUE CRITIQUE</span>
         </div>
       </div>
 
       {/* Main Content Area */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-[2.5rem] shadow-xl overflow-hidden">
+      <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl shadow-sm overflow-hidden">
         {/* Table */}
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left border-collapse">
-            <thead className="text-[10px] font-black text-slate-400 uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50">
+            <thead className="text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-border dark:border-border bg-slate-50/50 dark:bg-slate-800/50">
               <tr>
                 <th className="px-6 py-4">Étudiant & Identité</th>
                 <th className="px-6 py-4">Groupe & Filière</th>
@@ -133,26 +133,26 @@ export default function StudentsRiskPage() {
                 return (
                   <tr key={st.student_id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
                     <td className="px-6 py-4">
-                      <div className="font-extrabold text-slate-900 dark:text-white text-sm">{st.first_name} {st.last_name}</div>
-                      <div className="text-xs font-mono text-slate-500">CNE : {st.cne || 'N13800043'}</div>
+                      <div className="font-bold text-foreground dark:text-white text-sm">{st.first_name} {st.last_name}</div>
+                      <div className="text-xs font-mono text-muted-foreground">CNE : {st.cne || 'N13800043'}</div>
                     </td>
 
                     <td className="px-6 py-4">
-                      <div className="font-bold text-slate-900 dark:text-white text-xs">{st.filiere_name || 'Tronc Commun ENCG'}</div>
-                      <div className="text-[10px] font-mono text-indigo-600">{st.group_name || 'TC-S1-G1'}</div>
+                      <div className="font-bold text-foreground dark:text-white text-xs">{st.filiere_name || 'Tronc Commun ENCG'}</div>
+                      <div className="text-[10px] font-mono text-primary">{st.group_name || 'TC-S1-G1'}</div>
                     </td>
 
-                    <td className="px-6 py-4 text-center font-mono font-black text-xs text-rose-600">
+                    <td className="px-6 py-4 text-center font-mono font-bold text-xs text-rose-600">
                       {st.unjustified_absences || 4} heures
                     </td>
 
-                    <td className="px-6 py-4 text-center font-mono font-black text-xs text-amber-600">
+                    <td className="px-6 py-4 text-center font-mono font-bold text-xs text-amber-600">
                       {st.current_average || '07.75'} / 20
                     </td>
 
                     <td className="px-6 py-4 text-center">
                       <span className={cn(
-                        "px-3 py-1 rounded-xl text-xs font-black uppercase tracking-wider border inline-flex items-center gap-1",
+                        "px-3 py-1 rounded-xl text-xs font-bold uppercase tracking-wider border inline-flex items-center gap-1",
                         isCritical ? "bg-rose-50 text-rose-700 border-rose-200" : "bg-amber-50 text-amber-700 border-amber-200"
                       )}>
                         <AlertTriangle className="w-3.5 h-3.5" />

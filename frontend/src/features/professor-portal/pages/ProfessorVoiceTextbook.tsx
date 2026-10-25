@@ -214,7 +214,7 @@ function TactileSignatureModal({ isOpen, onClose, onSave, onClearSaved, currentS
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200">
       <div 
-        className="bg-card border border-border rounded-2xl sm:rounded-3xl shadow-2xl w-full max-w-xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200"
+        className="bg-card border border-border rounded-2xl sm:rounded-3xl shadow-sm w-full max-w-xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
@@ -224,7 +224,7 @@ function TactileSignatureModal({ isOpen, onClose, onSave, onClearSaved, currentS
               <PenTool className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-sm sm:text-base font-black uppercase tracking-wider text-white">
+              <h3 className="text-sm sm:text-base font-bold uppercase tracking-wider text-white">
                 Émargement Tactile de l'Enseignant
               </h3>
               <p className="text-[11px] text-indigo-200 font-medium">
@@ -299,10 +299,10 @@ function TactileSignatureModal({ isOpen, onClose, onSave, onClearSaved, currentS
           </div>
 
           {/* Canvas Box */}
-          <div className="relative rounded-2xl border-2 border-dashed border-indigo-300 dark:border-indigo-800 bg-white overflow-hidden shadow-inner select-none h-48 sm:h-56 touch-none">
+          <div className="relative rounded-2xl border-2 border-dashed border-primary/20 dark:border-primary bg-card overflow-hidden shadow-inner select-none h-48 sm:h-56 touch-none">
             {/* Background Guideline and Watermark */}
             <div className="absolute inset-0 pointer-events-none flex flex-col justify-end p-4">
-              <div className="border-b border-indigo-200 dark:border-indigo-100 border-dashed pb-1 flex items-center justify-between text-indigo-300 text-[10px] font-mono">
+              <div className="border-b border-primary/20 dark:border-primary/20 border-dashed pb-1 flex items-center justify-between text-indigo-300 text-[10px] font-mono">
                 <span>✕ Ligne de signature</span>
                 <span>Signez ici au doigt, stylet ou à la souris</span>
               </div>
@@ -360,7 +360,7 @@ function TactileSignatureModal({ isOpen, onClose, onSave, onClearSaved, currentS
           <button
             onClick={handleConfirm}
             disabled={!hasDrawn}
-            className="px-5 py-2.5 bg-gradient-to-r from-[#001A4B] to-[#0A2558] hover:opacity-95 disabled:opacity-40 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-lg flex items-center gap-1.5 transition-all cursor-pointer active:scale-95"
+            className="px-5 py-2.5 bg-gradient-to-r from-[#001A4B] to-[#0A2558] hover:opacity-95 disabled:opacity-40 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-lg flex items-center gap-1.5 transition-all cursor-pointer active:scale-95"
           >
             <Check className="w-4 h-4 text-amber-300" />
             <span>Valider &amp; Mémoriser l'Émargement</span>
@@ -1295,29 +1295,29 @@ const { data: textbookData } = useQuery({
     value: String(m.id),
     label: m.name,
     badge: m.filiere?.code || m.code || 'ENCG',
-    icon: <BookOpen className="w-3.5 h-3.5 text-blue-500" />
+    icon: <BookOpen className="w-3.5 h-3.5 text-primary" />
   }));
 
   const sessionTypeOptions: SelectOption[] = [
     { value: 'CM', label: 'CM (Cours Magistral)', badge: 'AMPHI', icon: <Sparkles className="w-3.5 h-3.5 text-amber-500" /> },
-    { value: 'TD', label: 'TD (Travaux Dirigés)', badge: 'SALLE', icon: <BookOpen className="w-3.5 h-3.5 text-blue-500" /> },
+    { value: 'TD', label: 'TD (Travaux Dirigés)', badge: 'SALLE', icon: <BookOpen className="w-3.5 h-3.5 text-primary" /> },
     { value: 'TP', label: 'TP (Travaux Pratiques)', badge: 'LABO', icon: <Layers className="w-3.5 h-3.5 text-emerald-500" /> },
   ];
 
   const durationOptions: SelectOption[] = [
     { value: '1.5', label: '1h30 (Séance courte)', badge: '1.5H', icon: <Clock className="w-3.5 h-3.5 text-sky-500" /> },
-    { value: '2.0', label: '2 heures (Standard ENCG)', badge: '2.0H', icon: <Clock className="w-3.5 h-3.5 text-indigo-500" /> },
+    { value: '2.0', label: '2 heures (Standard ENCG)', badge: '2.0H', icon: <Clock className="w-3.5 h-3.5 text-primary" /> },
     { value: '3.0', label: '3 heures (Séance double)', badge: '3.0H', icon: <Clock className="w-3.5 h-3.5 text-purple-500" /> },
     { value: '4.0', label: '4 heures (Séminaire)', badge: '4.0H', icon: <Clock className="w-3.5 h-3.5 text-rose-500" /> },
   ];
 
   return (
-    <div className="max-w-[1720px] mx-auto p-3 sm:p-5 md:p-6 space-y-4 font-sans animate-in fade-in duration-300 text-slate-900 dark:text-slate-100 pb-20">
+    <div className="max-w-[1720px] mx-auto space-y-4 font-sans animate-in fade-in duration-300 text-foreground dark:text-foreground pb-20">
       
       {/* ══════════════════════════════════════════════════════════════════════ */}
       {/* ── UNIFIED EXECUTIVE COCKPIT HEADER (~110px) ──────────────────────── */}
       {/* ══════════════════════════════════════════════════════════════════════ */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-[#000E29] via-[#001A4B] to-[#0A2558] rounded-2xl md:rounded-3xl p-4 sm:p-5 text-white shadow-xl border border-indigo-900/50">
+      <div className="relative overflow-hidden md:rounded-3xl p-4 sm:p-5 text-white border border-indigo-900/50 erp-page-banner">
         <div className="absolute top-0 right-0 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-0 left-1/3 w-60 h-60 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
@@ -1333,7 +1333,7 @@ const { data: textbookData } = useQuery({
 
               <div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="inline-flex items-center gap-1.5 bg-indigo-500/25 text-indigo-200 border border-indigo-400/30 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider">
+                  <span className="inline-flex items-center gap-1.5 bg-indigo-500/25 text-indigo-200 border border-indigo-400/30 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">
                     <Sparkles className="w-3 h-3 text-amber-300 animate-pulse" /> IA Vocale Synchrone • Gemini 1.5 Pro
                   </span>
                   {activeModuleItem?.code && (
@@ -1345,7 +1345,7 @@ const { data: textbookData } = useQuery({
                     {assignedModulesList.length} Module(s) Affecté(s)
                   </span>
                 </div>
-                <h1 className="text-lg md:text-2xl font-black text-white tracking-tight leading-tight mt-0.5">
+                <h1 className="text-white leading-tight mt-0.5 erp-page-title">
                   Cahier de Texte Numérique &amp; Copilot Vocal
                 </h1>
               </div>
@@ -1378,7 +1378,7 @@ const { data: textbookData } = useQuery({
 
               <button
                 onClick={handleDownloadServiceFait}
-                className="px-4 py-2 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-[#001A4B] rounded-xl text-xs font-black uppercase tracking-wider shadow-lg shadow-amber-400/20 flex items-center gap-1.5 cursor-pointer transition-all active:scale-95"
+                className="px-4 py-2 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-[#001A4B] rounded-xl text-xs font-bold uppercase tracking-wider shadow-lg shadow-amber-400/20 flex items-center gap-1.5 cursor-pointer transition-all active:scale-95"
               >
                 <Download className="w-3.5 h-3.5" />
                 <span>Attestation Service Fait (PDF)</span>
@@ -1390,7 +1390,7 @@ const { data: textbookData } = useQuery({
           <div className="pt-2 border-t border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
             <div className="flex items-center gap-2 font-bold text-slate-200">
               <BookOpen className="w-3.5 h-3.5 text-indigo-300" />
-              <span className="text-white font-black truncate max-w-[280px] sm:max-w-md">
+              <span className="text-white font-bold truncate max-w-[280px] sm:max-w-md">
                 {activeModuleItem ? activeModuleItem.name : "Aucun module affecté à votre compte"}
               </span>
               {activeModuleItem?.filiere?.code && (
@@ -1412,12 +1412,12 @@ const { data: textbookData } = useQuery({
                     style={{ width: `${activeModuleItem ? Math.max(0, Math.min(100, currentSummary.progress_percentage || 0)) : 0}%` }}
                   />
                 </div>
-                <span className="font-mono text-[11px] font-black text-amber-300">
+                <span className="font-mono text-[11px] font-bold text-amber-300">
                   {activeModuleItem ? currentSummary.progress_percentage || 0 : 0}%
                 </span>
               </div>
 
-              <div className="flex items-center gap-1.5 bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 px-2.5 py-1 rounded-xl text-[11px] font-black">
+              <div className="flex items-center gap-1.5 bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 px-2.5 py-1 rounded-xl text-[11px] font-bold">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
                 <span>{currentSummary.validated_count || 0} / {currentSummary.sessions_count || 0} Visées</span>
               </div>
@@ -1433,8 +1433,8 @@ const { data: textbookData } = useQuery({
         <div className="bg-card border border-border rounded-2xl p-3.5 sm:p-4 shadow-sm space-y-2.5">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/60 pb-2">
             <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-              <span className="text-xs font-black uppercase tracking-wider text-foreground">
+              <Calendar className="w-4 h-4 text-primary dark:text-indigo-400" />
+              <span className="text-xs font-bold uppercase tracking-wider text-foreground">
                 Mes Séances Affectées dans l'Emploi du Temps (Sélection 1-Clic)
               </span>
             </div>
@@ -1454,17 +1454,17 @@ const { data: textbookData } = useQuery({
                   className={cn(
                     "p-3 rounded-xl border text-left transition-all cursor-pointer relative group flex flex-col justify-between space-y-1.5",
                     isSelected
-                      ? "bg-indigo-50/80 dark:bg-indigo-950/60 border-indigo-500 shadow-sm ring-2 ring-indigo-500/20"
+                      ? "bg-indigo-50/80 dark:bg-indigo-950/60 border-primary shadow-sm ring-2 ring-indigo-500/20"
                       : "bg-muted/30 hover:bg-muted/70 border-border/70"
                   )}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                      <Clock className="w-3 h-3 text-indigo-500" />
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                      <Clock className="w-3 h-3 text-primary" />
                       {sched.day_of_week} • {sched.time_label}
                     </span>
                     <span className={cn(
-                      "px-2 py-0.5 rounded text-[9px] font-black uppercase",
+                      "px-2 py-0.5 rounded text-[9px] font-bold uppercase",
                       sched.session_type === 'CM' ? "bg-amber-500/15 text-amber-700 dark:text-amber-300" :
                       sched.session_type === 'TD' ? "bg-sky-500/15 text-sky-700 dark:text-sky-300" :
                       "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
@@ -1474,7 +1474,7 @@ const { data: textbookData } = useQuery({
                   </div>
 
                   <div>
-                    <h4 className="text-xs font-black text-foreground truncate group-hover:text-primary transition-colors">
+                    <h4 className="text-xs font-bold text-foreground truncate group-hover:text-primary transition-colors">
                       {sched.module_name}
                     </h4>
                     <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-0.5">
@@ -1490,7 +1490,7 @@ const { data: textbookData } = useQuery({
                   </div>
 
                   {isSelected && (
-                    <div className="absolute top-2 right-2 flex items-center gap-1 text-[9px] font-black text-indigo-600 dark:text-indigo-400">
+                    <div className="absolute top-2 right-2 flex items-center gap-1 text-[9px] font-bold text-primary dark:text-indigo-400">
                       <Check className="w-3 h-3" />
                     </div>
                   )}
@@ -1515,11 +1515,11 @@ const { data: textbookData } = useQuery({
           <div className="space-y-3">
             <div className="flex items-center justify-between border-b border-border pb-3">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-indigo-50 dark:bg-indigo-950 text-indigo-600 flex items-center justify-center font-bold">
+                <div className="w-7 h-7 rounded-lg bg-primary/5 dark:bg-indigo-950 text-primary flex items-center justify-center font-bold">
                   <BookOpen className="w-4 h-4" />
                 </div>
                 <div>
-                  <h2 className="text-sm font-black text-foreground uppercase tracking-wide">
+                  <h2 className="text-sm font-bold text-foreground uppercase tracking-wide">
                     Paramètres de la Séance
                   </h2>
                   <span className="text-[10px] text-muted-foreground font-medium">Uniquement vos modules &amp; cours affectés</span>
@@ -1530,13 +1530,13 @@ const { data: textbookData } = useQuery({
                 type="date"
                 value={sessionDate}
                 onChange={e => setSessionDate(e.target.value)}
-                className="bg-background border border-input rounded-xl px-2.5 py-1 text-xs font-bold text-foreground focus:outline-none shadow-2xs"
+                className="bg-background border border-input px-2.5 py-1 text-xs font-bold text-foreground focus:outline-none shadow-2xs rounded-[var(--control-radius)]"
               />
             </div>
 
             {/* Module Selector (Strictly Professor's Assigned Modules) */}
             <div className="space-y-1.5">
-              <div className="flex items-center justify-between text-[11px] font-black uppercase text-muted-foreground">
+              <div className="flex items-center justify-between text-[11px] font-bold uppercase text-muted-foreground">
                 <span>Élément de Module Dispensé</span>
                 <span className="text-[10px] text-muted-foreground font-bold lowercase">
                   ({assignedModulesList.length} module(s) affecté(s))
@@ -1565,7 +1565,7 @@ const { data: textbookData } = useQuery({
             {/* Type & Duration Inline Grid */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="text-[11px] font-black uppercase text-muted-foreground">
+                <label className="text-[11px] font-bold uppercase text-muted-foreground">
                   Type de Séance
                 </label>
                 <CustomSelect
@@ -1577,7 +1577,7 @@ const { data: textbookData } = useQuery({
               </div>
 
               <div className="space-y-1">
-                <label className="text-[11px] font-black uppercase text-muted-foreground">
+                <label className="text-[11px] font-bold uppercase text-muted-foreground">
                   Durée de la Séance
                 </label>
                 <CustomSelect
@@ -1592,27 +1592,27 @@ const { data: textbookData } = useQuery({
             {/* Group/Section & Pedagogical Method */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="text-[11px] font-black uppercase text-muted-foreground flex items-center justify-between">
+                <label className="text-[11px] font-bold uppercase text-muted-foreground flex items-center justify-between">
                   <span>Section / Groupe</span>
-                  {groupName && <span className="text-[9px] text-indigo-600 font-bold truncate">({groupName})</span>}
+                  {groupName && <span className="text-[9px] text-primary font-bold truncate">({groupName})</span>}
                 </label>
                 <input
                   type="text"
                   value={groupName}
                   onChange={e => setGroupName(e.target.value)}
                   placeholder={sessionType === 'CM' ? "Ex: Section 1 (Amphi 1)" : "Ex: Sous-Groupe G1.1"}
-                  className="w-full bg-background border border-input rounded-xl px-2.5 py-1.5 text-xs font-bold text-foreground focus:outline-none"
+                  className="w-full bg-background border border-input px-2.5 py-1.5 text-xs font-bold text-foreground focus:outline-none rounded-[var(--control-radius)]"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-[11px] font-black uppercase text-muted-foreground">
+                <label className="text-[11px] font-bold uppercase text-muted-foreground">
                   Méthode Pédagogique
                 </label>
                 <select
                   value={pedagogicalMethod}
                   onChange={e => setPedagogicalMethod(e.target.value)}
-                  className="w-full bg-background border border-input rounded-xl px-2 py-1.5 text-xs font-bold text-foreground focus:outline-none"
+                  className="w-full bg-background border border-input px-2 py-1.5 text-xs font-bold text-foreground focus:outline-none rounded-[var(--control-radius)]"
                 >
                   <option value="Cours Magistral Interactif">Cours Magistral Interactif</option>
                   <option value="Travaux Dirigés & Exercices">Travaux Dirigés &amp; Exercices</option>
@@ -1627,10 +1627,10 @@ const { data: textbookData } = useQuery({
             <div className="pt-1">
               <button
                 onClick={handleAutoSuggestChapter}
-                className="w-full py-2 bg-indigo-50 dark:bg-indigo-950/70 hover:bg-indigo-100 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 rounded-xl text-xs font-black tracking-wide flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+                className="w-full py-2 bg-primary/5 dark:bg-indigo-950/70 hover:bg-primary/10 text-primary dark:text-indigo-300 border border-primary/20 dark:border-primary rounded-xl text-xs font-bold tracking-wide flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
                 title="Suggérer automatiquement le chapitre suivant du syllabus selon l'avancement"
               >
-                <Compass className="w-3.5 h-3.5 text-indigo-600" />
+                <Compass className="w-3.5 h-3.5 text-primary" />
                 <span>✨ Suggérer le Chapitre Suivant selon le Syllabus</span>
               </button>
             </div>
@@ -1640,12 +1640,12 @@ const { data: textbookData } = useQuery({
           <div className="space-y-3 pt-3 border-t border-border">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-black uppercase tracking-wider text-foreground flex items-center gap-1.5">
+                <span className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
                   <Mic className="w-3.5 h-3.5 text-rose-500" />
                   <span>Dictée Vocale</span>
                 </span>
                 {isRecording && (
-                  <span className="font-mono text-xs font-black text-rose-600 dark:text-rose-400 px-2 py-0.5 rounded-md bg-rose-50 dark:bg-rose-950 border border-rose-200 animate-pulse">
+                  <span className="font-mono text-xs font-bold text-rose-600 dark:text-rose-400 px-2 py-0.5 rounded-md bg-rose-50 dark:bg-rose-950 border border-rose-200 animate-pulse">
                     {String(Math.floor(recordingSeconds / 60)).padStart(2, '0')}:{String(recordingSeconds % 60).padStart(2, '0')}
                   </span>
                 )}
@@ -1656,7 +1656,7 @@ const { data: textbookData } = useQuery({
                 <select
                   value={selectedLang}
                   onChange={e => setSelectedLang(e.target.value as any)}
-                  className="bg-background border border-input rounded-xl px-2 py-1 text-[11px] font-bold text-foreground focus:outline-none"
+                  className="bg-background border border-input px-2 py-1 text-[11px] font-bold text-foreground focus:outline-none rounded-[var(--control-radius)]"
                   title="Choisir la langue de reconnaissance vocale"
                 >
                   <option value="fr-FR">🇫🇷 Français</option>
@@ -1687,7 +1687,7 @@ const { data: textbookData } = useQuery({
                 value={transcription}
                 onChange={e => setTranscription(e.target.value)}
                 placeholder="Appuyez sur le micro et dictez : 'Aujourd'hui nous avons traité le chapitre 4 sur l'analyse des flux de trésorerie...'"
-                className="w-full h-24 bg-transparent text-xs text-foreground placeholder:text-muted-foreground focus:outline-none resize-none leading-relaxed font-medium"
+                className="w-full h-24 bg-transparent text-xs text-foreground placeholder:text-muted-foreground focus:outline-none resize-none leading-relaxed font-medium rounded-[var(--control-radius)]"
               />
 
               {/* Bottom Visualizer Wave & Counter */}
@@ -1698,9 +1698,9 @@ const { data: textbookData } = useQuery({
                       <span className="w-1 bg-rose-500 rounded-full animate-bounce [animation-delay:-0.3s] h-3.5" />
                       <span className="w-1 bg-amber-500 rounded-full animate-bounce [animation-delay:-0.15s] h-5" />
                       <span className="w-1 bg-purple-500 rounded-full animate-bounce h-4" />
-                      <span className="w-1 bg-indigo-500 rounded-full animate-bounce [animation-delay:-0.2s] h-2.5" />
+                      <span className="w-1 bg-primary rounded-full animate-bounce [animation-delay:-0.2s] h-2.5" />
                       <span className="w-1 bg-emerald-500 rounded-full animate-bounce [animation-delay:-0.4s] h-5" />
-                      <span className="text-[10px] font-black uppercase text-rose-600 dark:text-rose-400 ml-2">
+                      <span className="text-[10px] font-bold uppercase text-rose-600 dark:text-rose-400 ml-2">
                         Enregistrement en direct...
                       </span>
                     </div>
@@ -1719,7 +1719,7 @@ const { data: textbookData } = useQuery({
 
             {/* Quick Template Chips */}
             <div className="space-y-1.5">
-              <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground block">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
                 Exemples Rapides de Cours (1-Clic) :
               </span>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -1732,7 +1732,7 @@ const { data: textbookData } = useQuery({
                     }}
                     className="p-2 rounded-xl bg-muted/60 hover:bg-muted text-left border border-border/80 transition-all cursor-pointer group"
                   >
-                    <span className="text-[11px] font-black text-foreground group-hover:text-primary block truncate">
+                    <span className="text-[11px] font-bold text-foreground group-hover:text-primary block truncate">
                       {tmpl.label}
                     </span>
                     <span className="text-[10px] text-muted-foreground block truncate">
@@ -1748,10 +1748,10 @@ const { data: textbookData } = useQuery({
               <button
                 onClick={toggleRecording}
                 className={cn(
-                  "flex-1 min-w-[170px] py-3 rounded-xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-md cursor-pointer active:scale-95",
+                  "flex-1 min-w-[170px] py-3 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-md cursor-pointer active:scale-95",
                   isRecording 
                     ? "bg-rose-600 hover:bg-rose-700 text-white animate-pulse shadow-rose-900/30" 
-                    : "bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 text-white border border-slate-700"
+                    : "bg-slate-900 dark:bg-card hover:bg-slate-800 text-white border border-slate-700"
                 )}
               >
                 {isRecording ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4 text-amber-300" />}
@@ -1761,7 +1761,7 @@ const { data: textbookData } = useQuery({
               <button
                 onClick={handleStructureWithAi}
                 disabled={isAiProcessing || !transcription.trim()}
-                className="flex-1 min-w-[170px] py-3 bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 hover:opacity-95 disabled:opacity-40 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-lg flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-95"
+                className="flex-1 min-w-[170px] py-3 bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 hover:opacity-95 disabled:opacity-40 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-lg flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-95"
               >
                 {isAiProcessing ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -1790,11 +1790,11 @@ const { data: textbookData } = useQuery({
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h2 className="text-sm font-black text-foreground uppercase tracking-wide">
+                    <h2 className="text-sm font-bold text-foreground uppercase tracking-wide">
                       Fiche Pédagogique Officielle
                     </h2>
                     {structuredData ? (
-                      <span className="text-[10px] font-black bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+                      <span className="text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full">
                         Prête à Consigner
                       </span>
                     ) : (
@@ -1811,7 +1811,7 @@ const { data: textbookData } = useQuery({
               <div className="flex items-center gap-1.5">
                 <button
                   onClick={handleToggleSpeak}
-                  className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-100 cursor-pointer transition-colors"
+                  className="p-2 rounded-xl bg-primary/5 dark:bg-indigo-950/60 text-primary dark:text-indigo-400 border border-primary/20 dark:border-primary hover:bg-primary/10 cursor-pointer transition-colors"
                   title={isSpeaking ? "Arrêter la lecture" : "Écouter la synthèse vocale"}
                 >
                   {isSpeaking ? <VolumeX className="w-3.5 h-3.5 animate-pulse text-rose-500" /> : <Volume2 className="w-3.5 h-3.5" />}
@@ -1830,7 +1830,7 @@ const { data: textbookData } = useQuery({
                     onClick={() => setIsEditingDraft(!isEditingDraft)}
                     className={cn(
                       "px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1 border cursor-pointer transition-colors",
-                      isEditingDraft ? "bg-amber-500 text-slate-950 border-amber-600 font-black" : "bg-muted text-muted-foreground hover:text-foreground"
+                      isEditingDraft ? "bg-amber-500 text-slate-950 border-amber-600 font-bold" : "bg-muted text-muted-foreground hover:text-foreground"
                     )}
                   >
                     <Edit3 className="w-3 h-3" />
@@ -1846,7 +1846,7 @@ const { data: textbookData } = useQuery({
                 
                 {/* Session Title */}
                 <div className="p-3 rounded-xl bg-muted/40 border border-border space-y-1">
-                  <span className="text-[10px] font-black uppercase text-indigo-600 dark:text-indigo-400 tracking-wider">
+                  <span className="text-[10px] font-bold uppercase text-primary dark:text-indigo-400 tracking-wider">
                     Intitulé Officiel de la Séance
                   </span>
                   {isEditingDraft ? (
@@ -1854,17 +1854,17 @@ const { data: textbookData } = useQuery({
                       type="text"
                       value={structuredData.title}
                       onChange={e => setStructuredData({ ...structuredData, title: e.target.value })}
-                      className="w-full bg-background border border-input rounded-xl p-2 text-xs font-black text-foreground focus:outline-none"
+                      className="w-full bg-background border border-input p-2 text-xs font-bold text-foreground focus:outline-none rounded-[var(--control-radius)]"
                     />
                   ) : (
-                    <div className="font-black text-sm text-foreground">{structuredData.title}</div>
+                    <div className="font-bold text-sm text-foreground">{structuredData.title}</div>
                   )}
                 </div>
 
                 {/* Pedagogical Objectives */}
                 <div className="p-3 rounded-xl bg-muted/40 border border-border space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-black uppercase text-indigo-600 dark:text-indigo-400 tracking-wider">
+                    <span className="text-[10px] font-bold uppercase text-primary dark:text-indigo-400 tracking-wider">
                       Objectifs Pédagogiques Opérationnels (Taxonomie de Bloom)
                     </span>
                     <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
@@ -1884,7 +1884,7 @@ const { data: textbookData } = useQuery({
                               updated[i] = e.target.value;
                               setStructuredData({ ...structuredData, pedagogical_objectives: updated });
                             }}
-                            className="flex-1 bg-background border border-input rounded-xl p-2 text-xs font-medium text-foreground"
+                            className="flex-1 bg-background border border-input p-2 text-xs font-medium text-foreground rounded-[var(--control-radius)]"
                           />
                           <button
                             onClick={() => {
@@ -1904,7 +1904,7 @@ const { data: textbookData } = useQuery({
                             pedagogical_objectives: [...structuredData.pedagogical_objectives, 'Nouvel objectif pédagogique']
                           });
                         }}
-                        className="text-[11px] font-bold text-indigo-600 flex items-center gap-1 hover:underline pt-1"
+                        className="text-[11px] font-bold text-primary flex items-center gap-1 hover:underline pt-1"
                       >
                         <Plus className="w-3 h-3" /> Ajouter un objectif
                       </button>
@@ -1920,14 +1920,14 @@ const { data: textbookData } = useQuery({
 
                 {/* Concepts & Formulas */}
                 <div className="p-3 rounded-xl bg-muted/40 border border-border space-y-1">
-                  <span className="text-[10px] font-black uppercase text-indigo-600 dark:text-indigo-400 tracking-wider">
+                  <span className="text-[10px] font-bold uppercase text-primary dark:text-indigo-400 tracking-wider">
                     Notions Théoriques, Outils &amp; Formules Clés
                   </span>
                   {isEditingDraft ? (
                     <textarea
                       value={structuredData.notions_covered}
                       onChange={e => setStructuredData({ ...structuredData, notions_covered: e.target.value })}
-                      className="w-full bg-background border border-input rounded-xl p-2 text-xs font-medium text-foreground h-16"
+                      className="w-full bg-background border border-input p-2 text-xs font-medium text-foreground h-16 rounded-[var(--control-radius)]"
                     />
                   ) : (
                     <p className="text-foreground font-medium text-[11px] leading-relaxed">{structuredData.notions_covered}</p>
@@ -1937,7 +1937,7 @@ const { data: textbookData } = useQuery({
                 {/* Assigned Homework & Method */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 space-y-1">
-                    <span className="text-[10px] font-black uppercase text-amber-700 dark:text-amber-400 tracking-wider">
+                    <span className="text-[10px] font-bold uppercase text-amber-700 dark:text-amber-400 tracking-wider">
                       Travail à Faire / Exercices Assignés
                     </span>
                     {isEditingDraft ? (
@@ -1945,7 +1945,7 @@ const { data: textbookData } = useQuery({
                         type="text"
                         value={structuredData.work_assigned}
                         onChange={e => setStructuredData({ ...structuredData, work_assigned: e.target.value })}
-                        className="w-full bg-background border border-input rounded-xl p-2 text-xs font-bold text-foreground"
+                        className="w-full bg-background border border-input p-2 text-xs font-bold text-foreground rounded-[var(--control-radius)]"
                       />
                     ) : (
                       <p className="text-foreground font-bold text-[11px] truncate">{structuredData.work_assigned}</p>
@@ -1953,7 +1953,7 @@ const { data: textbookData } = useQuery({
                   </div>
 
                   <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/30 space-y-1">
-                    <span className="text-[10px] font-black uppercase text-blue-700 dark:text-blue-400 tracking-wider">
+                    <span className="text-[10px] font-bold uppercase text-primary dark:text-blue-400 tracking-wider">
                       Modalité Pédagogique
                     </span>
                     <p className="text-foreground font-bold text-[11px] truncate">
@@ -1968,7 +1968,7 @@ const { data: textbookData } = useQuery({
                     <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
                     Progression Syllabus Estimée pour cette Séance
                   </span>
-                  <span className="font-mono font-black text-xs">
+                  <span className="font-mono font-bold text-xs">
                     +{structuredData.estimated_progress || 8}%
                   </span>
                 </div>
@@ -1976,13 +1976,13 @@ const { data: textbookData } = useQuery({
               </div>
             ) : (
               /* ── RICH HIGH-FIDELITY SPECIMEN PREVIEW (NEVER AN EMPTY VOID!) ── */
-              <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-50 to-indigo-50/40 dark:from-slate-900/60 dark:to-indigo-950/20 border border-dashed border-indigo-300 dark:border-indigo-800/60 space-y-3.5">
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-50 to-indigo-50/40 dark:from-slate-900/60 dark:to-indigo-950/20 border border-dashed border-primary/20 dark:border-indigo-800/60 space-y-3.5">
                 
                 {/* Specimen Header Ribbon */}
-                <div className="flex items-center justify-between pb-2 border-b border-indigo-100 dark:border-indigo-900/40">
+                <div className="flex items-center justify-between pb-2 border-b border-primary/20 dark:border-indigo-900/40">
                   <div className="flex items-center gap-1.5">
                     <Award className="w-4 h-4 text-amber-500" />
-                    <span className="text-[10px] font-black uppercase text-indigo-950 dark:text-indigo-200 tracking-wider">
+                    <span className="text-[10px] font-bold uppercase text-indigo-950 dark:text-indigo-200 tracking-wider">
                       Spécimen de Fiche Académique Conforme (LMD)
                     </span>
                   </div>
@@ -1994,16 +1994,16 @@ const { data: textbookData } = useQuery({
                 {/* Specimen Preview Body */}
                 <div className="space-y-2.5 opacity-90 text-[11px]">
                   <div>
-                    <span className="text-[9px] font-black uppercase text-muted-foreground block">
+                    <span className="text-[9px] font-bold uppercase text-muted-foreground block">
                       Intitulé de Séance :
                     </span>
-                    <strong className="text-foreground text-xs font-black">
+                    <strong className="text-foreground text-xs font-bold">
                       {SPECIMEN_SAMPLE.title}
                     </strong>
                   </div>
 
                   <div>
-                    <span className="text-[9px] font-black uppercase text-muted-foreground block">
+                    <span className="text-[9px] font-bold uppercase text-muted-foreground block">
                       Objectifs Pédagogiques (Taxonomie de Bloom) :
                     </span>
                     <ul className="list-disc list-inside space-y-0.5 text-muted-foreground mt-0.5">
@@ -2014,7 +2014,7 @@ const { data: textbookData } = useQuery({
                   </div>
 
                   <div>
-                    <span className="text-[9px] font-black uppercase text-muted-foreground block">
+                    <span className="text-[9px] font-bold uppercase text-muted-foreground block">
                       Notions &amp; Formules :
                     </span>
                     <p className="text-muted-foreground line-clamp-2">
@@ -2023,7 +2023,7 @@ const { data: textbookData } = useQuery({
                   </div>
 
                   <div>
-                    <span className="text-[9px] font-black uppercase text-muted-foreground block">
+                    <span className="text-[9px] font-bold uppercase text-muted-foreground block">
                       Travail Assigné :
                     </span>
                     <p className="text-muted-foreground font-semibold line-clamp-1">
@@ -2033,13 +2033,13 @@ const { data: textbookData } = useQuery({
                 </div>
 
                 {/* Specimen Call to Action */}
-                <div className="pt-2 border-t border-indigo-100 dark:border-indigo-900/40 flex items-center justify-between gap-3">
+                <div className="pt-2 border-t border-primary/20 dark:border-indigo-900/40 flex items-center justify-between gap-3">
                   <span className="text-[10px] text-muted-foreground font-medium hidden sm:inline">
                     Sélectionnez une séance d'emploi du temps ou chargez ce modèle
                   </span>
                   <button
                     onClick={handleLoadDemo}
-                    className="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:opacity-95 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-md flex items-center justify-center gap-1.5 cursor-pointer transition-all active:scale-95"
+                    className="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:opacity-95 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-md flex items-center justify-center gap-1.5 cursor-pointer transition-all active:scale-95"
                   >
                     <Sparkles className="w-3.5 h-3.5 text-amber-300" />
                     <span>Charger cet Exemple Type</span>
@@ -2054,14 +2054,14 @@ const { data: textbookData } = useQuery({
           {/* Tactile Signature Preview & Quick Action Bar */}
           <div className="p-3 rounded-xl bg-muted/40 border border-border flex items-center justify-between gap-3">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+              <div className="w-8 h-8 rounded-lg bg-indigo-500/10 text-primary dark:text-indigo-400 flex items-center justify-center shrink-0">
                 <PenTool className="w-4 h-4" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-[11px] font-black uppercase text-foreground">Émargement de l'Enseignant</span>
+                  <span className="text-[11px] font-bold uppercase text-foreground">Émargement de l'Enseignant</span>
                   {professorSignature ? (
-                    <span className="text-[9px] font-black bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <span className="text-[9px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full flex items-center gap-1">
                       <Check className="w-3 h-3 text-emerald-600" /> Signé Tactilement
                     </span>
                   ) : (
@@ -2080,13 +2080,13 @@ const { data: textbookData } = useQuery({
 
             <div className="flex items-center gap-2 shrink-0">
               {professorSignature && (
-                <div className="hidden sm:block h-8 w-20 bg-white rounded border border-border p-0.5 shadow-sm overflow-hidden">
+                <div className="hidden sm:block h-8 w-20 bg-card rounded border border-border p-0.5 shadow-sm overflow-hidden">
                   <img src={professorSignature} alt="Signature" className="h-full w-full object-contain" />
                 </div>
               )}
               <button
                 onClick={() => setIsSignatureModalOpen(true)}
-                className="px-3 py-1.5 rounded-xl bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-1 cursor-pointer transition-all active:scale-95 shadow-sm"
+                className="px-3 py-1.5 rounded-xl bg-slate-900 dark:bg-card hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-1 cursor-pointer transition-all active:scale-95 shadow-sm"
               >
                 <PenTool className="w-3.5 h-3.5 text-amber-300" />
                 <span>{professorSignature ? 'Modifier' : 'Signer (Tactile)'}</span>
@@ -2098,7 +2098,7 @@ const { data: textbookData } = useQuery({
           <div className="pt-2 flex items-center gap-2">
             <button
               onClick={handlePrintSessionSheet}
-              className="py-3 px-4 bg-muted hover:bg-muted/80 text-foreground border border-border rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 shrink-0"
+              className="py-3 px-4 bg-muted hover:bg-muted/80 text-foreground border border-border rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 shrink-0"
               title="Aperçu avant impression de la Fiche Pédagogique A4"
             >
               <Printer className="w-4 h-4 text-primary" />
@@ -2108,7 +2108,7 @@ const { data: textbookData } = useQuery({
             <button
               onClick={handleSaveToTextbook}
               disabled={!selectedModule || !structuredData || saveMutation.isPending}
-              className="flex-1 py-3 bg-gradient-to-r from-[#001A4B] via-[#0A2558] to-[#113A7A] hover:opacity-95 disabled:opacity-40 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+              className="flex-1 py-3 bg-gradient-to-r from-[#001A4B] via-[#0A2558] to-[#113A7A] hover:opacity-95 disabled:opacity-40 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
             >
               {saveMutation.isPending ? (
                 <Loader2 className="w-4 h-4 animate-spin text-amber-300" />
@@ -2133,11 +2133,11 @@ const { data: textbookData } = useQuery({
         {/* Header & Controls */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-border pb-4">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-xl bg-primary/5 dark:bg-indigo-950 text-primary flex items-center justify-center">
               <Layers className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-sm font-black text-foreground">
+              <h2 className="text-sm font-bold text-foreground">
                 Séances Consignées &amp; Visées (Service Fait Pédagogique)
               </h2>
               <p className="text-[11px] text-muted-foreground font-medium">
@@ -2155,7 +2155,7 @@ const { data: textbookData } = useQuery({
                 value={historySearch}
                 onChange={e => setHistorySearch(e.target.value)}
                 placeholder="Rechercher séance..."
-                className="pl-8 pr-2.5 py-1 bg-background border border-input rounded-xl text-xs font-bold text-foreground focus:outline-none w-44 shadow-2xs"
+                className="pl-8 pr-2.5 py-1 bg-background border border-input text-xs font-bold text-foreground focus:outline-none w-44 shadow-2xs rounded-[var(--control-radius)]"
               />
             </div>
 
@@ -2163,7 +2163,7 @@ const { data: textbookData } = useQuery({
             <select
               value={historyTypeFilter}
               onChange={e => setHistoryTypeFilter(e.target.value)}
-              className="bg-background border border-input rounded-xl px-2.5 py-1 text-xs font-bold text-foreground focus:outline-none shadow-2xs"
+              className="bg-background border border-input px-2.5 py-1 text-xs font-bold text-foreground focus:outline-none shadow-2xs rounded-[var(--control-radius)]"
             >
               <option value="ALL">Tous types</option>
               <option value="CM">CM (Cours)</option>
@@ -2207,7 +2207,7 @@ const { data: textbookData } = useQuery({
                         <span className="text-[9px] font-bold text-muted-foreground uppercase leading-none">
                           {new Date(session.session_date).toLocaleDateString('fr-FR', { month: 'short' })}
                         </span>
-                        <span className="font-mono text-xs font-black text-foreground leading-none mt-0.5">
+                        <span className="font-mono text-xs font-bold text-foreground leading-none mt-0.5">
                           {new Date(session.session_date).getDate()}
                         </span>
                       </div>
@@ -2215,7 +2215,7 @@ const { data: textbookData } = useQuery({
                       <div>
                         <div className="flex items-center gap-2">
                           <span className={cn(
-                            "px-2 py-0.5 rounded-md text-[9px] font-black uppercase",
+                            "px-2 py-0.5 rounded-md text-[9px] font-bold uppercase",
                             session.session_type === 'CM' 
                               ? "bg-amber-500/15 text-amber-700 dark:text-amber-300"
                               : session.session_type === 'TD'
@@ -2224,7 +2224,7 @@ const { data: textbookData } = useQuery({
                           )}>
                             {session.session_type}
                           </span>
-                          <h4 className="text-xs font-black text-foreground hover:text-primary transition-colors">
+                          <h4 className="text-xs font-bold text-foreground hover:text-primary transition-colors">
                             {session.chapter_title}
                           </h4>
                           {session.group?.name && (
@@ -2241,12 +2241,12 @@ const { data: textbookData } = useQuery({
 
                     <div className="flex items-center gap-2.5 self-end sm:self-auto">
                       {session.status === 'validated' ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-black bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
                           <CheckCircle2 className="w-3 h-3 text-emerald-600" />
                           <span>Visée par Chef Dept</span>
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-black bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
                           <Clock className="w-3 h-3 text-amber-600" />
                           <span>En attente de visa</span>
                         </span>

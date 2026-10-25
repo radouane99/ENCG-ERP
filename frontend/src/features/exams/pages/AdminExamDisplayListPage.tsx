@@ -34,7 +34,7 @@ export default function AdminExamDisplayListPage() {
   }
 
   if (isLoading) {
-    return <div className="min-h-screen flex items-center justify-center bg-slate-100"><Loader2 className="w-8 h-8 animate-spin text-blue-500" /></div>
+    return <div className="min-h-screen flex items-center justify-center bg-muted"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
   }
 
   const exam = detailsData?.exam
@@ -42,13 +42,13 @@ export default function AdminExamDisplayListPage() {
   const surveillants = detailsData?.surveillances || []
 
   return (
-    <div className="space-y-6 animate-in p-6 max-w-7xl mx-auto pb-20">
+    <div className="space-y-6 animate-in max-w-7xl mx-auto pb-20">
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-bold text-[#0f2863] italic flex items-center gap-3">
+        <h1 className="text-[#0f2863] italic flex items-center gap-3 erp-page-title">
           <FileText className="w-6 h-6 text-amber-500" /> Liste d'Affichage
         </h1>
         <div className="flex items-center gap-3">
-          <Link to="/admin/exams" className="h-10 px-4 rounded-xl border border-slate-200 bg-white text-slate-600 text-sm font-bold flex items-center gap-2 hover:bg-slate-50 transition-colors">
+          <Link to="/admin/exams" className="h-10 px-4 rounded-xl border border-border bg-card text-muted-foreground text-sm font-bold flex items-center gap-2 hover:bg-muted/50 transition-colors">
             <ArrowLeft className="w-4 h-4" /> Retour au Planning
           </Link>
           
@@ -56,7 +56,7 @@ export default function AdminExamDisplayListPage() {
             onClick={() => {
               void openExamDoorSignPdf(id!).catch(() => toast.error("Impossible d'ouvrir l'affiche de porte."))
             }}
-            className="h-10 px-4 rounded-xl border border-blue-600 bg-blue-50 text-blue-700 hover:bg-blue-100 text-sm font-bold flex items-center gap-2 transition-colors shadow-sm"
+            className="h-10 px-4 rounded-xl border border-primary bg-primary/5 text-primary hover:bg-primary/10 text-sm font-bold flex items-center gap-2 transition-colors shadow-sm"
           >
             <Eye className="w-4 h-4" /> Aperçu PDF (Navigateur)
           </button>
@@ -72,37 +72,37 @@ export default function AdminExamDisplayListPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-[2rem] border border-slate-200 p-8 shadow-sm mb-8 flex items-start justify-between">
+      <div className="bg-card rounded-2xl border border-border p-8 shadow-sm mb-8 flex items-start justify-between">
         <div className="space-y-1">
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">MODULE</p>
-          <p className="font-bold text-slate-800 text-lg">{exam?.module?.name}</p>
+          <p className="font-bold text-foreground text-lg">{exam?.module?.name}</p>
         </div>
         <div className="space-y-1">
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">DATE & HEURE</p>
-          <p className="font-bold text-blue-700 text-lg">{new Date(exam?.exam_date).toLocaleDateString('fr-FR')} à {exam?.start_time}</p>
+          <p className="font-bold text-primary text-lg">{new Date(exam?.exam_date).toLocaleDateString('fr-FR')} à {exam?.start_time}</p>
         </div>
         <div className="space-y-1">
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">SALLE</p>
-          <p className="font-bold text-blue-700 text-lg">{exam?.room?.name}</p>
+          <p className="font-bold text-primary text-lg">{exam?.room?.name}</p>
         </div>
         <div className="space-y-1">
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">GROUPE / FILIÈRE</p>
-          <p className="font-bold text-slate-800 text-lg">{exam?.group?.name}<br/><span className="text-sm font-medium text-slate-500">({exam?.module?.filiere?.name})</span></p>
+          <p className="font-bold text-foreground text-lg">{exam?.group?.name}<br/><span className="text-sm font-medium text-muted-foreground">({exam?.module?.filiere?.name})</span></p>
         </div>
         
-        <div className="w-full mt-6 pt-6 border-t border-slate-100 flex items-start">
+        <div className="w-full mt-6 pt-6 border-t border-border flex items-start">
           <div className="space-y-1">
              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">SURVEILLANTS ASSIGNÉS</p>
-             <p className={cn("text-sm font-bold", surveillants.length > 0 ? "text-slate-800" : "text-red-500")}>
+             <p className={cn("text-sm font-bold", surveillants.length > 0 ? "text-foreground" : "text-red-500")}>
                {surveillants.length > 0 ? surveillants.map((s: any) => s.name).join(', ') : "Aucun surveillant"}
              </p>
           </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-slate-100">
-          <h2 className="text-xl font-bold text-slate-800">Étudiants concernés ({students.length})</h2>
+      <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+        <div className="p-6 border-b border-border">
+          <h2 className="text-xl font-bold text-foreground">Étudiants concernés ({students.length})</h2>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
@@ -117,8 +117,8 @@ export default function AdminExamDisplayListPage() {
             <tbody className="divide-y divide-slate-100">
               {students.map((student: any, idx: number) => (
                 <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
-                  <td className="px-6 py-4 font-black text-slate-800">{student.seat_number}</td>
-                  <td className="px-6 py-4 text-slate-500">{student.cne}</td>
+                  <td className="px-6 py-4 font-bold text-foreground">{student.seat_number}</td>
+                  <td className="px-6 py-4 text-muted-foreground">{student.cne}</td>
                   <td className="px-6 py-4 font-bold text-slate-700">{student.student_name}</td>
                   <td className="px-6 py-4 text-right">
                     <span className={cn("text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full",

@@ -209,7 +209,7 @@ const StudentsPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[var(--foreground)] flex items-center gap-2">
+          <h1 className="text-[var(--foreground)] flex items-center gap-2 erp-page-title">
             <div className="p-2 bg-[var(--color-primary)/10] text-[var(--color-primary)] rounded-xl">
               <Users size={24} />
             </div>
@@ -251,7 +251,7 @@ const StudentsPage: React.FC = () => {
         <select
           value={statusFilter}
           onChange={e => { setStatusFilter(e.target.value); setPage(1); }}
-          className="bg-[var(--background)] border border-[var(--border)] rounded-xl text-sm text-[var(--foreground)] px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:border-transparent min-w-[160px] cursor-pointer transition-all hover:border-[var(--muted-foreground)/30]"
+          className="bg-[var(--background)] border border-[var(--border)] text-sm text-[var(--foreground)] px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:border-transparent min-w-[160px] cursor-pointer transition-all hover:border-[var(--muted-foreground)/30] rounded-[var(--control-radius)]"
         >
           <option value="">{t('students:list.filter_all_status')}</option>
           <option value="active">{t('students:status.active')}</option>
@@ -481,7 +481,7 @@ const StudentsPage: React.FC = () => {
               </div>
               <div className="space-y-1.5">
                 <label className="text-sm font-semibold text-[var(--foreground)]">{t('students:form.fields.gender')} *</label>
-                <select value={form.gender} onChange={e => setForm({ ...form, gender: e.target.value as 'male'|'female' })} className="flex h-10 w-full rounded-xl border border-[var(--input)] bg-[var(--background)] px-3 py-2 text-sm ring-offset-[var(--background)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] disabled:cursor-not-allowed disabled:opacity-50">
+                <select value={form.gender} onChange={e => setForm({ ...form, gender: e.target.value as 'male'|'female' })} className="flex h-10 w-full border border-[var(--input)] bg-[var(--background)] px-3 py-2 text-sm ring-offset-[var(--background)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] disabled:cursor-not-allowed disabled:opacity-50 rounded-[var(--control-radius)]">
                   <option value="male">{t('students:form.gender.male')}</option>
                   <option value="female">{t('students:form.gender.female')}</option>
                 </select>
@@ -526,7 +526,7 @@ const StudentsPage: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <label className="text-sm font-semibold text-[var(--foreground)]">{t('students:list.columns.status')}</label>
-                <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })} className="flex h-10 w-full rounded-xl border border-[var(--input)] bg-[var(--background)] px-3 py-2 text-sm ring-offset-[var(--background)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]">
+                <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })} className="flex h-10 w-full border border-[var(--input)] bg-[var(--background)] px-3 py-2 text-sm ring-offset-[var(--background)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] rounded-[var(--control-radius)]">
                   <option value="active">{t('students:status.active')}</option>
                   <option value="suspended">{t('students:status.suspended')}</option>
                   <option value="graduated">{t('students:status.graduated')}</option>
@@ -535,7 +535,7 @@ const StudentsPage: React.FC = () => {
               </div>
               <div className="space-y-1.5">
                 <label className="text-sm font-semibold text-[var(--foreground)]">{t('students:list.columns.scholarship')}</label>
-                <select value={form.scholarship_type} onChange={e => setForm({ ...form, scholarship_type: e.target.value })} className="flex h-10 w-full rounded-xl border border-[var(--input)] bg-[var(--background)] px-3 py-2 text-sm ring-offset-[var(--background)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]">
+                <select value={form.scholarship_type} onChange={e => setForm({ ...form, scholarship_type: e.target.value })} className="flex h-10 w-full border border-[var(--input)] bg-[var(--background)] px-3 py-2 text-sm ring-offset-[var(--background)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] rounded-[var(--control-radius)]">
                   <option value="">{t('students:scholarship.none')}</option>
                   <option value="excellence">{t('students:scholarship.excellence')}</option>
                   <option value="social">{t('students:scholarship.social')}</option>

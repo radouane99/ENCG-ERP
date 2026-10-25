@@ -33,17 +33,17 @@ const { data: stats } = useQuery({
   )
 
   return (
-    <div className="space-y-8 max-w-[1600px] mx-auto p-4 md:p-6 pb-20 animate-in fade-in" dir={isRtl ? "rtl" : "ltr"}>
+    <div className="space-y-8 max-w-[1600px] mx-auto pb-20 animate-in fade-in" dir={isRtl ? "rtl" : "ltr"}>
       
       {/* Premium Header - Gold / Deep Blue Theme */}
-      <div className="bg-gradient-to-r from-[#0F172A] to-[#1E293B] rounded-[2rem] p-8 text-white shadow-xl shadow-slate-900/20 relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6 border border-slate-700/50">
+      <div className="p-8 text-white relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6 border border-slate-700/50 erp-page-banner">
         <div className="absolute top-0 end-0 -mt-10 -me-10 w-64 h-64 bg-amber-500/10 rounded-full blur-[80px] pointer-events-none"></div>
         <div className="flex items-center gap-4 relative z-10">
-          <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-amber-600 rounded-[1.2rem] flex items-center justify-center border border-amber-300/30 shadow-[0_0_20px_rgba(245,158,11,0.3)]">
+          <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-amber-600 rounded-2xl flex items-center justify-center border border-amber-300/30 shadow-[0_0_20px_rgba(245,158,11,0.3)]">
             <GraduationCap className="w-8 h-8 text-white" />
           </div>
           <div>
-            <h1 className="text-3xl font-black mb-1 tracking-tight flex items-center gap-2">
+            <h1 className="mb-1 flex items-center gap-2 erp-page-title">
               <span className="bg-gradient-to-r from-amber-200 to-amber-500 bg-clip-text text-transparent">Alumni Network</span>
             </h1>
             <p className="text-slate-300 font-medium text-sm">
@@ -58,7 +58,7 @@ const { data: stats } = useQuery({
         <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm flex items-center justify-between group hover:border-amber-500/50 transition-colors">
           <div>
             <p className="text-xs font-bold text-[var(--muted-foreground)] uppercase tracking-wider mb-1">{isRtl ? 'إجمالي الخريجين' : 'Total Lauréats'}</p>
-            <p className="text-3xl font-black text-[var(--foreground)]">{stats?.total_alumni?.toLocaleString() || '8 500'}</p>
+            <p className="text-3xl font-bold text-[var(--foreground)]">{stats?.total_alumni?.toLocaleString() || '8 500'}</p>
           </div>
           <div className="w-12 h-12 bg-amber-500/10 text-amber-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
             <Users size={24} />
@@ -67,7 +67,7 @@ const { data: stats } = useQuery({
         <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm flex items-center justify-between group hover:border-emerald-500/50 transition-colors">
           <div>
             <p className="text-xs font-bold text-[var(--muted-foreground)] uppercase tracking-wider mb-1">{isRtl ? 'نسبة الإدماج' : 'Insertion (6 mois)'}</p>
-            <p className="text-3xl font-black text-emerald-600">{stats?.employed_percentage || '92'}%</p>
+            <p className="text-3xl font-bold text-emerald-600">{stats?.employed_percentage || '92'}%</p>
           </div>
           <div className="w-12 h-12 bg-emerald-500/10 text-emerald-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
             <TrendingUp size={24} />
@@ -76,16 +76,16 @@ const { data: stats } = useQuery({
         <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm flex items-center justify-between group hover:border-blue-500/50 transition-colors">
           <div>
             <p className="text-xs font-bold text-[var(--muted-foreground)] uppercase tracking-wider mb-1">{isRtl ? 'القطاع الأول' : 'Top Secteur'}</p>
-            <p className="text-xl font-black text-[var(--foreground)]">{stats?.top_sectors?.[0]?.name || 'Audit & Conseil'}</p>
+            <p className="text-xl font-bold text-[var(--foreground)]">{stats?.top_sectors?.[0]?.name || 'Audit & Conseil'}</p>
           </div>
-          <div className="w-12 h-12 bg-blue-500/10 text-blue-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+          <div className="w-12 h-12 bg-blue-500/10 text-primary rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
             <Building2 size={24} />
           </div>
         </div>
         <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm flex items-center justify-between group hover:border-purple-500/50 transition-colors">
           <div>
             <p className="text-xs font-bold text-[var(--muted-foreground)] uppercase tracking-wider mb-1">{isRtl ? 'متوسط الراتب' : 'Salaire Moyen'}</p>
-            <p className="text-xl font-black text-[var(--foreground)]">{stats?.average_starting_salary || '12 000 MAD'}</p>
+            <p className="text-xl font-bold text-[var(--foreground)]">{stats?.average_starting_salary || '12 000 MAD'}</p>
           </div>
           <div className="w-12 h-12 bg-purple-500/10 text-purple-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
             <Briefcase size={24} />
@@ -94,7 +94,7 @@ const { data: stats } = useQuery({
       </div>
 
       {/* Directory Content */}
-      <div className="bg-[var(--card)] border border-[var(--border)] rounded-[2rem] shadow-sm overflow-hidden flex flex-col">
+      <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl shadow-sm overflow-hidden flex flex-col">
         <div className="p-4 border-b border-[var(--border)] flex flex-wrap gap-4 items-center justify-between bg-[color-mix(in srgb, var(--muted) 3000%, transparent)]">
           <h2 className="font-bold text-lg flex items-center gap-2 text-[var(--foreground)] px-2">
             <div className="p-2 bg-amber-500/10 rounded-lg text-amber-600"><GraduationCap size={18} /></div>

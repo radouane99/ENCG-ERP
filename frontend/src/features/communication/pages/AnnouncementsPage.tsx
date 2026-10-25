@@ -9,13 +9,13 @@ export default function AnnouncementsPage() {
   ])
 
   return (
-    <div className="space-y-6 animate-in p-6">
+    <div className="space-y-6 animate-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Annonces & Actualités</h1>
+          <h1 className="erp-page-title">Annonces & Actualités</h1>
           <p className="text-muted-foreground text-sm mt-1">Gérez le panneau d'affichage numérique de l'ENCG.</p>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg font-medium shadow-sm hover:bg-primary/90 text-sm">
+        <button className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium shadow-sm hover:bg-primary/90 text-sm">
           <Plus className="w-4 h-4" /> Nouvelle Annonce
         </button>
       </div>

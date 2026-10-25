@@ -77,7 +77,7 @@ export default function AdminStudentDetailPage() {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-[50vh]">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     )
   }
@@ -85,31 +85,31 @@ export default function AdminStudentDetailPage() {
   if (!student) return null;
 
   return (
-    <div className="space-y-8 animate-in p-6 max-w-[1200px] mx-auto">
+    <div className="space-y-8 animate-in max-w-[1200px] mx-auto">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center gap-4">
         <div className="w-12 h-12 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold text-xl shrink-0 shadow-sm">
           {getInitials(student.first_name)}
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-[#0f2863] italic">Dossier Étudiant</h1>
-          <p className="text-slate-500 mt-1 text-sm">Consultation du profil et des accès</p>
+          <h1 className="text-[#0f2863] italic erp-page-title">Dossier Étudiant</h1>
+          <p className="text-muted-foreground mt-1 text-sm">Consultation du profil et des accès</p>
         </div>
       </div>
 
-      <div className="bg-white border border-slate-100 rounded-3xl shadow-sm p-8 md:p-12 mt-8">
+      <div className="bg-card border border-border rounded-2xl shadow-sm p-8 md:p-12 mt-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-12">
           
           {/* IDENTITÉ */}
           <div className="space-y-6">
             <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Identité</h3>
             
-            <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6">
+            <div className="bg-muted/50 border border-border rounded-2xl p-6">
               <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Nom Complet</span>
-              <p className="font-bold text-slate-800 text-lg">{student.first_name} {student.last_name}</p>
+              <p className="font-bold text-foreground text-lg">{student.first_name} {student.last_name}</p>
             </div>
             
-            <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6">
+            <div className="bg-muted/50 border border-border rounded-2xl p-6">
               <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Adresse Email</span>
               <p className="font-bold text-[#0f2863] text-lg">{student.email}</p>
             </div>
@@ -119,14 +119,14 @@ export default function AdminStudentDetailPage() {
           <div className="space-y-6">
             <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Scolarité</h3>
             
-            <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6">
+            <div className="bg-muted/50 border border-border rounded-2xl p-6">
               <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Matricule / CNE</span>
-              <p className="font-bold text-slate-800 text-lg">{student.student_number} <span className="text-slate-400 text-sm font-normal">/ {student.cne}</span></p>
+              <p className="font-bold text-foreground text-lg">{student.student_number} <span className="text-slate-400 text-sm font-normal">/ {student.cne}</span></p>
             </div>
             
-            <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6">
+            <div className="bg-muted/50 border border-border rounded-2xl p-6">
               <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Filière Actuelle</span>
-              <p className="font-bold text-slate-800 text-lg">
+              <p className="font-bold text-foreground text-lg">
                 {student.latest_pathway?.filiere?.name 
                   ? `${student.latest_pathway.filiere.name} (S${student.latest_pathway.current_semester})` 
                   : 'Non affecté'}
@@ -151,9 +151,9 @@ export default function AdminStudentDetailPage() {
             {/* CONSEILLER PÉDAGOGIQUE IA */}
             <div className="pt-4">
               <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-4">Conseiller Pédagogique IA</h3>
-              <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-6 relative overflow-hidden">
+              <div className="bg-primary/5 border border-primary/20 rounded-2xl p-6 relative overflow-hidden">
                 <div className="absolute -right-4 -top-4 opacity-10">
-                  <Bot className="w-32 h-32 text-indigo-500" />
+                  <Bot className="w-32 h-32 text-primary" />
                 </div>
                 <div className="relative z-10">
                   <h4 className="text-[#0f2863] font-bold mb-2">Bilan Pédagogique Intelligent</h4>
@@ -170,8 +170,8 @@ export default function AdminStudentDetailPage() {
           </div>
         </div>
 
-        <div className="mt-12 flex items-center justify-end gap-4 border-t border-slate-100 pt-8">
-          <Link to="/admin/students" className="px-6 py-3 border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 transition-colors text-sm uppercase tracking-wide">
+        <div className="mt-12 flex items-center justify-end gap-4 border-t border-border pt-8">
+          <Link to="/admin/students" className="px-6 py-3 border border-border text-muted-foreground font-bold rounded-xl hover:bg-muted/50 transition-colors text-sm uppercase tracking-wide">
             Retour à la liste
           </Link>
           <button onClick={() => setIsEditing(true)} className="px-8 py-3 bg-[#f59e0b] text-white font-bold rounded-xl hover:bg-[#d97706] transition-colors text-sm uppercase tracking-wide shadow-md">

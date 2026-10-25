@@ -171,25 +171,25 @@ export default function ActivityLogsPage() {
     <div className="space-y-8 pb-12 animate-fade-in">
       
       {/* ── Premium Audit Hero Banner with CNDP & Law 09-08 Compliance ────────── */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-950 via-slate-900 to-indigo-950 p-6 md:p-10 text-white shadow-2xl border border-indigo-900/40">
+      <div className="relative overflow-hidden p-6 md:p-10 text-white border border-indigo-900/40 erp-page-banner">
         <div className="absolute -top-24 -end-24 w-80 h-80 rounded-full bg-indigo-500/15 blur-3xl pointer-events-none" />
         <div className="absolute -bottom-20 -start-20 w-72 h-72 rounded-full bg-emerald-500/15 blur-3xl pointer-events-none" />
 
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
           <div className="space-y-3 max-w-3xl">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-xs font-black uppercase tracking-wider backdrop-blur-md">
+              <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-xs font-bold uppercase tracking-wider backdrop-blur-md">
                 <Scale className="w-3.5 h-3.5 text-emerald-400" /> Conforme CNDP • Loi 09-08 Maroc
               </span>
-              <span className="px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 text-xs font-extrabold uppercase tracking-wider">
+              <span className="px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 text-xs font-bold uppercase tracking-wider">
                 Déclaration n° D-W-2025/ENCG-FES
               </span>
-              <span className="px-3 py-1 rounded-full bg-white/10 border border-white/15 text-slate-200 text-xs font-extrabold uppercase tracking-wider">
+              <span className="px-3 py-1 rounded-full bg-white/10 border border-white/15 text-slate-200 text-xs font-bold uppercase tracking-wider">
                 Conservation : 5 Ans
               </span>
             </div>
 
-            <h1 className="text-3xl md:text-4xl font-black tracking-tight text-white">
+            <h1 className="text-white erp-page-title">
               Journal d'Activité & Traçabilité Réglementaire CNDP
             </h1>
 
@@ -201,7 +201,7 @@ export default function ActivityLogsPage() {
           <div className="shrink-0 flex items-center gap-3 flex-wrap">
             <button
               onClick={handleExportCndpReport}
-              className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-3 rounded-2xl text-xs font-black transition-all shadow-lg active:scale-95 cursor-pointer"
+              className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-3 rounded-2xl text-xs font-bold transition-all shadow-lg active:scale-95 cursor-pointer"
             >
               <Download className="w-4 h-4" />
               <span>Rapport CNDP PDF</span>
@@ -209,7 +209,7 @@ export default function ActivityLogsPage() {
             <button
               onClick={() => refetch()}
               disabled={isLoading}
-              className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white border border-white/15 px-5 py-3 rounded-2xl text-xs font-extrabold backdrop-blur-md transition-all shadow-md active:scale-95 cursor-pointer disabled:opacity-50"
+              className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white border border-white/15 px-5 py-3 rounded-2xl text-xs font-bold backdrop-blur-md transition-all shadow-md active:scale-95 cursor-pointer disabled:opacity-50"
             >
               <RefreshCw className={`w-4 h-4 text-emerald-400 ${isLoading ? 'animate-spin' : ''}`} />
               <span>Actualiser</span>
@@ -220,58 +220,58 @@ export default function ActivityLogsPage() {
 
       {/* ── Security & CNDP KPI Stat Row ────────────────────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 shadow-sm border border-slate-200/80 dark:border-slate-800 flex items-center gap-4">
-          <div className="p-3.5 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">
+        <div className="bg-card dark:bg-card rounded-2xl p-5 shadow-sm border border-slate-200/80 dark:border-border flex items-center gap-4">
+          <div className="p-3.5 rounded-2xl bg-primary/5 dark:bg-indigo-950/60 text-primary dark:text-indigo-400">
             <Activity className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Total Traces d'Audit</p>
-            <p className="text-2xl font-black text-slate-900 dark:text-slate-100">{logs.length}</p>
+            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Traces d'Audit</p>
+            <p className="text-2xl font-bold text-foreground dark:text-foreground">{logs.length}</p>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 shadow-sm border border-slate-200/80 dark:border-slate-800 flex items-center gap-4">
+        <div className="bg-card dark:bg-card rounded-2xl p-5 shadow-sm border border-slate-200/80 dark:border-border flex items-center gap-4">
           <div className="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400">
             <Lock className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Protection Données (Loi 09-08)</p>
-            <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400">100% Conforme</p>
+            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Protection Données (Loi 09-08)</p>
+            <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">100% Conforme</p>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 shadow-sm border border-slate-200/80 dark:border-slate-800 flex items-center gap-4">
-          <div className="p-3.5 rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">
+        <div className="bg-card dark:bg-card rounded-2xl p-5 shadow-sm border border-slate-200/80 dark:border-border flex items-center gap-4">
+          <div className="p-3.5 rounded-2xl bg-primary/5 dark:bg-blue-950/60 text-primary dark:text-blue-400">
             <FileText className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Accès aux Données (PDR)</p>
-            <p className="text-2xl font-black text-slate-900 dark:text-slate-100">
+            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Accès aux Données (PDR)</p>
+            <p className="text-2xl font-bold text-foreground dark:text-foreground">
               {logs.filter(l => l.type === 'DATA_ACCESS' || l.type === 'DOCUMENT_REQUEST').length || 4}
             </p>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 shadow-sm border border-slate-200/80 dark:border-slate-800 flex items-center gap-4">
+        <div className="bg-card dark:bg-card rounded-2xl p-5 shadow-sm border border-slate-200/80 dark:border-border flex items-center gap-4">
           <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/60 text-amber-500">
             <Scale className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Registre CNDP</p>
-            <p className="text-2xl font-black text-amber-500">Certifié</p>
+            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Registre CNDP</p>
+            <p className="text-2xl font-bold text-amber-500">Certifié</p>
           </div>
         </div>
       </div>
 
       {/* ── Table & Filter Controls Card ────────────────────────────────────── */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-sm hover:shadow-md transition-all space-y-6">
+      <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl p-6 shadow-sm hover:shadow-md transition-all space-y-6">
         
         <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
           <div>
-            <h2 className="text-lg font-black text-slate-900 dark:text-slate-100 tracking-tight">
+            <h2 className="text-lg font-bold text-foreground dark:text-foreground tracking-tight">
               Registre des Traces d'Audit & Non-Répudiation
             </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+            <p className="text-xs text-muted-foreground dark:text-muted-foreground font-medium mt-0.5">
               Historique horodaté des connexions, consultations et modifications de données
             </p>
           </div>
@@ -286,12 +286,12 @@ export default function ActivityLogsPage() {
                 placeholder="Rechercher nom, email, IP..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="ps-9 pe-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none w-56"
+                className="ps-9 pe-3 py-1.5 bg-muted dark:bg-card border border-border dark:border-border text-xs font-bold text-foreground dark:text-foreground focus:ring-2 focus:ring-ring outline-none w-56 rounded-[var(--control-radius)]"
               />
             </div>
 
             {/* Date Filters */}
-            <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+            <div className="flex items-center gap-1 bg-muted dark:bg-card p-1 rounded-xl">
               {[
                 { key: 'ALL', label: 'Toutes dates' },
                 { key: 'TODAY', label: "Aujourd'hui" },
@@ -302,10 +302,10 @@ export default function ActivityLogsPage() {
                   key={df.key}
                   onClick={() => setDateFilter(df.key as any)}
                   className={cn(
-                    "px-2.5 py-1 text-xs font-black rounded-lg transition-all cursor-pointer flex items-center gap-1",
+                    "px-2.5 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center gap-1",
                     dateFilter === df.key
-                      ? "bg-indigo-600 text-white shadow-xs"
-                      : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                      ? "bg-primary text-primary-foreground shadow-xs"
+                      : "text-muted-foreground hover:text-foreground dark:hover:text-slate-200"
                   )}
                 >
                   <Calendar className="w-3 h-3" />
@@ -315,7 +315,7 @@ export default function ActivityLogsPage() {
             </div>
 
             {/* Type Filters */}
-            <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl flex-wrap">
+            <div className="flex items-center gap-1 bg-muted dark:bg-card p-1 rounded-xl flex-wrap">
               {[
                 { key: 'ALL', label: 'Tous' },
                 { key: 'GRADE_MUTATION', label: '📝 Notes' },
@@ -329,10 +329,10 @@ export default function ActivityLogsPage() {
                   key={tab.key}
                   onClick={() => setSelectedType(tab.key)}
                   className={cn(
-                    "px-2.5 py-1 text-xs font-black rounded-lg transition-all cursor-pointer",
+                    "px-2.5 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer",
                     selectedType === tab.key
-                      ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs"
-                      : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                      ? "bg-card dark:bg-card text-primary dark:text-indigo-400 shadow-xs"
+                      : "text-muted-foreground hover:text-foreground dark:hover:text-slate-200"
                   )}
                 >
                   {tab.label}
@@ -346,14 +346,14 @@ export default function ActivityLogsPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40">
-                <th className="p-4 text-xs font-black text-slate-400 uppercase tracking-wider">Identifiant / User</th>
-                <th className="p-4 text-xs font-black text-slate-400 uppercase tracking-wider">Action Réalisée</th>
-                <th className="p-4 text-xs font-black text-slate-400 uppercase tracking-wider">Type CNDP</th>
-                <th className="p-4 text-xs font-black text-slate-400 uppercase tracking-wider">Description Détillée</th>
-                <th className="p-4 text-xs font-black text-slate-400 uppercase tracking-wider">Adresse IP</th>
-                <th className="p-4 text-xs font-black text-slate-400 uppercase tracking-wider">Horodatage (Date)</th>
-                <th className="p-4 text-xs font-black text-slate-400 uppercase tracking-wider">Inspection</th>
+              <tr className="border-b border-border dark:border-border bg-slate-50/50 dark:bg-slate-800/40">
+                <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Identifiant / User</th>
+                <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Action Réalisée</th>
+                <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Type CNDP</th>
+                <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Description Détillée</th>
+                <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Adresse IP</th>
+                <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Horodatage (Date)</th>
+                <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Inspection</th>
               </tr>
             </thead>
             <tbody>
@@ -365,14 +365,14 @@ export default function ActivityLogsPage() {
                 </tr>
               ) : (
                 filteredLogs.map((log) => (
-                  <tr key={log.id} className="border-b border-slate-100 dark:border-slate-800/60 hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+                  <tr key={log.id} className="border-b border-border dark:border-slate-800/60 hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
                     <td className="p-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-black text-xs shadow-md">
+                        <div className="w-9 h-9 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center font-bold text-xs shadow-md">
                           {log.user?.charAt(0) ?? 'U'}
                         </div>
                         <div>
-                          <p className="font-extrabold text-sm text-slate-900 dark:text-slate-100">{log.user}</p>
+                          <p className="font-bold text-sm text-foreground dark:text-foreground">{log.user}</p>
                           {log.role && (
                             <p className="text-[10px] font-semibold text-slate-400">{log.role}</p>
                           )}
@@ -380,28 +380,28 @@ export default function ActivityLogsPage() {
                       </div>
                     </td>
                     <td className="p-4">
-                      <span className="px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                      <span className="px-2.5 py-1 rounded-xl text-[10px] font-bold uppercase tracking-wider bg-primary/5 dark:bg-indigo-950 text-primary dark:text-indigo-300 border border-primary/20 dark:border-primary">
                         {log.action}
                       </span>
                     </td>
                     <td className="p-4">
-                      <span className="font-mono text-xs font-black text-purple-600 dark:text-purple-400">
+                      <span className="font-mono text-xs font-bold text-purple-600 dark:text-purple-400">
                         {log.type}
                       </span>
                     </td>
-                    <td className="p-4 text-xs font-medium text-slate-600 dark:text-slate-300 max-w-xs truncate">
+                    <td className="p-4 text-xs font-medium text-muted-foreground dark:text-foreground max-w-xs truncate">
                       {log.description}
                     </td>
-                    <td className="p-4 font-mono text-xs text-slate-500 dark:text-slate-400 font-semibold">
+                    <td className="p-4 font-mono text-xs text-muted-foreground dark:text-muted-foreground font-semibold">
                       {log.ip}
                     </td>
-                    <td className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                    <td className="p-4 text-xs font-bold text-muted-foreground dark:text-muted-foreground whitespace-nowrap">
                       {log.date}
                     </td>
                     <td className="p-4">
                       <button
                         onClick={() => handleInspectLog(log)}
-                        className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-950 text-indigo-600 dark:text-indigo-400 text-xs font-extrabold transition-all cursor-pointer flex items-center gap-1.5"
+                        className="px-3 py-1.5 rounded-xl bg-muted dark:bg-card hover:bg-primary/5 dark:hover:bg-indigo-950 text-primary dark:text-indigo-400 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
                       >
                         <Eye className="w-3.5 h-3.5" />
                         <span>Inspecter</span>
@@ -416,16 +416,16 @@ export default function ActivityLogsPage() {
       </div>
 
       {/* ── CNDP Legal Footer Notice ────────────────────────────────────────── */}
-      <div className="rounded-3xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 flex flex-col md:flex-row items-center justify-between gap-4 text-slate-600 dark:text-slate-400 text-xs">
+      <div className="rounded-2xl bg-muted dark:bg-card border border-border dark:border-border p-6 flex flex-col md:flex-row items-center justify-between gap-4 text-muted-foreground dark:text-muted-foreground text-xs">
         <div className="flex items-center gap-3">
           <div className="p-2.5 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shrink-0">
             <Scale className="w-5 h-5" />
           </div>
           <p className="leading-relaxed font-semibold">
-            <strong className="text-slate-900 dark:text-slate-100">Conformité CNDP & Loi 09-08 :</strong> Ce journal d'audit garantit l'immutabilité et la non-répudiation des accès aux données personnelles de l'ENCG Fès. Les données sont conservées pendant la durée légale de 5 ans.
+            <strong className="text-foreground dark:text-foreground">Conformité CNDP & Loi 09-08 :</strong> Ce journal d'audit garantit l'immutabilité et la non-répudiation des accès aux données personnelles de l'ENCG Fès. Les données sont conservées pendant la durée légale de 5 ans.
           </p>
         </div>
-        <span className="px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-black text-[10px] uppercase tracking-wider shrink-0">
+        <span className="px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-bold text-[10px] uppercase tracking-wider shrink-0">
           CNDP Validé
         </span>
       </div>
@@ -433,24 +433,24 @@ export default function ActivityLogsPage() {
       {/* ── Interactive Audit Trace Inspector Modal Drawer ──────────────────── */}
       {activeInspectLog && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-2xl w-full p-6 shadow-2xl space-y-6 animate-in zoom-in-95 duration-200">
+          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl max-w-2xl w-full p-6 shadow-sm space-y-6 animate-in zoom-in-95 duration-200">
             
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+            <div className="flex items-center justify-between pb-4 border-b border-border dark:border-border">
               <div className="flex items-center gap-3">
-                <div className="p-3 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">
+                <div className="p-3 rounded-2xl bg-primary/5 dark:bg-indigo-950/60 text-primary dark:text-indigo-400">
                   <Terminal className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-black text-slate-900 dark:text-slate-100">
+                  <h3 className="text-lg font-bold text-foreground dark:text-foreground">
                     Inspecteur d'Événement Audit #{activeInspectLog.id}
                   </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Trace technique et horodatage certifié ISO-27001 & CNDP</p>
+                  <p className="text-xs text-muted-foreground dark:text-muted-foreground font-medium">Trace technique et horodatage certifié ISO-27001 & CNDP</p>
                 </div>
               </div>
 
               <button
                 onClick={() => setActiveInspectLog(null)}
-                className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 transition-colors cursor-pointer"
+                className="p-2 rounded-xl bg-muted dark:bg-card hover:bg-slate-200 dark:hover:bg-slate-700 text-muted-foreground transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -458,36 +458,36 @@ export default function ActivityLogsPage() {
 
             {/* Trace Details Grid */}
             <div className="grid grid-cols-2 gap-4 text-xs">
-              <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60 space-y-1">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Utilisateur / Acteur</p>
-                <p className="font-extrabold text-slate-900 dark:text-slate-100">{activeInspectLog.user}</p>
-                {activeInspectLog.email && <p className="text-slate-500">{activeInspectLog.email}</p>}
+              <div className="p-3.5 rounded-2xl bg-muted/50 dark:bg-slate-800/60 border border-border dark:border-slate-700/60 space-y-1">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Utilisateur / Acteur</p>
+                <p className="font-bold text-foreground dark:text-foreground">{activeInspectLog.user}</p>
+                {activeInspectLog.email && <p className="text-muted-foreground">{activeInspectLog.email}</p>}
               </div>
 
-              <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60 space-y-1">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Adresse IP & Client</p>
-                <p className="font-mono font-bold text-indigo-600 dark:text-indigo-400">{activeInspectLog.ip}</p>
+              <div className="p-3.5 rounded-2xl bg-muted/50 dark:bg-slate-800/60 border border-border dark:border-slate-700/60 space-y-1">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Adresse IP & Client</p>
+                <p className="font-mono font-bold text-primary dark:text-indigo-400">{activeInspectLog.ip}</p>
                 <p className="text-[10px] text-slate-400 truncate">{activeInspectLog.userAgent || 'Chrome/126.0'}</p>
               </div>
 
-              <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60 space-y-1">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Action & Categorie</p>
-                <p className="font-extrabold text-slate-900 dark:text-slate-100">{activeInspectLog.action}</p>
-                <span className="inline-block px-2 py-0.5 rounded text-[9px] font-mono font-black bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300">
+              <div className="p-3.5 rounded-2xl bg-muted/50 dark:bg-slate-800/60 border border-border dark:border-slate-700/60 space-y-1">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Action & Categorie</p>
+                <p className="font-bold text-foreground dark:text-foreground">{activeInspectLog.action}</p>
+                <span className="inline-block px-2 py-0.5 rounded text-[9px] font-mono font-bold bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300">
                   {activeInspectLog.type}
                 </span>
               </div>
 
-              <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60 space-y-1">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Horodatage Précis</p>
-                <p className="font-bold text-slate-900 dark:text-slate-100">{activeInspectLog.date}</p>
+              <div className="p-3.5 rounded-2xl bg-muted/50 dark:bg-slate-800/60 border border-border dark:border-slate-700/60 space-y-1">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Horodatage Précis</p>
+                <p className="font-bold text-foreground dark:text-foreground">{activeInspectLog.date}</p>
                 <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">✓ Signature Loi 09-08</p>
               </div>
             </div>
 
             {/* Description & Payload JSON */}
             <div className="space-y-2">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Payload JSON & Contexte</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Payload JSON & Contexte</p>
               <pre className="p-4 rounded-2xl bg-slate-950 text-emerald-400 font-mono text-[11px] leading-relaxed overflow-x-auto max-h-48 border border-slate-800">
                 {JSON.stringify(activeInspectLog.payload || { description: activeInspectLog.description, status: 'VERIFIED', cndp: 'CONFORME' }, null, 2)}
               </pre>
@@ -497,14 +497,14 @@ export default function ActivityLogsPage() {
             <div className="flex items-center justify-end gap-3 pt-2">
               <button
                 onClick={handleCopyPayload}
-                className="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-extrabold transition-all cursor-pointer flex items-center gap-1.5"
+                className="px-4 py-2.5 rounded-xl bg-muted dark:bg-card hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-foreground text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
               >
                 {copiedPayload ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
                 <span>{copiedPayload ? 'Copié' : 'Copier JSON'}</span>
               </button>
               <button
                 onClick={() => setActiveInspectLog(null)}
-                className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black transition-all shadow-md cursor-pointer"
+                className="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary text-primary-foreground text-xs font-bold transition-all shadow-md cursor-pointer"
               >
                 Fermer
               </button>

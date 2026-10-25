@@ -139,7 +139,7 @@ function GradeEntryGrid() {
               <AlertCircle className="w-3.5 h-3.5" /> Non enregistré — Réessayer
             </button>
           )}
-          <button aria-label="Recharger les notes" disabled={queueRef.current.dirty} onClick={fetchGrid} className="p-2 text-slate-400 hover:text-slate-600 bg-white rounded-lg border border-slate-200">
+          <button aria-label="Recharger les notes" disabled={queueRef.current.dirty} onClick={fetchGrid} className="p-2 text-slate-400 hover:text-muted-foreground bg-card rounded-lg border border-border">
             <RefreshCw className="w-4 h-4" />
           </button>
           </div>
@@ -151,9 +151,9 @@ function GradeEntryGrid() {
       {saveStatus === 'error' && <button type="button" className="min-h-11 rounded-lg border border-input px-3" onClick={() => {
         if (queueRef.current?.discard()) { setSaveStatus('idle'); void fetchGrid(); }
       }}>Abandonner les modifications locales et recharger</button>}
-      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-border shadow-sm overflow-x-auto">
+      <div className="bg-card dark:bg-card rounded-2xl border border-border shadow-sm overflow-x-auto">
         <table className="w-full text-sm text-left">
-          <thead className="text-[10px] text-slate-400 uppercase tracking-wider bg-slate-50 border-b border-slate-100">
+          <thead className="text-[10px] text-slate-400 uppercase tracking-wider bg-muted/50 border-b border-border">
             <tr>
               <th className="px-6 py-4 font-bold">Étudiant</th>
               <th className="px-6 py-4 font-bold w-32">Note CC (50%)</th>
@@ -166,12 +166,12 @@ function GradeEntryGrid() {
             {isLoading ? (
               <tr>
                 <td colSpan={5} className="px-6 py-12 text-center">
-                  <Loader2 className="w-6 h-6 text-blue-600 animate-spin mx-auto" />
+                  <Loader2 className="w-6 h-6 text-primary animate-spin mx-auto" />
                 </td>
               </tr>
             ) : students.map((st) => (
               <tr key={st.id} className="hover:bg-slate-50/50 transition-colors group">
-                <td className="px-6 py-4 font-bold text-slate-800">
+                <td className="px-6 py-4 font-bold text-foreground">
                   {st.first_name} {st.last_name}
                 </td>
                 <td className="px-6 py-3">
@@ -180,7 +180,7 @@ function GradeEntryGrid() {
                     min="0"
                     max="20"
                     step="0.25"
-                    className="w-full min-h-11 bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-slate-300"
+                    className="w-full min-h-11 bg-card border border-border px-3 py-2 text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-slate-300 rounded-[var(--control-radius)]"
                     placeholder="—"
                     value={st.cc ?? ''}
                     onChange={(e) => handleCellChange(st.id, 'cc', e.target.value)}
@@ -192,7 +192,7 @@ function GradeEntryGrid() {
                     min="0"
                     max="20"
                     step="0.25"
-                    className="w-full min-h-11 bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-slate-300"
+                    className="w-full min-h-11 bg-card border border-border px-3 py-2 text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-slate-300 rounded-[var(--control-radius)]"
                     placeholder="—"
                     value={st.exam ?? ''}
                     onChange={(e) => handleCellChange(st.id, 'exam', e.target.value)}
@@ -200,7 +200,7 @@ function GradeEntryGrid() {
                 </td>
                 <td className="px-6 py-4 text-center">
                   <span className={cn(
-                    "text-lg font-black",
+                    "text-lg font-bold",
                     st.average === null ? "text-slate-300" :
                     st.average >= 12 ? "text-emerald-600" :
                     st.average >= 10 ? "text-amber-500" : "text-red-500"
@@ -212,7 +212,7 @@ function GradeEntryGrid() {
                   {(() => {
                     const code = decisionFromScore(st.average)
                     return code ? <LmdBadge decision={code} score={st.average} /> : (
-                      <span className="inline-flex px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-500">
+                      <span className="inline-flex px-3 py-1 rounded-full text-xs font-bold bg-muted text-muted-foreground">
                         {st.status || '—'}
                       </span>
                     )

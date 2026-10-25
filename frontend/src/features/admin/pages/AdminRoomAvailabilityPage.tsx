@@ -98,16 +98,16 @@ export default function AdminRoomAvailabilityPage() {
   }, [date])
 
   return (
-    <div className="space-y-6 p-4 md:p-6 max-w-6xl mx-auto animate-in fade-in">
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950 to-[#001A4B] p-6 md:p-8 text-white shadow-xl">
+    <div className="space-y-6 max-w-6xl mx-auto animate-in fade-in">
+      <div className="relative overflow-hidden p-6 md:p-8 text-white erp-page-banner">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center">
               <CalendarCheck className="w-7 h-7 text-amber-300" />
             </div>
             <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-blue-200 mb-1">OCA / CSA / Enseignants</p>
-              <h1 className="text-2xl md:text-3xl font-black tracking-tight">Salles libres — extra & rattrapage</h1>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-blue-200 mb-1">OCA / CSA / Enseignants</p>
+              <h1 className="erp-page-title">Salles libres — extra & rattrapage</h1>
               <p className="text-sm text-blue-100/90 mt-1 max-w-xl">
                 Choisissez la date et le créneau ENCG : seules les salles vraiment libres (EDT + réservations) s’affichent.
               </p>
@@ -116,7 +116,7 @@ export default function AdminRoomAvailabilityPage() {
           {!isProfessor && (
             <Link
               to="/admin/reservations"
-              className="px-4 py-2.5 rounded-2xl bg-white/10 border border-white/20 text-xs font-black uppercase tracking-wide hover:bg-white/20"
+              className="px-4 py-2.5 rounded-2xl bg-white/10 border border-white/20 text-xs font-bold uppercase tracking-wide hover:bg-white/20"
             >
               Historique des réservations
             </Link>
@@ -124,24 +124,24 @@ export default function AdminRoomAvailabilityPage() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-5 md:p-6 space-y-5">
+      <div className="bg-card dark:bg-card rounded-2xl border border-border dark:border-border p-5 md:p-6 space-y-5">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <label className="space-y-1.5">
-            <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">Date</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Date</span>
             <input
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full rounded-2xl border border-slate-200 px-3 py-2.5 text-sm font-semibold"
+              className="w-full border border-border px-3 py-2.5 text-sm font-semibold rounded-[var(--control-radius)]"
             />
             <span className="text-xs text-slate-400 capitalize">{weekday}</span>
           </label>
           <label className="space-y-1.5">
-            <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">Créneau</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Créneau</span>
             <select
               value={slot}
               onChange={(e) => setSlot(Number(e.target.value))}
-              className="w-full rounded-2xl border border-slate-200 px-3 py-2.5 text-sm font-semibold"
+              className="w-full border border-border px-3 py-2.5 text-sm font-semibold rounded-[var(--control-radius)]"
             >
               {SLOTS.map((s, i) => (
                 <option key={s.start} value={i}>{s.label}</option>
@@ -149,21 +149,21 @@ export default function AdminRoomAvailabilityPage() {
             </select>
           </label>
           <label className="space-y-1.5">
-            <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">Effectif</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Effectif</span>
             <input
               type="number"
               min={1}
               value={headcount}
               onChange={(e) => setHeadcount(e.target.value)}
-              className="w-full rounded-2xl border border-slate-200 px-3 py-2.5 text-sm font-semibold"
+              className="w-full border border-border px-3 py-2.5 text-sm font-semibold rounded-[var(--control-radius)]"
             />
           </label>
           <label className="space-y-1.5">
-            <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">Type de salle</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Type de salle</span>
             <select
               value={kind}
               onChange={(e) => setKind(e.target.value as 'all' | 'td' | 'amphi')}
-              className="w-full rounded-2xl border border-slate-200 px-3 py-2.5 text-sm font-semibold"
+              className="w-full border border-border px-3 py-2.5 text-sm font-semibold rounded-[var(--control-radius)]"
             >
               <option value="all">Toutes (adaptées à l’effectif)</option>
               <option value="td">Salle TD / TP</option>
@@ -174,11 +174,11 @@ export default function AdminRoomAvailabilityPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <label className="space-y-1.5">
-            <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">Motif</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Motif</span>
             <select
               value={motif}
               onChange={(e) => setMotif(e.target.value)}
-              className="w-full rounded-2xl border border-slate-200 px-3 py-2.5 text-sm font-semibold"
+              className="w-full border border-border px-3 py-2.5 text-sm font-semibold rounded-[var(--control-radius)]"
             >
               {MOTIFS.map((m) => (
                 <option key={m.id} value={m.id}>{m.label}</option>
@@ -186,12 +186,12 @@ export default function AdminRoomAvailabilityPage() {
             </select>
           </label>
           <label className="md:col-span-2 space-y-1.5">
-            <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">Précision (module, groupe…)</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Précision (module, groupe…)</span>
             <input
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder="Ex. Rattrapage Macroéconomie — GFC S5 G1"
-              className="w-full rounded-2xl border border-slate-200 px-3 py-2.5 text-sm font-semibold"
+              className="w-full border border-border px-3 py-2.5 text-sm font-semibold rounded-[var(--control-radius)]"
             />
           </label>
         </div>
@@ -199,7 +199,7 @@ export default function AdminRoomAvailabilityPage() {
         <button
           type="button"
           onClick={() => { setEnabled(true); query.refetch() }}
-          className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-[#0f2863] text-white text-xs font-black uppercase tracking-wider"
+          className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-[#0f2863] text-white text-xs font-bold uppercase tracking-wider"
         >
           {query.isFetching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
           Voir les salles disponibles
@@ -208,20 +208,20 @@ export default function AdminRoomAvailabilityPage() {
 
       {enabled && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <section className="bg-white rounded-3xl border border-emerald-200 p-5 space-y-3">
-            <h2 className="text-sm font-black uppercase tracking-wide text-emerald-800 flex items-center gap-2">
+          <section className="bg-card rounded-2xl border border-emerald-200 p-5 space-y-3">
+            <h2 className="text-sm font-bold uppercase tracking-wide text-emerald-800 flex items-center gap-2">
               <DoorOpen className="w-4 h-4" /> Libres ({available.length})
             </h2>
             {query.isFetching && available.length === 0 ? (
-              <p className="text-sm text-slate-500">Recherche…</p>
+              <p className="text-sm text-muted-foreground">Recherche…</p>
             ) : available.length === 0 ? (
-              <p className="text-sm text-slate-500">Aucune salle libre pour ce créneau et cet effectif.</p>
+              <p className="text-sm text-muted-foreground">Aucune salle libre pour ce créneau et cet effectif.</p>
             ) : (
               available.map((room) => (
-                <div key={room.id} className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3">
+                <div key={room.id} className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-muted/50 px-4 py-3">
                   <div>
-                    <p className="font-black text-slate-900">{room.name}</p>
-                    <p className="text-xs text-slate-500">
+                    <p className="font-bold text-foreground">{room.name}</p>
+                    <p className="text-xs text-muted-foreground">
                       {room.code} · {room.capacity} places · {room.is_amphitheater ? 'Amphi' : room.type}
                     </p>
                   </div>
@@ -229,7 +229,7 @@ export default function AdminRoomAvailabilityPage() {
                     type="button"
                     disabled={bookMutation.isPending}
                     onClick={() => bookMutation.mutate(room)}
-                    className="shrink-0 px-3 py-2 rounded-xl bg-emerald-600 text-white text-[10px] font-black uppercase tracking-wide"
+                    className="shrink-0 px-3 py-2 rounded-xl bg-emerald-600 text-white text-[10px] font-bold uppercase tracking-wide"
                   >
                     {isProfessor ? 'Demander' : 'Attribuer'}
                   </button>
@@ -238,14 +238,14 @@ export default function AdminRoomAvailabilityPage() {
             )}
           </section>
 
-          <section className="bg-white rounded-3xl border border-slate-200 p-5 space-y-3">
-            <h2 className="text-sm font-black uppercase tracking-wide text-slate-600 flex items-center gap-2">
+          <section className="bg-card rounded-2xl border border-border p-5 space-y-3">
+            <h2 className="text-sm font-bold uppercase tracking-wide text-muted-foreground flex items-center gap-2">
               <Building2 className="w-4 h-4" /> Indisponibles ({occupied.length})
             </h2>
             {occupied.slice(0, 12).map((room) => (
-              <div key={room.id} className={cn('rounded-2xl border px-4 py-3', 'border-slate-100 bg-slate-50')}>
-                <p className="font-bold text-slate-800">{room.name}</p>
-                <p className="text-xs text-slate-500">{room.reason}</p>
+              <div key={room.id} className={cn('rounded-2xl border px-4 py-3', "border-border bg-muted/50")}>
+                <p className="font-bold text-foreground">{room.name}</p>
+                <p className="text-xs text-muted-foreground">{room.reason}</p>
               </div>
             ))}
             {occupied.length > 12 && (

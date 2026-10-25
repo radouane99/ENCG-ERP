@@ -203,7 +203,7 @@ export default function AdminDashboard() {
 
   return (
     <div dir={isRTL ? 'rtl' : 'ltr'} className={cn(
-      "min-h-screen text-slate-900 dark:text-slate-100 font-sans transition-colors duration-300 pb-16",
+      "min-h-screen text-foreground dark:text-foreground font-sans transition-colors duration-300 pb-16",
       isRTL && "font-serif"
     )}>
       <div className="w-full space-y-5">
@@ -240,7 +240,7 @@ export default function AdminDashboard() {
 
                 {/* Greeting */}
                 <div>
-                  <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white leading-[1.1]">
+                  <h1 className="text-white leading-[1.1] erp-page-title">
                     Bonjour, {userName.split(' ')[0]}{' '}
                     <span className="text-transparent bg-clip-text" style={{ backgroundImage: 'linear-gradient(135deg, #818cf8, #c084fc)' }}>
                       {userName.split(' ').slice(1).join(' ')}
@@ -256,19 +256,19 @@ export default function AdminDashboard() {
                   <div className="flex items-center gap-2 text-slate-300">
                     <Users size={14} className="text-indigo-400" />
                     <span className="text-sm font-bold">{studentsCount.toLocaleString()}</span>
-                    <span className="text-xs text-slate-500">étudiants</span>
+                    <span className="text-xs text-muted-foreground">étudiants</span>
                   </div>
                   <div className="w-px h-4 bg-slate-700" />
                   <div className="flex items-center gap-2 text-slate-300">
                     <GraduationCap size={14} className="text-emerald-400" />
                     <span className="text-sm font-bold">{professorsCount}</span>
-                    <span className="text-xs text-slate-500">enseignants</span>
+                    <span className="text-xs text-muted-foreground">enseignants</span>
                   </div>
                   <div className="w-px h-4 bg-slate-700" />
                   <div className="flex items-center gap-2 text-slate-300">
                     <Activity size={14} className="text-cyan-400" />
                     <span className="text-sm font-bold">{attendanceRate}%</span>
-                    <span className="text-xs text-slate-500">présence</span>
+                    <span className="text-xs text-muted-foreground">présence</span>
                   </div>
                   {atRiskCount > 0 && (
                     <>
@@ -276,7 +276,7 @@ export default function AdminDashboard() {
                       <div className="flex items-center gap-2 text-amber-400">
                         <ShieldAlert size={14} />
                         <span className="text-sm font-bold">{atRiskCount}</span>
-                        <span className="text-xs text-slate-500">à risque</span>
+                        <span className="text-xs text-muted-foreground">à risque</span>
                       </div>
                     </>
                   )}
@@ -333,7 +333,7 @@ export default function AdminDashboard() {
               <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center transition-transform duration-200 group-hover:scale-110", action.iconBg)}>
                 <action.icon size={20} />
               </div>
-              <span className="text-xs font-bold text-slate-700 dark:text-slate-300 text-center leading-snug">{action.label}</span>
+              <span className="text-xs font-bold text-slate-700 dark:text-foreground text-center leading-snug">{action.label}</span>
               <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-200" style={{ background: `radial-gradient(circle at 50% 0%, ${action.accent}10 0%, transparent 70%)` }} />
             </Link>
           ))}
@@ -342,16 +342,16 @@ export default function AdminDashboard() {
         {/* ══════════════════════════════════════════════════════════════
             FILTERS BAR
         ══════════════════════════════════════════════════════════════ */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800">
-          <div className="flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400">
-            <Filter className="w-3.5 h-3.5 text-indigo-500" />
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-card dark:bg-card border border-slate-200/80 dark:border-border">
+          <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground dark:text-muted-foreground">
+            <Filter className="w-3.5 h-3.5 text-primary" />
             <span>{t.filterLabel}</span>
           </div>
           <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
             <select
               value={selectedFiliere}
               onChange={(e) => setSelectedFiliere(e.target.value)}
-              className="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+              className="px-3 py-1.5 text-xs font-bold bg-muted/50 dark:bg-card border border-border dark:border-border text-foreground dark:text-foreground outline-none focus:ring-2 focus:ring-ring cursor-pointer rounded-[var(--control-radius)]"
             >
               <option value="all">{t.allFilieres}</option>
               {filiereDist.map((f: any) => (
@@ -361,7 +361,7 @@ export default function AdminDashboard() {
             <select
               value={selectedSemester}
               onChange={(e) => setSelectedSemester(e.target.value)}
-              className="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+              className="px-3 py-1.5 text-xs font-bold bg-muted/50 dark:bg-card border border-border dark:border-border text-foreground dark:text-foreground outline-none focus:ring-2 focus:ring-ring cursor-pointer rounded-[var(--control-radius)]"
             >
               <option value="all">{t.allSemesters}</option>
               {['S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8', 'S9', 'S10'].map(s => (
@@ -371,7 +371,7 @@ export default function AdminDashboard() {
             {(selectedFiliere !== 'all' || selectedSemester !== 'all') && (
               <button
                 onClick={() => { setSelectedFiliere('all'); setSelectedSemester('all'); }}
-                className="px-2.5 py-1.5 text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
+                className="px-2.5 py-1.5 text-[11px] font-bold text-primary dark:text-indigo-400 hover:underline cursor-pointer"
               >
                 {t.resetFilters}
               </button>
@@ -448,10 +448,10 @@ export default function AdminDashboard() {
                   <BrainCircuit size={16} className="text-purple-400 animate-pulse" />
                 </div>
                 <div>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-purple-400">{t.aiBadge}</span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-purple-400">{t.aiBadge}</span>
                 </div>
               </div>
-              <h2 className="text-lg font-black text-white">{t.aiHeadline}</h2>
+              <h2 className="text-lg font-bold text-white">{t.aiHeadline}</h2>
               <div className="space-y-1.5">
                 <div className="flex items-start gap-2 text-xs text-purple-200/80">
                   <span className="text-amber-400 shrink-0 mt-0.5">●</span>
@@ -482,14 +482,14 @@ export default function AdminDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
           {/* Guichet Express Widget */}
-          <div className="rounded-2xl p-6 flex flex-col bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800">
+          <div className="rounded-2xl p-6 flex flex-col bg-card dark:bg-card border border-slate-200/80 dark:border-border">
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400" style={{ border: '1px solid rgba(245,158,11,0.25)' }}>
                   <Stamp size={18} />
                 </div>
                 <div>
-                  <h3 className="text-sm font-black text-slate-900 dark:text-slate-100">{t.guichetTitle}</h3>
+                  <h3 className="text-sm font-bold text-foreground dark:text-foreground">{t.guichetTitle}</h3>
                   <p className="text-[11px] text-slate-400 font-medium">{t.guichetDesc}</p>
                 </div>
               </div>
@@ -512,12 +512,12 @@ export default function AdminDashboard() {
                   {pendingRequests.slice(0, 4).map((req: any) => (
                     <div
                       key={`${req.target_type}-${req.id}`}
-                      className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60 hover:border-indigo-300 dark:hover:border-indigo-700 transition-all"
+                      className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 dark:bg-slate-800/60 border border-border dark:border-slate-700/60 hover:border-primary/20 dark:hover:border-primary transition-all"
                     >
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-xs font-bold text-slate-900 dark:text-white truncate">{req.name}</span>
-                          <span className="px-1.5 py-0.5 text-[9px] font-bold rounded-md bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-300">{req.filiere}</span>
+                          <span className="text-xs font-bold text-foreground dark:text-white truncate">{req.name}</span>
+                          <span className="px-1.5 py-0.5 text-[9px] font-bold rounded-md bg-primary/10 dark:bg-indigo-950 text-primary dark:text-indigo-300">{req.filiere}</span>
                         </div>
                         <p className="text-[11px] text-slate-400 font-medium mt-0.5 truncate">{req.docType} · {req.time_ago}</p>
                       </div>
@@ -543,8 +543,8 @@ export default function AdminDashboard() {
               )}
             </div>
 
-            <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
-              <Link to="/admin/guichet" className="flex items-center justify-between text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:opacity-80 transition-opacity">
+            <div className="mt-4 pt-4 border-t border-border dark:border-border">
+              <Link to="/admin/guichet" className="flex items-center justify-between text-xs font-bold text-primary dark:text-indigo-400 hover:opacity-80 transition-opacity">
                 <span>{t.viewAllGuichet}</span>
                 <ChevronRight size={14} />
               </Link>
@@ -552,14 +552,14 @@ export default function AdminDashboard() {
           </div>
 
           {/* Exam Readiness Widget */}
-          <div className="rounded-2xl p-6 flex flex-col bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800">
+          <div className="rounded-2xl p-6 flex flex-col bg-card dark:bg-card border border-slate-200/80 dark:border-border">
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400" style={{ border: '1px solid rgba(168,85,247,0.25)' }}>
                   <Calendar size={18} />
                 </div>
                 <div>
-                  <h3 className="text-sm font-black text-slate-900 dark:text-slate-100">{t.examTitle}</h3>
+                  <h3 className="text-sm font-bold text-foreground dark:text-foreground">{t.examTitle}</h3>
                   <p className="text-[11px] text-slate-400 font-medium truncate max-w-[180px]">{examStats.sessionTitle}</p>
                 </div>
               </div>
@@ -572,10 +572,10 @@ export default function AdminDashboard() {
               {/* Room Coverage */}
               <div className="p-4 rounded-xl" style={{ background: 'rgba(168,85,247,0.05)', border: '1px solid rgba(168,85,247,0.15)' }}>
                 <div className="flex justify-between items-center text-xs font-bold mb-3">
-                  <span className="text-slate-700 dark:text-slate-300">{t.examRoomCoverage}</span>
-                  <span className="text-purple-600 dark:text-purple-400 font-black">{examStats.validRooms}/{examStats.totalRooms} Salles</span>
+                  <span className="text-slate-700 dark:text-foreground">{t.examRoomCoverage}</span>
+                  <span className="text-purple-600 dark:text-purple-400 font-bold">{examStats.validRooms}/{examStats.totalRooms} Salles</span>
                 </div>
-                <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                <div className="w-full h-2 rounded-full bg-muted dark:bg-card overflow-hidden">
                   <div
                     className="h-full rounded-full transition-all duration-700"
                     style={{ width: `${(examStats.validRooms / Math.max(examStats.totalRooms, 1)) * 100}%`, background: 'linear-gradient(90deg, #7c3aed, #6366f1)' }}
@@ -586,10 +586,10 @@ export default function AdminDashboard() {
               {/* Supervisor Coverage */}
               <div className="p-4 rounded-xl" style={{ background: 'rgba(16,185,129,0.05)', border: '1px solid rgba(16,185,129,0.15)' }}>
                 <div className="flex justify-between items-center text-xs font-bold mb-3">
-                  <span className="text-slate-700 dark:text-slate-300">{t.examSupervisorCoverage}</span>
-                  <span className="text-emerald-600 dark:text-emerald-400 font-black">{examStats.supervisorCoverage}% Assignés</span>
+                  <span className="text-slate-700 dark:text-foreground">{t.examSupervisorCoverage}</span>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-bold">{examStats.supervisorCoverage}% Assignés</span>
                 </div>
-                <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                <div className="w-full h-2 rounded-full bg-muted dark:bg-card overflow-hidden">
                   <div
                     className="h-full rounded-full transition-all duration-700"
                     style={{ width: `${examStats.supervisorCoverage}%`, background: 'linear-gradient(90deg, #10b981, #06b6d4)' }}
@@ -598,13 +598,13 @@ export default function AdminDashboard() {
               </div>
 
               {/* Exam count badge */}
-              <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/50">
-                <span className="text-xs font-bold text-slate-600 dark:text-slate-300">{t.upcomingExams}</span>
-                <span className="text-lg font-black text-purple-600 dark:text-purple-400">{examStats.upcomingCount}</span>
+              <div className="flex items-center justify-between p-3 rounded-xl bg-muted/50 dark:bg-slate-800/50 border border-border dark:border-slate-700/50">
+                <span className="text-xs font-bold text-muted-foreground dark:text-foreground">{t.upcomingExams}</span>
+                <span className="text-lg font-bold text-purple-600 dark:text-purple-400">{examStats.upcomingCount}</span>
               </div>
             </div>
 
-            <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+            <div className="mt-4 pt-4 border-t border-border dark:border-border">
               <Link to="/admin/exams" className="flex items-center justify-between text-xs font-bold text-purple-600 dark:text-purple-400 hover:opacity-80 transition-opacity">
                 <span>{t.viewExams}</span>
                 <ChevronRight size={14} />
@@ -616,17 +616,17 @@ export default function AdminDashboard() {
         {/* ══════════════════════════════════════════════════════════════
             ANALYTICS SECTION
         ══════════════════════════════════════════════════════════════ */}
-        <div className="rounded-2xl p-6 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 space-y-5">
+        <div className="rounded-2xl p-6 bg-card dark:bg-card border border-slate-200/80 dark:border-border space-y-5">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h3 className="text-base font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                <BarChart3 size={18} className="text-indigo-500" />
+              <h3 className="text-base font-bold text-foreground dark:text-foreground flex items-center gap-2">
+                <BarChart3 size={18} className="text-primary" />
                 {t.analyticsTitle}
               </h3>
               <p className="text-[11px] text-slate-400 font-medium mt-0.5">Métriques en temps réel · Base de données ENCG</p>
             </div>
 
-            <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 self-start sm:self-auto">
+            <div className="flex items-center gap-1 p-1 rounded-xl bg-muted dark:bg-card border border-border dark:border-border self-start sm:self-auto">
               {(['enrollment', 'attendance', 'filiere'] as const).map((tab) => (
                 <button
                   key={tab}
@@ -634,7 +634,7 @@ export default function AdminDashboard() {
                   className={cn(
                     "px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer",
                     chartTab === tab
-                      ? "bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm"
+                      ? "bg-card dark:bg-slate-700 text-primary dark:text-indigo-400 shadow-sm"
                       : "text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
                   )}
                 >
@@ -656,9 +656,9 @@ export default function AdminDashboard() {
                   { label: 'Taux de Rétention', value: '98.4%', color: 'text-emerald-600 dark:text-emerald-400' },
                   { label: 'Croissance', value: '+4.2%', color: 'text-indigo-600 dark:text-indigo-400' },
                 ].map(({ label, value, color }) => (
-                  <div key={label} className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/50 text-center">
+                  <div key={label} className="p-3 rounded-xl bg-muted/50 dark:bg-slate-800/50 border border-border dark:border-slate-700/50 text-center">
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{label}</p>
-                    <p className={cn("text-xl font-black mt-0.5", color)}>{value}</p>
+                    <p className={cn("text-xl font-bold mt-0.5", color)}>{value}</p>
                   </div>
                 ))}
               </div>
@@ -670,11 +670,11 @@ export default function AdminDashboard() {
               <BarChartSVG data={attendanceByWeek} />
               <div className="grid grid-cols-2 gap-3">
                 <div className="p-4 rounded-xl text-center" style={{ background: 'rgba(16,185,129,0.05)', border: '1px solid rgba(16,185,129,0.15)' }}>
-                  <p className="text-3xl font-black text-emerald-600 dark:text-emerald-400">{attendanceRate}%</p>
+                  <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">{attendanceRate}%</p>
                   <p className="text-[11px] text-slate-400 font-bold mt-0.5">Moyenne Campus</p>
                 </div>
                 <div className="p-4 rounded-xl text-center" style={{ background: 'rgba(245,158,11,0.05)', border: '1px solid rgba(245,158,11,0.15)' }}>
-                  <p className="text-3xl font-black text-amber-600 dark:text-amber-400">{atRiskCount}</p>
+                  <p className="text-3xl font-bold text-amber-600 dark:text-amber-400">{atRiskCount}</p>
                   <p className="text-[11px] text-slate-400 font-bold mt-0.5">Étudiants à Risque</p>
                 </div>
               </div>
@@ -686,14 +686,14 @@ export default function AdminDashboard() {
               <DonutChart data={filiereDist} />
               <div className="space-y-2">
                 {filiereDist.map((f: any) => (
-                  <div key={f.name} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/50 text-xs font-bold">
+                  <div key={f.name} className="flex items-center justify-between p-3 rounded-xl bg-muted/50 dark:bg-slate-800/50 border border-border dark:border-slate-700/50 text-xs font-bold">
                     <div className="flex items-center gap-2.5">
                       <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: f.color }} />
-                      <span className="text-slate-700 dark:text-slate-200">{f.name}</span>
+                      <span className="text-slate-700 dark:text-foreground">{f.name}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-slate-400">({f.count})</span>
-                      <span className="text-slate-900 dark:text-white font-black">{f.value}%</span>
+                      <span className="text-foreground dark:text-white font-bold">{f.value}%</span>
                     </div>
                   </div>
                 ))}
@@ -708,9 +708,9 @@ export default function AdminDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
           {/* Digital Trust Panel */}
-          <div className="rounded-2xl p-5 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 space-y-4">
+          <div className="rounded-2xl p-5 bg-card dark:bg-card border border-slate-200/80 dark:border-border space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
+              <h3 className="text-sm font-bold text-foreground dark:text-foreground flex items-center gap-2">
                 <ShieldCheck size={16} className="text-emerald-500" />
                 {t.trustTitle}
               </h3>
@@ -722,18 +722,18 @@ export default function AdminDashboard() {
 
             <div className="p-3.5 rounded-xl space-y-2.5" style={{ background: 'rgba(16,185,129,0.04)', border: '1px solid rgba(16,185,129,0.12)' }}>
               <div className="flex justify-between items-center">
-                <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
+                <span className="text-[11px] font-bold text-muted-foreground dark:text-foreground flex items-center gap-1.5">
                   <Lock size={12} className="text-emerald-500" />
                   {t.blockchainPV}
                 </span>
-                <span className="text-[11px] font-black text-emerald-600 dark:text-emerald-400">Actif</span>
+                <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">Actif</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
-                  <Link2 size={12} className="text-blue-500" />
+                <span className="text-[11px] font-bold text-muted-foreground dark:text-foreground flex items-center gap-1.5">
+                  <Link2 size={12} className="text-primary" />
                   {totalSignedDocs} {t.signedDocs}
                 </span>
-                <span className="text-[11px] font-black text-blue-600 dark:text-blue-400">Certifié</span>
+                <span className="text-[11px] font-bold text-primary dark:text-blue-400">Certifié</span>
               </div>
             </div>
 
@@ -743,19 +743,19 @@ export default function AdminDashboard() {
                 { label: t.upcomingExams, value: examStats.upcomingCount, color: 'text-purple-600 dark:text-purple-400', icon: <Calendar size={12} /> },
                 { label: t.averageGrade, value: `${avgGrade}/20`, color: 'text-emerald-600 dark:text-emerald-400', icon: <Award size={12} /> },
               ].map(({ label, value, color, icon }) => (
-                <div key={label} className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/50 text-xs font-bold">
-                  <span className="text-slate-500 dark:text-slate-400 flex items-center gap-1.5">{icon}{label}</span>
-                  <span className={cn("font-black", color)}>{value}</span>
+                <div key={label} className="flex items-center justify-between p-2.5 rounded-xl bg-muted/50 dark:bg-slate-800/50 border border-border dark:border-slate-700/50 text-xs font-bold">
+                  <span className="text-muted-foreground dark:text-muted-foreground flex items-center gap-1.5">{icon}{label}</span>
+                  <span className={cn("font-bold", color)}>{value}</span>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Live Activity Feed */}
-          <div className="rounded-2xl p-5 flex flex-col lg:col-span-2 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800">
+          <div className="rounded-2xl p-5 flex flex-col lg:col-span-2 bg-card dark:bg-card border border-slate-200/80 dark:border-border">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-black text-slate-900 dark:text-slate-100">{t.activityTitle}</h3>
-              <div className="flex items-center gap-1.5 text-[10px] font-black text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-full border border-emerald-200 dark:border-emerald-800">
+              <h3 className="text-sm font-bold text-foreground dark:text-foreground">{t.activityTitle}</h3>
+              <div className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-full border border-emerald-200 dark:border-emerald-800">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 <span>{t.liveBadge}</span>
               </div>
@@ -774,13 +774,13 @@ export default function AdminDashboard() {
                   return (
                     <div
                       key={i}
-                      className="flex items-start gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                      className="flex items-start gap-3 p-3 rounded-xl hover:bg-muted/50 dark:hover:bg-slate-800/50 transition-colors"
                     >
-                      <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center shrink-0 bg-slate-100 dark:bg-slate-800", iconColor)}>
+                      <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center shrink-0 bg-muted dark:bg-card", iconColor)}>
                         <Icon size={14} />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-xs text-slate-800 dark:text-slate-200 font-bold leading-snug">{a.message}</p>
+                        <p className="text-xs text-foreground dark:text-foreground font-bold leading-snug">{a.message}</p>
                         <p className="text-[10px] text-slate-400 font-medium mt-0.5">{a.time}</p>
                       </div>
                     </div>
@@ -813,7 +813,7 @@ function KPICard({
   progress?: number;
 }) {
   return (
-    <div className="relative overflow-hidden rounded-2xl p-5 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 group">
+    <div className="relative overflow-hidden rounded-2xl p-5 bg-card dark:bg-card border border-slate-200/80 dark:border-border hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 group">
       {/* Accent line at top */}
       <div className="absolute top-0 left-0 right-0 h-0.5 rounded-t-2xl" style={{ background: `linear-gradient(90deg, ${accent}80, ${accent}00)` }} />
 
@@ -825,13 +825,13 @@ function KPICard({
       </div>
 
       <div className="mt-4 space-y-0.5">
-        <div className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">{value}</div>
-        <div className="text-xs font-bold text-slate-700 dark:text-slate-300">{label}</div>
+        <div className="text-2xl font-bold tracking-tight text-foreground dark:text-white">{value}</div>
+        <div className="text-xs font-bold text-slate-700 dark:text-foreground">{label}</div>
         <p className="text-[11px] text-slate-400 font-medium truncate">{sublabel}</p>
       </div>
 
       {progress !== undefined && (
-        <div className="mt-3 w-full h-1.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+        <div className="mt-3 w-full h-1.5 rounded-full bg-muted dark:bg-card overflow-hidden">
           <div className="h-full rounded-full transition-all duration-700" style={{ width: `${progress}%`, background: accent }} />
         </div>
       )}
@@ -925,7 +925,7 @@ function DonutChart({ data }: { data: { name: string; value: number; color: stri
         })}
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
-        <span className="text-xl font-black text-slate-800 dark:text-white">{valid.reduce((s, d) => s + d.value, 0) || 0}%</span>
+        <span className="text-xl font-bold text-foreground dark:text-white">{valid.reduce((s, d) => s + d.value, 0) || 0}%</span>
         <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Effectifs</span>
       </div>
     </div>

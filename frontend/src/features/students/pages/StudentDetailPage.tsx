@@ -30,12 +30,12 @@ export default function StudentDetailPage() {
   if (!student) return null
 
   return (
-    <div className="space-y-6 animate-in p-6 max-w-5xl mx-auto">
+    <div className="space-y-6 animate-in max-w-5xl mx-auto">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <button onClick={() => navigate('/students')} className="p-2 bg-card border rounded-lg hover:bg-muted"><ArrowLeft className="w-5 h-5" /></button>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">{student.first_name} {student.last_name}</h1>
+            <h1 className="text-foreground erp-page-title">{student.first_name} {student.last_name}</h1>
             <p className="text-sm text-muted-foreground mt-1 flex items-center gap-2">
               <span className="font-mono text-primary font-medium">{student.student_number}</span>
               •
@@ -47,7 +47,7 @@ export default function StudentDetailPage() {
            <button className="px-4 py-2 border rounded-lg font-medium hover:bg-muted text-sm flex items-center gap-2">
              <Edit2 className="w-4 h-4" /> Modifier
            </button>
-           <button className="px-4 py-2 bg-primary text-white rounded-lg font-medium shadow-sm hover:bg-primary/90 text-sm flex items-center gap-2">
+           <button className="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium shadow-sm hover:bg-primary/90 text-sm flex items-center gap-2">
              <FileText className="w-4 h-4" /> Attestation
            </button>
         </div>

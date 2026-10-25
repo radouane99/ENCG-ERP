@@ -77,7 +77,7 @@ export default function DeliberationJuryPage() {
   const { deliberation, modules, matrix } = data;
 
   return (
-    <div className="space-y-6 p-6 animate-in pb-24">
+    <div className="space-y-6 animate-in pb-24">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
@@ -85,7 +85,7 @@ export default function DeliberationJuryPage() {
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Jury de Délibération</h1>
+            <h1 className="erp-page-title">Jury de Délibération</h1>
             <p className="text-muted-foreground text-sm mt-1">
               {deliberation?.filiere?.name} - {deliberation?.semester?.name} | {deliberation?.academic_year?.name}
             </p>
@@ -101,8 +101,8 @@ export default function DeliberationJuryPage() {
         </div>
       </div>
 
-      <div data-testid="ai-jury-brief" className={cn('rounded-xl border p-4', sealed ? 'opacity-50' : 'bg-indigo-50/80 border-indigo-100')}>
-        <p className="text-xs font-bold uppercase tracking-wider text-indigo-700">Brief IA (lecture seule)</p>
+      <div data-testid="ai-jury-brief" className={cn('rounded-xl border p-4', sealed ? 'opacity-50' : "bg-indigo-50/80 border-primary/20")}>
+        <p className="text-xs font-bold uppercase tracking-wider text-primary">Brief IA (lecture seule)</p>
         {sealed ? (
           <p className="text-sm mt-1">PV scellé — le brief IA est désactivé.</p>
         ) : (
@@ -193,7 +193,7 @@ export default function DeliberationJuryPage() {
       {/* Rachat Modal */}
       {isRachatModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-card w-full max-w-md rounded-2xl shadow-xl overflow-hidden animate-in zoom-in-95 duration-200">
+          <div className="bg-card w-full max-w-md rounded-2xl shadow-sm overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between p-5 border-b">
               <h3 className="font-bold text-lg flex items-center gap-2">
                 <AlertTriangle className="w-5 h-5 text-amber-500" />
@@ -219,7 +219,7 @@ export default function DeliberationJuryPage() {
                   max="20"
                   value={rachatData.newGrade}
                   onChange={(e) => setRachatData({...rachatData, newGrade: parseFloat(e.target.value)})}
-                  className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:outline-none"
+                  className="w-full border px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:outline-none rounded-[var(--control-radius)]"
                 />
                 <p className="text-[10px] text-muted-foreground">La note sera mise à jour dans le système et tracée.</p>
               </div>

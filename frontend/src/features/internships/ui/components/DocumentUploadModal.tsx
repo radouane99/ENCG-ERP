@@ -33,12 +33,12 @@ export const DocumentUploadModal: React.FC<Props> = ({ internshipId, isOpen, onC
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white p-6 rounded-lg w-96">
+      <div className="bg-card p-6 rounded-lg w-96">
         <h2 className="text-xl font-bold mb-4">Uploader un document</h2>
         <div className="mb-4">
           <label className="block text-sm font-medium mb-1">Type de document</label>
           <select 
-            className="w-full border p-2 rounded"
+            className="w-full border p-2 rounded rounded-[var(--control-radius)]"
             value={docType}
             onChange={(e) => setDocType(e.target.value)}
           >

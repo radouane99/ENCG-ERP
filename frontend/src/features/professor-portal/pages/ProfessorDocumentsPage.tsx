@@ -191,7 +191,7 @@ export default function ProfessorDocumentsPage() {
       case 'bordereau_decompte_vacation':
         return <Coins className="w-6 h-6 text-emerald-500" />;
       case 'attestation_igr_vacation':
-        return <Coins className="w-6 h-6 text-indigo-500" />;
+        return <Coins className="w-6 h-6 text-primary" />;
       case 'attestation_salaire':
         return <Coins className="w-6 h-6 text-amber-500" />;
       case 'autorisation_absence':
@@ -199,23 +199,23 @@ export default function ProfessorDocumentsPage() {
       case 'attestation_service_fait':
         return <ShieldCheck className="w-6 h-6 text-emerald-500" />;
       default:
-        return <FileText className="w-6 h-6 text-blue-500" />;
+        return <FileText className="w-6 h-6 text-primary" />;
     }
   };
 
   return (
-    <div className="space-y-8 p-4 md:p-8 max-w-[1700px] mx-auto font-sans animate-in fade-in pb-28">
+    <div className="space-y-8 max-w-[1700px] mx-auto font-sans animate-in fade-in pb-28">
       
       {/* Role Detection Header Pill */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-100 dark:bg-slate-800/60 p-2.5 rounded-2xl border border-slate-200 dark:border-slate-700/60">
-        <div className="flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-300 pl-2">
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-muted dark:bg-slate-800/60 p-2.5 rounded-2xl border border-border dark:border-slate-700/60">
+        <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground dark:text-foreground pl-2">
           <GraduationCap className="w-4 h-4 text-[#001A4B] dark:text-blue-400" />
           <span>Statut Enseignant Détecté :</span>
           <span className={cn(
-            "px-2.5 py-0.5 rounded-lg text-[11px] font-black uppercase tracking-wider",
+            "px-2.5 py-0.5 rounded-lg text-[11px] font-bold uppercase tracking-wider",
             isVacataire 
               ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300/60" 
-              : "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 border border-blue-300/60"
+              : "bg-primary/10 text-primary dark:bg-blue-950 dark:text-blue-300 border border-blue-300/60"
           )}>
             {isVacataire ? "Enseignant Vacataire (Contrat de Vacation)" : "Professeur Permanent (Statutaire MESRSFC)"}
           </span>
@@ -227,7 +227,7 @@ export default function ProfessorDocumentsPage() {
 
       {/* Hero Header Banner */}
       <div className={cn(
-        "rounded-3xl p-8 text-white shadow-xl border flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden",
+        "rounded-2xl p-8 text-white shadow-sm border flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden",
         isVacataire
           ? "bg-gradient-to-r from-slate-950 via-slate-900 to-[#1e1b4b] border-amber-500/30"
           : "bg-gradient-to-r from-slate-900 via-indigo-950 to-[#001A4B] border-indigo-900/60"
@@ -237,21 +237,21 @@ export default function ProfessorDocumentsPage() {
           <div className={cn(
             "w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg shrink-0",
             isVacataire 
-              ? "bg-gradient-to-br from-amber-500 to-amber-600 shadow-amber-500/30 text-slate-950 font-black" 
-              : "bg-gradient-to-br from-indigo-500 to-blue-600 shadow-indigo-500/30 text-white font-black"
+              ? "bg-gradient-to-br from-amber-500 to-amber-600 shadow-amber-500/30 text-slate-950 font-bold"
+              : "bg-gradient-to-br from-indigo-500 to-blue-600 shadow-indigo-500/30 text-white font-bold"
           )}>
             <Stamp className="w-7 h-7" />
           </div>
           <div>
             <span className={cn(
-              "px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest inline-flex items-center gap-1 mb-1 border",
+              "px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest inline-flex items-center gap-1 mb-1 border",
               isVacataire 
                 ? "bg-amber-500/20 text-amber-300 border-amber-400/30" 
                 : "bg-indigo-500/20 text-indigo-200 border border-indigo-400/30"
             )}>
               <Sparkles className="w-3 h-3 text-amber-400" /> Parapheur Électronique & Guichet RH
             </span>
-            <h1 className="text-2xl md:text-3xl font-black tracking-tight">
+            <h1 className="erp-page-title">
               {isVacataire 
                 ? "Attestations de Vacation & Décomptes d'Indemnités" 
                 : "Demandes de Documents & Ordres de Mission"}
@@ -266,7 +266,7 @@ export default function ProfessorDocumentsPage() {
           <button
             onClick={() => handleOpenRequestModal(isVacataire ? 'attestation_vacation' : 'attestation_travail')}
             className={cn(
-              "px-5 py-3 font-black rounded-xl text-xs uppercase tracking-wider transition-all shadow-lg cursor-pointer flex items-center gap-2",
+              "px-5 py-3 font-bold rounded-xl text-xs uppercase tracking-wider transition-all shadow-lg cursor-pointer flex items-center gap-2",
               isVacataire
                 ? "bg-amber-400 hover:bg-amber-300 text-[#001A4B] shadow-amber-400/20"
                 : "bg-emerald-500 hover:bg-emerald-400 text-white shadow-emerald-500/20"
@@ -297,12 +297,12 @@ export default function ProfessorDocumentsPage() {
 
       {/* Regulatory Context Banner for Vacataires */}
       {isVacataire && (
-        <div className="p-5 bg-amber-50/80 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/60 rounded-3xl flex items-start gap-4 text-xs animate-in fade-in">
+        <div className="p-5 bg-amber-50/80 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/60 rounded-2xl flex items-start gap-4 text-xs animate-in fade-in">
           <div className="w-10 h-10 rounded-2xl bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 flex items-center justify-center shrink-0 mt-0.5 font-bold">
             <AlertCircle className="w-5 h-5" />
           </div>
           <div className="space-y-1">
-            <h3 className="font-black text-sm text-amber-900 dark:text-amber-200">
+            <h3 className="font-bold text-sm text-amber-900 dark:text-amber-200">
               Réglementation Académique MESRSFC — Spécificité Enseignant Vacataire
             </h3>
             <p className="text-amber-800 dark:text-amber-300 leading-relaxed font-medium">
@@ -314,21 +314,21 @@ export default function ProfessorDocumentsPage() {
 
       {/* Mon Dossier Administratif RH & Conformité Paiement */}
       {administrativeDossier && (
-        <div className="bg-card border border-border rounded-3xl p-6 md:p-7 shadow-sm space-y-5 animate-in fade-in">
+        <div className="bg-card border border-border rounded-2xl p-6 md:p-7 shadow-sm space-y-5 animate-in fade-in">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 text-[#001A4B] dark:text-blue-400 flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 rounded-2xl bg-primary/5 dark:bg-indigo-950/50 text-[#001A4B] dark:text-blue-400 flex items-center justify-center shrink-0">
                 <ShieldCheck className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="font-extrabold text-sm md:text-base text-foreground flex items-center gap-2">
+                <h3 className="font-bold text-sm md:text-base text-foreground flex items-center gap-2">
                   Dossier Administratif RH &amp; Conformité
                   {administrativeDossier.is_complete ? (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300/60">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300/60">
                       <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" /> Conforme
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300/60">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300/60">
                       <Clock className="w-3 h-3 text-amber-600" /> En Révision
                     </span>
                   )}
@@ -342,7 +342,7 @@ export default function ProfessorDocumentsPage() {
             {isVacataire && (
               <button
                 onClick={handleDownloadContract}
-                className="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:opacity-95 text-slate-950 font-black rounded-xl text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer flex items-center gap-2 shrink-0 self-start sm:self-auto"
+                className="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:opacity-95 text-slate-950 font-bold rounded-xl text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer flex items-center gap-2 shrink-0 self-start sm:self-auto"
               >
                 <Download className="w-4 h-4" /> Contrat d'Engagement (PDF)
               </button>
@@ -351,24 +351,24 @@ export default function ProfessorDocumentsPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* RIB Bancaire */}
-            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/80 dark:border-slate-800 space-y-2">
+            <div className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-900/50 border border-slate-200/80 dark:border-border space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">RIB Bancaire Paiement</span>
-                <CreditCard className="w-4 h-4 text-indigo-500" />
+                <CreditCard className="w-4 h-4 text-primary" />
               </div>
               <div className="font-mono text-xs font-bold text-foreground">
                 {administrativeDossier.rib_number}
               </div>
               <div className="flex items-center justify-between text-[11px]">
                 <span className="text-muted-foreground font-medium truncate max-w-[150px]">{administrativeDossier.bank_name}</span>
-                <span className="text-emerald-600 dark:text-emerald-400 font-extrabold flex items-center gap-1 text-[10px]">
+                <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1 text-[10px]">
                   <CheckCircle2 className="w-3 h-3" /> Validé
                 </span>
               </div>
             </div>
 
             {/* Autorisation d'enseigner */}
-            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/80 dark:border-slate-800 space-y-2">
+            <div className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-900/50 border border-slate-200/80 dark:border-border space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Autorisation Employeur</span>
                 <Building2 className="w-4 h-4 text-purple-500" />
@@ -378,14 +378,14 @@ export default function ProfessorDocumentsPage() {
               </div>
               <div className="flex items-center justify-between text-[11px]">
                 <span className="text-muted-foreground font-medium">Circulaire Ministérielle</span>
-                <span className="text-emerald-600 dark:text-emerald-400 font-extrabold flex items-center gap-1 text-[10px]">
+                <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1 text-[10px]">
                   <CheckCircle2 className="w-3 h-3" /> Conforme
                 </span>
               </div>
             </div>
 
             {/* Diplôme le plus élevé */}
-            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/80 dark:border-slate-800 space-y-2">
+            <div className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-900/50 border border-slate-200/80 dark:border-border space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Qualification &amp; Diplôme</span>
                 <GraduationCap className="w-4 h-4 text-emerald-500" />
@@ -395,14 +395,14 @@ export default function ProfessorDocumentsPage() {
               </div>
               <div className="flex items-center justify-between text-[11px]">
                 <span className="text-muted-foreground font-medium">Contrôle Académique</span>
-                <span className="text-emerald-600 dark:text-emerald-400 font-extrabold flex items-center gap-1 text-[10px]">
+                <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1 text-[10px]">
                   <CheckCircle2 className="w-3 h-3" /> Certifié
                 </span>
               </div>
             </div>
 
             {/* Pièce d'identité CIN */}
-            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/80 dark:border-slate-800 space-y-2">
+            <div className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-900/50 border border-slate-200/80 dark:border-border space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Identité &amp; Statut Légal</span>
                 <ShieldCheck className="w-4 h-4 text-amber-500" />
@@ -412,7 +412,7 @@ export default function ProfessorDocumentsPage() {
               </div>
               <div className="flex items-center justify-between text-[11px]">
                 <span className="text-muted-foreground font-medium">Dossier Numérique RH</span>
-                <span className="text-emerald-600 dark:text-emerald-400 font-extrabold flex items-center gap-1 text-[10px]">
+                <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1 text-[10px]">
                   <CheckCircle2 className="w-3 h-3" /> À Jour
                 </span>
               </div>
@@ -424,8 +424,8 @@ export default function ProfessorDocumentsPage() {
       {/* Catalog of Available Documents */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-black uppercase tracking-wider text-slate-700 dark:text-slate-200 flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-indigo-600" /> 
+          <h2 className="text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-foreground flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-primary" />
             {isVacataire ? "Catalogue des Documents Dédiés aux Vacataires" : "Catalogue des Demandes Administratives Statutaires"}
           </h2>
           <span className="text-xs font-bold text-slate-400">Workflow officiel conforme Loi 53-05</span>
@@ -436,20 +436,20 @@ export default function ProfessorDocumentsPage() {
             <div 
               key={doc.id}
               onClick={() => handleOpenRequestModal(doc.id)}
-              className="p-6 bg-card border border-border hover:border-indigo-400 rounded-3xl shadow-sm hover:shadow-xl transition-all cursor-pointer flex flex-col justify-between space-y-4 group relative overflow-hidden"
+              className="p-6 bg-card border border-border hover:border-indigo-400 rounded-2xl shadow-sm hover:shadow-xl transition-all cursor-pointer flex flex-col justify-between space-y-4 group relative overflow-hidden"
             >
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 group-hover:bg-[#0f2863] flex items-center justify-center transition-colors shadow-sm">
+                  <div className="w-12 h-12 rounded-2xl bg-primary/5 dark:bg-indigo-950/50 group-hover:bg-[#0f2863] flex items-center justify-center transition-colors shadow-sm">
                     {renderIcon(doc.id)}
                   </div>
-                  <span className="px-2.5 py-1 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 rounded-lg text-[10px] font-black uppercase tracking-wider">
+                  <span className="px-2.5 py-1 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 rounded-lg text-[10px] font-bold uppercase tracking-wider">
                     3 Niveaux
                   </span>
                 </div>
 
                 <div>
-                  <h3 className="font-black text-base text-foreground group-hover:text-indigo-600 transition-colors">
+                  <h3 className="font-bold text-base text-foreground group-hover:text-primary transition-colors">
                     {doc.title}
                   </h3>
                   <span className="text-xs font-bold text-muted-foreground block mt-0.5">
@@ -462,7 +462,7 @@ export default function ProfessorDocumentsPage() {
                 </p>
               </div>
 
-              <div className="pt-3 border-t border-border flex items-center justify-between text-xs font-bold text-indigo-600 dark:text-indigo-400">
+              <div className="pt-3 border-t border-border flex items-center justify-between text-xs font-bold text-primary dark:text-indigo-400">
                 <span>{doc.processing_time}</span>
                 <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </div>
@@ -472,11 +472,11 @@ export default function ProfessorDocumentsPage() {
       </div>
 
       {/* History & 3-Tier Workflow Tracking */}
-      <div className="bg-card border border-border rounded-3xl shadow-sm p-6 md:p-8 space-y-6">
+      <div className="bg-card border border-border rounded-2xl shadow-sm p-6 md:p-8 space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
           <div className="flex items-center gap-3">
             <div className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></div>
-            <h3 className="text-xs font-extrabold uppercase tracking-widest text-foreground">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-foreground">
               Suivi en Temps Réel du Parapheur & Documents Prêts ({history.length})
             </h3>
           </div>
@@ -508,17 +508,17 @@ export default function ProfessorDocumentsPage() {
               return (
                 <div 
                   key={req.id} 
-                  className="p-5 rounded-2xl border border-border bg-card/50 hover:bg-card hover:border-indigo-200 transition-all space-y-4"
+                  className="p-5 rounded-2xl border border-border bg-card/50 hover:bg-card hover:border-primary/20 transition-all space-y-4"
                 >
                   <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                     <div className="flex items-start gap-3.5">
-                      <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center shrink-0 mt-0.5">
+                      <div className="w-10 h-10 rounded-xl bg-primary/5 dark:bg-indigo-950/40 flex items-center justify-center shrink-0 mt-0.5">
                         {renderIcon(req.type_id)}
                       </div>
                       <div>
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-mono text-xs font-bold text-muted-foreground">{req.tracking_code}</span>
-                          <span className="font-extrabold text-foreground text-sm">{req.type_label}</span>
+                          <span className="font-bold text-foreground text-sm">{req.type_label}</span>
                           <span className={`px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider ${
                             isReady ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' :
                             isRejected ? 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300' :
@@ -540,7 +540,7 @@ export default function ProfessorDocumentsPage() {
                       {isReady ? (
                         <button
                           onClick={() => handleDownloadPdf(req)}
-                          className="px-4 py-2 bg-[#001A4B] hover:bg-[#082663] text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-md cursor-pointer"
+                          className="px-4 py-2 bg-[#001A4B] hover:bg-[#082663] text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-md cursor-pointer"
                         >
                           <Download className="w-3.5 h-3.5 text-amber-400" /> Télécharger PDF
                         </button>
@@ -555,7 +555,7 @@ export default function ProfessorDocumentsPage() {
                   {/* 3-Tier Step Tracker */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-3 border-t border-border/60 text-xs">
                     <div className="flex items-center gap-2.5 p-2 rounded-xl bg-muted/40">
-                      <div className="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-black shrink-0">
+                      <div className="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-bold shrink-0">
                         ✓
                       </div>
                       <div>
@@ -580,7 +580,7 @@ export default function ProfessorDocumentsPage() {
 
                     <div className="flex items-center gap-2.5 p-2 rounded-xl bg-muted/40">
                       <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 ${
-                        isReady ? 'bg-blue-600 text-white' : isRejected ? 'bg-rose-500 text-white' : 'bg-slate-300 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                        isReady ? "bg-primary text-primary-foreground" : isRejected ? 'bg-rose-500 text-white' : "bg-slate-300 dark:bg-slate-700 text-muted-foreground dark:text-foreground"
                       }`}>
                         {isReady ? '✓' : isRejected ? '✕' : '3'}
                       </div>
@@ -602,7 +602,7 @@ export default function ProfessorDocumentsPage() {
       {/* Modal Nouvelle Demande */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-card rounded-3xl shadow-2xl w-full max-w-xl overflow-hidden border border-border animate-in zoom-in-95 space-y-6">
+          <div className="bg-card rounded-2xl shadow-sm w-full max-w-xl overflow-hidden border border-border animate-in zoom-in-95 space-y-6">
             
             <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-[#001A4B] p-6 text-white relative">
               <button 
@@ -611,10 +611,10 @@ export default function ProfessorDocumentsPage() {
               >
                 <X className="w-5 h-5" />
               </button>
-              <span className="bg-amber-500/20 text-amber-300 border border-amber-400/30 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest inline-flex items-center gap-1.5 mb-2">
+              <span className="bg-amber-500/20 text-amber-300 border border-amber-400/30 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest inline-flex items-center gap-1.5 mb-2">
                 <Stamp className="w-3.5 h-3.5 text-amber-400" /> Parapheur Électronique ENCG Fès
               </span>
-              <h3 className="font-black text-2xl tracking-tight">Nouvelle Demande Administrative</h3>
+              <h3 className="font-bold text-2xl tracking-tight">Nouvelle Demande Administrative</h3>
               <p className="text-xs text-slate-300 font-medium mt-1">
                 Votre dossier sera instruit par le Chef de Département puis scellé électroniquement par la Direction.
               </p>
@@ -628,7 +628,7 @@ export default function ProfessorDocumentsPage() {
                 <select
                   value={selectedType}
                   onChange={(e) => setSelectedType(e.target.value)}
-                  className="w-full px-4 py-3 bg-background border border-input rounded-xl text-sm font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  className="w-full px-4 py-3 bg-background border border-input text-sm font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 rounded-[var(--control-radius)]"
                 >
                   {availableTypes.map((t) => (
                     <option key={t.id} value={t.id}>
@@ -646,7 +646,7 @@ export default function ProfessorDocumentsPage() {
                   <select
                     value={missionCategory}
                     onChange={(e) => setMissionCategory(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-background border border-input rounded-xl text-xs font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    className="w-full px-4 py-2.5 bg-background border border-input text-xs font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 rounded-[var(--control-radius)]"
                   >
                     <option value="colloque_international">Colloque / Congrès Scientifique International</option>
                     <option value="seminaire_national">Séminaire de Recherche / Journée d'Études Nationale</option>
@@ -671,7 +671,7 @@ export default function ProfessorDocumentsPage() {
                       ? "Ex : Présentation comptable, décompte d'honoraires pour le semestre en cours..."
                       : "Ex : Présentation d'une communication scientifique sur la gouvernance financière / Jury de thèse de doctorat..."
                   }
-                  className="w-full px-4 py-3 bg-background border border-input rounded-xl text-xs font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  className="w-full px-4 py-3 bg-background border border-input text-xs font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 rounded-[var(--control-radius)]"
                 />
               </div>
 
@@ -685,7 +685,7 @@ export default function ProfessorDocumentsPage() {
                       value={destination}
                       onChange={(e) => setDestination(e.target.value)}
                       placeholder="Ex : Casablanca / Rabat / Tanger / Paris..."
-                      className="w-full px-4 py-2.5 bg-background border border-input rounded-xl text-xs font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      className="w-full px-4 py-2.5 bg-background border border-input text-xs font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 rounded-[var(--control-radius)]"
                     />
                   </div>
 
@@ -697,7 +697,7 @@ export default function ProfessorDocumentsPage() {
                         required
                         value={startDate}
                         onChange={(e) => setStartDate(e.target.value)}
-                        className="w-full px-4 py-2 bg-background border border-input rounded-xl text-xs font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+                        className="w-full px-4 py-2 bg-background border border-input text-xs font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 rounded-[var(--control-radius)]"
                       />
                     </div>
                     <div>
@@ -707,7 +707,7 @@ export default function ProfessorDocumentsPage() {
                         required
                         value={endDate}
                         onChange={(e) => setEndDate(e.target.value)}
-                        className="w-full px-4 py-2 bg-background border border-input rounded-xl text-xs font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+                        className="w-full px-4 py-2 bg-background border border-input text-xs font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 rounded-[var(--control-radius)]"
                       />
                     </div>
                   </div>
@@ -720,7 +720,7 @@ export default function ProfessorDocumentsPage() {
                       <select
                         value={transportMode}
                         onChange={(e) => setTransportMode(e.target.value as any)}
-                        className="w-full px-4 py-2 bg-background border border-input rounded-xl text-xs font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+                        className="w-full px-4 py-2 bg-background border border-input text-xs font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 rounded-[var(--control-radius)]"
                       >
                         <option value="voiture_personnelle">🚗 Voiture Personnelle</option>
                         <option value="train">🚆 Train ONCF (Al Boraq / Al Atlas)</option>
@@ -736,7 +736,7 @@ export default function ProfessorDocumentsPage() {
                       <select
                         value={expenseCoverage}
                         onChange={(e) => setExpenseCoverage(e.target.value)}
-                        className="w-full px-4 py-2 bg-background border border-input rounded-xl text-xs font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+                        className="w-full px-4 py-2 bg-background border border-input text-xs font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 rounded-[var(--control-radius)]"
                       >
                         <option value="charge_ecole">Budget ENCG Fès (Décret 2-97-511)</option>
                         <option value="charge_organisme_accueil">Organisme / Université d'Accueil</option>
@@ -747,7 +747,7 @@ export default function ProfessorDocumentsPage() {
 
                   {transportMode === 'voiture_personnelle' && (
                     <div className="animate-in fade-in zoom-in-95">
-                      <label className="block text-[10px] font-bold text-indigo-700 dark:text-indigo-400 uppercase tracking-wider mb-2">
+                      <label className="block text-[10px] font-bold text-primary dark:text-indigo-400 uppercase tracking-wider mb-2">
                         Immatriculation du Véhicule Personnel *
                       </label>
                       <input
@@ -756,7 +756,7 @@ export default function ProfessorDocumentsPage() {
                         value={vehicleRegistration}
                         onChange={(e) => setVehicleRegistration(e.target.value)}
                         placeholder="Ex : 12345-A-15 ou 67890 | B | 26"
-                        className="w-full px-4 py-2.5 bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800 rounded-xl text-xs font-mono font-bold text-indigo-900 dark:text-indigo-200 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                        className="w-full px-4 py-2.5 bg-indigo-50/50 dark:bg-indigo-950/30 border border-primary/20 dark:border-primary text-xs font-mono font-bold text-primary dark:text-indigo-200 focus:outline-none focus:ring-2 focus:ring-primary/20 rounded-[var(--control-radius)]"
                       />
                     </div>
                   )}
@@ -774,7 +774,7 @@ export default function ProfessorDocumentsPage() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-6 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:opacity-95 text-white font-black rounded-xl text-xs uppercase tracking-wider shadow-lg transition-all cursor-pointer flex items-center gap-2"
+                  className="px-6 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:opacity-95 text-white font-bold rounded-xl text-xs uppercase tracking-wider shadow-lg transition-all cursor-pointer flex items-center gap-2"
                 >
                   {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                   Transmettre au Parapheur

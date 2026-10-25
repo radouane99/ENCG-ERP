@@ -9,6 +9,7 @@
     "build:stats": "node scripts/build-stats.mjs",
     "lint:imports": "node scripts/remove-unused-imports.mjs",
     "lint": "oxlint --deny-warnings",
+    "design:check": "node scripts/unify-interface-design.mjs --check",
     "preview": "vite preview",
     "test": "vitest",
     "test:unit": "vitest run",

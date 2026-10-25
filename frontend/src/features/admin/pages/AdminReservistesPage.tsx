@@ -138,10 +138,10 @@ const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
   }
 
   return (
-    <div className="max-w-[1400px] mx-auto p-4 md:p-8 space-y-8 font-sans animate-in fade-in duration-500 pb-32">
+    <div className="max-w-[1400px] mx-auto space-y-8 font-sans animate-in fade-in duration-500 pb-32">
       
       {/* Header Banner */}
-      <div className="bg-gradient-to-r from-[#001035] via-[#092257] to-[#123e8e] rounded-[2.5rem] p-8 md:p-12 relative overflow-hidden shadow-2xl border border-blue-900/50">
+      <div className="bg-gradient-to-r from-[#001035] via-[#092257] to-[#123e8e] rounded-2xl p-8 md:p-12 relative overflow-hidden shadow-sm border border-blue-900/50">
         <div className="absolute inset-0 opacity-15 pointer-events-none" 
              style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '24px 24px' }}>
         </div>
@@ -149,14 +149,14 @@ const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
 
         <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-6">
-            <div className="w-20 h-20 rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-amber-300 shadow-2xl shrink-0">
+            <div className="w-20 h-20 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-amber-300 shadow-sm shrink-0">
               <RefreshCw className="w-10 h-10 animate-spin-slow" />
             </div>
             <div>
-              <div className="inline-flex items-center gap-2 bg-amber-400/20 text-amber-300 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-2 border border-amber-400/30">
+              <div className="inline-flex items-center gap-2 bg-amber-400/20 text-amber-300 px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mb-2 border border-amber-400/30">
                 <ShieldCheck className="w-4 h-4 text-amber-400" /> Gestion Scolarité & Réglementations ENCG
               </div>
-              <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight">
+              <h1 className="text-white erp-page-title">
                 Espace des Étudiants Réservistes & Dérogations
               </h1>
               <p className="text-blue-100/90 text-sm max-w-2xl font-medium mt-1">
@@ -168,7 +168,7 @@ const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
           <div className="flex items-center gap-3 shrink-0">
             <button 
               onClick={handleExportCsv}
-              className="flex items-center gap-2 px-5 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-xs uppercase tracking-wider transition-all shadow-lg active:scale-95 cursor-pointer"
+              className="flex items-center gap-2 px-5 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold text-xs uppercase tracking-wider transition-all shadow-lg active:scale-95 cursor-pointer"
             >
               <Download className="w-4 h-4" /> Exporter Liste (CSV)
             </button>
@@ -185,35 +185,35 @@ const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
 
       {/* Analytics Metric Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white border border-slate-200 rounded-[2rem] p-6 shadow-sm flex items-center justify-between">
+        <div className="bg-card border border-border rounded-2xl p-6 shadow-sm flex items-center justify-between">
           <div>
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">TOTAL ÉTUDIANTS RÉSERVISTES</span>
-            <h3 className="text-3xl font-black text-slate-900 mt-1">{summary.total_reservistes || 0}</h3>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">Avec au moins 1 module en dette</p>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">TOTAL ÉTUDIANTS RÉSERVISTES</span>
+            <h3 className="text-3xl font-bold text-foreground mt-1">{summary.total_reservistes || 0}</h3>
+            <p className="text-xs text-muted-foreground font-medium mt-0.5">Avec au moins 1 module en dette</p>
           </div>
-          <div className="w-14 h-14 rounded-2xl bg-amber-50 text-amber-600 border border-amber-100 flex items-center justify-center font-black text-xl shadow-inner">
+          <div className="w-14 h-14 rounded-2xl bg-amber-50 text-amber-600 border border-amber-100 flex items-center justify-center font-bold text-xl shadow-inner">
             <Users className="w-7 h-7" />
           </div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-[2rem] p-6 shadow-sm flex items-center justify-between">
+        <div className="bg-card border border-border rounded-2xl p-6 shadow-sm flex items-center justify-between">
           <div>
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">DÉROGATIONS ACCORDÉES</span>
-            <h3 className="text-3xl font-black text-emerald-600 mt-1">{summary.total_derogations || 0}</h3>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">Par le Conseil d'Établissement</p>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">DÉROGATIONS ACCORDÉES</span>
+            <h3 className="text-3xl font-bold text-emerald-600 mt-1">{summary.total_derogations || 0}</h3>
+            <p className="text-xs text-muted-foreground font-medium mt-0.5">Par le Conseil d'Établissement</p>
           </div>
-          <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center font-black text-xl shadow-inner">
+          <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center font-bold text-xl shadow-inner">
             <Award className="w-7 h-7" />
           </div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-[2rem] p-6 shadow-sm flex items-center justify-between">
+        <div className="bg-card border border-border rounded-2xl p-6 shadow-sm flex items-center justify-between">
           <div>
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">CUMUL DES MODULES EN DETTE</span>
-            <h3 className="text-3xl font-black text-indigo-600 mt-1">{summary.total_debts_count || 0}</h3>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">Modules à repasser en rattrapage</p>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">CUMUL DES MODULES EN DETTE</span>
+            <h3 className="text-3xl font-bold text-primary mt-1">{summary.total_debts_count || 0}</h3>
+            <p className="text-xs text-muted-foreground font-medium mt-0.5">Modules à repasser en rattrapage</p>
           </div>
-          <div className="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center font-black text-xl shadow-inner">
+          <div className="w-14 h-14 rounded-2xl bg-primary/5 text-primary border border-primary/20 flex items-center justify-center font-bold text-xl shadow-inner">
             <BookOpen className="w-7 h-7" />
           </div>
         </div>
@@ -221,16 +221,16 @@ const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
 
       {/* Top Recurrent Debt Modules */}
       {topModules.length > 0 && (
-        <div className="bg-white border border-slate-200 rounded-[2rem] p-6 shadow-sm space-y-3">
-          <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+        <div className="bg-card border border-border rounded-2xl p-6 shadow-sm space-y-3">
+          <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-amber-500" /> MODULES LES PLUS RÉCURRENTS EN DETTE (TOP 5)
           </h4>
           <div className="flex flex-wrap items-center gap-3">
             {topModules.map(m => (
-              <div key={m.module_code} className="bg-slate-50 border border-slate-200 px-4 py-2 rounded-xl flex items-center gap-2.5">
-                <span className="font-mono text-xs font-black text-[#0f2863]">{m.module_code}</span>
+              <div key={m.module_code} className="bg-muted/50 border border-border px-4 py-2 rounded-xl flex items-center gap-2.5">
+                <span className="font-mono text-xs font-bold text-[#0f2863]">{m.module_code}</span>
                 <span className="text-xs font-bold text-slate-700 line-clamp-1">{m.module_name}</span>
-                <span className="px-2 py-0.5 bg-amber-100 text-amber-900 text-[10px] font-black rounded-md">{m.count} étudiants</span>
+                <span className="px-2 py-0.5 bg-amber-100 text-amber-900 text-[10px] font-bold rounded-md">{m.count} étudiants</span>
               </div>
             ))}
           </div>
@@ -238,10 +238,10 @@ const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
       )}
 
       {/* Main Filter & Search Bar */}
-      <div className="bg-white border border-slate-200 rounded-[2rem] p-6 shadow-sm space-y-4">
+      <div className="bg-card border border-border rounded-2xl p-6 shadow-sm space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
-            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">
+            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">
               FILTRER PAR FILIÈRE
             </label>
             <CustomSelect
@@ -261,7 +261,7 @@ const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
           </div>
 
           <div>
-            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">
+            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">
               STATUT ÉTUDIANT
             </label>
             <CustomSelect
@@ -277,7 +277,7 @@ const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
           </div>
 
           <div>
-            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">
+            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">
               RECHERCHE RAPIDE
             </label>
             <div className="relative">
@@ -288,7 +288,7 @@ const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && fetchData()}
                 placeholder="Nom, Prénom, CNE, Apogée..."
-                className="w-full pl-11 pr-4 py-3 rounded-2xl border border-slate-200 text-xs font-bold bg-white text-slate-800 focus:ring-2 focus:ring-[#0f2863] outline-hidden shadow-xs"
+                className="w-full pl-11 pr-4 py-3 border border-border text-xs font-bold bg-card text-foreground focus:ring-2 focus:ring-[#0f2863] outline-hidden shadow-xs rounded-[var(--control-radius)]"
               />
             </div>
           </div>
@@ -296,10 +296,10 @@ const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
       </div>
 
       {/* Reservistes List Table */}
-      <div className="bg-white border border-slate-200 rounded-[2.5rem] shadow-xl overflow-hidden p-3">
+      <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden p-3">
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left border-collapse">
-            <thead className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 bg-slate-50">
+            <thead className="text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-border bg-muted/50">
               <tr>
                 <th className="px-6 py-4">Apogée / CNE</th>
                 <th className="px-6 py-4">Étudiant</th>
@@ -325,20 +325,20 @@ const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
                 </tr>
               ) : reservistes.map((student) => (
                 <tr key={student.student_id} className="hover:bg-blue-50/30 transition-colors">
-                  <td className="px-6 py-4 font-mono text-xs font-black text-slate-600">{student.cne}</td>
+                  <td className="px-6 py-4 font-mono text-xs font-bold text-muted-foreground">{student.cne}</td>
                   <td className="px-6 py-4">
-                    <div className="font-extrabold text-slate-900 text-xs">{student.full_name}</div>
+                    <div className="font-bold text-foreground text-xs">{student.full_name}</div>
                     <div className="text-[10px] text-slate-400 font-medium">{student.email}</div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="px-3 py-1 bg-slate-100 text-slate-800 rounded-lg text-xs font-black border border-slate-200">
+                    <span className="px-3 py-1 bg-muted text-foreground rounded-lg text-xs font-bold border border-border">
                       {student.filiere_code}
                     </span>
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex flex-wrap items-center gap-1.5">
                       {student.debt_modules.map((m: any) => (
-                        <span key={m.module_code} className="px-2.5 py-0.5 bg-amber-100 text-amber-900 text-[10px] font-black rounded-md border border-amber-200">
+                        <span key={m.module_code} className="px-2.5 py-0.5 bg-amber-100 text-amber-900 text-[10px] font-bold rounded-md border border-amber-200">
                           {m.module_code} (S{m.semester_number})
                         </span>
                       ))}
@@ -346,15 +346,15 @@ const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
                   </td>
                   <td className="px-6 py-4">
                     {student.derogation?.status === 'accordee' ? (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">
                         <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Dérogation Accordée
                       </span>
                     ) : student.derogation?.status === 'en_attente' ? (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase bg-amber-50 text-amber-700 border border-amber-200">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase bg-amber-50 text-amber-700 border border-amber-200">
                         <AlertTriangle className="w-3.5 h-3.5 text-amber-600" /> En Attente
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase bg-slate-100 text-slate-500 border border-slate-200">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase bg-muted text-muted-foreground border border-border">
                         Aucune Dérogation
                       </span>
                     )}
@@ -367,21 +367,21 @@ const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
                       <button
                         onClick={() => handleSendNotificationMail(student)}
                         disabled={sendingMailId === student.student_id}
-                        className="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-xl text-xs font-black transition-all cursor-pointer inline-flex items-center gap-1.5"
+                        className="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-xl text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5"
                         title="Envoyer un émail de notification via Resend"
                       >
                         {sendingMailId === student.student_id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileSignature className="w-3.5 h-3.5" />} Email
                       </button>
                       <button
                         onClick={() => handleOpenAuditModal(student.student_id)}
-                        className="px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl text-xs font-black transition-all cursor-pointer inline-flex items-center gap-1.5"
+                        className="px-3.5 py-2 bg-primary/5 hover:bg-primary/10 text-primary border border-primary/20 rounded-xl text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5"
                         title="Voir tous les modules validés et restant à valider"
                       >
                         <Search className="w-3.5 h-3.5" /> Audit & Backup Cursus
                       </button>
                       <button
                         onClick={() => handleOpenDerogationModal(student)}
-                        className="px-3.5 py-2 bg-[#0f2863] hover:bg-[#193a86] text-white rounded-xl text-xs font-black transition-all shadow-xs active:scale-95 cursor-pointer inline-flex items-center gap-1.5"
+                        className="px-3.5 py-2 bg-[#0f2863] hover:bg-[#193a86] text-white rounded-xl text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer inline-flex items-center gap-1.5"
                       >
                         <Award className="w-3.5 h-3.5" /> Gérer Dérogation
                       </button>
@@ -397,7 +397,7 @@ const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
       {/* Modal for Granting Dérogation */}
       {isModalOpen && selectedStudent && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-2xl max-w-lg w-full overflow-hidden p-8 space-y-6 animate-in zoom-in-95 duration-200">
+          <div className="bg-card rounded-2xl border border-border shadow-sm max-w-lg w-full overflow-hidden p-8 space-y-6 animate-in zoom-in-95 duration-200">
             
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -405,33 +405,33 @@ const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
                   <Award className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-black text-slate-900 tracking-tight">Dérogation Exceptionnelle</h3>
-                  <p className="text-xs text-slate-500 font-semibold">Conseil d'Établissement ENCG</p>
+                  <h3 className="text-xl font-bold text-foreground tracking-tight">Dérogation Exceptionnelle</h3>
+                  <p className="text-xs text-muted-foreground font-semibold">Conseil d'Établissement ENCG</p>
                 </div>
               </div>
               <button 
                 onClick={() => setIsModalOpen(false)}
-                className="p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition-colors"
+                className="p-2 text-slate-400 hover:text-muted-foreground rounded-full hover:bg-muted transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-1">
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">ÉTUDAINT CIBLÉ</span>
-              <p className="text-base font-black text-slate-900">{selectedStudent.full_name} ({selectedStudent.cne})</p>
-              <p className="text-xs text-indigo-600 font-bold">Filière: {selectedStudent.filiere_code} — {selectedStudent.total_debts} modules en dette</p>
+            <div className="bg-muted/50 p-4 rounded-2xl border border-border space-y-1">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">ÉTUDAINT CIBLÉ</span>
+              <p className="text-base font-bold text-foreground">{selectedStudent.full_name} ({selectedStudent.cne})</p>
+              <p className="text-xs text-primary font-bold">Filière: {selectedStudent.filiere_code} — {selectedStudent.total_debts} modules en dette</p>
             </div>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                   Décision du Conseil / Statut
                 </label>
                 <select
                   value={derogationStatus}
                   onChange={(e) => setDerogationStatus(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-[#0f2863] outline-hidden"
+                  className="w-full bg-muted/50 border border-border p-3 text-xs font-bold text-foreground focus:ring-2 focus:ring-[#0f2863] outline-hidden rounded-[var(--control-radius)]"
                 >
                   <option value="accordee">✅ Dérogation Accordée (Autorisé)</option>
                   <option value="en_attente">⏳ Dossier en Attente de Décision</option>
@@ -441,7 +441,7 @@ const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
               </div>
 
               <div>
-                <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                   Référence de la Décision Officielle
                 </label>
                 <input
@@ -449,12 +449,12 @@ const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
                   value={derogationRef}
                   onChange={(e) => setDerogationRef(e.target.value)}
                   placeholder="Ex: DEROG-2026-FES-482"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-[#0f2863] outline-hidden font-mono"
+                  className="w-full bg-muted/50 border border-border p-3 text-xs font-bold text-foreground focus:ring-2 focus:ring-[#0f2863] outline-hidden font-mono rounded-[var(--control-radius)]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                   Notes & Conditions Particulières
                 </label>
                 <textarea
@@ -462,7 +462,7 @@ const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
                   value={derogationNotes}
                   onChange={(e) => setDerogationNotes(e.target.value)}
                   placeholder="Commentaires du Conseil d'Établissement..."
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-[#0f2863] outline-hidden resize-none"
+                  className="w-full bg-muted/50 border border-border p-4 text-xs font-semibold text-foreground focus:ring-2 focus:ring-[#0f2863] outline-hidden resize-none rounded-[var(--control-radius)]"
                 />
               </div>
             </div>
@@ -471,7 +471,7 @@ const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="flex-1 py-3.5 px-4 font-black text-xs uppercase tracking-wider text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-2xl transition-all cursor-pointer"
+                className="flex-1 py-3.5 px-4 font-bold text-xs uppercase tracking-wider text-muted-foreground bg-muted hover:bg-slate-200 rounded-2xl transition-all cursor-pointer"
               >
                 Annuler
               </button>
@@ -479,7 +479,7 @@ const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
                 type="button"
                 onClick={handleSaveDerogation}
                 disabled={savingDerogation}
-                className="flex-1 py-3.5 px-4 font-black text-xs uppercase tracking-wider text-white bg-gradient-to-r from-[#0f2863] to-[#1d429b] hover:from-[#15347d] hover:to-[#224cb0] rounded-2xl shadow-lg active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2"
+                className="flex-1 py-3.5 px-4 font-bold text-xs uppercase tracking-wider text-white bg-gradient-to-r from-[#0f2863] to-[#1d429b] hover:from-[#15347d] hover:to-[#224cb0] rounded-2xl shadow-lg active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2"
               >
                 {savingDerogation ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
                 Enregistrer Décision
@@ -493,25 +493,25 @@ const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
       {/* Modal for Audit Cursus & Backup Historique */}
       {isAuditModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-2xl max-w-3xl w-full overflow-hidden p-8 space-y-6 animate-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col">
+          <div className="bg-card rounded-2xl border border-border shadow-sm max-w-3xl w-full overflow-hidden p-8 space-y-6 animate-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col">
             
-            <div className="flex items-center justify-between shrink-0 border-b border-slate-100 pb-4">
+            <div className="flex items-center justify-between shrink-0 border-b border-border pb-4">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                <div className="w-12 h-12 rounded-2xl bg-primary/5 text-primary flex items-center justify-center">
                   <Search className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-black text-slate-900 tracking-tight">
+                  <h3 className="text-xl font-bold text-foreground tracking-tight">
                     Audit du Cursus & Backup Historique
                   </h3>
-                  <p className="text-xs text-slate-500 font-semibold">
+                  <p className="text-xs text-muted-foreground font-semibold">
                     Historique sauvegardé des modules validés et restant à valider
                   </p>
                 </div>
               </div>
               <button 
                 onClick={() => setIsAuditModalOpen(false)}
-                className="p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition-colors"
+                className="p-2 text-slate-400 hover:text-muted-foreground rounded-full hover:bg-muted transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -525,16 +525,16 @@ const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
             ) : (
               <div className="space-y-6 overflow-y-auto pr-2 flex-1">
                 {/* Student Summary */}
-                <div className="bg-gradient-to-r from-slate-900 to-[#0f2863] p-6 rounded-3xl text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-md">
+                <div className="bg-gradient-to-r from-slate-900 to-[#0f2863] p-6 rounded-2xl text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-md">
                   <div>
-                    <span className="text-[10px] font-black uppercase text-indigo-300 tracking-widest">{auditData.student.filiere_code} — {auditData.student.filiere_name}</span>
-                    <h4 className="text-xl font-black">{auditData.student.full_name}</h4>
+                    <span className="text-[10px] font-bold uppercase text-indigo-300 tracking-widest">{auditData.student.filiere_code} — {auditData.student.filiere_name}</span>
+                    <h4 className="text-xl font-bold">{auditData.student.full_name}</h4>
                     <p className="text-xs font-mono text-slate-300">CNE / Apogée: {auditData.student.cne}</p>
                   </div>
 
                   <div className="text-right">
-                    <span className="text-3xl font-black text-emerald-400">{auditData.stats.progression_percentage}%</span>
-                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">PROGRESSION CURSUS</p>
+                    <span className="text-3xl font-bold text-emerald-400">{auditData.stats.progression_percentage}%</span>
+                    <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">PROGRESSION CURSUS</p>
                     <div className="w-32 h-2 bg-white/20 rounded-full overflow-hidden mt-1">
                       <div className="h-full bg-emerald-400 rounded-full" style={{ width: `${auditData.stats.progression_percentage}%` }}></div>
                     </div>
@@ -544,22 +544,22 @@ const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
                 {/* Progress Badges */}
                 <div className="grid grid-cols-3 gap-3">
                   <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-200 text-center">
-                    <span className="block text-2xl font-black text-emerald-700">{auditData.stats.validated_count}</span>
-                    <span className="text-[10px] font-black text-emerald-800 uppercase">Modules Validés (Backup)</span>
+                    <span className="block text-2xl font-bold text-emerald-700">{auditData.stats.validated_count}</span>
+                    <span className="text-[10px] font-bold text-emerald-800 uppercase">Modules Validés (Backup)</span>
                   </div>
                   <div className="p-4 bg-amber-50 rounded-2xl border border-amber-200 text-center">
-                    <span className="block text-2xl font-black text-amber-700">{auditData.stats.debt_count}</span>
-                    <span className="text-[10px] font-black text-amber-800 uppercase">Modules en Dette</span>
+                    <span className="block text-2xl font-bold text-amber-700">{auditData.stats.debt_count}</span>
+                    <span className="text-[10px] font-bold text-amber-800 uppercase">Modules en Dette</span>
                   </div>
-                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 text-center">
-                    <span className="block text-2xl font-black text-slate-700">{auditData.stats.total_modules}</span>
-                    <span className="text-[10px] font-black text-slate-600 uppercase">Total Cursus</span>
+                  <div className="p-4 bg-muted/50 rounded-2xl border border-border text-center">
+                    <span className="block text-2xl font-bold text-slate-700">{auditData.stats.total_modules}</span>
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase">Total Cursus</span>
                   </div>
                 </div>
 
                 {/* Modules Timeline / Grid */}
                 <div className="space-y-3">
-                  <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest">
+                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest">
                     DÉTAIL PAR MODULE ET HISTORIQUE ARCHIVÉ
                   </h4>
 
@@ -571,18 +571,18 @@ const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
                           "p-4 rounded-2xl border transition-all flex items-center justify-between gap-4",
                           m.status === 'validated' ? "bg-emerald-50/60 border-emerald-200" :
                           m.status === 'debt' ? "bg-amber-50/70 border-amber-200" :
-                          "bg-slate-50 border-slate-200"
+                          "bg-muted/50 border-border"
                         )}
                       >
                         <div className="flex items-center gap-3">
-                          <span className="w-9 h-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center font-mono font-black text-xs text-[#0f2863] shrink-0">
+                          <span className="w-9 h-9 rounded-xl bg-card border border-border flex items-center justify-center font-mono font-bold text-xs text-[#0f2863] shrink-0">
                             S{m.semester_number}
                           </span>
                           <div>
-                            <div className="font-extrabold text-slate-900 text-xs">
+                            <div className="font-bold text-foreground text-xs">
                               {m.module_code} - {m.module_name}
                             </div>
-                            <div className="text-[10px] text-slate-500 font-semibold">
+                            <div className="text-[10px] text-muted-foreground font-semibold">
                               {m.status_label} {m.validated_at && `(${m.validated_at})`} {m.debt_since && `(Depuis ${m.debt_since})`}
                             </div>
                           </div>
@@ -590,11 +590,11 @@ const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
 
                         <div>
                           {m.status === 'validated' ? (
-                            <span className="px-3 py-1 bg-emerald-600 text-white rounded-xl text-xs font-black shadow-xs">
+                            <span className="px-3 py-1 bg-emerald-600 text-white rounded-xl text-xs font-bold shadow-xs">
                               {m.grade} / 20
                             </span>
                           ) : m.status === 'debt' ? (
-                            <span className="px-3 py-1 bg-amber-500 text-white rounded-xl text-xs font-black shadow-xs">
+                            <span className="px-3 py-1 bg-amber-500 text-white rounded-xl text-xs font-bold shadow-xs">
                               À Repasser
                             </span>
                           ) : (
@@ -608,18 +608,18 @@ const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
               </div>
             )}
 
-            <div className="shrink-0 pt-3 border-t border-slate-100 flex items-center justify-between">
+            <div className="shrink-0 pt-3 border-t border-border flex items-center justify-between">
               <button
                 type="button"
                 onClick={() => window.print()}
-                className="py-3 px-5 text-xs font-black uppercase text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all cursor-pointer flex items-center gap-2"
+                className="py-3 px-5 text-xs font-bold uppercase text-slate-700 bg-muted hover:bg-slate-200 rounded-xl transition-all cursor-pointer flex items-center gap-2"
               >
                 <FileText className="w-4 h-4" /> Imprimer Audit Cursus
               </button>
               <button
                 type="button"
                 onClick={() => setIsAuditModalOpen(false)}
-                className="py-3 px-6 text-xs font-black uppercase text-white bg-[#0f2863] hover:bg-[#193a86] rounded-xl transition-all shadow-md cursor-pointer"
+                className="py-3 px-6 text-xs font-bold uppercase text-white bg-[#0f2863] hover:bg-[#193a86] rounded-xl transition-all shadow-md cursor-pointer"
               >
                 Fermer
               </button>

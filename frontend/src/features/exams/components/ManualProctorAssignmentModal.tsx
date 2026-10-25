@@ -427,24 +427,24 @@ const [proctorSearch, setProctorSearch] = useState('');
 
   return createPortal(
     <div className="fixed inset-0 z-[99999] flex flex-col w-screen h-screen bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200 overflow-hidden">
-      <div className="w-full h-full flex flex-col bg-white dark:bg-slate-900 overflow-hidden">
+      <div className="w-full h-full flex flex-col bg-card dark:bg-card overflow-hidden">
         {/* MODAL HEADER */}
-        <div className="px-6 py-3.5 border-b border-slate-200/80 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0 shadow-xs z-10">
+        <div className="px-6 py-3.5 border-b border-slate-200/80 dark:border-border bg-white/95 dark:bg-slate-900/95 backdrop-blur-md flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0 shadow-xs z-10">
           <div className="flex items-center gap-3.5">
             <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-500 text-white flex items-center justify-center shadow-lg shadow-amber-500/25 shrink-0">
               <Shield className="w-5 h-5 stroke-[2.2]" />
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white tracking-tight">
+                <h2 className="text-base sm:text-lg font-bold text-foreground dark:text-white tracking-tight">
                   Affectation Manuelle & Sur-Mesure des Surveillants
                 </h2>
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-800 shadow-xs">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-800 shadow-xs">
                   Liberté Totale Admin ✍️
                 </span>
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Session : <span className="font-bold text-slate-700 dark:text-slate-200">{sessionName}</span> •
+              <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-0.5">
+                Session : <span className="font-bold text-slate-700 dark:text-foreground">{sessionName}</span> •
                 Assignez librement chaque salle à un président et des surveillants avec détection automatique de conflits.
               </p>
             </div>
@@ -452,14 +452,14 @@ const [proctorSearch, setProctorSearch] = useState('');
 
           {/* Quick Header Badges & Actions */}
           <div className="flex items-center flex-wrap gap-2.5">
-            <div className="flex items-center gap-2 bg-slate-100/70 dark:bg-slate-800/70 border border-slate-200/80 dark:border-slate-700 px-3 py-1.5 rounded-xl shadow-2xs">
+            <div className="flex items-center gap-2 bg-slate-100/70 dark:bg-slate-800/70 border border-slate-200/80 dark:border-border px-3 py-1.5 rounded-xl shadow-2xs">
               <Activity className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Couverture :</span>
-              <span className="text-xs font-black text-slate-900 dark:text-white">
+              <span className="text-xs font-semibold text-muted-foreground dark:text-muted-foreground">Couverture :</span>
+              <span className="text-xs font-bold text-foreground dark:text-white">
                 {coverageStats.complete} / {exams.length} complètes
               </span>
               {conflicts.totalConflicts > 0 && (
-                <span className="ml-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-400 flex items-center gap-1 animate-pulse border border-rose-200 dark:border-rose-900">
+                <span className="ml-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-400 flex items-center gap-1 animate-pulse border border-rose-200 dark:border-rose-900">
                   <AlertTriangle className="w-3 h-3" />
                   {conflicts.totalConflicts} conflit(s)
                 </span>
@@ -469,7 +469,7 @@ const [proctorSearch, setProctorSearch] = useState('');
             <button
               onClick={handleResetToInitial}
               type="button"
-              className="px-3 py-1.5 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+              className="px-3 py-1.5 text-xs font-bold text-muted-foreground dark:text-foreground hover:text-foreground dark:hover:text-white bg-muted dark:bg-card hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
               title="Restaurer les affectations actuellement sauvegardées"
             >
               <RotateCcw className="w-3.5 h-3.5" />
@@ -489,7 +489,7 @@ const [proctorSearch, setProctorSearch] = useState('');
             <button
               onClick={onClose}
               type="button"
-              className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-white rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer border border-slate-200/60 dark:border-slate-700 shadow-2xs"
+              className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-white rounded-xl hover:bg-muted dark:hover:bg-slate-800 transition-colors cursor-pointer border border-slate-200/60 dark:border-border shadow-2xs"
               title="Fermer (Échap)"
             >
               <X className="w-5 h-5" />
@@ -500,9 +500,9 @@ const [proctorSearch, setProctorSearch] = useState('');
         {/* MODAL BODY (SPLIT VIEW) */}
         <div className="flex-1 flex flex-col lg:flex-row overflow-hidden bg-slate-50/60 dark:bg-slate-950/40">
           {/* LEFT: EXAM SLOTS LIST (68%) */}
-          <div className="flex-1 flex flex-col border-r border-slate-200/80 dark:border-slate-800 overflow-hidden">
+          <div className="flex-1 flex flex-col border-r border-slate-200/80 dark:border-border overflow-hidden">
             {/* Filter toolbar */}
-            <div className="p-3.5 border-b border-slate-200/80 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 backdrop-blur-sm flex flex-wrap items-center justify-between gap-3 shrink-0">
+            <div className="p-3.5 border-b border-slate-200/80 dark:border-border bg-white/70 dark:bg-slate-900/70 backdrop-blur-sm flex flex-wrap items-center justify-between gap-3 shrink-0">
               <div className="flex items-center gap-2 flex-1 min-w-[220px] max-w-sm">
                 <div className="relative w-full">
                   <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -511,12 +511,12 @@ const [proctorSearch, setProctorSearch] = useState('');
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Chercher module, salle, prof..."
-                    className="w-full pl-9 pr-7 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-amber-500 shadow-2xs transition-all"
+                    className="w-full pl-9 pr-7 py-2 text-xs bg-muted/50 dark:bg-card border border-border dark:border-border text-foreground dark:text-foreground placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-amber-500 shadow-2xs transition-all rounded-[var(--control-radius)]"
                   />
                   {searchQuery && (
                     <button
                       onClick={() => setSearchQuery('')}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-muted-foreground cursor-pointer"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
@@ -530,7 +530,7 @@ const [proctorSearch, setProctorSearch] = useState('');
                   <select
                     value={dateFilter}
                     onChange={(e) => setDateFilter(e.target.value)}
-                    className="px-3 py-2 pr-8 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-semibold focus:outline-hidden cursor-pointer shadow-2xs text-xs appearance-none"
+                    className="px-3 py-2 pr-8 bg-muted/50 dark:bg-card border border-border dark:border-border text-slate-700 dark:text-foreground font-semibold focus:outline-hidden cursor-pointer shadow-2xs text-xs appearance-none rounded-[var(--control-radius)]"
                   >
                     <option value="all">📅 Toutes les dates ({availableDates.length})</option>
                     {availableDates.map((d) => (
@@ -547,7 +547,7 @@ const [proctorSearch, setProctorSearch] = useState('');
                   <select
                     value={filiereFilter}
                     onChange={(e) => setFiliereFilter(e.target.value)}
-                    className="px-3 py-2 pr-8 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-semibold focus:outline-hidden cursor-pointer shadow-2xs text-xs appearance-none max-w-[200px] truncate"
+                    className="px-3 py-2 pr-8 bg-muted/50 dark:bg-card border border-border dark:border-border text-slate-700 dark:text-foreground font-semibold focus:outline-hidden cursor-pointer shadow-2xs text-xs appearance-none max-w-[200px] truncate rounded-[var(--control-radius)]"
                   >
                     <option value="all">🎓 Toutes les filières</option>
                     {availableFilieres.map((f) => (
@@ -560,14 +560,14 @@ const [proctorSearch, setProctorSearch] = useState('');
                 </div>
 
                 {/* Status Filter Segmented Button */}
-                <div className="inline-flex rounded-xl bg-slate-100 dark:bg-slate-800 p-1 border border-slate-200/80 dark:border-slate-700 shadow-2xs">
+                <div className="inline-flex rounded-xl bg-muted dark:bg-card p-1 border border-slate-200/80 dark:border-border shadow-2xs">
                   <button
                     onClick={() => setStatusFilter('all')}
                     className={cn(
                       'px-2.5 py-1 rounded-lg font-bold text-[11px] transition-all cursor-pointer',
                       statusFilter === 'all'
-                        ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                        : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                        ? "bg-card dark:bg-card text-foreground dark:text-white shadow-xs"
+                        : "text-muted-foreground hover:text-foreground dark:hover:text-slate-200"
                     )}
                   >
                     Tous ({exams.length})
@@ -578,7 +578,7 @@ const [proctorSearch, setProctorSearch] = useState('');
                       'px-2.5 py-1 rounded-lg font-bold text-[11px] transition-all cursor-pointer',
                       statusFilter === 'incomplete'
                         ? 'bg-amber-500 text-white shadow-xs'
-                        : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                        : "text-muted-foreground hover:text-foreground dark:hover:text-slate-200"
                     )}
                   >
                     Incomplets ({exams.length - coverageStats.complete})
@@ -589,7 +589,7 @@ const [proctorSearch, setProctorSearch] = useState('');
                       'px-2.5 py-1 rounded-lg font-bold text-[11px] transition-all cursor-pointer',
                       statusFilter === 'unassigned'
                         ? 'bg-rose-500 text-white shadow-xs'
-                        : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                        : "text-muted-foreground hover:text-foreground dark:hover:text-slate-200"
                     )}
                   >
                     Vides ({coverageStats.empty})
@@ -625,11 +625,11 @@ const [proctorSearch, setProctorSearch] = useState('');
                 </div>
               ) : filteredExams.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 text-slate-400">
-                  <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-2 text-slate-400">
+                  <div className="w-14 h-14 rounded-2xl bg-muted dark:bg-card flex items-center justify-center mb-2 text-slate-400">
                     <Filter className="w-6 h-6" />
                   </div>
-                  <p className="text-sm font-bold text-slate-700 dark:text-slate-300">Aucune séance ne correspond</p>
-                  <p className="text-xs text-slate-500 mt-1">Modifiez vos critères de recherche ou filtres.</p>
+                  <p className="text-sm font-bold text-slate-700 dark:text-foreground">Aucune séance ne correspond</p>
+                  <p className="text-xs text-muted-foreground mt-1">Modifiez vos critères de recherche ou filtres.</p>
                 </div>
               ) : (
                 filteredExams.map((exam, index) => {
@@ -645,12 +645,12 @@ const [proctorSearch, setProctorSearch] = useState('');
                     <div
                       key={exam.id}
                       className={cn(
-                        'bg-white dark:bg-slate-900 rounded-2xl border transition-all duration-200 p-4.5 relative shadow-xs',
+                        "bg-card dark:bg-card rounded-2xl border transition-all duration-200 p-4.5 relative shadow-xs",
                         hasConflict
                           ? 'border-rose-300 dark:border-rose-900 bg-rose-50/[0.15] dark:bg-rose-950/[0.15]'
                           : isHighlighted
                           ? 'border-amber-400 dark:border-amber-500 ring-2 ring-amber-400/30 shadow-md'
-                          : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-sm'
+                          : "border-border dark:border-border hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-sm"
                       )}
                       style={{ zIndex: filteredExams.length - index + 5 }}
                     >
@@ -661,7 +661,7 @@ const [proctorSearch, setProctorSearch] = useState('');
                           <span>
                             Conflit d'horaire détecté :{' '}
                             {examConflicts.map((c, i) => (
-                              <span key={i} className="font-black">
+                              <span key={i} className="font-bold">
                                 {c.proctorName} ({c.otherModule}){i < examConflicts.length - 1 ? ', ' : ''}
                               </span>
                             ))}
@@ -670,30 +670,30 @@ const [proctorSearch, setProctorSearch] = useState('');
                       )}
 
                       {/* Header of Exam Card */}
-                      <div className="flex flex-wrap items-center justify-between gap-2.5 pb-3 border-b border-slate-100 dark:border-slate-800/80">
+                      <div className="flex flex-wrap items-center justify-between gap-2.5 pb-3 border-b border-border dark:border-slate-800/80">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="px-2.5 py-1 rounded-lg text-xs font-black bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 flex items-center gap-1.5 shadow-2xs">
-                            <Calendar className="w-3.5 h-3.5 text-slate-500" />
+                          <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-muted dark:bg-card text-foreground dark:text-foreground flex items-center gap-1.5 shadow-2xs">
+                            <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
                             {exam.date_formatted}
                           </span>
-                          <span className="px-2.5 py-1 rounded-lg text-xs font-black bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200/70 dark:border-amber-900/60 flex items-center gap-1.5 shadow-2xs">
+                          <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200/70 dark:border-amber-900/60 flex items-center gap-1.5 shadow-2xs">
                             <Clock className="w-3.5 h-3.5 text-amber-600" />
                             {exam.start_time} ({exam.duration_minutes} min)
                           </span>
-                          <span className="px-2.5 py-1 rounded-lg text-xs font-black bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200/70 dark:border-blue-900/60 flex items-center gap-1.5 shadow-2xs">
-                            <MapPin className="w-3.5 h-3.5 text-blue-600" />
+                          <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-primary/5 dark:bg-blue-950/60 text-primary dark:text-blue-300 border border-blue-200/70 dark:border-blue-900/60 flex items-center gap-1.5 shadow-2xs">
+                            <MapPin className="w-3.5 h-3.5 text-primary" />
                             {exam.room_name}
                           </span>
                         </div>
 
                         <div className="flex items-center gap-2">
                           {exam.filiere_name && (
-                            <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg flex items-center gap-1">
-                              <GraduationCap className="w-3 h-3 text-slate-500" />
+                            <span className="text-[11px] font-bold text-muted-foreground dark:text-muted-foreground bg-muted dark:bg-card px-2.5 py-1 rounded-lg flex items-center gap-1">
+                              <GraduationCap className="w-3 h-3 text-muted-foreground" />
                               {exam.filiere_name} {exam.group_name ? `• ${exam.group_name}` : ''}
                             </span>
                           )}
-                          <span className="text-[10px] font-mono font-bold text-slate-400 bg-slate-50 dark:bg-slate-800/60 px-2 py-0.5 rounded-md border border-slate-200/60 dark:border-slate-800">
+                          <span className="text-[10px] font-mono font-bold text-slate-400 bg-muted/50 dark:bg-slate-800/60 px-2 py-0.5 rounded-md border border-slate-200/60 dark:border-border">
                             #EX-{exam.id}
                           </span>
                         </div>
@@ -701,10 +701,10 @@ const [proctorSearch, setProctorSearch] = useState('');
 
                       {/* Module Title */}
                       <div className="mt-3 mb-3">
-                        <h4 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
+                        <h4 className="text-sm font-bold text-foreground dark:text-white flex items-center gap-2">
                           <span>{exam.module_name}</span>
                           {exam.module_code && (
-                            <span className="text-[10px] font-mono font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-md">
+                            <span className="text-[10px] font-mono font-bold text-muted-foreground bg-muted dark:bg-card px-1.5 py-0.5 rounded-md">
                               {exam.module_code}
                             </span>
                           )}
@@ -716,7 +716,7 @@ const [proctorSearch, setProctorSearch] = useState('');
                         {/* 1. Surveillant Principal (Président de Salle) */}
                         <div className="p-3.5 rounded-2xl bg-amber-500/[0.04] dark:bg-amber-950/[0.15] border border-amber-200/70 dark:border-amber-900/50 flex flex-col justify-between">
                           <div className="flex items-center justify-between mb-2">
-                            <span className="text-[11px] font-black uppercase tracking-wider text-amber-800 dark:text-amber-400 flex items-center gap-1.5">
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-amber-800 dark:text-amber-400 flex items-center gap-1.5">
                               <Shield className="w-3.5 h-3.5 text-amber-600 fill-amber-500/20" />
                               Président de Salle (Principal)
                             </span>
@@ -745,8 +745,8 @@ const [proctorSearch, setProctorSearch] = useState('');
                         {/* 2. Surveillants Secondaires */}
                         <div className="p-3.5 rounded-2xl bg-indigo-500/[0.04] dark:bg-indigo-950/[0.15] border border-indigo-200/70 dark:border-indigo-900/50 flex flex-col justify-between">
                           <div className="flex items-center justify-between mb-2">
-                            <span className="text-[11px] font-black uppercase tracking-wider text-indigo-800 dark:text-indigo-400 flex items-center gap-1.5">
-                              <Users className="w-3.5 h-3.5 text-indigo-600" />
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-primary dark:text-indigo-400 flex items-center gap-1.5">
+                              <Users className="w-3.5 h-3.5 text-primary" />
                               Surveillant(s) Secondaire(s) ({assign.secondary_ids.length})
                             </span>
                           </div>
@@ -763,11 +763,11 @@ const [proctorSearch, setProctorSearch] = useState('');
                                 return (
                                   <span
                                     key={secId}
-                                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 shadow-xs"
+                                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold bg-card dark:bg-card border border-border dark:border-border text-foreground dark:text-foreground shadow-xs"
                                   >
                                     <span
                                       className={cn(
-                                        'w-5 h-5 rounded-md flex items-center justify-center text-[9px] font-black',
+                                        "w-5 h-5 rounded-md flex items-center justify-center text-[9px] font-bold",
                                         styles.avatar
                                       )}
                                     >
@@ -776,7 +776,7 @@ const [proctorSearch, setProctorSearch] = useState('');
                                     <span className="truncate max-w-[120px]">{secProctor.name}</span>
                                     <span
                                       className={cn(
-                                        'text-[8px] font-black uppercase px-1 py-0.2 rounded-md border',
+                                        "text-[8px] font-bold uppercase px-1 py-0.2 rounded-md border",
                                         styles.badge
                                       )}
                                     >
@@ -823,18 +823,18 @@ const [proctorSearch, setProctorSearch] = useState('');
           </div>
 
           {/* RIGHT SIDEBAR: PROCTORS WORKLOAD & QUOTAS PANEL */}
-          <div className="w-full lg:w-[420px] xl:w-[460px] flex flex-col bg-white dark:bg-slate-900 overflow-hidden shrink-0 border-t lg:border-t-0 shadow-xs">
-            <div className="p-4 border-b border-slate-200/80 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/80">
+          <div className="w-full lg:w-[420px] xl:w-[460px] flex flex-col bg-card dark:bg-card overflow-hidden shrink-0 border-t lg:border-t-0 shadow-xs">
+            <div className="p-4 border-b border-slate-200/80 dark:border-border bg-slate-50/70 dark:bg-slate-900/80">
               <div className="flex items-center justify-between mb-1.5">
-                <h3 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
+                <h3 className="text-sm font-bold text-foreground dark:text-white flex items-center gap-2">
                   <GraduationCap className="w-4 h-4 text-amber-600" />
                   Quotas & Charge des Surveillants
                 </h3>
-                <span className="text-xs font-black px-2 py-0.5 rounded-full bg-slate-200/60 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-200/60 dark:bg-card text-slate-700 dark:text-foreground">
                   {proctors.length} éligibles
                 </span>
               </div>
-              <p className="text-[11px] text-slate-500 leading-tight">
+              <p className="text-[11px] text-muted-foreground leading-tight">
                 Contrôlez en temps réel le nombre de séances attribuées à chaque enseignant (permanents, vacataires,
                 doctorants). Cliquez sur un prof pour filtrer ses séances à gauche.
               </p>
@@ -847,12 +847,12 @@ const [proctorSearch, setProctorSearch] = useState('');
                   value={proctorSearch}
                   onChange={(e) => setProctorSearch(e.target.value)}
                   placeholder="Rechercher un professeur..."
-                  className="w-full pl-8 pr-7 py-1.5 text-xs rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-hidden focus:ring-1 focus:ring-amber-500"
+                  className="w-full pl-8 pr-7 py-1.5 text-xs bg-card dark:bg-card border border-border dark:border-border text-foreground dark:text-foreground placeholder-slate-400 focus:outline-hidden focus:ring-1 focus:ring-amber-500 rounded-[var(--control-radius)]"
                 />
                 {proctorSearch && (
                   <button
                     onClick={() => setProctorSearch('')}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-muted-foreground cursor-pointer"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
@@ -869,7 +869,7 @@ const [proctorSearch, setProctorSearch] = useState('');
                       'px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap transition-colors cursor-pointer',
                       proctorTypeFilter === type
                         ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xs'
-                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                        : "bg-muted dark:bg-card text-muted-foreground dark:text-muted-foreground hover:text-foreground"
                     )}
                   >
                     {type === 'all' ? 'Tous' : type}
@@ -901,13 +901,13 @@ const [proctorSearch, setProctorSearch] = useState('');
                       'p-2.5 rounded-xl transition-all cursor-pointer flex items-center justify-between gap-3 group select-none',
                       isHighlighted
                         ? 'bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 shadow-sm'
-                        : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                        : "hover:bg-muted/50 dark:hover:bg-slate-800/50"
                     )}
                   >
                     <div className="flex items-center gap-2.5 min-w-0 flex-1">
                       <div
                         className={cn(
-                          'w-8 h-8 rounded-lg flex items-center justify-center font-black text-[10px] shrink-0',
+                          "w-8 h-8 rounded-lg flex items-center justify-center font-bold text-[10px] shrink-0",
                           styles.avatar
                         )}
                       >
@@ -916,12 +916,12 @@ const [proctorSearch, setProctorSearch] = useState('');
 
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <p className="font-bold text-xs text-slate-900 dark:text-slate-100 truncate">
+                          <p className="font-bold text-xs text-foreground dark:text-foreground truncate">
                             {proctor.name}
                           </p>
                           <span
                             className={cn(
-                              'text-[9px] font-black uppercase px-1.5 py-0.5 rounded-md border',
+                              "text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-md border",
                               styles.badge
                             )}
                           >
@@ -947,14 +947,14 @@ const [proctorSearch, setProctorSearch] = useState('');
                       {/* Live Counter Badge */}
                       <span
                         className={cn(
-                          'px-2.5 py-1 rounded-xl text-xs font-black min-w-[70px] text-center transition-all shadow-2xs',
+                          "px-2.5 py-1 rounded-xl text-xs font-bold min-w-[70px] text-center transition-all shadow-2xs",
                           workload.count === 0
-                            ? 'bg-slate-100 dark:bg-slate-800 text-slate-400'
+                            ? "bg-muted dark:bg-card text-slate-400"
                             : workload.count === 1
                             ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300'
                             : workload.count === 2
-                            ? 'bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300'
-                            : 'bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 font-black'
+                            ? "bg-primary/10 dark:bg-blue-950 text-primary dark:text-blue-300"
+                            : "bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 font-bold"
                         )}
                       >
                         {workload.count} {workload.count > 1 ? 'séances' : 'séance'}
@@ -968,11 +968,11 @@ const [proctorSearch, setProctorSearch] = useState('');
         </div>
 
         {/* MODAL FOOTER */}
-        <div className="px-6 py-3.5 border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0 shadow-lg z-10">
-          <div className="flex items-center gap-3 text-xs text-slate-500">
+        <div className="px-6 py-3.5 border-t border-border dark:border-border bg-white/95 dark:bg-slate-900/95 backdrop-blur-md flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0 shadow-lg z-10">
+          <div className="flex items-center gap-3 text-xs text-muted-foreground">
             <span>
               Total surveillances attribuées :{' '}
-              <strong className="text-slate-900 dark:text-white font-black">{coverageStats.totalAssignedSlots}</strong>
+              <strong className="text-foreground dark:text-white font-bold">{coverageStats.totalAssignedSlots}</strong>
             </span>
             <span>•</span>
             <span className="flex items-center gap-1.5 font-bold text-emerald-600 dark:text-emerald-400">
@@ -991,7 +991,7 @@ const [proctorSearch, setProctorSearch] = useState('');
             <button
               onClick={onClose}
               type="button"
-              className="flex-1 sm:flex-none px-4 py-2.5 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all cursor-pointer border border-slate-200/60 dark:border-slate-700"
+              className="flex-1 sm:flex-none px-4 py-2.5 text-xs font-bold text-muted-foreground dark:text-foreground hover:bg-muted dark:hover:bg-slate-800 rounded-xl transition-all cursor-pointer border border-slate-200/60 dark:border-border"
             >
               Annuler
             </button>
@@ -1000,7 +1000,7 @@ const [proctorSearch, setProctorSearch] = useState('');
               onClick={() => saveMutation.mutate()}
               disabled={saveMutation.isPending}
               type="button"
-              className="flex-1 sm:flex-none px-6 py-2.5 text-xs font-black uppercase tracking-wider text-white bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 rounded-xl transition-all shadow-lg shadow-amber-500/25 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 hover:scale-[1.01] active:scale-[0.99]"
+              className="flex-1 sm:flex-none px-6 py-2.5 text-xs font-bold uppercase tracking-wider text-white bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 rounded-xl transition-all shadow-lg shadow-amber-500/25 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 hover:scale-[1.01] active:scale-[0.99]"
             >
               {saveMutation.isPending ? (
                 <Loader2 className="w-4 h-4 animate-spin" />

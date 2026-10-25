@@ -113,23 +113,23 @@ export default function AdminPFEWorkflowPage() {
   };
 
   return (
-    <div className="max-w-[1700px] mx-auto p-4 md:p-8 space-y-8 font-sans animate-in fade-in pb-24">
+    <div className="max-w-[1700px] mx-auto space-y-8 font-sans animate-in fade-in pb-24">
       
       {/* ── Hero Powerhouse Banner ────────────────────────────────────────────── */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-slate-950 via-[#001A4B] to-purple-950 p-8 md:p-10 rounded-[2.5rem] shadow-2xl text-white border border-purple-900/40">
+      <div className="relative overflow-hidden p-8 md:p-10 text-white border border-purple-900/40 erp-page-banner">
         <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="flex items-center gap-6">
-            <div className="w-16 h-16 md:w-20 md:h-20 rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center shadow-2xl shrink-0">
+            <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center shadow-sm shrink-0">
               <GraduationCap className="w-8 h-8 md:w-10 md:h-10 text-amber-400" />
             </div>
             <div>
-              <div className="inline-flex items-center gap-2 bg-purple-500/20 text-purple-200 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-2 border border-purple-400/30">
+              <div className="inline-flex items-center gap-2 bg-purple-500/20 text-purple-200 px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mb-2 border border-purple-400/30">
                 <Sparkles className="w-4 h-4 text-amber-400" /> Hub PFE & Soutenances 360° — ENCG Fès
               </div>
-              <h1 className="text-2xl md:text-4xl font-black text-white tracking-tight leading-tight">
+              <h1 className="text-white leading-tight erp-page-title">
                 Pilotage des Stages, PFE & Jurys de Soutenance
               </h1>
               <p className="text-blue-100/90 text-xs md:text-sm font-medium mt-1 max-w-2xl">
@@ -146,7 +146,7 @@ export default function AdminPFEWorkflowPage() {
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Rechercher PFE, étudiant..."
-                className="pl-9 pr-4 py-2.5 bg-white/10 border border-white/20 rounded-2xl text-xs font-bold text-white placeholder:text-white/40 outline-none focus:ring-2 focus:ring-white/30 w-64"
+                className="pl-9 pr-4 py-2.5 bg-white/10 border border-white/20 text-xs font-bold text-white placeholder:text-white/40 outline-none focus:ring-2 focus:ring-white/30 w-64 rounded-[var(--control-radius)]"
               />
             </div>
           </div>
@@ -163,8 +163,8 @@ export default function AdminPFEWorkflowPage() {
             { label: 'SOUTENUS & VALIDÉS', value: stats.soutenus ?? 16 },
           ].map(s => (
             <div key={s.label} className="p-3 rounded-2xl bg-white/10 border border-white/15 text-center">
-              <span className="text-[9px] font-black uppercase tracking-wider text-blue-200 block">{s.label}</span>
-              <span className="text-2xl font-black text-white font-mono mt-1 block">{s.value}</span>
+              <span className="text-[9px] font-bold uppercase tracking-wider text-blue-200 block">{s.label}</span>
+              <span className="text-2xl font-bold text-white font-mono mt-1 block">{s.value}</span>
             </div>
           ))}
         </div>
@@ -175,7 +175,7 @@ export default function AdminPFEWorkflowPage() {
         <button
           onClick={() => setActiveTab('kanban')}
           className={cn(
-            "flex items-center gap-2.5 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap",
+            "flex items-center gap-2.5 px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap",
             activeTab === 'kanban'
               ? "bg-[#0f2863] text-white shadow-md"
               : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -188,7 +188,7 @@ export default function AdminPFEWorkflowPage() {
         <button
           onClick={() => setActiveTab('jurys')}
           className={cn(
-            "flex items-center gap-2.5 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap",
+            "flex items-center gap-2.5 px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap",
             activeTab === 'jurys'
               ? "bg-[#0f2863] text-white shadow-md"
               : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -201,7 +201,7 @@ export default function AdminPFEWorkflowPage() {
         <button
           onClick={() => setActiveTab('evaluation')}
           className={cn(
-            "flex items-center gap-2.5 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap",
+            "flex items-center gap-2.5 px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap",
             activeTab === 'evaluation'
               ? "bg-[#0f2863] text-white shadow-md"
               : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -218,36 +218,36 @@ export default function AdminPFEWorkflowPage() {
       {activeTab === 'kanban' && (
         <div className="space-y-6 animate-in fade-in">
           {isLoadingPfe ? (
-            <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-indigo-600" /></div>
+            <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-4">
               {STAGES.map(stage => {
                 const items = filterPfe(stages[stage.key] ?? []);
                 return (
-                  <div key={stage.key} className={cn('rounded-[1.5rem] border p-4 space-y-3', stage.color)}>
+                  <div key={stage.key} className={cn("rounded-2xl border p-4 space-y-3", stage.color)}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <span className="text-lg">{stage.icon}</span>
-                        <span className="font-black text-xs uppercase tracking-wider text-slate-700 dark:text-slate-200">{stage.label}</span>
+                        <span className="font-bold text-xs uppercase tracking-wider text-slate-700 dark:text-foreground">{stage.label}</span>
                       </div>
-                      <span className="px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-[10px] font-black">{items.length}</span>
+                      <span className="px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-foreground text-[10px] font-bold">{items.length}</span>
                     </div>
 
                     <div className="space-y-2 max-h-[460px] overflow-y-auto">
                       {items.length === 0 ? (
                         <p className="text-center text-xs text-slate-400 py-8">Aucun PFE dans cette étape</p>
                       ) : items.map((pfe: any) => (
-                        <div key={pfe.id} className="bg-white dark:bg-slate-900 rounded-2xl p-3.5 shadow-sm border border-slate-200 dark:border-slate-700 space-y-2.5">
-                          <p className="font-black text-xs text-slate-900 dark:text-white line-clamp-2">{pfe.title || 'Titre non défini'}</p>
+                        <div key={pfe.id} className="bg-card dark:bg-card rounded-2xl p-3.5 shadow-sm border border-border dark:border-border space-y-2.5">
+                          <p className="font-bold text-xs text-foreground dark:text-white line-clamp-2">{pfe.title || 'Titre non défini'}</p>
 
                           <div className="space-y-1 text-[11px]">
                             {pfe.student_name && (
-                              <div className="flex items-center gap-1.5 text-slate-500">
-                                <User className="w-3.5 h-3.5 text-indigo-500" /> {pfe.student_name}
+                              <div className="flex items-center gap-1.5 text-muted-foreground">
+                                <User className="w-3.5 h-3.5 text-primary" /> {pfe.student_name}
                               </div>
                             )}
                             {pfe.supervisor_name && (
-                              <div className="flex items-center gap-1.5 text-slate-500">
+                              <div className="flex items-center gap-1.5 text-muted-foreground">
                                 <UserCheck className="w-3.5 h-3.5 text-emerald-500" /> Encadrant : {pfe.supervisor_name}
                               </div>
                             )}
@@ -262,14 +262,14 @@ export default function AdminPFEWorkflowPage() {
                             <button
                               onClick={() => moveMutation.mutate({ id: pfe.id, status: stage.nextStatus! })}
                               disabled={moveMutation.isPending}
-                              className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[10px] font-black cursor-pointer transition-colors flex items-center justify-center gap-1 shadow-sm"
+                              className="w-full py-2 bg-primary hover:bg-primary text-primary-foreground rounded-xl text-[10px] font-bold cursor-pointer transition-colors flex items-center justify-center gap-1 shadow-sm"
                             >
                               {moveMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <ChevronRight className="w-3.5 h-3.5" />}
                               {stage.nextLabel}
                             </button>
                           )}
                           {!stage.nextStatus && (
-                            <div className="w-full py-1.5 bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 rounded-xl text-[10px] font-black text-center">
+                            <div className="w-full py-1.5 bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 rounded-xl text-[10px] font-bold text-center">
                               ✅ Soutenu & Validé
                             </div>
                           )}
@@ -289,10 +289,10 @@ export default function AdminPFEWorkflowPage() {
       {/* ═════════════════════════════════════════════════════════════════════════ */}
       {activeTab === 'jurys' && (
         <div className="space-y-6 animate-in fade-in">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 bg-card border border-border rounded-3xl shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 bg-card border border-border rounded-2xl shadow-sm">
             <div>
-              <h3 className="text-base font-black text-foreground flex items-center gap-2">
-                <Users className="w-5 h-5 text-indigo-600" />
+              <h3 className="text-base font-bold text-foreground flex items-center gap-2">
+                <Users className="w-5 h-5 text-primary" />
                 <span>Programmation & Déploiement des Jurys de Soutenance</span>
               </h3>
               <p className="text-xs text-muted-foreground">
@@ -302,7 +302,7 @@ export default function AdminPFEWorkflowPage() {
 
             <button
               onClick={handleAutoScheduleIA}
-              className="px-5 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:opacity-95 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-lg flex items-center gap-2 cursor-pointer self-start sm:self-auto"
+              className="px-5 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:opacity-95 text-white font-bold text-xs uppercase tracking-wider rounded-2xl shadow-lg flex items-center gap-2 cursor-pointer self-start sm:self-auto"
             >
               <Sparkles className="w-4 h-4 text-amber-300" />
               <span>Auto-Planificateur IA (Anti-Conflit Salles)</span>
@@ -310,23 +310,23 @@ export default function AdminPFEWorkflowPage() {
           </div>
 
           {loadingSoutenances ? (
-            <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-indigo-600" /></div>
+            <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {soutenances.map(s => (
               <div
                 key={s.id}
                 className={cn(
-                  "p-6 rounded-3xl border bg-card shadow-sm space-y-4 transition-all hover:border-indigo-400/80",
+                  "p-6 rounded-2xl border bg-card shadow-sm space-y-4 transition-all hover:border-indigo-400/80",
                   s.status === 'CONFLICT' ? "border-rose-300 dark:border-rose-800 bg-rose-500/5" : "border-border"
                 )}
               >
                 <div className="flex items-center justify-between">
-                  <span className="px-3 py-1 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 rounded-xl text-xs font-black">
+                  <span className="px-3 py-1 bg-primary/5 dark:bg-indigo-950/60 text-primary dark:text-indigo-300 border border-primary/20 rounded-xl text-xs font-bold">
                     🎓 {s.student}
                   </span>
                   <span className={cn(
-                    "px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border",
+                    "px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border",
                     s.status === 'CONFLICT' ? "bg-rose-100 text-rose-700 border-rose-200" : "bg-emerald-100 text-emerald-700 border-emerald-200"
                   )}>
                     {s.status === 'CONFLICT' ? '⚠️ Conflit de Salle' : '✅ Planifié'}
@@ -334,13 +334,13 @@ export default function AdminPFEWorkflowPage() {
                 </div>
 
                 <div>
-                  <h4 className="font-black text-sm text-foreground line-clamp-2">{s.topic}</h4>
-                  <p className="text-xs text-indigo-600 dark:text-indigo-400 font-bold mt-0.5">{s.filiere}</p>
+                  <h4 className="font-bold text-sm text-foreground line-clamp-2">{s.topic}</h4>
+                  <p className="text-xs text-primary dark:text-indigo-400 font-bold mt-0.5">{s.filiere}</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground pt-2 border-t border-border">
-                  <span className="flex items-center gap-1.5 font-mono"><Calendar className="w-3.5 h-3.5 text-indigo-500" /> {s.date}</span>
-                  <span className="flex items-center gap-1.5 font-mono"><Clock className="w-3.5 h-3.5 text-indigo-500" /> {s.time}</span>
+                  <span className="flex items-center gap-1.5 font-mono"><Calendar className="w-3.5 h-3.5 text-primary" /> {s.date}</span>
+                  <span className="flex items-center gap-1.5 font-mono"><Clock className="w-3.5 h-3.5 text-primary" /> {s.time}</span>
                   <span className="flex items-center gap-1.5 font-bold col-span-2 text-foreground"><MapPin className="w-3.5 h-3.5 text-amber-500" /> {s.room}</span>
                 </div>
 
@@ -354,7 +354,7 @@ export default function AdminPFEWorkflowPage() {
                 <div className="flex items-center gap-2 pt-2">
                   <button
                     onClick={() => handlePrintJuryConvocation(s)}
-                    className="flex-1 py-2.5 bg-[#002147] hover:bg-[#00152e] text-white font-black text-xs rounded-xl flex items-center justify-center gap-2 shadow-sm cursor-pointer transition-all active:scale-95"
+                    className="flex-1 py-2.5 bg-[#002147] hover:bg-[#00152e] text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 shadow-sm cursor-pointer transition-all active:scale-95"
                     title="Imprimer la convocation officielle sur A4"
                   >
                     <Printer className="w-3.5 h-3.5 text-amber-400" />
@@ -366,7 +366,7 @@ export default function AdminPFEWorkflowPage() {
                     className="p-2.5 bg-muted hover:bg-muted/80 text-foreground font-bold text-xs rounded-xl flex items-center justify-center border border-border cursor-pointer transition-colors"
                     title="Télécharger le PDF officiel"
                   >
-                    <FileDown className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                    <FileDown className="w-3.5 h-3.5 text-primary dark:text-blue-400" />
                   </button>
 
                   <button
@@ -374,7 +374,7 @@ export default function AdminPFEWorkflowPage() {
                       setSelectedPvModal(s);
                       setActiveTab('evaluation');
                     }}
-                    className="py-2.5 px-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-colors shadow-sm"
+                    className="py-2.5 px-3.5 bg-primary hover:bg-primary text-primary-foreground font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-colors shadow-sm"
                     title="Saisir la note et le PV"
                   >
                     <Award className="w-3.5 h-3.5" />
@@ -393,10 +393,10 @@ export default function AdminPFEWorkflowPage() {
       {/* ═════════════════════════════════════════════════════════════════════════ */}
       {activeTab === 'evaluation' && (
         <div className="space-y-6 animate-in fade-in">
-          <div className="p-6 md:p-8 bg-card border border-border rounded-3xl shadow-sm space-y-6 max-w-4xl mx-auto">
+          <div className="p-6 md:p-8 bg-card border border-border rounded-2xl shadow-sm space-y-6 max-w-4xl mx-auto">
             <div className="flex items-center justify-between pb-4 border-b border-border">
               <div>
-                <h3 className="text-lg font-black text-foreground flex items-center gap-2">
+                <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
                   <Award className="w-5 h-5 text-amber-500" />
                   <span>Grille d'Évaluation & Procès-Verbal de Soutenance</span>
                 </h3>
@@ -405,14 +405,14 @@ export default function AdminPFEWorkflowPage() {
                 </p>
               </div>
 
-              <span className="px-3 py-1 bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border border-amber-200 rounded-xl text-xs font-black">
+              <span className="px-3 py-1 bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border border-amber-200 rounded-xl text-xs font-bold">
                 Session Juin 2026
               </span>
             </div>
 
             {/* Candidate Selector */}
             <div>
-              <label className="block text-xs font-black text-muted-foreground uppercase tracking-wider mb-2">
+              <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
                 Sélectionner le Candidat à Évaluer
               </label>
               <select
@@ -421,7 +421,7 @@ export default function AdminPFEWorkflowPage() {
                   const item = soutenances.find(s => s.id === Number(e.target.value));
                   if (item) setSelectedPvModal(item);
                 }}
-                className="w-full bg-background border border-input rounded-xl px-4 py-3 text-xs font-bold text-foreground focus:outline-none"
+                className="w-full bg-background border border-input px-4 py-3 text-xs font-bold text-foreground focus:outline-none rounded-[var(--control-radius)]"
               >
                 {soutenances.map(s => (
                   <option key={s.id} value={s.id}>{s.student} — {s.topic}</option>
@@ -433,7 +433,7 @@ export default function AdminPFEWorkflowPage() {
             <div className="space-y-4 p-5 bg-muted/40 rounded-2xl border border-border">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-foreground">Note Globale Attribuée par le Jury :</span>
-                <span className="font-mono text-xl font-black text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/80 px-3 py-1 rounded-xl border border-indigo-200">
+                <span className="font-mono text-xl font-bold text-primary dark:text-indigo-400 bg-primary/5 dark:bg-indigo-950/80 px-3 py-1 rounded-xl border border-primary/20">
                   {pvScore} / 20
                 </span>
               </div>
@@ -449,7 +449,7 @@ export default function AdminPFEWorkflowPage() {
 
               <div className="p-4 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl flex items-center justify-between">
                 <span className="text-xs font-bold text-emerald-950 dark:text-emerald-200">Mention Accordée :</span>
-                <span className="text-xs font-black text-emerald-700 dark:text-emerald-300">{getMention(pvScore)}</span>
+                <span className="text-xs font-bold text-emerald-700 dark:text-emerald-300">{getMention(pvScore)}</span>
               </div>
             </div>
 
@@ -457,7 +457,7 @@ export default function AdminPFEWorkflowPage() {
             <div className="flex flex-col sm:flex-row items-center justify-end gap-3 pt-4 border-t border-border">
               <button
                 onClick={() => toast.success(`PV de Soutenance enregistré pour ${selectedPvModal?.student || 'le candidat'} avec la note de ${pvScore}/20 !`)}
-                className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-95 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-95 text-white font-bold text-xs uppercase tracking-wider rounded-2xl shadow-lg flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Check className="w-4 h-4" />
                 <span>Valider le PV de Soutenance 💾</span>

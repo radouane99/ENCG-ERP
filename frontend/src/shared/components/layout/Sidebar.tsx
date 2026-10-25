@@ -417,7 +417,7 @@ const [searchQuery, setSearchQuery] = useState('');
                             cn(
                               'flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all duration-200 cursor-pointer select-none group relative',
                               isActive 
-                                ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-md shadow-indigo-600/30 font-bold translate-x-1' 
+                                ? 'bg-sidebar-accent text-sidebar-foreground font-semibold border-s-2 border-sidebar-primary'
                                 : 'text-sidebar-foreground/80 hover:text-white hover:bg-white/10 hover:translate-x-0.5'
                             )
                           }
@@ -461,7 +461,7 @@ const [searchQuery, setSearchQuery] = useState('');
                       cn(
                         'flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all duration-200 cursor-pointer select-none group relative',
                         isActive 
-                          ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-md shadow-indigo-600/30 font-bold translate-x-1' 
+                          ? 'bg-sidebar-accent text-sidebar-foreground font-semibold border-s-2 border-sidebar-primary'
                           : 'text-sidebar-foreground/80 hover:text-white hover:bg-white/10 hover:translate-x-0.5'
                       )
                     }
@@ -500,7 +500,7 @@ const [searchQuery, setSearchQuery] = useState('');
             onClose?.();
           }}
         >
-          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xs font-black shadow-md shrink-0">
+          <div className="w-9 h-9 rounded-full bg-sidebar-accent flex items-center justify-center text-white text-xs font-black shadow-md shrink-0">
             {user.avatar_path ? (
               <img src={`${(import.meta.env.VITE_API_URL || '').replace(/\/api\/?$/, '')}/storage/${user.avatar_path}`} alt="Avatar" className="w-full h-full object-cover rounded-full" />
             ) : (

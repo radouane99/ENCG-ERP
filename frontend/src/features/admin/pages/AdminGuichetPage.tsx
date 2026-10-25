@@ -327,26 +327,26 @@ export default function UnifiedGuichetAttestationsPage() {
   }
 
   return (
-    <div data-testid="admin-guichet-page" className="max-w-[1680px] mx-auto p-4 sm:p-6 md:p-8 space-y-6 sm:space-y-8 font-sans pb-24">
+    <div data-testid="admin-guichet-page" className="max-w-[1680px] mx-auto space-y-6 sm:space-y-8 font-sans pb-24">
 
       {/* ═════════════════════════════════════════════════════════════════════════ */}
       {/* ── LUXURY EXECUTIVE HERO BANNER ───────────────────────────────────────── */}
       {/* ═════════════════════════════════════════════════════════════════════════ */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 p-6 sm:p-8 md:p-10 rounded-[2.5rem] shadow-2xl text-white border border-indigo-900/40 space-y-8">
+      <div className="relative overflow-hidden p-6 sm:p-8 md:p-10 text-white border border-indigo-900/40 space-y-8 erp-page-banner">
         <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/15 rounded-full blur-3xl pointer-events-none -translate-y-1/2 translate-x-1/3" />
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none translate-y-1/3 -translate-x-1/4" />
 
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-gradient-to-tr from-indigo-600/30 via-white/10 to-emerald-400/20 backdrop-blur-xl border border-white/20 flex items-center justify-center shadow-2xl shrink-0 group">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-indigo-600/30 via-white/10 to-emerald-400/20 backdrop-blur-xl border border-white/20 flex items-center justify-center shadow-sm shrink-0 group">
               <FileSignature className="w-8 h-8 sm:w-10 sm:h-10 text-amber-400 drop-shadow-md group-hover:scale-110 transition-transform duration-300" />
             </div>
             <div>
-              <div className="inline-flex items-center gap-2 bg-indigo-500/20 text-indigo-200 px-3.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-2 border border-indigo-400/30">
+              <div className="inline-flex items-center gap-2 bg-indigo-500/20 text-indigo-200 px-3.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mb-2 border border-indigo-400/30">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                 <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Guichet Unique 360° & Signature Numérique — ENCG Fès
               </div>
-              <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight leading-tight">
+              <h1 className="text-white leading-tight erp-page-title">
                 Guichet Unique & Demandes Administratives
               </h1>
               <p className="text-indigo-100/80 text-xs sm:text-sm font-medium mt-1.5 max-w-3xl leading-relaxed">
@@ -358,13 +358,13 @@ export default function UnifiedGuichetAttestationsPage() {
           <div className="flex flex-wrap items-center gap-3 shrink-0">
             <button
               onClick={() => setShowQuickGenerateModal(true)}
-              className="flex items-center justify-center gap-2 px-5 py-3.5 bg-gradient-to-r from-primary via-blue-600 to-indigo-600 hover:from-primary/90 hover:to-indigo-700 text-white font-black rounded-2xl transition-all text-xs shadow-xl cursor-pointer active:scale-95 border border-white/20"
+              className="flex items-center justify-center gap-2 px-5 py-3.5 bg-gradient-to-r from-primary via-blue-600 to-indigo-600 hover:from-primary/90 hover:to-indigo-700 text-white font-bold rounded-2xl transition-all text-xs shadow-sm cursor-pointer active:scale-95 border border-white/20"
             >
               <Plus className="w-4 h-4" /> Nouvelle Édition Rapide ⚡
             </button>
             <button
               onClick={() => setShowQrVerificationModal(true)}
-              className="flex items-center justify-center gap-2 px-5 py-3.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 font-black rounded-2xl transition-all text-xs border border-emerald-400/40 cursor-pointer shadow-lg active:scale-95"
+              className="flex items-center justify-center gap-2 px-5 py-3.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 font-bold rounded-2xl transition-all text-xs border border-emerald-400/40 cursor-pointer shadow-lg active:scale-95"
             >
               <ShieldCheck className="w-4 h-4 text-emerald-400" /> Scanner & Vérifier QR
             </button>
@@ -381,49 +381,49 @@ export default function UnifiedGuichetAttestationsPage() {
         {/* ── 4 High-End Responsive KPI Cards ── */}
         <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-6 border-t border-white/10">
           
-          <div className="p-5 rounded-3xl bg-white/5 hover:bg-white/10 backdrop-blur-xl border border-amber-400/20 shadow-lg transition-all space-y-2 relative overflow-hidden group">
+          <div className="p-5 rounded-2xl bg-white/5 hover:bg-white/10 backdrop-blur-xl border border-amber-400/20 shadow-lg transition-all space-y-2 relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/10 rounded-full blur-xl group-hover:scale-150 transition-transform" />
-            <div className="flex items-center justify-between text-[11px] font-black uppercase tracking-wider text-amber-300">
+            <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-amber-300">
               <span>EN ATTENTE DE TRAITEMENT</span>
               <Clock className="w-4 h-4 text-amber-400" />
             </div>
-            <div className="text-3xl font-black text-amber-300 font-mono tracking-tight">{stats.pending}</div>
+            <div className="text-3xl font-bold text-amber-300 font-mono tracking-tight">{stats.pending}</div>
             <div className="text-[10px] font-bold text-amber-200/70">
               SLA Actif : traitement sous 24h
             </div>
           </div>
 
-          <div className="p-5 rounded-3xl bg-white/5 hover:bg-white/10 backdrop-blur-xl border border-emerald-400/20 shadow-lg transition-all space-y-2 relative overflow-hidden group">
+          <div className="p-5 rounded-2xl bg-white/5 hover:bg-white/10 backdrop-blur-xl border border-emerald-400/20 shadow-lg transition-all space-y-2 relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-full blur-xl group-hover:scale-150 transition-transform" />
-            <div className="flex items-center justify-between text-[11px] font-black uppercase tracking-wider text-emerald-300">
+            <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-emerald-300">
               <span>TRAITÉES & SIGNÉES SHA-256</span>
               <ShieldCheck className="w-4 h-4 text-emerald-400" />
             </div>
-            <div className="text-3xl font-black text-emerald-400 font-mono tracking-tight">{stats.approved}</div>
+            <div className="text-3xl font-bold text-emerald-400 font-mono tracking-tight">{stats.approved}</div>
             <div className="text-[10px] font-bold text-emerald-200/70">
               Archivage sécurisé & coffre-fort
             </div>
           </div>
 
-          <div className="p-5 rounded-3xl bg-white/5 hover:bg-white/10 backdrop-blur-xl border border-indigo-400/20 shadow-lg transition-all space-y-2 relative overflow-hidden group">
+          <div className="p-5 rounded-2xl bg-white/5 hover:bg-white/10 backdrop-blur-xl border border-indigo-400/20 shadow-lg transition-all space-y-2 relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/10 rounded-full blur-xl group-hover:scale-150 transition-transform" />
-            <div className="flex items-center justify-between text-[11px] font-black uppercase tracking-wider text-indigo-300">
+            <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-indigo-300">
               <span>TOTAL DOSSIERS EN BASE</span>
               <FileText className="w-4 h-4 text-indigo-400" />
             </div>
-            <div className="text-3xl font-black text-white font-mono tracking-tight">{rawRequests.length}</div>
+            <div className="text-3xl font-bold text-white font-mono tracking-tight">{rawRequests.length}</div>
             <div className="text-[10px] font-bold text-indigo-200/70">
               {stats.rejected} rejeté(s) au total
             </div>
           </div>
 
-          <div className="p-5 rounded-3xl bg-white/5 hover:bg-white/10 backdrop-blur-xl border border-purple-400/20 shadow-lg transition-all space-y-2 relative overflow-hidden group">
+          <div className="p-5 rounded-2xl bg-white/5 hover:bg-white/10 backdrop-blur-xl border border-purple-400/20 shadow-lg transition-all space-y-2 relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/10 rounded-full blur-xl group-hover:scale-150 transition-transform" />
-            <div className="flex items-center justify-between text-[11px] font-black uppercase tracking-wider text-purple-300">
+            <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-purple-300">
               <span>TAUX D'ACCOMPLISSEMENT</span>
               <Sparkles className="w-4 h-4 text-purple-400" />
             </div>
-            <div className="text-3xl font-black text-purple-300 font-mono tracking-tight">
+            <div className="text-3xl font-bold text-purple-300 font-mono tracking-tight">
               {rawRequests.length > 0 ? Math.round((stats.approved / rawRequests.length) * 100) : 100}%
             </div>
             <div className="w-full bg-white/10 h-1.5 rounded-full overflow-hidden">
@@ -440,7 +440,7 @@ export default function UnifiedGuichetAttestationsPage() {
       {/* ═════════════════════════════════════════════════════════════════════════ */}
       {/* ── FULL-WIDTH SPACIOUS WORKSPACE CARD ─────────────────────────────────── */}
       {/* ═════════════════════════════════════════════════════════════════════════ */}
-      <div className="bg-card border border-border rounded-[2.5rem] p-6 sm:p-8 shadow-xl space-y-6">
+      <div className="bg-card border border-border rounded-2xl p-6 sm:p-8 shadow-sm space-y-6">
 
         {/* ── Top Level Tabs & Audience Switcher ── */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-border">
@@ -449,7 +449,7 @@ export default function UnifiedGuichetAttestationsPage() {
             <button
               onClick={() => setAudience('all')}
               className={cn(
-                "px-5 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer flex items-center gap-2.5",
+                "px-5 py-3 rounded-2xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2.5",
                 audience === 'all'
                   ? "bg-primary text-primary-foreground shadow-lg scale-[1.02]"
                   : "bg-muted/60 hover:bg-muted text-muted-foreground hover:text-foreground"
@@ -464,7 +464,7 @@ export default function UnifiedGuichetAttestationsPage() {
             <button
               onClick={() => setAudience('professors')}
               className={cn(
-                "px-5 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer flex items-center gap-2.5",
+                "px-5 py-3 rounded-2xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2.5",
                 audience === 'professors'
                   ? "bg-gradient-to-r from-indigo-600 to-primary text-white shadow-lg scale-[1.02]"
                   : "bg-muted/60 hover:bg-muted text-muted-foreground hover:text-foreground"
@@ -472,7 +472,7 @@ export default function UnifiedGuichetAttestationsPage() {
             >
               <span>👨‍🏫 Enseignants & Ordres de Mission</span>
               {profPendingCount > 0 ? (
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] bg-amber-400 text-slate-950 font-black animate-pulse">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] bg-amber-400 text-slate-950 font-bold animate-pulse">
                   {profPendingCount} En attente
                 </span>
               ) : (
@@ -485,7 +485,7 @@ export default function UnifiedGuichetAttestationsPage() {
             <button
               onClick={() => setAudience('students')}
               className={cn(
-                "px-5 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer flex items-center gap-2.5",
+                "px-5 py-3 rounded-2xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2.5",
                 audience === 'students'
                   ? "bg-primary text-primary-foreground shadow-lg scale-[1.02]"
                   : "bg-muted/60 hover:bg-muted text-muted-foreground hover:text-foreground"
@@ -493,7 +493,7 @@ export default function UnifiedGuichetAttestationsPage() {
             >
               <span>🎓 Étudiants (Scolarité)</span>
               {studentPendingCount > 0 ? (
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] bg-emerald-500 text-white font-black">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] bg-emerald-500 text-white font-bold">
                   {studentPendingCount} En attente
                 </span>
               ) : (
@@ -508,7 +508,7 @@ export default function UnifiedGuichetAttestationsPage() {
           <div className="flex items-center gap-2.5 shrink-0">
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="px-4 py-2.5 bg-muted/60 hover:bg-muted text-foreground border border-border rounded-xl text-xs font-black cursor-pointer transition-all flex items-center gap-2 shadow-xs"
+              className="px-4 py-2.5 bg-muted/60 hover:bg-muted text-foreground border border-border rounded-xl text-xs font-bold cursor-pointer transition-all flex items-center gap-2 shadow-xs"
               title="Importer des documents ou scans"
             >
               <UploadCloud className="w-4 h-4 text-primary" /> <span className="hidden sm:inline">Archiver GED</span>
@@ -532,7 +532,7 @@ export default function UnifiedGuichetAttestationsPage() {
                 type="button"
                 onClick={() => setViewMode('table')}
                 className={cn(
-                  "px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer flex items-center gap-1.5",
+                  "px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5",
                   viewMode === 'table'
                     ? "bg-card text-foreground shadow-sm"
                     : "text-muted-foreground hover:text-foreground"
@@ -544,7 +544,7 @@ export default function UnifiedGuichetAttestationsPage() {
                 type="button"
                 onClick={() => setViewMode('kanban')}
                 className={cn(
-                  "px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer flex items-center gap-1.5",
+                  "px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5",
                   viewMode === 'kanban'
                     ? "bg-card text-foreground shadow-sm"
                     : "text-muted-foreground hover:text-foreground"
@@ -571,7 +571,7 @@ export default function UnifiedGuichetAttestationsPage() {
                 key={s.key}
                 onClick={() => setFilter(s.key)}
                 className={cn(
-                  "px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-2",
+                  "px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2",
                   filter === s.key
                     ? "bg-foreground text-background shadow-md"
                     : "bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground border border-transparent"
@@ -594,7 +594,7 @@ export default function UnifiedGuichetAttestationsPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Rechercher étudiant, CNE, type..."
-              className="w-full pl-10 pr-8 py-2.5 bg-muted/40 border border-input rounded-xl text-xs font-bold focus:ring-2 focus:ring-primary/20 outline-none transition-all text-foreground"
+              className="w-full pl-10 pr-8 py-2.5 bg-muted/40 border border-input text-xs font-bold focus:ring-2 focus:ring-primary/20 outline-none transition-all text-foreground rounded-[var(--control-radius)]"
             />
             {search && (
               <button 
@@ -623,17 +623,17 @@ export default function UnifiedGuichetAttestationsPage() {
               onDragLeave={handleKanbanDragLeave}
               onDrop={(e) => handleKanbanDrop(e, 'pending')}
               className={cn(
-                "rounded-3xl p-5 flex flex-col min-h-[550px] border transition-all duration-200 shadow-sm",
+                "rounded-2xl p-5 flex flex-col min-h-[550px] border transition-all duration-200 shadow-sm",
                 activeDropColumn === 'pending'
                   ? "bg-amber-500/10 border-amber-400 ring-4 ring-amber-400/20 scale-[1.01]"
                   : "bg-muted/30 border-border"
               )}
             >
               <div className="flex items-center justify-between mb-4 px-1">
-                <h3 className="text-xs font-black text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                <h3 className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
                   <Clock className="w-4 h-4" /> EN ATTENTE DE VALIDATION
                 </h3>
-                <span className="px-3 py-0.5 rounded-full bg-amber-500/20 text-amber-700 dark:text-amber-300 text-xs font-black">
+                <span className="px-3 py-0.5 rounded-full bg-amber-500/20 text-amber-700 dark:text-amber-300 text-xs font-bold">
                   {kanbanRequests.filter((r: any) => r.status === 'pending').length}
                 </span>
               </div>
@@ -653,10 +653,10 @@ export default function UnifiedGuichetAttestationsPage() {
                     >
                       <div className="flex items-center justify-between gap-2">
                         <span className={cn(
-                          "px-2.5 py-0.5 text-[9px] font-black uppercase rounded-lg",
+                          "px-2.5 py-0.5 text-[9px] font-bold uppercase rounded-lg",
                           req.is_professor
                             ? "bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/20"
-                            : "bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/20"
+                            : "bg-blue-500/10 text-primary dark:text-blue-300 border border-blue-500/20"
                         )}>
                           {req.is_professor ? "👨‍🏫 Enseignant" : "🎓 Étudiant"}
                         </span>
@@ -664,7 +664,7 @@ export default function UnifiedGuichetAttestationsPage() {
                       </div>
 
                       <div>
-                        <h4 className="text-sm font-black text-foreground leading-tight">{cleanUtf8Text(req.person)}</h4>
+                        <h4 className="text-sm font-bold text-foreground leading-tight">{cleanUtf8Text(req.person)}</h4>
                         <p className="text-xs font-bold text-primary mt-1">{cleanUtf8Text(req.type)}</p>
                         {req.motif && (
                           <p className="text-[11px] text-muted-foreground italic mt-1 line-clamp-2">"{cleanUtf8Text(req.motif)}"</p>
@@ -674,7 +674,7 @@ export default function UnifiedGuichetAttestationsPage() {
                       {/* Date Anomaly Alert Box */}
                       {req.has_date_anomaly && (
                         <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl space-y-1.5 animate-pulse">
-                          <div className="flex items-center gap-1.5 text-[10px] font-black text-rose-600 dark:text-rose-400">
+                          <div className="flex items-center gap-1.5 text-[10px] font-bold text-rose-600 dark:text-rose-400">
                             <AlertTriangle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
                             <span>🚨 Dates Incohérentes Détectées</span>
                           </div>
@@ -689,7 +689,7 @@ export default function UnifiedGuichetAttestationsPage() {
                               setEditStartDate(req.start_date || '')
                               setEditEndDate(req.end_date || '')
                             }}
-                            className="w-full py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-[10px] font-black cursor-pointer shadow-xs transition-colors"
+                            className="w-full py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-[10px] font-bold cursor-pointer shadow-xs transition-colors"
                           >
                             ✏️ Corriger les dates
                           </button>
@@ -709,14 +709,14 @@ export default function UnifiedGuichetAttestationsPage() {
                               handlePrintCertificate(req.person, req.type, req.student_cne || '', req.id)
                             }
                           }}
-                          className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-md"
+                          className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-md"
                           title="Valider & Signer Numériquement"
                         >
                           <CheckCircle2 className="w-3.5 h-3.5" /> Valider
                         </button>
                         <button
                           onClick={() => setRejectingId(req.id)}
-                          className="p-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 border border-rose-500/20 rounded-xl text-xs font-black transition-all cursor-pointer"
+                          className="p-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 border border-rose-500/20 rounded-xl text-xs font-bold transition-all cursor-pointer"
                           title="Rejeter la demande"
                         >
                           <XCircle className="w-4 h-4" />
@@ -734,17 +734,17 @@ export default function UnifiedGuichetAttestationsPage() {
               onDragLeave={handleKanbanDragLeave}
               onDrop={(e) => handleKanbanDrop(e, 'approved')}
               className={cn(
-                "rounded-3xl p-5 flex flex-col min-h-[550px] border transition-all duration-200 shadow-sm",
+                "rounded-2xl p-5 flex flex-col min-h-[550px] border transition-all duration-200 shadow-sm",
                 activeDropColumn === 'approved'
                   ? "bg-emerald-500/10 border-emerald-400 ring-4 ring-emerald-400/20 scale-[1.01]"
                   : "bg-muted/30 border-border"
               )}
             >
               <div className="flex items-center justify-between mb-4 px-1">
-                <h3 className="text-xs font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+                <h3 className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
                   <CheckCircle2 className="w-4 h-4" /> APPROUVÉ & SIGNÉ
                 </h3>
-                <span className="px-3 py-0.5 rounded-full bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-xs font-black">
+                <span className="px-3 py-0.5 rounded-full bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-xs font-bold">
                   {kanbanRequests.filter((r: any) => r.status === 'approved' || r.status === 'ready' || r.status === 'processed').length}
                 </span>
               </div>
@@ -759,7 +759,7 @@ export default function UnifiedGuichetAttestationsPage() {
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span className={cn(
-                        "px-2.5 py-0.5 text-[9px] font-black uppercase rounded-lg",
+                        "px-2.5 py-0.5 text-[9px] font-bold uppercase rounded-lg",
                         req.is_professor
                           ? "bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/20"
                           : "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20"
@@ -770,21 +770,21 @@ export default function UnifiedGuichetAttestationsPage() {
                     </div>
 
                     <div>
-                      <h4 className="text-sm font-black text-foreground leading-tight">{cleanUtf8Text(req.person)}</h4>
+                      <h4 className="text-sm font-bold text-foreground leading-tight">{cleanUtf8Text(req.person)}</h4>
                       <p className="text-xs font-bold text-muted-foreground mt-1">{cleanUtf8Text(req.type)}</p>
                     </div>
 
                     <div className="flex items-center gap-2 pt-2 border-t border-border">
                       <button
                         onClick={() => handleSendEmail(req)}
-                        className="flex-1 py-2 bg-purple-500/10 hover:bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-500/20 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                        className="flex-1 py-2 bg-purple-500/10 hover:bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-500/20 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                         title="Transmettre par e-mail avec PJ"
                       >
                         <Mail className="w-3.5 h-3.5" /> Email
                       </button>
                       <button
                         onClick={() => handlePrintCertificate(req.person, req.type, req.student_cne || '', req.id, req.is_professor, req.real_id)}
-                        className="flex-1 py-2 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                        className="flex-1 py-2 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                         title="Télécharger ou imprimer le PDF certifié"
                       >
                         <Printer className="w-3.5 h-3.5" /> Imprimer
@@ -799,7 +799,7 @@ export default function UnifiedGuichetAttestationsPage() {
                           })
                           toast.success(`Demande de ${cleanUtf8Text(req.person)} remise en attente.`)
                         }}
-                        className="p-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 border border-amber-500/20 rounded-xl text-xs font-black transition-all cursor-pointer"
+                        className="p-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 border border-amber-500/20 rounded-xl text-xs font-bold transition-all cursor-pointer"
                         title="Remettre en attente"
                       >
                         <Clock className="w-3.5 h-3.5" />
@@ -816,17 +816,17 @@ export default function UnifiedGuichetAttestationsPage() {
               onDragLeave={handleKanbanDragLeave}
               onDrop={(e) => handleKanbanDrop(e, 'rejected')}
               className={cn(
-                "rounded-3xl p-5 flex flex-col min-h-[550px] border transition-all duration-200 shadow-sm",
+                "rounded-2xl p-5 flex flex-col min-h-[550px] border transition-all duration-200 shadow-sm",
                 activeDropColumn === 'rejected'
                   ? "bg-rose-500/10 border-rose-400 ring-4 ring-rose-400/20 scale-[1.01]"
                   : "bg-muted/30 border-border"
               )}
             >
               <div className="flex items-center justify-between mb-4 px-1">
-                <h3 className="text-xs font-black text-rose-600 dark:text-rose-400 uppercase tracking-wider flex items-center gap-1.5">
+                <h3 className="text-xs font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider flex items-center gap-1.5">
                   <XCircle className="w-4 h-4" /> REJETÉ
                 </h3>
-                <span className="px-3 py-0.5 rounded-full bg-rose-500/20 text-rose-700 dark:text-rose-300 text-xs font-black">
+                <span className="px-3 py-0.5 rounded-full bg-rose-500/20 text-rose-700 dark:text-rose-300 text-xs font-bold">
                   {kanbanRequests.filter((r: any) => r.status === 'rejected').length}
                 </span>
               </div>
@@ -840,12 +840,12 @@ export default function UnifiedGuichetAttestationsPage() {
                     className="p-4 bg-card rounded-2xl border border-rose-500/20 shadow-md space-y-3 cursor-grab active:cursor-grabbing hover:border-rose-400 transition-all group"
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <span className="px-2.5 py-0.5 text-[9px] font-black uppercase rounded-lg bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-500/20">
+                      <span className="px-2.5 py-0.5 text-[9px] font-bold uppercase rounded-lg bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-500/20">
                         {req.is_professor ? "👨‍🏫 Enseignant" : "🎓 Étudiant"}
                       </span>
                       <span className="text-[10px] font-mono text-rose-500 font-bold">Rejeté</span>
                     </div>
-                    <h4 className="text-sm font-black text-foreground leading-tight">{cleanUtf8Text(req.person)}</h4>
+                    <h4 className="text-sm font-bold text-foreground leading-tight">{cleanUtf8Text(req.person)}</h4>
                     <p className="text-xs font-bold text-muted-foreground">{cleanUtf8Text(req.type)}</p>
 
                     <div className="flex items-center gap-2 pt-2 border-t border-border">
@@ -861,7 +861,7 @@ export default function UnifiedGuichetAttestationsPage() {
                             handlePrintCertificate(req.person, req.type, req.student_cne || '', req.id)
                           }
                         }}
-                        className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-md"
+                        className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-md"
                         title="Réexaminer et valider directement"
                       >
                         <CheckCircle2 className="w-3.5 h-3.5" /> Valider
@@ -878,7 +878,7 @@ export default function UnifiedGuichetAttestationsPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse min-w-[980px]">
               <thead>
-                <tr className="border-b border-border text-[11px] font-black uppercase text-muted-foreground tracking-wider bg-muted/20">
+                <tr className="border-b border-border text-[11px] font-bold uppercase text-muted-foreground tracking-wider bg-muted/20">
                   <th className="py-4 px-5 rounded-l-2xl">Demandeur / Rôle</th>
                   <th className="py-4 px-5">Document & Objet</th>
                   <th className="py-4 px-5">Réf & Empreinte SHA-256</th>
@@ -906,7 +906,7 @@ export default function UnifiedGuichetAttestationsPage() {
                         <td className="py-4 px-5">
                           <div className="flex items-center gap-3.5">
                             <div className={cn(
-                              "w-11 h-11 rounded-2xl flex items-center justify-center font-black text-sm shrink-0 shadow-sm border",
+                              "w-11 h-11 rounded-2xl flex items-center justify-center font-bold text-sm shrink-0 shadow-sm border",
                               req.is_professor 
                                 ? "bg-purple-500/10 text-purple-700 dark:text-purple-300 border-purple-500/20"
                                 : "bg-primary/10 text-primary border-primary/20"
@@ -915,9 +915,9 @@ export default function UnifiedGuichetAttestationsPage() {
                             </div>
                             <div>
                               <div className="flex items-center gap-2">
-                                <p className="font-black text-sm text-foreground leading-tight">{cleanUtf8Text(req.person)}</p>
+                                <p className="font-bold text-sm text-foreground leading-tight">{cleanUtf8Text(req.person)}</p>
                                 <span className={cn(
-                                  "px-2 py-0.5 text-[9px] font-black uppercase rounded-lg border",
+                                  "px-2 py-0.5 text-[9px] font-bold uppercase rounded-lg border",
                                   req.is_professor 
                                     ? "bg-purple-500/10 text-purple-700 dark:text-purple-300 border-purple-500/20" 
                                     : "bg-muted text-muted-foreground border-border"
@@ -934,13 +934,13 @@ export default function UnifiedGuichetAttestationsPage() {
 
                         {/* 2. Document & Objet */}
                         <td className="py-4 px-5">
-                          <p className="font-black text-sm text-foreground">{cleanUtf8Text(req.type)}</p>
+                          <p className="font-bold text-sm text-foreground">{cleanUtf8Text(req.type)}</p>
                           {req.motif && (
                             <p className="text-xs font-medium text-muted-foreground italic mt-0.5 line-clamp-1">"{cleanUtf8Text(req.motif)}"</p>
                           )}
                           {req.has_date_anomaly && (
                             <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                              <span className="px-2.5 py-0.5 bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-500/30 rounded-md text-[10px] font-black flex items-center gap-1 animate-pulse">
+                              <span className="px-2.5 py-0.5 bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-500/30 rounded-md text-[10px] font-bold flex items-center gap-1 animate-pulse">
                                 <AlertTriangle className="w-3.5 h-3.5 text-rose-600" /> Dates Incohérentes ({req.start_date} au {req.end_date})
                               </span>
                               <button
@@ -950,7 +950,7 @@ export default function UnifiedGuichetAttestationsPage() {
                                   setEditStartDate(req.start_date || '')
                                   setEditEndDate(req.end_date || '')
                                 }}
-                                className="px-2.5 py-0.5 bg-amber-500 hover:bg-amber-600 text-white rounded-md text-[10px] font-black cursor-pointer shadow-xs"
+                                className="px-2.5 py-0.5 bg-amber-500 hover:bg-amber-600 text-white rounded-md text-[10px] font-bold cursor-pointer shadow-xs"
                               >
                                 ✏️ Corriger
                               </button>
@@ -977,15 +977,15 @@ export default function UnifiedGuichetAttestationsPage() {
                         {/* 4. Statut SLA */}
                         <td className="py-4 px-5">
                           {isApproved ? (
-                            <span className="px-3.5 py-1.5 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 rounded-full text-xs font-black inline-flex items-center gap-1.5 shadow-xs">
+                            <span className="px-3.5 py-1.5 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 rounded-full text-xs font-bold inline-flex items-center gap-1.5 shadow-xs">
                               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> Traitée (SLA OK)
                             </span>
                           ) : isRejected ? (
-                            <span className="px-3.5 py-1.5 bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-500/20 rounded-full text-xs font-black inline-flex items-center gap-1.5 shadow-xs">
+                            <span className="px-3.5 py-1.5 bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-500/20 rounded-full text-xs font-bold inline-flex items-center gap-1.5 shadow-xs">
                               <XCircle className="w-3.5 h-3.5 text-rose-500" /> Rejetée
                             </span>
                           ) : (
-                            <span className="px-3.5 py-1.5 bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 rounded-full text-xs font-black inline-flex items-center gap-1.5 shadow-xs animate-pulse">
+                            <span className="px-3.5 py-1.5 bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 rounded-full text-xs font-bold inline-flex items-center gap-1.5 shadow-xs animate-pulse">
                               <Clock className="w-3.5 h-3.5 text-amber-500" /> En attente (2h restant)
                             </span>
                           )}
@@ -1008,7 +1008,7 @@ export default function UnifiedGuichetAttestationsPage() {
                                       handlePrintCertificate(req.person, req.type, req.student_cne || '', req.id)
                                     }
                                   }}
-                                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-md transition-all cursor-pointer flex items-center gap-1.5 text-xs font-black active:scale-95"
+                                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-md transition-all cursor-pointer flex items-center gap-1.5 text-xs font-bold active:scale-95"
                                   title="Approuver & Signer le Document"
                                 >
                                   <CheckCircle2 className="w-4 h-4" /> Valider
@@ -1028,14 +1028,14 @@ export default function UnifiedGuichetAttestationsPage() {
                               <>
                                 <button
                                   onClick={() => handleSendEmail(req)}
-                                  className="px-3.5 py-2 bg-purple-500/10 hover:bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-500/20 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 text-xs font-black active:scale-95"
+                                  className="px-3.5 py-2 bg-purple-500/10 hover:bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-500/20 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 text-xs font-bold active:scale-95"
                                   title="Renvoyer par Email (Resend)"
                                 >
                                   <Mail className="w-4 h-4 text-purple-600 dark:text-purple-400" /> Email
                                 </button>
                                 <button
                                   onClick={() => handlePrintCertificate(req.person, req.type, req.student_cne || '', req.id, req.is_professor, req.real_id)}
-                                  className="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl transition-all cursor-pointer flex items-center gap-1.5 text-xs font-black shadow-md active:scale-95"
+                                  className="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl transition-all cursor-pointer flex items-center gap-1.5 text-xs font-bold shadow-md active:scale-95"
                                   title="Télécharger ou imprimer le PDF certifié"
                                 >
                                   <Printer className="w-4 h-4" /> Imprimer PDF
@@ -1058,14 +1058,14 @@ export default function UnifiedGuichetAttestationsPage() {
         {viewMode === 'table' && filteredRequests.length > itemsPerPage && (
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-5 border-t border-border">
             <p className="text-xs font-bold text-muted-foreground">
-              Affichage de <span className="text-foreground font-black">{Math.min((currentPage - 1) * itemsPerPage + 1, filteredRequests.length)}</span> à <span className="text-foreground font-black">{Math.min(currentPage * itemsPerPage, filteredRequests.length)}</span> sur <span className="text-foreground font-black">{filteredRequests.length}</span> demandes
+              Affichage de <span className="text-foreground font-bold">{Math.min((currentPage - 1) * itemsPerPage + 1, filteredRequests.length)}</span> à <span className="text-foreground font-bold">{Math.min(currentPage * itemsPerPage, filteredRequests.length)}</span> sur <span className="text-foreground font-bold">{filteredRequests.length}</span> demandes
             </p>
 
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                className="px-4 py-2.5 bg-muted hover:bg-muted/80 text-foreground rounded-xl text-xs font-black transition-all cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1.5"
+                className="px-4 py-2.5 bg-muted hover:bg-muted/80 text-foreground rounded-xl text-xs font-bold transition-all cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1.5"
               >
                 <ChevronLeft className="w-4 h-4" /> Précédent
               </button>
@@ -1097,7 +1097,7 @@ export default function UnifiedGuichetAttestationsPage() {
                         key={`page-${pNum}`}
                         onClick={() => setCurrentPage(pNum)}
                         className={cn(
-                          "w-9 h-9 rounded-xl text-xs font-black transition-all cursor-pointer",
+                          "w-9 h-9 rounded-xl text-xs font-bold transition-all cursor-pointer",
                           currentPage === pNum
                             ? "bg-primary text-primary-foreground shadow-md scale-105"
                             : "bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80"
@@ -1113,7 +1113,7 @@ export default function UnifiedGuichetAttestationsPage() {
               <button
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
-                className="px-4 py-2.5 bg-muted hover:bg-muted/80 text-foreground rounded-xl text-xs font-black transition-all cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1.5"
+                className="px-4 py-2.5 bg-muted hover:bg-muted/80 text-foreground rounded-xl text-xs font-bold transition-all cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1.5"
               >
                 Suivant <ChevronRight className="w-4 h-4" />
               </button>
@@ -1130,7 +1130,7 @@ export default function UnifiedGuichetAttestationsPage() {
       {/* ── Quick Document Generation Modal ── */}
       {showQuickGenerateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md animate-in fade-in">
-          <div className="bg-card border border-border rounded-[2.5rem] w-full max-w-lg shadow-2xl p-6 sm:p-8 space-y-6 animate-in zoom-in-95">
+          <div className="bg-card border border-border rounded-2xl w-full max-w-lg shadow-sm p-6 sm:p-8 space-y-6 animate-in zoom-in-95">
             
             <div className="flex items-center justify-between border-b border-border pb-4">
               <div className="flex items-center gap-3">
@@ -1138,7 +1138,7 @@ export default function UnifiedGuichetAttestationsPage() {
                   <Printer className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-black text-lg text-foreground">Édition Rapide & Signature Directe</h3>
+                  <h3 className="font-bold text-lg text-foreground">Édition Rapide & Signature Directe</h3>
                   <p className="text-xs text-muted-foreground">Génération immédiate certifiée avec QR Code</p>
                 </div>
               </div>
@@ -1159,7 +1159,7 @@ export default function UnifiedGuichetAttestationsPage() {
                   setQuickDocType('Attestation de Scolarité')
                 }}
                 className={cn(
-                  "py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center justify-center gap-2",
+                  "py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2",
                   quickTarget === 'student'
                     ? "bg-primary text-primary-foreground shadow-md"
                     : "text-muted-foreground hover:text-foreground"
@@ -1174,7 +1174,7 @@ export default function UnifiedGuichetAttestationsPage() {
                   setQuickDocType('Ordre de Mission Officiel')
                 }}
                 className={cn(
-                  "py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center justify-center gap-2",
+                  "py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2",
                   quickTarget === 'professor'
                     ? "bg-gradient-to-r from-indigo-600 to-primary text-white shadow-md"
                     : "text-muted-foreground hover:text-foreground"
@@ -1186,7 +1186,7 @@ export default function UnifiedGuichetAttestationsPage() {
 
             <form onSubmit={handleQuickGenerate} className="space-y-4">
               <div className="space-y-1.5">
-                <label className="block text-xs font-black uppercase text-muted-foreground tracking-wider">
+                <label className="block text-xs font-bold uppercase text-muted-foreground tracking-wider">
                   {quickTarget === 'professor' ? "Nom, Email ou CIN de l'Enseignant *" : "Nom ou CNE de l'Étudiant *"}
                 </label>
                 <div className="relative">
@@ -1196,13 +1196,13 @@ export default function UnifiedGuichetAttestationsPage() {
                     value={quickStudentCne}
                     onChange={(e) => setQuickStudentCne(e.target.value)}
                     placeholder={quickTarget === 'professor' ? "Ex: Abdelhak El Amrani ou elamrani@encg-fes.ma" : "Ex: N134892011 ou Zineb Alaoui"}
-                    className="w-full pl-11 pr-4 py-3 bg-muted/30 border border-input rounded-2xl text-xs font-bold focus:ring-4 focus:ring-primary/15 outline-none transition-all text-foreground"
+                    className="w-full pl-11 pr-4 py-3 bg-muted/30 border border-input text-xs font-bold focus:ring-4 focus:ring-primary/15 outline-none transition-all text-foreground rounded-[var(--control-radius)]"
                   />
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <label className="block text-xs font-black uppercase text-muted-foreground tracking-wider">
+                <label className="block text-xs font-bold uppercase text-muted-foreground tracking-wider">
                   Document Officiel *
                 </label>
                 <CustomSelect
@@ -1228,7 +1228,7 @@ export default function UnifiedGuichetAttestationsPage() {
               <div className="pt-2">
                 <button
                   type="submit"
-                  className="w-full py-3.5 bg-gradient-to-r from-primary via-blue-700 to-indigo-700 hover:from-primary/90 hover:to-indigo-800 text-white font-black text-xs rounded-2xl shadow-xl cursor-pointer transition-all flex items-center justify-center gap-2 active:scale-98"
+                  className="w-full py-3.5 bg-gradient-to-r from-primary via-blue-700 to-indigo-700 hover:from-primary/90 hover:to-indigo-800 text-white font-bold text-xs rounded-2xl shadow-sm cursor-pointer transition-all flex items-center justify-center gap-2 active:scale-98"
                 >
                   <Printer className="w-4 h-4" /> Générer & Imprimer PDF ({quickTarget === 'professor' ? 'Signé SG' : 'SHA-256'})
                 </button>
@@ -1242,9 +1242,9 @@ export default function UnifiedGuichetAttestationsPage() {
       {/* ── Rejection Modal ── */}
       {rejectingId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-in fade-in">
-          <div className="bg-card border border-border rounded-[2.5rem] w-full max-w-md shadow-2xl p-6 space-y-4">
+          <div className="bg-card border border-border rounded-2xl w-full max-w-md shadow-sm p-6 space-y-4">
             <div className="flex items-center justify-between border-b border-border pb-3">
-              <h3 className="font-black text-base text-rose-600 flex items-center gap-2">
+              <h3 className="font-bold text-base text-rose-600 flex items-center gap-2">
                 <AlertTriangle className="w-5 h-5" /> Motif du Rejet
               </h3>
               <button onClick={() => setRejectingId(null)} className="w-8 h-8 flex items-center justify-center rounded-xl bg-muted hover:bg-muted/80 cursor-pointer">
@@ -1257,17 +1257,17 @@ export default function UnifiedGuichetAttestationsPage() {
               value={rejectionReason}
               onChange={(e) => setRejectionReason(e.target.value)}
               placeholder="Indiquez le motif précis du rejet (obligatoire pour informer l'étudiant)..."
-              className="w-full p-3.5 bg-muted/40 border border-input rounded-2xl text-xs font-bold outline-none resize-none text-foreground"
+              className="w-full p-3.5 bg-muted/40 border border-input text-xs font-bold outline-none resize-none text-foreground rounded-[var(--control-radius)]"
             />
 
             <div className="flex justify-end gap-2 pt-2">
-              <button onClick={() => setRejectingId(null)} className="px-4 py-2 text-xs font-black text-muted-foreground hover:bg-muted rounded-xl cursor-pointer">
+              <button onClick={() => setRejectingId(null)} className="px-4 py-2 text-xs font-bold text-muted-foreground hover:bg-muted rounded-xl cursor-pointer">
                 Annuler
               </button>
               <button
                 onClick={() => updateStatusMutation.mutate({ id: rejectingId, status: 'rejected', reason: rejectionReason })}
                 disabled={!rejectionReason.trim()}
-                className="px-5 py-2 text-xs font-black bg-rose-600 text-white hover:bg-rose-700 rounded-xl shadow-md cursor-pointer disabled:opacity-50"
+                className="px-5 py-2 text-xs font-bold bg-rose-600 text-white hover:bg-rose-700 rounded-xl shadow-md cursor-pointer disabled:opacity-50"
               >
                 Confirmer le Rejet
               </button>
@@ -1279,19 +1279,19 @@ export default function UnifiedGuichetAttestationsPage() {
       {/* ── Real Interactive Cryptographic Verification & Anti-Fraud Comparison Modal ── */}
       {showQrVerificationModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in">
-          <div className="bg-card border border-border rounded-[2.5rem] w-full max-w-3xl shadow-2xl p-6 md:p-8 space-y-6 max-h-[92vh] overflow-y-auto">
+          <div className="bg-card border border-border rounded-2xl w-full max-w-3xl shadow-sm p-6 md:p-8 space-y-6 max-h-[92vh] overflow-y-auto">
             
             {/* Header */}
             <div className="flex items-center justify-between border-b border-border pb-4">
               <div className="flex items-center gap-3.5">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 flex items-center justify-center text-emerald-600 dark:text-emerald-400 font-black border border-emerald-500/30 shrink-0">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 flex items-center justify-center text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-500/30 shrink-0">
                   <ShieldCheck className="w-7 h-7" />
                 </div>
                 <div>
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-black uppercase tracking-wider mb-1 border border-emerald-500/20">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold uppercase tracking-wider mb-1 border border-emerald-500/20">
                     <ShieldCheck className="w-3 h-3" /> Contrôle d'Authenticité Anti-Falsification (Loi 53-05)
                   </div>
-                  <h3 className="font-black text-lg md:text-xl text-foreground">
+                  <h3 className="font-bold text-lg md:text-xl text-foreground">
                     Console de Vérification & Comparaison Documentaire
                   </h3>
                   <p className="text-xs text-muted-foreground font-medium">
@@ -1316,7 +1316,7 @@ export default function UnifiedGuichetAttestationsPage() {
                 type="button"
                 onClick={() => setVerifyTab('code')}
                 className={cn(
-                  "py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center justify-center gap-2",
+                  "py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2",
                   verifyTab === 'code'
                     ? "bg-primary text-primary-foreground shadow-sm"
                     : "text-muted-foreground hover:text-foreground"
@@ -1328,7 +1328,7 @@ export default function UnifiedGuichetAttestationsPage() {
                 type="button"
                 onClick={() => setVerifyTab('file')}
                 className={cn(
-                  "py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center justify-center gap-2",
+                  "py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2",
                   verifyTab === 'file'
                     ? "bg-primary text-primary-foreground shadow-sm"
                     : "text-muted-foreground hover:text-foreground"
@@ -1340,7 +1340,7 @@ export default function UnifiedGuichetAttestationsPage() {
 
             {verifyTab === 'code' ? (
               <div className="space-y-3">
-                <label className="block text-xs font-black uppercase text-muted-foreground tracking-wider">
+                <label className="block text-xs font-bold uppercase text-muted-foreground tracking-wider">
                   Code de Suivi, Réf, Token QR ou CNE Étudiant
                 </label>
                 <div className="flex gap-2">
@@ -1349,12 +1349,12 @@ export default function UnifiedGuichetAttestationsPage() {
                     value={verifyCode}
                     onChange={(e) => setVerifyCode(e.target.value)}
                     placeholder="Ex: DOC-ENCG-159-140F69 ou CNE: H148073298..."
-                    className="flex-1 px-4 py-3 bg-muted/30 border border-input rounded-2xl text-xs font-bold focus:ring-4 focus:ring-emerald-500/15 outline-none font-mono text-foreground"
+                    className="flex-1 px-4 py-3 bg-muted/30 border border-input text-xs font-bold focus:ring-4 focus:ring-emerald-500/15 outline-none font-mono text-foreground rounded-[var(--control-radius)]"
                   />
                   <button
                     onClick={() => handlePerformVerification(verifyCode)}
                     disabled={isVerifying || !verifyCode.trim()}
-                    className="px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs rounded-2xl shadow-md cursor-pointer disabled:opacity-50 flex items-center gap-1.5 shrink-0"
+                    className="px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-2xl shadow-md cursor-pointer disabled:opacity-50 flex items-center gap-1.5 shrink-0"
                   >
                     {isVerifying ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />} Vérifier & Comparer
                   </button>
@@ -1362,7 +1362,7 @@ export default function UnifiedGuichetAttestationsPage() {
               </div>
             ) : (
               <div className="space-y-3">
-                <label className="block text-xs font-black uppercase text-muted-foreground tracking-wider">
+                <label className="block text-xs font-bold uppercase text-muted-foreground tracking-wider">
                   Fichier PDF Officiel Présenté à Contrôler
                 </label>
                 <div className="border-2 border-dashed border-emerald-500/40 rounded-2xl p-6 text-center hover:bg-emerald-500/5 transition-colors cursor-pointer relative">
@@ -1388,8 +1388,8 @@ export default function UnifiedGuichetAttestationsPage() {
             {/* Quick Demo Test Runner Bar */}
             <div className="flex items-center justify-between p-3.5 rounded-2xl bg-indigo-500/10 border border-indigo-500/20">
               <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
-                <span className="text-xs font-bold text-indigo-900 dark:text-indigo-200">
+                <Sparkles className="w-4 h-4 text-primary dark:text-indigo-400 shrink-0" />
+                <span className="text-xs font-bold text-primary dark:text-indigo-200">
                   Tester le système de comparaison sur le dernier document certifié en base
                 </span>
               </div>
@@ -1397,7 +1397,7 @@ export default function UnifiedGuichetAttestationsPage() {
                 type="button"
                 onClick={() => handlePerformVerification('')}
                 disabled={isVerifying}
-                className="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl text-[11px] font-black cursor-pointer shadow-sm disabled:opacity-50 shrink-0"
+                className="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl text-[11px] font-bold cursor-pointer shadow-sm disabled:opacity-50 shrink-0"
               >
                 {isVerifying ? 'Vérification...' : 'Lancer la Comparaison Réelle ⚡'}
               </button>
@@ -1405,7 +1405,7 @@ export default function UnifiedGuichetAttestationsPage() {
 
             {/* ── ANTI-FRAUD SIDE-BY-SIDE COMPARISON COCKPIT ── */}
             {verificationResult && (
-              <div className="p-6 bg-emerald-500/5 dark:bg-emerald-500/10 rounded-3xl border-2 border-emerald-500/40 shadow-inner space-y-6 animate-in zoom-in-95">
+              <div className="p-6 bg-emerald-500/5 dark:bg-emerald-500/10 rounded-2xl border-2 border-emerald-500/40 shadow-inner space-y-6 animate-in zoom-in-95">
                 
                 {/* Result Title Banner */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-emerald-500/15 p-4 rounded-2xl border border-emerald-500/30">
@@ -1414,10 +1414,10 @@ export default function UnifiedGuichetAttestationsPage() {
                       <ShieldCheck className="w-6 h-6" />
                     </div>
                     <div>
-                      <span className="px-2 py-0.5 bg-emerald-600 text-white text-[9px] font-black uppercase rounded-md tracking-wider">
+                      <span className="px-2 py-0.5 bg-emerald-600 text-white text-[9px] font-bold uppercase rounded-md tracking-wider">
                         CERTIFICAT AUTHENTIQUE ENREGISTRÉ (LOI 53-05)
                       </span>
-                      <h4 className="text-base font-black text-foreground mt-0.5">
+                      <h4 className="text-base font-bold text-foreground mt-0.5">
                         {verificationResult.document_type}
                       </h4>
                     </div>
@@ -1432,14 +1432,14 @@ export default function UnifiedGuichetAttestationsPage() {
                   
                   {/* Column 1: Données Officielles Enregistrées en Base */}
                   <div className="bg-card p-5 rounded-2xl border border-border space-y-3.5 shadow-sm">
-                    <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-primary pb-2 border-b border-border">
+                    <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-primary pb-2 border-b border-border">
                       <FileCheck className="w-4 h-4 text-emerald-600" /> Données Officielles de Référence (Base Centrale)
                     </div>
 
                     <div className="space-y-2.5 text-xs">
                       <div>
-                        <span className="text-[10px] font-black uppercase text-muted-foreground block">Bénéficiaire Officiel</span>
-                        <strong className="text-sm font-black text-foreground">{cleanUtf8Text(verificationResult.beneficiary)}</strong>
+                        <span className="text-[10px] font-bold uppercase text-muted-foreground block">Bénéficiaire Officiel</span>
+                        <strong className="text-sm font-bold text-foreground">{cleanUtf8Text(verificationResult.beneficiary)}</strong>
                         <p className="text-[11px] text-muted-foreground font-mono mt-0.5 font-bold">
                           {verificationResult.cne ? `CNE : ${verificationResult.cne}` : `CIN : ${verificationResult.cin}`} • {verificationResult.role}
                         </p>
@@ -1447,7 +1447,7 @@ export default function UnifiedGuichetAttestationsPage() {
 
                       {verificationResult.filiere && (
                         <div>
-                          <span className="text-[10px] font-black uppercase text-muted-foreground block">Filière & Année</span>
+                          <span className="text-[10px] font-bold uppercase text-muted-foreground block">Filière & Année</span>
                           <strong className="text-foreground font-bold">{verificationResult.filiere}</strong>
                           <span className="text-muted-foreground font-bold text-[11px] ml-1.5">({verificationResult.academic_year || '2025/2026'})</span>
                         </div>
@@ -1455,18 +1455,18 @@ export default function UnifiedGuichetAttestationsPage() {
 
                       <div className="grid grid-cols-2 gap-2">
                         <div>
-                          <span className="text-[10px] font-black uppercase text-muted-foreground block">Date d'Émission</span>
+                          <span className="text-[10px] font-bold uppercase text-muted-foreground block">Date d'Émission</span>
                           <strong className="text-foreground font-bold">{verificationResult.issued_at}</strong>
                         </div>
                         <div>
-                          <span className="text-[10px] font-black uppercase text-muted-foreground block">Signataire Officiel</span>
+                          <span className="text-[10px] font-bold uppercase text-muted-foreground block">Signataire Officiel</span>
                           <strong className="text-foreground font-bold">{cleanUtf8Text(verificationResult.signer)}</strong>
                         </div>
                       </div>
 
                       {verificationResult.destination && (
                         <div>
-                          <span className="text-[10px] font-black uppercase text-muted-foreground block">Détails de Mission</span>
+                          <span className="text-[10px] font-bold uppercase text-muted-foreground block">Détails de Mission</span>
                           <p className="text-foreground font-medium text-[11px]">
                             Destination : <strong>{verificationResult.destination}</strong> • {cleanUtf8Text(verificationResult.purpose)}
                           </p>
@@ -1474,7 +1474,7 @@ export default function UnifiedGuichetAttestationsPage() {
                       )}
 
                       <div className="p-2.5 bg-muted/50 rounded-xl border border-border space-y-1">
-                        <span className="text-[9px] font-black uppercase text-muted-foreground block">Empreinte Cryptographique SHA-256</span>
+                        <span className="text-[9px] font-bold uppercase text-muted-foreground block">Empreinte Cryptographique SHA-256</span>
                         <div 
                           onClick={() => copyToClipboard(verificationResult.sha256_hash)}
                           className="font-mono text-[10px] font-bold text-emerald-600 dark:text-emerald-400 break-all select-all flex items-center justify-between gap-1 cursor-pointer hover:opacity-80 transition-opacity"
@@ -1490,7 +1490,7 @@ export default function UnifiedGuichetAttestationsPage() {
                   {/* Column 2: Contrôle Visuel Anti-Fraude & Digital Twin Preview */}
                   <div className="bg-card p-5 rounded-2xl border border-border flex flex-col justify-between space-y-4 shadow-sm">
                     <div className="space-y-3">
-                      <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 pb-2 border-b border-border">
+                      <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 pb-2 border-b border-border">
                         <Eye className="w-4 h-4" /> Comparaison Visuelle & Jumeau Numérique
                       </div>
 
@@ -1509,14 +1509,14 @@ export default function UnifiedGuichetAttestationsPage() {
                             openAuthenticatedPdf(`/admin/document-requests/159/preview`, 'Ouverture du document certifié original...')
                           }
                         }}
-                        className="w-full py-3.5 bg-gradient-to-r from-primary via-indigo-600 to-blue-600 hover:from-primary/90 hover:to-blue-700 text-white font-black text-xs rounded-2xl shadow-lg cursor-pointer transition-all flex items-center justify-center gap-2 active:scale-98"
+                        className="w-full py-3.5 bg-gradient-to-r from-primary via-indigo-600 to-blue-600 hover:from-primary/90 hover:to-blue-700 text-white font-bold text-xs rounded-2xl shadow-lg cursor-pointer transition-all flex items-center justify-center gap-2 active:scale-98"
                       >
                         <Eye className="w-4 h-4" /> Visualiser le PDF Original Officiel (Digital Twin) <ExternalLink className="w-3.5 h-3.5 ml-1" />
                       </button>
 
                       {/* Anti-Fraud Inspection Checklist */}
                       <div className="space-y-2 pt-2">
-                        <div className="text-[10px] font-black uppercase text-muted-foreground tracking-wider">
+                        <div className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">
                           Points de Contrôle Anti-Fraude :
                         </div>
                         <div className="space-y-1.5 text-[11px] font-bold text-foreground">
@@ -1542,7 +1542,7 @@ export default function UnifiedGuichetAttestationsPage() {
                       onClick={() => {
                         toast.error(`Alerte de fraude signalée pour le dossier ${verificationResult.tracking_code}. L'administration et la direction ont été notifiées immédiatement.`, { duration: 6000 })
                       }}
-                      className="w-full py-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30 rounded-xl text-xs font-black cursor-pointer transition-colors flex items-center justify-center gap-1.5"
+                      className="w-full py-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30 rounded-xl text-xs font-bold cursor-pointer transition-colors flex items-center justify-center gap-1.5"
                     >
                       <ShieldAlert className="w-4 h-4" /> Signaler une Divergence ou Falsification 🚨
                     </button>
@@ -1562,7 +1562,7 @@ export default function UnifiedGuichetAttestationsPage() {
                 setShowQrVerificationModal(false)
                 setVerificationResult(null)
               }}
-              className="w-full py-3.5 bg-primary hover:bg-primary/90 text-primary-foreground font-black text-xs rounded-2xl shadow-md cursor-pointer transition-all uppercase tracking-wider"
+              className="w-full py-3.5 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs rounded-2xl shadow-md cursor-pointer transition-all uppercase tracking-wider"
             >
               Fermer la Console de Vérification
             </button>
@@ -1573,11 +1573,11 @@ export default function UnifiedGuichetAttestationsPage() {
       {/* ── Modal de Correction des Dates de Déplacement / Mission ── */}
       {correctingDatesReq && (
         <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-card rounded-[2.5rem] max-w-lg w-full p-6 space-y-5 border border-border shadow-2xl animate-in zoom-in-95">
+          <div className="bg-card rounded-2xl max-w-lg w-full p-6 space-y-5 border border-border shadow-sm animate-in zoom-in-95">
             <div className="flex items-center justify-between border-b border-border pb-3">
               <div className="flex items-center gap-2 text-amber-600">
                 <AlertTriangle className="w-5 h-5" />
-                <h3 className="text-sm font-black text-foreground uppercase tracking-wider">
+                <h3 className="text-sm font-bold text-foreground uppercase tracking-wider">
                   Correction des Dates de Mission
                 </h3>
               </div>
@@ -1590,7 +1590,7 @@ export default function UnifiedGuichetAttestationsPage() {
             </div>
 
             <div className="p-3.5 bg-amber-500/10 rounded-2xl border border-amber-500/20 text-xs space-y-1">
-              <p className="font-black text-amber-700 dark:text-amber-300">
+              <p className="font-bold text-amber-700 dark:text-amber-300">
                 Demandeur : {cleanUtf8Text(correctingDatesReq.person)} ({cleanUtf8Text(correctingDatesReq.type)})
               </p>
               <p className="text-amber-800 dark:text-amber-200/80 font-medium">
@@ -1619,7 +1619,7 @@ export default function UnifiedGuichetAttestationsPage() {
             >
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-black text-foreground uppercase tracking-wider block">
+                  <label className="text-xs font-bold text-foreground uppercase tracking-wider block">
                     Date de Début *
                   </label>
                   <input
@@ -1627,12 +1627,12 @@ export default function UnifiedGuichetAttestationsPage() {
                     required
                     value={editStartDate}
                     onChange={(e) => setEditStartDate(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-muted/40 border border-input rounded-xl text-xs font-bold focus:ring-4 focus:ring-amber-500/15 outline-none text-foreground"
+                    className="w-full px-3.5 py-2.5 bg-muted/40 border border-input text-xs font-bold focus:ring-4 focus:ring-amber-500/15 outline-none text-foreground rounded-[var(--control-radius)]"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-black text-foreground uppercase tracking-wider block">
+                  <label className="text-xs font-bold text-foreground uppercase tracking-wider block">
                     Date de Fin *
                   </label>
                   <input
@@ -1640,7 +1640,7 @@ export default function UnifiedGuichetAttestationsPage() {
                     required
                     value={editEndDate}
                     onChange={(e) => setEditEndDate(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-muted/40 border border-input rounded-xl text-xs font-bold focus:ring-4 focus:ring-amber-500/15 outline-none text-foreground"
+                    className="w-full px-3.5 py-2.5 bg-muted/40 border border-input text-xs font-bold focus:ring-4 focus:ring-amber-500/15 outline-none text-foreground rounded-[var(--control-radius)]"
                   />
                 </div>
               </div>
@@ -1649,14 +1649,14 @@ export default function UnifiedGuichetAttestationsPage() {
                 <button
                   type="button"
                   onClick={() => setCorrectingDatesReq(null)}
-                  className="flex-1 py-2.5 bg-muted hover:bg-muted/80 text-foreground rounded-xl text-xs font-black transition-all cursor-pointer"
+                  className="flex-1 py-2.5 bg-muted hover:bg-muted/80 text-foreground rounded-xl text-xs font-bold transition-all cursor-pointer"
                 >
                   Annuler
                 </button>
                 <button
                   type="submit"
                   disabled={correctDatesMutation.isPending}
-                  className="flex-1 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-black shadow-md transition-all cursor-pointer disabled:opacity-50"
+                  className="flex-1 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold shadow-md transition-all cursor-pointer disabled:opacity-50"
                 >
                   {correctDatesMutation.isPending ? 'Enregistrement...' : 'Valider la Correction 💾'}
                 </button>
@@ -1669,11 +1669,11 @@ export default function UnifiedGuichetAttestationsPage() {
       {/* ── Modal de Motif de Refus Officiel ── */}
       {rejectingId !== null && (
         <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-card rounded-[2.5rem] max-w-lg w-full p-6 space-y-5 border border-border shadow-2xl animate-in zoom-in-95">
+          <div className="bg-card rounded-2xl max-w-lg w-full p-6 space-y-5 border border-border shadow-sm animate-in zoom-in-95">
             <div className="flex items-center justify-between border-b border-border pb-3">
               <div className="flex items-center gap-2 text-rose-600">
                 <XCircle className="w-5 h-5" />
-                <h3 className="text-sm font-black text-foreground uppercase tracking-wider">
+                <h3 className="text-sm font-bold text-foreground uppercase tracking-wider">
                   Refus de la Demande de Document
                 </h3>
               </div>
@@ -1690,7 +1690,7 @@ export default function UnifiedGuichetAttestationsPage() {
 
             {/* Quick Presets */}
             <div className="space-y-2">
-              <label className="text-xs font-black text-foreground uppercase tracking-wider block">
+              <label className="text-xs font-bold text-foreground uppercase tracking-wider block">
                 Motifs fréquents (Cliquer pour insérer) :
               </label>
               <div className="flex flex-wrap gap-1.5">
@@ -1733,7 +1733,7 @@ export default function UnifiedGuichetAttestationsPage() {
               className="space-y-4"
             >
               <div className="space-y-1.5">
-                <label className="text-xs font-black text-foreground uppercase tracking-wider block">
+                <label className="text-xs font-bold text-foreground uppercase tracking-wider block">
                   Motif Officiel Notifié au Demandeur *
                 </label>
                 <textarea
@@ -1742,7 +1742,7 @@ export default function UnifiedGuichetAttestationsPage() {
                   value={rejectionReason}
                   onChange={(e) => setRejectionReason(e.target.value)}
                   placeholder="Expliquez clairement à l'étudiant la raison du rejet..."
-                  className="w-full px-3.5 py-2.5 bg-muted/40 border border-input rounded-xl text-xs font-medium focus:ring-4 focus:ring-rose-500/15 outline-none text-foreground resize-none"
+                  className="w-full px-3.5 py-2.5 bg-muted/40 border border-input text-xs font-medium focus:ring-4 focus:ring-rose-500/15 outline-none text-foreground resize-none rounded-[var(--control-radius)]"
                 />
                 <p className="text-[10px] text-muted-foreground">
                   Ce motif s'affichera directement sur l'espace de l'étudiant et sera consigné dans l'historique d'audit.
@@ -1756,14 +1756,14 @@ export default function UnifiedGuichetAttestationsPage() {
                     setRejectingId(null)
                     setRejectionReason('')
                   }}
-                  className="flex-1 py-2.5 bg-muted hover:bg-muted/80 text-foreground rounded-xl text-xs font-black transition-all cursor-pointer"
+                  className="flex-1 py-2.5 bg-muted hover:bg-muted/80 text-foreground rounded-xl text-xs font-bold transition-all cursor-pointer"
                 >
                   Annuler
                 </button>
                 <button
                   type="submit"
                   disabled={updateStatusMutation.isPending}
-                  className="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-black shadow-md transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5"
+                  className="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold shadow-md transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5"
                 >
                   <XCircle className="w-4 h-4" />
                   {updateStatusMutation.isPending ? 'Enregistrement...' : 'Confirmer le Refus'}

@@ -49,7 +49,7 @@ const TimetablePage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-white flex items-center gap-2">
+          <h1 className="text-white flex items-center gap-2 erp-page-title">
             <CalendarIcon size={20} className="text-purple-400" />
             {t('title')}
           </h1>
@@ -67,7 +67,7 @@ const TimetablePage: React.FC = () => {
         <select 
           value={targetType} 
           onChange={e => setTargetType(e.target.value as any)}
-          className="bg-white/5 border border-white/10 rounded-xl text-sm text-white px-3 py-2 outline-none focus:border-purple-500/50"
+          className="bg-white/5 border border-white/10 text-sm text-white px-3 py-2 outline-none focus:border-purple-500/50 rounded-[var(--control-radius)]"
         >
           <option value="group">{t('filters.group')}</option>
           <option value="professor">{t('filters.professor')}</option>

@@ -67,7 +67,7 @@ export default function StudentAbsenceUpload() {
             <AlertTriangle className="w-6 h-6 text-red-600" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white/90">Régularisation d&apos;Absence</h1>
+            <h1 className="text-white/90 erp-page-title">Régularisation d&apos;Absence</h1>
             <p className="text-sm text-white/50">Portail Étudiant — dépôt API d&apos;un justificatif d&apos;absence</p>
           </div>
         </div>
@@ -92,10 +92,10 @@ export default function StudentAbsenceUpload() {
             </div>
           </div>
 
-          <div className="bg-white border border-white/10 p-8 rounded-2xl shadow-sm space-y-6">
+          <div className="bg-card border border-white/10 p-8 rounded-2xl shadow-sm space-y-6">
             <div>
               <h2 className="font-bold text-lg mb-2">Soumettre un certificat médical</h2>
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-muted-foreground">
                 Le justificatif sera enregistré avec le statut <strong>pending</strong> côté backend, en attente de validation.
               </p>
             </div>
@@ -111,7 +111,7 @@ export default function StudentAbsenceUpload() {
                   value={attendanceId}
                   onChange={(e: ChangeEvent<HTMLInputElement>) => setAttendanceId(e.target.value)}
                   placeholder="Ex. 42"
-                  className="w-full h-11 px-4 rounded-xl border border-slate-200 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none text-sm text-slate-800"
+                  className="w-full h-11 px-4 border border-border focus:border-primary focus:ring-1 focus:ring-ring outline-none text-sm text-foreground rounded-[var(--control-radius)]"
                 />
               </div>
 
@@ -120,7 +120,7 @@ export default function StudentAbsenceUpload() {
                 <select
                   value={reason}
                   onChange={(e: ChangeEvent<HTMLSelectElement>) => setReason(e.target.value)}
-                  className="w-full h-11 px-4 rounded-xl border border-slate-200 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none text-sm text-slate-800"
+                  className="w-full h-11 px-4 border border-border focus:border-primary focus:ring-1 focus:ring-ring outline-none text-sm text-foreground rounded-[var(--control-radius)]"
                 >
                   <option value="medical">Médical</option>
                   <option value="family">Familial</option>
@@ -137,27 +137,27 @@ export default function StudentAbsenceUpload() {
                 onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setDescription(e.target.value)}
                 rows={4}
                 placeholder="Précisez, si nécessaire, le contexte de l&apos;absence."
-                className="w-full p-4 rounded-xl border border-slate-200 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none text-sm resize-none text-slate-800"
+                className="w-full p-4 border border-border focus:border-primary focus:ring-1 focus:ring-ring outline-none text-sm resize-none text-foreground rounded-[var(--control-radius)]"
               />
             </div>
 
             <div className="max-w-md">
               <label
                 htmlFor="file-upload"
-                className={`flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${file ? 'border-blue-400 bg-blue-50' : 'border-gray-300 bg-white hover:bg-slate-50 hover:border-gray-400'}`}
+                className={`flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${file ? "border-blue-400 bg-primary/5" : "border-gray-300 bg-card hover:bg-muted/50 hover:border-gray-400"}`}
               >
                 <div className="flex flex-col items-center justify-center pt-5 pb-6">
                   {file ? (
                     <>
-                      <FileText className="w-12 h-12 text-blue-500 mb-3" />
-                      <p className="text-sm font-bold text-blue-700">{file.name}</p>
-                      <p className="text-xs text-blue-500 mt-1">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                      <FileText className="w-12 h-12 text-primary mb-3" />
+                      <p className="text-sm font-bold text-primary">{file.name}</p>
+                      <p className="text-xs text-primary mt-1">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
                     </>
                   ) : (
                     <>
                       <UploadCloud className="w-12 h-12 text-gray-400 mb-3" />
-                      <p className="mb-2 text-sm text-slate-500"><span className="font-semibold">Cliquez pour uploader</span> ou glissez-déposez</p>
-                      <p className="text-xs text-slate-500">PDF, JPG ou PNG (Max 5MB)</p>
+                      <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Cliquez pour uploader</span> ou glissez-déposez</p>
+                      <p className="text-xs text-muted-foreground">PDF, JPG ou PNG (Max 5MB)</p>
                     </>
                   )}
                 </div>
@@ -169,7 +169,7 @@ export default function StudentAbsenceUpload() {
               onClick={handleUpload}
               disabled={!file || !attendanceId || uploading}
               className={`w-full py-3 rounded-xl font-bold uppercase tracking-wide flex items-center justify-center gap-2 transition-colors ${
-                !file || !attendanceId || uploading ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 text-white shadow-md'
+                !file || !attendanceId || uploading ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : "bg-primary hover:bg-primary text-primary-foreground shadow-md"
               }`}
             >
               {uploading ? 'Envoi en cours...' : 'Soumettre le justificatif'}
@@ -181,11 +181,11 @@ export default function StudentAbsenceUpload() {
           <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <CheckCircle2 className="w-10 h-10 text-emerald-600" />
           </div>
-          <h2 className="text-2xl font-black text-emerald-800 mb-2">Justificatif reçu</h2>
+          <h2 className="text-2xl font-bold text-emerald-800 mb-2">Justificatif reçu</h2>
           <p className="text-emerald-700 max-w-md mx-auto mb-6">{submission.message}</p>
-          <div className="bg-white p-4 rounded-xl inline-block text-sm border border-emerald-100 text-left">
-            <div><span className="text-slate-500">Absence liée :</span> <span className="font-bold ml-2">#{submission.attendanceId}</span></div>
-            <div className="mt-1"><span className="text-slate-500">Statut backend :</span> <span className="font-bold text-orange-500 ml-2">{submission.status}</span></div>
+          <div className="bg-card p-4 rounded-xl inline-block text-sm border border-emerald-100 text-left">
+            <div><span className="text-muted-foreground">Absence liée :</span> <span className="font-bold ml-2">#{submission.attendanceId}</span></div>
+            <div className="mt-1"><span className="text-muted-foreground">Statut backend :</span> <span className="font-bold text-orange-500 ml-2">{submission.status}</span></div>
           </div>
         </div>
       )}

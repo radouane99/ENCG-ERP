@@ -18,7 +18,7 @@ export default function MessagesPage() {
             <h2 className="font-bold text-lg mb-4">Messagerie</h2>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <input type="text" placeholder="Rechercher une conversation..." className="w-full pl-9 pr-4 py-2 bg-background border rounded-lg text-sm" />
+              <input type="text" placeholder="Rechercher une conversation..." className="w-full pl-9 pr-4 py-2 bg-background border text-sm rounded-[var(--control-radius)]" />
             </div>
           </div>
           <div className="flex-1 overflow-y-auto">
@@ -66,8 +66,8 @@ export default function MessagesPage() {
           
           <div className="p-4 border-t bg-muted/5">
             <div className="flex items-center gap-2">
-              <input type="text" placeholder="Écrivez votre message..." className="flex-1 bg-background border rounded-full px-4 py-2.5 text-sm focus:outline-none focus:border-primary" />
-              <button className="w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center hover:bg-primary/90 transition-colors">
+              <input type="text" placeholder="Écrivez votre message..." className="flex-1 bg-background border px-4 py-2.5 text-sm focus:outline-none focus:border-primary rounded-[var(--control-radius)]" />
+              <button className="w-10 h-10 bg-primary text-primary-foreground rounded-full flex items-center justify-center hover:bg-primary/90 transition-colors">
                 <Send className="w-4 h-4" />
               </button>
             </div>

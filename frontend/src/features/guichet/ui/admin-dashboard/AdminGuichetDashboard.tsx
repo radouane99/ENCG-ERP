@@ -24,7 +24,7 @@ export const AdminGuichetDashboard: React.FC = () => {
       {req.status === 'pending' && (
         <button
           onClick={() => handleStatusChange(req.id, 'processing')}
-          className="min-h-11 px-3 py-1 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-xl text-sm font-medium"
+          className="min-h-11 px-3 py-1 bg-primary/5 text-primary hover:bg-primary/10 rounded-xl text-sm font-medium"
         >
           Traiter
         </button>
@@ -59,7 +59,7 @@ export const AdminGuichetDashboard: React.FC = () => {
           href={req.media[0].original_url}
           target="_blank"
           rel="noreferrer"
-          className="min-h-11 inline-flex items-center px-3 py-1 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-xl text-sm font-medium"
+          className="min-h-11 inline-flex items-center px-3 py-1 bg-muted text-gray-700 hover:bg-gray-200 rounded-xl text-sm font-medium"
         >
           Voir PDF
         </a>
@@ -70,19 +70,19 @@ export const AdminGuichetDashboard: React.FC = () => {
   return (
     <div className="space-y-6">
       <PageHeader title="Guichet Électronique" subtitle="Demandes administratives — En attente, Prêt, À retirer" />
-      <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-border">
+      <div className="bg-card dark:bg-card rounded-2xl shadow-sm border border-border">
 
       <div className="md:hidden p-4 space-y-3">
         {requests?.map((req) => (
           <article key={req.id} className="rounded-2xl border border-border p-4 space-y-3">
             <div className="flex items-start justify-between gap-2">
               <div>
-                <p className="font-black text-sm text-primary dark:text-white">
+                <p className="font-bold text-sm text-primary dark:text-white">
                   {req.student?.user?.first_name} {req.student?.user?.last_name}
                 </p>
-                <p className="text-xs text-slate-500">#{req.id} · CIN {req.student?.user?.cin}</p>
+                <p className="text-xs text-muted-foreground">#{req.id} · CIN {req.student?.user?.cin}</p>
               </div>
-              <span className="text-xs font-bold px-2 py-1 rounded-full bg-slate-100 dark:bg-slate-800">
+              <span className="text-xs font-bold px-2 py-1 rounded-full bg-muted dark:bg-card">
                 {documentStatusLabel(req.status)}
               </span>
             </div>
@@ -95,7 +95,7 @@ export const AdminGuichetDashboard: React.FC = () => {
       <div className="hidden md:block overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-sm border-b border-border">
+            <tr className="bg-muted/50 dark:bg-card text-muted-foreground dark:text-foreground text-sm border-b border-border">
               <th className="p-4 font-medium">ID</th>
               <th className="p-4 font-medium">Étudiant (CIN)</th>
               <th className="p-4 font-medium">Document</th>
@@ -105,17 +105,17 @@ export const AdminGuichetDashboard: React.FC = () => {
           </thead>
           <tbody className="divide-y divide-border">
             {requests?.map((req) => (
-              <tr key={req.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                <td className="p-4 text-sm text-slate-500">#{req.id}</td>
+              <tr key={req.id} className="hover:bg-muted/50 dark:hover:bg-slate-800/50">
+                <td className="p-4 text-sm text-muted-foreground">#{req.id}</td>
                 <td className="p-4">
-                  <div className="font-medium text-slate-800 dark:text-slate-100">
+                  <div className="font-medium text-foreground dark:text-foreground">
                     {req.student?.user?.first_name} {req.student?.user?.last_name}
                   </div>
-                  <div className="text-xs text-slate-500">CIN: {req.student?.user?.cin}</div>
+                  <div className="text-xs text-muted-foreground">CIN: {req.student?.user?.cin}</div>
                 </td>
                 <td className="p-4 text-sm">{req.document_type?.name}</td>
                 <td className="p-4">
-                  <span className="px-2 py-1 text-xs font-semibold rounded-full bg-slate-100 dark:bg-slate-800">
+                  <span className="px-2 py-1 text-xs font-semibold rounded-full bg-muted dark:bg-card">
                     {documentStatusLabel(req.status)}
                   </span>
                 </td>
@@ -129,10 +129,10 @@ export const AdminGuichetDashboard: React.FC = () => {
       {/* Rejection Modal */}
       {selectedRequest && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-xl">
+          <div className="bg-card rounded-lg p-6 max-w-md w-full shadow-sm">
             <h3 className="text-lg font-bold mb-4">Rejeter la demande #{selectedRequest.id}</h3>
             <textarea
-              className="w-full border border-gray-300 rounded p-2 mb-4 focus:ring-red-500 focus:border-red-500"
+              className="w-full border border-gray-300 rounded p-2 mb-4 focus:ring-red-500 focus:border-red-500 rounded-[var(--control-radius)]"
               rows={4}
               placeholder="Motif du rejet (obligatoire)"
               value={rejectionReason}
@@ -141,7 +141,7 @@ export const AdminGuichetDashboard: React.FC = () => {
             <div className="flex justify-end space-x-3">
               <button 
                 onClick={() => setSelectedRequest(null)}
-                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded"
+                className="px-4 py-2 text-muted-foreground hover:bg-muted rounded"
               >
                 Annuler
               </button>

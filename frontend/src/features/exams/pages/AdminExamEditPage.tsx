@@ -41,17 +41,17 @@ function PlanningForm({ details }: { details: any }) {
       {reschedule && <>
         <p className="text-sm text-muted-foreground">Les anciens QR seront invalidés et les confirmations des surveillants annulées. Les personnes concernées recevront une notification portail. Les emails devront être renvoyés depuis les convocations.</p>
         <label htmlFor="reschedule-reason" className="block text-sm font-medium">Motif de reprogrammation</label>
-        <textarea id="reschedule-reason" required minLength={10} maxLength={2000} value={reason} onChange={event => setReason(event.target.value)} className="w-full rounded-lg border bg-background p-3" />
+        <textarea id="reschedule-reason" required minLength={10} maxLength={2000} value={reason} onChange={event => setReason(event.target.value)} className="w-full border bg-background p-3 rounded-[var(--control-radius)]" />
         <label className="flex items-start gap-2 text-sm"><input type="checkbox" required checked={acknowledged} onChange={event => setAcknowledged(event.target.checked)} />Je confirme le renouvellement des convocations et le suivi des emails.</label>
       </>}
     </section>}
     <fieldset disabled={(protectedPlan && !reschedule) || save.isPending || !exam.planning_revision} className="grid gap-4 sm:grid-cols-2 disabled:opacity-60">
-      <div><label htmlFor="exam-date" className="block text-sm font-medium mb-2">Date de l’épreuve</label><input id="exam-date" required type="date" value={form.exam_date} onChange={event => setForm(previous => ({ ...previous, exam_date: event.target.value }))} className="w-full rounded-lg border bg-background p-3" /></div>
-      <div><label htmlFor="exam-slot" className="block text-sm font-medium mb-2">Créneau</label><select id="exam-slot" value={form.start_time} onChange={event => setForm(previous => ({ ...previous, start_time: event.target.value, duration_minutes: slots[event.target.value] || previous.duration_minutes }))} className="w-full rounded-lg border bg-background p-3">
+      <div><label htmlFor="exam-date" className="block text-sm font-medium mb-2">Date de l’épreuve</label><input id="exam-date" required type="date" value={form.exam_date} onChange={event => setForm(previous => ({ ...previous, exam_date: event.target.value }))} className="w-full border bg-background p-3 rounded-[var(--control-radius)]" /></div>
+      <div><label htmlFor="exam-slot" className="block text-sm font-medium mb-2">Créneau</label><select id="exam-slot" value={form.start_time} onChange={event => setForm(previous => ({ ...previous, start_time: event.target.value, duration_minutes: slots[event.target.value] || previous.duration_minutes }))} className="w-full border bg-background p-3 rounded-[var(--control-radius)]">
         {!slots[form.start_time] && <option value={form.start_time}>{form.start_time} — créneau existant</option>}
         {Object.entries(slots).map(([time, duration]) => <option key={time} value={time}>{time} · {duration} min</option>)}
       </select></div>
-      <div><label htmlFor="exam-room" className="block text-sm font-medium mb-2">Salle</label><select id="exam-room" required value={form.room_id} onChange={event => setForm(previous => ({ ...previous, room_id: event.target.value }))} className="w-full rounded-lg border bg-background p-3">
+      <div><label htmlFor="exam-room" className="block text-sm font-medium mb-2">Salle</label><select id="exam-room" required value={form.room_id} onChange={event => setForm(previous => ({ ...previous, room_id: event.target.value }))} className="w-full border bg-background p-3 rounded-[var(--control-radius)]">
         <option value="">Choisir une salle</option>
         {!rooms.some((room: any) => String(room.id) === form.room_id) && exam.room && <option value={exam.room_id}>{exam.room.name}</option>}
         {rooms.map((room: any) => <option key={room.id} value={room.id}>{room.name}</option>)}
@@ -66,9 +66,9 @@ function PlanningForm({ details }: { details: any }) {
 export default function AdminExamEditPage() {
   const { id } = useParams()
   const { data, isPending, isError, refetch } = useQuery({ queryKey: ['exam-details', id], queryFn: () => examsApi.getExamDetails(Number(id)), enabled: !!id })
-  return <main className="mx-auto max-w-5xl space-y-5 p-4 md:p-8 pb-24">
+  return <main className="mx-auto max-w-5xl space-y-5 pb-24">
     <Link to="/admin/exams" className="text-sm text-primary underline">Retour au planning des examens</Link>
-    <h1 className="text-2xl font-bold">Modifier le planning de l’épreuve</h1>
+    <h1 className="erp-page-title">Modifier le planning de l’épreuve</h1>
     {isPending && <p role="status">Chargement de l’épreuve…</p>}
     {isError && <div role="alert">Épreuve indisponible. <button type="button" onClick={() => void refetch()} className="underline">Réessayer</button></div>}
     {data?.exam && <PlanningForm key={`${data.exam.id}:${data.exam.planning_revision}`} details={data} />}
