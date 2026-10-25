@@ -177,7 +177,7 @@ class OrientationAdvisorService
 
         // 5. Conseil IA personnalisé
         $topMatch = $recommendations[0];
-        $aiVerdict = "Au vu de vos excellents résultats dans les matières analytiques et managériales, la filière {$topMatch['name']} ({$topMatch['code']}) correspond le plus étroitement à vos points forts académiques avec un taux de compatibilité de {$topMatch['compatibility_score']}%.";
+        $aiVerdict = "Suggestion indicative basée sur les résultats disponibles : {$topMatch['name']} ({$topMatch['code']}). Score calculé : {$topMatch['compatibility_score']} %. Ce score ne garantit ni admission ni affectation.";
 
         $registration = DB::table('student_registrations')
             ->where('student_id', $student->id)

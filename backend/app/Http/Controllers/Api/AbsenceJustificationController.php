@@ -27,6 +27,9 @@ class AbsenceJustificationController extends Controller
             'attendance.attendanceSession.group',
             'reviewer',
         ]);
+        $query->whereHas('student', fn ($q) => $q->where('institution_id', $request->user()->institution_id));
+        if ($request->user()->hasRole('student')) $query->where('student_id', $request->user()->student?->id ?? -1);
+        $scoped = clone $query;
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
@@ -128,10 +131,10 @@ class AbsenceJustificationController extends Controller
                 'last_page' => $paginated->lastPage(),
             ],
             'stats' => [
-                'total' => AbsenceJustification::count(),
-                'pending' => AbsenceJustification::where('status', 'pending')->count(),
-                'approved' => AbsenceJustification::where('status', 'approved')->count(),
-                'rejected' => AbsenceJustification::where('status', 'rejected')->count(),
+                'total' => (clone $scoped)->count(),
+                'pending' => (clone $scoped)->where('status', 'pending')->count(),
+                'approved' => (clone $scoped)->where('status', 'approved')->count(),
+                'rejected' => (clone $scoped)->where('status', 'rejected')->count(),
             ],
         ]);
     }

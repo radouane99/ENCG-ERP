@@ -19,7 +19,7 @@ interface StudentItem {
   cne: string;
   email?: string;
   status: 'present' | 'absent' | 'late' | 'excused';
-  scannedAt?: string;
+  scannedAt?: string; version?: number;
 }
 
 interface TimetableSession {
@@ -152,7 +152,7 @@ export default function ProfessorAbsencesView() {
     if (!selectedGroupe || !selectedModule) { setStudents([]); return; }
     let cancelled = false;
     api.get('/professor/attendance/students', { params: { module_id: selectedModule, group_id: selectedGroupe } }).then(response => {
-      if (!cancelled) setStudents((response.data.data ?? []).map((student: any) => ({ id: student.id, first_name: student.name, last_name: '', cne: student.cne, status: student.status ?? 'absent' })));
+      if (!cancelled) setStudents((response.data.data ?? []).map((student: any) => ({ id: student.id, first_name: student.name, last_name: '', cne: student.cne, status: student.status ?? 'absent', version: student.version })));
     }).catch(() => { if (!cancelled) { setStudents([]); toast.error('La liste du groupe ne peut pas être chargée.'); } });
     return () => { cancelled = true; };
   }, [selectedGroupe, selectedModule]);
@@ -285,6 +285,8 @@ export default function ProfessorAbsencesView() {
       });
 
       if (!res.data.session?.id) throw new Error('Session non créée.');
+      const roster = await api.get('/professor/attendance/students', { params: { attendance_session_id: res.data.session.id } });
+      setStudents(roster.data.data.map((student: any) => ({ id: student.id, first_name: student.name?.split(' ')[0] || '', last_name: student.name?.split(' ').slice(1).join(' ') || '', cne: student.cne, status: student.status || 'absent', version: student.version })));
       setSessionId(res.data.session.id);
       setQrToken(res.data.session.qr_token ?? '');
       setQrExpiresAt(res.data.session.expires_at);
@@ -310,7 +312,7 @@ export default function ProfessorAbsencesView() {
       date: sessionDate,
       records: students.map(s => ({
         student_id: s.id,
-        status: s.status
+        status: s.status, version: s.version
       }))
     };
 

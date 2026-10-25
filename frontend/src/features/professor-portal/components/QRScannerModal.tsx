@@ -65,7 +65,7 @@ interface StudentRosterItem {
   name: string
   cne: string
   apogee?: string
-  status: Status
+  version?: number; status: Status
 }
 
 // Subtle audio feedback for laser / barcode / RFID card scan
@@ -179,6 +179,8 @@ export function QRScannerModal({ isOpen, onClose, sessionId, sessionData }: Prop
     getDateForScheduleDay(sessionData?.day_of_week ?? sessionData?.day_name)
   )
   const [statuses, setStatuses] = useState<Record<number, Status>>({})
+  const dirtyIds = useRef(new Set<number>()); const versions = useRef<Record<number, number>>({})
+  const markLocal = (id: number, status: Status) => { dirtyIds.current.add(id); setStatuses(prev => ({ ...prev, [id]: status })) }
   const [code, setCode] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -211,7 +213,7 @@ export function QRScannerModal({ isOpen, onClose, sessionId, sessionData }: Prop
       setActiveId(null)
       setScheduleId('')
       setSessionDate(getDateForScheduleDay(sessionData?.day_of_week ?? sessionData?.day_name))
-      setStatuses({})
+      setStatuses({}); dirtyIds.current.clear(); versions.current = {}
       setError('')
       setSearchQuery('')
       setStatusFilter('all')
@@ -262,9 +264,9 @@ export function QRScannerModal({ isOpen, onClose, sessionId, sessionData }: Prop
     if (roster.data) {
       const initial: Record<number, Status> = {}
       for (const s of roster.data) {
-        initial[s.id] = s.status || 'absent'
+        initial[s.id] = s.status || 'absent'; if (!dirtyIds.current.has(s.id)) versions.current[s.id] = s.version ?? 0
       }
-      setStatuses(initial)
+      setStatuses(previous => Object.fromEntries(Object.entries(initial).map(([id, status]) => [id, dirtyIds.current.has(Number(id)) ? previous[Number(id)] ?? status : status])))
     }
   }, [roster.data])
 
@@ -314,24 +316,6 @@ export function QRScannerModal({ isOpen, onClose, sessionId, sessionData }: Prop
     setBusy(true)
     setError('')
     try {
-      // Direct local match if CNE or Apogée matches an enrolled student
-      const localMatch = roster.data?.find(
-        s =>
-          s.cne?.toLowerCase() === raw.toLowerCase() ||
-          s.apogee?.toLowerCase() === raw.toLowerCase()
-      )
-
-      if (localMatch) {
-        setStatuses(prev => ({ ...prev, [localMatch.id]: 'present' }))
-        setLastScannedStudent({ name: localMatch.name })
-        playBeep(true)
-        toast.success(`Présence validée : ${localMatch.name}`)
-        setCode('')
-        scanInputRef.current?.focus()
-        setBusy(false)
-        return
-      }
-
       // Backend API scan (handles QR tokens, CNEs, and warning counts)
       const res = await api.post(`/professor/attendance/${activeId}/scan`, { token: raw })
       const studentName = res.data.student_name || 'Étudiant'
@@ -339,7 +323,7 @@ export function QRScannerModal({ isOpen, onClose, sessionId, sessionData }: Prop
 
       // Update student locally in roster
       if (res.data.record?.student_id) {
-        setStatuses(prev => ({ ...prev, [res.data.record.student_id]: 'present' }))
+        dirtyIds.current.delete(res.data.record.student_id); versions.current[res.data.record.student_id] = res.data.record.version; setStatuses(prev => ({ ...prev, [res.data.record.student_id]: 'present' }))
       }
 
       setLastScannedStudent({ name: studentName, warning })
@@ -367,7 +351,7 @@ export function QRScannerModal({ isOpen, onClose, sessionId, sessionData }: Prop
     if (!roster.data) return
     const updated: Record<number, Status> = {}
     for (const student of roster.data) {
-      updated[student.id] = status
+      updated[student.id] = status; dirtyIds.current.add(student.id)
     }
     setStatuses(updated)
     if (status === 'present') {
@@ -388,7 +372,7 @@ export function QRScannerModal({ isOpen, onClose, sessionId, sessionData }: Prop
         close_session: true,
         date: sessionDate,
         records: Object.entries(statuses).map(([student_id, status]) => ({
-          student_id: Number(student_id),
+          student_id: Number(student_id), version: versions.current[Number(student_id)] ?? 0,
           status,
         })),
       })
@@ -900,7 +884,7 @@ export function QRScannerModal({ isOpen, onClose, sessionId, sessionData }: Prop
                         {/* Présent */}
                         <button
                           type="button"
-                          onClick={() => setStatuses(prev => ({ ...prev, [student.id]: 'present' }))}
+                          onClick={() => markLocal(student.id, 'present')}
                           className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer flex items-center gap-1 ${
                             currentStatus === 'present'
                               ? 'bg-emerald-600 text-white shadow-xs'
@@ -914,7 +898,7 @@ export function QRScannerModal({ isOpen, onClose, sessionId, sessionData }: Prop
                         {/* Absent */}
                         <button
                           type="button"
-                          onClick={() => setStatuses(prev => ({ ...prev, [student.id]: 'absent' }))}
+                          onClick={() => markLocal(student.id, 'absent')}
                           className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer flex items-center gap-1 ${
                             currentStatus === 'absent'
                               ? 'bg-rose-600 text-white shadow-xs'
@@ -928,7 +912,7 @@ export function QRScannerModal({ isOpen, onClose, sessionId, sessionData }: Prop
                         {/* Retard */}
                         <button
                           type="button"
-                          onClick={() => setStatuses(prev => ({ ...prev, [student.id]: 'late' }))}
+                          onClick={() => markLocal(student.id, 'late')}
                           className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
                             currentStatus === 'late'
                               ? 'bg-amber-500 text-white shadow-xs'
@@ -942,7 +926,7 @@ export function QRScannerModal({ isOpen, onClose, sessionId, sessionData }: Prop
                         {/* Justifié */}
                         <button
                           type="button"
-                          onClick={() => setStatuses(prev => ({ ...prev, [student.id]: 'excused' }))}
+                          onClick={() => markLocal(student.id, 'excused')}
                           className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
                             currentStatus === 'excused'
                               ? 'bg-sky-600 text-white shadow-xs'

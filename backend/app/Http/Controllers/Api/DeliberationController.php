@@ -406,19 +406,8 @@ class DeliberationController extends Controller
             $academicYearId = $this->resolveAcademicYearId($requestedYearId);
             $yearLevel = (int) $request->input('year_level', $request->query('year_level', 1));
             $semesterNum = (int) $request->input('semester_number', $request->query('semester_number', 1));
-            $isSigned = filter_var($request->input('signed', $request->query('signed', false)), FILTER_VALIDATE_BOOLEAN);
-            $signatureData = $request->input('signature_data', $request->query('signature_data'));
-
-            $filiere = Filiere::find($filiereId);
-            if (! $filiere) {
-                $filiere = Filiere::first();
-                $filiereId = $filiere ? $filiere->id : $filiereId;
-            }
-            $academicYear = AcademicYear::find($academicYearId);
-            if (! $academicYear) {
-                $academicYear = AcademicYear::first();
-                $academicYearId = $academicYear ? $academicYear->id : $academicYearId;
-            }
+            $filiere = Filiere::where('institution_id', $request->user()->institution_id)->findOrFail($filiereId);
+            $academicYear = AcademicYear::where('institution_id', $request->user()->institution_id)->findOrFail($academicYearId);
 
             $logoPath = public_path('logo-encg.png');
             $logoBase64 = file_exists($logoPath)
@@ -476,9 +465,6 @@ class DeliberationController extends Controller
                     ->where('semester_number', $semesterNum)
                     ->get();
 
-                if ($modules->isEmpty()) {
-                    $modules = Module::with('assessments')->take(7)->get();
-                }
 
                 $matrix = [];
                 foreach ($pvData['students'] ?? [] as $s) {
@@ -704,6 +690,9 @@ class DeliberationController extends Controller
     {
         $deliberation = Deliberation::findOrFail($id);
         $this->authorize('update', $deliberation);
+        $request->validate(['reason' => 'required|string|min:3|max:500']);
+        abort_unless($deliberation->decisions()->exists(), 422, 'Enregistrez les décisions de cette délibération avant de sceller le PV.');
+        abort_if(AcademicYear::findOrFail($deliberation->academic_year_id)->is_locked, 409, 'Année académique verrouillée.');
 
         $hash = app(DeliberationSealService::class)->seal(
             $deliberation,

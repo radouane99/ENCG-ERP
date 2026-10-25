@@ -16,6 +16,15 @@ class Grade extends Model
 
     protected $guarded = ['id'];
 
+    public function save(array $options = [])
+    {
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($options) {
+            $assessment = Assessment::withoutGlobalScopes()->find($this->assessment_id);
+            if ($assessment && (!$this->exists || $this->isDirty(['value', 'absent', 'student_id', 'assessment_id']))) app(\App\Services\Academic\DeliberationSealService::class)->assertModuleOpen((int) $assessment->module_id, (int) $this->student_id, (int) $assessment->academic_year_id);
+            return parent::save($options);
+        });
+    }
+
     protected function casts(): array
     {
         return [

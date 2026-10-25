@@ -8,13 +8,13 @@ class ManualCallRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->can('attendance.manage') || $this->user()->hasRole('professor');
+        return $this->user()->can('attendance.manage') || $this->user()->hasAnyRole(['professor', 'vacataire', 'admin', 'institution-admin', 'super-admin', 'director']);
     }
 
     public function rules(): array
     {
         return [
-            'student_id' => 'required|exists:users,id',
+            'student_id' => 'required|exists:students,id',
             'status' => 'required|in:present,absent,late,excused',
         ];
     }

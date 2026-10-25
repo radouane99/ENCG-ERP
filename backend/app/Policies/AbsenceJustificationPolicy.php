@@ -33,6 +33,7 @@ class AbsenceJustificationPolicy
 
     public function update(User $user, AbsenceJustification $absenceJustification): bool
     {
+        if ((int) $user->institution_id !== (int) $absenceJustification->student?->institution_id) return false;
         return $this->hasPermissionOrRole($user, 'students.edit', [
             'admin', 'super-admin', 'institution-admin', 'director', 'scolarite',
         ]);
@@ -40,6 +41,7 @@ class AbsenceJustificationPolicy
 
     public function delete(User $user, AbsenceJustification $absenceJustification): bool
     {
+        if ((int) $user->institution_id !== (int) $absenceJustification->student?->institution_id) return false;
         return $this->hasPermissionOrRole($user, 'students.delete', [
             'admin', 'super-admin', 'institution-admin', 'director',
         ]);

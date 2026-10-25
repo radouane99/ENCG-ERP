@@ -37,8 +37,10 @@ class OrientationAdvisorController extends Controller
         $semester = $registration?->semester_number;
         $modules = $registration ? Module::where('institution_id', $student->institution_id)->where('filiere_id', $registration->filiere_id)->where('semester_number', $semester)->where('is_active', true)->get()->map(function ($module) use ($student) {
             $hasGrades = \App\Models\Grade::where('student_id', $student->id)->whereHas('assessment', fn ($q) => $q->where('module_id', $module->id))->exists();
-            $result = $hasGrades ? app(\App\Domain\Deliberation\Services\DeliberationEngine::class)->calculateModuleResult($student, $module) : null;
-            return ['id' => $module->id, 'code' => $module->code, 'name' => $module->name, 'coefficient' => $module->coefficient, 'grade' => $result['average'] ?? null, 'grade_source' => $hasGrades ? 'recorded' : 'missing'];
+            $assessments = $module->assessments()->get()->reject(fn ($a) => in_array(strtolower($a->type), ['rattrapage', 'resit', 'r']));
+            $complete = $assessments->isNotEmpty() && \App\Models\Grade::where('student_id', $student->id)->whereIn('assessment_id', $assessments->pluck('id'))->where(fn ($q) => $q->whereNotNull('value')->orWhere('absent', true))->count() === $assessments->count();
+            $average = $complete ? app(\App\Services\Academic\GradeService::class)->calculateWeightedAverage($student, $assessments) : null;
+            return ['id' => $module->id, 'code' => $module->code, 'name' => $module->name, 'coefficient' => $module->coefficient, 'grade' => $average, 'grade_source' => $complete ? 'recorded' : 'missing'];
         }) : collect();
         return response()->json(['success' => true, 'data' => array_merge($this->orientationAdvisor->analyzeStudent($student), [
             'current_semester_modules' => $modules, 'current_semester' => $semester, 'academic_year_id' => $yearId,
@@ -76,24 +78,11 @@ class OrientationAdvisorController extends Controller
      */
     public function getAdminAnalytics(Request $request): JsonResponse
     {
-        $students = Student::with('user')->take(50)->get();
-
-        $specializationDemand = [
-            ['code' => 'GFC', 'name' => 'Gestion Financière et Comptable', 'count' => 34, 'percentage' => 42],
-            ['code' => 'MCM', 'name' => 'Management Commercial et Marketing', 'count' => 28, 'percentage' => 35],
-            ['code' => 'ACG', 'name' => 'Audit et Contrôle de Gestion', 'count' => 10, 'percentage' => 12],
-            ['code' => 'GRH', 'name' => 'Management des Ressources Humaines', 'count' => 5, 'percentage' => 6],
-            ['code' => 'MACI', 'name' => 'Management du Commerce International', 'count' => 5, 'percentage' => 5],
-        ];
-
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'total_students_evaluated' => $students->count(),
-                'specialization_demand' => $specializationDemand,
-                'average_gpa_tronc_commun' => 12.65,
-                'high_potential_students_count' => 18,
-            ],
-        ]);
+        $year = \App\Models\AcademicYear::where('institution_id', $request->user()->institution_id)->findOrFail(\App\Services\Academic\AcademicContext::yearId());
+        $wishes = \App\Models\SpecialtyWish::where('academic_year', $year->displayLabel())->where('preference_rank', 1)->whereHas('student', fn ($q) => $q->where('institution_id', $request->user()->institution_id));
+        $counts = (clone $wishes)->selectRaw('filiere_id, count(*) as total')->groupBy('filiere_id')->get();
+        $total = $counts->sum('total');
+        $filieres = \App\Models\Filiere::whereIn('id', $counts->pluck('filiere_id'))->where('institution_id', $request->user()->institution_id)->get()->keyBy('id');
+        return response()->json(['success' => true, 'data' => ['academic_year' => $year->displayLabel(), 'total_students_evaluated' => $total, 'specialization_demand' => $counts->filter(fn ($r) => isset($filieres[$r->filiere_id]))->map(fn ($r) => ['code' => $filieres[$r->filiere_id]->code, 'name' => $filieres[$r->filiere_id]->name, 'count' => (int)$r->total, 'percentage' => $total ? round(100 * $r->total / $total, 1) : 0])->values(), 'average_gpa_tronc_commun' => null, 'high_potential_students_count' => null, 'source' => 'recorded_first_preferences']]);
     }
 }

@@ -661,11 +661,8 @@ export default function AcademicYearSettingsPage() {
   }
 
   // Calculate Selected Professor Workload
-  const selectedProfAssignedCount = assignmentForm.professor_id 
-    ? assignments.filter((a: any) => a.professor_id == assignmentForm.professor_id || a.prof_id == assignmentForm.professor_id || (a.prof && a.prof.includes(professors.find((p: any) => p.id == assignmentForm.professor_id)?.last_name || '___'))).length 
-    : 0
-  const selectedProfVolumeHours = selectedProfAssignedCount * 4
-
+  const selectedProfAssignments = assignments.filter((a: any) => String(a.professor_id ?? a.prof_id) === String(assignmentForm.professor_id))
+  const selectedProfVolumeHours = selectedProfAssignments.some((a: any) => a.assigned_hours === null || !Number.isFinite(Number(a.assigned_hours))) ? null : selectedProfAssignments.reduce((sum: number, a: any) => sum + Number(a.assigned_hours), 0)
   // Resolve professor UUID from assignment row
   const resolveAssignmentProfessorId = (assignment: any): string | null => {
     const direct = assignment?.professor_id || assignment?.prof_id || assignment?.professor?.id
@@ -1291,19 +1288,12 @@ export default function AcademicYearSettingsPage() {
                 <div className="px-3.5 py-2 bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl flex items-center gap-3 shrink-0 animate-in zoom-in-95">
                   <BarChart2 className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
                   <div>
-                    <div className="text-[10px] font-bold uppercase text-slate-400">Charge hebdomadaire :</div>
+                    <div className="text-[10px] font-bold uppercase text-slate-400">Volume déclaré (année) :</div>
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-bold text-slate-800 dark:text-white font-mono">
-                        {selectedProfVolumeHours}h / 18h statutaires
+                        {selectedProfVolumeHours === null ? "Non renseigné" : selectedProfVolumeHours + " h"}
                       </span>
-                      <span className={cn(
-                        "px-2 py-0.5 rounded text-[10px] font-bold uppercase",
-                        selectedProfVolumeHours > 18 ? "bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300" :
-                        selectedProfVolumeHours >= 14 ? "bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300" :
-                        "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"
-                      )}>
-                        {selectedProfVolumeHours > 18 ? "⚠️ Surcharge" : selectedProfVolumeHours >= 14 ? "Équilibré" : "Disponible"}
-                      </span>
+                      <span className="text-xs text-muted-foreground">Disponibilités à vérifier</span>
                     </div>
                   </div>
                 </div>

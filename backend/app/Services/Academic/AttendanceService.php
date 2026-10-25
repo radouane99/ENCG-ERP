@@ -110,6 +110,7 @@ class AttendanceService
             ['status' => 'absent', 'is_justified' => false]
         );
 
+        $oldStatus = $record->status->value;
         $record->update([
             'status' => $status,
             'scanned_at' => Carbon::now(),
@@ -118,6 +119,7 @@ class AttendanceService
             'is_valid' => $isValid,
         ]);
 
+        if ($oldStatus !== $status) activity()->causedBy(auth()->user())->performedOn($record)->withProperties(['session_id' => $sessionId, 'student_id' => $studentId, 'old_status' => $oldStatus, 'new_status' => $status])->log('attendance_recorded');
         return $record->fresh(['student.user']);
         });
     }

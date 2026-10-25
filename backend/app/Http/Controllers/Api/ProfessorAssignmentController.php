@@ -63,7 +63,7 @@ class ProfessorAssignmentController extends Controller
                 'group_id' => $item->group_id,
                 'group' => $item->group->name ?? 'Tous les groupes',
                 'department_id' => $item->professor?->department_id,
-                'assigned_hours' => $item->assigned_hours ?? 36,
+                'assigned_hours' => $item->assigned_hours,
                 'session_type' => $item->session_type ?? 'cm',
                 'professor' => $item->professor ? [
                     'id' => $item->professor->uuid ?? $item->professor->id,
@@ -95,8 +95,8 @@ class ProfessorAssignmentController extends Controller
             'module_ids' => 'nullable|array',
             'group_id' => 'nullable',
             'group_ids' => 'nullable|array',
-            'session_type' => 'nullable|string', // cm, td, tp, both (cm+td)
-            'assigned_hours' => 'nullable|integer',
+            'session_type' => 'nullable|in:cm,td,tp,both',
+            'assigned_hours' => 'nullable|integer|min:1|max:1000',
         ]);
 
         $currentYear = AcademicYear::where('is_current', true)->first() ?? AcademicYear::latest('start_year')->first();
@@ -160,8 +160,12 @@ class ProfessorAssignmentController extends Controller
         $typesToCreate = ($sessionTypeInput === 'both') ? ['cm', 'td'] : [$sessionTypeInput];
 
         $createdCount = 0;
+        abort_if($currentYear->is_locked, 409, 'Année universitaire verrouillée.');
+        Professor::where('institution_id', $request->user()->institution_id)->where('is_active', true)->findOrFail($profId);
         foreach ($resolvedModuleIds as $modId) {
+            $module = Module::where('institution_id', $request->user()->institution_id)->findOrFail($modId);
             foreach ($resolvedGroupIds as $grpId) {
+                Group::where('filiere_id', $module->filiere_id)->where('semester_number', $module->semester_number)->where('academic_year_id', $currentYear->id)->findOrFail($grpId);
                 foreach ($typesToCreate as $sType) {
                     $exists = ModuleProfessor::where('module_id', $modId)
                         ->where('professor_id', $profId)

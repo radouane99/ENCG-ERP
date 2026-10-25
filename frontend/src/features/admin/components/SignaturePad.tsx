@@ -11,7 +11,7 @@ export function SignaturePad({ onSave }: { onSave: (dataUrl: string) => void }) 
     const rect = canvas.getBoundingClientRect()
     const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX
     const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY
-    return { x: clientX - rect.left, y: clientY - rect.top }
+    return { x: (clientX - rect.left) * canvas.width / rect.width, y: (clientY - rect.top) * canvas.height / rect.height }
   }
 
   const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {

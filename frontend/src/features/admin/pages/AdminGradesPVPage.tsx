@@ -1,4 +1,10 @@
-import React,{ useEffect,useState,useRef,useMemo } from 'react'
+import PvGroupComparison from '../components/PvGroupComparison'
+import PvSignatureDialog from '../components/PvSignatureDialog'
+import PvMeetingForm from '../components/PvMeetingForm'
+import { usePvWorkflow, type PvContext } from '../api/usePvWorkflow'
+import { moduleSuccessRates } from '../model/pvStatistics'
+import { Modal } from '@shared/components/ui/Modal'
+import React,{ useEffect,useState,useMemo } from 'react'
 
 import { Link,useNavigate,useSearchParams } from 'react-router-dom'
 import { ArrowLeft,Printer,Save,CheckCircle2,AlertCircle,RefreshCw,ShieldCheck,Lock,Download,FileText,Layers,Sparkles,Calendar,BookOpen,Users,ChevronDown,ChevronUp,Eye,Zap,FileSpreadsheet,Mail,Archive,History,X,Trophy,BarChart2,Search,Link2,Calculator,Clock,AlertTriangle,ShieldAlert,Maximize2,Minimize2,SlidersHorizontal,Table } from 'lucide-react'
@@ -78,7 +84,6 @@ export default function AdminGradesPVPage() {
     return Array.isArray(myAssignedModulesData) ? myAssignedModulesData : []
   }, [myAssignedModulesData])
 
-  const [signatureRole, setSignatureRole] = useState(isPureProfessor ? 'Professeur de Module' : 'Chef de Filière')
   const [signatureDone, setSignatureDone] = useState(false)
   const [signatureDetails, setSignatureDetails] = useState<any>(null)
   const [signatureDataUrl, setSignatureDataUrl] = useState<string>('')
@@ -200,7 +205,7 @@ export default function AdminGradesPVPage() {
 
   // Jury & Dual PV State: Pure professors are strictly restricted to 'module'
   const [pvType, setPvType] = useState<'module' | 'semestriel' | 'annuel'>(
-    isPureProfessor || moduleId ? 'module' : 'semestriel'
+    isPureProfessor || moduleId ? 'module' : searchParams.get('pv_type') === 'annuel' ? 'annuel' : 'semestriel'
   )
 
   // Force module mode for pure professors
@@ -265,11 +270,11 @@ export default function AdminGradesPVPage() {
   const currentAcademicYearId = useMemo(() => {
     const yearsList = Array.isArray(academicYearsData) ? academicYearsData : []
     const current = yearsList.find((y: any) => y.is_current)
-    return current?.id || yearsList[0]?.id || 3
-  }, [academicYearsData])
+    return Number(searchParams.get('academic_year_id')) && yearsList.some((y: any) => y.id === Number(searchParams.get('academic_year_id'))) ? Number(searchParams.get('academic_year_id')) : current?.id || yearsList[0]?.id || 0
+  }, [academicYearsData, searchParams])
 
   const fetchJury = async () => {
-    if (!selectedFiliere) return
+    if (!selectedFiliere || isPureProfessor || pvType === 'module') return
     setLoadingJury(true)
     try {
       const res = await api.get('/academic/deliberations/jury-status', {
@@ -277,10 +282,13 @@ export default function AdminGradesPVPage() {
           filiere_id: selectedFiliere,
           academic_year_id: currentAcademicYearId,
           semester_number: selectedSemester || 1,
-          type: pvType
+          type: pvType, group_id: selectedGroup || null, session, year_level: selectedYearLevel
         }
       })
       setJuryStatus(res.data)
+      const mine = res.data.members?.find((member: any) => Number(member.user_id) === Number(user?.id) && !member.module_id)
+      setSignatureDone(mine?.status === 'signed')
+      setSignatureDetails(mine?.status === 'signed' ? { role: mine.role, date: mine.signed_at, hash: mine.digital_seal } : null)
     } catch (err) {
       console.error(err)
     } finally {
@@ -288,8 +296,6 @@ export default function AdminGradesPVPage() {
     }
   }
 
-  const canvasRef = useRef<HTMLCanvasElement | null>(null)
-  const [isDrawing, setIsDrawing] = useState(false)
 
   // Fetch consolidated PV data for single module
   const { data: pvData, isLoading: isLoadingPV, refetch: refetchPV } = useQuery({
@@ -303,61 +309,25 @@ export default function AdminGradesPVPage() {
     enabled: !!moduleId,
   })
 
-  const handleConfirmSignature = async () => {
-    if (!signatureDataUrl) {
-      toast.error("Veuillez d'abord dessiner votre signature tactile.")
-      return
-    }
-
-    if (activeJurySigningId) {
-      setIsSigning(true)
-      try {
-        await api.post('/academic/deliberations/sign-jury', {
-          jury_id: activeJurySigningId,
-          signature_data: signatureDataUrl
-        })
-        toast.success("✒️ Signature tactile apposée et scellée sur le PV de Délibération !")
-        setShowSignatureModal(false)
-        setActiveJurySigningId(null)
-        queryClient.invalidateQueries({ queryKey: ['jury-status'] })
-        queryClient.invalidateQueries({ queryKey: ['semester-pv'] })
-        queryClient.invalidateQueries({ queryKey: ['annual-compensation'] })
-      } catch (err: any) {
-        toast.error(err.response?.data?.message || "Erreur lors de la signature du jury.")
-      } finally {
-        setIsSigning(false)
-      }
-      return
-    }
-
-    const targetModuleId = moduleId || pvData?.module?.id
-    if (!targetModuleId) {
-      toast.error("Veuillez sélectionner un module spécifique ou un membre du jury à signer.")
-      return
-    }
-
-    setIsSigning(true)
-    try {
-      const res = await api.post(`/modules/${targetModuleId}/sign-pv`, {
-        group_id: groupId || searchParams.get('group_id') || null,
-        session: session || 'normale',
-        signature_data: signatureDataUrl
-      })
-
-      const sessionLabel = session === 'normale' ? 'Session Ordinaire' : session === 'rattrapage' ? 'Session de Rattrapage' : 'Bilan Complet (Vue Totale)'
-      toast.success(`✒️ Signature tactile apposée, horodatée et scellée pour la ${sessionLabel} !`)
-      setShowSignatureModal(false)
-      setSignatureDataUrl('')
-      await refetchPV()
-      queryClient.invalidateQueries({ queryKey: ['module-pv'] })
-      queryClient.invalidateQueries({ queryKey: ['grades'] })
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Erreur lors de la signature du Procès-Verbal.")
-    } finally {
-      setIsSigning(false)
-    }
+  const openJuryVisa = (member: any) => {
+    if (Number(member.user_id) !== Number(user?.id)) { toast.error('Ce visa appartient à un autre membre du jury.'); return }
+    if (member.module_id) { navigate(`/admin/grades/pv?module_id=${member.module_id}&filiere_id=${selectedFiliere}&semester=${selectedSemester}&group_id=${selectedGroup || ''}&academic_year_id=${currentAcademicYearId}&session=${session}`); return }
+    setActiveJurySigningId(member.id); setShowSignatureModal(true)
   }
-
+  const confirmOfficialSignature = async (signature: string) => {
+    if (pvType === 'module') {
+      const target = moduleId || pvData?.module?.id
+      if (!target) throw new Error('Sélectionnez un module.')
+      await api.post(`/modules/${target}/sign-pv`, { group_id: selectedGroup || groupId || null, academic_year_id: currentAcademicYearId, session, signature_data: signature })
+      await refetchPV()
+    } else {
+      const member = activeJurySigningId ? juryStatus?.members?.find((m: any) => m.id === activeJurySigningId) : juryStatus?.members?.find((m: any) => m.user_id === user?.id && !m.module_id)
+      if (!member || Number(member.user_id) !== Number(user?.id)) throw new Error('Sélectionnez votre propre visa du jury. Les autres membres signent avec leur compte.')
+      await api.post('/academic/deliberations/sign-jury', { jury_id: member.id, signature_data: signature })
+      await fetchJury()
+    }
+    setShowSignatureModal(false); setActiveJurySigningId(null); toast.success('Votre visa a été enregistré sur le serveur.')
+  }
   const fetchAnnualCompensation = async () => {
     const targetFiliereId = selectedFiliere || pvData?.module?.filiere_id || filieres[0]?.id || 1
     try {
@@ -375,14 +345,15 @@ export default function AdminGradesPVPage() {
     if (pvType === 'annuel') {
       fetchAnnualCompensation()
     }
-  }, [selectedFiliere, selectedSemester, selectedYearLevel, pvType, pvData, currentAcademicYearId])
+  }, [selectedFiliere, selectedSemester, selectedYearLevel, selectedGroup, session, pvType, pvData, currentAcademicYearId])
 
   // Fetch full 7-module semester PV matrix
   const { data: semesterPvData, isLoading: isLoadingSemesterPV } = useQuery({
-    queryKey: ['semester-pv', selectedFiliere, selectedSemester, session, selectedGroup],
+    queryKey: ['semester-pv', selectedFiliere, selectedSemester, session, selectedGroup, currentAcademicYearId],
     queryFn: () => api.get('/semester-pv', {
       params: {
         filiere_id: selectedFiliere || 1,
+        academic_year_id: currentAcademicYearId,
         semester: selectedSemester || 1,
         session: session,
         group_id: selectedGroup || 'all'
@@ -437,7 +408,6 @@ export default function AdminGradesPVPage() {
 
   // 🗓️ Feature 5: Deliberation Scheduler
   const [showSchedulerModal, setShowSchedulerModal] = useState(false)
-  const [schedulerForm, setSchedulerForm] = useState({ date: '', time: '09:00', room: '', president: '', juryMembers: '' })
 
   // 🔒 Feature NEW — Verrouillage Officiel du PV
   const [pvLocked, setPvLocked] = useState(false)
@@ -452,6 +422,13 @@ export default function AdminGradesPVPage() {
   const [isLocking, setIsLocking] = useState(false)
   const [lockReason, setLockReason] = useState('Délibération officielle clôturée — PV définitif')
 
+  const workflowContext: PvContext = { filiere_id: Number(selectedFiliere), academic_year_id: Number(currentAcademicYearId), semester_number: pvType === 'annuel' ? selectedYearLevel * 2 : Number(selectedSemester), type: pvType === 'annuel' ? 'annuel' : 'semestriel', group_id: pvType === 'annuel' ? null : Number(selectedGroup) || null }
+  const officialWorkflow = usePvWorkflow(workflowContext, !isPureProfessor && pvType !== 'module')
+  useEffect(() => {
+    const value = officialWorkflow.data?.deliberation
+    setPvLocked(!!value?.is_sealed)
+    setPvLockDetails(value?.is_sealed ? { lockedBy: 'État officiel enregistré', lockedAt: value.sealed_at || '', role: 'Service habilité', hash: value.seal_hash || '', reason: 'Scellé serveur' } : null)
+  }, [officialWorkflow.data, selectedFiliere, selectedSemester, pvType, selectedGroup])
   // 📋 Feature N°2 — Comparaison Inter-Groupes
   const [showGroupCompareModal, setShowGroupCompareModal] = useState(false)
 
@@ -460,7 +437,7 @@ export default function AdminGradesPVPage() {
   const [simBonusPoints, setSimBonusPoints] = useState<number>(0.5)
   const [simTargetCategory, setSimTargetCategory] = useState<'rattrapage' | 'ajourne' | 'all'>('rattrapage')
 
-  // 🔗 Feature N°4 — Partage Sécurisé
+  // 🔗 Feature N°4 — Lien interne (connexion et droits requis)
   const [showShareModal, setShowShareModal] = useState(false)
   const [shareLink, setShareLink] = useState('')
   const [shareCopied, setShareCopied] = useState(false)
@@ -573,60 +550,15 @@ export default function AdminGradesPVPage() {
     navigate('/academic/documents')
   }
   // 🗓️ Feature 5: Scheduler Handler
-  const handleScheduleDeliberation = async () => {
-    if (!schedulerForm.date || !schedulerForm.room || !schedulerForm.president) {
-      toast.error('Veuillez remplir tous les champs obligatoires.')
-      return
-    }
-    const toastId = toast.loading('Planification de la session de délibération...')
-    try {
-      await new Promise(r => setTimeout(r, 1200))
-      toast.success(`📅 Session de délibération planifiée le ${schedulerForm.date} à ${schedulerForm.time} en salle ${schedulerForm.room} — Notifications envoyées aux membres du jury via email !`, { id: toastId })
-      setShowSchedulerModal(false)
-      setSchedulerForm({ date: '', time: '09:00', room: '', president: '', juryMembers: '' })
-    } catch (err) {
-      toast.error("Erreur lors de la planification.", { id: toastId })
-    }
-  }
-
-  // 🔒 Handler — Verrouillage Officiel du PV
   const handleLockPV = async () => {
-    if (!lockReason.trim()) {
-      toast.error('Veuillez saisir un motif de verrouillage.')
-      return
-    }
+    if (!lockReason.trim() || !officialWorkflow.data?.deliberation) { toast.error('Une délibération enregistrée et un motif sont requis.'); return }
     setIsLocking(true)
-    const toastId = toast.loading('🔒 Scellement cryptographique du PV en cours...')
-    try {
-      await new Promise(r => setTimeout(r, 1600))
-      // Generate a deterministic audit hash
-      const payload = `${selectedFiliere}-S${selectedSemester}-${pvType}-${Date.now()}`
-      const hashBuffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(payload))
-      const hashArray = Array.from(new Uint8Array(hashBuffer))
-      const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 40).toUpperCase()
-
-      const lockData = {
-        lockedBy: 'Admin ENCG Fès',
-        role: signatureDetails?.role || 'Président du Jury',
-        lockedAt: new Date().toLocaleString('fr-FR'),
-        hash: `SHA256:${hashHex}`,
-        reason: lockReason,
-      }
-      setPvLockDetails(lockData)
-      setPvLocked(true)
-      setShowLockModal(false)
-      toast.success('🔒 PV Officiel scellé et verrouillé définitivement ! Aucune modification ultérieure n\'est possible.', { id: toastId, duration: 6000 })
-    } catch (err) {
-      toast.error('Erreur lors du verrouillage.', { id: toastId })
-    } finally {
-      setIsLocking(false)
-    }
+    try { await api.post(`/academic/deliberations/${officialWorkflow.data.deliberation.id}/seal`, { reason: lockReason }); await officialWorkflow.refetch(); setShowLockModal(false); toast.success('Scellé enregistré sur le serveur.') }
+    catch (err: any) { toast.error(err.response?.data?.message || 'Le PV ne peut pas être scellé.') } finally { setIsLocking(false) }
   }
-
-  // 🔗 Handler — Partage Sécurisé
   const handleGenerateShareLink = () => {
-    const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
-    const url = `${window.location.origin}/admin/grades/pv?shared_token=${token}&filiere_id=${selectedFiliere || 1}&semester=${selectedSemester || 1}`
+    const params = new URLSearchParams({ filiere_id: selectedFiliere, semester: selectedSemester, academic_year_id: String(currentAcademicYearId), group_id: selectedGroup || '', session, pv_type: pvType })
+    const url = `${window.location.origin}/admin/grades/pv?${params}`
     setShareLink(url)
     setShowShareModal(true)
     setShareCopied(false)
@@ -796,103 +728,6 @@ export default function AdminGradesPVPage() {
     }
   }
 
-  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-
-    const rect = canvas.getBoundingClientRect()
-    let clientX = 0
-    let clientY = 0
-    
-    if ('touches' in e) {
-      clientX = e.touches[0].clientX
-      clientY = e.touches[0].clientY
-    } else {
-      clientX = e.clientX
-      clientY = e.clientY
-    }
-
-    ctx.beginPath()
-    ctx.moveTo(clientX - rect.left, clientY - rect.top)
-    ctx.strokeStyle = '#0F2863'
-    ctx.lineWidth = 3
-    ctx.lineCap = 'round'
-    setIsDrawing(true)
-  }
-
-  const draw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
-    if (!isDrawing) return
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-
-    const rect = canvas.getBoundingClientRect()
-    let clientX = 0
-    let clientY = 0
-    
-    if ('touches' in e) {
-      clientX = e.touches[0].clientX
-      clientY = e.touches[0].clientY
-    } else {
-      clientX = e.clientX
-      clientY = e.clientY
-    }
-
-    ctx.lineTo(clientX - rect.left, clientY - rect.top)
-    ctx.stroke()
-  }
-
-  const stopDrawing = () => {
-    setIsDrawing(false)
-  }
-
-  const clearCanvas = () => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
-  }
-
-  const submitSignature = async () => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-
-    const dataUrl = canvas.toDataURL('image/png')
-    
-    try {
-      if (activeJurySigningId) {
-        const res = await api.post('/academic/deliberations/sign-jury', {
-          jury_id: activeJurySigningId,
-          signature_data: dataUrl
-        })
-        toast.success(res.data.message || "Signature du membre du jury enregistrée avec succès !")
-        setShowSignatureModal(false)
-        setActiveJurySigningId(null)
-        fetchJury()
-      } else {
-        const sessionLabel = session === 'normale' ? 'Session Ordinaire' : session === 'rattrapage' ? 'Session de Rattrapage' : 'Bilan Complet (Vue Totale)'
-        const res = await api.post(`/modules/${moduleId}/pv/sign`, {
-          group_id: (groupId && groupId !== 'null') ? groupId : 'all',
-          session: session,
-          signature_data: dataUrl
-        })
-        toast.success(res.data.message || `PV (${sessionLabel}) signé et scellé avec succès !`)
-        setShowSignatureModal(false)
-        setSignatureDataUrl('')
-        clearCanvas()
-        refetchPV()
-        queryClient.invalidateQueries({ queryKey: ['module-pv'] })
-        queryClient.invalidateQueries({ queryKey: ['grades'] })
-      }
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Erreur lors de la signature.")
-    }
-  }
-
   // Get the Rattrapage assessment ID from pvData
   const rattrapageAssessment = pvData?.assessments?.find((a: any) => a.type.toLowerCase() === 'rattrapage')
   const rattrapageAssessmentId = rattrapageAssessment?.id
@@ -1004,8 +839,8 @@ export default function AdminGradesPVPage() {
         semester_number: selectedSemester || 1,
         year_level: yearLevel,
         session: 'normale',
-        signed: signatureDone ? 'true' : 'false',
-        signature_data: signatureDataUrl || null
+
+
       }, {
         responseType: 'blob', params: { group_id: viewAllGroups ? 'all' : (groupId || 'all'), session }
       })
@@ -1042,6 +877,11 @@ export default function AdminGradesPVPage() {
 
   const renderSelectorBar = () => (
     <div className="space-y-6" data-testid="admin-pv-page">
+      {showGroupCompareModal && <PvGroupComparison groups={groupes} moduleId={pvType === 'module' ? moduleId : null} semester={selectedSemester} filiere={selectedFiliere} year={Number(currentAcademicYearId)} session={session} onClose={() => setShowGroupCompareModal(false)}/>}
+      {showSignatureModal && <PvSignatureDialog onClose={() => setShowSignatureModal(false)} onConfirm={confirmOfficialSignature}/>}
+      {showSchedulerModal && <PvMeetingForm context={workflowContext} onClose={() => { setShowSchedulerModal(false); void officialWorkflow.refetch() }}/>}
+      {showLockModal && <Modal open title="Sceller le PV enregistré" onClose={() => !isLocking && setShowLockModal(false)} preventBackdropClose={isLocking}><p className="text-sm">Le scellé porte sur les décisions persistées. Une réouverture requiert le circuit de validation prévu.</p><label className="mt-4 block text-sm">Motif<textarea className="mt-1 w-full rounded-lg border p-3" value={lockReason} onChange={e => setLockReason(e.target.value)} maxLength={500}/></label><button disabled={isLocking || !officialWorkflow.data?.deliberation || !lockReason.trim()} className="mt-4 min-h-11 rounded-lg bg-blue-900 px-4 text-white disabled:opacity-50" onClick={() => void handleLockPV()}>{isLocking ? 'Enregistrement…' : 'Confirmer le scellé serveur'}</button></Modal>}
+      {officialWorkflow.isError && <p role="alert" className="rounded-xl border border-red-200 p-4 text-sm">État officiel du PV indisponible. <button className="underline" onClick={() => void officialWorkflow.refetch()}>Réessayer</button></p>}
       {moduleId && pvType === 'module' && hasAnyRole(['super-admin', 'admin', 'institution-admin', 'director']) && <form className="flex flex-wrap items-end gap-3 rounded-xl border border-border bg-card p-4" onSubmit={async event => {
         event.preventDefault(); const fields = new FormData(event.currentTarget); setPublishingGrades(true)
         try { const response = await api.post('/admin/grade-publications', { assessment_id: Number(fields.get('assessment_id')), duration_hours: Number(fields.get('duration_hours')) }); toast.success(`Publication enregistrée. Recours jusqu’au ${new Date(response.data.publication.appeals_until).toLocaleString('fr-FR')}.`) }
@@ -1617,10 +1457,7 @@ export default function AdminGradesPVPage() {
               { name: 'Rattrapage', value: ratCount2, color: '#f59e0b' },
               { name: 'Non Validés', value: nvCount2, color: '#ef4444' },
             ]
-            const moduleBarData = (semesterPvData?.modules || []).map((m: any) => ({
-              name: m.code || m.name?.slice(0, 8),
-              'Taux Réussite': Math.round(Math.random() * 40 + 55),
-            }))
+            const moduleBarData = moduleSuccessRates(semesterPvData?.modules || [], students)
             return (
               <div className="bg-white dark:bg-slate-900 border border-violet-200 dark:border-violet-900/50 rounded-3xl p-6 shadow-xl space-y-6 animate-in slide-in-from-top-2 duration-300">
                 <div className="flex items-center justify-between">
@@ -2551,8 +2388,7 @@ export default function AdminGradesPVPage() {
                       ) : (
                         <button
                           onClick={() => {
-                            setActiveJurySigningId(member.id)
-                            setShowSignatureModal(true)
+                            openJuryVisa(member)
                           }}
                           className="w-full py-1.5 px-3 bg-[#0f2863] hover:bg-[#193a86] text-white rounded-lg text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
                         >
@@ -2676,89 +2512,7 @@ export default function AdminGradesPVPage() {
 
 
           {/* DIGITAL SIGNATURE & SHA-256 SEAL MODAL */}
-          {showSignatureModal && (
-            <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
-              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 md:p-8 max-w-lg w-full shadow-2xl space-y-6 animate-in zoom-in-95 duration-200 text-left">
-                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-2xl bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-300 flex items-center justify-center">
-                      <ShieldCheck className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
-                    </div>
-                    <div>
-                      <h3 className="text-base font-black text-slate-900 dark:text-white">Signature Officielle du PV Semestriel</h3>
-                      <p className="text-xs text-slate-500">Scellé numérique conforme à la loi 09-08</p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setShowSignatureModal(false)}
-                    className="text-slate-400 hover:text-slate-600 text-xl font-bold cursor-pointer"
-                  >
-                    ×
-                  </button>
-                </div>
 
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-xs font-black uppercase text-slate-500 mb-1">
-                      Qualité du Signataire
-                    </label>
-                    <select
-                      value={signatureRole}
-                      onChange={(e) => setSignatureRole(e.target.value)}
-                      className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white"
-                    >
-                      <option value="Chef de Filière">Chef de Filière (Tronc Commun ENCG)</option>
-                      <option value="Président du Jury">Président du Jury de Délibération</option>
-                      <option value="Directeur Adjoint">Directeur Adjoint Chargé des Affaires Pédagogiques</option>
-                    </select>
-                  </div>
-
-                  {/* Real Interactive Canvas Signature Pad */}
-                  <div>
-                    <label className="block text-xs font-black uppercase text-slate-500 mb-1">
-                      Zone de Signature Numérique / Tactile
-                    </label>
-                    <SignaturePad onSave={(data) => setSignatureDataUrl(data)} />
-                  </div>
-
-
-                  <div className="p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-xl text-xs space-y-1">
-                    <div className="font-bold text-amber-900 dark:text-amber-300">🔒 Engagements et Scellé Numérique :</div>
-                    <p className="text-[11px] text-amber-800/80 dark:text-amber-400">
-                      En signant ce Procès-Verbal, vous certifiez l'exactitude des notes des 7 modules du Semestre {selectedSemester || 1} et l'application des délibérations du Jury.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-end gap-3 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowSignatureModal(false)}
-                    className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition-all cursor-pointer"
-                  >
-                    Annuler
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const details = {
-                        role: signatureRole,
-                        date: new Date().toLocaleString('fr-FR'),
-                        hash: 'SHA256:' + Math.random().toString(36).substring(2, 10).toUpperCase() + Math.random().toString(36).substring(2, 10).toUpperCase()
-                      }
-                      setSignatureDetails(details)
-                      setSignatureDone(true)
-                      setShowSignatureModal(false)
-                      toast.success(`PV Semestriel signé et scellé avec succès en tant que ${signatureRole} !`)
-                    }}
-                    className="px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-lg hover:scale-105 transition-all cursor-pointer"
-                  >
-                    🔒 Appliquer le Scellé & Signer
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
 
 
         </div>
@@ -3008,13 +2762,12 @@ export default function AdminGradesPVPage() {
 
               <Button
                 onClick={() => {
-                  const pendingMember = juryStatus?.members?.find((m: any) => m.status !== 'signed') || juryStatus?.members?.[0]
+                  const pendingMember = juryStatus?.members?.find((m: any) => Number(m.user_id) === Number(user?.id) && m.status !== 'signed')
                   if (pendingMember) {
-                    setActiveJurySigningId(pendingMember.id)
+                    openJuryVisa(pendingMember)
                   } else {
-                    setActiveJurySigningId(null)
+                    toast.error('Aucun visa en attente pour votre compte.'); return
                   }
-                  setShowSignatureModal(true)
                 }}
                 className="bg-[#0f2863] hover:bg-[#1a387e] text-white rounded-xl text-xs font-bold px-4 py-2.5 shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
               >
@@ -3718,8 +3471,7 @@ export default function AdminGradesPVPage() {
                     ) : (
                       <button
                         onClick={() => {
-                          setActiveJurySigningId(member.id)
-                          setShowSignatureModal(true)
+                          openJuryVisa(member)
                         }}
                         className="w-full py-1.5 px-3 bg-[#0f2863] hover:bg-[#193a86] text-white rounded-lg text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
                       >
@@ -3734,61 +3486,7 @@ export default function AdminGradesPVPage() {
         )}
 
         {/* Signature Tactile Modal for Annual PV View */}
-        {showSignatureModal && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs print:hidden">
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
-              <div className="p-6 bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] text-white flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center font-bold text-amber-300 shadow-lg">
-                    <ShieldCheck className="w-5 h-5 text-amber-400" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-black">Signature Tactile du PV Officiel</h3>
-                    <p className="text-xs text-blue-200">Validation et horodatage certifié du Jury de Délibération</p>
-                  </div>
-                </div>
-                <button onClick={() => setShowSignatureModal(false)} className="text-white/70 hover:text-white p-2 rounded-full hover:bg-white/10 cursor-pointer">
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
 
-              <div className="p-6 space-y-4">
-                <p className="text-xs text-slate-500 font-bold">
-                  Veuillez apposer votre signature manuscrite ci-dessous à l'aide de votre souris ou écran tactile.
-                </p>
-
-                <div className="border-2 border-dashed border-indigo-200 dark:border-indigo-800 rounded-3xl p-3 bg-slate-50 dark:bg-slate-800/40 flex justify-center">
-                  <SignaturePad onSave={(dataUrl) => setSignatureDataUrl(dataUrl)} />
-                </div>
-
-                {signatureDataUrl && (
-                  <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 rounded-2xl flex items-center gap-2 text-xs font-black text-emerald-700 dark:text-emerald-300">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                    <span>Signature Numérique Capturée et Horodatée en Temps Réel !</span>
-                  </div>
-                )}
-              </div>
-
-              <div className="p-4 bg-slate-50 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-2">
-                <button
-                  onClick={() => setShowSignatureModal(false)}
-                  className="px-5 py-2.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl font-bold text-xs uppercase tracking-wider cursor-pointer"
-                >
-                  Annuler
-                </button>
-                <button
-                  type="button"
-                  onClick={handleConfirmSignature}
-                  disabled={isSigning}
-                  className="px-6 py-2.5 bg-[#0f2863] hover:bg-[#1a387e] text-white rounded-xl font-black text-xs uppercase tracking-wider shadow-md cursor-pointer flex items-center gap-2 disabled:opacity-50"
-                >
-                  {isSigning ? <Spinner className="text-white" /> : null}
-                  {isSigning ? 'Scellé en cours...' : 'Valider & Sceller PV'}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     )
   }
@@ -4869,124 +4567,10 @@ export default function AdminGradesPVPage() {
       </div>
 
       {/* Signature drawing Canvas Modal */}
-      {showSignatureModal && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl relative border border-slate-100 animate-in zoom-in-95 duration-200">
-            <h3 className="text-lg font-bold text-[#0f2863] mb-1 flex items-center gap-2">
-              ✍️ Signature électronique du PV — {session === 'normale' ? 'Session Ordinaire' : session === 'rattrapage' ? 'Session de Rattrapage' : 'Bilan Complet (Vue Totale)'}
-            </h3>
-            <p className="text-xs text-slate-500 mb-4 font-medium">
-              Veuillez apposer votre signature manuscrite pour la <strong>{session === 'normale' ? 'Session Ordinaire' : session === 'rattrapage' ? 'Session de Rattrapage' : 'Vue Totale'}</strong>. En validant, le PV officiel de cette session sera horodaté avec date/heure et scellé sous une empreinte cryptographique SHA-256 distincte.
-            </p>
 
-            {/* Canvas Box */}
-            <div className="border border-slate-200 rounded-2xl overflow-hidden bg-slate-50 relative">
-              <canvas
-                ref={canvasRef}
-                width={400}
-                height={200}
-                className="w-full h-[200px] cursor-crosshair bg-white"
-                onMouseDown={startDrawing}
-                onMouseMove={draw}
-                onMouseUp={stopDrawing}
-                onMouseLeave={stopDrawing}
-                onTouchStart={startDrawing}
-                onTouchMove={draw}
-                onTouchEnd={stopDrawing}
-              />
-              <button
-                type="button"
-                onClick={clearCanvas}
-                className="absolute bottom-3 right-3 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold px-3 py-1.5 rounded-lg border border-slate-200 transition-colors"
-              >
-                Effacer
-              </button>
-            </div>
-
-            <div className="mt-6 flex justify-end gap-3 text-xs">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setShowSignatureModal(false)}
-                className="rounded-xl font-bold"
-              >
-                Annuler
-              </Button>
-              <Button
-                type="button"
-                onClick={submitSignature}
-                className="bg-emerald-600 text-white hover:bg-emerald-700 rounded-xl font-bold"
-              >
-                ✓ Valider & Verrouiller
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* 📋 FEATURE N°2: Group Comparison Modal */}
-      {showGroupCompareModal && (() => {
-        const currentGroupStr = selectedGroup ? `Groupe ${selectedGroup}` : 'Tous les groupes'
-        const groupsData = [
-          { name: 'Groupe A', count: 42, successRate: 88, avg: 13.45, topStudent: 'EL AMIR Reda (17.85)' },
-          { name: 'Groupe B', count: 45, successRate: 82, avg: 12.90, topStudent: 'BENNANI Sara (17.40)' },
-          { name: 'Groupe C', count: 40, successRate: 90, avg: 13.80, topStudent: 'CHRAIBI Youssef (18.10)' },
-          { name: 'Groupe D', count: 38, successRate: 79, avg: 12.30, topStudent: 'IDRISSI Omar (16.90)' },
-        ]
-        return (
-          <div className="fixed inset-0 z-[9999] bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-2xl w-full shadow-2xl space-y-5">
-              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-cyan-500/10 text-cyan-600 flex items-center justify-center font-bold">
-                    <Layers className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="text-base font-black text-slate-900 dark:text-white">Comparaison Inter-Groupes (Semestre {selectedSemester || 1})</h3>
-                    <p className="text-xs text-slate-500">Analyse comparative des performances entre les sections de la promotion</p>
-                  </div>
-                </div>
-                <button onClick={() => setShowGroupCompareModal(false)} className="p-2 text-slate-400 hover:text-slate-600 rounded-xl">
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {groupsData.map((g, i) => (
-                  <div key={i} className="p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/80 rounded-2xl space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="font-black text-sm text-slate-900 dark:text-white">{g.name}</span>
-                      <span className="px-2.5 py-1 bg-cyan-100 dark:bg-cyan-950 text-cyan-700 dark:text-cyan-300 text-[10px] font-black rounded-lg">
-                        {g.count} Étudiants
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2 text-xs">
-                      <div className="p-2 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800">
-                        <span className="text-[9px] text-slate-400 uppercase font-black">Taux Réussite</span>
-                        <div className="text-base font-black text-emerald-600 mt-0.5">{g.successRate}%</div>
-                      </div>
-                      <div className="p-2 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800">
-                        <span className="text-[9px] text-slate-400 uppercase font-black">Moy. Section</span>
-                        <div className="text-base font-black text-indigo-600 mt-0.5">{g.avg}/20</div>
-                      </div>
-                    </div>
-                    <div className="text-[11px] text-slate-600 dark:text-slate-300 pt-1 border-t border-slate-200 dark:border-slate-700">
-                      🏆 Major : <span className="font-bold text-slate-800 dark:text-white">{g.topStudent}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center text-xs">
-                <span className="text-slate-400 font-medium">Vue comparative filière ENCG Fès</span>
-                <Button onClick={() => setShowGroupCompareModal(false)} className="rounded-xl font-bold bg-slate-900 text-white">
-                  Fermer
-                </Button>
-              </div>
-            </div>
-          </div>
-        )
-      })()}
 
       {/* 🎯 FEATURE N°3: What-If Jury Simulator Modal */}
       {showSimulatorModal && (() => {
@@ -5082,7 +4666,7 @@ export default function AdminGradesPVPage() {
                   <Link2 className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-base font-black text-slate-900 dark:text-white">Lien de Partage Sécurisé du PV</h3>
+                  <h3 className="text-base font-black text-slate-900 dark:text-white">Lien de Lien interne (connexion et droits requis) du PV</h3>
                   <p className="text-xs text-slate-500">Partage temporaire en lecture seule avec les membres du jury</p>
                 </div>
               </div>
@@ -5131,81 +4715,7 @@ export default function AdminGradesPVPage() {
       )}
 
       {/* 🔒 PV LOCK CONFIRMATION MODAL */}
-      {showLockModal && (
 
-        <div className="fixed inset-0 z-[9999] bg-slate-950/80 backdrop-blur-lg flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-white dark:bg-slate-900 border-2 border-red-500/30 rounded-3xl p-0 max-w-md w-full shadow-2xl overflow-hidden animate-in zoom-in-95">
-
-            {/* Danger Header */}
-            <div className="relative bg-gradient-to-r from-red-700 to-rose-800 p-6 overflow-hidden">
-              <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'repeating-linear-gradient(45deg, #fff 0px, #fff 2px, transparent 2px, transparent 14px)' }} />
-              <div className="relative flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl bg-white/15 border border-white/30 text-white flex items-center justify-center backdrop-blur-sm">
-                  <Lock className="w-7 h-7" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-black text-white">Verrouillage Officiel du PV</h3>
-                  <p className="text-red-200 text-xs font-medium">Action irréversible — À confirmer avec précaution</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Warning Body */}
-            <div className="p-6 space-y-5">
-              <div className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-700/50 rounded-2xl p-4 space-y-2">
-                <div className="flex items-start gap-2 text-xs font-bold text-red-800 dark:text-red-300">
-                  <span className="text-base shrink-0">⚠️</span>
-                  <span>Une fois verrouillé, ce PV ne pourra plus être modifié. Toutes les notes, décisions et signatures seront figées définitivement dans le registre cryptographique.</span>
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Motif de Clôture *</label>
-                <textarea
-                  value={lockReason}
-                  onChange={e => setLockReason(e.target.value)}
-                  rows={2}
-                  placeholder="ex: Délibération officielle clôturée après validation du jury..."
-                  className="w-full px-3 py-2.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-medium text-slate-800 dark:text-white focus:ring-2 focus:ring-red-500 focus:outline-none resize-none"
-                />
-              </div>
-
-              <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl p-3 text-xs space-y-1">
-                <div className="font-black text-slate-700 dark:text-slate-200 text-[11px] uppercase tracking-wide mb-2">Ce verrouillage va :</div>
-                {[
-                  '🔐 Générer un sceau cryptographique SHA-256 unique',
-                  '📋 Horodater le PV avec identité du président du jury',
-                  '⛔ Désactiver toute modification des notes et décisions',
-                  '🗃️ Enregistrer l\'action dans le Journal d\'Audit immuable',
-                ].map((item, i) => (
-                  <div key={i} className="flex items-center gap-2 text-slate-600 dark:text-slate-300">{item}</div>
-                ))}
-              </div>
-
-              <div className="flex gap-3">
-                <Button
-                  variant="outline"
-                  onClick={() => { setShowLockModal(false); setLockReason('Délibération officielle clôturée — PV définitif') }}
-                  className="flex-1 rounded-xl font-bold text-xs border-slate-300"
-                >
-                  Annuler
-                </Button>
-                <button
-                  onClick={handleLockPV}
-                  disabled={isLocking || !lockReason.trim()}
-                  className="flex-1 px-4 py-2.5 bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-700 hover:to-rose-800 disabled:opacity-50 text-white rounded-xl font-black text-xs uppercase tracking-wider shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  {isLocking ? (
-                    <><Spinner className="text-white" /> Scellement en cours...</>
-                  ) : (
-                    <><Lock className="w-4 h-4" /> Confirmer le Verrouillage</>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* 🎓 FEATURE 4: Batch Attestation Modal */}
       {showAttestationModal && (() => {
@@ -5262,91 +4772,7 @@ export default function AdminGradesPVPage() {
       })()}
 
       {/* 🗓️ FEATURE 5: Deliberation Scheduler Modal */}
-      {showSchedulerModal && (
-        <div className="fixed inset-0 z-[9999] bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-5">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-rose-500 text-white flex items-center justify-center">
-                  <Calendar className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-black text-slate-900 dark:text-white">Planifier une Session de Délibération</h3>
-                  <p className="text-xs text-slate-500">Les membres du jury seront notifiés par email automatiquement</p>
-                </div>
-              </div>
-              <button onClick={() => setShowSchedulerModal(false)} className="p-2 text-slate-400 hover:text-slate-700 rounded-xl">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Date *</label>
-                <input
-                  type="date"
-                  value={schedulerForm.date}
-                  onChange={e => setSchedulerForm(f => ({...f, date: e.target.value}))}
-                  className="w-full px-3 py-2.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-medium text-slate-800 dark:text-white focus:ring-2 focus:ring-orange-500 focus:outline-none"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Heure *</label>
-                <input
-                  type="time"
-                  value={schedulerForm.time}
-                  onChange={e => setSchedulerForm(f => ({...f, time: e.target.value}))}
-                  className="w-full px-3 py-2.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-medium text-slate-800 dark:text-white focus:ring-2 focus:ring-orange-500 focus:outline-none"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Salle / Lieu *</label>
-                <input
-                  type="text"
-                  value={schedulerForm.room}
-                  onChange={e => setSchedulerForm(f => ({...f, room: e.target.value}))}
-                  placeholder="ex: Salle Conseil A"
-                  className="w-full px-3 py-2.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-medium text-slate-800 dark:text-white focus:ring-2 focus:ring-orange-500 focus:outline-none"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Président du Jury *</label>
-                <input
-                  type="text"
-                  value={schedulerForm.president}
-                  onChange={e => setSchedulerForm(f => ({...f, president: e.target.value}))}
-                  placeholder="Nom du Président"
-                  className="w-full px-3 py-2.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-medium text-slate-800 dark:text-white focus:ring-2 focus:ring-orange-500 focus:outline-none"
-                />
-              </div>
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Membres du Jury (emails séparés par virgule)</label>
-              <textarea
-                value={schedulerForm.juryMembers}
-                onChange={e => setSchedulerForm(f => ({...f, juryMembers: e.target.value}))}
-                placeholder="prof1@encg.ma, prof2@encg.ma, ..."
-                rows={2}
-                className="w-full px-3 py-2.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-medium text-slate-800 dark:text-white focus:ring-2 focus:ring-orange-500 focus:outline-none resize-none"
-              />
-            </div>
-
-            <div className="bg-orange-50 dark:bg-orange-950/30 border border-orange-200/60 rounded-xl p-3 text-xs text-orange-700 dark:text-orange-300">
-              📧 Les invitations seront envoyées automatiquement à tous les membres du jury 48h avant la séance via Resend.
-            </div>
-
-            <div className="flex justify-end gap-3 border-t border-slate-100 dark:border-slate-800 pt-4">
-              <Button variant="outline" onClick={() => setShowSchedulerModal(false)} className="rounded-xl font-bold text-xs">Annuler</Button>
-              <Button
-                onClick={handleScheduleDeliberation}
-                className="bg-gradient-to-r from-orange-500 to-rose-500 text-white rounded-xl font-black text-xs px-6 shadow-lg hover:scale-105 transition-all"
-              >
-                📅 Planifier & Notifier le Jury
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Bulk Results Email Dispatcher Modal */}
       {showBulkEmailModal && (() => {
@@ -5569,61 +4995,7 @@ export default function AdminGradesPVPage() {
       )}
 
       {/* Signature Tactile Modal */}
-      {showSignatureModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="p-6 bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] text-white flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center font-bold text-amber-300 shadow-lg">
-                  <ShieldCheck className="w-5 h-5 text-amber-400" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-black">Signature Tactile du PV Officiel</h3>
-                  <p className="text-xs text-blue-200">Validation et horodatage certifié par l'Enseignant</p>
-                </div>
-              </div>
-              <button onClick={() => setShowSignatureModal(false)} className="text-white/70 hover:text-white p-2 rounded-full hover:bg-white/10 cursor-pointer">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
 
-            <div className="p-6 space-y-4">
-              <p className="text-xs text-slate-500 font-bold">
-                Veuillez apposer votre signature manuscrite ci-dessous à l'aide de votre souris ou écran tactile.
-              </p>
-
-              <div className="border-2 border-dashed border-indigo-200 dark:border-indigo-800 rounded-3xl p-3 bg-slate-50 dark:bg-slate-800/40 flex justify-center">
-                <SignaturePad onSave={(dataUrl) => setSignatureDataUrl(dataUrl)} />
-              </div>
-
-              {signatureDataUrl && (
-                <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 rounded-2xl flex items-center gap-2 text-xs font-black text-emerald-700 dark:text-emerald-300">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                  <span>Signature Numérique Capturée et Horodatée en Temps Réel !</span>
-                </div>
-              )}
-            </div>
-
-            <div className="p-4 bg-slate-50 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-2">
-              <button
-                onClick={() => setShowSignatureModal(false)}
-                className="px-5 py-2.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl font-bold text-xs uppercase tracking-wider cursor-pointer"
-              >
-                Annuler
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmSignature}
-                disabled={isSigning}
-                className="px-6 py-2.5 bg-[#0f2863] hover:bg-[#1a387e] text-white rounded-xl font-black text-xs uppercase tracking-wider shadow-md cursor-pointer flex items-center gap-2 disabled:opacity-50"
-              >
-                {isSigning ? <Spinner className="text-white" /> : null}
-                {isSigning ? 'Scellé en cours...' : 'Valider & Sceller PV'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

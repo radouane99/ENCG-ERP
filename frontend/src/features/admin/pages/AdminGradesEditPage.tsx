@@ -1,4 +1,4 @@
-import { useState,FormEvent,useEffect } from 'react'
+﻿import { useState,FormEvent,useEffect } from 'react'
 import { Link,useSearchParams } from 'react-router-dom'
 import { ArrowLeft,Save } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -9,6 +9,8 @@ import { Spinner } from '@shared/components/ui/Spinner'
 import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query'
 import api from '@shared/lib/api'
 import { toast } from 'sonner'
+
+import './AdminGradesEditPage.css';
 
 export default function AdminGradesEditPage() {
   const { t, i18n } = useTranslation('common')
@@ -332,429 +334,311 @@ export default function AdminGradesEditPage() {
   }
 
   return (
-    <div className="space-y-8 animate-in p-4 md:p-6 max-w-[1200px] mx-auto pb-24">
+    <div className="admin-grades-page">
+
+      {/* Breadcrumb */}
+      <nav className="agp-breadcrumb">
+        <ul>
+          <li><Link to="/admin">Admin</Link></li>
+          <li><Link to="/admin/grades">Notes</Link></li>
+          <li className="active">{isRtl ? 'تحرير' : 'Edition'}</li>
+        </ul>
+      </nav>
+
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+      <div className="agp-header">
         <div>
-          <h1 className="text-3xl font-bold text-[var(--foreground)]">{isRtl ? 'إدخال النقاط' : 'Édition des Notes'}</h1>
-          <p className="text-[var(--muted-foreground)] mt-2">{isRtl ? 'الرجاء إدخال النقاط بدقة' : 'Veuillez saisir les notes avec précision'}</p>
+          <h1 className="agp-title">{isRtl ? 'إدخال النقاط' : 'Edition des Notes'}</h1>
+          <p className="agp-subtitle">{isRtl ? 'الرجاء إدخال النقاط بدقة' : 'Saisissez et validez les notes avec precision'}</p>
         </div>
-        <div className="flex items-center gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setShowAuditLogsDrawer(true)}
-            className="rounded-xl flex items-center gap-2 text-xs font-bold uppercase tracking-wider h-10 shadow-sm"
-          >
-            📋 Historique d'Audit
-          </Button>
-          <Link 
+        <div className="agp-header-actions">
+          <button type="button" onClick={() => setShowAuditLogsDrawer(true)} className="agp-btn agp-btn-ghost">
+            Historique Audit
+          </button>
+          <Link
             to={`/admin/grades/pv?filiere_id=${searchParams.get('filiere_id') || ''}&semester=${searchParams.get('semester') || ''}&module_id=${moduleId}`}
-            className="flex items-center gap-2 text-xs font-bold text-[#0f2863] hover:text-[#1a387e] bg-blue-50 px-4 py-2.5 rounded-xl transition-all uppercase tracking-wider shadow-sm h-10"
+            className="agp-btn agp-btn-outline"
           >
-            📊 {isRtl ? 'معاينة المحضر' : 'Consulter le PV'}
+            Consulter le PV
           </Link>
-          <Link to="/admin/grades" className="flex items-center gap-2 text-xs font-bold text-[var(--muted-foreground)] hover:text-[var(--color-primary)] transition-colors bg-slate-50 px-4 py-2.5 rounded-xl uppercase tracking-wider h-10">
-            <ArrowLeft className={cn("w-3.5 h-3.5", isRtl && "rotate-180")} /> 
+          <Link to="/admin/grades" className="agp-btn agp-btn-back">
+            <ArrowLeft className={cn("w-3.5 h-3.5", isRtl && "rotate-180")} />
             {isRtl ? 'العودة' : 'Retour'}
           </Link>
         </div>
       </div>
 
+      {/* PV Alert Banner */}
       {isModulePvSigned && (
-        <div className={cn(
-          "border-2 rounded-3xl p-5 flex items-center justify-between shadow-sm animate-in mb-6",
-          isExamAssessment 
-            ? "bg-amber-500/10 border-amber-500/30 text-amber-900" 
-            : "bg-blue-500/10 border-blue-500/30 text-blue-950"
-        )}>
-          <div className="flex items-center gap-4">
-            <div className={cn(
-              "w-12 h-12 rounded-2xl flex items-center justify-center font-black text-xl shrink-0",
-              isExamAssessment ? "bg-amber-500/20 text-amber-700" : "bg-blue-500/20 text-blue-700"
-            )}>
-              {isExamAssessment ? '🔒' : 'ℹ️'}
-            </div>
-            <div>
-              <h3 className="font-extrabold text-sm uppercase tracking-wider">
-                {isExamAssessment 
-                  ? 'PROCÈS-VERBAL D\'EXAMEN SCELLÉ & CLÔTURÉ ÉLECTRONIQUEMENT' 
-                  : 'PROCÈS-VERBAL D\'EXAMEN SCELLÉ — SAISIE DES CONTRÔLES OUVERTE'}
-              </h3>
-              <p className="text-xs font-medium mt-0.5 opacity-90">
-                {isExamAssessment ? (
-                  <>Le procès-verbal d'examen de ce module a été signé et scellé par <strong className="font-bold">{signatureInfo?.signed_by || 'l\'Enseignant Responsable'}</strong> ({signatureInfo?.signed_at ? new Date(signatureInfo.signed_at).toLocaleDateString('fr-FR') : 'Clôturé'}). La saisie et les modifications des notes d'examen sont définitivement verrouillées.</>
-                ) : (
-                  <>Le procès-verbal d'examen final est scellé. Conformément aux règles académiques, <strong>la saisie et l'ajustement des notes de Contrôle Continu ({selectedAssessment?.type || 'CC'}) restent pleinement ouverts et accessibles</strong> à l'enseignant.</>
-                )}
-              </p>
-            </div>
+        <div className={cn("agp-pv-alert", isExamAssessment ? "agp-pv-alert--exam" : "agp-pv-alert--cc")}>
+          <div className="agp-pv-alert__icon">{isExamAssessment ? '🔒' : 'ℹ️'}</div>
+          <div className="agp-pv-alert__body">
+            <h3>
+              {isExamAssessment
+                ? "PROCES-VERBAL D'EXAMEN SCELLE & CLOTURE ELECTRONIQUEMENT"
+                : "PROCES-VERBAL D'EXAMEN SCELLE — SAISIE DES CONTROLES OUVERTE"}
+            </h3>
+            <p>
+              {isExamAssessment ? (
+                <>PV signe et scelle par <strong>{signatureInfo?.signed_by || "l'Enseignant Responsable"}</strong> ({signatureInfo?.signed_at ? new Date(signatureInfo.signed_at).toLocaleDateString('fr-FR') : 'Cloture'}). La saisie des notes d'examen est definitivement verrouillee.</>
+              ) : (
+                <>PV d'examen final scelle. <strong>La saisie du CC ({selectedAssessment?.type || 'CC'}) reste pleinement ouverte</strong>.</>
+              )}
+            </p>
           </div>
-          <div className="flex items-center gap-2">
-            <span className={cn(
-              "px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider shrink-0 shadow-xs text-white",
-              isExamAssessment ? "bg-amber-700" : "bg-emerald-700"
-            )}>
-              {isExamAssessment ? 'Examen Verrouillé' : 'CC Ouvert (Modifications Autorisées)'}
+          <div className="agp-pv-alert__actions">
+            <span className={cn("agp-badge", isExamAssessment ? "agp-badge--amber" : "agp-badge--green")}>
+              {isExamAssessment ? 'Verrouille' : 'CC Ouvert'}
             </span>
             {isModulePvSigned && (
-              <button
-                type="button"
-                onClick={handleUnlockPv}
-                className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold px-3 py-1.5 rounded-xl shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
-                title={isRtl ? 'إلغاء قفل المحضر وإعادة فتح إدخال النقط' : 'Déverrouiller le PV pour réautoriser la saisie des notes'}
-              >
-                🔓 {isRtl ? 'إلغاء القفل' : 'Déverrouiller'}
+              <button type="button" onClick={handleUnlockPv} className="agp-btn-unlock">
+                🔓 {isRtl ? 'فتح' : 'Deverrouiller'}
               </button>
             )}
           </div>
         </div>
       )}
 
-      <div className="bg-[var(--card)] border border-[var(--border)] rounded-3xl shadow-sm p-6 mb-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="flex-1">
-            <label className="block text-sm font-bold text-[var(--foreground)] mb-2">
-              {isRtl ? 'اختر التقييم' : 'Sélectionner l\'Évaluation'}
-            </label>
-            {isLoadingAssessments ? (
-              <Spinner />
-            ) : (
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
-                <select 
-                  value={selectedAssessmentId || ''} 
-                  onChange={e => setSelectedAssessmentId(parseInt(e.target.value, 10))}
-                  className="w-full sm:w-1/3 p-3 rounded-xl border border-[var(--border)] bg-[var(--background)] focus:border-[var(--color-primary)] outline-none text-sm font-semibold text-[var(--foreground)]"
-                >
-                  <option value="" disabled>-- {isRtl ? 'التقييم' : 'Choisir une évaluation'} --</option>
-                  {assessmentsData?.map((a: any) => (
-                    <option key={a.id} value={a.id}>
-                      {a.type} (Poids: {a.weight}%)
-                    </option>
-                  ))}
-                </select>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setShowModalityModal(true)}
-                  className="rounded-xl font-bold uppercase tracking-wider text-xs px-4"
-                >
-                  ⚙️ Configurer les modalités
-                </Button>
-              </div>
-            )}
-          </div>
-
-          <div className="border-t md:border-t-0 md:border-l border-[var(--border)] pt-4 md:pt-0 md:ps-6 flex flex-wrap gap-6 items-center">
-            <div>
-              <span className="block text-xs font-bold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">
-                Périmètre de saisie
-              </span>
-              <div className="flex gap-1.5 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl w-fit">
+      {/* Config Panel */}
+      <div className="agp-config-panel">
+        <div className="agp-config-panel__left">
+          <span className="agp-section-label">{isRtl ? 'اختر التقييم' : 'Evaluation'}</span>
+          {isLoadingAssessments ? (
+            <Spinner />
+          ) : (
+            <div className="agp-assessment-tabs">
+              {assessmentsData?.map((a: any) => (
                 <button
+                  key={a.id}
                   type="button"
-                  onClick={() => setViewAllGroups(false)}
-                  className={cn(
-                    "px-4 py-2 rounded-xl text-xs font-bold transition-all uppercase tracking-wider",
-                    !viewAllGroups
-                      ? "bg-[#0f2863] text-white shadow-sm"
-                      : "text-slate-500 hover:text-slate-700"
-                  )}
+                  onClick={() => setSelectedAssessmentId(a.id)}
+                  className={cn("agp-assessment-tab", selectedAssessmentId === a.id && "agp-assessment-tab--active")}
                 >
-                  Par Groupe
+                  <span className="agp-assessment-tab__name">{a.type}</span>
+                  <span className="agp-assessment-tab__weight">{a.weight}%</span>
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setViewAllGroups(true)}
-                  className={cn(
-                    "px-4 py-2 rounded-xl text-xs font-bold transition-all uppercase tracking-wider",
-                    viewAllGroups
-                      ? "bg-[#0f2863] text-white shadow-sm"
-                      : "text-slate-500 hover:text-slate-700"
-                  )}
-                >
-                  Module Complet
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <span className="block text-xs font-bold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">
-                Saisie Double
-              </span>
-              <button
-                type="button"
-                onClick={() => setIsDoubleSaisie(!isDoubleSaisie)}
-                className={cn(
-                  "px-4 py-2 rounded-xl text-xs font-bold transition-all uppercase tracking-wider w-fit border flex items-center justify-center gap-1.5 h-10",
-                  isDoubleSaisie
-                    ? "bg-red-50 text-red-700 border-red-200 shadow-sm animate-pulse"
-                    : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
-                )}
-              >
-                {isDoubleSaisie ? '🛑 Activée (Double Saisie)' : '🗂️ Mode Double Saisie'}
+              ))}
+              <button type="button" onClick={() => setShowModalityModal(true)} className="agp-assessment-tab agp-assessment-tab--config">
+                ⚙️ <span className="agp-assessment-tab__name">Configurer</span>
               </button>
             </div>
+          )}
+        </div>
+
+        <div className="agp-config-panel__divider" />
+
+        <div className="agp-config-panel__right">
+          <div>
+            <span className="agp-section-label">Perimetre</span>
+            <div className="agp-toggle-group">
+              <button type="button" onClick={() => setViewAllGroups(false)} className={cn("agp-toggle-btn", !viewAllGroups && "agp-toggle-btn--active")}>Par Groupe</button>
+              <button type="button" onClick={() => setViewAllGroups(true)} className={cn("agp-toggle-btn", viewAllGroups && "agp-toggle-btn--active")}>Module Complet</button>
+            </div>
+          </div>
+          <div>
+            <span className="agp-section-label">Saisie Double</span>
+            <button type="button" onClick={() => setIsDoubleSaisie(!isDoubleSaisie)} className={cn("agp-double-saisie-btn", isDoubleSaisie && "agp-double-saisie-btn--active")}>
+              {isDoubleSaisie ? 'Activee' : 'Mode Double'}
+            </button>
           </div>
         </div>
       </div>
 
+      {/* Main */}
       {!selectedAssessmentId ? (
-        <div className="text-center text-[var(--muted-foreground)] py-8">
-          Veuillez sélectionner une évaluation pour saisir les notes.
+        <div className="agp-empty-state">
+          <div className="agp-empty-state__icon">📝</div>
+          <p>Selectionnez une evaluation ci-dessus pour saisir les notes</p>
         </div>
       ) : isLoadingStudents ? (
-        <div className="flex justify-center p-12"><Spinner /></div>
+        <div className="agp-loading"><Spinner /></div>
       ) : (
-        <form onSubmit={handleSubmit} className="bg-[var(--card)] border border-[var(--border)] rounded-3xl shadow-sm overflow-hidden flex flex-col items-center">
-          {/* Banner */}
-          <div className="bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-secondary)] p-8 text-white m-4 rounded-[1.5rem] shadow-md relative overflow-hidden w-[calc(100%-2rem)] flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <div className="relative z-10">
-              <span className="text-[10px] font-bold text-white/70 uppercase tracking-wider mb-2 block">
-                {isRtl ? 'تقييم' : 'Évaluation'}
-              </span>
-              <h2 className="text-2xl font-bold mb-1">{selectedAssessment?.type}</h2>
-              <div className="flex items-center gap-3">
-                <p className="text-white/90 text-sm">Poids : {selectedAssessment?.weight}%</p>
-                <Badge variant="success" className="bg-white/20 text-white border-none">{isRtl ? 'دورة عادية' : 'Session Ordinaire'}</Badge>
+        <form onSubmit={handleSubmit} className="agp-form-card">
+
+          {/* Evaluation Banner */}
+          <div className="agp-eval-banner">
+            <div className="agp-eval-banner__orb" />
+            <div className="agp-eval-banner__info">
+              <span className="agp-eval-banner__label">{isRtl ? 'تقييم' : 'Evaluation en cours'}</span>
+              <h2>{selectedAssessment?.type}</h2>
+              <div className="agp-eval-banner__meta">
+                <span>Coefficient : <strong>{selectedAssessment?.weight}%</strong></span>
+                <span className="agp-session-badge">Session Ordinaire</span>
               </div>
             </div>
 
-            {/* Import / Export Action Buttons */}
-            <div className="relative z-10 flex flex-wrap items-center gap-3 bg-white/5 border border-white/10 rounded-2xl p-3.5 backdrop-blur-sm">
-              <button
-                type="button"
-                onClick={handleExportExcel}
-                className="bg-white/10 text-white hover:bg-white/20 border border-white/20 px-4 py-2.5 rounded-xl text-xs font-bold shadow-sm transition-all flex items-center gap-1.5"
-              >
-                📥 {isRtl ? 'تحميل كشف Excel' : 'Canevas Excel'}
+            <div className="agp-eval-banner__actions">
+              <button type="button" onClick={handleExportExcel} className="agp-banner-btn">
+                📥 Canevas Excel
               </button>
-              <label className={cn("bg-white text-[#0f2863] hover:bg-white/90 px-4 py-2.5 rounded-xl text-xs font-bold shadow-sm transition-all flex items-center gap-1.5", isAssessmentLocked ? "opacity-50 cursor-not-allowed pointer-events-none" : "cursor-pointer")}>
-                📤 {isRtl ? 'استيراد النقاط' : 'Importer Excel'}
-                <input
-                  type="file"
-                  accept=".xlsx,.xls"
-                  disabled={isAssessmentLocked}
-                  onChange={handleImportExcel}
-                  className="hidden"
-                />
+              <label className={cn("agp-banner-btn agp-banner-btn--white", isAssessmentLocked && "agp-banner-btn--disabled")}>
+                📤 Importer Excel
+                <input type="file" accept=".xlsx,.xls" disabled={isAssessmentLocked} onChange={handleImportExcel} className="hidden" />
               </label>
             </div>
 
-            <div className="relative z-10 flex flex-col items-center justify-center bg-white/10 border border-white/20 rounded-2xl p-4 min-w-[120px] backdrop-blur-md">
-              <span className="text-3xl font-bold text-white mb-1">{studentsData?.length || 0}</span>
-              <span className="text-[9px] font-bold text-white/70 uppercase tracking-widest text-center">
-                {isRtl ? 'الطلاب' : 'Étudiants'}
-              </span>
+            <div className="agp-eval-banner__stat">
+              <span className="agp-eval-banner__stat-value">{studentsData?.length || 0}</span>
+              <span className="agp-eval-banner__stat-label">{isRtl ? 'الطلاب' : 'Etudiants'}</span>
             </div>
           </div>
 
           {/* Table */}
-          <div className="w-full px-4 overflow-x-auto pb-4">
-            <table className="w-full text-sm text-start border-collapse min-w-[800px]">
-              <thead className="bg-[color-mix(in srgb, var(--muted) 5000%, transparent)] text-[10px] font-bold text-[var(--muted-foreground)] uppercase tracking-wider border-y border-[var(--border)]">
+          <div className="agp-table-wrapper">
+            <table className="agp-table">
+              <thead>
                 <tr>
-                  <th className="px-6 py-4 text-start">{isRtl ? 'الطالب' : 'Étudiant'}</th>
+                  <th className="agp-th agp-th--left">{isRtl ? 'الطالب' : 'Etudiant'}</th>
                   {isDoubleSaisie ? (
                     <>
-                      <th className="px-6 py-4 text-center">Note 1 (Prof)</th>
-                      <th className="px-6 py-4 text-center">Absent(e) 1</th>
-                      <th className="px-6 py-4 text-center">Note 2 (Vérif)</th>
-                      <th className="px-6 py-4 text-center">Absent(e) 2</th>
-                      <th className="px-6 py-4 text-center">Statut</th>
+                      <th className="agp-th">Note 1</th>
+                      <th className="agp-th">Absent 1</th>
+                      <th className="agp-th">Note 2</th>
+                      <th className="agp-th">Absent 2</th>
+                      <th className="agp-th">Statut</th>
                     </>
                   ) : (
                     <>
-                      <th className="px-6 py-4 text-center">Note (/20)</th>
-                      <th className="px-6 py-4 text-center">Absent(e)</th>
+                      <th className="agp-th">Note (/20)</th>
+                      <th className="agp-th">Absent(e)</th>
                     </>
                   )}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[var(--border)]">
+              <tbody>
                 {studentsData?.map((student: any) => {
-                  const s1 = grades[student.student_id];
-                  const s2 = grades2[student.student_id];
-                  const hasConflict = isDoubleSaisie && (s1?.value !== s2?.value || s1?.absent !== s2?.absent);
+                  const s1 = grades[student.student_id]
+                  const s2 = grades2[student.student_id]
+                  const isFraud = student.is_fraud || student.has_exam_fraud
+                  const hasConflict = isDoubleSaisie && (s1?.value !== s2?.value || s1?.absent !== s2?.absent)
 
                   return (
-                    <tr key={student.student_id} className={cn("hover:bg-[color-mix(in srgb, var(--muted) 3000%, transparent)] transition-colors group", hasConflict && "bg-red-50/70 hover:bg-red-100/70 dark:bg-red-950/20 border-l-4 border-l-red-500")}>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center font-bold shrink-0 shadow-sm text-white", (student.is_fraud || student.has_exam_fraud) ? (isExamAssessment ? "bg-rose-600" : "bg-amber-600") : "bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-secondary)]")}>
-                            {student.first_name.substring(0, 1)}{student.last_name.substring(0, 1)}
+                    <tr key={student.student_id} className={cn("agp-tr", hasConflict && "agp-tr--conflict")}>
+                      <td className="agp-td">
+                        <div className="agp-student">
+                          <div className={cn("agp-avatar", isFraud && (isExamAssessment ? "agp-avatar--red" : "agp-avatar--amber"))}>
+                            {student.first_name[0]}{student.last_name[0]}
                           </div>
-                          <div>
-                            <div className="font-bold text-[var(--foreground)] text-sm flex items-center gap-2">
-                              {student.first_name} {student.last_name}
-                            </div>
-                            <div className="text-[10px] text-[var(--muted-foreground)] font-bold uppercase tracking-wider">
-                              {student.apogee || student.student_number}
-                            </div>
-                            {(student.is_fraud || student.has_exam_fraud) && (
+                          <div className="agp-student__info">
+                            <div className="agp-student__name">{student.first_name} {student.last_name}</div>
+                            <div className="agp-student__apogee">{student.apogee || student.student_number}</div>
+                            {isFraud && (
                               isExamAssessment ? (
-                                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[10px] font-black bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 border border-rose-300/60 mt-1 shadow-xs" title={student.fraud_reason || "Fraude signalée au PV d'Examen"}>
-                                  <span className="w-1.5 h-1.5 rounded-full bg-rose-600 animate-pulse" /> 🚨 FRAUDE PV EXAMEN (00/20 BLOQUÉ)
+                                <div className="agp-fraud-badge agp-fraud-badge--red" title={student.fraud_reason}>
+                                  <span className="agp-fraud-dot agp-fraud-dot--pulse" /> FRAUDE PV EXAMEN (00/20 BLOQUE)
                                 </div>
                               ) : (
-                                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[10px] font-black bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300/60 mt-1 shadow-xs" title="Fraude signalée à l'examen — La note CC est saisie normalement mais le résultat final du module sera 00/20">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-amber-600" /> ⚠️ FRAUDE EXAMEN (CC LIBRE · MOYENNE = 0)
+                                <div className="agp-fraud-badge agp-fraud-badge--amber">
+                                  <span className="agp-fraud-dot" /> FRAUDE EXAMEN (CC LIBRE)
                                 </div>
                               )
                             )}
                           </div>
                         </div>
                       </td>
+
                       {isDoubleSaisie ? (
                         <>
-                          {/* Saisie 1 */}
-                          <td className="px-6 py-4 text-center">
-                            <input 
-                              type="number"
-                              step="0.25"
-                              min="0"
-                              max="20"
-                              value={(isExamAssessment && (student.is_fraud || student.has_exam_fraud)) ? '0' : (grades[student.student_id]?.value ?? '')}
-                              disabled={isAssessmentLocked || (isExamAssessment && (student.is_fraud || student.has_exam_fraud)) || grades[student.student_id]?.absent}
+                          <td className="agp-td agp-td--center">
+                            <input type="number" step="0.25" min="0" max="20"
+                              value={(isExamAssessment && isFraud) ? '0' : (grades[student.student_id]?.value ?? '')}
+                              disabled={isAssessmentLocked || (isExamAssessment && isFraud) || grades[student.student_id]?.absent}
                               onChange={(e) => handleInputChange(student.student_id, 'value', e.target.value)}
-                              className={cn(
-                                "w-24 text-center rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm font-bold text-[var(--foreground)] focus:border-[var(--color-primary)] outline-none disabled:opacity-50",
-                                (isAssessmentLocked || (isExamAssessment && (student.is_fraud || student.has_exam_fraud))) && "bg-slate-100 text-slate-500 cursor-not-allowed opacity-100",
-                                (isExamAssessment && (student.is_fraud || student.has_exam_fraud)) && "bg-rose-100! text-rose-900! border-rose-400! font-black!"
-                              )}
+                              className={cn("agp-grade-input", (isExamAssessment && isFraud) && "agp-grade-input--fraud")}
                             />
-                            {(isExamAssessment && (student.is_fraud || student.has_exam_fraud)) && (
-                              <div className="text-[9px] font-bold text-rose-600 mt-0.5">Note 00/20 (Conseil)</div>
-                            )}
+                            {(isExamAssessment && isFraud) && <div className="agp-fraud-note">00/20</div>}
                           </td>
-                          <td className="px-6 py-4 text-center">
-                            <input 
-                              type="checkbox"
-                              checked={(isExamAssessment && (student.is_fraud || student.has_exam_fraud)) ? false : (grades[student.student_id]?.absent ?? false)}
-                              disabled={isAssessmentLocked || (isExamAssessment && (student.is_fraud || student.has_exam_fraud))}
+                          <td className="agp-td agp-td--center">
+                            <input type="checkbox"
+                              checked={(isExamAssessment && isFraud) ? false : (grades[student.student_id]?.absent ?? false)}
+                              disabled={isAssessmentLocked || (isExamAssessment && isFraud)}
                               onChange={(e) => handleInputChange(student.student_id, 'absent', e.target.checked)}
-                              className="w-5 h-5 rounded border-[var(--border)] text-[var(--color-primary)] disabled:opacity-50"
+                              className="agp-checkbox"
                             />
                           </td>
-                          {/* Saisie 2 */}
-                          <td className="px-6 py-4 text-center">
-                            <input 
-                              type="number"
-                              step="0.25"
-                              min="0"
-                              max="20"
-                              value={(isExamAssessment && (student.is_fraud || student.has_exam_fraud)) ? '0' : (grades2[student.student_id]?.value ?? '')}
-                              disabled={isAssessmentLocked || (isExamAssessment && (student.is_fraud || student.has_exam_fraud)) || grades2[student.student_id]?.absent}
+                          <td className="agp-td agp-td--center">
+                            <input type="number" step="0.25" min="0" max="20"
+                              value={(isExamAssessment && isFraud) ? '0' : (grades2[student.student_id]?.value ?? '')}
+                              disabled={isAssessmentLocked || (isExamAssessment && isFraud) || grades2[student.student_id]?.absent}
                               onChange={(e) => handleInputChange2(student.student_id, 'value', e.target.value)}
-                              className={cn(
-                                "w-24 text-center rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm font-bold text-[var(--foreground)] focus:border-[var(--color-primary)] outline-none disabled:opacity-50",
-                                (isAssessmentLocked || (isExamAssessment && (student.is_fraud || student.has_exam_fraud))) && "bg-slate-100 text-slate-500 cursor-not-allowed opacity-100",
-                                (isExamAssessment && (student.is_fraud || student.has_exam_fraud)) && "bg-rose-100! text-rose-900! border-rose-400! font-black!"
-                              )}
+                              className={cn("agp-grade-input", (isExamAssessment && isFraud) && "agp-grade-input--fraud")}
                             />
                           </td>
-                          <td className="px-6 py-4 text-center">
-                            <input 
-                              type="checkbox"
-                              checked={(isExamAssessment && (student.is_fraud || student.has_exam_fraud)) ? false : (grades2[student.student_id]?.absent ?? false)}
-                              disabled={isAssessmentLocked || (isExamAssessment && (student.is_fraud || student.has_exam_fraud))}
+                          <td className="agp-td agp-td--center">
+                            <input type="checkbox"
+                              checked={(isExamAssessment && isFraud) ? false : (grades2[student.student_id]?.absent ?? false)}
+                              disabled={isAssessmentLocked || (isExamAssessment && isFraud)}
                               onChange={(e) => handleInputChange2(student.student_id, 'absent', e.target.checked)}
-                              className="w-5 h-5 rounded border-[var(--border)] text-[var(--color-primary)] disabled:opacity-50"
+                              className="agp-checkbox"
                             />
                           </td>
-                          {/* Conflict Status */}
-                          <td className="px-6 py-4 text-center font-bold">
-                            {hasConflict ? (
-                              <span className="text-red-600 bg-red-100/80 px-2.5 py-1 rounded-lg text-xs flex items-center gap-1 w-fit mx-auto border border-red-200">
-                                ⚠️ Écart
-                              </span>
-                            ) : (
-                              <span className="text-emerald-600 bg-emerald-100/80 px-2.5 py-1 rounded-lg text-xs flex items-center gap-1 w-fit mx-auto border border-emerald-200">
-                                ✓ Conforme
-                              </span>
-                            )}
+                          <td className="agp-td agp-td--center">
+                            {hasConflict
+                              ? <span className="agp-status agp-status--conflict">Ecart</span>
+                              : <span className="agp-status agp-status--ok">Conforme</span>}
                           </td>
                         </>
                       ) : (
                         <>
-                          <td className="px-6 py-4 text-center">
-                            <input 
-                              type="number"
-                              step="0.25"
-                              min="0"
-                              max="20"
-                              value={(isExamAssessment && (student.is_fraud || student.has_exam_fraud)) ? '0' : (grades[student.student_id]?.value ?? '')}
-                              disabled={isAssessmentLocked || (isExamAssessment && (student.is_fraud || student.has_exam_fraud)) || grades[student.student_id]?.absent}
+                          <td className="agp-td agp-td--center">
+                            <input type="number" step="0.25" min="0" max="20"
+                              value={(isExamAssessment && isFraud) ? '0' : (grades[student.student_id]?.value ?? '')}
+                              disabled={isAssessmentLocked || (isExamAssessment && isFraud) || grades[student.student_id]?.absent}
                               onChange={(e) => handleInputChange(student.student_id, 'value', e.target.value)}
-                              className={cn(
-                                "w-24 text-center rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm font-bold text-[var(--foreground)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)/20] transition-all outline-none disabled:opacity-50",
-                                (isAssessmentLocked || (isExamAssessment && (student.is_fraud || student.has_exam_fraud))) && "bg-slate-100 text-slate-500 cursor-not-allowed opacity-100",
-                                (isExamAssessment && (student.is_fraud || student.has_exam_fraud)) && "bg-rose-100! text-rose-900! border-rose-400! font-black!"
-                              )}
+                              className={cn("agp-grade-input", (isExamAssessment && isFraud) && "agp-grade-input--fraud")}
                             />
-                            {(isExamAssessment && (student.is_fraud || student.has_exam_fraud)) && (
-                              <div className="text-[9px] font-bold text-rose-600 mt-0.5">Note 00/20 (Conseil)</div>
-                            )}
+                            {(isExamAssessment && isFraud) && <div className="agp-fraud-note">00/20</div>}
                           </td>
-                          <td className="px-6 py-4 text-center">
-                            <input 
-                              type="checkbox"
-                              checked={(isExamAssessment && (student.is_fraud || student.has_exam_fraud)) ? false : (grades[student.student_id]?.absent ?? false)}
-                              disabled={isAssessmentLocked || (isExamAssessment && (student.is_fraud || student.has_exam_fraud))}
+                          <td className="agp-td agp-td--center">
+                            <input type="checkbox"
+                              checked={(isExamAssessment && isFraud) ? false : (grades[student.student_id]?.absent ?? false)}
+                              disabled={isAssessmentLocked || (isExamAssessment && isFraud)}
                               onChange={(e) => handleInputChange(student.student_id, 'absent', e.target.checked)}
-                              className="w-5 h-5 rounded border-[var(--border)] text-[var(--color-primary)] focus:ring-[var(--color-primary)] disabled:opacity-50"
+                              className="agp-checkbox"
                             />
                           </td>
                         </>
                       )}
                     </tr>
-                  );
+                  )
                 })}
               </tbody>
             </table>
           </div>
 
-          <div className="p-6 w-full flex justify-between items-center border-t border-[var(--border)]">
-            <Link 
+          {/* Footer */}
+          <div className="agp-form-footer">
+            <Link
               to={`/admin/grades/pv?filiere_id=${searchParams.get('filiere_id') || ''}&semester=${searchParams.get('semester') || ''}&module_id=${moduleId}`}
-              className="flex items-center gap-2 text-xs font-bold text-[#0f2863] hover:text-[#1a387e] bg-blue-50 px-5 py-3.5 rounded-2xl transition-all uppercase tracking-wider shadow-sm"
+              className="agp-btn agp-btn-outline"
             >
-              📊 {isRtl ? 'معاينة المحضر' : 'Consulter le PV de Module'}
+              Consulter le PV
             </Link>
-            <Button 
-              type="submit" 
-              className={cn("bg-[var(--color-primary)] hover:bg-[var(--color-primary)/90] text-white font-bold py-6 px-8 rounded-2xl shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 flex items-center gap-3", isAssessmentLocked && "opacity-50 cursor-not-allowed")}
+            <button
+              type="submit"
+              className={cn("agp-btn-save", (saveMutation.isPending || isAssessmentLocked) && "agp-btn-save--disabled")}
               disabled={saveMutation.isPending || isAssessmentLocked}
             >
               {saveMutation.isPending ? <Spinner className="text-white" /> : <Save className="w-5 h-5" />}
-              {isAssessmentLocked ? '🔒 Examen Clôturé & Verrouillé' : (isRtl ? 'حفظ النقاط' : 'Enregistrer les Notes')}
-            </Button>
+              {isAssessmentLocked ? 'Examen Cloture & Verrouille' : (isRtl ? 'حفظ النقاط' : 'Enregistrer les Notes')}
+            </button>
           </div>
         </form>
       )}
 
-      {/* Modality Settings Modal */}
+      {/* Modality Modal */}
       {showModalityModal && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-[var(--card)] border border-[var(--border)] rounded-3xl p-6 w-full max-w-lg shadow-2xl relative animate-in zoom-in-95 duration-200">
-            <h3 className="text-xl font-bold text-[var(--foreground)] mb-2 flex items-center gap-2">
-              ⚙️ {isRtl ? 'تهيئة نظام التقييم' : 'Configuration des Modalités'}
-            </h3>
-            <p className="text-xs text-[var(--muted-foreground)] mb-6 font-medium">
-              Définissez les évaluations (CC1, CC2, Examen...) et leurs coefficients. La somme totale des poids doit être égale à 100%.
-            </p>
-
-            <div className="space-y-4 max-h-[300px] overflow-y-auto mb-6 pr-2">
+        <div className="agp-modal-overlay">
+          <div className="agp-modal">
+            <h3 className="agp-modal__title">Configuration des Modalites</h3>
+            <p className="agp-modal__subtitle">Definissez les evaluations et leurs coefficients. La somme doit etre egale a 100%.</p>
+            <div className="agp-modal__list">
               {modalityAssessments.map((a, index) => (
-                <div key={index} className="flex items-center gap-3 bg-[color-mix(in srgb, var(--muted) 500%, transparent)] p-3 rounded-xl border border-[var(--border)]">
-                  <div className="flex-1">
-                    <label className="block text-[9px] font-bold uppercase text-[var(--muted-foreground)] mb-1">Type d'évaluation</label>
-                    <select
-                      value={a.type}
-                      onChange={(e) => updateModalityField(index, 'type', e.target.value)}
-                      className="w-full p-2 text-sm font-semibold rounded-lg bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] outline-none"
-                    >
-                      <option value="CC">Contrôle Continu</option>
+                <div key={index} className="agp-modality-row">
+                  <div className="agp-modality-row__field">
+                    <label className="agp-field-label">Type</label>
+                    <select value={a.type} onChange={(e) => updateModalityField(index, 'type', e.target.value)} className="agp-select">
+                      <option value="CC">Controle Continu</option>
                       <option value="CC1">CC1</option>
                       <option value="CC2">CC2</option>
                       <option value="Exam">Examen</option>
@@ -764,138 +648,70 @@ export default function AdminGradesEditPage() {
                       <option value="Rattrapage">Rattrapage</option>
                     </select>
                   </div>
-                  <div className="w-28">
-                    <label className="block text-[9px] font-bold uppercase text-[var(--muted-foreground)] mb-1">Poids (%)</label>
-                    <input
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={a.weight}
+                  <div className="agp-modality-row__weight">
+                    <label className="agp-field-label">Poids (%)</label>
+                    <input type="number" min="0" max="100" value={a.weight}
                       onChange={(e) => updateModalityField(index, 'weight', parseFloat(e.target.value) || 0)}
-                      className="w-full p-2 text-sm font-bold text-center rounded-lg bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] outline-none"
+                      className="agp-input agp-input--center"
                     />
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => removeModalityRow(index)}
-                    className="self-end p-2.5 bg-red-50 hover:bg-red-100 text-red-500 rounded-lg transition-colors border border-red-100/50 mt-1"
-                  >
-                    🗑️
-                  </button>
+                  <button type="button" onClick={() => removeModalityRow(index)} className="agp-btn-remove">🗑️</button>
                 </div>
               ))}
-
-              {modalityAssessments.length === 0 && (
-                <div className="text-center text-xs text-[var(--muted-foreground)] py-6 italic">
-                  Aucune évaluation configurée. Cliquez sur ajouter pour commencer.
-                </div>
-              )}
+              {modalityAssessments.length === 0 && <div className="agp-empty-list">Aucune evaluation configuree.</div>}
             </div>
-
-            {/* ⚙️ Option Personnalisable — Plafond de Note en Rattrapage (Cap) */}
-            <div className="mb-4 p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-2xl space-y-2">
-              <div className="flex items-center justify-between gap-4 flex-wrap">
-                <div>
-                  <h4 className="text-xs font-black text-amber-900 dark:text-amber-200 flex items-center gap-1.5">
-                    ⚙️ Plafond de Note en Session de Rattrapage (Plafonnement)
-                  </h4>
-                  <p className="text-[10px] text-amber-700 dark:text-amber-300 font-medium">
-                    Choisissez la note maximale attribuable après la délibération de rattrapage (Règle établissement).
-                  </p>
-                </div>
-
-                <select
-                  value={rattrapageCap}
-                  onChange={(e) => setRattrapageCap(Number(e.target.value))}
-                  className="px-3 py-1.5 text-xs font-black rounded-xl bg-white dark:bg-slate-800 border border-amber-300 dark:border-amber-700 text-amber-900 dark:text-amber-100 outline-none cursor-pointer shadow-xs"
-                >
-                  <option value={10}>Plafond à 10.00 / 20 (Pass/Fail)</option>
-                  <option value={12}>Plafond à 12.00 / 20 (Standard LMD ENCG)</option>
-                  <option value={14}>Plafond à 14.00 / 20 (Niveau Bien)</option>
-                  <option value={20}>Sans Plafond (Note réelle jusqu'à 20/20)</option>
-                </select>
+            <div className="agp-rattrapage-cap">
+              <div>
+                <h4>Plafond Rattrapage</h4>
+                <p>Note maximale apres deliberation de rattrapage</p>
               </div>
-
-              <div className="text-[10px] text-amber-600 dark:text-amber-400 italic">
-                * Note : Les évaluations de type <strong>Rattrapage</strong> ne sont pas additionnées au 100% de la session ordinaire.
-              </div>
+              <select value={rattrapageCap} onChange={(e) => setRattrapageCap(Number(e.target.value))} className="agp-select agp-select--sm">
+                <option value={10}>10.00 / 20</option>
+                <option value={12}>12.00 / 20 (LMD ENCG)</option>
+                <option value={14}>14.00 / 20</option>
+                <option value={20}>Sans Plafond</option>
+              </select>
             </div>
-
-            <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center border-t border-[var(--border)] pt-4 gap-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={addModalityRow}
-                className="rounded-xl text-xs font-bold py-3"
-              >
-                ➕ Ajouter
-              </Button>
-              <div className="flex gap-2 justify-end">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => setShowModalityModal(false)}
-                  className="rounded-xl text-xs font-bold"
-                >
-                  Annuler
-                </Button>
-                <Button
-                  type="button"
-                  onClick={handleSaveModality}
-                  className="rounded-xl text-xs font-bold text-white bg-[var(--color-primary)] hover:bg-[var(--color-primary)/90]"
-                >
-                  Enregistrer (100%)
-                </Button>
+            <div className="agp-modal__footer">
+              <Button type="button" variant="outline" onClick={addModalityRow} className="rounded-xl text-xs font-bold py-3">Ajouter</Button>
+              <div className="agp-modal__footer-actions">
+                <Button type="button" variant="ghost" onClick={() => setShowModalityModal(false)} className="rounded-xl text-xs font-bold">Annuler</Button>
+                <Button type="button" onClick={handleSaveModality} className="rounded-xl text-xs font-bold text-white bg-[var(--color-primary)]">Enregistrer (100%)</Button>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Sliding Audit Logs Drawer */}
+      {/* Audit Logs Drawer */}
       {showAuditLogsDrawer && (
-        <div className="fixed inset-0 z-50 overflow-hidden flex justify-end print:hidden animate-in fade-in duration-200">
-          {/* Backdrop */}
-          <div 
-            className="absolute inset-0 bg-black/45 backdrop-blur-sm"
-            onClick={() => setShowAuditLogsDrawer(false)}
-          />
-          {/* Panel */}
-          <div className="relative w-full max-w-md bg-white dark:bg-slate-950 shadow-2xl h-full flex flex-col animate-in slide-in-from-right duration-300">
-            {/* Header */}
-            <div className="p-6 border-b border-[var(--border)] flex justify-between items-center bg-slate-50 dark:bg-slate-900/50">
+        <div className="agp-drawer-overlay">
+          <div className="agp-drawer-backdrop" onClick={() => setShowAuditLogsDrawer(false)} />
+          <div className="agp-drawer">
+            <div className="agp-drawer__header">
               <div>
-                <h3 className="text-base font-bold text-[#0f2863] dark:text-white">📋 Historique d'Audit</h3>
-                <p className="text-slate-400 text-[9px] uppercase font-bold tracking-wider mt-0.5">Traçabilité des opérations de notes</p>
+                <h3>Historique d'Audit</h3>
+                <p>Tracabilite des operations de notes</p>
               </div>
-              <button 
-                onClick={() => setShowAuditLogsDrawer(false)}
-                className="text-slate-400 hover:text-slate-600 text-sm font-bold bg-slate-100 dark:bg-slate-800 p-2 rounded-xl"
-              >
-                ✕
-              </button>
+              <button onClick={() => setShowAuditLogsDrawer(false)} className="agp-drawer__close">x</button>
             </div>
-
-            {/* List */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+            <div className="agp-drawer__body">
               {isLoadingLogs ? (
-                <div className="flex justify-center p-12"><Spinner /></div>
+                <div className="agp-loading"><Spinner /></div>
               ) : auditLogs && auditLogs.length > 0 ? (
-                <div className="space-y-4">
+                <div className="agp-audit-list">
                   {auditLogs.map((log: any) => (
-                    <div key={log.id} className="border border-slate-100 dark:border-slate-800 rounded-2xl p-4 bg-slate-50/50 dark:bg-slate-900 flex flex-col justify-between hover:bg-slate-50 dark:hover:bg-slate-850 transition-colors">
-                      <p className="text-xs text-slate-800 dark:text-slate-200 font-bold">{log.description}</p>
-                      <div className="mt-3 flex justify-between items-center text-[10px] text-slate-400 font-medium">
-                        <span className="bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md font-bold text-slate-600 dark:text-slate-400">✓ {log.causer_name}</span>
+                    <div key={log.id} className="agp-audit-item">
+                      <p>{log.description}</p>
+                      <div className="agp-audit-item__meta">
+                        <span>{log.causer_name}</span>
                         <span>{new Date(log.created_at).toLocaleString()}</span>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-12 text-slate-400 text-xs italic">
-                  Aucun historique d'audit disponible pour ce module.
-                </div>
+                <div className="agp-empty-state"><p>Aucun historique disponible.</p></div>
               )}
             </div>
           </div>

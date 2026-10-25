@@ -289,11 +289,20 @@ class DeliberationService
      */
     public function autoComposeJury(int $filiereId, int $academicYearId, ?int $semesterNumber = null, string $type = 'semestriel'): array
     {
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($filiereId, $academicYearId, $semesterNumber, $type) {
+        Filiere::whereKey($filiereId)->lockForUpdate()->firstOrFail();
+        $groupId = request()->filled('group_id') && is_numeric(request()->input('group_id')) ? request()->integer('group_id') : null;
+        $session = request()->input('session', 'normale');
+        if ($session === 'complet') $session = 'totale';
+        abort_unless(in_array($session, ['normale', 'rattrapage', 'totale'], true), 422);
+        if ($type === 'annuel') $semesterNumber = max(1, min(5, request()->integer('year_level', 1))) * 2;
         $academicYearId = $this->resolveValidAcademicYearId($academicYearId);
+        if ($groupId) \App\Models\Group::where('filiere_id', $filiereId)->where('academic_year_id', $academicYearId)->when($semesterNumber, fn ($q) => $q->where('semester_number', $semesterNumber))->findOrFail($groupId);
 
         $modules = Module::with('assessments')
             ->where('filiere_id', $filiereId)
             ->when($type === 'semestriel' && $semesterNumber, fn ($q) => $q->where('semester_number', $semesterNumber))
+            ->when($type === 'annuel', fn ($q) => $q->whereIn('semester_number', [$semesterNumber - 1, $semesterNumber]))
             ->get();
 
         $juryMembers = [];
@@ -305,7 +314,7 @@ class DeliberationService
                 ->first();
 
             // Check if there is an existing Module PV signature recorded for this module
-            $modSig = ModulePvSignature::where('module_id', $module->id)->with('signer')->latest()->first();
+            $modSig = ModulePvSignature::where('module_id', $module->id)->where('academic_year_id', $academicYearId)->where('group_id', $groupId)->where('session', $session)->with('signer')->latest()->first();
 
             $userId = $modSig?->signed_by ?? $profRecord?->professor?->user?->id;
             $userName = $modSig?->signer?->name ?? $profRecord?->professor?->user?->name ?? "Enseignant ({$module->code})";
@@ -318,7 +327,7 @@ class DeliberationService
                     'academic_year_id' => $academicYearId,
                     'type' => $type,
                     'module_id' => $module->id,
-                    'semester_number' => $semesterNumber,
+                    'semester_number' => $semesterNumber, 'group_id' => $groupId, 'session' => $session,
                 ],
                 [
                     'user_id' => $userId,
@@ -326,7 +335,7 @@ class DeliberationService
                     'role' => 'professeur',
                     'status' => $isAlreadySigned ? 'signed' : 'pending',
                     'signed_at' => $modSig?->signed_at ?? ($isAlreadySigned ? now() : null),
-                    'digital_seal' => $modSig?->seal_hash ?? ($isAlreadySigned ? 'SIG-MODULE-OK' : null),
+                    'digital_seal' => $modSig?->digital_seal,
                     'signature_data' => $modSig?->signature_data,
                 ]
             );
@@ -336,7 +345,7 @@ class DeliberationService
                 $jury->update([
                     'status' => 'signed',
                     'signed_at' => $modSig->signed_at ?? now(),
-                    'digital_seal' => $modSig->seal_hash ?? 'SIG-MODULE-OK',
+                    'digital_seal' => $modSig->digital_seal,
                     'signature_data' => $modSig->signature_data,
                 ]);
             }
@@ -349,10 +358,10 @@ class DeliberationService
                 'user_id' => $userId,
                 'user_name' => $userName,
                 'role' => 'professeur',
-                'status' => $jury->status,
-                'signed_at' => $jury->signed_at,
-                'digital_seal' => $jury->digital_seal,
-                'signature_image' => $jury->signature_data,
+                'status' => $modSig ? 'signed' : 'pending',
+                'signed_at' => $modSig?->signed_at,
+                'digital_seal' => $modSig?->digital_seal,
+                'signature_image' => $modSig?->signature_data,
                 'source' => $modSig ? 'module_pv' : 'manual',
             ];
         }
@@ -368,7 +377,7 @@ class DeliberationService
                 'academic_year_id' => $academicYearId,
                 'type' => $type,
                 'role' => 'chef_filiere',
-                'semester_number' => $semesterNumber,
+                'semester_number' => $semesterNumber, 'group_id' => $groupId, 'session' => $session,
             ],
             [
                 'user_id' => $chefUserId,
@@ -392,6 +401,7 @@ class DeliberationService
         ];
 
         return $juryMembers;
+        });
     }
 
     /**
@@ -407,6 +417,7 @@ class DeliberationService
         $actor = User::findOrFail($userId);
         abort_unless((int) $jury->filiere->institution_id === (int) $actor->institution_id && (int) $jury->user_id === $userId, 403, 'Vous ne pouvez signer que votre propre visa du jury.');
         abort_if(AcademicYear::whereKey($jury->academic_year_id)->value('is_locked'), 409, 'Année académique verrouillée.');
+        if ($jury->module_id) abort_unless(ModulePvSignature::where('module_id', $jury->module_id)->where('academic_year_id', $jury->academic_year_id)->where('group_id', $jury->group_id)->where('session', $jury->session)->exists(), 422, 'Signez d’abord le PV du module dans son interface de notes.');
         abort_unless(preg_match('/^data:image\/png;base64,[A-Za-z0-9+\/=\r\n]+$/', $signatureData) && strlen($signatureData) <= 500000, 422, 'Signature PNG requise.');
         if ($jury->status === 'signed') return ['status' => 'success', 'digital_seal' => $jury->digital_seal, 'signed_at' => $jury->signed_at];
 
@@ -457,20 +468,6 @@ class DeliberationService
                     $q->whereIn('semester_number', [$oddSemNumber, $evenSemNumber]);
                 })->get();
 
-            if ($students->isEmpty() && $filiereId) {
-                $students = Student::with('user')
-                    ->whereHas('registrations', fn ($q) => $q->whereIn('semester_number', [$oddSemNumber, $evenSemNumber]))
-                    ->get();
-            }
-
-            if ($students->isEmpty()) {
-                $students = Student::with('user')->has('grades')->get();
-            }
-
-            if ($students->isEmpty()) {
-                $students = Student::with('user')->take(50)->get();
-            }
-
             $academicYear = AcademicYear::find($academicYearId) ?? AcademicYear::where('is_current', true)->first();
             $academicYearName = $academicYear?->displayLabel() ?? '2026/2027';
 
@@ -481,29 +478,7 @@ class DeliberationService
                 ->orderBy('id')
                 ->get();
 
-            if ($filiereModules->isEmpty()) {
-                // Fallback to Tronc Commun (filiere_id = 1) for S1..S4 modules
-                $filiereModules = Module::where('filiere_id', 1)
-                    ->whereIn('semester_number', [$oddSemNumber, $evenSemNumber])
-                    ->with('assessments')
-                    ->orderBy('semester_number')
-                    ->orderBy('id')
-                    ->get();
-            }
-
-            if ($filiereModules->isEmpty()) {
-                $filiereModules = Module::whereIn('semester_number', [$oddSemNumber, $evenSemNumber])
-                    ->whereHas('assessments')
-                    ->with('assessments')
-                    ->orderBy('semester_number')
-                    ->orderBy('id')
-                    ->take(14)
-                    ->get();
-            }
-
-            if ($filiereModules->isEmpty()) {
-                $filiereModules = Module::with('assessments')->orderBy('id')->take(14)->get();
-            }
+            if ($students->isEmpty() || $filiereModules->isEmpty()) return ['students' => [], 'modules' => []];
 
             $results = [];
 

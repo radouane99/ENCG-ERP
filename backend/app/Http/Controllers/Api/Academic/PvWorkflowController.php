@@ -14,9 +14,11 @@ class PvWorkflowController extends Controller
     {
         $this->authorize('viewAny', Deliberation::class);
         $resolved = $context->resolve($request); $deliberation = $resolved['deliberation'];
+        $meeting = $deliberation ? DB::table('deliberation_meetings')->where('deliberation_id', $deliberation->id)->first() : null;
+        if ($meeting) { $meeting->starts_at = \Carbon\Carbon::parse($meeting->starts_at, 'UTC')->toIso8601String(); $meeting->ends_at = \Carbon\Carbon::parse($meeting->ends_at, 'UTC')->toIso8601String(); }
         return response()->json([
             'deliberation' => $deliberation,
-            'meeting' => $deliberation ? DB::table('deliberation_meetings')->where('deliberation_id', $deliberation->id)->first() : null,
+            'meeting' => $meeting,
             'members' => $deliberation ? DB::table('deliberation_members')->where('deliberation_id', $deliberation->id)->get() : [],
             'rooms' => Room::where('institution_id', $request->user()->institution_id)->orderBy('name')->get(['id', 'name']),
             'agents' => User::where('institution_id', $request->user()->institution_id)->where('is_active', true)->whereHas('roles', fn ($q) => $q->whereIn('name', ['professor', 'vacataire', 'department-head', 'filiere-head', 'director', 'admin', 'super-admin', 'institution-admin']))->orderBy('name')->get(['id', 'name']),

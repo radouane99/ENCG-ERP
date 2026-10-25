@@ -8,7 +8,7 @@ export default function PvMeetingForm({ context, onClose }: { context: PvContext
   const input = 'mt-1 min-h-11 w-full rounded-lg border border-border bg-background p-3'
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); const form = new FormData(event.currentTarget); setBusy(true); setError('')
-    try { const response = await api.post('/academic/pv-workflow/meeting', { ...context, starts_at: form.get('starts_at'), duration_minutes: Number(form.get('duration')), room_id: Number(form.get('room')), president_id: Number(form.get('president')), member_ids: form.getAll('members').map(Number), version: query.data?.meeting?.version ?? 0 }); await query.refetch(); setResult(`Réunion enregistrée. ${response.data.notifications_portal} notification(s) dans les espaces des membres. Aucun email annoncé comme envoyé.`) }
+    try { const response = await api.post('/academic/pv-workflow/meeting', { ...context, starts_at: new Date(String(form.get('starts_at'))).toISOString(), duration_minutes: Number(form.get('duration')), room_id: Number(form.get('room')), president_id: Number(form.get('president')), member_ids: form.getAll('members').map(Number), version: query.data?.meeting?.version ?? 0 }); await query.refetch(); setResult(`Réunion enregistrée. ${response.data.notifications_portal} notification(s) dans les espaces des membres.`) }
     catch (err: any) { setError(err.response?.data?.message || 'Enregistrement impossible.'); if (err.response?.status === 409) void query.refetch() } finally { setBusy(false) }
   }
   return <Modal open title="Planifier le jury" onClose={() => !busy && onClose()} size="lg" preventBackdropClose={busy}><form className="space-y-4" onSubmit={event => void submit(event)}>

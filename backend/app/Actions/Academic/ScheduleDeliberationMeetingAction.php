@@ -27,14 +27,17 @@ class ScheduleDeliberationMeetingAction
             abort_if($deliberation->is_sealed, 423, 'PV déjà scellé.');
             $current = DB::table('deliberation_meetings')->where('deliberation_id', $deliberation->id)->first();
             abort_unless((int)($current->version ?? 0) === $data['version'], 409, 'La réunion a changé. Actualisez avant de la modifier.');
-            $start = Carbon::parse($data['starts_at'], config('app.timezone')); $end = $start->copy()->addMinutes($data['duration_minutes']);
+            $start = Carbon::parse($data['starts_at'], config('app.timezone'))->utc(); $end = $start->copy()->addMinutes($data['duration_minutes']);
+            $localStart = $start->copy()->setTimezone('Africa/Casablanca'); $localEnd = $end->copy()->setTimezone('Africa/Casablanca');
+            abort_unless($start->toDateString() >= $year->start_date->toDateString() && $end->toDateString() <= $year->end_date->toDateString() && $start->isSameDay($end), 422, 'La réunion doit appartenir à l’année choisie et tenir dans une journée.');
+            abort_if(app(\App\Services\Academic\TimetableRoomGuard::class)->isRoomBusyAt((string) $room->id, $localStart, $localEnd), 409, 'Salle indisponible : cours, réservation ou fermeture sur cette plage.');
             abort_if(DB::table('deliberation_meetings')->where('deliberation_id', '!=', $deliberation->id)->where('starts_at', '<', $end)->where('ends_at', '>', $start)->where(fn ($q) => $q->where('room_id', $room->id)->orWhereIn('deliberation_id', DB::table('deliberation_members')->whereIn('user_id', $members->pluck('id'))->select('deliberation_id')))->exists(), 409, 'Salle ou membre du jury déjà réservé sur cette plage.');
             DB::table('deliberation_meetings')->updateOrInsert(['deliberation_id' => $deliberation->id], ['room_id' => $room->id, 'starts_at' => $start, 'ends_at' => $end, 'version' => ($current->version ?? 0) + 1, 'created_at' => $current->created_at ?? now(), 'updated_at' => now()]);
             $deliberation->update(['president_id' => $data['president_id'], 'deliberation_date' => $start->toDateString()]);
             DB::table('deliberation_members')->where('deliberation_id', $deliberation->id)->delete();
             foreach ($members as $member) {
                 DB::table('deliberation_members')->insert(['deliberation_id' => $deliberation->id, 'user_id' => $member->id, 'role' => $member->id === $data['president_id'] ? 'president' : 'member', 'created_at' => now(), 'updated_at' => now()]);
-                $member->notify(new SystemNotification('Réunion de délibération', $start->format('d/m/Y H:i').' · '.$room->name.' · '.$context['filiere']->name, 'academic', '/admin/grades/pv?filiere_id='.$context['filiere']->id.'&semester='.$context['semester']->number));
+                $member->notify(new SystemNotification('Réunion de délibération', $localStart->format('d/m/Y H:i').' · '.$room->name.' · '.$context['filiere']->name, 'academic', '/admin/grades/pv?filiere_id='.$context['filiere']->id.'&semester='.$context['semester']->number));
             }
             activity()->causedBy($request->user())->performedOn($deliberation)->withProperties(['room_id' => $room->id, 'starts_at' => $start->toIso8601String()])->log('deliberation_meeting_scheduled');
             return ['deliberation_id' => $deliberation->id, 'notifications_portal' => $members->count(), 'email_sent' => false];

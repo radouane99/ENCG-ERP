@@ -47,6 +47,7 @@ class ProfessorAttendanceController extends Controller
         if ($profId) {
             $mpModuleIds = DB::table('module_professor')
                 ->where('professor_id', $profId)
+                ->where('academic_year_id', \App\Services\Academic\AcademicContext::yearId())
                 ->pluck('module_id')
                 ->filter()
                 ->unique()
@@ -58,7 +59,7 @@ class ProfessorAttendanceController extends Controller
 
         // Modules complets strictement affectés
         $assignedModules = ! empty($allAssignedModuleIds)
-            ? Module::with('filiere')->whereIn('id', $allAssignedModuleIds)->get()
+            ? Module::with('filiere')->where('institution_id', $user->institution_id)->whereIn('id', $allAssignedModuleIds)->get()
             : collect();
 
         // Filières distinctes strictement issues des modules affectés
@@ -153,7 +154,7 @@ class ProfessorAttendanceController extends Controller
         app(\App\Services\Security\ClassroomAccessService::class)->authorize($request->user(), $module, $group, write: true);
         $students = Student::with('user')->where('institution_id', $request->user()->institution_id)->where(fn ($q) => $q->whereHas('pathways', fn ($p) => $p->where('academic_year_id', $group->academic_year_id)->where('group_id', $group->id))->orWhereHas('registrations', fn ($r) => $r->where('academic_year_id', $group->academic_year_id)->where('group_id', $group->id)))->get()->sortBy(fn ($s) => $s->user->name);
         $records = $session ? Attendance::where('attendance_session_id', $session->id)->get()->keyBy('student_id') : collect();
-        return response()->json(['data' => $students->map(fn ($s) => ['id' => $s->id, 'name' => $s->user->name, 'cne' => $s->cne, 'apogee' => $s->student_number, 'status' => $records[$s->id]->status ?? 'absent'])->values(), 'module_id' => $module->id, 'group_id' => $group->id]);
+        return response()->json(['data' => $students->map(fn ($s) => ['id' => $s->id, 'name' => $s->user->name, 'cne' => $s->cne, 'apogee' => $s->student_number, 'status' => $records[$s->id]->status ?? 'absent', 'version' => (int)($records[$s->id]->version ?? 0)])->values(), 'module_id' => $module->id, 'group_id' => $group->id]);
     }
     /**
      * Démarrer une session de présence.
@@ -185,6 +186,7 @@ class ProfessorAttendanceController extends Controller
             'records' => 'required|array|min:1',
             'records.*.student_id' => 'required|integer|distinct',
             'records.*.status' => 'required|in:present,absent,late,excused',
+            'records.*.version' => 'nullable|integer|min:0',
             'close_session' => 'sometimes|boolean',
         ]);
 
@@ -197,7 +199,13 @@ class ProfessorAttendanceController extends Controller
                 foreach ($validated['records'] as $row) abort_unless(Attendance::where('attendance_session_id', $session->id)->where('student_id', $row['student_id'])->where('status', $row['status'])->exists(), 409, 'Session déjà fermée avec des données différentes.');
                 return $session;
             }
-            foreach ($validated['records'] as $row) $this->attendanceService->markPresence($session->id, (int) $row['student_id'], $row['status']);
+            foreach ($validated['records'] as $row) {
+                if (isset($row['version'])) {
+                    $record = Attendance::where('attendance_session_id', $session->id)->where('student_id', $row['student_id'])->first();
+                    abort_unless((int)($record?->version ?? 0) === $row['version'], 409, 'L’appel a changé sur un autre poste. Actualisez les présences avant de confirmer.');
+                }
+                $this->attendanceService->markPresence($session->id, (int) $row['student_id'], $row['status']);
+            }
             if ($validated['close_session'] ?? false) $this->attendanceService->closeSession($session->id);
             return $session;
         });

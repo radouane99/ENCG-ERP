@@ -10,68 +10,67 @@ interface Student {
   id: string;
   name: string;
   cne: string;
-  isPresent: boolean | null;
+  isPresent: boolean | null; version: number; originalStatus: string; changed?: boolean;
 }
 
 export default function ProfessorCall() {
   const { sessionId } = useParams();
 
   // Fetch real students or fallback to group students
-  const { data: sessionData } = useQuery({
+  const { data: sessionData, isError, isPending, refetch } = useQuery({
     queryKey: ['attendance-session', sessionId],
     queryFn: async () => {
-      try {
-        const res = await api.get(`/v1/professor/attendance/session/${sessionId}/stats`);
-        return res.data.data || res.data;
-      } catch (e) {
-        return null;
-      }
+      const res = await api.get('/professor/attendance/students', { params: { attendance_session_id: sessionId } });
+      return { students: res.data.data };
     }
   });
 
+  const [dirty, setDirty] = useState(false);
   const [students, setStudents] = useState<Student[]>([]);
 
   useEffect(() => {
-    const roster = sessionData?.students || sessionData?.roster || [];
+    if (dirty) return;
+    const roster = sessionData?.students || [];
     if (!Array.isArray(roster)) return;
     setStudents(roster.map((s: any) => ({
-      id: String(s.id ?? s.student_id),
+      id: String(s.id ?? s.student_id), version: Number(s.version ?? 0),
       name: s.name || `${s.first_name || ''} ${s.last_name || ''}`.trim(),
       cne: s.cne || '',
-      isPresent: s.status === 'present' || s.isPresent === true,
+      originalStatus: s.status || 'absent', isPresent: ['late', 'excused'].includes(s.status) ? null : s.status === 'present' || s.isPresent === true,
     })));
-  }, [sessionData]);
+  }, [sessionData, dirty]);
 
   const togglePresence = (id: string, isPresent: boolean) => {
-    setStudents(prev => prev.map(s => s.id === id ? { ...s, isPresent } : s));
+    setDirty(true); setStudents(prev => prev.map(s => s.id === id ? { ...s, isPresent, changed: true } : s));
   };
 
   const saveMutation = useMutation({
     mutationFn: async () => {
       const payload = {
-        attendances: students.map(s => ({
-          student_id: s.id,
-          status: s.isPresent ? 'present' : 'absent',
+        session_id: Number(sessionId), close_session: false, records: students.map(s => ({
+          student_id: Number(s.id), version: s.version,
+          status: s.changed ? (s.isPresent ? 'present' : 'absent') : s.originalStatus,
         }))
       };
       if (sessionId) {
-        await api.post(`/professor/attendance/${sessionId}/manual-call`, payload);
+        await api.post('/professor/attendance/save', payload);
       }
       return true;
     },
-    onSuccess: () => {
+    onSuccess: async () => { await refetch(); setDirty(false);
       toast.success("Feuille d'émargement enregistrée avec succès !", {
         description: "Mise à jour instantanée du dossier académique des étudiants."
       });
     },
-    onError: () => {
-      toast.success("Feuille d'émargement enregistrée avec succès !");
+    onError: (error: any) => { toast.error(error.response?.data?.message || 'Enregistrement impossible. Vos choix restent visibles.');
     }
   });
 
   const presentCount = students.filter(s => s.isPresent).length;
   const absentCount = students.filter(s => s.isPresent === false).length;
 
+  if (isError) return <p role='alert' className='p-5'>Impossible de charger la liste officielle de cette séance.</p>;
+  if (isPending) return <p role='status' className='p-5'>Chargement de la liste…</p>;
   return (
     <div className="max-w-4xl mx-auto p-4 md:p-8 space-y-6 font-sans animate-in fade-in duration-500 pb-28">
       
@@ -116,7 +115,7 @@ export default function ProfessorCall() {
           </h2>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setStudents(prev => prev.map(s => ({ ...s, isPresent: true })))}
+              onClick={() => { setDirty(true); setStudents(prev => prev.map(s => ({ ...s, isPresent: true, changed: true }))) }}
               className="px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-xl text-xs font-black hover:bg-emerald-100 transition-colors"
             >
               Tous Présents
@@ -126,7 +125,7 @@ export default function ProfessorCall() {
 
         <div className="space-y-2">
           {students.map((student, idx) => (
-            <div key={student.id} className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 hover:border-indigo-300 transition-all">
+            <div key={student.id} className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 hover:border-indigo-300 transition-all">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-800 font-black flex items-center justify-center text-xs shrink-0">
                   {idx + 1}
@@ -134,6 +133,7 @@ export default function ProfessorCall() {
                 <div>
                   <div className="font-black text-sm text-slate-900">{student.name}</div>
                   <div className="text-[11px] font-bold text-slate-400">CNE : {student.cne}</div>
+                  {!student.changed && ['late', 'excused'].includes(student.originalStatus) && <span className="text-xs text-amber-800">{student.originalStatus === 'late' ? 'Retard enregistré' : 'Dispense enregistrée'}</span>}
                 </div>
               </div>
 
@@ -171,7 +171,7 @@ export default function ProfessorCall() {
         <div className="pt-6 border-t border-slate-100 flex justify-end">
           <button
             onClick={() => saveMutation.mutate()}
-            disabled={saveMutation.isPending}
+            disabled={saveMutation.isPending || !students.length}
             className="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-95 text-white rounded-2xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/20 disabled:opacity-50 cursor-pointer"
           >
             {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : <Save className="w-4 h-4" />}
