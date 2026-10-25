@@ -140,11 +140,17 @@ class ProfessorAssignmentController extends Controller
             }
             $resolvedModuleIds = array_unique($resolvedModuleIds);
 
-            // Collecter les groupes (soit array group_ids soit single group_id)
+            if (empty($resolvedModuleIds)) {
+                return response()->json(['success' => false, 'message' => 'Veuillez sélectionner au moins un module.'], 400);
+            }
+
+            // Collecter les groupes
             $rawGroupIds = ! empty($validated['group_ids']) ? $validated['group_ids'] : (array) ($validated['group_id'] ?? []);
+            $wantsAllGroups = in_array('all', $rawGroupIds) || in_array('', $rawGroupIds) || ($validated['group_id'] ?? null) === 'all';
+
             $resolvedGroupIds = [];
             foreach ($rawGroupIds as $gId) {
-                if ($gId === 'all') {
+                if ($gId === 'all' || empty($gId)) {
                     continue;
                 }
                 $r = $resolveId(Group::class, $gId);
@@ -154,33 +160,55 @@ class ProfessorAssignmentController extends Controller
             }
             $resolvedGroupIds = array_unique($resolvedGroupIds);
 
-            if (empty($resolvedModuleIds)) {
-                return response()->json(['success' => false, 'message' => 'Veuillez sélectionner au moins un module.'], 400);
-            }
-
-            if (empty($resolvedGroupIds)) {
-                return response()->json(['success' => false, 'message' => 'Veuillez sélectionner au moins un groupe ou section.'], 400);
-            }
-
             $sessionTypeInput = strtolower($validated['session_type'] ?? 'cm');
             $typesToCreate = ($sessionTypeInput === 'both') ? ['cm', 'td'] : [$sessionTypeInput];
 
             $createdCount = 0;
             abort_if($currentYear->is_locked, 409, 'Année universitaire verrouillée.');
             Professor::where('institution_id', $request->user()->institution_id)->where('is_active', true)->findOrFail($profId);
+
+            $selectedGroups = ! empty($resolvedGroupIds)
+                ? Group::where('academic_year_id', $currentYear->id)->whereIn('id', $resolvedGroupIds)->get()
+                : collect();
+
             foreach ($resolvedModuleIds as $modId) {
                 $module = Module::where('institution_id', $request->user()->institution_id)->findOrFail($modId);
-                foreach ($resolvedGroupIds as $grpId) {
-                    Group::where('filiere_id', $module->filiere_id)->where('semester_number', $module->semester_number)->where('academic_year_id', $currentYear->id)->findOrFail($grpId);
-                    foreach ($typesToCreate as $sType) {
-                        $exists = ModuleProfessor::where('module_id', $modId)
-                            ->where('professor_id', $profId)
-                            ->where('group_id', $grpId)
-                            ->where('session_type', $sType)
-                            ->where('academic_year_id', $currentYear->id)
-                            ->exists();
 
-                        if (! $exists) {
+                if ($wantsAllGroups) {
+                    $groupsForModule = Group::where('filiere_id', $module->filiere_id)
+                        ->where('semester_number', $module->semester_number)
+                        ->where('academic_year_id', $currentYear->id)
+                        ->get();
+                    $targetGroupIds = $groupsForModule->isNotEmpty()
+                        ? $groupsForModule->pluck('id')->toArray()
+                        : [null];
+                } elseif ($selectedGroups->isNotEmpty()) {
+                    $matching = $selectedGroups->filter(fn ($g) => $g->filiere_id == $module->filiere_id && $g->semester_number == $module->semester_number);
+                    if ($matching->isNotEmpty()) {
+                        $targetGroupIds = $matching->pluck('id')->toArray();
+                    } elseif (count($resolvedModuleIds) === 1) {
+                        $targetGroupIds = $selectedGroups->pluck('id')->toArray();
+                    } else {
+                        $targetGroupIds = [];
+                    }
+                } else {
+                    $targetGroupIds = [null];
+                }
+
+                foreach ($targetGroupIds as $grpId) {
+                    foreach ($typesToCreate as $sType) {
+                        $query = ModuleProfessor::where('module_id', $modId)
+                            ->where('professor_id', $profId)
+                            ->where('session_type', $sType)
+                            ->where('academic_year_id', $currentYear->id);
+
+                        if ($grpId === null) {
+                            $query->whereNull('group_id');
+                        } else {
+                            $query->where('group_id', $grpId);
+                        }
+
+                        if (! $query->exists()) {
                             $hours = (int) ($validated['assigned_hours'] ?? ($sType === 'cm' ? 36 : 18));
                             ModuleProfessor::create([
                                 'academic_year_id' => $currentYear->id,
@@ -323,9 +351,27 @@ class ProfessorAssignmentController extends Controller
             abort_if($professors->isEmpty(), 422, 'Aucun enseignant actif.');
 
             $semesterPeriod = $request->input('semester_period', 'all');
+            $shouldReset = $request->boolean('reset', true);
 
-            // 2. Récupérer les modules filtrés selon la période semestrielle choisie (Automne S1/S3/S5/S7/S9 vs Printemps S2/S4/S6/S8/S10 vs Annuel)
-            $modulesQuery = Module::with(['filiere.department'])->where('institution_id', $request->user()->institution_id)->whereNotIn('id', ModuleProfessor::where('academic_year_id', $currentYear->id)->select('module_id'));
+            if ($shouldReset) {
+                $cleanQuery = ModuleProfessor::where('academic_year_id', $currentYear->id)
+                    ->whereHas('module', fn ($q) => $q->where('institution_id', $request->user()->institution_id));
+                if ($semesterPeriod === 'odd' || $semesterPeriod === 'autumn' || $semesterPeriod === 's1') {
+                    $cleanQuery->whereHas('module', fn ($q) => $q->whereIn('semester_number', [1, 3, 5, 7, 9]));
+                } elseif ($semesterPeriod === 'even' || $semesterPeriod === 'spring' || $semesterPeriod === 's2') {
+                    $cleanQuery->whereHas('module', fn ($q) => $q->whereIn('semester_number', [2, 4, 6, 8, 10]));
+                } elseif (is_numeric($semesterPeriod)) {
+                    $cleanQuery->whereHas('module', fn ($q) => $q->where('semester_number', (int) $semesterPeriod));
+                }
+                $cleanQuery->delete();
+            }
+
+            // 2. Récupérer les modules filtrés selon la période semestrielle choisie
+            $modulesQuery = Module::with(['filiere.department'])->where('institution_id', $request->user()->institution_id);
+            if (! $shouldReset) {
+                $modulesQuery->whereNotIn('id', ModuleProfessor::where('academic_year_id', $currentYear->id)->select('module_id'));
+            }
+
             if ($semesterPeriod === 'odd' || $semesterPeriod === 'autumn' || $semesterPeriod === 's1') {
                 $modulesQuery->whereIn('semester_number', [1, 3, 5, 7, 9]);
             } elseif ($semesterPeriod === 'even' || $semesterPeriod === 'spring' || $semesterPeriod === 's2') {
@@ -335,7 +381,7 @@ class ProfessorAssignmentController extends Controller
             }
 
             $modules = $modulesQuery->get();
-            $groups = Group::where('academic_year_id', $currentYear->id)->whereIn('filiere_id', $modules->pluck('filiere_id'))->get();
+            $groups = Group::where('academic_year_id', $currentYear->id)->get();
 
             if ($modules->isEmpty()) {
                 return response()->json(['success' => false, 'message' => 'Aucun module disponible pour la période semestrielle sélectionnée.'], 400);
@@ -439,17 +485,16 @@ class ProfessorAssignmentController extends Controller
                 // On affecte donc 1 charge par Module, qui s'applique à tous les groupes de la filière.
                 $chargeSlots = [];
                 foreach ($modules as $mod) {
-                    if (! $mod->credit_hours || $mod->credit_hours <= 0) {
-                        continue;
-                    }
+                    $hoursCm = (int) ($mod->hours_cm > 0 ? $mod->hours_cm : 36);
+                    $hoursTd = (int) ($mod->hours_td > 0 ? $mod->hours_td : 18);
+                    $hours = (int) ($mod->credit_hours > 0 ? $mod->credit_hours : ($hoursCm + $hoursTd));
+
                     $modGroups = $groups->where('filiere_id', $mod->filiere_id)->where('semester_number', $mod->semester_number)->values();
-                    if ($modGroups->isEmpty()) {
-                        continue;
-                    }
+
                     $chargeSlots[] = [
                         'module' => $mod,
                         'groups' => $modGroups,
-                        'hours' => (int) $mod->credit_hours,
+                        'hours' => $hours,
                         'type' => 'cm',
                     ];
                 }

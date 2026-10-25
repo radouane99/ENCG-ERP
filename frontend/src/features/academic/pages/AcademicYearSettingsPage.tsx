@@ -592,8 +592,8 @@ const { data: departmentsData } = useQuery({
   const professors = assignmentForm.department_id
     ? allProfessors.filter((p: any) => p.department_id == assignmentForm.department_id)
     : allProfessors
-  const modules = modulesData?.data || []
-  const groups = groupsData?.data || []
+  const modules = useMemo(() => (modulesData?.data || []), [modulesData])
+  const groups = useMemo(() => (groupsData?.data || []), [groupsData])
   const assignments = useMemo(() => (assignmentsData?.data || []), [assignmentsData])
   const examSessions = useMemo(() => examSessionsData || [], [examSessionsData])
   const years = Array.isArray(yearsData) ? yearsData : []
@@ -707,6 +707,65 @@ const { data: departmentsData } = useQuery({
 
     return map
   }, [allProfessors, assignments, departments, resolveAssignmentProfessorId])
+
+  // ─── 👥 SMART GROUPS FILTERING BASED ON SELECTED MODULE(S) ─────────────────
+  const selectedModulesList = useMemo(() => {
+    if (!assignmentForm.module_ids || assignmentForm.module_ids.length === 0) return []
+    return modules.filter((m: any) => assignmentForm.module_ids.includes(String(m.id)))
+  }, [modules, assignmentForm.module_ids])
+
+  const availableGroups = useMemo(() => {
+    if (selectedModulesList.length === 0) {
+      return groups
+    }
+
+    // Filter groups matching the semester and filiere of selected modules
+    const matching = groups.filter((g: any) => {
+      return selectedModulesList.some((m: any) => {
+        const mSem = Number(m.semester_number || (typeof m.semester === 'string' ? m.semester.replace(/\D/g, '') : m.semester))
+        const gSem = Number(g.semester_number)
+        const semMatches = isNaN(mSem) || isNaN(gSem) || mSem === gSem
+        const filiereMatches = !m.filiere_id || !g.filiere_id || String(m.filiere_id) === String(g.filiere_id)
+        return semMatches && filiereMatches
+      })
+    })
+
+    return matching.length > 0 ? matching : groups
+  }, [groups, selectedModulesList])
+
+  // Prune incompatible groups when selected modules change
+  useEffect(() => {
+    if (selectedModulesList.length > 0) {
+      const allowedIds = new Set(['all', ...availableGroups.map((g: any) => String(g.id))])
+      setAssignmentForm(prev => {
+        if (!prev.group_ids || prev.group_ids.length === 0) return prev
+        const cleaned = prev.group_ids.filter(id => allowedIds.has(id))
+        return cleaned.length === prev.group_ids.length ? prev : { ...prev, group_ids: cleaned }
+      })
+    }
+  }, [availableGroups, selectedModulesList.length])
+
+  // Selected Professor Live Dossier Info
+  const selectedProfDetails = useMemo(() => {
+    if (!assignmentForm.professor_id) return null
+    const profGroup = groupedAssignmentsMap[String(assignmentForm.professor_id)]
+    const profModel = allProfessors.find((p: any) => String(p.id) === String(assignmentForm.professor_id))
+    const list = profGroup?.assignmentsList || []
+    const count = list.length
+    const totalHours = list.reduce((sum: number, curr: any) => sum + (Number(curr.assigned_hours) || (curr.session_type === 'cm' ? 36 : 18)), 0)
+    const estimatedWeekly = count * 4
+    const isAtLimit = estimatedWeekly >= 18
+    const isNearLimit = estimatedWeekly >= 14 && estimatedWeekly < 18
+    return {
+      profGroup,
+      profModel,
+      count,
+      totalHours,
+      estimatedWeekly,
+      isAtLimit,
+      isNearLimit
+    }
+  }, [assignmentForm.professor_id, groupedAssignmentsMap, allProfessors])
 
   const groupedProfessors = useMemo(() => {
     return Object.values(groupedAssignmentsMap).filter((profGroup: any) => {
@@ -1287,10 +1346,12 @@ const { data: departmentsData } = useQuery({
                       const displayName = (p.first_name || p.last_name)
                         ? `${p.first_name || ''} ${p.last_name || ''}`.trim()
                         : `Professeur #${p.id}`
+                      const profGroup = groupedAssignmentsMap[String(p.id)]
+                      const currentCount = profGroup?.assignmentsList?.length || 0
                       return {
                         value: String(p.id),
                         label: displayName,
-                        sublabel: p.email || p.speciality || 'Enseignant Chercheur'
+                        sublabel: `${p.grade || 'PES'} • ${currentCount} cours assigné${currentCount > 1 ? 's' : ''} (${currentCount * 4}h/18h)`
                       }
                     })
                 ]}
@@ -1330,24 +1391,91 @@ const { data: departmentsData } = useQuery({
                 }
               />
 
-              {/* Step 4: Group / Section (Multi-sélection) */}
+              {/* Step 4: Group / Section (Multi-sélection filtrée) */}
               <CustomMultiSelect
                 label="Groupe(s) / Section(s)"
                 stepNumber="4"
-                placeholder="Sélectionner le(s) groupe(s)"
+                placeholder={assignmentForm.module_ids.length === 0 ? "Sélectionner d'abord le module" : "Sélectionner le(s) groupe(s)"}
                 values={assignmentForm.group_ids}
                 onChange={(vals) => setAssignmentForm(prev => ({ ...prev, group_ids: vals }))}
                 icon={<Users className="w-4 h-4" />}
                 selectAllOption={true}
-                options={groups.map((g: any) => ({
-                  value: String(g.id),
-                  label: g.name,
-                  sublabel: g.filiere_name || 'Section Académique'
-                }))}
+                options={[
+                  {
+                    value: 'all',
+                    label: '🏛️ Section Entière (Amphithéâtre / Tous les groupes)',
+                    sublabel: selectedModulesList.length > 0
+                      ? `Affectation globale CM (${availableGroups.length} groupe${availableGroups.length > 1 ? 's' : ''} de ${selectedModulesList[0]?.semester ? 'S' + (selectedModulesList[0]?.semester_number || '') : 'la filière'})`
+                      : 'Affectation globale CM sans restriction de sous-groupe'
+                  },
+                  ...availableGroups.map((g: any) => ({
+                    value: String(g.id),
+                    label: `${g.name} (S${g.semester_number || '?'})`,
+                    sublabel: `${g.filiere_name || g.filiere || 'Filière'} • Capacité: ${g.capacity || 30} étud.`
+                  }))
+                ]}
               />
             </div>
 
-            {/* Format d'enseignement (CM / TD / Les deux) & Générateur en 1 clic */}
+            {/* Real-time Professor Workload Dossier Banner if Selected */}
+            {selectedProfDetails && (
+              <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-50/80 via-indigo-50/50 to-slate-50 dark:from-slate-800/80 dark:to-slate-900/80 border border-primary/20 dark:border-border flex flex-col md:flex-row items-start md:items-center justify-between gap-4 animate-in fade-in zoom-in-98 shadow-2xs">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-11 h-11 rounded-2xl bg-[#0f2863] text-white font-bold text-sm flex items-center justify-center shadow-xs shrink-0 ring-4 ring-blue-500/10">
+                    {selectedProfDetails.profGroup?.profName?.charAt(0).toUpperCase() || 'P'}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-bold text-sm text-foreground dark:text-white">
+                        {selectedProfDetails.profGroup?.profName}
+                      </h4>
+                      <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-primary/10 text-[#0f2863] dark:bg-blue-950 dark:text-blue-300">
+                        {selectedProfDetails.profGroup?.grade || 'PES'}
+                      </span>
+                    </div>
+                    <div className="text-xs text-muted-foreground flex items-center gap-2 mt-0.5">
+                      <span>{selectedProfDetails.profGroup?.departmentName}</span>
+                      <span>•</span>
+                      <span>{selectedProfDetails.profGroup?.specialty}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end pt-2 md:pt-0 border-t md:border-t-0 border-border dark:border-border">
+                  <div className="text-right">
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Charge Enregistrée :</div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold font-mono text-foreground dark:text-white">
+                        {selectedProfDetails.count} cours ({selectedProfDetails.estimatedWeekly}h / 18h statutaires)
+                      </span>
+                      <span className={cn(
+                        "text-[10px] font-bold px-2 py-0.5 rounded-full",
+                        selectedProfDetails.isAtLimit
+                          ? "bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300"
+                          : selectedProfDetails.isNearLimit
+                            ? "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
+                            : "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
+                      )}>
+                        {selectedProfDetails.isAtLimit ? '⚠️ Surcharge (>18h)' : selectedProfDetails.isNearLimit ? 'Équilibré (14-18h)' : 'Disponible (<14h)'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Progress Mini Gauge */}
+                  <div className="w-24 h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden shrink-0">
+                    <div
+                      className={cn(
+                        "h-full rounded-full transition-all duration-300",
+                        selectedProfDetails.isAtLimit ? "bg-rose-500" : selectedProfDetails.isNearLimit ? "bg-amber-500" : "bg-emerald-500"
+                      )}
+                      style={{ width: `${Math.min(Math.round((selectedProfDetails.estimatedWeekly / 18) * 100), 100)}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Format d'enseignement (CM / TD / Les deux) */}
             <div className="mt-3.5 pt-3 border-t border-border dark:border-slate-800/80 flex flex-wrap items-center justify-between gap-3 bg-slate-50/70 dark:bg-slate-900/40 p-3 rounded-xl border border-dashed dark:border-border">
               <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                 <span className="text-xs font-bold text-slate-700 dark:text-foreground flex items-center gap-1.5">
@@ -1400,7 +1528,7 @@ const { data: departmentsData } = useQuery({
                   <span className="inline-flex items-center gap-1.5 bg-primary/5 dark:bg-blue-950/50 text-primary dark:text-blue-300 border border-primary/20 dark:border-primary px-3 py-1 rounded-lg text-xs font-semibold">
                     <span>⚡ Génération automatique :</span>
                     <span className="px-1.5 py-0.2 bg-primary text-primary-foreground rounded font-mono font-bold text-[11px]">
-                      {assignmentForm.module_ids.length * assignmentForm.group_ids.length * (assignmentForm.session_type === 'both' ? 2 : 1)} affectation(s)
+                      {assignmentForm.module_ids.length * (assignmentForm.group_ids.includes('all') ? 1 : assignmentForm.group_ids.length) * (assignmentForm.session_type === 'both' ? 2 : 1)} affectation(s)
                     </span>
                   </span>
                 ) : (
@@ -1411,12 +1539,54 @@ const { data: departmentsData } = useQuery({
               </div>
             </div>
 
+            {/* Dynamic Simulation Equation Banner */}
+            <div className="p-3.5 rounded-xl bg-slate-50/80 dark:bg-slate-900/60 border border-slate-200/80 dark:border-border flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center gap-2 text-xs">
+                <span className="font-bold text-muted-foreground uppercase text-[10px] tracking-wider">Simulation :</span>
+                {assignmentForm.professor_id ? (
+                  <span className="px-2 py-0.5 rounded-md bg-card dark:bg-slate-800 border font-semibold text-foreground dark:text-white">
+                    👤 {selectedProfDetails?.profGroup?.profName?.split(' ')[0] || 'Enseignant'}
+                  </span>
+                ) : (
+                  <span className="text-slate-400 italic text-[11px]">Enseignant non sélectionné</span>
+                )}
+                <span className="text-slate-400">➜</span>
+                {assignmentForm.module_ids.length > 0 ? (
+                  <span className="px-2 py-0.5 rounded-md bg-primary/10 text-[#0f2863] dark:bg-blue-950 dark:text-blue-300 font-bold border border-primary/20">
+                    📚 {assignmentForm.module_ids.length} Module{assignmentForm.module_ids.length > 1 ? 's' : ''}
+                  </span>
+                ) : (
+                  <span className="text-slate-400 italic text-[11px]">0 module</span>
+                )}
+                <span className="text-slate-400">➜</span>
+                {assignmentForm.group_ids.length > 0 ? (
+                  <span className="px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-bold border border-emerald-200 dark:border-emerald-800">
+                    {assignmentForm.group_ids.includes('all') ? '🏛️ Section Entière (Amphi)' : `👥 ${assignmentForm.group_ids.length} Groupe${assignmentForm.group_ids.length > 1 ? 's' : ''}`}
+                  </span>
+                ) : (
+                  <span className="text-slate-400 italic text-[11px]">0 groupe</span>
+                )}
+              </div>
+
+              {assignmentForm.module_ids.length > 0 && assignmentForm.group_ids.length > 0 && (
+                <div className="inline-flex items-center gap-2 bg-[#0f2863] text-white px-3 py-1.5 rounded-xl font-bold text-xs shadow-xs animate-in fade-in">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                  <span>
+                    Total : {assignmentForm.module_ids.length * (assignmentForm.group_ids.includes('all') ? 1 : assignmentForm.group_ids.length) * (assignmentForm.session_type === 'both' ? 2 : 1)} affectation(s)
+                  </span>
+                  <span className="text-[10px] text-blue-200 font-mono">
+                    (~{assignmentForm.module_ids.length * (assignmentForm.group_ids.includes('all') ? 1 : assignmentForm.group_ids.length) * (assignmentForm.session_type === 'both' ? 54 : assignmentForm.session_type === 'cm' ? 36 : 18)}h)
+                  </span>
+                </div>
+              )}
+            </div>
+
             {/* Form Actions */}
             <div className="flex items-center justify-between pt-3 border-t border-border dark:border-border">
               <span className="text-xs text-muted-foreground">
                 {assignmentForm.professor_id && assignmentForm.module_ids.length > 0 && assignmentForm.group_ids.length > 0 ? (
                   <span className="text-emerald-600 dark:text-emerald-400 font-medium">
-                    ✓ Prêt : {assignmentForm.module_ids.length} module(s) × {assignmentForm.group_ids.length} groupe(s) • Format : {assignmentForm.session_type === 'both' ? 'CM + TD' : assignmentForm.session_type.toUpperCase()}
+                    ✓ Prêt : {assignmentForm.module_ids.length} module(s) × {assignmentForm.group_ids.includes('all') ? 'Section Entière' : `${assignmentForm.group_ids.length} groupe(s)`} • Format : {assignmentForm.session_type === 'both' ? 'CM + TD' : assignmentForm.session_type.toUpperCase()}
                   </span>
                 ) : (
                   'Renseignez l\'enseignant, au moins un module et au moins un groupe pour valider.'
@@ -1432,7 +1602,7 @@ const { data: departmentsData } = useQuery({
                 <span>
                   {createAssignmentMutation.isPending
                     ? 'Enregistrement...'
-                    : `Valider l'Affectation (${assignmentForm.module_ids.length * assignmentForm.group_ids.length * (assignmentForm.session_type === 'both' ? 2 : 1)})`}
+                    : `Valider l'Affectation (${assignmentForm.module_ids.length * (assignmentForm.group_ids.includes('all') ? 1 : assignmentForm.group_ids.length) * (assignmentForm.session_type === 'both' ? 2 : 1)})`}
                 </span>
               </button>
             </div>
@@ -1535,6 +1705,61 @@ const { data: departmentsData } = useQuery({
                   <X className="w-3.5 h-3.5" />
                 </button>
               )}
+            </div>
+
+            {/* Quick Workload Status Filter Chips */}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <button
+                type="button"
+                onClick={() => setWorkloadFilter('all')}
+                className={cn(
+                  "px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer whitespace-nowrap",
+                  workloadFilter === 'all'
+                    ? "bg-[#0f2863] text-white shadow-2xs"
+                    : "bg-muted hover:bg-slate-200 dark:bg-card dark:hover:bg-slate-700 text-slate-700 dark:text-foreground"
+                )}
+              >
+                Tous ({allProfessors.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setWorkloadFilter('unassigned')}
+                className={cn(
+                  "px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1 whitespace-nowrap",
+                  workloadFilter === 'unassigned'
+                    ? "bg-slate-700 text-white shadow-2xs"
+                    : "bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
+                )}
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                0h Dispo
+              </button>
+              <button
+                type="button"
+                onClick={() => setWorkloadFilter('full')}
+                className={cn(
+                  "px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1 whitespace-nowrap",
+                  workloadFilter === 'full'
+                    ? "bg-emerald-600 text-white shadow-2xs"
+                    : "bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300"
+                )}
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                Équilibrés
+              </button>
+              <button
+                type="button"
+                onClick={() => setWorkloadFilter('overloaded')}
+                className={cn(
+                  "px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1 whitespace-nowrap",
+                  workloadFilter === 'overloaded'
+                    ? "bg-rose-600 text-white shadow-2xs"
+                    : "bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300"
+                )}
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                Surcharge
+              </button>
             </div>
 
             {/* Custom Filter Popover Dropdowns */}
@@ -1710,18 +1935,24 @@ const { data: departmentsData } = useQuery({
                             </div>
                           </td>
 
-                          {/* Modules List Preview */}
+                          {/* Modules List Preview with Direct Fast-Delete */}
                           <td className="py-3 px-4">
                             {count > 0 ? (
                               <div className="flex flex-wrap items-center gap-1.5 max-w-md">
-                                {profGroup.assignmentsList.slice(0, 2).map((a: any, i: number) => {
+                                {profGroup.assignmentsList.slice(0, 4).map((a: any, i: number) => {
                                   const semNum = a.semester_number || (a.module && a.module.match(/-S(\d+)-/i)?.[1])
+                                  const isAmphi = !a.group || a.group === 'Amphi' || a.group.toLowerCase().includes('section') || a.group_id === null
                                   return (
-                                    <span key={i} className="inline-flex items-center gap-1 px-2 py-0.5 bg-muted/50 dark:bg-card text-slate-700 dark:text-foreground rounded-md text-[11px] font-medium border border-slate-200/80 dark:border-border">
+                                    <span
+                                      key={i}
+                                      className="group/tag inline-flex items-center gap-1.5 px-2.5 py-1 bg-muted/60 dark:bg-card hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-foreground rounded-lg text-[11px] font-medium border border-slate-200/80 dark:border-border transition-all shadow-2xs"
+                                    >
                                       {semNum && (
                                         <span className={cn(
                                           "px-1 py-0.2 rounded text-[9px] font-bold font-mono",
-                                          Number(semNum) % 2 === 1 ? "bg-primary/10 text-[#0f2863] dark:bg-blue-950 dark:text-blue-300" : "bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300"
+                                          Number(semNum) % 2 === 1
+                                            ? "bg-primary/10 text-[#0f2863] dark:bg-blue-950 dark:text-blue-300"
+                                            : "bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300"
                                         )}>
                                           S{semNum}
                                         </span>
@@ -1729,30 +1960,48 @@ const { data: departmentsData } = useQuery({
                                       <span className="font-bold text-[#0f2863] dark:text-blue-400 font-mono text-[10px]">
                                         {cleanUtf8Text(a.module?.split(' ')[0] || 'MOD')}
                                       </span>
-                                      <span className="text-[10px] text-slate-400 font-normal">
-                                        ({cleanUtf8Text(a.group)})
+                                      <span className="text-[10px] text-muted-foreground font-normal">
+                                        ({isAmphi ? '🏛️ Amphi' : cleanUtf8Text(a.group)})
                                       </span>
+                                      <span className="text-[9px] px-1 rounded bg-slate-200/80 dark:bg-slate-700 text-muted-foreground uppercase font-bold">
+                                        {a.session_type || 'CM'}
+                                      </span>
+                                      {/* Quick Delete Cross Button */}
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation()
+                                          handleDeleteAssignment(a.id)
+                                        }}
+                                        className="opacity-0 group-hover/tag:opacity-100 w-3.5 h-3.5 rounded-full hover:bg-rose-500 hover:text-white text-slate-400 flex items-center justify-center transition-all cursor-pointer -mr-0.5"
+                                        title="Supprimer cette affectation"
+                                      >
+                                        <X className="w-2.5 h-2.5 stroke-[3]" />
+                                      </button>
                                     </span>
                                   )
                                 })}
 
-                                {count > 2 && (
+                                {count > 4 && (
                                   <button
                                     onClick={() => setSelectedProfForModal(profGroup)}
-                                    className="px-2 py-0.5 bg-primary/5 dark:bg-blue-950/40 text-primary dark:text-blue-300 hover:bg-primary/10 rounded-md text-[10px] font-bold cursor-pointer"
+                                    className="px-2 py-1 bg-primary/5 dark:bg-blue-950/40 text-primary dark:text-blue-300 hover:bg-primary/10 rounded-lg text-[10px] font-bold cursor-pointer transition-colors"
                                   >
-                                    +{count - 2} autres
+                                    +{count - 4} autres
                                   </button>
                                 )}
                               </div>
                             ) : (
-                              <span className="text-slate-400 italic text-[11px]">Disponible (0h / 18h)</span>
+                              <span className="text-slate-400 italic text-[11px] flex items-center gap-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-600 inline-block" />
+                                Disponible (0h / 18h statutaires)
+                              </span>
                             )}
                           </td>
 
                           {/* Actions */}
                           <td className="py-3 px-4 text-right">
-                            <div className="inline-flex items-center gap-1.5 justify-end">
+                            <div className="inline-flex items-center gap-1 justify-end">
                               {count > 0 ? (
                                 <>
                                   <button
@@ -1766,7 +2015,7 @@ const { data: departmentsData } = useQuery({
                                   <button
                                     onClick={() => handlePrintOrdreDeService(profGroup)}
                                     className="p-1.5 text-muted-foreground hover:text-primary dark:text-foreground dark:hover:text-blue-400 bg-muted hover:bg-slate-200 dark:bg-card dark:hover:bg-slate-700 rounded-lg transition-colors cursor-pointer"
-                                    title="Imprimer l'Ordre de Service (A4 PDF)"
+                                    title="Télécharger l'Ordre de Service Officiel (PDF)"
                                   >
                                     <Printer className="w-3.5 h-3.5" />
                                   </button>
@@ -1774,9 +2023,24 @@ const { data: departmentsData } = useQuery({
                                   <button
                                     onClick={() => handleSendNotificationEmail(profGroup)}
                                     className="p-1.5 text-muted-foreground hover:text-primary dark:text-foreground dark:hover:text-blue-400 bg-muted hover:bg-slate-200 dark:bg-card dark:hover:bg-slate-700 rounded-lg transition-colors cursor-pointer"
-                                    title="Notifier l'enseignant par email officiel"
+                                    title="Notifier l'enseignant par email officiel (Resend)"
                                   >
                                     <Mail className="w-3.5 h-3.5" />
+                                  </button>
+
+                                  <button
+                                    onClick={() => {
+                                      setAssignmentForm(prev => ({
+                                        ...prev,
+                                        department_id: profGroup.departmentId ? String(profGroup.departmentId) : prev.department_id,
+                                        professor_id: String(profGroup.profId)
+                                      }))
+                                      window.scrollTo({ top: 320, behavior: 'smooth' })
+                                    }}
+                                    className="p-1.5 text-primary hover:bg-primary/10 dark:text-blue-400 dark:hover:bg-blue-950/40 rounded-lg transition-colors cursor-pointer"
+                                    title="Ajouter un autre module à cet enseignant"
+                                  >
+                                    <Plus className="w-3.5 h-3.5" />
                                   </button>
                                 </>
                               ) : (
@@ -1787,11 +2051,11 @@ const { data: departmentsData } = useQuery({
                                       department_id: profGroup.departmentId ? String(profGroup.departmentId) : prev.department_id,
                                       professor_id: String(profGroup.profId)
                                     }))
-                                    window.scrollTo({ top: 300, behavior: 'smooth' })
+                                    window.scrollTo({ top: 320, behavior: 'smooth' })
                                   }}
-                                  className="px-2.5 py-1 bg-primary/5 hover:bg-primary/10 dark:bg-indigo-950/40 dark:hover:bg-indigo-900/60 text-primary dark:text-indigo-300 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer"
+                                  className="px-3 py-1.5 bg-gradient-to-r from-[#0f2863] to-blue-700 hover:from-[#1a3a8a] hover:to-blue-800 text-white rounded-lg text-[11px] font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
                                 >
-                                  <Plus className="w-3 h-3" />
+                                  <Plus className="w-3 h-3 text-emerald-400" />
                                   <span>Affecter</span>
                                 </button>
                               )}
