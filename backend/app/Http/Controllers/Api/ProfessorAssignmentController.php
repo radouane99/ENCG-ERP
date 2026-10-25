@@ -17,23 +17,26 @@ use Illuminate\Support\Str;
 
 class ProfessorAssignmentController extends Controller
 {
+    public function carryForward(Request $request): JsonResponse
+    {
+        $validated = $request->validate(['source_year_id' => 'required|integer', 'apply' => 'sometimes|boolean']);
+        return response()->json(['success' => true, 'data' => app(\App\Actions\Academic\CarryForwardProfessorAssignmentsAction::class)->execute($validated['source_year_id'], $validated['apply'] ?? false)]);
+    }
     /**
      * Liste des affectations.
      */
     public function index(Request $request): JsonResponse
     {
-        $currentYear = AcademicYear::where('is_current', true)->first() ?? AcademicYear::latest('start_year')->first();
+        $currentYear = AcademicYear::where('institution_id', $request->user()->institution_id)->find(\App\Services\Academic\AcademicContext::yearId());
 
         if (! $currentYear) {
             return response()->json(['success' => true, 'data' => []]);
         }
 
         $query = ModuleProfessor::with(['professor.user', 'professor.department', 'module', 'group'])
-            ->where(function ($q) use ($currentYear) {
-                $q->where('academic_year_id', $currentYear->id)
-                    ->orWhereNull('academic_year_id');
-            });
-
+            ->where('academic_year_id', $currentYear->id)
+            ->whereHas('module', fn ($q) => $q->where('institution_id', $request->user()->institution_id))
+            ->whereHas('professor', fn ($q) => $q->where('institution_id', $request->user()->institution_id));
         // Filtrage optionnel par période semestrielle
         if ($request->filled('semester_period') && $request->semester_period !== 'all') {
             $period = $request->semester_period;
@@ -89,6 +92,7 @@ class ProfessorAssignmentController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        return DB::transaction(function () use ($request) {
         $validated = $request->validate([
             'professor_id' => 'required',
             'module_id' => 'nullable',
@@ -99,7 +103,7 @@ class ProfessorAssignmentController extends Controller
             'assigned_hours' => 'nullable|integer|min:1|max:1000',
         ]);
 
-        $currentYear = AcademicYear::where('is_current', true)->first() ?? AcademicYear::latest('start_year')->first();
+        $currentYear = AcademicYear::where('institution_id', $request->user()->institution_id)->find(\App\Services\Academic\AcademicContext::yearId());
         if (! $currentYear) {
             return response()->json(['success' => false, 'message' => 'Aucune année universitaire en cours.'], 400);
         }
@@ -198,6 +202,7 @@ class ProfessorAssignmentController extends Controller
                 : ($createdCount === 1 ? 'Affectation ajoutée avec succès.' : 'Les affectations sélectionnées existent déjà.'),
             'data' => ['created_count' => $createdCount],
         ]);
+        });
     }
 
     /**
@@ -205,7 +210,8 @@ class ProfessorAssignmentController extends Controller
      */
     public function destroy(Request $request, int $id): JsonResponse
     {
-        $deleted = ModuleProfessor::where('id', $id)->delete();
+        $year = AcademicYear::where('institution_id', $request->user()->institution_id)->findOrFail(\App\Services\Academic\AcademicContext::yearId()); abort_if($year->is_locked, 409, 'Année verrouillée.');
+        $deleted = ModuleProfessor::where('id', $id)->where('academic_year_id', $year->id)->whereHas('module', fn ($q) => $q->where('institution_id', $request->user()->institution_id))->delete();
 
         if (! $deleted) {
             return response()->json(['success' => false, 'message' => 'Affectation non trouvée.'], 404);
@@ -222,10 +228,11 @@ class ProfessorAssignmentController extends Controller
      */
     public function unassignAll(Request $request): JsonResponse
     {
-        $currentYear = AcademicYear::where('is_current', true)->first() ?? AcademicYear::latest('start_year')->first();
+        $currentYear = AcademicYear::where('institution_id', $request->user()->institution_id)->find(\App\Services\Academic\AcademicContext::yearId());
         $semesterPeriod = $request->input('semester_period', 'all');
 
-        $query = ModuleProfessor::query();
+        abort_unless($currentYear, 422, 'Année requise.'); abort_if($currentYear->is_locked, 409, 'Année verrouillée.');
+        $query = ModuleProfessor::where('academic_year_id', $currentYear->id)->whereHas('module', fn ($q) => $q->where('institution_id', $request->user()->institution_id));
         if ($currentYear) {
             $query->where(function ($q) use ($currentYear) {
                 $q->where('academic_year_id', $currentYear->id)
@@ -271,9 +278,11 @@ class ProfessorAssignmentController extends Controller
             ? (int) $validated['professor_id']
             : (Str::isUuid($validated['professor_id']) ? Professor::where('uuid', $validated['professor_id'])->value('id') : null);
 
-        $currentYear = AcademicYear::where('is_current', true)->first() ?? AcademicYear::latest('start_year')->first();
+        $currentYear = AcademicYear::where('institution_id', $request->user()->institution_id)->find(\App\Services\Academic\AcademicContext::yearId());
 
-        $query = ModuleProfessor::where('professor_id', $profId);
+        Professor::where('institution_id', $request->user()->institution_id)->findOrFail($profId);
+        abort_unless($currentYear, 422, 'Année requise.'); abort_if($currentYear->is_locked, 409, 'Année verrouillée.');
+        $query = ModuleProfessor::where('professor_id', $profId)->where('academic_year_id', $currentYear->id)->whereHas('module', fn ($q) => $q->where('institution_id', $request->user()->institution_id));
         if ($currentYear) {
             $query->where(function ($q) use ($currentYear) {
                 $q->where('academic_year_id', $currentYear->id)
@@ -297,67 +306,21 @@ class ProfessorAssignmentController extends Controller
      */
     public function autoDistribute(Request $request): JsonResponse
     {
-        $currentYear = AcademicYear::where('is_current', true)->first() ?? AcademicYear::latest('start_year')->first();
+        return DB::transaction(function () use ($request) {
+        $currentYear = AcademicYear::where('institution_id', $request->user()->institution_id)->find(\App\Services\Academic\AcademicContext::yearId());
 
         if (! $currentYear) {
             return response()->json(['success' => false, 'message' => 'Aucune année universitaire active trouvée.'], 400);
         }
+        $currentYear = AcademicYear::whereKey($currentYear->id)->lockForUpdate()->firstOrFail();
+        abort_if($currentYear->is_locked, 409, 'Année universitaire verrouillée.');
+        $professors = Professor::with(['user', 'department'])->where('institution_id', $request->user()->institution_id)->where('is_active', true)->get();
+        abort_if($professors->isEmpty(), 422, 'Aucun enseignant actif.');
 
         $semesterPeriod = $request->input('semester_period', 'all');
 
-        // 1. Récupérer l'intégralité des 18 enseignants avec leurs départements et spécialités
-        $professors = Professor::with(['user', 'department'])
-            ->where('is_active', true)
-            ->get();
-
-        if ($professors->isEmpty()) {
-            $professors = Professor::with(['user', 'department'])->get();
-        }
-
-        if ($professors->isEmpty()) {
-            return response()->json(['success' => false, 'message' => 'Aucun enseignant trouvé dans le corps professoral.'], 400);
-        }
-
-        // Auto-provision des modules S6 (GFC-S6 et MCM-S6) pour que le Semestre de Printemps contienne l'intégralité du cycle (21 modules = 42 charges comme l'Automne)
-        if ($semesterPeriod === 'even' || $semesterPeriod === 'spring' || $semesterPeriod === 'all') {
-            $hasS6 = Module::where('semester_number', 6)->exists();
-            if (! $hasS6) {
-                $inst = Institution::first();
-                $gfc = Filiere::where('code', 'GFC')->first();
-                $mcm = Filiere::where('code', 'MCM')->first();
-                if ($inst && $gfc) {
-                    $gfcS6 = [
-                        ['name' => 'Audit & Contrôle de Gestion', 'code' => 'GFC-S6-M01', 'semester_number' => 6, 'coefficient' => 3],
-                        ['name' => 'Marchés des Capitaux & Instruments Financiers', 'code' => 'GFC-S6-M02', 'semester_number' => 6, 'coefficient' => 3],
-                        ['name' => 'Comptabilité IFRS & Normes Internationales', 'code' => 'GFC-S6-M03', 'semester_number' => 6, 'coefficient' => 3],
-                        ['name' => 'Droit Fiscal & Contentieux des Affaires', 'code' => 'GFC-S6-M04', 'semester_number' => 6, 'coefficient' => 2],
-                        ['name' => 'Systèmes d\'Information Comptables (ERP Finance)', 'code' => 'GFC-S6-M05', 'semester_number' => 6, 'coefficient' => 2],
-                        ['name' => 'Économétrie Appliquée à la Finance', 'code' => 'GFC-S6-M06', 'semester_number' => 6, 'coefficient' => 2],
-                        ['name' => 'Anglais Financier & Communication', 'code' => 'GFC-S6-M07', 'semester_number' => 6, 'coefficient' => 1],
-                    ];
-                    foreach ($gfcS6 as $m) {
-                        Module::firstOrCreate(['code' => $m['code']], array_merge($m, ['institution_id' => $inst->id, 'filiere_id' => $gfc->id, 'is_active' => true]));
-                    }
-                }
-                if ($inst && $mcm) {
-                    $mcmS6 = [
-                        ['name' => 'Marketing Digital & E-Commerce', 'code' => 'MCM-S6-M01', 'semester_number' => 6, 'coefficient' => 3],
-                        ['name' => 'Gestion de la Relation Client (CRM)', 'code' => 'MCM-S6-M02', 'semester_number' => 6, 'coefficient' => 3],
-                        ['name' => 'Négociation & Stratégie Commerciale', 'code' => 'MCM-S6-M03', 'semester_number' => 6, 'coefficient' => 3],
-                        ['name' => 'Droit de la Consommation & Concurrence', 'code' => 'MCM-S6-M04', 'semester_number' => 6, 'coefficient' => 2],
-                        ['name' => 'Data Analytics & BI Marketing', 'code' => 'MCM-S6-M05', 'semester_number' => 6, 'coefficient' => 2],
-                        ['name' => 'Économie Internationale & Commerce', 'code' => 'MCM-S6-M06', 'semester_number' => 6, 'coefficient' => 2],
-                        ['name' => 'Communication & Négociation Anglais', 'code' => 'MCM-S6-M07', 'semester_number' => 6, 'coefficient' => 1],
-                    ];
-                    foreach ($mcmS6 as $m) {
-                        Module::firstOrCreate(['code' => $m['code']], array_merge($m, ['institution_id' => $inst->id, 'filiere_id' => $mcm->id, 'is_active' => true]));
-                    }
-                }
-            }
-        }
-
         // 2. Récupérer les modules filtrés selon la période semestrielle choisie (Automne S1/S3/S5/S7/S9 vs Printemps S2/S4/S6/S8/S10 vs Annuel)
-        $modulesQuery = Module::with(['filiere.department']);
+        $modulesQuery = Module::with(['filiere.department'])->where('institution_id', $request->user()->institution_id)->whereNotIn('id', ModuleProfessor::where('academic_year_id', $currentYear->id)->select('module_id'));
         if ($semesterPeriod === 'odd' || $semesterPeriod === 'autumn' || $semesterPeriod === 's1') {
             $modulesQuery->whereIn('semester_number', [1, 3, 5, 7, 9]);
         } elseif ($semesterPeriod === 'even' || $semesterPeriod === 'spring' || $semesterPeriod === 's2') {
@@ -367,7 +330,7 @@ class ProfessorAssignmentController extends Controller
         }
 
         $modules = $modulesQuery->get();
-        $groups = Group::all();
+        $groups = Group::where('academic_year_id', $currentYear->id)->whereIn('filiere_id', $modules->pluck('filiere_id'))->get();
 
         if ($modules->isEmpty()) {
             return response()->json(['success' => false, 'message' => 'Aucun module disponible pour la période semestrielle sélectionnée.'], 400);
@@ -377,10 +340,6 @@ class ProfessorAssignmentController extends Controller
 
         // 3. Réinitialisation ciblée des affectations des modules concernés
         DB::transaction(function () use ($currentYear, $professors, $modules, $groups, $targetModuleIds) {
-            ModuleProfessor::where('academic_year_id', $currentYear->id)
-                ->whereIn('module_id', $targetModuleIds)
-                ->delete();
-
             // Structure de suivi des charges par enseignant
             $profLoads = [];
             foreach ($professors as $p) {
@@ -475,11 +434,13 @@ class ProfessorAssignmentController extends Controller
             // On affecte donc 1 charge par Module, qui s'applique à tous les groupes de la filière.
             $chargeSlots = [];
             foreach ($modules as $mod) {
-                $modGroups = $groups->where('filiere_id', $mod->filiere_id)->values();
+                if (!$mod->credit_hours || $mod->credit_hours <= 0) continue;
+                $modGroups = $groups->where('filiere_id', $mod->filiere_id)->where('semester_number', $mod->semester_number)->values();
+                if ($modGroups->isEmpty()) continue;
                 $chargeSlots[] = [
                     'module' => $mod,
                     'groups' => $modGroups,
-                    'hours' => 36,
+                    'hours' => (int) $mod->credit_hours,
                     'type' => 'cm',
                 ];
             }
@@ -597,6 +558,7 @@ class ProfessorAssignmentController extends Controller
 
                 // Trouver un module transférable du prof surchargé vers le prof sous-chargé
                 $transferable = ModuleProfessor::where('academic_year_id', $currentYear->id)
+                    ->whereIn('module_id', $targetModuleIds)
                     ->where('professor_id', $overloadedProfId)
                     ->get()
                     ->first(function ($item) use ($underloadedProfId, $assignedProfessorsByModule) {
@@ -614,9 +576,9 @@ class ProfessorAssignmentController extends Controller
                     $assignedProfessorsByModule[$modId][] = $underloadedProfId;
 
                     $profLoads[$overloadedProfId]['assigned_count'] -= 1;
-                    $profLoads[$overloadedProfId]['total_hours'] -= 36;
+                    $profLoads[$overloadedProfId]['total_hours'] -= $transferable->assigned_hours;
                     $profLoads[$underloadedProfId]['assigned_count'] += 1;
-                    $profLoads[$underloadedProfId]['total_hours'] += 36;
+                    $profLoads[$underloadedProfId]['total_hours'] += $transferable->assigned_hours;
                 } else {
                     break;
                 }
@@ -625,10 +587,11 @@ class ProfessorAssignmentController extends Controller
 
         // Statistiques globales de répartition
         $allAssignedProfs = ModuleProfessor::where('academic_year_id', $currentYear->id)
+            ->whereHas('module', fn ($q) => $q->where('institution_id', $request->user()->institution_id))
             ->distinct('professor_id')
             ->count('professor_id');
 
-        $totalAssignmentsCount = ModuleProfessor::where('academic_year_id', $currentYear->id)->count();
+        $totalAssignmentsCount = ModuleProfessor::where('academic_year_id', $currentYear->id)->whereHas('module', fn ($q) => $q->where('institution_id', $request->user()->institution_id))->count();
 
         return response()->json([
             'success' => true,
@@ -640,5 +603,6 @@ class ProfessorAssignmentController extends Controller
                 'academic_year' => $currentYear->label ?? '2026/2027',
             ],
         ]);
+        });
     }
 }

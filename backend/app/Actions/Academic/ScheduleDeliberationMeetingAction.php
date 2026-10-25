@@ -15,7 +15,7 @@ class ScheduleDeliberationMeetingAction
         $context = app(PvWorkflowContext::class)->resolve($request);
         $data = $request->validate(['room_id' => 'required|integer', 'starts_at' => 'required|date|after:now', 'duration_minutes' => 'required|integer|between:30,480', 'president_id' => 'required|integer', 'member_ids' => 'present|array|max:50', 'member_ids.*' => 'integer|distinct', 'version' => 'required|integer|min:0']);
         $ids = collect($data['member_ids'])->push($data['president_id'])->unique()->values();
-        $members = User::whereIn('id', $ids)->where('institution_id', $request->user()->institution_id)->where('is_active', true)->whereHas('roles', fn ($q) => $q->whereIn('name', ['professor', 'vacataire', 'department-head', 'filiere-head', 'director', 'admin', 'super-admin', 'institution-admin']))->get();
+        $members = User::with('professor')->whereIn('id', $ids)->where('institution_id', $request->user()->institution_id)->where('is_active', true)->whereHas('roles', fn ($q) => $q->whereIn('name', ['professor', 'vacataire', 'department-head', 'filiere-head', 'director', 'admin', 'super-admin', 'institution-admin']))->get();
         abort_unless($members->count() === $ids->count(), 422, 'Les membres doivent être des utilisateurs actifs habilités de votre établissement.');
         return DB::transaction(function () use ($request, $context, $data, $members) {
             $year = AcademicYear::whereKey($context['year']->id)->lockForUpdate()->firstOrFail(); abort_if($year->is_locked, 409, 'Année verrouillée.');
@@ -31,6 +31,7 @@ class ScheduleDeliberationMeetingAction
             $localStart = $start->copy()->setTimezone('Africa/Casablanca'); $localEnd = $end->copy()->setTimezone('Africa/Casablanca');
             abort_unless($start->toDateString() >= $year->start_date->toDateString() && $end->toDateString() <= $year->end_date->toDateString() && $start->isSameDay($end), 422, 'La réunion doit appartenir à l’année choisie et tenir dans une journée.');
             abort_if(app(\App\Services\Academic\TimetableRoomGuard::class)->isRoomBusyAt((string) $room->id, $localStart, $localEnd), 409, 'Salle indisponible : cours, réservation ou fermeture sur cette plage.');
+            foreach ($members as $member) if ($member->professor) abort_if(app(\App\Services\Academic\TimetableRoomGuard::class)->isProfessorBusyAt($member->professor->id, $localStart, $localEnd), 409, 'Un membre du jury a un enseignement sur cette plage.');
             abort_if(DB::table('deliberation_meetings')->where('deliberation_id', '!=', $deliberation->id)->where('starts_at', '<', $end)->where('ends_at', '>', $start)->where(fn ($q) => $q->where('room_id', $room->id)->orWhereIn('deliberation_id', DB::table('deliberation_members')->whereIn('user_id', $members->pluck('id'))->select('deliberation_id')))->exists(), 409, 'Salle ou membre du jury déjà réservé sur cette plage.');
             DB::table('deliberation_meetings')->updateOrInsert(['deliberation_id' => $deliberation->id], ['room_id' => $room->id, 'starts_at' => $start, 'ends_at' => $end, 'version' => ($current->version ?? 0) + 1, 'created_at' => $current->created_at ?? now(), 'updated_at' => now()]);
             $deliberation->update(['president_id' => $data['president_id'], 'deliberation_date' => $start->toDateString()]);

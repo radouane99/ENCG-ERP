@@ -1,4 +1,5 @@
 import { assignmentSuggestions } from '../model/assignmentSuggestions'
+import AssignmentCarryForwardPanel from '../components/AssignmentCarryForwardPanel'
 import React,{ useState,useEffect,useMemo,useRef } from 'react'
 import {
 Calendar,Download,Upload,Trash2,Plus,CalendarDays,FileText,X,Sparkles,BookOpen,Users,Layers,Search,GraduationCap,Check,Copy,Mail,Printer,Zap,BarChart2,Eye,ChevronDown,Building2,AlertTriangle,
@@ -265,9 +266,9 @@ function CustomMultiSelect({
             {icon}
           </div>
           <span className="truncate">
-            {values.length === 0 
-              ? placeholder 
-              : values.length === 1 
+            {values.length === 0
+              ? placeholder
+              : values.length === 1
                 ? (options.find(o => String(o.value) === String(values[0]))?.label || `${values.length} sélectionné`)
                 : `${values.length} éléments sélectionnés`}
           </span>
@@ -406,8 +407,8 @@ function FilterDropdown({
   const filteredOptions = useMemo(() => {
     if (!searchTerm) return options
     const q = searchTerm.toLowerCase()
-    return options.filter(o => 
-      o.label.toLowerCase().includes(q) || 
+    return options.filter(o =>
+      o.label.toLowerCase().includes(q) ||
       (o.sublabel && o.sublabel.toLowerCase().includes(q))
     )
   }, [options, searchTerm])
@@ -445,7 +446,7 @@ function FilterDropdown({
             {selectedOption ? selectedOption.label : label}
           </span>
         </div>
-        
+
         <ChevronDown className={cn(
           "w-3.5 h-3.5 shrink-0 text-slate-400 transition-transform duration-200",
           isOpen ? "rotate-180 text-indigo-600 dark:text-indigo-400" : ""
@@ -609,8 +610,8 @@ export default function AcademicYearSettingsPage() {
 
   const departments = departmentsData?.data || []
   const allProfessors = professorsData?.data || []
-  const professors = assignmentForm.department_id 
-    ? allProfessors.filter((p: any) => p.department_id == assignmentForm.department_id) 
+  const professors = assignmentForm.department_id
+    ? allProfessors.filter((p: any) => p.department_id == assignmentForm.department_id)
     : allProfessors
   const modules = modulesData?.data || []
   const groups = groupsData?.data || []
@@ -736,17 +737,17 @@ export default function AcademicYearSettingsPage() {
                             (profGroup.specialty || '').toLowerCase().includes(searchLower) ||
                             (profGroup.departmentName || '').toLowerCase().includes(searchLower) ||
                             profGroup.assignmentsList.some((a: any) => (a.module || '').toLowerCase().includes(searchLower) || (a.group || '').toLowerCase().includes(searchLower))
-      
-      const matchesDept = selectedDeptFilter === 'all' || 
-                          profGroup.departmentId == selectedDeptFilter || 
+
+      const matchesDept = selectedDeptFilter === 'all' ||
+                          profGroup.departmentId == selectedDeptFilter ||
                           profGroup.assignmentsList.some((a: any) => a.department_id == selectedDeptFilter)
 
-      const matchesModule = selectedModuleFilter === 'all' || 
+      const matchesModule = selectedModuleFilter === 'all' ||
                             profGroup.assignmentsList.some((a: any) => (a.module || '').toLowerCase().includes(selectedModuleFilter.toLowerCase()) || a.module_id == selectedModuleFilter)
 
       const count = profGroup.assignmentsList.length
       const weeklyHours = count * 4
-      const matchesWorkload = 
+      const matchesWorkload =
         workloadFilter === 'all' ||
         (workloadFilter === 'unassigned' && count === 0) ||
         (workloadFilter === 'available' && count > 0 && weeklyHours < 14) ||
@@ -770,10 +771,10 @@ export default function AcademicYearSettingsPage() {
 
   // Mutations
   const autoDistributeMutation = useMutation({
-    mutationFn: (variables: { reset: boolean; semester_period?: string }) => 
-      api.post('/professor-assignments/auto-distribute', { 
+    mutationFn: (variables: { reset: boolean; semester_period?: string }) =>
+      api.post('/professor-assignments/auto-distribute', {
         reset: variables.reset,
-        semester_period: variables.semester_period || distributeSemesterPeriod 
+        semester_period: variables.semester_period || distributeSemesterPeriod
       }),
     onSuccess: (res: any) => {
       toast.success(res.data?.message || '🎉 Répartition automatique optimisée avec succès !')
@@ -787,9 +788,9 @@ export default function AcademicYearSettingsPage() {
 
   // 🗑️ Remise à Zéro Totale de Toutes les Affectations (avec support du semestre)
   const unassignAllMutation = useMutation({
-    mutationFn: (variables?: { semester_period?: string }) => 
-      api.post('/professor-assignments/unassign-all', { 
-        semester_period: variables?.semester_period || selectedSemesterPeriod 
+    mutationFn: (variables?: { semester_period?: string }) =>
+      api.post('/professor-assignments/unassign-all', {
+        semester_period: variables?.semester_period || selectedSemesterPeriod
       }),
     onSuccess: (res: any) => {
       toast.success(res.data?.message || '🗑️ Affectations remises à zéro avec succès !')
@@ -839,7 +840,7 @@ export default function AcademicYearSettingsPage() {
       const errorsObj = err.response?.data?.errors
       const firstError = errorsObj ? Object.values(errorsObj).flat()[0] as string : null
       const rawMsg = firstError || err.response?.data?.message || 'Erreur lors de la création de l\'année'
-      
+
       const cleanMsg = rawMsg.includes('gt.numeric') || rawMsg.includes('gt')
         ? "⚠️ L'année de fin doit être strictement supérieure à l'année de début (ex: 2026/2027)."
         : rawMsg
@@ -858,7 +859,7 @@ export default function AcademicYearSettingsPage() {
   })
 
   const updateSessionMutation = useMutation({
-    mutationFn: (data: {id: number, name: string, type: string, start_date: string, end_date: string}) => 
+    mutationFn: (data: {id: number, name: string, type: string, start_date: string, end_date: string}) =>
       academicApi.updateExamSession(data.id, { name: data.name, type: data.type, start_date: data.start_date, end_date: data.end_date }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['exam-sessions'] })
@@ -911,7 +912,7 @@ export default function AcademicYearSettingsPage() {
 
   const handleSaveSessions = async () => {
     try {
-      const promises = Object.entries(sessionDates).map(([id, dates]) => 
+      const promises = Object.entries(sessionDates).map(([id, dates]) =>
         updateSessionMutation.mutateAsync({ id: Number(id), ...dates })
       )
       await Promise.all(promises)
@@ -964,38 +965,16 @@ export default function AcademicYearSettingsPage() {
     })
   }
 
-  const handleDuplicatePreviousYearAssignments = async () => {
-    if (!confirm('Reconduire automatiquement toutes les affectations de l\'année N-1 vers 2026/2027 ?')) return
-    const toastId = toast.loading('🔄 Reconduite automatique des affectations de l\'année N-1 en cours...')
-    await new Promise(r => setTimeout(r, 1200))
-    toast.success('✨ 48 Affectations reconduites avec succès pour l\'Année Académique 2026/2027 !', { id: toastId })
-    queryClient.invalidateQueries({ queryKey: ['professor-assignments'] })
-  }
-
-  const handleExportBatchZip = async () => {
-    const toastId = toast.loading('📦 Compilation du lot ZIP (Ordres de Service PDF + Bilan Excel RH)...')
-    await new Promise(r => setTimeout(r, 1500))
-    toast.success('📦 Lot ZIP exporté avec succès (Ordres_De_Service_Complet_2026_2027.zip) !', { id: toastId })
-    openAuthenticatedUrl('/api/v1/admin/professor-assignments/ordre-de-service-pdf?scope=default')
-  }
-
-  const handleBatchRelanceProfessors = async () => {
-    const toastId = toast.loading('🔔 Relance automatique par email certifié des enseignants non-notifiés...')
-    await new Promise(r => setTimeout(r, 1200))
-    toast.success('🔔 Relance effectuée avec succès auprès de 5 enseignants !', { id: toastId })
-  }
-
   const handleSendNotificationEmail = async (profGroup: any) => {
     const profName = profGroup?.profName || ''
     const profId = profGroup?.profId || ''
     const firstAssignment = profGroup?.assignmentsList?.[0]
-    const profEmail = firstAssignment?.professor?.user?.email 
-      || firstAssignment?.prof_email 
-      || (profName.toLowerCase().includes('abdelhak') ? 'radouane.asri1996@gmail.com' : '')
+    const profEmail = firstAssignment?.professor?.user?.email
+      || firstAssignment?.prof_email
 
     const toastId = toast.loading(`📧 Expédition de l'email certifié (Resend) à ${profEmail || profName}...`)
     try {
-      const res = await api.post('/professor-assignments/notify', { 
+      const res = await api.post('/professor-assignments/notify', {
         prof_id: profId,
         prof_name: profName,
         email: profEmail
@@ -1034,13 +1013,13 @@ export default function AcademicYearSettingsPage() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto p-4 sm:p-6 pb-24">
-      
+
       {/* ─── 🏛️ INSTITUTIONAL HERO BANNER ────────────────────────────────────────── */}
       <div className="relative overflow-hidden bg-gradient-to-br from-[#0a1b44] via-[#0f2863] to-[#1e3a8a] text-white p-6 sm:p-8 rounded-3xl shadow-xl border border-blue-900/30 print:hidden">
         {/* Subtle background glow */}
         <div className="absolute -right-16 -top-16 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute right-1/3 -bottom-20 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-        
+
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           {/* Title & Badge */}
           <div className="space-y-3 max-w-2xl">
@@ -1048,11 +1027,11 @@ export default function AcademicYearSettingsPage() {
               <GraduationCap className="w-3.5 h-3.5 text-amber-300" />
               <span>Pilotage Académique & Affectations • ENCG Fès</span>
             </div>
-            
+
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white leading-tight">
               Années Universitaires & Affectations
             </h1>
-            
+
             <p className="text-xs sm:text-sm text-blue-100/80 leading-relaxed">
               Gestion du calendrier académique, répartition équilibrée des charges d'enseignement par département et planification des examens.
             </p>
@@ -1060,7 +1039,7 @@ export default function AcademicYearSettingsPage() {
 
           {/* Action Toolbar */}
           <div className="flex flex-wrap items-center gap-2.5 lg:justify-end">
-            <button 
+            <button
               onClick={() => setShowResetDistributeModal(true)}
               className="px-3.5 py-2 bg-gradient-to-r from-indigo-500 via-blue-600 to-[#0f2863] hover:from-indigo-600 hover:to-blue-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-md hover:shadow-indigo-500/20 cursor-pointer border border-indigo-300/40"
               title="Répartition automatique équitable par spécialité, département et statutaire (18h)"
@@ -1070,7 +1049,7 @@ export default function AcademicYearSettingsPage() {
             </button>
 
             {/* 🔴 TOTAL RESET BUTTON (MISE À ZÉRO) */}
-            <button 
+            <button
               onClick={() => setShowUnassignAllModal(true)}
               className="px-3.5 py-2 bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 hover:text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2 border border-rose-400/30 backdrop-blur-md cursor-pointer"
               title="Mise à zéro complète de toutes les affectations de l'année pour repartir à zéro"
@@ -1079,25 +1058,11 @@ export default function AcademicYearSettingsPage() {
               <span>Mise à Zéro (0h)</span>
             </button>
 
-            <button 
-              onClick={handleDuplicatePreviousYearAssignments}
-              className="px-3.5 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2 border border-white/15 backdrop-blur-md cursor-pointer"
-              title="Reconduire toutes les affectations de N-1"
-            >
-              <Copy className="w-3.5 h-3.5 text-blue-300" />
-              <span>Reconduire N-1</span>
-            </button>
 
-            <button 
-              onClick={handleExportBatchZip}
-              className="px-3.5 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2 border border-white/15 backdrop-blur-md cursor-pointer"
-              title="Exporter tous les Ordres de Service A4 en ZIP + Bilan RH"
-            >
-              <Download className="w-3.5 h-3.5 text-amber-300" />
-              <span>Exporter ZIP</span>
-            </button>
 
-            <button 
+
+
+            <button
               onClick={() => setShowImportModal(true)}
               className="px-3.5 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2 border border-white/15 backdrop-blur-md cursor-pointer"
               title="Importer un fichier Excel/CSV d'affectations"
@@ -1106,7 +1071,7 @@ export default function AcademicYearSettingsPage() {
               <span>Importer</span>
             </button>
 
-            <button 
+            <button
               onClick={handleAiAutoMatching}
               className="p-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-all border border-white/15 backdrop-blur-md cursor-pointer"
               title="Suggestions IA prédictives ciblées"
@@ -1172,6 +1137,7 @@ export default function AcademicYearSettingsPage() {
         </div>
       </div>
 
+      {activeTab === 'affectations' && <AssignmentCarryForwardPanel years={years} />}
       {/* ─── 🧭 CLEAN TAB NAVIGATION ────────────────────────────────────────── */}
       <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3 print:hidden">
         <div className="inline-flex p-1 bg-slate-100 dark:bg-slate-800/80 rounded-2xl border border-slate-200/60 dark:border-slate-700/60">
@@ -1188,7 +1154,7 @@ export default function AcademicYearSettingsPage() {
             <span>Affectations Enseignants</span>
             <span className={cn(
               "px-2 py-0.5 rounded-full text-[10px] font-black",
-              activeTab === 'affectations' 
+              activeTab === 'affectations'
                 ? "bg-blue-100 text-[#0f2863] dark:bg-blue-950 dark:text-blue-300"
                 : "bg-slate-200/70 text-slate-600 dark:bg-slate-700 dark:text-slate-300"
             )}>
@@ -1209,7 +1175,7 @@ export default function AcademicYearSettingsPage() {
             <span>Sessions & Examens</span>
             <span className={cn(
               "px-2 py-0.5 rounded-full text-[10px] font-black",
-              activeTab === 'sessions' 
+              activeTab === 'sessions'
                 ? "bg-blue-100 text-[#0f2863] dark:bg-blue-950 dark:text-blue-300"
                 : "bg-slate-200/70 text-slate-600 dark:bg-slate-700 dark:text-slate-300"
             )}>
@@ -1230,7 +1196,7 @@ export default function AcademicYearSettingsPage() {
             <span>Années & Semestres</span>
             <span className={cn(
               "px-2 py-0.5 rounded-full text-[10px] font-black",
-              activeTab === 'annees' 
+              activeTab === 'annees'
                 ? "bg-blue-100 text-[#0f2863] dark:bg-blue-950 dark:text-blue-300"
                 : "bg-slate-200/70 text-slate-600 dark:bg-slate-700 dark:text-slate-300"
             )}>
@@ -1265,7 +1231,7 @@ export default function AcademicYearSettingsPage() {
       {/* ─── TAB 1: AFFECTATIONS DES PROFESSEURS ──────────────────────────── */}
       {activeTab === 'affectations' && (
         <div className="space-y-6 print:hidden">
-          
+
           {/* Quick Assignment Creator Form Card */}
           <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xs space-y-5">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4 gap-3">
@@ -1309,8 +1275,8 @@ export default function AcademicYearSettingsPage() {
                 placeholder="Tous les départements"
                 value={assignmentForm.department_id}
                 onChange={(val) => {
-                  setAssignmentForm(prev => ({ 
-                    ...prev, 
+                  setAssignmentForm(prev => ({
+                    ...prev,
                     department_id: val,
                     professor_id: ''
                   }))
@@ -1339,8 +1305,8 @@ export default function AcademicYearSettingsPage() {
                   ...professors
                     .filter((p: any) => !assignmentForm.department_id || String(p.department_id) === String(assignmentForm.department_id))
                     .map((p: any) => {
-                      const displayName = (p.first_name || p.last_name) 
-                        ? `${p.first_name || ''} ${p.last_name || ''}`.trim() 
+                      const displayName = (p.first_name || p.last_name)
+                        ? `${p.first_name || ''} ${p.last_name || ''}`.trim()
                         : `Professeur #${p.id}`
                       return {
                         value: String(p.id),
@@ -1478,15 +1444,15 @@ export default function AcademicYearSettingsPage() {
                 )}
               </span>
 
-              <button 
+              <button
                 onClick={handleCreateAssignment}
                 disabled={createAssignmentMutation.isPending || !assignmentForm.professor_id || assignmentForm.module_ids.length === 0 || assignmentForm.group_ids.length === 0}
                 className="px-6 py-2.5 bg-[#0f2863] hover:bg-[#1a3a8a] text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-sm transition-all cursor-pointer flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <Plus className="w-4 h-4 text-emerald-400 font-bold" />
                 <span>
-                  {createAssignmentMutation.isPending 
-                    ? 'Enregistrement...' 
+                  {createAssignmentMutation.isPending
+                    ? 'Enregistrement...'
                     : `Valider l'Affectation (${assignmentForm.module_ids.length * assignmentForm.group_ids.length * (assignmentForm.session_type === 'both' ? 2 : 1)})`}
                 </span>
               </button>
@@ -1748,10 +1714,10 @@ export default function AcademicYearSettingsPage() {
                                   {count} {count > 1 ? 'cours' : 'cours'}
                                 </span>
                               </div>
-                              
+
                               {/* Mini Progress Bar */}
                               <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                                <div 
+                                <div
                                   className={cn(
                                     "h-full rounded-full transition-all duration-300",
                                     weeklyHours > 18 ? "bg-rose-500" :
@@ -1877,7 +1843,7 @@ export default function AcademicYearSettingsPage() {
                 </p>
               </div>
 
-              <button 
+              <button
                 onClick={() => setShowNewSessionForm(!showNewSessionForm)}
                 className="px-4 py-2 bg-[#0f2863] text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-2 hover:bg-[#1a3a8a] cursor-pointer"
               >
@@ -1895,27 +1861,27 @@ export default function AcademicYearSettingsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Intitulé de la session</label>
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       value={newSessionForm.name}
                       onChange={(e) => setNewSessionForm({...newSessionForm, name: e.target.value})}
-                      className="w-full px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-800 dark:text-white outline-none" 
+                      className="w-full px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-800 dark:text-white outline-none"
                       placeholder="ex: Session Ordinaire Automne S1"
                     />
                   </div>
                   <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Type de session</label>
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       value={newSessionForm.type}
                       onChange={(e) => setNewSessionForm({...newSessionForm, type: e.target.value})}
-                      className="w-full px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-800 dark:text-white outline-none" 
+                      className="w-full px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-800 dark:text-white outline-none"
                       placeholder="ex: normale / rattrapage"
                     />
                   </div>
                   <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Année Universitaire</label>
-                    <select 
+                    <select
                       value={newSessionForm.academic_year_id}
                       onChange={(e) => setNewSessionForm({...newSessionForm, academic_year_id: e.target.value})}
                       className="w-full px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-800 dark:text-white outline-none"
@@ -1926,7 +1892,7 @@ export default function AcademicYearSettingsPage() {
                   </div>
                   <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Semestre</label>
-                    <select 
+                    <select
                       value={newSessionForm.semester_id}
                       onChange={(e) => setNewSessionForm({...newSessionForm, semester_id: e.target.value})}
                       className="w-full px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-800 dark:text-white outline-none"
@@ -1937,26 +1903,26 @@ export default function AcademicYearSettingsPage() {
                   </div>
                   <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Date de Début</label>
-                    <input 
-                      type="date" 
+                    <input
+                      type="date"
                       value={newSessionForm.start_date}
                       onChange={(e) => setNewSessionForm({...newSessionForm, start_date: e.target.value})}
-                      className="w-full px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-800 dark:text-white outline-none" 
+                      className="w-full px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-800 dark:text-white outline-none"
                     />
                   </div>
                   <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Date de Fin</label>
-                    <input 
-                      type="date" 
+                    <input
+                      type="date"
                       value={newSessionForm.end_date}
                       onChange={(e) => setNewSessionForm({...newSessionForm, end_date: e.target.value})}
-                      className="w-full px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-800 dark:text-white outline-none" 
+                      className="w-full px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-800 dark:text-white outline-none"
                     />
                   </div>
                 </div>
 
                 <div className="flex justify-end pt-2">
-                  <button 
+                  <button
                     onClick={handleCreateSession}
                     disabled={createSessionMutation.isPending}
                     className="px-5 py-2 bg-[#0f2863] text-white font-bold rounded-xl text-xs uppercase tracking-wider shadow-xs hover:bg-[#1a3a8a] transition-all cursor-pointer"
@@ -1971,7 +1937,7 @@ export default function AcademicYearSettingsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {examSessions.map((session: any) => (
                 <div key={session.id} className="p-5 border border-slate-200 dark:border-slate-800 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 relative group space-y-4 shadow-xs">
-                  <button 
+                  <button
                     onClick={() => handleDeleteSession(session.id)}
                     className="absolute top-4 right-4 p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-all opacity-0 group-hover:opacity-100 cursor-pointer"
                     title="Supprimer la session"
@@ -1989,29 +1955,29 @@ export default function AcademicYearSettingsPage() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="sm:col-span-2">
                       <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Intitulé de la Session</label>
-                      <input 
-                        type="text" 
-                        value={sessionDates[session.id]?.name ?? session.name} 
+                      <input
+                        type="text"
+                        value={sessionDates[session.id]?.name ?? session.name}
                         onChange={(e) => setSessionDates({...sessionDates, [session.id]: {...sessionDates[session.id], name: e.target.value}})}
-                        className="w-full px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-800 dark:text-white outline-none" 
+                        className="w-full px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-800 dark:text-white outline-none"
                       />
                     </div>
                     <div>
                       <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Date Début</label>
-                      <input 
-                        type="date" 
-                        value={sessionDates[session.id]?.start_date || ''} 
+                      <input
+                        type="date"
+                        value={sessionDates[session.id]?.start_date || ''}
                         onChange={(e) => setSessionDates({...sessionDates, [session.id]: {...sessionDates[session.id], start_date: e.target.value}})}
-                        className="w-full px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-800 dark:text-white outline-none" 
+                        className="w-full px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-800 dark:text-white outline-none"
                       />
                     </div>
                     <div>
                       <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Date Fin</label>
-                      <input 
-                        type="date" 
-                        value={sessionDates[session.id]?.end_date || ''} 
+                      <input
+                        type="date"
+                        value={sessionDates[session.id]?.end_date || ''}
                         onChange={(e) => setSessionDates({...sessionDates, [session.id]: {...sessionDates[session.id], end_date: e.target.value}})}
-                        className="w-full px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-800 dark:text-white outline-none" 
+                        className="w-full px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-800 dark:text-white outline-none"
                       />
                     </div>
                   </div>
@@ -2023,7 +1989,7 @@ export default function AcademicYearSettingsPage() {
               <p className="text-xs text-slate-400 italic">
                 N'oubliez pas d'enregistrer vos modifications après avoir ajusté les plages de dates.
               </p>
-              <button 
+              <button
                 onClick={handleSaveSessions}
                 disabled={updateSessionMutation.isPending}
                 className="px-5 py-2.5 bg-[#0f2863] text-white font-bold rounded-xl hover:bg-[#1a3a8a] transition-colors text-xs uppercase tracking-wider shadow-xs cursor-pointer disabled:opacity-50"
@@ -2043,25 +2009,25 @@ export default function AcademicYearSettingsPage() {
             <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">
               Gestion des Années Académiques
             </h3>
-            
+
             <div className="flex flex-col sm:flex-row items-center gap-3">
-              <input 
-                type="text" 
-                placeholder="Ex: 2026/2027" 
+              <input
+                type="text"
+                placeholder="Ex: 2026/2027"
                 value={newYearLabel}
                 onChange={(e) => setNewYearLabel(e.target.value)}
                 className="flex-1 w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-800 dark:text-white outline-none"
               />
               <label className="flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-300 cursor-pointer whitespace-nowrap">
-                <input 
-                  type="checkbox" 
+                <input
+                  type="checkbox"
                   checked={newYearIsCurrent}
                   onChange={(e) => setNewYearIsCurrent(e.target.checked)}
-                  className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" 
+                  className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                 />
                 <span>Année courante</span>
               </label>
-              <button 
+              <button
                 onClick={handleCreateYear}
                 disabled={createYearMutation.isPending}
                 className="w-full sm:w-auto px-5 py-2 bg-[#0f2863] text-white font-bold rounded-xl text-xs uppercase tracking-wider hover:bg-[#1a3a8a] transition-all shadow-xs cursor-pointer disabled:opacity-50"
@@ -2093,7 +2059,7 @@ export default function AcademicYearSettingsPage() {
             <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">
               Semestres Académiques (S1 à S10)
             </h3>
-            
+
             <div className="grid grid-cols-2 gap-3">
               {[
                 { s: 'S1', nv: 'Niveau 1 (S1)', type: 'Automne' },
@@ -2139,7 +2105,7 @@ export default function AcademicYearSettingsPage() {
                 </div>
               </div>
 
-              <button 
+              <button
                 onClick={() => setSelectedProfForModal(null)}
                 className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-white rounded-lg transition-colors cursor-pointer"
               >
@@ -2194,7 +2160,7 @@ export default function AcademicYearSettingsPage() {
                       </div>
                     </div>
 
-                    <button 
+                    <button
                       onClick={() => handleDeleteAssignment(item.id)}
                       className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg transition-all cursor-pointer"
                       title="Supprimer cette affectation"
@@ -2207,22 +2173,22 @@ export default function AcademicYearSettingsPage() {
             </div>
 
             <div className="flex items-center justify-between gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
-              <button 
+              <button
                 onClick={() => setSelectedProfForModal(null)}
                 className="px-4 py-2 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-semibold rounded-xl hover:bg-slate-50 transition-colors text-xs cursor-pointer"
               >
                 Fermer
               </button>
-              
+
               <div className="flex items-center gap-2">
-                <button 
+                <button
                   onClick={() => handleSendNotificationEmail(selectedProfForModal)}
                   className="px-3.5 py-2 bg-blue-50 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300 font-bold rounded-xl text-xs border border-blue-200 dark:border-blue-800 cursor-pointer flex items-center gap-1.5"
                 >
                   <Mail className="w-3.5 h-3.5" />
                   <span>Notifier Email</span>
                 </button>
-                <button 
+                <button
                   onClick={() => handlePrintOrdreDeService(selectedProfForModal)}
                   className="px-4 py-2 bg-[#0f2863] text-white font-bold rounded-xl text-xs hover:bg-[#1a3a8a] transition-all shadow-xs cursor-pointer flex items-center gap-1.5"
                 >
@@ -2240,7 +2206,7 @@ export default function AcademicYearSettingsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
           <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-200 dark:border-slate-800 animate-in zoom-in-95">
             <div className="bg-gradient-to-r from-[#0f2863] to-blue-700 p-5 text-white relative">
-              <button 
+              <button
                 onClick={() => setShowImportModal(false)}
                 className="absolute top-4 right-4 text-white/80 hover:text-white transition-colors cursor-pointer"
               >
@@ -2252,7 +2218,7 @@ export default function AcademicYearSettingsPage() {
               </h3>
               <p className="text-blue-100 text-xs mt-0.5">Fichier Excel (.xlsx) ou CSV avec structure par colonnes</p>
             </div>
-            
+
             <div className="p-5 space-y-4">
               <div>
                 <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1">
@@ -2281,7 +2247,7 @@ export default function AcademicYearSettingsPage() {
                 <p className="text-[11px] font-mono font-bold text-amber-800 dark:text-amber-200 bg-amber-100/60 dark:bg-amber-900/40 p-1.5 rounded-lg text-center">
                   email_professeur | module_code | groupe
                 </p>
-                <button 
+                <button
                   onClick={handleDownloadTemplate}
                   className="text-xs font-bold text-blue-600 hover:text-blue-700 inline-flex items-center gap-1 cursor-pointer pt-1"
                 >
@@ -2290,13 +2256,13 @@ export default function AcademicYearSettingsPage() {
               </div>
 
               <div className="flex items-center justify-between gap-3 pt-2">
-                <button 
+                <button
                   onClick={() => setShowImportModal(false)}
                   className="px-4 py-2 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-semibold rounded-xl hover:bg-slate-50 transition-colors text-xs w-full cursor-pointer"
                 >
                   Annuler
                 </button>
-                <button 
+                <button
                   onClick={() => {
                     toast.success('🚀 Importation des affectations effectuée avec succès !')
                     setShowImportModal(false)
@@ -2316,7 +2282,7 @@ export default function AcademicYearSettingsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
           <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden border border-indigo-200 dark:border-indigo-900 animate-in zoom-in-95">
             <div className="bg-gradient-to-r from-indigo-700 to-[#0f2863] p-5 text-white relative">
-              <button 
+              <button
                 onClick={() => setShowAiMatchingModal(false)}
                 className="absolute top-4 right-4 text-white/80 hover:text-white transition-colors cursor-pointer"
               >
@@ -2391,13 +2357,13 @@ export default function AcademicYearSettingsPage() {
                   </div>
 
                   <div className="flex items-center justify-between gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
-                    <button 
+                    <button
                       onClick={() => setShowAiMatchingModal(false)}
                       className="px-4 py-2 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-semibold rounded-xl hover:bg-slate-50 transition-colors text-xs cursor-pointer"
                     >
                       Fermer
                     </button>
-                    <button 
+                    <button
                       onClick={handleApplyAiSuggestions}
                       className="px-5 py-2 bg-gradient-to-r from-indigo-600 to-[#0f2863] hover:from-indigo-700 hover:to-blue-900 text-white font-bold rounded-xl text-xs uppercase tracking-wider transition-all shadow-xs cursor-pointer flex items-center gap-1.5"
                     >
@@ -2515,7 +2481,7 @@ export default function AcademicYearSettingsPage() {
               >
                 <Sparkles className="w-4 h-4 text-amber-300" />
                 <span>
-                  {autoDistributeMutation.isPending ? 'Calcul en cours...' : 
+                  {autoDistributeMutation.isPending ? 'Calcul en cours...' :
                    `Mise à Zéro + Répartition Équilibrée (${distributeSemesterPeriod === 'odd' ? 'Automne S1/S3/S5/S7' : distributeSemesterPeriod === 'even' ? 'Printemps S2/S4/S6/S8' : 'Année Complète'})`}
                 </span>
               </button>

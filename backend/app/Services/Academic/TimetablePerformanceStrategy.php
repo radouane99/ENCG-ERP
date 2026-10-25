@@ -54,7 +54,7 @@ class TimetablePerformanceStrategy
     public function place(array $variables, Collection $rooms, array $config = []): array
     {
         $maxDailyHours = (int) ($config['max_daily_hours'] ?? 8);
-        $maxDailySlots = max(1, (int) ceil($maxDailyHours / 2));
+        $maxDailySlots = max(1, (int) floor($maxDailyHours / 2));
         $energyWeight = (int) ($config['energy_weight'] ?? 80);
         $preferOriginal = (bool) ($config['prefer_original_slot'] ?? false);
         $this->workingDays = ($config['include_saturday'] ?? false)
@@ -403,7 +403,7 @@ class TimetablePerformanceStrategy
                 continue;
             }
 
-            $key = ($var['professor_id'] ?? '').'|'.($var['module_id'] ?? $var['module_name'] ?? '').'|cm';
+            $key = ($var['professor_id'] ?? '').'|'.($var['module_id'] ?? $var['module_name'] ?? '').'|cm|'.($var['occurrence_index'] ?? 1);
             $buckets[$key][] = $var;
         }
 

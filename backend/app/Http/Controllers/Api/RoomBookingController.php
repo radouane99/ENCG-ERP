@@ -18,20 +18,22 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\DB;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class RoomBookingController extends Controller
 {
     private const APPROVER_ROLES = [
-        'super-admin', 'institution-admin', 'director', 'scolarite',
+        'super-admin', 'super_admin', 'admin', 'institution-admin', 'institution_admin', 'director', 'scolarite',
     ];
 
     /**
      * Liste des réservations.
      */
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
         $bookings = RoomBooking::with(['booker', 'room'])
+            ->whereHas('room', fn ($q) => $q->where('institution_id', $request->user()->institution_id))
             ->orderByDesc('start_time')
             ->get();
 
@@ -63,7 +65,10 @@ class RoomBookingController extends Controller
         $user = $request->user();
         $canApprove = $this->userCanApprove($user);
 
-        $validated['booked_by'] = $validated['booked_by'] ?? $user?->id;
+        $room = Room::where('institution_id', $user->institution_id)->findOrFail($validated['room_id']);
+        $validated['booked_by'] = $canApprove ? ($validated['booked_by'] ?? $user->id) : $user->id;
+        \App\Models\User::where('institution_id', $user->institution_id)->findOrFail($validated['booked_by']);
+        $validated['room_name'] = $room->name;
         $validated['room_name'] = $validated['room_name']
             ?? Room::query()->whereKey($validated['room_id'])->value('name')
             ?? 'Salle';
@@ -79,14 +84,12 @@ class RoomBookingController extends Controller
             $validated['status'] = 'pending';
         }
 
-        if ($this->hasConflict($validated['room_id'], $validated['start_time'], $validated['end_time'])) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Conflit détecté : la salle est déjà réservée sur ce créneau.',
-            ], 409);
-        }
-
-        $booking = RoomBooking::create($validated);
+        $booking = DB::transaction(function () use ($validated) {
+            \App\Models\AcademicYear::whereKey(\App\Services\Academic\AcademicContext::yearId())->lockForUpdate()->first();
+            Room::whereKey($validated['room_id'])->lockForUpdate()->firstOrFail();
+            abort_if($this->hasConflict($validated['room_id'], $validated['start_time'], $validated['end_time']), 409, 'Conflit détecté : salle indisponible sur ce créneau.');
+            return RoomBooking::create($validated);
+        });
 
         // Auto-notify students if requested and approved
         if ($notifyStudents && $validated['status'] === 'approved' && ! empty($groupIds)) {
@@ -185,6 +188,7 @@ class RoomBookingController extends Controller
      */
     public function update(Request $request, RoomBooking $roomBooking): JsonResponse
     {
+        Room::where('institution_id', $request->user()->institution_id)->findOrFail($roomBooking->room_id);
         $validated = $request->validate([
             'status' => 'sometimes|string|in:pending,approved,rejected,cancelled',
         ]);
@@ -195,7 +199,15 @@ class RoomBookingController extends Controller
             abort_unless($isOwnCancellation, 403, 'Seule la scolarité peut valider ou refuser une réservation.');
         }
 
-        $roomBooking->update($validated);
+        DB::transaction(function () use ($roomBooking, $validated) {
+            \App\Models\AcademicYear::whereKey(\App\Services\Academic\AcademicContext::yearId())->lockForUpdate()->first();
+            Room::whereKey($roomBooking->room_id)->lockForUpdate()->firstOrFail();
+            $roomBooking->refresh();
+            if (in_array($validated['status'] ?? '', ['pending', 'approved'], true)) {
+                abort_if(app(TimetableRoomGuard::class)->isRoomBusyAt((string) $roomBooking->room_id, $roomBooking->start_time, $roomBooking->end_time, $roomBooking->id), 409, 'Salle occupée : validation impossible.');
+            }
+            $roomBooking->update($validated);
+        });
 
         return response()->json([
             'success' => true,
@@ -206,9 +218,11 @@ class RoomBookingController extends Controller
     /**
      * Supprimer une réservation.
      */
-    public function destroy(RoomBooking $roomBooking): JsonResponse
+    public function destroy(Request $request, RoomBooking $roomBooking): JsonResponse
     {
-        $roomBooking->delete();
+        Room::where('institution_id', $request->user()->institution_id)->findOrFail($roomBooking->room_id);
+        abort_unless($this->userCanApprove($request->user()) || (int) $roomBooking->booked_by === (int) $request->user()->id, 403);
+        $roomBooking->update(['status' => 'cancelled']);
 
         return response()->json([
             'success' => true,

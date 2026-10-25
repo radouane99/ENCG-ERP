@@ -13,6 +13,9 @@ class DeliberationSealService
 {
     public function vote(Deliberation $deliberation, User $user, string $decision, ?string $comment = null): void
     {
+        DB::transaction(function () use ($deliberation, $user, $decision, $comment) {
+        $deliberation = Deliberation::whereKey($deliberation->id)->lockForUpdate()->firstOrFail();
+        abort_unless((int)$deliberation->institution_id === (int)$user->institution_id, 403);
         $this->assertNotSealed($deliberation);
 
         $now = now();
@@ -28,6 +31,7 @@ class DeliberationSealService
             ['deliberation_id', 'user_id'],
             ['decision', 'comment', 'updated_at']
         );
+        });
     }
 
     public function seal(Deliberation $deliberation, User $user): string

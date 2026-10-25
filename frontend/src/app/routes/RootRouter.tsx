@@ -192,7 +192,7 @@ const AdminReinscriptionCockpitPage = lazy(() => import('@features/admin/pages/A
 const AlumniNetwork = lazy(() => import('@features/admin/pages/AlumniNetwork'))
 const PilotagePage = lazy(() => import('@features/admin/pages/PilotagePage'))
 const DocumentPreviewPage = lazy(() => import('@features/documents/pages/DocumentPreviewPage'))
-const AdminAiTimetableSchedulerPage = lazy(() => import('@features/timetable/pages/AdminAiTimetableSchedulerPage'))
+const AdminAiTimetableSchedulerPage = lazy(() => import('@features/admin/pages/AdminTimetableEnginePage'))
 const ProfessorSchedulePage = lazy(() => import('@features/professor-portal/pages/ProfessorSchedulePage'))
 const AdminAnalyticsDashboard = lazy(() => import('@features/analytics/ui/AdminAnalyticsDashboard'))
 const AdminGuichetPage = lazy(() => import('@features/admin/pages/AdminGuichetPage'))

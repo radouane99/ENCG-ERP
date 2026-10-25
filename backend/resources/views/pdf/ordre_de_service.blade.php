@@ -111,7 +111,7 @@
                 <td width="2%"></td>
                 <td width="32%" style="background-color: #fefce8; border: 1px solid #fef08a; border-radius: 4px; padding: 3px 6px; text-align: center;">
                     <div style="font-size: 6.5pt; font-weight: bold; color: #854d0e; text-transform: uppercase;">Service Hebdomadaire</div>
-                    <div style="font-size: 10pt; font-weight: 900; color: #a16207;">{{ $weeklyHours ?? 44 }}h / Semaine</div>
+                    <div style="font-size: 10pt; font-weight: 900; color: #a16207;">{{ $totalHours }}h affectées</div>
                 </td>
             </tr>
         </table>
@@ -139,7 +139,7 @@
                                 <td style="font-family: monospace; font-weight: 900; color: #0f2863; padding: 1.8px 3px;">{{ $mod['code'] }}</td>
                                 <td style="font-weight: bold; color: #1e293b; padding: 1.8px 3px;">{{ $mod['name'] }}</td>
                                 <td style="font-weight: bold; color: #059669; padding: 1.8px 3px;">{{ $mod['group'] }}</td>
-                                <td style="text-align: center; font-weight: 900; color: #d97706; padding: 1.8px 3px;">{{ $mod['hours'] ?? 48 }}h</td>
+                                <td style="text-align: center; font-weight: 900; color: #d97706; padding: 1.8px 3px;">{{ ($mod['hours'] ?? 0) > 0 ? $mod['hours'].'h' : 'À renseigner' }}</td>
                             </tr>
                         @endforeach
                     @else

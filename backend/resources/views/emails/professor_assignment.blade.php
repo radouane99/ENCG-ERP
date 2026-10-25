@@ -73,7 +73,7 @@
                                 TOTAL VOLUME HORAIRE CUMULÉ :
                             </td>
                             <td style="border: 1px solid #cbd5e1; text-align: center; font-family: monospace; padding: 10px;">
-                                {{ $totalHours }}h / Semestre ({{ $weeklyHours }}h/sem)
+                                {{ $totalHours }}h affectées
                             </td>
                         </tr>
                     </tbody>

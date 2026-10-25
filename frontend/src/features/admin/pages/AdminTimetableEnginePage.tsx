@@ -24,6 +24,7 @@ import { toast } from 'sonner'
 import { cn } from '@/shared/lib/utils'
 import ManualTimetableBoard from './ManualTimetableBoard'
 import OfficialTimetableMatrix from './OfficialTimetableMatrix'
+import SemesterReadinessPanel from '../components/SemesterReadinessPanel'
 
 interface ScheduledSession {
   id: number | string
@@ -42,6 +43,8 @@ interface ScheduledSession {
 }
 
 interface SimulationData {
+  input_issues?: string[]
+  unplaced_count?: number
   total_variables: number
   total_placed: number
   satisfaction_rate: number
@@ -82,6 +85,7 @@ export default function AdminTimetableEnginePage() {
   const [energyWeight, setEnergyWeight] = useState(DEFAULTS.energyWeight)
   const [profAvailWeight, setProfAvailWeight] = useState(DEFAULTS.profAvailWeight)
   const [maxDailyHours, setMaxDailyHours] = useState(DEFAULTS.maxDailyHours)
+  const [teachingWeeks, setTeachingWeeks] = useState(15)
   const [workMode, setWorkMode] = useState<'filieres' | 'official' | 'result'>('filieres')
   const [viewTab, setViewTab] = useState<'grid' | 'energy' | 'audit'>('grid')
   const [simResult, setSimResult] = useState<SimulationData | null>(null)
@@ -96,7 +100,7 @@ export default function AdminTimetableEnginePage() {
   const [busyFiliereId, setBusyFiliereId] = useState<number | null>(null)
   const [confirmPublishId, setConfirmPublishId] = useState<number | null>(null)
 
-  const { data: workspace, refetch: refetchWorkspace } = useQuery({
+  const { data: workspace, refetch: refetchWorkspace, isError: workspaceError } = useQuery({
     queryKey: ['edt-campaign-workspace'],
     queryFn: () => api.get('/admin/smart-scheduling/workspace').then((res) => res.data.data || res.data),
   })
@@ -128,6 +132,7 @@ export default function AdminTimetableEnginePage() {
       toast.success('Campagne ouverte — lundi à vendredi, sans samedi.')
       refetchWorkspace()
     },
+    onError: (err: any) => toast.error(err.response?.data?.message || 'Ouverture de campagne impossible.'),
   })
 
   const draftMutation = useMutation({
@@ -137,6 +142,7 @@ export default function AdminTimetableEnginePage() {
         filiere_id: filiereId,
         include_saturday: false,
         max_daily_hours: maxDailyHours,
+        teaching_weeks: teachingWeeks,
         energy_weight: energyWeight,
         semester_number: selectedSemester ? Number(selectedSemester) : undefined,
       })
@@ -159,6 +165,7 @@ export default function AdminTimetableEnginePage() {
       toast.success('Proposition envoyée aux enseignants.')
       refetchWorkspace()
     },
+    onError: (err: any) => toast.error(err.response?.data?.data?.message || err.response?.data?.message || 'Proposition impossible.'),
   })
 
   const publishVersionMutation = useMutation({
@@ -169,6 +176,7 @@ export default function AdminTimetableEnginePage() {
       refetchWorkspace()
       refetchStats()
     },
+    onError: (err: any) => toast.error(err.response?.data?.data?.message || err.response?.data?.message || 'Publication impossible.'),
   })
 
   const simulateMutation = useMutation({
@@ -180,13 +188,14 @@ export default function AdminTimetableEnginePage() {
         prof_avail_weight: profAvailWeight,
         include_saturday: false,
         max_daily_hours: maxDailyHours,
+        teaching_weeks: teachingWeeks,
       })
       return res.data.data
     },
     onSuccess: (data: SimulationData) => {
       setSimResult(data)
       setWorkMode('result')
-      toast.success(`${data.total_placed} séances simulées, sans conflit.`)
+      toast.success(`${data.total_placed} séances placées. Vérifiez les éventuels éléments non planifiés.`)
     },
     onError: (err: any) => {
       toast.error(err.response?.data?.message || err.message)
@@ -395,6 +404,16 @@ export default function AdminTimetableEnginePage() {
           </div>
         </div>
         <div className="absolute bottom-0 left-0 right-0 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(99,102,241,0.4), transparent)' }} />
+      </div>
+
+      {workspaceError && <div role="alert" className="rounded-xl border border-red-200 p-4 text-red-700">Le suivi du semestre est indisponible. <button onClick={() => refetchWorkspace()} className="underline">Réessayer</button></div>}
+      {workspace?.readiness && <SemesterReadinessPanel data={workspace.readiness} />}
+      {!!simResult?.input_issues?.length && <div role="alert" className="rounded-xl border border-amber-300 p-4 text-sm text-amber-800 dark:text-amber-300"><p className="font-bold">Données à compléter avant génération</p><ul className="list-disc pl-5">{simResult.input_issues.slice(0, 10).map(issue => <li key={issue}>{issue}</li>)}</ul></div>}
+      {!!simResult?.unplaced_count && <p role="status" className="text-sm text-amber-800 dark:text-amber-300">{simResult.unplaced_count} séances non placées : revoir les disponibilités, capacités et plafonds de charge.</p>}
+      <div className="rounded-xl border border-slate-200 bg-white p-4 text-sm dark:border-slate-700 dark:bg-slate-900">
+        <label htmlFor="teaching-weeks" className="font-semibold">Semaines d’enseignement prévues</label>
+        <input id="teaching-weeks" type="number" min={1} max={30} value={teachingWeeks} onChange={event => setTeachingWeeks(Math.min(30, Math.max(1, Number(event.target.value) || 1)))} className="ml-3 w-20 rounded-lg border p-2 dark:bg-slate-800" />
+        <p className="mt-2 text-xs text-slate-500">La génération propose une semaine type en créneaux de 2 h. Ajustez les séances ponctuelles pour respecter les volumes affectés.</p>
       </div>
 
       {/* ══════════════════════════════════════════════════════

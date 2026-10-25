@@ -59,6 +59,9 @@ class SmartSchedulingEngine
             'prof_avail_weight' => $profAvailWeight,
             'max_daily_hours' => $maxDailyHours,
             'include_saturday' => (bool) ($params['include_saturday'] ?? false),
+            'semester_number' => $params['semester_number'] ?? null,
+            'teaching_weeks' => $params['teaching_weeks'] ?? 15,
+            'except_schedule_ids' => $params['except_schedule_ids'] ?? [],
         ]);
 
         $executionTime = round((microtime(true) - $startTime) * 1000, 2);
@@ -164,118 +167,44 @@ class SmartSchedulingEngine
         $semesterId = $config['semester_id'] ?? null;
         $semesterNumber = isset($config['semester_number']) ? (int) $config['semester_number'] : null;
 
-        $groupsQuery = Group::with('filiere');
-        if ($filiereId) {
-            $groupsQuery->where('filiere_id', $filiereId);
-        }
-        if ($semesterNumber >= 1 && $semesterNumber <= 10) {
-            $groupsQuery->where('semester_number', $semesterNumber);
-        }
-        $groups = $groupsQuery->get();
-
-        $modulesQuery = Module::with('filiere');
-        if ($filiereId) {
-            $modulesQuery->where('filiere_id', $filiereId);
-        }
-        if ($semesterNumber >= 1 && $semesterNumber <= 10 && Schema::hasColumn('modules', 'semester_number')) {
-            $modulesQuery->where('semester_number', $semesterNumber);
-        }
-        $modules = $modulesQuery->get();
-
-        $rooms = Room::all();
-        if ($rooms->isEmpty()) {
-            // Seed realistic ENCG rooms in-memory if empty
-            $rooms = collect([
-                (object) ['id' => 1, 'name' => 'Amphi Ibn Khaldoun', 'type' => 'amphitheater', 'capacity' => 220, 'building' => 'Bâtiment Principal'],
-                (object) ['id' => 2, 'name' => 'Amphi Al Qaraouiyine', 'type' => 'amphitheater', 'capacity' => 180, 'building' => 'Bâtiment Principal'],
-                (object) ['id' => 3, 'name' => 'Amphi 3 - Finance', 'type' => 'amphitheater', 'capacity' => 150, 'building' => 'Bâtiment Principal'],
-                (object) ['id' => 4, 'name' => 'Salle TD 101', 'type' => 'classroom', 'capacity' => 45, 'building' => 'Bâtiment A'],
-                (object) ['id' => 5, 'name' => 'Salle TD 102', 'type' => 'classroom', 'capacity' => 45, 'building' => 'Bâtiment A'],
-                (object) ['id' => 6, 'name' => 'Salle TD 103', 'type' => 'classroom', 'capacity' => 45, 'building' => 'Bâtiment A'],
-                (object) ['id' => 7, 'name' => 'Salle TD 201', 'type' => 'classroom', 'capacity' => 40, 'building' => 'Bâtiment B'],
-                (object) ['id' => 8, 'name' => 'Salle TD 202', 'type' => 'classroom', 'capacity' => 40, 'building' => 'Bâtiment B'],
-                (object) ['id' => 9, 'name' => 'Lab Informatique L1', 'type' => 'lab', 'capacity' => 35, 'building' => 'Bâtiment C'],
-                (object) ['id' => 10, 'name' => 'Lab Informatique L2', 'type' => 'lab', 'capacity' => 35, 'building' => 'Bâtiment C'],
-            ]);
-        }
-
-        $professors = Professor::with('user')->get();
-        if ($professors->isEmpty()) {
-            $professors = collect([
-                (object) ['id' => 1, 'user' => (object) ['first_name' => 'Abdelhak', 'last_name' => 'El Amrani']],
-                (object) ['id' => 2, 'user' => (object) ['first_name' => 'Fatima', 'last_name' => 'Benjelloun']],
-                (object) ['id' => 3, 'user' => (object) ['first_name' => 'Karim', 'last_name' => 'Alami']],
-                (object) ['id' => 4, 'user' => (object) ['first_name' => 'Nadia', 'last_name' => 'Berrada']],
-            ]);
-        }
-
-        // 2. Build CSP Variables — CM partagé (G1+G2), TD par groupe
-        $variables = [];
-        $varIndex = 1;
-        $cohorts = $groups->groupBy(fn ($group) => ($group->filiere_id ?? 0).'|'.($group->semester_number ?? 0));
-
-        foreach ($cohorts as $cohortGroups) {
-            $cohortGroups = $cohortGroups->values();
-            $lead = $cohortGroups->first();
-            $groupModules = $modules->where('filiere_id', $lead->filiere_id);
-            if ($groupModules->isEmpty()) {
-                $groupModules = $modules->take(5);
-            }
-
-            $cohortIds = $cohortGroups->pluck('id')->all();
-            $cohortSize = (int) $cohortGroups->sum(fn ($g) => $g->capacity ?? 40);
-            $cohortLabel = $cohortGroups->map(fn ($g) => $g->name ?? 'G'.$g->id)->implode(' + ');
-
-            foreach ($groupModules as $mod) {
-                $cmHours = $mod->hours_cm ?? 20;
-                $tdHours = $mod->hours_td ?? 10;
-                $cmBlocks = (int) max(1, round($cmHours / 15));
-                $tdBlocks = (int) max(1, round($tdHours / 15));
-
-                $assignment = DB::table('module_professor')
-                    ->where('module_id', $mod->id)
-                    ->first();
-                $profId = $assignment->professor_id ?? ($professors[($mod->id) % count($professors)]->id ?? 1);
-
-                for ($b = 1; $b <= $cmBlocks; $b++) {
-                    $variables[] = [
-                        'var_id' => $varIndex++,
-                        'group_id' => $lead->id,
-                        'occupied_group_ids' => $cohortIds,
-                        'group_name' => $cohortLabel,
-                        'group_size' => max($cohortSize, 40),
-                        'module_id' => $mod->id,
-                        'module_name' => $mod->name,
-                        'module_code' => $mod->code ?? "MOD-{$mod->id}",
-                        'filiere_code' => $mod->filiere?->code ?? $lead->filiere?->code ?? 'ENCG',
-                        'professor_id' => $profId,
-                        'session_type' => 'cm',
-                        'required_type' => (count($cohortIds) > 1 || $cohortSize > 50) ? 'amphitheater' : 'classroom',
-                    ];
-                }
-
-                foreach ($cohortGroups as $group) {
-                    if ($tdBlocks <= 0) {
-                        continue;
+        $yearId = AcademicContext::yearId();
+        $institutionId = auth()->user()?->institution_id ?? config('erp.institution_id', 1);
+        $semester = \App\Models\Semester::where('academic_year_id', $yearId)->when($semesterId, fn ($q) => $q->whereKey($semesterId), fn ($q) => $q->where('is_current', true))->first();
+        $parity = ($semester?->number ?? 1) % 2;
+        $groups = Group::with('filiere')->where('academic_year_id', $yearId)
+            ->whereHas('filiere', fn ($q) => $q->where('institution_id', $institutionId))
+            ->when($filiereId, fn ($q) => $q->where('filiere_id', $filiereId))
+            ->when($semesterNumber, fn ($q) => $q->where('semester_number', $semesterNumber), fn ($q) => $q->whereRaw('MOD(semester_number, 2) = ?', [$parity]))->get();
+        $modules = Module::with('filiere')->where('institution_id', $institutionId)
+            ->when($filiereId, fn ($q) => $q->where('filiere_id', $filiereId))
+            ->when($semesterNumber, fn ($q) => $q->where('semester_number', $semesterNumber), fn ($q) => $q->whereRaw('MOD(semester_number, 2) = ?', [$parity]))->get();
+        $rooms = Room::where('institution_id', $institutionId)->get();
+        $professors = Professor::with('user')->where('institution_id', $institutionId)->where('is_active', true)->get();
+        $assignments = \App\Models\ModuleProfessor::where('academic_year_id', $yearId)->whereIn('module_id', $modules->pluck('id'))->whereIn('professor_id', $professors->pluck('id'))->get();
+        $weeks = max(1, (int) ($config['teaching_weeks'] ?? 15));
+        $variables = []; $inputIssues = []; $varIndex = 1;
+        foreach ($modules as $mod) {
+            foreach ($groups->where('filiere_id', $mod->filiere_id)->where('semester_number', $mod->semester_number) as $group) {
+                $assigned = $assignments->where('module_id', $mod->id)->filter(fn ($a) => ! $a->group_id || (int) $a->group_id === (int) $group->id);
+                if ($assigned->isEmpty()) { $inputIssues[] = 'Affectation manquante : '.$mod->name.' / '.$group->name; }
+                foreach ($assigned as $assignment) {
+                    $hours = (float) $assignment->assigned_hours;
+                    $type = strtolower($assignment->session_type ?? '');
+                    if ($hours <= 0 || ! in_array($type, ['cm', 'td', 'tp'], true)) {
+                        $inputIssues[] = 'Volume ou type de séance à compléter : '.$mod->name.' / '.$group->name; continue;
                     }
-                    $variables[] = [
-                        'var_id' => $varIndex++,
-                        'group_id' => $group->id,
-                        'occupied_group_ids' => [$group->id],
-                        'group_name' => $group->name ?? "Groupe {$group->id}",
-                        'group_size' => $group->capacity ?? 35,
-                        'module_id' => $mod->id,
-                        'module_name' => $mod->name,
-                        'module_code' => $mod->code ?? "MOD-{$mod->id}",
-                        'filiere_code' => $mod->filiere?->code ?? $group->filiere?->code ?? 'ENCG',
-                        'professor_id' => $profId,
-                        'session_type' => 'td',
-                        'required_type' => 'classroom',
-                    ];
+                    $blocks = max(1, (int) round($hours / ($weeks * 2)));
+                    for ($b = 1; $b <= $blocks; $b++) {
+                        $variables[] = ['var_id' => $varIndex++, 'occurrence_index' => $b, 'group_id' => $group->id, 'occupied_group_ids' => [$group->id],
+                            'group_name' => $group->name, 'group_size' => (int) $group->capacity,
+                            'module_id' => $mod->id, 'module_name' => $mod->name, 'module_code' => $mod->code,
+                            'filiere_code' => $mod->filiere?->code, 'professor_id' => $assignment->professor_id,
+                            'session_type' => $type, 'assigned_hours' => $hours,
+                            'required_type' => $type === 'tp' ? 'lab' : ($group->capacity > 50 ? 'amphitheater' : 'classroom')];
+                    }
                 }
             }
         }
-
         // 3. Place with MRV / LCV occupancy strategy (professeur, salle, groupe)
         $placed = $this->strategy->place($variables, $rooms, $config);
 
@@ -289,7 +218,7 @@ class SmartSchedulingEngine
             ]);
         }
 
-        $totalRequired = count($variables);
+        $totalRequired = count($placed['assignments']) + count($placed['unplaced']);
         $totalPlaced = count($scheduledSessions);
         $satisfactionRate = $totalRequired > 0 ? round(($totalPlaced / $totalRequired) * 100, 1) : 100.0;
 
@@ -302,12 +231,15 @@ class SmartSchedulingEngine
             'strategy' => $placed['strategy'],
             'heuristics' => $placed['heuristics'],
             'hard_constraints' => $placed['hard_constraints'],
+            'input_issues' => array_values(array_unique($inputIssues)),
+            'teaching_weeks' => $weeks,
+            'volume_notice' => 'Grille hebdomadaire indicative en créneaux de 2 h. Ajuster les semaines et séances ponctuelles pour respecter les volumes affectés.',
             'total_variables' => $totalRequired,
             'total_placed' => $totalPlaced,
             'unplaced_count' => count($placed['unplaced']),
             'conflict_rate' => $placed['zero_hard_conflicts'] ? 0.0 : 1.0,
             'satisfaction_rate' => $satisfactionRate,
-            'energy_efficiency_score' => max(88.0, $energyScore),
+            'energy_efficiency_score' => $energyScore,
             'load_balance_score' => $placed['load_balance'],
             'conflicts_prevented' => $placed['conflicts_prevented'],
             'building_clustering' => $placed['building_clustering'],

@@ -25,7 +25,7 @@ class TimetableController extends Controller
     public function index(Request $request): JsonResponse
     {
         $schedules = $this->timetableService->getSchedules(
-            $request->only(['group_id', 'professor_id', 'room_id'])
+            $request->only(['group_id', 'professor_id', 'room_id', 'academic_year_id'])
         );
 
         return response()->json(['success' => true, 'data' => $schedules]);
@@ -43,12 +43,7 @@ class TimetableController extends Controller
             'filiere_id' => 'required|integer',
         ]);
 
-        $result = $this->engine->generateSemesterTimetable(
-            $validated['institution_id'],
-            $validated['academic_year_id'],
-            $validated['semester_id'],
-            $validated['filiere_id']
-        );
+        $result = app(\App\Services\Academic\TimetableCampaignService::class)->generateDraft($validated['filiere_id']);
 
         return response()->json($result, $result['success'] ? 200 : 400);
     }
@@ -60,29 +55,17 @@ class TimetableController extends Controller
     {
         $validated = $request->validate([
             'schedule_id' => 'required|integer',
-            'new_day' => 'required|integer',
-            'new_start_time' => 'required',
-            'new_end_time' => 'required',
+            'new_day' => 'required|integer|min:1|max:7',
+            'new_start_time' => 'required|date_format:H:i',
+            'new_end_time' => 'required|date_format:H:i|after:new_start_time',
             'new_room_id' => 'required|integer',
         ]);
 
-        $result = $this->resolver->validateAndSuggestMove(
-            $validated['schedule_id'],
-            $validated['new_day'],
-            $validated['new_start_time'],
-            $validated['new_end_time'],
-            $validated['new_room_id']
-        );
-
-        if ($result['success']) {
-            Schedule::where('id', $validated['schedule_id'])->update([
-                'day_of_week' => $validated['new_day'],
-                'start_time' => $validated['new_start_time'],
-                'end_time' => $validated['new_end_time'],
-                'room_id' => $validated['new_room_id'],
-            ]);
-        }
-
+        $schedule = app(\App\Actions\Academic\SaveTimetableSessionAction::class)->execute([
+            'day_of_week' => $validated['new_day'], 'start_time' => $validated['new_start_time'],
+            'end_time' => $validated['new_end_time'], 'room_id' => $validated['new_room_id'],
+        ], $validated['schedule_id']);
+        $result = ['success' => true, 'message' => 'Séance déplacée.', 'data' => $schedule];
         return response()->json($result);
     }
 
@@ -101,11 +84,18 @@ class TimetableController extends Controller
             ->where('academic_year_id', $validated['academic_year_id'])
             ->pluck('id');
 
-        $updated = Schedule::where('academic_year_id', $validated['academic_year_id'])
+        $versionIds = Schedule::where('institution_id', $request->user()->institution_id)->where('academic_year_id', $validated['academic_year_id'])
             ->where('semester_id', $validated['semester_id'])
             ->whereIn('group_id', $groupIds)
-            ->where('is_active', false)
-            ->update(['is_active' => true]);
+            ->whereNotNull('schedule_version_id')->distinct()->pluck('schedule_version_id');
+        abort_if($versionIds->isEmpty(), 422, 'Aucune proposition à publier. Utiliser la campagne semestrielle.');
+        $updated = \Illuminate\Support\Facades\DB::transaction(function () use ($versionIds) {
+            foreach ($versionIds as $versionId) {
+                $result = app(\App\Services\Academic\TimetableCampaignService::class)->publish($versionId);
+                abort_unless($result['success'], 422, $result['message']);
+            }
+            return $versionIds->count();
+        });
 
         return response()->json([
             'success' => true,
@@ -130,32 +120,17 @@ class TimetableController extends Controller
             'day_of_week' => 'required|integer|min:1|max:7',
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i|after:start_time',
-            'session_type' => 'required|string',
+            'session_type' => 'required|in:cm,td,tp',
             'recurrence' => 'nullable|string',
         ]);
 
-        $schedule = Schedule::create([
-            'institution_id' => $validated['institution_id'],
-            'academic_year_id' => $validated['academic_year_id'],
-            'semester_id' => $validated['semester_id'],
-            'group_id' => $validated['group_id'],
-            'module_id' => $validated['module_id'],
-            'room_id' => $validated['room_id'] ?? null,
-            'professor_id' => $validated['professor_id'],
-            'professor_type' => $validated['professor_type'] ?? 'App\\Models\\User',
-            'day_of_week' => $validated['day_of_week'],
-            'start_time' => $validated['start_time'],
-            'end_time' => $validated['end_time'],
-            'session_type' => $validated['session_type'],
-            'recurrence' => $validated['recurrence'] ?? 'weekly',
-            'is_active' => true,
-        ]);
+        $schedule = app(\App\Actions\Academic\SaveTimetableSessionAction::class)->execute($validated);
 
         return response()->json([
             'success' => true,
             'message' => 'Séance créée avec succès.',
             'data' => $schedule,
-        ]);
+        ], 201);
     }
 
     /**
@@ -170,11 +145,12 @@ class TimetableController extends Controller
             'professor_id' => 'nullable|integer',
             'day_of_week' => 'nullable|integer|min:1|max:7',
             'start_time' => 'nullable|date_format:H:i',
-            'end_time' => 'nullable|date_format:H:i|after:start_time',
-            'session_type' => 'nullable|string',
+            'end_time' => 'nullable|date_format:H:i',
+            'session_type' => 'sometimes|in:cm,td,tp',
+            'version' => 'sometimes|integer|min:1',
         ]);
 
-        $schedule->update(array_filter($validated, fn ($v) => $v !== null));
+        $schedule = app(\App\Actions\Academic\SaveTimetableSessionAction::class)->execute($validated, $id);
 
         return response()->json([
             'success' => true,
@@ -188,7 +164,13 @@ class TimetableController extends Controller
      */
     public function destroy(int $id): JsonResponse
     {
-        Schedule::findOrFail($id)->delete();
+        \Illuminate\Support\Facades\DB::transaction(function () use ($id) {
+            $year = \App\Models\AcademicYear::where('institution_id', auth()->user()->institution_id)->lockForUpdate()->findOrFail(\App\Services\Academic\AcademicContext::yearId());
+            abort_if($year->is_locked, 409, 'Année universitaire verrouillée.');
+            $schedule = Schedule::where('institution_id', $year->institution_id)->where('academic_year_id', $year->id)->findOrFail($id);
+            abort_if($schedule->schedule_version_id, 409, 'Utiliser le brouillon de la campagne.');
+            $schedule->delete();
+        });
 
         return response()->json([
             'success' => true,

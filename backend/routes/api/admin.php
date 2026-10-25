@@ -763,6 +763,8 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:admin|super-admi
     Route::get('/admin/exams/{exam}/live-attendance/pdf', [PdfExportController::class, 'liveAttendancePdf']);
     Route::get('/admin/exams/{exam}/display-list/pdf', [PdfExportController::class, 'displayList']);
     Route::post('/professor-assignments/notify', [PdfExportController::class, 'notifyProfessorAssignment']);
+    Route::post('/professor-assignments/carry-forward', [ProfessorAssignmentController::class, 'carryForward']);
+    Route::get('/professor-assignments/orders-zip', [PdfExportController::class, 'exportProfessorOrdersZip']);
 
     Route::get('/admin/api/filieres/{id}/groups', [InternalApiController::class, 'filiereGroups']);
     Route::get('/admin/api/groups/{id}/modules', [InternalApiController::class, 'groupModules']);

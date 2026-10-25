@@ -80,4 +80,29 @@ class AcademicReliabilityTest extends TestCase
         $this->postJson('/api/academic/pv-workflow/meeting', array_replace($payload, ['filiere_id' => $other->id]))->assertConflict();
         $this->actor('student'); $this->postJson('/api/academic/pv-workflow/meeting', $payload)->assertForbidden();
     }
+    public function test_jury_does_not_reuse_a_module_signature_from_a_different_session_or_group(): void {
+        $c = $this->context(); $admin = $this->actor();
+        \App\Models\ModulePvSignature::create(['module_id' => $c['module']->id, 'academic_year_id' => $c['year']->id, 'group_id' => null, 'session' => 'normale', 'signed_by' => $admin->id, 'signature_data' => 'synthetic', 'digital_seal' => str_repeat('a', 64), 'signed_at' => now()]);
+        $params = ['filiere_id' => $c['filiere']->id, 'academic_year_id' => $c['year']->id, 'semester_number' => 1, 'type' => 'semestriel'];
+        $url = '/api/academic/deliberations/jury-status?';
+        $this->getJson($url.http_build_query($params + ['session' => 'rattrapage']))->assertOk()->assertJsonPath('members.0.status', 'pending')->assertJsonPath('members.0.digital_seal', null);
+        $this->getJson($url.http_build_query($params + ['session' => 'normale', 'group_id' => $c['group']->id]))->assertOk()->assertJsonPath('members.0.status', 'pending');
+        $this->getJson($url.http_build_query($params + ['session' => 'normale']))->assertOk()->assertJsonPath('members.0.status', 'signed')->assertJsonPath('members.0.digital_seal', str_repeat('a', 64));
+    }
+    public function test_assignment_notification_cannot_select_a_teacher_by_arbitrary_recipient(): void {
+        $this->context(); $this->actor(); $teacher = $this->makeTestProfessor();
+        \Illuminate\Support\Facades\Mail::fake();
+        $this->postJson('/api/professor-assignments/notify', ['email' => $teacher->user->email])->assertUnprocessable();
+        $this->postJson('/api/professor-assignments/notify', ['prof_id' => $teacher->id, 'email' => 'untrusted@example.test'])->assertUnprocessable();
+        \Illuminate\Support\Facades\Mail::assertNothingSent();
+    }
+    public function test_assignment_distribution_keeps_existing_assignments_and_never_seeds_a_catalog(): void {
+        $c = $this->context(); $this->actor(); $professor = $this->makeTestProfessor(['is_active' => true]);
+        $original = ModuleProfessor::create(['module_id' => $c['module']->id, 'group_id' => $c['group']->id, 'academic_year_id' => $c['year']->id, 'professor_id' => $professor->id, 'professor_type' => \App\Models\Professor::class, 'assigned_hours' => 27, 'session_type' => 'cm']);
+        $new = $this->makeTestModule($c['filiere']->id, ['credit_hours' => 24]); $modulesBefore = \App\Models\Module::count();
+        $this->postJson('/api/professor-assignments/auto-distribute', ['semester_period' => 'odd'])->assertOk();
+        $this->assertDatabaseHas('module_professor', ['id' => $original->id, 'professor_id' => $professor->id, 'assigned_hours' => 27]);
+        $this->assertSame($modulesBefore, \App\Models\Module::count());
+        $this->assertDatabaseHas('module_professor', ['module_id' => $new->id, 'assigned_hours' => 24]);
+    }
 }

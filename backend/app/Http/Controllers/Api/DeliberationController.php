@@ -602,6 +602,7 @@ class DeliberationController extends Controller
      */
     public function getJuryStatus(Request $request): JsonResponse
     {
+        $request->validate(['filiere_id' => 'required|integer', 'academic_year_id' => 'nullable|integer', 'semester_number' => 'nullable|integer|between:1,10', 'type' => 'nullable|in:semestriel,annuel', 'session' => 'nullable|in:normale,rattrapage,totale,complet', 'group_id' => 'nullable|integer', 'year_level' => 'nullable|integer|between:1,5']);
         $filiereId = (int) $request->query('filiere_id', 1);
         $academicYearId = $this->resolveAcademicYearId($request->query('academic_year_id'));
         $semesterNum = (int) $request->query('semester_number', 1);

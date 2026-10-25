@@ -80,10 +80,11 @@ class RoomAvailabilityAndSmartFinderTest extends TestCase
 
     public function test_smart_find_detects_occupied_room_and_suggests_alternatives()
     {
-        $testDate = Carbon::now()->next(Carbon::TUESDAY);
+        $testDate = Carbon::parse('2026-11-03');
         $dayOfWeek = (int) $testDate->dayOfWeekIso;
 
         $year = $this->ensureAcademicYear();
+        $year->update(['start_date' => '2026-09-01', 'end_date' => '2027-06-30']);
         $semester = $year->semesters()->firstOrCreate([
             'name' => 'Semestre 1',
             'number' => 1,

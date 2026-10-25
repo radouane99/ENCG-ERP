@@ -30,6 +30,7 @@ class SmartSchedulingController extends Controller
             'include_saturday' => 'nullable|boolean',
             'max_daily_hours' => 'nullable|integer|min:4|max:10',
             'semester_number' => 'nullable|integer|min:1|max:10',
+            'teaching_weeks' => 'nullable|integer|min:1|max:30',
         ]);
 
         $result = $this->engine->simulate($validated);
@@ -52,6 +53,7 @@ class SmartSchedulingController extends Controller
             'persist' => 'nullable|boolean',
         ]);
 
+        abort_if($validated['persist'] ?? false, 409, 'Ajuster un brouillon de campagne avant de publier.');
         $result = $this->engine->reoptimizeExisting($validated);
 
         return response()->json([
@@ -75,7 +77,8 @@ class SmartSchedulingController extends Controller
             'include_saturday' => 'nullable|boolean',
         ]);
 
-        $result = $this->engine->generateAndPublish($validated);
+        abort_unless(! empty($validated['filiere_id']), 422, 'Choisir une filière.');
+        $result = $this->campaigns->generateDraft($validated['filiere_id'], $validated);
 
         return response()->json([
             'success' => $result['success'] ?? false,
@@ -149,6 +152,7 @@ class SmartSchedulingController extends Controller
             'max_daily_hours' => 'nullable|integer|min:4|max:10',
             'include_saturday' => 'nullable|boolean',
             'semester_number' => 'nullable|integer|min:1|max:10',
+            'teaching_weeks' => 'nullable|integer|min:1|max:30',
         ]);
 
         $result = $this->campaigns->generateDraft((int) $validated['filiere_id'], $validated);
@@ -199,6 +203,7 @@ class SmartSchedulingController extends Controller
         $validated = $request->validate([
             'schedule_ids' => 'required|array|min:1',
             'schedule_ids.*' => 'integer',
+            'revision' => 'nullable|string|size:64',
             'day_of_week' => 'required|integer|min:0|max:6',
             'start_time' => 'nullable|string',
             'end_time' => 'nullable|string',
@@ -217,6 +222,7 @@ class SmartSchedulingController extends Controller
             array_filter([
                 'professor_id' => $validated['professor_id'] ?? null,
                 'room_id' => $validated['room_id'] ?? null,
+                'revision' => $validated['revision'] ?? null,
             ], fn ($v) => $v !== null)
         );
 
@@ -226,6 +232,7 @@ class SmartSchedulingController extends Controller
     public function addSession(Request $request, int $versionId): JsonResponse
     {
         $validated = $request->validate([
+            'revision' => 'nullable|string|size:64',
             'group_ids' => 'nullable|array',
             'group_ids.*' => 'integer|exists:groups,id',
             'group_id' => 'nullable|integer|exists:groups,id',
@@ -246,10 +253,11 @@ class SmartSchedulingController extends Controller
     public function deleteBlock(Request $request, int $versionId): JsonResponse
     {
         $validated = $request->validate([
+            'revision' => 'nullable|string|size:64',
             'schedule_ids' => 'required|array|min:1',
             'schedule_ids.*' => 'integer',
         ]);
-        $result = $this->campaigns->deleteSession($versionId, $validated['schedule_ids']);
+        $result = $this->campaigns->deleteSession($versionId, $validated['schedule_ids'], $validated['revision'] ?? null);
 
         return response()->json(['success' => $result['success'] ?? false, 'data' => $result], ($result['success'] ?? false) ? 200 : 422);
     }

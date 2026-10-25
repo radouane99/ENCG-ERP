@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { useAuthStore } from '@stores/authStore';
 import api from '@shared/lib/api';
+import { openAuthenticatedUrl } from '@shared/lib/documentAccess';
 import {
 Calendar,
 Clock,
@@ -40,129 +41,59 @@ export default function ProfessorSchedulePage() {
   const [viewMode, setViewMode] = useState<'matrix' | 'list' | 'official'>('matrix');
   const [selectedDay, setSelectedDay] = useState<number>(1);
 
-  const profFullName = user?.name || 'Amina Chraibi';
-  const profLastName = (user as any)?.last_name || 'Chraibi';
-
-  // 1. Fetch Official Matrix from Admin Timetable engine
-  const { data: matrixData, isLoading: isMatrixLoading, refetch: refetchMatrix, isFetching: isMatrixFetching } = useQuery({
-    queryKey: ['official-timetable-matrix-prof', profFullName],
-    queryFn: async () => {
-      const res = await api.get('/timetable/export/all/0/matrix');
-      return res.data?.data || res.data;
-    },
+  const profFullName = user?.name || 'Enseignant';
+  const [refusalNotes, setRefusalNotes] = useState<Record<number, string>>({});
+  const { data: scheduleData, refetch: refetchSchedule, isError: scheduleError } = useQuery({
+    queryKey: ['professor-personal-schedule'],
+    queryFn: () => api.get('/professor-portal/schedule').then(res => res.data),
+  });
+  const professorId = scheduleData?.professor_id;
+  const allSessions = Array.isArray(scheduleData?.data) ? scheduleData.data : [];
+  const activeSessions = allSessions.filter((item: any) => item.lifecycle === 'PUBLISHED').map((item: any) => ({
+    ...item, session_id: item.id, title: item.module_name, location: item.room,
+    group: item.group_code, time_formatted: `${item.start_time} - ${item.end_time}`,
+  }));
+  const proposals = allSessions.filter((item: any) => item.lifecycle === 'PROPOSED');
+  const { data: matrixData, refetch: refetchMatrix, isFetching: isMatrixFetching } = useQuery({
+    queryKey: ['official-timetable-matrix-prof', professorId], enabled: !!professorId,
+    queryFn: () => api.get(`/timetable/export/professor/${professorId}/matrix`).then(res => res.data.data || res.data),
     staleTime: 30000,
   });
-
-  // 2. Fetch stats & surveillances
   const { data: statsData, refetch: refetchStats } = useQuery({
-    queryKey: ['professor-stats'],
-    queryFn: async () => {
-      const res = await api.get('/dashboard/professor/stats');
-      return res.data?.data;
-    },
-    staleTime: 30000,
+    queryKey: ['professor-stats'], queryFn: () => api.get('/dashboard/professor/stats').then(res => res.data.data), staleTime: 30000,
   });
-
-  const professorId = statsData?.professor_id || (user?.id ? Number(user.id) : 1);
   const surveillances = Array.isArray(statsData?.surveillances) ? statsData.surveillances : [];
-
-  // Parse all sessions belonging to this EXACT professor from the official Admin Matrix
-  const parsedSessions: any[] = [];
-  const profMatrixSections: any[] = [];
-
-  if (matrixData?.sections && Array.isArray(matrixData.sections)) {
-    const targetFullName = (user?.name || 'Amina Chraibi').trim().toLowerCase();
-
-    matrixData.sections.forEach((sec: any) => {
-      const matchingRows = (sec.rows || []).filter((r: any) => {
-        const rawName = (r.professor_name || '')
-          .replace(/\s*\((TD|TP|CM)\)/gi, '')
-          .trim()
-          .toLowerCase();
-
-        // Exact match on full name ("amina chraibi") OR exact professor_id
-        const isExactName = rawName === targetFullName;
-        const isExactId = r.professor_id && professorId && Number(r.professor_id) === Number(professorId);
-
-        return isExactName || isExactId;
-      });
-
-      if (matchingRows.length > 0) {
-        profMatrixSections.push({
-          ...sec,
-          rows: matchingRows,
-        });
-
-        matchingRows.forEach((row: any, rIdx: number) => {
-          [1, 2, 3, 4, 5].forEach((dayKey) => {
-            const slots = row.days?.[dayKey] || [];
-            slots.forEach((slotStr: string, sIdx: number) => {
-              // format e.g. "G1: 14h30-16h15" or "G1: 10h45-12h45"
-              const parts = slotStr.split(':');
-              const groupLabel = parts[0] || 'G1';
-              const timeRange = (parts.slice(1).join(':') || slotStr).trim();
-              const timeFormatted = timeRange.replace('h', ':').replace('h', ':');
-
-              parsedSessions.push({
-                session_id: `${sec.filiere_code}-${dayKey}-${rIdx}-${sIdx}`,
-                title: row.element_name || row.module_name || 'Module',
-                module_name: row.module_name,
-                code: row.session_type?.toUpperCase() || 'CM',
-                time: timeRange,
-                time_formatted: timeFormatted,
-                day_of_week: dayKey,
-                day_name: DAYS.find((d) => d.key === dayKey)?.name || 'Jour',
-                location: row.room_label || 'Salle ENCG',
-                room: row.room_label || 'Salle ENCG',
-                group: `${sec.semester_label || 'S5'} • ${groupLabel}`,
-                filiere_code: sec.filiere_code,
-                filiere_name: sec.filiere_name,
-                semester_label: sec.semester_label,
-                color: row.color || '#001A4B',
-              });
-            });
-          });
-        });
-      }
-    });
-  }
-
-  // Fallback to statsData.next_classes if matrix was empty
-  const activeSessions = parsedSessions.length > 0 ? parsedSessions : (statsData?.next_classes || []);
-
+  const profMatrixSections = Array.isArray(matrixData?.sections) ? matrixData.sections : [];
+  const confirmation = useMutation({
+    mutationFn: ({ id, decision }: { id: number; decision: 'confirmed' | 'refused' }) => api.post(`/professor-portal/schedules/${id}/confirm`, { decision, note: refusalNotes[id] || null }),
+    onSuccess: () => { toast.success('Réponse enregistrée.'); refetchSchedule() },
+    onError: (err: any) => toast.error(err.response?.data?.data?.message || err.response?.data?.message || 'Confirmation impossible.'),
+  });
+  const startCall = useMutation({
+    mutationFn: async (session: any) => {
+      const response = await api.post('/professor/attendance/start', { module_id: session.module_id, group_id: session.group_id, session_type: session.session_type, room_name: session.room });
+      return { ...session, session_id: response.data.session.id };
+    },
+    onSuccess: session => setActiveSession(session),
+    onError: (err: any) => toast.error(err.response?.data?.message || 'Ouverture de l’appel impossible.'),
+  });
   const handleRefetchAll = () => {
+    refetchSchedule();
     refetchMatrix();
     refetchStats();
   };
 
   // Export ICS
-  const handleExportIcs = () => {
-    if (activeSessions.length === 0) {
-      toast.error('Aucune séance à exporter.');
-      return;
-    }
-    const events = activeSessions
-      .map((c: any) => {
-        return `BEGIN:VEVENT\nSUMMARY:${c.title || 'Séance de cours'}\nLOCATION:${c.location || c.room || 'ENCG Fès'}\nDESCRIPTION:${c.group || ''}\nEND:VEVENT`;
-      })
-      .join('\n');
-    const icsData = `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//ENCG Fes ERP//Emploi du temps//FR\nCALSCALE:GREGORIAN\nMETHOD:PUBLISH\n${events}\nEND:VCALENDAR`;
-
-    const blob = new Blob([icsData], { type: 'text/calendar;charset=utf-8' });
-    const link = document.createElement('a');
-    link.href = window.URL.createObjectURL(blob);
-    link.setAttribute('download', `Emploi_du_temps_${profFullName.replace(/\s+/g, '_')}.ics`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    toast.success('📅 Emploi du temps exporté avec succès vers votre Agenda (.ics) !');
+  const handleExportIcs = async () => {
+    if (!professorId) return;
+    try {
+      const response = await api.get(`/timetable/export/professor/${professorId}/ics`, { responseType: 'blob' });
+      const url = URL.createObjectURL(response.data); const link = document.createElement('a'); link.href = url; link.download = 'emploi-du-temps.ics'; link.click(); window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch { toast.error('Export agenda indisponible.'); }
   };
-
-  // Download PDF
   const handleDownloadPdf = () => {
-    window.open(`/api/timetable/export/professor/${professorId}/pdf`, '_blank');
+    if (professorId) openAuthenticatedUrl(`/api/timetable/export/professor/${professorId}/pdf`);
   };
-
   // Get classes for matrix cell
   const getClassesForSlot = (dayKey: number, slotIndex: number) => {
     return activeSessions.filter((cls: any) => {
@@ -235,6 +166,17 @@ export default function ProfessorSchedulePage() {
       </div>
 
       {/* ── Summary Key Indicator Strip ── */}
+      {scheduleError && <div role="alert" className="rounded-xl border border-red-200 p-4 text-red-700">Votre emploi du temps est indisponible. <button onClick={() => refetchSchedule()} className="underline">Réessayer</button></div>}
+      {proposals.length > 0 && <section className="rounded-2xl border border-indigo-200 bg-white p-5 space-y-3 dark:bg-slate-900 dark:border-indigo-800" aria-labelledby="schedule-proposals">
+        <h2 id="schedule-proposals" className="text-lg font-bold">Planning proposé : votre avis est attendu</h2>
+        <p className="text-sm text-slate-500">Ces séances restent provisoires jusqu’à leur publication par la scolarité.</p>
+        {proposals.map((session: any) => <div key={session.id} className="rounded-xl border p-3 space-y-2">
+          <p className="font-semibold">{session.module_name} · {session.group_code}</p><p className="text-sm text-slate-500">{session.day_name} · {session.time} · {session.room}</p>
+          <p className="text-sm">Réponse : {session.confirmation_status === 'confirmed' ? 'Confirmée' : session.confirmation_status === 'refused' ? 'Indisponibilité signalée' : 'En attente'}</p>
+          <input aria-label={`Motif pour ${session.module_name}`} value={refusalNotes[session.id] || ''} onChange={event => setRefusalNotes(notes => ({ ...notes, [session.id]: event.target.value }))} placeholder="Précision ou motif d’indisponibilité" maxLength={500} className="w-full rounded-lg border p-2 text-sm dark:bg-slate-800" />
+          <div className="flex flex-wrap gap-2"><button disabled={confirmation.isPending || session.confirmation_status === 'confirmed'} onClick={() => confirmation.mutate({ id: session.id, decision: 'confirmed' })} className="rounded-lg bg-emerald-700 px-3 py-2 text-sm text-white disabled:opacity-50">Confirmer ce créneau</button><button disabled={confirmation.isPending} onClick={() => confirmation.mutate({ id: session.id, decision: 'refused' })} className="rounded-lg border px-3 py-2 text-sm">Signaler une indisponibilité</button></div>
+        </div>)}
+      </section>}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 shadow-sm border border-slate-200 dark:border-slate-800">
           <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-1">Enseignant</span>
@@ -252,7 +194,7 @@ export default function ProfessorSchedulePage() {
 
         <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 shadow-sm border border-slate-200 dark:border-slate-800">
           <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-1">Volume Hebdomadaire</span>
-          <div className="text-2xl font-black text-amber-600 dark:text-amber-400">{activeSessions.length * 2} heures</div>
+          <div className="text-2xl font-black text-amber-600 dark:text-amber-400">{Math.round(activeSessions.reduce((sum: number, item: any) => { const minutes = (time: string) => { const parts = time.split(":" ).map(Number); return parts[0] * 60 + parts[1] }; return sum + (minutes(item.end_time) - minutes(item.start_time)) / 60 }, 0) * 100) / 100} heures</div>
           <div className="text-[10px] font-bold text-slate-500 mt-1">Créneaux d'enseignement</div>
         </div>
 
@@ -403,7 +345,7 @@ export default function ProfessorSchedulePage() {
                                 </div>
 
                                 <button
-                                  onClick={() => setActiveSession(session)}
+                                  onClick={() => startCall.mutate(session)} disabled={startCall.isPending}
                                   className="w-full mt-2 py-1.5 bg-[#001A4B] hover:bg-[#082663] text-white rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-1 shadow-xs cursor-pointer transition-colors"
                                 >
                                   <QrCode className="w-3 h-3 text-amber-300" /> Faire l'Appel (QR / Liste)
@@ -571,7 +513,7 @@ export default function ProfessorSchedulePage() {
 
                       <div className="flex items-center gap-2 shrink-0">
                         <button
-                          onClick={() => setActiveSession(cls)}
+                          onClick={() => startCall.mutate(cls)} disabled={startCall.isPending}
                           className="px-5 py-2.5 bg-[#001A4B] hover:bg-[#082663] text-white font-black text-xs rounded-xl uppercase tracking-wider shadow-sm flex items-center gap-2 cursor-pointer transition-colors"
                         >
                           <QrCode className="w-4 h-4 text-amber-300" /> Faire l'Appel (QR / Liste)

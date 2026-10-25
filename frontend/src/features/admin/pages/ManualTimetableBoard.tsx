@@ -105,7 +105,7 @@ export default function ManualTimetableBoard({
 
   const moveMutation = useMutation({
     mutationFn: (body: Record<string, unknown>) =>
-      api.post(`/admin/smart-scheduling/versions/${versionId}/move`, body).then((res) => res.data.data),
+      api.post(`/admin/smart-scheduling/versions/${versionId}/move`, { ...body, revision: board?.revision }).then((res) => res.data.data),
     onSuccess: (data: any) => {
       toast.success(data.message || 'Séance déplacée avec succès.')
       setPicked(null)
@@ -120,7 +120,7 @@ export default function ManualTimetableBoard({
 
   const addMutation = useMutation({
     mutationFn: (body: Record<string, unknown>) =>
-      api.post(`/admin/smart-scheduling/versions/${versionId}/sessions`, body).then((res) => res.data.data),
+      api.post(`/admin/smart-scheduling/versions/${versionId}/sessions`, { ...body, revision: board?.revision }).then((res) => res.data.data),
     onSuccess: (data: any) => {
       toast.success(data.message || 'Séance ajoutée avec succès')
       setShowAdd(false)
@@ -133,12 +133,13 @@ export default function ManualTimetableBoard({
 
   const deleteMutation = useMutation({
     mutationFn: (schedule_ids: number[]) =>
-      api.post(`/admin/smart-scheduling/versions/${versionId}/sessions/delete`, { schedule_ids }).then((res) => res.data.data),
+      api.post(`/admin/smart-scheduling/versions/${versionId}/sessions/delete`, { schedule_ids, revision: board?.revision }).then((res) => res.data.data),
     onSuccess: (data: any) => {
       toast.success(data.message || 'Séance supprimée')
       setPicked(null)
       applyBoard(data)
     },
+    onError: (err: any) => toast.error(err.response?.data?.message || 'Suppression impossible.'),
   })
 
   const slots: Slot[] = board?.slots || [
@@ -151,7 +152,7 @@ export default function ManualTimetableBoard({
   const rawBlocks: Block[] = board?.blocks || []
   const blocks = useMemo(() => {
     if (selectedGroup === 'all') return rawBlocks
-    return rawBlocks.filter((b) => (b.group_label || '').toLowerCase().includes(selectedGroup.toLowerCase()))
+    return rawBlocks.filter((b) => b.group_ids.some(id => String(id) === selectedGroup))
   }, [rawBlocks, selectedGroup])
 
   const unplaced = blocks.filter((b) => b.unplaced || b.day_of_week < 1)
@@ -181,10 +182,8 @@ export default function ManualTimetableBoard({
 
   const groupOptions: SelectOption[] = useMemo(() => [
     { value: 'all', label: 'Tous les groupes', badge: 'Tous', icon: <Users className="w-3.5 h-3.5 text-emerald-500" /> },
-    { value: 'G1', label: 'Groupe 1 (G1)', badge: 'G1', icon: <Users className="w-3.5 h-3.5 text-emerald-500" /> },
-    { value: 'G2', label: 'Groupe 2 (G2)', badge: 'G2', icon: <Users className="w-3.5 h-3.5 text-emerald-500" /> },
-    { value: 'G3', label: 'Groupe 3 (G3)', badge: 'G3', icon: <Users className="w-3.5 h-3.5 text-emerald-500" /> },
-  ], [])
+    ...(catalog.groups || []).map((group: any) => ({ value: group.id, label: group.name, icon: <Users className="w-3.5 h-3.5 text-emerald-500" /> })),
+  ], [catalog.groups])
 
   const cellBlocks = useMemo(() => {
     const map: Record<string, Block[]> = {}

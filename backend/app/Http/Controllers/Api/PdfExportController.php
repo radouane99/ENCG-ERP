@@ -2291,10 +2291,10 @@ class PdfExportController extends Controller
      */
     private function buildOrdreDeServicePdf(Professor $professor): array
     {
-        $currentYear = AcademicYear::where('is_current', true)->first()
-            ?? AcademicYear::orderByDesc('start_year')->first();
+        $currentYear = AcademicYear::where('institution_id', $professor->institution_id)->findOrFail(\App\Services\Academic\AcademicContext::yearId());
 
         $query = ModuleProfessor::with(['module.filiere', 'group', 'academicYear'])
+            ->whereHas('module', fn ($q) => $q->where('institution_id', $professor->institution_id))
             ->where('professor_id', $professor->id);
 
         if ($currentYear) {
@@ -2319,20 +2319,6 @@ class PdfExportController extends Controller
         $modulesList = [];
         foreach ($assignedModules as $item) {
             $moduleHours = (int) ($item->assigned_hours ?? 0);
-            if ($moduleHours <= 0) {
-                $moduleHours = (int) ($item->module->credit_hours ?? 0);
-            }
-            if ($moduleHours <= 0) {
-                $moduleHours = (int) (
-                    ($item->module->hours_cm ?? 0)
-                    + ($item->module->hours_td ?? 0)
-                    + ($item->module->hours_tp ?? 0)
-                );
-            }
-            if ($moduleHours <= 0) {
-                $moduleHours = 36;
-            }
-
             $modulesList[] = [
                 'code' => $item->module->code ?? 'MOD',
                 'name' => $item->module->name ?? 'Module Académique',
@@ -2343,7 +2329,7 @@ class PdfExportController extends Controller
 
         $totalModulesCount = count($modulesList);
         $totalHours = array_reduce($modulesList, fn ($sum, $m) => $sum + $m['hours'], 0);
-        $weeklyHours = $totalModulesCount > 0 ? (int) max(1, round($totalHours / 15)) : 0;
+        $weeklyHours = null;
 
         $trackingCode = 'ODS-'.date('Y').'-'.strtoupper(substr(str_replace('-', '', (string) $professor->id), 0, 8));
         $verifyUrl = url("/verify/document/{$trackingCode}");
@@ -2392,6 +2378,30 @@ class PdfExportController extends Controller
             ?? throw (new ModelNotFoundException)->setModel(Professor::class, [(string) $publicId]);
     }
 
+    public function exportProfessorOrdersZip(Request $request)
+    {
+        abort_unless($request->user()->hasAnyRole(['super-admin', 'super_admin', 'admin', 'institution-admin', 'institution_admin', 'director', 'scolarite']), 403);
+        $institution = $request->user()->institution_id;
+        $year = AcademicYear::where('institution_id', $institution)->findOrFail(\App\Services\Academic\AcademicContext::yearId());
+        $ids = ModuleProfessor::where('academic_year_id', $year->id)->whereHas('module', fn ($q) => $q->where('institution_id', $institution))->distinct()->pluck('professor_id');
+        abort_if($ids->isEmpty(), 422, 'Aucune affectation à exporter.');
+        abort_if($ids->count() > 150, 422, 'Limiter cet export à 150 enseignants.');
+        abort_unless(class_exists(\ZipArchive::class), 503, 'Export ZIP indisponible sur ce serveur.');
+        $path = tempnam(storage_path('app'), 'prof-orders-');
+        $zip = new \ZipArchive;
+        try {
+            abort_unless($zip->open($path, \ZipArchive::OVERWRITE) === true, 500, 'Création du ZIP impossible.');
+            foreach (Professor::where('institution_id', $institution)->whereIn('id', $ids)->with(['user', 'department'])->get() as $professor) {
+                $zip->addFromString('ordre-service-'.$professor->id.'.pdf', $this->buildOrdreDeServicePdf($professor)['pdf']->output());
+            }
+            $zip->close();
+            return response()->download($path, 'ordres-service-'.$year->start_year.'.zip', ['Content-Type' => 'application/zip'])->deleteFileAfterSend(true);
+        } catch (\Throwable $e) {
+            if (is_file($path)) { @unlink($path); }
+            throw $e;
+        }
+    }
+
     private function resolveProfessorFromDepartmentHead(Department $department): ?Professor
     {
         $headName = trim($department->head_name ?? '');
@@ -2413,12 +2423,13 @@ class PdfExportController extends Controller
      */
     public function notifyProfessorAssignment(Request $request)
     {
+        abort_unless($request->user()->hasAnyRole(['super_admin', 'admin', 'director', 'scolarite']), 403);
+        $request->validate(['prof_id' => ['required']]);
         $profId = $request->input('prof_id');
         $profNameReq = trim($request->input('prof_name', ''));
-        $targetEmail = trim($request->input('email', ''));
 
-        $currentYear = AcademicYear::where('is_current', true)->first()
-            ?? AcademicYear::orderByDesc('start_year')->first();
+        $currentYear = AcademicYear::where('institution_id', $request->user()->institution_id)
+            ->findOrFail(\App\Services\Academic\AcademicContext::yearId());
 
         // Locate Professor in DB
         $professor = null;
@@ -2430,21 +2441,6 @@ class PdfExportController extends Controller
             }
         }
 
-        if (! $professor && $targetEmail) {
-            $user = User::where('email', $targetEmail)->first();
-            if ($user) {
-                $professor = Professor::with(['user', 'department'])->where('user_id', $user->id)->first();
-            }
-        }
-
-        if (! $professor && $profNameReq) {
-            $professor = Professor::with(['user', 'department'])
-                ->whereHas('user', function ($q) use ($profNameReq) {
-                    $q->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$profNameReq}%"])
-                        ->orWhere('name', 'LIKE', "%{$profNameReq}%");
-                })->first();
-        }
-
         if (! $professor) {
             return response()->json([
                 'success' => false,
@@ -2453,11 +2449,14 @@ class PdfExportController extends Controller
         }
 
         $profUser = $professor->user;
-        $destEmail = $targetEmail ?: ($profUser?->email ?? 'radouane.asri1996@gmail.com');
+        abort_unless((int) $professor->institution_id === (int) $request->user()->institution_id, 403);
+        $destEmail = $profUser?->email;
+        abort_unless(filter_var($destEmail, FILTER_VALIDATE_EMAIL), 422, 'Adresse officielle de l’enseignant manquante.');
 
         // Fetch Real Database Assignments
         $assignedModules = ModuleProfessor::with(['module', 'group', 'academicYear'])
             ->where('professor_id', $professor->id)
+            ->whereHas('module', fn ($q) => $q->where('institution_id', $request->user()->institution_id))
             ->when($currentYear, fn ($q) => $q->where('academic_year_id', $currentYear->id))
             ->get();
 
@@ -2465,10 +2464,7 @@ class PdfExportController extends Controller
         foreach ($assignedModules as $a) {
             $hours = (int) ($a->assigned_hours ?? 0);
             if ($hours <= 0) {
-                $hours = (int) ($a->module->credit_hours ?? 0);
-            }
-            if ($hours <= 0) {
-                $hours = 36;
+                abort(422, 'Compléter les volumes horaires avant notification.');
             }
             $formattedAssignments[] = [
                 'module' => ($a->module->code ?? 'MOD').' '.($a->module->name ?? 'Module'),
@@ -2478,8 +2474,9 @@ class PdfExportController extends Controller
         }
 
         $count = count($formattedAssignments);
+        abort_if($count === 0, 422, 'Aucune affectation pour cette année.');
         $totalHours = array_reduce($formattedAssignments, fn ($sum, $m) => $sum + $m['hours'], 0);
-        $weeklyHours = $count > 0 ? (int) max(1, round($totalHours / 15)) : 0;
+        $weeklyHours = null;
 
         $profName = trim(($profUser?->first_name ?? '').' '.($profUser?->last_name ?? ''));
         if (empty($profName)) {
@@ -2499,7 +2496,8 @@ class PdfExportController extends Controller
         try {
             $pdfContent = $this->buildOrdreDeServicePdf($professor)['pdf']->output();
         } catch (\Exception $e) {
-            // PDF output fallback
+            report($e);
+            return response()->json(['success' => false, 'message' => 'Le PDF ne peut pas être généré. Aucun message envoyé.'], 500);
         }
 
         try {
@@ -2507,12 +2505,13 @@ class PdfExportController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => "📧 Email certifié d'affectation avec Ordre de Service PDF envoyé à {$destEmail} ({$count} modules réels) !",
+                'message' => "Notification avec PDF transmise au service de messagerie pour {$destEmail}.",
             ]);
         } catch (\Exception $e) {
+            report($e);
             return response()->json([
                 'success' => false,
-                'message' => "Erreur lors de l'envoi Resend : ".$e->getMessage(),
+                'message' => 'Le service de messagerie ne peut pas transmettre la notification actuellement.',
             ], 500);
         }
     }

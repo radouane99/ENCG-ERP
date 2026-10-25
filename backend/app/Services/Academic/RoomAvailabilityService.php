@@ -37,7 +37,7 @@ class RoomAvailabilityService
 
         // Compute headcount if not provided
         if ($headcount <= 0 && ! empty($groupIds)) {
-            $headcount = Group::whereIn('id', $groupIds)->count() * 35;
+            $headcount = (int) Group::whereIn('id', $groupIds)->sum('capacity');
         }
         if ($headcount <= 0) {
             $headcount = ($sessionType === 'cm' || $sessionType === 'amphi') ? 80 : 35;

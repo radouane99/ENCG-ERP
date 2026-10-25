@@ -24,15 +24,18 @@ class TimetableService
                 'schedules.start_time',
                 'schedules.end_time',
                 'modules.name as module_name',
-                'modules.color as module_color',
+                DB::raw('NULL as module_color'),
                 'rooms.name as room_name',
                 'groups.name as group_name',
                 'schedules.professor_id',
                 DB::raw("COALESCE(users.first_name, 'Professeur') as prof_first_name"),
                 DB::raw("COALESCE(users.last_name, '') as prof_last_name"),
-                'schedules.type' // e.g., 'CM', 'TD', 'TP'
+                'schedules.session_type as type',
+                'schedules.version'
             )
-            ->where('schedules.is_active', true);
+            ->where('schedules.is_active', true)
+            ->where('schedules.academic_year_id', $filters['academic_year_id'] ?? AcademicContext::yearId())
+            ->where('schedules.institution_id', auth()->user()?->institution_id ?? config('erp.institution_id', 1));
 
         if (! empty($filters['group_id'])) {
             $query->where('schedules.group_id', $filters['group_id']);

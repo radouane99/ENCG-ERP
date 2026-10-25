@@ -127,7 +127,7 @@ class TimetableRoomGuardTest extends TestCase
 
     public function test_available_rooms_excludes_booked_and_scheduled_rooms(): void
     {
-        $year = $this->makeTestAcademicYear(['is_current' => true]);
+        $year = $this->makeTestAcademicYear(['is_current' => true, 'start_date' => '2026-08-01']);
         $semester = $this->makeTestSemester($year->id, ['is_current' => true, 'number' => 1]);
         $campus = Campus::firstOrCreate(
             ['code' => 'CAMPUS_PRINCIPAL'],

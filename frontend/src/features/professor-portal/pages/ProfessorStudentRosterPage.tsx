@@ -7,7 +7,7 @@ UserCheck,ShieldAlert,RefreshCw,Printer,Info,
 FileText,X,CheckCircle2,BarChart3,Download,Copy,
 LayoutGrid,LayoutList,UserX,RotateCcw,QrCode,
 Lock,Unlock,MessageCircle,Eye,Calendar,Pencil,
-Tag,PrinterIcon,Save,Sparkles,AlertTriangle
+Tag,PrinterIcon,Save,Sparkles,AlertTriangle,Clock
 } from 'lucide-react';
 import api from '@/shared/lib/api';
 import { openAuthenticatedUrl } from '@shared/lib/documentAccess';
@@ -82,6 +82,54 @@ const TAG_CONFIG: Record<AnnotationTag, { label: string; bg: string; text: strin
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
+interface ScheduleItem {
+  id: number;
+  module_id: number;
+  module_code: string;
+  module_name: string;
+  group_id: number;
+  group_code: string;
+  filiere_name?: string;
+  semester?: string;
+  day_of_week: number; // 1=Monday … 7=Sunday
+  day_name: string;   // "Lundi", "Mardi"…
+  start_time: string; // "08:00"
+  end_time: string;
+  room?: string;
+  type: string;       // "CM", "TD", "TP"
+  sub_groups?: string[];
+}
+
+/** Returns the date (YYYY-MM-DD) of the given ISO day within the current academic week (Monday to Saturday). */
+function getDateForScheduleDay(dayOfWeek: number): string {
+  const today = new Date();
+  const todayJs = today.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+  const currentIsoDay = todayJs === 0 ? 7 : todayJs; // 1=Mon ... 7=Sun
+
+  // Calculate Monday of current academic week
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - (currentIsoDay - 1));
+
+  // Target day within current week
+  const target = new Date(monday);
+  target.setDate(monday.getDate() + (dayOfWeek - 1));
+
+  const y = target.getFullYear();
+  const m = String(target.getMonth() + 1).padStart(2, '0');
+  const d = String(target.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+const DAY_COLORS: Record<number, { bg: string; border: string; text: string; dot: string }> = {
+  1: { bg: 'bg-blue-500/10',   border: 'border-blue-500/30',   text: 'text-blue-300',   dot: 'bg-blue-400' },
+  2: { bg: 'bg-violet-500/10', border: 'border-violet-500/30', text: 'text-violet-300', dot: 'bg-violet-400' },
+  3: { bg: 'bg-emerald-500/10',border: 'border-emerald-500/30',text: 'text-emerald-300',dot: 'bg-emerald-400' },
+  4: { bg: 'bg-amber-500/10',  border: 'border-amber-500/30',  text: 'text-amber-300',  dot: 'bg-amber-400' },
+  5: { bg: 'bg-rose-500/10',   border: 'border-rose-500/30',   text: 'text-rose-300',   dot: 'bg-rose-400' },
+  6: { bg: 'bg-pink-500/10',   border: 'border-pink-500/30',   text: 'text-pink-300',   dot: 'bg-pink-400' },
+  7: { bg: 'bg-slate-500/10',  border: 'border-slate-500/30',  text: 'text-slate-300',  dot: 'bg-slate-400' },
+};
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function ProfessorStudentRosterPage() {
@@ -91,6 +139,11 @@ export default function ProfessorStudentRosterPage() {
 
   const [options, setOptions] = useState<OptionsPayload | null>(null);
   const [loadingOptions, setLoadingOptions] = useState(true);
+
+  // Schedule-based group selection
+  const [schedules, setSchedules] = useState<ScheduleItem[]>([]);
+  const [loadingSchedules, setLoadingSchedules] = useState(true);
+  const [selectedScheduleId, setSelectedScheduleId] = useState<number | null>(null);
 
   const [selectedModuleId, setSelectedModuleId] = useState<number | null>(null);
   const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
@@ -259,6 +312,10 @@ export default function ProfessorStudentRosterPage() {
     [selectedModule, selectedGroupId]
   );
   const availableSubGroups = useMemo(() => selectedSection?.sub_groups ?? [], [selectedSection]);
+  const selectedSchedule = useMemo(
+    () => schedules.find(s => s.id === selectedScheduleId) || null,
+    [schedules, selectedScheduleId]
+  );
 
   // Filtered students
   const filteredStudents = useMemo(() => {
@@ -310,7 +367,6 @@ export default function ProfessorStudentRosterPage() {
       const payload = res.data?.data ?? res.data;
       let modulesList: ModuleOption[] = payload?.modules ?? [];
 
-      // Si les modules ne sont pas directement regroupés mais les groupes existent
       if ((!modulesList || modulesList.length === 0) && payload?.groups?.length > 0) {
         const map: Record<number, ModuleOption> = {};
         payload.groups.forEach((g: any) => {
@@ -318,7 +374,7 @@ export default function ProfessorStudentRosterPage() {
           if (!map[mId]) {
             map[mId] = {
               module_id: mId,
-              module_name: g.module_name || 'Module d\'Enseignement',
+              module_name: g.module_name || "Module d'Enseignement",
               module_code: g.module_code || 'MOD',
               sections: [],
             };
@@ -336,18 +392,67 @@ export default function ProfessorStudentRosterPage() {
       }
 
       setOptions({ modules: modulesList });
-      const firstModule = modulesList[0];
-      if (firstModule) {
-        setSelectedModuleId(firstModule.module_id);
-        const firstSection = firstModule.sections?.[0];
-        if (firstSection) setSelectedGroupId(firstSection.group_id);
+      if (modulesList.length > 0 && !selectedGroupId) {
+        const firstMod = modulesList[0];
+        setSelectedModuleId(firstMod.module_id);
+        if (firstMod.sections && firstMod.sections.length > 0) {
+          setSelectedGroupId(firstMod.sections[0].group_id);
+          if (firstMod.sections[0].sub_groups && firstMod.sections[0].sub_groups.length > 0) {
+            setSelectedSubGroup(firstMod.sections[0].sub_groups[0]);
+          }
+        }
       }
     } catch {
       toast.error('Impossible de charger les modules affectés');
     } finally {
       setLoadingOptions(false);
     }
-  }, []);
+  }, [selectedGroupId]);
+
+  // ── Fetch schedules from timetable ──────────────────────────────────────────
+  const fetchSchedules = useCallback(async () => {
+    setLoadingSchedules(true);
+    try {
+      const res = await api.get('/professor-portal/schedule');
+      const raw: any[] = res.data?.data ?? res.data?.schedules ?? res.data ?? [];
+      const items: ScheduleItem[] = (Array.isArray(raw) ? raw : []).map((s: any) => ({
+        id: s.id,
+        module_id: s.module_id,
+        module_code: s.module_code || '',
+        module_name: s.module_name || s.title || '',
+        group_id: s.group_id,
+        group_code: s.group_code || s.group || '',
+        filiere_name: s.filiere_name || '',
+        semester: s.semester ? `S${s.semester}` : '',
+        day_of_week: s.day_of_week ?? 1,
+        day_name: s.day_name || ['', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'][s.day_of_week ?? 1],
+        start_time: (s.start_time || '').slice(0, 5) || (s.time ? s.time.split(' - ')[0]?.slice(0, 5) : ''),
+        end_time: (s.end_time || '').slice(0, 5) || (s.time ? s.time.split(' - ')[1]?.slice(0, 5) : ''),
+        room: s.room || s.classroom || '',
+        type: (s.type || s.session_type || 'CM').toUpperCase(),
+        sub_groups: s.sub_groups || [],
+      }));
+      setSchedules(items);
+      // Auto-select schedule: prioritize today's slot if present, otherwise first slot of the week
+      if (items.length > 0 && !selectedScheduleId) {
+        const todayJs = new Date().getDay();
+        const currentIsoDay = todayJs === 0 ? 7 : todayJs; // 1=Mon ... 7=Sun
+        const todaySlot = items.find(s => s.day_of_week === currentIsoDay);
+        const chosen = todaySlot || items[0];
+
+        setSelectedScheduleId(chosen.id);
+        setSelectedModuleId(chosen.module_id);
+        setSelectedGroupId(chosen.group_id);
+        setListMode(chosen.type === 'TD' || chosen.type === 'TP' ? 'subgroup' : 'section');
+        if (chosen.sub_groups?.length) setSelectedSubGroup(chosen.sub_groups[0]);
+        setSeanceDate(getDateForScheduleDay(chosen.day_of_week));
+      }
+    } catch {
+      // fallback: use options-based selection
+    } finally {
+      setLoadingSchedules(false);
+    }
+  }, [selectedScheduleId]);
 
   // Fetch Students
   const fetchStudents = useCallback(async () => {
@@ -506,7 +611,7 @@ export default function ProfessorStudentRosterPage() {
     }
   };
 
-  useEffect(() => { fetchOptions(); }, [fetchOptions]);
+  useEffect(() => { fetchOptions(); fetchSchedules(); }, [fetchOptions, fetchSchedules]);
   useEffect(() => { if (selectedGroupId) fetchStudents(); }, [selectedGroupId, listMode, selectedSubGroup]);
   useEffect(() => {
     if (selectedGroupId && selectedModuleId) {
@@ -514,10 +619,6 @@ export default function ProfessorStudentRosterPage() {
     }
   }, [selectedGroupId, selectedModuleId, listMode, selectedSubGroup]);
   useEffect(() => { setSelectedSubGroup(availableSubGroups[0] ?? ''); }, [availableSubGroups]);
-  useEffect(() => {
-    const firstSection = selectedModule?.sections?.[0];
-    setSelectedGroupId(firstSection?.group_id ?? null);
-  }, [selectedModuleId]);
 
   // Actions: Absence Toggle
   const toggleAbsent = (id: number) => {
@@ -757,165 +858,154 @@ export default function ProfessorStudentRosterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-100">
-      {/* ─── Sticky Header ────────────────────────────────────────────── */}
-      <div className="border-b border-slate-800/80 bg-slate-900/80 backdrop-blur-xl sticky top-0 z-30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3.5">
-          <div className="flex items-center justify-between gap-4 flex-wrap">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 text-emerald-400">
-                <ClipboardList className="w-6 h-6" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h1 className="text-xl font-bold text-white tracking-tight">
-                    Listes d'Étudiants & Émargement
-                  </h1>
-                  {isLocked && (
-                    <span className="flex items-center gap-1 text-[11px] font-semibold text-amber-300 bg-amber-500/20 border border-amber-500/40 px-2 py-0.5 rounded-full">
-                      <Lock className="w-3 h-3" /> Verrouillé
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs text-slate-400">
-                  لوائح الطلبة وأوراق الحضور الرسمية — {profName || 'Professeur ENCG'}
-                </p>
-              </div>
-            </div>
+    <div className="space-y-6 font-sans animate-in fade-in duration-500 text-slate-900 dark:text-slate-100 pb-20 max-w-[1600px] mx-auto p-2 sm:p-4">
+      {/* ── Top Role & Institution Header Pill ── */}
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xs">
+        <div className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-200 pl-1">
+          <GraduationCap className="w-4 h-4 text-[#001A4B] dark:text-blue-400 shrink-0" />
+          <span>Espace Enseignant :</span>
+          <span className="px-2.5 py-0.5 rounded-lg text-[11px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300/60">
+            Listes d'Étudiants & Émargement Officiel
+          </span>
+          <span className="text-slate-300 dark:text-slate-700">•</span>
+          <span className="text-slate-600 dark:text-slate-400">{profName || 'Professeur ENCG'}</span>
+          {isLocked && (
+            <span className="flex items-center gap-1 text-[11px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-700 px-2 py-0.5 rounded-full ml-1">
+              <Lock className="w-3 h-3 text-amber-500" /> Verrouillé
+            </span>
+          )}
+        </div>
+        <span className="text-[11px] font-bold text-slate-400 pr-1">
+          ENCG Fès · Année Académique 2026–2027
+        </span>
+      </div>
 
-            {/* Header Right Actions */}
-            <div className="flex items-center gap-2 flex-wrap">
-              {/* View layout toggle */}
-              <div className="flex rounded-lg overflow-hidden border border-slate-700/80 bg-slate-800/80 p-0.5">
-                <button
-                  onClick={() => setViewMode('table')}
-                  title="Vue Tableau"
-                  className={cn(
-                    'p-1.5 rounded transition-all',
-                    viewMode === 'table' ? 'bg-slate-700 text-white shadow' : 'text-slate-400 hover:text-white'
-                  )}
-                >
-                  <LayoutList className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => setViewMode('cards')}
-                  title="Vue Cartes / Trombinoscope"
-                  className={cn(
-                    'p-1.5 rounded transition-all',
-                    viewMode === 'cards' ? 'bg-slate-700 text-white shadow' : 'text-slate-400 hover:text-white'
-                  )}
-                >
-                  <LayoutGrid className="w-4 h-4" />
-                </button>
-              </div>
-
-              {/* Stats panel toggle */}
-              <button
-                onClick={() => setShowStats(v => !v)}
-                className={cn(
-                  'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all border',
-                  showStats
-                    ? 'bg-violet-600/20 border-violet-500/40 text-violet-300'
-                    : 'bg-slate-800/80 border-slate-700/80 text-slate-300 hover:text-white hover:bg-slate-700'
-                )}
-              >
-                <BarChart3 className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Stats</span>
-              </button>
-
-              {/* QR Code toggle */}
-              <button
-                onClick={() => setShowQrCol(v => !v)}
-                className={cn(
-                  'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all border',
-                  showQrCol
-                    ? 'bg-cyan-600/20 border-cyan-500/40 text-cyan-300'
-                    : 'bg-slate-800/80 border-slate-700/80 text-slate-300 hover:text-white hover:bg-slate-700'
-                )}
-              >
-                <QrCode className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">QR</span>
-              </button>
-
-              {/* Lock Button */}
-              <button
-                onClick={toggleLock}
-                className={cn(
-                  'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border',
-                  isLocked
-                    ? 'bg-amber-600/25 border-amber-500/50 text-amber-300 hover:bg-amber-600/35'
-                    : 'bg-slate-800/80 border-slate-700/80 text-slate-300 hover:text-white hover:bg-slate-700'
-                )}
-                title={isLocked ? 'Déverrouiller la feuille de présence' : 'Geler la liste pour éviter les modifications accidentelles'}
-              >
-                {isLocked ? <Lock className="w-3.5 h-3.5 text-amber-400" /> : <Unlock className="w-3.5 h-3.5 text-slate-400" />}
-                <span>{isLocked ? 'Verrouillé' : 'Verrouiller'}</span>
-              </button>
-
-              {/* Refresh */}
-              <button
-                onClick={() => {
-                  fetchOptions(true);
-                  fetchStudents();
-                }}
-                disabled={loadingStudents || loadingOptions || !selectedGroupId}
-                className="p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 border border-slate-700/80 text-slate-300 transition-all disabled:opacity-40"
-                title="Actualiser la liste (invalide le cache)"
-              >
-                <RefreshCw className={cn('w-4 h-4', (loadingStudents || loadingOptions) && 'animate-spin')} />
-              </button>
-
-              {/* WhatsApp Share Button */}
-              <button
-                onClick={() => setShowWhatsAppModal(true)}
-                disabled={students.length === 0}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/30 text-emerald-300 text-xs font-semibold transition-all disabled:opacity-40"
-                title="Partager le compte-rendu sur WhatsApp"
-              >
-                <MessageCircle className="w-4 h-4 text-emerald-400" />
-                <span className="hidden md:inline">WhatsApp</span>
-              </button>
-
-              {/* PDF Preview Button */}
-              <button
-                onClick={handleOpenPdfPreview}
-                disabled={!selectedGroupId || students.length === 0}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-600/20 hover:bg-cyan-600/30 border border-cyan-500/40 text-cyan-300 text-xs font-semibold transition-all disabled:opacity-40"
-                title="Aperçu du PDF officiel dans un lecteur intégré"
-              >
-                <Eye className="w-4 h-4 text-cyan-400" />
-                <span className="hidden sm:inline">Aperçu PDF</span>
-              </button>
-
-              {/* Print / Export PDF Modal */}
-              <button
-                onClick={() => setShowPdfModal(true)}
-                disabled={!selectedGroupId || students.length === 0}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-semibold transition-all shadow-lg shadow-emerald-950/40 disabled:opacity-40"
-              >
-                <Printer className="w-4 h-4" />
-                <span>Imprimer PDF</span>
-              </button>
-            </div>
+      {/* ── Hero Banner (Unified ENCG Design System) ── */}
+      <div className="rounded-3xl p-6 sm:p-8 text-white shadow-xl border bg-gradient-to-r from-slate-900 via-indigo-950 to-[#001A4B] border-indigo-900/60 relative overflow-hidden flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl pointer-events-none -translate-y-1/2 translate-x-1/3"></div>
+        <div className="flex items-center gap-4 relative z-10">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-emerald-500/30 text-white font-black flex items-center justify-center shadow-lg shrink-0">
+            <ClipboardList className="w-7 h-7" />
           </div>
+          <div>
+            <span className="px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest inline-flex items-center gap-1 mb-1 border bg-emerald-500/20 text-emerald-300 border-emerald-400/30">
+              <Sparkles className="w-3 h-3 text-emerald-400" /> Module Apogée & LMD
+            </span>
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
+              Listes d'Étudiants & Feuille d'Émargement
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-300 font-medium mt-0.5">
+              Pointage des présences par séance, gestion des absences, synchronisation avec le Cahier de Texte et exports certifiés.
+            </p>
+          </div>
+        </div>
+
+        {/* Hero Quick Action Buttons */}
+        <div className="flex items-center gap-2 relative z-10 flex-wrap">
+          {/* Table / Cards View Mode Toggle */}
+          <div className="flex rounded-xl overflow-hidden border border-white/20 bg-white/10 p-0.5 backdrop-blur-md">
+            <button
+              onClick={() => setViewMode('table')}
+              title="Vue Tableau"
+              className={cn(
+                'p-2 rounded-lg transition-all',
+                viewMode === 'table' ? 'bg-white text-[#001A4B] shadow font-bold' : 'text-slate-300 hover:text-white'
+              )}
+            >
+              <LayoutList className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setViewMode('cards')}
+              title="Vue Cartes / Trombinoscope"
+              className={cn(
+                'p-2 rounded-lg transition-all',
+                viewMode === 'cards' ? 'bg-white text-[#001A4B] shadow font-bold' : 'text-slate-300 hover:text-white'
+              )}
+            >
+              <LayoutGrid className="w-4 h-4" />
+            </button>
+          </div>
+
+          <button
+            onClick={() => setShowStats(v => !v)}
+            className={cn(
+              'flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all border backdrop-blur-md cursor-pointer',
+              showStats ? 'bg-violet-500 text-white border-violet-400' : 'bg-white/10 border-white/20 text-slate-200 hover:bg-white/20'
+            )}
+          >
+            <BarChart3 className="w-3.5 h-3.5" />
+            <span>Stats</span>
+          </button>
+
+          <button
+            onClick={() => setShowQrCol(v => !v)}
+            className={cn(
+              'flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all border backdrop-blur-md cursor-pointer',
+              showQrCol ? 'bg-cyan-500 text-white border-cyan-400' : 'bg-white/10 border-white/20 text-slate-200 hover:bg-white/20'
+            )}
+          >
+            <QrCode className="w-3.5 h-3.5" />
+            <span>QR</span>
+          </button>
+
+          <button
+            onClick={toggleLock}
+            className={cn(
+              'flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all border backdrop-blur-md cursor-pointer',
+              isLocked
+                ? 'bg-amber-500 text-slate-950 border-amber-400'
+                : 'bg-white/10 border-white/20 text-slate-200 hover:bg-white/20'
+            )}
+            title={isLocked ? 'Déverrouiller la feuille de présence' : 'Geler la liste pour éviter les modifications accidentelles'}
+          >
+            {isLocked ? <Lock className="w-3.5 h-3.5 text-slate-950" /> : <Unlock className="w-3.5 h-3.5 text-slate-300" />}
+            <span>{isLocked ? 'Verrouillé' : 'Verrouiller'}</span>
+          </button>
+
+          <button
+            onClick={handleOpenPdfPreview}
+            disabled={!selectedGroupId || students.length === 0}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-bold text-white transition-all backdrop-blur-md cursor-pointer disabled:opacity-40"
+          >
+            <Eye className="w-4 h-4 text-cyan-300" />
+            <span className="hidden sm:inline">Aperçu PDF</span>
+          </button>
+
+          <button
+            onClick={() => setShowPdfModal(true)}
+            disabled={!selectedGroupId || students.length === 0}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-black uppercase tracking-wider shadow-md transition-all cursor-pointer disabled:opacity-40"
+          >
+            <Printer className="w-4 h-4" />
+            <span>Imprimer</span>
+          </button>
+
+          <button
+            onClick={() => setShowWhatsAppModal(true)}
+            disabled={students.length === 0}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#25D366]/20 hover:bg-[#25D366]/30 border border-[#25D366]/40 text-xs font-bold text-emerald-200 transition-all cursor-pointer disabled:opacity-40"
+          >
+            <MessageCircle className="w-4 h-4 text-[#25D366]" />
+            <span className="hidden sm:inline">WhatsApp</span>
+          </button>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-5">
+      <div className="space-y-5">
         {loadingOptions ? (
           <div className="flex items-center justify-center py-24">
-            <Loader2 className="w-8 h-8 text-emerald-400 animate-spin" />
+            <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
           </div>
         ) : !options?.modules?.length ? (
           <NoModulesPlaceholder />
         ) : (
           <>
             {/* ─── 1. Sélecteur de Séance & Date ───────────────────────── */}
-            <div className="bg-slate-900/80 border border-slate-800/80 rounded-2xl p-4 shadow-xl backdrop-blur-xl">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xs">
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <div className="flex items-center gap-3 flex-wrap">
-                  <div className="flex items-center gap-2 text-sm font-semibold text-slate-200">
-                    <Calendar className="w-4 h-4 text-emerald-400" />
+                  <div className="flex items-center gap-2 text-sm font-bold text-slate-800 dark:text-slate-200">
+                    <Calendar className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                     <span>Séance d'enseignement :</span>
                   </div>
 
@@ -933,8 +1023,8 @@ export default function ProfessorStudentRosterPage() {
                           className={cn(
                             'relative px-3 py-1 rounded-full text-xs font-bold border transition-all flex items-center gap-1.5',
                             isCurrent
-                              ? 'bg-emerald-600 border-emerald-500 text-white shadow-lg shadow-emerald-900/40'
-                              : 'bg-slate-800/90 border-slate-700/80 text-slate-400 hover:border-emerald-500/60 hover:text-emerald-300'
+                              ? 'bg-[#001A4B] border-[#001A4B] text-white shadow-md dark:bg-emerald-600 dark:border-emerald-500'
+                              : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-emerald-500/60 hover:text-emerald-600 dark:hover:text-emerald-300'
                           )}
                         >
                           <span>{s}</span>
@@ -942,7 +1032,7 @@ export default function ProfessorStudentRosterPage() {
                             <span
                               className={cn(
                                 'w-1.5 h-1.5 rounded-full',
-                                isCurrent ? 'bg-white' : 'bg-emerald-400'
+                                isCurrent ? 'bg-amber-300' : 'bg-emerald-500'
                               )}
                               title="Données enregistrées pour cette séance"
                             />
@@ -953,10 +1043,24 @@ export default function ProfessorStudentRosterPage() {
                   </div>
                 </div>
 
-                {/* Date Picker + Status */}
-                <div className="flex items-center gap-3 ml-auto flex-wrap">
-                  <div className="flex items-center gap-2 bg-slate-800/90 border border-slate-700/80 rounded-lg px-2.5 py-1">
-                    <span className="text-xs text-slate-400 font-medium">Date :</span>
+                {/* Date Picker + Schedule slot badge */}
+                <div className="flex items-center gap-2.5 ml-auto flex-wrap">
+                  {selectedSchedule && (
+                    <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-xl text-xs text-blue-900 dark:text-blue-200">
+                      <Clock className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
+                      <span className="font-bold">{selectedSchedule.day_name}</span>
+                      <span className="font-mono text-slate-600 dark:text-slate-300">{selectedSchedule.start_time} - {selectedSchedule.end_time}</span>
+                      {selectedSchedule.room && (
+                        <>
+                          <span className="text-slate-400">•</span>
+                          <span className="font-semibold text-slate-700 dark:text-slate-200">📍 {selectedSchedule.room}</span>
+                        </>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-2.5 py-1">
+                    <span className="text-xs text-slate-600 dark:text-slate-400 font-medium">Date :</span>
                     <input
                       type="date"
                       value={seanceDate}
@@ -966,8 +1070,23 @@ export default function ProfessorStudentRosterPage() {
                         setSeanceDate(d);
                         persistCurrentSeance(absentIds, annotations, isLocked, d);
                       }}
-                      className="bg-transparent text-xs text-white focus:outline-none disabled:opacity-60 cursor-pointer"
+                      className="bg-transparent text-xs text-slate-900 dark:text-white font-medium focus:outline-none disabled:opacity-60 cursor-pointer"
                     />
+                    {selectedSchedule && (
+                      <button
+                        type="button"
+                        disabled={isLocked}
+                        onClick={() => {
+                          const schedDate = getDateForScheduleDay(selectedSchedule.day_of_week);
+                          setSeanceDate(schedDate);
+                          persistCurrentSeance(absentIds, annotations, isLocked, schedDate);
+                        }}
+                        className="text-[11px] text-blue-600 dark:text-sky-400 hover:underline font-bold ml-1 disabled:opacity-40 cursor-pointer"
+                        title="Réinitialiser à la date du créneau de l'emploi pour cette semaine"
+                      >
+                        Date créneau
+                      </button>
+                    )}
                     <button
                       type="button"
                       disabled={isLocked}
@@ -976,7 +1095,7 @@ export default function ProfessorStudentRosterPage() {
                         setSeanceDate(today);
                         persistCurrentSeance(absentIds, annotations, isLocked, today);
                       }}
-                      className="text-[11px] text-emerald-400 hover:underline font-semibold ml-1 disabled:opacity-40"
+                      className="text-[11px] text-emerald-600 dark:text-emerald-400 hover:underline font-bold ml-1 disabled:opacity-40 cursor-pointer"
                     >
                       Aujourd'hui
                     </button>
@@ -984,11 +1103,11 @@ export default function ProfessorStudentRosterPage() {
 
                   {/* Séance summary badge */}
                   <div className="flex items-center gap-2">
-                    <span className="text-xs px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-700/70 text-slate-300 font-mono">
+                    <span className="text-xs px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-mono">
                       {absentIds.size === 0 ? (
-                        <span className="text-emerald-400">Plein effectif (0 absent)</span>
+                        <span className="text-emerald-600 dark:text-emerald-400 font-bold">Plein effectif (0 absent)</span>
                       ) : (
-                        <span className="text-rose-400 font-semibold">{absentIds.size} absent{absentIds.size > 1 ? 's' : ''}</span>
+                        <span className="text-rose-600 dark:text-rose-400 font-bold">{absentIds.size} absent{absentIds.size > 1 ? 's' : ''}</span>
                       )}
                     </span>
 
@@ -996,10 +1115,10 @@ export default function ProfessorStudentRosterPage() {
                     <button
                       onClick={handleFetchAttendanceRisk}
                       disabled={!selectedGroupId}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-semibold transition-all shadow-sm disabled:opacity-50"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-700 text-xs font-bold transition-all shadow-2xs hover:bg-amber-100 dark:hover:bg-amber-900/50 disabled:opacity-50 cursor-pointer"
                       title="Analyse prédictive des risques d'absence et d'exclusion (Art. 14 ENCG Fès)"
                     >
-                      <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                      <Sparkles className="w-3.5 h-3.5 text-amber-500" />
                       <span>Risque Décrochage IA</span>
                     </button>
 
@@ -1007,7 +1126,7 @@ export default function ProfessorStudentRosterPage() {
                     <button
                       onClick={() => setShowSaveModal(true)}
                       disabled={savingAttendance || !selectedGroupId}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-md shadow-emerald-950/40 disabled:opacity-50"
+                      className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-[#001A4B] hover:bg-[#082663] dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-md disabled:opacity-50 cursor-pointer"
                       title="Enregistrer la feuille de présence et synchroniser avec le Cahier de Texte"
                     >
                       {savingAttendance ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
@@ -1018,110 +1137,128 @@ export default function ProfessorStudentRosterPage() {
               </div>
             </div>
 
-            {/* ─── Pedagogical Filters ──────────────────────────────────── */}
-            <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-5 backdrop-blur-xl">
-              <div className="flex items-center gap-2 mb-4">
-                <Filter className="w-4 h-4 text-emerald-400" />
-                <span className="text-sm font-semibold text-white">Sélection Pédagogique (Modules & Groupes)</span>
+            {/* ─── Schedule-based Group Selector ───────────────────────── */}
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xs">
+              <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <BookOpen className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  <span className="text-sm font-bold text-slate-900 dark:text-white">Mes Créneaux d'Enseignement & Groupes</span>
+                  <span className="text-[10px] text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2.5 py-0.5 rounded-full font-mono font-bold">
+                    {schedules.length} créneau{schedules.length > 1 ? 'x' : ''} officiel{schedules.length > 1 ? 's' : ''}
+                  </span>
+                </div>
+                <button
+                  onClick={() => { fetchSchedules(); fetchOptions(true); }}
+                  className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400 font-bold transition-colors cursor-pointer"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" /> <span>Actualiser</span>
+                </button>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div>
-                  <label className="block text-xs text-slate-400 mb-1.5 font-medium uppercase tracking-wider">Module / Matière</label>
-                  <div className="relative">
-                    <BookOpen className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                    <select
-                      value={selectedModuleId ?? ''}
-                      onChange={e => setSelectedModuleId(Number(e.target.value))}
-                      className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-9 pr-8 py-2.5 text-sm text-white appearance-none focus:outline-none focus:border-emerald-500 transition-colors"
-                    >
-                      {options.modules.map(m => (
-                        <option key={m.module_id} value={m.module_id}>
-                          {m.module_code} — {m.module_name}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
-                  </div>
-                </div>
 
-                <div>
-                  <label className="block text-xs text-slate-400 mb-1.5 font-medium uppercase tracking-wider">Section (Amphi / Filière)</label>
-                  <div className="relative">
-                    <GraduationCap className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                    <select
-                      value={selectedGroupId ?? ''}
-                      onChange={e => setSelectedGroupId(Number(e.target.value))}
-                      className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-9 pr-8 py-2.5 text-sm text-white appearance-none focus:outline-none focus:border-emerald-500 transition-colors"
-                    >
-                      {selectedModule?.sections.map(s => (
-                        <option key={s.group_id} value={s.group_id}>
-                          {s.group_code} — {s.filiere_name} ({s.semester})
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
-                  </div>
+              {loadingSchedules ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-5 h-5 text-emerald-600 animate-spin" />
+                  <span className="ml-2 text-sm text-slate-500">Chargement des créneaux officiels...</span>
                 </div>
-
-                <div>
-                  <label className="block text-xs text-slate-400 mb-1.5 font-medium uppercase tracking-wider">Format d'enseignement</label>
-                  <div className="flex rounded-lg overflow-hidden border border-slate-700 bg-slate-800">
-                    <button
-                      onClick={() => setListMode('section')}
-                      className={cn(
-                        'flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-semibold transition-all',
-                        listMode === 'section'
-                          ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white'
-                          : 'text-slate-400 hover:text-white hover:bg-slate-700'
-                      )}
-                    >
-                      <Layers className="w-3.5 h-3.5" />
-                      <span>Cours Magistral (CM)</span>
-                    </button>
-                    <button
-                      onClick={() => setListMode('subgroup')}
-                      disabled={availableSubGroups.length === 0}
-                      className={cn(
-                        'flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-semibold transition-all disabled:opacity-40',
-                        listMode === 'subgroup'
-                          ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white'
-                          : 'text-slate-400 hover:text-white hover:bg-slate-700'
-                      )}
-                    >
-                      <Users className="w-3.5 h-3.5" />
-                      <span>TD / TP</span>
-                    </button>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs text-slate-400 mb-1.5 font-medium uppercase tracking-wider">Sous-groupe TD Officiel</label>
-                  {listMode === 'subgroup' && availableSubGroups.length > 0 ? (
-                    <div className="flex gap-2 flex-wrap">
-                      {availableSubGroups.map(sg => (
-                        <button
-                          key={sg}
-                          onClick={() => setSelectedSubGroup(sg)}
-                          className={cn(
-                            'px-4 py-2 rounded-lg text-sm font-bold border transition-all',
-                            selectedSubGroup === sg
-                              ? 'bg-violet-600 border-violet-500 text-white shadow-lg shadow-violet-900/30'
-                              : 'bg-slate-800 border-slate-700 text-slate-300 hover:border-violet-500 hover:text-violet-300'
-                          )}
-                        >
-                          {sg}
-                        </button>
-                      ))}
+              ) : schedules.length === 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div>
+                    <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1.5 font-bold uppercase tracking-wider">Module / Matière</label>
+                    <div className="relative">
+                      <BookOpen className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <select value={selectedModuleId ?? ''} onChange={e => setSelectedModuleId(Number(e.target.value))} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-8 py-2.5 text-sm text-slate-900 dark:text-white font-medium appearance-none focus:outline-none focus:border-emerald-500 transition-colors">
+                        {options.modules.map(m => (<option key={m.module_id} value={m.module_id}>{m.module_code} -- {m.module_name}</option>))}
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                     </div>
-                  ) : (
-                    <div className="h-10 flex items-center">
-                      <span className="text-slate-500 text-xs italic">
-                        {listMode === 'section' ? 'Section complète (Amphithéâtre)' : 'Aucun sous-groupe assigné'}
-                      </span>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1.5 font-bold uppercase tracking-wider">Section (Amphi / Filière)</label>
+                    <div className="relative">
+                      <GraduationCap className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <select value={selectedGroupId ?? ''} onChange={e => setSelectedGroupId(Number(e.target.value))} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-8 py-2.5 text-sm text-slate-900 dark:text-white font-medium appearance-none focus:outline-none focus:border-emerald-500 transition-colors">
+                        {selectedModule?.sections.map(s => (<option key={s.group_id} value={s.group_id}>{s.group_code} -- {s.filiere_name} ({s.semester})</option>))}
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                     </div>
-                  )}
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1.5 font-bold uppercase tracking-wider">Format</label>
+                    <div className="flex rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 p-0.5">
+                      <button onClick={() => setListMode('section')} className={cn('flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-bold rounded-lg transition-all', listMode === 'section' ? 'bg-[#001A4B] text-white shadow dark:bg-emerald-600' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900')}><Layers className="w-3.5 h-3.5" /><span>CM</span></button>
+                      <button onClick={() => setListMode('subgroup')} disabled={availableSubGroups.length === 0} className={cn('flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-bold rounded-lg transition-all disabled:opacity-40', listMode === 'subgroup' ? 'bg-[#001A4B] text-white shadow dark:bg-violet-600' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900')}><Users className="w-3.5 h-3.5" /><span>TD / TP</span></button>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1.5 font-bold uppercase tracking-wider">Sous-groupe TD</label>
+                    {listMode === 'subgroup' && availableSubGroups.length > 0 ? (
+                      <div className="flex gap-2 flex-wrap">
+                        {availableSubGroups.map(sg => (<button key={sg} onClick={() => setSelectedSubGroup(sg)} className={cn('px-3.5 py-1.5 rounded-lg text-sm font-bold border transition-all cursor-pointer', selectedSubGroup === sg ? 'bg-[#001A4B] border-[#001A4B] text-white dark:bg-violet-600 dark:border-violet-500' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-[#001A4B]')}>{sg}</button>))}
+                      </div>
+                    ) : (
+                      <div className="h-10 flex items-center"><span className="text-slate-400 text-xs italic">{listMode === 'section' ? 'Section complète (Amphithéâtre)' : 'Aucun sous-groupe'}</span></div>
+                    )}
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+                  {schedules.map(sch => {
+                    const isSelected = selectedScheduleId === sch.id;
+                    const schedDate = getDateForScheduleDay(sch.day_of_week);
+                    const dateLabel = new Date(schedDate + 'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'short' });
+                    const isTd = sch.type === 'TD' || sch.type === 'TP';
+                    return (
+                      <button
+                        key={sch.id}
+                        onClick={() => {
+                          setSelectedScheduleId(sch.id);
+                          setSelectedModuleId(sch.module_id);
+                          setSelectedGroupId(sch.group_id);
+                          setListMode(isTd ? 'subgroup' : 'section');
+                          if (sch.sub_groups?.length) setSelectedSubGroup(sch.sub_groups[0]);
+                          else setSelectedSubGroup('');
+                          setSeanceDate(schedDate);
+                        }}
+                        className={cn(
+                          'relative text-left p-4 rounded-2xl border transition-all duration-200 hover:scale-[1.01] cursor-pointer overflow-hidden shadow-2xs',
+                          isSelected
+                            ? 'bg-blue-50/80 dark:bg-emerald-950/30 border-2 border-[#001A4B] dark:border-emerald-500 shadow-md ring-2 ring-[#001A4B]/10'
+                            : 'bg-slate-50/80 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700/80 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-100/70'
+                        )}
+                      >
+                        {isSelected && <div className="absolute top-2.5 right-2.5 w-2.5 h-2.5 rounded-full bg-[#001A4B] dark:bg-emerald-400 animate-pulse" />}
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className={cn('text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border', isTd ? 'bg-violet-100 text-violet-800 border-violet-200 dark:bg-violet-950 dark:text-violet-300 dark:border-violet-800' : 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800')}>{sch.type || 'CM'}</span>
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono font-bold bg-white dark:bg-slate-800 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700">{sch.module_code}</span>
+                        </div>
+                        <div className="font-bold text-slate-900 dark:text-white text-sm leading-tight mb-1.5 truncate" title={sch.module_name}>{sch.module_name}</div>
+                        <div className="flex items-center gap-1.5 mb-2.5">
+                          <GraduationCap className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                          <span className="text-xs font-bold text-slate-800 dark:text-slate-200">{sch.group_code}</span>
+                          {sch.filiere_name && <span className="text-[11px] text-slate-500 truncate">• {sch.filiere_name}</span>}
+                        </div>
+                        <div className={cn('flex items-center gap-2 text-xs rounded-xl px-2.5 py-1.5 flex-wrap border', isSelected ? 'bg-white dark:bg-slate-800 border-[#001A4B]/20' : 'bg-white dark:bg-slate-800/80 border-slate-200 dark:border-slate-700')}>
+                          <span className={cn('font-bold', isSelected ? 'text-[#001A4B] dark:text-emerald-300' : 'text-slate-700 dark:text-slate-200')}>{sch.day_name}</span>
+                          <span className="text-slate-300 dark:text-slate-600">|</span>
+                          <span className="font-mono text-slate-600 dark:text-slate-300">{sch.start_time} - {sch.end_time}</span>
+                          {sch.room && <><span className="text-slate-300 dark:text-slate-600">|</span><span className="text-slate-600 dark:text-slate-400 font-medium truncate">📍 {sch.room}</span></>}
+                        </div>
+                        <div className="mt-2 flex items-center gap-1.5">
+                          <Calendar className="w-3 h-3 text-slate-400" />
+                          <span className="text-[11px] text-slate-500 dark:text-slate-400 capitalize">{dateLabel}</span>
+                        </div>
+                        {isTd && sch.sub_groups && sch.sub_groups.length > 0 && (
+                          <div className="mt-2.5 flex gap-1.5 flex-wrap">
+                            {sch.sub_groups.map(sg => (
+                              <span key={sg} onClick={e => { e.stopPropagation(); if (isSelected) setSelectedSubGroup(sg); }} className={cn('text-[10px] font-bold px-2 py-0.5 rounded-full border cursor-pointer transition-all', isSelected && selectedSubGroup === sg ? 'bg-[#001A4B] border-[#001A4B] text-white dark:bg-violet-600 dark:border-violet-500' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-[#001A4B]')}>{sg}</span>
+                            ))}
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             {/* ─── Stats Panel ─────────────────────────────────────────── */}
@@ -1139,54 +1276,54 @@ export default function ProfessorStudentRosterPage() {
             <div className="flex items-center justify-between gap-4 flex-wrap">
               <div className="flex items-center gap-2 flex-wrap">
                 {/* Quick Attendance Filter Buttons */}
-                <div className="flex rounded-lg overflow-hidden border border-slate-700/80 bg-slate-800/80 p-0.5 text-xs">
+                <div className="flex rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 p-0.5 text-xs shadow-2xs">
                   <button
                     onClick={() => setAttendanceFilter('all')}
                     className={cn(
-                      'px-3 py-1.5 font-semibold rounded transition-all flex items-center gap-1.5',
+                      'px-3 py-1.5 font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer',
                       attendanceFilter === 'all'
-                        ? 'bg-slate-700 text-white shadow'
-                        : 'text-slate-400 hover:text-white'
+                        ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-2xs'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                     )}
                   >
                     <span>Tous</span>
-                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-slate-900/60 font-mono">{students.length}</span>
+                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-slate-200 dark:bg-slate-900/60 font-mono font-bold">{students.length}</span>
                   </button>
                   <button
                     onClick={() => setAttendanceFilter('present')}
                     className={cn(
-                      'px-3 py-1.5 font-semibold rounded transition-all flex items-center gap-1.5',
+                      'px-3 py-1.5 font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer',
                       attendanceFilter === 'present'
-                        ? 'bg-emerald-600 text-white shadow'
-                        : 'text-slate-400 hover:text-emerald-300'
+                        ? 'bg-emerald-600 text-white shadow-2xs'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-300'
                     )}
                   >
                     <span>✅ Présents</span>
-                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-slate-900/60 font-mono">{stats.present}</span>
+                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-800/40 text-emerald-100 font-mono font-bold">{stats.present}</span>
                   </button>
                   <button
                     onClick={() => setAttendanceFilter('absent')}
                     className={cn(
-                      'px-3 py-1.5 font-semibold rounded transition-all flex items-center gap-1.5',
+                      'px-3 py-1.5 font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer',
                       attendanceFilter === 'absent'
-                        ? 'bg-rose-600 text-white shadow'
-                        : 'text-slate-400 hover:text-rose-300'
+                        ? 'bg-rose-600 text-white shadow-2xs'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-300'
                     )}
                   >
                     <span>❌ Absents</span>
-                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-slate-900/60 font-mono">{stats.absent}</span>
+                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-rose-800/40 text-rose-100 font-mono font-bold">{stats.absent}</span>
                   </button>
                   <button
                     onClick={() => setAttendanceFilter('annotated')}
                     className={cn(
-                      'px-3 py-1.5 font-semibold rounded transition-all flex items-center gap-1.5',
+                      'px-3 py-1.5 font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer',
                       attendanceFilter === 'annotated'
-                        ? 'bg-amber-600 text-white shadow'
-                        : 'text-slate-400 hover:text-amber-300'
+                        ? 'bg-amber-600 text-white shadow-2xs'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-300'
                     )}
                   >
                     <span>📝 Avec Note</span>
-                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-slate-900/60 font-mono">{stats.annotatedCount}</span>
+                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-amber-800/40 text-amber-100 font-mono font-bold">{stats.annotatedCount}</span>
                   </button>
                 </div>
 
@@ -1194,7 +1331,7 @@ export default function ProfessorStudentRosterPage() {
                   <button
                     onClick={resetAbsences}
                     disabled={isLocked}
-                    className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-rose-400 transition-colors disabled:opacity-40 ml-2"
+                    className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-rose-600 font-semibold transition-colors disabled:opacity-40 ml-2 cursor-pointer"
                   >
                     <RotateCcw className="w-3.5 h-3.5" />
                     <span>Reset séance {selectedSeance}</span>
@@ -1205,16 +1342,16 @@ export default function ProfessorStudentRosterPage() {
               {/* Search & Export Buttons */}
               <div className="flex items-center gap-2">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <input
                     type="text"
                     placeholder="Nom, Matricule, CNE…"
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
-                    className="bg-slate-800/80 border border-slate-700/80 rounded-lg pl-9 pr-8 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors w-48"
+                    className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-8 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-emerald-500 transition-colors w-48 shadow-2xs"
                   />
                   {searchQuery && (
-                    <button onClick={() => setSearchQuery('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white">
+                    <button onClick={() => setSearchQuery('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
                       <X className="w-3.5 h-3.5" />
                     </button>
                   )}
@@ -1223,39 +1360,39 @@ export default function ProfessorStudentRosterPage() {
                 <button
                   onClick={handleCopyList}
                   disabled={filteredStudents.length === 0}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 border border-slate-700/80 text-slate-300 text-xs font-semibold transition-all disabled:opacity-40"
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition-all disabled:opacity-40 shadow-2xs cursor-pointer"
                   title="Copier la liste filtrée dans le presse-papiers"
                 >
-                  <Copy className="w-3.5 h-3.5 text-sky-400" />
+                  <Copy className="w-3.5 h-3.5 text-blue-600 dark:text-sky-400" />
                   <span className="hidden sm:inline">Copier</span>
                 </button>
 
                 <button
                   onClick={handleDownloadExcel}
                   disabled={downloadingExcel || students.length === 0}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 border border-slate-700/80 text-slate-300 text-xs font-semibold transition-all disabled:opacity-40"
+                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition-all disabled:opacity-40 shadow-2xs cursor-pointer"
                 >
-                  {downloadingExcel ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />}
+                  {downloadingExcel ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />}
                   <span className="hidden sm:inline">Excel</span>
                 </button>
               </div>
             </div>
 
             {/* ─── Student List Section ────────────────────────────────── */}
-            <div className="bg-slate-900/70 border border-slate-800/80 rounded-2xl overflow-hidden backdrop-blur-xl shadow-2xl">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs">
               {loadingStudents ? (
                 <div className="flex flex-col items-center justify-center py-24 gap-3">
-                  <Loader2 className="w-8 h-8 text-emerald-400 animate-spin" />
-                  <p className="text-slate-400 text-sm">Chargement de la liste officielle…</p>
+                  <Loader2 className="w-8 h-8 text-emerald-600 dark:text-emerald-400 animate-spin" />
+                  <p className="text-slate-500 text-sm font-medium">Chargement de la liste officielle…</p>
                 </div>
               ) : filteredStudents.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 gap-3">
-                  <UserCheck className="w-12 h-12 text-slate-700" />
-                  <p className="text-slate-400 text-sm">Aucun étudiant ne correspond aux filtres sélectionnés</p>
+                  <UserCheck className="w-12 h-12 text-slate-300 dark:text-slate-700" />
+                  <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">Aucun étudiant ne correspond aux filtres sélectionnés</p>
                   {(searchQuery || attendanceFilter !== 'all') && (
                     <button
                       onClick={() => { setSearchQuery(''); setAttendanceFilter('all'); }}
-                      className="text-emerald-400 text-xs hover:underline font-medium"
+                      className="text-blue-600 dark:text-emerald-400 text-xs hover:underline font-bold cursor-pointer"
                     >
                       Réinitialiser les filtres
                     </button>
@@ -1263,7 +1400,7 @@ export default function ProfessorStudentRosterPage() {
                 </div>
               ) : viewMode === 'cards' ? (
                 /* ─── Cards / Trombinoscope View ──────────────────────── */
-                <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                <div className="p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">
                   {filteredStudents.map((s, idx) => {
                     const isAbsent = absentIds.has(s.id);
                     const ann = annotations[s.id];
@@ -1273,10 +1410,10 @@ export default function ProfessorStudentRosterPage() {
                       <div
                         key={s.id}
                         className={cn(
-                          'rounded-xl border p-4 flex flex-col justify-between gap-3 transition-all relative',
+                          'rounded-2xl border p-4 flex flex-col justify-between gap-3 transition-all relative',
                           isAbsent
-                            ? 'bg-rose-950/25 border-rose-700/40 shadow-inner'
-                            : 'bg-slate-800/50 border-slate-700/60 hover:border-slate-600 shadow-sm'
+                            ? 'bg-rose-50/70 dark:bg-rose-950/25 border-rose-300 dark:border-rose-700/50 shadow-inner'
+                            : 'bg-white dark:bg-slate-800/60 border-slate-200 dark:border-slate-700/80 hover:border-slate-300 dark:hover:border-slate-600 shadow-2xs hover:shadow-md'
                         )}
                       >
                         <div>
@@ -1284,30 +1421,30 @@ export default function ProfessorStudentRosterPage() {
                             <div className="flex items-center gap-2.5">
                               <div
                                 className={cn(
-                                  'w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-white font-bold text-xs shadow',
-                                  isAbsent ? 'bg-rose-700' : 'bg-gradient-to-br from-emerald-600 to-teal-600'
+                                  'w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-white font-black text-xs shadow-xs',
+                                  isAbsent ? 'bg-rose-600' : 'bg-gradient-to-br from-emerald-600 to-teal-600'
                                 )}
                               >
                                 {(s.last_name?.[0] || '?').toUpperCase()}
                               </div>
                               <div>
-                                <p className={cn('font-semibold text-sm leading-tight', isAbsent ? 'text-rose-200' : 'text-white')}>
+                                <p className={cn('font-bold text-sm leading-tight', isAbsent ? 'text-rose-900 dark:text-rose-200' : 'text-slate-900 dark:text-white')}>
                                   {(s.last_name || '').toUpperCase()} {s.first_name}
                                 </p>
-                                <p className="text-slate-400 text-xs font-mono">{s.matricule || '—'}</p>
+                                <p className="text-slate-500 text-xs font-mono font-medium">{s.matricule || '—'}</p>
                               </div>
                             </div>
-                            <span className="text-slate-500 text-[11px] font-mono">#{idx + 1}</span>
+                            <span className="text-slate-400 text-[11px] font-mono">#{idx + 1}</span>
                           </div>
 
                           <div className="grid grid-cols-2 gap-1.5 text-[11px] mb-2">
-                            <div className="bg-slate-900/60 rounded-lg p-1.5 border border-slate-800">
-                              <p className="text-slate-500 text-[9px] uppercase font-semibold">CNE / Massar</p>
-                              <p className="text-slate-300 font-mono truncate">{s.cne || s.massar_code || '—'}</p>
+                            <div className="bg-slate-50 dark:bg-slate-900/60 rounded-xl p-2 border border-slate-200 dark:border-slate-700/60">
+                              <p className="text-slate-400 text-[9px] uppercase font-bold">CNE / Massar</p>
+                              <p className="text-slate-800 dark:text-slate-200 font-mono font-medium truncate">{s.cne || s.massar_code || '—'}</p>
                             </div>
-                            <div className="bg-slate-900/60 rounded-lg p-1.5 border border-slate-800">
-                              <p className="text-slate-500 text-[9px] uppercase font-semibold">CIN</p>
-                              <p className="text-slate-300 font-mono truncate">{s.cin || '—'}</p>
+                            <div className="bg-slate-50 dark:bg-slate-900/60 rounded-xl p-2 border border-slate-200 dark:border-slate-700/60">
+                              <p className="text-slate-400 text-[9px] uppercase font-bold">CIN</p>
+                              <p className="text-slate-800 dark:text-slate-200 font-mono font-medium truncate">{s.cin || '—'}</p>
                             </div>
                           </div>
 
@@ -1316,13 +1453,13 @@ export default function ProfessorStudentRosterPage() {
                             <div
                               onClick={() => openAnnotationEditor(s)}
                               className={cn(
-                                'cursor-pointer mb-2 px-2.5 py-1 rounded-lg border text-[11px] flex items-center justify-between gap-1.5 transition-all',
-                                tagStyle ? `${tagStyle.bg} ${tagStyle.text} ${tagStyle.border}` : 'bg-blue-500/10 border-blue-500/20 text-blue-300'
+                                'cursor-pointer mb-2 px-2.5 py-1 rounded-xl border text-[11px] flex items-center justify-between gap-1.5 transition-all',
+                                tagStyle ? `${tagStyle.bg} ${tagStyle.text} ${tagStyle.border}` : 'bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800'
                               )}
                               title="Cliquer pour modifier la note"
                             >
                               <div className="flex items-center gap-1 truncate">
-                                <span className="font-semibold">{tagStyle?.label || 'Note'} :</span>
+                                <span className="font-bold">{tagStyle?.label || 'Note'} :</span>
                                 <span className="truncate">{ann.text || '—'}</span>
                               </div>
                               <Pencil className="w-2.5 h-2.5 flex-shrink-0 opacity-70" />
@@ -1331,21 +1468,21 @@ export default function ProfessorStudentRosterPage() {
                         </div>
 
                         {/* Card bottom actions */}
-                        <div className="flex items-center justify-between pt-2 border-t border-slate-700/50">
+                        <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-700/60">
                           <div className="flex items-center gap-1.5">
                             {/* Individual Sheet button */}
                             <button
                               onClick={() => setIndividualStudent(s)}
-                              className="p-1.5 rounded-lg bg-slate-700/80 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
+                              className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-700/80 hover:bg-slate-200 text-slate-600 dark:text-slate-300 hover:text-slate-900 transition-colors cursor-pointer"
                               title="Fiche individuelle d'émargement / rattrapage"
                             >
-                              <FileText className="w-3.5 h-3.5 text-cyan-400" />
+                              <FileText className="w-3.5 h-3.5 text-blue-600 dark:text-cyan-400" />
                             </button>
 
                             {/* Annotation trigger */}
                             <button
                               onClick={() => openAnnotationEditor(s)}
-                              className="p-1.5 rounded-lg bg-slate-700/80 hover:bg-slate-700 text-slate-300 hover:text-amber-300 transition-colors"
+                              className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-700/80 hover:bg-slate-200 text-slate-600 dark:text-slate-300 hover:text-amber-600 transition-colors cursor-pointer"
                               title="Ajouter / éditer une note"
                             >
                               <Pencil className="w-3.5 h-3.5" />
@@ -1357,10 +1494,10 @@ export default function ProfessorStudentRosterPage() {
                             onClick={() => toggleAbsent(s.id)}
                             disabled={isLocked}
                             className={cn(
-                              'flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all border disabled:opacity-50',
+                              'flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold transition-all border disabled:opacity-50 cursor-pointer',
                               isAbsent
-                                ? 'bg-rose-600 border-rose-500 text-white'
-                                : 'bg-slate-700/90 border-slate-600 text-slate-300 hover:border-rose-500 hover:text-rose-400'
+                                ? 'bg-rose-600 border-rose-600 text-white shadow-2xs'
+                                : 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 hover:bg-rose-50 hover:border-rose-200 hover:text-rose-700'
                             )}
                           >
                             <UserX className="w-3 h-3" />
@@ -1376,19 +1513,19 @@ export default function ProfessorStudentRosterPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b border-slate-800 bg-slate-900/90">
-                        <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider w-10">N°</th>
-                        <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Matricule</th>
-                        <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">CNE / Massar</th>
-                        <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">CIN</th>
-                        <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Nom & Prénom</th>
-                        <th className="text-center px-4 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Section / TD</th>
+                      <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80">
+                        <th className="text-left px-4 py-3 text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider w-10">N°</th>
+                        <th className="text-left px-4 py-3 text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">Matricule</th>
+                        <th className="text-left px-4 py-3 text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">CNE / Massar</th>
+                        <th className="text-left px-4 py-3 text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">CIN</th>
+                        <th className="text-left px-4 py-3 text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">Nom & Prénom</th>
+                        <th className="text-center px-4 py-3 text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">Section / TD</th>
                         {showQrCol && (
-                          <th className="text-center px-4 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider w-20">QR</th>
+                          <th className="text-center px-4 py-3 text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider w-20">QR</th>
                         )}
-                        <th className="text-center px-4 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Note / Justificatif</th>
-                        <th className="text-center px-4 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider w-32">Émargement ({selectedSeance})</th>
-                        <th className="text-center px-4 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider w-12">Fiche</th>
+                        <th className="text-center px-4 py-3 text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">Note / Justificatif</th>
+                        <th className="text-center px-4 py-3 text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider w-36">Émargement ({selectedSeance})</th>
+                        <th className="text-center px-4 py-3 text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider w-12">Fiche</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1401,39 +1538,39 @@ export default function ProfessorStudentRosterPage() {
                           <tr
                             key={s.id}
                             className={cn(
-                              'border-b border-slate-800/60 transition-colors',
+                              'border-b transition-colors',
                               isAbsent
-                                ? 'bg-rose-950/20 text-rose-100 hover:bg-rose-950/30'
-                                : idx % 2 === 0 ? 'hover:bg-slate-800/40' : 'bg-slate-900/30 hover:bg-slate-800/40'
+                                ? 'bg-rose-50/60 dark:bg-rose-950/20 text-rose-950 dark:text-rose-200 border-rose-100 dark:border-rose-900/40 hover:bg-rose-100/60'
+                                : 'border-slate-100 dark:border-slate-800/60 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 text-slate-900 dark:text-slate-100'
                             )}
                           >
-                            <td className="px-4 py-3 text-slate-500 font-mono text-xs">{idx + 1}</td>
+                            <td className="px-4 py-3 text-slate-400 font-mono text-xs">{idx + 1}</td>
                             <td className="px-4 py-3">
-                              <span className="font-mono text-xs bg-slate-800/90 border border-slate-700/80 rounded px-2 py-0.5 text-slate-300">
+                              <span className="font-mono text-xs bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-0.5 text-slate-700 dark:text-slate-200 font-bold">
                                 {s.matricule || '—'}
                               </span>
                             </td>
                             <td className="px-4 py-3">
                               <div className="flex flex-col gap-0.5">
-                                <span className="text-slate-300 text-xs font-mono">{s.cne || '—'}</span>
+                                <span className="text-slate-800 dark:text-slate-200 text-xs font-mono font-medium">{s.cne || '—'}</span>
                                 {s.massar_code && s.massar_code !== s.cne && (
-                                  <span className="text-slate-500 text-[10px] font-mono">{s.massar_code}</span>
+                                  <span className="text-slate-400 text-[10px] font-mono">{s.massar_code}</span>
                                 )}
                               </div>
                             </td>
-                            <td className="px-4 py-3 text-slate-400 text-xs font-mono">{s.cin || '—'}</td>
+                            <td className="px-4 py-3 text-slate-500 dark:text-slate-400 text-xs font-mono">{s.cin || '—'}</td>
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-2.5">
                                 <div
                                   className={cn(
-                                    'w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold',
-                                    isAbsent ? 'bg-rose-700 text-white' : 'bg-gradient-to-br from-emerald-600 to-teal-600 text-white'
+                                    'w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 text-xs font-bold text-white shadow-2xs',
+                                    isAbsent ? 'bg-rose-600' : 'bg-gradient-to-br from-emerald-600 to-teal-600'
                                   )}
                                 >
                                   {(s.last_name?.[0] || '?').toUpperCase()}
                                 </div>
                                 <div>
-                                  <p className={cn('font-semibold text-sm', isAbsent ? 'text-rose-200 line-through' : 'text-white')}>
+                                  <p className={cn('font-bold text-sm', isAbsent ? 'text-rose-800 dark:text-rose-300 line-through' : 'text-slate-900 dark:text-white')}>
                                     {(s.last_name || '').toUpperCase()} {s.first_name}
                                   </p>
                                 </div>
@@ -1441,11 +1578,11 @@ export default function ProfessorStudentRosterPage() {
                             </td>
                             <td className="px-4 py-3 text-center">
                               <div className="flex items-center justify-center gap-1.5 flex-wrap">
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-300 text-xs font-medium">
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800 text-xs font-bold">
                                   {s.section || selectedSection?.group_code || '—'}
                                 </span>
                                 {s.sub_group && (
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-300 text-xs font-medium">
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-violet-50 text-violet-700 border border-violet-200 dark:bg-violet-950 dark:text-violet-300 dark:border-violet-800 text-xs font-bold">
                                     {s.sub_group}
                                   </span>
                                 )}
@@ -1454,7 +1591,7 @@ export default function ProfessorStudentRosterPage() {
 
                             {showQrCol && (
                               <td className="px-3 py-2 text-center">
-                                <QRCodeSVG value={s.matricule || String(s.id)} size={36} className="mx-auto" title={`QR ${s.matricule}`} />
+                                <QRCodeSVG value={s.matricule || String(s.id)} size={34} className="mx-auto" title={`QR ${s.matricule}`} />
                               </td>
                             )}
 
@@ -1464,8 +1601,8 @@ export default function ProfessorStudentRosterPage() {
                                 <button
                                   onClick={() => openAnnotationEditor(s)}
                                   className={cn(
-                                    'inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-xs font-medium transition-all max-w-[130px] truncate',
-                                    tagStyle ? `${tagStyle.bg} ${tagStyle.text} ${tagStyle.border}` : 'bg-slate-800 border-slate-700 text-slate-300'
+                                    'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border text-xs font-semibold transition-all max-w-[130px] truncate cursor-pointer',
+                                    tagStyle ? `${tagStyle.bg} ${tagStyle.text} ${tagStyle.border}` : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'
                                   )}
                                   title={`${tagStyle?.label || 'Note'} : ${ann.text || ''}`}
                                 >
@@ -1476,7 +1613,7 @@ export default function ProfessorStudentRosterPage() {
                                 <button
                                   onClick={() => openAnnotationEditor(s)}
                                   disabled={isLocked}
-                                  className="text-slate-600 hover:text-amber-400 p-1 rounded transition-colors disabled:opacity-30"
+                                  className="text-slate-400 hover:text-amber-500 p-1.5 rounded-lg transition-colors disabled:opacity-30 cursor-pointer"
                                   title="Ajouter une remarque ou justificatif"
                                 >
                                   <Pencil className="w-3.5 h-3.5" />
@@ -1490,10 +1627,10 @@ export default function ProfessorStudentRosterPage() {
                                 onClick={() => toggleAbsent(s.id)}
                                 disabled={isLocked}
                                 className={cn(
-                                  'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all disabled:opacity-50',
+                                  'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all disabled:opacity-50 cursor-pointer',
                                   isAbsent
-                                    ? 'bg-rose-600/25 border-rose-500/50 text-rose-300 hover:bg-rose-600 hover:text-white'
-                                    : 'bg-emerald-600/15 border-emerald-500/30 text-emerald-400 hover:bg-rose-600/15 hover:border-rose-500/30 hover:text-rose-400'
+                                    ? 'bg-rose-600 border-rose-600 text-white shadow-2xs hover:bg-rose-700'
+                                    : 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 hover:bg-rose-50 hover:border-rose-200 hover:text-rose-700'
                                 )}
                               >
                                 {isAbsent ? (
@@ -1514,7 +1651,7 @@ export default function ProfessorStudentRosterPage() {
                             <td className="px-2 py-3 text-center">
                               <button
                                 onClick={() => setIndividualStudent(s)}
-                                className="p-1.5 rounded-lg text-slate-500 hover:text-cyan-400 hover:bg-slate-800 transition-colors"
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 dark:hover:text-cyan-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                                 title="Générer la fiche d'émargement individuelle"
                               >
                                 <FileText className="w-4 h-4" />
@@ -1527,16 +1664,16 @@ export default function ProfessorStudentRosterPage() {
                   </table>
 
                   {/* Table Footer */}
-                  <div className="px-4 py-3 border-t border-slate-800/80 bg-slate-900/80 flex items-center justify-between flex-wrap gap-2 text-xs">
-                    <p className="text-slate-400">
-                      Affichage de <span className="text-white font-semibold">{filteredStudents.length}</span> étudiant{filteredStudents.length !== 1 ? 's' : ''}
+                  <div className="px-4 py-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex items-center justify-between flex-wrap gap-2 text-xs">
+                    <p className="text-slate-600 dark:text-slate-400 font-medium">
+                      Affichage de <span className="text-slate-900 dark:text-white font-bold">{filteredStudents.length}</span> étudiant{filteredStudents.length !== 1 ? 's' : ''}
                       {searchQuery && ` (sur un total de ${students.length})`}
-                      {listMode === 'subgroup' && selectedSubGroup ? ` — Sous-groupe officiel ${selectedSubGroup}` : ' — Section Complète (Amphi CM)'}
+                      {listMode === 'subgroup' && selectedSubGroup ? ` — Sous-groupe officiel ${selectedSubGroup}` : ' — Section Complète (Amphithéâtre)'}
                       {absentIds.size > 0 && (
-                        <span className="text-rose-400 ml-2 font-semibold">· {absentIds.size} absent{absentIds.size > 1 ? 's' : ''} marqués pour {selectedSeance}</span>
+                        <span className="text-rose-600 dark:text-rose-400 ml-2 font-bold">· {absentIds.size} absent{absentIds.size > 1 ? 's' : ''} marqués pour {selectedSeance}</span>
                       )}
                     </p>
-                    <div className="flex items-center gap-2 text-slate-500">
+                    <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500">
                       <Info className="w-3.5 h-3.5" />
                       <span>Conforme nomenclature ministérielle MESRSFC & règlement intérieur ENCG Fès</span>
                     </div>
@@ -1550,49 +1687,49 @@ export default function ProfessorStudentRosterPage() {
 
       {/* ─── 5. PDF Modal (Config & Options) ─────────────────────────── */}
       {showPdfModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
-            <div className="flex items-center justify-between p-5 border-b border-slate-800">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
+            <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 text-emerald-400">
+                <div className="p-2.5 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400">
                   <FileText className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-white font-semibold">Fiche d'Émargement Officielle</h2>
-                  <p className="text-slate-400 text-xs">Format PDF A4 conforme — ENCG Fès / USMBA</p>
+                  <h2 className="text-slate-900 dark:text-white font-bold text-base">Fiche d'Émargement Officielle</h2>
+                  <p className="text-slate-500 dark:text-slate-400 text-xs">Format PDF A4 conforme — ENCG Fès / USMBA</p>
                 </div>
               </div>
-              <button onClick={() => setShowPdfModal(false)} className="text-slate-500 hover:text-white transition-colors">
+              <button onClick={() => setShowPdfModal(false)} className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="p-5 space-y-4 text-sm">
               {/* Summary info */}
-              <div className="bg-slate-800/60 rounded-xl p-4 space-y-2 border border-slate-700/60">
+              <div className="bg-slate-50 dark:bg-slate-800/60 rounded-xl p-4 space-y-2 border border-slate-200 dark:border-slate-700/60">
                 <div className="flex justify-between">
-                  <span className="text-slate-400">Section / Groupe</span>
-                  <span className="text-white font-medium">{selectedSection?.group_code} — {selectedSection?.filiere_name}</span>
+                  <span className="text-slate-500 dark:text-slate-400 text-xs">Section / Groupe</span>
+                  <span className="text-slate-900 dark:text-white font-semibold text-xs">{selectedSection?.group_code} — {selectedSection?.filiere_name}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400">Format d'enseignement</span>
-                  <span className="text-white font-medium">{listMode === 'section' ? 'Cours Magistral (Amphi)' : `TD — Sous-groupe ${selectedSubGroup}`}</span>
+                  <span className="text-slate-500 dark:text-slate-400 text-xs">Format d'enseignement</span>
+                  <span className="text-slate-900 dark:text-white font-semibold text-xs">{listMode === 'section' ? 'Cours Magistral (Amphi)' : `TD — Sous-groupe ${selectedSubGroup}`}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400">Effectif à exporter</span>
-                  <span className="text-emerald-400 font-bold">{students.length} étudiants</span>
+                  <span className="text-slate-500 dark:text-slate-400 text-xs">Effectif à exporter</span>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-bold text-xs">{students.length} étudiants</span>
                 </div>
                 {absentIds.size > 0 && (
                   <div className="flex justify-between">
-                    <span className="text-slate-400">Absents actuels ({selectedSeance})</span>
-                    <span className="text-rose-400 font-bold">{absentIds.size} absent(s) marqués</span>
+                    <span className="text-slate-500 dark:text-slate-400 text-xs">Absents actuels ({selectedSeance})</span>
+                    <span className="text-rose-600 dark:text-rose-400 font-bold text-xs">{absentIds.size} absent(s) marqués</span>
                   </div>
                 )}
               </div>
 
               {/* Mode picker */}
               <div>
-                <p className="text-xs text-slate-400 uppercase font-semibold tracking-wider mb-2.5">Type de document</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold tracking-wider mb-2.5">Type de document</p>
                 <div className="grid grid-cols-2 gap-3">
                   <PdfModeCard
                     active={pdfMode === 'emargement'}
@@ -1613,20 +1750,20 @@ export default function ProfessorStudentRosterPage() {
 
               {/* Orientation picker */}
               <div>
-                <p className="text-xs text-slate-400 uppercase font-semibold tracking-wider mb-2.5">Orientation A4</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold tracking-wider mb-2.5">Orientation A4</p>
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     onClick={() => setPdfOrientation('portrait')}
                     className={cn(
-                      'flex items-center gap-3 p-3 rounded-xl border transition-all',
+                      'flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer',
                       pdfOrientation === 'portrait'
-                        ? 'bg-emerald-600/15 border-emerald-500/60 ring-1 ring-emerald-500/40'
-                        : 'bg-slate-800/60 border-slate-700 hover:border-slate-600'
+                        ? 'bg-blue-50/80 dark:bg-emerald-600/15 border-[#001A4B] dark:border-emerald-500/60 ring-1 ring-[#001A4B]/20 dark:ring-emerald-500/40'
+                        : 'bg-white dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 hover:border-slate-300'
                     )}
                   >
-                    <div className={cn('w-6 h-8 rounded border-2 flex-shrink-0', pdfOrientation === 'portrait' ? 'border-emerald-400' : 'border-slate-600')} />
+                    <div className={cn('w-6 h-8 rounded border-2 flex-shrink-0', pdfOrientation === 'portrait' ? 'border-[#001A4B] dark:border-emerald-400' : 'border-slate-400 dark:border-slate-600')} />
                     <div className="text-left">
-                      <p className={cn('text-sm font-semibold', pdfOrientation === 'portrait' ? 'text-white' : 'text-slate-300')}>Portrait</p>
+                      <p className={cn('text-xs font-bold', pdfOrientation === 'portrait' ? 'text-[#001A4B] dark:text-white' : 'text-slate-700 dark:text-slate-300')}>Portrait</p>
                       <p className="text-[11px] text-slate-500">Vertical (Standard)</p>
                     </div>
                   </button>
@@ -1634,15 +1771,15 @@ export default function ProfessorStudentRosterPage() {
                   <button
                     onClick={() => setPdfOrientation('paysage')}
                     className={cn(
-                      'flex items-center gap-3 p-3 rounded-xl border transition-all',
+                      'flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer',
                       pdfOrientation === 'paysage'
-                        ? 'bg-emerald-600/15 border-emerald-500/60 ring-1 ring-emerald-500/40'
-                        : 'bg-slate-800/60 border-slate-700 hover:border-slate-600'
+                        ? 'bg-blue-50/80 dark:bg-emerald-600/15 border-[#001A4B] dark:border-emerald-500/60 ring-1 ring-[#001A4B]/20 dark:ring-emerald-500/40'
+                        : 'bg-white dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 hover:border-slate-300'
                     )}
                   >
-                    <div className={cn('w-8 h-6 rounded border-2 flex-shrink-0', pdfOrientation === 'paysage' ? 'border-emerald-400' : 'border-slate-600')} />
+                    <div className={cn('w-8 h-6 rounded border-2 flex-shrink-0', pdfOrientation === 'paysage' ? 'border-[#001A4B] dark:border-emerald-400' : 'border-slate-400 dark:border-slate-600')} />
                     <div className="text-left">
-                      <p className={cn('text-sm font-semibold', pdfOrientation === 'paysage' ? 'text-white' : 'text-slate-300')}>Paysage</p>
+                      <p className={cn('text-xs font-bold', pdfOrientation === 'paysage' ? 'text-[#001A4B] dark:text-white' : 'text-slate-700 dark:text-slate-300')}>Paysage</p>
                       <p className="text-[11px] text-slate-500">Horizontal (Idéal grille)</p>
                     </div>
                   </button>
@@ -1650,13 +1787,13 @@ export default function ProfessorStudentRosterPage() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between p-5 border-t border-slate-800 bg-slate-900/90">
+            <div className="flex items-center justify-between p-5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/90">
               <button
                 onClick={() => {
                   setShowPdfModal(false);
                   handleOpenPdfPreview();
                 }}
-                className="flex items-center gap-1.5 text-xs text-cyan-400 hover:text-cyan-300 font-semibold"
+                className="flex items-center gap-1.5 text-xs text-blue-600 dark:text-cyan-400 hover:underline font-bold cursor-pointer"
               >
                 <Eye className="w-4 h-4" />
                 <span>Voir l'aperçu d'abord</span>
@@ -1665,16 +1802,16 @@ export default function ProfessorStudentRosterPage() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setShowPdfModal(false)}
-                  className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors"
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition-colors cursor-pointer"
                 >
                   Annuler
                 </button>
                 <button
                   onClick={handleDownloadPdf}
                   disabled={downloadingPdf}
-                  className="flex items-center gap-2 px-5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-semibold transition-all shadow-lg shadow-emerald-950/50 disabled:opacity-60"
+                  className="flex items-center gap-2 px-5 py-2 rounded-xl bg-[#001A4B] hover:bg-[#082663] dark:bg-gradient-to-r dark:from-emerald-600 dark:to-teal-600 text-white text-xs font-bold transition-all shadow-md disabled:opacity-60 cursor-pointer"
                 >
-                  {downloadingPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                  {downloadingPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4 text-amber-300" />}
                   <span>Télécharger PDF</span>
                 </button>
               </div>
@@ -1685,7 +1822,7 @@ export default function ProfessorStudentRosterPage() {
 
       {/* ─── 5. PDF Live Preview Iframe Modal ───────────────────────── */}
       {showPdfPreview && (
-        <div className="fixed inset-0 z-[70] flex flex-col bg-black/90 backdrop-blur-md animate-in fade-in">
+        <div className="fixed inset-0 z-[70] flex flex-col bg-black/85 backdrop-blur-md animate-in fade-in">
           {/* Preview Header */}
           <div className="flex items-center justify-between px-6 py-3.5 border-b border-slate-800 bg-slate-900/95">
             <div className="flex items-center gap-3">
@@ -1710,14 +1847,14 @@ export default function ProfessorStudentRosterPage() {
             <div className="flex items-center gap-3">
               <button
                 onClick={handleDownloadPdf}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold transition-all shadow-lg shadow-emerald-950/40"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-md cursor-pointer"
               >
                 <Download className="w-4 h-4" />
                 <span>Télécharger</span>
               </button>
               <button
                 onClick={handleClosePdfPreview}
-                className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+                className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors cursor-pointer"
                 title="Fermer l'aperçu"
               >
                 <X className="w-5 h-5" />
@@ -1747,19 +1884,19 @@ export default function ProfessorStudentRosterPage() {
 
       {/* ─── 6. WhatsApp Share Modal ─────────────────────────────────── */}
       {showWhatsAppModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
-            <div className="flex items-center justify-between p-5 border-b border-slate-800">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
+            <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-emerald-500/20 border border-emerald-500/30 text-emerald-400">
+                <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400">
                   <MessageCircle className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-white font-semibold">Partage Rapport WhatsApp</h2>
-                  <p className="text-slate-400 text-xs">Transmission immédiate aux délégués ou à la scolarité</p>
+                  <h2 className="text-slate-900 dark:text-white font-bold text-base">Partage Rapport WhatsApp</h2>
+                  <p className="text-slate-500 dark:text-slate-400 text-xs">Transmission immédiate aux délégués ou à la scolarité</p>
                 </div>
               </div>
-              <button onClick={() => setShowWhatsAppModal(false)} className="text-slate-500 hover:text-white transition-colors">
+              <button onClick={() => setShowWhatsAppModal(false)} className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -1767,68 +1904,68 @@ export default function ProfessorStudentRosterPage() {
             <div className="p-5 space-y-4 text-sm">
               {/* Format selection */}
               <div>
-                <label className="block text-xs text-slate-400 uppercase font-semibold tracking-wider mb-2">
+                <label className="block text-xs text-slate-500 dark:text-slate-400 uppercase font-bold tracking-wider mb-2">
                   Format du rapport
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     onClick={() => setWhatsAppType('absents_only')}
                     className={cn(
-                      'p-3 rounded-xl border text-left transition-all',
+                      'p-3.5 rounded-xl border text-left transition-all cursor-pointer',
                       whatsAppType === 'absents_only'
-                        ? 'bg-emerald-600/15 border-emerald-500 text-white'
-                        : 'bg-slate-800/60 border-slate-700 text-slate-400 hover:text-white'
+                        ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-500 text-emerald-950 dark:text-white ring-1 ring-emerald-500/40'
+                        : 'bg-white dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-300'
                     )}
                   >
-                    <p className="font-semibold text-xs text-white">Rapport des Absents</p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">Idéal pour le délégué ({absentIds.size} absents)</p>
+                    <p className="font-bold text-xs text-slate-900 dark:text-white">Rapport des Absents</p>
+                    <p className="text-[11px] text-slate-500 mt-0.5">Idéal pour le délégué ({absentIds.size} absents)</p>
                   </button>
 
                   <button
                     onClick={() => setWhatsAppType('full_roster')}
                     className={cn(
-                      'p-3 rounded-xl border text-left transition-all',
+                      'p-3.5 rounded-xl border text-left transition-all cursor-pointer',
                       whatsAppType === 'full_roster'
-                        ? 'bg-emerald-600/15 border-emerald-500 text-white'
-                        : 'bg-slate-800/60 border-slate-700 text-slate-400 hover:text-white'
+                        ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-500 text-emerald-950 dark:text-white ring-1 ring-emerald-500/40'
+                        : 'bg-white dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-300'
                     )}
                   >
-                    <p className="font-semibold text-xs text-white">Appel Complet</p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">Tous les étudiants (✅ & ❌)</p>
+                    <p className="font-bold text-xs text-slate-900 dark:text-white">Appel Complet</p>
+                    <p className="text-[11px] text-slate-500 mt-0.5">Tous les étudiants (✅ & ❌)</p>
                   </button>
                 </div>
               </div>
 
               {/* Message preview */}
               <div>
-                <label className="block text-xs text-slate-400 uppercase font-semibold tracking-wider mb-1.5">
+                <label className="block text-xs text-slate-500 dark:text-slate-400 uppercase font-bold tracking-wider mb-1.5">
                   Aperçu du message formaté
                 </label>
-                <div className="bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs font-mono text-slate-300 max-h-52 overflow-y-auto whitespace-pre-wrap select-all">
+                <div className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-xs font-mono text-slate-800 dark:text-slate-300 max-h-52 overflow-y-auto whitespace-pre-wrap select-all">
                   {generatedWhatsAppText}
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center justify-between p-5 border-t border-slate-800 bg-slate-900/90">
+            <div className="flex items-center justify-between p-5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/90">
               <button
                 onClick={handleCopyWhatsApp}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-xs font-semibold transition-colors"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition-colors cursor-pointer"
               >
-                <Copy className="w-3.5 h-3.5 text-sky-400" />
+                <Copy className="w-3.5 h-3.5 text-blue-600 dark:text-sky-400" />
                 <span>Copier le texte</span>
               </button>
 
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setShowWhatsAppModal(false)}
-                  className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors"
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition-colors cursor-pointer"
                 >
                   Fermer
                 </button>
                 <button
                   onClick={handleSendWhatsApp}
-                  className="flex items-center gap-2 px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-lg shadow-emerald-950/50"
+                  className="flex items-center gap-2 px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-md cursor-pointer"
                 >
                   <MessageCircle className="w-4 h-4" />
                   <span>Ouvrir WhatsApp</span>
@@ -1841,26 +1978,26 @@ export default function ProfessorStudentRosterPage() {
 
       {/* ─── 3. Annotation Editor Modal ─────────────────────────────── */}
       {editingStudentId !== null && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md shadow-2xl p-5 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-md shadow-2xl p-5 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-lg bg-amber-500/20 text-amber-400">
+                <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400">
                   <Tag className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-white font-semibold text-sm">Annotation Étudiant</h3>
-                  <p className="text-slate-400 text-xs">Séance {selectedSeance} — {seanceDate}</p>
+                  <h3 className="text-slate-900 dark:text-white font-bold text-sm">Annotation Étudiant</h3>
+                  <p className="text-slate-500 dark:text-slate-400 text-xs">Séance {selectedSeance} — {seanceDate}</p>
                 </div>
               </div>
-              <button onClick={() => setEditingStudentId(null)} className="text-slate-500 hover:text-white">
+              <button onClick={() => setEditingStudentId(null)} className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Tag Quick Select */}
             <div>
-              <label className="block text-xs text-slate-400 uppercase font-semibold tracking-wider mb-2">
+              <label className="block text-xs text-slate-500 dark:text-slate-400 uppercase font-bold tracking-wider mb-2">
                 Catégorie rapide
               </label>
               <div className="grid grid-cols-3 gap-2">
@@ -1870,10 +2007,10 @@ export default function ProfessorStudentRosterPage() {
                     type="button"
                     onClick={() => setEditNoteTag(t)}
                     className={cn(
-                      'px-2.5 py-1.5 rounded-lg border text-xs font-semibold transition-all text-center',
+                      'px-2.5 py-1.5 rounded-lg border text-xs font-bold transition-all text-center cursor-pointer',
                       editNoteTag === t
                         ? `${cfg.bg} ${cfg.text} ${cfg.border} ring-1 ring-amber-500/40`
-                        : 'bg-slate-800/80 border-slate-700 text-slate-400 hover:text-white'
+                        : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-300'
                     )}
                   >
                     {cfg.label}
@@ -1884,7 +2021,7 @@ export default function ProfessorStudentRosterPage() {
 
             {/* Note text */}
             <div>
-              <label className="block text-xs text-slate-400 uppercase font-semibold tracking-wider mb-1.5">
+              <label className="block text-xs text-slate-500 dark:text-slate-400 uppercase font-bold tracking-wider mb-1.5">
                 Remarque ou motif (justificatif, retard…)
               </label>
               <textarea
@@ -1892,17 +2029,17 @@ export default function ProfessorStudentRosterPage() {
                 value={editNoteText}
                 onChange={e => setEditNoteText(e.target.value)}
                 placeholder="Ex: Certificat médical déposé, retard de 20min autorisé, dispense exceptionnelle…"
-                className="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-amber-500"
               />
             </div>
 
             {/* Actions */}
-            <div className="flex items-center justify-between pt-2 border-t border-slate-800">
+            <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
               {annotations[editingStudentId] ? (
                 <button
                   type="button"
                   onClick={() => removeAnnotation(editingStudentId)}
-                  className="text-xs text-rose-400 hover:text-rose-300 font-semibold"
+                  className="text-xs text-rose-600 dark:text-rose-400 hover:underline font-bold"
                 >
                   Supprimer
                 </button>
@@ -1912,14 +2049,14 @@ export default function ProfessorStudentRosterPage() {
                 <button
                   type="button"
                   onClick={() => setEditingStudentId(null)}
-                  className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold"
+                  className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold cursor-pointer"
                 >
                   Annuler
                 </button>
                 <button
                   type="button"
                   onClick={saveAnnotation}
-                  className="px-4 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold transition-all shadow-md shadow-amber-950/40"
+                  className="px-4 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold transition-all shadow-md cursor-pointer"
                 >
                   Enregistrer
                 </button>
@@ -1931,18 +2068,18 @@ export default function ProfessorStudentRosterPage() {
 
       {/* ─── 7. Individual Student Sheet Modal (Export Individuel) ───── */}
       {individualStudent && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in">
-          <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="flex items-center justify-between p-5 border-b border-slate-800 bg-slate-900/90">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-cyan-500/20 text-cyan-400">
+                <div className="p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-600 dark:text-cyan-400">
                   <FileText className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-white font-bold text-sm">
+                  <h2 className="text-slate-900 dark:text-white font-bold text-sm">
                     Fiche Individuelle d'Émargement & Rattrapage
                   </h2>
-                  <p className="text-slate-400 text-xs">
+                  <p className="text-slate-500 dark:text-slate-400 text-xs">
                     {(individualStudent.last_name || '').toUpperCase()} {individualStudent.first_name} — Matricule: {individualStudent.matricule || '—'}
                   </p>
                 </div>
@@ -1951,14 +2088,14 @@ export default function ProfessorStudentRosterPage() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={handlePrintIndividualSheet}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition-all shadow"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-md cursor-pointer"
                 >
                   <PrinterIcon className="w-3.5 h-3.5" />
                   <span>Imprimer (A4)</span>
                 </button>
                 <button
                   onClick={() => setIndividualStudent(null)}
-                  className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white"
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -1966,51 +2103,51 @@ export default function ProfessorStudentRosterPage() {
             </div>
 
             {/* Printable Document Area */}
-            <div id="individual-printable-sheet" className="p-6 overflow-y-auto bg-slate-950/60 text-slate-200 space-y-5">
+            <div id="individual-printable-sheet" className="p-6 overflow-y-auto bg-slate-50 dark:bg-slate-950/60 text-slate-800 dark:text-slate-200 space-y-5">
               {/* Document Header (ENCG Fès Style) */}
-              <div className="text-center pb-4 border-b border-slate-800">
-                <p className="text-xs uppercase tracking-widest text-slate-400 font-semibold">Royaume du Maroc</p>
-                <p className="text-xs text-slate-300 font-medium">Université Sidi Mohamed Ben Abdellah — Fès</p>
-                <h3 className="text-sm font-bold text-emerald-400 mt-1">
+              <div className="text-center pb-4 border-b border-slate-200 dark:border-slate-800">
+                <p className="text-xs uppercase tracking-widest text-slate-500 dark:text-slate-400 font-bold">Royaume du Maroc</p>
+                <p className="text-xs text-slate-600 dark:text-slate-300 font-medium">Université Sidi Mohamed Ben Abdellah — Fès</p>
+                <h3 className="text-sm font-black text-[#001A4B] dark:text-emerald-400 mt-1">
                   École Nationale de Commerce et de Gestion de Fès
                 </h3>
-                <div className="inline-block mt-2 px-3 py-1 rounded-full bg-slate-800 border border-slate-700 text-xs font-bold text-white uppercase tracking-wider">
+                <div className="inline-block mt-2 px-3 py-1 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-black text-[#001A4B] dark:text-white uppercase tracking-wider shadow-2xs">
                   Fiche Individuelle de Présence & d'Émargement
                 </div>
               </div>
 
               {/* Student & Course Details */}
               <div className="grid grid-cols-2 gap-4 text-xs">
-                <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-3.5 space-y-2">
-                  <p className="text-[11px] uppercase tracking-wider font-bold text-emerald-400 mb-1">Identité Étudiant</p>
-                  <div><span className="text-slate-400">Nom & Prénom :</span> <span className="text-white font-bold">{(individualStudent.last_name || '').toUpperCase()} {individualStudent.first_name}</span></div>
-                  <div><span className="text-slate-400">Matricule :</span> <span className="text-white font-mono">{individualStudent.matricule || '—'}</span></div>
-                  <div><span className="text-slate-400">CNE / Massar :</span> <span className="text-white font-mono">{individualStudent.cne || individualStudent.massar_code || '—'}</span></div>
-                  <div><span className="text-slate-400">CIN :</span> <span className="text-white font-mono">{individualStudent.cin || '—'}</span></div>
+                <div className="bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 space-y-2 shadow-2xs">
+                  <p className="text-[11px] uppercase tracking-wider font-bold text-emerald-600 dark:text-emerald-400 mb-1">Identité Étudiant</p>
+                  <div><span className="text-slate-500 dark:text-slate-400">Nom & Prénom :</span> <span className="text-slate-900 dark:text-white font-bold">{(individualStudent.last_name || '').toUpperCase()} {individualStudent.first_name}</span></div>
+                  <div><span className="text-slate-500 dark:text-slate-400">Matricule :</span> <span className="text-slate-900 dark:text-white font-mono font-bold">{individualStudent.matricule || '—'}</span></div>
+                  <div><span className="text-slate-500 dark:text-slate-400">CNE / Massar :</span> <span className="text-slate-900 dark:text-white font-mono">{individualStudent.cne || individualStudent.massar_code || '—'}</span></div>
+                  <div><span className="text-slate-500 dark:text-slate-400">CIN :</span> <span className="text-slate-900 dark:text-white font-mono">{individualStudent.cin || '—'}</span></div>
                 </div>
 
-                <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-3.5 space-y-2">
-                  <p className="text-[11px] uppercase tracking-wider font-bold text-emerald-400 mb-1">Affectation Pédagogique</p>
-                  <div><span className="text-slate-400">Module :</span> <span className="text-white font-semibold">{selectedModule?.module_code} — {selectedModule?.module_name}</span></div>
-                  <div><span className="text-slate-400">Section :</span> <span className="text-white font-medium">{selectedSection?.group_code} ({selectedSection?.filiere_name})</span></div>
-                  <div><span className="text-slate-400">Sous-groupe TD :</span> <span className="text-white font-medium">{individualStudent.sub_group || selectedSubGroup || 'Section Complète'}</span></div>
-                  <div><span className="text-slate-400">Enseignant :</span> <span className="text-white font-medium">Pr. {profName || 'ENCG Fès'}</span></div>
+                <div className="bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 space-y-2 shadow-2xs">
+                  <p className="text-[11px] uppercase tracking-wider font-bold text-emerald-600 dark:text-emerald-400 mb-1">Affectation Pédagogique</p>
+                  <div><span className="text-slate-500 dark:text-slate-400">Module :</span> <span className="text-slate-900 dark:text-white font-semibold">{selectedModule?.module_code} — {selectedModule?.module_name}</span></div>
+                  <div><span className="text-slate-500 dark:text-slate-400">Section :</span> <span className="text-slate-900 dark:text-white font-medium">{selectedSection?.group_code} ({selectedSection?.filiere_name})</span></div>
+                  <div><span className="text-slate-500 dark:text-slate-400">Sous-groupe TD :</span> <span className="text-slate-900 dark:text-white font-medium">{individualStudent.sub_group || selectedSubGroup || 'Section Complète'}</span></div>
+                  <div><span className="text-slate-500 dark:text-slate-400">Enseignant :</span> <span className="text-slate-900 dark:text-white font-medium">Pr. {profName || 'ENCG Fès'}</span></div>
                 </div>
               </div>
 
               {/* Status on current session */}
-              <div className="bg-slate-900/70 border border-slate-800 rounded-xl p-4 flex items-center justify-between">
+              <div className="bg-white dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex items-center justify-between shadow-2xs">
                 <div>
-                  <p className="text-xs text-slate-400">Statut actuel ({selectedSeance} — {seanceDate}) :</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Statut actuel ({selectedSeance} — {seanceDate}) :</p>
                   <p className="text-sm font-bold mt-0.5">
                     {absentIds.has(individualStudent.id) ? (
-                      <span className="text-rose-400">❌ Absent non justifié</span>
+                      <span className="text-rose-600 dark:text-rose-400">❌ Absent non justifié</span>
                     ) : (
-                      <span className="text-emerald-400">✅ Présent & Régulier</span>
+                      <span className="text-emerald-600 dark:text-emerald-400">✅ Présent & Régulier</span>
                     )}
                   </p>
                   {annotations[individualStudent.id] && (
-                    <p className="text-xs text-amber-300 mt-1">
+                    <p className="text-xs text-amber-600 dark:text-amber-300 mt-1">
                       Remarque : {annotations[individualStudent.id].text} ({annotations[individualStudent.id].tag || 'Note'})
                     </p>
                   )}
@@ -2020,7 +2157,7 @@ export default function ProfessorStudentRosterPage() {
 
               {/* Grid 10 Sessions Emargement / Rattrapage Table */}
               <div>
-                <p className="text-xs font-semibold text-slate-300 mb-2">Grille de validation des séances (1 à 10) :</p>
+                <p className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">Grille de validation des séances (1 à 10) :</p>
                 <div className="grid grid-cols-5 gap-2 text-center text-xs">
                   {SEANCES.slice(0, 10).map(s => {
                     const seanceData = seanceStore[s];
@@ -2028,16 +2165,16 @@ export default function ProfessorStudentRosterPage() {
                     const isPassed = !!seanceData;
 
                     return (
-                      <div key={s} className="border border-slate-800 bg-slate-900/80 rounded-lg p-2 flex flex-col justify-between h-20">
-                        <span className="font-bold text-slate-300">{s}</span>
+                      <div key={s} className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/80 rounded-xl p-2 flex flex-col justify-between h-20 shadow-2xs">
+                        <span className="font-bold text-slate-700 dark:text-slate-300">{s}</span>
                         <div className="text-[10px]">
                           {isPassed ? (
-                            isAbs ? <span className="text-rose-400 font-bold">ABS</span> : <span className="text-emerald-400 font-bold">PRÉSENT</span>
+                            isAbs ? <span className="text-rose-600 dark:text-rose-400 font-bold">ABS</span> : <span className="text-emerald-600 dark:text-emerald-400 font-bold">PRÉSENT</span>
                           ) : (
-                            <span className="text-slate-600">—</span>
+                            <span className="text-slate-400 dark:text-slate-600">—</span>
                           )}
                         </div>
-                        <div className="border-t border-slate-800/80 pt-1 text-[9px] text-slate-500 italic">
+                        <div className="border-t border-slate-100 dark:border-slate-800/80 pt-1 text-[9px] text-slate-400 dark:text-slate-500 italic">
                           Émargement
                         </div>
                       </div>
@@ -2047,22 +2184,22 @@ export default function ProfessorStudentRosterPage() {
               </div>
 
               {/* Signatures & Seal Zone */}
-              <div className="pt-4 border-t border-slate-800 grid grid-cols-2 gap-8 text-xs text-center">
+              <div className="pt-4 border-t border-slate-200 dark:border-slate-800 grid grid-cols-2 gap-8 text-xs text-center">
                 <div>
-                  <p className="font-semibold text-slate-400 mb-10">Signature de l'Étudiant(e)</p>
-                  <p className="text-[10px] text-slate-500">Précédé de la mention « Lu et approuvé »</p>
+                  <p className="font-bold text-slate-600 dark:text-slate-400 mb-10">Signature de l'Étudiant(e)</p>
+                  <p className="text-[10px] text-slate-400 dark:text-slate-500">Précédé de la mention « Lu et approuvé »</p>
                 </div>
                 <div>
-                  <p className="font-semibold text-slate-400 mb-10">Visa & Cachet de l'Enseignant</p>
-                  <p className="text-[10px] text-slate-500">Fait à Fès, le {seanceDate}</p>
+                  <p className="font-bold text-slate-600 dark:text-slate-400 mb-10">Visa & Cachet de l'Enseignant</p>
+                  <p className="text-[10px] text-slate-400 dark:text-slate-500">Fait à Fès, le {seanceDate}</p>
                 </div>
               </div>
             </div>
 
-            <div className="p-4 border-t border-slate-800 bg-slate-900/90 flex justify-end">
+            <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/90 flex justify-end">
               <button
                 onClick={() => setIndividualStudent(null)}
-                className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors"
+                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition-colors cursor-pointer"
               >
                 Fermer
               </button>
@@ -2073,22 +2210,22 @@ export default function ProfessorStudentRosterPage() {
 
       {/* ─── Modal: Save to DB & Sync Textbook ─────────────────────────── */}
       {showSaveModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in">
-          <div className="relative w-full max-w-xl bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
+          <div className="relative w-full max-w-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col">
             {/* Header */}
-            <div className="p-5 border-b border-slate-800 bg-slate-900/90 flex items-center justify-between">
+            <div className="p-5 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900/90 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
+                <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400">
                   <BookOpen className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-white">Enregistrement & Synergie Pédagogique</h3>
-                  <p className="text-xs text-slate-400">Sauvegarde de la présence et liaison avec le Cahier de Texte</p>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white">Enregistrement & Synergie Pédagogique</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Sauvegarde de la présence et liaison avec le Cahier de Texte</p>
                 </div>
               </div>
               <button
                 onClick={() => setShowSaveModal(false)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -2097,28 +2234,28 @@ export default function ProfessorStudentRosterPage() {
             {/* Body */}
             <div className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
               {/* Session Recap */}
-              <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-4 space-y-2">
+              <div className="bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl p-4 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-slate-400">Séance & Date :</span>
-                  <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded">
+                  <span className="text-xs text-slate-500 dark:text-slate-400">Séance & Date :</span>
+                  <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 px-2 py-0.5 rounded">
                     {selectedSeance} • {seanceDate}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-slate-400">Module :</span>
-                  <span className="text-xs font-semibold text-white truncate max-w-[280px]">
+                  <span className="text-xs text-slate-500 dark:text-slate-400">Module :</span>
+                  <span className="text-xs font-bold text-slate-900 dark:text-white truncate max-w-[280px]">
                     {selectedModule?.module_code} - {selectedModule?.module_name}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-slate-400">Groupe / Section :</span>
-                  <span className="text-xs font-medium text-slate-300">
+                  <span className="text-xs text-slate-500 dark:text-slate-400">Groupe / Section :</span>
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                     {selectedSection?.group_code} {listMode === 'subgroup' && selectedSubGroup ? `(${selectedSubGroup})` : ''}
                   </span>
                 </div>
-                <div className="flex items-center justify-between pt-1 border-t border-slate-800/80">
-                  <span className="text-xs text-slate-400">Effectif présent :</span>
-                  <span className="text-xs font-bold text-white">
+                <div className="flex items-center justify-between pt-1 border-t border-slate-200 dark:border-slate-800/80">
+                  <span className="text-xs text-slate-500 dark:text-slate-400">Effectif présent :</span>
+                  <span className="text-xs font-bold text-slate-900 dark:text-white">
                     {students.length - absentIds.size} / {students.length} ({absentIds.size} absent{absentIds.size > 1 ? 's' : ''})
                   </span>
                 </div>
@@ -2128,21 +2265,21 @@ export default function ProfessorStudentRosterPage() {
               <div className={cn(
                 'rounded-xl border p-4 transition-all',
                 syncTextbook
-                  ? 'bg-emerald-950/20 border-emerald-500/40 ring-1 ring-emerald-500/20'
-                  : 'bg-slate-950/40 border-slate-800'
+                  ? 'bg-emerald-50/60 dark:bg-emerald-950/20 border-emerald-300 dark:border-emerald-500/40 ring-1 ring-emerald-500/20'
+                  : 'bg-slate-50 dark:bg-slate-950/40 border-slate-200 dark:border-slate-800'
               )}>
                 <label className="flex items-start gap-3 cursor-pointer select-none">
                   <input
                     type="checkbox"
                     checked={syncTextbook}
                     onChange={(e) => setSyncTextbook(e.target.checked)}
-                    className="mt-1 h-4 w-4 rounded border-slate-700 bg-slate-800 text-emerald-500 focus:ring-emerald-400 focus:ring-offset-slate-900 cursor-pointer"
+                    className="mt-1 h-4 w-4 rounded border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-emerald-600 focus:ring-emerald-400 cursor-pointer"
                   />
                   <div className="flex-1">
-                    <p className="text-sm font-semibold text-white">
+                    <p className="text-sm font-bold text-slate-900 dark:text-white">
                       Enregistrer en même temps dans le Cahier de Texte Numérique
                     </p>
-                    <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
                       Crée automatiquement une séance de 2.0h avec statut « Réalisé » dans votre cahier de texte officiel ENCG Fès.
                     </p>
                   </div>
@@ -2150,23 +2287,23 @@ export default function ProfessorStudentRosterPage() {
 
                 {/* Additional Textbook Inputs */}
                 {syncTextbook && (
-                  <div className="mt-4 pt-3 border-t border-emerald-500/20 space-y-3 animate-in fade-in">
+                  <div className="mt-4 pt-3 border-t border-emerald-200 dark:border-emerald-500/20 space-y-3 animate-in fade-in">
                     <div>
                       <div className="flex items-center justify-between mb-1">
-                        <label className="block text-xs font-semibold text-slate-300">
-                          Intitulé du Chapitre / Séance <span className="text-slate-500">(optionnel)</span>
+                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                          Intitulé du Chapitre / Séance <span className="text-slate-400">(optionnel)</span>
                         </label>
                         <button
                           type="button"
                           onClick={handleAiSuggestAttendanceTextbook}
                           disabled={isGeneratingAiSuggestion || !selectedModuleId}
-                          className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/30 text-[11px] font-bold transition-all disabled:opacity-50"
+                          className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-purple-50 dark:bg-purple-500/20 hover:bg-purple-100 dark:hover:bg-purple-500/30 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-500/30 text-[11px] font-bold transition-all disabled:opacity-50 cursor-pointer"
                           title="Suggérer le chapitre et les concepts clés de cette séance avec Gemini AI"
                         >
                           {isGeneratingAiSuggestion ? (
-                            <Loader2 className="w-3 h-3 animate-spin text-purple-400" />
+                            <Loader2 className="w-3 h-3 animate-spin text-purple-600 dark:text-purple-400" />
                           ) : (
-                            <Sparkles className="w-3 h-3 text-amber-300" />
+                            <Sparkles className="w-3 h-3 text-amber-500" />
                           )}
                           <span>{isGeneratingAiSuggestion ? 'Génération IA…' : '🪄 Auto-compléter avec l\'IA'}</span>
                         </button>
@@ -2176,20 +2313,20 @@ export default function ProfessorStudentRosterPage() {
                         value={customChapterTitle}
                         onChange={(e) => setCustomChapterTitle(e.target.value)}
                         placeholder={`Ex: Séance ${selectedSeance} — Concepts fondamentaux & Études de cas`}
-                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                        className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-slate-300 mb-1">
-                        Notions abordées & Activités <span className="text-slate-500">(optionnel)</span>
+                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                        Notions abordées & Activités <span className="text-slate-400">(optionnel)</span>
                       </label>
                       <textarea
                         rows={2}
                         value={customKeyConcepts}
                         onChange={(e) => setCustomKeyConcepts(e.target.value)}
                         placeholder="Ex: Présentation du cours magistral, exercices d'application en sous-groupes..."
-                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 resize-none"
+                        className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 resize-none"
                       />
                     </div>
                   </div>
@@ -2198,12 +2335,12 @@ export default function ProfessorStudentRosterPage() {
             </div>
 
             {/* Footer */}
-            <div className="p-4 border-t border-slate-800 bg-slate-900/90 flex items-center justify-end gap-3">
+            <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/90 flex items-center justify-end gap-3">
               <button
                 type="button"
                 onClick={() => setShowSaveModal(false)}
                 disabled={savingAttendance}
-                className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors disabled:opacity-50"
+                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition-colors disabled:opacity-50 cursor-pointer"
               >
                 Annuler
               </button>
@@ -2211,7 +2348,7 @@ export default function ProfessorStudentRosterPage() {
                 type="button"
                 onClick={handleSaveAttendanceToDb}
                 disabled={savingAttendance}
-                className="flex items-center gap-2 px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-md shadow-emerald-950/40 disabled:opacity-50"
+                className="flex items-center gap-2 px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-md disabled:opacity-50 cursor-pointer"
               >
                 {savingAttendance ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
                 <span>{savingAttendance ? 'Enregistrement en cours…' : 'Confirmer & Enregistrer'}</span>
@@ -2223,25 +2360,25 @@ export default function ProfessorStudentRosterPage() {
 
       {/* ─── Modal: AI Attendance Risk & Early Warning ─────────────────── */}
       {showRiskModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in">
-          <div className="relative w-full max-w-2xl bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
+          <div className="relative w-full max-w-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
             {/* Header */}
-            <div className="p-5 border-b border-slate-800 bg-slate-900/90 flex items-center justify-between">
+            <div className="p-5 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900/90 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400">
+                <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400">
                   <Sparkles className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-white flex items-center gap-2">
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                     <span>Détection Prédictive Décrochage & Risque d'Absence (IA)</span>
-                    <span className="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full font-bold">Art. 14 ENCG Fès</span>
+                    <span className="text-[10px] bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300 border border-amber-300 dark:border-amber-500/30 px-2 py-0.5 rounded-full font-bold">Art. 14 ENCG Fès</span>
                   </h3>
-                  <p className="text-xs text-slate-400">Analyse de conformité réglementaire LMD & Alerte d'assiduité précoce</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Analyse de conformité réglementaire LMD & Alerte d'assiduité précoce</p>
                 </div>
               </div>
               <button
                 onClick={() => setShowRiskModal(false)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -2251,67 +2388,67 @@ export default function ProfessorStudentRosterPage() {
             <div className="p-6 space-y-5 overflow-y-auto">
               {loadingRiskAnalysis ? (
                 <div className="flex flex-col items-center justify-center py-16 gap-3">
-                  <Loader2 className="w-8 h-8 text-amber-400 animate-spin" />
-                  <p className="text-sm font-semibold text-slate-300">Analyse de l'assiduité par l'IA en cours…</p>
+                  <Loader2 className="w-8 h-8 text-amber-500 animate-spin" />
+                  <p className="text-sm font-bold text-slate-700 dark:text-slate-300">Analyse de l'assiduité par l'IA en cours…</p>
                   <p className="text-xs text-slate-500">Examen des 12 séances d'émargement et seuils légaux ENCG</p>
                 </div>
               ) : riskData ? (
                 <>
                   {/* KPIs Stats */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div className="bg-slate-950/60 border border-rose-500/30 rounded-xl p-3.5 flex flex-col gap-1">
-                      <div className="flex items-center justify-between text-rose-400 text-xs font-semibold">
+                    <div className="bg-rose-50/70 dark:bg-slate-950/60 border border-rose-200 dark:border-rose-500/30 rounded-2xl p-4 flex flex-col gap-1">
+                      <div className="flex items-center justify-between text-rose-600 dark:text-rose-400 text-xs font-bold">
                         <span>Risque Critique</span>
                         <AlertTriangle className="w-4 h-4" />
                       </div>
-                      <p className="text-2xl font-bold text-white">{riskData.critical_count ?? 0}</p>
-                      <p className="text-[11px] text-slate-400">≥ 3 absences (Exclusion Art. 14)</p>
+                      <p className="text-2xl font-black text-rose-950 dark:text-white">{riskData.critical_count ?? 0}</p>
+                      <p className="text-[11px] text-rose-600/80 dark:text-slate-400 font-medium">≥ 3 absences (Exclusion Art. 14)</p>
                     </div>
 
-                    <div className="bg-slate-950/60 border border-amber-500/30 rounded-xl p-3.5 flex flex-col gap-1">
-                      <div className="flex items-center justify-between text-amber-400 text-xs font-semibold">
+                    <div className="bg-amber-50/70 dark:bg-slate-950/60 border border-amber-200 dark:border-amber-500/30 rounded-2xl p-4 flex flex-col gap-1">
+                      <div className="flex items-center justify-between text-amber-600 dark:text-amber-400 text-xs font-bold">
                         <span>Zone Vigilance</span>
                         <Info className="w-4 h-4" />
                       </div>
-                      <p className="text-2xl font-bold text-white">{riskData.warning_count ?? 0}</p>
-                      <p className="text-[11px] text-slate-400">2 absences non justifiées</p>
+                      <p className="text-2xl font-black text-amber-950 dark:text-white">{riskData.warning_count ?? 0}</p>
+                      <p className="text-[11px] text-amber-600/80 dark:text-slate-400 font-medium">2 absences non justifiées</p>
                     </div>
 
-                    <div className="bg-slate-950/60 border border-emerald-500/30 rounded-xl p-3.5 flex flex-col gap-1">
-                      <div className="flex items-center justify-between text-emerald-400 text-xs font-semibold">
+                    <div className="bg-emerald-50/70 dark:bg-slate-950/60 border border-emerald-200 dark:border-emerald-500/30 rounded-2xl p-4 flex flex-col gap-1">
+                      <div className="flex items-center justify-between text-emerald-600 dark:text-emerald-400 text-xs font-bold">
                         <span>Assiduité Globale</span>
                         <CheckCircle2 className="w-4 h-4" />
                       </div>
-                      <p className="text-2xl font-bold text-white">{riskData.global_attendance_rate ?? 100}%</p>
-                      <p className="text-[11px] text-slate-400">{riskData.total_sessions_evaluated ?? 1} séances évaluées</p>
+                      <p className="text-2xl font-black text-emerald-950 dark:text-white">{riskData.global_attendance_rate ?? 100}%</p>
+                      <p className="text-[11px] text-emerald-600/80 dark:text-slate-400 font-medium">{riskData.total_sessions_evaluated ?? 1} séances évaluées</p>
                     </div>
                   </div>
 
                   {/* AI Diagnosis */}
-                  <div className="bg-purple-950/20 border border-purple-500/30 rounded-xl p-4 space-y-2">
-                    <div className="flex items-center gap-2 text-purple-300 font-bold text-xs uppercase tracking-wider">
-                      <Sparkles className="w-4 h-4 text-purple-400" />
+                  <div className="bg-purple-50/60 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-500/30 rounded-2xl p-4 space-y-2">
+                    <div className="flex items-center gap-2 text-purple-700 dark:text-purple-300 font-bold text-xs uppercase tracking-wider">
+                      <Sparkles className="w-4 h-4 text-purple-600 dark:text-purple-400" />
                       <span>Diagnostic Synthétique du Copilote IA</span>
                     </div>
-                    <p className="text-xs text-slate-300 leading-relaxed">
+                    <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
                       {riskData.ai_summary}
                     </p>
                   </div>
 
                   {/* Critical Students Table */}
                   <div>
-                    <h4 className="text-xs font-bold text-rose-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <h4 className="text-xs font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                       <AlertTriangle className="w-3.5 h-3.5" />
                       <span>Étudiants exposés à l'élimination ({riskData.critical_students?.length ?? 0})</span>
                     </h4>
                     {riskData.critical_students?.length === 0 ? (
-                      <div className="bg-slate-950/40 border border-slate-800 rounded-xl p-4 text-center text-xs text-emerald-400 font-medium">
+                      <div className="bg-emerald-50 dark:bg-slate-950/40 border border-emerald-200 dark:border-slate-800 rounded-xl p-4 text-center text-xs text-emerald-700 dark:text-emerald-400 font-bold">
                         ✅ Aucun étudiant en situation critique d'exclusion pour ce groupe.
                       </div>
                     ) : (
-                      <div className="border border-slate-800 rounded-xl overflow-hidden">
+                      <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-2xs">
                         <table className="w-full text-left text-xs">
-                          <thead className="bg-slate-800/80 text-slate-400 font-semibold uppercase text-[10px]">
+                          <thead className="bg-slate-50 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 font-bold uppercase text-[10px]">
                             <tr>
                               <th className="p-2.5">Étudiant(e)</th>
                               <th className="p-2.5">Matricule / CNE</th>
@@ -2320,15 +2457,15 @@ export default function ProfessorStudentRosterPage() {
                               <th className="p-2.5">Statut Légal</th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-slate-800 bg-slate-900/60">
+                          <tbody className="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900/60">
                             {riskData.critical_students.map((st: any) => (
-                              <tr key={st.id} className="hover:bg-slate-800/40 transition-colors">
-                                <td className="p-2.5 font-bold text-white">{st.name}</td>
-                                <td className="p-2.5 text-slate-400 font-mono text-[11px]">{st.matricule} • {st.cne}</td>
-                                <td className="p-2.5 text-center font-bold text-rose-400">{st.unexcused_absences} séance{st.unexcused_absences > 1 ? 's' : ''}</td>
-                                <td className="p-2.5 text-center font-bold text-white">{st.attendance_rate}%</td>
+                              <tr key={st.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                                <td className="p-2.5 font-bold text-slate-900 dark:text-white">{st.name}</td>
+                                <td className="p-2.5 text-slate-500 dark:text-slate-400 font-mono text-[11px]">{st.matricule} • {st.cne}</td>
+                                <td className="p-2.5 text-center font-bold text-rose-600 dark:text-rose-400">{st.unexcused_absences} séance{st.unexcused_absences > 1 ? 's' : ''}</td>
+                                <td className="p-2.5 text-center font-bold text-slate-900 dark:text-white">{st.attendance_rate}%</td>
                                 <td className="p-2.5">
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300 border border-rose-200 dark:border-rose-500/30">
                                     Éliminatoire Art. 14
                                   </span>
                                 </td>
@@ -2342,11 +2479,11 @@ export default function ProfessorStudentRosterPage() {
 
                   {/* AI Recommendations */}
                   {riskData.ai_recommendations?.length > 0 && (
-                    <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-4 space-y-2">
-                      <div className="text-xs font-bold text-amber-300 uppercase tracking-wider">
+                    <div className="bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl p-4 space-y-2">
+                      <div className="text-xs font-bold text-amber-600 dark:text-amber-300 uppercase tracking-wider">
                         💡 Recommandations Opérationnelles du Modèle IA :
                       </div>
-                      <ul className="space-y-1 text-xs text-slate-300 list-disc list-inside">
+                      <ul className="space-y-1 text-xs text-slate-700 dark:text-slate-300 list-disc list-inside font-medium">
                         {riskData.ai_recommendations.map((rec: string, idx: number) => (
                           <li key={idx} className="leading-relaxed">{rec}</li>
                         ))}
@@ -2362,12 +2499,12 @@ export default function ProfessorStudentRosterPage() {
             </div>
 
             {/* Footer */}
-            <div className="p-4 border-t border-slate-800 bg-slate-900/90 flex items-center justify-between">
-              <span className="text-[11px] text-slate-500">Conforme à la Charte des Études ENCG Fès</span>
+            <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/90 flex items-center justify-between">
+              <span className="text-[11px] text-slate-400 font-medium">Conforme à la Charte des Études ENCG Fès</span>
               <button
                 type="button"
                 onClick={() => setShowRiskModal(false)}
-                className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors"
+                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition-colors cursor-pointer"
               >
                 Fermer
               </button>
@@ -2392,21 +2529,21 @@ function StatCard({
   icon: string;
   color: 'slate' | 'emerald' | 'rose' | 'sky' | 'amber';
 }) {
-  const borderMap = {
-    slate: 'border-slate-800/80',
-    emerald: 'border-emerald-500/30',
-    rose: 'border-rose-500/30',
-    sky: 'border-sky-500/30',
-    amber: 'border-amber-500/30',
+  const colorMap = {
+    slate: 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white',
+    emerald: 'bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-300',
+    rose: 'bg-rose-50/50 dark:bg-rose-950/20 border-rose-200 dark:border-rose-800/60 text-rose-700 dark:text-rose-300',
+    sky: 'bg-sky-50/50 dark:bg-sky-950/20 border-sky-200 dark:border-sky-800/60 text-sky-700 dark:text-sky-300',
+    amber: 'bg-amber-50/50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800/60 text-amber-700 dark:text-amber-300',
   };
 
   return (
-    <div className={cn('bg-slate-900/80 border rounded-xl p-4 flex flex-col gap-2 shadow', borderMap[color])}>
+    <div className={cn('border rounded-2xl p-4 flex flex-col gap-2 shadow-2xs transition-all', colorMap[color])}>
       <div className="flex items-center justify-between">
-        <span className="text-slate-400 text-xs uppercase tracking-wider font-semibold">{label}</span>
+        <span className="text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider font-bold">{label}</span>
         <span className="text-base">{icon}</span>
       </div>
-      <p className="text-2xl font-bold text-white">{value}</p>
+      <p className="text-2xl font-black">{value}</p>
     </div>
   );
 }
@@ -2428,16 +2565,16 @@ function PdfModeCard({
     <button
       onClick={onClick}
       className={cn(
-        'relative flex flex-col items-start gap-2 p-3.5 rounded-xl border text-left transition-all',
+        'relative flex flex-col items-start gap-2 p-3.5 rounded-2xl border text-left transition-all cursor-pointer',
         active
-          ? 'bg-emerald-600/15 border-emerald-500/60 ring-1 ring-emerald-500/40'
-          : 'bg-slate-800/60 border-slate-700 hover:border-slate-600'
+          ? 'bg-blue-50/80 dark:bg-emerald-950/30 border-[#001A4B] dark:border-emerald-500 ring-2 ring-[#001A4B]/20 dark:ring-emerald-500/40 shadow-sm'
+          : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-slate-300'
       )}
     >
-      {active && <CheckCircle2 className="absolute top-2.5 right-2.5 w-4 h-4 text-emerald-400" />}
-      <div className={cn('p-1.5 rounded-lg', active ? 'text-emerald-400' : 'text-slate-500')}>{icon}</div>
+      {active && <CheckCircle2 className="absolute top-2.5 right-2.5 w-4 h-4 text-[#001A4B] dark:text-emerald-400" />}
+      <div className={cn('p-1.5 rounded-lg', active ? 'text-[#001A4B] dark:text-emerald-400' : 'text-slate-400')}>{icon}</div>
       <div>
-        <p className={cn('text-sm font-semibold', active ? 'text-white' : 'text-slate-300')}>{title}</p>
+        <p className={cn('text-sm font-bold', active ? 'text-[#001A4B] dark:text-white' : 'text-slate-700 dark:text-slate-300')}>{title}</p>
         <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">{subtitle}</p>
       </div>
     </button>
@@ -2447,12 +2584,12 @@ function PdfModeCard({
 function NoModulesPlaceholder() {
   return (
     <div className="flex flex-col items-center justify-center py-24 gap-4">
-      <div className="p-4 rounded-2xl bg-slate-800/60 border border-slate-700">
-        <ShieldAlert className="w-12 h-12 text-amber-400" />
+      <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800">
+        <ShieldAlert className="w-12 h-12 text-amber-600 dark:text-amber-400" />
       </div>
       <div className="text-center max-w-md">
-        <h3 className="text-white font-semibold text-lg mb-2">Aucun module affecté</h3>
-        <p className="text-slate-400 text-sm leading-relaxed">
+        <h3 className="text-slate-900 dark:text-white font-bold text-lg mb-2">Aucun module affecté</h3>
+        <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">
           Vous n'avez pas encore de modules pédagogiques affectés pour cette année universitaire. Veuillez contacter la direction des études de l'ENCG Fès.
         </p>
       </div>

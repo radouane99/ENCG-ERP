@@ -282,7 +282,7 @@ export default function AdminGradesPVPage() {
           filiere_id: selectedFiliere,
           academic_year_id: currentAcademicYearId,
           semester_number: selectedSemester || 1,
-          type: pvType, group_id: selectedGroup || null, session, year_level: selectedYearLevel
+          type: pvType, group_id: pvType === 'annuel' ? null : selectedGroup || null, session, year_level: selectedYearLevel
         }
       })
       setJuryStatus(res.data)
@@ -299,14 +299,14 @@ export default function AdminGradesPVPage() {
 
   // Fetch consolidated PV data for single module
   const { data: pvData, isLoading: isLoadingPV, refetch: refetchPV } = useQuery({
-    queryKey: ['module-pv', moduleId, groupId, viewAllGroups, session],
+    queryKey: ['module-pv', moduleId, selectedGroup, viewAllGroups, session, currentAcademicYearId],
     queryFn: () => api.get(`/modules/${moduleId}/pv`, {
       params: {
-        group_id: viewAllGroups ? 'all' : (groupId && groupId !== 'null' ? groupId : 'all'),
+        academic_year_id: currentAcademicYearId, group_id: viewAllGroups ? 'all' : (selectedGroup || 'all'),
         session: session
       }
     }).then(res => res.data),
-    enabled: !!moduleId,
+    enabled: !!moduleId && !!currentAcademicYearId,
   })
 
   const openJuryVisa = (member: any) => {
@@ -497,26 +497,15 @@ export default function AdminGradesPVPage() {
   }
 
   // ✉️ Feature 2: Email Broadcast Handler
-  const handleBroadcastTranscripts = async () => {
-    setIsSendingBulk(true)
-    const toastId = toast.loading("Envoi des relevés de notes officiels aux étudiants via Resend...")
-    try {
-      await new Promise(r => setTimeout(r, 1200))
-      toast.success(`📧 Relevés de notes envoyés avec succès à tous les étudiants inscrits du Semestre ${selectedSemester || 1} !`, { id: toastId })
-      setShowBulkEmailModal(false)
-    } catch (err) {
-      toast.error("Erreur lors de la diffusion des emails.", { id: toastId })
-    } finally {
-      setIsSendingBulk(false)
-    }
+  const handleBroadcastTranscripts = () => {
+    setShowBulkEmailModal(false)
+    navigate('/academic/documents')
   }
-
-
   // Query AI Grade Distribution Audit
   const { data: aiAuditData } = useQuery({
     queryKey: ['module-ai-audit', moduleId],
     queryFn: () => api.get(`/modules/${moduleId}/ai-audit`).then(r => r.data),
-    enabled: !!moduleId,
+    enabled: !!moduleId && !!currentAcademicYearId,
   })
 
   const handleDownloadZipBundle = async () => {
@@ -557,7 +546,7 @@ export default function AdminGradesPVPage() {
     catch (err: any) { toast.error(err.response?.data?.message || 'Le PV ne peut pas être scellé.') } finally { setIsLocking(false) }
   }
   const handleGenerateShareLink = () => {
-    const params = new URLSearchParams({ filiere_id: selectedFiliere, semester: selectedSemester, academic_year_id: String(currentAcademicYearId), group_id: selectedGroup || '', session, pv_type: pvType })
+    const params = new URLSearchParams({ filiere_id: selectedFiliere, semester: selectedSemester, academic_year_id: String(currentAcademicYearId), group_id: selectedGroup || '', session, pv_type: pvType, module_id: moduleId || '' })
     const url = `${window.location.origin}/admin/grades/pv?${params}`
     setShareLink(url)
     setShowShareModal(true)
@@ -824,12 +813,13 @@ export default function AdminGradesPVPage() {
 
 
   const handleExportPdf = async (preview = false) => {
+    if (!selectedFiliere || !currentAcademicYearId) { toast.error('Sélectionnez une formation et une année.'); return }
     // Open blank tab synchronously before async await to bypass browser popup blocker
     const pdfWindow = preview ? window.open('about:blank', '_blank') : null
     const toastId = toast.loading('Génération du Procès-Verbal PDF Officiel...')
     try {
       const effectiveType = pvType === 'annuel' ? 'annuel' : 'semestriel'
-      const filiereId = selectedFiliere || 13
+      const filiereId = selectedFiliere
       const yearLevel = selectedYearLevel || Math.max(1, Math.ceil((Number(selectedSemester) || 1) / 2))
 
       const response = await api.post('/deliberations/export-pv-pdf', {
@@ -838,11 +828,11 @@ export default function AdminGradesPVPage() {
         academic_year_id: currentAcademicYearId,
         semester_number: selectedSemester || 1,
         year_level: yearLevel,
-        session: 'normale',
+        session,
 
 
       }, {
-        responseType: 'blob', params: { group_id: viewAllGroups ? 'all' : (groupId || 'all'), session }
+        responseType: 'blob', params: { group_id: viewAllGroups ? 'all' : (selectedGroup || 'all'), session }
       })
 
       const blob = new Blob([response.data], { type: 'application/pdf' })
@@ -878,6 +868,7 @@ export default function AdminGradesPVPage() {
   const renderSelectorBar = () => (
     <div className="space-y-6" data-testid="admin-pv-page">
       {showGroupCompareModal && <PvGroupComparison groups={groupes} moduleId={pvType === 'module' ? moduleId : null} semester={selectedSemester} filiere={selectedFiliere} year={Number(currentAcademicYearId)} session={session} onClose={() => setShowGroupCompareModal(false)}/>}
+      {showShareModal && <Modal open title="Lien interne du PV" onClose={() => setShowShareModal(false)}><p className="text-sm">Le destinataire doit se connecter et disposer des droits du PV. Ce lien ne donne aucun droit supplémentaire.</p><label className="mt-4 block text-sm">Adresse du PV<input readOnly value={shareLink} className="mt-1 min-h-11 w-full rounded-lg border p-3"/></label><button className="mt-4 min-h-11 rounded-lg border px-4" onClick={() => void navigator.clipboard.writeText(shareLink).then(() => setShareCopied(true)).catch(() => toast.error('Copie impossible. Sélectionnez le lien manuellement.'))}>{shareCopied ? 'Lien copié' : 'Copier le lien'}</button></Modal>}
       {showSignatureModal && <PvSignatureDialog onClose={() => setShowSignatureModal(false)} onConfirm={confirmOfficialSignature}/>}
       {showSchedulerModal && <PvMeetingForm context={workflowContext} onClose={() => { setShowSchedulerModal(false); void officialWorkflow.refetch() }}/>}
       {showLockModal && <Modal open title="Sceller le PV enregistré" onClose={() => !isLocking && setShowLockModal(false)} preventBackdropClose={isLocking}><p className="text-sm">Le scellé porte sur les décisions persistées. Une réouverture requiert le circuit de validation prévu.</p><label className="mt-4 block text-sm">Motif<textarea className="mt-1 w-full rounded-lg border p-3" value={lockReason} onChange={e => setLockReason(e.target.value)} maxLength={500}/></label><button disabled={isLocking || !officialWorkflow.data?.deliberation || !lockReason.trim()} className="mt-4 min-h-11 rounded-lg bg-blue-900 px-4 text-white disabled:opacity-50" onClick={() => void handleLockPV()}>{isLocking ? 'Enregistrement…' : 'Confirmer le scellé serveur'}</button></Modal>}
@@ -1239,7 +1230,7 @@ export default function AdminGradesPVPage() {
                   className="rounded-xl border-blue-200 text-blue-800 bg-blue-50/70 hover:bg-blue-100/70 dark:bg-blue-950/30 dark:border-blue-800 dark:text-blue-300 text-xs font-bold px-3.5 py-2 shadow-xs flex items-center gap-1.5"
                 >
                   {isSendingBulk ? <Spinner className="w-3.5 h-3.5 text-blue-600" /> : <Mail className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />}
-                  <span>Diffusion Email</span>
+                  <span>Préparer les relevés</span>
                 </Button>
 
                 {/* Attestations en Lot */}
@@ -1323,7 +1314,7 @@ export default function AdminGradesPVPage() {
                   className="rounded-xl text-xs font-semibold px-2.5 py-1.5 h-auto text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:text-slate-300 transition-all flex items-center gap-1.5"
                 >
                   <Link2 className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
-                  <span>Lien Sécurisé</span>
+                  <span>Lien interne</span>
                 </Button>
 
                 {/* Planifier Séance */}
@@ -3727,7 +3718,7 @@ export default function AdminGradesPVPage() {
               className="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white rounded-xl flex items-center gap-1.5 text-xs font-bold shadow-xs px-3.5 py-2"
             >
               <Mail className="w-3.5 h-3.5 text-indigo-200" />
-              <span>Diffusion Email</span>
+              <span>Préparer les relevés</span>
             </Button>
 
             {/* Toggle Statistiques & IA */}
@@ -4657,62 +4648,7 @@ export default function AdminGradesPVPage() {
       })()}
 
       {/* 🔗 FEATURE N°4: Secure Share Link Modal */}
-      {showShareModal && (
-        <div className="fixed inset-0 z-[9999] bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-5">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-sky-500/10 text-sky-600 flex items-center justify-center font-bold">
-                  <Link2 className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-black text-slate-900 dark:text-white">Lien de Lien interne (connexion et droits requis) du PV</h3>
-                  <p className="text-xs text-slate-500">Partage temporaire en lecture seule avec les membres du jury</p>
-                </div>
-              </div>
-              <button onClick={() => setShowShareModal(false)} className="p-2 text-slate-400 hover:text-slate-600 rounded-xl">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
 
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Lien Crypté Généré</label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  readOnly
-                  value={shareLink}
-                  className="flex-1 px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-mono text-slate-700 dark:text-slate-200 select-all outline-none"
-                />
-                <Button
-                  onClick={() => {
-                    navigator.clipboard.writeText(shareLink)
-                    setShareCopied(true)
-                    toast.success("Lien copié dans le presse-papier !")
-                  }}
-                  className="bg-sky-600 hover:bg-sky-700 text-white rounded-xl text-xs font-bold shrink-0"
-                >
-                  {shareCopied ? 'Copie OK !' : 'Copier'}
-                </Button>
-              </div>
-            </div>
-
-            <div className="bg-sky-50 dark:bg-sky-950/30 border border-sky-200 dark:border-sky-800/60 rounded-2xl p-3.5 text-xs text-sky-800 dark:text-sky-300 space-y-1">
-              <div className="font-bold flex items-center gap-1.5">
-                <ShieldCheck className="w-4 h-4 text-sky-600" />
-                Accès Sécurisé en Lecture Seule
-              </div>
-              <p className="text-[11px] opacity-90">Ce lien expirera automatiquement dans 48 heures. Les destinataires pourront consulter la matrice du PV sans droit de modification.</p>
-            </div>
-
-            <div className="pt-2 flex justify-end">
-              <Button onClick={() => setShowShareModal(false)} className="rounded-xl font-bold bg-slate-900 text-white text-xs">
-                Terminé
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* 🔒 PV LOCK CONFIRMATION MODAL */}
 

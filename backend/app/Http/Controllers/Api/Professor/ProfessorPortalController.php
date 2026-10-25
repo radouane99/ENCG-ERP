@@ -41,32 +41,54 @@ class ProfessorPortalController extends Controller
         $profId = $user->professor?->id;
         $userId = $user->id;
 
-        $schedule = Schedule::with(['module', 'group', 'room', 'version'])
+        $schedule = Schedule::with(['module.filiere', 'group.filiere', 'room', 'version'])
+            ->where('institution_id', $user->institution_id)
+            ->where('academic_year_id', \App\Services\Academic\AcademicContext::yearId())
             ->where(function ($q) use ($profId, $userId) {
                 if ($profId) {
-                    $q->where('professor_id', $profId);
+                    $q->where(fn ($p) => $p->where('professor_id', $profId)->where('professor_type', \App\Models\Professor::class));
                 }
-                $q->orWhere('professor_id', $userId);
+                $q->orWhere(fn ($p) => $p->where('professor_id', $userId)->where('professor_type', \App\Models\User::class));
             })
             ->where(function ($q) {
                 $q->where('is_active', true)
                     ->orWhereHas('version', fn ($v) => $v->where('status', 'PROPOSED'));
             })
             ->get()
-            ->map(fn ($s) => [
-                'id' => $s->id,
-                'title' => $s->module->name ?? 'N/A',
-                'group' => $s->group->name ?? 'N/A',
-                'room' => $s->room->name ?? 'N/A',
-                'time' => $s->start_time.' - '.$s->end_time,
-                'day_of_week' => $s->day_of_week,
-                'session_type' => $s->session_type,
-                'confirmation_status' => $s->confirmation_status ?? 'pending',
-                'lifecycle' => $s->version?->status ?? ($s->is_active ? 'PUBLISHED' : 'DRAFT'),
-            ]);
+            ->map(function ($s) {
+                $subGroups = [];
+                if (preg_match('/G(?:roupe)?\s*[.\-_]?\s*(\d+)/i', $s->group->name ?? '', $m)) {
+                    $subGroups = ["G{$m[1]}.1", "G{$m[1]}.2"];
+                }
+                $dayNames = ['', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+
+                return [
+                    'id' => $s->id,
+                    'module_id' => $s->module_id,
+                    'module_code' => $s->module?->code ?? 'MOD',
+                    'module_name' => $s->module?->name ?? 'N/A',
+                    'group_id' => $s->group_id,
+                    'group_code' => $s->group?->name ?? 'N/A',
+                    'filiere_name' => $s->group?->filiere?->name ?? ($s->module?->filiere?->name ?? ''),
+                    'title' => $s->module->name ?? 'N/A',
+                    'group' => $s->group->name ?? 'N/A',
+                    'room' => $s->room->name ?? ($s->classroom ?? 'N/A'),
+                    'time' => $s->start_time.' - '.$s->end_time,
+                    'start_time' => $s->start_time,
+                    'end_time' => $s->end_time,
+                    'day_of_week' => $s->day_of_week,
+                    'day_name' => $dayNames[$s->day_of_week ?? 1] ?? 'Lundi',
+                    'session_type' => $s->session_type ?? 'cm',
+                    'type' => strtoupper($s->session_type ?? 'CM'),
+                    'sub_groups' => $subGroups,
+                    'confirmation_status' => $s->confirmation_status ?? 'pending',
+                    'lifecycle' => $s->getRelation('version')?->status ?? ($s->is_active ? 'PUBLISHED' : 'DRAFT'),
+                ];
+            });
 
         return response()->json([
             'success' => true,
+            'professor_id' => $profId,
             'data' => $schedule,
         ]);
     }

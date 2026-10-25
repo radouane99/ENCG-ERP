@@ -29,7 +29,7 @@ const ProfessorWorkloadPage = lazy(() => import('@features/professor-portal/page
 const ProfessorDocumentsPage = lazy(() => import('@features/professor-portal/pages/ProfessorDocumentsPage'))
 const ProfessorStudentRosterPage = lazy(() => import('@features/professor-portal/pages/ProfessorStudentRosterPage'))
 
-const ProfessorTimetablePage = lazy(() => import('@features/timetable/pages/AdminAiTimetableSchedulerPage'))
+const ProfessorTimetablePage = lazy(() => import('@features/professor-portal/pages/ProfessorSchedulePage'))
 
 const AdminExamSurveillanceHubPage = lazy(() => import('@features/exams/pages/AdminExamSurveillanceHubPage'))
 

@@ -72,6 +72,7 @@ class TimetableRoomGuard
         if ($capacity < $headcount) {
             return false;
         }
+        if (($var['required_type'] ?? '') === 'lab' && ! in_array(strtolower((string) ($room->type ?? '')), ['lab', 'laboratory', 'tp'], true)) { return false; }
 
         if ($this->isSharedCours($var) || (string) ($var['required_type'] ?? '') === 'amphitheater') {
             return $this->isAmphitheater($room) || $capacity >= max(100, $headcount);
@@ -103,7 +104,13 @@ class TimetableRoomGuard
         $except = array_values(array_filter(array_map('intval', $exceptScheduleIds)));
 
         if (Schema::hasTable('schedules')) {
-            $query = Schedule::query()->where('day_of_week', '>=', 1);
+            $query = Schedule::query()->where('day_of_week', '>=', 1)
+                ->where('academic_year_id', AcademicContext::yearId())
+                ->where('institution_id', auth()->user()?->institution_id ?? config('erp.institution_id', 1));
+            $semester = \App\Models\Semester::where('academic_year_id', AcademicContext::yearId())->where('is_current', true)->first();
+            if ($semester) {
+                $query->whereHas('module', fn ($q) => $q->whereRaw('MOD(semester_number, 2) = ?', [$semester->number % 2]));
+            }
             if ($except !== []) {
                 $query->whereNotIn('id', $except);
             }
@@ -152,7 +159,7 @@ class TimetableRoomGuard
                 continue;
             }
             $day = (int) $start->dayOfWeekIso;
-            if ($day < 1 || $day > 5) {
+            if ($day < 1 || $day > 7) {
                 continue;
             }
             $grid->occupy(
@@ -175,7 +182,7 @@ class TimetableRoomGuard
         return $grid->roomBusy($day, $start, $end, $roomId);
     }
 
-    public function isRoomBusyAt(string $roomId, \DateTimeInterface $start, \DateTimeInterface $end): bool
+    public function isRoomBusyAt(string $roomId, \DateTimeInterface $start, \DateTimeInterface $end, ?int $exceptBookingId = null): bool
     {
         $room = Room::query()->find($roomId);
         if (! $room || ! $this->roomOperational($room)) {
@@ -184,7 +191,7 @@ class TimetableRoomGuard
 
         $start = Carbon::parse($start);
         $end = Carbon::parse($end);
-        $grid = $this->gridForInstant($start, $end);
+        $grid = $this->gridForInstant($start, $end, $exceptBookingId);
 
         return $grid->roomBusy(
             (int) $start->dayOfWeekIso,
@@ -221,6 +228,7 @@ class TimetableRoomGuard
         $occupied = [];
 
         foreach (Room::query()->orderBy('capacity')->get() as $room) {
+            if ((int) $room->institution_id !== (int) (auth()->user()?->institution_id ?? config('erp.institution_id', 1))) { continue; }
             if (! $this->roomOperational($room)) {
                 $occupied[] = $this->roomPayload($room, 'Hors service');
 
@@ -257,7 +265,12 @@ class TimetableRoomGuard
         ];
     }
 
-    private function gridForInstant(Carbon $start, Carbon $end): TimetableOccupancyGrid
+    public function isProfessorBusyAt(int $professorId, Carbon $start, Carbon $end): bool
+    {
+        return $this->gridForInstant($start, $end)->professorBusy($start->dayOfWeekIso, $start->format('H:i:s'), $end->format('H:i:s'), $professorId);
+    }
+
+    private function gridForInstant(Carbon $start, Carbon $end, ?int $exceptBookingId = null): TimetableOccupancyGrid
     {
         $grid = new TimetableOccupancyGrid;
         $day = (int) $start->dayOfWeekIso;
@@ -266,6 +279,8 @@ class TimetableRoomGuard
 
         if (Schema::hasTable('schedules') && $day >= 1 && $day <= 6) {
             $query = Schedule::query()
+                ->where('institution_id', auth()->user()?->institution_id ?? config('erp.institution_id', 1))
+                ->whereHas('academicYear', fn ($q) => $q->whereDate('start_date', '<=', $start->toDateString())->whereDate('end_date', '>=', $start->toDateString()))
                 ->where('day_of_week', $day)
                 ->whereTime('start_time', '<', $tEnd)
                 ->whereTime('end_time', '>', $tStart);
@@ -293,6 +308,7 @@ class TimetableRoomGuard
 
         if (Schema::hasTable('room_bookings')) {
             $bookings = RoomBooking::query()
+                ->when($exceptBookingId, fn ($q) => $q->where('id', '!=', $exceptBookingId))
                 ->whereIn('status', ['pending', 'approved'])
                 ->where('start_time', '<', $end)
                 ->where('end_time', '>', $start)
@@ -314,6 +330,12 @@ class TimetableRoomGuard
                     ['booking'],
                     $roomId
                 );
+            }
+        }
+
+        if (Schema::hasTable('deliberation_meetings')) {
+            foreach (\Illuminate\Support\Facades\DB::table('deliberation_meetings')->where('starts_at', '<', $end)->where('ends_at', '>', $start)->get() as $meeting) {
+                $grid->occupy($day, 0, Carbon::parse($meeting->starts_at)->format('H:i:s'), Carbon::parse($meeting->ends_at)->format('H:i:s'), 'jury:'.$meeting->id, [], $meeting->room_id);
             }
         }
 
