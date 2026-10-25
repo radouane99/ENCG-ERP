@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Api\Professor;
 
 use App\Enums\AttendanceStatus;
 use App\Http\Controllers\Controller;
+use App\Models\AcademicEvent;
 use App\Models\AcademicYear;
 use App\Models\Attendance;
 use App\Models\AttendanceSession;
+use App\Models\ExamSession;
 use App\Models\ExamSurveillance;
 use App\Models\FinalProject;
 use App\Models\Group;
@@ -1924,19 +1926,60 @@ class ProfessorPortalController extends Controller
                 'email' => $user?->email,
             ];
 
+            // Détection des périodes d'examens (Session Normale & Rattrapage)
+            $examSessions = ExamSession::where('is_active', true)
+                ->orderBy('start_date')
+                ->get()
+                ->map(fn ($es) => [
+                    'id' => $es->id,
+                    'name' => $es->name,
+                    'type' => $es->type,
+                    'start_date' => $es->start_date ? $es->start_date->format('Y-m-d') : null,
+                    'end_date' => $es->end_date ? $es->end_date->format('Y-m-d') : null,
+                ])->toArray();
+
+            $examEvents = AcademicEvent::where('is_active', true)
+                ->whereIn('type', ['examens', 'exams', 'exam_normal', 'exam_resit'])
+                ->get()
+                ->map(fn ($ev) => [
+                    'id' => 'event_'.$ev->id,
+                    'name' => $ev->title ?? $ev->name ?? 'Semaine d\'Examens',
+                    'type' => str_contains($ev->type, 'resit') ? 'rattrapage' : 'normale',
+                    'start_date' => $ev->start_date ? $ev->start_date->format('Y-m-d') : null,
+                    'end_date' => $ev->end_date ? $ev->end_date->format('Y-m-d') : null,
+                ])->toArray();
+
+            $allExamPeriods = array_merge($examSessions, $examEvents);
+
             return [
                 'modules' => $modulesList,
                 'groups' => $groupList,
                 'professor' => $profPayload,
+                'exam_periods' => $allExamPeriods,
             ];
         });
+
+        $today = date('Y-m-d');
+        $examPeriods = $cached['exam_periods'] ?? [];
+        $currentExamPeriod = null;
+        foreach ($examPeriods as $ep) {
+            if (! empty($ep['start_date']) && ! empty($ep['end_date']) && $today >= $ep['start_date'] && $today <= $ep['end_date']) {
+                $currentExamPeriod = $ep;
+                break;
+            }
+        }
 
         return response()->json([
             'success' => true,
             'modules' => $cached['modules'],
             'groups' => $cached['groups'],
             'professor' => $cached['professor'],
-            'data' => $cached,
+            'exam_periods' => $examPeriods,
+            'current_exam_period' => $currentExamPeriod,
+            'data' => array_merge($cached, [
+                'exam_periods' => $examPeriods,
+                'current_exam_period' => $currentExamPeriod,
+            ]),
         ]);
     }
 
@@ -2102,6 +2145,34 @@ class ProfessorPortalController extends Controller
 
         if (! $groupId || ! $moduleId) {
             return response()->json(['success' => false, 'message' => 'Groupe et Module obligatoires.'], 422);
+        }
+
+        // Règle Académique ENCG Fès : Suspension du pointage d'assiduité ordinaire durant la semaine d'examens
+        // Les cours magistraux et séances de TD sont suspendus durant les sessions d'examens.
+        // L'émargement et les absences d'examens sont gérés via le Procès-Verbal de Surveillance et ne comptent pas dans l'Article 14.
+        $isRattrapageExplicit = (bool) $request->input('is_rattrapage', false) || str_contains($seanceCode, 'RAT');
+        if (! $isRattrapageExplicit) {
+            $conflictingExam = ExamSession::where('is_active', true)
+                ->whereDate('start_date', '<=', $sessionDate)
+                ->whereDate('end_date', '>=', $sessionDate)
+                ->first();
+
+            if (! $conflictingExam) {
+                $conflictingExam = AcademicEvent::where('is_active', true)
+                    ->whereIn('type', ['examens', 'exams', 'exam_normal', 'exam_resit'])
+                    ->whereDate('start_date', '<=', $sessionDate)
+                    ->whereDate('end_date', '>=', $sessionDate)
+                    ->first();
+            }
+
+            if ($conflictingExam) {
+                $periodName = $conflictingExam->name ?? $conflictingExam->title ?? 'Semaine d\'Examens';
+                return response()->json([
+                    'success' => false,
+                    'code' => 'EXAM_PERIOD_LOCKED',
+                    'message' => "Saisie bloquée : La date du {$sessionDate} correspond à la semaine d'examens ({$periodName}). Les cours magistraux et TD réguliers sont suspendus. L'émargement et le suivi des absences d'examens s'effectuent exclusivement via le Procès-Verbal de Surveillance et ne sont pas comptabilisés dans les absences de cours ordinaires (Article 14).",
+                ], 422);
+            }
         }
 
         $user = $request->user();

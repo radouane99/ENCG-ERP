@@ -11,6 +11,9 @@ use App\Models\Filiere;
 use App\Models\Room;
 use App\Services\Academic\ExamConvocationService;
 use App\Services\Academic\ExamPlanningEngine;
+use App\Services\Academic\ExamWorkflowGuard;
+use App\Actions\Exam\CreatePlannedExamAction;
+use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -117,6 +120,7 @@ class ExamPlanningController extends Controller
      */
     public function resetExams(Request $request): JsonResponse
     {
+        app(ExamWorkflowGuard::class)->manage();
         $validated = $request->validate([
             'filiere_id' => 'nullable|integer',
             'session_id' => 'nullable|integer',
@@ -125,6 +129,7 @@ class ExamPlanningController extends Controller
         ]);
 
         $sessionId = $validated['session_id'] ?? $validated['exam_session_id'] ?? null;
+        abort_unless($sessionId, 422, 'Session obligatoire pour une réinitialisation.');
         $query = Exam::query();
 
         if ($sessionId) {
@@ -142,14 +147,19 @@ class ExamPlanningController extends Controller
             });
         }
 
-        $exams = $query->get();
-        $count = $exams->count();
-
-        foreach ($exams as $exam) {
-            ExamSeating::where('exam_id', $exam->id)->delete();
-            ExamSurveillance::where('exam_id', $exam->id)->delete();
-            $exam->delete();
-        }
+        $count = DB::transaction(function () use ($query, $sessionId) {
+            $session = \App\Models\ExamSession::whereKey($sessionId)->lockForUpdate()->firstOrFail();
+            $guard = app(ExamWorkflowGuard::class);
+            $guard->mutableSession($session);
+            $exams = $query->lockForUpdate()->get();
+            foreach ($exams as $exam) { $guard->mutablePlan($exam); }
+            foreach ($exams as $exam) {
+                ExamSeating::where('exam_id', $exam->id)->delete();
+                ExamSurveillance::where('exam_id', $exam->id)->delete();
+                $exam->delete();
+            }
+            return $exams->count();
+        });
 
         return response()->json([
             'success' => true,
@@ -165,6 +175,7 @@ class ExamPlanningController extends Controller
      */
     public function autoGenerateBatch(Request $request): JsonResponse
     {
+        app(ExamWorkflowGuard::class)->manage();
         $validated = $request->validate([
             'filiere_id' => 'nullable|integer',
             'session_id' => 'nullable|integer',
@@ -205,24 +216,17 @@ class ExamPlanningController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
+            'exam_session_id' => 'required|integer|exists:exam_sessions,id',
             'module_id' => 'required|integer',
-            'group_id' => 'nullable|integer',
-            'room_id' => 'nullable|integer',
+            'group_id' => 'required|integer',
+            'room_id' => 'required|integer',
             'exam_date' => 'required|date',
             'start_time' => 'required|string',
-            'duration_minutes' => 'required|integer',
+            'duration_minutes' => 'required|integer|min:1|max:480',
             'session_type' => 'nullable|string',
         ]);
 
-        $exam = Exam::create([
-            'module_id' => $validated['module_id'],
-            'group_id' => $validated['group_id'] ?? null,
-            'room_id' => $validated['room_id'] ?? null,
-            'exam_date' => $validated['exam_date'],
-            'start_time' => $validated['start_time'],
-            'duration_minutes' => $validated['duration_minutes'],
-            'session_type' => $validated['session_type'] ?? 'normale',
-        ]);
+        $exam = app(CreatePlannedExamAction::class)->execute($validated);
 
         return response()->json([
             'success' => true,

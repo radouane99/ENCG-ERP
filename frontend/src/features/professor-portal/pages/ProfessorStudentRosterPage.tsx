@@ -26,8 +26,18 @@ interface ModuleOption {
   sections: SectionOption[];
 }
 
+interface ExamPeriod {
+  id: string | number;
+  name: string;
+  type: string;
+  start_date: string;
+  end_date: string;
+}
+
 interface OptionsPayload {
   modules: ModuleOption[];
+  exam_periods?: ExamPeriod[];
+  current_exam_period?: ExamPeriod | null;
 }
 
 interface StudentRow {
@@ -145,6 +155,8 @@ export default function ProfessorStudentRosterPage() {
 
   const [options, setOptions] = useState<OptionsPayload | null>(null);
   const [loadingOptions, setLoadingOptions] = useState(true);
+  const [examPeriods, setExamPeriods] = useState<ExamPeriod[]>([]);
+  const [currentExamPeriod, setCurrentExamPeriod] = useState<ExamPeriod | null>(null);
 
   // Schedule-based group selection
   // Schedule-based group selection
@@ -279,10 +291,32 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
   const [sendingRattrapageConvocations, setSendingRattrapageConvocations] = useState(false);
   const [downloadingRattrapagePv, setDownloadingRattrapagePv] = useState(false);
 
+  // ─── Règle Académique ENCG Fès : Période / Semaine d'Examens ─────────────────
+  // Détection si la date de la séance active ou aujourd'hui se situe dans une période d'examens
+  const activeExamPeriodForSeance = useMemo(() => {
+    if (!examPeriods || examPeriods.length === 0) return currentExamPeriod;
+    const targetDate = seanceDate || new Date().toISOString().slice(0, 10);
+    const found = examPeriods.find(ep => {
+      if (!ep.start_date || !ep.end_date) return false;
+      return targetDate >= ep.start_date && targetDate <= ep.end_date;
+    });
+    return found || null;
+  }, [examPeriods, seanceDate, currentExamPeriod]);
+
   // ─── Article 14: Total non-justified absences per student across all sessions ───
+  // Règle Académique ENCG Fès : Neutralisation complète des semaines d'examens
+  // Aucune absence ordinaire n'est calculée pour les séances situées en semaine d'examens
   const studentAbsenceCounts = useMemo(() => {
     const counts: Record<number, number> = {};
     Object.entries(seanceStore).forEach(([code, data]) => {
+      const sDate = code === selectedSeance ? seanceDate : data?.date;
+      const isExamDate = examPeriods.some(ep => {
+        if (!ep.start_date || !ep.end_date || !sDate) return false;
+        return sDate >= ep.start_date && sDate <= ep.end_date;
+      });
+      // Neutraliser si la séance tombe pendant une semaine d'examens
+      if (isExamDate) return;
+
       const absIds = code === selectedSeance ? Array.from(absentIds) : (data?.absentIds || []);
       absIds.forEach(id => {
         const ann = code === selectedSeance ? annotations[id] : data?.annotations?.[id];
@@ -292,7 +326,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
       });
     });
     return counts;
-  }, [seanceStore, selectedSeance, absentIds, annotations]);
+  }, [seanceStore, selectedSeance, absentIds, annotations, seanceDate, examPeriods]);
   // Storage key for caching séances locally
   const storageKey = useMemo(() => {
     if (!selectedGroupId || !selectedModuleId) return null;
@@ -927,7 +961,12 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
         modulesList = Object.values(map);
       }
 
-      setOptions({ modules: modulesList });
+      const periods = res.data?.exam_periods || payload?.exam_periods || [];
+      const currentPeriod = res.data?.current_exam_period ?? payload?.current_exam_period ?? null;
+      setExamPeriods(periods);
+      setCurrentExamPeriod(currentPeriod);
+
+      setOptions({ modules: modulesList, exam_periods: periods, current_exam_period: currentPeriod });
       if (modulesList.length > 0 && !selectedGroupId) {
         const firstMod = modulesList[0];
         setSelectedModuleId(firstMod.module_id);
@@ -1067,6 +1106,10 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
 
   // Save attendance to Backend Database & optionally sync with Textbook
   const handleSaveAttendanceToDb = async () => {
+    if (activeExamPeriodForSeance) {
+      toast.error(`Enregistrement bloqué : La date du ${seanceDate} correspond à la semaine d'examens (${activeExamPeriodForSeance.name}). Les cours et TD sont suspendus.`);
+      return;
+    }
     if (!selectedGroupId || !selectedModuleId) {
       toast.error('Veuillez sélectionner un module et un groupe');
       return;
@@ -1095,8 +1138,12 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
       );
       persistCurrentSeance(absentIds, annotations, isLocked, seanceDate, true);
       setShowSaveModal(false);
-    } catch {
-      toast.error('Erreur lors de l\'enregistrement en base de données');
+    } catch (err: any) {
+      if (err.response?.data?.code === 'EXAM_PERIOD_LOCKED') {
+        toast.error(err.response.data.message);
+      } else {
+        toast.error(err.response?.data?.message || 'Erreur lors de l\'enregistrement en base de données');
+      }
     } finally {
       setSavingAttendance(false);
     }
@@ -1160,6 +1207,10 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
 
   // Actions: Absence Toggle
   const toggleAbsent = (id: number) => {
+    if (activeExamPeriodForSeance) {
+      toast.warning(`Pointage neutralisé : Semaine d'examens en cours (${activeExamPeriodForSeance.name}). Les cours réguliers sont suspendus.`);
+      return;
+    }
     if (isLocked) {
       toast.error('Liste verrouillée — Déverrouillez la séance pour modifier les présences');
       return;
@@ -1172,6 +1223,10 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
 
   // Reset absences for current session
   const resetAbsences = () => {
+    if (activeExamPeriodForSeance) {
+      toast.warning(`Action neutralisée : Semaine d'examens en cours (${activeExamPeriodForSeance.name}).`);
+      return;
+    }
     if (isLocked) {
       toast.error('Liste verrouillée — Déverrouillez pour réinitialiser');
       return;
@@ -1256,6 +1311,10 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
 
   // Start Live Session (from schedule card or current selection)
   const handleStartLiveSession = async (overrideGroupId?: number, overrideModuleId?: number) => {
+    if (activeExamPeriodForSeance) {
+      toast.warning(`Session live suspendue : Semaine d'examens en cours (${activeExamPeriodForSeance.name}). Les cours et TD sont suspendus.`);
+      return;
+    }
     const gid = overrideGroupId ?? selectedGroupId;
     const mid = overrideModuleId ?? selectedModuleId;
     if (!gid || !mid) { toast.error('Sélectionnez un module et un groupe.'); return; }
@@ -1284,8 +1343,12 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
       setLiveQrExpiresAt(session.expires_at ?? null);
       setIsSessionActive(true);
       toast.success('🚀 Session live démarrée !', { description: `${mapped.length} étudiants chargés.` });
-    } catch {
-      toast.error('Impossible de démarrer la session. Vérifiez le module et le groupe.');
+    } catch (err: any) {
+      if (err.response?.data?.code === 'EXAM_PERIOD_LOCKED') {
+        toast.error(err.response.data.message);
+      } else {
+        toast.error('Impossible de démarrer la session. Vérifiez le module et le groupe.');
+      }
     } finally {
       setSavingLive(false);
     }
@@ -1681,6 +1744,40 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
           <NoModulesPlaceholder />
         ) : (
           <>
+            {/* ─── Exam Week Neutralization Banner (ENCG Academic Rule) ─── */}
+            {activeExamPeriodForSeance && (
+              <div className="rounded-3xl p-5 bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-amber-500/5 border-2 border-amber-500/35 text-amber-900 dark:text-amber-200 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4 animate-in fade-in slide-in-from-top-2">
+                <div className="flex items-start gap-3.5">
+                  <div className="p-3 rounded-2xl bg-amber-500/20 text-amber-700 dark:text-amber-300 shrink-0 shadow-inner">
+                    <Calendar className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-xs font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-amber-500/25 text-amber-900 dark:text-amber-100 border border-amber-500/40">
+                        Semaine d'Examens · {activeExamPeriodForSeance.name}
+                      </span>
+                      <span className="text-xs font-bold text-amber-800 dark:text-amber-300 font-mono">
+                        Du {activeExamPeriodForSeance.start_date} au {activeExamPeriodForSeance.end_date}
+                      </span>
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-200 border border-amber-300 dark:border-amber-700">
+                        Procédure Distincte
+                      </span>
+                    </div>
+                    <p className="text-xs mt-1.5 text-amber-800/90 dark:text-amber-300/90 leading-relaxed max-w-4xl">
+                      Les cours magistraux et travaux dirigés sont officiellement <strong>suspendus</strong> durant cette session d'examens. Le pointage d'assiduité ordinaire et le calcul des absences (Article 14) sont <strong>neutralisés</strong>. L'émargement et le suivi des absences d'examens relèvent exclusivement du <strong>Procès-Verbal de Surveillance d'Examen</strong>.
+                    </p>
+                  </div>
+                </div>
+                <a
+                  href="/professor-portal/proctoring"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white text-xs font-bold shadow-md transition-all shrink-0 cursor-pointer"
+                >
+                  <ShieldAlert className="w-4 h-4" />
+                  <span>Accéder à la Surveillance & PV</span>
+                </a>
+              </div>
+            )}
+
             {/* ─── Solution 1: Live Intelligent Auto-Detection Banner ─── */}
             <div className="relative overflow-hidden rounded-2xl border border-indigo-200/80 dark:border-indigo-800/60 bg-gradient-to-r from-blue-50/80 via-indigo-50/50 to-slate-50 dark:from-slate-900 dark:via-indigo-950/40 dark:to-slate-900 p-4 sm:p-5 shadow-xs">
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -2584,16 +2681,19 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                           {/* Absence toggle */}
                           <button
                             onClick={() => toggleAbsent(s.id)}
-                            disabled={isLocked}
+                            disabled={isLocked || !!activeExamPeriodForSeance}
                             className={cn(
                               'flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold transition-all border disabled:opacity-50 cursor-pointer',
-                              isAbsent
-                                ? 'bg-rose-600 border-rose-600 text-white shadow-2xs'
-                                : 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 hover:bg-rose-50 hover:border-rose-200 hover:text-rose-700'
+                              activeExamPeriodForSeance
+                                ? 'bg-amber-50 dark:bg-amber-950/30 border-amber-300 dark:border-amber-800 text-amber-700 dark:text-amber-300 cursor-not-allowed'
+                                : isAbsent
+                                  ? 'bg-rose-600 border-rose-600 text-white shadow-2xs'
+                                  : 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 hover:bg-rose-50 hover:border-rose-200 hover:text-rose-700'
                             )}
+                            title={activeExamPeriodForSeance ? `Pointage neutralisé : Semaine d'examens (${activeExamPeriodForSeance.name})` : undefined}
                           >
                             <UserX className="w-3 h-3" />
-                            <span>{isAbsent ? 'Absent' : 'Présent'}</span>
+                            <span>{activeExamPeriodForSeance ? 'Neutralisé' : isAbsent ? 'Absent' : 'Présent'}</span>
                           </button>
                         </div>
                       </div>
@@ -2734,15 +2834,23 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                             <td className="px-4 py-3 text-center">
                               <button
                                 onClick={() => toggleAbsent(s.id)}
-                                disabled={isLocked}
+                                disabled={isLocked || !!activeExamPeriodForSeance}
                                 className={cn(
                                   'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all disabled:opacity-50 cursor-pointer',
-                                  isAbsent
-                                    ? 'bg-rose-600 border-rose-600 text-white shadow-2xs hover:bg-rose-700'
-                                    : 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 hover:bg-rose-50 hover:border-rose-200 hover:text-rose-700'
+                                  activeExamPeriodForSeance
+                                    ? 'bg-amber-50 dark:bg-amber-950/30 border-amber-300 dark:border-amber-800 text-amber-700 dark:text-amber-300 cursor-not-allowed'
+                                    : isAbsent
+                                      ? 'bg-rose-600 border-rose-600 text-white shadow-2xs hover:bg-rose-700'
+                                      : 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 hover:bg-rose-50 hover:border-rose-200 hover:text-rose-700'
                                 )}
+                                title={activeExamPeriodForSeance ? `Pointage neutralisé : Semaine d'examens (${activeExamPeriodForSeance.name})` : undefined}
                               >
-                                {isAbsent ? (
+                                {activeExamPeriodForSeance ? (
+                                  <>
+                                    <Lock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                                    <span>Neutralisé</span>
+                                  </>
+                                ) : isAbsent ? (
                                   <>
                                     <UserX className="w-3.5 h-3.5" />
                                     <span>Absent</span>

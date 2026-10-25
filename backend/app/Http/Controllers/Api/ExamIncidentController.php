@@ -29,7 +29,7 @@ class ExamIncidentController extends Controller
     public function index(Request $request): JsonResponse
     {
         // Récupération des incidents d'examen
-        $query = ExamIncident::with(['exam.module.filiere', 'exam.examSession', 'student.user', 'reporter']);
+        $query = ExamIncident::with(['exam.module.filiere', 'exam.examSession', 'student.user', 'reporter'])->whereHas('exam.examSession', fn ($q) => $q->where('institution_id', $request->user()->institution_id));
 
         if ($request->filled('session_id')) {
             $query->whereHas('exam', fn ($q) => $q->where('exam_session_id', $request->session_id));
@@ -101,7 +101,8 @@ class ExamIncidentController extends Controller
 
         // Inclure et harmoniser également les dossiers disciplinaires existants (DisciplinaryCase)
         $existingStudentIds = $incidents->pluck('student_id')->toArray();
-        $casesQuery = DisciplinaryCase::with(['student.user']);
+        $casesQuery = DisciplinaryCase::with(['student.user', 'decision'])->where('institution_id', $request->user()->institution_id);
+        if ($request->filled('exam_id') || $request->filled('session_id') || str_contains($request->path(), 'exam-incidents')) { $casesQuery->whereRaw('1 = 0'); }
         if (! empty($existingStudentIds)) {
             $casesQuery->whereNotIn('student_id', $existingStudentIds);
         }
@@ -162,14 +163,14 @@ class ExamIncidentController extends Controller
                     default => '🚨 Fraude à l\'Examen',
                 },
                 'description' => $case->description,
-                'confiscated_items' => 'Documents / Pièces saisies au PV',
+                'confiscated_items' => null,
                 'severity' => in_array(strtolower($case->infraction_type ?? ''), ['fraud', 'fraude']) ? 'high' : 'medium',
                 'status' => $normalizedStatus,
-                'hearing_date' => $case->incident_date ? Carbon::parse($case->incident_date)->format('Y-m-d à 10h00') : '2026-09-12 à 10h00',
-                'hearing_room' => 'Salle du Conseil de Direction',
-                'hearing_notes' => $case->student_statement ?? 'Audition contradictoire tenue par le Conseil de Discipline.',
-                'decision' => $normalizedStatus === 'resolved' ? 'Note 0.00/20 attribuée d\'office au module avec mention FRAUDE au PV' : null,
-                'sanction_scope' => $normalizedStatus === 'resolved' ? 'module' : null,
+                'hearing_date' => null,
+                'hearing_room' => null,
+                'hearing_notes' => $case->student_statement,
+                'decision' => $case->decision?->decision_text,
+                'sanction_scope' => $case->decision?->sanction_type,
                 'created_at' => $case->created_at?->format('Y-m-d H:i') ?? now()->format('Y-m-d H:i'),
             ];
         });
@@ -225,55 +226,23 @@ class ExamIncidentController extends Controller
     {
         $validated = $request->validate([
             'student_id' => 'required|exists:students,id',
-            'exam_id' => 'nullable|exists:exams,id',
+            'exam_id' => 'required|exists:exams,id',
             'type' => 'required|string',
             'severity' => 'nullable|string|in:low,medium,high',
-            'description' => 'nullable|string',
+            'description' => 'required|string|min:5|max:10000',
             'confiscated_items' => 'nullable|string',
         ]);
 
-        $examId = $validated['exam_id'] ?? null;
-        if (! $examId) {
-            $examId = Exam::latest()->value('id') ?? 174;
-        }
-
+        $exam = Exam::with('examSession')->findOrFail($validated['exam_id']);
+        app(\App\Services\Academic\ExamWorkflowGuard::class)->attendance($exam);
+        abort_unless(ExamSeating::where('exam_id', $exam->id)->where('student_id', $validated['student_id'])->exists(), 422, 'Cet étudiant ne figure pas dans les convocations de cette épreuve.');
         $incident = ExamIncident::create([
-            'exam_id' => $examId,
-            'student_id' => $validated['student_id'],
-            'reported_by' => $request->user()?->id,
-            'type' => $validated['type'],
-            'description' => $validated['description'] ?? null,
-            'confiscated_items' => $validated['confiscated_items'] ?? null,
-            'status' => 'pending',
+            'exam_id' => $exam->id, 'student_id' => $validated['student_id'],
+            'reported_by' => $request->user()->id, 'type' => $validated['type'],
+            'description' => $validated['description'],
+            'confiscated_items' => $validated['confiscated_items'] ?? null, 'status' => 'pending',
         ]);
-
-        try {
-            if (app()->bound(ExamCourseAttendanceService::class)) {
-                app(ExamCourseAttendanceService::class)->reportFraudIncident($incident);
-            }
-        } catch (\Throwable $e) {
-        }
-
-        // Sanction automatique conservatoire pour fraude manifeste
-        $exam = Exam::find($examId);
-        if (str_contains(strtolower($validated['type']), 'fraude') && $exam?->module_id) {
-            try {
-                $assessment = Assessment::firstOrCreate(
-                    ['module_id' => $exam->module_id, 'type' => 'examen'],
-                    ['weight' => 100]
-                );
-
-                Grade::updateOrCreate(
-                    ['student_id' => $validated['student_id'], 'assessment_id' => $assessment->id],
-                    ['value' => 0.00, 'absent' => false]
-                );
-
-                ExamSeating::where('exam_id', $examId)
-                    ->where('student_id', $validated['student_id'])
-                    ->update(['is_present' => false]);
-            } catch (\Throwable $e) {
-            }
-        }
+        activity()->causedBy($request->user())->performedOn($incident)->log('exam_incident_reported');
 
         return response()->json([
             'success' => true,
@@ -287,38 +256,14 @@ class ExamIncidentController extends Controller
      */
     public function convoke(Request $request, int $id): JsonResponse
     {
-        $incident = ExamIncident::find($id);
-        $dateStr = $request->input('hearing_date', date('Y-m-d à 10h00'));
-        $roomStr = $request->input('hearing_room', 'Salle des Actes — ENCG Fès');
-
-        if (! $incident && $id >= 50000) {
-            $case = DisciplinaryCase::find($id - 50000);
-            if ($case) {
-                $case->update(['status' => 'convoked']);
-
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Convocation officielle émise avec succès.',
-                    'data' => $case,
-                ]);
-            }
-        }
-
-        if (! $incident) {
-            abort(404, 'Dossier introuvable');
-        }
-
-        $incident->update([
-            'status' => 'convoked',
-            'hearing_date' => $dateStr,
-            'hearing_room' => $roomStr,
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Convocation officielle émise avec succès.',
-            'data' => $incident,
-        ]);
+        $user = $request->user();
+        abort_unless($user->hasAnyRole(['admin', 'super-admin', 'super_admin', 'institution-admin', 'institution_admin', 'director', 'discipline-committee']), 403);
+        $data = $request->validate(['hearing_date' => 'required|string|max:100', 'hearing_room' => 'required|string|max:255']);
+        $incident = ExamIncident::with('exam.examSession')->findOrFail($id);
+        app(\App\Services\Academic\ExamWorkflowGuard::class)->session($incident->exam->examSession);
+        abort_unless(in_array($incident->status, ['pending', 'convoked'], true), 409, 'Ce dossier a déjà fait l’objet d’une décision.');
+        $incident->update($data + ['status' => 'convoked']);
+        return response()->json(['success' => true, 'message' => 'Convocation enregistrée. Le PDF est disponible; aucun email automatique envoyé.', 'data' => $incident]);
     }
 
     /**
@@ -326,81 +271,12 @@ class ExamIncidentController extends Controller
      */
     public function decide(Request $request, int $id): JsonResponse
     {
-        $incident = ExamIncident::find($id);
-        $sanction = $request->input('sanction', 'module');
-        $notes = $request->input('observations') ?? $request->input('notes') ?? $incident?->hearing_notes;
-
-        $isDismissed = in_array($sanction, ['dismissed', 'classement']);
-
-        $decisionText = match ($sanction) {
-            'semestre' => 'Annulation du semestre S1/S2 avec note 0.00/20 attribuée à l\'ensemble des modules',
-            'blame' => 'Blâme officiel avec inscription irréversible au dossier académique',
-            'avertissement' => 'Avertissement écrit notifié à l\'étudiant et son tuteur légal',
-            'exclusion', 'annee' => 'Exclusion temporaire de 1 an universitaire sans réinscription',
-            'dismissed', 'classement' => 'Classement sans suite — Aucune charge retenue après audition contradictoire',
-            default => 'Note 0.00/20 attribuée d\'office au module de l\'épreuve avec mention FRAUDE au PV',
-        };
-
-        if (! $incident && $id >= 50000) {
-            $case = DisciplinaryCase::find($id - 50000);
-            if ($case) {
-                $case->update([
-                    'status' => $isDismissed ? 'dismissed' : 'closed',
-                ]);
-
-                return response()->json([
-                    'success' => true,
-                    'message' => $isDismissed ? 'Dossier classé sans suite.' : 'Décision du Conseil scellée et enregistrée.',
-                    'data' => $case,
-                ]);
-            }
-        }
-
-        if (! $incident) {
-            abort(404, 'Dossier introuvable');
-        }
-
-        $incident->update([
-            'status' => $isDismissed ? 'dismissed' : 'resolved',
-            'sanction_scope' => $sanction,
-            'decision' => $decisionText,
-            'hearing_notes' => $notes,
+        $data = $request->validate([
+            'sanction' => 'required|string|in:module,semestre,blame,avertissement,exclusion,annee,dismissed,classement',
+            'observations' => 'required|string|min:5|max:10000',
         ]);
-
-        // Appliquer la sanction au semestre entier
-        if ($sanction === 'semestre') {
-            $exam = Exam::find($incident->exam_id);
-            if ($exam?->module) {
-                $moduleIds = Module::where('semester_id', $exam->module->semester_id)->pluck('id');
-                $assessmentIds = Assessment::whereIn('module_id', $moduleIds)->pluck('id');
-
-                foreach ($assessmentIds as $assId) {
-                    Grade::updateOrCreate(
-                        ['student_id' => $incident->student_id, 'assessment_id' => $assId],
-                        ['value' => 0.00, 'absent' => false]
-                    );
-                }
-            }
-        } elseif ($sanction === 'module') {
-            $exam = Exam::find($incident->exam_id);
-            if ($exam?->module_id) {
-                $assessment = Assessment::firstOrCreate(
-                    ['module_id' => $exam->module_id, 'type' => 'examen'],
-                    ['weight' => 100]
-                );
-
-                Grade::updateOrCreate(
-                    ['student_id' => $incident->student_id, 'assessment_id' => $assessment->id],
-                    ['value' => 0.00, 'absent' => false]
-                );
-            }
-        }
-
-        return response()->json([
-            'success' => true,
-            'message' => $isDismissed ? 'Dossier classé sans suite.' : 'Décision du Conseil scellée et enregistrée.',
-            'data' => $incident,
-        ]);
+        $incident = app(\App\Actions\Exam\DecideExamIncidentAction::class)->execute($id, $data);
+        return response()->json(['success' => true, 'message' => 'Décision enregistrée et application contrôlée.', 'data' => $incident]);
     }
 
     /**
@@ -408,22 +284,13 @@ class ExamIncidentController extends Controller
      */
     public function destroy(int $id): JsonResponse
     {
-        $incident = ExamIncident::find($id);
-        if ($incident) {
-            $incident->delete();
-        } elseif ($id >= 50000) {
-            $case = DisciplinaryCase::find($id - 50000);
-            if ($case) {
-                $case->delete();
-            }
-        } else {
-            abort(404, 'Dossier introuvable');
-        }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Dossier disciplinaire supprimé avec succès.',
-        ]);
+        app(\App\Services\Academic\ExamWorkflowGuard::class)->manage();
+        $incident = ExamIncident::with('exam.examSession')->findOrFail($id);
+        app(\App\Services\Academic\ExamWorkflowGuard::class)->session($incident->exam->examSession);
+        abort_unless($incident->status === 'pending', 409, 'Un dossier convoqué ou décidé doit être conservé.');
+        activity()->causedBy(auth()->user())->performedOn($incident)->withProperties($incident->toArray())->log('exam_incident_removed_before_hearing');
+        $incident->delete();
+        return response()->json(['success' => true, 'message' => 'Signalement retiré; trace conservée dans le journal.']);
     }
 
     /**
@@ -561,18 +428,20 @@ class ExamIncidentController extends Controller
      */
     public function lockPv(Request $request, int $id): JsonResponse
     {
-        $exam = Exam::findOrFail($id);
-
-        $seal = 'SHA256:ENCG-FES-'.strtoupper(substr(md5(now().$id), 0, 16));
-
-        $exam->update(['is_locked' => true, 'locked_at' => now()]);
-
-        return response()->json([
-            'success' => true,
-            'message' => '🔒 PV scellé avec succès.',
-            'seal' => $seal,
-            'locked_at' => now()->toIso8601String(),
-        ]);
+        $exam = \Illuminate\Support\Facades\DB::transaction(function () use ($id) {
+            $exam = Exam::whereKey($id)->lockForUpdate()->firstOrFail();
+            app(\App\Services\Academic\ExamWorkflowGuard::class)->viewExam($exam);
+            if ($exam->is_locked) { return $exam; }
+            app(\App\Services\Academic\ExamWorkflowGuard::class)->mutableSession($exam->examSession);
+            $end = Carbon::parse($exam->exam_date->toDateString().' '.$exam->start_time)->addMinutes($exam->duration_minutes);
+            abort_if($end->isFuture(), 422, 'L’épreuve n’est pas encore terminée.');
+            abort_if(! $exam->seatings()->exists() || $exam->seatings()->whereNull('is_present')->exists(), 422, 'Tous les pointages doivent être terminés.');
+            abort_if(! $exam->surveillances()->exists() || $exam->surveillances()->whereNull('signed_at')->exists(), 422, 'Tous les surveillants affectés doivent viser le PV.');
+            $exam->update(['is_locked' => true, 'locked_at' => now()]);
+            activity()->causedBy(auth()->user())->performedOn($exam)->log('exam_pv_locked');
+            return $exam;
+        });
+        return response()->json(['success' => true, 'message' => 'PV verrouillé.', 'seal' => $exam->documentSeal(), 'locked_at' => $exam->locked_at?->toIso8601String()]);
     }
 
     /**

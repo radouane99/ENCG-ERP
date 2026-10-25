@@ -92,7 +92,7 @@ export default function ProfessorCall() {
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> Appel Manuel Officiel
           </span>
           <h1 className="text-2xl font-black">Feuille de Présence de la Séance</h1>
-          <p className="text-xs text-slate-300 font-medium">Groupe TC-S2-G1 • Audit & Contrôle de Gestion</p>
+          <p className="text-xs text-slate-300 font-medium">Étudiants rattachés à cette séance officielle</p>
         </div>
 
         <div className="flex items-center gap-3">

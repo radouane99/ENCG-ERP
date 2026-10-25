@@ -7,7 +7,7 @@ import { examsApi } from '@shared/api/exams';
 export default function AdminExamGlobalLiveDashboardPage() {
   const { sessionId } = useParams();
   
-  const { data: liveData, refetch, isFetching } = useQuery({
+  const { data: liveData, refetch, isFetching, isPending, isError } = useQuery({
     queryKey: ['global-live-attendance', sessionId],
     queryFn: () => examsApi.getGlobalLiveStats(Number(sessionId)),
     refetchInterval: 5000,
@@ -16,7 +16,7 @@ export default function AdminExamGlobalLiveDashboardPage() {
 
   const stats = liveData?.data || { 
     session_name: '', 
-    students: { total: 0, present: 0, absent: 0, latest_scans: [] },
+    students: { total: 0, present: 0, absent: 0, unrecorded: 0, latest_scans: [] },
     professors: { total: 0, present: 0, confirmed: 0, absent: 0, latest_confirmations: [] }
   }
 
@@ -26,13 +26,13 @@ export default function AdminExamGlobalLiveDashboardPage() {
 
   return (
     <div className="space-y-6 animate-in p-6 max-w-7xl mx-auto pb-20">
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-wrap gap-4 items-center justify-between mb-8">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
             <BarChart3 className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-[#0f2863] italic">Global Live Dashboard</h1>
+            <h1 className="text-2xl font-bold text-[#0f2863]">Supervision de la session</h1>
             <p className="text-xs text-slate-500">
               Supervision en temps réel : {stats?.session_name || 'Chargement...'}
             </p>
@@ -52,6 +52,9 @@ export default function AdminExamGlobalLiveDashboardPage() {
         </div>
       </div>
 
+      {isPending && <p role="status">Chargement des pointages…</p>}
+      {isError && <p role="alert" className="rounded-xl border border-destructive p-4 text-destructive">Suivi indisponible. Les valeurs précédentes ne confirment pas l’état actuel; actualisez.</p>}
+      {!isPending && <p className="text-sm text-slate-600">{stats.students.unrecorded ?? 0} pointage(s) encore à saisir. Les totaux comptent les convocations par épreuve, un étudiant peut avoir plusieurs épreuves.</p>}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Etudiants */}
         <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm p-6">

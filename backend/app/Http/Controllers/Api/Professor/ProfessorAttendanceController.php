@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Api\Professor;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Academic\ManualCallRequest;
 use App\Http\Requests\Academic\StartAttendanceSessionRequest;
+use App\Models\AcademicEvent;
 use App\Models\AcademicYear;
 use App\Models\Attendance;
 use App\Models\AttendanceSession;
+use App\Models\ExamSession;
 use App\Models\Filiere;
 use App\Models\Module;
 use App\Models\Schedule;
@@ -161,12 +163,37 @@ class ProfessorAttendanceController extends Controller
      */
     public function startSession(StartAttendanceSessionRequest $request): JsonResponse
     {
+        $sessionDate = $request->validated('date') ?? now()->toDateString();
+
+        // Règle Académique ENCG Fès : Suspension d'appel durant la semaine d'examens
+        $conflictingExam = ExamSession::where('is_active', true)
+            ->whereDate('start_date', '<=', $sessionDate)
+            ->whereDate('end_date', '>=', $sessionDate)
+            ->first();
+
+        if (! $conflictingExam) {
+            $conflictingExam = AcademicEvent::where('is_active', true)
+                ->whereIn('type', ['examens', 'exams', 'exam_normal', 'exam_resit'])
+                ->whereDate('start_date', '<=', $sessionDate)
+                ->whereDate('end_date', '>=', $sessionDate)
+                ->first();
+        }
+
+        if ($conflictingExam) {
+            $periodName = $conflictingExam->name ?? $conflictingExam->title ?? 'Semaine d\'Examens';
+            return response()->json([
+                'success' => false,
+                'code' => 'EXAM_PERIOD_LOCKED',
+                'message' => "Appel suspendu : La date du {$sessionDate} se situe dans la période d'examens ({$periodName}). Les cours et TD réguliers sont suspendus. L'émargement d'examen s'effectue exclusivement via le Procès-Verbal de Surveillance.",
+            ], 422);
+        }
+
         $session = $this->attendanceService->startSession(
             $request->validated('module_id'),
             $request->validated('group_id'),
             $request->user()->id,
             $request->validated('room_name'),
-            ['date' => $request->validated('date') ?? now()->toDateString()]
+            ['date' => $sessionDate]
         );
 
         return response()->json([

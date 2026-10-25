@@ -201,11 +201,11 @@ class ConvocationController extends Controller
 
     public function updateSeatingStatus(Request $request, int $examId): JsonResponse
     {
-        $exam = Exam::find($examId);
+        $exam = Exam::findOrFail($examId);
 
         $validated = $request->validate([
-            'seating_id' => 'nullable|integer',
-            'student_id' => 'nullable|integer',
+            'seating_id' => 'required_without:student_id|nullable|integer',
+            'student_id' => 'required_without:seating_id|nullable|integer',
             'status' => 'required|string|in:present,absent,late',
         ]);
 
@@ -219,14 +219,19 @@ class ConvocationController extends Controller
             $query->where('student_id', $validated['student_id']);
         }
 
-        $query->update(['is_present' => $statusBool, 'updated_at' => now()]);
+        DB::transaction(function () use ($query, $exam, $validated, $statusBool) {
+            Exam::whereKey($exam->id)->lockForUpdate()->firstOrFail();
+            $seat = $query->lockForUpdate()->firstOrFail();
+            app(\App\Services\Academic\ExamWorkflowGuard::class)->attendance($exam->fresh(), $seat->room_id);
+            $seat->update(['status' => $validated['status'], 'is_present' => $statusBool]);
+        });
 
         return response()->json(['success' => true, 'message' => 'Statut d\'émargement mis à jour.']);
     }
 
     public function batchUpdateAttendance(Request $request, int $examId): JsonResponse
     {
-        $exam = Exam::find($examId);
+        $exam = Exam::findOrFail($examId);
 
         $validated = $request->validate([
             'status' => 'required|string|in:present,absent,late',
@@ -234,48 +239,38 @@ class ConvocationController extends Controller
 
         $statusBool = in_array($validated['status'], ['present', 'late']);
 
-        ExamSeating::where('exam_id', $examId)
-            ->update(['is_present' => $statusBool, 'updated_at' => now()]);
+        DB::transaction(function () use ($exam, $validated, $statusBool, $request) {
+            $exam = Exam::whereKey($exam->id)->lockForUpdate()->firstOrFail();
+            $admin = $request->user()->hasAnyRole(['admin', 'super-admin', 'super_admin', 'institution-admin', 'institution_admin', 'director', 'scolarite']);
+            $query = ExamSeating::where('exam_id', $exam->id);
+            if (! $admin) {
+                $rooms = ExamSurveillance::where('exam_id', $exam->id)->where('professor_id', $request->user()->id)->pluck('room_id');
+                abort_if($rooms->isEmpty(), 403);
+                $query->whereIn('room_id', $rooms);
+            }
+            foreach ((clone $query)->distinct()->pluck('room_id') as $roomId) {
+                app(\App\Services\Academic\ExamWorkflowGuard::class)->attendance($exam, $roomId);
+            }
+            $query->update(['status' => $validated['status'], 'is_present' => $statusBool, 'updated_at' => now()]);
+        });
 
         return response()->json(['success' => true, 'message' => 'Émargement de groupe mis à jour.']);
     }
 
     public function saveExamSignature(Request $request, int $examId): JsonResponse
     {
-        $validated = $request->validate([
-            'signature_data' => 'required|string',
-            'supervisor_name' => 'nullable|string',
-            'role' => 'nullable|string',
-        ]);
-
-        $user = $request->user();
-        $ident = strtolower(($user?->name ?? '').' '.($user?->email ?? '').' '.($validated['supervisor_name'] ?? ''));
-
-        $role = $validated['role'] ?? null;
-        if (! $role) {
-            $role = (str_contains($ident, 'chraibi') || str_contains($ident, 'second')) ? 'secondary' : 'principal';
-        }
-
-        if ($role === 'principal') {
-            Cache::put("exam_pv_principal_signature_{$examId}", $validated['signature_data'], 86400 * 7);
-        } else {
-            Cache::put("exam_pv_secondary_signature_{$examId}", $validated['signature_data'], 86400 * 7);
-            // If the principal cache accidentally had this same signature, clear it!
-            if (Cache::get("exam_pv_principal_signature_{$examId}") === $validated['signature_data']) {
-                Cache::forget("exam_pv_principal_signature_{$examId}");
-            }
-        }
-
-        // Forget ambiguous shared key
-        Cache::forget("exam_pv_signature_{$examId}");
-
-        return response()->json([
-            'success' => true,
-            'role' => $role,
-            'message' => 'Signature enregistrée avec succès pour le '.($role === 'principal' ? 'Surveillant Principal' : 'Surveillant Secondaire'),
-            'principal_signature' => Cache::get("exam_pv_principal_signature_{$examId}"),
-            'secondary_signature' => Cache::get("exam_pv_secondary_signature_{$examId}"),
-        ]);
+        $exam = Exam::findOrFail($examId);
+        app(\App\Services\Academic\ExamWorkflowGuard::class)->viewExam($exam);
+        app(\App\Services\Academic\ExamWorkflowGuard::class)->mutableSession($exam->examSession);
+        abort_if($exam->is_locked, 409, 'PV verrouillé.');
+        $data = $request->validate(['signature_data' => 'required|string|max:2000000', 'role' => 'required|in:principal,secondary']);
+        $rows = ExamSurveillance::where('exam_id', $examId)->where('professor_id', $request->user()->id)->get();
+        $row = $rows->first(fn ($row) => ($data['role'] === 'principal') === in_array($row->role, ['president_salle', 'Surveillant Principal']));
+        abort_unless($row, 403, 'Chaque surveillant doit apposer son propre visa depuis son compte.');
+        $pad = str_starts_with($data['signature_data'], 'data:image/png;base64,');
+        abort_unless($pad || $data['signature_data'] === 'DIGITAL_CERTIFIED_STAMP_ENCG', 422, 'Format de signature invalide.');
+        $request->merge(['signature_type' => $pad ? 'pad' : 'digital', 'signature_data' => $pad ? $data['signature_data'] : null]);
+        return $this->signExamPv($request, $row->id);
     }
 
     public function myConvocations(Request $request): JsonResponse
@@ -395,6 +390,8 @@ class ConvocationController extends Controller
     {
         $data = $request->validate(['signature_type' => 'required|in:digital,pad', 'signature_data' => 'required_if:signature_type,pad|nullable|string|max:2000000', 'records' => 'sometimes|array|max:500', 'records.*.student_id' => 'required|integer|distinct', 'records.*.status' => 'required|in:present,absent']);
         $row = DB::transaction(function () use ($request, $id, $data) {
+            $target = ExamSurveillance::whereKey($id)->where('professor_id', $request->user()->id)->firstOrFail();
+            Exam::whereKey($target->exam_id)->lockForUpdate()->firstOrFail();
             $row = ExamSurveillance::with('exam.module')->whereKey($id)->where('professor_id', $request->user()->id)->lockForUpdate()->firstOrFail();
             abort_unless((int) $row->exam->module->institution_id === (int) $request->user()->institution_id, 403);
             abort_if(! $row->exam->exam_date || Carbon::parse($row->exam->exam_date)->startOfDay()->isFuture(), 422, 'L’examen n’a pas encore eu lieu.');
@@ -404,10 +401,14 @@ class ConvocationController extends Controller
             foreach ($data['records'] ?? [] as $record) {
                 $seat = $seats->firstWhere('student_id', $record['student_id']); abort_unless($seat, 403, 'Étudiant hors de la salle affectée.');
                 $present = $record['status'] === 'present';
-                abort_if($row->signed_at && (bool) $seat->is_present !== $present, 409, 'PV visé : une réouverture est requise.');
-                if (! $row->signed_at) $seat->update(['is_present' => $present]);
+                $alreadySigned = ExamSurveillance::where('exam_id', $row->exam_id)->where('room_id', $room)->whereNotNull('signed_at')->exists();
+                abort_if($alreadySigned && (bool) $seat->is_present !== $present, 409, 'PV visé : une réouverture est requise.');
+                if (! $alreadySigned) $seat->update(['status' => $record['status'], 'is_present' => $present]);
             }
             if ($row->signed_at) return $row;
+            app(\App\Services\Academic\ExamWorkflowGuard::class)->mutableSession($row->exam->examSession);
+            abort_if($row->exam->is_locked, 409, 'PV verrouillé.');
+            abort_if($seats->contains(fn ($seat) => $seat->is_present === null), 422, 'Terminer tous les pointages avant de viser le PV.');
             $row->fill(['signature_data' => $data['signature_data'] ?? null, 'signature_type' => $data['signature_type'], 'signed_at' => now(),
                 'signature_hash' => hash('sha256', json_encode(['exam_id' => $row->exam_id, 'room_id' => $room, 'signer' => $request->user()->id, 'seats' => $seats->toArray()], JSON_THROW_ON_ERROR))])->save();
             activity()->causedBy($request->user())->performedOn($row)->log('surveillance_pv_visa_recorded'); return $row;
@@ -455,6 +456,7 @@ class ConvocationController extends Controller
         $updated = DB::transaction(function () use ($request, $qrToken, $validated) {
             $seat = ExamSeating::with('exam.module')->where('qr_token', $qrToken)->lockForUpdate()->first();
             if (! $seat) return 0;
+            app(\App\Services\Academic\ExamWorkflowGuard::class)->attendance($seat->exam, $seat->room_id);
             abort_unless((int) $seat->exam->module->institution_id === (int) $request->user()->institution_id, 403);
             $surveillances = ExamSurveillance::where('exam_id', $seat->exam_id)->where('room_id', $seat->room_id)->lockForUpdate()->get();
             abort_unless($request->user()->hasAnyRole(['admin', 'institution-admin', 'super-admin', 'director', 'scolarite']) || $surveillances->contains('professor_id', $request->user()->id), 403);

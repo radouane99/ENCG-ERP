@@ -29,7 +29,7 @@ class ExamLockingController extends Controller
      */
     public function index(): JsonResponse
     {
-        $institution = Institution::first();
+        $institution = Institution::findOrFail(auth()->user()->institution_id);
         $settings = $institution ? (is_array($institution->settings) ? $institution->settings : (is_string($institution->settings) ? json_decode($institution->settings, true) : [])) : [];
 
         $currentPhase = $settings['exam_lock_phase'] ?? 'Verrouillé';
@@ -60,16 +60,13 @@ class ExamLockingController extends Controller
     public function updateStatus(Request $request): JsonResponse
     {
         $request->validate([
-            'new_phase' => 'required|string',
-            'deadline' => 'nullable|string',
-            'reason' => 'nullable|string',
+            'new_phase' => 'required|string|in:Ordinaire Automne,Rattrapage Automne,Ordinaire Printemps,Rattrapage Printemps,Verrouillé,Verrouillage Total',
+            'deadline' => 'nullable|date',
+            'reason' => 'required|string|min:5|max:2000',
         ]);
 
-        $institution = Institution::first() ?? Institution::create([
-            'name' => 'ENCG Fès',
-            'code' => 'ENCG-FES',
-            'settings' => ['exam_lock_phase' => 'Verrouillé'],
-        ]);
+        app(\App\Services\Academic\ExamWorkflowGuard::class)->manage();
+        $institution = Institution::findOrFail($request->user()->institution_id);
 
         $settings = is_array($institution->settings) ? $institution->settings : (is_string($institution->settings) ? json_decode($institution->settings, true) : []);
 
@@ -80,7 +77,7 @@ class ExamLockingController extends Controller
 
         if ($oldPhase !== $newPhase || $deadline !== null) {
             $settings['exam_lock_phase'] = $newPhase;
-            if ($deadline !== null) {
+            if ($request->exists('deadline')) {
                 $settings['exam_lock_deadline'] = $deadline;
             }
             $institution->update(['settings' => $settings]);
@@ -95,22 +92,11 @@ class ExamLockingController extends Controller
                 'ip_address' => $request->ip(),
             ]);
 
-            // Déclencher la délibération si verrouillage
-            if (in_array($newPhase, ['Verrouillé', 'Verrouillage Total'])) {
-                $modules = Module::all();
-                $sessionId = ExamSession::where('status', 'active')->latest('id')->value('id');
-
-                foreach ($modules as $module) {
-                    try {
-                        $this->deliberationService->processModuleDeliberation($module->id, $sessionId);
-                    } catch (\Exception $e) {
-                        Log::error("Échec délibération module {$module->id}: ".$e->getMessage());
-                    }
-                }
-            }
+            // Closing grade entry never runs a jury or changes academic decisions.
+            // Deliberation remains an explicit, scoped and audited workflow.
 
             // Notifier les professeurs
-            $professors = User::whereHas('roles', fn ($q) => $q->whereIn('name', ['professor', 'vacataire']))->get();
+            $professors = User::where('institution_id', $institution->id)->whereHas('roles', fn ($q) => $q->whereIn('name', ['professor', 'vacataire']))->get();
 
             if ($professors->isNotEmpty()) {
                 Notification::send($professors, new SystemNotification(

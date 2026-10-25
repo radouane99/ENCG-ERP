@@ -16,6 +16,7 @@ import { toast } from 'sonner'
 
 interface DisciplineCase {
   id: number
+  is_disciplinary_case?: boolean
   student_id: number
   student_name: string
   student_name_ar?: string
@@ -158,8 +159,8 @@ export default function DisciplinePage(): React.ReactElement {
     mutationFn: async (payload: { case_id: number; hearing_date: string; hearing_room: string; send_email: boolean }) => {
       return api.post(`/discipline/${payload.case_id}/convoke`, payload)
     },
-    onSuccess: () => {
-      toast.success('✉️ Convocation officielle émise & notifiée à l\'étudiant et son tuteur.')
+    onSuccess: (response) => {
+      toast.success(response.data.message || 'Convocation enregistrée; PDF disponible.')
       setShowConvocationModal(false)
       queryClient.invalidateQueries({ queryKey: ['discipline-cases'] })
     },
@@ -460,7 +461,7 @@ export default function DisciplinePage(): React.ReactElement {
                 Conseil de Discipline & Convocations Officielles
               </h1>
               <p className="text-xs text-rose-100/80 max-w-2xl leading-relaxed">
-                Instruction des infractions d'examen, convocations certifiées (Email + PDF A4), auditions contradictoires et délibérations des sanctions (Loi 01-00).
+                Instruction des infractions d'examen, convocations PDF A4, auditions contradictoires et délibérations des sanctions (Loi 01-00).
               </p>
             </div>
           </div>
@@ -780,7 +781,7 @@ export default function DisciplinePage(): React.ReactElement {
                       <div className="flex items-center justify-end gap-1.5">
 
                         {/* Action 1: Convoquer */}
-                        {item.status === 'pending' && (
+                        {!item.is_disciplinary_case && item.status === 'pending' && (
                           <button
                             type="button"
                             onClick={() => {
@@ -795,7 +796,7 @@ export default function DisciplinePage(): React.ReactElement {
                         )}
 
                         {/* Action 2: Statuer (Conseil de Discipline) */}
-                        {item.status === 'convoked' && (
+                        {!item.is_disciplinary_case && item.status === 'convoked' && (
                           <button
                             type="button"
                             onClick={() => {
@@ -811,22 +812,8 @@ export default function DisciplinePage(): React.ReactElement {
                           </button>
                         )}
 
-                        {/* Action 3: Réviser if resolved or dismissed */}
-                        {(item.status === 'resolved' || item.status === 'dismissed') && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setSelectedCase(item)
-                              setFinalSanction(item.sanction_scope as any || 'module')
-                              setHearingObservations(item.hearing_notes || '')
-                              setShowHearingModal(true)
-                            }}
-                            className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-[10px] transition-all flex items-center gap-1 cursor-pointer"
-                            title="Modifier la délibération"
-                          >
-                            <Scale className="w-3.5 h-3.5" /> Réviser
-                          </button>
-                        )}
+                        {(item.status === 'resolved' || item.status === 'dismissed') && <span className="text-xs text-muted-foreground">Décision enregistrée</span>}
+                        {item.is_disciplinary_case && <span className="text-xs text-muted-foreground">Dossier général historique</span>}
 
                         {/* Action 4: Visualiseur & Générateur de Vrai PDF */}
                         <button

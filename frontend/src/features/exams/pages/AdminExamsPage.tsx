@@ -10,6 +10,7 @@ import { examsApi } from '@shared/api/exams';
 import api from '@shared/lib/api'
 import { openExamEmargementPdf, openExamDoorSignPdf } from '@shared/lib/documentAccess';
 import { toast } from 'sonner';
+import ExamWorkflowPanel from '../components/ExamWorkflowPanel';
 import { CustomSelect, SelectOption } from '@shared/components/ui';
 
 // Helper for date formatting in French
@@ -433,6 +434,7 @@ const { data: filieres } = useQuery({
 
   return (
     <div className="max-w-[1600px] mx-auto p-4 md:p-8 space-y-7 font-sans pb-28">
+      <ExamWorkflowPanel sessionId={selectedSessionId ? Number(selectedSessionId) : null} />
 
       {/* 🌟 Luxury ENCG Institutional Hero Banner */}
       <div className="relative bg-gradient-to-r from-[#061126] via-[#0b1f4d] to-[#07132c] p-6 md:p-9 rounded-[2.5rem] shadow-2xl text-white border border-blue-800/40 overflow-hidden">

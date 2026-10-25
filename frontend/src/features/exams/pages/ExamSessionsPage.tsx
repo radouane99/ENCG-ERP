@@ -142,7 +142,7 @@ export default function ExamSessionsPage() {
       {loading ? <div className="text-muted-foreground p-12 text-center">Chargement...</div> : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {sessions.length === 0 ? (
-            <div className="col-span-3 text-center py-16 text-muted-foreground">
+            <div className="md:col-span-2 lg:col-span-3 text-center py-16 text-muted-foreground">
               <CalendarDays className="w-12 h-12 mx-auto mb-3 opacity-20" />
               <p>Aucune session d'examen définie.</p>
               <button onClick={openCreate} className="mt-2 text-sm text-primary hover:underline">+ Créer la première session</button>
@@ -204,35 +204,28 @@ export default function ExamSessionsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className={labelCls}>Année</label>
-                  <select value={form.academic_year_id} onChange={e => setForm(p => ({...p, academic_year_id: e.target.value}))} className={inputCls}>
+                  <select required value={form.academic_year_id} onChange={e => setForm(p => ({...p, academic_year_id: e.target.value, semester_id: ''}))} className={inputCls}>
                     <option value="">— Choisir —</option>
                     {options.years.map((y: any) => <option key={y.id} value={y.id}>{y.label}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className={labelCls}>Semestre</label>
-                  <select value={form.semester_id} onChange={e => setForm(p => ({...p, semester_id: e.target.value}))} className={inputCls}>
+                  <select required disabled={!form.academic_year_id} value={form.semester_id} onChange={e => setForm(p => ({...p, semester_id: e.target.value}))} className={inputCls}>
                     <option value="">— Choisir —</option>
-                    {/* fallback si api non dispo */}
-                    <option value="1">Semestre 1</option>
-                    <option value="2">Semestre 2</option>
-                    <option value="3">Semestre 3</option>
-                    <option value="4">Semestre 4</option>
-                    <option value="5">Semestre 5</option>
-                    <option value="6">Semestre 6</option>
-                    {options.semesters.map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                    {options.semesters.filter((s: any) => Number(s.academic_year_id) === Number(form.academic_year_id)).map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}
                   </select>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div><label className={labelCls}>Date début</label><input type="date" value={form.start_date} onChange={e => setForm(p => ({...p, start_date: e.target.value}))} className={inputCls} /></div>
-                <div><label className={labelCls}>Date fin</label><input type="date" value={form.end_date} onChange={e => setForm(p => ({...p, end_date: e.target.value}))} className={inputCls} /></div>
+                <div><label className={labelCls}>Date début</label><input type="date" required value={form.start_date} onChange={e => setForm(p => ({...p, start_date: e.target.value}))} className={inputCls} /></div>
+                <div><label className={labelCls}>Date fin</label><input type="date" required min={form.start_date} value={form.end_date} onChange={e => setForm(p => ({...p, end_date: e.target.value}))} className={inputCls} /></div>
               </div>
 
               <div className="flex items-center gap-3 mt-2">
                 <input type="checkbox" id="is_active" checked={form.is_active} onChange={e => setForm(p => ({ ...p, is_active: e.target.checked }))} className="w-4 h-4 accent-primary rounded" />
-                <label htmlFor="is_active" className="text-sm text-foreground">Définir comme session active (désactivera les autres)</label>
+                <label htmlFor="is_active" className="text-sm text-foreground">Définir comme session active (désactivera les autres de la même année)</label>
               </div>
 
               <div className="flex items-center justify-end gap-3 pt-4 border-t">

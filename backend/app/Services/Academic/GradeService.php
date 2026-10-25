@@ -55,14 +55,12 @@ class GradeService
      */
     public function getFraudStudentIds(Module $module): array
     {
-        $incidents = ExamIncident::whereHas('exam', function ($q) use ($module) {
-            $q->where('module_id', $module->id);
-        })->whereIn('type', ['fraude', 'fraud', 'tricherie', 'cheating'])->pluck('student_id')->toArray();
-
-        $cases = DisciplinaryCase::whereIn('infraction_type', ['fraude', 'fraud', 'tricherie', 'cheating'])
-            ->pluck('student_id')->toArray();
-
-        return array_values(array_unique(array_merge($incidents, $cases)));
+        return ExamIncident::where('status', 'resolved')->whereIn('sanction_scope', ['module', 'semestre'])
+            ->whereHas('exam.examSession', fn ($q) => $q->where('academic_year_id', AcademicContext::yearId())->where('institution_id', $module->institution_id))
+            ->where(function ($q) use ($module) {
+                $q->where(fn ($q) => $q->where('sanction_scope', 'module')->whereHas('exam', fn ($e) => $e->where('module_id', $module->id)))
+                    ->orWhere(fn ($q) => $q->where('sanction_scope', 'semestre')->whereHas('exam.module', fn ($m) => $m->where('filiere_id', $module->filiere_id)->where('semester_number', $module->semester_number)));
+            })->distinct()->pluck('student_id')->all();
     }
 
     /**
@@ -120,7 +118,7 @@ class GradeService
      */
     public function isExamLocked(Assessment $assessment): ?string
     {
-        $institution = Institution::first();
+        $institution = Institution::find($assessment->module?->institution_id);
         if (! $institution) {
             return null;
         }

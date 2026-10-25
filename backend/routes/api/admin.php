@@ -273,11 +273,6 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:admin|super-admi
     Route::get('/admin/apogee/export-csv', [ApogeeEngineController::class, 'exportApogeeCsv']);
     Route::get('/admin/apogee/preview', [ApogeeEngineController::class, 'getApogeePreview']);
 
-    Route::prefix('discipline')->group(function () {
-        Route::get('/', [DisciplineController::class, 'index']);
-        Route::post('/', [DisciplineController::class, 'store']);
-        Route::post('/{id}/decide', [DisciplineController::class, 'decide']);
-    });
 
     Route::prefix('internships')->group(function () {
         Route::get('/', [AdminInternshipController::class, 'index']);
@@ -313,6 +308,7 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:admin|super-admi
     });
     Route::apiResource('academic-years', AcademicYearController::class)->except(['show']);
     Route::post('academic-years/{id}/rollover', [AcademicYearController::class, 'rollover']);
+    Route::get('exam-sessions/{examSession}/readiness', [ExamSessionController::class, 'readiness']);
     Route::apiResource('exam-sessions', ExamSessionController::class)->except(['show']);
     Route::get('final-projects/options', [FinalProjectController::class, 'options']);
     Route::apiResource('final-projects', FinalProjectController::class);
@@ -338,8 +334,6 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:admin|super-admi
     Route::apiResource('complaints', ComplaintController::class)->except(['destroy']);
 
     // Discipline
-    Route::apiResource('discipline', DisciplineController::class)->except(['destroy', 'show', 'update']);
-    Route::post('discipline/{id}/decide', [DisciplineController::class, 'decide']);
 
     // Absences (Admin)
     Route::prefix('admin/absences')->group(function () {

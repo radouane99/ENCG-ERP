@@ -65,6 +65,7 @@ const AdminRoomAvailabilityPage = lazy(() => import('@features/admin/pages/Admin
 const AttendancePage = lazy(() => import('@features/attendance/pages/AttendancePage'))
 
 const ExamSessionsPage = lazy(() => import('@features/exams/pages/ExamSessionsPage'))
+const AdminExamGlobalLiveDashboardPage = lazy(() => import('@features/exams/pages/AdminExamGlobalLiveDashboardPage'))
 const AdminExamAnalyticsPage = lazy(() => import('@features/exams/pages/AdminExamAnalyticsPage'))
 
 
@@ -537,6 +538,8 @@ export default function RootRouter() {
             <Route path="/admin/alumni" element={<AlumniNetwork />} />
             <Route path="/admin/pilotage" element={<PilotagePage />} />
             <Route path="/admin/exams" element={<AdminExamsPage />} />
+            <Route path="/admin/exams/sessions" element={<ExamSessionsPage />} />
+            <Route path="/admin/exams/sessions/:sessionId/live" element={<AdminExamGlobalLiveDashboardPage />} />
             <Route path="/admin/exams/:id/edit" element={<AdminExamEditPage />} />
             <Route path="/admin/exams/:id/display-list" element={<AdminExamDisplayListPage />} />
             <Route path="/admin/exams/:id/attendance-sheet" element={<AdminExamAttendanceSheetPage />} />

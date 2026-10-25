@@ -13,6 +13,7 @@ use App\Models\Group;
 use App\Models\Professor;
 use App\Models\Room;
 use App\Models\Student;
+use App\Models\StudentRegistration;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Collection;
@@ -50,8 +51,10 @@ class ExamConvocationService
      */
     public function generateConvocations(int $examId): array
     {
-        $exam = Exam::with(['group.students', 'module', 'seatings'])->findOrFail($examId);
-        $defaultRoomId = $exam->room_id ?? Room::first()?->id;
+        $exam = Exam::with(['group.students', 'module', 'seatings', 'examSession'])->findOrFail($examId);
+        app(ExamWorkflowGuard::class)->mutableSession($exam->examSession);
+        abort_if($exam->is_locked, 409, 'PV verrouillé.');
+        $defaultRoomId = $exam->room_id;
 
         $existingSeatings = ExamSeating::where('exam_id', $examId)->get();
 
@@ -61,7 +64,18 @@ class ExamConvocationService
             $students = $this->resolveStudentsForExam($exam);
         }
 
-        $this->assignAntiCheatSeatsForExam($examId, $students, $defaultRoomId);
+        abort_if($students->isEmpty(), 422, 'Aucun étudiant inscrit dans le groupe de cette épreuve.');
+        if ($existingSeatings->isEmpty()) {
+            $room = Room::where('institution_id', $exam->examSession->institution_id)->whereKey($defaultRoomId)->firstOrFail();
+            abort_if(! $room->is_available || $students->count() > ($room->exam_capacity ?? floor($room->capacity / 2)), 422, 'Salle indisponible ou capacité d’examen insuffisante.');
+        }
+        // A retry must keep printed QR codes, room allocations and seat numbers stable.
+        foreach ($students as $index => $student) {
+            $seat = ExamSeating::firstOrNew(['exam_id' => $examId, 'student_id' => $student->id]);
+            if (! $seat->exists) { $seat->fill(['room_id' => $defaultRoomId, 'seat_number' => $index + 1]); }
+            if (! $seat->qr_token) { $seat->qr_token = Str::uuid()->toString(); }
+            if ($seat->isDirty()) { $seat->save(); }
+        }
 
         ExamSurveillance::where('exam_id', $examId)
             ->whereNull('qr_token')
@@ -82,26 +96,8 @@ class ExamConvocationService
      */
     private function resolveStudentsForExam(Exam $exam): Collection
     {
-        $filiereId = $exam->module?->filiere_id ?? $exam->group?->filiere_id;
-        $semesterNum = $exam->module?->semester_number ?? $exam->group?->semester_number;
-
-        $students = collect();
-        if ($filiereId) {
-            $groups = Group::where('filiere_id', $filiereId)
-                ->when($semesterNum, fn ($q) => $q->where('semester_number', $semesterNum))
-                ->with('students')
-                ->get();
-            foreach ($groups as $g) {
-                if ($g->students) {
-                    $students = $students->merge($g->students);
-                }
-            }
-        }
-        if ($students->isEmpty() && $exam->group && $exam->group->students) {
-            $students = $exam->group->students;
-        }
-
-        return $students->unique('id')->values();
+        $ids = StudentRegistration::where('group_id', $exam->group_id)->where('academic_year_id', $exam->examSession->academic_year_id)->pluck('student_id');
+        return $this->orderStudentsForExam($exam->id, Student::whereIn('id', $ids)->get());
     }
 
     /**
@@ -218,7 +214,9 @@ class ExamConvocationService
      */
     public function sendBatchEmails(int $sessionId, array $seatingIds): array
     {
-        $studentIds = ExamSeating::whereIn('id', $seatingIds)->pluck('student_id')->unique();
+        app(ExamWorkflowGuard::class)->manage();
+        app(ExamWorkflowGuard::class)->session(ExamSession::findOrFail($sessionId));
+        $studentIds = ExamSeating::whereHas('exam', fn ($q) => $q->where('exam_session_id', $sessionId))->whereIn('id', $seatingIds)->pluck('student_id')->unique();
 
         if ($studentIds->isEmpty()) {
             return ['success' => false, 'message' => 'Aucun étudiant sélectionné.'];
@@ -456,7 +454,8 @@ class ExamConvocationService
             return ['success' => false, 'message' => 'Convocation introuvable.'];
         }
 
-        $seating->update(['is_present' => true]);
+        app(ExamWorkflowGuard::class)->attendance($seating->exam, $seating->room_id);
+        $seating->update(['status' => 'present', 'is_present' => true]);
 
         return ['success' => true, 'message' => 'Présence enregistrée.'];
     }
@@ -472,7 +471,8 @@ class ExamConvocationService
             return ['success' => false, 'message' => 'QR Code invalide.'];
         }
 
-        $seating->update(['is_present' => true]);
+        app(ExamWorkflowGuard::class)->attendance($seating->exam, $seating->room_id);
+        $seating->update(['status' => 'present', 'is_present' => true]);
 
         $student = Student::with('user')->find($seating->student_id);
 
@@ -490,7 +490,8 @@ class ExamConvocationService
      */
     public function getLiveStats(int $examId): array
     {
-        $exam = Exam::with(['module.filiere', 'group'])->find($examId);
+        $exam = Exam::with(['module.filiere', 'group'])->findOrFail($examId);
+        app(ExamWorkflowGuard::class)->viewExam($exam);
         $total = ExamSeating::where('exam_id', $examId)->count();
         $present = ExamSeating::where('exam_id', $examId)->where('is_present', true)->count();
 
@@ -515,7 +516,8 @@ class ExamConvocationService
                 ] : null,
                 'total_students' => $total,
                 'present' => $present,
-                'absent' => $total - $present,
+                'absent' => ExamSeating::where('exam_id', $examId)->where('is_present', false)->count(),
+                'unrecorded' => ExamSeating::where('exam_id', $examId)->whereNull('is_present')->count(),
                 'latest_scans' => $latestScans,
             ],
         ];
@@ -531,6 +533,8 @@ class ExamConvocationService
             return ['success' => false, 'message' => 'Session introuvable.'];
         }
 
+        app(ExamWorkflowGuard::class)->manage();
+        app(ExamWorkflowGuard::class)->session($session);
         $examIds = $session->exams->pluck('id');
 
         $totalStudents = ExamSeating::whereIn('exam_id', $examIds)->count();
@@ -543,8 +547,8 @@ class ExamConvocationService
             'success' => true,
             'data' => [
                 'session_name' => $session->name,
-                'students' => compact('totalStudents', 'presentStudents') + ['absent' => $totalStudents - $presentStudents],
-                'professors' => compact('totalSurveillants', 'confirmedSurveillants'),
+                'students' => ['total' => $totalStudents, 'present' => $presentStudents, 'absent' => ExamSeating::whereIn('exam_id', $examIds)->where('is_present', false)->count(), 'unrecorded' => ExamSeating::whereIn('exam_id', $examIds)->whereNull('is_present')->count(), 'latest_scans' => []],
+                'professors' => ['total' => $totalSurveillants, 'confirmed' => $confirmedSurveillants, 'present' => ExamSurveillance::whereIn('exam_id', $examIds)->where('has_attended', true)->count(), 'absent' => ExamSurveillance::whereIn('exam_id', $examIds)->where('has_attended', false)->count(), 'latest_confirmations' => []],
             ],
         ];
     }
@@ -554,39 +558,19 @@ class ExamConvocationService
      */
     public function getExamDetails(int $examId): array
     {
-        $exam = Exam::with(['module.filiere', 'group', 'room'])->find($examId);
+        $exam = Exam::with(['module.filiere', 'group', 'room'])->findOrFail($examId);
+        app(ExamWorkflowGuard::class)->viewExam($exam);
 
         $rawSeatings = ExamSeating::with(['student.user', 'room'])
             ->where('exam_id', $examId)
             ->orderBy('id', 'asc')
             ->get();
 
-        $distinctSeats = $rawSeatings->pluck('seat_number')->unique();
-        $isCorrupted = $distinctSeats->count() <= 1 || $distinctSeats->contains(125);
-
-        if ($isCorrupted) {
-            foreach ($rawSeatings as $i => $item) {
-                $item->seat_number = $i + 1;
-                try {
-                    ExamSeating::where('id', $item->id)->update(['seat_number' => $i + 1]);
-                } catch (\Throwable $e) {
-                }
-            }
-        }
-
-        $seatings = $rawSeatings
-            ->map(function ($s, $idx) use ($isCorrupted) {
-                $seatNumber = ($isCorrupted || empty($s->seat_number) || $s->seat_number == 125)
-                    ? ($idx + 1)
-                    : (is_numeric($s->seat_number) ? (int) $s->seat_number : ($idx + 1));
-                $s->seat_number = $seatNumber;
-                $s->cne = $s->student?->cne ?? '—';
-                $s->student_name = $s->student?->user?->name ?? '—';
-
-                return $s;
-            })
-            ->sortBy('seat_number')
-            ->values();
+        $seatings = $rawSeatings->map(function ($seat) {
+            $seat->cne = $seat->student?->cne ?? '—';
+            $seat->student_name = $seat->student?->user?->name ?? '—';
+            return $seat;
+        })->sortBy('seat_number')->values();
 
         $surveillances = ExamSurveillance::with(['professor.user', 'room'])
             ->where('exam_id', $examId)
@@ -599,29 +583,12 @@ class ExamConvocationService
             ->unique('student_id')
             ->values();
 
-        $principalSignature = Cache::get("exam_pv_principal_signature_{$examId}");
-        $secondarySignature = Cache::get("exam_pv_secondary_signature_{$examId}");
-
-        // If secondary was mistakenly placed into principal slot
-        if ($principalSignature && $secondarySignature && $principalSignature === $secondarySignature) {
-            $principalSignature = null;
-            Cache::forget("exam_pv_principal_signature_{$examId}");
-        } elseif (! $secondarySignature && $principalSignature) {
-            // If only one signature was cached before dual-signature support, it belongs to the secondary supervisor (Chraibi)
-            $secondarySignature = $principalSignature;
-            $principalSignature = null;
-            Cache::put("exam_pv_secondary_signature_{$examId}", $secondarySignature, 86400 * 7);
-            Cache::forget("exam_pv_principal_signature_{$examId}");
-        }
-
-        // Clean ambiguous shared key
-        Cache::forget("exam_pv_signature_{$examId}");
-
-        if ($exam) {
-            $exam->principal_signature = $principalSignature;
-            $exam->secondary_signature = $secondarySignature;
-            $exam->signature_data = $principalSignature;
-        }
+        $principal = $surveillances->first(fn ($row) => in_array($row->role, ['president_salle', 'Surveillant Principal']) && $row->signed_at);
+        $secondary = $surveillances->first(fn ($row) => ! in_array($row->role, ['president_salle', 'Surveillant Principal']) && $row->signed_at);
+        $exam->principal_signature = $principal ? ($principal->signature_data ?: 'DIGITAL_CERTIFIED_STAMP_ENCG') : null;
+        $exam->secondary_signature = $secondary ? ($secondary->signature_data ?: 'DIGITAL_CERTIFIED_STAMP_ENCG') : null;
+        $exam->signature_data = $exam->principal_signature;
+        $exam->seal = $exam->is_locked ? $exam->documentSeal() : null;
 
         return [
             'success' => true,

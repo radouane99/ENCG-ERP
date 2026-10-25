@@ -19,7 +19,8 @@ interface Candidate {
   cne: string
   name: string
   seat_number: string | number
-  status: 'present' | 'absent' | 'late'
+  status: 'present' | 'absent' | 'late' | 'unrecorded'
+  qr_token?: string
   has_fraud?: boolean
   fraud_details?: string
   checkin_time?: string
@@ -258,10 +259,9 @@ const { data: dbIncidentsData } = useQuery({
     if (detailsData?.exam) {
       if (detailsData.exam.is_locked) {
         setIsPvLocked(true)
-        const lockedAt = detailsData.exam.locked_at ? new Date(detailsData.exam.locked_at).getTime().toString(36).toUpperCase() : Date.now().toString(36).toUpperCase()
-        setPvLockSeal(`SHA256:ENCG-FES-${id}-${lockedAt}`)
+        setPvLockSeal(detailsData.exam.seal || '')
       }
-      if (detailsData.exam.principal_signature && detailsData.exam.principal_signature !== detailsData.exam.secondary_signature) {
+      if (detailsData.exam.principal_signature) {
         setPrincipalSignatureUrl(detailsData.exam.principal_signature)
       } else {
         setPrincipalSignatureUrl('')
@@ -309,123 +309,24 @@ const { data: dbIncidentsData } = useQuery({
     }
   }, [dbIncidentsData, detailsData?.incidents, adminSupervisorName])
 
-  // Populate Candidates from DB Seatings or Students + Preserve Local Attendance State & Incidents
+  // Candidate identity, room and presence come exclusively from the seating plan.
   useEffect(() => {
-    const fraudStudentIds = new Set<number>()
-    const fraudCnes = new Set<string>()
-    const fraudNames = new Set<string>()
-
-    const collectIncident = (inc: any) => {
-      if (!inc) return
-      if (inc.student_id) fraudStudentIds.add(Number(inc.student_id))
-      if (inc.student?.id) fraudStudentIds.add(Number(inc.student.id))
-
-      const cneCandidates = [inc.cne, inc.student?.cne].filter(Boolean)
-      cneCandidates.forEach((c: string) => {
-        const clean = c.toUpperCase().trim()
-        fraudCnes.add(clean)
-        fraudCnes.add(clean.replace(/^M/, 'N'))
-        fraudCnes.add(clean.replace(/^N/, 'M'))
-        fraudCnes.add(clean.replace(/^[A-Z]/, ''))
-      })
-
-      const nameCandidates = [
-        inc.student_name,
-        inc.student?.user?.name,
-        `${inc.student?.first_name || ''} ${inc.student?.last_name || ''}`.trim(),
-        `${inc.student?.last_name || ''} ${inc.student?.first_name || ''}`.trim()
-      ].filter(Boolean)
-      nameCandidates.forEach((n: string) => {
-        fraudNames.add(n.toLowerCase().trim())
-      })
-    }
-
-    if (Array.isArray(dbIncidentsData)) dbIncidentsData.forEach(collectIncident)
-    if (Array.isArray(detailsData?.incidents)) detailsData.incidents.forEach(collectIncident)
-    incidentsList.forEach(collectIncident)
-
-    if (detailsData?.seatings && detailsData.seatings.length > 0) {
-      setCandidates(prevCandidates => {
-        const prevCandidateMap = new Map(prevCandidates.map(c => [c.id, c]))
-
-        return detailsData.seatings.map((s: any, idx: number) => {
-          const studentId = s.student_id ? Number(s.student_id) : undefined
-          const rawCne = (s.cne || s.student?.cne || '').toUpperCase().trim()
-          const rawName = (s.student_name || s.student?.user?.name || '').toLowerCase().trim()
-
-          const isFraud = Boolean(
-            (studentId && fraudStudentIds.has(studentId))
-            || (rawCne && (fraudCnes.has(rawCne) || fraudCnes.has(rawCne.replace(/^M/, 'N')) || fraudCnes.has(rawCne.replace(/^N/, 'M')) || fraudCnes.has(rawCne.replace(/^[A-Z]/, ''))))
-            || (rawName && (fraudNames.has(rawName) || Array.from(fraudNames).some(fn => fn && (rawName.includes(fn) || fn.includes(rawName)))))
-          )
-
-          const existingCandidate = prevCandidateMap.get(s.id || idx + 1)
-
-          let resolvedStatus: 'present' | 'absent' | 'late' = 'absent'
-          if (isFraud) {
-            resolvedStatus = 'present'
-          } else if (s.is_present) {
-            resolvedStatus = 'present'
-          } else if (existingCandidate && existingCandidate.status !== 'absent') {
-            resolvedStatus = existingCandidate.status
-          } else if (s.status) {
-            resolvedStatus = s.status
-          }
-
-          const seatVal = s.seat_number && Number(s.seat_number) !== 125
-            ? s.seat_number
-            : (idx + 1);
-
-          const formattedSeatNumber = typeof seatVal === 'number' || !isNaN(Number(seatVal))
-            ? `N° ${String(seatVal).padStart(2, '0')}`
-            : String(seatVal);
-
-          return {
-            id: s.id || idx + 1,
-            seating_id: s.id,
-            student_id: s.student_id,
-            cne: s.cne || s.student?.cne || (s.student_id ? `E${s.student_id}` : '—'),
-            name: s.student_name || s.student?.user?.name || `Étudiant #${s.student_id || idx + 1}`,
-            seat_number: formattedSeatNumber,
-            status: resolvedStatus,
-            has_fraud: Boolean(isFraud),
-            checkin_time: existingCandidate?.checkin_time || (s.updated_at && s.is_present ? new Date(s.updated_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : undefined)
-          }
-        })
-      })
-    } else if (detailsData?.exam) {
-      api.get(`/students`, { params: { filiere_id: detailsData.exam.module?.filiere_id, group_id: detailsData.exam.group_id } })
-        .then(res => {
-          const rawStudents = res.data?.data || res.data || []
-          if (rawStudents.length > 0) {
-            const mapped: Candidate[] = rawStudents.map((st: any, idx: number) => {
-              const studentId = st.id ? Number(st.id) : undefined
-              const rawCne = (st.cne || st.user?.email?.split('@')[0] || '').toUpperCase().trim()
-              const rawName = (st.user?.name || `${st.last_name?.toUpperCase()} ${st.first_name}`).toLowerCase().trim()
-
-              const isFraud = Boolean(
-                (studentId && fraudStudentIds.has(studentId))
-                || (rawCne && (fraudCnes.has(rawCne) || fraudCnes.has(rawCne.replace(/^M/, 'N')) || fraudCnes.has(rawCne.replace(/^N/, 'M')) || fraudCnes.has(rawCne.replace(/^[A-Z]/, ''))))
-                || (rawName && (fraudNames.has(rawName) || Array.from(fraudNames).some(fn => fn && (rawName.includes(fn) || fn.includes(rawName)))))
-              )
-
-              return {
-                id: st.id,
-                student_id: st.id,
-                cne: st.cne || st.user?.email?.split('@')[0] || (st.id ? `E${st.id}` : '—'),
-                name: st.user?.name || `${st.last_name?.toUpperCase()} ${st.first_name}`,
-                seat_number: `N° ${String(idx + 1).padStart(2, '0')}`,
-                status: isFraud ? 'present' : 'absent',
-                has_fraud: Boolean(isFraud)
-              }
-            })
-            setCandidates(mapped)
-          }
-        }).catch(console.error)
-    }
-  }, [detailsData, dbIncidentsData, incidentsList])
-
-
+    if (!detailsData) return
+    const incidents = Array.isArray(detailsData.incidents) ? detailsData.incidents : []
+    const incidentStudents = new Set(incidents.map((incident: any) => Number(incident.student_id)))
+    let pending: any[] = []
+    try { const stored: unknown = JSON.parse(sessionStorage.getItem(`offline_emargement_queue_${id}`) || '[]'); if (Array.isArray(stored)) pending = stored } catch { /* Preserve malformed storage for review. */ }
+    setCandidates((detailsData.seatings || []).map((seat: any) => {
+      const queued = [...pending].reverse().find(item => item.seating_id === seat.id)
+      const status = queued?.status || (['present', 'absent', 'late'].includes(seat.status) ? seat.status : seat.is_present === true ? 'present' : seat.is_present === false ? 'absent' : 'unrecorded')
+      return { id: seat.id, seating_id: seat.id, student_id: seat.student_id,
+        cne: seat.cne || seat.student?.cne || '—', name: seat.student_name || seat.student?.user?.name || '—',
+        seat_number: seat.seat_number ? `N° ${String(seat.seat_number).padStart(2, '0')}` : '—',
+        qr_token: seat.qr_token, status, has_fraud: incidentStudents.has(Number(seat.student_id)),
+        checkin_time: seat.is_present === true && seat.updated_at ? new Date(seat.updated_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : undefined,
+      }
+    }))
+  }, [detailsData, id])
 
   // Mutation to update attendance in DB
   const updateAttendanceMutation = useMutation({
@@ -456,84 +357,56 @@ const { data: dbIncidentsData } = useQuery({
     return () => { window.removeEventListener('online', handleOnline); window.removeEventListener('offline', handleOffline) }
   }, [id, syncAttendance])
   // Update candidate status handler
-  const handleToggleStatus = (candidate: Candidate, newStatus: 'present' | 'absent' | 'late') => {
-    if (isPvLocked) {
-      toast.error('Ce PV d\'examen est verrouillé. Aucune modification possible.')
-      return
-    }
-
-    playAudioFeedback(newStatus === 'present' ? 'present' : 'absent')
-
-    setCandidates(prev => prev.map(c => {
-      if (c.id === candidate.id) {
-        const time = newStatus !== 'absent' ? new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : undefined
-        return { ...c, status: newStatus, checkin_time: time }
-      }
-      return c
-    }))
-
-    if (!navigator.onLine) {
+  const handleToggleStatus = async (candidate: Candidate, newStatus: 'present' | 'absent' | 'late') => {
+    if (isPvLocked) { toast.error('PV verrouillé.'); return false }
+    const payload = { seating_id: candidate.seating_id, student_id: candidate.student_id, status: newStatus }
+    try {
+      if (!navigator.onLine) throw new Error('offline')
+      await syncAttendance(payload)
+      playAudioFeedback(newStatus === 'present' ? 'present' : 'absent')
+      toast.success(`${candidate.name} : pointage confirmé.`)
+      return true
+    } catch (error: any) {
+      if (error?.response) { toast.error(error.response.data?.message || 'Pointage refusé.'); return false }
       try {
-        const queue = JSON.parse(sessionStorage.getItem(`offline_emargement_queue_${id}`) || '[]')
-        queue.push({ seating_id: candidate.seating_id, student_id: candidate.student_id, status: newStatus, timestamp: Date.now() })
-        sessionStorage.setItem(`offline_emargement_queue_${id}`, JSON.stringify(queue))
-        setOfflineQueueCount(queue.length)
-        toast.info(`💾 Pointage enregistré localement (${queue.length} en attente de synchro)`)
-      } catch {}
-    } else {
-      updateAttendanceMutation.mutate({
-        seating_id: candidate.seating_id,
-        student_id: candidate.student_id,
-        status: newStatus
-      })
+        const key = `offline_emargement_queue_${id}`
+        const queue: unknown = JSON.parse(sessionStorage.getItem(key) || '[]')
+        if (!Array.isArray(queue)) throw new Error('File invalide')
+        const next = [...queue.filter(item => item.seating_id !== candidate.seating_id), { ...payload, timestamp: Date.now() }]
+        sessionStorage.setItem(key, JSON.stringify(next))
+        setOfflineQueueCount(next.length)
+        setCandidates(previous => previous.map(item => item.id === candidate.id ? { ...item, status: newStatus } : item))
+        toast.warning('Pointage local, en attente de confirmation serveur.')
+      } catch { toast.error('Pointage non enregistré. Réessayez sans fermer cette page.') }
+      return false
     }
-
-    toast.success(`${candidate.name} : Statut ${newStatus.toUpperCase()}`)
   }
 
-
-  // ⚡ Batch Action: Mark ALL Present (1-Click)
-  const handleMarkAllPresent = () => {
-    if (isPvLocked) {
-      toast.error('Ce PV d\'examen est verrouillé.')
-      return
+  const setBatchAttendance = async (status: 'present' | 'absent') => {
+    if (isPvLocked) { toast.error('PV verrouillé.'); return }
+    const toastId = toast.loading('Enregistrement des pointages de la salle…')
+    try {
+      await api.post(`/exam-planning/${id}/batch-update-attendance`, { status })
+      await queryClient.invalidateQueries({ queryKey: ['admin-exam-details', id] })
+      queryClient.invalidateQueries({ queryKey: ['admin-exam-live-stats', id] })
+      toast.success('Pointages confirmés par le serveur.', { id: toastId })
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || 'Action non enregistrée. Réessayez lorsque la connexion est disponible.', { id: toastId })
     }
-    const toastId = toast.loading('Saisie rapide : Marquage de TOUS les candidats comme PRÉSENTS...')
-    const timeNow = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
-    
-    setCandidates(prev => prev.map(c => ({ ...c, status: 'present', checkin_time: c.checkin_time || timeNow })))
-    playAudioFeedback('present')
-
-    api.post(`/exam-planning/${id}/batch-update-attendance`, { status: 'present' }).catch(() => {})
-
-    toast.success('✅ Tous les candidats de la salle ont été marqués PRÉSENTS !', { id: toastId })
   }
-
-  // ⚡ Batch Action: Reset ALL Absent
-  const handleResetAllAbsent = () => {
-    if (isPvLocked) {
-      toast.error('Ce PV d\'examen est verrouillé.')
-      return
-    }
-    const toastId = toast.loading('Réinitialisation des présences...')
-    setCandidates(prev => prev.map(c => ({ ...c, status: 'absent', checkin_time: undefined })))
-    playAudioFeedback('absent')
-
-    api.post(`/exam-planning/${id}/batch-update-attendance`, { status: 'absent' }).catch(() => {})
-
-    toast.success('Réinitialisation terminée : Tous les candidats marqués absents.', { id: toastId })
-  }
+  const handleMarkAllPresent = () => setBatchAttendance('present')
+  const handleResetAllAbsent = () => setBatchAttendance('absent')
 
   // Process QR Code Scan
-  const handleProcessScanCode = () => {
+  const handleProcessScanCode = async () => {
     if (!scannedQrToken.trim()) return
     const token = scannedQrToken.trim().toUpperCase()
     
-    const candidate = candidates.find(c => c.cne.toUpperCase() === token || c.seat_number.toString().toUpperCase() === token || c.name.toUpperCase().includes(token))
+    const matches = candidates.filter(c => c.qr_token?.toUpperCase() === token || c.cne.toUpperCase() === token)
+    const candidate = matches.length === 1 ? matches[0] : undefined
     
     if (candidate) {
-      handleToggleStatus(candidate, 'present')
-      toast.success(`🎯 Check-in réussi : ${candidate.name} (${candidate.seat_number})`)
+      if (!await handleToggleStatus(candidate, 'present')) return
       setScannedQrToken('')
       setShowQrScanModal(false)
     } else {
@@ -557,130 +430,34 @@ const { data: dbIncidentsData } = useQuery({
 
   // Submit Fraud Report
   const handleSubmitFraudReport = async () => {
-    if (!selectedStudentForFraud) return
-    if (!fraudDescription.trim()) {
-      toast.error('Veuillez saisir les détails de l\'incident.')
+    if (!selectedStudentForFraud || fraudDescription.trim().length < 5) {
+      toast.error("Veuillez préciser les faits constatés (5 caractères minimum).")
       return
     }
-
-    playAudioFeedback('fraud')
-    const toastId = toast.loading("Enregistrement de l'incident dans la base de données...")
+    const studentId = selectedStudentForFraud.student_id || selectedStudentForFraud.id
+    const payload = { exam_id: Number(id), student_id: studentId, type: fraudType, description: fraudDescription.trim(), confiscated_items: confiscatedItems }
+    const toastId = toast.loading("Enregistrement du signalement...")
     try {
-      await api.post(`/exam-incidents`, {
-        exam_id: Number(id),
-        student_id: selectedStudentForFraud.student_id || selectedStudentForFraud.id,
-        type: fraudType,
-        description: fraudDescription,
-        confiscated_items: confiscatedItems
-      })
-
-
-      try {
-        await api.post(`/exam-planning/${id}/update-seating-status`, {
-          student_id: selectedStudentForFraud.student_id || selectedStudentForFraud.id,
-          seating_id: selectedStudentForFraud.seating_id,
-          status: 'present'
-        })
-      } catch {}
-
+      await api.post('/exam-incidents', payload)
       queryClient.invalidateQueries({ queryKey: ['admin-exam-incidents', id] })
       queryClient.invalidateQueries({ queryKey: ['admin-exam-details', id] })
-      queryClient.invalidateQueries({ queryKey: ['admin-exam-live-stats', id] })
-
-      const newReport: IncidentReport = {
-        id: Date.now(),
-        student_name: selectedStudentForFraud.name,
-        cne: selectedStudentForFraud.cne,
-        type: fraudType,
-        description: fraudDescription,
-        confiscated_items: confiscatedItems,
-        timestamp: new Date().toLocaleTimeString('fr-FR'),
-        reported_by: adminSupervisorName
-      }
-
-      const newDisciplineCase = {
-        exam_id: Number(id),
-        id: Date.now(),
-        student: {
-          id: selectedStudentForFraud.student_id || selectedStudentForFraud.id || Date.now(),
-          first_name: selectedStudentForFraud.name.split(' ').slice(1).join(' ') || selectedStudentForFraud.name,
-          last_name: selectedStudentForFraud.name.split(' ')[0] || '',
-          cne: selectedStudentForFraud.cne,
-          apogee: selectedStudentForFraud.cne,
-          email: '',
-          filiere: examObj?.module?.filiere?.name || '—',
-          guardian_email: ''
-        },
-        module_name: examObj?.module?.name || '—',
-        exam_date: examObj?.exam_date || new Date().toISOString().split('T')[0],
-        type: 'Fraude',
-        description: fraudDescription,
-        confiscated_items: confiscatedItems || 'Aucun',
-        severity: 'high',
-        status: 'pending',
-        created_at: new Date().toISOString().split('T')[0]
-      }
-
-      try {
-        const existingQueue = JSON.parse(sessionStorage.getItem('encg_exam_incidents_queue') || '[]')
-        sessionStorage.setItem('encg_exam_incidents_queue', JSON.stringify([newDisciplineCase, ...existingQueue]))
-      } catch {}
-
-      setIncidentsList(prev => {
-        const filtered = prev.filter(p => p.cne !== selectedStudentForFraud.cne && p.student_name !== selectedStudentForFraud.name)
-        return [newReport, ...filtered]
-      })
-      setCandidates(prev => prev.map(c => c.id === selectedStudentForFraud.id ? { ...c, has_fraud: true, status: 'present', fraud_details: fraudDescription } : c))
-
       setShowFraudModal(false)
-      toast.success(`🚨 Incident de type "${fraudType.toUpperCase()}" enregistré avec succès ! Transmission automatique au Conseil de Discipline.`, { id: toastId })
-    } catch {
-      const newReport: IncidentReport = {
-        id: Date.now(),
-        student_name: selectedStudentForFraud.name,
-        cne: selectedStudentForFraud.cne,
-        type: fraudType,
-        description: fraudDescription,
-        confiscated_items: confiscatedItems,
-        timestamp: new Date().toLocaleTimeString('fr-FR'),
-        reported_by: adminSupervisorName
+      toast.success('Signalement enregistré pour instruction. La présence et la note restent distinctes.', { id: toastId })
+    } catch (error: any) {
+      if (error?.response) {
+        toast.error(error.response.data?.message || 'Signalement refusé par le serveur.', { id: toastId })
+        return
       }
-
-      const newDisciplineCase = {
-        exam_id: Number(id),
-        id: Date.now(),
-        student: {
-          id: selectedStudentForFraud.student_id || selectedStudentForFraud.id || Date.now(),
-          first_name: selectedStudentForFraud.name.split(' ').slice(1).join(' ') || selectedStudentForFraud.name,
-          last_name: selectedStudentForFraud.name.split(' ')[0] || '',
-          cne: selectedStudentForFraud.cne,
-          apogee: selectedStudentForFraud.cne,
-          email: '',
-          filiere: examObj?.module?.filiere?.name || '—',
-          guardian_email: ''
-        },
-        module_name: examObj?.module?.name || '—',
-        exam_date: examObj?.exam_date || new Date().toISOString().split('T')[0],
-        type: 'Fraude',
-        description: fraudDescription,
-        confiscated_items: confiscatedItems || 'Aucun',
-        severity: 'high',
-        status: 'pending',
-        created_at: new Date().toISOString().split('T')[0]
-      }
-
       try {
-        const existingQueue = JSON.parse(sessionStorage.getItem('encg_exam_incidents_queue') || '[]')
-        sessionStorage.setItem('encg_exam_incidents_queue', JSON.stringify([newDisciplineCase, ...existingQueue]))
-      } catch {}
-
-      setIncidentsList(prev => {
-        const filtered = prev.filter(p => p.cne !== selectedStudentForFraud.cne && p.student_name !== selectedStudentForFraud.name)
-        return [newReport, ...filtered]
-      })
-      setCandidates(prev => prev.map(c => c.id === selectedStudentForFraud.id ? { ...c, has_fraud: true, status: 'present' } : c))
-      setShowFraudModal(false)
-      toast.success(`🚨 Incident enregistré au PV & Transmis au Conseil de Discipline !`, { id: toastId })
+        const key = 'encg_exam_incidents_queue'
+        const queue: unknown = JSON.parse(sessionStorage.getItem(key) || '[]')
+        if (!Array.isArray(queue)) throw new Error('File invalide')
+        sessionStorage.setItem(key, JSON.stringify([...queue, { ...payload, student: { id: studentId } }]))
+        setShowFraudModal(false)
+        toast.warning('Signalement conservé sur cet appareil, en attente de transmission. Il ne figure pas encore au dossier serveur.', { id: toastId })
+      } catch {
+        toast.error('Enregistrement impossible. Gardez cette fenêtre et réessayez; le signalement n’a pas été transmis.', { id: toastId })
+      }
     }
   }
 
@@ -783,15 +560,13 @@ const { data: dbIncidentsData } = useQuery({
         supervisor_name: adminSupervisorName,
         signature_data: signatureDataUrl
       })
-      const seal = res.data?.seal || `SHA256:ENCG-FES-${id || 1}-${Date.now().toString(36).toUpperCase()}`
+      const seal = res.data?.seal
+      if (!seal) throw new Error('Scellé serveur absent')
       setPvLockSeal(seal)
       setIsPvLocked(true)
       toast.success('🔒 PV d\'Examen scellé et verrouillé définitivement dans la BDD !', { id: toastId })
-    } catch {
-      const seal = `SHA256:ENCG-FES-${id || 1}-${Date.now().toString(36).toUpperCase()}`
-      setPvLockSeal(seal)
-      setIsPvLocked(true)
-      toast.success('🔒 PV d\'Examen scellé et verrouillé !', { id: toastId })
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || 'Clôture refusée. Le PV reste ouvert.', { id: toastId })
     }
   }
 
@@ -810,11 +585,11 @@ const { data: dbIncidentsData } = useQuery({
   // Real KPI Calculations
   const examObj = detailsData?.exam
   const totalCount = candidates.length
-  const absentCount = candidates.filter(c => c.status === 'absent' && !c.has_fraud).length
-  const presentCount = candidates.filter(c => c.status === 'present' && !c.has_fraud).length
-  const lateCount = candidates.filter(c => c.status === 'late' && !c.has_fraud).length
+  const absentCount = candidates.filter(c => c.status === 'absent').length
+  const presentCount = candidates.filter(c => c.status === 'present').length
+  const lateCount = candidates.filter(c => c.status === 'late').length
   const fraudCount = candidates.filter(c => c.has_fraud).length || incidentsList.length
-  const totalAttendedWithCopies = Math.max(0, totalCount - absentCount)
+  const totalAttendedWithCopies = presentCount + lateCount
   const presenceRate = totalCount > 0 ? Math.round((totalAttendedWithCopies / totalCount) * 100) : 0
   const finalCopiesCount = customCopiesCount !== '' ? Number(customCopiesCount) : totalAttendedWithCopies
 
@@ -822,47 +597,12 @@ const { data: dbIncidentsData } = useQuery({
   const handlePrintOfficialPV = async () => {
     const apiUrl = api.defaults.baseURL || '/api'
 
-    // 🛡️ Auto-sync signatures to backend without passing huge Base64 in URL
-    try {
-      if (principalSignatureUrl && principalSignatureUrl.startsWith('data:image') && principalSignatureUrl !== secondarySignatureUrl) {
-        await api.post(`/exam-planning/${id}/save-signature`, {
-          signature_data: principalSignatureUrl,
-          role: 'principal'
-        })
-      }
-      if (secondarySignatureUrl && secondarySignatureUrl.startsWith('data:image')) {
-        await api.post(`/exam-planning/${id}/save-signature`, {
-          signature_data: secondarySignatureUrl,
-          role: 'secondary'
-        })
-      }
-    } catch (e) {
-      console.warn('Signatures auto-sync error:', e)
-    }
-
     openAuthenticatedUrl(`${apiUrl}/exams/${id}/pv-pdf`)
   }
 
   // Trigger Download Incident & Fraud Report PDF
   const handleDownloadFraudReport = async () => {
     const apiUrl = api.defaults.baseURL || '/api'
-
-    try {
-      if (principalSignatureUrl && principalSignatureUrl.startsWith('data:image') && principalSignatureUrl !== secondarySignatureUrl) {
-        await api.post(`/exam-planning/${id}/save-signature`, {
-          signature_data: principalSignatureUrl,
-          role: 'principal'
-        })
-      }
-      if (secondarySignatureUrl && secondarySignatureUrl.startsWith('data:image')) {
-        await api.post(`/exam-planning/${id}/save-signature`, {
-          signature_data: secondarySignatureUrl,
-          role: 'secondary'
-        })
-      }
-    } catch (e) {
-      console.warn('Signatures auto-sync error:', e)
-    }
 
     openAuthenticatedUrl(`${apiUrl}/exams/${id}/pv-pdf?mode=incident`)
   }
@@ -1368,7 +1108,7 @@ const { data: dbIncidentsData } = useQuery({
                                 || (student.status === 'late' && "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300")
                           )}>
                             {student.has_fraud ? <ShieldAlert className="w-3.5 h-3.5 text-white" /> : student.status === 'present' ? <CheckCircle2 className="w-3 h-3" /> : student.status === 'absent' ? <XCircle className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
-                            {student.has_fraud ? '🚨 FRAUDE' : student.status.toUpperCase()}
+                            {student.has_fraud ? '🚨 FRAUDE' : student.status === 'unrecorded' ? 'À POINTER' : student.status.toUpperCase()}
                           </span>
                         </td>
                         <td className="p-3 text-center font-mono text-slate-500">
@@ -1498,7 +1238,7 @@ const { data: dbIncidentsData } = useQuery({
                         student.status === 'present' ? "text-emerald-700 dark:text-emerald-300" :
                         student.status === 'absent' ? "text-red-700 dark:text-red-300" : "text-amber-700 dark:text-amber-300"
                       )}>
-                        {student.has_fraud ? '🚨 FRAUDE' : student.status.toUpperCase()}
+                        {student.has_fraud ? '🚨 FRAUDE' : student.status === 'unrecorded' ? 'À POINTER' : student.status.toUpperCase()}
                       </span>
                       {student.checkin_time && (
                         <span className="font-mono text-slate-400">{student.checkin_time}</span>

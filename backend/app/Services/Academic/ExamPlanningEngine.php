@@ -23,9 +23,11 @@ class ExamPlanningEngine
      */
     public function generatePlan(int $examId, array $roomIds, array $professorIds, ?int $secondaryGroupId = null): array
     {
+        app(ExamWorkflowGuard::class)->manage();
         $exam = Exam::with(['group', 'examSession'])->findOrFail($examId);
+        app(ExamWorkflowGuard::class)->mutablePlan($exam);
 
-        $academicYearId = $exam->examSession->academic_year_id ?? 1;
+        $academicYearId = $exam->examSession->academic_year_id;
 
         $studentsA = StudentRegistration::with('student')
             ->where('group_id', $exam->group_id)
@@ -41,6 +43,7 @@ class ExamPlanningEngine
 
         $studentsB = collect();
         if ($secondaryGroupId && $secondaryGroupId != $exam->group_id) {
+            Group::where('academic_year_id', $academicYearId)->where('filiere_id', $exam->group->filiere_id)->where('semester_number', $exam->group->semester_number)->findOrFail($secondaryGroupId);
             $studentsB = StudentRegistration::with('student')
                 ->where('group_id', $secondaryGroupId)
                 ->where('academic_year_id', $academicYearId)
@@ -76,7 +79,13 @@ class ExamPlanningEngine
         });
         $students = collect($studentList);
 
-        $rooms = Room::whereIn('id', $roomIds)->get();
+        $rooms = Room::where('institution_id', $exam->examSession->institution_id)->where('is_available', true)->whereIn('id', $roomIds)->get();
+        abort_unless($rooms->count() === count(array_unique($roomIds)), 422, 'Une salle est indisponible ou hors établissement.');
+        $professorIds = array_values(array_unique($professorIds));
+        $proctors = User::where('institution_id', $exam->examSession->institution_id)->where('is_active', true)->whereIn('id', $professorIds)->get();
+        abort_unless($proctors->count() === count($professorIds) && $proctors->every(fn ($p) => $p->hasAnyRole(['professor', 'vacataire', 'department-head', 'enseignant', 'doctorant']) || $p->professor?->is_active), 422, 'Liste de surveillants invalide.');
+        $required = $rooms->sum(fn ($room) => floor($room->capacity / 2) >= 50 ? 2 : 1);
+        abort_if(count($professorIds) < $required, 422, 'Pas assez de surveillants pour couvrir toutes les salles.');
         if ($rooms->isEmpty()) {
             throw new Exception('Aucune salle sélectionnée.');
         }
@@ -88,6 +97,9 @@ class ExamPlanningEngine
         }
 
         return DB::transaction(function () use ($examId, $rooms, $students, $professorIds) {
+            $exam = Exam::whereKey($examId)->lockForUpdate()->firstOrFail();
+            app(ExamWorkflowGuard::class)->mutablePlan($exam);
+            Room::whereIn('id', $rooms->pluck('id'))->orderBy('id')->lockForUpdate()->get();
             // Nettoyer le plan existant
             ExamSeating::where('exam_id', $examId)->delete();
             ExamSurveillance::where('exam_id', $examId)->delete();
@@ -164,15 +176,20 @@ class ExamPlanningEngine
         ?string $customStartDate = null
     ): array {
         $session = ExamSession::with('semester')->findOrFail($sessionId);
-        $isAutomne = $session->semester->number === 1;
+        app(ExamWorkflowGuard::class)->mutableSession($session);
+        abort_unless($session->semester && $session->academic_year_id && $session->start_date && $session->end_date, 422, 'Configurer l’année, le semestre et la période de la session.');
+        $isAutomne = (int) $session->semester->number % 2 === 1;
 
         if (! empty($customModuleIds)) {
             $modules = Module::whereIn('id', $customModuleIds)
+                ->where('institution_id', $session->institution_id)
+                ->when($filiereId, fn ($q) => $q->where('filiere_id', $filiereId))
+                ->when($semesterNumber, fn ($q) => $q->where('semester_number', $semesterNumber), fn ($q) => $q->whereRaw($isAutomne ? 'semester_number % 2 != 0' : 'semester_number % 2 = 0'))
                 ->get()
                 ->sortBy(fn ($m) => array_search($m->id, $customModuleIds))
                 ->values();
         } else {
-            $modules = Module::when($filiereId, fn ($q) => $q->where('filiere_id', $filiereId))
+            $modules = Module::where('institution_id', $session->institution_id)->when($filiereId, fn ($q) => $q->where('filiere_id', $filiereId))
                 ->when($semesterNumber, fn ($q) => $q->where('semester_number', $semesterNumber), fn ($q) => $q->whereRaw($isAutomne ? 'semester_number % 2 != 0' : 'semester_number % 2 = 0'))
                 ->orderBy('filiere_id')
                 ->orderBy('semester_number')
@@ -180,7 +197,7 @@ class ExamPlanningEngine
                 ->get();
         }
 
-        $rooms = Room::orderBy('capacity')->get();
+        $rooms = Room::where('institution_id', $session->institution_id)->where('is_available', true)->where('capacity', '>', 1)->orderBy('capacity')->get();
 
         if ($modules->isEmpty()) {
             throw new Exception('Aucun module trouvé pour les critères sélectionnés.');
@@ -191,31 +208,29 @@ class ExamPlanningEngine
 
         $startDate = $customStartDate ? Carbon::parse($customStartDate) : Carbon::parse($session->start_date);
         $endDate = Carbon::parse($session->end_date);
-        if ($endDate->lte($startDate)) {
-            $endDate = $startDate->copy()->addDays(45);
-        }
+        abort_if($startDate->lt($session->start_date) || $endDate->lt($startDate), 422, 'Date de démarrage hors période de session.');
         $currentDate = $startDate->copy();
         if ($currentDate->isSunday()) {
             $currentDate->addDay();
         }
 
         return DB::transaction(function () use (
-            $filiereId, $sessionId, $session, $modules, $rooms, $currentDate, $modulesPerDay, $daySlotMode
+            $filiereId, $sessionId, $session, $modules, $rooms, $currentDate, $endDate, $modulesPerDay, $daySlotMode
         ) {
+            $lockedSession = ExamSession::whereKey($sessionId)->lockForUpdate()->firstOrFail();
+            app(ExamWorkflowGuard::class)->mutableSession($lockedSession);
+            Room::whereIn('id', $rooms->pluck('id'))->orderBy('id')->lockForUpdate()->get();
             // Supprimer les examens existants pour cette session et filière(s)
-            if ($filiereId) {
-                $moduleIds = Module::where('filiere_id', $filiereId)->pluck('id');
-                $existingExamIds = Exam::where('exam_session_id', $sessionId)->whereIn('module_id', $moduleIds)->pluck('id');
-            } else {
-                $existingExamIds = Exam::where('exam_session_id', $sessionId)->pluck('id');
-            }
+            $existing = Exam::where('exam_session_id', $sessionId)->whereIn('module_id', $modules->pluck('id'))->lockForUpdate()->get();
+            foreach ($existing as $exam) { app(ExamWorkflowGuard::class)->mutablePlan($exam); }
+            $existingExamIds = $existing->pluck('id');
 
             ExamSeating::whereIn('exam_id', $existingExamIds)->delete();
             ExamSurveillance::whereIn('exam_id', $existingExamIds)->delete();
             Exam::whereIn('id', $existingExamIds)->delete();
 
             // Sélection exhaustive du corps de surveillance : Professeurs Permanents, Vacataires et Doctorants surveillants
-            $professors = User::where(function ($query) {
+            $professors = User::where('institution_id', $session->institution_id)->where(function ($query) {
                 $query->whereHas('roles', fn ($q) => $q->whereIn('name', [
                     'professor',
                     'department-head',
@@ -229,16 +244,16 @@ class ExamPlanningEngine
                 ->get();
 
             if ($professors->isEmpty()) {
-                $profUserIds = Professor::whereNotNull('user_id')->pluck('user_id');
+                $profUserIds = Professor::where('institution_id', $session->institution_id)->where('is_active', true)->whereNotNull('user_id')->pluck('user_id');
                 $professors = User::whereIn('id', $profUserIds)->get();
             }
             if ($professors->isEmpty()) {
-                $professors = User::limit(5)->get();
+                abort(422, 'Aucun enseignant surveillant disponible.');
             }
 
             $examsCreated = 0;
             $allCreatedExams = [];
-            $bookedRoomsBySlot = []; // [$dateStr][$startTime][] = room_id
+            $scheduledExams = Exam::with('seatings')->whereBetween('exam_date', [$currentDate->toDateString(), $endDate->toDateString()])->get();
 
             // Grouper les modules par filière pour les planifier en parallèle sans chevauchement
             $modulesByFiliere = $modules->groupBy('filiere_id');
@@ -280,6 +295,7 @@ class ExamPlanningEngine
             $loopCount = 0;
 
             while ($hasRemainingModules && $loopCount < $safetyLoopLimit) {
+                abort_if($currentDate->gt($endDate), 422, 'Période insuffisante : aucun planning partiel n’a été enregistré.');
                 $loopCount++;
                 $dateStr = $currentDate->format('Y-m-d');
                 $scheduledSomethingToday = false;
@@ -321,19 +337,28 @@ class ExamPlanningEngine
                             }
                         }
 
-                        $students = StudentRegistration::whereHas('group', fn ($q) => $q->where('filiere_id', $module->filiere_id))
+                        $students = StudentRegistration::whereHas('group', fn ($q) => $q->where('filiere_id', $module->filiere_id)->where('semester_number', $module->semester_number))
                             ->where('academic_year_id', $session->academic_year_id)
-                            ->pluck('student_id');
+                            ->distinct()->pluck('student_id');
 
-                        $studentCount = $students->count() ?: 24;
+                        $studentCount = $students->count();
+                        abort_if($studentCount === 0, 422, "Aucun inscrit pour le module {$module->code} et son semestre.");
 
                         // Trouver le créneau où les salles libres peuvent contenir les étudiants
                         $chosenSlot = null;
                         $chosenAvailableRooms = null;
 
                         foreach ($allCandidateSlots as $slotCand) {
-                            $bookedInSlot = $bookedRoomsBySlot[$dateStr][$slotCand] ?? [];
-                            $freeRooms = $rooms->filter(fn ($r) => ! in_array($r->id, $bookedInSlot))->values();
+                            $slotStart = Carbon::parse($dateStr.' '.$slotCand);
+                            $slotEnd = $slotStart->copy()->addMinutes(ExamSlotCatalog::durationMinutes($slotCand));
+                            $overlaps = $scheduledExams->filter(function ($other) use ($dateStr, $slotStart, $slotEnd) {
+                                if ($other->exam_date->toDateString() !== $dateStr) { return false; }
+                                $otherStart = Carbon::parse($dateStr.' '.$other->start_time);
+                                return $slotStart->lt($otherStart->copy()->addMinutes($other->duration_minutes)) && $slotEnd->gt($otherStart);
+                            });
+                            if ($overlaps->contains(fn ($other) => $other->seatings->pluck('student_id')->intersect($students)->isNotEmpty())) { continue; }
+                            $bookedInSlot = $overlaps->flatMap(fn ($other) => array_merge([$other->room_id], $other->seatings->pluck('room_id')->all()))->all();
+                            $freeRooms = $rooms->filter(fn ($r) => ! in_array($r->id, $bookedInSlot) && ! app(TimetableRoomGuard::class)->isRoomBusyAt((string) $r->id, $slotStart, $slotEnd))->values();
                             $totalCap = $freeRooms->sum(fn ($r) => floor($r->capacity / 2));
 
                             if ($totalCap >= $studentCount) {
@@ -344,35 +369,20 @@ class ExamPlanningEngine
                         }
 
                         if (! $chosenSlot) {
-                            $bestSlot = $allCandidateSlots[0];
-                            $bestCap = -1;
-                            $bestRooms = collect();
-                            foreach ($allCandidateSlots as $slotCand) {
-                                $bookedInSlot = $bookedRoomsBySlot[$dateStr][$slotCand] ?? [];
-                                $freeRooms = $rooms->filter(fn ($r) => ! in_array($r->id, $bookedInSlot))->values();
-                                $cap = $freeRooms->sum(fn ($r) => floor($r->capacity / 2));
-                                if ($cap > $bestCap) {
-                                    $bestCap = $cap;
-                                    $bestSlot = $slotCand;
-                                    $bestRooms = $freeRooms;
-                                }
-                            }
-                            $chosenSlot = $bestSlot;
-                            $chosenAvailableRooms = $bestRooms->isNotEmpty() ? $bestRooms : clone $rooms;
+                            abort(422, "Capacité insuffisante le {$dateStr} : choisir une autre période ou libérer des salles.");
                         }
 
                         $slotInfo = ExamSlotCatalog::resolve($chosenSlot);
                         $unassignedCount = $studentCount;
                         $studentsList = $students->toArray();
                         $availableRooms = clone $chosenAvailableRooms;
-                        $filiereGroup = Group::where('filiere_id', $module->filiere_id)->first() ?? Group::first();
-                        $defaultGroupId = $filiereGroup?->id ?? 1;
+                        $filiereGroup = Group::where('filiere_id', $module->filiere_id)->where('semester_number', $module->semester_number)->where('academic_year_id', $session->academic_year_id)->firstOrFail();
+                        $defaultGroupId = $filiereGroup->id;
 
                         while ($unassignedCount > 0 && $availableRooms->isNotEmpty()) {
                             $assignedRoom = $availableRooms->first(fn ($r) => floor($r->capacity / 2) >= $unassignedCount)
                                 ?? $availableRooms->pop();
 
-                            $bookedRoomsBySlot[$dateStr][$chosenSlot][] = $assignedRoom->id;
                             $availableRooms = $availableRooms->filter(fn ($r) => $r->id !== $assignedRoom->id)->values();
 
                             $examCapacity = floor($assignedRoom->capacity / 2);
@@ -408,6 +418,7 @@ class ExamPlanningEngine
                             if (! empty($seatings)) {
                                 ExamSeating::insert($seatings);
                             }
+                            $scheduledExams->push($exam->load('seatings'));
                         }
 
                         $modulePointers[$fid]++;
@@ -459,6 +470,15 @@ class ExamPlanningEngine
                     $workload[$p->id] = 0;
                     $daily[$p->id] = [];
                     $schedules[$p->id] = [];
+                }
+                foreach (ExamSurveillance::with('exam')->whereIn('professor_id', $professors->pluck('id'))->whereNotIn('exam_id', collect($allCreatedExams)->pluck('id'))->get() as $row) {
+                    if (! $row->exam) { continue; }
+                    $otherDate = $row->exam->exam_date->toDateString();
+                    $parts = explode(':', $row->exam->start_time);
+                    $otherStart = (int) $parts[0] * 60 + (int) $parts[1];
+                    $schedules[$row->professor_id][] = ['date' => $otherDate, 'start' => $otherStart, 'end' => $otherStart + $row->exam->duration_minutes];
+                    $workload[$row->professor_id]++;
+                    $daily[$row->professor_id][$otherDate] = ($daily[$row->professor_id][$otherDate] ?? 0) + 1;
                 }
 
                 $totalExams = $sortedExams->count();
@@ -543,7 +563,7 @@ class ExamPlanningEngine
                     })->first();
 
                     if (! $president) {
-                        $president = $professors->first();
+                        abort(422, "Aucun président disponible pour l’épreuve {$exam->id}. Aucun planning partiel enregistré.");
                     }
 
                     // Enregistrer le président
@@ -632,7 +652,7 @@ class ExamPlanningEngine
                     })->first();
 
                     if (! $second) {
-                        $second = $professors->first(fn ($p) => $p->id !== $president->id);
+                        abort(422, "Aucun second surveillant disponible pour l’épreuve {$exam->id}. Aucun planning partiel enregistré.");
                     }
 
                     if ($second) {

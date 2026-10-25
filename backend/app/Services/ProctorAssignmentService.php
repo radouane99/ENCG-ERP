@@ -67,8 +67,13 @@ class ProctorAssignmentService
         }
 
         return DB::transaction(function () use ($session) {
+            $guard = app(\App\Services\Academic\ExamWorkflowGuard::class);
+            $guard->manage();
+            $locked = ExamSession::whereKey($session->id)->lockForUpdate()->firstOrFail();
+            $guard->mutableSession($locked);
+            foreach ($session->exams as $exam) { $guard->mutablePlan($exam); }
             // Sélection exhaustive : Professeurs Permanents, Vacataires et Doctorants surveillants
-            $availableProfessors = User::where(function ($query) {
+            $availableProfessors = User::where('institution_id', $session->institution_id)->where(function ($query) {
                 $query->whereHas('roles', fn ($q) => $q->whereIn('name', [
                     'professor',
                     'department-head',
@@ -83,7 +88,7 @@ class ProctorAssignmentService
                 ->get();
 
             if ($availableProfessors->isEmpty()) {
-                $availableProfessors = User::whereHas('roles', fn ($q) => $q->whereIn('name', [
+                $availableProfessors = User::where('institution_id', $session->institution_id)->where('is_active', true)->whereHas('roles', fn ($q) => $q->whereIn('name', [
                     'professor',
                     'department-head',
                     'enseignant',
@@ -362,6 +367,12 @@ class ProctorAssignmentService
         }
 
         return DB::transaction(function () use ($session, $assignments) {
+            $guard = app(\App\Services\Academic\ExamWorkflowGuard::class);
+            $guard->manage();
+            $locked = ExamSession::whereKey($session->id)->lockForUpdate()->firstOrFail();
+            $guard->mutableSession($locked);
+            foreach ($session->exams as $exam) { $guard->mutablePlan($exam); }
+            abort_if(empty($assignments), 422, 'Aucune affectation fournie.');
             $sessionExamIds = $session->exams->pluck('id')->toArray();
 
             // Récupérer les confirmations existantes pour les préserver si même prof
@@ -375,17 +386,29 @@ class ProctorAssignmentService
 
             $createdCount = 0;
             $examsMap = $session->exams->keyBy('id');
-            $defaultRoomId = Room::first()?->id;
+            $defaultRoomId = null;
 
             foreach ($assignments as $item) {
                 $examId = (int) ($item['exam_id'] ?? 0);
                 if (! in_array($examId, $sessionExamIds) || ! isset($examsMap[$examId])) {
-                    continue;
+                    abort(422, 'Épreuve hors de la session sélectionnée.');
                 }
 
                 $exam = $examsMap[$examId];
                 $roomId = ! empty($item['room_id']) ? (int) $item['room_id'] : ($exam->room_id ?: $defaultRoomId);
 
+                abort_unless($roomId && ($roomId === (int) $exam->room_id || $exam->seatings()->where('room_id', $roomId)->exists()), 422, 'Salle étrangère au plan de cette épreuve.');
+                $candidateIds = array_values(array_unique(array_filter(array_merge([$item['principal_id'] ?? null, $item['secondary_id'] ?? null], (array) ($item['secondary_ids'] ?? [])))));
+                foreach ($candidateIds as $candidateId) {
+                    $candidate = User::where('institution_id', $session->institution_id)->where('is_active', true)->findOrFail($candidateId);
+                    abort_unless($candidate->hasAnyRole(['professor', 'vacataire', 'department-head', 'enseignant', 'doctorant']) || $candidate->professor?->is_active, 422, 'Ce compte ne peut pas assurer de surveillance.');
+                    $start = Carbon::parse($exam->exam_date->toDateString().' '.$exam->start_time);
+                    $end = $start->copy()->addMinutes($exam->duration_minutes);
+                    foreach (ExamSurveillance::with('exam')->where('professor_id', $candidateId)->whereHas('exam', fn ($q) => $q->whereDate('exam_date', $exam->exam_date))->get() as $other) {
+                        $otherStart = Carbon::parse($other->exam->exam_date->toDateString().' '.$other->exam->start_time);
+                        abort_if($start->lt($otherStart->copy()->addMinutes($other->exam->duration_minutes)) && $end->gt($otherStart), 409, 'Chevauchement de surveillance pour cet enseignant.');
+                    }
+                }
                 // 1. Surveillant Principal (Président de salle)
                 if (! empty($item['principal_id'])) {
                     $profId = (int) $item['principal_id'];
