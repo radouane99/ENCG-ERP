@@ -843,7 +843,7 @@
                             <img src="{{ $directorSignature }}" alt="Cachet et Signature Direction">
                         @endif
                     </div>
-                    <div class="sign-status-badge">Cachet Officiel &amp; Signature Institutionnels</div>
+                    <div class="sign-status-badge">Signature et cachet à apposer</div>
                 </td>
             </tr>
         </table>
@@ -858,7 +858,7 @@
                 </td>
                 <td style="width: 90%; padding-left: 6px;">
                     <div class="hash-code">
-                        <strong style="color: #581c1c;">AUTHENTIFICATION NUMÉRIQUE &amp; SCELLÉ DE SÉCURITÉ (SHA-256) :</strong><br>
+                        <strong style="color: #581c1c;">RÉFÉRENCE DU DOCUMENT (SHA-256) :</strong><br>
                         {{ $item['sealHash'] ?? hash('sha256', 'ENCG-DISCIPLINE-'.($item['incident']->id ?? 1)) }}<br>
                         <span style="color: #64748b;">
                             Document disciplinaire officiel délivré par le Système Centralisé ENCG ERP • Page {{ $idx + 2 }} sur {{ count($items) + 1 }}.

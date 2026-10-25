@@ -464,7 +464,7 @@
                     </tr>
                     <tr>
                         <td colspan="2" style="text-align: center; padding: 1.5px 3px;">
-                            <span class="badge-decision">DÉCISION DÉFINITIVE</span>
+                            <span class="badge-decision">DÉCISION ENREGISTRÉE</span>
                         </td>
                     </tr>
                 </table>
@@ -569,13 +569,7 @@
             ■ 2. DÉCISION &amp; SANCTION OFFICIELLEMENT PRONONCÉE PAR LE CONSEIL
         </div>
         <div class="sanction-text">
-            @if($incident->sanction)
-                {{ $incident->sanction }}
-            @elseif($incident->decision_note)
-                {{ $incident->decision_note }}
-            @else
-                Note 0.00 / 20 attribuée d'office au module avec mention "FRAUDE" inscrite au PV officiel d'examen.
-            @endif
+            {{ $incident->decision }}
         </div>
         <div class="sanction-deliberation">
             Délibération adoptée à l'unanimité des membres présents du Conseil de Discipline réuni le {{ date('d/m/Y') }}.
@@ -603,7 +597,7 @@
                         <img src="{{ $secretaireSignature }}" alt="Visa Secrétaire de Séance">
                     @endif
                 </div>
-                <div class="sign-status-badge">Procès-Verbal Scellé &amp; Enregistré</div>
+                <div class="sign-status-badge">Signature à apposer</div>
             </td>
             <td>
                 <div class="sign-role-title">Le Directeur de l'ENCG de Fès</div>
@@ -613,7 +607,7 @@
                         <img src="{{ $directorSignature }}" alt="Cachet et Signature Direction">
                     @endif
                 </div>
-                <div class="sign-status-badge">(Cachet Officiel &amp; Signature Valides)</div>
+                <div class="sign-status-badge">Signature et cachet à apposer</div>
             </td>
         </tr>
     </table>
@@ -628,10 +622,10 @@
             </td>
             <td style="width: 90%; padding-left: 6px;">
                 <div class="hash-code">
-                    <strong style="color: #581c1c;">AUTHENTIFICATION NUMÉRIQUE DU PROCÈS-VERBAL (SHA-256) :</strong><br>
+                    <strong style="color: #581c1c;">RÉFÉRENCE DU DOCUMENT (SHA-256) :</strong><br>
                     {{ $sealHash ?? hash('sha256', 'DECISION-DISCIPLINE-'.($incident->id ?? 1)) }}<br>
                     <span style="color: #64748b;">
-                        Document disciplinaire officiel sous scellé numérique délivré par le Système Centralisé ENCG ERP. Toute falsification ou altération expose son auteur aux sanctions disciplinaires et pénales prévues par la législation en vigueur.
+                        Document préparé depuis le dossier enregistré. Signatures et cachets des autorités compétentes à apposer avant remise officielle. Le QR donne accès au dossier réservé au personnel.
                     </span>
                 </div>
             </td>

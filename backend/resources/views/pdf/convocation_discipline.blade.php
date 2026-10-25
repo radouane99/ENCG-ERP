@@ -675,7 +675,7 @@
                         <img src="{{ $directorSignature }}" alt="Cachet et Signature Direction">
                     @endif
                 </div>
-                <div class="sign-status-badge">Cachet Officiel &amp; Signature Institutionnels</div>
+                <div class="sign-status-badge">Signature et cachet à apposer</div>
             </td>
         </tr>
     </table>
@@ -690,10 +690,10 @@
             </td>
             <td style="width: 90%; padding-left: 6px;">
                 <div class="hash-code">
-                    <strong style="color: #581c1c;">AUTHENTIFICATION NUMÉRIQUE &amp; SCELLÉ DE SÉCURITÉ (SHA-256) :</strong><br>
+                    <strong style="color: #581c1c;">RÉFÉRENCE DU DOCUMENT (SHA-256) :</strong><br>
                     {{ $sealHash ?? hash('sha256', 'ENCG-DISCIPLINE-'.($incident->id ?? 1)) }}<br>
                     <span style="color: #64748b;">
-                        Document disciplinaire officiel sous scellé numérique délivré par le Système Centralisé ENCG ERP. Toute falsification ou altération expose son auteur aux sanctions disciplinaires et pénales prévues par la législation en vigueur.
+                        Document préparé depuis le dossier enregistré. Signatures et cachets des autorités compétentes à apposer avant remise officielle. Le QR donne accès au dossier réservé au personnel.
                     </span>
                 </div>
             </td>

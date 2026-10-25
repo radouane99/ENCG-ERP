@@ -282,6 +282,7 @@ class ConvocationController extends Controller
 
         $seatings = ExamSeating::with(['exam.module', 'exam.examSession', 'room'])
             ->where('student_id', $student->id)
+            ->where(fn ($q) => $q->whereNotNull('sent_at')->orWhereIn('status', ['sent', 'present', 'absent', 'late']))
             ->orderBy('exam_id', 'desc')
             ->get()
             ->map(fn ($s) => [
@@ -429,6 +430,8 @@ class ConvocationController extends Controller
             ], 404);
         }
 
+        app(\App\Services\Academic\ExamWorkflowGuard::class)->viewExam($seating->exam);
+
         return response()->json([
             'success' => true,
             'valid' => true,
@@ -540,10 +543,17 @@ class ConvocationController extends Controller
             return response()->json(['success' => false, 'message' => 'Étudiant introuvable.'], 404);
         }
 
+        abort_unless($request->user() && (int) $student->institution_id === (int) $request->user()->institution_id, 404);
+        $isOwner = (int) $student->user_id === (int) $request->user()->id;
+        if (! $isOwner) { app(\App\Services\Academic\ExamWorkflowGuard::class)->manage(); }
+
         $sessionType = strtoupper($request->query('session_type', 'ORDINAIRE'));
 
         $query = ExamSeating::with(['exam.module', 'exam.session', 'exam.group', 'room'])
-            ->where('student_id', $student->id);
+            ->where('student_id', $student->id)
+            ->whereHas('exam.session', fn ($q) => $q->where('academic_year_id', \App\Services\Academic\AcademicContext::yearId()));
+        if ($request->filled('session_id')) { $query->whereHas('exam', fn ($q) => $q->where('exam_session_id', $request->integer('session_id'))); }
+        if ($isOwner) { $query->where(fn ($q) => $q->whereNotNull('sent_at')->orWhereIn('status', ['sent', 'present', 'absent', 'late'])); }
 
         if ($sessionType === 'RATTRAPAGE') {
             $query->where(function ($q) {
@@ -556,7 +566,7 @@ class ConvocationController extends Controller
         } elseif ($sessionType === 'ORDINAIRE' || $sessionType === 'NORMALE') {
             $query->where(function ($q) {
                 $q->whereHas('exam.session', function ($s) {
-                    $s->whereIn('type', ['normale', 'ordinaire'])->orWhere('name', 'like', '%normale%')->orWhere('name', 'like', '%ordinaire%');
+                    $s->whereIn('type', ['normal', 'normale', 'ordinaire'])->orWhere('name', 'like', '%normale%')->orWhere('name', 'like', '%ordinaire%');
                 })->orWhereHas('exam', function ($e) {
                     $e->whereIn('type', ['normale', 'ordinaire', 'written', 'oral']);
                 });
@@ -566,30 +576,7 @@ class ConvocationController extends Controller
         $seatings = $query->get();
 
         // Fallback intelligent if session types aren't explicitly labeled
-        if ($seatings->isEmpty() && ! empty($sessionType)) {
-            $allSeatings = ExamSeating::with(['exam.module', 'exam.session', 'exam.group', 'room'])
-                ->where('student_id', $student->id)
-                ->get();
-
-            if ($sessionType === 'RATTRAPAGE') {
-                $seatings = $allSeatings->filter(function ($s) {
-                    $date = $s->exam?->exam_date ? Carbon::parse($s->exam->exam_date) : null;
-
-                    return ($s->exam?->session && str_contains(strtolower($s->exam->session->name ?? ''), 'rattrapage'))
-                        || ($date && $date->day > 10);
-                });
-            } else {
-                $seatings = $allSeatings->filter(function ($s) {
-                    $date = $s->exam?->exam_date ? Carbon::parse($s->exam->exam_date) : null;
-
-                    return ! ($s->exam?->session && str_contains(strtolower($s->exam->session->name ?? ''), 'rattrapage'))
-                        && (! $date || $date->day <= 10);
-                });
-            }
-            if ($seatings->isEmpty()) {
-                $seatings = $allSeatings;
-            }
-        }
+        abort_if($seatings->isEmpty(), 404, 'Aucune convocation diffusée pour cette session et cette année.');
 
         $seatings = $seatings->sortBy(function ($s) {
             return ($s->exam?->exam_date ? Carbon::parse($s->exam->exam_date)->format('Ymd') : '99999999').'_'.($s->exam?->start_time ?? '00:00');
@@ -597,13 +584,13 @@ class ConvocationController extends Controller
 
         $stUser = $student->user;
         $studentName = $stUser ? trim(($stUser->first_name ?? '').' '.($stUser->last_name ?? '')) : 'Étudiant ENCG';
-        $cne = $student->cne ?? 'N130094822';
-        $cin = $student->cin ?? 'F598711';
+        $cne = $student->cne ?? '—';
+        $cin = $student->cin ?? '—';
 
         $reg = $student->registrations()->latest()->first();
         $filiereName = $reg?->filiere?->name ?? 'Tronc Commun ENCG';
-        $groupName = $reg?->group?->name ?? 'TC-S2-G1';
-        $subGroup = $reg?->sub_group ?? 'G1.2';
+        $groupName = $reg?->group?->name ?? '—';
+        $subGroup = $reg?->sub_group ?? '—';
         $semesterNumber = $reg?->semester_number ?? 2;
 
         $examsFormatted = $seatings->map(function ($s) {

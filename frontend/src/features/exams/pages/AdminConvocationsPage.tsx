@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { FileText, Mail, Zap, CheckCircle, AlertTriangle, Loader2, Users, Shield, Calendar, Clock, MapPin, ChevronRight, BarChart3, Eye, Download, X, MessageCircle, Search, QrCode, Sparkles, ShieldCheck, Send, Layers, CheckCircle2, RefreshCw, LayoutGrid, ListFilter, Printer, BadgeCheck, Inbox, ExternalLink } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -12,7 +12,8 @@ import ManualProctorAssignmentModal from '../components/ManualProctorAssignmentM
 export default function AdminConvocationsPage() {
   const navigate = useNavigate()
   useQueryClient();
-  const [selectedSessionId, setSelectedSessionId] = useState<number | null>(null);
+  const [searchParams] = useSearchParams();
+  const [selectedSessionId, setSelectedSessionId] = useState<number | null>(() => Number(searchParams.get('session_id')) > 0 ? Number(searchParams.get('session_id')) : null);
   const [activeTab, setActiveTab] = useState<'students' | 'surveillants' | 'overview'>('students');
   const [isManualAssignModalOpen, setIsManualAssignModalOpen] = useState(false);
   const [selectedFiliere, setSelectedFiliere] = useState<string>('all');

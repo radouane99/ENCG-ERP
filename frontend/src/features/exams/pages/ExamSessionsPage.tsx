@@ -3,6 +3,7 @@ import { Plus,Edit2,Trash2,X,CalendarDays,CheckCircle,Lock } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
 import { toast } from 'sonner'
+import { Link } from 'react-router-dom'
 
 interface ExamSession {
   id: number;
@@ -14,6 +15,7 @@ interface ExamSession {
   is_locked: boolean;
   academic_year: string;
   semester: string;
+  exams_count?: number;
   academic_year_id: number | null;
   semester_id: number | null;
 }
@@ -35,6 +37,8 @@ const EMPTY = { name: '', type: 'normal', start_date: '', end_date: '', is_activ
 export default function ExamSessionsPage() {
   const [sessions, setSessions] = useState<ExamSession[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
+  const [saving, setSaving] = useState(false)
   const [showModal, setShowModal] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [form, setForm] = useState({ ...EMPTY })
@@ -44,9 +48,11 @@ export default function ExamSessionsPage() {
   const fetchData = useCallback(async () => {
     try {
       setLoading(true)
+      setLoadError(false)
       const res = await api.get('/exam-sessions')
       setSessions(res.data.data || [])
     } catch (err) {
+      setLoadError(true)
       console.error(err)
     } finally {
       setLoading(false)
@@ -83,6 +89,8 @@ export default function ExamSessionsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (saving) return
+    setSaving(true)
     try {
       const payload = {
         ...form,
@@ -100,6 +108,8 @@ export default function ExamSessionsPage() {
       fetchData()
     } catch (err: any) {
       toast.error(err?.response?.data?.message || 'Erreur.')
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -124,6 +134,15 @@ export default function ExamSessionsPage() {
     }
   }
 
+  const handleLock = async (session: ExamSession) => {
+    if (!confirm(session.is_locked ? 'Déverrouiller explicitement cette session ?' : 'Clôturer cette session après vérification des PV et incidents ?')) return
+    try {
+      await api.put(`/exam-sessions/${session.id}`, { is_locked: !session.is_locked })
+      toast.success(session.is_locked ? 'Session déverrouillée.' : 'Session clôturée.')
+      await fetchData()
+    } catch (error: any) { toast.error(error?.response?.data?.message || 'Action refusée.') }
+  }
+
   const inputCls = "w-full px-3 py-2 text-sm bg-background border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
   const labelCls = "block text-xs font-bold text-muted-foreground uppercase mb-1"
 
@@ -139,7 +158,8 @@ export default function ExamSessionsPage() {
         </button>
       </div>
 
-      {loading ? <div className="text-muted-foreground p-12 text-center">Chargement...</div> : (
+      {loadError && <div role="alert" className="rounded-xl border border-destructive p-4 text-destructive">Chargement des sessions impossible. <button type="button" className="underline" onClick={() => void fetchData()}>Réessayer</button></div>}
+      {loading ? <div className="text-muted-foreground p-12 text-center">Chargement...</div> : !loadError && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {sessions.length === 0 ? (
             <div className="md:col-span-2 lg:col-span-3 text-center py-16 text-muted-foreground">
@@ -153,7 +173,7 @@ export default function ExamSessionsPage() {
               {s.is_locked && <div className="absolute top-3 left-3"><Lock className="w-3.5 h-3.5 text-muted-foreground" aria-label="Verrouillée" /></div>}
               
               <div className="mt-2">
-                <span className={cn("text-xs font-bold px-2 py-1 rounded-md mb-2 inline-block", TYPE_COLORS[s.type])}>{TYPE_LABELS[s.type]}</span>
+                <span className={cn("text-xs font-bold px-2 py-1 rounded-md mb-2 inline-block", TYPE_COLORS[s.type])}>{TYPE_LABELS[s.type] || s.type}</span>
                 <p className="font-bold text-foreground text-lg">{s.name}</p>
                 <p className="text-sm text-muted-foreground">{s.academic_year} • {s.semester}</p>
               </div>
@@ -165,6 +185,11 @@ export default function ExamSessionsPage() {
                 </div>
               )}
               
+              <div className="mt-4 flex flex-wrap gap-2 text-sm">
+                <Link className="font-medium text-primary underline" to={`/admin/exams?session_id=${s.id}`}>Préparer les épreuves</Link>
+                <Link className="font-medium text-primary underline" to={`/admin/exams/sessions/${s.id}/live`}>Superviser</Link>
+                <button type="button" className="text-muted-foreground underline" onClick={() => void handleLock(s)}>{s.is_locked ? 'Déverrouiller' : 'Clôturer la session'}</button>
+              </div>
               <div className="flex items-center gap-2 mt-4 pt-4 border-t">
                 {!s.is_active && !s.is_locked && (
                   <button onClick={() => handleSetActive(s)} className="flex-1 text-xs font-medium text-primary border border-primary/30 hover:bg-primary/10 px-3 py-1.5 rounded-lg transition-colors">
@@ -172,8 +197,8 @@ export default function ExamSessionsPage() {
                   </button>
                 )}
                 <div className="flex-1 flex justify-end gap-1">
-                  <button onClick={() => openEdit(s)} className="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md"><Edit2 className="w-4 h-4" /></button>
-                  {!s.is_locked && <button onClick={() => handleDelete(s.id)} className="p-1.5 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-md"><Trash2 className="w-4 h-4" /></button>}
+                  <button aria-label={`Modifier ${s.name}`} disabled={s.is_locked} onClick={() => openEdit(s)} className="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md"><Edit2 className="w-4 h-4" /></button>
+                  {!s.is_locked && !s.exams_count && <button aria-label={`Supprimer ${s.name}`} onClick={() => handleDelete(s.id)} className="p-1.5 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-md"><Trash2 className="w-4 h-4" /></button>}
                 </div>
               </div>
             </div>
@@ -183,7 +208,7 @@ export default function ExamSessionsPage() {
 
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-card border rounded-2xl shadow-xl w-full max-w-md">
+          <div role="dialog" aria-modal="true" aria-label={editingId ? 'Modifier la session' : 'Nouvelle session'} className="bg-card border rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-4 border-b bg-muted/30">
               <h3 className="font-bold text-lg">{editingId ? 'Modifier la session' : 'Nouvelle Session'}</h3>
               <button onClick={() => setShowModal(false)} className="p-1 text-muted-foreground hover:bg-muted rounded-md"><X className="w-5 h-5" /></button>
@@ -230,7 +255,7 @@ export default function ExamSessionsPage() {
 
               <div className="flex items-center justify-end gap-3 pt-4 border-t">
                 <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 text-sm text-muted-foreground hover:bg-muted rounded-lg">Annuler</button>
-                <button type="submit" className="px-4 py-2 text-sm font-medium bg-primary text-white hover:bg-primary/90 rounded-lg shadow-sm">{editingId ? 'Mettre à jour' : 'Enregistrer'}</button>
+                <button type="submit" disabled={saving} className="px-4 py-2 text-sm font-medium bg-primary text-white hover:bg-primary/90 rounded-lg shadow-sm disabled:opacity-50">{saving ? 'Enregistrement…' : editingId ? 'Mettre à jour' : 'Enregistrer'}</button>
               </div>
             </form>
           </div>

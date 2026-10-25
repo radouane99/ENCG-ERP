@@ -56,4 +56,13 @@ class ExamWorkflowGuard
         abort_unless($admin || ($user && $rows->contains('professor_id', $user->id)), 403, 'Aucune surveillance affectée pour cette salle.');
         abort_if($rows->contains(fn ($row) => $row->signed_at !== null), 409, 'PV visé : une réouverture est requise.');
     }
+
+    public function allowsProctor(User $user, Exam $exam, ?array $availability = null): bool
+    {
+        $profile = $user->professor?->id;
+        if (! $profile) { return true; }
+        $start = \Carbon\Carbon::parse($exam->exam_date->toDateString().' '.$exam->start_time);
+        $end = $start->copy()->addMinutes($exam->duration_minutes);
+        return ProfessorAvailabilityService::allows($availability ?? ProfessorAvailabilityService::map($exam->examSession->academic_year_id), $profile, $start->dayOfWeekIso, $start->format('H:i:s'), $end->format('H:i:s'));
+    }
 }

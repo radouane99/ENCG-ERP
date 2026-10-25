@@ -277,7 +277,7 @@
                 <td class="meta-val">
                     <strong>{{ $total_students }}</strong> Inscrits | 
                     <span style="color: #059669;"><strong>{{ $present_students }}</strong> Présents</span> | 
-                    <span style="color: #dc2626;"><strong>{{ $absent_students }}</strong> Absents</span>
+                    <span style="color: #dc2626;"><strong>{{ $absent_students }}</strong> Absents | <strong>{{ $unrecorded_students ?? 0 }}</strong> À pointer</span>
                 </td>
             </tr>
         </table>
@@ -373,13 +373,13 @@
                             </td>
                             <td style="vertical-align: middle; padding-left: 5px;">
                                 <div style="font-size: 7px; font-weight: 900; color: #001A4B; text-transform: uppercase;">
-                                    PV CERTIFIÉ ENCG
+                                    {{ $exam->is_locked ? 'PV VERROUILLÉ' : 'BROUILLON — PV NON CLÔTURÉ' }}
                                 </div>
                                 <div style="font-family: monospace; font-size: 6px; font-weight: bold; color: #001A4B; margin-top: 1px;">
-                                    {{ substr($seal ?? 'SHA256:ENCG-FES-PV-EXAM-SEAL', 0, 24) }}
+                                    {{ $exam->is_locked ? substr($seal, 0, 24) : 'Visas et pointages à compléter' }}
                                 </div>
                                 <div style="font-size: 5.5px; color: #64748b; margin-top: 1px;">
-                                    Généré le {{ $generated_at ?? date('d/m/Y H:i') }}
+                                    Accès au dossier réservé au personnel. Généré le {{ $generated_at ?? date('d/m/Y H:i') }}
                                 </div>
                             </td>
                         </tr>

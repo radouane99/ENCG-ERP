@@ -30,6 +30,10 @@ class ExamIncidentController extends Controller
     {
         // Récupération des incidents d'examen
         $query = ExamIncident::with(['exam.module.filiere', 'exam.examSession', 'student.user', 'reporter'])->whereHas('exam.examSession', fn ($q) => $q->where('institution_id', $request->user()->institution_id));
+        $staff = $request->user()->hasAnyRole(['admin', 'super-admin', 'super_admin', 'institution-admin', 'institution_admin', 'director', 'department-head', 'filiere-head', 'scolarite', 'discipline-committee']);
+        if (! $staff) {
+            $query->whereHas('exam.surveillances', fn ($q) => $q->where('professor_id', $request->user()->id));
+        }
 
         if ($request->filled('session_id')) {
             $query->whereHas('exam', fn ($q) => $q->where('exam_session_id', $request->session_id));
@@ -102,6 +106,7 @@ class ExamIncidentController extends Controller
         // Inclure et harmoniser également les dossiers disciplinaires existants (DisciplinaryCase)
         $existingStudentIds = $incidents->pluck('student_id')->toArray();
         $casesQuery = DisciplinaryCase::with(['student.user', 'decision'])->where('institution_id', $request->user()->institution_id);
+        if (! $staff) { $casesQuery->whereRaw('1 = 0'); }
         if ($request->filled('exam_id') || $request->filled('session_id') || str_contains($request->path(), 'exam-incidents')) { $casesQuery->whereRaw('1 = 0'); }
         if (! empty($existingStudentIds)) {
             $casesQuery->whereNotIn('student_id', $existingStudentIds);
@@ -258,12 +263,31 @@ class ExamIncidentController extends Controller
     {
         $user = $request->user();
         abort_unless($user->hasAnyRole(['admin', 'super-admin', 'super_admin', 'institution-admin', 'institution_admin', 'director', 'discipline-committee']), 403);
-        $data = $request->validate(['hearing_date' => 'required|string|max:100', 'hearing_room' => 'required|string|max:255']);
+        $data = $request->validate(['hearing_date' => 'required|date_format:Y-m-d \à H:i', 'hearing_room' => 'required|string|max:255', 'send_email' => 'sometimes|boolean']);
         $incident = ExamIncident::with('exam.examSession')->findOrFail($id);
         app(\App\Services\Academic\ExamWorkflowGuard::class)->session($incident->exam->examSession);
         abort_unless(in_array($incident->status, ['pending', 'convoked'], true), 409, 'Ce dossier a déjà fait l’objet d’une décision.');
-        $incident->update($data + ['status' => 'convoked']);
-        return response()->json(['success' => true, 'message' => 'Convocation enregistrée. Le PDF est disponible; aucun email automatique envoyé.', 'data' => $incident]);
+        $incident->update(['hearing_date' => $data['hearing_date'], 'hearing_room' => $data['hearing_room'], 'status' => 'convoked']);
+        $incident->student?->user?->notify(new \App\Notifications\SystemNotification('Convocation à une audition', 'Une audition est prévue le '.$data['hearing_date'].' — '.$data['hearing_room'].'. Contactez la scolarité pour votre convocation.', 'info', '/dashboard'));
+        $emailStatus = 'not_requested';
+        if ($data['send_email'] ?? false) {
+            $recipient = $incident->student?->user;
+            if (! $recipient || ! filter_var($recipient->email, FILTER_VALIDATE_EMAIL)) {
+                $emailStatus = 'missing_address';
+            } else {
+                try {
+                    $pdf = app(PdfExportController::class)->convocationDisciplinePdf($incident->id)->getContent();
+                    \Illuminate\Support\Facades\Mail::to($recipient->email)->send(new \App\Mail\DisciplineHearingMail($recipient->name, $data['hearing_date'], $data['hearing_room'], $pdf, $incident->id));
+                    $emailStatus = 'accepted';
+                    activity()->causedBy($user)->performedOn($incident)->log('discipline_hearing_email_accepted');
+                } catch (\Throwable $error) {
+                    report($error);
+                    $emailStatus = 'failed';
+                }
+            }
+        }
+        $message = $emailStatus === 'accepted' ? 'Convocation enregistrée; email accepté par le transport.' : ($emailStatus === 'not_requested' ? 'Convocation enregistrée; PDF disponible et notification portail créée.' : 'Convocation enregistrée, mais email non envoyé. Remettez le PDF ou réessayez.');
+        return response()->json(['success' => true, 'message' => $message, 'email_status' => $emailStatus, 'data' => $incident]);
     }
 
     /**
@@ -437,7 +461,12 @@ class ExamIncidentController extends Controller
             abort_if($end->isFuture(), 422, 'L’épreuve n’est pas encore terminée.');
             abort_if(! $exam->seatings()->exists() || $exam->seatings()->whereNull('is_present')->exists(), 422, 'Tous les pointages doivent être terminés.');
             abort_if(! $exam->surveillances()->exists() || $exam->surveillances()->whereNull('signed_at')->exists(), 422, 'Tous les surveillants affectés doivent viser le PV.');
-            $exam->update(['is_locked' => true, 'locked_at' => now()]);
+            $hash = hash('sha256', json_encode([
+                'exam' => $exam->only(['id', 'exam_session_id', 'module_id', 'exam_date', 'start_time', 'room_id']),
+                'seats' => $exam->seatings()->orderBy('id')->get(['id', 'student_id', 'room_id', 'seat_number', 'status', 'is_present'])->toArray(),
+                'visas' => $exam->surveillances()->orderBy('id')->get(['id', 'professor_id', 'room_id', 'signature_hash', 'signed_at'])->toArray(),
+            ], JSON_THROW_ON_ERROR));
+            $exam->update(['is_locked' => true, 'locked_at' => now(), 'pv_seal_hash' => $hash]);
             activity()->causedBy(auth()->user())->performedOn($exam)->log('exam_pv_locked');
             return $exam;
         });

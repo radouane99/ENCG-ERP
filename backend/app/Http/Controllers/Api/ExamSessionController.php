@@ -124,6 +124,11 @@ class ExamSessionController extends Controller
             }
             $next = array_merge($session->toArray(), $validated);
             $this->validateContext($next);
+            if (! empty($validated['is_locked'])) {
+                abort_if($session->exams()->where('is_locked', false)->exists(), 422, 'Clôturer tous les PV d’épreuve avant de verrouiller la session.');
+                abort_if(\App\Models\ExamIncident::whereHas('exam', fn ($q) => $q->where('exam_session_id', $session->id))->whereNotIn('status', ['resolved', 'dismissed'])->exists(), 422, 'Traiter les dossiers disciplinaires avant la clôture de session.');
+                $validated['is_active'] = false;
+            }
             if ($session->exams()->exists()) {
                 foreach (['academic_year_id', 'semester_id', 'type'] as $field) {
                     abort_if(isset($validated[$field]) && (string) $validated[$field] !== (string) $session->$field, 409, 'Le contexte des épreuves existantes doit être conservé.');

@@ -108,6 +108,7 @@ class ProctorAssignmentService
             $workloadMap = [];
             $dailyMap = [];
             $assignedCount = 0;
+            $availability = \App\Services\Academic\ProfessorAvailabilityService::map($session->academic_year_id);
 
             foreach ($availableProfessors as $prof) {
                 $workloadMap[$prof->id] = 0;
@@ -147,6 +148,7 @@ class ProctorAssignmentService
                 $assignedForExam = 0;
 
                 foreach ($sortedProfs as $prof) {
+                    if (! $guard->allowsProctor($prof, $exam, $availability)) { continue; }
                     if ($assignedForExam >= $proctorsNeeded) {
                         break;
                     }
@@ -197,6 +199,7 @@ class ProctorAssignmentService
                         $assignedForExam++;
                     }
                 }
+                abort_if($assignedForExam < $proctorsNeeded, 422, 'Surveillance incomplète : aucun remplacement partiel n’a été enregistré. Vérifiez les disponibilités.');
             }
 
             $totalWorkloads = array_values($workloadMap);
@@ -371,9 +374,11 @@ class ProctorAssignmentService
             $guard->manage();
             $locked = ExamSession::whereKey($session->id)->lockForUpdate()->firstOrFail();
             $guard->mutableSession($locked);
-            foreach ($session->exams as $exam) { $guard->mutablePlan($exam); }
             abort_if(empty($assignments), 422, 'Aucune affectation fournie.');
             $sessionExamIds = $session->exams->pluck('id')->toArray();
+            $targetIds = collect($assignments)->pluck('exam_id')->map(fn ($id) => (int) $id)->unique();
+            abort_if($targetIds->diff($sessionExamIds)->isNotEmpty(), 422, 'Épreuve hors de la session sélectionnée.');
+            foreach ($session->exams->whereIn('id', $targetIds) as $exam) { $guard->mutablePlan($exam); }
 
             // Récupérer les confirmations existantes pour les préserver si même prof
             $existingConfirmed = ExamSurveillance::whereIn('exam_id', $sessionExamIds)
@@ -382,7 +387,7 @@ class ProctorAssignmentService
                 ->keyBy(fn ($s) => "{$s->exam_id}_{$s->professor_id}");
 
             // Supprimer les affectations précédentes de cette session
-            ExamSurveillance::whereIn('exam_id', $sessionExamIds)->delete();
+            ExamSurveillance::whereIn('exam_id', $targetIds)->delete();
 
             $createdCount = 0;
             $examsMap = $session->exams->keyBy('id');
@@ -401,6 +406,7 @@ class ProctorAssignmentService
                 $candidateIds = array_values(array_unique(array_filter(array_merge([$item['principal_id'] ?? null, $item['secondary_id'] ?? null], (array) ($item['secondary_ids'] ?? [])))));
                 foreach ($candidateIds as $candidateId) {
                     $candidate = User::where('institution_id', $session->institution_id)->where('is_active', true)->findOrFail($candidateId);
+                    abort_unless($guard->allowsProctor($candidate, $exam), 422, 'Cet enseignant a déclaré une indisponibilité sur ce créneau.');
                     abort_unless($candidate->hasAnyRole(['professor', 'vacataire', 'department-head', 'enseignant', 'doctorant']) || $candidate->professor?->is_active, 422, 'Ce compte ne peut pas assurer de surveillance.');
                     $start = Carbon::parse($exam->exam_date->toDateString().' '.$exam->start_time);
                     $end = $start->copy()->addMinutes($exam->duration_minutes);

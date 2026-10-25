@@ -103,6 +103,7 @@ class ExamWorkflowReliabilityTest extends TestCase
         $data = ['sanction' => 'dismissed', 'observations' => 'Audition synthétique : aucun élément retenu.'];
         $this->postJson($url.'/decide', $data)->assertStatus(409);
         $this->postJson($url.'/convoke', ['hearing_date' => '2027-01-16 à 10:00', 'hearing_room' => 'Salle du conseil'])->assertOk();
+        $this->travelTo(\Carbon\Carbon::parse('2027-01-16 11:00'));
         $this->postJson($url.'/decide', $data)->assertOk();
         $this->postJson($url.'/decide', ['sanction' => 'module', 'observations' => 'Autre décision sans réouverture.'])->assertStatus(409);
         $this->deleteJson($url)->assertStatus(409);
@@ -173,6 +174,32 @@ class ExamWorkflowReliabilityTest extends TestCase
         $this->postJson('/api/exams/'.$this->exam->id.'/pv/lock')->assertOk()->assertJsonPath('seal', $seal);
         $this->assertEquals(2, ExamSurveillance::whereNotNull('signed_at')->count());
         $this->postJson('/api/convocations/update-attendance/SYN-QR', ['status' => 'absent'])->assertStatus(409);
+    }
+
+    public function test_pdf_cannot_forge_signatures_or_delete_multiple_incidents(): void
+    {
+        $seat = $this->seat(); $seat->update(['seat_number' => 125]);
+        foreach (['Premier constat', 'Deuxième constat distinct'] as $description) {
+            ExamIncident::create(['exam_id' => $this->exam->id, 'student_id' => $seat->student_id, 'type' => 'fraude', 'description' => $description]);
+        }
+        $pdf = \Mockery::mock(\Barryvdh\DomPDF\PDF::class);
+        $pdf->shouldReceive('stream')->once()->andReturn(response('%PDF-synthetic', 200, ['Content-Type' => 'application/pdf']));
+        $this->mock(\App\Services\Documents\OfficialPdfFactory::class)->shouldReceive('make')->once()
+            ->with('pdf.pv_examen', \Mockery::on(fn ($data) => ! $data['hasPrincipalSignature'] && ! $data['hasSecondarySignature'] && $data['incidents']->count() === 2 && $data['unrecorded_students'] === 1 && str_contains($data['verifyUrl'], '/surveillance')))->andReturn($pdf);
+        $this->get('/api/exams/'.$this->exam->id.'/pv-pdf?principal_signature=data:image/png;base64,FORGED')->assertOk();
+        $this->assertDatabaseCount('exam_incidents', 2);
+        $this->assertEquals(125, $seat->fresh()->seat_number);
+        $this->assertNull($seat->fresh()->is_present);
+    }
+
+    public function test_hearing_email_uses_registered_student_and_reports_transport_status(): void
+    {
+        \Illuminate\Support\Facades\Mail::fake();
+        $seat = $this->seat();
+        $incident = ExamIncident::create(['exam_id' => $this->exam->id, 'student_id' => $seat->student_id, 'type' => 'fraude', 'status' => 'pending']);
+        $this->mock(\App\Http\Controllers\Api\PdfExportController::class)->shouldReceive('convocationDisciplinePdf')->once()->with($incident->id)->andReturn(response('%PDF-synthetic'));
+        $this->postJson('/api/discipline/'.$incident->id.'/convoke', ['hearing_date' => '2027-01-16 à 10:00', 'hearing_room' => 'Salle du conseil', 'send_email' => true])->assertOk()->assertJsonPath('email_status', 'accepted');
+        \Illuminate\Support\Facades\Mail::assertSent(\App\Mail\DisciplineHearingMail::class, fn ($mail) => $mail->hasTo($seat->student->user->email) && count($mail->attachments()) === 1);
     }
 }
 

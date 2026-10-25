@@ -9,6 +9,9 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (! Schema::hasColumn('exams', 'pv_seal_hash')) {
+            Schema::table('exams', fn (Blueprint $table) => $table->string('pv_seal_hash', 64)->nullable());
+        }
         if (! Schema::hasColumn('exam_seatings', 'status')) {
             Schema::table('exam_seatings', fn (Blueprint $table) => $table->string('status', 20)->nullable()->index());
             DB::table('exam_seatings')->where('is_present', true)->update(['status' => 'present']);
@@ -20,5 +23,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('exam_seatings', fn (Blueprint $table) => $table->dropColumn('status'));
+        Schema::table('exams', fn (Blueprint $table) => $table->dropColumn('pv_seal_hash'));
     }
 };

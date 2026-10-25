@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Calendar, Users, Loader2, Sliders, Sparkles, Clock, Layers, Zap, Archive, RefreshCw, ArrowUp, ArrowDown, FileText, Mail, AlertTriangle, Printer, ShieldCheck, Search, Building2, CheckSquare, BarChart3, ScanLine, DoorOpen, UserCheck, Edit3, X, Filter } from 'lucide-react';
 
 import { cn, cleanUtf8Text } from '@shared/lib/utils';
@@ -62,7 +62,8 @@ export default function AdminExamsPage() {
   // Filter States
   // Filter States
 const [selectedSemesterNum, setSelectedSemesterNum] = useState<number | ''>('');
-  const [selectedSessionId, setSelectedSessionId] = useState<number | ''>('');
+  const [searchParams] = useSearchParams();
+  const [selectedSessionId, setSelectedSessionId] = useState<number | ''>(() => Number(searchParams.get('session_id')) > 0 ? Number(searchParams.get('session_id')) : '');
   const [selectedFiliereId, setSelectedFiliereId] = useState<number | ''>('');
   const [selectedDateFilter, setSelectedDateFilter] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');

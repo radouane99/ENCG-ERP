@@ -465,6 +465,8 @@ class ExamPlanningEngine
                 $workload = [];
                 $daily = [];
                 $schedules = [];
+                $availability = ProfessorAvailabilityService::map($session->academic_year_id);
+                $profiles = $professors->keyBy('id');
 
                 foreach ($professors as $p) {
                     $workload[$p->id] = 0;
@@ -499,8 +501,9 @@ class ExamPlanningEngine
 
                     // Vérification de disponibilité (Hard constraint : zéro chevauchement horaire ; Soft : quotas équitables)
                     $canProctor = function (int $pid, bool $ignoreWorkloadCap = false, bool $ignoreDailyCap = false) use (
-                        $dateStr, $candStart, $candEnd, &$daily, &$schedules, &$workload, $maxFairWorkload, $dynamicDailyCap
+                        $dateStr, $candStart, $candEnd, &$daily, &$schedules, &$workload, $maxFairWorkload, $dynamicDailyCap, $availability, $profiles, $exam
                     ): bool {
+                        if (! app(ExamWorkflowGuard::class)->allowsProctor($profiles[$pid], $exam, $availability)) { return false; }
                         // 1. RÈGLE PHYSIQUE ABSOLUE ET INVIOLABLE : Zéro chevauchement d'heure le même jour
                         foreach ($schedules[$pid] as $s) {
                             if ($s['date'] === $dateStr && $candStart < $s['end'] && $s['start'] < $candEnd) {

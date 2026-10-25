@@ -51,6 +51,7 @@ class ExamConvocationService
      */
     public function generateConvocations(int $examId): array
     {
+        app(ExamWorkflowGuard::class)->manage();
         $exam = Exam::with(['group.students', 'module', 'seatings', 'examSession'])->findOrFail($examId);
         app(ExamWorkflowGuard::class)->mutableSession($exam->examSession);
         abort_if($exam->is_locked, 409, 'PV verrouillé.');
@@ -326,6 +327,8 @@ class ExamConvocationService
      */
     public function sendBatchSurveillantsEmails(int $sessionId, array $surveillanceIds): array
     {
+        app(ExamWorkflowGuard::class)->manage();
+        app(ExamWorkflowGuard::class)->session(ExamSession::findOrFail($sessionId));
         $session = ExamSession::with(['exams.module', 'exams.room'])->findOrFail($sessionId);
         $examIds = $session->exams->pluck('id');
 

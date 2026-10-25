@@ -90,6 +90,9 @@ class Exam extends Model
      */
     public function documentSeal(): string
     {
+        if ($this->pv_seal_hash) {
+            return 'SHA256:ENCG-FES-'.$this->getKey().'-'.strtoupper($this->pv_seal_hash);
+        }
         $fingerprint = $this->locked_at ?? $this->created_at ?? $this->getKey();
 
         return 'SHA256:ENCG-FES-'.$this->getKey().'-'.strtoupper(substr(md5($this->getKey().(string) $fingerprint), 0, 16));

@@ -19,6 +19,7 @@ class DecideExamIncidentAction
             $incident = ExamIncident::with('exam.module', 'exam.examSession')->whereKey($id)->lockForUpdate()->firstOrFail();
             app(ExamWorkflowGuard::class)->session($incident->exam->examSession);
             abort_unless(in_array($incident->status, ['convoked', 'auditioned'], true), 409, 'Convoquer le dossier et consigner l’audition avant toute décision.');
+            abort_if(! $incident->hearing_date || \Carbon\Carbon::parse(str_replace(' à ', ' ', $incident->hearing_date))->isFuture(), 422, 'L’audition prévue n’a pas encore eu lieu.');
             $sanction = $data['sanction'];
             $dismissed = in_array($sanction, ['dismissed', 'classement']);
             $text = match ($sanction) {

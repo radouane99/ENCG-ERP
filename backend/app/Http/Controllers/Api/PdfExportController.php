@@ -206,6 +206,13 @@ class PdfExportController extends Controller
             abort(404, 'Convocation introuvable.');
         }
 
+        $actor = request()->user();
+        abort_unless($actor, 401);
+        if ($actor->hasRole('student')) {
+            abort_unless((int) $seating->student->user_id === (int) $actor->id, 403);
+            abort_unless($seating->sent_at || in_array($seating->status, ['sent', 'present', 'absent', 'late']), 404, 'Convocation non diffusée.');
+        } else { app(\App\Services\Academic\ExamWorkflowGuard::class)->viewExam($seating->exam); }
+
         $pdf = $this->generateSingleConvocationPdf($seating);
         $user = $seating->student?->user;
         $name = trim(($user?->last_name ?? 'Etudiant').'_'.($user?->first_name ?? ''));
@@ -1902,7 +1909,9 @@ class PdfExportController extends Controller
     public function convocationDisciplinePdf(int $incidentId)
     {
         $incident = ExamIncident::with(['exam.module.filiere', 'student.user'])->findOrFail($incidentId);
+        app(\App\Services\Academic\ExamWorkflowGuard::class)->viewExam($incident->exam);
 
+        abort_unless($incident->hearing_date && $incident->hearing_room, 422, 'Enregistrer la convocation avant de générer son document.');
         $student = $incident->student;
         $user = $student?->user;
         $firstNameFr = $user?->first_name ?? ($user ? explode(' ', $user->name)[0] : 'Étudiant');
@@ -1913,7 +1922,7 @@ class PdfExportController extends Controller
         $fullNameAr = ! empty($rawAr) ? ArabicGlyphReshaper::reshape($rawAr) : '';
 
         $sealHash = strtoupper(hash('sha256', "CONVOCATION-DISCIPLINE-{$incident->id}-{$incident->student_id}-ENCG"));
-        $verifyUrl = url("/verify-discipline?id={$incident->id}&hash=".substr($sealHash, 0, 16));
+        $verifyUrl = url('/discipline');
 
         $qrBase64 = '';
         try {
@@ -1963,8 +1972,8 @@ class PdfExportController extends Controller
             'sealHash' => $sealHash,
             'verifyUrl' => $verifyUrl,
             'qrBase64' => $qrBase64,
-            'directorSignature' => $this->generateDirectorOfficialSeal(),
-            'secretaireSignature' => $this->generateSecretaryVisaStamp(),
+            'directorSignature' => null,
+            'secretaireSignature' => null,
         ])->setPaper('a4', 'portrait');
 
         $safeName = preg_replace('/[^A-Za-z0-9_]/', '_', $fullNameFr);
@@ -1975,7 +1984,9 @@ class PdfExportController extends Controller
     public function decisionDisciplinePdf(int $incidentId)
     {
         $incident = ExamIncident::with(['exam.module.filiere', 'student.user'])->findOrFail($incidentId);
+        app(\App\Services\Academic\ExamWorkflowGuard::class)->viewExam($incident->exam);
 
+        abort_unless(in_array($incident->status, ['resolved', 'dismissed']) && $incident->decision, 422, 'Aucune décision enregistrée pour ce dossier.');
         $student = $incident->student;
         $user = $student?->user;
         $firstNameFr = $user?->first_name ?? ($user ? explode(' ', $user->name)[0] : 'Étudiant');
@@ -2027,8 +2038,8 @@ class PdfExportController extends Controller
             'sealHash' => $sealHash,
             'verifyUrl' => $verifyUrl,
             'qrBase64' => $qrBase64,
-            'directorSignature' => $this->generateDirectorOfficialSeal(),
-            'secretaireSignature' => $this->generateSecretaryVisaStamp(),
+            'directorSignature' => null,
+            'secretaireSignature' => null,
         ])->setPaper('a4', 'portrait');
 
         $safeName = preg_replace('/[^A-Za-z0-9_]/', '_', $fullNameFr);
@@ -2038,14 +2049,15 @@ class PdfExportController extends Controller
 
     public function batchDisciplinePdf(Request $request)
     {
-        $incidents = ExamIncident::with(['exam.module.filiere', 'student.user'])
+        app(\App\Services\Academic\ExamWorkflowGuard::class)->manage();
+        $incidents = ExamIncident::with(['exam.module.filiere', 'student.user'])->whereNotNull('hearing_date')->whereHas('exam.examSession', fn ($q) => $q->where('institution_id', $request->user()->institution_id))
             ->latest()
             ->get();
 
         $logoBase64 = $this->resolveLogoBase64();
         $batchSealHash = strtoupper(hash('sha256', 'BATCH-CONVOCATIONS-ENCG-'.now()->format('Ymd')));
-        $directorSignature = $this->generateDirectorOfficialSeal();
-        $secretaireSignature = $this->generateSecretaryVisaStamp();
+        $directorSignature = null;
+        $secretaireSignature = null;
 
         $items = $incidents->map(function ($inc) {
             $student = $inc->student;
@@ -2058,7 +2070,7 @@ class PdfExportController extends Controller
             $fullNameAr = ! empty($rawAr) ? ArabicGlyphReshaper::reshape($rawAr) : '';
 
             $sealHash = strtoupper(hash('sha256', "CONVOCATION-DISCIPLINE-{$inc->id}-{$inc->student_id}-ENCG"));
-            $verifyUrl = url("/verify-discipline?id={$inc->id}&hash=".substr($sealHash, 0, 16));
+            $verifyUrl = url('/discipline');
 
             $qrBase64 = '';
             try {

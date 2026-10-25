@@ -82,7 +82,7 @@ export default function DisciplinePage(): React.ReactElement {
   const [convocationDate, setConvocationDate] = useState('2026-09-28')
   const [convocationTime, setConvocationTime] = useState('10:00')
   const [convocationRoom, setConvocationRoom] = useState('Salle des Actes — ENCG Fès')
-  const [sendEmailToGuardian, setSendEmailToGuardian] = useState(true)
+  const [sendEmailToGuardian, setSendEmailToGuardian] = useState(false)
 
   // Deliberation Hearing Modal Form
   const [finalSanction, setFinalSanction] = useState<'module' | 'semestre' | 'blame' | 'avertissement' | 'exclusion' | 'dismissed'>('module')
@@ -1118,7 +1118,7 @@ export default function DisciplinePage(): React.ReactElement {
 
               <div className="p-3.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40 rounded-2xl space-y-2">
                 <div className="font-bold text-amber-900 dark:text-amber-200 flex items-center gap-1.5">
-                  <Send className="w-4 h-4 text-amber-600" /> Notifications Automatiques (Resend Mailable)
+                  <Send className="w-4 h-4 text-amber-600" /> Envoi de la convocation
                 </div>
                 <label className="flex items-center gap-2 cursor-pointer text-slate-700 dark:text-slate-300">
                   <input
@@ -1127,7 +1127,7 @@ export default function DisciplinePage(): React.ReactElement {
                     onChange={e => setSendEmailToGuardian(e.target.checked)}
                     className="rounded text-amber-600 focus:ring-amber-500"
                   />
-                  <span>Envoyer la convocation PDF officielle par email à l'étudiant et son tuteur</span>
+                  <span>Envoyer le PDF à l’adresse email enregistrée de l’étudiant</span>
                 </label>
               </div>
             </div>
