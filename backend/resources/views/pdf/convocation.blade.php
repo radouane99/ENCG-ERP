@@ -134,29 +134,25 @@
             - Toute copie non rendue à l'heure fixée par les surveillants n'est pas acceptée et est affectée d'un zéro.
         </div>
 
-        <div style="display: table; width: 100%;">
-            <div style="display: table-cell; width: 50%; vertical-align: top;">
-                <div style="font-size: 8px; color: #666; margin-top: 50px;">
-                    Document généré électroniquement.
-                </div>
-            </div>
-            <div style="display: table-cell; width: 50%; text-align: right; vertical-align: top;">
-                <div class="signature-title">Chargée de la Scolarité et des Affaires Estudiantines</div>
-                <div style="text-align: right; margin-top: 15px;">
-                    @if(!empty($qrCodeBase64))
-                        <img src="data:image/png;base64,{{ $qrCodeBase64 }}" alt="QR Code" style="border: 1.5px solid #000; padding: 2px; float: right; margin-left: 20px; width: 90px; height: 90px;">
-                    @elseif(!empty($qr_token))
-                        @php $localConvocationQr = 'data:image/svg+xml;base64,'.base64_encode((string) \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')->size(120)->margin(2)->generate($qr_token)); @endphp
-                        <img src="{{ $localConvocationQr }}" alt="QR de convocation" style="border:1px solid #cbd5e1;padding:2px;float:right;margin-left:20px;width:90px;height:90px;">
-                    @endif
-                    <div style="float: right; margin-right: 20px; font-style: italic; font-size: 10px; color: #666; padding-top: 40px;">
-                        Signature et cachet à apposer
-                    </div>
-        <div style="margin-top: 15px; border-top: 1px dashed #000; padding-top: 5px; font-size: 8px; font-family: monospace; color: #1e293b;">
-            <div style="font-weight:bold;font-size:8.5px;color:#1a3673;">RÉFÉRENCE DE CONVOCATION</div>
-            <div>Référence métier : <span style="font-weight:bold;">{{ $digital_signature ?? 'Voir identifiant numérique en pied de page' }}</span></div>
-            <div>Édition : {{ $generated_at ?? date('d/m/Y H:i:s') }}. Les visas requis restent à contrôler auprès de la scolarité.</div>
-        </div>
+        <table style="width:100%;margin-top:18px;border:none;"><tr>
+            <td style="width:55%;border:none;text-align:left;vertical-align:top;font-size:8px;color:#475569;">
+                <strong>RÉFÉRENCE DE CONVOCATION</strong><br>
+                Référence métier : {{ $digital_signature ?? 'Voir identifiant numérique en pied de page' }}<br>
+                Édition : {{ $generated_at ?? date('d/m/Y H:i:s') }}.<br>
+                Les visas requis restent à contrôler auprès de la scolarité.
+            </td>
+            <td style="width:45%;border:none;text-align:right;vertical-align:top;">
+                <strong>Service de la Scolarité</strong><br>
+                <span style="font-size:9px;color:#64748b;">Signature et cachet à apposer</span>
+                @if(!empty($qrCodeBase64))
+                    @php $convocationQrMime = str_contains(base64_decode($qrCodeBase64) ?: '', '<svg') ? 'image/svg+xml' : 'image/png'; @endphp
+                    <br><img src="data:{{ $convocationQrMime }};base64,{{ $qrCodeBase64 }}" alt="QR de convocation" style="margin-top:8px;width:65px;height:65px;">
+                @elseif(!empty($qr_token))
+                    @php $localConvocationQr = 'data:image/svg+xml;base64,'.base64_encode((string) \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')->size(120)->margin(2)->generate($qr_token)); @endphp
+                    <br><img src="{{ $localConvocationQr }}" alt="QR de convocation" style="margin-top:8px;width:65px;height:65px;">
+                @endif
+            </td>
+        </tr></table>
     </div>
 </body>
 </html>

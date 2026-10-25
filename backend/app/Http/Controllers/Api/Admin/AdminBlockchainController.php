@@ -12,6 +12,25 @@ use Illuminate\Support\Str;
 
 class AdminBlockchainController extends Controller
 {
+    public function exportRecord(Request $request, int $id)
+    {
+        abort_unless($request->user()->hasAnyRole(['admin', 'super-admin', 'super_admin', 'institution-admin', 'institution_admin', 'director', 'scolarite']), 403);
+        $cert = BlockchainCertificate::with('student.user')->whereHas('student', fn ($q) => $q->where('institution_id', $request->user()->institution_id))->findOrFail($id);
+        return \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.workflow_record', [
+            'title' => 'Extrait du registre de traçabilité des diplômes',
+            'facts' => [
+                'Titulaire' => $cert->student->user?->name ?: trim($cert->student->first_name.' '.$cert->student->last_name),
+                'CNE' => $cert->student->cne ?: 'Non renseigné',
+                'Diplôme déclaré' => $cert->diploma_name ?: 'Non renseigné',
+                'Référence du registre' => (string) $cert->id,
+                'Empreinte déclarée' => $cert->hash,
+                'Transaction déclarée' => $cert->transaction_id,
+                'Date du registre' => $cert->certified_at?->format('d/m/Y H:i') ?: 'Non renseignée',
+            ],
+            'headers' => [], 'rows' => [],
+            'notice' => 'Cet extrait reproduit les informations conservées dans le registre interne. Il ne prouve pas un ancrage sur un réseau externe et ne remplace ni le diplôme ni les signatures et validations administratives requises.',
+        ])->download('extrait-registre-diplome-'.$cert->id.'.pdf');
+    }
     /**
      * Registre des diplômes certifiés sur le ledger Blockchain.
      */
@@ -176,6 +195,7 @@ class AdminBlockchainController extends Controller
             'success' => true,
             'message' => 'Diplôme Authentique & Conforme.',
             'data' => [
+                'id' => $cert->id,
                 'student' => trim($studentName) ?: 'Lauréat Officiel ENCG',
                 'cne' => $student?->cne ?? 'Non spécifié',
                 'cin' => $student?->cin ?? 'Non spécifié',

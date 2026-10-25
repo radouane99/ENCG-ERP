@@ -25,7 +25,7 @@ use App\Services\Academic\ExamWorkflowGuard;
 use App\Services\Academic\GradeService;
 use App\Services\Academic\ResitEligibilityRegistry;
 use App\Services\Documents\OfficialPdfFactory;
-use Barryvdh\DomPDF\PDF;
+use App\Services\Documents\RegisteredPdf as PDF;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;

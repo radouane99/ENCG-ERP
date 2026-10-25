@@ -1,0 +1,111 @@
+[
+  {
+    "file": "attestation-scolarite.pdf",
+    "pages": 1,
+    "identifier": "202610250000000009",
+    "width_pt": 595.28,
+    "height_pt": 841.89,
+    "sha256": "d3234ac86f7e28cb64b01b945234a320965ca7858186ef038de85e2286d7f53f",
+    "fonts": [
+      "/DejaVuSans",
+      "/DejaVuSans-Bold"
+    ]
+  },
+  {
+    "file": "attestation-travail.pdf",
+    "pages": 1,
+    "identifier": "202610250000000016",
+    "width_pt": 595.28,
+    "height_pt": 841.89,
+    "sha256": "b9afa64a9773fbcc5c8425052fe2bc82e7309a4df5193a91343a7735bebf00a9",
+    "fonts": [
+      "/DejaVuSans",
+      "/DejaVuSans-Bold",
+      "/Times-Bold"
+    ]
+  },
+  {
+    "file": "carte-cr80.pdf",
+    "pages": 1,
+    "identifier": "202610250000000018",
+    "width_pt": 242.64,
+    "height_pt": 153.01,
+    "sha256": "86fb2687be47a604e3bcd61089057be766911d04220356c71d934e7af2d6b605",
+    "fonts": [
+      "/DejaVuSans",
+      "/DejaVuSans-Bold"
+    ]
+  },
+  {
+    "file": "convocation.pdf",
+    "pages": 1,
+    "identifier": "202610250000000010",
+    "width_pt": 595.28,
+    "height_pt": 841.89,
+    "sha256": "6f73dcffb1dc6fb6ccd8e47c28246c257a8655ebbb650d2fe4c8f669ab149c86",
+    "fonts": [
+      "/DejaVuSans",
+      "/DejaVuSans-Bold"
+    ]
+  },
+  {
+    "file": "emploi-du-temps-dense.pdf",
+    "pages": 1,
+    "identifier": "202610250000000014",
+    "width_pt": 841.89,
+    "height_pt": 595.28,
+    "sha256": "1baa753ca94fcbeceab3b25aae4da31449af4debffe2a86b17d6ff882c669c31",
+    "fonts": [
+      "/DejaVuSans",
+      "/DejaVuSans-Bold"
+    ]
+  },
+  {
+    "file": "emploi-du-temps.pdf",
+    "pages": 1,
+    "identifier": "202610250000000013",
+    "width_pt": 841.89,
+    "height_pt": 595.28,
+    "sha256": "d0acc39dacf7230a35e760c5c13d593426b28d22096dc77e3775401fd9cb3fa6",
+    "fonts": [
+      "/DejaVuSans",
+      "/DejaVuSans-Bold"
+    ]
+  },
+  {
+    "file": "planning-examens.pdf",
+    "pages": 1,
+    "identifier": "202610250000000011",
+    "width_pt": 841.89,
+    "height_pt": 595.28,
+    "sha256": "e382d3437aabc1f601b2adab91002253c916b3955cd8bf090dbb53562998c1ca",
+    "fonts": [
+      "/DejaVuSans",
+      "/DejaVuSans-Bold"
+    ]
+  },
+  {
+    "file": "preinscription.pdf",
+    "pages": 1,
+    "identifier": "202610250000000015",
+    "width_pt": 595.28,
+    "height_pt": 841.89,
+    "sha256": "cc8834d1ec3df269ebb3153a145f05796d44afba77d9d4f30ceed56a3a55743d",
+    "fonts": [
+      "/DejaVuSans",
+      "/DejaVuSans-Bold"
+    ]
+  },
+  {
+    "file": "rapport-multipage.pdf",
+    "pages": 4,
+    "identifier": "202610250000000012",
+    "width_pt": 595.28,
+    "height_pt": 841.89,
+    "sha256": "44c75a044b92be581f8ee41f933f14e01a666cb7e12abdb0186af68fcee06156",
+    "fonts": [
+      "/DejaVuSans",
+      "/DejaVuSans-Bold"
+    ]
+  }
+]

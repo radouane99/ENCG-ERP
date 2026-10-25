@@ -35,7 +35,7 @@ export default function DocumentRegistryPage() {
     <PageHeader title="Registre des documents PDF" subtitle="Identifiants numériques, archives et contrôle des exemplaires émis." />
     <form onSubmit={event => { event.preventDefault(); setIdentifier(search.trim()); setPage(1) }} className="erp-surface flex flex-wrap items-end gap-4 p-5">
       <Input label="Identifiant numérique" inputMode="numeric" pattern="[0-9]*" value={search} onChange={event => setSearch(event.target.value)} placeholder="Saisir la référence complète" containerClassName="min-w-0 flex-1" />
-      <label className="space-y-1 text-sm font-medium">État<select aria-label="État du document" value={status} onChange={event => { setStatus(event.target.value); setPage(1) }} className="block rounded-[var(--control-radius)] border border-input bg-card p-3"><option value="">Tous</option><option value="issued">Émis</option><option value="pending">En préparation</option><option value="revoked">Retiré</option></select></label>
+      <label className="space-y-1 text-sm font-medium">État<select aria-label="État du document" value={status} onChange={event => { setStatus(event.target.value); setPage(1) }} className="block border border-input bg-card p-3 rounded-[var(--control-radius)]"><option value="">Tous</option><option value="issued">Émis</option><option value="pending">En préparation</option><option value="revoked">Retiré</option></select></label>
       <Button type="submit">Rechercher</Button>
     </form>
     {query.isPending && <p role="status">Chargement du registre…</p>}

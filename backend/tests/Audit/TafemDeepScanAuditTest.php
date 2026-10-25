@@ -119,7 +119,11 @@ class TafemDeepScanAuditTest extends TestCase
     public function test_real_local_pdf_and_raster_ocr_extract_synthetic_identity(): void
     {
         Http::preventStrayRequests();
-        $pdf = app('dompdf.wrapper')->loadHTML('<html><body><h1>SYNTHETIC AUDIT DOCUMENT</h1><p>CIN AB123456</p><p>CNE N123456789</p><p>NOM SYNTHETIQUE</p></body></html>')->output();
+        // OCR ingests external identity evidence, not a branded ERP document with a registry footer.
+        $fixture = new \Dompdf\Dompdf;
+        $fixture->loadHtml('<html><body><h1>SYNTHETIC AUDIT DOCUMENT</h1><p>CIN AB123456</p><p>CNE N123456789</p><p>NOM SYNTHETIQUE</p></body></html>');
+        $fixture->render();
+        $pdf = $fixture->output();
         $path = tempnam(sys_get_temp_dir(), 'tafem_audit_').'.pdf';
         try {
             file_put_contents($path, $pdf);

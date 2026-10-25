@@ -37,6 +37,8 @@ class PdfDocumentRegistryTest extends TestCase
         $this->assertSame($bytes, Pdf::loadHTML($html)->output());
         $this->assertDatabaseCount('pdf_document_records', 1);
         $this->assertStringStartsWith('%PDF-', $bytes);
+        $this->getJson('/api/documents/registry?identifier='.$record->digital_identifier)->assertOk()->assertJsonPath('total', 1)->assertJsonPath('data.0.digital_identifier', $record->digital_identifier);
+        $this->get('/api/documents/registry/'.$record->id.'/download')->assertOk()->assertContent($bytes);
     }
 
     public function test_modified_content_and_paper_have_distinct_identifiers(): void
@@ -45,6 +47,14 @@ class PdfDocumentRegistryTest extends TestCase
         Pdf::loadHTML('<h1>Version deux</h1>')->output();
         Pdf::loadHTML('<h1>Version deux</h1>')->setPaper('a4', 'landscape')->output();
         $this->assertSame(3, PdfDocumentRecord::distinct()->count('digital_identifier'));
+    }
+
+    public function test_explicit_a3_landscape_overrides_legacy_a4_css(): void
+    {
+        $pdf = Pdf::loadHTML('<html><head><style>@page {size:A4 portrait;}</style></head><body>Contrôle A3</body></html>')->setPaper('a3', 'landscape');
+        $pdf->output();
+        $this->assertEqualsWithDelta(1190.55, $pdf->getDomPDF()->getCanvas()->get_width(), 0.1);
+        $this->assertEqualsWithDelta(841.89, $pdf->getDomPDF()->getCanvas()->get_height(), 0.1);
     }
 
     public function test_public_reference_contains_no_personal_information_and_revocation_is_effective(): void
@@ -72,6 +82,18 @@ class PdfDocumentRegistryTest extends TestCase
         $record = PdfDocumentRecord::firstOrFail();
         Storage::disk('private')->put($record->file_path, '%PDF-corrupted');
         $this->getJson('/api/documents/registry/'.$record->id.'/download')->assertStatus(409);
+    }
+
+    public function test_diploma_registry_extract_uses_the_registered_pdf_and_rejects_other_institutions(): void
+    {
+        $student = $this->makeTestStudent();
+        $cert = \App\Models\BlockchainCertificate::create(['student_id' => $student->id, 'diploma_name' => 'Diplôme synthétique', 'hash' => '0x'.str_repeat('a', 64), 'transaction_id' => 'TEST-TRANSACTION', 'certified_at' => now(), 'network_status' => 'UNVERIFIED']);
+        $response = $this->get('/api/admin/blockchain/certificates/'.$cert->id.'/pdf')->assertOk()->assertHeader('Content-Type', 'application/pdf');
+        $this->assertStringStartsWith('%PDF-', $response->getContent());
+        $this->assertDatabaseHas('pdf_document_records', ['source_view' => 'pdf.workflow_record', 'status' => 'issued']);
+        $otherInstitution = \App\Models\Institution::create(['name' => 'Établissement synthétique', 'code' => 'PDF-OTHER', 'slug' => 'pdf-other']);
+        $student->update(['institution_id' => $otherInstitution->id]);
+        $this->getJson('/api/admin/blockchain/certificates/'.$cert->id.'/pdf')->assertNotFound();
     }
 
     public function test_real_templates_render_portrait_landscape_and_multi_page_samples(): void

@@ -670,6 +670,7 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:admin|super-admi
 
     // Blockchain Certification
     Route::prefix('admin/blockchain')->group(function () {
+        Route::get('/certificates/{id}/pdf', [AdminBlockchainController::class, 'exportRecord']);
         Route::get('/certificates', [AdminBlockchainController::class, 'getLedger']);
         Route::post('/certify-promo', [AdminBlockchainController::class, 'certifyPromo']);
         Route::post('/verify', [AdminBlockchainController::class, 'verify']);

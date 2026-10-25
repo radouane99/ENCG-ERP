@@ -3,77 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { ShieldCheck, Link as LinkIcon, Award, CheckCircle2, Copy, Search, Key, Loader2, XCircle, Sparkles, RefreshCw, Check, Printer, Building2, Download, Boxes, Fingerprint } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { blockchainApi } from '@shared/api/blockchain';
+import api from '@shared/lib/api';
 import { toast } from 'sonner';
-
-// Helper: Generate a real 100% Data-URL PNG QR Code image locally using HTML5 Canvas
-const generateQrDataUrl = (dataText: string): string => {
-  try {
-    const canvas = document.createElement('canvas');
-    canvas.width = 180;
-    canvas.height = 180;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return '';
-
-    // White background
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, 180, 180);
-
-    ctx.fillStyle = '#0f2863';
-    const modules = 25;
-    const cellSize = Math.floor(160 / modules);
-    const offset = 10;
-
-    const grid: boolean[][] = Array(modules).fill(0).map(() => Array(modules).fill(false));
-
-    // Draw 3 Finder patterns (Top-Left, Top-Right, Bottom-Left)
-    const addFinder = (row: number, col: number) => {
-      for (let r = 0; r < 7; r++) {
-        for (let c = 0; c < 7; c++) {
-          if (r === 0 || r === 6 || c === 0 || c === 6 || (r >= 2 && r <= 4 && c >= 2 && c <= 4)) {
-            grid[row + r][col + c] = true;
-          }
-        }
-      }
-    };
-
-    addFinder(0, 0);
-    addFinder(0, modules - 7);
-    addFinder(modules - 7, 0);
-
-    // Timing patterns
-    for (let i = 8; i < modules - 8; i += 2) {
-      grid[6][i] = true;
-      grid[i][6] = true;
-    }
-
-    // Data modules derived deterministically from input text hash
-    let charIdx = 0;
-    const str = dataText || 'ENCG-FES-BLOCKCHAIN-2026';
-    for (let r = 0; r < modules; r++) {
-      for (let c = 0; c < modules; c++) {
-        if ((r <= 7 && c <= 7) || (r <= 7 && c >= modules - 8) || (r >= modules - 8 && c <= 7)) continue;
-        if (r === 6 || c === 6) continue;
-
-        const charCode = str.charCodeAt(charIdx % str.length);
-        grid[r][c] = ((charCode * (r + 1) + c * 17 + charIdx) % 3) === 0;
-        charIdx++;
-      }
-    }
-
-    // Render grid to canvas
-    for (let r = 0; r < modules; r++) {
-      for (let c = 0; c < modules; c++) {
-        if (grid[r][c]) {
-          ctx.fillRect(offset + c * cellSize, offset + r * cellSize, cellSize, cellSize);
-        }
-      }
-    }
-
-    return canvas.toDataURL('image/png');
-  } catch {
-    return '';
-  }
-};
 
 export default function AdminBlockchainDiplomas() {
   useTranslation(['admin', 'common']);
@@ -193,117 +124,19 @@ const { data, isLoading, refetch } = useQuery({
     toast.success('Registre Blockchain téléchargé (Format CSV Excel).');
   };
 
-  // High-End Professional Certificate Printable Template with REAL PNG Data-URL QR Code (Strict 1-Page A4)
-  const handlePrintDiplomaCert = (cert: any) => {
+  const handlePrintDiplomaCert = async (cert: any) => {
+    if (!cert?.id) { toast.error('Référence du registre manquante. Rechargez le dossier.'); return; }
     const win = window.open('', '_blank');
-    if (!win) return;
-    const currentDate = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
-    const realQrDataUrl = generateQrDataUrl(cert.hash || cert.transaction_id || cert.student_name);
-
-    win.document.write(`<!DOCTYPE html><html><head><title>Attestation d'Authenticité Blockchain - ${cert.student_name}</title>
-      <style>
-        @page { size: A4 portrait; margin: 8mm; }
-        * { box-sizing: border-box; }
-        html, body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #0f2863; background: #ffffff; width: 100%; }
-        body { padding: 8px; }
-        .frame { border: 4px double #0f2863; padding: 22px 26px; border-radius: 18px; position: relative; background: #ffffff; }
-        
-        .header-table { width: 100%; margin-bottom: 12px; border-bottom: 2px solid #0f2863; padding-bottom: 10px; border-collapse: collapse; }
-        .header-cell-left { width: 40%; text-align: left; font-size: 10px; font-weight: 700; color: #0f2863; line-height: 1.4; }
-        .header-cell-center { width: 20%; text-align: center; }
-        .header-cell-right { width: 40%; text-align: right; font-size: 10px; font-weight: 700; color: #0f2863; line-height: 1.4; font-family: 'Amiri', serif; }
-
-        .main-title-box { text-align: center; margin: 12px 0 16px 0; background: linear-gradient(135deg, #0f2863, #1e3a8a); color: white; padding: 12px 18px; border-radius: 14px; border: 2px solid #f59e0b; }
-        .cert-subtitle { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; color: #fde68a; }
-        .cert-title { font-size: 17px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; color: #ffffff; }
-
-        .intro-text { font-size: 12px; text-align: justify; line-height: 1.6; margin: 12px 0; font-weight: 500; color: #1e293b; }
-
-        .details-grid { background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 14px; padding: 14px 18px; font-size: 12px; margin: 14px 0; }
-        .row { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid #e2e8f0; }
-        .row:last-child { border-bottom: none; }
-        .lbl { font-weight: 700; color: #64748b; font-size: 11px; text-transform: uppercase; }
-        .val { font-weight: 900; color: #0f2863; text-align: right; font-size: 12px; }
-
-        .hash-box { margin-top: 10px; padding: 10px; background: #ffffff; border: 1px dashed #0f2863; border-radius: 10px; font-family: monospace; font-size: 10px; word-break: break-all; color: #1e3a8a; }
-
-        .footer-sig { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 18px; padding-top: 12px; border-top: 1.5px solid #e2e8f0; font-size: 11px; }
-        .sig-box { text-align: right; }
-
-        .qr-section { display: flex; align-items: center; gap: 14px; margin-top: 14px; padding: 10px 14px; background: #f1f5f9; border-radius: 12px; border: 1px solid #cbd5e1; font-size: 10px; color: #334155; }
-        .qr-img { width: 85px; height: 85px; border-radius: 8px; border: 1px solid #cbd5e1; background: white; padding: 4px; shrink-0; }
-      </style>
-    </head><body>
-      <div class="frame">
-        <table class="header-table">
-          <tr>
-            <td class="header-cell-left">
-              ROYAUME DU MAROC<br/>
-              Ministère de l'Enseignement Supérieur, de la Recherche Scientifique et de l'Innovation<br/>
-              Université Sidi Mohamed Ben Abdellah<br/>
-              <strong>École Nationale de Commerce et de Gestion de Fès</strong>
-            </td>
-            <td class="header-cell-center">
-              <div style="font-weight: 900; font-size: 13px; color: #0f2863; border: 2px solid #0f2863; border-radius: 50%; width: 46px; height: 46px; line-height: 44px; margin: 0 auto;">ENCG</div>
-            </td>
-            <td class="header-cell-right">
-              المملكة المغربية<br/>
-              وزارة التعليم العالي والبحث العلمي والابتكار<br/>
-              جامعة سيدي محمد بن عبد الله<br/>
-              <strong>المدرسة الوطنية للتجارة والتسيير بفاس</strong>
-            </td>
-          </tr>
-        </table>
-
-        <div class="main-title-box">
-          <div class="cert-subtitle">REGISTRE CRYPTOGRAPHIQUE OFFICIEL POLYGON</div>
-          <div class="cert-title">ATTESTATION D'AUTHENTICITÉ BLOCKCHAIN DU DIPLÔME</div>
-        </div>
-
-        <p class="intro-text">
-          La Direction de l'École Nationale de Commerce et de Gestion de Fès (Université Sidi Mohamed Ben Abdellah) atteste par la présente que le diplôme délivré à l'étudiant(e) mentionné(e) ci-dessous a fait l'objet d'un ancrage cryptographique officiel et définitif sur le registre distribué <strong>Polygon Blockchain Ledger</strong>, garantissant l'authenticité juridique et internationale du document.
-        </p>
-
-        <div class="details-grid">
-          <div class="row"><span class="lbl">Titulaire du Diplôme :</span><span class="val" style="font-size: 14px; color: #0f2863;">${(cert.student_name || 'Lauréat ENCG').toUpperCase()}</span></div>
-          <div class="row"><span class="lbl">Code Massar / CNE :</span><span class="val" style="font-family: monospace;">${cert.cne || 'N130094821'}</span></div>
-          <div class="row"><span class="lbl">Carte Nationale (CIN) :</span><span class="val" style="font-family: monospace;">${cert.cin || 'F598711'}</span></div>
-          <div class="row"><span class="lbl">Intitulé de la Spécialité :</span><span class="val">${cert.degree}</span></div>
-          <div class="row"><span class="lbl">Date d'Ancrage Smart Contract :</span><span class="val">${cert.datetime || cert.date}</span></div>
-          <div class="row"><span class="lbl">Statut du Registre :</span><span class="val" style="color: #16a34a;">CERTIFIÉ CONFORME (IMMUTABLE) ✅</span></div>
-
-          <div class="hash-box">
-            <strong>Empreinte SHA-256 (Smart Contract Transaction Hash) :</strong><br/>
-            ${cert.hash}
-          </div>
-        </div>
-
-        <div class="footer-sig">
-          <div>
-            Fait à Fès, le ${currentDate}<br/>
-            <span style="font-size: 10px; color: #64748b;">Réf Transaction : ${cert.transaction_id || 'tx_encg_2026'}</span>
-          </div>
-          <div class="sig-box">
-            <strong style="color: #0f2863; font-size: 11px;">Pour le Directeur de l'ENCG Fès</strong><br/>
-            <span style="font-size: 10px; color: #64748b;">Le Secrétaire Général & Parapheur Numérique</span><br/><br/>
-            <span style="display:inline-block; border:1.5px solid #d97706; padding:4px 12px; border-radius:6px; color:#0f2863; font-weight:900; font-size:10px; background:#fffbeb;">
-              [SCEAU NUMÉRIQUE & SIGNATURE CERTIFIÉE ENCG]
-            </span>
-          </div>
-        </div>
-
-        <div class="qr-section">
-          <img src="${realQrDataUrl}" class="qr-img" alt="QR Code Real" />
-          <div>
-            <strong>Authentification Publique Internationale (Norme ENCG Blockchain 2026) :</strong><br/>
-            Ce document est juridiquement opposable et vérifiable 24h/7j par les ambassades, universités étrangères et recruteurs en scannant le QR Code officiel ou via le portail public de l'ENCG Fès : <u>https://encg-fes.ac.ma/verify</u>
-          </div>
-        </div>
-      </div>
-      <script>setTimeout(() => window.print(), 350);</script>
-    </body></html>`);
-    win.document.close();
-    toast.success('Attestation d\'authenticité officielle générée (Format A4 conforme) !');
+    if (!win) { toast.error('Autorisez l’ouverture de la prévisualisation PDF.'); return; }
+    try {
+      const response = await api.get(`/admin/blockchain/certificates/${cert.id}/pdf`, { responseType: 'blob' });
+      const url = URL.createObjectURL(response.data);
+      win.location.href = url;
+      setTimeout(() => URL.revokeObjectURL(url), 120000);
+    } catch {
+      win.close();
+      toast.error('Extrait PDF indisponible. Vérifiez votre accès au dossier.');
+    }
   };
 
   return (

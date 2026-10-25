@@ -810,7 +810,7 @@ const { data: aiAuditData } = useQuery({
   }
 
   const handlePrint = () => {
-    window.print()
+    void handleExportPdf(true)
   }
 
 
@@ -1333,7 +1333,7 @@ const { data: aiAuditData } = useQuery({
               {/* Right: Imprimer */}
               <Button
                 variant="ghost"
-                onClick={() => window.print()}
+                onClick={handlePrint}
                 className="rounded-xl text-xs font-semibold px-3 py-1.5 h-auto text-muted-foreground hover:text-foreground hover:bg-slate-200/60 dark:text-foreground transition-all flex items-center gap-1.5 ml-auto"
               >
                 <Printer className="w-3.5 h-3.5 text-muted-foreground" />
