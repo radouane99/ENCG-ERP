@@ -17,14 +17,14 @@
             background: #fff;
         }
         .page-border {
-            border: 4px double #002e5b;
+            border: 4px double #1a3673;
             padding: 18px 22px;
         }
         /* Official Kingdom Header */
         .official-header {
             width: 100%;
             border-collapse: collapse;
-            border-bottom: 2px solid #002e5b;
+            border-bottom: 2px solid #1a3673;
             padding-bottom: 12px;
             margin-bottom: 18px;
         }
@@ -41,7 +41,7 @@
             text-align: center;
             font-size: 20px;
             font-weight: bold;
-            color: #002e5b;
+            color: #1a3673;
             margin: 16px 0 22px 0;
             text-transform: uppercase;
             letter-spacing: 2px;
@@ -52,8 +52,8 @@
         .section-title {
             font-size: 12px;
             font-weight: bold;
-            color: #002e5b;
-            border-left: 4px solid #002e5b;
+            color: #1a3673;
+            border-left: 4px solid #1a3673;
             padding-left: 8px;
             margin-bottom: 10px;
         }
@@ -98,7 +98,7 @@
                 @if(!empty($logoBase64))
                     <img src="{{ $logoBase64 }}" alt="Logo ENCG" style="height: 50px;">
                 @else
-                    <strong style="font-size: 14px; color: #002e5b;">ENCG FÈS</strong>
+                    <strong style="font-size: 14px; color: #1a3673;">ENCG FÈS</strong>
                 @endif
             </td>
             <td style="width: 35%; text-align: right;">
@@ -159,7 +159,7 @@
         <div class="section-title">Article 2 : Rémunération</div>
         <p>
             La rémunération brute est fixée à
-            <strong style="color: #002e5b; font-size: 13px;">{{ number_format($contract->hourly_rate ?? 0, 2, ',', ' ') }} MAD</strong>
+            <strong style="color: #1a3673; font-size: 13px;">{{ number_format($contract->hourly_rate ?? 0, 2, ',', ' ') }} MAD</strong>
             par heure de vacation assurée.<br>
             Le règlement s'effectuera après attestation de service fait.
             @if(isset($contract->agreed_hours) && isset($contract->hourly_rate))

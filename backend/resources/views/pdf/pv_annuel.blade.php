@@ -87,7 +87,7 @@
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 1.5px;
-            border-bottom: 1.5px solid #001A4B;
+            border-bottom: 1.5px solid #1a3673;
             padding-bottom: 1px;
         }
         .inst-header-table td {
@@ -110,7 +110,7 @@
         .state-kingdom {
             font-size: 9pt;
             font-weight: 900;
-            color: #001A4B;
+            color: #1a3673;
             letter-spacing: 0.5px;
             text-transform: uppercase;
         }
@@ -123,7 +123,7 @@
         .state-school {
             font-size: 8.8pt;
             font-weight: 900;
-            color: #001A4B;
+            color: #1a3673;
             text-transform: uppercase;
             margin-top: 1px;
         }
@@ -150,12 +150,12 @@
             line-height: 1.15;
         }
         .qr-meta strong {
-            color: #001A4B;
+            color: #1a3673;
         }
 
         /* ─── Title Banner ─── */
         .title-banner {
-            background-color: #001A4B;
+            background-color: #1a3673;
             color: #ffffff;
             text-align: center;
             padding: 3px 6px;
@@ -197,7 +197,7 @@
         }
         .meta-label {
             font-weight: 900;
-            color: #001A4B;
+            color: #1a3673;
             text-transform: uppercase;
             font-size: 6.5pt;
         }
@@ -226,25 +226,25 @@
             font-size: {{ $thFont }};
         }
         .matrix-table thead th.main-info-head {
-            background-color: #001A4B;
+            background-color: #1a3673;
             color: #ffffff;
-            border-bottom: 1.5px solid #001A4B;
+            border-bottom: 1.5px solid #1a3673;
         }
         .matrix-table thead th.sem-head {
             background-color: #1e1b4b;
             color: #ffffff;
-            border-right: 2px solid #001A4B !important;
+            border-right: 2px solid #1a3673 !important;
             padding: 3px 2px;
             font-size: {{ $thFont }};
             letter-spacing: 0.3px;
         }
         .matrix-table thead th.res-head {
-            background-color: #001A4B;
+            background-color: #1a3673;
             color: #ffffff;
-            border-right: 1.5px solid #001A4B !important;
+            border-right: 1.5px solid #1a3673 !important;
         }
         .matrix-table thead th.mod-code-head {
-            background-color: #0f2863;
+            background-color: #1a3673;
             color: #ffffff;
             font-size: {{ $thFont }};
             font-weight: 900;
@@ -260,7 +260,7 @@
             padding: 1.5px 1px;
             text-transform: lowercase;
             letter-spacing: 0;
-            border-bottom: 1.5px solid #001A4B;
+            border-bottom: 1.5px solid #1a3673;
         }
 
         .matrix-table tr:nth-child(even) td {
@@ -269,7 +269,7 @@
 
         /* Section Separators */
         .sec-sep {
-            border-right: 2px solid #001A4B !important;
+            border-right: 2px solid #1a3673 !important;
         }
         .mod-sep {
             border-right: 1px solid #94a3b8 !important;
@@ -287,7 +287,7 @@
             font-family: 'DejaVu Sans', sans-serif;
             font-weight: 900;
             font-size: {{ $numFont }};
-            color: #001A4B;
+            color: #1a3673;
             white-space: nowrap;
         }
         .cin-cell {
@@ -469,10 +469,10 @@
         .signatures-title {
             font-size: 7.2pt;
             font-weight: 900;
-            color: #001A4B;
+            color: #1a3673;
             margin-bottom: 2px;
             text-transform: uppercase;
-            border-bottom: 1.5px solid #001A4B;
+            border-bottom: 1.5px solid #1a3673;
             padding-bottom: 1.5px;
             letter-spacing: 0.3px;
         }
@@ -482,7 +482,7 @@
             margin-bottom: 2px;
         }
         .sig-box {
-            border: 1px solid #001A4B;
+            border: 1px solid #1a3673;
             border-radius: 2px;
             padding: 2px 2px;
             text-align: center;
@@ -493,7 +493,7 @@
         .sig-header {
             font-size: 6.0pt;
             font-weight: 900;
-            color: #001A4B;
+            color: #1a3673;
             text-transform: uppercase;
             border-bottom: 0.5px solid #cbd5e1;
             padding-bottom: 1px;
@@ -586,7 +586,7 @@
                 @if(!empty($logoBase64))
                     <img src="{{ $logoBase64 }}" alt="Logo ENCG Fès">
                 @else
-                    <div style="font-size: 13pt; font-weight: 900; color: #001A4B;">ENCG FÈS</div>
+                    <div style="font-size: 13pt; font-weight: 900; color: #1a3673;">ENCG FÈS</div>
                 @endif
             </td>
             <td class="inst-center-cell">
@@ -809,7 +809,7 @@
                 @if(!empty($logoBase64))
                     <img src="{{ $logoBase64 }}" alt="Logo ENCG Fès">
                 @else
-                    <div style="font-size: 13pt; font-weight: 900; color: #001A4B;">ENCG FÈS</div>
+                    <div style="font-size: 13pt; font-weight: 900; color: #1a3673;">ENCG FÈS</div>
                 @endif
             </td>
             <td class="inst-center-cell">

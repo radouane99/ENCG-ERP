@@ -21,7 +21,7 @@
             line-height: 1.15;
         }
         .outer-frame {
-            border: 1.5px solid #001A4B;
+            border: 1.5px solid #1a3673;
             padding: 8px 10px;
             background-color: #ffffff;
         }
@@ -31,7 +31,7 @@
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 6px;
-            border-bottom: 1.5px solid #001A4B;
+            border-bottom: 1.5px solid #1a3673;
             padding-bottom: 4px;
         }
         .header-table td {
@@ -41,7 +41,7 @@
             width: 38%;
             font-size: 7.5px;
             font-weight: bold;
-            color: #001A4B;
+            color: #1a3673;
             line-height: 1.25;
         }
         .header-center {
@@ -57,13 +57,13 @@
             text-align: right;
             font-size: 7.5px;
             font-weight: bold;
-            color: #001A4B;
+            color: #1a3673;
             line-height: 1.25;
         }
 
         /* Banner title */
         .pv-title-banner {
-            background-color: #001A4B;
+            background-color: #1a3673;
             color: #ffffff;
             text-align: center;
             padding: 5px 8px;
@@ -106,7 +106,7 @@
         }
         .meta-val {
             font-weight: bold;
-            color: #001A4B;
+            color: #1a3673;
             width: 33%;
         }
 
@@ -118,12 +118,12 @@
             font-size: 8px;
         }
         .data-table th {
-            background-color: #001A4B;
+            background-color: #1a3673;
             color: #ffffff;
             padding: 3.5px 5px;
             font-weight: bold;
             text-align: center;
-            border: 1px solid #001A4B;
+            border: 1px solid #1a3673;
             text-transform: uppercase;
             font-size: 7.5px;
             letter-spacing: 0.3px;
@@ -266,7 +266,7 @@
                 <td class="meta-label">Statut du PV :</td>
                 <td class="meta-val">
                     @if($mode === 'emargement')
-                        <span style="color: #001A4B; font-weight: bold;">[ÉMARGEMENT EN SALLE]</span>
+                        <span style="color: #1a3673; font-weight: bold;">[ÉMARGEMENT EN SALLE]</span>
                     @elseif($exam->is_locked)
                         <span style="color: #059669; font-weight: bold;">[SCELLÉ & DÉFINITIF]</span>
                     @else
@@ -300,7 +300,7 @@
             <tbody>
                 @forelse($seatings as $idx => $seating)
                 <tr>
-                    <td class="text-center" style="font-weight: bold; color: #001A4B;">
+                    <td class="text-center" style="font-weight: bold; color: #1a3673;">
                         {{ ($seating->seat_number && !str_contains($seating->seat_number, '125')) ? $seating->seat_number : ('N° ' . str_pad($idx + 1, 2, '0', STR_PAD_LEFT)) }}
                     </td>
                     <td class="text-center font-mono font-bold" style="color: #475569;">
@@ -363,19 +363,19 @@
         <!-- Signatures & Verification Seal Table -->
         <table class="seal-signature-table">
             <tr>
-                <td style="width: 32%; border: 1px solid #001A4B; background-color: #f8fafc; padding: 4px; border-radius: 2px;">
+                <td style="width: 32%; border: 1px solid #1a3673; background-color: #f8fafc; padding: 4px; border-radius: 2px;">
                     <table style="width: 100%; border-collapse: collapse;">
                         <tr>
                             <td style="width: 48px; vertical-align: middle;">
                                 @if(!empty($qrBase64))
-                                    <img src="{{ $qrBase64 }}" alt="QR Code Verification" style="width: 44px; height: 44px; border: 1px solid #001A4B; padding: 1px; background: #fff; border-radius: 2px;">
+                                    <img src="{{ $qrBase64 }}" alt="QR Code Verification" style="width: 44px; height: 44px; border: 1px solid #1a3673; padding: 1px; background: #fff; border-radius: 2px;">
                                 @endif
                             </td>
                             <td style="vertical-align: middle; padding-left: 5px;">
-                                <div style="font-size: 7px; font-weight: 900; color: #001A4B; text-transform: uppercase;">
+                                <div style="font-size: 7px; font-weight: 900; color: #1a3673; text-transform: uppercase;">
                                     {{ $exam->is_locked ? 'PV VERROUILLÉ' : 'BROUILLON — PV NON CLÔTURÉ' }}
                                 </div>
-                                <div style="font-family: monospace; font-size: 6px; font-weight: bold; color: #001A4B; margin-top: 1px;">
+                                <div style="font-family: monospace; font-size: 6px; font-weight: bold; color: #1a3673; margin-top: 1px;">
                                     {{ $exam->is_locked ? substr($seal, 0, 24) : 'Visas et pointages à compléter' }}
                                 </div>
                                 <div style="font-size: 5.5px; color: #64748b; margin-top: 1px;">
@@ -386,8 +386,8 @@
                     </table>
                 </td>
                 <td style="width: 2%;"></td>
-                <td style="width: 32%; text-align: center; border: 1px solid #001A4B; background-color: #f8fafc; padding: 4px; border-radius: 2px;">
-                    <div style="font-weight: 900; font-size: 7px; color: #001A4B; text-transform: uppercase;">
+                <td style="width: 32%; text-align: center; border: 1px solid #1a3673; background-color: #f8fafc; padding: 4px; border-radius: 2px;">
+                    <div style="font-weight: 900; font-size: 7px; color: #1a3673; text-transform: uppercase;">
                         Surveillant Principal
                     </div>
                     <div style="font-size: 7px; color: #1e293b; font-weight: bold; margin-top: 1px;">
@@ -408,8 +408,8 @@
                     @endif
                 </td>
                 <td style="width: 2%;"></td>
-                <td style="width: 32%; text-align: center; border: 1px solid #001A4B; background-color: #f8fafc; padding: 4px; border-radius: 2px;">
-                    <div style="font-weight: 900; font-size: 7px; color: #001A4B; text-transform: uppercase;">
+                <td style="width: 32%; text-align: center; border: 1px solid #1a3673; background-color: #f8fafc; padding: 4px; border-radius: 2px;">
+                    <div style="font-weight: 900; font-size: 7px; color: #1a3673; text-transform: uppercase;">
                         Surveillant Secondaire
                     </div>
                     <div style="font-size: 7px; color: #1e293b; font-weight: bold; margin-top: 1px;">

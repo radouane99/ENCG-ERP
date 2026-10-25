@@ -3,7 +3,6 @@
 namespace App\Services\Documents;
 
 use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Support\Str;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class OfficialPdfFactory
@@ -16,16 +15,19 @@ class OfficialPdfFactory
             : '';
 
         if (! isset($data['verifyUrl'])) {
-            $data['verifyUrl'] = url('/verify/document/'.Str::random(10));
+            $data['verifyUrl'] = '';
         }
 
         try {
-            $qrSvg = QrCode::format('svg')->size(150)->margin(0)->generate($data['verifyUrl']);
-            $data['qrBase64'] = 'data:image/svg+xml;base64,'.base64_encode($qrSvg);
+            $data['qrBase64'] = $data['verifyUrl'] !== ''
+                ? 'data:image/svg+xml;base64,'.base64_encode(QrCode::format('svg')->size(150)->margin(0)->generate($data['verifyUrl']))
+                : '';
         } catch (\Throwable) {
             $data['qrBase64'] = '';
         }
 
-        return Pdf::loadView($view, $data)->setPaper('a4', 'portrait');
+        $pdf = Pdf::loadView($view, $data);
+        if ($view === 'pdf.carte_etudiant_cr80') { return $pdf->setPaper([0, 0, 153.01, 242.64], 'landscape'); }
+        return $pdf->setPaper('a4', str_contains($view, 'emploi_du_temps') ? 'landscape' : 'portrait');
     }
 }

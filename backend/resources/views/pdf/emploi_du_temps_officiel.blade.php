@@ -16,7 +16,7 @@
             padding: 0;
         }
         .frame {
-            border: 1.2px solid #0f2863;
+            border: 1.2px solid #1a3673;
         }
         .gold-line {
             background: #c9a227;
@@ -24,7 +24,7 @@
         h1 {
             text-align: center;
             letter-spacing: 0.5px;
-            color: #0f2863;
+            color: #1a3673;
             text-transform: uppercase;
         }
         .sub {
@@ -46,7 +46,7 @@
             line-height: 1.05;
         }
         table.edt th {
-            background: #0f2863;
+            background: #1a3673;
             color: #ffffff;
             text-align: center;
             font-weight: bold;
@@ -70,11 +70,11 @@
         .badge {
             display: inline-block;
             background: #e8eef5;
-            color: #0f2863;
+            color: #1a3673;
             font-size: 5.8pt;
             font-weight: bold;
             padding: 0.5px 5px;
-            border: 0.5px solid #0f2863;
+            border: 0.5px solid #1a3673;
             border-radius: 2px;
         }
     </style>
@@ -180,7 +180,7 @@
                     $tDisplay = $tVal ? (\Illuminate\Support\Str::startsWith($tVal, 'la semaine du') ? $tVal : 'la semaine du ' . $tVal) : null;
                 @endphp
                 @if(!empty($cStart) || !empty($tVal))
-                    <div style="margin-top:1px; font-size: {{ $dateFontSize }}; color:#0f2863; font-weight:bold;">
+                    <div style="margin-top:1px; font-size: {{ $dateFontSize }}; color:#1a3673; font-weight:bold;">
                         @if(!empty($cStart))
                             Démarrage des cours le {{ $cStart }}
                         @endif
@@ -247,6 +247,9 @@
                 </tbody>
             </table>
 
+            @if(!empty($section['footer']['cours']))
+                <p style="font-size:6pt;line-height:1.05;margin:1px 0 0;color:#475569;">Début des cours : {{ $section['footer']['cours'] }}. Début des TD/TP : {{ $section['footer']['td_tp'] ?? 'Non renseigné' }}.</p>
+            @endif
             <table class="foot" style="margin-top: {{ $rowCount > 16 ? '1.5px' : '3px' }};">
                 <tr>
                     <td class="qr" style="width: {{ $qrSize }}; padding: 0;">
@@ -260,7 +263,7 @@
                         @endif
                         Document officiel certifié par l'administration pédagogique de l'ENCG Fès. Généré le {{ $date ?? now()->format('d/m/Y') }}.
                     </td>
-                    <td style="text-align:right;font-weight:bold;color:#0f2863;font-size: {{ $footFontSize }};width:190px;line-height:1.08;padding:0;">
+                    <td style="text-align:right;font-weight:bold;color:#1a3673;font-size: {{ $footFontSize }};width:190px;line-height:1.08;padding:0;">
                         {{ $section['footer']['school'] ?? 'ENCG FÈS' }} — {{ $section['academic_year'] ?? $year }}<br>
                         <span style="font-size: {{ $footFontSize }};font-weight:normal;color:#64748b;">Direction des Études & Affaires Pédagogiques</span>
                     </td>

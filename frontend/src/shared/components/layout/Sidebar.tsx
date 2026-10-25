@@ -49,6 +49,7 @@ const navigation: (NavItem | NavGroup)[] = [
     groupTitleAr: 'الشؤون الطلابية والمسالك',
     items: [
       { label: 'Guichet Unique & Demandes', labelAr: 'الشباك والطلبات الإدارية', href: '/admin/guichet', icon: ClipboardList, badge: 'SLA', roles: ['super-admin', 'institution-admin', 'director', 'scolarite'] },
+      { label: 'Registre des documents PDF', labelAr: 'سجل الوثائق الرقمية', href: '/admin/document-registry', icon: FileEdit, roles: ['super-admin', 'institution-admin', 'director', 'scolarite'] },
       { label: 'Gestion des Étudiants', labelAr: 'إدارة الطلبة', href: '/admin/students', icon: Users, roles: ['super-admin', 'institution-admin', 'director', 'scolarite'] },
       { label: 'Nouvelles inscriptions (TAFEM / CNAEM)', labelAr: 'التسجيل الجديد وطافيم', href: '/academic/enrollments', icon: UserPlus, badge: 'Nouveaux', roles: ['super-admin', 'institution-admin', 'director', 'scolarite'] },
       { label: 'Réinscriptions (Anciens)', labelAr: 'إعادة تسجيل القدامى', href: '/admin/reinscriptions', icon: RefreshCw, badge: '2A-5A', roles: ['super-admin', 'institution-admin', 'director', 'scolarite'] },

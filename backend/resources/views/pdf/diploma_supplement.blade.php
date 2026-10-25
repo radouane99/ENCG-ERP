@@ -5,7 +5,7 @@
 @section('styles')
 <style>
     .supplement-banner {
-        background: linear-gradient(135deg, #001A4B 0%, #082663 100%);
+        background: linear-gradient(135deg, #1a3673 0%, #082663 100%);
         color: #ffffff;
         text-align: center;
         padding: 12px 16px;
@@ -37,7 +37,7 @@
         font-size: 8pt;
     }
     .section-title {
-        background-color: #0f2863;
+        background-color: #1a3673;
         color: #ffffff;
         font-size: 8pt;
         font-weight: 800;
@@ -73,10 +73,10 @@
         border-collapse: collapse;
         font-size: 7pt;
         margin: 6px 0;
-        border: 1px solid #0f2863;
+        border: 1px solid #1a3673;
     }
     .semesters-grid th {
-        background-color: #0f2863;
+        background-color: #1a3673;
         color: #ffffff;
         padding: 4px 6px;
         font-weight: 800;
@@ -136,7 +136,7 @@
         </tr>
         <tr>
             <td class="label-col">1.4 Identifiant national / National Student ID :</td>
-            <td class="val-col">CNE/Massar : <span style="font-family: monospace; font-weight: bold;">{{ $student->cne ?? 'N134098221' }}</span> · CIN : <span style="font-family: monospace;">{{ $student->cin ?? 'CD678901' }}</span></td>
+            <td class="val-col">CNE/Massar : <span style="font-family: monospace; font-weight: bold;">{{ $student->cne ?? 'Non renseigné' }}</span> · CIN : <span style="font-family: monospace;">{{ $student->cin ?? 'Non renseigné' }}</span></td>
         </tr>
     </table>
 
@@ -211,7 +211,7 @@
                     <td>{{ $row['focus'] }}</td>
                     <td style="text-align: center; font-weight: bold; color: #166534;">{{ $row['ects'] }} ECTS</td>
                     <td style="text-align: center; font-family: monospace; font-weight: bold;">{{ number_format($row['avg'], 2) }}/20</td>
-                    <td style="text-align: center; font-weight: bold; color: #0f2863;">{{ $row['status'] }}</td>
+                    <td style="text-align: center; font-weight: bold; color: #1a3673;">{{ $row['status'] }}</td>
                 </tr>
             @endforeach
         </tbody>
@@ -233,14 +233,14 @@
         </tr>
     </table>
 
-    {{-- SECTION 7 : CERTIFICATION ET SCEAU OFFICIEL --}}
+    {{-- SECTION 7 : CERTIFICATION ET CACHET À APPOSER --}}
     <table class="seal-box">
         <tr>
             <td>
                 <div style="font-size: 7.5pt; font-weight: bold; color: #475569;">FÈS, LE {{ now()->format('d/m/Y') }}</div>
-                <div style="font-size: 8pt; font-weight: 800; color: #0f2863; margin-top: 3px;">LE DIRECTEUR DE L'ENCG FÈS</div>
+                <div style="font-size: 8pt; font-weight: 800; color: #1a3673; margin-top: 3px;">LE DIRECTEUR DE L'ENCG FÈS</div>
                 <div style="margin-top: 15px;">
-                    <span style="display: inline-block; padding: 4px 8px; border: 1.5px solid #0f2863; color: #0f2863; font-weight: 800; font-size: 7pt; text-transform: uppercase;">
+                    <span style="display: inline-block; padding: 4px 8px; border: 1.5px solid #1a3673; color: #1a3673; font-weight: 800; font-size: 7pt; text-transform: uppercase;">
                         ✓ SCELLÉ NUMÉRIQUEMENT
                     </span>
                 </div>
@@ -253,7 +253,7 @@
             </td>
             <td>
                 <div style="font-size: 7.5pt; font-weight: bold; color: #475569;">EMPREINTE CRYPTOGRAPHIQUE</div>
-                <div style="font-size: 6.5pt; font-family: monospace; color: #0f2863; word-break: break-all; margin-top: 4px; padding: 3px; background-color: #f1f5f9; border: 1px solid #cbd5e1;">
+                <div style="font-size: 6.5pt; font-family: monospace; color: #1a3673; word-break: break-all; margin-top: 4px; padding: 3px; background-color: #f1f5f9; border: 1px solid #cbd5e1;">
                     SHA256:{{ substr(hash('sha256', ($student->cne ?? 'CNE') . ($student->id ?? 1) . '300-ECTS-ENCG'), 0, 32) }}...
                 </div>
                 <div style="font-size: 6.5pt; color: #166534; font-weight: bold; margin-top: 4px;">✓ Certifié Conforme Bologne / EHEA</div>

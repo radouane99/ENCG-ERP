@@ -5,17 +5,17 @@
 @section('content')
     <div style="position: relative; width: 100%;">
         <!-- Header -->
-        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 20px; border-bottom: 2px solid #0f2863; padding-bottom: 10px;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 20px; border-bottom: 2px solid #1a3673; padding-bottom: 10px;">
             <tr>
                 <td width="70%">
                     <div style="font-size: 10px; font-weight: bold; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">ROYAUME DU MAROC</div>
-                    <div style="font-size: 12px; font-weight: 900; color: #0f2863; text-transform: uppercase; margin-top: 2px;">UNIVERSITÉ SIDI MOHAMED BEN ABDELLAH DE FÈS</div>
+                    <div style="font-size: 12px; font-weight: 900; color: #1a3673; text-transform: uppercase; margin-top: 2px;">UNIVERSITÉ SIDI MOHAMED BEN ABDELLAH DE FÈS</div>
                     <div style="font-size: 12px; font-weight: 900; color: #990000; text-transform: uppercase; margin-top: 3px;">ÉCOLE NATIONALE DE COMMERCE ET DE GESTION DE FÈS</div>
                 </td>
                 <td width="30%" style="text-align: right;">
-                    <div style="font-size: 9px; font-family: monospace; font-weight: bold; color: #0f2863;">N° RÉCÉPISSÉ :</div>
+                    <div style="font-size: 9px; font-family: monospace; font-weight: bold; color: #1a3673;">N° RÉCÉPISSÉ :</div>
                     <div style="font-size: 12px; font-family: monospace; font-weight: 900; color: #059669;">
-                        REC-2026-{{ $cne ?? 'M145092428' }}
+                        REC-2026-{{ $cne ?? 'Non renseigné' }}
                     </div>
                 </td>
             </tr>
@@ -24,7 +24,7 @@
 
         <!-- Title -->
         <div style="text-align: center; margin: 20px 0;">
-            <h2 style="font-size: 18px; font-weight: 900; color: #0f2863; text-transform: uppercase; margin: 0; text-decoration: underline;">
+            <h2 style="font-size: 18px; font-weight: 900; color: #1a3673; text-transform: uppercase; margin: 0; text-decoration: underline;">
                 RÉCÉPISSÉ DE DÉPÔT DE DOSSIER PHYSIQUE
             </h2>
             <div style="font-size: 10px; font-weight: bold; color: #64748b; margin-top: 4px;">
@@ -36,15 +36,15 @@
         <table width="100%" cellpadding="6" cellspacing="0" style="border-collapse: collapse; margin-bottom: 20px; background-color: #f8fafc; border: 1px solid #cbd5e1; font-size: 12px;">
             <tr>
                 <td width="35%"><strong>Nom et Prénom :</strong></td>
-                <td width="65%" style="font-weight: 900; color: #0f2863;">{{ strtoupper($studentName ?? 'ABEN HSSAIN SIHAM') }}</td>
+                <td width="65%" style="font-weight: 900; color: #1a3673;">{{ strtoupper($studentName ?? 'ABEN HSSAIN SIHAM') }}</td>
             </tr>
             <tr>
                 <td><strong>Code Massar / CNE :</strong></td>
-                <td style="font-family: monospace; font-weight: bold;">{{ $cne ?? 'M145092428' }}</td>
+                <td style="font-family: monospace; font-weight: bold;">{{ $cne ?? 'Non renseigné' }}</td>
             </tr>
             <tr>
                 <td><strong>Carte d'Identité (CNIE) :</strong></td>
-                <td style="font-family: monospace;">{{ $cin ?? 'UB121643' }}</td>
+                <td style="font-family: monospace;">{{ $cin ?? 'Non renseigné' }}</td>
             </tr>
             <tr>
                 <td><strong>Filière Affectée :</strong></td>
@@ -53,12 +53,12 @@
         </table>
 
         <!-- Deposited Documents Checklist Table -->
-        <h3 style="font-size: 12px; font-weight: bold; color: #0f2863; margin-bottom: 10px;">
+        <h3 style="font-size: 12px; font-weight: bold; color: #1a3673; margin-bottom: 10px;">
             LISTE DES PIÈCES PHYSIQUES DÉPOSÉES AU GUICHET :
         </h3>
 
         <table width="100%" cellpadding="8" cellspacing="0" style="border-collapse: collapse; font-size: 11px; border: 1px solid #cbd5e1; margin-bottom: 25px;">
-            <tr style="background-color: #0f2863; color: #ffffff; font-weight: bold;">
+            <tr style="background-color: #1a3673; color: #ffffff; font-weight: bold;">
                 <td width="60%">Intitulé de la Pièce Justificative</td>
                 <td width="20%" style="text-align: center;">Statut</td>
                 <td width="20%" style="text-align: center;">Observation</td>

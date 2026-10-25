@@ -26,13 +26,13 @@
         left: -5mm;
         right: -5mm;
         bottom: -1.5mm;
-        border: 2px double #002e5b;
+        border: 2px double #1a3673;
         pointer-events: none;
         z-index: -100;
     }
 
     .official-logos-header {
-        border-bottom: 1.5px solid #002e5b;
+        border-bottom: 1.5px solid #1a3673;
         padding-bottom: 2px !important;
         margin-bottom: 4px !important;
     }
@@ -50,10 +50,10 @@
     .doc-title {
         font-size: 11.5pt;
         font-weight: 900;
-        color: #002e5b;
+        color: #1a3673;
         letter-spacing: 1.2px;
         text-transform: uppercase;
-        border-bottom: 2px solid #002e5b;
+        border-bottom: 2px solid #1a3673;
         display: inline-block;
         padding-bottom: 2px;
     }
@@ -81,19 +81,19 @@
         width: 100%;
         border-collapse: collapse;
         margin: 4px 0 6px 0;
-        border: 1px solid #002e5b;
+        border: 1px solid #1a3673;
         table-layout: fixed;
         page-break-inside: avoid;
     }
     .cndp-table-header td {
-        background-color: #002e5b !important;
+        background-color: #1a3673 !important;
         color: #ffffff !important;
         padding: 3.5px 6px;
         font-size: 7.2pt;
         font-weight: 900;
         text-transform: uppercase;
         letter-spacing: 0.5px;
-        border-bottom: 1px solid #002e5b;
+        border-bottom: 1px solid #1a3673;
     }
     .cndp-table td {
         padding: 3.5px 6px;
@@ -121,7 +121,7 @@
     }
     .cndp-table .val-name {
         font-size: 8.5pt;
-        color: #002e5b;
+        color: #1a3673;
         text-transform: uppercase;
         font-weight: 900;
     }
@@ -134,7 +134,7 @@
     .cndp-table .val-mono {
         font-family: DejaVu Sans Mono, monospace;
         font-weight: 900;
-        color: #002e5b;
+        color: #1a3673;
         font-size: 7.8pt;
     }
 
@@ -142,7 +142,7 @@
     .cndp-box {
         background-color: #f8fafc;
         border: 0.8px solid #cbd5e1;
-        border-left: 3px solid #002e5b;
+        border-left: 3px solid #1a3673;
         padding: 5px 8px;
         font-size: 6.8pt;
         line-height: 1.35;
@@ -169,14 +169,14 @@
     /* Official Stamp Circle */
     .official-seal-box {
         display: inline-block;
-        border: 1.5px solid #002e5b;
+        border: 1.5px solid #1a3673;
         border-radius: 50%;
         width: 52px;
         height: 52px;
         text-align: center;
         vertical-align: middle;
         padding: 3px 1px;
-        color: #002e5b;
+        color: #1a3673;
         font-size: 4.2pt;
         font-weight: 900;
         text-transform: uppercase;
@@ -246,13 +246,13 @@
     </tr>
     <tr>
         <td class="label">Diplôme Préparé :</td>
-        <td class="val" colspan="3" style="color: #002e5b; font-weight: 900;">
+        <td class="val" colspan="3" style="color: #1a3673; font-weight: 900;">
             Diplôme des Écoles Nationales de Commerce et de Gestion (Bac+5 — Grade Master d'État)
         </td>
     </tr>
     <tr>
         <td class="label">Filière / Spécialité :</td>
-        <td class="val" style="color: #002e5b; font-weight: 900;">
+        <td class="val" style="color: #1a3673; font-weight: 900;">
             {{ $filiereName ?? 'Gestion Financière et Comptable (GFC)' }}
         </td>
         <td class="label">Niveau & Sous-Groupe :</td>
@@ -276,7 +276,7 @@
     </tr>
     <tr>
         <td class="label">Email Académique :</td>
-        <td class="val" style="color: #002e5b; font-weight: bold;">
+        <td class="val" style="color: #1a3673; font-weight: bold;">
             {{ $user->email ?? 'student@encg-fes.ma' }}
         </td>
         <td class="label">Téléphone Contact :</td>
@@ -311,7 +311,7 @@
 @section('signature_right')
     <div style="font-size: 7.2pt; color: #334155; text-align: right; font-weight: bold;">Délivré à Fès, le {{ $generatedDate ?? date('d/m/Y') }}</div>
     <div style="font-size: 6.5pt; font-weight: bold; color: #475569; margin-top: 1px; text-align: right;">Pour le Directeur et par délégation</div>
-    <div style="font-size: 7.8pt; font-weight: 900; color: #002e5b; text-transform: uppercase; margin-top: 1px; text-align: right;">
+    <div style="font-size: 7.8pt; font-weight: 900; color: #1a3673; text-transform: uppercase; margin-top: 1px; text-align: right;">
         LE SECRÉTAIRE GÉNÉRAL & RESPONSABLE CNDP
     </div>
     <div style="margin-top: 1px; text-align: right;">
@@ -326,9 +326,7 @@
                     </div>
                 </td>
                 <td style="vertical-align: middle;">
-                    <svg width="85" height="22" viewBox="0 0 120 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M8,22 C16,10 24,4 30,4 C35,4 32,22 36,24 C40,26 45,14 50,10 C55,4 60,18 65,16 C70,14 82,6 90,14 C98,10 102,4 112,8" stroke="#002e5b" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
+                    <div style="height:26px;font-size:7pt;color:#64748b;">Signature à apposer</div>
                 </td>
             </tr>
         </table>

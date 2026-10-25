@@ -24,7 +24,7 @@
 
         /* Institutional Double Border Frame */
         .page-frame {
-            border: 2.5px solid #001A4B;
+            border: 2.5px solid #1a3673;
             outline: 1px solid #C5A059;
             outline-offset: -5px;
             padding: 10px 12px 8px 12px;
@@ -37,7 +37,7 @@
         .header-table {
             width: 100%;
             border-collapse: collapse;
-            border-bottom: 2px solid #001A4B;
+            border-bottom: 2px solid #1a3673;
             padding-bottom: 4px;
             margin-bottom: 5px;
         }
@@ -59,7 +59,7 @@
         .inst-school-name {
             font-size: 8pt;
             font-weight: bold;
-            color: #001A4B;
+            color: #1a3673;
             letter-spacing: 0.5px;
         }
         .inst-univ-name {
@@ -77,19 +77,19 @@
             text-align: right;
             font-size: 6.5pt;
             line-height: 1.2;
-            color: #001A4B;
+            color: #1a3673;
         }
         .arabic-state-title {
             font-size: 8pt;
             font-weight: bold;
-            color: #001A4B;
+            color: #1a3673;
             direction: rtl;
             margin-bottom: 2px;
         }
 
         /* Room Hero Banner */
         .room-hero {
-            background-color: #001A4B;
+            background-color: #1a3673;
             color: #ffffff;
             border-radius: 5px;
             border-bottom: 3.5px solid #C5A059;
@@ -195,7 +195,7 @@
 
         /* Section Banner */
         .section-banner {
-            background-color: #001A4B;
+            background-color: #1a3673;
             color: #ffffff;
             padding: 2.5px 6px;
             border-radius: 2px;
@@ -226,7 +226,7 @@
         }
         .sched-table th {
             background-color: #f1f5f9;
-            color: #001A4B;
+            color: #1a3673;
             font-weight: bold;
             text-align: center;
             text-transform: uppercase;
@@ -235,7 +235,7 @@
         }
         .sched-day-lbl {
             font-weight: bold;
-            color: #001A4B;
+            color: #1a3673;
             background-color: #f8fafc;
             width: 12%;
             text-align: center;
@@ -253,7 +253,7 @@
         }
         .session-module {
             font-weight: bold;
-            color: #001A4B;
+            color: #1a3673;
             font-size: 6.2pt;
             line-height: 1.1;
         }
@@ -291,7 +291,7 @@
         .charter-title {
             font-size: 6.5pt;
             font-weight: bold;
-            color: #001A4B;
+            color: #1a3673;
             text-transform: uppercase;
             border-bottom: 0.5px solid #e2e8f0;
             padding-bottom: 1.5px;
@@ -310,7 +310,7 @@
             color: #334155;
         }
         .charter-table strong {
-            color: #001A4B;
+            color: #1a3673;
         }
 
         /* Tripartite Stamps */
@@ -332,7 +332,7 @@
         .sig-title {
             font-size: 6.2pt;
             font-weight: bold;
-            color: #001A4B;
+            color: #1a3673;
             text-transform: uppercase;
         }
         .sig-sub {
@@ -440,7 +440,7 @@
         <tr>
             <td style="width: 35%;">
                 <strong>Réf. Patrimoine :</strong>
-                <span style="font-family: 'DejaVu Sans Mono', monospace; font-weight: bold; color: #001A4B;">
+                <span style="font-family: 'DejaVu Sans Mono', monospace; font-weight: bold; color: #1a3673;">
                     ENCG-PAT-{{ $currentYear }}-{{ $room->code }}
                 </span>
             </td>
@@ -452,7 +452,7 @@
             </td>
             <td style="width: 25%; text-align: right;">
                 <strong>Année Universitaire :</strong>
-                <span style="color: #001A4B; font-weight: bold;">{{ $academicYear }}</span>
+                <span style="color: #1a3673; font-weight: bold;">{{ $academicYear }}</span>
             </td>
         </tr>
     </table>
@@ -630,9 +630,9 @@
                 <div class="sig-title">DIRECTION DE L'ÉTABLISSEMENT</div>
                 <div class="sig-sub">Le Directeur de l'ENCG Fès</div>
                 <div class="stamp-area">
-                    <div class="seal-text" style="color: #001A4B;">
+                    <div class="seal-text" style="color: #1a3673;">
                         ★ USMBA · ENCG FÈS ★<br/>
-                        SCEAU OFFICIEL DE L'ÉCOLE<br/>
+                        CACHET À APPOSER DE L'ÉCOLE<br/>
                         POUR LE DIRECTEUR
                     </div>
                 </div>
@@ -650,7 +650,7 @@
                 @endif
             </td>
             <td style="vertical-align: middle; padding-left: 6px;">
-                <strong style="color: #001A4B; font-size: 6.2pt; text-transform: uppercase;">
+                <strong style="color: #1a3673; font-size: 6.2pt; text-transform: uppercase;">
                     Système d'Information &amp; Registre des Espaces — ENCG Fès
                 </strong><br/>
                 <span style="color: #64748b; line-height: 1.15;">
@@ -660,9 +660,9 @@
                 </span>
             </td>
             <td style="width: 130px; text-align: right; vertical-align: middle;">
-                <div style="font-size: 5.8pt; font-weight: bold; color: #001A4B;">Université Sidi Mohamed Ben Abdellah</div>
+                <div style="font-size: 5.8pt; font-weight: bold; color: #1a3673;">Université Sidi Mohamed Ben Abdellah</div>
                 <div style="font-size: 5.4pt; color: #64748b;">École Nationale de Commerce et de Gestion</div>
-                <div style="font-size: 6pt; font-weight: bold; color: #001A4B; margin-top: 1px;">PAGE 1 / 1 (A4 OFFICIEL)</div>
+                <div style="font-size: 6pt; font-weight: bold; color: #1a3673; margin-top: 1px;">PAGE 1 / 1 (A4 OFFICIEL)</div>
             </td>
         </tr>
     </table>

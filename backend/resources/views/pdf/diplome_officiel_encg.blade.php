@@ -15,14 +15,14 @@
         }
         body {
             font-family: 'Times New Roman', Times, serif;
-            color: #0f2863;
+            color: #1a3673;
             background-color: #ffffff;
             line-height: 1.35;
         }
         
         /* Grand Double Cadre Ornemental de Diplôme d'État */
         .diploma-outer-frame {
-            border: 4px double #0f2863;
+            border: 4px double #1a3673;
             padding: 4px;
             height: 98%;
             position: relative;
@@ -44,7 +44,7 @@
             opacity: 0.04;
             font-size: 52pt;
             font-weight: 900;
-            color: #0f2863;
+            color: #1a3673;
             text-transform: uppercase;
             letter-spacing: 6px;
             pointer-events: none;
@@ -68,7 +68,7 @@
             text-align: left;
             font-size: 8.5pt;
             font-family: 'Helvetica', Arial, sans-serif;
-            color: #0f2863;
+            color: #1a3673;
             font-weight: bold;
             line-height: 1.3;
         }
@@ -81,7 +81,7 @@
             text-align: right;
             font-size: 8.5pt;
             font-family: 'Arial', sans-serif;
-            color: #0f2863;
+            color: #1a3673;
             font-weight: bold;
             line-height: 1.4;
             direction: rtl;
@@ -95,13 +95,13 @@
         .diploma-title-ar {
             font-size: 16pt;
             font-weight: bold;
-            color: #0f2863;
+            color: #1a3673;
             margin-bottom: 2px;
         }
         .diploma-title-fr {
             font-size: 19pt;
             font-weight: 900;
-            color: #0f2863;
+            color: #1a3673;
             letter-spacing: 2px;
             text-transform: uppercase;
             text-shadow: 1px 1px 0px rgba(197, 160, 89, 0.3);
@@ -126,7 +126,7 @@
         .recipient-name {
             font-size: 20pt;
             font-weight: bold;
-            color: #0f2863;
+            color: #1a3673;
             text-transform: uppercase;
             letter-spacing: 1.5px;
             margin: 6px 0;
@@ -135,7 +135,7 @@
         .specialite-box {
             font-size: 14pt;
             font-weight: bold;
-            color: #0f2863;
+            color: #1a3673;
             text-transform: uppercase;
             margin: 4px 0;
         }
@@ -165,7 +165,7 @@
         }
         .sig-title {
             font-weight: bold;
-            color: #0f2863;
+            color: #1a3673;
             text-transform: uppercase;
             font-size: 8.5pt;
             margin-bottom: 4px;
@@ -212,7 +212,7 @@
                         @if(!empty($logoBase64))
                             <img src="{{ $logoBase64 }}" alt="Logo ENCG Fès" style="max-height: 52px; max-width: 130px;">
                         @else
-                            <strong style="color: #0f2863; font-size: 15pt; letter-spacing: 1px;">ENCG FÈS</strong>
+                            <strong style="color: #1a3673; font-size: 15pt; letter-spacing: 1px;">ENCG FÈS</strong>
                         @endif
                     </td>
                     <td class="header-right">
@@ -262,7 +262,7 @@
             </div>
 
             <p style="font-size: 10pt;">
-                au titre de l'année universitaire <strong>{{ $academicYear ?? '2025-2026' }}</strong>
+                au titre de l'année universitaire <strong>{{ $academicYear ?? 'Non renseignée' }}</strong>
                 @if(!empty($mention))
                     &nbsp;—&nbsp; <span class="mention-badge">Mention : {{ $mention }}</span>
                 @else
@@ -282,7 +282,7 @@
                 </td>
                 <td>
                     <div class="sig-title">Le Directeur de l'ENCG Fès</div>
-                    <div style="font-size: 8pt; color: #0f2863; font-weight: bold; margin-top: 4px;">
+                    <div style="font-size: 8pt; color: #1a3673; font-weight: bold; margin-top: 4px;">
                         Pr. Abderrazak EL HIRI
                     </div>
                     <div style="font-size: 7pt; color: #059669; font-weight: bold; margin-top: 14px;">
@@ -291,7 +291,7 @@
                 </td>
                 <td>
                     <div class="sig-title">Le Président de l'Université USMBA</div>
-                    <div style="font-size: 8pt; color: #0f2863; font-weight: bold; margin-top: 4px;">
+                    <div style="font-size: 8pt; color: #1a3673; font-weight: bold; margin-top: 4px;">
                         Pr. Mustapha IJJAALI
                     </div>
                     <div style="font-size: 7pt; color: #059669; font-weight: bold; margin-top: 14px;">
@@ -311,7 +311,7 @@
                         @endif
                     </td>
                     <td style="width: 60%; text-align: left; padding-left: 6px;">
-                        <strong style="color: #0f2863; font-size: 7.5pt;">REGISTRE NATIONAL DES DIPLÔMES D'ÉTAT — USMBA / ENCG FÈS</strong><br>
+                        <strong style="color: #1a3673; font-size: 7.5pt;">REGISTRE NATIONAL DES DIPLÔMES D'ÉTAT — USMBA / ENCG FÈS</strong><br>
                         N° d'Enregistrement : <strong>DIP-ENCG-{{ date('Y') }}-{{ $student->id ?? 100 }}</strong> &nbsp;|&nbsp; 
                         Sceau SHA-256 : <span style="font-family: monospace; font-size: 6.5pt; color: #059669;">{{ $hashSignature ?? '7F8A2B9C0D1E3F4A5B6C7D8E9F0A1B2C3D4E5F6' }}</span><br>
                         Document officiel d'État délivré en exemplaire unique. Toute altération constitue un faux en écriture publique.

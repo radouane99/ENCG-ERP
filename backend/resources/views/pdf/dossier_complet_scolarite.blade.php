@@ -23,7 +23,7 @@
         .page-container {
             width: 100%;
             height: 278mm;
-            border: 4px double #002e5b;
+            border: 4px double #1a3673;
             border-collapse: collapse;
         }
         .content-td {
@@ -107,7 +107,7 @@
                                 @if(!empty($logoBase64))
                                     <img src="{{ $logoBase64 }}" alt="Logo ENCG" style="height: 42px;">
                                 @else
-                                    <strong style="color: #002e5b;">ENCG FÈS</strong>
+                                    <strong style="color: #1a3673;">ENCG FÈS</strong>
                                 @endif
                             </td>
                             <td style="text-align: right; width: 35%;">
@@ -121,12 +121,12 @@
                 </div>
 
                 <!-- Header Title Banner -->
-                <div style="background-color: #0f2863; color: #ffffff; text-align: center; padding: 5px 10px; border-radius: 4px; margin-bottom: 10px;">
+                <div style="background-color: #1a3673; color: #ffffff; text-align: center; padding: 5px 10px; border-radius: 4px; margin-bottom: 10px;">
                     <h2 style="font-size: 13.5px; font-weight: 900; letter-spacing: 0.8px; color: #ffffff; text-transform: uppercase; margin: 0;">
                         ATTESTATION D'INSCRIPTION &amp; RÉCÉPISSÉ DE DÉPÔT
                     </h2>
                     <div style="font-size: 7.5pt; font-weight: bold; color: #93c5fd; margin-top: 1px; text-transform: uppercase; letter-spacing: 0.5px;">
-                        DOCUMENT OFFICIEL CERTIFIÉ ET HORODATÉ ÉLECTRONIQUEMENT — ANNÉE UNIVERSITAIRE {{ $academicYear ?? '2026-2027' }}
+                        DOCUMENT OFFICIEL CERTIFIÉ ET HORODATÉ ÉLECTRONIQUEMENT — ANNÉE UNIVERSITAIRE {{ $academicYear ?? 'Non renseignée' }}
                     </div>
                 </div>
 
@@ -142,26 +142,26 @@
                                 <table width="100%" cellpadding="3.5" cellspacing="0" style="font-size: 9pt; border-collapse: collapse; background-color: #ffffff; border: 1px solid #cbd5e1; border-radius: 4px;">
                                     <tr style="border-bottom: 1px solid #e2e8f0;">
                                         <td width="38%" style="font-weight: bold; color: #475569; background-color: #f8fafc;">Nom et Prénom :</td>
-                                        <td width="62%" style="font-weight: 900; color: #0f2863; font-size: 10.5pt; text-transform: uppercase;">
+                                        <td width="62%" style="font-weight: 900; color: #1a3673; font-size: 10.5pt; text-transform: uppercase;">
                                             {{ $studentName ?? 'ENMILI FATIMA-ZAHRA' }}
                                         </td>
                                     </tr>
                                     <tr style="border-bottom: 1px solid #e2e8f0;">
                                         <td style="font-weight: bold; color: #475569; background-color: #f8fafc;">CODE MASSAR / CNE :</td>
                                         <td style="font-weight: 900; font-family: monospace; font-size: 10pt; color: #059669;">
-                                            {{ $cne ?? 'H148073298' }}
+                                            {{ $cne ?? 'Non renseigné' }}
                                         </td>
                                     </tr>
                                     <tr style="border-bottom: 1px solid #e2e8f0;">
                                         <td style="font-weight: bold; color: #475569; background-color: #f8fafc;">Carte d'Identité (CNIE) :</td>
                                         <td style="font-weight: bold; font-family: monospace; color: #1e293b;">
-                                            {{ $cin ?? 'ZG195334' }}
+                                            {{ $cin ?? 'Non renseigné' }}
                                         </td>
                                     </tr>
                                     <tr style="border-bottom: 1px solid #e2e8f0;">
                                         <td style="font-weight: bold; color: #475569; background-color: #f8fafc;">Né(e) le &amp; Lieu :</td>
                                         <td style="color: #1e293b;">
-                                            <strong>{{ $birthDate ?? '25 / 07 / 2008' }}</strong> &nbsp;à&nbsp; <strong style="color: #0f2863;">{{ strtoupper($birthCity ?? 'OUJDA') }}</strong>
+                                            <strong>{{ $birthDate ?? '25 / 07 / 2008' }}</strong> &nbsp;à&nbsp; <strong style="color: #1a3673;">{{ strtoupper($birthCity ?? 'OUJDA') }}</strong>
                                         </td>
                                     </tr>
                                     <tr>
@@ -174,7 +174,7 @@
                             </td>
 
                             <td width="24%" style="text-align: right; vertical-align: top; padding-left: 8px;">
-                                <div style="width: 100px; height: 125px; border: 2px solid #0f2863; border-radius: 4px; padding: 2px; background-color: #ffffff; display: inline-block;">
+                                <div style="width: 100px; height: 125px; border: 2px solid #1a3673; border-radius: 4px; padding: 2px; background-color: #ffffff; display: inline-block;">
                                     @if(!empty($photoBase64))
                                         <img src="{{ $photoBase64 }}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 2px;" alt="Photo Étudiant" />
                                     @else
@@ -190,7 +190,7 @@
 
                 <!-- Section I: Academic Origin & Baccalaureate Section -->
                 <div style="background-color: #ffffff; border: 1px solid #cbd5e1; border-radius: 4px; overflow: hidden; margin-bottom: 8px;">
-                    <div style="background-color: #0f2863; color: #ffffff; font-weight: 900; font-size: 8pt; text-transform: uppercase; padding: 3px 8px; letter-spacing: 0.5px;">
+                    <div style="background-color: #1a3673; color: #ffffff; font-weight: 900; font-size: 8pt; text-transform: uppercase; padding: 3px 8px; letter-spacing: 0.5px;">
                         I. ORIGINE ACADÉMIQUE &amp; NOTES DU BACCALAURÉAT
                     </div>
                     <div style="padding: 5px 8px;">
@@ -198,21 +198,21 @@
                             <tr>
                                 <td width="32%" style="font-weight: bold; color: #475569;">Série du Bac &amp; Mention :</td>
                                 <td width="68%" style="font-weight: bold; color: #1e293b;">
-                                    Série <strong style="color: #0f2863;">{{ $bacSerie ?? 'Sciences Économiques' }}</strong> &nbsp;·&nbsp; Mention <strong style="color: #059669;">{{ $bacMention ?? 'Bien' }}</strong>
+                                    Série <strong style="color: #1a3673;">{{ $bacSerie ?? 'Sciences Économiques' }}</strong> &nbsp;·&nbsp; Mention <strong style="color: #059669;">{{ $bacMention ?? 'Bien' }}</strong>
                                 </td>
                             </tr>
                             <tr>
                                 <td style="font-weight: bold; color: #475569;">Notes des Examens :</td>
                                 <td style="color: #1e293b;">
                                     <span>National : <strong style="color: #059669;">{{ $bacNationalNote ?? '15.80 / 20' }}</strong></span> &nbsp;·&nbsp; 
-                                    <span>Régional : <strong style="color: #0f2863;">{{ $bacRegionalNote ?? '14.90 / 20' }}</strong></span> &nbsp;·&nbsp; 
+                                    <span>Régional : <strong style="color: #1a3673;">{{ $bacRegionalNote ?? '14.90 / 20' }}</strong></span> &nbsp;·&nbsp; 
                                     <span>Moyenne Général : <strong style="color: #d97706;">{{ $bacGeneralNote ?? '15.41 / 20' }}</strong></span>
                                 </td>
                             </tr>
                             <tr>
                                 <td style="font-weight: bold; color: #475569;">Établissement &amp; Région :</td>
                                 <td style="color: #1e293b;">
-                                    Lycee test &nbsp;·&nbsp; Académie <strong style="color: #0f2863;">ACADÉMIE L'Oriental</strong>
+                                    Lycee test &nbsp;·&nbsp; Académie <strong style="color: #1a3673;">ACADÉMIE L'Oriental</strong>
                                 </td>
                             </tr>
                         </table>
@@ -221,14 +221,14 @@
 
                 <!-- Section II: Registration & ENCG Pathway Section -->
                 <div style="background-color: #ffffff; border: 1px solid #cbd5e1; border-radius: 4px; overflow: hidden; margin-bottom: 8px;">
-                    <div style="background-color: #0f2863; color: #ffffff; font-weight: 900; font-size: 8pt; text-transform: uppercase; padding: 3px 8px; letter-spacing: 0.5px;">
+                    <div style="background-color: #1a3673; color: #ffffff; font-weight: 900; font-size: 8pt; text-transform: uppercase; padding: 3px 8px; letter-spacing: 0.5px;">
                         II. INSCRIPTION &amp; AFFECTATION ENCG FÈS
                     </div>
                     <div style="padding: 5px 8px;">
                         <table width="100%" cellpadding="2.5" cellspacing="0" style="border-collapse: collapse; font-size: 8pt;">
                             <tr style="border-bottom: 1px solid #f1f5f9;">
                                 <td width="32%" style="font-weight: bold; color: #475569;">Est officiellement inscrit(e) au :</td>
-                                <td width="68%" style="font-weight: 900; color: #0f2863;">
+                                <td width="68%" style="font-weight: 900; color: #1a3673;">
                                     Semestre 1 du Cycle Diplôme ENCG (Bac+5) à l'E.N.C.G. FÈS
                                 </td>
                             </tr>
@@ -240,14 +240,14 @@
                             </tr>
                             <tr style="border-bottom: 1px solid #f1f5f9;">
                                 <td style="font-weight: bold; color: #475569;">Filière d'Affectation :</td>
-                                <td style="font-weight: 900; color: #0f2863;">
+                                <td style="font-weight: 900; color: #1a3673;">
                                     {{ $filiereName ?? 'DEUX ANNÉES PRÉPARATOIRES (TRONC COMMUN)' }}
                                 </td>
                             </tr>
                             <tr>
                                 <td style="font-weight: bold; color: #475569;">Année Universitaire :</td>
                                 <td style="font-weight: bold; color: #059669;">
-                                    {{ $academicYear ?? '2026-2027' }}
+                                    {{ $academicYear ?? 'Non renseignée' }}
                                 </td>
                             </tr>
                         </table>
@@ -256,7 +256,7 @@
 
                 <!-- Section III: Physical Documents Receipt Section -->
                 <div style="background-color: #ffffff; border: 1px solid #cbd5e1; border-radius: 4px; overflow: hidden; margin-bottom: 8px;">
-                    <div style="background-color: #0f2863; color: #ffffff; font-weight: 900; font-size: 8pt; text-transform: uppercase; padding: 3px 8px; letter-spacing: 0.5px;">
+                    <div style="background-color: #1a3673; color: #ffffff; font-weight: 900; font-size: 8pt; text-transform: uppercase; padding: 3px 8px; letter-spacing: 0.5px;">
                         III. ÉMARGEMENT &amp; RÉCÉPISSÉ DE DÉPÔT DU DOSSIER PHYSIQUE (SCOLARITÉ)
                     </div>
                     <div style="padding: 5px 8px;">
@@ -323,7 +323,7 @@
                                 @endif
                             </div>
                             <div style="padding-top: 2px;">
-                                <strong style="color:#002e5b; font-size: 9.5px;">Document numérique officiel sécurisé</strong><br>
+                                <strong style="color:#1a3673; font-size: 9.5px;">Document numérique officiel sécurisé</strong><br>
                                 Généré automatiquement par l'ERP ENCG.<br>
                                 <strong>Anti-Fraude :</strong> Scannez le code QR ci-dessus pour valider l'authenticité de ce document.
                             </div>
@@ -331,7 +331,7 @@
                         <td class="footer-right">
                             Fait à Fès, le {{ date('d/m/Y') }}<br><br>
                             <div style="font-size: 7.5pt; font-weight: bold; color: #475569;">POUR LE DIRECTEUR ET PAR DÉLÉGATION</div>
-                            <strong style="color: #0f2863; font-size: 8.5pt;">LE CHEF DU SERVICE DE LA SCOLARITÉ</strong>
+                            <strong style="color: #1a3673; font-size: 8.5pt;">LE CHEF DU SERVICE DE LA SCOLARITÉ</strong>
                         </td>
                     </tr>
                 </table>
@@ -366,7 +366,7 @@
                                 @if(!empty($logoBase64))
                                     <img src="{{ $logoBase64 }}" alt="Logo ENCG" style="height: 42px;">
                                 @else
-                                    <strong style="color: #002e5b;">ENCG FÈS</strong>
+                                    <strong style="color: #1a3673;">ENCG FÈS</strong>
                                 @endif
                             </td>
                             <td style="text-align: right; width: 35%;">
@@ -380,12 +380,12 @@
                 </div>
 
                 <!-- Header Title Banner -->
-                <div style="background-color: #0f2863; color: #ffffff; text-align: center; padding: 5px 10px; border-radius: 4px; margin-bottom: 10px;">
+                <div style="background-color: #1a3673; color: #ffffff; text-align: center; padding: 5px 10px; border-radius: 4px; margin-bottom: 10px;">
                     <h2 style="font-size: 13.5px; font-weight: 900; letter-spacing: 0.8px; color: #ffffff; text-transform: uppercase; margin: 0;">
                         FORMULAIRE D'ENGAGEMENT DE L'ÉTUDIANT(E)
                     </h2>
                     <div style="font-size: 7.5pt; font-weight: bold; color: #93c5fd; margin-top: 1px; text-transform: uppercase; letter-spacing: 0.5px;">
-                        ANNÉE UNIVERSITAIRE {{ $academicYear ?? '2026-2027' }} • ENGAGEMENT DÉONTOLOGIQUE &amp; RÈGLEMENT INTERNE
+                        ANNÉE UNIVERSITAIRE {{ $academicYear ?? 'Non renseignée' }} • ENGAGEMENT DÉONTOLOGIQUE &amp; RÈGLEMENT INTERNE
                     </div>
                 </div>
 
@@ -394,33 +394,33 @@
                     <tr>
                         <td width="76%" style="vertical-align: top;">
                             <div style="border: 1px solid #cbd5e1; border-radius: 4px; overflow: hidden;">
-                                <div style="background-color: #0f2863; color: #ffffff; font-weight: 900; font-size: 8pt; text-transform: uppercase; padding: 3px 8px; letter-spacing: 0.5px;">
+                                <div style="background-color: #1a3673; color: #ffffff; font-weight: 900; font-size: 8pt; text-transform: uppercase; padding: 3px 8px; letter-spacing: 0.5px;">
                                     1. IDENTIFICATION DE L'ÉTUDIANT(E) INSCRIT(E)
                                 </div>
                                 <div style="padding: 5px 8px;">
                                     <table width="100%" cellpadding="3" cellspacing="0" style="border-collapse: collapse; font-size: 8.5pt;">
                                         <tr style="border-bottom: 1px solid #f1f5f9;">
                                             <td width="40%" style="font-weight: bold; color: #475569;">Nom &amp; Prénom :</td>
-                                            <td width="60%" style="font-weight: 900; color: #0f2863; font-size: 10pt; text-transform: uppercase;">
+                                            <td width="60%" style="font-weight: 900; color: #1a3673; font-size: 10pt; text-transform: uppercase;">
                                                 {{ strtoupper($studentName ?? 'ENMILI FATIMA-ZAHRA') }}
                                             </td>
                                         </tr>
                                         <tr style="border-bottom: 1px solid #f1f5f9;">
                                             <td style="font-weight: bold; color: #475569;">Date &amp; Lieu de Naissance :</td>
                                             <td style="font-weight: bold; color: #1e293b;">
-                                                {{ $birthDate ?? '25 / 07 / 2008' }} &nbsp;à&nbsp; <strong style="color: #0f2863;">{{ strtoupper($birthCity ?? 'OUJDA') }}</strong>
+                                                {{ $birthDate ?? '25 / 07 / 2008' }} &nbsp;à&nbsp; <strong style="color: #1a3673;">{{ strtoupper($birthCity ?? 'OUJDA') }}</strong>
                                             </td>
                                         </tr>
                                         <tr style="border-bottom: 1px solid #f1f5f9;">
                                             <td style="font-weight: bold; color: #475569;">Carte d'Identité (CNIE) :</td>
                                             <td style="font-weight: bold; font-family: monospace; color: #1e293b;">
-                                                {{ $cin ?? 'ZG195334' }}
+                                                {{ $cin ?? 'Non renseigné' }}
                                             </td>
                                         </tr>
                                         <tr style="border-bottom: 1px solid #f1f5f9;">
                                             <td style="font-weight: bold; color: #475569;">Code CNE / MASSAR :</td>
                                             <td style="font-weight: 900; font-family: monospace; color: #059669;">
-                                                {{ $cne ?? 'H148073298' }}
+                                                {{ $cne ?? 'Non renseigné' }}
                                             </td>
                                         </tr>
                                         <tr style="border-bottom: 1px solid #f1f5f9;">
@@ -431,7 +431,7 @@
                                         </tr>
                                         <tr>
                                             <td style="font-weight: bold; color: #475569;">Filière d'Affectation :</td>
-                                            <td style="font-weight: 900; color: #0f2863; text-transform: uppercase;">
+                                            <td style="font-weight: 900; color: #1a3673; text-transform: uppercase;">
                                                 {{ $filiereName ?? 'DEUX ANNÉES PRÉPARATOIRES (TC)' }}
                                             </td>
                                         </tr>
@@ -441,7 +441,7 @@
                         </td>
 
                         <td width="24%" style="text-align: right; vertical-align: top; padding-left: 8px;">
-                            <div style="width: 100px; height: 125px; border: 2px solid #0f2863; border-radius: 4px; padding: 2px; background-color: #ffffff; display: inline-block;">
+                            <div style="width: 100px; height: 125px; border: 2px solid #1a3673; border-radius: 4px; padding: 2px; background-color: #ffffff; display: inline-block;">
                                 @if(!empty($photoBase64))
                                     <img src="{{ $photoBase64 }}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 2px;" alt="Photo Étudiant" />
                                 @else
@@ -456,41 +456,41 @@
 
                 <!-- Rules & Ethical Obligations Checklist -->
                 <div style="border: 1px solid #cbd5e1; border-radius: 4px; overflow: hidden; margin-bottom: 10px;">
-                    <div style="background-color: #0f2863; color: #ffffff; font-weight: 900; font-size: 8pt; text-transform: uppercase; padding: 3px 8px; letter-spacing: 0.5px;">
+                    <div style="background-color: #1a3673; color: #ffffff; font-weight: 900; font-size: 8pt; text-transform: uppercase; padding: 3px 8px; letter-spacing: 0.5px;">
                         2. ENGAGEMENTS DÉONTOLOGIQUES &amp; OBLIGATIONS ACADÉMIQUES
                     </div>
                     <div style="padding: 5px 8px;">
                         <table width="100%" cellpadding="3" cellspacing="0" style="border-collapse: collapse; font-size: 8pt;">
                             <tr style="border-bottom: 1px solid #f1f5f9;">
                                 <td width="6%" style="text-align: center; vertical-align: top; padding-top: 4px;">
-                                    <span style="background-color: #0f2863; color: #ffffff; font-size: 7pt; font-weight: 900; padding: 1px 5px; border-radius: 2px;">01</span>
+                                    <span style="background-color: #1a3673; color: #ffffff; font-size: 7pt; font-weight: 900; padding: 1px 5px; border-radius: 2px;">01</span>
                                 </td>
                                 <td width="94%" style="line-height: 1.35; color: #1e293b;">
-                                    <strong style="color: #0f2863;">Assiduité &amp; Présence Obligatoire :</strong> Je m'engage à assister avec régularité et ponctualité à l'ensemble des cours magistraux, travaux dirigés (TD), travaux pratiques (TP) et conférences programmés par l'établissement.
+                                    <strong style="color: #1a3673;">Assiduité &amp; Présence Obligatoire :</strong> Je m'engage à assister avec régularité et ponctualité à l'ensemble des cours magistraux, travaux dirigés (TD), travaux pratiques (TP) et conférences programmés par l'établissement.
                                 </td>
                             </tr>
                             <tr style="border-bottom: 1px solid #f1f5f9;">
                                 <td style="text-align: center; vertical-align: top; padding-top: 4px;">
-                                    <span style="background-color: #0f2863; color: #ffffff; font-size: 7pt; font-weight: 900; padding: 1px 5px; border-radius: 2px;">02</span>
+                                    <span style="background-color: #1a3673; color: #ffffff; font-size: 7pt; font-weight: 900; padding: 1px 5px; border-radius: 2px;">02</span>
                                 </td>
                                 <td style="line-height: 1.35; color: #1e293b;">
-                                    <strong style="color: #0f2863;">Respect du Règlement Intérieur :</strong> Déclare avoir pris connaissance du règlement intérieur de l'ENCG Fès et m'engage à respecter les règles de bienséance, le matériel, le campus et le corps enseignant et administratif.
+                                    <strong style="color: #1a3673;">Respect du Règlement Intérieur :</strong> Déclare avoir pris connaissance du règlement intérieur de l'ENCG Fès et m'engage à respecter les règles de bienséance, le matériel, le campus et le corps enseignant et administratif.
                                 </td>
                             </tr>
                             <tr style="border-bottom: 1px solid #f1f5f9;">
                                 <td style="text-align: center; vertical-align: top; padding-top: 4px;">
-                                    <span style="background-color: #0f2863; color: #ffffff; font-size: 7pt; font-weight: 900; padding: 1px 5px; border-radius: 2px;">03</span>
+                                    <span style="background-color: #1a3673; color: #ffffff; font-size: 7pt; font-weight: 900; padding: 1px 5px; border-radius: 2px;">03</span>
                                 </td>
                                 <td style="line-height: 1.35; color: #1e293b;">
-                                    <strong style="color: #0f2863;">Intégrité Académique :</strong> Je m'engage à respecter la charte de probité intellectuelle, m'interdisant toute forme de fraude, plagiat ou tricherie lors des contrôles continus et examens finaux.
+                                    <strong style="color: #1a3673;">Intégrité Académique :</strong> Je m'engage à respecter la charte de probité intellectuelle, m'interdisant toute forme de fraude, plagiat ou tricherie lors des contrôles continus et examens finaux.
                                 </td>
                             </tr>
                             <tr>
                                 <td style="text-align: center; vertical-align: top; padding-top: 4px;">
-                                    <span style="background-color: #0f2863; color: #ffffff; font-size: 7pt; font-weight: 900; padding: 1px 5px; border-radius: 2px;">04</span>
+                                    <span style="background-color: #1a3673; color: #ffffff; font-size: 7pt; font-weight: 900; padding: 1px 5px; border-radius: 2px;">04</span>
                                 </td>
                                 <td style="line-height: 1.35; color: #1e293b;">
-                                    <strong style="color: #0f2863;">Authenticité des Pièces :</strong> Certifie sur l'honneur l'exactitude absolue de l'ensemble des pièces scannées et documents physiques déposés auprès de la Scolarité ENCG Fès.
+                                    <strong style="color: #1a3673;">Authenticité des Pièces :</strong> Certifie sur l'honneur l'exactitude absolue de l'ensemble des pièces scannées et documents physiques déposés auprès de la Scolarité ENCG Fès.
                                 </td>
                             </tr>
                         </table>
@@ -502,16 +502,16 @@
                     <tr>
                         <td width="48%" style="vertical-align: top;">
                             <div style="font-size: 7.5pt; color: #475569; font-weight: bold; margin-bottom: 4px;">
-                                Fait à Fès, le : <strong style="color: #0f2863;">{{ date('d/m/Y') }}</strong>
+                                Fait à Fès, le : <strong style="color: #1a3673;">{{ date('d/m/Y') }}</strong>
                             </div>
                             <div style="padding: 6px 8px; border: 1px dashed #f59e0b; background-color: #fffbeb; border-radius: 4px; font-size: 7pt; color: #78350f; line-height: 1.35;">
-                                <strong style="color: #0f2863; font-size: 7.5pt;">Notice de la Scolarité :</strong><br>
+                                <strong style="color: #1a3673; font-size: 7.5pt;">Notice de la Scolarité :</strong><br>
                                 Ce document d'engagement est généré automatiquement lors de l'inscription et doit être signé et joint au dossier physique de l'étudiant.
                             </div>
                         </td>
                         <td width="4%"></td>
                         <td width="48%" style="vertical-align: top; text-align: center;">
-                            <strong style="font-size: 8pt; color: #0f2863; display: block; margin-bottom: 3px;">
+                            <strong style="font-size: 8pt; color: #1a3673; display: block; margin-bottom: 3px;">
                                 Signature de l'Étudiant(e)<br>
                                 <span style="font-size: 6.5pt; font-weight: normal; color: #64748b;">(précédée de la mention manuscrite "Lu et approuvé")</span>
                             </strong>
@@ -536,7 +536,7 @@
                                 @endif
                             </div>
                             <div style="padding-top: 2px;">
-                                <strong style="color:#002e5b; font-size: 9.5px;">Document numérique officiel sécurisé</strong><br>
+                                <strong style="color:#1a3673; font-size: 9.5px;">Document numérique officiel sécurisé</strong><br>
                                 Généré automatiquement par l'ERP ENCG.<br>
                                 <strong>Anti-Fraude :</strong> Scannez le code QR ci-dessus pour valider l'authenticité de ce document.
                             </div>
@@ -544,7 +544,7 @@
                         <td class="footer-right">
                             Fait à Fès, le {{ date('d/m/Y') }}<br><br>
                             <div style="font-size: 7.5pt; font-weight: bold; color: #475569;">POUR LE DIRECTEUR ET PAR DÉLÉGATION</div>
-                            <strong style="color: #0f2863; font-size: 8.5pt;">LE CHEF DU SERVICE DE LA SCOLARITÉ</strong>
+                            <strong style="color: #1a3673; font-size: 8.5pt;">LE CHEF DU SERVICE DE LA SCOLARITÉ</strong>
                         </td>
                     </tr>
                 </table>
@@ -579,7 +579,7 @@
                                 @if(!empty($logoBase64))
                                     <img src="{{ $logoBase64 }}" alt="Logo ENCG" style="height: 42px;">
                                 @else
-                                    <strong style="color: #002e5b;">ENCG FÈS</strong>
+                                    <strong style="color: #1a3673;">ENCG FÈS</strong>
                                 @endif
                             </td>
                             <td style="text-align: right; width: 35%;">
@@ -593,12 +593,12 @@
                 </div>
 
                 <!-- Header Title Banner -->
-                <div style="background-color: #0f2863; color: #ffffff; text-align: center; padding: 5px 10px; border-radius: 4px; margin-bottom: 10px;">
+                <div style="background-color: #1a3673; color: #ffffff; text-align: center; padding: 5px 10px; border-radius: 4px; margin-bottom: 10px;">
                     <h2 style="font-size: 13.5px; font-weight: 900; letter-spacing: 0.8px; color: #ffffff; text-transform: uppercase; margin: 0;">
                         FICHE DE RENSEIGNEMENTS MÉDICAUX &amp; SANTÉ ÉTUDIANT
                     </h2>
                     <div style="font-size: 7.5pt; font-weight: bold; color: #93c5fd; margin-top: 1px; text-transform: uppercase; letter-spacing: 0.5px;">
-                        ANNÉE UNIVERSITAIRE {{ $academicYear ?? '2026-2027' }} • SERVICE DE SANTÉ &amp; MÉDECINE PRÉVENTIVE ENCG FÈS
+                        ANNÉE UNIVERSITAIRE {{ $academicYear ?? 'Non renseignée' }} • SERVICE DE SANTÉ &amp; MÉDECINE PRÉVENTIVE ENCG FÈS
                     </div>
                 </div>
 
@@ -607,21 +607,21 @@
                     <tr>
                         <td width="76%" style="vertical-align: top;">
                             <div style="border: 1px solid #cbd5e1; border-radius: 4px; overflow: hidden;">
-                                <div style="background-color: #0f2863; color: #ffffff; font-weight: 900; font-size: 8pt; text-transform: uppercase; padding: 3px 8px; letter-spacing: 0.5px;">
+                                <div style="background-color: #1a3673; color: #ffffff; font-weight: 900; font-size: 8pt; text-transform: uppercase; padding: 3px 8px; letter-spacing: 0.5px;">
                                     1. COORDONNÉES PERSONNELLES DE L'ÉTUDIANT(E)
                                 </div>
                                 <div style="padding: 5px 8px;">
                                     <table width="100%" cellpadding="3" cellspacing="0" style="border-collapse: collapse; font-size: 8.5pt;">
                                         <tr style="border-bottom: 1px solid #f1f5f9;">
                                             <td width="38%" style="font-weight: bold; color: #475569;">Nom &amp; Prénom :</td>
-                                            <td width="62%" style="font-weight: 900; color: #0f2863; font-size: 10pt; text-transform: uppercase;">
+                                            <td width="62%" style="font-weight: 900; color: #1a3673; font-size: 10pt; text-transform: uppercase;">
                                                 {{ strtoupper($studentName ?? 'ENMILI FATIMA-ZAHRA') }}
                                             </td>
                                         </tr>
                                         <tr style="border-bottom: 1px solid #f1f5f9;">
                                             <td style="font-weight: bold; color: #475569;">CODE CNE / CNIE :</td>
                                             <td style="font-weight: 900; font-family: monospace; color: #059669;">
-                                                {{ $cne ?? 'H148073298' }} &nbsp;|&nbsp; <span style="color: #1e293b;">{{ $cin ?? 'ZG195334' }}</span>
+                                                {{ $cne ?? 'Non renseigné' }} &nbsp;|&nbsp; <span style="color: #1e293b;">{{ $cin ?? 'Non renseigné' }}</span>
                                             </td>
                                         </tr>
                                         <tr style="border-bottom: 1px solid #f1f5f9;">
@@ -632,7 +632,7 @@
                                         </tr>
                                         <tr>
                                             <td style="font-weight: bold; color: #475569;">Téléphone Personnel :</td>
-                                            <td style="font-weight: 900; font-family: monospace; color: #0f2863;">
+                                            <td style="font-weight: 900; font-family: monospace; color: #1a3673;">
                                                 {{ $phone ?? '0660606060' }}
                                             </td>
                                         </tr>
@@ -642,7 +642,7 @@
                         </td>
 
                         <td width="24%" style="text-align: right; vertical-align: top; padding-left: 8px;">
-                            <div style="width: 100px; height: 125px; border: 2px solid #0f2863; border-radius: 4px; padding: 2px; background-color: #ffffff; display: inline-block;">
+                            <div style="width: 100px; height: 125px; border: 2px solid #1a3673; border-radius: 4px; padding: 2px; background-color: #ffffff; display: inline-block;">
                                 @if(!empty($photoBase64))
                                     <img src="{{ $photoBase64 }}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 2px;" alt="Photo Étudiant" />
                                 @else
@@ -657,7 +657,7 @@
 
                 <!-- Section 2 : Parent & Emergency Contacts -->
                 <div style="border: 1px solid #cbd5e1; border-radius: 4px; overflow: hidden; margin-bottom: 8px;">
-                    <div style="background-color: #0f2863; color: #ffffff; font-weight: 900; font-size: 8pt; text-transform: uppercase; padding: 3px 8px; letter-spacing: 0.5px;">
+                    <div style="background-color: #1a3673; color: #ffffff; font-weight: 900; font-size: 8pt; text-transform: uppercase; padding: 3px 8px; letter-spacing: 0.5px;">
                         2. COORDONNÉES DES PARENTS ET PERSONNE À CONTACTER EN CAS D'URGENCE
                     </div>
                     <div style="padding: 5px 8px;">
@@ -672,7 +672,7 @@
                             </tr>
                             <tr style="border-bottom: 1px solid #f1f5f9;">
                                 <td style="font-weight: bold; color: #475569;">Téléphone des Parents :</td>
-                                <td style="font-weight: bold; font-family: monospace; color: #0f2863;">{{ $parentPhone ?? '0606060606' }}</td>
+                                <td style="font-weight: bold; font-family: monospace; color: #1a3673;">{{ $parentPhone ?? '0606060606' }}</td>
                             </tr>
                             <tr style="border-bottom: 1px solid #f1f5f9;">
                                 <td style="font-weight: bold; color: #475569;">Personne à contacter en cas d'urgence :</td>
@@ -688,7 +688,7 @@
 
                 <!-- Section 3 : Health Status & Medical Attestation -->
                 <div style="border: 1px solid #cbd5e1; border-radius: 4px; overflow: hidden; margin-bottom: 8px;">
-                    <div style="background-color: #0f2863; color: #ffffff; font-weight: 900; font-size: 8pt; text-transform: uppercase; padding: 3px 8px; letter-spacing: 0.5px;">
+                    <div style="background-color: #1a3673; color: #ffffff; font-weight: 900; font-size: 8pt; text-transform: uppercase; padding: 3px 8px; letter-spacing: 0.5px;">
                         3. ÉTAT DE SANTÉ ET ATTESTATION DU MÉDECIN TRAITANT
                     </div>
                     <div style="padding: 5px 8px;">
@@ -717,7 +717,7 @@
                 <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 6px; font-size: 8pt;">
                     <tr>
                         <td width="48%" style="vertical-align: top; text-align: center;">
-                            <strong style="font-size: 8pt; color: #0f2863; display: block; margin-bottom: 3px;">
+                            <strong style="font-size: 8pt; color: #1a3673; display: block; margin-bottom: 3px;">
                                 Signature de l'Étudiant(e)<br>
                                 <span style="font-size: 6.5pt; font-weight: normal; color: #64748b;">(précédée de la mention manuscrite "Certifié exact et sincère")</span>
                             </strong>
@@ -729,7 +729,7 @@
                         </td>
                         <td width="4%"></td>
                         <td width="48%" style="vertical-align: top; text-align: center;">
-                            <strong style="font-size: 8pt; color: #0f2863; display: block; margin-bottom: 3px;">
+                            <strong style="font-size: 8pt; color: #1a3673; display: block; margin-bottom: 3px;">
                                 Visa &amp; Cachet du Service Scolarité / Santé<br>
                                 <span style="font-size: 6.5pt; font-weight: normal; color: #64748b;">(Réception et enregistrement du dossier médical)</span>
                             </strong>
@@ -754,7 +754,7 @@
                                 @endif
                             </div>
                             <div style="padding-top: 2px;">
-                                <strong style="color:#002e5b; font-size: 9.5px;">Document numérique officiel sécurisé</strong><br>
+                                <strong style="color:#1a3673; font-size: 9.5px;">Document numérique officiel sécurisé</strong><br>
                                 Généré automatiquement par l'ERP ENCG.<br>
                                 <strong>Anti-Fraude :</strong> Scannez le code QR ci-dessus pour valider l'authenticité de ce document.
                             </div>
@@ -762,7 +762,7 @@
                         <td class="footer-right">
                             Fait à Fès, le {{ date('d/m/Y') }}<br><br>
                             <div style="font-size: 7.5pt; font-weight: bold; color: #475569;">POUR LE DIRECTEUR ET PAR DÉLÉGATION</div>
-                            <strong style="color: #0f2863; font-size: 8.5pt;">LE CHEF DU SERVICE DE LA SCOLARITÉ</strong>
+                            <strong style="color: #1a3673; font-size: 8.5pt;">LE CHEF DU SERVICE DE LA SCOLARITÉ</strong>
                         </td>
                     </tr>
                 </table>

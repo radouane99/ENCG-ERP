@@ -146,15 +146,16 @@
                     @if(!empty($qrCodeBase64))
                         <img src="data:image/png;base64,{{ $qrCodeBase64 }}" alt="QR Code" style="border: 1.5px solid #000; padding: 2px; float: right; margin-left: 20px; width: 90px; height: 90px;">
                     @elseif(!empty($qr_token))
-                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=90x90&data={{ urlencode($qr_token) }}" alt="QR Code" style="border: 1.5px solid #000; padding: 2px; float: right; margin-left: 20px;">
+                        @php $localConvocationQr = 'data:image/svg+xml;base64,'.base64_encode((string) \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')->size(120)->margin(2)->generate($qr_token)); @endphp
+                        <img src="{{ $localConvocationQr }}" alt="QR de convocation" style="border:1px solid #cbd5e1;padding:2px;float:right;margin-left:20px;width:90px;height:90px;">
                     @endif
                     <div style="float: right; margin-right: 20px; font-style: italic; font-size: 10px; color: #666; padding-top: 40px;">
-                        Signature Cachetée
+                        Signature et cachet à apposer
                     </div>
         <div style="margin-top: 15px; border-top: 1px dashed #000; padding-top: 5px; font-size: 8px; font-family: monospace; color: #1e293b;">
-            <div style="font-weight: bold; font-size: 8.5px; color: #0f2863;">🔒 CERTIFICAT D'AUTHENTICITÉ ET SIGNATURE CRYPTOGRAPHIQUE SHA-256</div>
-            <div>EMPREINTE NUMÉRIQUE : <span style="font-weight: bold; color: #000;">{{ $digital_signature ?? '4F8A-9E2C-11B7-D8A4-8E90-FC12-A3B4-5678' }}</span></div>
-            <div>HORODATAGE OFFICIEL : {{ $generated_at ?? date('d/m/Y H:i:s CASABLANCA') }} | Document certifié et vérifiable publiquement sur le portail ERP ENCG Fès.</div>
+            <div style="font-weight:bold;font-size:8.5px;color:#1a3673;">RÉFÉRENCE DE CONVOCATION</div>
+            <div>Référence métier : <span style="font-weight:bold;">{{ $digital_signature ?? 'Voir identifiant numérique en pied de page' }}</span></div>
+            <div>Édition : {{ $generated_at ?? date('d/m/Y H:i:s') }}. Les visas requis restent à contrôler auprès de la scolarité.</div>
         </div>
     </div>
 </body>

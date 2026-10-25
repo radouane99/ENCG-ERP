@@ -64,7 +64,7 @@
         /* En-tête Institutionnel Officiel */
         .institution-header {
             width: 100%;
-            border-bottom: 2px solid #002e5b;
+            border-bottom: 2px solid #1a3673;
             padding-bottom: 4px;
             margin-bottom: 5px;
         }
@@ -93,14 +93,14 @@
         .header-center .main-title {
             font-size: 10.5pt;
             font-weight: 900;
-            color: #002e5b;
+            color: #1a3673;
             text-transform: uppercase;
             letter-spacing: 0.6px;
             margin: 0 0 2px 0;
         }
         .header-center .document-badge {
             display: inline-block;
-            background-color: #002e5b;
+            background-color: #1a3673;
             color: #ffffff;
             font-size: 7.2pt;
             font-weight: 800;
@@ -133,7 +133,7 @@
         }
         .banner-cell-room {
             width: 27%;
-            background-color: #002e5b;
+            background-color: #1a3673;
             color: #ffffff;
             border-top-left-radius: 4px;
             border-bottom-left-radius: 4px;
@@ -187,14 +187,14 @@
         .notice-bar {
             width: 100%;
             background-color: #f1f5f9;
-            border-left: 3.5px solid #002e5b;
+            border-left: 3.5px solid #1a3673;
             padding: 3px 8px;
             margin-bottom: 5px;
             font-size: 6.8pt;
             color: #334155;
         }
         .notice-bar strong {
-            color: #002e5b;
+            color: #1a3673;
         }
 
         /* Grille des Sièges & Candidats (3 colonnes, sans émargement) */
@@ -204,7 +204,7 @@
             margin-top: 1px;
         }
         .seats-table thead tr {
-            background-color: #002e5b;
+            background-color: #1a3673;
             color: #ffffff;
         }
         .seats-table th {
@@ -239,7 +239,7 @@
         /* Badges Siège & CNE */
         .seat-pill {
             display: inline-block;
-            background-color: #002e5b;
+            background-color: #1a3673;
             color: #ffffff;
             font-weight: 900;
             font-size: {{ $fontSize }};
@@ -296,7 +296,7 @@
         }
         .footer-legal {
             font-weight: bold;
-            color: #002e5b;
+            color: #1a3673;
         }
     </style>
 </head>
@@ -309,7 +309,7 @@
                 @if(!empty($logoBase64))
                     <img src="{{ $logoBase64 }}" alt="Logo ENCG Fes">
                 @else
-                    <div style="font-size: 11pt; font-weight: 900; color: #002e5b;">ENCG FÈS</div>
+                    <div style="font-size: 11pt; font-weight: 900; color: #1a3673;">ENCG FÈS</div>
                 @endif
             </td>
             <td class="header-center">
@@ -335,7 +335,7 @@
             </td>
             <td style="width: 43%; padding-left: 10px;">
                 <div class="meta-label">Module / Épreuve Académique</div>
-                <div class="meta-value" style="color: #002e5b; font-size: 9.5pt;">
+                <div class="meta-value" style="color: #1a3673; font-size: 9.5pt;">
                     {{ $moduleName }} @if($moduleCode)<small style="font-size: 7.5pt; color: #64748b;">({{ $moduleCode }})</small>@endif
                 </div>
                 <div class="meta-sub">
@@ -480,7 +480,7 @@
                     Authenticité certifiée par le Système d'Information ENCG Fès &bull; Édité le {{ date('d/m/Y à H:i') }}<br>
                     Plan officiel d'affectation et de placement des étudiants en salle d'examen.
                 </td>
-                <td style="text-align: right; vertical-align: middle; font-size: 7.2pt; font-weight: bold; color: #002e5b; white-space: nowrap;">
+                <td style="text-align: right; vertical-align: middle; font-size: 7.2pt; font-weight: bold; color: #1a3673; white-space: nowrap;">
                     ENCG FÈS &bull; EXAM-{{ str_pad($exam->id, 4, '0', STR_PAD_LEFT) }}
                 </td>
             </tr>

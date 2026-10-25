@@ -11,10 +11,10 @@
     .doc-title {
         font-size: 16px;
         font-weight: 900;
-        color: #002e5b;
+        color: #1a3673;
         text-transform: uppercase;
         letter-spacing: 1px;
-        border-bottom: 2px solid #002e5b;
+        border-bottom: 2px solid #1a3673;
         display: inline-block;
         padding-bottom: 4px;
     }
@@ -55,7 +55,7 @@
     }
     .charter-box {
         background-color: #f1f5f9;
-        border-left: 4px solid #002e5b;
+        border-left: 4px solid #1a3673;
         padding: 15px;
         border-radius: 4px;
         margin-bottom: 25px;
@@ -63,7 +63,7 @@
     .charter-title {
         font-size: 11px;
         font-weight: 900;
-        color: #002e5b;
+        color: #1a3673;
         text-transform: uppercase;
         margin-bottom: 8px;
     }
@@ -84,7 +84,7 @@
         vertical-align: top;
         font-size: 11px;
         font-weight: bold;
-        color: #002e5b;
+        color: #1a3673;
     }
     .signature-space {
         height: 60px;
@@ -113,7 +113,7 @@
         </tr>
         <tr>
             <td class="label-col">Espace / Salle Autorisée :</td>
-            <td class="value-col" style="color: #002e5b; font-size: 14px;">{{ $roomName }} (Capacité: {{ $capacity }} Places)</td>
+            <td class="value-col" style="color: #1a3673; font-size: 14px;">{{ $roomName }} (Capacité: {{ $capacity }} Places)</td>
         </tr>
         <tr>
             <td class="label-col">Objet & Intitulé de l'Événement :</td>

@@ -13,10 +13,10 @@
     .doc-title {
         font-size: 15pt;
         font-weight: 900;
-        color: #002e5b;
+        color: #1a3673;
         letter-spacing: 2px;
         text-transform: uppercase;
-        border-bottom: 2.5px solid #002e5b;
+        border-bottom: 2.5px solid #1a3673;
         display: inline-block;
         padding-bottom: 4px;
     }
@@ -44,20 +44,20 @@
         width: 100%;
         border-collapse: collapse;
         margin: 10px 0 16px 0;
-        border: 1.5px solid #002e5b;
+        border: 1.5px solid #1a3673;
         border-radius: 5px;
         box-sizing: border-box;
         page-break-inside: avoid;
     }
     .info-card-header td {
-        background-color: #002e5b !important;
+        background-color: #1a3673 !important;
         color: #ffffff !important;
         padding: 5.5px 10px;
         font-size: 8.5pt;
         font-weight: 900;
         text-transform: uppercase;
         letter-spacing: 0.8px;
-        border-bottom: 1.5px solid #002e5b;
+        border-bottom: 1.5px solid #1a3673;
     }
     .info-card-table td {
         padding: 5.5px 10px;
@@ -84,7 +84,7 @@
     }
     .info-card-table .val-name {
         font-size: 10.5pt;
-        color: #002e5b;
+        color: #1a3673;
         text-transform: uppercase;
         font-weight: 900;
         letter-spacing: 0.5px;
@@ -98,7 +98,7 @@
     .info-card-table .val-mono {
         font-family: DejaVu Sans Mono, monospace;
         font-weight: 900;
-        color: #002e5b;
+        color: #1a3673;
         font-size: 9.5pt;
     }
 
@@ -106,7 +106,7 @@
     .purpose-box {
         background-color: #f8fafc;
         border: 1px solid #cbd5e1;
-        border-left: 3.5px solid #002e5b;
+        border-left: 3.5px solid #1a3673;
         padding: 10px 14px;
         font-size: 9pt;
         line-height: 1.6;
@@ -119,14 +119,14 @@
     /* Official Stamp Circle */
     .official-seal-box {
         display: inline-block;
-        border: 1.8px solid #002e5b;
+        border: 1.8px solid #1a3673;
         border-radius: 50%;
         width: 62px;
         height: 62px;
         text-align: center;
         vertical-align: middle;
         padding: 5px 2px;
-        color: #002e5b;
+        color: #1a3673;
         font-size: 5pt;
         font-weight: 900;
         text-transform: uppercase;
@@ -142,7 +142,7 @@
         ATTESTATION DE SCOLARITÉ
     </div>
     <div class="doc-subtitle">
-        ANNÉE UNIVERSITAIRE {{ $year ?? '2026-2027' }}
+        ANNÉE UNIVERSITAIRE {{ $year ?? 'Non renseignée' }}
     </div>
 </div>
 
@@ -164,7 +164,7 @@
     <tr>
         <td class="label">Date et Lieu de Naissance :</td>
         <td class="val">
-            {{ $birthDate ?? ($student->birth_date ? \Carbon\Carbon::parse($student->birth_date)->format('d/m/Y') : '25/07/2008') }} à {{ strtoupper($birthCity ?? ($student->birth_place ?? 'OUJDA')) }}
+            {{ $birthDate ?? (!empty($student->birth_date) ? \Carbon\Carbon::parse($student->birth_date)->format('d/m/Y') : 'Non renseignée') }} à {{ strtoupper($birthCity ?? ($student->birth_place ?? 'Non renseigné')) }}
         </td>
     </tr>
     <tr>
@@ -176,19 +176,19 @@
     <tr>
         <td class="label">Code Massar / CNE :</td>
         <td class="val val-accent">
-            {{ $cne ?? ($student->cne ?? 'H148073298') }}
+            {{ $cne ?? ($student->cne ?? 'Non renseigné') }}
         </td>
     </tr>
     <tr>
         <td class="label">Carte d'Identité (CIN / CNIE) :</td>
         <td class="val val-mono">
-            {{ $cin ?? ($student->cin ?? 'ZG195334') }}
+            {{ $cin ?? ($student->cin ?? 'Non renseignée') }}
         </td>
     </tr>
     <tr>
         <td class="label">N° d'Inscription / Apogée :</td>
         <td class="val val-mono">
-            {{ $student->student_number ?? ($student->id ?? 'H148073298') }}
+            {{ $student->student_number ?? ($student->id ?? 'Non renseigné') }}
         </td>
     </tr>
     <tr class="info-card-header">
@@ -196,13 +196,13 @@
     </tr>
     <tr>
         <td class="label">Diplôme Préparé :</td>
-        <td class="val" style="color: #002e5b; font-weight: 900;">
+        <td class="val" style="color: #1a3673; font-weight: 900;">
             Diplôme des Écoles Nationales de Commerce et de Gestion (Bac+5 / Grade Master)
         </td>
     </tr>
     <tr>
         <td class="label">Filière / Spécialité :</td>
-        <td class="val" style="color: #002e5b; font-weight: 900;">
+        <td class="val" style="color: #1a3673; font-weight: 900;">
             {{ $filiereName ?? ($student->latestPathway?->filiere ?? 'DEUX ANNÉES PRÉPARATOIRES (TRONC COMMUN)') }}
         </td>
     </tr>
@@ -214,8 +214,8 @@
     </tr>
     <tr>
         <td class="label">Année Universitaire :</td>
-        <td class="val" style="color: #002e5b; font-weight: 900;">
-            {{ $year ?? '2026-2027' }}
+        <td class="val" style="color: #1a3673; font-weight: 900;">
+            {{ $year ?? 'Non renseignée' }}
         </td>
     </tr>
 </table>
@@ -226,28 +226,10 @@
 @endsection
 
 @section('signature_right')
-    <div style="font-size: 8pt; color: #334155; text-align: right; font-weight: bold;">Fait à Fès, le {{ $date ?? date('d/m/Y') }}</div>
-    <div style="font-size: 7.2pt; font-weight: bold; color: #475569; margin-top: 1.5px; text-align: right;">Pour le Directeur et par délégation</div>
-    <div style="font-size: 8.8pt; font-weight: 900; color: #002e5b; text-transform: uppercase; margin-top: 1px; text-align: right;">
-        LE SECRÉTAIRE GÉNÉRAL
-    </div>
-    <div style="margin-top: 3px; text-align: right;">
-        <table align="right" style="border-collapse: collapse; margin-left: auto;">
-            <tr>
-                <td style="vertical-align: middle; padding-right: 8px;">
-                    <div class="official-seal-box">
-                        ROYAUME DU MAROC<br>
-                        ★ ENCG FÈS ★<br>
-                        USMBA<br>
-                        SCEAU OFFICIEL
-                    </div>
-                </td>
-                <td style="vertical-align: middle;">
-                    <svg width="95" height="26" viewBox="0 0 120 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M8,22 C16,10 24,4 30,4 C35,4 32,22 36,24 C40,26 45,14 50,10 C55,4 60,18 65,16 C70,14 82,6 90,14 C98,10 102,4 112,8" stroke="#002e5b" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
-                </td>
-            </tr>
-        </table>
-    </div>
+    <div style="font-size:8pt;color:#334155;text-align:right;">Fait à Fès, le {{ $date ?? date('d/m/Y') }}</div>
+    <div style="font-size:7.2pt;color:#64748b;margin-top:4px;text-align:right;">Signature et cachet du service habilité</div>
+    @if(!empty($signatoryTitle))
+        <div style="font-size:8pt;font-weight:bold;color:#1a3673;margin-top:4px;text-align:right;">{{ $signatoryTitle }}</div>
+    @endif
+    <div style="height:42px;margin-top:5px;border-bottom:1px dotted #cbd5e1;"></div>
 @endsection

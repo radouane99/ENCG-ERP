@@ -3,8 +3,8 @@
 @section('title', $title ?? 'PV DE DÉLIBÉRATION CONCOURS TAFEM 2026 — ENCG FÈS')
 
 @section('content')
-    <div style="text-align: center; margin-bottom: 12px; border-bottom: 2px solid #002e5b; padding-bottom: 8px;">
-        <h2 style="font-size: 14pt; font-weight: bold; text-transform: uppercase; margin: 0; color: #002e5b;">
+    <div style="text-align: center; margin-bottom: 12px; border-bottom: 2px solid #1a3673; padding-bottom: 8px;">
+        <h2 style="font-size: 14pt; font-weight: bold; text-transform: uppercase; margin: 0; color: #1a3673;">
             {{ $title ?? "PROCÈS-VERBAL DE DÉLIBÉRATION DU CONCOURS NATIONAL D'ACCÈS (TAFEM 2026)" }}
         </h2>
         <p style="font-size: 8.5pt; color: #475569; margin: 3px 0 0 0; font-weight: bold;">
@@ -33,19 +33,19 @@
     <!-- Candidates Table -->
     <table width="100%" cellpadding="4" cellspacing="0" style="border-collapse: collapse; font-size: 7.5pt; margin-bottom: 15px;">
         <thead>
-            <tr style="background-color: #002e5b; color: #ffffff;">
-                <th style="border: 1px solid #002e5b; padding: 4px; width: 6%; text-align: center;">Rang</th>
-                <th style="border: 1px solid #002e5b; padding: 4px; width: 14%; text-align: center;">Code MASSAR / CNE</th>
-                <th style="border: 1px solid #002e5b; padding: 4px; width: 11%; text-align: center;">CIN</th>
-                <th style="border: 1px solid #002e5b; padding: 4px; width: 33%; text-align: left;">Nom & Prénom</th>
-                <th style="border: 1px solid #002e5b; padding: 4px; width: 14%; text-align: center;">Score TAFEM / 200</th>
-                <th style="border: 1px solid #002e5b; padding: 4px; width: 22%; text-align: center;">Décision du Jury</th>
+            <tr style="background-color: #1a3673; color: #ffffff;">
+                <th style="border: 1px solid #1a3673; padding: 4px; width: 6%; text-align: center;">Rang</th>
+                <th style="border: 1px solid #1a3673; padding: 4px; width: 14%; text-align: center;">Code MASSAR / CNE</th>
+                <th style="border: 1px solid #1a3673; padding: 4px; width: 11%; text-align: center;">CIN</th>
+                <th style="border: 1px solid #1a3673; padding: 4px; width: 33%; text-align: left;">Nom & Prénom</th>
+                <th style="border: 1px solid #1a3673; padding: 4px; width: 14%; text-align: center;">Score TAFEM / 200</th>
+                <th style="border: 1px solid #1a3673; padding: 4px; width: 22%; text-align: center;">Décision du Jury</th>
             </tr>
         </thead>
         <tbody>
             @forelse($candidates ?? [] as $index => $c)
                 <tr style="background-color: {{ $index % 2 === 0 ? '#ffffff' : '#f8fafc' }};">
-                    <td style="border: 1px solid #cbd5e1; text-align: center; font-weight: bold; color: #002e5b;">
+                    <td style="border: 1px solid #cbd5e1; text-align: center; font-weight: bold; color: #1a3673;">
                         #{{ $c['rank'] ?? ($index + 1) }}
                     </td>
                     <td style="border: 1px solid #cbd5e1; text-align: center; font-family: monospace; font-weight: bold;">

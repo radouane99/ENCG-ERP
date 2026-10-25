@@ -18,10 +18,10 @@
     .doc-title {
         font-size: 11.5pt;
         font-weight: 900;
-        color: #002e5b;
+        color: #1a3673;
         letter-spacing: 1px;
         text-transform: uppercase;
-        border-bottom: 1.5px solid #002e5b;
+        border-bottom: 1.5px solid #1a3673;
         display: inline-block;
         padding-bottom: 2px;
     }
@@ -38,7 +38,7 @@
         width: 100%;
         border-collapse: collapse;
         margin: 0 0 5px 0;
-        border: 0.5px solid #002e5b;
+        border: 0.5px solid #1a3673;
         table-layout: fixed;
     }
     .student-info-table td {
@@ -56,14 +56,14 @@
     }
     .student-info-table .val { font-weight: 800; color: #0f172a; font-size: 7pt; }
     .student-info-table .val-accent { color: #047857; font-family: DejaVu Sans Mono, monospace; font-weight: 900; }
-    .student-info-table .val-mono { font-family: DejaVu Sans Mono, monospace; font-weight: 800; color: #002e5b; }
+    .student-info-table .val-mono { font-family: DejaVu Sans Mono, monospace; font-weight: 800; color: #1a3673; }
 
     .grades-table {
         width: 100%;
         border-collapse: collapse;
         margin: 0 0 5px 0;
         font-size: 6.8pt;
-        border: 0.5px solid #002e5b;
+        border: 0.5px solid #1a3673;
         table-layout: fixed;
     }
     .grades-table th,
@@ -73,20 +73,20 @@
     }
 
     .sem-main-header td {
-        background-color: #002e5b !important;
+        background-color: #1a3673 !important;
         color: #ffffff !important;
         padding: 2.5px 5px;
         font-size: 7pt;
         font-weight: 900;
         text-transform: uppercase;
-        border-color: #002e5b !important;
+        border-color: #1a3673 !important;
     }
     .sem-title-text { text-align: left; }
     .sem-avg-text { text-align: right; color: #fef08a !important; font-weight: 900; }
 
     .grades-sub-header th {
         background-color: #e2e8f0;
-        color: #002e5b;
+        color: #1a3673;
         font-weight: 900;
         font-size: 5.8pt;
         text-align: center;
@@ -98,16 +98,16 @@
     .sem-footer-tr td {
         background-color: #e2e8f0 !important;
         font-weight: 900;
-        color: #002e5b;
+        color: #1a3673;
         font-size: 6.8pt;
         padding: 2px 4px;
-        border-top: 1px solid #002e5b !important;
+        border-top: 1px solid #1a3673 !important;
     }
 
-    .col-code { font-family: DejaVu Sans Mono, monospace; font-weight: 800; color: #002e5b; font-size: 6.2pt; }
+    .col-code { font-family: DejaVu Sans Mono, monospace; font-weight: 800; color: #1a3673; font-size: 6.2pt; }
     .col-name { font-weight: 700; color: #0f172a; font-size: 6.6pt; }
     .col-session { text-align: center; font-size: 6pt; color: #475569; }
-    .col-year { text-align: center; font-family: DejaVu Sans Mono, monospace; font-weight: 800; color: #002e5b; font-size: 6.2pt; }
+    .col-year { text-align: center; font-family: DejaVu Sans Mono, monospace; font-weight: 800; color: #1a3673; font-size: 6.2pt; }
     .col-note { text-align: center; font-family: DejaVu Sans Mono, monospace; font-weight: 900; }
     .note-ok { color: #15803d; }
     .note-ko { color: #b91c1c; }
@@ -125,7 +125,7 @@
 
     .result-banner {
         width: 100%;
-        background: #002e5b;
+        background: #1a3673;
         color: #ffffff;
         padding: 5px 8px;
         margin: 0;
@@ -158,7 +158,7 @@
 <div class="doc-title-container">
     <div class="doc-title">RELEVÉ DE NOTES ET RÉSULTATS</div>
     <div class="doc-subtitle">
-        SESSION ORDINAIRE &amp; RATTRAPAGE — ANNÉE UNIVERSITAIRE {{ $year ?? '2026-2027' }}
+        SESSION ORDINAIRE &amp; RATTRAPAGE — ANNÉE UNIVERSITAIRE {{ $year ?? 'Non renseignée' }}
     </div>
 </div>
 
@@ -181,7 +181,7 @@
     </tr>
     <tr>
         <td class="label">Filière</td>
-        <td class="val" colspan="3" style="color: #002e5b;">
+        <td class="val" colspan="3" style="color: #1a3673;">
             {{ $filiereName ?? ($student->latestPathway ? $student->latestPathway->filiere->name : '—') }}
         </td>
     </tr>
@@ -295,12 +295,10 @@
 @section('signature_right')
     <div style="font-size: 6.8pt; color: #334155; text-align: right; font-weight: 700;">Fait à Fès, le {{ $date ?? date('d/m/Y') }}</div>
     <div style="font-size: 6pt; font-weight: 700; color: #64748b; margin-top: 1px; text-align: right;">Pour le Directeur et par délégation</div>
-    <div style="font-size: 7pt; font-weight: 900; color: #002e5b; text-transform: uppercase; margin-top: 1px; text-align: right;">
+    <div style="font-size: 7pt; font-weight: 900; color: #1a3673; text-transform: uppercase; margin-top: 1px; text-align: right;">
         Le Directeur Adjoint aux Affaires Pédagogiques
     </div>
     <div style="margin-top: 2px; text-align: right;">
-        <svg width="80" height="18" viewBox="0 0 120 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M8,22 C16,10 24,4 30,4 C35,4 32,22 36,24 C40,26 45,14 50,10 C55,4 60,18 65,16 C70,14 82,6 90,14 C98,10 102,4 112,8" stroke="#002e5b" stroke-width="2" stroke-linecap="round"/>
-        </svg>
+        <div style="height:26px;font-size:7pt;color:#64748b;">Signature à apposer</div>
     </div>
 @endsection

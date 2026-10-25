@@ -15,7 +15,7 @@
     .pv-title {
         font-size: 13pt;
         font-weight: 900;
-        color: #002e5b;
+        color: #1a3673;
         text-transform: uppercase;
         letter-spacing: 0.5px;
         margin: 0;
@@ -59,14 +59,14 @@
     table.roster-table {
         width: 100%;
         border-collapse: collapse;
-        border: 1.5px solid #002e5b;
+        border: 1.5px solid #1a3673;
         page-break-inside: auto;
     }
     table.roster-table thead {
         display: table-header-group;
     }
     table.roster-table th {
-        background-color: #002e5b;
+        background-color: #1a3673;
         color: #ffffff;
         font-size: 7.5pt;
         font-weight: 800;
@@ -129,7 +129,7 @@
     .stats-num {
         font-size: 11pt;
         font-weight: 900;
-        color: #002e5b;
+        color: #1a3673;
     }
     .signatures-block {
         margin-top: 12px;
@@ -183,7 +183,7 @@
         </tr>
         <tr>
             <td class="cartouche-label">Date Rattrapage :</td>
-            <td class="cartouche-value" style="color: #002e5b;">{{ $rattrapageDate ?? date('d/m/Y') }}</td>
+            <td class="cartouche-value" style="color: #1a3673;">{{ $rattrapageDate ?? date('d/m/Y') }}</td>
             <td class="cartouche-label">Créneau :</td>
             <td class="cartouche-value">{{ $timeSlot ?? '14:00 - 16:00' }}</td>
             <td class="cartouche-label">Salle / Lieu :</td>
@@ -293,7 +293,7 @@
         <table width="100%" cellpadding="0" cellspacing="0">
             <tr>
                 <td class="sig-column">
-                    <div style="font-weight: bold; color: #002e5b; margin-bottom: 4px;">Visa & Signature de l'Enseignant :</div>
+                    <div style="font-weight: bold; color: #1a3673; margin-bottom: 4px;">Visa & Signature de l'Enseignant :</div>
                     <div style="font-size: 7pt; color: #64748b; margin-bottom: 30px;">
                         Fait à Fès, le {{ date('d/m/Y') }}<br>
                         Prof. {{ $professorName ?? '' }} ({{ $professorStatus ?? 'Enseignant' }})<br>
@@ -305,7 +305,7 @@
                 </td>
                 <td width="4%"></td>
                 <td class="sig-column">
-                    <div style="font-weight: bold; color: #002e5b; margin-bottom: 4px;">Visa de la Direction des Études & Scolarité :</div>
+                    <div style="font-weight: bold; color: #1a3673; margin-bottom: 4px;">Visa de la Direction des Études & Scolarité :</div>
                     <div style="font-size: 7pt; color: #64748b; margin-bottom: 30px;">
                         École Nationale de Commerce et de Gestion de Fès<br>
                         Régularisation enregistrée au Système d'Information Pédagogique<br>
@@ -324,7 +324,7 @@
         <table width="100%" cellpadding="0" cellspacing="0">
             <tr>
                 <td style="text-align: left; font-size: 6.5pt;">
-                    <strong>Authentification & Traçabilité :</strong> Réf PV-RAT-{{ date('Y') }}-{{ str_pad($group->id ?? 1, 4, '0', STR_PAD_LEFT) }}-{{ $seanceCode ?? 'S1' }} • SHA-256 : <span style="font-family: monospace; color: #002e5b; font-weight: bold;">{{ substr($securityHash ?? hash('sha256', date('YmdHis')), 0, 32) }}…</span>
+                    <strong>Authentification & Traçabilité :</strong> Réf PV-RAT-{{ date('Y') }}-{{ str_pad($group->id ?? 1, 4, '0', STR_PAD_LEFT) }}-{{ $seanceCode ?? 'S1' }} • SHA-256 : <span style="font-family: monospace; color: #1a3673; font-weight: bold;">{{ substr($securityHash ?? hash('sha256', date('YmdHis')), 0, 32) }}…</span>
                 </td>
                 <td style="text-align: right; font-size: 6.5pt;">
                     Extrait officiel du {{ date('d/m/Y à H:i') }} • Portail ENCG Fès

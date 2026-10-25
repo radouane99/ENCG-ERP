@@ -5,16 +5,16 @@
 @section('content')
     <div style="position: relative; width: 100%; font-family: Arial, sans-serif;">
         <!-- Header -->
-        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 15px; border-bottom: 2px solid #0f2863; padding-bottom: 10px;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 15px; border-bottom: 2px solid #1a3673; padding-bottom: 10px;">
             <tr>
                 <td width="65%">
                     <div style="font-size: 10px; font-weight: bold; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">ROYAUME DU MAROC</div>
-                    <div style="font-size: 12px; font-weight: 900; color: #0f2863; text-transform: uppercase; margin-top: 2px;">UNIVERSITÉ SIDI MOHAMED BEN ABDELLAH DE FÈS</div>
+                    <div style="font-size: 12px; font-weight: 900; color: #1a3673; text-transform: uppercase; margin-top: 2px;">UNIVERSITÉ SIDI MOHAMED BEN ABDELLAH DE FÈS</div>
                     <div style="font-size: 12px; font-weight: 900; color: #990000; text-transform: uppercase; margin-top: 3px;">ÉCOLE NATIONALE DE COMMERCE ET DE GESTION DE FÈS</div>
                 </td>
                 <td width="35%" style="text-align: right;">
                     @if(!empty($photoBase64))
-                        <img src="{{ $photoBase64 }}" style="width: 70px; height: 85px; border: 2px solid #0f2863; object-fit: cover; margin-bottom: 4px; display: inline-block; vertical-align: middle;" alt="Photo Candidat" />
+                        <img src="{{ $photoBase64 }}" style="width: 70px; height: 85px; border: 2px solid #1a3673; object-fit: cover; margin-bottom: 4px; display: inline-block; vertical-align: middle;" alt="Photo Candidat" />
                     @endif
                     @if(!empty($qrBase64))
                         <img src="{{ $qrBase64 }}" style="width: 75px; height: 75px; border: 1px solid #cbd5e1; padding: 2px; background: #fff; display: inline-block; vertical-align: middle; margin-left: 4px;" alt="QR Code Verification" />
@@ -26,7 +26,7 @@
 
         <!-- Document Title -->
         <div style="text-align: center; margin: 15px 0;">
-            <h2 style="font-size: 16px; font-weight: 900; color: #0f2863; text-transform: uppercase; margin: 0;">
+            <h2 style="font-size: 16px; font-weight: 900; color: #1a3673; text-transform: uppercase; margin: 0;">
                 RÉCÉPISSÉ DE PRÉ-INSCRIPTION & CONVOCATION AU GUICHET
             </h2>
             <div style="font-size: 11px; font-weight: bold; color: #d97706; margin-top: 4px;">
@@ -36,12 +36,12 @@
 
         <!-- Candidate Identity Card -->
         <table width="100%" cellpadding="6" cellspacing="0" style="border-collapse: collapse; margin-bottom: 15px; background-color: #f8fafc; border: 1px solid #cbd5e1; font-size: 11px;">
-            <tr style="background-color: #0f2863; color: #ffffff;">
+            <tr style="background-color: #1a3673; color: #ffffff;">
                 <td colspan="2" style="font-weight: bold; font-size: 12px;">IDENTIFICATION DU CANDIDAT</td>
             </tr>
             <tr>
                 <td width="35%"><strong>Nom et Prénom :</strong></td>
-                <td width="65%" style="font-weight: 900; color: #0f2863; font-size: 12px;">{{ strtoupper($name ?? '') }}</td>
+                <td width="65%" style="font-weight: 900; color: #1a3673; font-size: 12px;">{{ strtoupper($name ?? '') }}</td>
             </tr>
             <tr>
                 <td><strong>Code MASSAR (CNE) :</strong></td>
@@ -73,7 +73,7 @@
                 </tr>
                 <tr>
                     <td width="30%"><strong>Date de Passage :</strong></td>
-                    <td width="70%" style="font-weight: bold; color: #0f2863;">Mardi 01 Septembre 2026</td>
+                    <td width="70%" style="font-weight: bold; color: #1a3673;">Mardi 01 Septembre 2026</td>
                 </tr>
                 <tr>
                     <td><strong>Horaire Autorisé :</strong></td>
@@ -81,13 +81,13 @@
                 </tr>
                 <tr>
                     <td><strong>Guichet D'Accueil :</strong></td>
-                    <td style="font-weight: bold; color: #0f2863;">Guichet N° 2 — Service des Inscriptions ENCG Fès</td>
+                    <td style="font-weight: bold; color: #1a3673;">Guichet N° 2 — Service des Inscriptions ENCG Fès</td>
                 </tr>
             </table>
         </div>
 
         <!-- Checklist Table -->
-        <h3 style="font-size: 11px; font-weight: bold; color: #0f2863; margin-bottom: 8px;">
+        <h3 style="font-size: 11px; font-weight: bold; color: #1a3673; margin-bottom: 8px;">
             📋 PIÈCES PHYSIQUES À FOURNIR IMPÉRATIVEMENT DANS L'ENVELOPPE :
         </h3>
         <table width="100%" cellpadding="6" cellspacing="0" style="border-collapse: collapse; font-size: 10px; border: 1px solid #cbd5e1; margin-bottom: 20px;">

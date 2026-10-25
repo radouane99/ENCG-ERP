@@ -23,7 +23,7 @@
         .header-table {
             width: 100%;
             border-collapse: collapse;
-            border-bottom: 2px solid #001A4B;
+            border-bottom: 2px solid #1a3673;
             padding-bottom: 6px;
             margin-bottom: 8px;
         }
@@ -32,14 +32,14 @@
         .header-center { text-align: center; vertical-align: middle; }
         .header-right { width: 110px; text-align: right; vertical-align: middle; font-size: 7.5px; color: #64748b; }
         .country-title { font-size: 8px; font-weight: bold; text-transform: uppercase; color: #64748b; letter-spacing: 1px; }
-        .univ-title { font-size: 11px; font-weight: bold; color: #001A4B; text-transform: uppercase; margin: 1px 0; }
+        .univ-title { font-size: 11px; font-weight: bold; color: #1a3673; text-transform: uppercase; margin: 1px 0; }
         .school-title { font-size: 10px; font-weight: bold; color: #C5A059; text-transform: uppercase; }
         .service-title { font-size: 7.5px; color: #475569; margin-top: 2px; }
-        .badge-year { display: inline-block; background: #001A4B; color: #fff; font-weight: bold; font-size: 7px; padding: 2px 6px; border-radius: 3px; margin-top: 2px; }
+        .badge-year { display: inline-block; background: #1a3673; color: #fff; font-weight: bold; font-size: 7px; padding: 2px 6px; border-radius: 3px; margin-top: 2px; }
 
         /* Document Title Hero */
         .doc-hero {
-            background-color: #001A4B;
+            background-color: #1a3673;
             color: #ffffff;
             border-radius: 5px;
             border-bottom: 3px solid #C5A059;
@@ -61,7 +61,7 @@
         }
         .info-box td { padding: 5px 8px; vertical-align: top; font-size: 8px; }
         .info-label { font-weight: bold; color: #64748b; text-transform: uppercase; font-size: 6.8px; }
-        .info-value { font-size: 9px; font-weight: bold; color: #001A4B; margin-top: 1px; }
+        .info-value { font-size: 9px; font-weight: bold; color: #1a3673; margin-top: 1px; }
 
         /* Financial Metrics Strip */
         .metrics-table {
@@ -78,17 +78,17 @@
             text-align: center;
         }
         .metric-lbl { font-size: 6.8px; font-weight: bold; color: #64748b; text-transform: uppercase; }
-        .metric-val { font-size: 11px; font-weight: bold; color: #001A4B; margin-top: 1px; }
+        .metric-val { font-size: 11px; font-weight: bold; color: #1a3673; margin-top: 1px; }
 
         /* Section Bar */
         .section-bar {
             background: #f1f5f9;
-            border-left: 3.5px solid #001A4B;
+            border-left: 3.5px solid #1a3673;
             padding: 3px 6px;
             margin: 6px 0 4px 0;
             font-size: 8.5px;
             font-weight: bold;
-            color: #001A4B;
+            color: #1a3673;
             text-transform: uppercase;
         }
 
@@ -104,7 +104,7 @@
             font-size: 7.8px;
         }
         .data-table th {
-            background-color: #001A4B;
+            background-color: #1a3673;
             color: #ffffff;
             font-size: 7.2px;
             text-transform: uppercase;
@@ -138,7 +138,7 @@
             vertical-align: top;
             height: 70px;
         }
-        .sign-role { font-size: 7.5px; font-weight: bold; color: #001A4B; text-transform: uppercase; }
+        .sign-role { font-size: 7.5px; font-weight: bold; color: #1a3673; text-transform: uppercase; }
         .sign-sub { font-size: 6.5px; color: #64748b; font-style: italic; margin-top: 1px; }
 
         /* Footer */
@@ -197,7 +197,7 @@
             </td>
             <td style="width: 20%;">
                 <div class="info-label">Identifiant Fiscal / CIN</div>
-                <div class="info-value">{{ $user->cin ?? 'CD124578' }}</div>
+                <div class="info-value">{{ $user->cin ?? 'Non renseigné' }}</div>
             </td>
         </tr>
     </table>
@@ -287,7 +287,7 @@
             <td class="sign-cell">
                 <div class="sign-role">Service Financier & Trésorerie</div>
                 <div class="sign-sub">Bon à Payer & Liquidation</div>
-                <div style="margin-top: 25px; font-size: 6.5px; color: #001A4B;">Visa Ordonnateur</div>
+                <div style="margin-top: 25px; font-size: 6.5px; color: #1a3673;">Visa Ordonnateur</div>
             </td>
         </tr>
     </table>

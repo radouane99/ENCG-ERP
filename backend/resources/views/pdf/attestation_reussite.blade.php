@@ -18,10 +18,10 @@
     .doc-title {
         font-size: 13pt;
         font-weight: 900;
-        color: #002e5b;
+        color: #1a3673;
         letter-spacing: 1.2px;
         text-transform: uppercase;
-        border-bottom: 1.5px solid #002e5b;
+        border-bottom: 1.5px solid #1a3673;
         display: inline-block;
         padding-bottom: 3px;
     }
@@ -45,7 +45,7 @@
         width: 100%;
         border-collapse: collapse;
         margin: 8px 0 10px 0;
-        border: 0.5px solid #002e5b;
+        border: 0.5px solid #1a3673;
         table-layout: fixed;
     }
     .info-table td {
@@ -68,18 +68,18 @@
     }
     .info-table .val-name {
         font-size: 9pt;
-        color: #002e5b;
+        color: #1a3673;
         text-transform: uppercase;
         font-weight: 900;
     }
     .info-table .val-mono {
         font-family: DejaVu Sans Mono, monospace;
         font-weight: 800;
-        color: #002e5b;
+        color: #1a3673;
     }
     .result-banner {
         width: 100%;
-        background: #002e5b;
+        background: #1a3673;
         color: #ffffff;
         padding: 6px 10px;
         margin: 8px 0;
@@ -104,7 +104,7 @@
 @section('content')
 <div class="doc-title-container">
     <div class="doc-title">ATTESTATION DE RÉUSSITE</div>
-    <div class="doc-subtitle">ANNÉE UNIVERSITAIRE {{ $year ?? '2026-2027' }}</div>
+    <div class="doc-subtitle">ANNÉE UNIVERSITAIRE {{ $year ?? 'Non renseignée' }}</div>
 </div>
 
 <div class="attestation-body">
@@ -134,7 +134,7 @@
         </tr>
         <tr>
             <td class="label">Filière</td>
-            <td class="val" style="color: #002e5b;">
+            <td class="val" style="color: #1a3673;">
                 {{ $student->latestPathway?->filiere ?? '—' }}
             </td>
         </tr>
@@ -143,7 +143,7 @@
     <div class="result-banner">
         <div class="main">Déclaré(e) définitivement admis(e) aux épreuves du diplôme ENCG</div>
         <div class="sub">
-            Année {{ $year ?? '2026-2027' }}
+            Année {{ $year ?? 'Non renseignée' }}
             @if(!empty($mention))
                 · Mention : {{ strtoupper($mention) }}
             @endif

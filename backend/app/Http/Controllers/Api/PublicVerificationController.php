@@ -26,6 +26,18 @@ class PublicVerificationController extends Controller
      */
     public function verifyDocument(Request $request, string $documentId): JsonResponse
     {
+        if (str_starts_with($documentId, 'DOC-')) {
+            $record = \App\Models\PdfDocumentRecord::where('verification_token', $documentId)->first();
+            if (! $record) { return response()->json(['success' => false, 'is_valid' => false, 'message' => 'Référence documentaire introuvable.'], 404); }
+            $issued = $record->status === 'issued';
+            return response()->json(['success' => true, 'is_valid' => $issued, 'data' => [
+                'registry_document' => true, 'is_valid' => $issued,
+                'digital_identifier' => $record->digital_identifier, 'document_type' => $record->document_label,
+                'status' => $record->status, 'issued_at' => $record->issued_at?->toIso8601String(),
+                'page_count' => $record->page_count, 'file_sha256' => $issued ? $record->file_sha256 : null,
+                'message' => $issued ? 'Référence enregistrée. Comparez le fichier PDF pour vérifier son intégrité.' : ($record->status === 'revoked' ? 'Ce document a été retiré du registre.' : 'Émission du document non terminée.'),
+            ]]);
+        }
         // 0. Token Crypté Haute Sécurité (Format ENC-)
         if (str_starts_with($documentId, 'ENC-')) {
             return $this->verifyEncryptedToken($request, $documentId);

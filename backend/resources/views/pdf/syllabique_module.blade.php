@@ -4,7 +4,7 @@
 
 @section('content')
     <div style="text-align: center; margin-bottom: 20px;">
-        <h2 style="font-size: 16px; font-weight: bold; text-transform: uppercase; margin: 0; color: #0f2863;">
+        <h2 style="font-size: 16px; font-weight: bold; text-transform: uppercase; margin: 0; color: #1a3673;">
             FICHE DESCRIPTIVE & SYLLABIQUE DU MODULE
         </h2>
         <p style="font-size: 14px; font-weight: bold; margin-top: 5px; color: #059669;">
@@ -30,15 +30,15 @@
     </table>
 
     <!-- SYLLABUS CONTENT BOX -->
-    <div style="border: 1px solid #0f2863; border-radius: 6px; padding: 15px; background-color: #ffffff; margin-bottom: 20px; font-size: 11px; line-height: 1.6;">
-        <h3 style="font-size: 12px; font-weight: bold; color: #0f2863; text-transform: uppercase; margin-top: 0; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">
+    <div style="border: 1px solid #1a3673; border-radius: 6px; padding: 15px; background-color: #ffffff; margin-bottom: 20px; font-size: 11px; line-height: 1.6;">
+        <h3 style="font-size: 12px; font-weight: bold; color: #1a3673; text-transform: uppercase; margin-top: 0; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">
             1. OBJECTIFS PÉDAGOGIQUES ET COMPÉTENCES VISÉES
         </h3>
         <p style="margin-top: 0; margin-bottom: 12px; text-align: justify;">
             {{ $objectifs ?? "Ce module vise à maîtriser les compétences fondamentales de la discipline et d'émettre des recommandations stratégiques." }}
         </p>
 
-        <h3 style="font-size: 12px; font-weight: bold; color: #0f2863; text-transform: uppercase; margin-top: 0; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">
+        <h3 style="font-size: 12px; font-weight: bold; color: #1a3673; text-transform: uppercase; margin-top: 0; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">
             2. PROGRAMME STRUCTURÉ DU COURS
         </h3>
         <ul style="margin-top: 0; margin-bottom: 12px; padding-left: 20px;">
@@ -55,15 +55,15 @@
         </ul>
 
 
-        <h3 style="font-size: 12px; font-weight: bold; color: #0f2863; text-transform: uppercase; margin-top: 0; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">
+        <h3 style="font-size: 12px; font-weight: bold; color: #1a3673; text-transform: uppercase; margin-top: 0; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">
             3. MODALITÉS D'ÉVALUATION ET DE CONTRÔLE DES CONNAISSANCES
         </h3>
         <table width="100%" cellpadding="5" cellspacing="0" style="border-collapse: collapse; font-size: 10px; border: 1px solid #cbd5e1; margin-top: 5px;">
             <thead>
-                <tr style="background-color: #0f2863; color: #ffffff;">
-                    <th style="border: 1px solid #0f2863;">Épreuve / Contrôle</th>
-                    <th style="border: 1px solid #0f2863; text-align: center;">Pondération (%)</th>
-                    <th style="border: 1px solid #0f2863;">Durée & Nature</th>
+                <tr style="background-color: #1a3673; color: #ffffff;">
+                    <th style="border: 1px solid #1a3673;">Épreuve / Contrôle</th>
+                    <th style="border: 1px solid #1a3673; text-align: center;">Pondération (%)</th>
+                    <th style="border: 1px solid #1a3673;">Durée & Nature</th>
                 </tr>
             </thead>
             <tbody>
@@ -93,7 +93,7 @@
                 Fiche Syllabique Officielle ENCG Fès • Valable pour l'Année Académique 2026/2027<br>
                 Empreinte Numérique : {{ md5($moduleCode ?? 'GFC-S5-M02') }}
             </td>
-            <td width="40%" style="text-align: right; font-size: 10px; font-weight: bold; color: #0f2863;">
+            <td width="40%" style="text-align: right; font-size: 10px; font-weight: bold; color: #1a3673;">
                 L'Enseignant Responsable du Module<br><br><br>
                 _______________________
             </td>

@@ -119,6 +119,7 @@ const AiAssistantPage = lazy(() => import('@features/ai/pages/AiAssistantPage'))
 const ProfilePage = lazy(() => import('@features/profile/pages/ProfilePage'))
 const SettingsPage = lazy(() => import('@features/settings/pages/SettingsPage'))
 const NotificationsPage = lazy(() => import('@features/notifications/pages/NotificationsPage'))
+const DocumentRegistryPage = lazy(() => import('@features/documents/pages/DocumentRegistryPage'))
 
 // Administration
 const ActivityLogsPage = lazy(() => import('@features/admin/pages/ActivityLogsPage'))
@@ -468,6 +469,7 @@ export default function RootRouter() {
           {/* Profile & Settings & Notifications */}
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
+          <Route path="/admin/document-registry" element={<ProtectedRoute roles={[...ADMIN_ROLES, 'scolarite']}><DocumentRegistryPage /></ProtectedRoute>} />
           <Route element={<ProtectedRoute roles={ADMIN_ROLES} />}>
             <Route path="/settings" element={<SettingsPage />} />
           </Route>

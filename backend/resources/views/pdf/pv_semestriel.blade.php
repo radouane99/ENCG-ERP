@@ -59,7 +59,7 @@
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 2.5px;
-            border-bottom: 1.5px solid #001A4B;
+            border-bottom: 1.5px solid #1a3673;
             padding-bottom: 2px;
         }
         .inst-header-table td {
@@ -82,7 +82,7 @@
         .state-kingdom {
             font-size: 8.5pt;
             font-weight: 900;
-            color: #001A4B;
+            color: #1a3673;
             letter-spacing: 0.5px;
             text-transform: uppercase;
         }
@@ -95,7 +95,7 @@
         .state-school {
             font-size: 8pt;
             font-weight: 900;
-            color: #001A4B;
+            color: #1a3673;
             text-transform: uppercase;
             margin-top: 1px;
         }
@@ -122,12 +122,12 @@
             line-height: 1.15;
         }
         .qr-meta strong {
-            color: #001A4B;
+            color: #1a3673;
         }
 
         /* ─── Title Banner ─── */
         .title-banner {
-            background-color: #001A4B;
+            background-color: #1a3673;
             color: #ffffff;
             text-align: center;
             padding: 3px 6px;
@@ -169,7 +169,7 @@
         }
         .meta-label {
             font-weight: 900;
-            color: #001A4B;
+            color: #1a3673;
             text-transform: uppercase;
             font-size: 5.8pt;
         }
@@ -192,14 +192,14 @@
             line-height: 1.05;
         }
         .table-pv thead th {
-            background-color: #001A4B;
+            background-color: #1a3673;
             color: #ffffff;
             font-weight: 900;
             text-transform: uppercase;
             font-size: {{ $thFont }};
         }
         .table-pv thead th.sub-th {
-            background-color: #0f2863;
+            background-color: #1a3673;
             color: #e2e8f0;
             font-size: 6.2pt;
             font-weight: 800;
@@ -223,7 +223,7 @@
             font-family: 'DejaVu Sans', sans-serif;
             font-weight: 900;
             font-size: {{ $moyFont }};
-            color: #001A4B;
+            color: #1a3673;
             background-color: #f1f5f9;
             letter-spacing: -0.2px;
         }
@@ -231,7 +231,7 @@
             font-family: 'DejaVu Sans', sans-serif;
             font-weight: 800;
             font-size: {{ $numFont }};
-            color: #001A4B;
+            color: #1a3673;
         }
         .cin-cell {
             font-family: 'DejaVu Sans', sans-serif;
@@ -290,10 +290,10 @@
         .signatures-title {
             font-size: 7.2pt;
             font-weight: 900;
-            color: #001A4B;
+            color: #1a3673;
             margin-bottom: 3px;
             text-transform: uppercase;
-            border-bottom: 1.5px solid #001A4B;
+            border-bottom: 1.5px solid #1a3673;
             padding-bottom: 2px;
             letter-spacing: 0.4px;
         }
@@ -303,7 +303,7 @@
             margin-bottom: 2.5px;
         }
         .sig-box {
-            border: 1px solid #001A4B;
+            border: 1px solid #1a3673;
             border-radius: 2px;
             padding: 2px 3px;
             text-align: center;
@@ -314,7 +314,7 @@
         .sig-header {
             font-size: 6.2pt;
             font-weight: 900;
-            color: #001A4B;
+            color: #1a3673;
             text-transform: uppercase;
             border-bottom: 0.5px solid #cbd5e1;
             padding-bottom: 1px;
@@ -400,7 +400,7 @@
                 @if(!empty($logoBase64))
                     <img src="{{ $logoBase64 }}" alt="Logo ENCG Fès">
                 @else
-                    <div style="font-size: 9pt; font-weight: 900; color: #001A4B;">
+                    <div style="font-size: 9pt; font-weight: 900; color: #1a3673;">
                         ENCG FÈS
                         <div style="font-size: 6.5pt; font-weight: normal; color: #475569;">
                             École Nationale de Commerce et de Gestion

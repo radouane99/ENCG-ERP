@@ -25,7 +25,7 @@
             left: -2mm;
             right: -2mm;
             bottom: -2mm;
-            border: 3px double #002e5b;
+            border: 3px double #1a3673;
             pointer-events: none;
             z-index: -100;
         }
@@ -33,7 +33,7 @@
         .header-table {
             width: 100%;
             border-collapse: collapse;
-            border-bottom: 2px solid #002e5b;
+            border-bottom: 2px solid #1a3673;
             padding-bottom: 6px;
             margin-bottom: 10px;
         }
@@ -51,7 +51,7 @@
             opacity: 0.04;
             font-size: 32pt;
             font-weight: 900;
-            color: #002e5b;
+            color: #1a3673;
             transform: rotate(-25deg);
             z-index: -50;
             text-transform: uppercase;
@@ -59,7 +59,7 @@
         }
 
         .mission-header-banner {
-            background: #002e5b;
+            background: #1a3673;
             color: #ffffff;
             text-align: center;
             padding: 10px 14px;
@@ -137,7 +137,7 @@
         }
 
         .legal-clause-box {
-            border-left: 3.5px solid #002e5b;
+            border-left: 3.5px solid #1a3673;
             background-color: #f1f5f9;
             border-radius: 0 6px 6px 0;
             padding: 8px 12px;
@@ -146,7 +146,7 @@
         .legal-clause-title {
             font-size: 8pt;
             font-weight: 900;
-            color: #002e5b;
+            color: #1a3673;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             margin-bottom: 2px;
@@ -178,7 +178,7 @@
         .approval-card-title {
             font-size: 8.5pt;
             font-weight: 900;
-            color: #002e5b;
+            color: #1a3673;
             text-transform: uppercase;
             border-bottom: 1px solid #e2e8f0;
             padding-bottom: 4px;
@@ -226,13 +226,13 @@
     <table class="header-table">
         <tr>
             <td style="width: 25%; text-align: left;">
-                <div style="font-size: 8pt; font-weight: bold; color: #002e5b; text-transform: uppercase;">
+                <div style="font-size: 8pt; font-weight: bold; color: #1a3673; text-transform: uppercase;">
                     Royaume du Maroc<br>
                     Ministère de l'Enseignement<br>Supérieur &amp; de la Recherche
                 </div>
             </td>
             <td style="width: 50%; text-align: center;">
-                <div style="font-size: 11pt; font-weight: 900; color: #002e5b; text-transform: uppercase; letter-spacing: 0.5px;">
+                <div style="font-size: 11pt; font-weight: 900; color: #1a3673; text-transform: uppercase; letter-spacing: 0.5px;">
                     Université Sidi Mohamed Ben Abdellah
                 </div>
                 <div style="font-size: 10pt; font-weight: 800; color: #b45309; margin-top: 2px; text-transform: uppercase;">
@@ -243,7 +243,7 @@
                 </div>
             </td>
             <td style="width: 25%; text-align: right;">
-                <div style="font-size: 8pt; font-weight: bold; color: #002e5b; text-align: right;">
+                <div style="font-size: 8pt; font-weight: bold; color: #1a3673; text-align: right;">
                     ENCG FÈS<br>
                     Direction / Secrétariat Général<br>
                     Ressources Humaines
@@ -266,7 +266,7 @@
             <tr>
                 <td style="width: 60%;">
                     <strong style="color: #475569;">RÉFÉRENCE PARAPHEUR :</strong> 
-                    <span style="font-family: monospace; font-weight: 900; color: #002e5b; font-size: 10pt;">{{ $trackingCode }}</span>
+                    <span style="font-family: monospace; font-weight: 900; color: #1a3673; font-size: 10pt;">{{ $trackingCode }}</span>
                     @if($isDraft)
                         <span style="background-color: #fee2e2; color: #b91c1c; font-size: 7.5pt; font-weight: bold; padding: 1px 4px; border-radius: 3px; margin-left: 6px;">[EN COURS DE VALIDATION]</span>
                     @else
@@ -274,7 +274,7 @@
                     @endif
                 </td>
                 <td style="width: 40%; text-align: right; color: #475569;">
-                    Fès, le <strong style="color: #002e5b; font-size: 9.5pt;">{{ $date }}</strong>
+                    Fès, le <strong style="color: #1a3673; font-size: 9.5pt;">{{ $date }}</strong>
                 </td>
             </tr>
         </table>
@@ -289,8 +289,8 @@
     <div class="details-table-card">
         <table class="details-table">
             <tr>
-                <td class="label-col" style="background-color: #f1f5f9; color: #002e5b;">Enseignant(e)-Chercheur(se) :</td>
-                <td class="val-col" style="background-color: #f1f5f9; font-weight: 900; color: #002e5b; font-size: 10pt; text-transform: uppercase;">
+                <td class="label-col" style="background-color: #f1f5f9; color: #1a3673;">Enseignant(e)-Chercheur(se) :</td>
+                <td class="val-col" style="background-color: #f1f5f9; font-weight: 900; color: #1a3673; font-size: 10pt; text-transform: uppercase;">
                     Pr. {{ $user->name ?? ($professor ? ($professor->first_name . ' ' . $professor->last_name) : 'ENSEIGNANT PERMANENT') }}
                 </td>
             </tr>
@@ -307,14 +307,14 @@
                 </td>
             </tr>
             <tr>
-                <td class="label-col" style="color: #002e5b;">Objet / Motif de la Mission :</td>
+                <td class="label-col" style="color: #1a3673;">Objet / Motif de la Mission :</td>
                 <td class="val-col" style="font-weight: 700; color: #0f172a;">
                     {{ $mission['motif'] }}
                 </td>
             </tr>
             <tr>
                 <td class="label-col">Ville &amp; Destination :</td>
-                <td class="val-col" style="font-weight: 900; color: #002e5b; font-size: 9.5pt;">
+                <td class="val-col" style="font-weight: 900; color: #1a3673; font-size: 9.5pt;">
                     📍 {{ $mission['destination'] }}
                 </td>
             </tr>
@@ -383,9 +383,9 @@
 
             <!-- Direction Decision & Signature Block -->
             <td style="width: 52%;">
-                <div class="approval-card" style="border-color: #002e5b;">
-                    <div class="approval-card-title" style="color: #002e5b;">2. DÉCISION &amp; SIGNATURE DIRECTION</div>
-                    <div style="font-size: 8.5pt; font-weight: bold; color: #002e5b;">
+                <div class="approval-card" style="border-color: #1a3673;">
+                    <div class="approval-card-title" style="color: #1a3673;">2. DÉCISION &amp; SIGNATURE DIRECTION</div>
+                    <div style="font-size: 8.5pt; font-weight: bold; color: #1a3673;">
                         {{ $signatoryTitle }}
                     </div>
                     <div style="margin-top: 2px; font-size: 8pt; color: #475569;">
@@ -396,7 +396,7 @@
                         <div style="margin-top: 8px; font-size: 7pt; color: #047857; font-weight: bold; font-family: monospace;">
                             SHA-256: {{ substr($digitalSeal, 0, 32) }}...
                         </div>
-                        <div style="margin-top: 4px; font-size: 7.5pt; color: #002e5b; font-weight: 900;">
+                        <div style="margin-top: 4px; font-size: 7.5pt; color: #1a3673; font-weight: 900;">
                             ✓ VU, APPROUVÉ ET SCELLÉ NUMÉRIQUEMENT
                         </div>
                     @else

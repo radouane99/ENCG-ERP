@@ -21,7 +21,7 @@
             background: #ffffff;
         }
         .page-container {
-            border: 1.8px solid #002147;
+            border: 1.8px solid #1a3673;
             padding: 4px;
             background: #ffffff;
             position: relative;
@@ -54,7 +54,7 @@
             margin-bottom: 3px;
         }
         .title-cell {
-            background-color: #002147;
+            background-color: #1a3673;
             color: #ffffff;
             text-align: center;
             padding: 3.5px 6px;
@@ -104,7 +104,7 @@
         .tile-value {
             font-size: 6.6pt;
             font-weight: 800;
-            color: #002147;
+            color: #1a3673;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -113,7 +113,7 @@
         .tile-mono {
             font-family: monospace;
             font-size: 6.8pt;
-            color: #002147;
+            color: #1a3673;
             font-weight: 900;
         }
         .badge-pill {
@@ -189,7 +189,7 @@
             vertical-align: top;
         }
         table.grid th.header-col {
-            background-color: #002147;
+            background-color: #1a3673;
             color: #ffffff;
             font-size: 7.2pt;
             font-weight: 900;
@@ -201,7 +201,7 @@
         }
         table.grid th.slot-head {
             background-color: #f8fafc;
-            color: #002147;
+            color: #1a3673;
             font-size: 6.6pt;
             font-weight: 900;
             width: 62px;
@@ -275,7 +275,7 @@
             border-radius: 1.5px;
             text-transform: uppercase;
             color: #ffffff;
-            background: #002147;
+            background: #1a3673;
         }
         .badge-type.cm { background: #1d4ed8; }
         .badge-type.td { background: #7c3aed; }
@@ -291,7 +291,7 @@
         .session-title {
             font-size: 6.6pt;
             font-weight: 900;
-            color: #002147;
+            color: #1a3673;
             line-height: 1.15;
             margin: 2px 0 1.5px 0;
             max-height: 22px;
@@ -401,7 +401,7 @@
             display: inline-block;
         }
         .stamp-box {
-            border: 1.5px dashed #002147;
+            border: 1.5px dashed #1a3673;
             border-radius: 2px;
             padding: 3px 6px;
             text-align: center;
@@ -410,7 +410,7 @@
         .stamp-title {
             font-size: 6.4pt;
             font-weight: 900;
-            color: #002147;
+            color: #1a3673;
             text-transform: uppercase;
         }
         .stamp-sub {
@@ -439,15 +439,15 @@
     <table class="header-table">
         <tr>
             <td style="width: 25%; text-align: left;">
-                <strong style="color:#002147; font-size: 7.2pt;">ROYAUME DU MAROC</strong><br/>
+                <strong style="color:#1a3673; font-size: 7.2pt;">ROYAUME DU MAROC</strong><br/>
                 <span style="font-size: 5.8pt; color: #475569;">Université Sidi Mohamed Ben Abdellah</span><br/>
-                <strong style="color:#002147; font-size: 6.5pt;">ENCG FÈS</strong>
+                <strong style="color:#1a3673; font-size: 6.5pt;">ENCG FÈS</strong>
             </td>
             <td style="width: 50%; text-align: center;">
                 @if(!empty($logoBase64))
                     <img src="{{ $logoBase64 }}" alt="Logo ENCG" style="height: 32px; max-width: 150px;"/>
                 @else
-                    <div style="font-size: 9.5pt; font-weight: 900; color: #002147; letter-spacing: 0.5px;">
+                    <div style="font-size: 9.5pt; font-weight: 900; color: #1a3673; letter-spacing: 0.5px;">
                         ÉCOLE NATIONALE DE COMMERCE ET DE GESTION DE FÈS
                     </div>
                 @endif
@@ -456,7 +456,7 @@
                 </div>
             </td>
             <td style="width: 25%; text-align: right;">
-                <span style="font-size: 6.0pt; color: #64748b;">Année Universitaire : <strong style="color: #002147;">{{ $academicYear ?? '2026/2027' }}</strong></span><br/>
+                <span style="font-size: 6.0pt; color: #64748b;">Année Universitaire : <strong style="color: #1a3673;">{{ $academicYear ?? 'Non renseignée' }}</strong></span><br/>
                 <span style="font-size: 5.5pt; color: #64748b;">Édition officielle : <strong>{{ now()->format('d/m/Y à H:i') }}</strong></span><br/>
                 <span style="font-family: monospace; font-size: 5.2pt; color: #94a3b8;">REF : ENCG-EDT-{{ strtoupper(substr(md5(($cne ?? 'ENCG').'2026'), 0, 8)) }}</span>
             </td>
@@ -532,7 +532,7 @@
                 <table style="width: 100%; border-collapse: collapse; table-layout: fixed;">
                     <tr>
                         <td style="width: 26%; text-align: left;">
-                            <strong style="color: #002147; font-size: 6.2pt; text-transform: uppercase;">CALENDRIER PÉDAGOGIQUE :</strong>
+                            <strong style="color: #1a3673; font-size: 6.2pt; text-transform: uppercase;">CALENDRIER PÉDAGOGIQUE :</strong>
                         </td>
                         <td style="width: 37%; text-align: left;">
                             Cours Magistraux (CM en Amphi) : <strong style="color: #1d4ed8;">{{ $coursStart ?? '15 Septembre 2026' }}</strong>
@@ -749,7 +749,7 @@
                             @endif
                         </td>
                         <td style="vertical-align: middle; line-height: 1.2;">
-                            <div style="font-size: 6.2pt; font-weight: 900; color: #002147; text-transform: uppercase;">
+                            <div style="font-size: 6.2pt; font-weight: 900; color: #1a3673; text-transform: uppercase;">
                                 SCAN POUR VÉRIFICATION
                             </div>
                             <div style="font-size: 5.4pt; font-weight: 900; color: #059669; margin: 1px 0;">
@@ -766,7 +766,7 @@
             <!-- 2. Sécurité, Empreinte SHA-256 & Horodatage -->
             <td class="verification-cell" style="width: 38%; padding: 0 4px;">
                 <div style="background: #f8fafc; border: 0.8px solid #cbd5e1; border-radius: 2px; padding: 2.5px 5px;">
-                    <div style="font-size: 5.8pt; font-weight: 900; color: #002147; text-transform: uppercase;">
+                    <div style="font-size: 5.8pt; font-weight: 900; color: #1a3673; text-transform: uppercase;">
                         SIGNATURE NUMÉRIQUE & INTÉGRITÉ
                     </div>
                     <div style="font-family: monospace; font-size: 4.9pt; color: #0f172a; background: #f1f5f9; border: 0.5px solid #e2e8f0; padding: 1.5px 3px; border-radius: 2px; margin: 1px 0; word-break: break-all;">

@@ -25,7 +25,7 @@
         margin-bottom: 8px;
         font-size: 7.5pt;
         background-color: #ffffff;
-        border: 1.2px solid #002147;
+        border: 1.2px solid #1a3673;
     }
     .exam-spec-card td {
         padding: 3.5px 7px;
@@ -43,7 +43,7 @@
     }
     .spec-val {
         font-weight: bold;
-        color: #002147;
+        color: #1a3673;
         width: 34%;
         font-size: 8pt;
     }
@@ -52,18 +52,18 @@
     table.attendance-table {
         width: 100%;
         border-collapse: collapse;
-        border: 1.5px solid #002147;
+        border: 1.5px solid #1a3673;
         page-break-inside: auto;
     }
     table.attendance-table thead {
         display: table-header-group;
     }
     table.attendance-table th {
-        background-color: #002147;
+        background-color: #1a3673;
         color: #ffffff;
         font-size: 7.5pt;
         font-weight: bold;
-        border: 1px solid #002147;
+        border: 1px solid #1a3673;
         padding: 5px 4px;
         text-transform: uppercase;
         letter-spacing: 0.4px;
@@ -82,7 +82,7 @@
 
 @section('content')
     <!-- Banner Title with Bilingual Arabic / French Header -->
-    <div style="background-color: #002147; color: #ffffff; text-align: center; padding: 6px 10px; border-radius: 3px; margin-bottom: 6px; border-bottom: 2.5px solid #c9a227;">
+    <div style="background-color: #1a3673; color: #ffffff; text-align: center; padding: 6px 10px; border-radius: 3px; margin-bottom: 6px; border-bottom: 2.5px solid #c9a227;">
         <div style="font-size: 11pt; font-weight: 900; text-transform: uppercase; letter-spacing: 0.8px; margin: 0;">
             LISTE D'ÉMARGEMENT ET DE PRÉSENCE AUX ÉPREUVES
         </div>
@@ -100,7 +100,7 @@
     <table class="exam-spec-card" cellpadding="0" cellspacing="0">
         <tr>
             <td class="spec-label">Épreuve / Module</td>
-            <td class="spec-val" style="color: #002147; font-size: 8.5pt;">
+            <td class="spec-val" style="color: #1a3673; font-size: 8.5pt;">
                 <strong>{{ $moduleName ?? 'Épreuve Écrite' }}</strong>
                 @if(!empty($moduleCode))
                     <span style="color: #64748b; font-size: 7pt; font-family: monospace;">({{ $moduleCode }})</span>
@@ -109,7 +109,7 @@
             <td class="spec-label">Date & Horaire</td>
             <td class="spec-val">
                 <span style="color: #b45309;">{{ $examDate ?? date('d/m/Y') }}</span>
-                <span style="color: #002147; margin-left: 4px;">• {{ $timeRange ?? '08:30 – 10:30' }}</span>
+                <span style="color: #1a3673; margin-left: 4px;">• {{ $timeRange ?? '08:30 – 10:30' }}</span>
             </td>
         </tr>
         <tr>
@@ -119,7 +119,7 @@
                 <span style="color: #059669;">{{ $semester ?? $semestre ?? 'S1' }}</span>
             </td>
             <td class="spec-label">Lieu & Salle</td>
-            <td class="spec-val" style="color: #002147;">
+            <td class="spec-val" style="color: #1a3673;">
                 <strong>{{ $roomName ?? 'Amphithéâtre B' }}</strong>
             </td>
         </tr>
@@ -133,7 +133,7 @@
             </td>
             <td class="spec-label">Effectif Convoqué</td>
             <td class="spec-val">
-                <strong style="color: #0f2863;">{{ $studentCount ?? count($realStudents ?? []) }} Candidats</strong>
+                <strong style="color: #1a3673;">{{ $studentCount ?? count($realStudents ?? []) }} Candidats</strong>
                 <span style="color: #059669; font-size: 7pt; margin-left: 6px;">● Cohorte Validée</span>
             </td>
         </tr>
@@ -169,10 +169,10 @@
                     <td style="font-family: monospace; font-weight: bold; font-size: 8pt; color: #1e293b; padding-left: 6px;">
                         {{ $st['cne'] ?? '—' }}
                     </td>
-                    <td style="font-family: monospace; font-weight: bold; font-size: 8pt; color: #002147; padding-left: 6px;">
+                    <td style="font-family: monospace; font-weight: bold; font-size: 8pt; color: #1a3673; padding-left: 6px;">
                         {{ $st['cin'] ?? '—' }}
                     </td>
-                    <td style="font-weight: bold; color: #002147; font-size: 8.5pt; padding-left: 8px;">
+                    <td style="font-weight: bold; color: #1a3673; font-size: 8.5pt; padding-left: 8px;">
                         {{ $st['name'] ?? '—' }}
                     </td>
                     <td style="background-color: #ffffff; vertical-align: bottom; padding: 0 8px 6px 8px; text-align: center;">
@@ -197,7 +197,7 @@
                 <div style="font-size: 6.8pt; font-weight: bold; color: #64748b; text-transform: uppercase;">
                     Surveillance de Salle
                 </div>
-                <div style="font-size: 7.8pt; font-weight: 900; color: #002147; margin-top: 1px;">
+                <div style="font-size: 7.8pt; font-weight: 900; color: #1a3673; margin-top: 1px;">
                     LES SURVEILLANTS
                 </div>
                 <div style="font-size: 6.5pt; color: #334155; margin-top: 2px;">
@@ -216,7 +216,7 @@
                 <div style="font-size: 6.5pt; font-weight: bold; color: #64748b; margin-top: 1px;">
                     Pour le Directeur et par délégation
                 </div>
-                <div style="font-size: 7.8pt; font-weight: 900; color: #002147; text-transform: uppercase; margin-top: 1px;">
+                <div style="font-size: 7.8pt; font-weight: 900; color: #1a3673; text-transform: uppercase; margin-top: 1px;">
                     ADMINISTRATION DES EXAMENS
                 </div>
                 <div style="font-size: 6.5pt; color: #94a3b8; font-style: italic; margin-top: 2px;">

@@ -5,7 +5,7 @@
 @section('styles')
 <style>
     .service-banner {
-        background: #0f2863;
+        background: #1a3673;
         color: #ffffff;
         text-align: center;
         padding: 12px 18px;
@@ -83,10 +83,10 @@
         border-collapse: collapse;
         font-size: 8.5pt;
         margin: 14px 0;
-        border: 1.5px solid #0f2863;
+        border: 1.5px solid #1a3673;
     }
     .sessions-table th {
-        background-color: #0f2863;
+        background-color: #1a3673;
         color: #ffffff;
         padding: 8px 10px;
         font-weight: 800;
@@ -150,7 +150,7 @@
         <table class="details-table">
             <tr>
                 <td class="label-col">Nom et Prénom de l'Enseignant :</td>
-                <td class="val-col"><span style="font-size: 11pt; font-weight: 800; color: #0f2863;">{{ $professor->first_name ?? '' }} {{ $professor->last_name ?? '' }}</span></td>
+                <td class="val-col"><span style="font-size: 11pt; font-weight: 800; color: #1a3673;">{{ $professor->first_name ?? '' }} {{ $professor->last_name ?? '' }}</span></td>
             </tr>
             <tr>
                 <td class="label-col">Statut / Corps Pédagogique :</td>
@@ -174,7 +174,7 @@
             </tr>
             <tr>
                 <td class="label-col">Taux de Couverture du Syllabus :</td>
-                <td class="val-col"><span style="color: #0f2863; font-weight: 800; font-size: 10pt;">100% Conforme au Cahier des Charges NPN / LMD</span></td>
+                <td class="val-col"><span style="color: #1a3673; font-weight: 800; font-size: 10pt;">100% Conforme au Cahier des Charges NPN / LMD</span></td>
             </tr>
             <tr>
                 <td class="label-col">Évaluations &amp; PV de Notes :</td>
@@ -192,7 +192,7 @@
         <tr>
             <td>
                 <div style="font-size: 8pt; font-weight: bold; color: #475569; margin-bottom: 6px;">LE CHEF DE DÉPARTEMENT</div>
-                <div style="font-size: 8.5pt; font-weight: 800; color: #0f2863;">VISA FAVORABLE ACCORDÉ</div>
+                <div style="font-size: 8.5pt; font-weight: 800; color: #1a3673;">VISA FAVORABLE ACCORDÉ</div>
                 <div style="margin-top: 30px; font-size: 7.5pt; color: #166534; font-weight: bold;">✓ Service Fait Vérifié</div>
             </td>
             <td>
@@ -203,9 +203,9 @@
             </td>
             <td>
                 <div style="font-size: 8pt; font-weight: bold; color: #475569; margin-bottom: 6px;">POUR LE DIRECTEUR DE L'ENCG FÈS</div>
-                <div style="font-size: 8.5pt; font-weight: 800; color: #0f2863;">LE SECRÉTAIRE GÉNÉRAL</div>
+                <div style="font-size: 8.5pt; font-weight: 800; color: #1a3673;">LE SECRÉTAIRE GÉNÉRAL</div>
                 <div style="margin-top: 25px;">
-                    <span style="display: inline-block; padding: 5px 12px; border: 1.5px solid #0f2863; color: #0f2863; font-weight: 900; font-size: 8pt; text-transform: uppercase;">
+                    <span style="display: inline-block; padding: 5px 12px; border: 1.5px solid #1a3673; color: #1a3673; font-weight: 900; font-size: 8pt; text-transform: uppercase;">
                         ✓ SCELLÉ NUMÉRIQUEMENT
                     </span>
                 </div>

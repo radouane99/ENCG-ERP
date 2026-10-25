@@ -20,7 +20,7 @@
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 12px;
-            border-bottom: 2px solid #0f2863;
+            border-bottom: 2px solid #1a3673;
             padding-bottom: 8px;
         }
         .header-logo-cell {
@@ -42,14 +42,14 @@
         .institution-title {
             font-size: 11pt;
             font-weight: bold;
-            color: #0f2863;
+            color: #1a3673;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
         .document-title {
             font-size: 13pt;
             font-weight: 900;
-            color: #0f2863;
+            color: #1a3673;
             margin: 4px 0 2px 0;
             text-transform: uppercase;
         }
@@ -84,14 +84,14 @@
             margin-top: 6px;
         }
         .logs-table th {
-            background-color: #0f2863;
+            background-color: #1a3673;
             color: #ffffff;
             font-weight: bold;
             text-align: left;
             padding: 6px 5px;
             font-size: 7.5pt;
             text-transform: uppercase;
-            border: 1px solid #0f2863;
+            border: 1px solid #1a3673;
         }
         .logs-table td {
             padding: 5px 5px;

@@ -4,7 +4,7 @@
 
 @section('content')
     <div style="text-align: center; margin-bottom: 25px;">
-        <h2 style="font-size: 16px; font-weight: bold; text-transform: uppercase; margin: 0; color: #0f2863;">
+        <h2 style="font-size: 16px; font-weight: bold; text-transform: uppercase; margin: 0; color: #1a3673;">
             PROCES-VERBAL D'ACCREDITATION ET DE VALIDATION PEDAGOGIQUE
         </h2>
         <p style="font-size: 13px; font-weight: bold; margin-top: 5px; color: #059669;">
@@ -32,20 +32,20 @@
     </table>
 
     <!-- CERTIFICATION BODY -->
-    <div style="border: 1px solid #0f2863; border-radius: 6px; padding: 15px; background-color: #ffffff; margin-bottom: 25px; font-size: 11px; line-height: 1.6;">
-        <h3 style="font-size: 12px; font-weight: bold; color: #0f2863; text-transform: uppercase; margin-top: 0; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">
+    <div style="border: 1px solid #1a3673; border-radius: 6px; padding: 15px; background-color: #ffffff; margin-bottom: 25px; font-size: 11px; line-height: 1.6;">
+        <h3 style="font-size: 12px; font-weight: bold; color: #1a3673; text-transform: uppercase; margin-top: 0; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">
             1. DÉCISION DE LA COMMISSION PÉDAGOGIQUE
         </h3>
         <p style="margin-top: 0; margin-bottom: 12px; text-align: justify;">
             Le Conseil de l'École Nationale de Commerce et de Gestion de Fès, réuni en session ordinaire, certifie que le module <strong>{{ $moduleName ?? 'Analyse Financière' }}</strong> répertorié sous le code <strong>{{ $moduleCode ?? 'GFC-S5-M02' }}</strong> est formellement homologué et conforme aux normes d'accréditation du Ministère de l'Enseignement Supérieur, de la Recherche Scientifique et de l'Innovation.
         </p>
 
-        <h3 style="font-size: 12px; font-weight: bold; color: #0f2863; text-transform: uppercase; margin-top: 0; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">
+        <h3 style="font-size: 12px; font-weight: bold; color: #1a3673; text-transform: uppercase; margin-top: 0; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">
             2. ÉLÉMENTS CONSTITUTIFS DU MODULE (ECM)
         </h3>
         <table width="100%" cellpadding="6" cellspacing="0" style="border-collapse: collapse; font-size: 10px; border: 1px solid #cbd5e1; margin-bottom: 12px;">
             <thead>
-                <tr style="background-color: #f1f5f9; color: #0f2863;">
+                <tr style="background-color: #f1f5f9; color: #1a3673;">
                     <th style="border: 1px solid #cbd5e1;">Élément de Module (ECM)</th>
                     <th style="border: 1px solid #cbd5e1; text-align: center;">Pondération (%)</th>
                     <th style="border: 1px solid #cbd5e1; text-align: center;">Volume Horaire</th>
@@ -68,7 +68,7 @@
             </tbody>
         </table>
 
-        <h3 style="font-size: 12px; font-weight: bold; color: #0f2863; text-transform: uppercase; margin-top: 0; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">
+        <h3 style="font-size: 12px; font-weight: bold; color: #1a3673; text-transform: uppercase; margin-top: 0; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">
             3. BARÈME D'ÉVALUATION ET CONTRÔLE CONTINU
         </h3>
         <p style="margin-top: 0; margin-bottom: 5px;">

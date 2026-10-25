@@ -40,10 +40,10 @@
         font-size: 11.5pt;
         font-weight: 900;
         text-transform: uppercase;
-        color: #002e5b;
+        color: #1a3673;
         letter-spacing: 0.5px;
         line-height: 1.3;
-        border-bottom: 2px solid #002e5b;
+        border-bottom: 2px solid #1a3673;
         padding-bottom: 3px;
         margin: 0;
     }
@@ -71,7 +71,7 @@
     .arrete-ref-bar .ref-code {
         font-family: DejaVu Sans Mono, monospace;
         font-weight: 900;
-        color: #002e5b;
+        color: #1a3673;
     }
 
     .arrete-body {
@@ -82,7 +82,7 @@
     }
     .arrete-director {
         font-weight: 900;
-        color: #0f2863;
+        color: #1a3673;
         margin: 0 0 5px 0;
         text-transform: uppercase;
         font-size: 8.5pt;
@@ -98,7 +98,7 @@
     }
 
     .arrete-articles {
-        border: 1.5px solid #002e5b;
+        border: 1.5px solid #1a3673;
         border-radius: 4px;
         padding: 7px 10px;
         background-color: #f8fafc;
@@ -108,7 +108,7 @@
     .arrete-articles h3 {
         font-size: 8.5pt;
         font-weight: 900;
-        color: #002e5b;
+        color: #1a3673;
         text-transform: uppercase;
         margin: 0 0 6px 0;
         border-bottom: 1px solid #94a3b8;
@@ -125,7 +125,7 @@
         margin-bottom: 0;
     }
     .arrete-highlight {
-        color: #002e5b;
+        color: #1a3673;
         font-weight: 900;
     }
 
@@ -145,7 +145,7 @@
         line-height: 1.4;
     }
     .arrete-cert-left strong {
-        color: #002e5b;
+        color: #1a3673;
         font-size: 7.8pt;
         text-transform: uppercase;
     }
@@ -161,7 +161,7 @@
     .arrete-sign-right .role {
         font-size: 8.5pt;
         font-weight: 900;
-        color: #002e5b;
+        color: #1a3673;
         text-transform: uppercase;
         margin: 0;
     }
@@ -171,7 +171,7 @@
         margin: 2px 0 6px 0;
     }
     .tampon-box {
-        border: 1.5px dashed #002e5b;
+        border: 1.5px dashed #1a3673;
         padding: 6px 10px;
         display: inline-block;
         background-color: #f1f5f9;
@@ -181,7 +181,7 @@
     .tampon-box .label {
         font-size: 7.5pt;
         font-weight: 900;
-        color: #002e5b;
+        color: #1a3673;
         text-transform: uppercase;
     }
     .tampon-box .note {
@@ -198,7 +198,7 @@
             DÉCISION N° {{ $decisionNumber ?? '384/'.date('Y') }}<br>
             PORTANT NOMINATION D'UN CHEF DE DÉPARTEMENT
         </div>
-        <div class="arrete-subtitle">Année Académique {{ $academicYear ?? '2026/2027' }}</div>
+        <div class="arrete-subtitle">Année Académique {{ $academicYear ?? 'Non renseignée' }}</div>
     </div>
 
     <table class="arrete-ref-bar" cellpadding="0" cellspacing="0">
@@ -272,12 +272,10 @@
     <div style="font-size: 6.5pt; font-weight: bold; color: #64748b; margin-top: 1px;">
         Pour le Directeur et par délégation
     </div>
-    <div style="font-size: 8pt; font-weight: 900; color: #002e5b; text-transform: uppercase; margin-top: 1px;">
+    <div style="font-size: 8pt; font-weight: 900; color: #1a3673; text-transform: uppercase; margin-top: 1px;">
         {{ $signatoryTitle ?? 'LE SECRÉTAIRE GÉNÉRAL' }}
     </div>
     <div style="margin-top: 2px;">
-        <svg width="90" height="20" viewBox="0 0 120 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M8,22 C16,10 24,4 30,4 C35,4 32,22 36,24 C40,26 45,14 50,10 C55,4 60,18 65,16 C70,14 82,6 90,14 C98,10 102,4 112,8" stroke="#059669" stroke-width="2" stroke-linecap="round"/>
-        </svg>
+        <div style="height:26px;font-size:7pt;color:#64748b;">Signature à apposer</div>
     </div>
 @endsection

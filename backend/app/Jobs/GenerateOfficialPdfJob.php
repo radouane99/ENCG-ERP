@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Storage;
 class GenerateOfficialPdfJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    public ?int $documentInstitutionId = null;
+    public ?int $documentActorId = null;
 
     /**
      * @param  array<string, mixed>  $data
@@ -22,11 +24,17 @@ class GenerateOfficialPdfJob implements ShouldQueue
         public array $data,
         public string $outputPath,
         public string $disk = 'local'
-    ) {}
+    ) {
+        $this->documentInstitutionId = auth()->user()?->institution_id;
+        $this->documentActorId = auth()->id();
+    }
 
     public function handle(OfficialPdfFactory $factory): void
     {
         $pdf = $factory->make($this->view, $this->data);
+        if ($pdf instanceof \App\Services\Documents\RegisteredPdf) {
+            $pdf->withDocumentContext($this->documentInstitutionId, $this->documentActorId);
+        }
         Storage::disk($this->disk)->put($this->outputPath, $pdf->output());
     }
 }

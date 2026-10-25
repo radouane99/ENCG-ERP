@@ -23,7 +23,7 @@
         .page-break { page-break-after: always; }
 
         .page-frame {
-            border: 2px solid #0f2863;
+            border: 2px solid #1a3673;
             outline: 1px solid #94a3b8;
             outline-offset: -4px;
             padding: 7mm 7mm 6mm 7mm;
@@ -39,7 +39,7 @@
 
         /* ── BANNER TITLE ── */
         .title-banner {
-            background: #0f2863;
+            background: #1a3673;
             color: #ffffff;
             text-align: center;
             padding: 8px 12px;
@@ -85,7 +85,7 @@
             padding: 4px 10px;
             font-size: 7.5pt;
             font-weight: bold;
-            color: #0f2863;
+            color: #1a3673;
             text-transform: uppercase;
             letter-spacing: 0.6px;
         }
@@ -120,14 +120,14 @@
         }
         .info-val.highlight {
             font-size: 10.5pt;
-            color: #0f2863;
+            color: #1a3673;
             text-transform: uppercase;
         }
 
         /* ── MISSION MANDATE ── */
         .mission-mandate {
             background: #f8fafc;
-            border-left: 3px solid #0f2863;
+            border-left: 3px solid #1a3673;
             border-right: 1px solid #e2e8f0;
             border-top: 1px solid #e2e8f0;
             border-bottom: 1px solid #e2e8f0;
@@ -143,7 +143,7 @@
         .section-heading {
             font-size: 8pt;
             font-weight: bold;
-            color: #0f2863;
+            color: #1a3673;
             text-transform: uppercase;
             letter-spacing: 0.6px;
             margin: 6px 0 3px 0;
@@ -160,7 +160,7 @@
             table-layout: fixed;
         }
         .exam-table thead tr {
-            background: #0f2863;
+            background: #1a3673;
             color: #ffffff;
         }
         .exam-table th {
@@ -169,7 +169,7 @@
             font-size: 7.5pt;
             font-weight: bold;
             text-transform: uppercase;
-            border: 1px solid #0f2863;
+            border: 1px solid #1a3673;
             letter-spacing: 0.4px;
         }
         .exam-table td {
@@ -183,7 +183,7 @@
         }
         .exam-table td.date-cell {
             font-weight: bold;
-            color: #0f2863;
+            color: #1a3673;
             font-size: 8pt;
         }
         .exam-table td.time-cell {
@@ -201,7 +201,7 @@
         }
         .exam-table td.room-cell {
             font-weight: bold;
-            color: #0f2863;
+            color: #1a3673;
             font-size: 8.5pt;
         }
         .exam-table th.col-role {
@@ -245,7 +245,7 @@
             line-height: 1.2;
         }
         .role-title.principal {
-            background: #0f2863;
+            background: #1a3673;
             color: #ffffff;
         }
         .role-title.secondaire {
@@ -274,7 +274,7 @@
         }
         .charte-num {
             font-weight: bold;
-            color: #0f2863;
+            color: #1a3673;
         }
 
         /* ── SIGNATURE & FOOTER BLOCK ── */
@@ -282,7 +282,7 @@
             width: 100%;
             border-collapse: collapse;
             margin-top: 6px;
-            border-top: 1.5px solid #0f2863;
+            border-top: 1.5px solid #1a3673;
             padding-top: 6px;
         }
         .footer-table td {
@@ -323,7 +323,7 @@
         .sign-title {
             font-size: 8pt;
             font-weight: bold;
-            color: #0f2863;
+            color: #1a3673;
         }
         .sign-subtitle {
             font-size: 6.5pt;
@@ -349,7 +349,7 @@
             text-align: left;
         }
         .qr-section img {
-            border: 1px solid #0f2863;
+            border: 1px solid #1a3673;
             padding: 2px;
             background: #fff;
             width: 50px;
@@ -518,23 +518,23 @@
     </div>
 
     {{-- FOOTER / SIGNATURES & VERIFICATION ELECTRONIQUE --}}
-    <table class="footer-table" cellpadding="0" cellspacing="0" style="width: 100%; border-top: 1.5px solid #0f2863; padding-top: 6px; margin-top: 6px;">
+    <table class="footer-table" cellpadding="0" cellspacing="0" style="width: 100%; border-top: 1.5px solid #1a3673; padding-top: 6px; margin-top: 6px;">
         <tr>
             <td style="width: 58%; vertical-align: top;">
                 <table cellpadding="0" cellspacing="0" style="width: 100%;">
                     <tr>
                         <td style="width: 72px; vertical-align: middle;">
                             @if(!empty($data['qrCodeBase64']))
-                                <img src="{{ $data['qrCodeBase64'] }}" alt="QR Code" style="width: 65px; height: 65px; border: 1.5px solid #0f2863; padding: 2px; background: #ffffff; border-radius: 3px;">
+                                <img src="{{ $data['qrCodeBase64'] }}" alt="QR Code" style="width: 65px; height: 65px; border: 1.5px solid #1a3673; padding: 2px; background: #ffffff; border-radius: 3px;">
                             @endif
                         </td>
                         <td style="padding-left: 8px; vertical-align: middle;">
-                            <div style="font-size: 7pt; color: #0f2863; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">
+                            <div style="font-size: 7pt; color: #1a3673; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">
                                 Vérification Électronique Officielle
                             </div>
                             <div style="font-size: 6pt; color: #64748b; margin-top: 2px; line-height: 1.35;">
                                 Fait à Fès, le <strong style="color: #1e293b;">{{ now()->format('d/m/Y') }}</strong><br>
-                                Réf. Sécurité : <span style="font-family: monospace; font-weight: bold; color: #0f2863;">{{ substr(md5(($data['qr_token'] ?? $data['id'] ?? 'ENCG').$academicYear), 0, 16) }}</span><br>
+                                Réf. Sécurité : <span style="font-family: monospace; font-weight: bold; color: #1a3673;">{{ substr(md5(($data['qr_token'] ?? $data['id'] ?? 'ENCG').$academicYear), 0, 16) }}</span><br>
                                 Scannez le QR Code pour valider l'authenticité sur le portail ENCG.
                             </div>
                             <div style="margin-top: 4px;">
@@ -547,7 +547,7 @@
                 </table>
             </td>
             <td style="width: 42%; vertical-align: top; text-align: center;">
-                <div style="font-size: 7.8pt; font-weight: bold; color: #0f2863;">Pour le Directeur de l'ENCG Fès</div>
+                <div style="font-size: 7.8pt; font-weight: bold; color: #1a3673;">Pour le Directeur de l'ENCG Fès</div>
                 <div style="font-size: 6.2pt; color: #64748b; font-style: italic; margin-top: 1px;">Le Directeur Adjoint chargé des Affaires Pédagogiques</div>
                 <div style="height: 38px; margin: 4px auto; border-bottom: 1px dashed #94a3b8; width: 75%;"></div>
                 <div style="font-size: 5.8pt; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;">Cachet Officiel et Signature Numérique</div>

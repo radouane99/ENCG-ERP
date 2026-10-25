@@ -25,13 +25,13 @@
             opacity: 0.05;
             font-size: 42px;
             font-weight: bold;
-            color: #0f2863;
+            color: #1a3673;
             transform: rotate(-35deg);
             z-index: -1000;
         }
         .header-table {
             width: 100%;
-            border-bottom: 3px double #0f2863;
+            border-bottom: 3px double #1a3673;
             padding-bottom: 12px;
             margin-bottom: 25px;
         }
@@ -42,10 +42,10 @@
         .doc-title {
             font-size: 22px;
             font-weight: bold;
-            color: #0f2863;
+            color: #1a3673;
             text-transform: uppercase;
             letter-spacing: 1.5px;
-            border-bottom: 2px solid #0f2863;
+            border-bottom: 2px solid #1a3673;
             display: inline-block;
             padding-bottom: 4px;
         }
@@ -56,7 +56,7 @@
         }
         .highlight {
             font-weight: bold;
-            color: #0f2863;
+            color: #1a3673;
         }
         .stamp-box {
             margin-top: 40px;
@@ -65,7 +65,7 @@
         .tampon-sec {
             width: 140px;
             height: 140px;
-            border: 3px double #0f2863;
+            border: 3px double #1a3673;
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -73,7 +73,7 @@
             text-align: center;
             padding: 10px;
             box-sizing: border-border;
-            color: #0f2863;
+            color: #1a3673;
             font-size: 9px;
             font-weight: bold;
             text-transform: uppercase;
@@ -100,9 +100,9 @@
                 <img src="{{ public_path('logo-encg.png') }}" style="max-height: 60px;" alt="ENCG Fès">
             </td>
             <td style="width: 75%; text-align: center;">
-                <div style="font-size: 15px; font-weight: bold; color: #0f2863;">ROYAUME DU MAROC</div>
+                <div style="font-size: 15px; font-weight: bold; color: #1a3673;">ROYAUME DU MAROC</div>
                 <div style="font-size: 12px; font-weight: bold; color: #334155;">Université Sidi Mohamed Ben Abdellah — Fès</div>
-                <div style="font-size: 12px; color: #0f2863; font-weight: bold;">École Nationale de Commerce et de Gestion</div>
+                <div style="font-size: 12px; color: #1a3673; font-weight: bold;">École Nationale de Commerce et de Gestion</div>
                 <div style="font-size: 10px; color: #64748b;">Service des Affaires Académiques & de la Scolarité</div>
             </td>
         </tr>
@@ -134,7 +134,7 @@
             </tr>
             <tr>
                 <td style="font-weight: bold; color: #475569;">Année Académique :</td>
-                <td class="highlight">{{ $year ?? '2025/2026' }}</td>
+                <td class="highlight">{{ $year ?? 'Non renseignée' }}</td>
             </tr>
         </table>
         <br>

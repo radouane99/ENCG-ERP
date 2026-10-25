@@ -5,7 +5,7 @@
 @section('styles')
 <style>
     .attestation-header-banner {
-        background: #0f2863;
+        background: #1a3673;
         color: #ffffff;
         text-align: center;
         padding: 12px 18px;
@@ -94,13 +94,13 @@
     }
     .official-seal-badge {
         display: inline-block;
-        border: 2px dashed #002e5b;
+        border: 2px dashed #1a3673;
         border-radius: 50%;
         width: 105px;
         height: 105px;
         text-align: center;
         padding: 14px 6px;
-        color: #002e5b;
+        color: #1a3673;
         font-size: 7.5pt;
         font-weight: bold;
         line-height: 1.25;
@@ -128,10 +128,10 @@
             <tr>
                 <td style="width: 58%;">
                     <strong style="color: #475569;">RÉFÉRENCE OFFICIELLE :</strong> 
-                    <span style="font-family: monospace; font-weight: 900; color: #0f2863; font-size: 10.5pt;">{{ $trackingCode ?? ('DOC-PROF-' . date('Y') . '-0001') }}</span>
+                    <span style="font-family: monospace; font-weight: 900; color: #1a3673; font-size: 10.5pt;">{{ $trackingCode ?? 'Voir identifiant en pied de page' }}</span>
                 </td>
                 <td style="width: 42%; text-align: right; color: #475569;">
-                    Fès, le <strong style="color: #0f2863; font-size: 10pt;">{{ $date ?? date('d/m/Y') }}</strong>
+                    Fès, le <strong style="color: #1a3673; font-size: 10pt;">{{ $date ?? date('d/m/Y') }}</strong>
                 </td>
             </tr>
         </table>
@@ -146,15 +146,15 @@
     <div class="details-table-card">
         <table class="details-table">
             <tr>
-                <td class="label-col" style="background-color: #f1f5f9; color: #0f2863;">Nom &amp; Prénom de l'Enseignant :</td>
-                <td class="val-col" style="background-color: #f1f5f9; font-weight: 900; color: #0f2863; font-size: 10.5pt; text-transform: uppercase;">
-                    Pr. {{ isset($professor) ? (($professor->last_name ?? '') . ' ' . ($professor->first_name ?? '')) : 'ABDELHAK EL AMRANI' }}
+                <td class="label-col" style="background-color: #f1f5f9; color: #1a3673;">Nom &amp; Prénom de l'Enseignant :</td>
+                <td class="val-col" style="background-color: #f1f5f9; font-weight: 900; color: #1a3673; font-size: 10.5pt; text-transform: uppercase;">
+                    Pr. {{ isset($professor) ? (($professor->last_name ?? '') . ' ' . ($professor->first_name ?? '')) : 'Non renseigné' }}
                 </td>
             </tr>
             <tr>
                 <td class="label-col">Carte d'Identité Nationale (CIN) :</td>
                 <td class="val-col" style="font-weight: 900; font-family: monospace; font-size: 10pt; color: #0f172a;">
-                    {{ $professor->cin ?? 'CD542190' }}
+                    {{ $professor->cin ?? 'Non renseigné' }}
                 </td>
             </tr>
             <tr>
@@ -184,7 +184,7 @@
             <tr>
                 <td class="label-col">Année Universitaire en Cours :</td>
                 <td class="val-col" style="font-weight: 900; color: #b45309; font-size: 10pt;">
-                    {{ $year ?? '2025/2026' }}
+                    {{ $year ?? 'Non renseignée' }}
                 </td>
             </tr>
         </table>
@@ -199,22 +199,10 @@
 @endsection
 
 @section('signature_right')
-    <div class="signature-container-box">
-        <div style="font-size: 9.5pt; color: #334155; font-weight: bold;">
-            Fait à Fès, le {{ $date ?? date('d/m/Y') }}
-        </div>
-        <div style="font-size: 8.5pt; font-weight: bold; color: #64748b; margin-top: 4px;">
-            Pour le Directeur et par délégation
-        </div>
-        <div style="font-size: 10.5pt; font-weight: 900; color: #002e5b; text-transform: uppercase; margin-top: 3px; letter-spacing: 0.5px;">
-            {{ $signatoryTitle ?? 'LE SECRÉTAIRE GÉNÉRAL DE L\'ENCG FÈS' }}
-        </div>
-
-        <!-- Clean spacious area left open for Official Stamp and Signature -->
-        <div style="margin-top: 25px; min-height: 85px;">
-            <div style="font-size: 7.5pt; color: #059669; font-weight: bold; padding-top: 40px;">
-                [Document Certifié Numériquement &bull; Clé SHA-256]
-            </div>
-        </div>
-    </div>
+    <div style="font-size:8pt;color:#334155;text-align:right;">Fait à Fès, le {{ $date ?? date('d/m/Y') }}</div>
+    <div style="font-size:7.2pt;color:#64748b;margin-top:4px;text-align:right;">Signature et cachet du service habilité</div>
+    @if(!empty($signatoryTitle))
+        <div style="font-size:8pt;font-weight:bold;color:#1a3673;margin-top:4px;text-align:right;">{{ $signatoryTitle }}</div>
+    @endif
+    <div style="height:42px;margin-top:5px;border-bottom:1px dotted #cbd5e1;"></div>
 @endsection

@@ -62,6 +62,9 @@ Route::match(['get', 'post'], '/blockchain/public-verify', [AdminBlockchainContr
 Route::match(['get', 'post'], '/verify/blockchain', [AdminBlockchainController::class, 'verify']);
 
 Route::middleware(['auth:sanctum', 'institution.context'])->group(function () {
+    Route::get('/documents/registry', [\App\Http\Controllers\Api\DocumentRegistryController::class, 'index']);
+    Route::get('/documents/registry/{id}/download', [\App\Http\Controllers\Api\DocumentRegistryController::class, 'download']);
+    Route::post('/documents/registry/{id}/revoke', [\App\Http\Controllers\Api\DocumentRegistryController::class, 'revoke']);
     Route::get('/workspace/today', [\App\Http\Controllers\Api\OperationalWorkspaceController::class, 'index']);
     Route::patch('/workspace/requests/{id}/followup', [\App\Http\Controllers\Api\OperationalWorkspaceController::class, 'assign']);
     Route::post('/broadcasting/auth', fn (Request $request) => Broadcast::auth($request));

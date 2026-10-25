@@ -67,14 +67,14 @@
         .hdr-school {
             font-size: 7.2pt;
             font-weight: bold;
-            color: #002147;
+            color: #1a3673;
             text-transform: uppercase;
             letter-spacing: 0.3px;
         }
         .hdr-ar-school {
             font-size: 7.2pt;
             font-weight: bold;
-            color: #002147;
+            color: #1a3673;
             margin-bottom: 1px;
         }
         .hdr-council {

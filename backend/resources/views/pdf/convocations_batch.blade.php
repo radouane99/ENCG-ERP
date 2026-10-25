@@ -23,7 +23,7 @@
         .page-break { page-break-after: always; }
 
         .page-frame {
-            border: 1.5px double #1a3a5c;
+            border: 1.5px double #1a3673;
             padding: 4mm 5mm 3mm 5mm;
         }
 
@@ -38,7 +38,7 @@
 
         /* ── TITLE ── */
         .title-banner {
-            background: #1a3a5c;
+            background: #1a3673;
             color: #fff;
             text-align: center;
             padding: 5px 8px;
@@ -77,7 +77,7 @@
             background: #e8f0f8;
             font-size: 7pt;
             font-weight: bold;
-            color: #1a3a5c;
+            color: #1a3673;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             padding: 2px 7px;
@@ -105,14 +105,14 @@
             margin-bottom: 3px;
             display: block;
         }
-        .info-value.big { font-size: 9.5pt; color: #1a3a5c; text-transform: uppercase; }
+        .info-value.big { font-size: 9.5pt; color: #1a3673; text-transform: uppercase; }
 
         .instruction {
             background: #f0f6ff;
-            border-left: 2.5px solid #1a3a5c;
+            border-left: 2.5px solid #1a3673;
             padding: 3px 7px;
             font-size: 7pt;
-            color: #1a3a5c;
+            color: #1a3673;
             font-style: italic;
             margin-bottom: 5px;
         }
@@ -120,12 +120,12 @@
         .section-label {
             font-size: 7pt;
             font-weight: bold;
-            color: #1a3a5c;
+            color: #1a3673;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             margin-bottom: 2px;
             padding-left: 4px;
-            border-left: 2px solid #1a3a5c;
+            border-left: 2px solid #1a3673;
         }
 
         /* ── EXAM TABLE ── */
@@ -136,14 +136,14 @@
             font-size: 7pt;
             table-layout: fixed;
         }
-        .exam-table thead tr { background: #1a3a5c; color: #fff; }
+        .exam-table thead tr { background: #1a3673; color: #fff; }
         .exam-table th {
             padding: 3px 3px;
             text-align: center;
             font-size: 6.5pt;
             font-weight: bold;
             text-transform: uppercase;
-            border: 1px solid #1a3a5c;
+            border: 1px solid #1a3673;
         }
         .exam-table td {
             padding: 2.5px 3px;
@@ -153,7 +153,7 @@
             word-wrap: break-word;
         }
         .exam-table tbody tr:nth-child(even) { background: #f5f9ff; }
-        .exam-table td.date-cell { font-weight: bold; color: #1a3a5c; }
+        .exam-table td.date-cell { font-weight: bold; color: #1a3673; }
         .exam-table th.col-horaire,
         .exam-table td.time-cell {
             width: 7%;
@@ -175,13 +175,13 @@
         .exam-table td.module-cell {
             text-align: left;
             font-weight: bold;
-            color: #1a3a5c;
+            color: #1a3673;
             font-size: 7pt;
             padding: 2px 5px;
             line-height: 1.2;
         }
         .seat-pill {
-            background: #1a3a5c;
+            background: #1a3673;
             color: #fff;
             padding: 1px 4px;
             font-size: 6.5pt;
@@ -213,7 +213,7 @@
 
         /* ── FOOTER (in-flow, directly after content) ── */
         .footer-block {
-            border-top: 1.5px solid #1a3a5c;
+            border-top: 1.5px solid #1a3673;
             padding-top: 4px;
             margin-top: 6px;
         }
@@ -250,7 +250,7 @@
         .sig-label {
             font-size: 7pt;
             font-weight: bold;
-            color: #1a3a5c;
+            color: #1a3673;
         }
         .sig-sub {
             font-size: 6pt;
@@ -265,7 +265,7 @@
         }
         .sig-caption { font-size: 6pt; color: #94a3b8; }
         .qr-wrap { text-align: right; margin-top: 2px; }
-        .qr-wrap img { border: 1px solid #1a3a5c; padding: 2px; width: 52px; height: 52px; }
+        .qr-wrap img { border: 1px solid #1a3673; padding: 2px; width: 52px; height: 52px; }
 
         .tagline {
             font-size: 5.5pt;

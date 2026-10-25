@@ -5,7 +5,7 @@
 @section('styles')
 <style>
     .attestation-header-banner {
-        background: #0f2863;
+        background: #1a3673;
         color: #ffffff;
         text-align: center;
         padding: 12px 18px;
@@ -86,7 +86,7 @@
         border: 1px solid #cbd5e1;
     }
     .modules-table th {
-        background-color: #0f2863;
+        background-color: #1a3673;
         color: #ffffff;
         padding: 7px 8px;
         font-weight: 800;
@@ -112,13 +112,13 @@
     }
     .official-seal-badge {
         display: inline-block;
-        border: 2px dashed #002e5b;
+        border: 2px dashed #1a3673;
         border-radius: 50%;
         width: 95px;
         height: 95px;
         text-align: center;
         padding-top: 18px;
-        color: #002e5b;
+        color: #1a3673;
         font-weight: 900;
         font-size: 7.5pt;
         text-transform: uppercase;
@@ -136,7 +136,7 @@
 <div class="meta-ref-bar">
     <table class="meta-table">
         <tr>
-            <td style="width: 50%; font-weight: bold; color: #0f2863;">
+            <td style="width: 50%; font-weight: bold; color: #1a3673;">
                 RÉFÉRENCE : <span style="font-family: monospace; font-size: 10pt; color: #0284c7;">{{ $trackingCode }}</span>
             </td>
             <td style="width: 50%; text-align: right; color: #475569;">
@@ -155,7 +155,7 @@
     <table class="details-table">
         <tr>
             <td class="label-col">Nom et Prénom :</td>
-            <td class="val-col" style="font-size: 10.5pt; font-weight: 800; color: #0f2863;">
+            <td class="val-col" style="font-size: 10.5pt; font-weight: 800; color: #1a3673;">
                 {{ strtoupper($professor->last_name ?? '') }} {{ ucfirst($professor->first_name ?? '') }}
             </td>
         </tr>
@@ -181,7 +181,7 @@
         </tr>
         <tr>
             <td class="label-col">Année Universitaire :</td>
-            <td class="val-col" style="font-weight: 800;">{{ $year ?? '2026/2027' }}</td>
+            <td class="val-col" style="font-weight: 800;">{{ $year ?? 'Non renseignée' }}</td>
         </tr>
     </table>
 </div>
@@ -208,7 +208,7 @@
             <td style="color: #475569;">
                 {{ $c->group->name ?? 'TC / GFC / MCM' }}
             </td>
-            <td style="text-align: center; font-weight: 800; font-family: monospace; color: #0f2863;">
+            <td style="text-align: center; font-weight: 800; font-family: monospace; color: #1a3673;">
                 {{ $c->agreed_hours ?? 0 }} Heures
             </td>
             <td style="text-align: center; font-weight: 700; color: #059669;">
@@ -225,10 +225,10 @@
     </tbody>
     <tfoot>
         <tr style="background-color: #f1f5f9; font-weight: 900;">
-            <td colspan="2" style="text-align: right; text-transform: uppercase; color: #0f2863;">
+            <td colspan="2" style="text-align: right; text-transform: uppercase; color: #1a3673;">
                 Volume Total Réalisé &amp; Certifié :
             </td>
-            <td style="text-align: center; font-family: monospace; font-size: 9.5pt; color: #0f2863;">
+            <td style="text-align: center; font-family: monospace; font-size: 9.5pt; color: #1a3673;">
                 {{ $totalHours ?? 0 }} Heures
             </td>
             <td style="text-align: center; color: #059669;">
@@ -255,7 +255,7 @@
         </td>
         <td style="width: 65%; vertical-align: top; text-align: right;">
             <div class="signature-container-box">
-                <div style="font-size: 8.5pt; font-weight: 800; color: #0f2863; text-transform: uppercase;">
+                <div style="font-size: 8.5pt; font-weight: 800; color: #1a3673; text-transform: uppercase;">
                     POUR LE DIRECTEUR DE L'ENCG FÈS
                 </div>
                 <div style="font-size: 7.5pt; font-weight: bold; color: #475569; margin-top: 2px;">

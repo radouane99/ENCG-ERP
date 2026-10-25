@@ -10,14 +10,14 @@
     }
     .exam-header-banner {
         text-align: center;
-        border-bottom: 2px solid #002e5b;
+        border-bottom: 2px solid #1a3673;
         padding-bottom: 6px;
         margin-bottom: 8px;
     }
     .exam-main-title {
         font-size: 13pt;
         font-weight: 900;
-        color: #002e5b;
+        color: #1a3673;
         text-transform: uppercase;
         letter-spacing: 0.8px;
         margin: 0;
@@ -77,7 +77,7 @@
         margin-bottom: 4px;
     }
     .section-banner {
-        background-color: #002e5b;
+        background-color: #1a3673;
         color: #ffffff;
         font-weight: 900;
         font-size: 8.5pt;
@@ -93,7 +93,7 @@
     }
     .question-num {
         font-weight: 900;
-        color: #002e5b;
+        color: #1a3673;
     }
     .question-pts {
         font-weight: bold;
@@ -168,7 +168,7 @@
             <td class="cartouche-lbl">Durée de l'épreuve :</td>
             <td class="cartouche-val"><span style="color: #b91c1c;">{{ $duration ?? '2 Heures' }}</span></td>
             <td class="cartouche-lbl">Barème Total :</td>
-            <td class="cartouche-val"><span style="color: #002e5b; font-size: 9pt;">{{ $totalPoints ?? 20 }} / 20</span> (Validation ≥ 10/20)</td>
+            <td class="cartouche-val"><span style="color: #1a3673; font-size: 9pt;">{{ $totalPoints ?? 20 }} / 20</span> (Validation ≥ 10/20)</td>
         </tr>
     </table>
 
@@ -221,7 +221,7 @@
     <!-- GRILLE D'ÉVALUATION & BARÈME -->
     @if(!empty($rubric) && is_array($rubric))
         <div style="margin-top: 12px; page-break-inside: avoid;">
-            <div style="font-weight: 900; color: #002e5b; font-size: 8pt; text-transform: uppercase; margin-bottom: 4px;">
+            <div style="font-weight: 900; color: #1a3673; font-size: 8pt; text-transform: uppercase; margin-bottom: 4px;">
                 📋 Grille d'Évaluation & Critères d'Excellence Pédagogique ENCG :
             </div>
             <table class="rubric-table" cellpadding="0" cellspacing="0">

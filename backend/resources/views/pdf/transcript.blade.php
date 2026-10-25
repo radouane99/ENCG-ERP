@@ -7,11 +7,11 @@
     body { font-family: DejaVu Sans, Arial, sans-serif; font-size: 10px; color: #1e293b; background: #fff; }
 
     /* Header — table-based for DomPDF compatibility */
-    .header-table { width: 100%; border-collapse: collapse; border-bottom: 3px solid #0f2863; padding-bottom: 14px; margin-bottom: 16px; }
+    .header-table { width: 100%; border-collapse: collapse; border-bottom: 3px solid #1a3673; padding-bottom: 14px; margin-bottom: 16px; }
     .header-table td { vertical-align: middle; }
-    .institution { font-size: 16px; font-weight: 900; color: #0f2863; letter-spacing: -0.5px; }
+    .institution { font-size: 16px; font-weight: 900; color: #1a3673; letter-spacing: -0.5px; }
     .address { font-size: 8px; color: #64748b; margin-top: 2px; }
-    .doc-label { font-size: 13px; font-weight: 900; color: #0f2863; text-transform: uppercase; letter-spacing: 1px; }
+    .doc-label { font-size: 13px; font-weight: 900; color: #1a3673; text-transform: uppercase; letter-spacing: 1px; }
     .doc-sub { font-size: 8px; color: #94a3b8; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
 
     /* Student info card — table-based */
@@ -22,13 +22,13 @@
     .info-filiere { font-size: 9px; color: #475569; margin-top: 2px; }
 
     /* Academic year badge */
-    .year-badge { background: #0f2863; color: white; border-radius: 6px; padding: 6px 12px; text-align: center; }
+    .year-badge { background: #1a3673; color: white; border-radius: 6px; padding: 6px 12px; text-align: center; }
     .year-badge .year { font-size: 13px; font-weight: 900; }
     .year-badge .year-label { font-size: 7px; text-transform: uppercase; letter-spacing: 0.5px; }
 
     /* Grades Table */
     .grades-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 9px; }
-    .grades-table th { background: #0f2863; color: white; padding: 8px 6px; text-align: center; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+    .grades-table th { background: #1a3673; color: white; padding: 8px 6px; text-align: center; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
     .grades-table th.left { text-align: left; }
     .grades-table td { padding: 7px 6px; border-bottom: 1px solid #f1f5f9; text-align: center; }
     .grades-table td.left { text-align: left; }
@@ -45,7 +45,7 @@
     .gpa-outer { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
     .gpa-card { border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 10px 20px; text-align: center; }
     .gpa-label { font-size: 7.5px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.8px; }
-    .gpa-value { font-size: 22px; font-weight: 900; color: #0f2863; }
+    .gpa-value { font-size: 22px; font-weight: 900; color: #1a3673; }
     .gpa-sub { font-size: 8px; color: #64748b; }
 
     /* Signature area — table-based */
@@ -147,7 +147,7 @@
           @endforeach
           <td style="font-weight:700">{{ $row['moyenne'] !== null ? number_format($row['moyenne'],2) : '—' }}</td>
           <td>{{ $row['rattrapage'] !== null ? number_format($row['rattrapage'],2) : '—' }}</td>
-          <td style="font-weight:900; color:#0f2863">{{ $row['moyenne_finale'] !== null ? number_format($row['moyenne_finale'],2) : '—' }}</td>
+          <td style="font-weight:900; color:#1a3673">{{ $row['moyenne_finale'] !== null ? number_format($row['moyenne_finale'],2) : '—' }}</td>
           <td>
             @php $d = $row['decision']; @endphp
             @if(str_starts_with($d,'Validé'))
@@ -209,7 +209,7 @@
         @endif
       </td>
       <td class="footer-seal" style="width:50%; vertical-align:middle; padding-left:10px;">
-        <strong style="color:#0f2863;">Document Officiel Vérifié ENCG Fès</strong><br>
+        <strong style="color:#1a3673;">Document Officiel Vérifié ENCG Fès</strong><br>
         Généré le {{ $generated_at }}<br>
         <span style="font-size:7pt; color:#64748b;">Vérification d'authenticité : {{ $verify_url }}</span>
       </td>

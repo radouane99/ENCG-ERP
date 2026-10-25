@@ -5,15 +5,15 @@
     <title>Procès-Verbal de Délibération</title>
     <style>
         body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 10px; color: #333; margin: 0; padding: 0; }
-        .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #0f2863; padding-bottom: 10px; }
+        .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #1a3673; padding-bottom: 10px; }
         .logo { max-width: 150px; margin-bottom: 10px; }
-        h1 { color: #0f2863; font-size: 16px; margin: 0 0 5px 0; text-transform: uppercase; }
+        h1 { color: #1a3673; font-size: 16px; margin: 0 0 5px 0; text-transform: uppercase; }
         h2 { font-size: 12px; margin: 0; color: #555; }
         .info-box { display: table; width: 100%; margin-bottom: 20px; font-size: 11px; }
         .info-box > div { display: table-cell; width: 33.33%; }
         table.matrix { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
         table.matrix th, table.matrix td { border: 1px solid #ccc; padding: 4px; text-align: center; }
-        table.matrix th { background-color: #f8fafc; color: #0f2863; font-weight: bold; font-size: 9px; }
+        table.matrix th { background-color: #f8fafc; color: #1a3673; font-weight: bold; font-size: 9px; }
         table.matrix td.student-name { text-align: left; font-weight: bold; }
         table.matrix td.grade { font-family: monospace; }
         .status-V { color: #16a34a; font-weight: bold; }

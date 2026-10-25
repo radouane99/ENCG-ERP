@@ -3,15 +3,15 @@
 @section('title', 'Attestation de Décharge')
 
 @section('content')
-<div style="text-align: center; font-size: 22px; font-weight: bold; color: #002e5b; letter-spacing: 2px; margin: 25px 0 35px 0; text-transform: uppercase; border-bottom: 2px solid #002e5b; padding-bottom: 12px;">
+<div style="text-align: center; font-size: 22px; font-weight: bold; color: #1a3673; letter-spacing: 2px; margin: 25px 0 35px 0; text-transform: uppercase; border-bottom: 2px solid #1a3673; padding-bottom: 12px;">
     ATTESTATION DE DÉCHARGE GLOBALE
 </div>
 
 <div style="font-size: 14px; line-height: 2.2; text-align: justify; margin-bottom: 20px; font-family: 'Helvetica', sans-serif;">
     Les services administratifs et académiques de l'École Nationale de Commerce et de Gestion de Fès certifient par la présente que :<br><br>
     
-    <div style="text-align: center; margin: 20px 0; background-color: #f8fafc; padding: 18px; border-radius: 8px; border: 1.5px solid #002e5b;">
-        <strong style="font-size: 20px; color: #002e5b;">{{ strtoupper($student->last_name ?? '') }} {{ ucfirst($student->first_name ?? '') }}</strong><br>
+    <div style="text-align: center; margin: 20px 0; background-color: #f8fafc; padding: 18px; border-radius: 8px; border: 1.5px solid #1a3673;">
+        <strong style="font-size: 20px; color: #1a3673;">{{ strtoupper($student->last_name ?? '') }} {{ ucfirst($student->first_name ?? '') }}</strong><br>
         <span style="font-size: 13px; color: #475569; display: inline-block; margin-top: 6px;">
             <strong>Matricule Apogée :</strong> {{ $student->student_number ?? 'N/A' }} &nbsp;&nbsp;|&nbsp;&nbsp; 
             <strong>CNE :</strong> {{ $student->cne ?? 'N/A' }}

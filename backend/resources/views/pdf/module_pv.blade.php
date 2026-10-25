@@ -78,7 +78,7 @@
         .state-kingdom {
             font-size: 9.5pt;
             font-weight: 900;
-            color: #001A4B;
+            color: #1a3673;
             letter-spacing: 0.8px;
             text-transform: uppercase;
         }
@@ -96,7 +96,7 @@
         .state-school {
             font-size: 8pt;
             font-weight: 900;
-            color: #001A4B;
+            color: #1a3673;
             text-transform: uppercase;
             letter-spacing: 0.2px;
             margin-top: 1px;
@@ -122,7 +122,7 @@
             border-radius: 3px;
         }
         .seal-card-header {
-            background-color: #001A4B;
+            background-color: #1a3673;
             color: #ffffff;
             font-size: 6pt;
             font-weight: 900;
@@ -159,13 +159,13 @@
         .sovereign-ribbon {
             width: 100%;
             height: 2px;
-            border-top: 1.5px solid #001A4B;
+            border-top: 1.5px solid #1a3673;
             border-bottom: 1px solid #d97706;
             margin-bottom: 3px;
             clear: both;
         }
         .pv-hero-banner {
-            background-color: #001A4B;
+            background-color: #1a3673;
             border-radius: 3px;
             padding: 4px 8px;
             margin-bottom: 3px;
@@ -196,7 +196,7 @@
         }
         .hero-session-pill {
             background-color: #f59e0b;
-            color: #001A4B;
+            color: #1a3673;
             font-weight: 900;
             font-size: 7.5pt;
             padding: 2.5px 8px;
@@ -236,7 +236,7 @@
         .meta-gov-val {
             font-size: 7.8pt;
             font-weight: 800;
-            color: #001A4B;
+            color: #1a3673;
         }
         .meta-gov-badge {
             display: inline-block;
@@ -265,7 +265,7 @@
         }
         .pv-table th {
             background-color: #f1f5f9;
-            color: #0f2863;
+            color: #1a3673;
             font-weight: bold;
             text-transform: uppercase;
             font-size: {{ $thFont }};
@@ -287,7 +287,7 @@
         .moyenne-col {
             font-weight: bold;
             font-size: {{ $tbFont }};
-            color: #0f2863;
+            color: #1a3673;
             background-color: #f1f5f9;
         }
         .badge {
@@ -318,7 +318,7 @@
         .sig-title {
             font-size: 7.8pt;
             font-weight: bold;
-            color: #0f2863;
+            color: #1a3673;
             text-transform: uppercase;
             margin-bottom: 3px;
         }
@@ -329,7 +329,7 @@
             width: 100%;
             border-collapse: collapse;
             margin-top: 4px;
-            border-top: 1.5px solid #0f2863;
+            border-top: 1.5px solid #1a3673;
             padding-top: 3px;
         }
         .footer-banner {
@@ -389,7 +389,7 @@
                     <tr>
                         <td class="seal-card-body">
                             <div class="seal-info-text">
-                                <div><strong style="color: #64748b;">RÉF :</strong> <span style="font-family: monospace; font-weight: bold; color: #001A4B;">PV-{{ $module->code }}-{{ date('Y') }}</span></div>
+                                <div><strong style="color: #64748b;">RÉF :</strong> <span style="font-family: monospace; font-weight: bold; color: #1a3673;">PV-{{ $module->code }}-{{ date('Y') }}</span></div>
                                 <div><strong style="color: #64748b;">STATUT :</strong> <span style="color: #059669; font-weight: bold;">CERTIFIÉ SCELLÉ</span></div>
                                 <div><strong style="color: #64748b;">ÉDITÉ LE :</strong> <strong>{{ $date ?? date('d/m/Y H:i') }}</strong></div>
                             </div>
@@ -434,7 +434,7 @@
         <tr>
             <td class="meta-gov-col" style="width: 20%;">
                 <span class="meta-gov-lbl">Année Universitaire</span>
-                <span class="meta-gov-val">{{ $academicYear ?? '2026/2027' }}</span>
+                <span class="meta-gov-val">{{ $academicYear ?? 'Non renseignée' }}</span>
             </td>
             <td class="meta-gov-col" style="width: 32%;">
                 <span class="meta-gov-lbl">Filière d'Études</span>
@@ -606,7 +606,7 @@
                     @endif
                 </td>
                 <td style="vertical-align: middle; padding-left: 6px; font-size: 6.8pt; color: #334155; line-height: 1.2;">
-                    <strong style="color: #0f2863; font-size: 7.5pt; text-transform: uppercase;">Document Numérique Officiel Sécurisé — ENCG Fès</strong><br>
+                    <strong style="color: #1a3673; font-size: 7.5pt; text-transform: uppercase;">Document Numérique Officiel Sécurisé — ENCG Fès</strong><br>
                     Généré automatiquement par le système ERP d'Évaluation &amp; Délibération Académique.<br>
                     <span style="color: #059669; font-weight: bold;">Contrôle d'Intégrité :</span> Scannez le code QR ou visitez <span style="font-family: monospace; font-weight: bold;">{{ $verifyUrl ?? url('/') }}</span> pour vérifier l'authenticité de ce PV.
                     @if(!empty($signature['digital_seal']))
@@ -615,7 +615,7 @@
                 </td>
                 <td style="width: 28%; text-align: right; vertical-align: middle; font-size: 6.8pt; color: #64748b; font-weight: bold;">
                     CERTIFICATION NUMÉRIQUE<br>
-                    <span style="color: #0f2863; font-size: 7.8pt; font-family: monospace;">ENCG-PV-{{ $module->code }}-2026</span>
+                    <span style="color: #1a3673; font-size: 7.8pt; font-family: monospace;">ENCG-PV-{{ $module->code }}-2026</span>
                 </td>
             </tr>
         </table>

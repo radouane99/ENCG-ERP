@@ -9,11 +9,13 @@ use Illuminate\Support\Str;
 
 class PdfDocumentRegistry
 {
-    public function reserve(string $fingerprint, ?int $institutionId, ?string $view, string $label): PdfDocumentRecord
+    public function reserve(string $fingerprint, ?int $institutionId, ?string $view, string $label, ?int $actorId = null): PdfDocumentRecord
     {
-        return DB::transaction(function () use ($fingerprint, $institutionId, $view, $label) {
+        return DB::transaction(function () use ($fingerprint, $institutionId, $view, $label, $actorId) {
+            $actorId ??= auth()->id();
+            if ($actorId && ! \App\Models\User::whereKey($actorId)->where('institution_id', $institutionId)->exists()) { $actorId = null; }
             $record = PdfDocumentRecord::firstOrCreate(['content_fingerprint' => $fingerprint], [
-                'institution_id' => $institutionId, 'created_by' => auth()->id(),
+                'institution_id' => $institutionId, 'created_by' => $actorId,
                 'verification_token' => 'DOC-'.Str::random(48), 'source_view' => $view,
                 'document_label' => mb_substr($label ?: 'Document ENCG', 0, 200),
             ]);
@@ -35,7 +37,7 @@ class PdfDocumentRegistry
                 if (! hash_equals($record->file_sha256, hash('sha256', $stored))) { throw new \RuntimeException('Archive PDF incohérente : restauration requise.'); }
                 return $stored;
             }
-            $path = 'pdf-registry/'.$record->digital_identifier.'.pdf';
+            $path = 'pdf-registry/'.hash('sha256', DB::connection()->getDatabaseName()).'/'.$record->verification_token.'.pdf';
             if (! Storage::disk('private')->put($path, $bytes)) { throw new \RuntimeException('Archivage PDF impossible.'); }
             $record->update(['status' => 'issued', 'file_path' => $path, 'file_sha256' => hash('sha256', $bytes), 'file_bytes' => strlen($bytes), 'page_count' => $pages, 'issued_at' => now()]);
             return $bytes;

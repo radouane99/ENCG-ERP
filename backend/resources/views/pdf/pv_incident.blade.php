@@ -82,7 +82,7 @@
     </tr>
 </table>
 
-<div style="font-weight: bold; font-size: 12px; color: #0f2863; margin-bottom: 8px;">
+<div style="font-weight: bold; font-size: 12px; color: #1a3673; margin-bottom: 8px;">
     DESCRIPTION DÉTAILLÉE DU PROCÈS-VERBAL :
 </div>
 <div class="statement-box">

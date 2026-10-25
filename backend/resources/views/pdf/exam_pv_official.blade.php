@@ -18,7 +18,7 @@
         }
         .header-table {
             width: 100%;
-            border-bottom: 2px solid #0f2863;
+            border-bottom: 2px solid #1a3673;
             padding-bottom: 10px;
             margin-bottom: 15px;
         }
@@ -26,7 +26,7 @@
             text-align: center;
             font-size: 18px;
             font-weight: bold;
-            color: #0f2863;
+            color: #1a3673;
             text-transform: uppercase;
             letter-spacing: 1px;
             margin-bottom: 4px;
@@ -59,7 +59,7 @@
         .val {
             font-size: 12px;
             font-weight: bold;
-            color: #0f2863;
+            color: #1a3673;
         }
         .stats-table {
             width: 100%;
@@ -74,7 +74,7 @@
         .stat-num {
             font-size: 20px;
             font-weight: bold;
-            color: #0f2863;
+            color: #1a3673;
         }
         .signature-box {
             margin-top: 30px;
@@ -85,7 +85,7 @@
         }
         .sig-title {
             font-weight: bold;
-            color: #0f2863;
+            color: #1a3673;
             font-size: 12px;
             margin-bottom: 10px;
             text-transform: uppercase;
@@ -115,7 +115,7 @@
                 <img src="{{ public_path('logo-encg.png') }}" style="max-height: 55px;" alt="ENCG Fès">
             </td>
             <td style="width: 80%; text-align: center;">
-                <div style="font-size: 14px; font-weight: bold; color: #0f2863;">ROYAUME DU MAROC</div>
+                <div style="font-size: 14px; font-weight: bold; color: #1a3673;">ROYAUME DU MAROC</div>
                 <div style="font-size: 12px; color: #475569;">Université Sidi Mohamed Ben Abdellah — ENCG Fès</div>
                 <div style="font-size: 10px; color: #64748b;">Service des Examens & de la Scolarité</div>
             </td>

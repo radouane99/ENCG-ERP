@@ -15,7 +15,7 @@
     .roster-title {
         font-size: 13pt;
         font-weight: 900;
-        color: #002e5b;
+        color: #1a3673;
         text-transform: uppercase;
         letter-spacing: 0.5px;
         margin: 0;
@@ -51,19 +51,19 @@
     table.roster-table {
         width: 100%;
         border-collapse: collapse;
-        border: 1.5px solid #002e5b;
+        border: 1.5px solid #1a3673;
         page-break-inside: auto;
     }
     table.roster-table thead {
         display: table-header-group;
     }
     table.roster-table th {
-        background-color: #002e5b;
+        background-color: #1a3673;
         color: #ffffff;
         font-size: 8pt;
         font-weight: bold;
         padding: 5px 4px;
-        border: 0.8px solid #002e5b;
+        border: 0.8px solid #1a3673;
         text-align: center;
     }
     table.roster-table tr {
@@ -101,7 +101,7 @@
         opacity: 0.038;
         font-size: 32pt;
         font-weight: 900;
-        color: #002e5b;
+        color: #1a3673;
         transform: rotate(-25deg);
         z-index: -1000;
         text-transform: uppercase;
@@ -152,7 +152,7 @@
                 @if(!empty($subGroup))
                     <span style="color: #059669; font-weight: 900;">Travaux Dirigés (TD) • Sous-Groupe {{ $subGroup }}</span>
                 @else
-                    <span style="color: #002e5b; font-weight: 900;">Cours Magistral (CM) • Section {{ $groupName ?? 'Section 1' }}</span>
+                    <span style="color: #1a3673; font-weight: 900;">Cours Magistral (CM) • Section {{ $groupName ?? 'Section 1' }}</span>
                 @endif
             </td>
         </tr>
@@ -161,7 +161,7 @@
             <td class="cartouche-value">{{ $groupName ?? 'Section 1' }}</td>
             <td class="cartouche-label">Effectif Total Inscrits :</td>
             <td class="cartouche-value">
-                <strong style="color: #002e5b; font-size: 8.5pt;">{{ count($students ?? []) }} Étudiants</strong>
+                <strong style="color: #1a3673; font-size: 8.5pt;">{{ count($students ?? []) }} Étudiants</strong>
                 @if(!empty($subGroup))
                     <span style="font-size: 7pt; color: #059669;">(Sous-groupe équilibré)</span>
                 @else
@@ -211,7 +211,7 @@
             @forelse($students as $index => $st)
                 <tr style="background-color: {{ $index % 2 === 0 ? '#ffffff' : '#f8fafc' }};">
                     <td style="text-align: center; font-weight: bold; color: #64748b;">{{ $index + 1 }}</td>
-                    <td style="text-align: center; font-family: monospace; font-weight: bold; color: #002e5b;">
+                    <td style="text-align: center; font-family: monospace; font-weight: bold; color: #1a3673;">
                         {{ $st['student_number'] ?? '—' }}
                     </td>
                     <td style="text-align: center; font-family: monospace; font-weight: bold; color: #334155;">
@@ -270,7 +270,7 @@
         <table width="100%" cellpadding="0" cellspacing="0">
             <tr>
                 <td class="sig-column" style="margin-right: 4%;">
-                    <div style="font-weight: bold; color: #002e5b; margin-bottom: 4px;">Visa & Signature de l'Enseignant :</div>
+                    <div style="font-weight: bold; color: #1a3673; margin-bottom: 4px;">Visa & Signature de l'Enseignant :</div>
                     <div style="font-size: 7pt; color: #64748b; margin-bottom: 35px;">
                         Fait à Fès, le {{ date('d/m/Y') }}<br>
                         Prof. {{ $professorName ?? '' }}
@@ -281,7 +281,7 @@
                 </td>
                 <td width="4%"></td>
                 <td class="sig-column">
-                    <div style="font-weight: bold; color: #002e5b; margin-bottom: 4px;">Visa & Cachet de l'Administration :</div>
+                    <div style="font-weight: bold; color: #1a3673; margin-bottom: 4px;">Visa & Cachet de l'Administration :</div>
                     <div style="font-size: 7pt; color: #64748b; margin-bottom: 35px;">
                         Direction des Études & Scolarité ENCG Fès<br>
                         Document officiel extrait du Système d'Information Intégré
@@ -299,7 +299,7 @@
         <table width="100%" cellpadding="0" cellspacing="0">
             <tr>
                 <td style="text-align: left; font-size: 6.5pt;">
-                    <strong>Authentification & Intégrité :</strong> Réf #{{ $trackingCode ?? ('EMG-'.date('Y').'-'.str_pad($group->id ?? 1, 4, '0', STR_PAD_LEFT)) }} • Empreinte SHA-256 : <span style="font-family: monospace; color: #002e5b; font-weight: bold;">{{ substr($securityHash ?? hash('sha256', date('YmdHis')), 0, 32) }}…</span>
+                    <strong>Authentification & Intégrité :</strong> Réf #{{ $trackingCode ?? ('EMG-'.date('Y').'-'.str_pad($group->id ?? 1, 4, '0', STR_PAD_LEFT)) }} • Empreinte SHA-256 : <span style="font-family: monospace; color: #1a3673; font-weight: bold;">{{ substr($securityHash ?? hash('sha256', date('YmdHis')), 0, 32) }}…</span>
                 </td>
                 <td style="text-align: right; font-size: 6.5pt;">
                     Extrait officiel du {{ date('d/m/Y à H:i') }} • Portail ERP Intégré ENCG Fès

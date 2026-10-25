@@ -21,7 +21,7 @@
 
     /* Modern Institutional Banner */
     .convention-banner {
-        background-color: #002e5b;
+        background-color: #1a3673;
         color: #ffffff;
         text-align: center;
         padding: 5px 8px;
@@ -76,8 +76,8 @@
     .party-header {
         font-weight: bold;
         font-size: 7.2pt;
-        color: #002e5b;
-        border-bottom: 1.5px solid #002e5b;
+        color: #1a3673;
+        border-bottom: 1.5px solid #1a3673;
         padding-bottom: 1px;
         margin-bottom: 3px;
         text-transform: uppercase;
@@ -94,7 +94,7 @@
     .articles-header {
         font-size: 7pt;
         font-weight: bold;
-        color: #002e5b;
+        color: #1a3673;
         text-transform: uppercase;
         border-bottom: 1px solid #e2e8f0;
         padding-bottom: 1px;
@@ -109,7 +109,7 @@
     }
     .article-tag {
         font-weight: bold;
-        color: #002e5b;
+        color: #1a3673;
         text-transform: uppercase;
         font-size: 6.4pt;
     }
@@ -133,7 +133,7 @@
     .sig-title {
         font-size: 7pt;
         font-weight: bold;
-        color: #002e5b;
+        color: #1a3673;
         text-transform: uppercase;
         margin-bottom: 1px;
     }
@@ -153,7 +153,7 @@
         position: relative;
     }
     .box-encg {
-        border: 1.5px dashed #002e5b;
+        border: 1.5px dashed #1a3673;
         background-color: #f8fafc;
     }
     .box-company {
@@ -167,13 +167,13 @@
 
     .official-seal-circle {
         display: inline-block;
-        border: 1.2px solid #002e5b;
+        border: 1.2px solid #1a3673;
         border-radius: 50%;
         width: 70px;
         padding: 2px 0;
         font-size: 4.8pt;
         font-weight: bold;
-        color: #002e5b;
+        color: #1a3673;
         text-align: center;
         line-height: 1.15;
         background-color: #ffffff;
@@ -248,13 +248,13 @@
         <tr>
             <td style="width: 38%;">
                 <strong>Réf. Convention :</strong> 
-                <span style="font-family: monospace; font-weight: bold; color: #002e5b;">
+                <span style="font-family: monospace; font-weight: bold; color: #1a3673;">
                     {{ $conventionRef ?? ('CONV-ENCG-' . date('Y') . '-' . str_pad($internship->id ?? 1, 4, '0', STR_PAD_LEFT)) }}
                 </span>
             </td>
             <td style="width: 37%; text-align: center;">
                 <strong>Type de Stage :</strong> 
-                <span style="color: #002e5b; font-weight: bold; text-transform: uppercase;">
+                <span style="color: #1a3673; font-weight: bold; text-transform: uppercase;">
                     {{ match($internship->type ?? '') {
                         'initiation' => 'Stage d\'Initiation (1ère/2ème Année)',
                         'application' => 'Stage d\'Application (3ème/4ème Année)',
@@ -298,7 +298,7 @@
             <td class="party-box">
                 <div class="party-header">3. Le Stagiaire</div>
                 Étudiant(e) : <strong>{{ strtoupper($student->first_name ?? '') }} {{ strtoupper($student->last_name ?? '') }}</strong><br>
-                CNE/Massar : <span style="font-family: monospace; font-weight: bold; color: #002e5b;">{{ $student->cne ?? 'Non renseigné' }}</span> &nbsp;|&nbsp; CIN : <span style="font-family: monospace;">{{ $student->cin ?? 'Non renseignée' }}</span><br>
+                CNE/Massar : <span style="font-family: monospace; font-weight: bold; color: #1a3673;">{{ $student->cne ?? 'Non renseigné' }}</span> &nbsp;|&nbsp; CIN : <span style="font-family: monospace;">{{ $student->cin ?? 'Non renseignée' }}</span><br>
                 Filière : {{ $student->filiere->name ?? 'Non renseignée' }}<br>
                 Assurance : <strong>{{ $internship->insurance_company ?? 'Non renseignée' }}</strong><br>
                 Police N° : <span style="font-family: monospace;">{{ $internship->insurance_policy_number ?? 'Non renseignée' }}</span>
@@ -393,7 +393,7 @@
                         <tr>
                             <td style="text-align: center; vertical-align: top; padding-top: 4px; height: 22px;">
                                 <div class="student-sign-notice">Mention manuscrite obligatoire :</div>
-                                <div style="font-weight: bold; color: #002e5b; font-size: 6.8pt; margin-top: 1px;">« Lu et approuvé »</div>
+                                <div style="font-weight: bold; color: #1a3673; font-size: 6.8pt; margin-top: 1px;">« Lu et approuvé »</div>
                             </td>
                         </tr>
                         <tr>
@@ -429,7 +429,7 @@
                     @endif
                 </td>
                 <td style="vertical-align: middle; padding-left: 6px;">
-                    <strong style="color: #002e5b; font-size: 6.4pt; text-transform: uppercase;">
+                    <strong style="color: #1a3673; font-size: 6.4pt; text-transform: uppercase;">
                         Convention de stage — Dossier ENCG Fès
                     </strong><br>
                     <span style="color: #64748b; line-height: 1.15;">
@@ -438,9 +438,9 @@
                     </span>
                 </td>
                 <td style="width: 140px; text-align: right; vertical-align: middle;">
-                    <div style="font-size: 6pt; font-weight: bold; color: #002e5b;">Université Sidi Mohamed Ben Abdellah</div>
+                    <div style="font-size: 6pt; font-weight: bold; color: #1a3673;">Université Sidi Mohamed Ben Abdellah</div>
                     <div style="font-size: 5.6pt; color: #64748b;">École Nationale de Commerce et de Gestion</div>
-                    <div style="font-size: 6.2pt; font-weight: bold; color: #002e5b; margin-top: 1px;">PAGE 1 / 1</div>
+                    <div style="font-size: 6.2pt; font-weight: bold; color: #1a3673; margin-top: 1px;">PAGE 1 / 1</div>
                 </td>
             </tr>
         </table>

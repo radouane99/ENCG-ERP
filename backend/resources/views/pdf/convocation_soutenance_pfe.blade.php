@@ -21,7 +21,7 @@
             background: #ffffff;
         }
         .page-container {
-            border: 1.8px solid #002147;
+            border: 1.8px solid #1a3673;
             padding: 5px 8px 4px 8px;
             background: #ffffff;
             position: relative;
@@ -37,7 +37,7 @@
             opacity: 0.03;
             font-size: 34pt;
             font-weight: 900;
-            color: #002147;
+            color: #1a3673;
             text-transform: uppercase;
             letter-spacing: 3px;
             text-align: center;
@@ -66,7 +66,7 @@
         .hdr-kingdom {
             font-size: 6.8pt;
             font-weight: bold;
-            color: #002147;
+            color: #1a3673;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             line-height: 1.1;
@@ -74,7 +74,7 @@
         .hdr-ar-kingdom {
             font-size: 7.8pt;
             font-weight: bold;
-            color: #002147;
+            color: #1a3673;
             line-height: 1.15;
         }
         .hdr-univ {
@@ -91,7 +91,7 @@
         .hdr-school {
             font-size: 6.8pt;
             font-weight: bold;
-            color: #002147;
+            color: #1a3673;
             text-transform: uppercase;
             letter-spacing: 0.2px;
             line-height: 1.1;
@@ -99,7 +99,7 @@
         .hdr-ar-school {
             font-size: 6.8pt;
             font-weight: bold;
-            color: #002147;
+            color: #1a3673;
             line-height: 1.15;
         }
         .hdr-dept {
@@ -127,7 +127,7 @@
             color: #334155;
         }
         .ref-hdr {
-            background-color: #002147;
+            background-color: #1a3673;
             color: #ffffff !important;
             font-weight: bold;
             font-size: 5.2pt;
@@ -139,12 +139,12 @@
             font-family: 'DejaVu Sans Mono', monospace, sans-serif;
             font-size: 5.8pt;
             font-weight: bold;
-            color: #002147;
+            color: #1a3673;
             border-bottom: 1px solid #f1e5c3;
         }
         .ref-badge {
             display: inline-block;
-            background-color: #002147;
+            background-color: #1a3673;
             color: #ffffff;
             font-size: 5.0pt;
             font-weight: bold;
@@ -157,7 +157,7 @@
         /* Séparateur Royal Double Ligne */
         .royal-divider {
             margin: 1.5px 0 2.5px 0;
-            border-top: 1.2px solid #002147;
+            border-top: 1.2px solid #1a3673;
             border-bottom: 0.8px solid #c9a227;
             height: 1.5px;
         }
@@ -169,7 +169,7 @@
             margin-bottom: 2px;
         }
         .title-cell {
-            background-color: #002147;
+            background-color: #1a3673;
             border-top: 1px solid #c9a227;
             color: #ffffff;
             text-align: center;
@@ -208,7 +208,7 @@
             color: #334155;
             background: #f8fafc;
             border: 0.8px solid #cbd5e1;
-            border-left: 2.5px solid #002147;
+            border-left: 2.5px solid #1a3673;
             padding: 2.5px 5px;
             margin-bottom: 2px;
             text-align: justify;
@@ -238,7 +238,7 @@
         .tile-value {
             font-size: 6.8pt;
             font-weight: 900;
-            color: #002147;
+            color: #1a3673;
             line-height: 1.1;
         }
         .tile-sub {
@@ -272,7 +272,7 @@
         .topic-text {
             font-size: 6.6pt;
             font-weight: bold;
-            color: #002147;
+            color: #1a3673;
             font-style: italic;
             line-height: 1.15;
         }
@@ -301,7 +301,7 @@
         .log-val {
             font-size: 7.2pt;
             font-weight: 900;
-            color: #002147;
+            color: #1a3673;
             line-height: 1.1;
         }
         .log-sub {
@@ -312,7 +312,7 @@
 
         /* Jury Section */
         .jury-header {
-            background-color: #002147;
+            background-color: #1a3673;
             color: #ffffff;
             font-size: 5.5pt;
             font-weight: 900;
@@ -326,12 +326,12 @@
             width: 100%;
             border-collapse: collapse;
             table-layout: fixed;
-            border: 0.8px solid #002147;
+            border: 0.8px solid #1a3673;
             margin-bottom: 2px;
         }
         .jury-table th {
             background-color: #f1f5f9;
-            color: #002147;
+            color: #1a3673;
             font-size: 4.8pt;
             font-weight: 800;
             padding: 2px 3px;
@@ -390,7 +390,7 @@
         .charte-title {
             font-size: 4.8pt;
             font-weight: 900;
-            color: #002147;
+            color: #1a3673;
             text-transform: uppercase;
             margin-bottom: 0.5px;
         }
@@ -465,7 +465,7 @@
                     @if(!empty($logoBase64))
                         <img src="{{ $logoBase64 }}" style="max-height: 48px; max-width: 135px; width: auto; display: block;" alt="Logo ENCG Fès">
                     @else
-                        <strong style="color: #002147; font-size: 10pt; letter-spacing: 0.5px;">ENCG FÈS</strong><br>
+                        <strong style="color: #1a3673; font-size: 10pt; letter-spacing: 0.5px;">ENCG FÈS</strong><br>
                         <span style="font-size: 5.5pt; color: #64748b;">Université USMBA</span>
                     @endif
                 </td>
@@ -488,7 +488,7 @@
                         </tr>
                         <tr>
                             <td><strong>SESSION :</strong> Juin 2026</td>
-                            <td style="text-align: right;"><strong>ANNÉE :</strong> {{ $academicYear ?? '2025/2026' }}</td>
+                            <td style="text-align: right;"><strong>ANNÉE :</strong> {{ $academicYear ?? 'Non renseignée' }}</td>
                         </tr>
                         <tr>
                             <td colspan="2" style="text-align: center; padding: 0.5px;">
@@ -528,7 +528,7 @@
                     <div class="tile-label">Étudiant(e) Candidat(e)</div>
                     <div class="tile-value">{{ strtoupper($studentName) }}</div>
                     @if(!empty($studentNameAr))
-                        <div style="font-size: 6.6pt; font-weight: bold; color: #002147; margin-top: 0.5px;">{!! $studentNameAr !!}</div>
+                        <div style="font-size: 6.6pt; font-weight: bold; color: #1a3673; margin-top: 0.5px;">{!! $studentNameAr !!}</div>
                     @endif
                 </td>
                 <td class="dossier-cell" style="width: 34%;">
@@ -538,8 +538,8 @@
                 </td>
                 <td class="dossier-cell" style="width: 28%;">
                     <div class="tile-label">Identifiants Académiques</div>
-                    <div class="tile-mono">CNE: {{ $cne ?? 'N138094101' }}</div>
-                    <div class="tile-mono">CIN: {{ $cin ?? 'CD654321' }}</div>
+                    <div class="tile-mono">CNE: {{ $cne ?? 'Non renseigné' }}</div>
+                    <div class="tile-mono">CIN: {{ $cin ?? 'Non renseigné' }}</div>
                 </td>
             </tr>
         </table>
@@ -627,7 +627,7 @@
                             </td>
                             @endif
                             <td style="vertical-align: middle; border: none;">
-                                <strong style="color: #002147; font-size: 5.2pt;">CONTRÔLE D'AUTHENTICITÉ NUMÉRIQUE</strong><br>
+                                <strong style="color: #1a3673; font-size: 5.2pt;">CONTRÔLE D'AUTHENTICITÉ NUMÉRIQUE</strong><br>
                                 <span style="font-size: 4.5pt; color: #475569;">Système d'Information Scolarité &bull; ENCG Fès</span><br>
                                 <span style="font-size: 4.3pt; color: #64748b;">Empreinte SHA-256 : <span style="font-family: monospace;">{{ hash('sha256', ($soutenanceId ?? '1').($studentName ?? '').'ENCG-PFE') }}</span></span><br>
                                 <span style="font-size: 4.3pt; color: #047857; font-weight: bold;">Document officiel certifié conforme dématérialisé.</span>
@@ -637,7 +637,7 @@
                 </td>
                 <td class="auth-right">
                     <div style="font-style: italic; color: #334155; font-size: 5.2pt; margin-bottom: 0.5px;">Fait à Fès, le {{ date('d/m/Y') }}</div>
-                    <div style="font-weight: 900; color: #002147; font-size: 5.6pt; text-transform: uppercase;">Pour le Directeur de l'ENCG de Fès et par délégation,</div>
+                    <div style="font-weight: 900; color: #1a3673; font-size: 5.6pt; text-transform: uppercase;">Pour le Directeur de l'ENCG de Fès et par délégation,</div>
                     <div style="font-size: 4.8pt; color: #64748b; margin-bottom: 1px;">Le Directeur Adjoint aux Affaires Pédagogiques</div>
                     
                     <div class="seal-circle">

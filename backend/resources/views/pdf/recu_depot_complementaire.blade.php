@@ -25,7 +25,7 @@
         .page-frame {
             width: 100%;
             height: 284mm;
-            border: 2px solid #0f2863;
+            border: 2px solid #1a3673;
             border-collapse: collapse;
         }
 
@@ -89,13 +89,13 @@
             text-align: right;
             font-size: 6.5pt;
             font-weight: bold;
-            color: #0f2863;
+            color: #1a3673;
             line-height: 1.25;
         }
 
         /* ── Title Box ── */
         .title-box {
-            background-color: #0f2863;
+            background-color: #1a3673;
             color: #ffffff;
             text-align: center;
             padding: 3px 6px;
@@ -143,7 +143,7 @@
         }
         .meta-val {
             font-weight: 900;
-            color: #0f2863;
+            color: #1a3673;
             font-size: 7.5pt;
         }
         .meta-rec {
@@ -186,7 +186,7 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
-        .card-header.blue-hdr { background-color: #0f2863; color: #ffffff; }
+        .card-header.blue-hdr { background-color: #1a3673; color: #ffffff; }
         .card-header.green-hdr { background-color: #065f46; color: #ffffff; }
 
         .card-body {
@@ -209,7 +209,7 @@
         }
         .kv-value {
             font-weight: 900;
-            color: #0f2863;
+            color: #1a3673;
             text-align: right;
         }
         .kv-value.cne-val { color: #059669; font-family: monospace; font-size: 7.5pt; }
@@ -330,8 +330,8 @@
     $logoB64  = $logoBase64 ?? '';
     $qrB64    = $qrBase64 ?? '';
     $sName    = strtoupper($studentName ?? 'ABEN HSSAIN SIHAM');
-    $sCne     = $cne ?? 'M145092428';
-    $sCin     = $cin ?? 'UB121643';
+    $sCne     = $cne ?? 'Non renseigné';
+    $sCin     = $cin ?? 'Non renseigné';
     $sFiliere = strtoupper($filiereName ?? 'DEUX ANNÉES PRÉPARATOIRES (TRONC COMMUN)');
     $docLbl   = $documentLabel ?? 'Extrait d\'Acte de Naissance Récent';
     $confNote = $conformiteNote ?? 'Original conforme — validité vérifiée';
@@ -472,13 +472,13 @@
                 </tr>
                 <tr>
                     <td style="vertical-align: top; padding-right: 4px;">
-                        <strong style="font-size: 7.5pt; color: #0f2863; display: block; text-align: center; height: 12pt;">Signature &amp; Empreinte de l'Étudiant(e)</strong>
+                        <strong style="font-size: 7.5pt; color: #1a3673; display: block; text-align: center; height: 12pt;">Signature &amp; Empreinte de l'Étudiant(e)</strong>
                         <div class="sig-box">
                             <div class="sig-label">Lu et approuvé — Signature manuscrite obligatoire</div>
                         </div>
                     </td>
                     <td style="vertical-align: top; padding-left: 4px;">
-                        <strong style="font-size: 7.5pt; color: #0f2863; display: block; text-align: center; height: 12pt;">Cachet &amp; Signature Agent Scolarité</strong>
+                        <strong style="font-size: 7.5pt; color: #1a3673; display: block; text-align: center; height: 12pt;">Cachet &amp; Signature Agent Scolarité</strong>
                         <div class="sig-box">
                             <div class="sig-label">Cachet officiel du Service de Scolarité — ENCG Fès</div>
                         </div>
@@ -598,7 +598,7 @@
                                         <img src="{{ $qrB64 }}" style="width:36px; height:36px; display:inline-block;">
                                     </td>
                                     <td width="65%" style="text-align: left; vertical-align: middle; font-size: 6pt; color: #475569;">
-                                        <strong style="color: #0f2863; font-size: 6.5pt;">Vérification Anti-Fraude</strong><br>
+                                        <strong style="color: #1a3673; font-size: 6.5pt;">Vérification Anti-Fraude</strong><br>
                                         Généré par l'ERP ENCG Fès<br>
                                         Réf: {{ $recNum }}-{{ date('YmdHi') }}
                                     </td>
@@ -638,7 +638,7 @@
                         </div>
 
                         <div class="archive-box">
-                            <strong style="color: #0f2863;">Usage interne :</strong> Ce volet doit être obligatoirement classé dans le dossier physique de l'étudiant aux archives du Service de Scolarité de l'ENCG Fès.
+                            <strong style="color: #1a3673;">Usage interne :</strong> Ce volet doit être obligatoirement classé dans le dossier physique de l'étudiant aux archives du Service de Scolarité de l'ENCG Fès.
                         </div>
                     </td>
                 </tr>
@@ -656,13 +656,13 @@
                 </tr>
                 <tr>
                     <td style="vertical-align: top; padding-right: 4px;">
-                        <strong style="font-size: 7.5pt; color: #0f2863; display: block; text-align: center; height: 12pt;">Signature de l'Étudiant(e) (Reconnaissance)</strong>
+                        <strong style="font-size: 7.5pt; color: #1a3673; display: block; text-align: center; height: 12pt;">Signature de l'Étudiant(e) (Reconnaissance)</strong>
                         <div class="sig-box">
                             <div class="sig-label">Lu et approuvé — Signature manuscrite obligatoire</div>
                         </div>
                     </td>
                     <td style="vertical-align: top; padding-left: 4px;">
-                        <strong style="font-size: 7.5pt; color: #0f2863; display: block; text-align: center; height: 12pt;">Cachet &amp; Signature Agent Scolarité (Archivage)</strong>
+                        <strong style="font-size: 7.5pt; color: #1a3673; display: block; text-align: center; height: 12pt;">Cachet &amp; Signature Agent Scolarité (Archivage)</strong>
                         <div class="sig-box">
                             <div class="sig-label">Pour le Directeur — Chef du Service de Scolarité — ENCG Fès</div>
                         </div>

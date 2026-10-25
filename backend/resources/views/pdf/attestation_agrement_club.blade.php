@@ -21,7 +21,7 @@
 
     /* Modern Institutional Banner */
     .agrement-banner {
-        background-color: #002e5b;
+        background-color: #1a3673;
         color: #ffffff;
         text-align: center;
         padding: 5px 8px;
@@ -64,7 +64,7 @@
         margin-bottom: 4px;
         padding: 3px 6px;
         background-color: #fcfcfd;
-        border-left: 2.5px solid #002e5b;
+        border-left: 2.5px solid #1a3673;
         font-style: italic;
     }
 
@@ -79,7 +79,7 @@
     }
     .id-card-table th {
         background-color: #f1f5f9;
-        color: #002e5b;
+        color: #1a3673;
         text-align: left;
         padding: 3px 6px;
         font-weight: bold;
@@ -117,7 +117,7 @@
     .articles-header {
         font-size: 7pt;
         font-weight: bold;
-        color: #002e5b;
+        color: #1a3673;
         text-transform: uppercase;
         border-bottom: 1px solid #e2e8f0;
         padding-bottom: 1px;
@@ -132,7 +132,7 @@
     }
     .article-tag {
         font-weight: bold;
-        color: #002e5b;
+        color: #1a3673;
         text-transform: uppercase;
         font-size: 6.3pt;
     }
@@ -156,7 +156,7 @@
     .sig-title {
         font-size: 7pt;
         font-weight: bold;
-        color: #002e5b;
+        color: #1a3673;
         text-transform: uppercase;
         margin-bottom: 1px;
     }
@@ -184,19 +184,19 @@
         background-color: #f0fdf4;
     }
     .box-director {
-        border: 1.5px dashed #002e5b;
+        border: 1.5px dashed #1a3673;
         background-color: #f8fafc;
     }
 
     .official-seal-circle {
         display: inline-block;
-        border: 1.2px solid #002e5b;
+        border: 1.2px solid #1a3673;
         border-radius: 50%;
         width: 70px;
         padding: 2px 0;
         font-size: 4.8pt;
         font-weight: bold;
-        color: #002e5b;
+        color: #1a3673;
         text-align: center;
         line-height: 1.15;
         background-color: #ffffff;
@@ -262,7 +262,7 @@
     <div class="agrement-banner">
         <div class="agrement-title">ATTESTATION OFFICIELLE D'AGRÉMENT DU CLUB</div>
         <div class="agrement-subtitle">
-            Vie Associative, Citoyenneté &amp; Rayonnement Parascolaire • Année Universitaire {{ $academicYear ?? '2026-2027' }}
+            Vie Associative, Citoyenneté &amp; Rayonnement Parascolaire • Année Universitaire {{ $academicYear ?? 'Non renseignée' }}
         </div>
     </div>
 
@@ -271,7 +271,7 @@
         <tr>
             <td style="width: 38%;">
                 <strong>Réf. Agrément :</strong> 
-                <span style="font-family: monospace; font-weight: bold; color: #002e5b;">
+                <span style="font-family: monospace; font-weight: bold; color: #1a3673;">
                     {{ $agrementRef ?? ('AGR-ENCG-' . date('Y') . '-' . str_pad($club->id ?? 1, 4, '0', STR_PAD_LEFT)) }}
                 </span>
             </td>
@@ -283,7 +283,7 @@
             </td>
             <td style="width: 25%; text-align: right;">
                 <strong>Date d'Octroi :</strong> 
-                <span style="color: #002e5b; font-weight: bold;">
+                <span style="color: #1a3673; font-weight: bold;">
                     {{ $dateIssued ?? date('d/m/Y') }}
                 </span>
             </td>
@@ -307,7 +307,7 @@
         </tr>
         <tr>
             <td class="id-lbl">Nom Officiel du Club :</td>
-            <td class="id-val" style="color: #002e5b; font-size: 7.8pt;">{{ $club->name ?? 'Club Universitaire' }}</td>
+            <td class="id-val" style="color: #1a3673; font-size: 7.8pt;">{{ $club->name ?? 'Club Universitaire' }}</td>
             <td class="id-lbl">Pôle / Catégorie :</td>
             <td class="id-val" style="color: #0284c7;">{{ $club->category ?? 'Pôle Entrepreneuriat & Management' }}</td>
         </tr>
@@ -424,20 +424,18 @@
                                 <div class="official-seal-circle">
                                     ★ ENCG FÈS ★<br>
                                     <span style="font-size: 4.2pt; color: #475569;">USMBA • DIRECTION</span><br>
-                                    SCEAU OFFICIEL
+                                    CACHET À APPOSER
                                 </div>
                             </td>
                         </tr>
                         <tr>
                             <td style="text-align: center; vertical-align: middle; height: 40px;">
-                                <svg width="78" height="20" viewBox="0 0 120 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M8,22 C16,10 24,4 30,4 C35,4 32,22 36,24 C40,26 45,14 50,10 C55,4 60,18 65,16 C70,14 82,6 90,14 C98,10 102,4 112,8" stroke="#002e5b" stroke-width="2" stroke-linecap="round"/>
-                                </svg>
+                                <div style="height:26px;font-size:7pt;color:#64748b;">Signature à apposer</div>
                             </td>
                         </tr>
                         <tr>
                             <td style="text-align: center; vertical-align: bottom; padding-bottom: 2px;">
-                                <div class="sig-caption" style="color: #002e5b;">Cachet officiel &amp; Signature</div>
+                                <div class="sig-caption" style="color: #1a3673;">Cachet officiel &amp; Signature</div>
                             </td>
                         </tr>
                     </table>
@@ -459,18 +457,18 @@
                     @endif
                 </td>
                 <td style="vertical-align: middle; padding-left: 6px;">
-                    <strong style="color: #002e5b; font-size: 6.4pt; text-transform: uppercase;">
+                    <strong style="color: #1a3673; font-size: 6.4pt; text-transform: uppercase;">
                         Homologation Associative Officielle — Système SI ENCG Fès
                     </strong><br>
                     <span style="color: #64748b; line-height: 1.15;">
                         Document certifié conforme aux dispositions du décret N° 2-15-260 et de la loi 53-05 sur l'échange électronique des données juridiques.<br>
-                        <strong>Authentification Sécurisée :</strong> {{ $agrementRef ?? ('AGR-ENCG-' . date('Y')) }} • <strong>Jeton Crypté :</strong> <span style="font-family: monospace; font-size: 5.2pt; color: #002e5b;">{{ substr($club->encrypted_verify_token ?? 'ENC', 0, 24) }}...</span>
+                        <strong>Authentification Sécurisée :</strong> {{ $agrementRef ?? ('AGR-ENCG-' . date('Y')) }} • <strong>Jeton Crypté :</strong> <span style="font-family: monospace; font-size: 5.2pt; color: #1a3673;">{{ substr($club->encrypted_verify_token ?? 'ENC', 0, 24) }}...</span>
                     </span>
                 </td>
                 <td style="width: 140px; text-align: right; vertical-align: middle;">
-                    <div style="font-size: 6pt; font-weight: bold; color: #002e5b;">Université Sidi Mohamed Ben Abdellah</div>
+                    <div style="font-size: 6pt; font-weight: bold; color: #1a3673;">Université Sidi Mohamed Ben Abdellah</div>
                     <div style="font-size: 5.6pt; color: #64748b;">École Nationale de Commerce et de Gestion</div>
-                    <div style="font-size: 6.2pt; font-weight: bold; color: #002e5b; margin-top: 1px;">PAGE 1 / 1</div>
+                    <div style="font-size: 6.2pt; font-weight: bold; color: #1a3673; margin-top: 1px;">PAGE 1 / 1</div>
                 </td>
             </tr>
         </table>

@@ -18,8 +18,9 @@ Award
 } from 'lucide-react';
 import api from '@/shared/lib/api';
 import { cleanUtf8Text } from '@/shared/lib/utils';
+import RegisteredDocumentVerification from './RegisteredDocumentVerification';
 
-export default function VerifyDocument() {
+function LegacyVerifyDocument() {
   const { id } = useParams();
   const [loading, setLoading] = useState(true);
   const [result, setResult] = useState<any>(null);
@@ -242,4 +243,9 @@ export default function VerifyDocument() {
       </div>
     </div>
   );
+}
+
+export default function VerifyDocument() {
+  const { id } = useParams();
+  return id?.startsWith('DOC-') ? <RegisteredDocumentVerification key={id} token={id} /> : <LegacyVerifyDocument />;
 }

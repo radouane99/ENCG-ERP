@@ -5,7 +5,7 @@
 @section('styles')
 <style>
     .mission-header-banner {
-        background: #0f2863;
+        background: #1a3673;
         color: #ffffff;
         text-align: center;
         padding: 12px 18px;
@@ -79,7 +79,7 @@
         border-bottom: 1px solid #e2e8f0;
     }
     .legal-clause-box {
-        border-left: 4px solid #0f2863;
+        border-left: 4px solid #1a3673;
         background-color: #f1f5f9;
         border-radius: 0 8px 8px 0;
         padding: 10px 16px;
@@ -88,7 +88,7 @@
     .legal-clause-title {
         font-size: 8.5pt;
         font-weight: 900;
-        color: #0f2863;
+        color: #1a3673;
         text-transform: uppercase;
         letter-spacing: 0.5px;
         margin-bottom: 4px;
@@ -108,13 +108,13 @@
     }
     .official-seal-badge {
         display: inline-block;
-        border: 2px dashed #002e5b;
+        border: 2px dashed #1a3673;
         border-radius: 50%;
         width: 105px;
         height: 105px;
         text-align: center;
         padding: 14px 6px;
-        color: #002e5b;
+        color: #1a3673;
         font-size: 7.5pt;
         font-weight: bold;
         line-height: 1.25;
@@ -142,10 +142,10 @@
             <tr>
                 <td style="width: 58%;">
                     <strong style="color: #475569;">RÉFÉRENCE OFFICIELLE :</strong> 
-                    <span style="font-family: monospace; font-weight: 900; color: #0f2863; font-size: 10.5pt;">{{ $trackingCode ?? ('DOC-PROF-' . date('Y') . '-0842') }}</span>
+                    <span style="font-family: monospace; font-weight: 900; color: #1a3673; font-size: 10.5pt;">{{ $trackingCode ?? ('DOC-PROF-' . date('Y') . '-0842') }}</span>
                 </td>
                 <td style="width: 42%; text-align: right; color: #475569;">
-                    Fès, le <strong style="color: #0f2863; font-size: 10pt;">{{ $date ?? date('d/m/Y') }}</strong>
+                    Fès, le <strong style="color: #1a3673; font-size: 10pt;">{{ $date ?? date('d/m/Y') }}</strong>
                 </td>
             </tr>
         </table>
@@ -160,9 +160,9 @@
     <div class="details-table-card">
         <table class="details-table">
             <tr>
-                <td class="label-col" style="background-color: #f1f5f9; color: #0f2863;">Enseignant(e)-Chercheur(se) :</td>
-                <td class="val-col" style="background-color: #f1f5f9; font-weight: 900; color: #0f2863; font-size: 10.5pt; text-transform: uppercase;">
-                    Pr. {{ isset($professor) ? (($professor->last_name ?? '') . ' ' . ($professor->first_name ?? '')) : 'ABDELHAK EL AMRANI' }}
+                <td class="label-col" style="background-color: #f1f5f9; color: #1a3673;">Enseignant(e)-Chercheur(se) :</td>
+                <td class="val-col" style="background-color: #f1f5f9; font-weight: 900; color: #1a3673; font-size: 10.5pt; text-transform: uppercase;">
+                    Pr. {{ isset($professor) ? (($professor->last_name ?? '') . ' ' . ($professor->first_name ?? '')) : 'Non renseigné' }}
                 </td>
             </tr>
             <tr>
@@ -184,14 +184,14 @@
                 </td>
             </tr>
             <tr>
-                <td class="label-col" style="color: #0f2863;">Objet / Motif de la Mission :</td>
+                <td class="label-col" style="color: #1a3673;">Objet / Motif de la Mission :</td>
                 <td class="val-col" style="font-weight: 700; color: #0f172a;">
                     {{ $mission['motif'] ?? 'Participation à la Conférence Internationale & Encadrement Thèses' }}
                 </td>
             </tr>
             <tr>
                 <td class="label-col">Lieu &amp; Destination :</td>
-                <td class="val-col" style="font-weight: 900; color: #0f2863; font-size: 10pt;">
+                <td class="val-col" style="font-weight: 900; color: #1a3673; font-size: 10pt;">
                     {{ $mission['destination'] ?? 'Casablanca / Rabat (Maroc)' }}
                 </td>
             </tr>
@@ -203,7 +203,7 @@
             </tr>
             <tr>
                 <td class="label-col">Moyen de Transport Autorisé :</td>
-                <td class="val-col" style="font-weight: 700; color: #0f2863;">
+                <td class="val-col" style="font-weight: 700; color: #1a3673;">
                     {{ $mission['transport_mode'] ?? 'Voiture Personnelle / Train ONCF (Al Boraq - Al Atlas) / Aérien' }}
                 </td>
             </tr>
@@ -230,7 +230,7 @@
         <div style="font-size: 8.5pt; font-weight: bold; color: #64748b; margin-top: 4px;">
             Pour le Directeur et par délégation
         </div>
-        <div style="font-size: 10.5pt; font-weight: 900; color: #002e5b; text-transform: uppercase; margin-top: 3px; letter-spacing: 0.5px;">
+        <div style="font-size: 10.5pt; font-weight: 900; color: #1a3673; text-transform: uppercase; margin-top: 3px; letter-spacing: 0.5px;">
             {{ $signatoryTitle ?? 'LE SECRÉTAIRE GÉNÉRAL DE L\'ENCG FÈS' }}
         </div>
 

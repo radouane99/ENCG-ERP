@@ -21,7 +21,7 @@
             background: #ffffff;
         }
         .page-container {
-            border: 1.8px solid #002147;
+            border: 1.8px solid #1a3673;
             padding: 6px 8px;
             background: #ffffff;
             position: relative;
@@ -54,7 +54,7 @@
             margin-bottom: 4px;
         }
         .title-cell {
-            background-color: #002147;
+            background-color: #1a3673;
             color: #ffffff;
             text-align: center;
             padding: 4px 6px;
@@ -104,7 +104,7 @@
         .tile-value {
             font-size: 7.0pt;
             font-weight: 800;
-            color: #002147;
+            color: #1a3673;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -113,7 +113,7 @@
         .tile-mono {
             font-family: monospace;
             font-size: 7.2pt;
-            color: #002147;
+            color: #1a3673;
             font-weight: 900;
         }
         .badge-pill {
@@ -178,7 +178,7 @@
             vertical-align: middle;
         }
         table.exams-table th {
-            background-color: #002147;
+            background-color: #1a3673;
             color: #ffffff;
             font-size: 7.2pt;
             font-weight: 900;
@@ -190,7 +190,7 @@
         }
         .exam-date-badge {
             font-weight: 900;
-            color: #002147;
+            color: #1a3673;
             font-size: 7.2pt;
         }
         .exam-time-badge {
@@ -206,13 +206,13 @@
             padding: 0.5px 3px;
             font-size: 5.6pt;
             font-weight: 800;
-            color: #002147;
+            color: #1a3673;
             margin-bottom: 1.5px;
         }
         .exam-module-name {
             font-size: 7.2pt;
             font-weight: 900;
-            color: #002147;
+            color: #1a3673;
             line-height: 1.15;
             text-align: left;
         }
@@ -288,7 +288,7 @@
             display: inline-block;
         }
         .stamp-box {
-            border: 1.5px dashed #002147;
+            border: 1.5px dashed #1a3673;
             border-radius: 2px;
             padding: 3px 6px;
             text-align: center;
@@ -297,7 +297,7 @@
         .stamp-title {
             font-size: 6.4pt;
             font-weight: 900;
-            color: #002147;
+            color: #1a3673;
             text-transform: uppercase;
         }
         .stamp-sub {
@@ -326,15 +326,15 @@
     <table class="header-table">
         <tr>
             <td style="width: 25%; text-align: left;">
-                <strong style="color:#002147; font-size: 7.2pt;">ROYAUME DU MAROC</strong><br/>
+                <strong style="color:#1a3673; font-size: 7.2pt;">ROYAUME DU MAROC</strong><br/>
                 <span style="font-size: 5.8pt; color: #475569;">Université Sidi Mohamed Ben Abdellah</span><br/>
-                <strong style="color:#002147; font-size: 6.5pt;">ENCG FÈS</strong>
+                <strong style="color:#1a3673; font-size: 6.5pt;">ENCG FÈS</strong>
             </td>
             <td style="width: 50%; text-align: center;">
                 @if(!empty($logoBase64))
                     <img src="{{ $logoBase64 }}" alt="Logo ENCG" style="height: 32px; max-width: 150px;"/>
                 @else
-                    <div style="font-size: 9.5pt; font-weight: 900; color: #002147; letter-spacing: 0.5px;">
+                    <div style="font-size: 9.5pt; font-weight: 900; color: #1a3673; letter-spacing: 0.5px;">
                         ÉCOLE NATIONALE DE COMMERCE ET DE GESTION DE FÈS
                     </div>
                 @endif
@@ -343,7 +343,7 @@
                 </div>
             </td>
             <td style="width: 25%; text-align: right;">
-                <span style="font-size: 6.0pt; color: #64748b;">Année Universitaire : <strong style="color: #002147;">{{ $academicYear ?? '2026/2027' }}</strong></span><br/>
+                <span style="font-size: 6.0pt; color: #64748b;">Année Universitaire : <strong style="color: #1a3673;">{{ $academicYear ?? 'Non renseignée' }}</strong></span><br/>
                 <span style="font-size: 5.5pt; color: #64748b;">Édition officielle : <strong>{{ now()->format('d/m/Y à H:i') }}</strong></span><br/>
                 <span style="font-family: monospace; font-size: 5.2pt; color: #94a3b8;">REF : ENCG-CONV-{{ strtoupper(substr(md5(($cne ?? 'ENCG').'2026'), 0, 8)) }}</span>
             </td>
@@ -400,7 +400,7 @@
             <td class="dossier-cell">
                 <div class="tile-label">NATURE DE LA SESSION</div>
                 <div class="tile-value">
-                    <strong style="color: #002147;">{{ $sessionType }}</strong>
+                    <strong style="color: #1a3673;">{{ $sessionType }}</strong>
                 </div>
             </td>
             <td class="dossier-cell">
@@ -489,7 +489,7 @@
                             @endif
                         </td>
                         <td style="vertical-align: middle; line-height: 1.15;">
-                            <div style="font-size: 6.2pt; font-weight: 900; color: #002147; text-transform: uppercase;">
+                            <div style="font-size: 6.2pt; font-weight: 900; color: #1a3673; text-transform: uppercase;">
                                 PASS ENTRÉE SALLE
                             </div>
                             <div style="font-size: 5.2pt; font-weight: 900; color: #059669; margin: 1px 0;">
@@ -506,7 +506,7 @@
             <!-- 2. Sécurité, Empreinte SHA-256 & Horodatage -->
             <td class="verification-cell" style="width: 37%; padding: 0 4px;">
                 <div style="background: #f8fafc; border: 0.8px solid #cbd5e1; border-radius: 2px; padding: 2.5px 5px;">
-                    <div style="font-size: 5.8pt; font-weight: 900; color: #002147; text-transform: uppercase;">
+                    <div style="font-size: 5.8pt; font-weight: 900; color: #1a3673; text-transform: uppercase;">
                         AUTHENTICITÉ NUMÉRIQUE & CONTRÔLE
                     </div>
                     <div style="font-family: monospace; font-size: 4.8pt; color: #0f172a; background: #f1f5f9; border: 0.5px solid #e2e8f0; padding: 1.5px 3px; border-radius: 2px; margin: 1px 0; word-break: break-all;">

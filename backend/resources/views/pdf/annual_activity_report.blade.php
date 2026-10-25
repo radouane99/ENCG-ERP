@@ -5,7 +5,7 @@
 @section('styles')
 <style>
     .report-banner {
-        background: linear-gradient(135deg, #0f2863 0%, #001A4B 100%);
+        background: linear-gradient(135deg, #1a3673 0%, #1a3673 100%);
         color: #ffffff;
         text-align: center;
         padding: 14px 18px;
@@ -41,7 +41,7 @@
         font-size: 8.5pt;
     }
     .section-header {
-        background-color: #0f2863;
+        background-color: #1a3673;
         color: #ffffff;
         font-size: 9pt;
         font-weight: 800;
@@ -88,7 +88,7 @@
     .summary-val {
         font-size: 11pt;
         font-weight: 900;
-        color: #0f2863;
+        color: #1a3673;
     }
     .summary-lbl {
         font-size: 7pt;
@@ -191,7 +191,7 @@
                     <td>{{ $m['filiere'] }} ({{ $m['group'] }})</td>
                     <td style="text-align: center;">{{ $m['cm_hours'] }}h</td>
                     <td style="text-align: center;">{{ $m['td_hours'] }}h</td>
-                    <td style="text-align: center; font-weight: bold; color: #0f2863;">{{ $m['total_hours'] }}h</td>
+                    <td style="text-align: center; font-weight: bold; color: #1a3673;">{{ $m['total_hours'] }}h</td>
                 </tr>
             @empty
                 <tr>
@@ -200,7 +200,7 @@
                     <td>Gestion Financière et Comptable (G1)</td>
                     <td style="text-align: center;">28h</td>
                     <td style="text-align: center;">28h</td>
-                    <td style="text-align: center; font-weight: bold; color: #0f2863;">56h</td>
+                    <td style="text-align: center; font-weight: bold; color: #1a3673;">56h</td>
                 </tr>
                 <tr>
                     <td style="font-weight: bold; font-family: monospace;">GFC-S5-M04</td>
@@ -208,7 +208,7 @@
                     <td>Gestion Financière et Comptable (G2)</td>
                     <td style="text-align: center;">28h</td>
                     <td style="text-align: center;">28h</td>
-                    <td style="text-align: center; font-weight: bold; color: #0f2863;">56h</td>
+                    <td style="text-align: center; font-weight: bold; color: #1a3673;">56h</td>
                 </tr>
                 <tr>
                     <td style="font-weight: bold; font-family: monospace;">CCA-S7-M01</td>
@@ -216,7 +216,7 @@
                     <td>Master CCA (Semestre 7)</td>
                     <td style="text-align: center;">24h</td>
                     <td style="text-align: center;">18h</td>
-                    <td style="text-align: center; font-weight: bold; color: #0f2863;">42h</td>
+                    <td style="text-align: center; font-weight: bold; color: #1a3673;">42h</td>
                 </tr>
             @endforelse
         </tbody>
@@ -324,9 +324,9 @@
             </td>
             <td style="width: 35%; text-align: center;">
                 <div style="font-size: 8pt; font-weight: bold; color: #475569; margin-bottom: 4px;">POUR LE DIRECTEUR DE L'ENCG FÈS</div>
-                <div style="font-size: 8.5pt; font-weight: 800; color: #0f2863;">LE SECRÉTAIRE GÉNÉRAL</div>
+                <div style="font-size: 8.5pt; font-weight: 800; color: #1a3673;">LE SECRÉTAIRE GÉNÉRAL</div>
                 <div style="margin-top: 25px;">
-                    <span style="display: inline-block; padding: 4px 10px; border: 1.5px solid #0f2863; color: #0f2863; font-weight: 900; font-size: 7.5pt; text-transform: uppercase;">
+                    <span style="display: inline-block; padding: 4px 10px; border: 1.5px solid #1a3673; color: #1a3673; font-weight: 900; font-size: 7.5pt; text-transform: uppercase;">
                         ✓ CERTIFIÉ CONFORME
                     </span>
                 </div>

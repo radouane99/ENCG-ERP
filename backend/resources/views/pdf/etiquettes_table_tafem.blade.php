@@ -4,7 +4,7 @@
 
 @section('content')
     <div style="text-align: center; margin-bottom: 15px;">
-        <h2 style="font-size: 16px; font-weight: bold; text-transform: uppercase; margin: 0; color: #0f2863;">
+        <h2 style="font-size: 16px; font-weight: bold; text-transform: uppercase; margin: 0; color: #1a3673;">
             CONCOURS NATIONAL TAFEM 2026 — ÉTIQUETTES DE PUPITRES
         </h2>
         <p style="font-size: 10px; color: #64748b; margin-top: 3px;">
@@ -17,9 +17,9 @@
         @foreach(array_chunk($labels ?? [], 2) as $row)
             <tr>
                 @foreach($row as $label)
-                    <td width="50%" style="border: 2px dashed #0f2863; background-color: #f8fafc; border-radius: 8px; padding: 10px; vertical-align: top;">
+                    <td width="50%" style="border: 2px dashed #1a3673; background-color: #f8fafc; border-radius: 8px; padding: 10px; vertical-align: top;">
                         <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #cbd5e1; padding-bottom: 4px; margin-bottom: 6px;">
-                            <strong style="font-size: 11px; color: #0f2863;">ENCG FÈS — TAFEM 2026</strong>
+                            <strong style="font-size: 11px; color: #1a3673;">ENCG FÈS — TAFEM 2026</strong>
                             <span style="font-size: 11px; font-weight: bold; color: #e6007e;">TABLE N° {{ $label['table_number'] ?? ($label['seat_number'] ?? '—') }}</span>
                         </div>
                         

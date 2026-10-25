@@ -5,7 +5,7 @@
 @section('styles')
 <style>
     .igr-header-banner {
-        background: #0f2863;
+        background: #1a3673;
         color: #ffffff;
         text-align: center;
         padding: 12px 18px;
@@ -83,10 +83,10 @@
         border-collapse: collapse;
         font-size: 9pt;
         margin: 12px 0 16px 0;
-        border: 1.5px solid #0f2863;
+        border: 1.5px solid #1a3673;
     }
     .tax-breakdown-table th {
-        background-color: #0f2863;
+        background-color: #1a3673;
         color: #ffffff;
         padding: 8px 10px;
         font-weight: 800;
@@ -100,7 +100,7 @@
     }
     .legal-notice-box {
         background-color: #f1f5f9;
-        border-left: 4px solid #0f2863;
+        border-left: 4px solid #1a3673;
         padding: 8px 12px;
         font-size: 8pt;
         color: #475569;
@@ -121,13 +121,13 @@
     }
     .official-seal-badge {
         display: inline-block;
-        border: 2px dashed #002e5b;
+        border: 2px dashed #1a3673;
         border-radius: 50%;
         width: 95px;
         height: 95px;
         text-align: center;
         padding-top: 18px;
-        color: #002e5b;
+        color: #1a3673;
         font-weight: 900;
         font-size: 7.5pt;
         text-transform: uppercase;
@@ -145,7 +145,7 @@
 <div class="meta-ref-bar">
     <table class="meta-table">
         <tr>
-            <td style="width: 50%; font-weight: bold; color: #0f2863;">
+            <td style="width: 50%; font-weight: bold; color: #1a3673;">
                 RÉFÉRENCE : <span style="font-family: monospace; font-size: 10pt; color: #0284c7;">{{ $trackingCode }}</span>
             </td>
             <td style="width: 50%; text-align: right; color: #475569;">
@@ -165,7 +165,7 @@
     <table class="details-table">
         <tr>
             <td class="label-col">Bénéficiaire (Nom et Prénom) :</td>
-            <td class="val-col" style="font-size: 10.5pt; font-weight: 800; color: #0f2863;">
+            <td class="val-col" style="font-size: 10.5pt; font-weight: 800; color: #1a3673;">
                 {{ strtoupper($professor->last_name ?? '') }} {{ ucfirst($professor->first_name ?? '') }}
             </td>
         </tr>
@@ -211,9 +211,9 @@
             <td style="text-align: right; font-family: monospace; font-weight: 700;">—</td>
         </tr>
         <tr style="background-color: #f8fafc;">
-            <td style="font-weight: 800; color: #0f2863;">Montant Brut Imposable (Assiette IGR) :</td>
+            <td style="font-weight: 800; color: #1a3673;">Montant Brut Imposable (Assiette IGR) :</td>
             <td style="text-align: center; font-size: 8pt; color: #64748b;">Brut avant retenues</td>
-            <td style="text-align: right; font-family: monospace; font-size: 10pt; font-weight: 800; color: #0f2863;">
+            <td style="text-align: right; font-family: monospace; font-size: 10pt; font-weight: 800; color: #1a3673;">
                 {{ number_format($grossAmount ?? 0, 2, ',', ' ') }} MAD
             </td>
         </tr>
@@ -253,7 +253,7 @@
         </td>
         <td style="width: 65%; vertical-align: top; text-align: right;">
             <div class="signature-container-box">
-                <div style="font-size: 8.5pt; font-weight: 800; color: #0f2863; text-transform: uppercase;">
+                <div style="font-size: 8.5pt; font-weight: 800; color: #1a3673; text-transform: uppercase;">
                     POUR LE DIRECTEUR DE L'ENCG FÈS
                 </div>
                 <div style="font-size: 7.5pt; font-weight: bold; color: #475569; margin-top: 2px;">

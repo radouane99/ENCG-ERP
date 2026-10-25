@@ -19,7 +19,7 @@
             background: #ffffff;
         }
         .outer-frame {
-            border: 1.5px solid #001A4B;
+            border: 1.5px solid #1a3673;
             padding: 3px 5px;
             background: #ffffff;
             position: relative;
@@ -41,7 +41,7 @@
             margin: 2px 0 3px 0;
         }
         .title-banner {
-            background-color: #001A4B;
+            background-color: #1a3673;
             color: #ffffff;
             text-align: center;
             padding: 2.5px 4px;
@@ -85,7 +85,7 @@
             line-height: 1.1;
         }
         .info-table strong {
-            color: #001A4B;
+            color: #1a3673;
         }
 
         /* Grille Hebdomadaire */
@@ -97,13 +97,13 @@
             page-break-inside: avoid;
         }
         table.grid th, table.grid td {
-            border: 0.8px solid #001A4B;
+            border: 0.8px solid #1a3673;
             vertical-align: middle;
             text-align: center;
             padding: 2px 1.5px;
         }
         table.grid th {
-            background: #001A4B;
+            background: #1a3673;
             color: #ffffff;
             font-size: 7.2pt;
             font-weight: bold;
@@ -117,7 +117,7 @@
         .slot-time {
             font-weight: bold;
             font-size: 7pt;
-            color: #001A4B;
+            color: #1a3673;
             line-height: 1.1;
         }
         .slot-period {
@@ -135,7 +135,7 @@
         .course-title {
             font-weight: bold;
             font-size: 7.2pt;
-            color: #001A4B;
+            color: #1a3673;
             line-height: 1.15;
             margin-bottom: 1.5px;
         }
@@ -145,7 +145,7 @@
             display: inline-block;
             padding: 0.5px 3.5px;
             border-radius: 2px;
-            background: #001A4B;
+            background: #1a3673;
             color: #ffffff;
             margin-right: 2px;
         }
@@ -180,7 +180,7 @@
         }
         table.recap th {
             background: #e2e8f0;
-            color: #001A4B;
+            color: #1a3673;
             font-weight: bold;
             text-transform: uppercase;
             padding: 2px 2.5px;
@@ -226,17 +226,17 @@
                 @if(!empty($logoBase64))
                     <img src="{{ $logoBase64 }}" style="max-height: 44px; max-width: 100%; height: auto;" alt="ENCG Fès">
                 @else
-                    <div style="font-size: 10pt; font-weight: 900; color: #001A4B;">ENCG FÈS</div>
+                    <div style="font-size: 10pt; font-weight: 900; color: #1a3673;">ENCG FÈS</div>
                     <div style="font-size: 6pt; color: #475569;">École Nationale de Commerce et de Gestion</div>
                 @endif
             </td>
 
             <!-- En-tête Central -->
             <td style="width: 46%; text-align: center;">
-                <div style="font-size: 7pt; font-weight: bold; color: #001A4B; text-transform: uppercase; line-height: 1.3;">
+                <div style="font-size: 7pt; font-weight: bold; color: #1a3673; text-transform: uppercase; line-height: 1.3;">
                     ROYAUME DU MAROC<br>
                     UNIVERSITÉ SIDI MOHAMED BEN ABDELLAH DE FÈS<br>
-                    <span style="font-size: 7.8pt; color: #001A4B; font-weight: 900;">ÉCOLE NATIONALE DE COMMERCE ET DE GESTION</span>
+                    <span style="font-size: 7.8pt; color: #1a3673; font-weight: 900;">ÉCOLE NATIONALE DE COMMERCE ET DE GESTION</span>
                 </div>
             </td>
 
@@ -245,7 +245,7 @@
                 <table style="float: right; border-collapse: collapse;">
                     <tr>
                         <td style="text-align: right; padding-right: 5px; vertical-align: middle;">
-                            <div style="font-size: 6.5pt; font-weight: 900; color: #001A4B; text-transform: uppercase;">
+                            <div style="font-size: 6.5pt; font-weight: 900; color: #1a3673; text-transform: uppercase;">
                                 DOCUMENT CERTIFIÉ
                             </div>
                             <div style="font-size: 5.5pt; color: #059669; font-weight: bold;">
@@ -268,7 +268,7 @@
     <!-- Title Banner -->
     <div class="title-banner">
         <h1>EMPLOI DU TEMPS INDIVIDUEL DE L'ENSEIGNANT</h1>
-        <div class="sub">Année Universitaire {{ $academicYear ?? '2026/2027' }} · Semestre Courant · Planning Officiel d'Enseignement</div>
+        <div class="sub">Année Universitaire {{ $academicYear ?? 'Non renseignée' }} · Semestre Courant · Planning Officiel d'Enseignement</div>
     </div>
 
     <!-- Informations Enseignant -->
@@ -363,11 +363,11 @@
         <tbody>
             @forelse($schedules as $sess)
                 <tr>
-                    <td style="font-weight: bold; color: #001A4B;">{{ $days[$sess->day_of_week] ?? 'Jour' }}</td>
+                    <td style="font-weight: bold; color: #1a3673;">{{ $days[$sess->day_of_week] ?? 'Jour' }}</td>
                     <td style="font-family: monospace; font-weight: bold;">{{ substr($sess->start_time, 0, 5) }} - {{ substr($sess->end_time, 0, 5) }}</td>
-                    <td style="font-weight: bold; color: #001A4B;">{{ $sess->module->name ?? 'Module' }}</td>
+                    <td style="font-weight: bold; color: #1a3673;">{{ $sess->module->name ?? 'Module' }}</td>
                     <td style="text-align: center; font-weight: bold;">
-                        <span style="background: #001A4B; color: #fff; padding: 0.5px 3px; border-radius: 2px;">{{ strtoupper($sess->session_type ?? 'CM') }}</span>
+                        <span style="background: #1a3673; color: #fff; padding: 0.5px 3px; border-radius: 2px;">{{ strtoupper($sess->session_type ?? 'CM') }}</span>
                     </td>
                     <td style="font-weight: bold; color: #047857;">{{ $sess->group->name ?? 'Section 1' }}</td>
                     <td style="text-align: center; font-weight: bold; color: #b91c1c;">📍 {{ $sess->room->name ?? 'Salle ENCG' }}</td>

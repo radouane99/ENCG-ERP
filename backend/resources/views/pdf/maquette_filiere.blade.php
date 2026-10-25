@@ -4,7 +4,7 @@
 
 @section('content')
     <div style="text-align: center; margin-bottom: 20px;">
-        <h2 style="font-size: 16px; font-weight: bold; text-transform: uppercase; margin: 0; color: #0f2863;">
+        <h2 style="font-size: 16px; font-weight: bold; text-transform: uppercase; margin: 0; color: #1a3673;">
             MAQUETTE PÉDAGOGIQUE & PROGRAMME D'ENSEIGNEMENT
         </h2>
         <p style="font-size: 13px; font-weight: bold; margin-top: 5px; color: #059669;">
@@ -30,23 +30,23 @@
     </table>
 
     <!-- CURRICULUM SYLLABUS TABLE -->
-    <h3 style="font-size: 12px; font-weight: bold; color: #0f2863; text-transform: uppercase; margin-bottom: 8px;">
+    <h3 style="font-size: 12px; font-weight: bold; color: #1a3673; text-transform: uppercase; margin-bottom: 8px;">
         STRUCTURE DES MODULES ET VOLUMES HORAIRES D'ENSEIGNEMENT
     </h3>
 
     <table width="100%" cellpadding="6" cellspacing="0" style="border-collapse: collapse; margin-bottom: 20px; font-size: 10px;">
         <thead>
-            <tr style="background-color: #0f2863; color: #ffffff; text-align: left;">
-                <th style="border: 1px solid #0f2863;">Semestre</th>
-                <th style="border: 1px solid #0f2863;">Code & Intitulé du Module</th>
-                <th style="border: 1px solid #0f2863; text-align: center;">Volume Horaire (CM/TD)</th>
-                <th style="border: 1px solid #0f2863;">Département Responsable</th>
+            <tr style="background-color: #1a3673; color: #ffffff; text-align: left;">
+                <th style="border: 1px solid #1a3673;">Semestre</th>
+                <th style="border: 1px solid #1a3673;">Code & Intitulé du Module</th>
+                <th style="border: 1px solid #1a3673; text-align: center;">Volume Horaire (CM/TD)</th>
+                <th style="border: 1px solid #1a3673;">Département Responsable</th>
             </tr>
         </thead>
         <tbody>
             @forelse($modulesList ?? [] as $idx => $mod)
             <tr style="background-color: {{ $idx % 2 === 0 ? '#ffffff' : '#f8fafc' }};">
-                <td style="border: 1px solid #cbd5e1; font-weight: bold; color: #0f2863;">{{ $mod['semester'] ?? 'Semestre' }}</td>
+                <td style="border: 1px solid #cbd5e1; font-weight: bold; color: #1a3673;">{{ $mod['semester'] ?? 'Semestre' }}</td>
                 <td style="border: 1px solid #cbd5e1; font-weight: 500;">{{ $mod['code_title'] ?? 'Module' }}</td>
                 <td style="border: 1px solid #cbd5e1; text-align: center; font-weight: bold; color: #059669;">{{ $mod['hours'] ?? '48 Heures' }}</td>
                 <td style="border: 1px solid #cbd5e1;">{{ $mod['dept'] ?? 'Sciences de Gestion' }}</td>
@@ -73,7 +73,7 @@
                 Document certifié conforme • ENCG Fès — USMBA<br>
                 Empreinte Numérique : {{ md5($filiereCode ?? 'GFC') }}
             </td>
-            <td width="40%" style="text-align: right; font-size: 10px; font-weight: bold; color: #0f2863;">
+            <td width="40%" style="text-align: right; font-size: 10px; font-weight: bold; color: #1a3673;">
                 Le Chef de Filière / Coordinateur<br><br><br>
                 _______________________
             </td>
