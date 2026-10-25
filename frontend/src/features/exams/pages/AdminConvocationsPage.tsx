@@ -57,6 +57,11 @@ const [flashAlertModalOpen, setFlashAlertModalOpen] = useState(false);
     }
   }
 
+  const requireSessionId = () => {
+    if (!selectedSessionId) throw new Error('Sélectionnez une session avant cette action.')
+    return selectedSessionId
+  }
+
   const notify = (msg: string, type: 'success' | 'error' = 'success') => {
     if (type === 'success') {
       toast.success(msg)
@@ -113,10 +118,19 @@ const { data: exams, isLoading: isLoadingExams } = useQuery({
     onError: (err: any) => notify(err.response?.data?.message || 'Erreur lors de la génération.', 'error'),
   })
 
+  const publishMutation = useMutation({
+    mutationFn: () => {
+      if (!selectedSessionId) throw new Error('Sélectionnez une session.')
+      return api.post('/convocations/publish-session', { session_id: selectedSessionId })
+    },
+    onSuccess: (response) => { toast.success(response.data.message); refetchStats(); refetchList() },
+    onError: (error: any) => toast.error(error?.response?.data?.message || error.message || 'Publication refusée.'),
+  })
+
   // Send all convocations emails
   const sendMutation = useMutation({
     mutationFn: () => {
-      const activeSessionId = selectedSessionId || sessions?.[0]?.id || 1
+      const activeSessionId = requireSessionId()
       return examsApi.sendSessionEmails(activeSessionId)
     },
     onSuccess: (data: any) => {
@@ -130,7 +144,7 @@ const { data: exams, isLoading: isLoadingExams } = useQuery({
   // Auto-assign proctors
   const assignMutation = useMutation({
     mutationFn: () => {
-      const activeSessionId = selectedSessionId || sessions?.[0]?.id || 1
+      const activeSessionId = requireSessionId()
       return examsApi.autoAssignProctors(activeSessionId)
     },
     onSuccess: (data: any) => {
@@ -144,7 +158,7 @@ const { data: exams, isLoading: isLoadingExams } = useQuery({
   // Batch actions - Students
   const batchDownloadMutation = useMutation({
     mutationFn: (seatingIds: number[]) => {
-      const activeSessionId = selectedSessionId || sessions?.[0]?.id || 1
+      const activeSessionId = requireSessionId()
       return examsApi.batchDownloadPdf(activeSessionId, seatingIds)
     },
     onSuccess: (blob) => {
@@ -162,7 +176,7 @@ const { data: exams, isLoading: isLoadingExams } = useQuery({
 
   const batchEmailMutation = useMutation({
     mutationFn: (seatingIds: number[]) => {
-      const activeSessionId = selectedSessionId || sessions?.[0]?.id || 1
+      const activeSessionId = requireSessionId()
       return examsApi.sendBatchEmails(activeSessionId, seatingIds)
     },
     onSuccess: (data: any) => {
@@ -485,6 +499,10 @@ const { data: exams, isLoading: isLoadingExams } = useQuery({
   return (
     <div className="min-h-screen bg-slate-50/60 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 pb-20">
       <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border bg-card p-4">
+          <p className="text-sm text-muted-foreground">Diffusez les convocations sur le portail après validation du placement. L’envoi des emails reste une action distincte.</p>
+          <button type="button" disabled={!selectedSessionId || publishMutation.isPending} onClick={() => publishMutation.mutate()} className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50">{publishMutation.isPending ? 'Publication…' : 'Publier sur le portail'}</button>
+        </div>
         
         {/* 🌟 1. ROYAL NAVY & EMERALD EXECUTIVE HERO BANNER */}
         <div className="relative overflow-hidden rounded-[2.2rem] bg-gradient-to-r from-[#07132c] via-[#0f2863] to-[#0a1b40] text-white p-7 sm:p-9 shadow-2xl border border-blue-900/50">

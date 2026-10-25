@@ -298,6 +298,8 @@ class ExamIncidentController extends Controller
         $data = $request->validate([
             'sanction' => 'required|string|in:module,semestre,blame,avertissement,exclusion,annee,dismissed,classement',
             'observations' => 'required|string|min:5|max:10000',
+            'votes_for' => 'nullable|integer|min:0|max:1000',
+            'votes_against' => 'nullable|integer|min:0|max:1000',
         ]);
         $incident = app(\App\Actions\Exam\DecideExamIncidentAction::class)->execute($id, $data);
         return response()->json(['success' => true, 'message' => 'Décision enregistrée et application contrôlée.', 'data' => $incident]);

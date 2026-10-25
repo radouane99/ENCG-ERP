@@ -44,7 +44,7 @@ class DecideExamIncidentAction
                 }
             }
             $incident->update(['status' => $dismissed ? 'dismissed' : 'resolved', 'decision' => $text, 'sanction_scope' => $sanction, 'hearing_notes' => $data['observations']]);
-            activity()->causedBy($user)->performedOn($incident)->withProperties(['sanction' => $sanction, 'observations' => $data['observations']])->log('exam_incident_council_decision');
+            activity()->causedBy($user)->performedOn($incident)->withProperties(['sanction' => $sanction, 'observations' => $data['observations'], 'votes_for' => $data['votes_for'] ?? null, 'votes_against' => $data['votes_against'] ?? null])->log('exam_incident_council_decision');
             return $incident;
         });
     }

@@ -340,9 +340,10 @@ class ExamPlanningEngine
                         $students = StudentRegistration::whereHas('group', fn ($q) => $q->where('filiere_id', $module->filiere_id)->where('semester_number', $module->semester_number))
                             ->where('academic_year_id', $session->academic_year_id)
                             ->distinct()->pluck('student_id');
+                        $students = app(ExamWorkflowGuard::class)->eligibleCandidates($session, $module->id, $students);
 
                         $studentCount = $students->count();
-                        abort_if($studentCount === 0, 422, "Aucun inscrit pour le module {$module->code} et son semestre.");
+                        abort_if($studentCount === 0, 422, "Aucun inscrit éligible pour le module {$module->code} : vérifier le semestre et, en rattrapage, les droits liés à cette année.");
 
                         // Trouver le créneau où les salles libres peuvent contenir les étudiants
                         $chosenSlot = null;

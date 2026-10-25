@@ -27,53 +27,17 @@ class StudentConvocationController extends Controller
         $sessionType = strtoupper($request->query('session_type', ''));
 
         $query = ExamSeating::with(['exam.module', 'exam.session', 'room'])
-            ->where('student_id', $studentId);
+            ->where('student_id', $studentId)
+            ->whereHas('exam.session', fn ($q) => $q->where('academic_year_id', \App\Services\Academic\AcademicContext::yearId()))
+            ->where(fn ($q) => $q->whereNotNull('sent_at')->orWhereIn('status', ['sent', 'present', 'absent', 'late']));
 
         if ($sessionType === 'RATTRAPAGE') {
-            $query->where(function ($q) {
-                $q->whereHas('exam.session', function ($s) {
-                    $s->where('type', 'rattrapage')->orWhere('name', 'like', '%rattrapage%');
-                })->orWhereHas('exam', function ($e) {
-                    $e->where('type', 'rattrapage');
-                });
-            });
-        } elseif ($sessionType === 'ORDINAIRE' || $sessionType === 'NORMALE') {
-            $query->where(function ($q) {
-                $q->whereHas('exam.session', function ($s) {
-                    $s->whereIn('type', ['normale', 'ordinaire'])->orWhere('name', 'like', '%normale%')->orWhere('name', 'like', '%ordinaire%');
-                })->orWhereHas('exam', function ($e) {
-                    $e->whereIn('type', ['normale', 'ordinaire', 'written', 'oral']);
-                });
-            });
+            $query->whereHas('exam.session', fn ($q) => $q->whereIn('type', ['rattrapage', 'resit']));
+        } elseif (in_array($sessionType, ['ORDINAIRE', 'NORMALE'], true)) {
+            $query->whereHas('exam.session', fn ($q) => $q->whereIn('type', ['normal', 'normale', 'ordinaire']));
         }
 
         $seatings = $query->get();
-
-        // Fallback intelligent if session types aren't explicitly labeled
-        if ($seatings->isEmpty() && ! empty($sessionType)) {
-            $allSeatings = ExamSeating::with(['exam.module', 'exam.session', 'room'])
-                ->where('student_id', $studentId)
-                ->get();
-
-            if ($sessionType === 'RATTRAPAGE') {
-                $seatings = $allSeatings->filter(function ($s) {
-                    $date = $s->exam?->exam_date ? Carbon::parse($s->exam->exam_date) : null;
-
-                    return ($s->exam?->session && str_contains(strtolower($s->exam->session->name ?? ''), 'rattrapage'))
-                        || ($date && $date->day > 10);
-                });
-            } else {
-                $seatings = $allSeatings->filter(function ($s) {
-                    $date = $s->exam?->exam_date ? Carbon::parse($s->exam->exam_date) : null;
-
-                    return ! ($s->exam?->session && str_contains(strtolower($s->exam->session->name ?? ''), 'rattrapage'))
-                        && (! $date || $date->day <= 10);
-                });
-            }
-            if ($seatings->isEmpty()) {
-                $seatings = $allSeatings;
-            }
-        }
 
         $seatings = $seatings->sortBy(function ($s) {
             return ($s->exam?->exam_date ? Carbon::parse($s->exam->exam_date)->format('Ymd') : '99999999').'_'.($s->exam?->start_time ?? '00:00');
@@ -92,7 +56,7 @@ class StudentConvocationController extends Controller
                 'room' => $s->room->name ?? 'N/A',
                 'seat' => 'Table N° '.ExamConvocationService::seatNumberFor($s),
                 'status' => 'Publiée',
-                'qrToken' => $s->qr_token ?? ('CONV-'.$s->id),
+                'qrToken' => $s->qr_token,
             ];
         });
 
@@ -107,63 +71,10 @@ class StudentConvocationController extends Controller
      */
     public function download(int $id, Request $request)
     {
-        $convocation = Convocation::where('id', $id)
-            ->where('student_id', $request->user()->id)
-            ->firstOrFail();
-
-        if ($convocation->status === 'sent') {
-            $convocation->update(['status' => 'viewed']);
-        }
-
-        $verificationUrl = url("/api/v1/admin/convocations/verify/{$convocation->qr_token}");
-        $qrCodeBase64 = base64_encode(QrCode::format('svg')->size(100)->generate($verificationUrl));
-
-        $semId = (int) ($convocation->exam?->module?->semester_number ?? 1);
-        $niveauName = match (true) {
-            $semId <= 2 => '1ère Année',
-            $semId <= 4 => '2ème Année',
-            $semId <= 6 => '3ème Année',
-            $semId <= 8 => '4ème Année',
-            default => '5ème Année',
-        };
-
-        $logoPath = public_path('logo-encg.png');
-        $logoBase64 = file_exists($logoPath) ? 'data:image/png;base64,'.base64_encode(file_get_contents($logoPath)) : '';
-
-        $student = $convocation->student;
-        $firstName = str_replace(' ', '_', strtolower($student->user->first_name ?? ''));
-        $lastName = str_replace(' ', '_', strtolower($student->user->last_name ?? ''));
-
-        $seatingForSeat = ExamSeating::where('exam_id', $convocation->exam_id)
-            ->where('student_id', $convocation->student_id)
-            ->first();
-        $seatLabel = $seatingForSeat
-            ? ExamConvocationService::seatNumberFor($seatingForSeat)
-            : (int) ($convocation->seat_number ?? 1);
-
-        $pdf = Pdf::loadView('pdf.convocation', [
-            'convocation' => $convocation,
-            'exams' => [[
-                'date' => $convocation->exam->exam_date ? Carbon::parse($convocation->exam->exam_date)->format('d/m/Y') : 'À déterminer',
-                'time' => $convocation->exam->start_time ? substr($convocation->exam->start_time, 0, 5) : '09:00',
-                'module' => $convocation->exam->module->name ?? 'N/A',
-                'room' => $convocation->room->name ?? '-',
-                'seat' => 'Table N° '.$seatLabel,
-                'enseignant' => '-',
-            ]],
-            'session_name' => 'Session de Fin de Semestre',
-            'session_type' => 'ORDINAIRE',
-            'person_name' => ($student->user->first_name ?? '').' '.($student->user->last_name ?? ''),
-            'person_role' => 'Étudiant',
-            'person_id' => $student->cne ?? 'N/A',
-            'filiere_name' => $student->latestPathway?->filiere?->name ?? 'Tronc Commun',
-            'niveau_name' => $niveauName,
-            'qrCodeBase64' => $qrCodeBase64,
-            'logoBase64' => $logoBase64,
-            'date' => now()->format('d/m/Y'),
-        ]);
-
-        return $pdf->download("convocation_{$lastName}_{$firstName}.pdf");
+        $student = Student::where('user_id', $request->user()->id)->firstOrFail();
+        $seat = ExamSeating::whereKey($id)->where('student_id', $student->id)->firstOrFail();
+        abort_unless($seat->sent_at || in_array($seat->status, ['sent', 'present', 'absent', 'late']), 404, 'Convocation non diffusée.');
+        return app(\App\Http\Controllers\Api\PdfExportController::class)->studentConvocationPdf($seat->id);
     }
 
     /**
@@ -204,13 +115,13 @@ class StudentConvocationController extends Controller
             ->firstOrFail();
 
         $path = $request->hasFile('certificate')
-            ? $request->file('certificate')->store('certificates', 'public')
+            ? $request->file('certificate')->store('exam-absence-justifications', 'private')
             : null;
 
         ExamIncident::create([
             'exam_id' => $seating->exam_id,
             'student_id' => $seating->student_id,
-            'type' => 'absence_justifiee',
+            'type' => 'absence_declaree',
             'description' => $request->input('reason'),
             'attachment_path' => $path,
             'reported_by' => $request->user()->id,
@@ -218,7 +129,7 @@ class StudentConvocationController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Absence déclarée avec succès.',
+            'message' => 'Absence déclarée pour vérification par la scolarité; aucun statut de présence modifié.',
         ]);
     }
 }

@@ -98,6 +98,15 @@ class Exam extends Model
         return 'SHA256:ENCG-FES-'.$this->getKey().'-'.strtoupper(substr(md5($this->getKey().(string) $fingerprint), 0, 16));
     }
 
+    public function planningRevision(): string
+    {
+        return hash('sha256', json_encode([
+            'exam' => array_intersect_key($this->getRawOriginal(), array_flip(['id', 'exam_session_id', 'module_id', 'group_id', 'room_id', 'exam_date', 'start_time', 'duration_minutes', 'is_locked', 'updated_at'])),
+            'seats' => $this->seatings()->orderBy('id')->get(['id', 'room_id', 'seat_number', 'sent_at', 'is_present', 'status'])->toArray(),
+            'proctors' => $this->surveillances()->orderBy('id')->get(['id', 'professor_id', 'room_id', 'confirmed_at', 'sent_at', 'signed_at'])->toArray(),
+        ], JSON_THROW_ON_ERROR));
+    }
+
     /**
      * Horaire d'épreuve selon les créneaux officiels ENCG (2h + pause 15 min entre créneaux).
      */

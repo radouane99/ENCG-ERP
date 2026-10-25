@@ -235,55 +235,40 @@ class ExamPlanningController extends Controller
         ]);
     }
 
+    public function updatePlanning(Request $request, Exam $exam): JsonResponse
+    {
+        $data = $request->validate([
+            'exam_date' => 'required|date', 'start_time' => 'required|date_format:H:i',
+            'room_id' => 'required|integer', 'duration_minutes' => 'required|integer|min:1|max:480',
+            'planning_revision' => 'required|string|size:64',
+        ]);
+        $exam = app(CreatePlannedExamAction::class)->execute($data + $exam->only(['exam_session_id', 'module_id', 'group_id']), $exam);
+        return response()->json(['success' => true, 'message' => 'Planning enregistré.', 'exam' => $exam]);
+    }
+
     /**
      * Vérifier les conflits de salle et de groupe.
      */
     public function checkRoomConflict(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'room_id' => 'required|integer',
-            'group_id' => 'nullable|integer',
-            'exam_date' => 'required|date',
-            'start_time' => 'required|string',
-            'duration_minutes' => 'required|integer',
+        $data = $request->validate([
+            'room_id' => 'required|integer', 'group_id' => 'nullable|integer',
+            'exam_date' => 'required|date', 'start_time' => 'required|date_format:H:i',
+            'duration_minutes' => 'required|integer|min:1|max:480', 'exclude_exam_id' => 'nullable|integer',
         ]);
-
-        // Conflit de salle
-        $roomConflict = Exam::with(['module', 'room'])
-            ->where('room_id', $validated['room_id'])
-            ->where('exam_date', $validated['exam_date'])
-            ->where('start_time', $validated['start_time'])
-            ->first();
-
-        if ($roomConflict) {
-            return response()->json([
-                'success' => false,
-                'has_conflict' => true,
-                'message' => "{$roomConflict->room->name} est déjà réservée pour {$roomConflict->module->name}.",
-            ]);
-        }
-
-        // Conflit de groupe le même jour
-        if (! empty($validated['group_id'])) {
-            $groupConflict = Exam::with('module')
-                ->where('group_id', $validated['group_id'])
-                ->where('exam_date', $validated['exam_date'])
-                ->first();
-
-            if ($groupConflict) {
-                return response()->json([
-                    'success' => true,
-                    'has_conflict' => false,
-                    'warning' => "Ce groupe a déjà {$groupConflict->module->name} le même jour.",
-                ]);
-            }
-        }
-
-        return response()->json([
-            'success' => true,
-            'has_conflict' => false,
-            'message' => 'Aucun conflit détecté.',
-        ]);
+        $room = Room::where('institution_id', $request->user()->institution_id)->findOrFail($data['room_id']);
+        $slot = \App\Services\Academic\ExamSlotCatalog::normalizeForStorage($data['start_time']);
+        $start = Carbon::parse($data['exam_date'].' '.$slot['start_time']);
+        $end = $start->copy()->addMinutes($slot['duration_minutes']);
+        $busy = app(\App\Services\Academic\TimetableRoomGuard::class)->isRoomBusyAt((string) $room->id, $start, $end);
+        $query = Exam::whereDate('exam_date', $data['exam_date'])->whereHas('examSession', fn ($q) => $q->where('institution_id', $request->user()->institution_id))
+            ->when($data['exclude_exam_id'] ?? null, fn ($q, $id) => $q->whereKeyNot($id))
+            ->where(fn ($q) => $q->where('room_id', $room->id)->orWhereHas('seatings', fn ($q) => $q->where('room_id', $room->id))->when($data['group_id'] ?? null, fn ($q, $id) => $q->orWhere('group_id', $id)));
+        $conflict = $query->get()->contains(function ($exam) use ($start, $end, $data) {
+            $other = Carbon::parse($data['exam_date'].' '.$exam->start_time);
+            return $start->lt($other->copy()->addMinutes($exam->duration_minutes)) && $end->gt($other);
+        });
+        return response()->json(['success' => true, 'has_conflict' => $busy || $conflict, 'message' => $busy || $conflict ? 'Chevauchement de salle, de groupe ou de réservation.' : 'Aucun conflit détecté sur cet intervalle.']);
     }
 
     /**

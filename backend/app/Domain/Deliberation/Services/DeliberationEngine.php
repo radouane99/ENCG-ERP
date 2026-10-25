@@ -147,7 +147,7 @@ class DeliberationEngine extends CanonicalDeliberationEngine
     {
         $session = $deliberation->semester?->examSessions()
             ->where(function ($query) {
-                $query->whereRaw('LOWER(type) = ?', ['normale']);
+                $query->whereIn(\Illuminate\Support\Facades\DB::raw('LOWER(type)'), ['normal', 'normale', 'ordinaire']);
             })
             ->first()
             ?? $deliberation->semester?->examSessions()->first();
@@ -159,18 +159,9 @@ class DeliberationEngine extends CanonicalDeliberationEngine
         }
 
         foreach ($moduleAverages as $module) {
-            if ($module->final_module_score < LmdRules::VALIDATION_THRESHOLD) {
-                ResitEligibility::updateOrCreate(
-                    [
-                        'student_id' => $studentId,
-                        'module_id' => $module->module_id,
-                        'exam_session_id' => $examSessionId,
-                    ],
-                    [
-                        'is_eligible' => true,
-                    ]
-                );
-            }
+            app(\App\Services\Academic\ResitEligibilityRegistry::class)->record(
+                $studentId, $module->module_id, $deliberation->academic_year_id, $examSessionId, $module->final_module_score < LmdRules::VALIDATION_THRESHOLD
+            );
         }
     }
 

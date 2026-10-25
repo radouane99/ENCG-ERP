@@ -88,10 +88,8 @@ class DeliberationService
                     ->update(['status' => 'passed']);
             } else {
                 $rattrapage++;
-                ResitEligibility::updateOrCreate(
-                    ['student_id' => $studentId, 'module_id' => $moduleId, 'exam_session_id' => $sessionId],
-                    ['is_eligible' => true]
-                );
+                $yearId = $sessionId ? \App\Models\ExamSession::findOrFail($sessionId)->academic_year_id : AcademicContext::yearId();
+                app(ResitEligibilityRegistry::class)->record($studentId, $moduleId, (int) $yearId, $sessionId, true);
             }
         }
 

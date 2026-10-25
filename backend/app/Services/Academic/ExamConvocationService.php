@@ -98,6 +98,7 @@ class ExamConvocationService
     private function resolveStudentsForExam(Exam $exam): Collection
     {
         $ids = StudentRegistration::where('group_id', $exam->group_id)->where('academic_year_id', $exam->examSession->academic_year_id)->pluck('student_id');
+        $ids = app(ExamWorkflowGuard::class)->eligibleCandidates($exam->examSession, $exam->module_id, $ids);
         return $this->orderStudentsForExam($exam->id, Student::whereIn('id', $ids)->get());
     }
 
@@ -341,8 +342,8 @@ class ExamConvocationService
         $sentCount = 0;
 
         foreach ($surveillances as $professorId => $profSurveillances) {
-            $professorRecord = Professor::resolveWithDepartmentByPublicId($professorId);
-            $professor = $professorRecord?->user ?? User::find($professorId);
+            $professor = User::with('professor')->find($professorId);
+            $professorRecord = $professor?->professor;
             if (! $professor?->email) {
                 continue;
             }
@@ -592,6 +593,7 @@ class ExamConvocationService
         $exam->secondary_signature = $secondary ? ($secondary->signature_data ?: 'DIGITAL_CERTIFIED_STAMP_ENCG') : null;
         $exam->signature_data = $exam->principal_signature;
         $exam->seal = $exam->is_locked ? $exam->documentSeal() : null;
+        $exam->planning_revision = $exam->planningRevision();
 
         return [
             'success' => true,

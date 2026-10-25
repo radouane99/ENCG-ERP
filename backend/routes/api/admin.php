@@ -550,6 +550,7 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:admin|super-admi
         Route::post('/auto-generate-batch', [ExamPlanningController::class, 'autoGenerateBatch']);
         Route::post('/custom-generate', [ExamPlanningController::class, 'autoGenerateBatch']);
         Route::post('/store', [ExamPlanningController::class, 'store']);
+        Route::put('/{exam}/planning', [ExamPlanningController::class, 'updatePlanning']);
         Route::post('/check-conflict', [ExamPlanningController::class, 'checkRoomConflict']);
 
         // New Convocations module logic
@@ -595,6 +596,7 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:admin|super-admi
     // Convocations Lifecycle
     Route::prefix('convocations')->group(function () {
         Route::post('/generate-session', [ConvocationController::class, 'generateSession']);
+        Route::post('/publish-session', [ConvocationController::class, 'publishSession']);
         Route::post('/send-session', [ConvocationController::class, 'sendSession']);
         Route::post('/session/{sessionId}/campus-sms', [ConvocationController::class, 'sendCampusAlerts']);
         Route::get('/session/{sessionId}/stats', [ConvocationController::class, 'sessionStats']);
@@ -651,6 +653,8 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:admin|super-admi
     // Retakes
     Route::prefix('retakes')->group(function () {
         Route::get('/', [RetakeController::class, 'index']);
+        Route::get('/legacy', [RetakeController::class, 'legacy']);
+        Route::patch('/{id}/year', [RetakeController::class, 'reconcileYear']);
         Route::patch('/{id}/status', [RetakeController::class, 'updateStatus']);
         Route::post('/bulk-status', [RetakeController::class, 'bulkUpdateStatus']);          // #4 Bulk
         Route::post('/{id}/upload-justification', [RetakeController::class, 'uploadJustification']); // #6 Upload

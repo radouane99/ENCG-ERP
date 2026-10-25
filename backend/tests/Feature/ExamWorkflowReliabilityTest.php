@@ -201,5 +201,113 @@ class ExamWorkflowReliabilityTest extends TestCase
         $this->postJson('/api/discipline/'.$incident->id.'/convoke', ['hearing_date' => '2027-01-16 à 10:00', 'hearing_room' => 'Salle du conseil', 'send_email' => true])->assertOk()->assertJsonPath('email_status', 'accepted');
         \Illuminate\Support\Facades\Mail::assertSent(\App\Mail\DisciplineHearingMail::class, fn ($mail) => $mail->hasTo($seat->student->user->email) && count($mail->attachments()) === 1);
     }
+
+    public function test_generation_requires_real_enrolment_and_rolls_back_missing_data(): void
+    {
+        $this->makeTestProfessor(); $this->makeTestProfessor();
+        $payload = ['session_id' => $this->session->id, 'module_ids' => [$this->exam->module_id], 'modules_per_day' => 1];
+        $this->postJson('/api/exam-planning/auto-generate', $payload)->assertUnprocessable();
+        $this->assertDatabaseHas('exams', ['id' => $this->exam->id]);
+        $student = $this->makeTestStudent();
+        StudentRegistration::create(['student_id' => $student->id, 'academic_year_id' => $this->session->academic_year_id, 'filiere_id' => $this->exam->module->filiere_id, 'semester_number' => 1, 'group_id' => $this->exam->group_id, 'status' => 'academic_validated', 'registration_type' => 'new_enrollment']);
+        $this->postJson('/api/exam-planning/auto-generate', $payload)->assertOk();
+        $this->assertDatabaseCount('exams', 1);
+        $this->assertDatabaseCount('exam_seatings', 1);
+        $this->assertDatabaseCount('exam_surveillances', 2);
+        $this->assertDatabaseHas('exam_seatings', ['student_id' => $student->id]);
+    }
+
+    public function test_student_cannot_download_another_students_convocation(): void
+    {
+        $seat = $this->seat();
+        $other = $this->makeTestStudent();
+        $other->user->assignRole(Role::findOrCreate('student', 'sanctum'));
+        $this->actingAs($other->user, 'sanctum')->getJson('/api/students/'.$seat->student_id.'/convocation-pdf')->assertForbidden();
+    }
+
+    public function test_declared_unavailability_is_used_by_proctor_assignment(): void
+    {
+        $teacher = $this->makeTestProfessor();
+        \App\Models\ProfessorAvailability::create(['professor_id' => $teacher->user_id, 'academic_year_id' => $this->session->academic_year_id, 'availability_data' => ['Mardi' => ['matin' => false, 'apresMidi' => true]]]);
+        $this->assertFalse(app(\App\Services\Academic\ExamWorkflowGuard::class)->allowsProctor($teacher->user, $this->exam));
+    }
+
+    public function test_edit_saves_same_exam_and_rejects_stale_or_published_plan(): void
+    {
+        $revision = $this->getJson('/api/exam-planning/'.$this->exam->id.'/details')->assertOk()->json('data.exam.planning_revision');
+        $data = ['exam_date' => '2027-01-13', 'start_time' => '10:45', 'room_id' => $this->exam->room_id, 'duration_minutes' => 90, 'planning_revision' => $revision];
+        $url = '/api/exam-planning/'.$this->exam->id.'/planning';
+        $this->putJson($url, $data)->assertOk();
+        $this->assertDatabaseCount('exams', 1);
+        $this->assertDatabaseHas('exams', ['id' => $this->exam->id, 'duration_minutes' => 90, 'start_time' => '10:45:00']);
+        $this->putJson($url, $data)->assertStatus(409);
+        $seat = $this->seat(); $seat->update(['sent_at' => now()]);
+        $data['planning_revision'] = $this->exam->fresh()->planningRevision();
+        $this->putJson($url, $data)->assertStatus(409);
+    }
+
+    public function test_resit_invites_only_current_year_eligible_candidates(): void
+    {
+        $student = $this->makeTestStudent(); $other = $this->makeTestStudent();
+        $resit = $this->session->replicate(); $resit->type = 'rattrapage'; $resit->save();
+        $registry = app(\App\Services\Academic\ResitEligibilityRegistry::class);
+        $registry->record($student->id, $this->exam->module_id, $this->session->academic_year_id, $this->session->id, true);
+        \App\Models\ResitEligibility::create(['student_id' => $other->id, 'module_id' => $this->exam->module_id, 'is_eligible' => true]);
+        $ids = app(\App\Services\Academic\ExamWorkflowGuard::class)->eligibleCandidates($resit, $this->exam->module_id, collect([$student->id, $other->id]));
+        $this->assertSame([$student->id], $ids->all());
+    }
+
+    public function test_resit_registry_preserves_year_history_and_manual_refusal(): void
+    {
+        $student = $this->makeTestStudent();
+        $registry = app(\App\Services\Academic\ResitEligibilityRegistry::class);
+        $current = $registry->record($student->id, $this->exam->module_id, $this->session->academic_year_id, $this->session->id, true);
+        $current->update(['status' => 'Refusé', 'is_eligible' => false, 'decided_at' => now(), 'decided_by' => $this->admin->id]);
+        $registry->record($student->id, $this->exam->module_id, $this->session->academic_year_id, $this->session->id, true);
+        $this->assertFalse($current->fresh()->is_eligible);
+        $nextYear = $this->makeTestAcademicYear(['start_year' => 2027, 'end_year' => 2028, 'label' => '2027/2028', 'is_current' => false]);
+        $registry->record($student->id, $this->exam->module_id, $nextYear->id, null, true);
+        $this->assertDatabaseCount('resit_eligibilities', 2);
+        $this->assertDatabaseHas('resit_eligibilities', ['id' => $current->id, 'status' => 'Refusé', 'is_eligible' => false]);
+    }
+
+    public function test_legacy_resit_requires_explicit_year_and_never_merges_over_existing_decision(): void
+    {
+        $student = $this->makeTestStudent();
+        $legacy = \App\Models\ResitEligibility::create(['student_id' => $student->id, 'module_id' => $this->exam->module_id, 'is_eligible' => false, 'status' => 'Refusé']);
+        $this->getJson('/api/retakes/legacy')->assertOk()->assertJsonPath('count', 1);
+        $data = ['academic_year_id' => $this->session->academic_year_id, 'reason' => 'Année vérifiée depuis le dossier synthétique.'];
+        $this->patchJson('/api/retakes/'.$legacy->id.'/year', $data)->assertOk();
+        $this->assertDatabaseHas('resit_eligibilities', ['id' => $legacy->id, 'academic_year_id' => $this->session->academic_year_id, 'is_eligible' => false, 'status' => 'Refusé']);
+        $duplicate = \App\Models\ResitEligibility::create(['student_id' => $student->id, 'module_id' => $this->exam->module_id, 'is_eligible' => true]);
+        $this->patchJson('/api/retakes/'.$duplicate->id.'/year', $data)->assertStatus(409);
+        $this->assertNull($duplicate->fresh()->academic_year_id);
+        $this->assertDatabaseCount('resit_eligibilities', 2);
+    }
+
+    public function test_portal_publication_is_explicit_idempotent_and_independent_of_email(): void
+    {
+        \Illuminate\Support\Facades\Mail::fake();
+        $seat = $this->seat();
+        $student = $seat->student;
+        $student->user->assignRole(Role::findOrCreate('student', 'sanctum'));
+        $this->actingAs($student->user, 'sanctum')->getJson('/api/v1/student-portal/convocations?session_type=ORDINAIRE')->assertOk()->assertJsonCount(0, 'convocations');
+        $this->actingAs($this->admin, 'sanctum');
+        $this->postJson('/api/convocations/publish-session', ['session_id' => $this->session->id])->assertUnprocessable();
+        $this->session->update(['is_active' => true]);
+        $teacher = $this->makeTestProfessor();
+        ExamSurveillance::create(['exam_id' => $this->exam->id, 'room_id' => $this->exam->room_id, 'professor_id' => $teacher->user_id, 'role' => 'president_salle']);
+        $this->postJson('/api/convocations/publish-session', ['session_id' => $this->session->id])->assertOk()->assertJsonPath('published_count', 1);
+        $this->postJson('/api/convocations/publish-session', ['session_id' => $this->session->id])->assertOk()->assertJsonPath('published_count', 0);
+        $this->actingAs($student->user, 'sanctum')->getJson('/api/v1/student-portal/convocations?session_type=ORDINAIRE')->assertOk()->assertJsonCount(1, 'convocations');
+        $this->getJson('/api/v1/student-portal/convocations?session_type=RATTRAPAGE')->assertOk()->assertJsonCount(0, 'convocations');
+        $resit = $this->session->replicate(); $resit->type = 'rattrapage'; $resit->save();
+        $resitExam = $this->exam->replicate(); $resitExam->exam_session_id = $resit->id; $resitExam->save();
+        ExamSeating::create(['exam_id' => $resitExam->id, 'student_id' => $student->id, 'room_id' => $seat->room_id, 'seat_number' => 1, 'qr_token' => 'RESIT-SYN', 'status' => 'sent']);
+        $this->getJson('/api/v1/student-portal/convocations?session_type=ORDINAIRE')->assertOk()->assertJsonCount(1, 'convocations');
+        $this->getJson('/api/v1/student-portal/convocations?session_type=RATTRAPAGE')->assertOk()->assertJsonCount(1, 'convocations');
+        $this->assertDatabaseHas('exam_seatings', ['id' => $seat->id, 'status' => 'sent', 'qr_token' => 'SYN-QR']);
+        \Illuminate\Support\Facades\Mail::assertNothingSent();
+    }
 }
 

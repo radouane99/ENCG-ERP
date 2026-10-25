@@ -210,10 +210,11 @@ export interface AcademicYearPayload {
 }
 
 export interface ExamPayload {
+  exam_session_id: number;
   module_id: number;
   group_id: number;
   room_id: number;
-  date: string;
+  exam_date: string;
   start_time: string;
   duration_minutes: number;
   type?: string;
@@ -222,7 +223,7 @@ export interface ExamPayload {
 
 export interface RoomConflictPayload {
   room_id: number;
-  date: string;
+  exam_date: string;
   start_time: string;
   duration_minutes: number;
   exclude_exam_id?: number;

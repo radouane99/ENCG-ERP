@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -35,6 +35,9 @@ export default function StudentConvocationsPage() {
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [previewPdfUrl, setPreviewPdfUrl] = useState<string | null>(null);
 
+  useEffect(() => { setPreviewPdfUrl(null); setIsPreviewModalOpen(false) }, [activeSession])
+  useEffect(() => () => { if (previewPdfUrl) URL.revokeObjectURL(previewPdfUrl) }, [previewPdfUrl])
+
   // Query real student exam seatings & convocations
   const { data: convData, isLoading } = useQuery({
     queryKey: ['studentConvocations', activeSession],
@@ -55,7 +58,7 @@ export default function StudentConvocationsPage() {
     try {
       setIsPreviewLoading(true);
       toast.info(isRtl ? 'جاري تجهيز معاينة الاستدعاء الرسمي...' : "Chargement de l'Aperçu officiel (PDF A4)...");
-      const studentId = (user as any)?.student?.id || (user as any)?.id || 'me';
+      const studentId = 'me';
       const url = `/students/${studentId}/convocation-pdf?session_type=${activeSession}`;
 
       const res = await api.get(url, {
@@ -90,7 +93,7 @@ export default function StudentConvocationsPage() {
       setIsDownloadingPdf(true);
       toast.info(isRtl ? 'جاري استخراج استدعاء الامتحان الرسمي...' : 'Génération de la Convocation officielle aux Examens (PDF)...');
 
-      const studentId = (user as any)?.student?.id || (user as any)?.id || 'me';
+      const studentId = 'me';
       const url = `/students/${studentId}/convocation-pdf?session_type=${activeSession}`;
 
       const res = await api.get(url, {
@@ -154,7 +157,7 @@ export default function StudentConvocationsPage() {
             <div className="flex flex-wrap items-center gap-2 sm:gap-3 pt-1">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white/10 text-white text-xs font-semibold">
                 <Calendar className="w-3.5 h-3.5 text-amber-300 shrink-0" />
-                <span>{activeSession === 'ORDINAIRE' ? 'Session Normale (Printemps 2026)' : 'Session de Rattrapage'}</span>
+                <span>{activeSession === 'ORDINAIRE' ? 'Session ordinaire' : 'Session de Rattrapage'}</span>
               </span>
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white/10 text-white text-xs font-semibold">
                 <FileCheck2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />

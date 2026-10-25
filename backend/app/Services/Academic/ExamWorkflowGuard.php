@@ -65,4 +65,12 @@ class ExamWorkflowGuard
         $end = $start->copy()->addMinutes($exam->duration_minutes);
         return ProfessorAvailabilityService::allows($availability ?? ProfessorAvailabilityService::map($exam->examSession->academic_year_id), $profile, $start->dayOfWeekIso, $start->format('H:i:s'), $end->format('H:i:s'));
     }
+
+    public function eligibleCandidates(ExamSession $session, int $moduleId, \Illuminate\Support\Collection $studentIds): \Illuminate\Support\Collection
+    {
+        if (! in_array(strtolower($session->type), ['rattrapage', 'resit'], true)) { return $studentIds; }
+        return \App\Models\ResitEligibility::where('module_id', $moduleId)->where('is_eligible', true)->whereIn('student_id', $studentIds)
+            ->where('academic_year_id', $session->academic_year_id)
+            ->distinct()->pluck('student_id');
+    }
 }

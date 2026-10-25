@@ -25,6 +25,8 @@ export default function ExamWorkflowPanel({ sessionId }: { sessionId?: number | 
     { label: '5. Instruire les incidents', to: '/discipline', detail: data ? `${data.pending_incidents} dossiers à instruire` : 'Audition puis décision du conseil', ready: data && data.exams > 0 && data.pending_incidents === 0 },
     { label: '6. Délibérer et publier', to: '/admin/grades/pv', detail: 'Noyau de notes, jury et PV', ready: false },
     { label: '7. Traiter les recours', to: '/admin/grade-appeals', detail: 'Après publication des résultats', ready: false },
+    { label: '8. Organiser le rattrapage', to: '/admin/retake', detail: 'Droits annuels et décisions de dérogation', ready: false },
+    { label: '9. Archiver les PV', to: '/admin/exams/pv-archive', detail: 'Après visas et clôture des épreuves', ready: false },
   ]
   return <section className="rounded-2xl border border-border bg-card p-4 md:p-5 space-y-4" aria-label="Parcours des examens">
     <div className="flex items-start justify-between gap-3">

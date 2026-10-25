@@ -9,8 +9,10 @@ import { cn } from '@shared/lib/utils'
 import { examsApi } from '@shared/api/exams'
 import api from '@shared/lib/api'
 import toast from 'react-hot-toast'
+import LegacyResitPanel from '../components/LegacyResitPanel'
 
-type RetakeStatus = 'Accordé' | 'Refusé' | 'En attente'
+type DecisionStatus = 'Accordé' | 'Refusé' | 'En attente'
+type RetakeStatus = DecisionStatus | 'Non requis'
 type ActiveTab    = 'pending' | 'all' | 'refused'
 
 interface RetakeItem {
@@ -44,6 +46,7 @@ interface Stats {
 const STATUS_CFG: Record<RetakeStatus, { label: string; icon: React.ReactNode; cls: string }> = {
   'En attente': { label: 'À vérifier', icon: <Clock className="w-3 h-3" />,        cls: 'bg-amber-50 text-amber-700 border border-amber-200' },
   Accordé:      { label: 'Accordé',    icon: <CheckCircle className="w-3 h-3" />,  cls: 'bg-emerald-50 text-emerald-700 border border-emerald-200' },
+  'Non requis': { label: 'Non requis', icon: <Info className="w-3 h-3" />, cls: 'bg-slate-100 text-slate-600 border border-slate-200' },
   Refusé:       { label: 'Refusé',     icon: <XCircle className="w-3 h-3" />,      cls: 'bg-red-50 text-red-700 border border-red-200' },
 }
 
@@ -114,23 +117,12 @@ export default function AdminRetakePage() {
 
 
   // ── Single status update ───────────────────────────────────────────────
-  const handleUpdateStatus = async (id: number, status: RetakeStatus) => {
+  const handleUpdateStatus = async (id: number, status: DecisionStatus) => {
     setUpdating(id)
     try {
-      await examsApi.updateRetakeStatus(id, status)
-      setStudents(prev => prev.map(s => s.id === id ? { ...s, status } : s))
-      setStats(prev => {
-        const old = students.find(s => s.id === id)?.status
-        const next = { ...prev }
-        if (old === 'En attente') next.enAttente = Math.max(0, next.enAttente - 1)
-        if (old === 'Accordé')   next.accordes   = Math.max(0, next.accordes - 1)
-        if (old === 'Refusé')    next.refuses     = Math.max(0, next.refuses - 1)
-        if (status === 'En attente') next.enAttente += 1
-        if (status === 'Accordé')   next.accordes   += 1
-        if (status === 'Refusé')    next.refuses     += 1
-        return next
-      })
-      toast.success(status === 'Accordé' ? '✅ Rattrapage accordé · Email envoyé' : '❌ Rattrapage refusé · Email envoyé')
+      const response = await examsApi.updateRetakeStatus(id, status)
+      await fetchRetakes()
+      toast.success(response.message || 'Décision enregistrée.')
     } catch {
       toast.error('Erreur lors de la mise à jour')
     } finally {
@@ -143,9 +135,9 @@ export default function AdminRetakePage() {
     if (selectedIds.size === 0) { toast.error('Sélectionnez au moins un étudiant'); return }
     setBulkLoading(true)
     try {
-      await examsApi.bulkUpdateRetakeStatus([...selectedIds], status)
+      const response = await examsApi.bulkUpdateRetakeStatus([...selectedIds], status)
       setStudents(prev => prev.map(s => selectedIds.has(s.id) ? { ...s, status } : s))
-      toast.success(`${selectedIds.size} décision(s) enregistrée(s) · Emails envoyés`)
+      toast.success(response.message || `${selectedIds.size} décision(s) enregistrée(s).`)
       setSelectedIds(new Set())
       await fetchRetakes()
     } catch {
@@ -215,6 +207,7 @@ export default function AdminRetakePage() {
 
   return (
     <div className="space-y-6 p-6 max-w-[1400px] mx-auto pb-24">
+      <LegacyResitPanel onReconciled={fetchRetakes} />
 
       {/* Header */}
       <div className="flex items-center justify-between">

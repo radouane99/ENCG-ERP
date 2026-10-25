@@ -149,6 +149,7 @@ class PdfExportController extends Controller
                 }
             }
 
+            abort_unless($candidate, 403, 'Aucun dossier correspondant : récépissé non délivré.');
             if ($candidate) {
                 $statusLabel = 'Admis sur Liste Principale';
                 $statusRaw = strtolower((string) ($candidate->status ?? ''));
@@ -253,10 +254,10 @@ class PdfExportController extends Controller
         }
 
         $pdf = $this->generateSingleSurveillantConvocationPdf((int) $surveillance->id);
-        $profRecord = Professor::find($surveillance->professor_id);
+        $profRecord = Professor::where('user_id', $surveillance->professor_id)->first();
         $profUser = $profRecord?->user ?? User::find($surveillance->professor_id);
-        $fullName = trim(($profUser?->first_name ?? $profRecord?->first_name ?? '').'_'.($profUser?->last_name ?? $profRecord?->last_name ?? ($profUser?->name ?? 'Amina_Chraibi')));
-        $cleanName = preg_replace('/[^A-Za-z0-9_]/', '', str_replace(' ', '_', $fullName)) ?: 'Amina_Chraibi';
+        $fullName = trim(($profUser?->first_name ?? $profRecord?->first_name ?? '').'_'.($profUser?->last_name ?? $profRecord?->last_name ?? ($profUser?->name ?? 'Surveillant')));
+        $cleanName = preg_replace('/[^A-Za-z0-9_]/', '', str_replace(' ', '_', $fullName)) ?: 'Surveillant';
         $ref = 'SURV-2026-'.str_pad($surveillance->id, 3, '0', STR_PAD_LEFT);
 
         return $pdf->download("Ordre_Mission_Surveillance_Pr_{$cleanName}_{$ref}.pdf");
@@ -265,55 +266,13 @@ class PdfExportController extends Controller
     public function downloadMySurveillancesPdf(Request $request)
     {
         $user = $request->user();
-        $profId = $user?->id;
-
-        $surveillance = null;
-        if ($profId) {
-            $surveillance = ExamSurveillance::where('professor_id', $profId)->first();
-            if (! $surveillance) {
-                $profRecord = Professor::where('user_id', $profId)->first();
-                if ($profRecord) {
-                    $surveillance = ExamSurveillance::where('professor_id', $profRecord->id)->first();
-                }
-            }
-        }
-
-        if (! $surveillance) {
-            $targetProfId = $request->query('professor_id') ?: $request->query('prof_id');
-            if ($targetProfId) {
-                $surveillance = ExamSurveillance::where('professor_id', $targetProfId)->first();
-            }
-        }
-
-        if (! $surveillance) {
-            $targetSurvId = $request->query('surveillance_id') ?: $request->query('id');
-            if ($targetSurvId) {
-                $surveillance = ExamSurveillance::find($targetSurvId) ?? ExamSurveillance::where('exam_id', $targetSurvId)->first();
-            }
-        }
-
-        if (! $surveillance) {
-            $targetName = $user?->name ?: 'Amina Chraibi';
-            $prof = Professor::whereHas('user', function ($q) use ($targetName) {
-                $q->whereRaw("CONCAT(TRIM(first_name), ' ', TRIM(last_name)) ILIKE ?", ["%{$targetName}%"])
-                    ->orWhere('name', 'ILIKE', "%{$targetName}%");
-            })->first();
-
-            $candidateIds = array_filter([$prof?->id, $prof?->user_id]);
-            if (! empty($candidateIds)) {
-                $surveillance = ExamSurveillance::whereIn('professor_id', $candidateIds)->first();
-            }
-        }
-
-        if (! $surveillance) {
-            $surveillance = ExamSurveillance::latest('id')->first();
-        }
-
-        if ($surveillance) {
-            return $this->surveillantConvocationPdf($surveillance->id);
-        }
-
-        abort(404, 'Aucune séance de surveillance trouvée pour cet enseignant.');
+        abort_unless($user, 401);
+        $target = $request->integer('professor_id') ?: $user->id;
+        if ($target !== $user->id) { app(\App\Services\Academic\ExamWorkflowGuard::class)->manage(); }
+        $query = ExamSurveillance::where('professor_id', $target)->whereHas('exam.examSession', fn ($q) => $q->where('institution_id', $user->institution_id)->where('academic_year_id', \App\Services\Academic\AcademicContext::yearId()));
+        if ($request->filled('session_id')) { $query->whereHas('exam', fn ($q) => $q->where('exam_session_id', $request->integer('session_id'))); }
+        $surveillance = $query->firstOrFail();
+        return $this->surveillantConvocationPdf($surveillance->id);
     }
 
     public function surveillantConvocationPreview(int $surveillanceId)
@@ -326,6 +285,12 @@ class PdfExportController extends Controller
 
     private function generateSingleConvocationPdf(ExamSeating $seating)
     {
+        $actor = request()->user();
+        abort_unless($actor, 401);
+        if ($actor->hasRole('student')) {
+            abort_unless((int) $seating->student->user_id === (int) $actor->id, 403);
+            abort_unless($seating->sent_at || in_array($seating->status, ['sent', 'present', 'absent', 'late']), 404);
+        } else { app(\App\Services\Academic\ExamWorkflowGuard::class)->viewExam($seating->exam); }
         $student = $seating->student ?? Student::with('user')->find($seating->student_id);
         $user = $student?->user ?? ($student?->user_id ? User::find($student->user_id) : null);
         $studentId = $seating->student_id ?? ($student?->id ?? 1);
@@ -410,9 +375,11 @@ class PdfExportController extends Controller
         $professorId = $surveillance->professor_id;
         $sessionId = $surveillance->exam?->exam_session_id;
 
-        $profRecord = Professor::find($professorId) ?? Professor::where('user_id', $professorId)->first();
-        $profUser = $profRecord?->user ?? User::find($professorId);
-        $allIds = array_unique(array_filter([$professorId, $profRecord?->id, $profUser?->id]));
+        app(\App\Services\Academic\ExamWorkflowGuard::class)->viewExam($surveillance->exam);
+        if ((int) request()->user()->id !== (int) $professorId) { app(\App\Services\Academic\ExamWorkflowGuard::class)->manage(); }
+        $profUser = User::with('professor')->findOrFail($professorId);
+        $profRecord = $profUser->professor;
+        $allIds = [$profUser->id];
 
         $allSurveillances = ExamSurveillance::with(['exam.module', 'room', 'exam.room', 'exam.examSession'])
             ->whereIn('professor_id', $allIds)
@@ -620,6 +587,8 @@ class PdfExportController extends Controller
 
     public function batchDownloadSurveillantsPdf(Request $request, int $sessionId)
     {
+        app(\App\Services\Academic\ExamWorkflowGuard::class)->manage();
+        app(\App\Services\Academic\ExamWorkflowGuard::class)->session(ExamSession::findOrFail($sessionId));
         $surveillanceIds = $request->input('seating_ids', []);
         if (empty($surveillanceIds)) {
             return response()->json(['success' => false, 'message' => 'Aucun surveillant sélectionné.'], 400);

@@ -36,8 +36,8 @@ class ExamSchedulingService
             $exam = Exam::whereKey($examId)->lockForUpdate()->firstOrFail();
             app(ExamWorkflowGuard::class)->mutableSession($exam->examSession);
             abort_unless($exam->seatings()->exists() && $exam->surveillances()->exists(), 422, 'Compléter le placement et la surveillance avant diffusion.');
-            $count = Convocation::where('exam_id', $examId)->where('status', 'draft')->update(['status' => 'sent']);
-            ExamSeating::where('exam_id', $examId)->where(fn ($q) => $q->whereNull('status')->orWhere('status', 'draft'))->update(['status' => 'sent']);
+            Convocation::where('exam_id', $examId)->where('status', 'draft')->update(['status' => 'sent']);
+            $count = ExamSeating::where('exam_id', $examId)->where(fn ($q) => $q->whereNull('status')->orWhere('status', 'draft'))->update(['status' => 'sent']);
             activity()->causedBy(auth()->user())->performedOn($exam)->log('exam_convocations_published');
             return $count;
         });

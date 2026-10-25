@@ -68,7 +68,7 @@ export default function ExamPlanningManager() {
   const handleAutoAssign = async () => {
     try {
       if (exams.length === 0) return toast.error("Aucun examen à affecter.");
-      const res = await api.post(`/exam-planning/${exams[0].id}/auto-assign-proctors`);
+      const res = await api.post(`/exam-planning/${selectedSession}/auto-assign-proctors`);
       toast.success(res.data.message);
       queryClient.invalidateQueries({ queryKey: ['exams'] });
     } catch {

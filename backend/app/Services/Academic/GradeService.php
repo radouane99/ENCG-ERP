@@ -379,30 +379,18 @@ class GradeService
     {
         $created = 0;
         $updated = 0;
+        $sessionIds = \App\Models\ExamSession::where('academic_year_id', AcademicContext::yearId())->where('institution_id', $module->institution_id)
+            ->whereNotIn('type', ['rattrapage', 'resit'])->whereHas('exams', fn ($q) => $q->where('module_id', $module->id))->pluck('id');
+        $examSessionId = $sessionIds->count() === 1 ? $sessionIds->first() : null;
 
         foreach ($students as $student) {
             $moyenne = $this->calculateWeightedAverage($student, $normaleAssessments, []);
             $decision = $this->determineDecision($moyenne);
 
-            if (in_array($decision, ['R', 'NV'])) {
-                $record = ResitEligibility::updateOrCreate(
-                    [
-                        'module_id' => $module->id,
-                        'student_id' => $student->id,
-                    ],
-                    [
-                        'is_eligible' => true,
-                        'status' => 'eligible',
-                        'reason' => "Moyenne initiale: {$moyenne}/20 ({$decision})",
-                    ]
-                );
-
-                if ($record->wasRecentlyCreated) {
-                    $created++;
-                } else {
-                    $updated++;
-                }
-            }
+            $existing = ResitEligibility::where('student_id', $student->id)->where('module_id', $module->id)->where('academic_year_id', AcademicContext::yearId())->exists();
+            if ($moyenne === null) { continue; }
+            $record = app(ResitEligibilityRegistry::class)->record($student->id, $module->id, (int) AcademicContext::yearId(), $examSessionId, in_array($decision, ['R', 'NV']), "Moyenne initiale: {$moyenne}/20 ({$decision})");
+            if (! $existing) { $created++; } else { $updated++; }
         }
 
         return ['created' => $created, 'updated' => $updated];

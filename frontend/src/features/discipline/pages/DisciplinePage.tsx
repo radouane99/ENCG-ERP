@@ -87,8 +87,8 @@ export default function DisciplinePage(): React.ReactElement {
   // Deliberation Hearing Modal Form
   const [finalSanction, setFinalSanction] = useState<'module' | 'semestre' | 'blame' | 'avertissement' | 'exclusion' | 'dismissed'>('module')
   const [hearingObservations, setHearingObservations] = useState('')
-  const [votesFor, setVotesFor] = useState(5)
-  const [votesAgainst, setVotesAgainst] = useState(0)
+  const [votesFor, setVotesFor] = useState<number | ''>('')
+  const [votesAgainst, setVotesAgainst] = useState<number | ''>('')
 
   // Printable Document Modal Type
   const [printDocumentType, setPrintDocumentType] = useState<'convocation' | 'pv_decision'>('convocation')
@@ -171,11 +171,11 @@ export default function DisciplinePage(): React.ReactElement {
 
   // 5. Submit Disciplinary Hearing Decision Mutation
   const decideSanctionMutation = useMutation({
-    mutationFn: async (payload: { case_id: number; sanction: string; observations: string; votes_for: number }) => {
+    mutationFn: async (payload: { case_id: number; sanction: string; observations: string; votes_for: number | null; votes_against: number | null }) => {
       return api.post(`/discipline/${payload.case_id}/decide`, payload)
     },
     onSuccess: () => {
-      toast.success('⚖️ Délibération du Conseil scellée et enregistrée.')
+      toast.success('Décision du Conseil enregistrée.')
       setShowHearingModal(false)
       queryClient.invalidateQueries({ queryKey: ['discipline-cases'] })
     },
@@ -1220,7 +1220,7 @@ export default function DisciplinePage(): React.ReactElement {
                     type="number"
                     min={0}
                     value={votesFor}
-                    onChange={e => setVotesFor(Number(e.target.value))}
+                    onChange={e => setVotesFor(e.target.value === '' ? '' : Number(e.target.value))}
                     className="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl font-black text-center"
                   />
                 </div>
@@ -1230,7 +1230,7 @@ export default function DisciplinePage(): React.ReactElement {
                     type="number"
                     min={0}
                     value={votesAgainst}
-                    onChange={e => setVotesAgainst(Number(e.target.value))}
+                    onChange={e => setVotesAgainst(e.target.value === '' ? '' : Number(e.target.value))}
                     className="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl font-black text-center"
                   />
                 </div>
@@ -1250,13 +1250,14 @@ export default function DisciplinePage(): React.ReactElement {
                   case_id: selectedCase.id,
                   sanction: finalSanction,
                   observations: hearingObservations,
-                  votes_for: votesFor
+                  votes_for: votesFor === '' ? null : votesFor,
+                  votes_against: votesAgainst === '' ? null : votesAgainst
                 })}
                 disabled={decideSanctionMutation.isPending}
                 className="bg-rose-700 hover:bg-rose-800 text-white font-black rounded-xl text-xs px-6 shadow-lg"
               >
                 {decideSanctionMutation.isPending ? <Spinner className="w-4 h-4 me-1" /> : <Scale className="w-4 h-4 me-1" />}
-                Sceller la Délibération
+                Enregistrer la décision
               </Button>
             </div>
           </div>

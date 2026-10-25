@@ -82,4 +82,53 @@ test.describe('Workflow complet des examens', () => {
     await expect(page.getByRole('button', { name: /Clôturer le PV/ })).toBeEnabled()
     await expect(page.getByRole('button', { name: /PV Clôturé/ })).toHaveCount(0)
   })
+
+  test('la modification sauvegarde réellement et conserve le formulaire si le serveur refuse', async ({ page }) => {
+    await admin(page)
+    let allow = false; let saved = 0
+    const exam = { id: 8, exam_session_id: 3, module: { name: 'Audit synthétique' }, group: { name: 'SYN-G1' }, room_id: 6, room: { name: 'Salle synthétique' }, exam_date: '2027-01-12', start_time: '08:30:00', duration_minutes: 120, planning_revision: 'a'.repeat(64) }
+    await page.route(url => url.pathname === '/api/exam-planning/8/details', route => route.fulfill(json({ data: { exam, seatings: [], surveillances: [], incidents: [] } })))
+    await page.route(url => url.pathname === '/api/rooms', route => route.fulfill(json({ data: [{ id: 6, name: 'Salle synthétique' }] })))
+    await page.route(url => url.pathname === '/api/exam-planning/8/planning', route => {
+      expect(route.request().method()).toBe('PUT')
+      expect(route.request().postDataJSON()).toMatchObject({ exam_date: '2027-01-13', room_id: 6, planning_revision: 'a'.repeat(64) })
+      if (!allow) return route.fulfill({ ...json({ message: 'Planning modifié ailleurs' }), status: 409 })
+      saved++; exam.exam_date = '2027-01-13'; exam.planning_revision = 'b'.repeat(64)
+      return route.fulfill(json({ success: true, exam }))
+    })
+    await page.goto('/admin/exams/8/edit')
+    await page.getByLabel('Date de l’épreuve', { exact: true }).fill('2027-01-13')
+    await page.getByRole('button', { name: 'Enregistrer le planning', exact: true }).click()
+    await expect(page.getByText('Planning modifié ailleurs', { exact: true })).toBeVisible()
+    await expect(page.getByLabel('Date de l’épreuve', { exact: true })).toHaveValue('2027-01-13')
+    expect(saved).toBe(0)
+    allow = true
+    await page.getByRole('button', { name: 'Enregistrer le planning', exact: true }).click()
+    await expect(page.getByText('Planning enregistré.', { exact: true })).toBeVisible()
+    expect(saved).toBe(1)
+  })
+
+  test('un ancien droit de rattrapage exige un choix explicite et une référence avant rattachement', async ({ page }) => {
+    await admin(page)
+    let reconciled = false
+    await page.route(url => url.pathname === '/api/retakes', route => route.fulfill(json({ data: [] })))
+    await page.route(url => url.pathname === '/api/academic-years', route => route.fulfill(json({ data: [{ id: 7, label: '2025/2026' }, { id: 8, label: '2026/2027' }] })))
+    await page.route(url => url.pathname === '/api/retakes/legacy', route => route.fulfill(json({ count: reconciled ? 0 : 1, data: reconciled ? [] : [{ id: 51, student_name: 'Sara Synthetic', cne: 'SYN17', module_name: 'Audit synthétique', status: 'Refusé', reason: 'Dossier historique', created_at: '2026-06-10' }] })))
+    await page.route(url => url.pathname === '/api/retakes/51/year', route => {
+      expect(route.request().postDataJSON()).toMatchObject({ academic_year_id: 7, reason: 'PV historique vérifié par la scolarité.' })
+      reconciled = true
+      return route.fulfill(json({ success: true }))
+    })
+    await page.goto('/admin/retake')
+    await page.getByText(/1 ancien\(s\) droit\(s\) de rattrapage sans année/).click()
+    const button = page.getByRole('button', { name: 'Rattacher ce dossier', exact: true })
+    await expect(button).toBeDisabled()
+    await expect(page.getByLabel('Année confirmée par le dossier', { exact: true })).toHaveValue('')
+    await page.getByLabel('Année confirmée par le dossier', { exact: true }).selectOption('7')
+    await expect(button).toBeDisabled()
+    await page.getByLabel('Élément justifiant le rattachement', { exact: true }).fill('PV historique vérifié par la scolarité.')
+    await button.click()
+    await expect(button).toHaveCount(0)
+    expect(reconciled).toBe(true)
+  })
 })

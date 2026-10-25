@@ -71,6 +71,13 @@ class ConvocationController extends Controller
         return response()->json($this->convocationService->generateSessionConvocations($validated['session_id']));
     }
 
+    public function publishSession(Request $request): JsonResponse
+    {
+        $data = $request->validate(['session_id' => 'required|integer']);
+        $count = app(\App\Actions\Exam\PublishSessionConvocationsAction::class)->execute($data['session_id']);
+        return response()->json(['success' => true, 'published_count' => $count, 'message' => $count.' convocation(s) publiée(s) sur le portail. Aucun email envoyé.']);
+    }
+
     public function sendSession(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -556,21 +563,9 @@ class ConvocationController extends Controller
         if ($isOwner) { $query->where(fn ($q) => $q->whereNotNull('sent_at')->orWhereIn('status', ['sent', 'present', 'absent', 'late'])); }
 
         if ($sessionType === 'RATTRAPAGE') {
-            $query->where(function ($q) {
-                $q->whereHas('exam.session', function ($s) {
-                    $s->where('type', 'rattrapage')->orWhere('name', 'like', '%rattrapage%');
-                })->orWhereHas('exam', function ($e) {
-                    $e->where('type', 'rattrapage');
-                });
-            });
-        } elseif ($sessionType === 'ORDINAIRE' || $sessionType === 'NORMALE') {
-            $query->where(function ($q) {
-                $q->whereHas('exam.session', function ($s) {
-                    $s->whereIn('type', ['normal', 'normale', 'ordinaire'])->orWhere('name', 'like', '%normale%')->orWhere('name', 'like', '%ordinaire%');
-                })->orWhereHas('exam', function ($e) {
-                    $e->whereIn('type', ['normale', 'ordinaire', 'written', 'oral']);
-                });
-            });
+            $query->whereHas('exam.session', fn ($q) => $q->whereIn('type', ['rattrapage', 'resit']));
+        } elseif (in_array($sessionType, ['ORDINAIRE', 'NORMALE'], true)) {
+            $query->whereHas('exam.session', fn ($q) => $q->whereIn('type', ['normal', 'normale', 'ordinaire']));
         }
 
         $seatings = $query->get();
