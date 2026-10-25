@@ -165,12 +165,11 @@ const navigation: (NavItem | NavGroup)[] = [
       { label: 'Double Correction Apogée', labelAr: 'التصحيح المزدوج للمواد', href: '/professor/double-grading', icon: ArrowRightLeft, badge: 'LMD', roles: ['professor'] },
       { label: 'Recours & Réclamations (48h)', labelAr: 'شكايات ومراجعة النقاط', href: '/professor/grade-appeals', icon: Scale, badge: '48h', roles: ['professor', 'vacataire'] },
       { label: 'Cahier de Texte Vocal (IA)', labelAr: 'دفتر النصوص الصوتي الذكي', href: '/professor/voice-textbook', icon: Mic, badge: 'IA', roles: ['professor', 'vacataire'] },
-      { label: 'Saisie des Absences & Appel', labelAr: 'تسجيل الغيابات والمناداة', href: '/professor/absences', icon: UserX, roles: ['professor', 'vacataire'] },
+      { label: 'Présences & Émargement Officiel', labelAr: 'الحضور والإمضاء الرسمي', href: '/professor/student-rosters', icon: ClipboardList, roles: ['professor', 'vacataire'] },
       { label: 'Surveillances Planifiées', labelAr: 'جدول الحراسات المبرمجة', href: '/professor/proctoring', icon: Eye, roles: ['professor'] },
       { label: 'Grille Soutenance PFE', labelAr: 'شبكة تقييم مناقشات PFE', href: '/professor/pfe-evaluation', icon: Award, badge: 'PFE', roles: ['professor', 'vacataire'] },
       { label: 'Charge Statutaire & Vacations', labelAr: 'الحصص ومستحقات الساعات', href: '/professor/workload', icon: Clock, badge: 'RH', roles: ['professor', 'vacataire'] },
       { label: 'Guichet RH & Ordres de Mission', labelAr: 'شباك الوثائق الإدارية والمهمات', href: '/professor/documents', icon: Stamp, badge: 'RH', roles: ['professor', 'vacataire'] },
-      { label: 'Listes Étudiants & Émargement', labelAr: 'لوائح الطلبة وأوراق الحضور', href: '/professor/student-rosters', icon: ClipboardList, roles: ['professor', 'vacataire'] },
     ]
   },
 ]

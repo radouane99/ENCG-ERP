@@ -20,6 +20,8 @@ use App\Models\StudentPathway;
 use App\Models\Textbook;
 use App\Models\User;
 use App\Models\VacationContract;
+use App\Services\Academic\TimetableCampaignService;
+use App\Services\Documents\OfficialPdfFactory;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;

@@ -406,11 +406,6 @@ class ProfessorAiCopilotController extends Controller
         if ($moduleId) {
             $sessionsQuery->where('module_id', $moduleId);
         }
-        if (! empty($subGroup)) {
-            $sessionsQuery->where(function ($q) use ($subGroup) {
-                $q->where('sub_group', $subGroup)->orWhereNull('sub_group');
-            });
-        }
         $sessions = $sessionsQuery->orderBy('session_date', 'asc')->get();
         $totalSessionsCount = max(1, $sessions->count());
 

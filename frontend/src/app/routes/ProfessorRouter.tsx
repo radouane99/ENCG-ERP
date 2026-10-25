@@ -1,4 +1,4 @@
-import { Routes,Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { lazy } from 'react';
 
 const ProfessorDashboard = lazy(() => import('@features/professor-portal/pages/ProfessorDashboard'))
@@ -7,8 +7,7 @@ const ProfessorProctoring = lazy(() => import('@features/professor-portal/pages/
 const ProfessorAvailability = lazy(() => import('@features/professor-portal/pages/ProfessorAvailability'))
 const TextbooksPage = lazy(() => import('@features/admin/pages/TextbooksPage'))
 const ProfessorInternships = lazy(() => import('@features/internships/ui/pages/ProfessorSupervisionPage'))
-const ProfessorAbsences = lazy(() => import('@features/absences/ui/pages/ProfessorAbsencesView'))
-const ProfessorCall = lazy(() => import('@features/professor-portal/pages/ProfessorCall'))
+
 const ProfessorClassroom = lazy(() => import('@features/professor-portal/pages/ProfessorClassroom'))
 const ProfessorReservations = lazy(() => import('@features/professor-portal/pages/ProfessorReservations'))
 const RoomAvailabilityHubPage = lazy(() => import('@features/infrastructure/pages/RoomAvailabilityHubPage'))
@@ -52,8 +51,8 @@ export default function ProfessorRouter() {
       <Route path="textbook" element={<TextbooksPage />} />
       <Route path="voice-textbook" element={<ProfessorVoiceTextbook />} />
       <Route path="internships" element={<ProfessorInternships />} />
-      <Route path="absences" element={<ProfessorAbsences />} />
-      <Route path="absences/call/:sessionId" element={<ProfessorCall />} />
+      <Route path="absences" element={<Navigate to="/professor/student-rosters" replace />} />
+      <Route path="absences/call/:sessionId" element={<Navigate to="/professor/student-rosters" replace />} />
       <Route path="classroom/:moduleId" element={<ProfessorClassroom />} />
       <Route path="reservations" element={<ProfessorReservations />} />
       <Route path="rooms/availability" element={<RoomAvailabilityHubPage />} />

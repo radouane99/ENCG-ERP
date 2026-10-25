@@ -7,10 +7,10 @@ export interface OfflineAttendanceRecord {
   sessionId?: number | null;
   session_id?: number | null;
   close_session?: boolean;
-  moduleId?: string | number;
-  module_id?: string | number;
-  groupId?: string | number;
-  group_id?: string | number;
+  moduleId?: string | number | null;
+  module_id?: string | number | null;
+  groupId?: string | number | null;
+  group_id?: string | number | null;
   date: string;
   records: Array<{
     student_id: number;

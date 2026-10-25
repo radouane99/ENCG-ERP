@@ -27,6 +27,8 @@ interface Props {
   isOpen: boolean
   onClose: () => void
   sessionId: string | number
+  attendanceSessionId?: number
+  attendanceDate?: string
   sessionData?: {
     id?: string | number
     session_id?: string | number
@@ -172,9 +174,15 @@ function formatFrenchCompactDate(dateStr: string): string {
   }
 }
 
-export function QRScannerModal({ isOpen, onClose, sessionId, sessionData }: Props) {
+export function QRScannerModal({ isOpen, onClose, sessionId, sessionData, attendanceSessionId, attendanceDate }: Props) {
   const [scheduleId, setScheduleId] = useState('')
   const [activeId, setActiveId] = useState<number | null>(null)
+  useEffect(() => {
+    if (isOpen && attendanceSessionId) {
+      setActiveId(attendanceSessionId)
+      if (attendanceDate) setSessionDate(attendanceDate.slice(0, 10))
+    }
+  }, [isOpen, attendanceSessionId, attendanceDate])
   const [sessionDate, setSessionDate] = useState(() =>
     getDateForScheduleDay(sessionData?.day_of_week ?? sessionData?.day_name)
   )
@@ -222,11 +230,11 @@ export function QRScannerModal({ isOpen, onClose, sessionId, sessionData }: Prop
     } else {
       // Initialize date for current session's day
       const targetDay = sessionData?.day_of_week ?? sessionData?.day_name
-      if (targetDay) {
+      if (targetDay && !attendanceSessionId) {
         setSessionDate(getDateForScheduleDay(targetDay))
       }
     }
-  }, [isOpen, sessionData?.day_of_week, sessionData?.day_name])
+  }, [isOpen, sessionData?.day_of_week, sessionData?.day_name, attendanceSessionId])
 
   // Auto-detect matching schedule
   useEffect(() => {
@@ -251,11 +259,6 @@ export function QRScannerModal({ isOpen, onClose, sessionId, sessionData }: Prop
         }
       }
 
-      // 3. Fallback to first valid schedule
-      const firstValid = context.data.find(s => s.groupId)
-      if (firstValid) {
-        setScheduleId(firstValid.id)
-      }
     }
   }, [context.data, sessionId, sessionData, scheduleId])
 
@@ -274,11 +277,11 @@ export function QRScannerModal({ isOpen, onClose, sessionId, sessionData }: Prop
 
   // Automatically recalculate sessionDate when selectedSchedule resolves
   useEffect(() => {
-    if (selectedSchedule) {
+    if (selectedSchedule && !attendanceSessionId) {
       const scheduleDay = selectedSchedule.day_of_week ?? selectedSchedule.day
       setSessionDate(getDateForScheduleDay(scheduleDay))
     }
-  }, [selectedSchedule?.id, selectedSchedule?.day, selectedSchedule?.day_of_week])
+  }, [selectedSchedule?.id, selectedSchedule?.day, selectedSchedule?.day_of_week, attendanceSessionId])
 
   // Start attendance session
   async function handleStartSession() {

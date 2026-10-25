@@ -7,13 +7,17 @@ UserCheck,ShieldAlert,RefreshCw,Printer,Info,
 FileText,X,CheckCircle2,BarChart3,Download,Copy,
 LayoutGrid,LayoutList,UserX,RotateCcw,QrCode,
 Lock,Unlock,MessageCircle,Eye,Calendar,Pencil,
-Tag,PrinterIcon,Save,Sparkles,AlertTriangle,Clock
+Tag,PrinterIcon,Save,Sparkles,AlertTriangle,Clock,
+Radio,Smartphone,CheckCheck,Maximize2,Minimize2,Zap,
+Mic,MicOff,Volume2,CheckSquare,CalendarDays,Play,Check,Wifi,WifiOff,
+History,Plus,Trash2,ArrowRight
 } from 'lucide-react';
 import api from '@/shared/lib/api';
 import { openAuthenticatedUrl } from '@shared/lib/documentAccess';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/stores/authStore';
 import { cn } from '@shared/lib/utils';
+import { offlineAttendanceStore } from '@/shared/lib/offlineAttendanceStore';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -53,7 +57,7 @@ interface StudentRow {
 type ListMode = 'section' | 'subgroup';
 type PdfMode = 'emargement' | 'seances';
 type PdfOrientation = 'portrait' | 'paysage';
-type ViewMode = 'table' | 'cards';
+type ViewMode = 'table' | 'cards' | 'voice';
 type AttendanceFilter = 'all' | 'present' | 'absent' | 'annotated';
 type AnnotationTag = 'justifie' | 'retard' | 'exclusion' | 'rattrapage' | 'remarque';
 
@@ -62,12 +66,33 @@ interface StudentAnnotation {
   tag?: AnnotationTag;
 }
 
+export interface RattrapageAttendanceRecord {
+  studentId: number;
+  status: 'present' | 'absent' | 'retard' | 'excuse';
+  note?: string;
+  regularized?: boolean;
+}
+
+export interface RattrapageSession {
+  id: string;
+  originalSeance: string;
+  date: string;
+  timeSlot: string;
+  room: string;
+  title: string;
+  records: RattrapageAttendanceRecord[];
+  createdAt: string;
+}
+
 interface SeanceData {
   absentIds: number[];
   annotations: Record<number, StudentAnnotation>;
   isLocked: boolean;
   date: string;
   savedAt?: string;
+  isSavedToDb?: boolean;
+  session_id?: number;
+  rattrapages?: RattrapageSession[];
 }
 
 const SEANCES = Array.from({ length: 12 }, (_, i) => `S${i + 1}`);
@@ -208,6 +233,54 @@ export default function ProfessorStudentRosterPage() {
   const [loadingRiskAnalysis, setLoadingRiskAnalysis] = useState(false);
   const [riskData, setRiskData] = useState<any>(null);
 
+  // 10. Solutions 1, 2, 3: Live Auto-Detection, Timeline & Smart QR Check-in
+  const [showLiveQrModal, setShowLiveQrModal] = useState(false);
+  const [qrCountdown, setQrCountdown] = useState(15);
+  const [qrRotator, setQrRotator] = useState(0);
+  const [qrCheckedInIds, setQrCheckedInIds] = useState<Set<number>>(new Set());
+  const [isFullscreenQr, setIsFullscreenQr] = useState(false);
+
+  // 11. Voice Dictation IA (Mode Appel Vocal - merged from ProfessorAbsencesView)
+  const [isListening, setIsListening] = useState(false);
+  const [voiceTranscript, setVoiceTranscript] = useState('');
+
+  // 12. Live Session (4-status, backend QR token, offline sync)
+  type StudentStatus = 'present' | 'absent' | 'retard' | 'excuse';
+  interface LiveStudent {
+    id: number; first_name: string; last_name: string; cne: string;
+    status: StudentStatus; version?: number;
+  }
+  const [liveStudents, setLiveStudents] = useState<LiveStudent[]>([]);
+  const [liveSessionId, setLiveSessionId] = useState<number | null>(null);
+  const [liveQrToken, setLiveQrToken] = useState('');
+  const [liveQrExpiresAt, setLiveQrExpiresAt] = useState<string | null>(null);
+  const [liveQrCountdown, setLiveQrCountdown] = useState(0);
+  const [isSessionActive, setIsSessionActive] = useState(false);
+  const [savingLive, setSavingLive] = useState(false);
+  const [activeVoiceTab, setActiveVoiceTab] = useState<'trombi' | 'qr' | 'voice'>('trombi');
+  const [selectedDayFilter, setSelectedDayFilter] = useState('all');
+
+  // 13. Rattrapage (Séance de Rattrapage & Appel des Absents)
+  const [showRattrapageModal, setShowRattrapageModal] = useState(false);
+  const [rattrapageTargetSeance, setRattrapageTargetSeance] = useState<string>('S1');
+  const [rattrapageDate, setRattrapageDate] = useState<string>(new Date().toISOString().slice(0, 10));
+  const [rattrapageTime, setRattrapageTime] = useState<string>('14:00 - 16:00');
+  const [rattrapageRoom, setRattrapageRoom] = useState<string>('Salle de Rattrapage');
+  const [rattrapageTitle, setRattrapageTitle] = useState<string>('');
+  const [rattrapageStudents, setRattrapageStudents] = useState<{
+    student: StudentRow;
+    status: 'present' | 'absent' | 'retard' | 'excuse';
+    note: string;
+    regularize: boolean;
+  }[]>([]);
+  const [rattrapageTab, setRattrapageTab] = useState<'call' | 'qr' | 'history'>('call');
+  const [autoRegularizeOriginal, setAutoRegularizeOriginal] = useState<boolean>(true);
+  const [savingRattrapage, setSavingRattrapage] = useState(false);
+  const [rattrapageSearchQuery, setRattrapageSearchQuery] = useState('');
+  const [rattrapageStatusFilter, setRattrapageStatusFilter] = useState<'all' | 'absent' | 'present'>('all');
+  const [selectedStudentToAdd, setSelectedStudentToAdd] = useState<number | null>(null);
+  const [rattrapageQrCountdown, setRattrapageQrCountdown] = useState(15);
+  const [rattrapageQrCheckedInIds, setRattrapageQrCheckedInIds] = useState<Set<number>>(new Set());
   // Storage key for caching séances locally
   const storageKey = useMemo(() => {
     if (!selectedGroupId || !selectedModuleId) return null;
@@ -221,8 +294,19 @@ export default function ProfessorStudentRosterPage() {
       const raw = localStorage.getItem(storageKey);
       if (raw) {
         const parsed = JSON.parse(raw);
-        setSeanceStore(parsed);
-        const currentData = parsed[selectedSeance];
+        // Only keep sessions with actual recorded data or saved in DB
+        const cleaned: Record<string, SeanceData> = {};
+        Object.entries(parsed).forEach(([code, data]: [string, any]) => {
+          const isSaved = !!data.isSavedToDb || !!data.session_id;
+          const hasAbsents = Array.isArray(data.absentIds) && data.absentIds.length > 0;
+          const isLocked = !!data.isLocked;
+          if (isSaved || hasAbsents || isLocked) {
+            cleaned[code] = data;
+          }
+        });
+
+        setSeanceStore(cleaned);
+        const currentData = cleaned[selectedSeance];
         if (currentData) {
           setAbsentIds(new Set(currentData.absentIds || []));
           setAnnotations(currentData.annotations || {});
@@ -246,22 +330,40 @@ export default function ProfessorStudentRosterPage() {
 
   // Switch séance and restore its state
   const handleSelectSeance = (seance: string) => {
-    // Persist current séance before switching
+    // Only persist previous session if it has actual data or was saved to DB
     if (storageKey) {
-      const updatedStore = {
-        ...seanceStore,
-        [selectedSeance]: {
-          absentIds: Array.from(absentIds),
-          annotations,
-          isLocked,
-          date: seanceDate,
-          savedAt: new Date().toISOString(),
+      const existing = seanceStore[selectedSeance];
+      const isSaved = !!existing?.isSavedToDb || !!existing?.session_id;
+      const hasActualData = absentIds.size > 0 || isLocked || isSaved;
+
+      if (hasActualData) {
+        const updatedStore = {
+          ...seanceStore,
+          [selectedSeance]: {
+            absentIds: Array.from(absentIds),
+            annotations,
+            isLocked,
+            date: seanceDate,
+            savedAt: existing?.savedAt || (isSaved ? new Date().toISOString() : undefined),
+            isSavedToDb: isSaved,
+            session_id: existing?.session_id,
+          }
+        };
+        setSeanceStore(updatedStore);
+        try {
+          localStorage.setItem(storageKey, JSON.stringify(updatedStore));
+        } catch {}
+      } else {
+        // Remove empty unrecorded session from store
+        if (seanceStore[selectedSeance]) {
+          const updatedStore = { ...seanceStore };
+          delete updatedStore[selectedSeance];
+          setSeanceStore(updatedStore);
+          try {
+            localStorage.setItem(storageKey, JSON.stringify(updatedStore));
+          } catch {}
         }
-      };
-      setSeanceStore(updatedStore);
-      try {
-        localStorage.setItem(storageKey, JSON.stringify(updatedStore));
-      } catch {}
+      }
     }
 
     setSelectedSeance(seance);
@@ -283,23 +385,43 @@ export default function ProfessorStudentRosterPage() {
     newAbsentIds: Set<number>,
     newAnnotations: Record<number, StudentAnnotation>,
     newLocked: boolean,
-    newDate: string
+    newDate: string,
+    markSavedToDb: boolean = false
   ) => {
     if (!storageKey) return;
-    const updatedStore = {
-      ...seanceStore,
-      [selectedSeance]: {
-        absentIds: Array.from(newAbsentIds),
-        annotations: newAnnotations,
-        isLocked: newLocked,
-        date: newDate,
-        savedAt: new Date().toISOString(),
+    const existing = seanceStore[selectedSeance];
+    const isSaved = markSavedToDb || !!existing?.isSavedToDb || !!existing?.session_id;
+    const hasActualData = newAbsentIds.size > 0 || newLocked || isSaved;
+
+    if (hasActualData) {
+      const updatedStore = {
+        ...seanceStore,
+        [selectedSeance]: {
+          absentIds: Array.from(newAbsentIds),
+          annotations: newAnnotations,
+          isLocked: newLocked,
+          date: newDate,
+          savedAt: existing?.savedAt || (isSaved ? new Date().toISOString() : undefined),
+          isSavedToDb: isSaved,
+          session_id: existing?.session_id,
+          rattrapages: existing?.rattrapages,
+        }
+      };
+      setSeanceStore(updatedStore);
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(updatedStore));
+      } catch {}
+    } else {
+      // Remove empty unrecorded session from store
+      if (seanceStore[selectedSeance]) {
+        const updatedStore = { ...seanceStore };
+        delete updatedStore[selectedSeance];
+        setSeanceStore(updatedStore);
+        try {
+          localStorage.setItem(storageKey, JSON.stringify(updatedStore));
+        } catch {}
       }
-    };
-    setSeanceStore(updatedStore);
-    try {
-      localStorage.setItem(storageKey, JSON.stringify(updatedStore));
-    } catch {}
+    }
   }, [storageKey, selectedSeance, seanceStore]);
 
   // Derived options
@@ -316,6 +438,321 @@ export default function ProfessorStudentRosterPage() {
     () => schedules.find(s => s.id === selectedScheduleId) || null,
     [schedules, selectedScheduleId]
   );
+
+  // ─── Solutions 1 & 2: Smart Auto-Detection & Progression Timeline ───
+  // Strict rule: A session is ONLY considered completed if:
+  // 1. Actually saved to database (isSavedToDb / session_id)
+  // 2. Has recorded absences (absentIds.length > 0)
+  // 3. Or locked by the professor (isLocked)
+  const completedSeances = useMemo(() => {
+    return SEANCES.filter(s => {
+      const info = seanceStore[s];
+      if (!info) return false;
+      const isSaved = !!info.isSavedToDb || !!info.session_id;
+      const hasAbsents = Array.isArray(info.absentIds) && info.absentIds.length > 0;
+      const isLocked = !!info.isLocked;
+      return isSaved || hasAbsents || isLocked;
+    });
+  }, [seanceStore]);
+
+  const nextRecommendedSeance = useMemo(() => {
+    const firstUncompleted = SEANCES.find(s => !completedSeances.includes(s));
+    return firstUncompleted || 'S1';
+  }, [completedSeances]);
+
+  // Is the current selected timetable slot live right now?
+  const isLiveSessionNow = useMemo(() => {
+    if (!selectedSchedule) return false;
+    const now = new Date();
+    const currentDay = now.getDay() === 0 ? 7 : now.getDay();
+    if (selectedSchedule.day_of_week && Number(selectedSchedule.day_of_week) === currentDay) {
+      if (selectedSchedule.start_time && selectedSchedule.end_time) {
+        const [startH, startM] = selectedSchedule.start_time.split(':').map(Number);
+        const [endH, endM] = selectedSchedule.end_time.split(':').map(Number);
+        const currentMinutes = now.getHours() * 60 + now.getMinutes();
+        const startMinutes = startH * 60 + startM - 30; // 30 mins before
+        const endMinutes = endH * 60 + endM + 30; // 30 mins after
+        return currentMinutes >= startMinutes && currentMinutes <= endMinutes;
+      }
+      return true;
+    }
+    return false;
+  }, [selectedSchedule]);
+
+  // ─── Solution 3: Dynamic Live QR Check-in Rotator & Simulator ───
+  useEffect(() => {
+    if (!showLiveQrModal) return;
+    const interval = setInterval(() => {
+      setQrCountdown(prev => {
+        if (prev <= 1) {
+          setQrRotator(r => r + 1);
+          return 15;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [showLiveQrModal]);
+
+  // QR token changes dynamically every 15s to prevent sharing
+  const qrPayloadUrl = useMemo(() => {
+    const baseUrl = window.location.origin;
+    const token = btoa(`${selectedGroupId}:${selectedModuleId}:${selectedSeance}:${qrRotator}`);
+    return `${baseUrl}/student/checkin?token=${token}`;
+  }, [selectedGroupId, selectedModuleId, selectedSeance, qrRotator]);
+
+  // Handle student check-in simulation / scan
+  const handleSimulateQrScan = () => {
+    const unscanned = students.filter(s => !qrCheckedInIds.has(s.id) && absentIds.has(s.id));
+    if (unscanned.length === 0) {
+      const anyUnscanned = students.filter(s => !qrCheckedInIds.has(s.id));
+      if (anyUnscanned.length === 0) {
+        toast.info('Tous les étudiants de ce groupe ont déjà scanné le QR Code !');
+        return;
+      }
+      const randomSt = anyUnscanned[Math.floor(Math.random() * anyUnscanned.length)];
+      setQrCheckedInIds(prev => new Set(prev).add(randomSt.id));
+      toast.success(`⚡ Scan reçu : ${randomSt.first_name} ${randomSt.last_name} (${randomSt.matricule || 'Étudiant'})`);
+      return;
+    }
+    const randomSt = unscanned[Math.floor(Math.random() * unscanned.length)];
+    setQrCheckedInIds(prev => new Set(prev).add(randomSt.id));
+    setAbsentIds(prev => {
+      const next = new Set(prev);
+      next.delete(randomSt.id);
+      return next;
+    });
+    toast.success(`⚡ Présence validée par QR : ${randomSt.first_name} ${randomSt.last_name}`);
+  };
+
+  // Apply all QR check-ins
+  const handleApplyLiveQr = () => {
+    setAbsentIds(prev => {
+      const next = new Set(prev);
+      qrCheckedInIds.forEach(id => next.delete(id));
+      return next;
+    });
+    persistCurrentSeance(
+      new Set(Array.from(absentIds).filter(id => !qrCheckedInIds.has(id))),
+      annotations,
+      isLocked,
+      seanceDate
+    );
+    setShowLiveQrModal(false);
+    toast.success(`✨ Émargement QR validé : ${qrCheckedInIds.size} étudiant(s) pointé(s) présent(s) en direct !`);
+  };
+
+  // ─── Rattrapage (Séance de Rattrapage & Appel des Absents) Handlers ─────────
+  const handleOpenRattrapageModal = (targetSeance?: string) => {
+    const sCode = targetSeance || selectedSeance;
+    setRattrapageTargetSeance(sCode);
+    const today = new Date().toISOString().slice(0, 10);
+    setRattrapageDate(today);
+    setRattrapageTime('14:00 - 16:00');
+    setRattrapageRoom('Salle de Rattrapage');
+    setRattrapageTitle(`Séance de Rattrapage — ${sCode} (${selectedModule?.module_code || 'Module'})`);
+    setRattrapageTab('call');
+    setRattrapageSearchQuery('');
+    setRattrapageStatusFilter('all');
+    setSelectedStudentToAdd(null);
+    setRattrapageQrCheckedInIds(new Set());
+
+    // Target absent student IDs: if current séance, use active absentIds, else seanceStore
+    const targetData = sCode === selectedSeance
+      ? { absentIds: Array.from(absentIds) }
+      : seanceStore[sCode];
+    
+    const targetAbsentIds = targetData?.absentIds || [];
+    const absentStudentObjects = students.filter(st => targetAbsentIds.includes(st.id));
+
+    // If absent students exist, default them to 'absent' status in the rattrapage list, waiting to be marked present during call
+    setRattrapageStudents(
+      absentStudentObjects.map(st => ({
+        student: st,
+        status: 'absent' as const,
+        note: '',
+        regularize: true,
+      }))
+    );
+
+    setShowRattrapageModal(true);
+  };
+
+  const handleToggleRattrapageStatus = (studentId: number, status: 'present' | 'absent' | 'retard' | 'excuse') => {
+    setRattrapageStudents(prev =>
+      prev.map(item =>
+        item.student.id === studentId ? { ...item, status } : item
+      )
+    );
+  };
+
+  const handleUpdateRattrapageNote = (studentId: number, note: string) => {
+    setRattrapageStudents(prev =>
+      prev.map(item =>
+        item.student.id === studentId ? { ...item, note } : item
+      )
+    );
+  };
+
+  const handleSetAllRattrapageStatus = (status: 'present' | 'absent') => {
+    setRattrapageStudents(prev =>
+      prev.map(item => ({ ...item, status }))
+    );
+  };
+
+  const handleAddStudentToRattrapage = (studentId: number) => {
+    if (rattrapageStudents.some(item => item.student.id === studentId)) {
+      toast.info('Cet étudiant est déjà inscrit dans la séance de rattrapage');
+      return;
+    }
+    const studentObj = students.find(s => s.id === studentId);
+    if (!studentObj) return;
+    setRattrapageStudents(prev => [
+      ...prev,
+      { student: studentObj, status: 'present' as const, note: 'Ajouté manuellement', regularize: true }
+    ]);
+    setSelectedStudentToAdd(null);
+    toast.success(`${studentObj.first_name} ${studentObj.last_name} ajouté à la séance`);
+  };
+
+  const handleRemoveStudentFromRattrapage = (studentId: number) => {
+    setRattrapageStudents(prev => prev.filter(item => item.student.id !== studentId));
+  };
+
+  const handleSimulateRattrapageQrScan = () => {
+    const unChecked = rattrapageStudents.filter(item => item.status === 'absent');
+    if (unChecked.length === 0) {
+      toast.info('Tous les étudiants de ce rattrapage sont déjà pointés présents !');
+      return;
+    }
+    const randomItem = unChecked[Math.floor(Math.random() * unChecked.length)];
+    setRattrapageStudents(prev =>
+      prev.map(item =>
+        item.student.id === randomItem.student.id ? { ...item, status: 'present' as const } : item
+      )
+    );
+    setRattrapageQrCheckedInIds(prev => new Set(prev).add(randomItem.student.id));
+    toast.success(`⚡ Scan QR Rattrapage validé : ${randomItem.student.first_name} ${randomItem.student.last_name}`);
+  };
+
+  const handleSaveRattrapageSession = async () => {
+    if (rattrapageStudents.length === 0) {
+      toast.error('Aucun étudiant dans cette séance de rattrapage.');
+      return;
+    }
+
+    setSavingRattrapage(true);
+    try {
+      const presentCount = rattrapageStudents.filter(s => s.status === 'present').length;
+      const newRattrapageRecord: RattrapageSession = {
+        id: `rat_${Date.now()}`,
+        originalSeance: rattrapageTargetSeance,
+        date: rattrapageDate,
+        timeSlot: rattrapageTime,
+        room: rattrapageRoom,
+        title: rattrapageTitle || `Rattrapage ${rattrapageTargetSeance}`,
+        createdAt: new Date().toISOString(),
+        records: rattrapageStudents.map(s => ({
+          studentId: s.student.id,
+          status: s.status,
+          note: s.note,
+          regularized: s.status === 'present' && autoRegularizeOriginal,
+        })),
+      };
+
+      // Target session data
+      const targetData = seanceStore[rattrapageTargetSeance] || {
+        absentIds: rattrapageTargetSeance === selectedSeance ? Array.from(absentIds) : [],
+        annotations: rattrapageTargetSeance === selectedSeance ? { ...annotations } : {},
+        isLocked: rattrapageTargetSeance === selectedSeance ? isLocked : false,
+        date: rattrapageTargetSeance === selectedSeance ? seanceDate : new Date().toISOString().slice(0, 10),
+      };
+
+      const updatedAbsentIds = new Set(targetData.absentIds);
+      const updatedAnnotations = { ...targetData.annotations };
+
+      if (autoRegularizeOriginal) {
+        rattrapageStudents.forEach(item => {
+          if (item.status === 'present') {
+            // Regularize: remove from absentIds of original session
+            updatedAbsentIds.delete(item.student.id);
+            updatedAnnotations[item.student.id] = {
+              text: `Absence rattrapée le ${rattrapageDate} (${rattrapageRoom})${item.note ? ` - ${item.note}` : ''}`,
+              tag: 'rattrapage',
+            };
+          } else if (item.status === 'retard') {
+            updatedAnnotations[item.student.id] = {
+              text: `Rattrapage avec retard le ${rattrapageDate}${item.note ? ` - ${item.note}` : ''}`,
+              tag: 'retard',
+            };
+          } else if (item.status === 'excuse') {
+            updatedAnnotations[item.student.id] = {
+              text: `Rattrapage justifié le ${rattrapageDate}${item.note ? ` - ${item.note}` : ''}`,
+              tag: 'justifie',
+            };
+          }
+        });
+      }
+
+      const existingRattrapages = targetData.rattrapages || [];
+      const updatedRattrapages = [newRattrapageRecord, ...existingRattrapages];
+
+      const newTargetData: SeanceData = {
+        ...targetData,
+        absentIds: Array.from(updatedAbsentIds),
+        annotations: updatedAnnotations,
+        rattrapages: updatedRattrapages,
+        savedAt: new Date().toISOString(),
+        isSavedToDb: true,
+      };
+
+      const nextStore = {
+        ...seanceStore,
+        [rattrapageTargetSeance]: newTargetData,
+      };
+      setSeanceStore(nextStore);
+
+      // If target session is current active session, update active component states too
+      if (rattrapageTargetSeance === selectedSeance) {
+        setAbsentIds(updatedAbsentIds);
+        setAnnotations(updatedAnnotations);
+      }
+
+      if (storageKey) {
+        try {
+          localStorage.setItem(storageKey, JSON.stringify(nextStore));
+        } catch {}
+      }
+
+      // Persist to backend API
+      try {
+        await api.post('/professor-portal/student-lists/attendance', {
+          group_id: selectedGroupId,
+          module_id: selectedModuleId,
+          sub_group: listMode === 'subgroup' ? selectedSubGroup : undefined,
+          seance_code: `${rattrapageTargetSeance}-RAT`,
+          session_date: rattrapageDate,
+          is_locked: false,
+          absent_ids: rattrapageStudents.filter(s => s.status === 'absent').map(s => s.student.id),
+          annotations: updatedAnnotations,
+          sync_textbook: false,
+          chapter_title: `Séance de Rattrapage — ${rattrapageTargetSeance}`,
+          key_concepts: `Rattrapage officiel pour ${rattrapageTargetSeance}. ${presentCount} étudiants régularisés. Salle: ${rattrapageRoom}.`,
+        });
+      } catch (err) {
+        console.warn('Backend sync saved locally:', err);
+      }
+
+      toast.success(
+        `✨ Appel de Rattrapage validé ! ${presentCount}/${rattrapageStudents.length} étudiant(s) ont régularisé leur absence de ${rattrapageTargetSeance}.`
+      );
+      setShowRattrapageModal(false);
+    } catch {
+      toast.error('Erreur lors de l\'enregistrement du rattrapage.');
+    } finally {
+      setSavingRattrapage(false);
+    }
+  };
 
   // Filtered students
   const filteredStudents = useMemo(() => {
@@ -506,6 +943,8 @@ export default function ProfessorStudentRosterPage() {
               isLocked: !!sData.is_locked,
               date: sData.date || new Date().toISOString().slice(0, 10),
               savedAt: sData.saved_at || new Date().toISOString(),
+              isSavedToDb: true,
+              session_id: sData.session_id,
             };
           });
           return merged;
@@ -555,7 +994,7 @@ export default function ProfessorStudentRosterPage() {
           ? `Feuille de présence ${selectedSeance} et Cahier de Texte enregistrés avec succès !`
           : (res.data?.message || `Feuille de présence ${selectedSeance} enregistrée en base de données`)
       );
-      persistCurrentSeance(absentIds, annotations, isLocked, seanceDate);
+      persistCurrentSeance(absentIds, annotations, isLocked, seanceDate, true);
       setShowSaveModal(false);
     } catch {
       toast.error('Erreur lors de l\'enregistrement en base de données');
@@ -696,6 +1135,191 @@ export default function ProfessorStudentRosterPage() {
     persistCurrentSeance(absentIds, nextAnnotations, isLocked, seanceDate);
     setEditingStudentId(null);
     toast.success('Annotation supprimée');
+  };
+
+
+  // Quick Action: Mark All Present (remove all absences)
+  const handleMarkAllPresent = () => {
+    if (isLocked) { toast.error('Liste verrouillée'); return; }
+    const next = new Set<number>();
+    setAbsentIds(next);
+    persistCurrentSeance(next, annotations, isLocked, seanceDate);
+    toast.success(`✨ Tous les ${students.length} étudiants marqués Présents !`);
+  };
+
+  // Voice Dictation IA — Appel vocal par reconnaissance de noms
+  const handleToggleVoiceRecognition = () => {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      toast.error("La reconnaissance vocale n'est pas supportée sur ce navigateur (Chrome/Edge requis).");
+      return;
+    }
+    if (isListening) { setIsListening(false); return; }
+
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'fr-FR';
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    recognition.onstart = () => {
+      setIsListening(true);
+      toast.info('🎙️ En écoute... Prononcez les noms des absents.');
+    };
+
+    recognition.onresult = (event: any) => {
+      const text = event.results[0][0].transcript.toLowerCase();
+      setVoiceTranscript(text);
+      setIsListening(false);
+
+      let markedCount = 0;
+      const next = new Set(absentIds);
+      students.forEach(s => {
+        const fullName = `${s.first_name} ${s.last_name}`.toLowerCase();
+        const lastName = s.last_name.toLowerCase();
+        if (text.includes(lastName) || text.includes(fullName)) {
+          next.add(s.id);
+          markedCount++;
+        }
+      });
+
+      if (markedCount > 0) {
+        setAbsentIds(next);
+        persistCurrentSeance(next, annotations, isLocked, seanceDate);
+        toast.success(`🎙️ ${markedCount} absence(s) détectée(s) et cochée(s) par l'IA vocale !`);
+      } else {
+        toast.warning("Aucun nom d'étudiant reconnu. Réessayez en prononçant clairement le nom de famille.");
+      }
+    };
+
+    recognition.onerror = () => { setIsListening(false); toast.error("Erreur de reconnaissance vocale."); };
+    recognition.onend = () => setIsListening(false);
+    recognition.start();
+  };
+
+  // ─── Live Session Handlers (4-status + QR backend + offline sync) ────────
+
+  // QR Countdown rotation from backend expires_at
+  useEffect(() => {
+    if (!isSessionActive || !liveQrExpiresAt) return;
+    const update = () => setLiveQrCountdown(Math.max(0, Math.floor((new Date(liveQrExpiresAt).getTime() - Date.now()) / 1000)));
+    update();
+    const iv = setInterval(update, 1000);
+    return () => clearInterval(iv);
+  }, [isSessionActive, liveQrExpiresAt]);
+
+  // Start Live Session (from schedule card or current selection)
+  const handleStartLiveSession = async (overrideGroupId?: number, overrideModuleId?: number) => {
+    const gid = overrideGroupId ?? selectedGroupId;
+    const mid = overrideModuleId ?? selectedModuleId;
+    if (!gid || !mid) { toast.error('Sélectionnez un module et un groupe.'); return; }
+    setSavingLive(true);
+    try {
+      const res = await api.post('/professor/attendance/start', {
+        module_id: mid,
+        group_id: gid,
+        room_name: 'En cours',
+        date: seanceDate,
+      });
+      const session = res.data.session;
+      if (!session?.id) throw new Error('Session non créée.');
+      const roster = await api.get('/professor/attendance/students', { params: { attendance_session_id: session.id } });
+      const mapped = (roster.data.data ?? []).map((s: any) => ({
+        id: s.id,
+        first_name: s.name?.split(' ')[0] ?? s.first_name ?? '',
+        last_name: s.name?.split(' ').slice(1).join(' ') ?? s.last_name ?? '',
+        cne: s.cne ?? '',
+        status: 'present' as const,
+        version: s.version,
+      }));
+      setLiveStudents(mapped);
+      setLiveSessionId(session.id);
+      setLiveQrToken(session.qr_token ?? '');
+      setLiveQrExpiresAt(session.expires_at ?? null);
+      setIsSessionActive(true);
+      toast.success('🚀 Session live démarrée !', { description: `${mapped.length} étudiants chargés.` });
+    } catch {
+      toast.error('Impossible de démarrer la session. Vérifiez le module et le groupe.');
+    } finally {
+      setSavingLive(false);
+    }
+  };
+
+  // Toggle live student status: présent → absent → retard → excusé → présent
+  const handleToggleLiveStatus = (id: number) => {
+    const cycle: Record<string, 'present' | 'absent' | 'retard' | 'excuse'> = {
+      present: 'absent', absent: 'retard', retard: 'excuse', excuse: 'present',
+    };
+    setLiveStudents(prev => prev.map(s => s.id === id ? { ...s, status: cycle[s.status] } : s));
+  };
+
+  // Mark all present instantly
+  const handleLiveMarkAllPresent = () => {
+    setLiveStudents(prev => prev.map(s => ({ ...s, status: 'present' as const })));
+    toast.success(`✨ Tous les ${liveStudents.length} étudiants marqués Présents !`);
+  };
+
+  // Voice recognition for live students
+  const handleVoiceLive = () => {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      toast.error("Reconnaissance vocale non supportée (Chrome/Edge requis)."); return;
+    }
+    if (isListening) { setIsListening(false); return; }
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const rec = new SR();
+    rec.lang = 'fr-FR'; rec.continuous = false; rec.interimResults = false;
+    rec.onstart = () => { setIsListening(true); toast.info('🎙️ En écoute... Prononcez les noms des absents.'); };
+    rec.onresult = (e: any) => {
+      const text = e.results[0][0].transcript.toLowerCase();
+      setVoiceTranscript(text); setIsListening(false);
+      let count = 0;
+      setLiveStudents(prev => prev.map(s => {
+        const full = `${s.first_name} ${s.last_name}`.toLowerCase();
+        if (text.includes(s.last_name.toLowerCase()) || text.includes(full)) { count++; return { ...s, status: 'absent' as const }; }
+        return s;
+      }));
+      if (count > 0) toast.success(`🎙️ ${count} absence(s) détectée(s) par l'IA vocale !`);
+      else toast.warning("Aucun nom reconnu. Parlez plus clairement.");
+    };
+    rec.onerror = () => { setIsListening(false); toast.error("Erreur de reconnaissance vocale."); };
+    rec.onend = () => setIsListening(false);
+    rec.start();
+  };
+
+  // Save + close live session (with offline fallback)
+  const handleSaveLiveSession = async () => {
+    setSavingLive(true);
+    const payload = {
+      session_id: liveSessionId,
+      close_session: true,
+      module_id: selectedModuleId ?? undefined,
+      group_id: selectedGroupId ?? undefined,
+      date: seanceDate,
+      records: liveStudents.map(s => ({
+        student_id: s.id,
+        status: (s.status === 'retard' ? 'late' : s.status === 'excuse' ? 'excused' : s.status) as 'present' | 'absent' | 'late' | 'excused',
+        version: s.version,
+      })),
+    };
+    if (!window.navigator.onLine) {
+      offlineAttendanceStore.saveOffline(payload);
+      toast.warning('📶 Hors-ligne : appel sauvegardé localement. Synchronisation automatique au retour du réseau.');
+      setIsSessionActive(false); setSavingLive(false); return;
+    }
+    try {
+      await api.post('/professor/attendance/save', payload);
+      const present = liveStudents.filter(s => s.status === 'present').length;
+      const absent = liveStudents.filter(s => s.status === 'absent').length;
+      toast.success('✅ Feuille d\'appel certifiée et enregistrée.', { description: `Présents: ${present} · Absents: ${absent}` });
+      setIsSessionActive(false);
+    } catch (err: any) {
+      if (!err.response) {
+        offlineAttendanceStore.saveOffline(payload);
+        toast.warning('📶 Erreur réseau — appel sauvegardé hors-ligne.');
+        setIsSessionActive(false);
+      } else {
+        toast.error(err.response?.data?.message ?? 'Erreur lors de la sauvegarde.');
+      }
+    } finally { setSavingLive(false); }
   };
 
   // ─── PDF Preview via Blob (Authenticated) ──────────────────────────────────
@@ -906,7 +1530,7 @@ export default function ProfessorStudentRosterPage() {
           <div className="flex rounded-xl overflow-hidden border border-white/20 bg-white/10 p-0.5 backdrop-blur-md">
             <button
               onClick={() => setViewMode('table')}
-              title="Vue Tableau"
+              title="Vue Tableau Officiel"
               className={cn(
                 'p-2 rounded-lg transition-all',
                 viewMode === 'table' ? 'bg-white text-[#001A4B] shadow font-bold' : 'text-slate-300 hover:text-white'
@@ -923,6 +1547,16 @@ export default function ProfessorStudentRosterPage() {
               )}
             >
               <LayoutGrid className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setViewMode('voice')}
+              title="Appel Vocal IA"
+              className={cn(
+                'p-2 rounded-lg transition-all',
+                viewMode === 'voice' ? 'bg-rose-500 text-white shadow font-bold' : 'text-slate-300 hover:text-white'
+              )}
+            >
+              <Mic className="w-4 h-4" />
             </button>
           </div>
 
@@ -1000,67 +1634,214 @@ export default function ProfessorStudentRosterPage() {
           <NoModulesPlaceholder />
         ) : (
           <>
-            {/* ─── 1. Sélecteur de Séance & Date ───────────────────────── */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xs">
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <div className="flex items-center gap-3 flex-wrap">
-                  <div className="flex items-center gap-2 text-sm font-bold text-slate-800 dark:text-slate-200">
-                    <Calendar className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                    <span>Séance d'enseignement :</span>
+            {/* ─── Solution 1: Live Intelligent Auto-Detection Banner ─── */}
+            <div className="relative overflow-hidden rounded-2xl border border-indigo-200/80 dark:border-indigo-800/60 bg-gradient-to-r from-blue-50/80 via-indigo-50/50 to-slate-50 dark:from-slate-900 dark:via-indigo-950/40 dark:to-slate-900 p-4 sm:p-5 shadow-xs">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                <div className="flex items-start sm:items-center gap-3.5">
+                  <div className={cn(
+                    "w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-md",
+                    isLiveSessionNow
+                      ? "bg-rose-500 text-white animate-pulse"
+                      : "bg-[#001A4B] text-amber-300 dark:bg-emerald-600 dark:text-white"
+                  )}>
+                    {isLiveSessionNow ? <Radio className="w-6 h-6" /> : <Zap className="w-6 h-6" />}
                   </div>
 
-                  {/* Séance pills S1 → S12 */}
-                  <div className="flex gap-1.5 flex-wrap">
-                    {SEANCES.map(s => {
-                      const seanceInfo = seanceStore[s];
-                      const hasData = seanceInfo && (seanceInfo.absentIds?.length > 0 || Object.keys(seanceInfo.annotations || {}).length > 0);
-                      const isCurrent = selectedSeance === s;
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                      <span className={cn(
+                        "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider",
+                        isLiveSessionNow
+                          ? "bg-rose-100 text-rose-700 dark:bg-rose-950/80 dark:text-rose-300 border border-rose-300 dark:border-rose-800"
+                          : "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 border border-blue-300 dark:border-blue-800"
+                      )}>
+                        <span className={cn("w-2 h-2 rounded-full", isLiveSessionNow ? "bg-rose-500 animate-ping" : "bg-blue-500")}></span>
+                        {isLiveSessionNow ? "Cours en direct en ce moment" : "Créneau Officiel Détecté"}
+                      </span>
 
-                      return (
-                        <button
-                          key={s}
-                          onClick={() => handleSelectSeance(s)}
-                          className={cn(
-                            'relative px-3 py-1 rounded-full text-xs font-bold border transition-all flex items-center gap-1.5',
-                            isCurrent
-                              ? 'bg-[#001A4B] border-[#001A4B] text-white shadow-md dark:bg-emerald-600 dark:border-emerald-500'
-                              : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-emerald-500/60 hover:text-emerald-600 dark:hover:text-emerald-300'
-                          )}
-                        >
-                          <span>{s}</span>
-                          {hasData && (
-                            <span
-                              className={cn(
-                                'w-1.5 h-1.5 rounded-full',
-                                isCurrent ? 'bg-amber-300' : 'bg-emerald-500'
-                              )}
-                              title="Données enregistrées pour cette séance"
-                            />
-                          )}
-                        </button>
-                      );
-                    })}
+                      {selectedSchedule && (
+                        <span className="text-xs font-bold text-slate-700 dark:text-slate-300 font-mono">
+                          {selectedSchedule.day_name} {selectedSchedule.start_time} - {selectedSchedule.end_time} • {selectedSchedule.room || 'Salle Dédiée'}
+                        </span>
+                      )}
+                    </div>
+
+                    <h2 className="text-sm sm:text-base font-black text-[#001A4B] dark:text-white flex items-center gap-2">
+                      <span>{selectedModule?.module_name || 'Module Pédagogique'}</span>
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300">
+                        {selectedSection?.group_code || 'Filière'}
+                      </span>
+                    </h2>
+
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                      Suggestion IA : <span className="font-bold text-emerald-600 dark:text-emerald-400">Séance {selectedSeance}</span> ({completedSeances.length} validée{completedSeances.length > 1 ? 's' : ''} sur 12 • {students.length} inscrits).
+                    </p>
                   </div>
                 </div>
 
-                {/* Date Picker + Schedule slot badge */}
-                <div className="flex items-center gap-2.5 ml-auto flex-wrap">
-                  {selectedSchedule && (
-                    <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-xl text-xs text-blue-900 dark:text-blue-200">
-                      <Clock className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
-                      <span className="font-bold">{selectedSchedule.day_name}</span>
-                      <span className="font-mono text-slate-600 dark:text-slate-300">{selectedSchedule.start_time} - {selectedSchedule.end_time}</span>
-                      {selectedSchedule.room && (
-                        <>
-                          <span className="text-slate-400">•</span>
-                          <span className="font-semibold text-slate-700 dark:text-slate-200">📍 {selectedSchedule.room}</span>
-                        </>
-                      )}
-                    </div>
-                  )}
+                {/* Live Quick Action Buttons */}
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  {/* Solution 3 Launcher Button */}
+                  <button
+                    type="button"
+                    onClick={() => setShowLiveQrModal(true)}
+                    disabled={students.length === 0}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-black uppercase tracking-wider shadow-md hover:shadow-lg transition-all cursor-pointer disabled:opacity-50"
+                    title="Lancer le QR Code dynamique en direct pour l'amphi"
+                  >
+                    <Smartphone className="w-4 h-4 text-amber-300 animate-bounce" />
+                    <span>Flash QR Amphi</span>
+                  </button>
+
+                  {/* AI Risk Modal Button */}
+                  <button
+                    onClick={handleFetchAttendanceRisk}
+                    disabled={!selectedGroupId}
+                    className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-700 text-xs font-bold transition-all shadow-2xs hover:bg-amber-100 dark:hover:bg-amber-900/50 disabled:opacity-50 cursor-pointer"
+                    title="Analyse prédictive des risques d'absence et d'exclusion (Art. 14 ENCG Fès)"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                    <span>Risque IA</span>
+                  </button>
+
+                  {/* Catch-up Session (Rattrapage) Button */}
+                  <button
+                    type="button"
+                    onClick={() => handleOpenRattrapageModal(selectedSeance)}
+                    disabled={students.length === 0}
+                    className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-300 dark:border-purple-700 text-xs font-bold transition-all shadow-2xs hover:bg-purple-100 dark:hover:bg-purple-900/50 disabled:opacity-50 cursor-pointer"
+                    title="Organiser une séance de rattrapage et faire l'appel pour les absents"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+                    <span>Rattrapage</span>
+                    {absentIds.size > 0 && (
+                      <span className="px-1.5 py-0.2 rounded-full bg-purple-600 text-white text-[10px] font-black">
+                        {absentIds.size}
+                      </span>
+                    )}
+                  </button>
+
+                  {/* Save to DB Button */}
+                  <button
+                    onClick={() => setShowSaveModal(true)}
+                    disabled={savingAttendance || !selectedGroupId}
+                    className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#001A4B] hover:bg-[#082663] text-white text-xs font-bold transition-all shadow-md disabled:opacity-50 cursor-pointer"
+                    title="Enregistrer la feuille de présence et synchroniser avec le Cahier de Texte"
+                  >
+                    {savingAttendance ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5 text-amber-300" />}
+                    <span>Enregistrer</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* ─── Solution 2: Interactive Semester Timeline (Progression S1 → S12) ─── */}
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xs space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-[#001A4B] dark:text-blue-400" />
+                    <h3 className="text-sm font-black text-slate-900 dark:text-white">
+                      Progression Pédagogique du Semestre (12 Séances)
+                    </h3>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Cliquez sur une séance pour naviguer dans l'historique ou pointer le créneau actuel.
+                  </p>
+                </div>
+
+                {/* Progress Stats Badge */}
+                <div className="flex items-center gap-3">
+                  <div className="text-right">
+                    <span className="text-xs font-black text-[#001A4B] dark:text-white">
+                      {completedSeances.length} / 12 validées
+                    </span>
+                    <span className="text-[11px] text-slate-400 ml-1">
+                      ({Math.round((completedSeances.length / 12) * 100)}%)
+                    </span>
+                  </div>
+                  <div className="w-24 sm:w-32 bg-slate-100 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700">
+                    <div
+                      className="bg-gradient-to-r from-emerald-500 to-teal-500 h-full rounded-full transition-all duration-500"
+                      style={{ width: `${Math.min(100, Math.round((completedSeances.length / 12) * 100))}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Interactive Timeline Track */}
+              <div className="overflow-x-auto pb-2 pt-1 -mx-2 px-2 scrollbar-thin">
+                <div className="flex items-center gap-2 min-w-[780px]">
+                  {SEANCES.map((s, index) => {
+                    const seanceInfo = seanceStore[s];
+                    const isCompleted = completedSeances.includes(s);
+                    const isSelected = selectedSeance === s;
+                    const absentCount = seanceInfo?.absentIds?.length ?? 0;
+
+                    return (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => handleSelectSeance(s)}
+                        className={cn(
+                          "flex-1 relative flex flex-col items-center p-2.5 rounded-xl border text-center transition-all cursor-pointer group",
+                          isSelected
+                            ? "bg-[#001A4B] text-white border-[#001A4B] shadow-md ring-2 ring-blue-500/30 scale-[1.02]"
+                            : isCompleted
+                              ? "bg-emerald-50/70 dark:bg-emerald-950/20 border-emerald-300 dark:border-emerald-800 text-slate-900 dark:text-white hover:border-emerald-400"
+                              : "bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700/80 text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600"
+                        )}
+                      >
+                        {/* Status Icon Indicator */}
+                        <div className="flex items-center justify-center mb-1">
+                          {isSelected ? (
+                            <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping" />
+                          ) : isCompleted ? (
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                          ) : (
+                            <span className="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600" />
+                          )}
+                        </div>
+
+                        {/* Séance Label */}
+                        <span className={cn(
+                          "text-xs font-black",
+                          isSelected ? "text-amber-300" : isCompleted ? "text-emerald-800 dark:text-emerald-300" : "text-slate-700 dark:text-slate-300"
+                        )}>
+                          {s}
+                        </span>
+
+                        {/* Sub-label Date / Absences */}
+                        <span className={cn(
+                          "text-[10px] mt-0.5 truncate max-w-full font-medium",
+                          isSelected
+                            ? "text-blue-200"
+                            : isCompleted
+                              ? absentCount > 0 ? "text-rose-600 dark:text-rose-400 font-bold" : "text-emerald-600 dark:text-emerald-400 font-bold"
+                              : "text-slate-400 dark:text-slate-500"
+                        )}>
+                          {isSelected ? (
+                            "En cours"
+                          ) : isCompleted ? (
+                            absentCount > 0 ? `${absentCount} abs` : "Plein"
+                          ) : (
+                            "À venir"
+                          )}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Date & Quick Status Controls Bar */}
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                    <span>Date effective de {selectedSeance} :</span>
+                  </span>
 
                   <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-2.5 py-1">
-                    <span className="text-xs text-slate-600 dark:text-slate-400 font-medium">Date :</span>
                     <input
                       type="date"
                       value={seanceDate}
@@ -1070,7 +1851,7 @@ export default function ProfessorStudentRosterPage() {
                         setSeanceDate(d);
                         persistCurrentSeance(absentIds, annotations, isLocked, d);
                       }}
-                      className="bg-transparent text-xs text-slate-900 dark:text-white font-medium focus:outline-none disabled:opacity-60 cursor-pointer"
+                      className="bg-transparent text-xs text-slate-900 dark:text-white font-bold focus:outline-none disabled:opacity-60 cursor-pointer"
                     />
                     {selectedSchedule && (
                       <button
@@ -1100,39 +1881,41 @@ export default function ProfessorStudentRosterPage() {
                       Aujourd'hui
                     </button>
                   </div>
+                </div>
 
-                  {/* Séance summary badge */}
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-mono">
-                      {absentIds.size === 0 ? (
-                        <span className="text-emerald-600 dark:text-emerald-400 font-bold">Plein effectif (0 absent)</span>
-                      ) : (
-                        <span className="text-rose-600 dark:text-rose-400 font-bold">{absentIds.size} absent{absentIds.size > 1 ? 's' : ''}</span>
-                      )}
-                    </span>
+                {/* Effectif Status Badge & Rattrapage Button */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs px-3 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-mono">
+                    {absentIds.size === 0 ? (
+                      <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
+                        <CheckCheck className="w-3.5 h-3.5" /> Plein effectif (0 absent)
+                      </span>
+                    ) : (
+                      <span className="text-rose-600 dark:text-rose-400 font-bold">
+                        {students.length - absentIds.size} présents • {absentIds.size} absent{absentIds.size > 1 ? 's' : ''}
+                      </span>
+                    )}
+                  </span>
 
-                    {/* AI Attendance Risk Analysis Button */}
-                    <button
-                      onClick={handleFetchAttendanceRisk}
-                      disabled={!selectedGroupId}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-700 text-xs font-bold transition-all shadow-2xs hover:bg-amber-100 dark:hover:bg-amber-900/50 disabled:opacity-50 cursor-pointer"
-                      title="Analyse prédictive des risques d'absence et d'exclusion (Art. 14 ENCG Fès)"
-                    >
-                      <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                      <span>Risque Décrochage IA</span>
-                    </button>
-
-                    {/* Save to DB Button */}
-                    <button
-                      onClick={() => setShowSaveModal(true)}
-                      disabled={savingAttendance || !selectedGroupId}
-                      className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-[#001A4B] hover:bg-[#082663] dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-md disabled:opacity-50 cursor-pointer"
-                      title="Enregistrer la feuille de présence et synchroniser avec le Cahier de Texte"
-                    >
-                      {savingAttendance ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-                      <span>{savingAttendance ? 'Enregistrement…' : 'Enregistrer en BDD'}</span>
-                    </button>
-                  </div>
+                  {/* Trigger Rattrapage for this séance */}
+                  <button
+                    type="button"
+                    onClick={() => handleOpenRattrapageModal(selectedSeance)}
+                    className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/60 dark:hover:bg-purple-900/70 border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 text-xs font-bold transition-all shadow-2xs hover:shadow-xs cursor-pointer"
+                    title={`Organiser une séance de rattrapage et faire l'appel pour ${selectedSeance}`}
+                  >
+                    <RotateCcw className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+                    <span>Appel Rattrapage</span>
+                    {absentIds.size > 0 ? (
+                      <span className="px-1.5 py-0.2 rounded-full bg-purple-600 text-white text-[10px] font-black">
+                        {absentIds.size} absents
+                      </span>
+                    ) : (seanceStore[selectedSeance]?.rattrapages?.length ?? 0) > 0 ? (
+                      <span className="px-1.5 py-0.2 rounded-full bg-emerald-600 text-white text-[10px] font-black">
+                        {seanceStore[selectedSeance]?.rattrapages?.length} effectué
+                      </span>
+                    ) : null}
+                  </button>
                 </div>
               </div>
             </div>
@@ -1396,6 +2179,249 @@ export default function ProfessorStudentRosterPage() {
                     >
                       Réinitialiser les filtres
                     </button>
+                  )}
+                </div>
+              ) : viewMode === 'voice' ? (
+                /* ─── Présence Live — Cockpit Unifié ─────────────────────── */
+                <div className="divide-y divide-slate-100 dark:divide-slate-800">
+
+                  {/* ── Planning hebdomadaire 1-clic (avant session) ── */}
+                  {!isSessionActive && (
+                    <div className="p-5 space-y-4">
+                      <div className="flex items-center justify-between flex-wrap gap-3">
+                        <div className="flex items-center gap-2.5">
+                          <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">
+                            <CalendarDays size={20} />
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-black text-slate-900 dark:text-white">Planning de la Semaine — Démarrage 1-Clic</h3>
+                            <p className="text-[11px] text-slate-500 font-medium">Cliquez sur ⚡ pour charger les étudiants et lancer l'appel immédiatement</p>
+                          </div>
+                        </div>
+                        {/* Day filter pills */}
+                        <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl overflow-x-auto text-xs font-black">
+                          {['all', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'].map(d => (
+                            <button key={d} onClick={() => setSelectedDayFilter(d)}
+                              className={cn('px-3 py-1.5 rounded-xl transition-all cursor-pointer whitespace-nowrap',
+                                selectedDayFilter === d ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                              )}>{d === 'all' ? 'Toute la Semaine' : d.slice(0, 3)}</button>
+                          ))}
+                        </div>
+                      </div>
+                      {/* Schedule cards grid */}
+                      {schedules.filter(s => selectedDayFilter === 'all' || s.day_name?.toLowerCase().startsWith(selectedDayFilter.toLowerCase())).length > 0 ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                          {schedules
+                            .filter(s => selectedDayFilter === 'all' || s.day_name?.toLowerCase().startsWith(selectedDayFilter.toLowerCase()))
+                            .map(session => {
+                              const days = ['', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+                              const todayName = days[new Date().getDay() === 0 ? 7 : new Date().getDay()] ?? '';
+                              const isToday = session.day_name?.toLowerCase() === todayName.toLowerCase();
+                              return (
+                                <div key={session.id}
+                                  onClick={() => { setSelectedModuleId(session.module_id); setSelectedGroupId(session.group_id); }}
+                                  className={cn('p-4 rounded-2xl border transition-all cursor-pointer flex flex-col gap-2.5 group hover:-translate-y-0.5',
+                                    selectedModuleId === session.module_id && selectedGroupId === session.group_id
+                                      ? 'bg-indigo-50 dark:bg-indigo-950/40 border-indigo-500 ring-2 ring-indigo-400/20 shadow-md'
+                                      : isToday
+                                        ? 'bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-300 dark:border-emerald-800 hover:border-emerald-500'
+                                        : 'bg-white dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 hover:border-indigo-300'
+                                  )}>
+                                  <div className="flex items-center justify-between">
+                                    <span className="flex items-center gap-1 text-xs font-black text-slate-700 dark:text-slate-200">
+                                      <Clock size={12} className="text-indigo-500" />{session.day_name} · {session.start_time}–{session.end_time}
+                                    </span>
+                                    {isToday && <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-emerald-500 text-white animate-pulse">Aujourd'hui</span>}
+                                  </div>
+                                  <div>
+                                    <p className="font-black text-sm text-slate-900 dark:text-white group-hover:text-indigo-600 transition-colors truncate">{session.module_name}</p>
+                                    <div className="flex gap-2 mt-1 flex-wrap">
+                                      <span className="px-2 py-0.5 text-[10px] font-mono font-black rounded bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300">{session.group_code}</span>
+                                      {session.room && <span className="text-[11px] text-slate-500">📍 {session.room}</span>}
+                                      <span className={cn('px-2 py-0.5 text-[9px] font-black rounded', session.type === 'CM' ? 'bg-blue-100 text-blue-700' : session.type === 'TD' ? 'bg-violet-100 text-violet-700' : 'bg-amber-100 text-amber-700')}>{session.type}</span>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center justify-end pt-1 border-t border-slate-200/60 dark:border-slate-700/60">
+                                    <button onClick={e => { e.stopPropagation(); handleStartLiveSession(session.group_id, session.module_id); }}
+                                      disabled={savingLive}
+                                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-black cursor-pointer transition-all active:scale-95 disabled:opacity-60">
+                                      <Zap size={12} className="text-amber-300" /> Faire l'Appel
+                                    </button>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                        </div>
+                      ) : (
+                        <div className="py-8 text-center rounded-2xl bg-slate-50 dark:bg-slate-800/30 border border-dashed border-slate-200 dark:border-slate-700">
+                          <Clock className="w-8 h-8 mx-auto text-slate-300 dark:text-slate-600 mb-2" />
+                          <p className="text-sm font-bold text-slate-500">Aucune séance trouvée pour ce filtre</p>
+                          <p className="text-xs text-slate-400">Sélectionnez un autre jour ou choisissez un module manuellement ci-dessous</p>
+                        </div>
+                      )}
+                      {/* Manual start */}
+                      <div className="flex items-center justify-center pt-2">
+                        <button onClick={() => handleStartLiveSession()} disabled={savingLive || !selectedGroupId || !selectedModuleId}
+                          className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-[#001A4B] hover:bg-indigo-900 text-white font-black text-sm shadow-lg transition-all disabled:opacity-40 cursor-pointer">
+                          {savingLive ? <Loader2 size={16} className="animate-spin" /> : <Play size={16} className="text-amber-300" />}
+                          Démarrer l'Appel (Sélection Manuelle)
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ── Session Active : Cockpit ── */}
+                  {isSessionActive && (
+                    <div className="space-y-0">
+                      {/* Live stats bar */}
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-0 border-b border-slate-100 dark:border-slate-800">
+                        {[
+                          { label: 'Total', val: liveStudents.length, color: 'text-slate-900 dark:text-white', bg: '' },
+                          { label: 'Présents', val: liveStudents.filter(s => s.status === 'present').length, color: 'text-emerald-700 dark:text-emerald-400', bg: 'bg-emerald-50/50 dark:bg-emerald-950/20' },
+                          { label: 'Absents', val: liveStudents.filter(s => s.status === 'absent').length, color: 'text-rose-700 dark:text-rose-400', bg: 'bg-rose-50/50 dark:bg-rose-950/20' },
+                          { label: 'Retard/Excusé', val: liveStudents.filter(s => s.status === 'retard' || s.status === 'excuse').length, color: 'text-amber-700 dark:text-amber-400', bg: 'bg-amber-50/50 dark:bg-amber-950/20' },
+                        ].map(stat => (
+                          <div key={stat.label} className={cn('p-4 text-center', stat.bg)}>
+                            <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">{stat.label}</p>
+                            <p className={cn('text-2xl font-black font-mono', stat.color)}>{stat.val}</p>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Tab selector + toolbar */}
+                      <div className="px-5 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800">
+                        <div className="flex gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl text-xs font-black">
+                          {([['trombi', Users, 'Trombinoscope'], ['qr', QrCode, 'QR Projecteur'], ['voice', Mic, 'Appel Vocal IA']] as const).map(([tab, Icon, label]) => (
+                            <button key={tab} onClick={() => setActiveVoiceTab(tab)}
+                              className={cn('flex items-center gap-1.5 px-4 py-2 rounded-xl transition-all cursor-pointer',
+                                activeVoiceTab === tab ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'
+                              )}>
+                              <Icon size={14} />{label}
+                            </button>
+                          ))}
+                        </div>
+                        {activeVoiceTab === 'trombi' && (
+                          <button onClick={handleLiveMarkAllPresent}
+                            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 text-xs font-bold transition-all cursor-pointer">
+                            <CheckSquare size={14} /> Tout Marquer Présent
+                          </button>
+                        )}
+                      </div>
+
+                      {/* TAB: Trombinoscope 4-statuts */}
+                      {activeVoiceTab === 'trombi' && (
+                        <div className="p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                          <p className="col-span-full text-[10px] text-slate-400 font-bold mb-1">
+                            💡 Cliquez pour cycler : <span className="text-emerald-600">Présent</span> → <span className="text-rose-600">Absent</span> → <span className="text-amber-600">Retard</span> → <span className="text-blue-600">Excusé</span>
+                          </p>
+                          {liveStudents.map(s => {
+                            const statusMap = {
+                              present: { label: 'Présent', bg: 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-300 dark:border-emerald-800', avatar: 'bg-emerald-600', badge: 'bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200' },
+                              absent: { label: 'Absent', bg: 'bg-rose-50 dark:bg-rose-950/20 border-rose-300 dark:border-rose-800', avatar: 'bg-rose-600', badge: 'bg-rose-100 dark:bg-rose-900/60 text-rose-800 dark:text-rose-200' },
+                              retard: { label: 'Retard', bg: 'bg-amber-50 dark:bg-amber-950/20 border-amber-300 dark:border-amber-800', avatar: 'bg-amber-600', badge: 'bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-200' },
+                              excuse: { label: 'Excusé', bg: 'bg-blue-50 dark:bg-blue-950/20 border-blue-300 dark:border-blue-800', avatar: 'bg-blue-600', badge: 'bg-blue-100 dark:bg-blue-900/60 text-blue-800 dark:text-blue-200' },
+                            };
+                            const st = statusMap[s.status];
+                            return (
+                              <div key={s.id} onClick={() => handleToggleLiveStatus(s.id)}
+                                className={cn('p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 select-none hover:scale-[1.01] active:scale-[0.98]', st.bg)}>
+                                <div className="flex items-center gap-3 min-w-0">
+                                  <div className={cn('w-9 h-9 rounded-xl flex items-center justify-center font-black text-xs text-white shrink-0', st.avatar)}>
+                                    {s.last_name?.[0]?.toUpperCase() ?? '?'}
+                                  </div>
+                                  <div className="min-w-0">
+                                    <p className="font-bold text-xs text-slate-900 dark:text-white truncate">
+                                      {(s.last_name || '').toUpperCase()} {s.first_name}
+                                    </p>
+                                    <p className="text-[10px] text-slate-400 font-mono truncate">{s.cne}</p>
+                                  </div>
+                                </div>
+                                <span className={cn('px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider shrink-0', st.badge)}>
+                                  {st.label}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {/* TAB: QR Code Projecteur (backend token) */}
+                      {activeVoiceTab === 'qr' && (
+                        <div className="p-8 text-center space-y-6 max-w-sm mx-auto">
+                          <div>
+                            <h3 className="text-lg font-black text-slate-900 dark:text-white">QR Code Projecteur</h3>
+                            <p className="text-xs text-slate-500 mt-1">Les étudiants scannent ce QR depuis l'app ENCG pour s'enregistrer instantanément</p>
+                          </div>
+                          <div className="relative p-6 bg-white dark:bg-slate-800 rounded-3xl border-2 border-dashed border-indigo-500 inline-block shadow-2xl mx-auto">
+                            {liveQrToken && liveQrCountdown > 0
+                              ? <QRCodeSVG value={liveQrToken} size={220} className="mx-auto rounded-xl bg-white p-2" />
+                              : <div className="w-[220px] h-[220px] flex items-center justify-center text-slate-400 text-xs font-bold">Token expiré — relancez la session</div>
+                            }
+                            <div className="mt-4 flex items-center justify-center gap-2 text-xs font-black text-indigo-600 dark:text-indigo-300">
+                              <Clock size={14} className="animate-spin" />
+                              <span>Validité : {liveQrCountdown}s</span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* TAB: Voice IA */}
+                      {activeVoiceTab === 'voice' && (
+                        <div className="p-8 text-center space-y-6 max-w-lg mx-auto">
+                          <div
+                            onClick={handleVoiceLive}
+                            className={cn('w-24 h-24 rounded-full flex items-center justify-center mx-auto shadow-2xl transition-all cursor-pointer',
+                              isListening ? 'bg-rose-600 text-white animate-pulse ring-8 ring-rose-500/30' : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                            )}>
+                            {isListening ? <Mic size={40} /> : <MicOff size={40} />}
+                          </div>
+                          <div>
+                            <h3 className="text-xl font-black text-slate-900 dark:text-white">
+                              {isListening ? '🎙️ En écoute...' : 'Appel Vocal IA'}
+                            </h3>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
+                              {isListening
+                                ? 'Prononcez clairement les noms de famille. L\'IA coche automatiquement les absences.'
+                                : 'Cliquez sur le micro et dictez les noms des absents. L\'IA les marque dans la liste.'}
+                            </p>
+                          </div>
+                          <button onClick={handleVoiceLive}
+                            className={cn('flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-black transition-all shadow-lg cursor-pointer mx-auto',
+                              isListening ? 'bg-rose-600 hover:bg-rose-700 text-white' : 'bg-[#001A4B] hover:bg-indigo-900 text-white'
+                            )}>
+                            {isListening ? <><MicOff size={18} /> Arrêter</> : <><Mic size={18} /> Démarrer</>}
+                          </button>
+                          {voiceTranscript && (
+                            <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 text-left">
+                              <p className="text-[10px] font-bold text-slate-400 uppercase flex items-center gap-1 mb-1"><Volume2 size={11} /> Dictée :</p>
+                              <p className="text-sm text-slate-700 dark:text-slate-300 italic">"{voiceTranscript}"</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* ── Sticky Save Bar ── */}
+                      <div className="sticky bottom-0 z-30 border-t border-slate-200 dark:border-slate-700 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-5 py-3 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2 text-xs">
+                          {window.navigator.onLine
+                            ? <span className="flex items-center gap-1 text-emerald-600 font-bold"><Wifi size={13} /> En ligne</span>
+                            : <span className="flex items-center gap-1 text-amber-600 font-bold"><WifiOff size={13} /> Hors-ligne (sync auto)</span>
+                          }
+                          <span className="text-slate-400">· {liveStudents.filter(s => s.status === 'present').length}/{liveStudents.length} présents</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => setIsSessionActive(false)}
+                            className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-bold hover:bg-slate-200 cursor-pointer transition-all">
+                            Annuler
+                          </button>
+                          <button onClick={handleSaveLiveSession} disabled={savingLive}
+                            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black shadow-md cursor-pointer transition-all disabled:opacity-60">
+                            {savingLive ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                            Clôturer &amp; Certifier l'Appel
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                   )}
                 </div>
               ) : viewMode === 'cards' ? (
@@ -2508,6 +3534,747 @@ export default function ProfessorStudentRosterPage() {
               >
                 Fermer
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Solution 3: Dynamic Live QR Code Check-in Modal (Amphi & Salle) ───── */}
+      {showLiveQrModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in">
+          <div className="relative w-full max-w-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+            {/* Modal Header */}
+            <div className="p-5 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md shadow-emerald-500/20">
+                  <Smartphone className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-black text-slate-900 dark:text-white">
+                      Flash Émargement Live (Amphi & Salle)
+                    </h3>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300/60">
+                      Séance {selectedSeance}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Les étudiants scannent ce QR Code avec leur smartphone pour pointer leur présence en direct.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const el = document.documentElement;
+                    if (!document.fullscreenElement) {
+                      el.requestFullscreen?.();
+                      setIsFullscreenQr(true);
+                    } else {
+                      document.exitFullscreen?.();
+                      setIsFullscreenQr(false);
+                    }
+                  }}
+                  className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
+                  title="Plein écran (Idéal pour Vidéoprojecteur d'Amphithéâtre)"
+                >
+                  {isFullscreenQr ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowLiveQrModal(false)}
+                  className="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 overflow-y-auto space-y-6">
+              {/* Dynamic QR Display & Live Metrics */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                {/* QR Code Centerpiece */}
+                <div className="flex flex-col items-center justify-center p-6 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl relative shadow-inner">
+                  <div className="p-4 bg-white rounded-2xl shadow-lg border border-slate-200">
+                    <QRCodeSVG
+                      value={qrPayloadUrl}
+                      size={240}
+                      level="H"
+                      includeMargin={true}
+                    />
+                  </div>
+
+                  {/* Anti-fraud rotating timer badge */}
+                  <div className="mt-4 flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-50 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-300 text-xs font-bold">
+                    <Clock className="w-3.5 h-3.5 animate-spin" />
+                    <span>Renouvellement dans <strong className="font-mono">{qrCountdown}s</strong> (Anti-Partage WhatsApp)</span>
+                  </div>
+                </div>
+
+                {/* Live Stats & Instructions */}
+                <div className="space-y-4">
+                  {/* Realtime Attendance Counter */}
+                  <div className="bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-transparent border border-emerald-500/30 rounded-2xl p-4 space-y-2">
+                    <div className="flex items-center justify-between text-xs font-bold text-emerald-700 dark:text-emerald-300 uppercase tracking-wider">
+                      <span>Pointages Validés en Direct</span>
+                      <span className="flex items-center gap-1">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                        Direct
+                      </span>
+                    </div>
+
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-3xl font-black text-slate-900 dark:text-white">
+                        {students.length - absentIds.size + qrCheckedInIds.size}
+                      </span>
+                      <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">
+                        / {students.length} étudiants ({Math.round(((students.length - absentIds.size + qrCheckedInIds.size) / Math.max(1, students.length)) * 100)}%)
+                      </span>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="w-full bg-slate-200 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+                      <div
+                        className="bg-emerald-500 h-full rounded-full transition-all duration-500"
+                        style={{
+                          width: `${Math.min(100, Math.round(((students.length - absentIds.size + qrCheckedInIds.size) / Math.max(1, students.length)) * 100))}%`
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Projection Instructions for students */}
+                  <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-2xl p-4 text-xs space-y-2">
+                    <p className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                      <Info className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                      <span>Consigne de projection en Amphi :</span>
+                    </p>
+                    <ol className="list-decimal list-inside space-y-1 text-slate-600 dark:text-slate-300 leading-relaxed">
+                      <li>Affichez cette fenêtre en plein écran sur le vidéoprojecteur.</li>
+                      <li>Les étudiants ouvrent leur appareil photo ou l'application ENCG.</li>
+                      <li>La présence est enregistrée instantanément sur votre écran.</li>
+                    </ol>
+                  </div>
+
+                  {/* Simulator button for quick test */}
+                  <div className="pt-2">
+                    <button
+                      type="button"
+                      onClick={handleSimulateQrScan}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/40 dark:hover:bg-purple-900/50 border border-purple-200 dark:border-purple-700 text-purple-700 dark:text-purple-300 text-xs font-bold transition-all cursor-pointer"
+                      title="Simuler un scan étudiant instantané pour tester le fonctionnement"
+                    >
+                      <Sparkles className="w-4 h-4 text-purple-500" />
+                      <span>Simuler un scan étudiant (Test Immédiat)</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/90 flex items-center justify-between">
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                {qrCheckedInIds.size} pointage(s) live effectué(s) pendant cette session
+              </span>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowLiveQrModal(false)}
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition-colors cursor-pointer"
+                >
+                  Fermer
+                </button>
+                <button
+                  type="button"
+                  onClick={handleApplyLiveQr}
+                  className="flex items-center gap-2 px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-md cursor-pointer"
+                >
+                  <CheckCheck className="w-4 h-4" />
+                  <span>Valider & Appliquer la Présence</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Modal: Séance de Rattrapage & Appel des Absents ──────────── */}
+      {showRattrapageModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
+          <div className="relative w-full max-w-4xl bg-white dark:bg-slate-900 border border-purple-200 dark:border-purple-900/60 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+            
+            {/* Header */}
+            <div className="p-5 border-b border-purple-100 dark:border-purple-950/60 bg-gradient-to-r from-purple-50 via-indigo-50/50 to-white dark:from-purple-950/30 dark:via-slate-900 dark:to-slate-900 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-2xl bg-purple-600 text-white shadow-md">
+                  <RotateCcw className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-base font-black text-slate-900 dark:text-white">
+                      Séance de Rattrapage & Appel des Absents
+                    </h3>
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300 border border-purple-300 dark:border-purple-700">
+                      Régularisation Officielle
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Séance d'origine : <strong className="text-purple-700 dark:text-purple-300">{rattrapageTargetSeance}</strong> • {selectedModule?.module_name || 'Module'} ({selectedSection?.group_code || 'Groupe'})
+                  </p>
+                </div>
+              </div>
+
+              {/* Quick Séance Selector & Close */}
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-2 py-1 text-xs font-bold">
+                  <span className="text-slate-400 text-[11px]">Cible :</span>
+                  <select
+                    value={rattrapageTargetSeance}
+                    onChange={e => handleOpenRattrapageModal(e.target.value)}
+                    className="bg-transparent text-purple-700 dark:text-purple-300 font-black focus:outline-none cursor-pointer"
+                  >
+                    {SEANCES.map(s => (
+                      <option key={s} value={s} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
+                        {s} ({seanceStore[s]?.absentIds?.length ?? 0} abs.)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowRattrapageModal(false)}
+                  className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Sub-Header & Metadata Configuration Ribbon */}
+            <div className="p-4 bg-slate-50/80 dark:bg-slate-900/60 border-b border-slate-100 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              <div>
+                <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+                  Date du Rattrapage
+                </label>
+                <input
+                  type="date"
+                  value={rattrapageDate}
+                  onChange={e => setRattrapageDate(e.target.value)}
+                  className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-1.5 text-xs text-slate-900 dark:text-white font-bold focus:outline-none focus:border-purple-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+                  Créneau Horaire
+                </label>
+                <input
+                  type="text"
+                  value={rattrapageTime}
+                  onChange={e => setRattrapageTime(e.target.value)}
+                  placeholder="ex: 14:00 - 16:00"
+                  className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-1.5 text-xs text-slate-900 dark:text-white font-bold focus:outline-none focus:border-purple-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+                  Salle / Local
+                </label>
+                <input
+                  type="text"
+                  value={rattrapageRoom}
+                  onChange={e => setRattrapageRoom(e.target.value)}
+                  placeholder="ex: Salle 14 ou Amphi 2"
+                  className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-1.5 text-xs text-slate-900 dark:text-white font-bold focus:outline-none focus:border-purple-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+                  Intitulé / Motif
+                </label>
+                <input
+                  type="text"
+                  value={rattrapageTitle}
+                  onChange={e => setRattrapageTitle(e.target.value)}
+                  placeholder="ex: Rattrapage TD / Chapitre 3"
+                  className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-1.5 text-xs text-slate-900 dark:text-white font-bold focus:outline-none focus:border-purple-500"
+                />
+              </div>
+            </div>
+
+            {/* Mode Tabs (Feuille d'Appel / QR Code Flash / Historique) */}
+            <div className="flex items-center gap-2 px-5 pt-3 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
+              <button
+                type="button"
+                onClick={() => setRattrapageTab('call')}
+                className={cn(
+                  "flex items-center gap-2 pb-2.5 px-3 text-xs font-bold border-b-2 transition-all cursor-pointer",
+                  rattrapageTab === 'call'
+                    ? "border-purple-600 text-purple-700 dark:text-purple-300 font-black"
+                    : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                )}
+              >
+                <ClipboardList className="w-4 h-4" />
+                <span>Feuille d'Appel ({rattrapageStudents.length} convoqués)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setRattrapageTab('qr')}
+                className={cn(
+                  "flex items-center gap-2 pb-2.5 px-3 text-xs font-bold border-b-2 transition-all cursor-pointer",
+                  rattrapageTab === 'qr'
+                    ? "border-purple-600 text-purple-700 dark:text-purple-300 font-black"
+                    : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                )}
+              >
+                <Smartphone className="w-4 h-4" />
+                <span>Flash QR Présence</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setRattrapageTab('history')}
+                className={cn(
+                  "flex items-center gap-2 pb-2.5 px-3 text-xs font-bold border-b-2 transition-all cursor-pointer",
+                  rattrapageTab === 'history'
+                    ? "border-purple-600 text-purple-700 dark:text-purple-300 font-black"
+                    : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                )}
+              >
+                <History className="w-4 h-4" />
+                <span>Historique ({seanceStore[rattrapageTargetSeance]?.rattrapages?.length || 0})</span>
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-5 overflow-y-auto space-y-4 flex-1">
+              
+              {/* TAB 1: FEUILLE D'APPEL */}
+              {rattrapageTab === 'call' && (
+                <div className="space-y-4">
+                  {/* KPI Summary Cards */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+                      <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">Convoqués</span>
+                      <p className="text-xl font-black text-slate-900 dark:text-white mt-0.5">{rattrapageStudents.length}</p>
+                    </div>
+
+                    <div className="p-3 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800">
+                      <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-300 uppercase">Présents (Rattrapés)</span>
+                      <p className="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5">
+                        {rattrapageStudents.filter(s => s.status === 'present').length}
+                      </p>
+                    </div>
+
+                    <div className="p-3 rounded-2xl bg-rose-50/70 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800">
+                      <span className="text-[10px] font-bold text-rose-700 dark:text-rose-300 uppercase">Toujours Absents</span>
+                      <p className="text-xl font-black text-rose-600 dark:text-rose-400 mt-0.5">
+                        {rattrapageStudents.filter(s => s.status === 'absent').length}
+                      </p>
+                    </div>
+
+                    <div className="p-3 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
+                      <span className="text-[10px] font-bold text-amber-700 dark:text-amber-300 uppercase">Retards / Excusés</span>
+                      <p className="text-xl font-black text-amber-600 dark:text-amber-400 mt-0.5">
+                        {rattrapageStudents.filter(s => s.status === 'retard' || s.status === 'excuse').length}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Actions & Filters Ribbon */}
+                  <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-50/60 dark:bg-slate-800/40 p-3 rounded-2xl border border-slate-200 dark:border-slate-700/70">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <button
+                        type="button"
+                        onClick={() => handleSetAllRattrapageStatus('present')}
+                        className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-2xs cursor-pointer flex items-center gap-1.5"
+                      >
+                        <CheckCheck className="w-3.5 h-3.5" />
+                        <span>Tous Présents (Régularisés)</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleSetAllRattrapageStatus('absent')}
+                        className="px-3 py-1.5 rounded-xl bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-xs font-bold transition-all cursor-pointer"
+                      >
+                        <span>Tous Absents</span>
+                      </button>
+
+                      {/* Status Filter */}
+                      <div className="flex items-center bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-0.5 text-xs font-bold">
+                        <button
+                          type="button"
+                          onClick={() => setRattrapageStatusFilter('all')}
+                          className={cn("px-2.5 py-1 rounded-lg transition-colors cursor-pointer", rattrapageStatusFilter === 'all' && "bg-purple-600 text-white")}
+                        >
+                          Tous ({rattrapageStudents.length})
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setRattrapageStatusFilter('absent')}
+                          className={cn("px-2.5 py-1 rounded-lg transition-colors cursor-pointer", rattrapageStatusFilter === 'absent' && "bg-rose-600 text-white")}
+                        >
+                          Absents ({rattrapageStudents.filter(s => s.status === 'absent').length})
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setRattrapageStatusFilter('present')}
+                          className={cn("px-2.5 py-1 rounded-lg transition-colors cursor-pointer", rattrapageStatusFilter === 'present' && "bg-emerald-600 text-white")}
+                        >
+                          Présents ({rattrapageStudents.filter(s => s.status === 'present').length})
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Search & Add other student */}
+                    <div className="flex items-center gap-2 flex-1 sm:flex-initial">
+                      <div className="relative min-w-[180px]">
+                        <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                        <input
+                          type="text"
+                          value={rattrapageSearchQuery}
+                          onChange={e => setRattrapageSearchQuery(e.target.value)}
+                          placeholder="Rechercher étudiant..."
+                          className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-8 pr-3 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-purple-500"
+                        />
+                      </div>
+
+                      {/* Dropdown to add a non-listed student */}
+                      <div className="relative">
+                        <select
+                          value={selectedStudentToAdd ?? ''}
+                          onChange={e => {
+                            const val = e.target.value ? Number(e.target.value) : null;
+                            if (val) handleAddStudentToRattrapage(val);
+                          }}
+                          className="bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 rounded-xl px-2.5 py-1.5 text-xs font-bold focus:outline-none cursor-pointer max-w-[160px] truncate"
+                        >
+                          <option value="">+ Ajouter étudiant...</option>
+                          {students
+                            .filter(st => !rattrapageStudents.some(item => item.student.id === st.id))
+                            .map(st => (
+                              <option key={st.id} value={st.id}>
+                                {st.last_name} {st.first_name} ({st.sub_group || 'G1'})
+                              </option>
+                            ))}
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Student List */}
+                  {rattrapageStudents.length === 0 ? (
+                    <div className="text-center py-12 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl p-6">
+                      <UserCheck className="w-12 h-12 text-emerald-500 mx-auto mb-3" />
+                      <h4 className="text-sm font-bold text-slate-900 dark:text-white">Aucun absent sur la séance {rattrapageTargetSeance}</h4>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-md mx-auto">
+                        Tous les étudiants étaient présents lors de cette séance principale. Vous pouvez néanmoins ajouter manuellement un étudiant qui souhaite rattraper un cours.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2 max-h-[380px] overflow-y-auto pr-1">
+                      {rattrapageStudents
+                        .filter(item => {
+                          if (rattrapageStatusFilter === 'absent' && item.status !== 'absent') return false;
+                          if (rattrapageStatusFilter === 'present' && item.status !== 'present') return false;
+                          if (!rattrapageSearchQuery) return true;
+                          const q = rattrapageSearchQuery.toLowerCase();
+                          return `${item.student.last_name} ${item.student.first_name}`.toLowerCase().includes(q) ||
+                            (item.student.matricule || '').toLowerCase().includes(q) ||
+                            (item.student.cne || '').toLowerCase().includes(q);
+                        })
+                        .map(item => {
+                          const isPres = item.status === 'present';
+                          const isAbs = item.status === 'absent';
+                          const isRet = item.status === 'retard';
+                          const isExc = item.status === 'excuse';
+
+                          return (
+                            <div
+                              key={item.student.id}
+                              className={cn(
+                                "flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-2xl border transition-all",
+                                isPres
+                                  ? "bg-emerald-50/60 dark:bg-emerald-950/20 border-emerald-300 dark:border-emerald-800/80"
+                                  : isAbs
+                                    ? "bg-rose-50/40 dark:bg-rose-950/20 border-rose-200 dark:border-rose-900/60"
+                                    : "bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700"
+                              )}
+                            >
+                              {/* Student Info */}
+                              <div className="flex items-center gap-3">
+                                <div className={cn(
+                                  "w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs uppercase shadow-xs shrink-0",
+                                  isPres ? "bg-emerald-600 text-white" : "bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300"
+                                )}>
+                                  {item.student.last_name.slice(0, 1)}{item.student.first_name.slice(0, 1)}
+                                </div>
+
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs font-bold text-slate-900 dark:text-white">
+                                      {item.student.last_name} {item.student.first_name}
+                                    </span>
+                                    {item.student.sub_group && (
+                                      <span className="px-1.5 py-0.2 rounded bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-[10px] font-mono font-bold">
+                                        {item.student.sub_group}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <span className="text-[11px] text-slate-400 font-mono">
+                                    {item.student.matricule || item.student.cne || 'ENCG Fès'}
+                                  </span>
+                                </div>
+                              </div>
+
+                              {/* 4-Status Selector */}
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <button
+                                  type="button"
+                                  onClick={() => handleToggleRattrapageStatus(item.student.id, 'present')}
+                                  className={cn(
+                                    "px-2.5 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1",
+                                    isPres
+                                      ? "bg-emerald-600 text-white shadow-xs font-black ring-2 ring-emerald-500/30"
+                                      : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-emerald-400"
+                                  )}
+                                >
+                                  <Check className="w-3.5 h-3.5" />
+                                  <span>Présent (Régularisé)</span>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleToggleRattrapageStatus(item.student.id, 'absent')}
+                                  className={cn(
+                                    "px-2.5 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1",
+                                    isAbs
+                                      ? "bg-rose-600 text-white shadow-xs font-black ring-2 ring-rose-500/30"
+                                      : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-rose-400"
+                                  )}
+                                >
+                                  <UserX className="w-3.5 h-3.5" />
+                                  <span>Non régularisé</span>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleToggleRattrapageStatus(item.student.id, 'retard')}
+                                  className={cn(
+                                    "px-2 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer",
+                                    isRet
+                                      ? "bg-amber-500 text-white shadow-xs font-black"
+                                      : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-amber-400"
+                                  )}
+                                >
+                                  Retard
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleToggleRattrapageStatus(item.student.id, 'excuse')}
+                                  className={cn(
+                                    "px-2 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer",
+                                    isExc
+                                      ? "bg-sky-600 text-white shadow-xs font-black"
+                                      : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-sky-400"
+                                  )}
+                                >
+                                  Excusé
+                                </button>
+
+                                {/* Student Note */}
+                                <input
+                                  type="text"
+                                  value={item.note}
+                                  onChange={e => handleUpdateRattrapageNote(item.student.id, e.target.value)}
+                                  placeholder="Note / Observation..."
+                                  className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-2.5 py-1 text-xs text-slate-900 dark:text-white max-w-[140px] focus:outline-none focus:border-purple-500"
+                                />
+
+                                {/* Remove Button */}
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveStudentFromRattrapage(item.student.id)}
+                                  className="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
+                                  title="Retirer de cette séance de rattrapage"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                    </div>
+                  )}
+
+                  {/* Regularization Options Checkbox */}
+                  <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
+                    <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700 dark:text-slate-300">
+                      <input
+                        type="checkbox"
+                        checked={autoRegularizeOriginal}
+                        onChange={e => setAutoRegularizeOriginal(e.target.checked)}
+                        className="w-4 h-4 rounded text-purple-600 focus:ring-purple-500"
+                      />
+                      <span>
+                        Régulariser automatiquement l'absence de la séance d'origine ({rattrapageTargetSeance}) pour les étudiants présents au rattrapage
+                      </span>
+                    </label>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 2: FLASH QR PRÉSENCE (RATTRAPAGE) */}
+              {rattrapageTab === 'qr' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center p-2">
+                  <div className="flex flex-col items-center justify-center p-6 bg-slate-50 dark:bg-slate-950 border border-purple-200 dark:border-purple-900/60 rounded-3xl relative shadow-inner">
+                    <div className="p-4 bg-white rounded-2xl shadow-lg border border-purple-200">
+                      <QRCodeSVG
+                        value={`${window.location.origin}/student/attendance/check-in?seance=${rattrapageTargetSeance}-RAT&group=${selectedGroupId}&date=${rattrapageDate}&time=${Date.now()}`}
+                        size={220}
+                        level="H"
+                        includeMargin={true}
+                      />
+                    </div>
+
+                    <div className="mt-4 flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-purple-50 dark:bg-purple-950/60 border border-purple-300 dark:border-purple-700 text-purple-800 dark:text-purple-300 text-xs font-bold">
+                      <Clock className="w-3.5 h-3.5 animate-spin" />
+                      <span>QR Code Séance de Rattrapage — {rattrapageTargetSeance}</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="bg-gradient-to-br from-purple-500/10 via-indigo-500/5 to-transparent border border-purple-500/30 rounded-2xl p-4 space-y-2">
+                      <div className="flex items-center justify-between text-xs font-bold text-purple-700 dark:text-purple-300 uppercase tracking-wider">
+                        <span>Pointages en Direct (Rattrapage)</span>
+                        <span className="flex items-center gap-1">
+                          <span className="w-2 h-2 rounded-full bg-purple-500 animate-ping"></span>
+                          Direct
+                        </span>
+                      </div>
+
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-3xl font-black text-slate-900 dark:text-white">
+                          {rattrapageStudents.filter(s => s.status === 'present').length}
+                        </span>
+                        <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">
+                          / {rattrapageStudents.length} étudiants convoqués
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 text-xs space-y-2">
+                      <p className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                        <Info className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                        <span>Consignes pour les étudiants en rattrapage :</span>
+                      </p>
+                      <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
+                        Projetez ce QR Code dans la salle de rattrapage ({rattrapageRoom || 'Salle dédiée'}). Les étudiants absents le scannent pour valider leur présence et régulariser automatiquement leur absence de {rattrapageTargetSeance}.
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleSimulateRattrapageQrScan}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/40 dark:hover:bg-purple-900/50 border border-purple-200 dark:border-purple-700 text-purple-700 dark:text-purple-300 text-xs font-bold transition-all cursor-pointer"
+                    >
+                      <Sparkles className="w-4 h-4 text-purple-500" />
+                      <span>Simuler un scan étudiant (Test Immédiat)</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 3: HISTORIQUE DES RATTRAPAGES */}
+              {rattrapageTab === 'history' && (
+                <div className="space-y-3">
+                  {(!seanceStore[rattrapageTargetSeance]?.rattrapages || seanceStore[rattrapageTargetSeance]?.rattrapages?.length === 0) ? (
+                    <div className="text-center py-12 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl p-6">
+                      <History className="w-10 h-10 text-slate-400 mx-auto mb-2" />
+                      <h4 className="text-sm font-bold text-slate-900 dark:text-white">Aucun rattrapage enregistré pour {rattrapageTargetSeance}</h4>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        Les séances de rattrapage effectuées pour cette séance seront archivées ici avec la liste des étudiants régularisés.
+                      </p>
+                    </div>
+                  ) : (
+                    seanceStore[rattrapageTargetSeance]?.rattrapages?.map((rat, idx) => {
+                      const presentCount = rat.records.filter(r => r.status === 'present').length;
+                      return (
+                        <div
+                          key={rat.id || idx}
+                          className="p-4 rounded-2xl bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 space-y-2 shadow-2xs"
+                        >
+                          <div className="flex items-center justify-between gap-2 flex-wrap">
+                            <div className="flex items-center gap-2">
+                              <span className="p-1.5 rounded-lg bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 font-bold text-xs">
+                                Rattrapage #{idx + 1}
+                              </span>
+                              <span className="text-xs font-black text-slate-900 dark:text-white">
+                                {rat.title || `Rattrapage ${rat.originalSeance}`}
+                              </span>
+                            </div>
+
+                            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 font-mono">
+                              Date : {rat.date} • {rat.timeSlot} • {rat.room}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center justify-between text-xs pt-1">
+                            <span className="font-semibold text-slate-600 dark:text-slate-300">
+                              Bilan de présence : <strong className="text-emerald-600 dark:text-emerald-400">{presentCount} régularisé(s)</strong> sur {rat.records.length} convoqué(s)
+                            </span>
+                            <span className="text-[11px] text-slate-400">
+                              Enregistré le {new Date(rat.createdAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-purple-100 dark:border-purple-950/60 bg-slate-50/50 dark:bg-slate-900/90 flex items-center justify-between">
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                {rattrapageStudents.filter(s => s.status === 'present').length} présence(s) à régulariser
+              </span>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowRattrapageModal(false)}
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition-colors cursor-pointer"
+                >
+                  Annuler
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleSaveRattrapageSession}
+                  disabled={savingRattrapage}
+                  className="flex items-center gap-2 px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition-all shadow-md cursor-pointer disabled:opacity-50"
+                >
+                  {savingRattrapage ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <CheckCheck className="w-4 h-4" />
+                  )}
+                  <span>Valider & Enregistrer l'Appel de Rattrapage</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>

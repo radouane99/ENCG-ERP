@@ -28,9 +28,14 @@ Contrôle exécuté en transaction PostgreSQL **READ ONLY** avec `tests/Audit/Se
 ## Validation et éléments restant à recetter
 
 - Suite backend complète : **454 tests, 1 976 assertions réussis**, journal `backend/storage/logs/semester-full-suite-20261025.log`.
+- Contrôle ultérieur du parcours HTTP réel professeur, de la révision concurrente et des exports : **8 tests, 55 assertions réussis**, journal `backend/storage/logs/semester-final-api-check.log`. Ce contrôle a révélé puis permis de corriger un import manquant dans l'endpoint de confirmation enseignant.
 - Tests de régression dédiés : brouillon privé, confirmations personnelles, publication, capacité, conflit enseignant, révision concurrente, génération par affectations réelles, réapprobation des réservations, ancienne route d'édition, reconduction idempotente et PDF dans le ZIP.
 - Tests navigateur avec réponses API synthétiques : préparation desktop/mobile sans débordement, refus de publication expliqué, reconduction prévisualisée/appliquée et confirmation depuis le portail professeur.
 - Tests frontend unitaires : 50 réussis. TypeScript et build de production vérifiés. Le lint du projet conserve des avertissements; ils ne sont pas présentés comme corrigés intégralement.
 - Captures conservées dans `screenshots/preparation-semestre-desktop.png` et `screenshots/preparation-semestre-mobile.png`.
 
-La recette terrain caméra/QR, les coupures réseau sur plusieurs appareils, la livraison des emails réels et le déploiement distant restent distincts des tests automatisés locaux. Aucun email réel ni déploiement distant n'a été effectué pendant cette livraison. Des avertissements de dépréciation PHP proviennent des bibliothèques QR tierces pendant le test PDF; aucune modification du vendor n'a été faite.
+La recette terrain caméra/QR, les coupures réseau sur plusieurs appareils et le déploiement distant restent distincts des tests automatisés locaux. Aucun déploiement distant n'a été effectué. Des avertissements de dépréciation PHP proviennent des bibliothèques QR tierces pendant le test PDF; aucune modification du vendor n'a été faite.
+
+Après désignation explicite du destinataire par l'utilisateur, un email réel de test a été accepté par Resend le 25 octobre 2026 à 01:15:13 UTC (02:15:13 Casablanca). L'expéditeur configuré est `no-reply@benadadarentcar.com`; le passage à une adresse institutionnelle ENCG nécessite de vérifier son domaine chez le fournisseur. Le test contient uniquement un message technique, sans dossier étudiant/professeur. L'acceptation par le transport ne prouve pas le placement dans la boîte de réception. Le script de test conserve un reçu local et évite de renvoyer le même test.
+
+Comparaison finale de la base source : 155 tables historiques identiques, 1 721 notes conservées. Une ligne supplémentaire existe dans `audit_logs` (analyse de risque d'assiduité par API); le contrôle de l'empreinte des anciennes lignes confirme qu'elles sont toutes conservées sans modification. Le journal d'audit n'a pas été purgé pour faire passer artificiellement la comparaison stricte.

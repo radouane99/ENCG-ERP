@@ -72,7 +72,7 @@ export default function ProfessorSchedulePage() {
   const startCall = useMutation({
     mutationFn: async (session: any) => {
       const response = await api.post('/professor/attendance/start', { module_id: session.module_id, group_id: session.group_id, session_type: session.session_type, room_name: session.room });
-      return { ...session, session_id: response.data.session.id };
+      return { ...session, attendance_session_id: response.data.session.id, attendance_date: response.data.session.session_date };
     },
     onSuccess: session => setActiveSession(session),
     onError: (err: any) => toast.error(err.response?.data?.message || 'Ouverture de l’appel impossible.'),
@@ -532,7 +532,9 @@ export default function ProfessorSchedulePage() {
       <QRScannerModal
         isOpen={!!activeSession}
         onClose={() => setActiveSession(null)}
-        sessionId={activeSession?.session_id ?? ''}
+        sessionId={activeSession?.id ?? ''}
+        attendanceSessionId={activeSession?.attendance_session_id}
+        attendanceDate={activeSession?.attendance_date}
         sessionData={activeSession}
       />
     </div>

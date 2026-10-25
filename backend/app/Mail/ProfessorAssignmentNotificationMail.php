@@ -29,10 +29,10 @@ class ProfessorAssignmentNotificationMail extends Mailable
     {
         return new Envelope(
             from: new Address(
-                config('mail.from.address', 'no-reply@benadadarentcar.com'),
+                config('mail.from.address', 'noreply@encg-fes.ac.ma'),
                 config('mail.from.name', 'ENCG Portail')
             ),
-            subject: '🏛️ ENCG Fès — Ordre de Service & Notification Officielle d\'Affectation Pédagogique 2026/2027',
+            subject: 'ENCG Fès — Ordre de service & affectation pédagogique '.($this->profData['academicYear'] ?? ''),
         );
     }
 
