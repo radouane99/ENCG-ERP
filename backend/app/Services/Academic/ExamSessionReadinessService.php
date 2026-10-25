@@ -2,9 +2,9 @@
 
 namespace App\Services\Academic;
 
-use App\Models\ExamSession;
 use App\Models\ExamIncident;
 use App\Models\ExamSeating;
+use App\Models\ExamSession;
 use App\Models\ExamSurveillance;
 
 class ExamSessionReadinessService
@@ -14,6 +14,7 @@ class ExamSessionReadinessService
         app(ExamWorkflowGuard::class)->session($session);
         $exams = $session->exams()->with('room')->withCount(['seatings', 'surveillances'])->get();
         $ids = $exams->pluck('id');
+
         return [
             'session_id' => $session->id, 'name' => $session->name,
             'is_active' => $session->is_active, 'is_locked' => $session->is_locked,

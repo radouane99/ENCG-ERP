@@ -2,7 +2,15 @@
 
 namespace Tests\Feature;
 
-use App\Models\{Deliberation, DeliberationDecision, Semester, StudentPathway, StudentRegistration, User};
+use App\Actions\Academic\ConfirmStudentRenewalAction;
+use App\Domain\Deliberation\ProgramCompletionRules;
+use App\Models\Deliberation;
+use App\Models\DeliberationDecision;
+use App\Models\Institution;
+use App\Models\Semester;
+use App\Models\StudentPathway;
+use App\Models\StudentRegistration;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use Spatie\Permission\Models\Role;
@@ -34,7 +42,9 @@ class GraduationLifecycleTest extends TestCase
         [$student, $decision, $year, $filiere] = $this->fixture();
         StudentRegistration::create(['student_id' => $student->id, 'academic_year_id' => $year->id, 'filiere_id' => $filiere->id, 'semester_number' => 3, 'registration_type' => 're_enrollment', 'status' => 'academic_validated']);
         $this->getJson('/api/alumni/graduation-candidates')->assertOk()->assertJsonPath('data.0.decision_id', $decision->id);
-        for ($i = 0; $i < 2; $i++) $this->postJson('/api/alumni/graduates/finalize', ['decision_id' => $decision->id])->assertOk();
+        for ($i = 0; $i < 2; $i++) {
+            $this->postJson('/api/alumni/graduates/finalize', ['decision_id' => $decision->id])->assertOk();
+        }
         $this->assertSame('graduated', $student->refresh()->status);
         $this->assertFalse($student->latestPathway->is_current);
         $this->getJson('/api/alumni/graduates')->assertOk()->assertJsonPath('total', 1)->assertJsonPath('data.0.id', $student->id);
@@ -61,7 +71,7 @@ class GraduationLifecycleTest extends TestCase
 
     public function test_initial_speciality_keeps_ten_semesters_and_master_uses_its_duration(): void
     {
-        $rules = \App\Domain\Deliberation\ProgramCompletionRules::class;
+        $rules = ProgramCompletionRules::class;
         $this->assertSame(10, $rules::finalSemester('grande_ecole', 2));
         $this->assertSame(4, $rules::finalSemester('master_temps_amenage', 2));
         $this->assertSame(6, $rules::finalSemester('licence_universite', 3));
@@ -89,7 +99,7 @@ class GraduationLifecycleTest extends TestCase
         $decision->update(['decision' => 'retake']);
         $this->postJson('/api/alumni/graduates/finalize', ['decision_id' => $decision->id])->assertUnprocessable();
         $decision->update(['decision' => 'admitted']);
-        $institution = \App\Models\Institution::create(['name' => 'Other school', 'code' => 'OTHER', 'slug' => 'other']);
+        $institution = Institution::create(['name' => 'Other school', 'code' => 'OTHER', 'slug' => 'other']);
         $staff = User::factory()->create(['institution_id' => $institution->id]);
         $staff->assignRole(Role::findOrCreate('scolarite', 'sanctum'));
         Sanctum::actingAs($staff);
@@ -101,7 +111,7 @@ class GraduationLifecycleTest extends TestCase
     public function test_ambiguous_or_out_of_program_renewal_is_not_eligible(): void
     {
         [$student, , $year, $filiere] = $this->fixture();
-        $action = app(\App\Actions\Academic\ConfirmStudentRenewalAction::class);
+        $action = app(ConfirmStudentRenewalAction::class);
         $registration = StudentRegistration::create(['student_id' => $student->id, 'academic_year_id' => $year->id, 'filiere_id' => $filiere->id, 'semester_number' => 5, 'registration_type' => 're_enrollment', 'status' => 'academic_validated']);
         $this->assertNull($action->eligibleRegistration($student, $year->id));
         $this->getJson('/api/admin/reinscriptions/stats')->assertOk()->assertJsonPath('data.total_pending', 0)->assertJsonPath('data.total_needs_review', 1);
@@ -121,7 +131,7 @@ class GraduationLifecycleTest extends TestCase
         $this->getJson('/api/alumni/graduates')->assertOk()->assertJsonPath('total', 1)->assertJsonPath('data.0.graduations.0.filiere_name', $filiere->name);
         $this->assertDatabaseCount('student_graduations', 1);
         StudentRegistration::create(['student_id' => $student->id, 'academic_year_id' => $year->id, 'filiere_id' => $filiere->id, 'semester_number' => 3, 'registration_type' => 're_enrollment', 'status' => 'academic_validated']);
-        $this->assertNull(app(\App\Actions\Academic\ConfirmStudentRenewalAction::class)->eligibleRegistration($student, $year->id));
+        $this->assertNull(app(ConfirmStudentRenewalAction::class)->eligibleRegistration($student, $year->id));
     }
 
     public function test_archiving_counts_use_recorded_decisions_and_graduations(): void

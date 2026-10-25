@@ -1,18 +1,22 @@
 <?php
+
 namespace App\Actions\Auth;
 
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
-use Spatie\Permission\Models\{Permission, Role};
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 final class ManageUserAccessAction
 {
     private const PROTECTED = ['super-admin', 'super_admin', 'institution-admin', 'institution_admin', 'director', 'admin'];
+
     public function assertManageable(User $actor, User $target): void
     {
         abort_unless((int) $actor->institution_id === (int) $target->institution_id, 404);
         abort_if(! $actor->hasAnyRole(['super-admin', 'super_admin']) && $target->hasAnyRole(self::PROTECTED) && $actor->id !== $target->id, 403, 'Ce compte relève de l’administration supérieure.');
     }
+
     public function execute(User $actor, User $target, array $roles, ?array $permissions = null): User
     {
         return DB::transaction(function () use ($actor, $target, $roles, $permissions) {
@@ -37,12 +41,19 @@ final class ManageUserAccessAction
             if ($permissions !== null) {
                 $permissions = array_values(array_unique($permissions));
                 abort_unless(Permission::whereIn('name', $permissions)->where('guard_name', 'sanctum')->count() === count($permissions), 422, 'Permission inconnue.');
-                if (! $super) foreach ($permissions as $permission) abort_unless(! in_array($permission, ['roles.manage', 'users.manage', 'system.settings'], true) && $actor->can($permission), 403, 'Permission non délégable.');
+                if (! $super) {
+                    foreach ($permissions as $permission) {
+                        abort_unless(! in_array($permission, ['roles.manage', 'users.manage', 'system.settings'], true) && $actor->can($permission), 403, 'Permission non délégable.');
+                    }
+                }
             }
             $oldPermissions = $target->getDirectPermissions()->pluck('name')->all();
             $target->syncRoles($roles);
-            if ($permissions !== null) $target->syncPermissions($permissions);
+            if ($permissions !== null) {
+                $target->syncPermissions($permissions);
+            }
             activity()->causedBy($actor)->performedOn($target)->withProperties(['roles_before' => $before, 'roles_after' => $roles, 'permissions_before' => $oldPermissions, 'permissions_after' => $permissions ?? $oldPermissions])->log('user_access_changed');
+
             return $target->load('roles', 'permissions');
         });
     }

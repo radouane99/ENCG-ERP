@@ -1,7 +1,9 @@
 <?php
+
 namespace App\Services\Academic;
 
-use App\Models\{AcademicYear, RenewalCampaign};
+use App\Models\AcademicYear;
+use App\Models\RenewalCampaign;
 
 final class RenewalCampaignService
 {

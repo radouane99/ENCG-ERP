@@ -53,9 +53,9 @@ class AnalyticsController extends Controller
         }
 
         $filiereId = $request->integer('filiere_id') ?: null;
-        $groupId   = $request->integer('group_id') ?: null;
+        $groupId = $request->integer('group_id') ?: null;
         // Art.14 threshold: warn at 2, exclude at 3
-        $warnThreshold    = max(1, $request->integer('warn_threshold', 2));
+        $warnThreshold = max(1, $request->integer('warn_threshold', 2));
         $excludeThreshold = max(2, $request->integer('exclude_threshold', 3));
 
         // Query: unexcused absences per student per module, excluding exam period sessions
@@ -64,7 +64,7 @@ class AnalyticsController extends Controller
             ->join('students as st', 'a.student_id', '=', 'st.id')
             ->join('student_pathways as sp', function ($j) use ($groupId) {
                 $j->on('sp.student_id', '=', 'st.id')
-                  ->where('sp.is_current', true);
+                    ->where('sp.is_current', true);
                 if ($groupId) {
                     $j->where('sp.group_id', '=', $groupId);
                 }
@@ -126,23 +126,23 @@ class AnalyticsController extends Controller
             $maxAbsences = $rows->max('unexcused_absences');
 
             return [
-                'student_id'         => $first->student_id,
-                'student_number'     => $first->student_number,
-                'first_name'         => $first->first_name,
-                'last_name'          => $first->last_name,
-                'email'              => $first->email,
-                'filiere_name'       => $first->filiere_name,
-                'filiere_code'       => $first->filiere_code,
-                'group_name'         => $first->group_name,
-                'modules_at_risk'    => $rows->map(fn ($r) => [
-                    'module_id'          => $r->module_id,
-                    'module_name'        => $r->module_name,
-                    'module_code'        => $r->module_code,
+                'student_id' => $first->student_id,
+                'student_number' => $first->student_number,
+                'first_name' => $first->first_name,
+                'last_name' => $first->last_name,
+                'email' => $first->email,
+                'filiere_name' => $first->filiere_name,
+                'filiere_code' => $first->filiere_code,
+                'group_name' => $first->group_name,
+                'modules_at_risk' => $rows->map(fn ($r) => [
+                    'module_id' => $r->module_id,
+                    'module_name' => $r->module_name,
+                    'module_code' => $r->module_code,
                     'unexcused_absences' => (int) $r->unexcused_absences,
-                    'status'             => (int) $r->unexcused_absences >= $excludeThreshold ? 'EXCLUSION_RISK' : 'WARNING',
+                    'status' => (int) $r->unexcused_absences >= $excludeThreshold ? 'EXCLUSION_RISK' : 'WARNING',
                 ])->values(),
                 'max_absences_in_module' => (int) $maxAbsences,
-                'art14_status'       => (int) $maxAbsences >= $excludeThreshold ? 'EXCLUSION_RISK' : 'WARNING',
+                'art14_status' => (int) $maxAbsences >= $excludeThreshold ? 'EXCLUSION_RISK' : 'WARNING',
                 'requires_convocation' => (int) $maxAbsences >= $warnThreshold,
             ];
         })->values();
@@ -153,26 +153,26 @@ class AnalyticsController extends Controller
             $students = $rows->pluck('student_id')->unique();
 
             return [
-                'filiere_id'        => $fId,
-                'filiere_name'      => $first->filiere_name,
-                'filiere_code'      => $first->filiere_code,
-                'students_at_risk'  => $students->count(),
-                'exclusion_risk'    => $rows->where('unexcused_absences', '>=', $excludeThreshold)->pluck('student_id')->unique()->count(),
-                'warning'           => $rows->where('unexcused_absences', '<', $excludeThreshold)->pluck('student_id')->unique()->count(),
+                'filiere_id' => $fId,
+                'filiere_name' => $first->filiere_name,
+                'filiere_code' => $first->filiere_code,
+                'students_at_risk' => $students->count(),
+                'exclusion_risk' => $rows->where('unexcused_absences', '>=', $excludeThreshold)->pluck('student_id')->unique()->count(),
+                'warning' => $rows->where('unexcused_absences', '<', $excludeThreshold)->pluck('student_id')->unique()->count(),
             ];
         })->values();
 
         return response()->json([
             'success' => true,
             'data' => [
-                'academic_year'      => $academicYear->name,
-                'warn_threshold'     => $warnThreshold,
-                'exclude_threshold'  => $excludeThreshold,
+                'academic_year' => $academicYear->name,
+                'warn_threshold' => $warnThreshold,
+                'exclude_threshold' => $excludeThreshold,
                 'total_students_at_risk' => $byStudent->count(),
-                'exclusion_risk_count'   => $byStudent->where('art14_status', 'EXCLUSION_RISK')->count(),
-                'warning_count'          => $byStudent->where('art14_status', 'WARNING')->count(),
-                'by_filiere'         => $byFiliere,
-                'students'           => $byStudent,
+                'exclusion_risk_count' => $byStudent->where('art14_status', 'EXCLUSION_RISK')->count(),
+                'warning_count' => $byStudent->where('art14_status', 'WARNING')->count(),
+                'by_filiere' => $byFiliere,
+                'students' => $byStudent,
             ],
         ]);
     }
@@ -213,17 +213,17 @@ class AnalyticsController extends Controller
                 $unexcusedRate = $total > 0 ? round(($row->unexcused_absences / $total) * 100, 1) : 0;
 
                 return [
-                    'filiere_id'          => $row->filiere_id,
-                    'filiere_name'        => $row->filiere_name,
-                    'filiere_code'        => $row->filiere_code,
-                    'total_records'       => $total,
-                    'presences'           => (int) $row->presences,
-                    'unexcused_absences'  => (int) $row->unexcused_absences,
-                    'justified_absences'  => (int) $row->justified_absences,
-                    'absenteeism_rate'    => $absRate,
-                    'unexcused_rate'      => $unexcusedRate,
-                    'attendance_rate'     => $total > 0 ? round(($row->presences / $total) * 100, 1) : 100,
-                    'risk_level'          => $unexcusedRate >= 15 ? 'HIGH' : ($unexcusedRate >= 8 ? 'MEDIUM' : 'LOW'),
+                    'filiere_id' => $row->filiere_id,
+                    'filiere_name' => $row->filiere_name,
+                    'filiere_code' => $row->filiere_code,
+                    'total_records' => $total,
+                    'presences' => (int) $row->presences,
+                    'unexcused_absences' => (int) $row->unexcused_absences,
+                    'justified_absences' => (int) $row->justified_absences,
+                    'absenteeism_rate' => $absRate,
+                    'unexcused_rate' => $unexcusedRate,
+                    'attendance_rate' => $total > 0 ? round(($row->presences / $total) * 100, 1) : 100,
+                    'risk_level' => $unexcusedRate >= 15 ? 'HIGH' : ($unexcusedRate >= 8 ? 'MEDIUM' : 'LOW'),
                 ];
             });
 
@@ -231,14 +231,13 @@ class AnalyticsController extends Controller
             'success' => true,
             'data' => [
                 'academic_year' => $academicYear->name,
-                'filieres'      => $rows,
-                'summary'       => [
-                    'total_filieres'   => $rows->count(),
-                    'high_risk'        => $rows->where('risk_level', 'HIGH')->count(),
-                    'average_rate'     => $rows->avg('absenteeism_rate') ? round($rows->avg('absenteeism_rate'), 1) : 0,
+                'filieres' => $rows,
+                'summary' => [
+                    'total_filieres' => $rows->count(),
+                    'high_risk' => $rows->where('risk_level', 'HIGH')->count(),
+                    'average_rate' => $rows->avg('absenteeism_rate') ? round($rows->avg('absenteeism_rate'), 1) : 0,
                 ],
             ],
         ]);
     }
 }
-

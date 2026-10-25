@@ -27,9 +27,12 @@ use App\Models\Room;
 use App\Models\Student;
 use App\Models\StudentRegistration;
 use App\Models\User;
+use App\Services\Academic\AcademicContext;
 use App\Services\Academic\DeliberationService;
 use App\Services\Academic\ExamConvocationService;
+use App\Services\Academic\ExamWorkflowGuard;
 use App\Services\Academic\GradeService;
+use App\Services\Document\WorkflowDocumentExportService;
 use App\Services\Documents\OfficialPdfFactory;
 use App\Services\Security\ProfessorAccessService;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -108,19 +111,23 @@ class PdfExportController extends Controller
         $cne = strtoupper(trim((string) $request->query('cne', '')));
         $cin = strtoupper(trim((string) $request->query('cin', '')));
 
-        if (!empty($cne) || !empty($cin) || $request->filled('application_id') || $request->filled('student_id')) {
+        if (! empty($cne) || ! empty($cin) || $request->filled('application_id') || $request->filled('student_id')) {
             $candidate = null;
             if ($request->filled('application_id')) {
                 $candidate = DB::table('applications')->where('id', $request->integer('application_id'))->first();
-            } elseif (!empty($cne) || !empty($cin)) {
+            } elseif (! empty($cne) || ! empty($cin)) {
                 $candidate = DB::table('applications')
                     ->where(function ($q) use ($cne, $cin) {
-                        if (!empty($cne)) $q->whereRaw('UPPER(TRIM(cne)) = ?', [$cne]);
-                        if (!empty($cin)) $q->orWhereRaw('UPPER(TRIM(cin)) = ?', [$cin]);
+                        if (! empty($cne)) {
+                            $q->whereRaw('UPPER(TRIM(cne)) = ?', [$cne]);
+                        }
+                        if (! empty($cin)) {
+                            $q->orWhereRaw('UPPER(TRIM(cin)) = ?', [$cin]);
+                        }
                     })->first();
             }
 
-            if (!$candidate && (!empty($cne) || !empty($cin) || $request->filled('student_id'))) {
+            if (! $candidate && (! empty($cne) || ! empty($cin) || $request->filled('student_id'))) {
                 $std = DB::table('students')
                     ->join('users', 'students.user_id', '=', 'users.id')
                     ->leftJoin('student_pathways', function ($j) {
@@ -128,9 +135,15 @@ class PdfExportController extends Controller
                     })
                     ->leftJoin('filieres', 'student_pathways.filiere_id', '=', 'filieres.id')
                     ->where(function ($q) use ($cne, $cin, $request) {
-                        if ($request->filled('student_id')) $q->where('students.id', $request->integer('student_id'));
-                        if (!empty($cne)) $q->orWhereRaw('UPPER(TRIM(students.cne)) = ?', [$cne]);
-                        if (!empty($cin)) $q->orWhereRaw('UPPER(TRIM(users.cin)) = ?', [$cin]);
+                        if ($request->filled('student_id')) {
+                            $q->where('students.id', $request->integer('student_id'));
+                        }
+                        if (! empty($cne)) {
+                            $q->orWhereRaw('UPPER(TRIM(students.cne)) = ?', [$cne]);
+                        }
+                        if (! empty($cin)) {
+                            $q->orWhereRaw('UPPER(TRIM(users.cin)) = ?', [$cin]);
+                        }
                     })->select(
                         'users.first_name', 'users.last_name', 'users.name', 'students.cne', 'users.cin',
                         'filieres.name as filiere_name', 'students.status'
@@ -162,17 +175,18 @@ class PdfExportController extends Controller
                 }
 
                 $data = [
-                    'name' => trim(($candidate->first_name ?? 'CANDIDAT') . ' ' . ($candidate->last_name ?? '')),
+                    'name' => trim(($candidate->first_name ?? 'CANDIDAT').' '.($candidate->last_name ?? '')),
                     'cne' => $candidate->cne ?? ($cne ?: 'N142088916'),
                     'cin' => $candidate->cin ?? ($cin ?: 'C3967857'),
                     'filiere' => $candidate->reference_number ?? 'Deux années préparatoires (TAFEM S1)',
-                    'score' => number_format((float) ($candidate->selection_score ?? 150.00), 2) . ' pts',
+                    'score' => number_format((float) ($candidate->selection_score ?? 150.00), 2).' pts',
                     'statusLabel' => $statusLabel,
-                    'verifyUrl' => url('/public/track-dossier?cne=' . ($candidate->cne ?? $cne)),
+                    'verifyUrl' => url('/public/track-dossier?cne='.($candidate->cne ?? $cne)),
                 ];
 
                 $pdf = $this->getPdfInstance('pdf.recepisse_tafem', $data);
-                return $pdf->stream("Recepisse_Inscription_" . ($data['cne']) . ".pdf");
+
+                return $pdf->stream('Recepisse_Inscription_'.($data['cne']).'.pdf');
             }
         }
 
@@ -186,10 +200,11 @@ class PdfExportController extends Controller
                 'filiere' => 'Deux années préparatoires (TAFEM S1)',
                 'score' => '155.00 pts',
                 'statusLabel' => 'Inscription Définitive Validée',
-                'verifyUrl' => url('/public/inscription/status?cne=' . ($cne ?: 'N140091375')),
+                'verifyUrl' => url('/public/inscription/status?cne='.($cne ?: 'N140091375')),
             ];
             $pdf = $this->getPdfInstance('pdf.recepisse_tafem', $data);
-            return $pdf->stream("Recepisse_TAFEM.pdf");
+
+            return $pdf->stream('Recepisse_TAFEM.pdf');
         }
     }
 
@@ -212,7 +227,9 @@ class PdfExportController extends Controller
         if ($actor->hasRole('student')) {
             abort_unless((int) $seating->student->user_id === (int) $actor->id, 403);
             abort_unless($seating->sent_at || in_array($seating->status, ['sent', 'present', 'absent', 'late']), 404, 'Convocation non diffusée.');
-        } else { app(\App\Services\Academic\ExamWorkflowGuard::class)->viewExam($seating->exam); }
+        } else {
+            app(ExamWorkflowGuard::class)->viewExam($seating->exam);
+        }
 
         $pdf = $this->generateSingleConvocationPdf($seating);
         $user = $seating->student?->user;
@@ -268,10 +285,15 @@ class PdfExportController extends Controller
         $user = $request->user();
         abort_unless($user, 401);
         $target = $request->integer('professor_id') ?: $user->id;
-        if ($target !== $user->id) { app(\App\Services\Academic\ExamWorkflowGuard::class)->manage(); }
-        $query = ExamSurveillance::where('professor_id', $target)->whereHas('exam.examSession', fn ($q) => $q->where('institution_id', $user->institution_id)->where('academic_year_id', \App\Services\Academic\AcademicContext::yearId()));
-        if ($request->filled('session_id')) { $query->whereHas('exam', fn ($q) => $q->where('exam_session_id', $request->integer('session_id'))); }
+        if ($target !== $user->id) {
+            app(ExamWorkflowGuard::class)->manage();
+        }
+        $query = ExamSurveillance::where('professor_id', $target)->whereHas('exam.examSession', fn ($q) => $q->where('institution_id', $user->institution_id)->where('academic_year_id', AcademicContext::yearId()));
+        if ($request->filled('session_id')) {
+            $query->whereHas('exam', fn ($q) => $q->where('exam_session_id', $request->integer('session_id')));
+        }
         $surveillance = $query->firstOrFail();
+
         return $this->surveillantConvocationPdf($surveillance->id);
     }
 
@@ -290,7 +312,9 @@ class PdfExportController extends Controller
         if ($actor->hasRole('student')) {
             abort_unless((int) $seating->student->user_id === (int) $actor->id, 403);
             abort_unless($seating->sent_at || in_array($seating->status, ['sent', 'present', 'absent', 'late']), 404);
-        } else { app(\App\Services\Academic\ExamWorkflowGuard::class)->viewExam($seating->exam); }
+        } else {
+            app(ExamWorkflowGuard::class)->viewExam($seating->exam);
+        }
         $student = $seating->student ?? Student::with('user')->find($seating->student_id);
         $user = $student?->user ?? ($student?->user_id ? User::find($student->user_id) : null);
         $studentId = $seating->student_id ?? ($student?->id ?? 1);
@@ -374,8 +398,10 @@ class PdfExportController extends Controller
         $professorId = $surveillance->professor_id;
         $sessionId = $surveillance->exam?->exam_session_id;
 
-        app(\App\Services\Academic\ExamWorkflowGuard::class)->viewExam($surveillance->exam);
-        if ((int) request()->user()->id !== (int) $professorId) { app(\App\Services\Academic\ExamWorkflowGuard::class)->manage(); }
+        app(ExamWorkflowGuard::class)->viewExam($surveillance->exam);
+        if ((int) request()->user()->id !== (int) $professorId) {
+            app(ExamWorkflowGuard::class)->manage();
+        }
         $profUser = User::with('professor')->findOrFail($professorId);
         $profRecord = $profUser->professor;
         $allIds = [$profUser->id];
@@ -428,7 +454,9 @@ class PdfExportController extends Controller
         $verifyUrl = url('/api/convocations/'.$verifyToken.'/verify');
         $qrCodeBase64 = null;
         try {
-            if (!$verifyToken) throw new \RuntimeException('QR de surveillance non émis.');
+            if (! $verifyToken) {
+                throw new \RuntimeException('QR de surveillance non émis.');
+            }
             $qrSvg = QrCode::format('svg')->size(100)->margin(0)->generate($verifyUrl);
             $qrCodeBase64 = 'data:image/svg+xml;base64,'.base64_encode($qrSvg);
         } catch (\Throwable $e) {
@@ -586,8 +614,8 @@ class PdfExportController extends Controller
 
     public function batchDownloadSurveillantsPdf(Request $request, int $sessionId)
     {
-        app(\App\Services\Academic\ExamWorkflowGuard::class)->manage();
-        app(\App\Services\Academic\ExamWorkflowGuard::class)->session(ExamSession::findOrFail($sessionId));
+        app(ExamWorkflowGuard::class)->manage();
+        app(ExamWorkflowGuard::class)->session(ExamSession::findOrFail($sessionId));
         $surveillanceIds = $request->input('seating_ids', []);
         if (empty($surveillanceIds)) {
             return response()->json(['success' => false, 'message' => 'Aucun surveillant sélectionné.'], 400);
@@ -786,19 +814,24 @@ class PdfExportController extends Controller
     {
         $this->authorize('view', $student);
         abort_unless((int) $student->institution_id === (int) $request->user()->institution_id, 403);
-        $registration = \App\Models\StudentRegistration::with(['academicYear', 'filiere', 'group'])->where('student_id', $student->id)->where('academic_year_id', \App\Services\Academic\AcademicContext::yearId())->where('status', 'admin_validated')->first();
+        $registration = StudentRegistration::with(['academicYear', 'filiere', 'group'])->where('student_id', $student->id)->where('academic_year_id', AcademicContext::yearId())->where('status', 'admin_validated')->first();
         abort_unless($registration, 422, 'Une inscription administrative validée est requise pour cette année.');
-        $bytes = app(\App\Services\Document\WorkflowDocumentExportService::class)->pdf('Attestation de scolarité — à viser', ['Étudiant' => $student->user->name, 'CNE' => $student->cne, 'Année universitaire' => $registration->academicYear->label, 'Formation' => $registration->filiere?->name ?? 'Non renseignée', 'Semestre' => $registration->semester_number, 'Groupe' => $registration->group?->name ?? 'Non affecté', 'Établi le' => now()->format('d/m/Y')], notice: 'Document établi à partir de l’inscription administrative enregistrée. À faire viser par le service de scolarité pour un usage officiel.');
+        $bytes = app(WorkflowDocumentExportService::class)->pdf('Attestation de scolarité — à viser', ['Étudiant' => $student->user->name, 'CNE' => $student->cne, 'Année universitaire' => $registration->academicYear->label, 'Formation' => $registration->filiere?->name ?? 'Non renseignée', 'Semestre' => $registration->semester_number, 'Groupe' => $registration->group?->name ?? 'Non affecté', 'Établi le' => now()->format('d/m/Y')], notice: 'Document établi à partir de l’inscription administrative enregistrée. À faire viser par le service de scolarité pour un usage officiel.');
+
         return response($bytes, 200, ['Content-Type' => 'application/pdf', 'Content-Disposition' => ($request->boolean('download') ? 'attachment' : 'inline').'; filename="Attestation_Scolarite.pdf"', 'Cache-Control' => 'private, no-store']);
     }
 
     private function respondAttestationInscriptionPdfFromPayload(Request $request, array $payload)
     {
         abort_unless($request->user()->hasAnyRole(['super-admin', 'admin', 'institution-admin', 'scolarite', 'director']), 403);
-        $student = Student::where('institution_id', $request->user()->institution_id)->where(function ($q) use ($payload) { $q->where('cne', $payload['cne'])->orWhere('student_number', $payload['cne']); })->firstOrFail();
+        $student = Student::where('institution_id', $request->user()->institution_id)->where(function ($q) use ($payload) {
+            $q->where('cne', $payload['cne'])->orWhere('student_number', $payload['cne']);
+        })->firstOrFail();
         $student->loadMissing('user');
+
         return $this->respondAttestationInscriptionPdf($request, $student);
     }
+
     private function streamOrDownloadPdf(Request $request, $pdf, string $filename)
     {
         if ($request->boolean('download')) {
@@ -1877,7 +1910,7 @@ class PdfExportController extends Controller
     public function convocationDisciplinePdf(int $incidentId)
     {
         $incident = ExamIncident::with(['exam.module.filiere', 'student.user'])->findOrFail($incidentId);
-        app(\App\Services\Academic\ExamWorkflowGuard::class)->viewExam($incident->exam);
+        app(ExamWorkflowGuard::class)->viewExam($incident->exam);
 
         abort_unless($incident->hearing_date && $incident->hearing_room, 422, 'Enregistrer la convocation avant de générer son document.');
         $student = $incident->student;
@@ -1952,7 +1985,7 @@ class PdfExportController extends Controller
     public function decisionDisciplinePdf(int $incidentId)
     {
         $incident = ExamIncident::with(['exam.module.filiere', 'student.user'])->findOrFail($incidentId);
-        app(\App\Services\Academic\ExamWorkflowGuard::class)->viewExam($incident->exam);
+        app(ExamWorkflowGuard::class)->viewExam($incident->exam);
 
         abort_unless(in_array($incident->status, ['resolved', 'dismissed']) && $incident->decision, 422, 'Aucune décision enregistrée pour ce dossier.');
         $student = $incident->student;
@@ -2017,7 +2050,7 @@ class PdfExportController extends Controller
 
     public function batchDisciplinePdf(Request $request)
     {
-        app(\App\Services\Academic\ExamWorkflowGuard::class)->manage();
+        app(ExamWorkflowGuard::class)->manage();
         $incidents = ExamIncident::with(['exam.module.filiere', 'student.user'])->whereNotNull('hearing_date')->whereHas('exam.examSession', fn ($q) => $q->where('institution_id', $request->user()->institution_id))
             ->latest()
             ->get();
@@ -2271,7 +2304,7 @@ class PdfExportController extends Controller
      */
     private function buildOrdreDeServicePdf(Professor $professor): array
     {
-        $currentYear = AcademicYear::where('institution_id', $professor->institution_id)->findOrFail(\App\Services\Academic\AcademicContext::yearId());
+        $currentYear = AcademicYear::where('institution_id', $professor->institution_id)->findOrFail(AcademicContext::yearId());
 
         $query = ModuleProfessor::with(['module.filiere', 'group', 'academicYear'])
             ->whereHas('module', fn ($q) => $q->where('institution_id', $professor->institution_id))
@@ -2362,7 +2395,7 @@ class PdfExportController extends Controller
     {
         abort_unless($request->user()->hasAnyRole(['super-admin', 'super_admin', 'admin', 'institution-admin', 'institution_admin', 'director', 'scolarite']), 403);
         $institution = $request->user()->institution_id;
-        $year = AcademicYear::where('institution_id', $institution)->findOrFail(\App\Services\Academic\AcademicContext::yearId());
+        $year = AcademicYear::where('institution_id', $institution)->findOrFail(AcademicContext::yearId());
         $ids = ModuleProfessor::where('academic_year_id', $year->id)->whereHas('module', fn ($q) => $q->where('institution_id', $institution))->distinct()->pluck('professor_id');
         abort_if($ids->isEmpty(), 422, 'Aucune affectation à exporter.');
         abort_if($ids->count() > 150, 422, 'Limiter cet export à 150 enseignants.');
@@ -2375,9 +2408,12 @@ class PdfExportController extends Controller
                 $zip->addFromString('ordre-service-'.$professor->id.'.pdf', $this->buildOrdreDeServicePdf($professor)['pdf']->output());
             }
             $zip->close();
+
             return response()->download($path, 'ordres-service-'.$year->start_year.'.zip', ['Content-Type' => 'application/zip'])->deleteFileAfterSend(true);
         } catch (\Throwable $e) {
-            if (is_file($path)) { @unlink($path); }
+            if (is_file($path)) {
+                @unlink($path);
+            }
             throw $e;
         }
     }
@@ -2409,7 +2445,7 @@ class PdfExportController extends Controller
         $profNameReq = trim($request->input('prof_name', ''));
 
         $currentYear = AcademicYear::where('institution_id', $request->user()->institution_id)
-            ->findOrFail(\App\Services\Academic\AcademicContext::yearId());
+            ->findOrFail(AcademicContext::yearId());
 
         // Locate Professor in DB
         $professor = null;
@@ -2477,6 +2513,7 @@ class PdfExportController extends Controller
             $pdfContent = $this->buildOrdreDeServicePdf($professor)['pdf']->output();
         } catch (\Exception $e) {
             report($e);
+
             return response()->json(['success' => false, 'message' => 'Le PDF ne peut pas être généré. Aucun message envoyé.'], 500);
         }
 
@@ -2489,6 +2526,7 @@ class PdfExportController extends Controller
             ]);
         } catch (\Exception $e) {
             report($e);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Le service de messagerie ne peut pas transmettre la notification actuellement.',
@@ -3261,17 +3299,25 @@ class PdfExportController extends Controller
 
         return 'data:image/svg+xml;base64,'.base64_encode($avatarSvg);
     }
+
     public function exportAttestationsZip(Request $request)
     {
         abort_unless($request->user()->hasAnyRole(['super-admin', 'admin', 'institution-admin', 'director', 'scolarite']), 403);
-        $year = \App\Models\AcademicYear::where('institution_id', $request->user()->institution_id)->findOrFail(\App\Services\Academic\AcademicContext::yearId());
-        $query = \App\Models\StudentRegistration::with('student.user', 'filiere', 'group')->where('academic_year_id', $year->id)->where('status', 'admin_validated')
+        $year = AcademicYear::where('institution_id', $request->user()->institution_id)->findOrFail(AcademicContext::yearId());
+        $query = StudentRegistration::with('student.user', 'filiere', 'group')->where('academic_year_id', $year->id)->where('status', 'admin_validated')
             ->whereHas('student', fn ($q) => $q->where('institution_id', $request->user()->institution_id));
-        if ($request->filled('group_id') && $request->input('group_id') !== 'all') $query->where('group_id', $request->input('group_id'));
-        if ($request->filled('filiere_id')) $query->where('filiere_id', $request->input('filiere_id'));
-        if ($request->filled('semester_number')) $query->where('semester_number', $request->integer('semester_number'));
+        if ($request->filled('group_id') && $request->input('group_id') !== 'all') {
+            $query->where('group_id', $request->input('group_id'));
+        }
+        if ($request->filled('filiere_id')) {
+            $query->where('filiere_id', $request->input('filiere_id'));
+        }
+        if ($request->filled('semester_number')) {
+            $query->where('semester_number', $request->integer('semester_number'));
+        }
         abort_if((clone $query)->count() > 250, 422, 'Filtrez par filière ou groupe pour exporter au plus 250 inscriptions.');
-        $service = app(\App\Services\Document\WorkflowDocumentExportService::class); $files = [];
+        $service = app(WorkflowDocumentExportService::class);
+        $files = [];
         foreach ($query->orderBy('student_id')->get()->unique('student_id') as $registration) {
             $files['Inscription_'.$registration->student_id.'.pdf'] = $service->pdf('Attestation d’inscription — à viser', [
                 'Référence inscription' => $registration->id, 'Étudiant' => $registration->student->user->name, 'CNE' => $registration->student->cne,
@@ -3279,5 +3325,7 @@ class PdfExportController extends Controller
                 'État administratif' => 'Inscription validée'], [], [], 'Document préparé à partir d’une inscription administrative validée. Signature et cachet du service compétent requis.');
         }
         activity()->causedBy($request->user())->withProperties(['academic_year_id' => $year->id, 'document_count' => count($files)])->log('registration_documents_exported');
+
         return $service->zip($files, 'Inscriptions_'.$year->id.'.zip');
-    }}
+    }
+}

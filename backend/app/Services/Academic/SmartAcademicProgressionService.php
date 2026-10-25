@@ -2,11 +2,18 @@
 
 namespace App\Services\Academic;
 
+use App\Actions\Academic\FinalizeGraduationAction;
+use App\Actions\Academic\ManageSpecialtyAllocationAction;
+use App\Domain\Deliberation\LmdRules;
+use App\Domain\Deliberation\ProgramCompletionRules;
+use App\Domain\Deliberation\Services\DeliberationEngine;
 use App\Models\AcademicYear;
 use App\Models\Assessment;
 use App\Models\AuditLog;
+use App\Models\DeliberationDecision;
 use App\Models\Group;
 use App\Models\Module;
+use App\Models\SpecialtyWish;
 use App\Models\Student;
 use App\Models\StudentPathway;
 use App\Models\StudentRegistration;
@@ -89,7 +96,7 @@ class SmartAcademicProgressionService
             }
 
             $currentSem = (int) ($pathway->current_semester ?? 1);
-            $finalSemester = \App\Domain\Deliberation\ProgramCompletionRules::finalSemester($pathway->filiere?->type, $pathway->filiere?->duration_years);
+            $finalSemester = ProgramCompletionRules::finalSemester($pathway->filiere?->type, $pathway->filiere?->duration_years);
             $filiereName = $pathway->filiere?->name ?? 'Tronc Commun';
             $filiereCode = $pathway->filiere?->code ?? 'TC';
 
@@ -127,10 +134,12 @@ class SmartAcademicProgressionService
                     continue;
                 }
 
-                if (! $relevantModules->has($modId)) continue;
-                $scores = app(\App\Domain\Deliberation\Services\DeliberationEngine::class)->calculateModuleAverages($student->id, $semNum, true);
+                if (! $relevantModules->has($modId)) {
+                    continue;
+                }
+                $scores = app(DeliberationEngine::class)->calculateModuleAverages($student->id, $semNum, true);
                 $moyenne = $scores->firstWhere('module_id', $modId)?->final_module_score;
-                $isValidated = $moyenne !== null && $moyenne >= \App\Domain\Deliberation\LmdRules::VALIDATION_THRESHOLD;
+                $isValidated = $moyenne !== null && $moyenne >= LmdRules::VALIDATION_THRESHOLD;
                 $modulesResults[] = [
                     'module_id' => $modId,
                     'code' => $first->module_code,
@@ -181,18 +190,18 @@ class SmartAcademicProgressionService
                 $targetLevel = $levelLabel;
             } elseif ($semB === $finalSemester) {
                 // A successful calculation is a proposal; graduation needs a sealed jury decision.
-                $graduationDecision = \App\Models\DeliberationDecision::where('student_id', $student->id)
+                $graduationDecision = DeliberationDecision::where('student_id', $student->id)
                     ->whereIn('decision', ['DIPLOME', 'graduated'])
                     ->whereHas('deliberation', fn ($q) => $q->where('academic_year_id', $year->id)
                         ->where('filiere_id', $pathway->filiere_id)->where('institution_id', $student->institution_id)
                         ->whereIn('type', ['annual', 'annuel'])->where('is_sealed', true))
                     ->latest('id')->first();
-                if ($failedCount === 0 && $annualAverage >= \App\Domain\Deliberation\LmdRules::VALIDATION_THRESHOLD && $graduationDecision) {
+                if ($failedCount === 0 && $annualAverage >= LmdRules::VALIDATION_THRESHOLD && $graduationDecision) {
                     $decisionCode = 'DIPLOME';
                     $decisionLabel = 'Diplômé (décision du jury scellée)';
                     $targetLevel = 'Lauréat · '.$filiereName;
                     $statGraduated++;
-                } elseif ($failedCount === 0 && $annualAverage >= \App\Domain\Deliberation\LmdRules::VALIDATION_THRESHOLD) {
+                } elseif ($failedCount === 0 && $annualAverage >= LmdRules::VALIDATION_THRESHOLD) {
                     $decisionCode = 'A_VERIFIER';
                     $decisionLabel = 'Fin de cursus : décision de diplomation du jury à sceller';
                     $targetSemester = $currentSem;
@@ -371,7 +380,7 @@ class SmartAcademicProgressionService
 
                 if ($decision === 'DIPLOME') {
                     abort_unless(auth()->user(), 403, 'Un responsable authentifié doit confirmer la diplomation.');
-                    app(\App\Actions\Academic\FinalizeGraduationAction::class)->execute(auth()->user(), $studentItem['graduation_decision_id']);
+                    app(FinalizeGraduationAction::class)->execute(auth()->user(), $studentItem['graduation_decision_id']);
                     $graduatedCount++;
 
                     continue;
@@ -388,13 +397,15 @@ class SmartAcademicProgressionService
                 // Déterminer la filière cible (Spécialité si passage vers S5)
                 $targetFiliereId = $student->filiere_id ?? 1;
                 if (in_array($targetSem, [5, 7], true) && in_array($decision, ['ADMIS_PUR', 'ADMIS_AVEC_DETTE'], true)) {
-                    $campaign = app(\App\Actions\Academic\ManageSpecialtyAllocationAction::class)->campaign($student->institution_id);
+                    $campaign = app(ManageSpecialtyAllocationAction::class)->campaign($student->institution_id);
                     if ((int) ($campaign['target_semester'] ?? 0) === $targetSem) {
                         abort_unless(($campaign['finalized_at'] ?? null) && (int) $campaign['target_year_id'] === (int) $newYear->id, 422, 'Finalisez la campagne d’orientation pour l’année cible.');
-                        $wish = \App\Models\SpecialtyWish::where('student_id', $studentId)->where('academic_year', $newYear->label)->where('allocation_status', 'assigned')->first();
+                        $wish = SpecialtyWish::where('student_id', $studentId)->where('academic_year', $newYear->label)->where('allocation_status', 'assigned')->first();
                         abort_unless($wish, 422, 'Affectation de spécialité en attente pour un étudiant.');
                         $targetFiliereId = $wish->filiere_id;
-                    } elseif ($targetSem === 5) abort(422, 'Configurez et finalisez la campagne d’orientation avant la bascule vers S5.');
+                    } elseif ($targetSem === 5) {
+                        abort(422, 'Configurez et finalisez la campagne d’orientation avant la bascule vers S5.');
+                    }
                 }
                 // Trouver un groupe adéquat pour le semestre cible et la filière
                 $targetGroup = Group::where('academic_year_id', $newYear->id)

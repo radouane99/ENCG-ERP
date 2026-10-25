@@ -2,13 +2,13 @@
 
 namespace Tests\Feature;
 
-use App\Domain\Student\Models\StudentDossierAuditLog;
 use App\Models\AcademicYear;
 use App\Models\Filiere;
+use App\Models\RenewalCampaign;
 use App\Models\Student;
 use App\Models\StudentPathway;
+use App\Models\StudentRegistration;
 use App\Models\User;
-use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Laravel\Sanctum\Sanctum;
@@ -51,7 +51,7 @@ class ReinscriptionWorkflowTest extends TestCase
             'current_semester' => 3,
             'is_current' => true,
         ]);
-        \App\Models\StudentRegistration::create(['student_id' => $this->student->id, 'filiere_id' => $this->filiere->id,
+        StudentRegistration::create(['student_id' => $this->student->id, 'filiere_id' => $this->filiere->id,
             'academic_year_id' => $this->academicYear->id, 'semester_number' => 3, 'registration_type' => 're_enrollment', 'status' => 'academic_validated']);
     }
 
@@ -112,9 +112,9 @@ class ReinscriptionWorkflowTest extends TestCase
     public function test_legacy_command_without_options_cannot_open_a_campaign_or_send_notifications(): void
     {
         Mail::fake();
-        $campaigns = \App\Models\RenewalCampaign::count();
+        $campaigns = RenewalCampaign::count();
         $this->artisan('reinscription:ouvrir')->expectsOutputToContain('Commande automatique désactivée')->assertFailed();
-        $this->assertSame($campaigns, \App\Models\RenewalCampaign::count());
+        $this->assertSame($campaigns, RenewalCampaign::count());
         Mail::assertNothingOutgoing();
     }
 }

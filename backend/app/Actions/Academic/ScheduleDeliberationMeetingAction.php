@@ -1,9 +1,14 @@
 <?php
+
 namespace App\Actions\Academic;
 
-use App\Models\{AcademicYear, Deliberation, Room, User};
+use App\Models\AcademicYear;
+use App\Models\Deliberation;
+use App\Models\Room;
+use App\Models\User;
 use App\Notifications\SystemNotification;
 use App\Services\Academic\PvWorkflowContext;
+use App\Services\Academic\TimetableRoomGuard;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -17,8 +22,10 @@ class ScheduleDeliberationMeetingAction
         $ids = collect($data['member_ids'])->push($data['president_id'])->unique()->values();
         $members = User::with('professor')->whereIn('id', $ids)->where('institution_id', $request->user()->institution_id)->where('is_active', true)->whereHas('roles', fn ($q) => $q->whereIn('name', ['professor', 'vacataire', 'department-head', 'filiere-head', 'director', 'admin', 'super-admin', 'institution-admin']))->get();
         abort_unless($members->count() === $ids->count(), 422, 'Les membres doivent être des utilisateurs actifs habilités de votre établissement.');
+
         return DB::transaction(function () use ($request, $context, $data, $members) {
-            $year = AcademicYear::whereKey($context['year']->id)->lockForUpdate()->firstOrFail(); abort_if($year->is_locked, 409, 'Année verrouillée.');
+            $year = AcademicYear::whereKey($context['year']->id)->lockForUpdate()->firstOrFail();
+            abort_if($year->is_locked, 409, 'Année verrouillée.');
             $room = Room::where('institution_id', $request->user()->institution_id)->whereKey($data['room_id'])->lockForUpdate()->firstOrFail();
             $deliberation = $context['deliberation'] ? Deliberation::whereKey($context['deliberation']->id)->lockForUpdate()->firstOrFail() : Deliberation::firstOrCreate([
                 'institution_id' => $request->user()->institution_id, 'academic_year_id' => $year->id, 'semester_id' => $context['semester']->id,
@@ -26,12 +33,18 @@ class ScheduleDeliberationMeetingAction
             ], ['status' => 'pending']);
             abort_if($deliberation->is_sealed, 423, 'PV déjà scellé.');
             $current = DB::table('deliberation_meetings')->where('deliberation_id', $deliberation->id)->first();
-            abort_unless((int)($current->version ?? 0) === $data['version'], 409, 'La réunion a changé. Actualisez avant de la modifier.');
-            $start = Carbon::parse($data['starts_at'], config('app.timezone'))->utc(); $end = $start->copy()->addMinutes($data['duration_minutes']);
-            $localStart = $start->copy()->setTimezone('Africa/Casablanca'); $localEnd = $end->copy()->setTimezone('Africa/Casablanca');
+            abort_unless((int) ($current->version ?? 0) === $data['version'], 409, 'La réunion a changé. Actualisez avant de la modifier.');
+            $start = Carbon::parse($data['starts_at'], config('app.timezone'))->utc();
+            $end = $start->copy()->addMinutes($data['duration_minutes']);
+            $localStart = $start->copy()->setTimezone('Africa/Casablanca');
+            $localEnd = $end->copy()->setTimezone('Africa/Casablanca');
             abort_unless($start->toDateString() >= $year->start_date->toDateString() && $end->toDateString() <= $year->end_date->toDateString() && $start->isSameDay($end), 422, 'La réunion doit appartenir à l’année choisie et tenir dans une journée.');
-            abort_if(app(\App\Services\Academic\TimetableRoomGuard::class)->isRoomBusyAt((string) $room->id, $localStart, $localEnd), 409, 'Salle indisponible : cours, réservation ou fermeture sur cette plage.');
-            foreach ($members as $member) if ($member->professor) abort_if(app(\App\Services\Academic\TimetableRoomGuard::class)->isProfessorBusyAt($member->professor->id, $localStart, $localEnd), 409, 'Un membre du jury a un enseignement sur cette plage.');
+            abort_if(app(TimetableRoomGuard::class)->isRoomBusyAt((string) $room->id, $localStart, $localEnd), 409, 'Salle indisponible : cours, réservation ou fermeture sur cette plage.');
+            foreach ($members as $member) {
+                if ($member->professor) {
+                    abort_if(app(TimetableRoomGuard::class)->isProfessorBusyAt($member->professor->id, $localStart, $localEnd), 409, 'Un membre du jury a un enseignement sur cette plage.');
+                }
+            }
             abort_if(DB::table('deliberation_meetings')->where('deliberation_id', '!=', $deliberation->id)->where('starts_at', '<', $end)->where('ends_at', '>', $start)->where(fn ($q) => $q->where('room_id', $room->id)->orWhereIn('deliberation_id', DB::table('deliberation_members')->whereIn('user_id', $members->pluck('id'))->select('deliberation_id')))->exists(), 409, 'Salle ou membre du jury déjà réservé sur cette plage.');
             DB::table('deliberation_meetings')->updateOrInsert(['deliberation_id' => $deliberation->id], ['room_id' => $room->id, 'starts_at' => $start, 'ends_at' => $end, 'version' => ($current->version ?? 0) + 1, 'created_at' => $current->created_at ?? now(), 'updated_at' => now()]);
             $deliberation->update(['president_id' => $data['president_id'], 'deliberation_date' => $start->toDateString()]);
@@ -41,6 +54,7 @@ class ScheduleDeliberationMeetingAction
                 $member->notify(new SystemNotification('Réunion de délibération', $localStart->format('d/m/Y H:i').' · '.$room->name.' · '.$context['filiere']->name, 'academic', '/admin/grades/pv?filiere_id='.$context['filiere']->id.'&semester='.$context['semester']->number));
             }
             activity()->causedBy($request->user())->performedOn($deliberation)->withProperties(['room_id' => $room->id, 'starts_at' => $start->toIso8601String()])->log('deliberation_meeting_scheduled');
+
             return ['deliberation_id' => $deliberation->id, 'notifications_portal' => $members->count(), 'email_sent' => false];
         });
     }

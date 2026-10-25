@@ -2,8 +2,8 @@
 
 namespace App\Support;
 
-use App\Models\Application;
 use App\Models\AdmissionCampaign;
+use App\Models\Application;
 use App\Models\User;
 use Illuminate\Http\Request;
 
@@ -39,6 +39,7 @@ final class AdmissionAccess
             $today = now(config('admissions.timezone'))->toDateString();
             abort_unless($campaign->status === 'open' && $today >= $campaign->open_date->toDateString() && $today <= $campaign->close_date->toDateString(), 422, 'La campagne est fermée.');
         }
+
         return $campaign;
     }
 
@@ -67,6 +68,7 @@ final class AdmissionAccess
             abort_if($app->dossier_status === 'approved', 403, 'Dossier validé : modification interdite.');
             self::campaignOpen($app);
         }
+
         return $app;
     }
 

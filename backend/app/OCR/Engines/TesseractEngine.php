@@ -3,6 +3,7 @@
 namespace App\OCR\Engines;
 
 use App\OCR\Contracts\OcrEngineInterface;
+use App\OCR\OcrProcess;
 use App\OCR\OcrResult;
 
 /**
@@ -108,7 +109,7 @@ class TesseractEngine implements OcrEngineInterface
         if ($this->isPdf($mimeType, $filePath)) {
             // 1. Try extracting direct embedded images via pdfimages (fastest and highest quality for scans)
             $imgPrefix = $tmpDir.'/pdf_raw_'.$this->processId;
-            \App\OCR\OcrProcess::run(sprintf('pdfimages -png %s %s 2>/dev/null', escapeshellarg($filePath), escapeshellarg($imgPrefix)));
+            OcrProcess::run(sprintf('pdfimages -png %s %s 2>/dev/null', escapeshellarg($filePath), escapeshellarg($imgPrefix)));
             $rawImages = glob("{$imgPrefix}*.png") ?: [];
             $validScans = array_filter($rawImages, fn ($img) => @filesize($img) > 25000);
 
@@ -131,7 +132,7 @@ class TesseractEngine implements OcrEngineInterface
                 escapeshellarg($filePath),
                 escapeshellarg($tmpPrefix)
             );
-            \App\OCR\OcrProcess::run($cmd);
+            OcrProcess::run($cmd);
 
             $pages = glob("{$tmpPrefix}*.png") ?: [];
             foreach ($pages as $p) {
@@ -169,7 +170,7 @@ class TesseractEngine implements OcrEngineInterface
             escapeshellarg($lang),
             $psm
         );
-        \App\OCR\OcrProcess::run($cmd);
+        OcrProcess::run($cmd);
 
         if (file_exists($txtFile)) {
             $createdFiles[] = $txtFile;
@@ -185,7 +186,7 @@ class TesseractEngine implements OcrEngineInterface
     private function getInstalledLanguages(): array
     {
         $output = [];
-        \App\OCR\OcrProcess::run('tesseract --list-langs 2>/dev/null', $output);
+        OcrProcess::run('tesseract --list-langs 2>/dev/null', $output);
 
         $langs = [];
         foreach ($output as $line) {
@@ -253,7 +254,7 @@ class TesseractEngine implements OcrEngineInterface
     {
         $returnVar = -1;
         $output = [];
-        \App\OCR\OcrProcess::run("which {$cmd} 2>/dev/null", $output, $returnVar);
+        OcrProcess::run("which {$cmd} 2>/dev/null", $output, $returnVar);
 
         return $returnVar === 0;
     }

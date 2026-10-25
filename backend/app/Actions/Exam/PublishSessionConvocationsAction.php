@@ -2,8 +2,12 @@
 
 namespace App\Actions\Exam;
 
-use App\Models\{Exam, ExamSession, Room};
-use App\Services\Academic\{ExamSchedulingService, ExamWorkflowGuard};
+use App\Models\Exam;
+use App\Models\ExamSession;
+use App\Models\Room;
+use App\Services\Academic\ExamSchedulingService;
+use App\Services\Academic\ExamWorkflowGuard;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class PublishSessionConvocationsAction
@@ -12,6 +16,7 @@ class PublishSessionConvocationsAction
     {
         $guard = app(ExamWorkflowGuard::class);
         $guard->manage();
+
         return DB::transaction(function () use ($id, $guard) {
             $session = ExamSession::whereKey($id)->lockForUpdate()->firstOrFail();
             $guard->mutableSession($session);
@@ -26,18 +31,23 @@ class PublishSessionConvocationsAction
                     abort_if($seats->contains(fn ($seat) => ! $seat->qr_token), 422, 'Générer tous les QR avant diffusion.');
                     abort_unless($exam->surveillances->contains('room_id', $roomId), 422, 'Une salle ne dispose d’aucun surveillant.');
                 }
-                $start = \Carbon\Carbon::parse($exam->exam_date->toDateString().' '.$exam->start_time);
+                $start = Carbon::parse($exam->exam_date->toDateString().' '.$exam->start_time);
                 $end = $start->copy()->addMinutes($exam->duration_minutes);
                 foreach (Exam::with('seatings', 'surveillances')->whereDate('exam_date', $exam->exam_date)->whereKeyNot($exam->id)->get() as $other) {
-                    $otherStart = \Carbon\Carbon::parse($other->exam_date->toDateString().' '.$other->start_time);
-                    if ($start->gte($otherStart->copy()->addMinutes($other->duration_minutes)) || $end->lte($otherStart)) { continue; }
+                    $otherStart = Carbon::parse($other->exam_date->toDateString().' '.$other->start_time);
+                    if ($start->gte($otherStart->copy()->addMinutes($other->duration_minutes)) || $end->lte($otherStart)) {
+                        continue;
+                    }
                     abort_if($exam->seatings->pluck('room_id')->intersect($other->seatings->pluck('room_id')->push($other->room_id))->isNotEmpty()
                         || $exam->seatings->pluck('student_id')->intersect($other->seatings->pluck('student_id'))->isNotEmpty()
                         || $exam->surveillances->pluck('professor_id')->intersect($other->surveillances->pluck('professor_id'))->isNotEmpty(), 422, 'Conflit de salle, de candidat ou de surveillant : publication refusée.');
                 }
             }
             $count = 0;
-            foreach ($exams as $exam) { $count += app(ExamSchedulingService::class)->publishConvocations($exam->id); }
+            foreach ($exams as $exam) {
+                $count += app(ExamSchedulingService::class)->publishConvocations($exam->id);
+            }
+
             return $count;
         });
     }

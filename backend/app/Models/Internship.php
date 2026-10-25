@@ -15,6 +15,7 @@ class Internship extends Model
     use HasFactory, HasValidationWorkflow;
 
     protected $guarded = ['id'];
+
     protected $hidden = ['security_token', 'company_token_hash'];
 
     protected function casts(): array

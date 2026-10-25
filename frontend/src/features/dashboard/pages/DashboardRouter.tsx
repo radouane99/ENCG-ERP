@@ -7,6 +7,7 @@ const StudentDashboard = lazy(() => import('./StudentDashboard'));
 const ProfessorDashboard = lazy(() => import('@features/professor-portal/pages/ProfessorDashboard'));
 const ExecutiveDashboard = lazy(() => import('./ExecutiveDashboard'));
 const CandidateDossierPortal = lazy(() => import('@features/public/components/CandidateDossierPortal'));
+const OperationalWorkspace = lazy(() => import('../components/OperationalWorkspace'));
 
 const DashboardRouter: React.FC = () => {
   const { user } = useAuthStore();
@@ -22,6 +23,7 @@ const DashboardRouter: React.FC = () => {
 
   return (
     <Suspense fallback={<LoadingScreen />}>
+      {(isAdmin || isDirector || isProfessor || isEnrolledStudent) && <OperationalWorkspace />}
       {isAdmin ? (
         <AdminDashboard />
       ) : isDirector ? (

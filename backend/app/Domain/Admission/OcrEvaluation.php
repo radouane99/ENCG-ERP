@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Domain\Admission;
 
 final class OcrEvaluation
@@ -8,7 +9,8 @@ final class OcrEvaluation
     public function evaluate(array $samples, string $kind): array
     {
         $totals = ['labeled' => 0, 'exact' => 0, 'missing' => 0, 'mismatched' => 0, 'critical_mismatches' => 0];
-        $byType = []; $byField = [];
+        $byType = [];
+        $byField = [];
         foreach ($samples as $sample) {
             foreach ($sample['expected'] as $field => $expected) {
                 $actual = $sample['extracted'][$field] ?? null;
@@ -23,6 +25,7 @@ final class OcrEvaluation
                 }
             }
         }
+
         return ['dataset_kind' => $kind, 'samples' => count($samples), 'totals' => $totals,
             'exact_match_percent' => $totals['labeled'] ? round(100 * $totals['exact'] / $totals['labeled'], 2) : null,
             'by_document_type' => $byType, 'by_field' => $byField, 'external_calls' => 0, 'raw_values_stored' => false,
@@ -34,9 +37,13 @@ final class OcrEvaluation
         $value = trim((string) $value);
         if (in_array($field, ['bac_average', 'admission_score', 'tafem_score'], true)) {
             $number = str_replace(',', '.', $value);
+
             return is_numeric($number) ? (string) (float) $number : $value;
         }
-        if (in_array($field, ['cne', 'cin'], true)) return mb_strtoupper(preg_replace('/\s+/u', '', $value));
+        if (in_array($field, ['cne', 'cin'], true)) {
+            return mb_strtoupper(preg_replace('/\s+/u', '', $value));
+        }
+
         return mb_strtolower(preg_replace('/\s+/u', ' ', $value));
     }
 }

@@ -2,12 +2,17 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Actions\Exam\ExportExamConvocationsAction;
+use App\Actions\Exam\PublishSessionConvocationsAction;
 use App\Http\Controllers\Controller;
 use App\Models\Exam;
 use App\Models\ExamSeating;
 use App\Models\ExamSurveillance;
+use App\Models\Professor;
 use App\Models\Student;
+use App\Services\Academic\AcademicContext;
 use App\Services\Academic\ExamConvocationService;
+use App\Services\Academic\ExamWorkflowGuard;
 use App\Services\Campus\CampusAlertService;
 use App\Services\ProctorAssignmentService;
 use App\Services\WhatsAppService;
@@ -15,9 +20,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class ConvocationController extends Controller
@@ -79,7 +82,8 @@ class ConvocationController extends Controller
     public function publishSession(Request $request): JsonResponse
     {
         $data = $request->validate(['session_id' => 'required|integer']);
-        $count = app(\App\Actions\Exam\PublishSessionConvocationsAction::class)->execute($data['session_id']);
+        $count = app(PublishSessionConvocationsAction::class)->execute($data['session_id']);
+
         return response()->json(['success' => true, 'published_count' => $count, 'message' => $count.' convocation(s) publiée(s) sur le portail. Aucun email envoyé.']);
     }
 
@@ -234,7 +238,7 @@ class ConvocationController extends Controller
         DB::transaction(function () use ($query, $exam, $validated, $statusBool) {
             Exam::whereKey($exam->id)->lockForUpdate()->firstOrFail();
             $seat = $query->lockForUpdate()->firstOrFail();
-            app(\App\Services\Academic\ExamWorkflowGuard::class)->attendance($exam->fresh(), $seat->room_id);
+            app(ExamWorkflowGuard::class)->attendance($exam->fresh(), $seat->room_id);
             $seat->update(['status' => $validated['status'], 'is_present' => $statusBool]);
         });
 
@@ -261,7 +265,7 @@ class ConvocationController extends Controller
                 $query->whereIn('room_id', $rooms);
             }
             foreach ((clone $query)->distinct()->pluck('room_id') as $roomId) {
-                app(\App\Services\Academic\ExamWorkflowGuard::class)->attendance($exam, $roomId);
+                app(ExamWorkflowGuard::class)->attendance($exam, $roomId);
             }
             $query->update(['status' => $validated['status'], 'is_present' => $statusBool, 'updated_at' => now()]);
         });
@@ -272,8 +276,8 @@ class ConvocationController extends Controller
     public function saveExamSignature(Request $request, int $examId): JsonResponse
     {
         $exam = Exam::findOrFail($examId);
-        app(\App\Services\Academic\ExamWorkflowGuard::class)->viewExam($exam);
-        app(\App\Services\Academic\ExamWorkflowGuard::class)->mutableSession($exam->examSession);
+        app(ExamWorkflowGuard::class)->viewExam($exam);
+        app(ExamWorkflowGuard::class)->mutableSession($exam->examSession);
         abort_if($exam->is_locked, 409, 'PV verrouillé.');
         $data = $request->validate(['signature_data' => 'required|string|max:2000000', 'role' => 'required|in:principal,secondary']);
         $rows = ExamSurveillance::where('exam_id', $examId)->where('professor_id', $request->user()->id)->get();
@@ -282,6 +286,7 @@ class ConvocationController extends Controller
         $pad = str_starts_with($data['signature_data'], 'data:image/png;base64,');
         abort_unless($pad || $data['signature_data'] === 'DIGITAL_CERTIFIED_STAMP_ENCG', 422, 'Format de signature invalide.');
         $request->merge(['signature_type' => $pad ? 'pad' : 'digital', 'signature_data' => $pad ? $data['signature_data'] : null]);
+
         return $this->signExamPv($request, $row->id);
     }
 
@@ -385,17 +390,29 @@ class ConvocationController extends Controller
         $data = $request->validate(['surveillance_ids' => 'sometimes|array|min:1|max:200', 'surveillance_ids.*' => 'integer|distinct', 'all' => 'sometimes|boolean']);
         $count = DB::transaction(function () use ($request, $id, $data) {
             $query = ExamSurveillance::whereHas('exam.module', fn ($q) => $q->where('institution_id', $request->user()->institution_id));
-            if (! $request->user()->hasAnyRole(['admin', 'institution-admin', 'super-admin', 'director', 'scolarite'])) $query->where('professor_id', $request->user()->id);
-            if (isset($data['surveillance_ids'])) $query->whereIn('id', $data['surveillance_ids']);
-            elseif ($id !== 'all' && ! ($data['all'] ?? false)) $query->whereKey($id);
+            if (! $request->user()->hasAnyRole(['admin', 'institution-admin', 'super-admin', 'director', 'scolarite'])) {
+                $query->where('professor_id', $request->user()->id);
+            }
+            if (isset($data['surveillance_ids'])) {
+                $query->whereIn('id', $data['surveillance_ids']);
+            } elseif ($id !== 'all' && ! ($data['all'] ?? false)) {
+                $query->whereKey($id);
+            }
             $rows = $query->lockForUpdate()->get();
             abort_if($rows->isEmpty(), 404, 'Aucune surveillance affectée ne correspond.');
             abort_if(isset($data['surveillance_ids']) && $rows->count() !== count($data['surveillance_ids']), 403, 'Une surveillance ne vous est pas affectée.');
-            foreach ($rows as $row) if (! $row->confirmed_at) $row->update(['confirmed_at' => now()]);
+            foreach ($rows as $row) {
+                if (! $row->confirmed_at) {
+                    $row->update(['confirmed_at' => now()]);
+                }
+            }
+
             return $rows->count();
         });
+
         return response()->json(['success' => true, 'message' => "Réception confirmée pour {$count} surveillance(s).", 'confirmed_at' => now()->toDateTimeString()]);
     }
+
     /**
      * Signature électronique officielle du PV d'examen par le surveillant.
      */
@@ -412,22 +429,31 @@ class ConvocationController extends Controller
             $seats = ExamSeating::where('exam_id', $row->exam_id)->where('room_id', $room)->orderBy('id')->lockForUpdate()->get(['id', 'student_id', 'is_present']);
             abort_if($seats->isEmpty(), 422, 'Aucune liste de placement enregistrée pour cette salle.');
             foreach ($data['records'] ?? [] as $record) {
-                $seat = $seats->firstWhere('student_id', $record['student_id']); abort_unless($seat, 403, 'Étudiant hors de la salle affectée.');
+                $seat = $seats->firstWhere('student_id', $record['student_id']);
+                abort_unless($seat, 403, 'Étudiant hors de la salle affectée.');
                 $present = $record['status'] === 'present';
                 $alreadySigned = ExamSurveillance::where('exam_id', $row->exam_id)->where('room_id', $room)->whereNotNull('signed_at')->exists();
                 abort_if($alreadySigned && (bool) $seat->is_present !== $present, 409, 'PV visé : une réouverture est requise.');
-                if (! $alreadySigned) $seat->update(['status' => $record['status'], 'is_present' => $present]);
+                if (! $alreadySigned) {
+                    $seat->update(['status' => $record['status'], 'is_present' => $present]);
+                }
             }
-            if ($row->signed_at) return $row;
-            app(\App\Services\Academic\ExamWorkflowGuard::class)->mutableSession($row->exam->examSession);
+            if ($row->signed_at) {
+                return $row;
+            }
+            app(ExamWorkflowGuard::class)->mutableSession($row->exam->examSession);
             abort_if($row->exam->is_locked, 409, 'PV verrouillé.');
             abort_if($seats->contains(fn ($seat) => $seat->is_present === null), 422, 'Terminer tous les pointages avant de viser le PV.');
             $row->fill(['signature_data' => $data['signature_data'] ?? null, 'signature_type' => $data['signature_type'], 'signed_at' => now(),
                 'signature_hash' => hash('sha256', json_encode(['exam_id' => $row->exam_id, 'room_id' => $room, 'signer' => $request->user()->id, 'seats' => $seats->toArray()], JSON_THROW_ON_ERROR))])->save();
-            activity()->causedBy($request->user())->performedOn($row)->log('surveillance_pv_visa_recorded'); return $row;
+            activity()->causedBy($request->user())->performedOn($row)->log('surveillance_pv_visa_recorded');
+
+            return $row;
         });
+
         return response()->json(['success' => true, 'message' => 'Visa de surveillance enregistré.', 'signer_name' => $request->user()->name, 'signed_at' => $row->signed_at, 'signature_hash' => $row->signature_hash, 'status' => 'signed']);
     }
+
     public function scanVerify(string $qrToken): JsonResponse
     {
         $seating = ExamSeating::with(['student.user', 'exam.module', 'exam.examSession', 'room'])
@@ -442,7 +468,7 @@ class ConvocationController extends Controller
             ], 404);
         }
 
-        app(\App\Services\Academic\ExamWorkflowGuard::class)->viewExam($seating->exam);
+        app(ExamWorkflowGuard::class)->viewExam($seating->exam);
 
         return response()->json([
             'success' => true,
@@ -470,13 +496,16 @@ class ConvocationController extends Controller
 
         $updated = DB::transaction(function () use ($request, $qrToken, $validated) {
             $seat = ExamSeating::with('exam.module')->where('qr_token', $qrToken)->lockForUpdate()->first();
-            if (! $seat) return 0;
-            app(\App\Services\Academic\ExamWorkflowGuard::class)->attendance($seat->exam, $seat->room_id);
+            if (! $seat) {
+                return 0;
+            }
+            app(ExamWorkflowGuard::class)->attendance($seat->exam, $seat->room_id);
             abort_unless((int) $seat->exam->module->institution_id === (int) $request->user()->institution_id, 403);
             $surveillances = ExamSurveillance::where('exam_id', $seat->exam_id)->where('room_id', $seat->room_id)->lockForUpdate()->get();
             abort_unless($request->user()->hasAnyRole(['admin', 'institution-admin', 'super-admin', 'director', 'scolarite']) || $surveillances->contains('professor_id', $request->user()->id), 403);
             abort_if($surveillances->contains(fn ($row) => $row->signed_at !== null), 409, 'PV visé : une réouverture est requise.');
             $seat->update(['status' => $validated['status'], 'is_present' => $validated['status'] !== 'absent']);
+
             return 1;
         });
 
@@ -557,15 +586,21 @@ class ConvocationController extends Controller
 
         abort_unless($request->user() && (int) $student->institution_id === (int) $request->user()->institution_id, 404);
         $isOwner = (int) $student->user_id === (int) $request->user()->id;
-        if (! $isOwner) { app(\App\Services\Academic\ExamWorkflowGuard::class)->manage(); }
+        if (! $isOwner) {
+            app(ExamWorkflowGuard::class)->manage();
+        }
 
         $sessionType = strtoupper($request->query('session_type', 'ORDINAIRE'));
 
         $query = ExamSeating::with(['exam.module', 'exam.session', 'exam.group', 'room'])
             ->where('student_id', $student->id)
-            ->whereHas('exam.session', fn ($q) => $q->where('academic_year_id', \App\Services\Academic\AcademicContext::yearId()));
-        if ($request->filled('session_id')) { $query->whereHas('exam', fn ($q) => $q->where('exam_session_id', $request->integer('session_id'))); }
-        if ($isOwner) { $query->where(fn ($q) => $q->whereNotNull('sent_at')->orWhereIn('status', ['sent', 'present', 'absent', 'late'])); }
+            ->whereHas('exam.session', fn ($q) => $q->where('academic_year_id', AcademicContext::yearId()));
+        if ($request->filled('session_id')) {
+            $query->whereHas('exam', fn ($q) => $q->where('exam_session_id', $request->integer('session_id')));
+        }
+        if ($isOwner) {
+            $query->where(fn ($q) => $q->whereNotNull('sent_at')->orWhereIn('status', ['sent', 'present', 'absent', 'late']));
+        }
 
         if ($sessionType === 'RATTRAPAGE') {
             $query->whereHas('exam.session', fn ($q) => $q->whereIn('type', ['rattrapage', 'resit']));
@@ -658,9 +693,12 @@ class ConvocationController extends Controller
 
     public function downloadProfessorConvocationPdf(Request $request, int $professorId)
     {
-        $professor = \App\Models\Professor::findOrFail($professorId);
-        if ((int) $professor->user_id !== (int) $request->user()->id) { app(\App\Services\Academic\ExamWorkflowGuard::class)->manage(); }
+        $professor = Professor::findOrFail($professorId);
+        if ((int) $professor->user_id !== (int) $request->user()->id) {
+            app(ExamWorkflowGuard::class)->manage();
+        }
         $request->merge(['professor_id' => $professor->user_id]);
+
         return app(PdfExportController::class)->downloadMySurveillancesPdf($request);
     }
 
@@ -668,6 +706,7 @@ class ConvocationController extends Controller
     {
         $data = $request->validate(['session_id' => 'required|integer', 'seating_ids' => 'sometimes|array', 'seating_ids.*' => 'integer']);
         $result = isset($data['seating_ids']) ? $this->convocationService->sendBatchEmails($data['session_id'], $data['seating_ids']) : $this->convocationService->sendSessionEmails($data['session_id']);
+
         return response()->json($result, $result['success'] ? 200 : 422);
     }
 
@@ -676,21 +715,26 @@ class ConvocationController extends Controller
         $data = $request->validate(['session_id' => 'required|integer', 'surveillance_ids' => 'sometimes|array', 'surveillance_ids.*' => 'integer']);
         $ids = $data['surveillance_ids'] ?? ExamSurveillance::whereHas('exam', fn ($q) => $q->where('exam_session_id', $data['session_id']))->pluck('id')->all();
         $result = $this->convocationService->sendBatchSurveillantsEmails($data['session_id'], $ids);
+
         return response()->json($result, $result['success'] ? 200 : 422);
     }
 
     public function exportConvocationsZip(Request $request)
     {
         $data = $request->validate(['session_id' => 'required|integer', 'student_ids' => 'sometimes|array', 'student_ids.*' => 'integer', 'filiere_id' => 'nullable|integer']);
-        return app(\App\Actions\Exam\ExportExamConvocationsAction::class)->execute($data['session_id'], $data['student_ids'] ?? [], $data['filiere_id'] ?? null);
+
+        return app(ExportExamConvocationsAction::class)->execute($data['session_id'], $data['student_ids'] ?? [], $data['filiere_id'] ?? null);
     }
 
     public function generateMissionOrder(Request $request): JsonResponse
     {
         $data = $request->validate(['surveillance_id' => 'required|integer']);
         $row = ExamSurveillance::with('exam')->findOrFail($data['surveillance_id']);
-        app(\App\Services\Academic\ExamWorkflowGuard::class)->viewExam($row->exam);
-        if ((int) $row->professor_id !== (int) $request->user()->id) { app(\App\Services\Academic\ExamWorkflowGuard::class)->manage(); }
+        app(ExamWorkflowGuard::class)->viewExam($row->exam);
+        if ((int) $row->professor_id !== (int) $request->user()->id) {
+            app(ExamWorkflowGuard::class)->manage();
+        }
+
         return response()->json(['success' => true, 'message' => 'Document de surveillance disponible.', 'pdf_url' => url('/api/exam-planning/surveillant/'.$row->id.'/download')]);
     }
 

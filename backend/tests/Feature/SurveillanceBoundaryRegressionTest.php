@@ -1,23 +1,37 @@
 <?php
+
 namespace Tests\Feature;
-use App\Models\{Exam, ExamSession, ExamSurveillance, ExamSeating, Room};
+
+use App\Models\Exam;
+use App\Models\ExamSeating;
+use App\Models\ExamSession;
+use App\Models\ExamSurveillance;
+use App\Models\Group;
+use App\Models\Room;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
+
 class SurveillanceBoundaryRegressionTest extends TestCase
 {
     use RefreshDatabase;
+
     public function test_only_assigned_user_can_confirm_read_room_and_visa_immutable_attendance(): void
     {
-        $year = $this->makeTestAcademicYear(); $f = $this->makeTestFiliere(); $module = $this->makeTestModule($f->id);
+        $year = $this->makeTestAcademicYear();
+        $f = $this->makeTestFiliere();
+        $module = $this->makeTestModule($f->id);
         $semester = $this->makeTestSemester($year->id);
         $session = ExamSession::create(['institution_id' => 1, 'academic_year_id' => $year->id, 'semester_id' => $semester->id, 'name' => 'Synthetic surveillance', 'type' => 'normale', 'start_date' => now()->subDay(), 'end_date' => now()->addDay()]);
         $room = Room::create(['institution_id' => 1, 'name' => 'Synthetic room', 'code' => 'SYN-ROOM', 'type' => 'classroom', 'capacity' => 20]);
-        $group = \App\Models\Group::create(['academic_year_id' => $year->id, 'filiere_id' => $f->id, 'semester_number' => 1, 'name' => 'Synthetic G1', 'capacity' => 20]);
+        $group = Group::create(['academic_year_id' => $year->id, 'filiere_id' => $f->id, 'semester_number' => 1, 'name' => 'Synthetic G1', 'capacity' => 20]);
         $exam = Exam::create(['group_id' => $group->id, 'exam_session_id' => $session->id, 'module_id' => $module->id, 'room_id' => $room->id, 'exam_date' => now()->subDay()->toDateString(), 'start_time' => '09:00', 'duration_minutes' => 120, 'type' => 'written']);
-        $teacher = $this->makeTestProfessor(); $other = $this->makeTestProfessor();
-        foreach ([$teacher, $other] as $p) $p->user->assignRole(Role::findOrCreate('professor', 'sanctum'));
+        $teacher = $this->makeTestProfessor();
+        $other = $this->makeTestProfessor();
+        foreach ([$teacher, $other] as $p) {
+            $p->user->assignRole(Role::findOrCreate('professor', 'sanctum'));
+        }
         $row = ExamSurveillance::create(['exam_id' => $exam->id, 'room_id' => $room->id, 'professor_id' => $teacher->user_id, 'role' => 'primary']);
         $student = $this->makeTestStudent();
         ExamSeating::create(['exam_id' => $exam->id, 'student_id' => $student->id, 'room_id' => $room->id, 'seat_number' => 1, 'qr_token' => 'synthetic-seat-token', 'is_present' => false]);

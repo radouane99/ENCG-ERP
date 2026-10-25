@@ -4,7 +4,8 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     public function up(): void
     {
         Schema::create('admission_work_items', function (Blueprint $table) {
@@ -29,6 +30,7 @@ return new class extends Migration {
             $table->index(['application_id', 'document_type', 'id']);
         });
     }
+
     public function down(): void
     {
         Schema::dropIfExists('admission_original_events');

@@ -5,6 +5,7 @@ namespace App\Actions\Admission;
 use App\Models\Application;
 use App\Models\User;
 use App\Support\AdmissionAccess;
+use App\Support\AdmissionDeskAccess;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -18,7 +19,7 @@ class ManageAdmissionOperationsAction
             $agent = User::where('institution_id', AdmissionAccess::institution($request))->findOrFail($data['assigned_to']);
             abort_unless($agent->is_active && AdmissionAccess::staff($agent), 422, 'Le responsable doit appartenir au service des admissions.');
         }
-        DB::transaction(function () use ($app, $data, $request) {
+        DB::transaction(function () use ($app, $data) {
             Application::whereKey($app->id)->lockForUpdate()->firstOrFail();
             $current = DB::table('admission_work_items')->where('application_id', $app->id)->lockForUpdate()->first();
             abort_unless((int) ($current->version ?? 0) === $data['version'], 409, 'Le suivi a changé. Actualisez le dossier.');
@@ -34,12 +35,14 @@ class ManageAdmissionOperationsAction
     {
         AdmissionAccess::review($request);
         $app = AdmissionAccess::dossier($request);
+
         return DB::transaction(function () use ($app, $data, $request) {
             Application::whereKey($app->id)->lockForUpdate()->firstOrFail();
-            \App\Support\AdmissionDeskAccess::assertAvailable($app, $request->user()->id);
+            AdmissionDeskAccess::assertAvailable($app, $request->user()->id);
             $previous = DB::table('admission_original_events')->where('operation_id', $data['operation_id'])->first();
             if ($previous) {
                 abort_unless((int) $previous->application_id === $app->id && $previous->document_type === $data['document_type'] && $previous->event === $data['event'], 409, 'Référence déjà utilisée.');
+
                 return $previous->id;
             }
             $last = DB::table('admission_original_events')->where('application_id', $app->id)->where('document_type', $data['document_type'])->orderByDesc('id')->first();
@@ -51,6 +54,7 @@ class ManageAdmissionOperationsAction
                 'note' => $data['note'], 'recorded_by' => $request->user()->id, 'created_at' => now(), 'updated_at' => now(),
             ]);
             app(ManageDossierAction::class)->event($app, 'original_'.$data['event'], ['custody_event_id' => $id, 'document_type' => $data['document_type']]);
+
             return $id;
         });
     }

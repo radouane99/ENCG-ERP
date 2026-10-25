@@ -6,12 +6,11 @@ use App\Events\GradeEntryPeriodChanged;
 use App\Http\Controllers\Controller;
 use App\Mail\GradePhaseUpdatedMail;
 use App\Models\ExamLockingAudit;
-use App\Models\ExamSession;
 use App\Models\Institution;
-use App\Models\Module;
 use App\Models\User;
 use App\Notifications\SystemNotification;
 use App\Services\Academic\DeliberationService;
+use App\Services\Academic\ExamWorkflowGuard;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -65,7 +64,7 @@ class ExamLockingController extends Controller
             'reason' => 'required|string|min:5|max:2000',
         ]);
 
-        app(\App\Services\Academic\ExamWorkflowGuard::class)->manage();
+        app(ExamWorkflowGuard::class)->manage();
         $institution = Institution::findOrFail($request->user()->institution_id);
 
         $settings = is_array($institution->settings) ? $institution->settings : (is_string($institution->settings) ? json_decode($institution->settings, true) : []);

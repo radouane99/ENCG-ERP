@@ -2,14 +2,19 @@
 
 namespace App\Actions\Admission;
 
+use App\Domain\Admission\AdmissionEntryRules;
+use App\Http\Requests\Admissions\SaveDossierRequest;
+use App\Models\AcademicYear;
 use App\Models\Application;
+use App\Models\Group;
 use App\Models\Student;
 use App\Models\StudentDocument;
 use App\Models\StudentPathway;
 use App\Models\StudentRegistration;
 use App\Models\User;
-use App\Models\Group;
+use App\Services\Admissions\AdmissionNotificationService;
 use App\Support\AdmissionAccess;
+use App\Support\AdmissionDeskAccess;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -43,9 +48,12 @@ class ManageDossierAction
     {
         $found = AdmissionAccess::dossier($request, true);
         $app = Application::whereKey($found->id)->lockForUpdate()->firstOrFail();
-        if (AdmissionAccess::staff($request->user())) \App\Support\AdmissionDeskAccess::assertAvailable($app, $request->user()->id);
+        if (AdmissionAccess::staff($request->user())) {
+            AdmissionDeskAccess::assertAvailable($app, $request->user()->id);
+        }
         abort_unless(in_array($app->dossier_status, ['draft', 'needs_correction']), 403, 'Le dossier est en cours de revue. Une demande de correction est nécessaire.');
         $this->version($app, $request);
+
         return $app;
     }
 
@@ -59,7 +67,9 @@ class ManageDossierAction
             // Only explicit, validated profile fields are mirrored. Identifiers/contact ownership are immutable here.
             $columns = ['first_name', 'last_name', 'phone', 'birth_date', 'bac_year', 'bac_average', 'bac_series'];
             foreach ($columns as $key) {
-                if (array_key_exists($key, $data) && (! $app->official_rank_source || in_array($key, ['phone', 'birth_date']))) $app->{$key} = $data[$key];
+                if (array_key_exists($key, $data) && (! $app->official_rank_source || in_array($key, ['phone', 'birth_date']))) {
+                    $app->{$key} = $data[$key];
+                }
             }
             if ($app->owner_user_id) {
                 $u = User::whereKey($app->owner_user_id)->lockForUpdate()->firstOrFail();
@@ -70,6 +80,7 @@ class ManageDossierAction
             $app->version++;
             $app->save();
             $this->event($app, 'draft_saved', ['fields' => array_keys($data)]);
+
             return $app;
         });
     }
@@ -97,22 +108,31 @@ class ManageDossierAction
                 $app = $this->locked($request);
                 $old = StudentDocument::where('application_id', $app->id)->where('type', $type)->where('is_current', true)->first();
                 abort_if($app->dossier_status === 'needs_correction' && $old?->status === 'verified', 422, 'Cette pièce est déjà validée. Remplacez uniquement les pièces à corriger ou contactez la scolarité.');
-                if ($old && $old->content_hash === $hash) return $old;
+                if ($old && $old->content_hash === $hash) {
+                    return $old;
+                }
                 $version = StudentDocument::where('application_id', $app->id)->where('type', $type)->max('version') + 1;
-                $ext = match ($mime) { 'application/pdf' => 'pdf', 'image/png' => 'png', 'image/webp' => 'webp', default => 'jpg' };
+                $ext = match ($mime) {
+                    'application/pdf' => 'pdf', 'image/png' => 'png', 'image/webp' => 'webp', default => 'jpg'
+                };
                 $path = 'admissions/'.$app->id.'/'.Str::uuid().'.'.$ext;
                 Storage::disk('private')->put($path, file_get_contents($file->getRealPath()));
-                if ($old) $old->update(['is_current' => false]);
+                if ($old) {
+                    $old->update(['is_current' => false]);
+                }
                 $doc = StudentDocument::create(['application_id' => $app->id, 'student_id' => $app->student_id,
                     'cne' => $app->cne, 'type' => $type, 'file_path' => $path, 'storage_disk' => 'private',
                     'original_filename' => $type.'.'.$ext, 'mime_type' => $mime, 'file_size' => $file->getSize(),
                     'version' => $version, 'content_hash' => $hash, 'is_current' => true, 'status' => 'pending', 'uploaded_by' => auth()->id()]);
                 $app->increment('version');
                 $this->event($app, 'document_uploaded', ['document_id' => $doc->id, 'type' => $type, 'version' => $version]);
+
                 return $doc;
             });
         } catch (\Throwable $e) {
-            if ($path) Storage::disk('private')->delete($path);
+            if ($path) {
+                Storage::disk('private')->delete($path);
+            }
             throw $e;
         }
     }
@@ -141,11 +161,12 @@ class ManageDossierAction
                 'birth_date' => 'required|date_format:Y-m-d|before:today', 'gender' => 'required|in:male,female',
                 'address' => 'required', 'bac_average' => 'required|numeric|between:0,20', 'bac_year' => 'required|integer'])->validate();
             $types = StudentDocument::where('application_id', $app->id)->where('is_current', true)->whereNull('withdrawn_at')->pluck('type')->all();
-            abort_if(array_diff(\App\Domain\Admission\AdmissionEntryRules::documents($app->campaign->entry_route), $types), 422, 'Ajoutez toutes les pièces requises pour ce concours avant de soumettre.');
+            abort_if(array_diff(AdmissionEntryRules::documents($app->campaign->entry_route), $types), 422, 'Ajoutez toutes les pièces requises pour ce concours avant de soumettre.');
             abort_if(StudentDocument::where('application_id', $app->id)->where('is_current', true)->whereNull('withdrawn_at')->where('status', 'rejected')->exists(), 422, 'Remplacez les pièces signalées à corriger avant de soumettre à nouveau.');
             $app->update(['dossier_status' => 'submitted', 'status' => 'submitted', 'submitted_at' => now(), 'version' => $app->version + 1]);
             $this->event($app, 'submitted');
-            app(\App\Services\Admissions\AdmissionNotificationService::class)->queue($app, 'submitted');
+            app(AdmissionNotificationService::class)->queue($app, 'submitted');
+
             return $app;
         });
     }
@@ -157,7 +178,7 @@ class ManageDossierAction
             'decision' => 'required|in:verified,rejected', 'reason' => 'required_if:decision,rejected|nullable|string|max:2000', 'corrections' => 'nullable|array']);
         $corrections = $request->input('corrections', []);
         if ($corrections) {
-            $rules = (new \App\Http\Requests\Admissions\SaveDossierRequest)->rules();
+            $rules = (new SaveDossierRequest)->rules();
             unset($rules['application_id'], $rules['version']);
             $data['corrections'] = validator($corrections, $rules)->validate();
             abort_unless(trim((string) ($data['reason'] ?? '')) !== '', 422, 'Expliquez la correction de champ dans l’observation.');
@@ -165,7 +186,7 @@ class ManageDossierAction
         DB::transaction(function () use ($request, $documentId, $data) {
             $app = AdmissionAccess::dossier($request);
             $app = Application::whereKey($app->id)->lockForUpdate()->firstOrFail();
-            \App\Support\AdmissionDeskAccess::assertAvailable($app, $request->user()->id);
+            AdmissionDeskAccess::assertAvailable($app, $request->user()->id);
             $this->version($app, $request);
             abort_unless(in_array($app->dossier_status, ['submitted', 'under_review', 'needs_correction']), 422, 'Le candidat doit soumettre son dossier avant la revue.');
             $doc = StudentDocument::where('application_id', $app->id)->whereKey($documentId)->where('is_current', true)->whereNull('withdrawn_at')->firstOrFail();
@@ -174,13 +195,15 @@ class ManageDossierAction
                 'reviewer_id' => auth()->id(), 'decision' => $data['decision'], 'reason' => $data['reason'] ?? null,
                 'corrections' => ! empty($data['corrections']) ? json_encode($data['corrections'], JSON_UNESCAPED_UNICODE) : null,
                 'created_at' => now(), 'updated_at' => now()]);
-            if (! empty($data['corrections'])) $app->profile = array_replace($app->profile ?? [], $data['corrections']);
+            if (! empty($data['corrections'])) {
+                $app->profile = array_replace($app->profile ?? [], $data['corrections']);
+            }
             $requiresCorrection = $data['decision'] === 'rejected' || StudentDocument::where('application_id', $app->id)->where('is_current', true)->whereNull('withdrawn_at')->where('status', 'rejected')->exists();
             $app->update(['dossier_status' => $requiresCorrection || $app->dossier_status === 'needs_correction' ? 'needs_correction' : 'under_review', 'version' => $app->version + 1]);
             $this->event($app, 'document_reviewed', ['document_id' => $doc->id, 'decision' => $data['decision']]);
             if ($data['decision'] === 'rejected') {
                 $this->event($app, 'needs_correction', ['document_id' => $doc->id]);
-                app(\App\Services\Admissions\AdmissionNotificationService::class)->queue($app, 'needs_correction');
+                app(AdmissionNotificationService::class)->queue($app, 'needs_correction');
             }
         });
     }
@@ -198,27 +221,31 @@ class ManageDossierAction
             'physical_checklist.photos' => 'required_if:decision,approved|accepted',
             'physical_checklist.attestation_admission' => 'sometimes|accepted',
             'physical_checklist.releve_parcours' => 'sometimes|accepted']);
+
         return DB::transaction(function () use ($request, $data) {
             $resolved = AdmissionAccess::dossier($request);
             $campaign = $resolved->campaign()->lockForUpdate()->firstOrFail();
             $entrySemester = (int) $campaign->entry_semester;
-            abort_unless(\App\Domain\Admission\AdmissionEntryRules::validEntry($campaign->entry_route, $entrySemester), 422, 'Niveau d’entrée de campagne incohérent.');
-            abort_if(\App\Models\AcademicYear::findOrFail($campaign->academic_year_id)->is_locked, 422, 'Année universitaire verrouillée.');
+            abort_unless(AdmissionEntryRules::validEntry($campaign->entry_route, $entrySemester), 422, 'Niveau d’entrée de campagne incohérent.');
+            abort_if(AcademicYear::findOrFail($campaign->academic_year_id)->is_locked, 422, 'Année universitaire verrouillée.');
             $app = Application::whereKey($resolved->id)->lockForUpdate()->firstOrFail();
-            \App\Support\AdmissionDeskAccess::assertAvailable($app, $request->user()->id);
+            AdmissionDeskAccess::assertAvailable($app, $request->user()->id);
             if ($app->dossier_status === 'approved') {
                 abort_unless($data['decision'] === 'approved' && Student::find($app->student_id)?->student_number === $data['official_number'], 409, 'Décision déjà enregistrée.');
+
                 return $app;
             }
             $this->version($app, $request);
             abort_unless(in_array($app->dossier_status, ['submitted', 'under_review']), 422, 'Le dossier doit être soumis avant revue.');
             if ($data['decision'] === 'approved') {
-                foreach (\App\Domain\Admission\AdmissionEntryRules::physicalChecklist($campaign->entry_route) as $key => $label) validator($data, ['physical_checklist.'.$key => 'required|accepted'])->validate();
+                foreach (AdmissionEntryRules::physicalChecklist($campaign->entry_route) as $key => $label) {
+                    validator($data, ['physical_checklist.'.$key => 'required|accepted'])->validate();
+                }
                 abort_if($campaign->filiere->requiresTuitionPayment(), 422, 'Une admission TAFEM/CNAEM doit concerner une formation initiale gratuite.');
                 AdmissionAccess::invitationActive($app);
                 abort_unless($app->eligibility === 'main' && $app->owner_user_id, 422, 'Dossier non admissible ou non activé.');
                 $verified = StudentDocument::where('application_id', $app->id)->where('is_current', true)->whereNull('withdrawn_at')->where('status', 'verified')->pluck('type')->all();
-                abort_if(array_diff(\App\Domain\Admission\AdmissionEntryRules::documents($campaign->entry_route), $verified), 422, 'Vérifiez chaque pièce numérique avant la validation définitive.');
+                abort_if(array_diff(AdmissionEntryRules::documents($campaign->entry_route), $verified), 422, 'Vérifiez chaque pièce numérique avant la validation définitive.');
                 $already = Application::where('admission_campaign_id', $campaign->id)->where('dossier_status', 'approved')->count();
                 abort_if($already >= $campaign->target_capacity, 422, 'Capacité de la campagne atteinte.');
                 $student = Student::where('cne', $app->cne)->lockForUpdate()->first();
@@ -230,7 +257,9 @@ class ManageDossierAction
                 $number = trim($data['official_number']);
                 abort_if($number === $app->cne || in_array(strtolower($number), ['en-attente', 'pending']), 422, 'Renseignez un numéro officiel vérifié.');
                 abort_if(Student::where('student_number', $number)->when($student, fn ($q) => $q->where('id', '!=', $student->id))->exists(), 422, 'Numéro officiel déjà attribué.');
-                if ($student && $student->status === 'active' && $student->student_number !== $number) abort(409, 'Le numéro officiel existant doit être conservé.');
+                if ($student && $student->status === 'active' && $student->student_number !== $number) {
+                    abort(409, 'Le numéro officiel existant doit être conservé.');
+                }
                 $profile = $app->profile ?? [];
                 validator($profile, ['gender' => 'required|in:male,female'])->validate();
                 $owner = User::whereKey($app->owner_user_id)->lockForUpdate()->firstOrFail();
@@ -260,7 +289,8 @@ class ManageDossierAction
                 'physical_checklist' => isset($data['physical_checklist']) ? json_encode($data['physical_checklist']) : null,
                 'created_at' => now(), 'updated_at' => now()]);
             $this->event($app, $data['decision']);
-            app(\App\Services\Admissions\AdmissionNotificationService::class)->queue($app, $data['decision']);
+            app(AdmissionNotificationService::class)->queue($app, $data['decision']);
+
             return $app;
         });
     }

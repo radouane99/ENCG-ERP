@@ -17,10 +17,17 @@ $app = Application::where('reference_number', 'E2E-TAFEM-001')->firstOrFail();
 $institution = Institution::findOrFail($app->campaign->institution_id);
 $previous = $institution->settings;
 $path = 'admissions-synthetic-smoke/'.Str::uuid().'.pdf';
-$document = null; $status = null; $start = microtime(true);
-Http::globalResponseMiddleware(function ($response) use (&$status) { $status = $response->getStatusCode(); return $response; });
+$document = null;
+$status = null;
+$start = microtime(true);
+Http::globalResponseMiddleware(function ($response) use (&$status) {
+    $status = $response->getStatusCode();
+
+    return $response;
+});
 try {
-    $settings = $previous ?? []; $settings['admissions']['ocr_cloud_enabled'] = true;
+    $settings = $previous ?? [];
+    $settings['admissions']['ocr_cloud_enabled'] = true;
     $institution->update(['settings' => $settings]);
     $pdf = app('dompdf.wrapper')->loadHTML('<html><body><h1>SYNTHETIC TEST ONLY</h1><p>CNE Z123456789</p><p>CIN XY123456</p><p>Nom SYNTHETIQUE Prenom TEST</p></body></html>')->output();
     Storage::disk('private')->put($path, $pdf);
@@ -34,7 +41,9 @@ try {
 } catch (Throwable $e) {
     echo json_encode(['provider_http_status' => $status, 'cloud_used' => false, 'error_class' => get_class($e), 'duration_seconds' => round(microtime(true) - $start, 2)], JSON_PRETTY_PRINT).PHP_EOL;
 } finally {
-    if ($document) $document->delete();
+    if ($document) {
+        $document->delete();
+    }
     Storage::disk('private')->delete($path);
     $institution->update(['settings' => $previous]);
 }

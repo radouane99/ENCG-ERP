@@ -5,8 +5,8 @@ namespace App\Services\Academic;
 use App\Domain\Deliberation\LmdRules;
 use App\Exceptions\OptimisticLockException;
 use App\Models\Assessment;
-use App\Models\DisciplinaryCase;
 use App\Models\ExamIncident;
+use App\Models\ExamSession;
 use App\Models\Grade;
 use App\Models\Institution;
 use App\Models\Module;
@@ -379,7 +379,7 @@ class GradeService
     {
         $created = 0;
         $updated = 0;
-        $sessionIds = \App\Models\ExamSession::where('academic_year_id', AcademicContext::yearId())->where('institution_id', $module->institution_id)
+        $sessionIds = ExamSession::where('academic_year_id', AcademicContext::yearId())->where('institution_id', $module->institution_id)
             ->whereNotIn('type', ['rattrapage', 'resit'])->whereHas('exams', fn ($q) => $q->where('module_id', $module->id))->pluck('id');
         $examSessionId = $sessionIds->count() === 1 ? $sessionIds->first() : null;
 
@@ -388,9 +388,15 @@ class GradeService
             $decision = $this->determineDecision($moyenne);
 
             $existing = ResitEligibility::where('student_id', $student->id)->where('module_id', $module->id)->where('academic_year_id', AcademicContext::yearId())->exists();
-            if ($moyenne === null) { continue; }
+            if ($moyenne === null) {
+                continue;
+            }
             $record = app(ResitEligibilityRegistry::class)->record($student->id, $module->id, (int) AcademicContext::yearId(), $examSessionId, in_array($decision, ['R', 'NV']), "Moyenne initiale: {$moyenne}/20 ({$decision})");
-            if (! $existing) { $created++; } else { $updated++; }
+            if (! $existing) {
+                $created++;
+            } else {
+                $updated++;
+            }
         }
 
         return ['created' => $created, 'updated' => $updated];

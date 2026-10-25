@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Application;
 use App\Models\Student;
 use App\Services\Academic\StudentSubGroupDispatcherService;
 use App\Support\Utf8Text;
@@ -23,7 +24,7 @@ class UserResource extends JsonResource
 
         $academicInfo = null;
         $student = null;
-        $admission = \App\Models\Application::where('owner_user_id', $this->resource->id)->whereHas('campaign', fn ($q) => $q->where('status', 'open'))->latest('id')->first();
+        $admission = Application::where('owner_user_id', $this->resource->id)->whereHas('campaign', fn ($q) => $q->where('status', 'open'))->latest('id')->first();
         if (in_array('student', $roles)) {
             $student = $this->relationLoaded('student')
                 ? $this->student

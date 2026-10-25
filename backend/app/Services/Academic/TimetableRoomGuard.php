@@ -6,8 +6,10 @@ use App\Models\Group;
 use App\Models\Room;
 use App\Models\RoomBooking;
 use App\Models\Schedule;
+use App\Models\Semester;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
@@ -72,7 +74,9 @@ class TimetableRoomGuard
         if ($capacity < $headcount) {
             return false;
         }
-        if (($var['required_type'] ?? '') === 'lab' && ! in_array(strtolower((string) ($room->type ?? '')), ['lab', 'laboratory', 'tp'], true)) { return false; }
+        if (($var['required_type'] ?? '') === 'lab' && ! in_array(strtolower((string) ($room->type ?? '')), ['lab', 'laboratory', 'tp'], true)) {
+            return false;
+        }
 
         if ($this->isSharedCours($var) || (string) ($var['required_type'] ?? '') === 'amphitheater') {
             return $this->isAmphitheater($room) || $capacity >= max(100, $headcount);
@@ -107,7 +111,7 @@ class TimetableRoomGuard
             $query = Schedule::query()->where('day_of_week', '>=', 1)
                 ->where('academic_year_id', AcademicContext::yearId())
                 ->where('institution_id', auth()->user()?->institution_id ?? config('erp.institution_id', 1));
-            $semester = \App\Models\Semester::where('academic_year_id', AcademicContext::yearId())->where('is_current', true)->first();
+            $semester = Semester::where('academic_year_id', AcademicContext::yearId())->where('is_current', true)->first();
             if ($semester) {
                 $query->whereHas('module', fn ($q) => $q->whereRaw('MOD(semester_number, 2) = ?', [$semester->number % 2]));
             }
@@ -228,7 +232,9 @@ class TimetableRoomGuard
         $occupied = [];
 
         foreach (Room::query()->orderBy('capacity')->get() as $room) {
-            if ((int) $room->institution_id !== (int) (auth()->user()?->institution_id ?? config('erp.institution_id', 1))) { continue; }
+            if ((int) $room->institution_id !== (int) (auth()->user()?->institution_id ?? config('erp.institution_id', 1))) {
+                continue;
+            }
             if (! $this->roomOperational($room)) {
                 $occupied[] = $this->roomPayload($room, 'Hors service');
 
@@ -334,7 +340,7 @@ class TimetableRoomGuard
         }
 
         if (Schema::hasTable('deliberation_meetings')) {
-            foreach (\Illuminate\Support\Facades\DB::table('deliberation_meetings')->where('starts_at', '<', $end)->where('ends_at', '>', $start)->get() as $meeting) {
+            foreach (DB::table('deliberation_meetings')->where('starts_at', '<', $end)->where('ends_at', '>', $start)->get() as $meeting) {
                 $grid->occupy($day, 0, Carbon::parse($meeting->starts_at)->format('H:i:s'), Carbon::parse($meeting->ends_at)->format('H:i:s'), 'jury:'.$meeting->id, [], $meeting->room_id);
             }
         }

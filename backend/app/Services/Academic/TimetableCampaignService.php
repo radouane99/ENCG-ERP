@@ -6,8 +6,8 @@ use App\Models\AcademicYear;
 use App\Models\EdtCampaign;
 use App\Models\Filiere;
 use App\Models\Group;
-use App\Models\Institution;
 use App\Models\Module;
+use App\Models\ModuleProfessor;
 use App\Models\Professor;
 use App\Models\Room;
 use App\Models\Schedule;
@@ -50,6 +50,7 @@ class TimetableCampaignService
         return DB::transaction(function () use ($operation) {
             $year = AcademicYear::whereKey($this->contextYear()?->id)->lockForUpdate()->firstOrFail();
             abort_if($year->is_locked, 409, 'Année universitaire verrouillée.');
+
             return $operation();
         });
     }
@@ -58,6 +59,7 @@ class TimetableCampaignService
     {
         return $this->locked(function () use ($versionId, $scheduleIds, $dayOfWeek, $startTime, $endTime, $unplace, $attributes) {
             $this->assertRevision($versionId, $attributes['revision'] ?? null);
+
             return $this->moveBlockLocked($versionId, $scheduleIds, $dayOfWeek, $startTime, $endTime, $unplace, $attributes);
         });
     }
@@ -66,6 +68,7 @@ class TimetableCampaignService
     {
         return $this->locked(function () use ($versionId, $payload) {
             $this->assertRevision($versionId, $payload['revision'] ?? null);
+
             return $this->addSessionLocked($versionId, $payload);
         });
     }
@@ -74,6 +77,7 @@ class TimetableCampaignService
     {
         return $this->locked(function () use ($versionId, $scheduleIds, $revision) {
             $this->assertRevision($versionId, $revision);
+
             return $this->deleteSessionLocked($versionId, $scheduleIds);
         });
     }
@@ -82,12 +86,15 @@ class TimetableCampaignService
     {
         $rows = DB::table('schedules')->where('schedule_version_id', $versionId)->orderBy('id')
             ->get(['id', 'day_of_week', 'start_time', 'end_time', 'room_id', 'professor_id', 'module_id', 'group_id', 'session_type', 'version', 'updated_at']);
+
         return hash('sha256', $rows->toJson());
     }
 
     private function assertRevision(int $versionId, ?string $revision): void
     {
-        if ($revision !== null) { abort_unless(hash_equals($this->revision($versionId), $revision), 409, 'Planning modifié entre-temps. Actualiser la grille avant de réessayer.'); }
+        if ($revision !== null) {
+            abort_unless(hash_equals($this->revision($versionId), $revision), 409, 'Planning modifié entre-temps. Actualiser la grille avant de réessayer.');
+        }
     }
 
     public function generateDraft(int $filiereId, array $params = []): array
@@ -98,8 +105,10 @@ class TimetableCampaignService
     public function confirmSession(int $scheduleId, int $professorId, string $decision, ?string $note = null): array
     {
         abort_unless(in_array($decision, ['confirmed', 'refused'], true), 422, 'Décision invalide.');
+
         return $this->locked(fn () => $this->confirmSessionLocked($scheduleId, $professorId, $decision, $note));
     }
+
     public function __construct(
         private SmartSchedulingEngine $engine,
         private TimetableRoomGuard $rooms
@@ -329,7 +338,9 @@ class TimetableCampaignService
         $this->assertVersion($version);
         $rows = Schedule::with(['room', 'group', 'module'])->where('schedule_version_id', $versionId)->get();
         $issues = $this->hardConflictsFromBlocks($this->groupIntoBlocks($rows));
-        if ($rows->isEmpty()) { $issues[] = ['message' => 'Le planning est vide.']; }
+        if ($rows->isEmpty()) {
+            $issues[] = ['message' => 'Le planning est vide.'];
+        }
         foreach ($rows as $row) {
             if ((int) $row->day_of_week < 1 || $row->start_time >= $row->end_time) {
                 $issues[] = ['message' => 'Des séances restent à placer sur un créneau valide.'];
@@ -337,10 +348,12 @@ class TimetableCampaignService
             if (! $row->room || ! $this->rooms->roomOperational($row->room)) {
                 $issues[] = ['message' => 'Une salle est manquante ou hors service.'];
             }
-            $assigned = \App\Models\ModuleProfessor::where('academic_year_id', $version->academic_year_id)
+            $assigned = ModuleProfessor::where('academic_year_id', $version->academic_year_id)
                 ->where('module_id', $row->module_id)->where('professor_id', $row->professor_id)
                 ->where(fn ($q) => $q->where('group_id', $row->group_id)->orWhereNull('group_id'))->exists();
-            if (! $assigned) { $issues[] = ['message' => 'Une séance ne correspond pas aux affectations officielles des enseignants.']; }
+            if (! $assigned) {
+                $issues[] = ['message' => 'Une séance ne correspond pas aux affectations officielles des enseignants.'];
+            }
             if ($requireConfirmations && $row->confirmation_status !== 'confirmed') {
                 $issues[] = ['message' => 'Toutes les séances doivent être confirmées par leurs enseignants avant publication.'];
             }
@@ -353,9 +366,11 @@ class TimetableCampaignService
         }
         $parity = $version->semester()->value('number') % 2;
         $readiness = app(SemesterReadinessService::class)->summarize($this->contextYear(), $parity, $version->filiere_id);
-        if ($readiness['missing_assignments_count'] > 0) { $issues[] = ['message' => 'Compléter les affectations CM, TD et TP prévues au programme de cette filière.']; }
+        if ($readiness['missing_assignments_count'] > 0) {
+            $issues[] = ['message' => 'Compléter les affectations CM, TD et TP prévues au programme de cette filière.'];
+        }
         $groups = Group::where('academic_year_id', $version->academic_year_id)->where('filiere_id', $version->filiere_id)->whereRaw('MOD(semester_number, 2) = ?', [$parity])->get();
-        $assignments = \App\Models\ModuleProfessor::with('module')->where('academic_year_id', $version->academic_year_id)
+        $assignments = ModuleProfessor::with('module')->where('academic_year_id', $version->academic_year_id)
             ->whereHas('module', fn ($q) => $q->where('filiere_id', $version->filiere_id)->whereRaw('MOD(semester_number, 2) = ?', [$parity]))->get();
         foreach ($assignments as $assignment) {
             foreach ($groups->where('semester_number', $assignment->module->semester_number)->filter(fn ($g) => ! $assignment->group_id || (int) $g->id === (int) $assignment->group_id) as $group) {
@@ -364,6 +379,7 @@ class TimetableCampaignService
                 }
             }
         }
+
         return collect($issues)->unique('message')->values()->all();
     }
 
@@ -372,12 +388,17 @@ class TimetableCampaignService
         return $this->locked(function () use ($versionId) {
             $version = ScheduleVersion::lockForUpdate()->findOrFail($versionId);
             $this->assertVersion($version);
-            if ($version->status === 'PROPOSED') { return ['success' => true, 'message' => 'Cette proposition est déjà disponible.', 'status' => 'PROPOSED']; }
+            if ($version->status === 'PROPOSED') {
+                return ['success' => true, 'message' => 'Cette proposition est déjà disponible.', 'status' => 'PROPOSED'];
+            }
             $this->assertEditable($version);
             $issues = $this->publicationIssues($versionId, false);
-            if ($issues) { return ['success' => false, 'message' => $issues[0]['message'], 'issues' => $issues]; }
+            if ($issues) {
+                return ['success' => false, 'message' => $issues[0]['message'], 'issues' => $issues];
+            }
             $version->update(['status' => 'PROPOSED']);
             Schedule::where('schedule_version_id', $versionId)->update(['confirmation_status' => 'pending', 'confirmed_at' => null]);
+
             return ['success' => true, 'message' => 'Proposition disponible dans le portail des enseignants pour confirmation.', 'status' => 'PROPOSED'];
         });
     }
@@ -387,19 +408,27 @@ class TimetableCampaignService
         return $this->locked(function () use ($versionId) {
             $version = ScheduleVersion::lockForUpdate()->findOrFail($versionId);
             $this->assertVersion($version);
-            if ($version->status === 'PUBLISHED') { return ['success' => true, 'message' => 'Cette version est déjà publiée.']; }
-            if ($version->status !== 'PROPOSED') { return ['success' => false, 'message' => 'Proposer le planning aux enseignants avant publication.']; }
+            if ($version->status === 'PUBLISHED') {
+                return ['success' => true, 'message' => 'Cette version est déjà publiée.'];
+            }
+            if ($version->status !== 'PROPOSED') {
+                return ['success' => false, 'message' => 'Proposer le planning aux enseignants avant publication.'];
+            }
             $issues = $this->publicationIssues($versionId);
-            if ($issues) { return ['success' => false, 'message' => $issues[0]['message'], 'issues' => $issues]; }
+            if ($issues) {
+                return ['success' => false, 'message' => $issues[0]['message'], 'issues' => $issues];
+            }
             $previousIds = ScheduleVersion::where('edt_campaign_id', $version->edt_campaign_id)
                 ->where('filiere_id', $version->filiere_id)->whereKeyNot($version->id)->where('status', 'PUBLISHED')->pluck('id');
             Schedule::whereIn('schedule_version_id', $previousIds)->update(['is_active' => false]);
             ScheduleVersion::whereIn('id', $previousIds)->update(['status' => 'ARCHIVED']);
             $version->update(['status' => 'PUBLISHED']);
             Schedule::where('schedule_version_id', $versionId)->update(['is_active' => true]);
+
             return ['success' => true, 'message' => 'Emploi du temps officiel publié.', 'status' => 'PUBLISHED'];
         });
     }
+
     private function confirmSessionLocked(int $scheduleId, int $professorId, string $decision, ?string $note = null): array
     {
         $session = Schedule::query()->findOrFail($scheduleId);
@@ -479,7 +508,9 @@ class TimetableCampaignService
     public function board(int $versionId, ?int $targetFiliereId = null, ?int $semesterNumber = null): array
     {
         $version = ScheduleVersion::query()->with('filiere')->find($versionId);
-        if ($version) { $this->assertVersion($version); }
+        if ($version) {
+            $this->assertVersion($version);
+        }
 
         $filiereId = $targetFiliereId ?? ($version ? (int) $version->filiere_id : null);
 

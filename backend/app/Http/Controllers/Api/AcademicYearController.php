@@ -7,7 +7,10 @@ use App\Http\Requests\Academic\RolloverAcademicYearRequest;
 use App\Http\Requests\Academic\StoreAcademicYearRequest;
 use App\Http\Requests\Academic\UpdateAcademicYearRequest;
 use App\Models\AcademicYear;
+use App\Models\Deliberation;
+use App\Models\DeliberationDecision;
 use App\Models\Student;
+use App\Models\StudentGraduation;
 use App\Models\StudentPathway;
 use App\Models\StudentRegistration;
 use App\Services\Academic\SmartAcademicProgressionService;
@@ -139,13 +142,13 @@ class AcademicYearController extends Controller
         $archives = $years->map(function ($y, $index) {
             $studentCount = StudentPathway::where('academic_year_id', $y->id)->pluck('student_id')
                 ->merge(StudentRegistration::where('academic_year_id', $y->id)->pluck('student_id'))->unique()->count();
-            $decisions = \App\Models\DeliberationDecision::whereHas('deliberation', fn ($q) => $q->where('academic_year_id', $y->id)
+            $decisions = DeliberationDecision::whereHas('deliberation', fn ($q) => $q->where('academic_year_id', $y->id)
                 ->where('institution_id', $y->institution_id)->whereIn('type', ['annual', 'annuel'])->where('is_sealed', true))
                 ->orderByDesc('id')->get()->unique('student_id');
             $admittedCount = $decisions->whereIn('decision', ['admitted', 'V', 'V.Comp', 'DIPLOME', 'graduated'])->count();
             $repeatedCount = $decisions->whereIn('decision', ['REDOUBLANT', 'REPEAT_YEAR', 'repeat_year', 'repeated'])->count();
-            $graduatedCount = \App\Models\StudentGraduation::where('institution_id', $y->institution_id)->where('academic_year_id', $y->id)->distinct()->count('student_id');
-            $seals = \App\Models\Deliberation::where('academic_year_id', $y->id)->where('institution_id', $y->institution_id)
+            $graduatedCount = StudentGraduation::where('institution_id', $y->institution_id)->where('academic_year_id', $y->id)->distinct()->count('student_id');
+            $seals = Deliberation::where('academic_year_id', $y->id)->where('institution_id', $y->institution_id)
                 ->where('is_sealed', true)->whereNotNull('seal_hash')->pluck('seal_hash');
 
             $label = $y->label ?? $y->name ?? '2024-2025';

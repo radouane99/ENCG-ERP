@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\Assessment;
 use App\Models\Grade;
 use App\Models\Module;
 use App\Models\Student;

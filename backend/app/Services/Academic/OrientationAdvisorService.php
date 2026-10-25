@@ -125,7 +125,9 @@ class OrientationAdvisorService
             ->whereNotNull('value')
             ->with(['assessment.module'])
             ->get();
-        if ($grades->isEmpty()) return ['student_id' => $student->id, 'recommendations' => [], 'radar_skills' => [], 'total_grades_analyzed' => 0, 'ai_verdict' => 'Résultats insuffisants pour proposer une orientation.'];
+        if ($grades->isEmpty()) {
+            return ['student_id' => $student->id, 'recommendations' => [], 'radar_skills' => [], 'total_grades_analyzed' => 0, 'ai_verdict' => 'Résultats insuffisants pour proposer une orientation.'];
+        }
 
         // 2. Extraire les moyennes par domaine de compétences
         $categoryScores = $this->calculateCategoryScores($grades);
@@ -141,7 +143,9 @@ class OrientationAdvisorService
 
             foreach ($profile['weights'] as $cat => $weight) {
                 $catScore = $categoryScores[$cat] ?? null;
-                if ($catScore === null) continue;
+                if ($catScore === null) {
+                    continue;
+                }
                 if ($catScore >= 12.5) {
                     $strengths[] = $this->getCategoryLabel($cat).' ('.number_format($catScore, 2).'/20)';
                 } elseif ($catScore < 10.0) {
@@ -215,7 +219,9 @@ class OrientationAdvisorService
         ];
 
         foreach ($grades as $grade) {
-            if ($grade->value === null && ! $grade->absent) continue;
+            if ($grade->value === null && ! $grade->absent) {
+                continue;
+            }
             $note = $grade->absent ? 0.0 : (float) $grade->value;
             $module = $grade->assessment?->module ?? $grade->module;
             $moduleName = strtolower($module?->name ?? '');
@@ -264,7 +270,9 @@ class OrientationAdvisorService
 
         foreach ($weights as $cat => $weight) {
             $score = $categoryScores[$cat] ?? null;
-            if ($score === null) continue;
+            if ($score === null) {
+                continue;
+            }
             $weightedSum += ($score / 20.0) * $weight;
             $totalWeight += $weight;
         }

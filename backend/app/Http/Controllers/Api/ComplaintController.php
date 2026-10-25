@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Api\Academic\GradeAppealController;
 use App\Http\Controllers\Controller;
+use App\Models\Assessment;
 use App\Models\Complaint;
-use App\Models\Grade;
-use App\Models\GradeAppeal;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -111,15 +111,19 @@ class ComplaintController extends Controller
      */
     public function submitGradeAppeal(Request $request): JsonResponse
     {
-        $a = \App\Models\Assessment::findOrFail($request->integer('assessment_id'));
+        $a = Assessment::findOrFail($request->integer('assessment_id'));
         $request->merge(['module_id' => $a->module_id, 'reason_category' => $request->input('reason_category', 'autre'), 'student_justification' => $request->input('student_justification', $request->input('reason'))]);
-        return app(\App\Http\Controllers\Api\Academic\GradeAppealController::class)->studentStore($request);
+
+        return app(GradeAppealController::class)->studentStore($request);
     }
+
     public function listGradeAppeals(Request $request): JsonResponse
     {
-        $controller = app(\App\Http\Controllers\Api\Academic\GradeAppealController::class);
+        $controller = app(GradeAppealController::class);
+
         return $request->user()->hasRole('student') ? $controller->studentIndex($request) : $controller->index($request);
     }
+
     /**
      * Résoudre une réclamation de note.
      */
@@ -127,6 +131,7 @@ class ComplaintController extends Controller
     {
         $decision = ['approved' => 'rectified', 'rejected' => 'rejected'][$request->input('status')] ?? $request->input('status');
         $request->merge(['decision' => $decision, 'rectified_grade' => $request->input('new_grade'), 'professor_comment' => $request->input('professor_notes')]);
-        return app(\App\Http\Controllers\Api\Academic\GradeAppealController::class)->resolve($request, $id);
+
+        return app(GradeAppealController::class)->resolve($request, $id);
     }
 }

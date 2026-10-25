@@ -75,7 +75,7 @@ class GradeGridService
                 });
             }
 
-            return ['success' => true, 'calculated_results' => $this->grid($user,$module->id,$group->id)['data']];
+            return ['success' => true, 'calculated_results' => $this->grid($user, $module->id, $group->id)['data']];
         });
     }
 }

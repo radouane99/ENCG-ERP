@@ -3,18 +3,21 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Enums\InternshipStatus;
-use App\Helpers\ArabicGlyphReshaper;
+use App\Http\Controllers\Api\Professor\ProfessorInternshipController;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Internship\ScheduleSoutenanceRequest;
 use App\Http\Requests\Internship\ValidateInternshipRequest;
 use App\Models\Internship;
+use App\Models\Professor;
+use App\Models\Room;
 use App\Models\Soutenance;
 use App\Services\Academic\InternshipService;
 use App\Services\Academic\SoutenanceService;
+use App\Services\Document\WorkflowDocumentExportService;
+use App\Support\InternshipAccess;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class AdminInternshipController extends Controller
 {
@@ -29,7 +32,7 @@ class AdminInternshipController extends Controller
     public function index(Request $request): JsonResponse
     {
         $this->authorize('viewAny', Internship::class);
-        abort_unless(\App\Support\InternshipAccess::staff($request->user()) || $request->user()->hasRole('scolarite'), 403);
+        abort_unless(InternshipAccess::staff($request->user()) || $request->user()->hasRole('scolarite'), 403);
 
         $perPage = min((int) $request->input('per_page', 20), 100);
         $paginated = Internship::whereHas('student', fn ($q) => $q->where('institution_id', $request->user()->institution_id))->with(['student.user', 'supervisor.user', 'soutenance.room', 'internshipDocuments'])
@@ -55,7 +58,7 @@ class AdminInternshipController extends Controller
      */
     public function getSoutenancesList(): JsonResponse
     {
-        $soutenances = Soutenance::where(fn ($q) => $q->whereHas('internship.student', fn ($s) => $s->where('institution_id', request()->user()->institution_id))->orWhereHas('finalProject.student', fn ($s) => $s->where('institution_id', request()->user()->institution_id)))->when(! \App\Support\InternshipAccess::staff(request()->user()), fn ($q) => $q->where(fn ($q) => $q->where('president_id', request()->user()->professor?->id ?? -1)->orWhere('examiner_id', request()->user()->professor?->id ?? -1)->orWhere('supervisor_id', request()->user()->professor?->id ?? -1)))->with([
+        $soutenances = Soutenance::where(fn ($q) => $q->whereHas('internship.student', fn ($s) => $s->where('institution_id', request()->user()->institution_id))->orWhereHas('finalProject.student', fn ($s) => $s->where('institution_id', request()->user()->institution_id)))->when(! InternshipAccess::staff(request()->user()), fn ($q) => $q->where(fn ($q) => $q->where('president_id', request()->user()->professor?->id ?? -1)->orWhere('examiner_id', request()->user()->professor?->id ?? -1)->orWhere('supervisor_id', request()->user()->professor?->id ?? -1)))->with([
             'internship.student.user',
             'internship.student.pathways.filiere',
             'finalProject.student.user',
@@ -126,8 +129,8 @@ class AdminInternshipController extends Controller
         ]);
 
         $request->merge(['internship_id' => $id]);
-        return app(\App\Http\Controllers\Api\Professor\ProfessorInternshipController::class)->updateStatus($request);
 
+        return app(ProfessorInternshipController::class)->updateStatus($request);
 
     }
 
@@ -169,18 +172,27 @@ class AdminInternshipController extends Controller
     public function downloadConvocationPdf(int $id)
     {
         $s = Soutenance::with('internship.student.user', 'finalProject.student.user', 'room', 'president.user', 'examiner.user', 'supervisor.user')->findOrFail($id);
-        $student = $s->internship?->student ?? $s->finalProject?->student; abort_unless($student && (int) $student->institution_id === (int) request()->user()->institution_id, 404);
+        $student = $s->internship?->student ?? $s->finalProject?->student;
+        abort_unless($student && (int) $student->institution_id === (int) request()->user()->institution_id, 404);
         if ((int) request()->user()->student?->id !== (int) $student->id) {
-            if ($s->internship) \App\Support\InternshipAccess::defense(request()->user(), $s);
-            else $this->authorize('view', $s->finalProject);
+            if ($s->internship) {
+                InternshipAccess::defense(request()->user(), $s);
+            } else {
+                $this->authorize('view', $s->finalProject);
+            }
         }
         abort_unless($s->status !== 'cancelled' && $s->date_time, 422, 'Soutenance annulée ou non planifiée.');
-        $bytes = app(\App\Services\Document\WorkflowDocumentExportService::class)->pdf('Convocation à la soutenance', [
+        $bytes = app(WorkflowDocumentExportService::class)->pdf('Convocation à la soutenance', [
             'Référence' => $s->id, 'Étudiant' => $student->user->name, 'CNE' => $student->cne, 'Date et heure' => $s->date_time->format('d/m/Y H:i'),
             'Salle' => $s->room?->name, 'Présidence' => $s->president?->user?->name, 'Examinateur' => $s->examiner?->user?->name, 'Encadrant' => $s->supervisor?->user?->name], [], [], 'Convocation préparée à partir de la planification enregistrée. Toute modification doit être confirmée par le service compétent.');
+
         return response($bytes)->header('Content-Type', 'application/pdf')->header('Content-Disposition', 'inline; filename="Convocation_Soutenance_'.$id.'.pdf"')->header('Cache-Control', 'private, no-store');
-    }    public function options(Request $request): JsonResponse
+    }
+
+    public function options(Request $request): JsonResponse
     {
-        abort_unless(\App\Support\InternshipAccess::staff($request->user()), 403);
-        return response()->json(['professors' => \App\Models\Professor::with('user')->where('institution_id', $request->user()->institution_id)->where('is_active', true)->get()->map(fn ($p) => ['id' => $p->id, 'name' => $p->user->name]), 'rooms' => \App\Models\Room::where('institution_id', $request->user()->institution_id)->where('is_out_of_service', false)->get(['id', 'name'])]);
-    }}
+        abort_unless(InternshipAccess::staff($request->user()), 403);
+
+        return response()->json(['professors' => Professor::with('user')->where('institution_id', $request->user()->institution_id)->where('is_active', true)->get()->map(fn ($p) => ['id' => $p->id, 'name' => $p->user->name]), 'rooms' => Room::where('institution_id', $request->user()->institution_id)->where('is_out_of_service', false)->get(['id', 'name'])]);
+    }
+}

@@ -426,7 +426,6 @@ class DeliberationController extends Controller
                 $annualData = $this->deliberationService->calculateAnnualCompensation($filiereId, $academicYearId, $yearLevel);
                 $juries = $this->deliberationService->autoComposeJury($filiereId, $academicYearId, null, 'annuel');
 
-
                 $viewData = [
                     'filiere' => $filiere,
                     'yearLevel' => $yearLevel,
@@ -464,7 +463,6 @@ class DeliberationController extends Controller
                     ->where('filiere_id', $filiereId)
                     ->where('semester_number', $semesterNum)
                     ->get();
-
 
                 $matrix = [];
                 foreach ($pvData['students'] ?? [] as $s) {

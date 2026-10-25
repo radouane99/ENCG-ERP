@@ -3,7 +3,6 @@
 use App\Domain\Deliberation\LmdRules;
 use App\Models\AcademicEvent;
 use App\Models\AcademicYear;
-use App\Models\Assessment;
 use App\Models\Attendance;
 use App\Models\AttendanceSession;
 use App\Models\Campus;
@@ -23,6 +22,7 @@ use App\Models\Room;
 use App\Models\Semester;
 use App\Models\Student;
 use App\Models\StudentPathway;
+use App\Models\StudentRegistration;
 use App\Models\User;
 use App\Models\VacationContract;
 use App\Services\Academic\AcademicWindowGuard;
@@ -197,7 +197,7 @@ it('confirms Grande École reinscription without payment and blocks unpaid FC', 
         'is_current' => true,
     ]);
 
-    \App\Models\StudentRegistration::create(['student_id' => $geStudent->id, 'filiere_id' => $geFiliere->id,
+    StudentRegistration::create(['student_id' => $geStudent->id, 'filiere_id' => $geFiliere->id,
         'academic_year_id' => $year->id, 'semester_number' => 3, 'registration_type' => 're_enrollment', 'status' => 'academic_validated']);
     $this->actingAs($geUser, 'sanctum')
         ->postJson('/api/v1/student-portal/reinscription/confirm', [

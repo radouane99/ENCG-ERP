@@ -6,11 +6,11 @@ use App\Domain\Deliberation\LmdRules;
 use App\Models\Assessment;
 use App\Models\Deliberation;
 use App\Models\DeliberationDecision;
-use App\Models\ResitEligibility;
 use App\Models\Student;
 use App\Services\Academic\AcademicContext;
 use App\Services\Academic\DeliberationEngine as CanonicalDeliberationEngine;
 use App\Services\Academic\DeliberationSealService;
+use App\Services\Academic\ResitEligibilityRegistry;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -147,7 +147,7 @@ class DeliberationEngine extends CanonicalDeliberationEngine
     {
         $session = $deliberation->semester?->examSessions()
             ->where(function ($query) {
-                $query->whereIn(\Illuminate\Support\Facades\DB::raw('LOWER(type)'), ['normal', 'normale', 'ordinaire']);
+                $query->whereIn(DB::raw('LOWER(type)'), ['normal', 'normale', 'ordinaire']);
             })
             ->first()
             ?? $deliberation->semester?->examSessions()->first();
@@ -159,7 +159,7 @@ class DeliberationEngine extends CanonicalDeliberationEngine
         }
 
         foreach ($moduleAverages as $module) {
-            app(\App\Services\Academic\ResitEligibilityRegistry::class)->record(
+            app(ResitEligibilityRegistry::class)->record(
                 $studentId, $module->module_id, $deliberation->academic_year_id, $examSessionId, $module->final_module_score < LmdRules::VALIDATION_THRESHOLD
             );
         }

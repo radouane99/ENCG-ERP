@@ -124,7 +124,9 @@ class LmsCourseController extends Controller
             $semesterNumber = $currentPathway?->current_semester;
             $groupId = $currentPathway?->group_id;
 
-            if (! $filiereId) { return response()->json(['success' => true, 'data' => []]); }
+            if (! $filiereId) {
+                return response()->json(['success' => true, 'data' => []]);
+            }
             $query = Module::with(['filiere.department']);
             if ($filiereId) {
                 $query->where('filiere_id', $filiereId);

@@ -47,11 +47,13 @@ class NotificationController extends Controller
                 ],
             ]);
         } catch (\Throwable $e) {
+            report($e);
             return response()->json([
-                'success' => true,
+                'success' => false,
+                'message' => 'Notifications temporairement indisponibles. Réessayez.',
                 'data' => [],
                 'meta' => ['current_page' => 1, 'last_page' => 1, 'per_page' => 15, 'total' => 0, 'unread_count' => 0],
-            ]);
+            ], 503);
         }
     }
 

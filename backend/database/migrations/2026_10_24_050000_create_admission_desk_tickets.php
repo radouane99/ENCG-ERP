@@ -28,5 +28,8 @@ return new class extends Migration
         });
     }
 
-    public function down(): void { Schema::dropIfExists('admission_desk_tickets'); }
+    public function down(): void
+    {
+        Schema::dropIfExists('admission_desk_tickets');
+    }
 };

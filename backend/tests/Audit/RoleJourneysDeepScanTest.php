@@ -2,11 +2,22 @@
 
 namespace Tests\Audit;
 
-use App\Models\{AcademicYear, Assessment, Grade, GradeAppeal, Internship, ModulePvSignature, Professor, ProfessorAvailability, Soutenance, Student, StudentPathway, User};
+use App\Models\Grade;
+use App\Models\GradeAppeal;
+use App\Models\Internship;
+use App\Models\ModulePvSignature;
+use App\Models\Soutenance;
+use App\Models\StudentPathway;
+use App\Models\StudentRegistration;
+use App\Models\User;
+use App\Services\Academic\SmartAcademicProgressionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\{DB, Http, Mail};
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Mail;
 use Laravel\Sanctum\Sanctum;
 use Spatie\Permission\Models\Role;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
 /** Audit-only probes: failing assertions describe the expected protection, not a passing production certification. */
@@ -23,7 +34,8 @@ class RoleJourneysDeepScanTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        Mail::fake(); Http::preventStrayRequests();
+        Mail::fake();
+        Http::preventStrayRequests();
     }
 
     private function observed(string $probe, array $data): void
@@ -33,33 +45,42 @@ class RoleJourneysDeepScanTest extends TestCase
 
     private function academicContext(): array
     {
-        $year = $this->makeTestAcademicYear(); $filiere = $this->makeTestFiliere();
+        $year = $this->makeTestAcademicYear();
+        $filiere = $this->makeTestFiliere();
         $this->openTestRenewalCampaign($year);
         $module = $this->makeTestModule($filiere->id, ['semester_number' => 3]);
         $student = $this->makeTestStudent();
         $pathway = StudentPathway::create(['student_id' => $student->id, 'filiere_id' => $filiere->id,
             'academic_year_id' => $year->id, 'current_semester' => 3, 'is_current' => true]);
+
         return compact('year', 'filiere', 'module', 'student', 'pathway');
     }
 
-    private function renewalPayload(): array { return ['phone' => '0612345678', 'address' => 'Synthetic address', 'city' => 'Fes']; }
+    private function renewalPayload(): array
+    {
+        return ['phone' => '0612345678', 'address' => 'Synthetic address', 'city' => 'Fes'];
+    }
 
     public function test_renewal_cannot_advance_two_semesters_on_every_retry(): void
     {
-        $c = $this->academicContext(); $this->login($c['student']->user, 'student');
-        \App\Models\StudentRegistration::create(['student_id' => $c['student']->id, 'academic_year_id' => $c['year']->id, 'filiere_id' => $c['filiere']->id,
+        $c = $this->academicContext();
+        $this->login($c['student']->user, 'student');
+        StudentRegistration::create(['student_id' => $c['student']->id, 'academic_year_id' => $c['year']->id, 'filiere_id' => $c['filiere']->id,
             'semester_number' => 3, 'status' => 'academic_validated', 'registration_type' => 're_enrollment']);
         $a = $this->postJson('/api/student-portal/reinscription/confirm', $this->renewalPayload());
         $first = $c['pathway']->fresh()->current_semester;
         $b = $this->postJson('/api/student-portal/reinscription/confirm', $this->renewalPayload());
         $second = $c['pathway']->fresh()->current_semester;
         $this->observed('renewal_retry', ['first_http' => $a->status(), 'second_http' => $b->status(), 'first_semester' => $first, 'second_semester' => $second, 'annual_registrations' => DB::table('student_registrations')->count()]);
-        $a->assertOk(); $b->assertOk(); $this->assertSame($first, $second);
+        $a->assertOk();
+        $b->assertOk();
+        $this->assertSame($first, $second);
     }
 
     public function test_client_claim_of_payment_is_not_a_verified_payment(): void
     {
-        $c = $this->academicContext(); $paid = $this->makeTestFiliere(['code' => 'PAID-AUDIT', 'type' => 'formation_continue']);
+        $c = $this->academicContext();
+        $paid = $this->makeTestFiliere(['code' => 'PAID-AUDIT', 'type' => 'formation_continue']);
         $this->login($c['student']->user, 'student');
         $r = $this->postJson('/api/student-portal/reinscription/confirm', $this->renewalPayload() + ['filiere_id' => $paid->id, 'payment_status' => 'paid', 'payment_provider' => 'cmi']);
         $this->observed('unverified_payment', ['http' => $r->status(), 'new_filiere' => $c['pathway']->fresh()->filiere_id, 'target_filiere' => $paid->id]);
@@ -68,26 +89,32 @@ class RoleJourneysDeepScanTest extends TestCase
 
     public function test_payment_rejection_does_not_activate_the_student(): void
     {
-        $c = $this->academicContext(); $c['filiere']->update(['type' => 'formation_continue']); $c['student']->update(['status' => 'pending']);
+        $c = $this->academicContext();
+        $c['filiere']->update(['type' => 'formation_continue']);
+        $c['student']->update(['status' => 'pending']);
         $this->login($c['student']->user, 'student');
         $r = $this->postJson('/api/student-portal/reinscription/confirm', $this->renewalPayload());
         $this->observed('renewal_rejected_side_effect', ['http' => $r->status(), 'student_status' => $c['student']->fresh()->status]);
-        $r->assertStatus(402); $this->assertSame('pending', $c['student']->fresh()->status);
+        $r->assertStatus(402);
+        $this->assertSame('pending', $c['student']->fresh()->status);
     }
 
     public function test_appeal_is_rejected_when_the_reported_window_is_closed(): void
     {
-        $c = $this->academicContext(); $this->login($c['student']->user, 'student');
+        $c = $this->academicContext();
+        $this->login($c['student']->user, 'student');
         $window = $this->getJson('/api/student-portal/grade-appeals')->json('data.appeal_window.is_open');
         $r = $this->postJson('/api/student-portal/grade-appeals', ['module_id' => $c['module']->id, 'original_grade' => 1,
             'reason_category' => 'erreur_materielle', 'student_justification' => 'Synthetic audit appeal outside publication window.']);
         $this->observed('closed_appeal_window', ['window_open' => $window, 'http' => $r->status(), 'persisted' => GradeAppeal::count()]);
-        $this->assertFalse($window); $r->assertUnprocessable();
+        $this->assertFalse($window);
+        $r->assertUnprocessable();
     }
 
     public function test_appeal_assessment_must_belong_to_the_claimed_module(): void
     {
-        $c = $this->academicContext(); $other = $this->makeTestModule($c['filiere']->id);
+        $c = $this->academicContext();
+        $other = $this->makeTestModule($c['filiere']->id);
         $assessment = $this->createTestAssessment(['module_id' => $other->id, 'type' => 'Exam', 'weight' => 100, 'academic_year_id' => $c['year']->id]);
         $this->login($c['student']->user, 'student');
         $r = $this->postJson('/api/student-portal/grade-appeals', ['module_id' => $c['module']->id, 'assessment_id' => $assessment->id,
@@ -104,7 +131,9 @@ class RoleJourneysDeepScanTest extends TestCase
 
     public function test_rectification_without_any_grade_cannot_report_success(): void
     {
-        $c = $this->academicContext(); $appeal = $this->appeal($c); $this->login(User::factory()->create(['institution_id' => 1]), 'institution-admin');
+        $c = $this->academicContext();
+        $appeal = $this->appeal($c);
+        $this->login(User::factory()->create(['institution_id' => 1]), 'institution-admin');
         $r = $this->postJson('/api/admin/grade-appeals/'.$appeal->id.'/resolve', ['decision' => 'rectified', 'rectified_grade' => 18, 'professor_comment' => 'Correction motivée pour test synthétique.']);
         $this->observed('rectification_without_grade', ['http' => $r->status(), 'appeal_status' => $appeal->fresh()->status, 'grades' => Grade::count()]);
         $r->assertUnprocessable();
@@ -112,9 +141,12 @@ class RoleJourneysDeepScanTest extends TestCase
 
     public function test_a_signed_module_grade_cannot_be_rewritten_by_ordinary_appeal_resolution(): void
     {
-        $c = $this->academicContext(); $assessment = $this->createTestAssessment(['module_id' => $c['module']->id, 'type' => 'Exam', 'weight' => 100, 'academic_year_id' => $c['year']->id]);
+        $c = $this->academicContext();
+        $assessment = $this->createTestAssessment(['module_id' => $c['module']->id, 'type' => 'Exam', 'weight' => 100, 'academic_year_id' => $c['year']->id]);
         $grade = Grade::create(['student_id' => $c['student']->id, 'assessment_id' => $assessment->id, 'value' => 8, 'absent' => false]);
-        $appeal = $this->appeal($c, $assessment->id); $user = User::factory()->create(['institution_id' => 1]); $this->login($user, 'institution-admin');
+        $appeal = $this->appeal($c, $assessment->id);
+        $user = User::factory()->create(['institution_id' => 1]);
+        $this->login($user, 'institution-admin');
         ModulePvSignature::create(['module_id' => $c['module']->id, 'academic_year_id' => $c['year']->id, 'signed_by' => $user->id, 'signed_at' => now(), 'signature_data' => 'synthetic-signature', 'digital_seal' => hash('sha256', 'synthetic-seal')]);
         $r = $this->postJson('/api/admin/grade-appeals/'.$appeal->id.'/resolve', ['decision' => 'rectified', 'rectified_grade' => 18, 'professor_comment' => 'Correction motivée pour test synthétique.']);
         $this->observed('signed_grade_appeal_bypass', ['http' => $r->status(), 'grade_after' => $grade->fresh()->value]);
@@ -123,16 +155,22 @@ class RoleJourneysDeepScanTest extends TestCase
 
     public function test_professor_only_sees_supervised_internships(): void
     {
-        $c = $this->academicContext(); $owner = $this->makeTestProfessor(); $stranger = $this->makeTestProfessor();
+        $c = $this->academicContext();
+        $owner = $this->makeTestProfessor();
+        $stranger = $this->makeTestProfessor();
         $stage = Internship::create(['student_id' => $c['student']->id, 'supervisor_id' => $owner->id, 'type' => 'fin_etudes', 'company_name' => 'Synthetic', 'start_date' => '2026-10-01', 'end_date' => '2027-01-01', 'status' => 'active']);
-        $this->login($stranger->user, 'professor'); $r = $this->getJson('/api/professor/internships/supervised');
+        $this->login($stranger->user, 'professor');
+        $r = $this->getJson('/api/professor/internships/supervised');
         $this->observed('unrelated_professor_internships', ['http' => $r->status(), 'listed_ids' => collect($r->json('internships'))->pluck('id')->all()]);
-        $r->assertOk(); $this->assertNotContains($stage->id, collect($r->json('internships'))->pluck('id')->all());
+        $r->assertOk();
+        $this->assertNotContains($stage->id, collect($r->json('internships'))->pluck('id')->all());
     }
 
     public function test_unrelated_professor_cannot_complete_someone_elses_internship(): void
     {
-        $c = $this->academicContext(); $owner = $this->makeTestProfessor(); $stranger = $this->makeTestProfessor();
+        $c = $this->academicContext();
+        $owner = $this->makeTestProfessor();
+        $stranger = $this->makeTestProfessor();
         $stage = Internship::create(['student_id' => $c['student']->id, 'supervisor_id' => $owner->id, 'type' => 'fin_etudes', 'company_name' => 'Synthetic', 'start_date' => '2026-10-01', 'end_date' => '2027-01-01', 'status' => 'active']);
         $this->login($stranger->user, 'professor');
         $r = $this->postJson('/api/professor/internships/update-status', ['internship_id' => $stage->id, 'status' => 'completed']);
@@ -142,7 +180,9 @@ class RoleJourneysDeepScanTest extends TestCase
 
     public function test_professor_outside_jury_cannot_grade_a_defense(): void
     {
-        $c = $this->academicContext(); $owner = $this->makeTestProfessor(); $stranger = $this->makeTestProfessor();
+        $c = $this->academicContext();
+        $owner = $this->makeTestProfessor();
+        $stranger = $this->makeTestProfessor();
         $stage = Internship::create(['student_id' => $c['student']->id, 'supervisor_id' => $owner->id, 'type' => 'fin_etudes', 'company_name' => 'Synthetic', 'start_date' => '2026-10-01', 'end_date' => '2027-01-01', 'status' => 'active']);
         $s = Soutenance::create(['internship_id' => $stage->id, 'president_id' => $owner->id, 'examiner_id' => $owner->id, 'date_time' => now()->addDay(), 'status' => 'scheduled']);
         $this->login($stranger->user, 'professor');
@@ -154,42 +194,50 @@ class RoleJourneysDeepScanTest extends TestCase
     public function test_student_cannot_self_certify_school_signature_and_insurance(): void
     {
         $this->withoutExceptionHandling();
-        $c = $this->academicContext(); $this->login($c['student']->user, 'student');
+        $c = $this->academicContext();
+        $this->login($c['student']->user, 'student');
         $r = $this->postJson('/api/student-portal/internships/conventions', ['type' => 'fin_etudes', 'company_name' => 'Synthetic company',
             'company_mentor_name' => 'Synthetic mentor', 'supervisor_email' => 'synthetic@example.test', 'position_title' => 'Synthetic position', 'start_date' => '2027-02-01', 'end_date' => '2027-05-01']);
         $this->observed('self_certified_convention', ['http' => $r->status(), 'convention_status' => $r->json('data.convention_status'), 'insurance_verified' => $r->json('data.insurance_verified')]);
-        $r->assertCreated(); $this->assertNotSame('school_signed', $r->json('data.convention_status'));
+        $r->assertCreated();
+        $this->assertNotSame('school_signed', $r->json('data.convention_status'));
     }
 
     public function test_availability_uses_the_user_key_expected_by_the_foreign_key(): void
     {
         $this->withoutExceptionHandling();
-        $this->makeTestAcademicYear(); $this->makeTestStudent(); $prof = $this->makeTestProfessor();
-        $this->assertNotSame($prof->id, $prof->user_id); $this->login($prof->user, 'professor');
+        $this->makeTestAcademicYear();
+        $this->makeTestStudent();
+        $prof = $this->makeTestProfessor();
+        $this->assertNotSame($prof->id, $prof->user_id);
+        $this->login($prof->user, 'professor');
         $r = $this->postJson('/api/professor/availability/my', ['availability' => ['Lundi' => ['matin' => true, 'apresMidi' => false]], 'notes' => 'Synthetic availability']);
         $this->observed('availability_identity', ['http' => $r->status(), 'professor_profile_id' => $prof->id, 'expected_user_id' => $prof->user_id, 'stored_key' => DB::table('professor_availabilities')->value('professor_id')]);
-        $r->assertOk(); $this->assertDatabaseHas('professor_availabilities', ['professor_id' => $prof->user_id]);
+        $r->assertOk();
+        $this->assertDatabaseHas('professor_availabilities', ['professor_id' => $prof->user_id]);
     }
 
     public function test_student_does_not_see_a_fabricated_average_without_grades(): void
     {
-        $c = $this->academicContext(); $this->login($c['student']->user, 'student');
+        $c = $this->academicContext();
+        $this->login($c['student']->user, 'student');
         $r = $this->getJson('/api/student-portal/reinscription/status');
         $this->observed('empty_grades_average', ['http' => $r->status(), 'average' => $r->json('data.average_grade'), 'admitted' => $r->json('data.is_admis')]);
-        $r->assertOk(); $this->assertNull($r->json('data.average_grade'));
+        $r->assertOk();
+        $this->assertNull($r->json('data.average_grade'));
     }
 
     public function test_rollover_without_grades_preserves_the_current_year_and_pathway(): void
     {
         $c = $this->academicContext();
-        $service = app(\App\Services\Academic\SmartAcademicProgressionService::class);
+        $service = app(SmartAcademicProgressionService::class);
         $roster = $service->getProgressionRoster($c['year']->id);
         $this->assertNull($roster['students'][0]['annual_average']);
         $this->assertSame('A_VERIFIER', $roster['students'][0]['decision_code']);
         try {
             $service->executeSmartRollover($c['year']->id, '2027/2028', '2027-09-01', '2028-06-30');
             $this->fail('An incomplete academic record must block rollover.');
-        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+        } catch (HttpException $exception) {
             $this->assertSame(422, $exception->getStatusCode());
         }
         $this->assertTrue((bool) $c['year']->fresh()->is_current);

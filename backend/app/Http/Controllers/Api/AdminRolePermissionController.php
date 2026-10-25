@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Actions\Auth\ManageUserAccessAction;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
@@ -135,7 +136,7 @@ class AdminRolePermissionController extends Controller
             'permissions.*' => 'string',
         ]);
 
-        $user = app(\App\Actions\Auth\ManageUserAccessAction::class)->execute($request->user(), $user, $validated['roles'], $validated['permissions']);
+        $user = app(ManageUserAccessAction::class)->execute($request->user(), $user, $validated['roles'], $validated['permissions']);
 
         return response()->json([
             'success' => true,

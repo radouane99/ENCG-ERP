@@ -202,6 +202,7 @@ jobs:
           E2E_LIVE: '1'
           E2E_PRODUCTION: '1'
           E2E_API_URL: http://127.0.0.1:8000/api
+          E2E_API_PROXY_URL: http://127.0.0.1:8000
 
   security-regression:
     name: 🔐 Security regression (P0 routes)

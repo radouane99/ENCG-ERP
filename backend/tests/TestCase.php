@@ -8,6 +8,7 @@ use App\Models\Filiere;
 use App\Models\Institution;
 use App\Models\Module;
 use App\Models\Professor;
+use App\Models\RenewalCampaign;
 use App\Models\Semester;
 use App\Models\Student;
 use App\Models\User;
@@ -23,11 +24,11 @@ abstract class TestCase extends BaseTestCase
         putenv('APP_ENV=testing');
         $_ENV['APP_ENV'] = 'testing';
         $_SERVER['APP_ENV'] = 'testing';
-        $connection = getenv('ENCG_TEST_DATABASE') === 'pgsql' ? 'pgsql' : 'sqlite';
-        $database = $connection === 'pgsql' ? (getenv('DB_DATABASE') ?: 'encg_erp_test') : ':memory:';
-        if ($connection === 'pgsql' && ! preg_match('/_test$/', $database)) {
-            throw new \RuntimeException('PostgreSQL tests require a dedicated database ending in _test.');
-        }
+        $connection = (getenv('ENCG_TEST_DATABASE') ?: ($_ENV['ENCG_TEST_DATABASE'] ?? 'sqlite')) === 'pgsql' ? 'pgsql' : 'sqlite';
+        $dbCandidate = getenv('DB_DATABASE') ?: ($_ENV['DB_DATABASE'] ?? null);
+        $database = $connection === 'pgsql'
+            ? ($dbCandidate && preg_match('/_test$/', (string) $dbCandidate) ? (string) $dbCandidate : 'encg_erp_test')
+            : ':memory:';
         foreach (['DB_CONNECTION' => $connection, 'DB_DATABASE' => $database] as $key => $value) {
             putenv($key.'='.$value);
             $_ENV[$key] = $value;
@@ -157,9 +158,9 @@ abstract class TestCase extends BaseTestCase
         ], $overrides));
     }
 
-    protected function openTestRenewalCampaign(AcademicYear $year): \App\Models\RenewalCampaign
+    protected function openTestRenewalCampaign(AcademicYear $year): RenewalCampaign
     {
-        return \App\Models\RenewalCampaign::updateOrCreate(['institution_id' => $year->institution_id, 'academic_year_id' => $year->id],
+        return RenewalCampaign::updateOrCreate(['institution_id' => $year->institution_id, 'academic_year_id' => $year->id],
             ['status' => 'open', 'opens_on' => now('Africa/Casablanca')->subDay()->toDateString(), 'closes_on' => now('Africa/Casablanca')->addDay()->toDateString()]);
     }
 

@@ -1,8 +1,19 @@
 <?php
+
 namespace App\Actions\Academic;
 
-use App\Models\{Assessment, Grade, GradeAppeal, GradeAudit, Module, ModulePvSignature, Student, User};
-use App\Services\Academic\{AcademicContext, GradeService};
+use App\Models\AcademicYear;
+use App\Models\Assessment;
+use App\Models\Deliberation;
+use App\Models\Grade;
+use App\Models\GradeAppeal;
+use App\Models\GradeAudit;
+use App\Models\Module;
+use App\Models\ModulePvSignature;
+use App\Models\Student;
+use App\Models\User;
+use App\Services\Academic\GradeService;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 final class ManageGradeAppealAction
@@ -14,7 +25,7 @@ final class ManageGradeAppealAction
             $assessment = Assessment::whereKey($data['assessment_id'] ?? -1)->where('module_id', $data['module_id'] ?? -1)->where('needs_review', false)->first();
             abort_unless($assessment, 422, 'Sélectionnez une évaluation publiée de ce module.');
             $publication = DB::table('grade_publications')->where('assessment_id', $assessment->id)->first();
-            abort_unless($publication && now()->between(\Carbon\Carbon::parse($publication->published_at), \Carbon\Carbon::parse($publication->appeals_until)), 422, 'La fenêtre de recours de cette évaluation est fermée.');
+            abort_unless($publication && now()->between(Carbon::parse($publication->published_at), Carbon::parse($publication->appeals_until)), 422, 'La fenêtre de recours de cette évaluation est fermée.');
             $grade = Grade::where('student_id', $student->id)->where('assessment_id', $assessment->id)->first();
             abort_unless($grade && $grade->value !== null, 422, 'Aucune note publiée correspondante.');
             abort_if(GradeAppeal::where('student_id', $student->id)->where('assessment_id', $assessment->id)->whereIn('status', ['pending', 'submitted', 'under_review'])->exists(), 422, 'Un recours est déjà en cours.');
@@ -23,6 +34,7 @@ final class ManageGradeAppealAction
                 'reason_category' => $data['reason_category'], 'reason' => $data['student_justification'], 'student_justification' => $data['student_justification'],
                 'status' => 'submitted', 'appeal_deadline_at' => $publication->appeals_until]);
             activity()->causedBy(auth()->user())->performedOn($appeal)->log('grade_appeal_submitted');
+
             return $appeal;
         });
     }
@@ -37,12 +49,13 @@ final class ManageGradeAppealAction
             $staff = $actor->hasAnyRole(['super-admin', 'admin', 'institution-admin', 'director', 'pedagogy_officer', 'department-head']);
             abort_unless($staff || app(GradeService::class)->isProfessorAssignedToModule($actor->id, (int) $appeal->module_id), 403);
             abort_unless(in_array($appeal->status, ['pending', 'submitted', 'under_review']), 409, 'Ce recours est déjà traité.');
-            $decision = $data['decision']; $score = $data['rectified_grade'] ?? null;
+            $decision = $data['decision'];
+            $score = $data['rectified_grade'] ?? null;
             if ($decision === 'rectified') {
                 $assessment = Assessment::withoutGlobalScopes()->whereKey($appeal->assessment_id)->where('module_id', $appeal->module_id)->where('needs_review', false)->first();
                 abort_unless($assessment && $score !== null, 422, 'Évaluation et note de correction obligatoires.');
-                abort_if(\App\Models\AcademicYear::whereKey($assessment->academic_year_id)->value('is_locked'), 409, 'Année verrouillée : une réouverture académique est requise.');
-                abort_if(\App\Models\Deliberation::where('academic_year_id', $assessment->academic_year_id)->where('is_sealed', true)->whereHas('decisions', fn ($q) => $q->where('student_id', $appeal->student_id))->exists(), 409, 'Délibération scellée : une réouverture du jury est requise.');
+                abort_if(AcademicYear::whereKey($assessment->academic_year_id)->value('is_locked'), 409, 'Année verrouillée : une réouverture académique est requise.');
+                abort_if(Deliberation::where('academic_year_id', $assessment->academic_year_id)->where('is_sealed', true)->whereHas('decisions', fn ($q) => $q->where('student_id', $appeal->student_id))->exists(), 409, 'Délibération scellée : une réouverture du jury est requise.');
                 abort_if(ModulePvSignature::withoutGlobalScopes()->where('module_id', $assessment->module_id)->where('academic_year_id', $assessment->academic_year_id)->exists(), 409, 'PV signé : une réouverture motivée par la direction est requise.');
                 $grade = Grade::where('student_id', $appeal->student_id)->where('assessment_id', $assessment->id)->lockForUpdate()->first();
                 abort_unless($grade, 422, 'La note officielle n’existe pas.');
@@ -54,6 +67,7 @@ final class ManageGradeAppealAction
             }
             $appeal->fill(['status' => $decision, 'professor_comment' => $data['professor_comment'], 'professor_notes' => $data['professor_comment'], 'resolved_by' => $actor->id, 'resolved_at' => now()])->save();
             activity()->causedBy($actor)->performedOn($appeal)->withProperties(['decision' => $decision])->log('grade_appeal_resolved');
+
             return $appeal->load('resolver');
         });
     }

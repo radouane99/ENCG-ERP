@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
@@ -7,12 +8,14 @@ use Illuminate\Console\Command;
 class OuvrirReinscriptionAnnuelle extends Command
 {
     protected $signature = 'reinscription:ouvrir {--annee= : Ancien paramètre conservé pour compatibilité}';
+
     protected $description = 'Ancienne commande désactivée : utilisez le calendrier administratif des réinscriptions';
 
     public function handle(): int
     {
         $this->error('Commande automatique désactivée. Publiez le calendrier dans Réinscriptions > Calendrier.');
         $this->line('Les inscriptions pédagogiques proviennent des décisions académiques ; la confirmation appartient à l’étudiant.');
+
         return self::FAILURE;
     }
 }

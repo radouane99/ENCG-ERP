@@ -2,8 +2,12 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Actions\Academic\FinalizeGraduationAction;
 use App\Http\Controllers\Controller;
+use App\Models\DeliberationDecision;
+use App\Models\Student;
 use App\Services\Academic\AlumniService;
+use App\Support\AdmissionAccess;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -11,8 +15,8 @@ class AlumniController extends Controller
 {
     public function graduationCandidates(Request $request): JsonResponse
     {
-        abort_unless(\App\Support\AdmissionAccess::staff($request->user()) || $request->user()->hasRole('pedagogy_officer'), 403);
-        $rows = \App\Models\DeliberationDecision::with('student.user', 'deliberation.filiere', 'deliberation.academicYear')
+        abort_unless(AdmissionAccess::staff($request->user()) || $request->user()->hasRole('pedagogy_officer'), 403);
+        $rows = DeliberationDecision::with('student.user', 'deliberation.filiere', 'deliberation.academicYear')
             ->whereIn('decision', ['DIPLOME', 'graduated', 'admitted', 'V', 'V.Comp'])
             ->whereHas('deliberation', fn ($q) => $q->where('institution_id', $request->user()->institution_id)->where('is_sealed', true)->whereIn('type', ['annual', 'annuel']))
             ->whereHas('student', fn ($q) => $q->where('institution_id', $request->user()->institution_id)->where('status', '!=', 'graduated'))
@@ -32,16 +36,16 @@ class AlumniController extends Controller
     public function finalizeGraduation(Request $request): JsonResponse
     {
         $data = $request->validate(['decision_id' => 'required|integer|min:1']);
-        $student = app(\App\Actions\Academic\FinalizeGraduationAction::class)->execute($request->user(), $data['decision_id']);
+        $student = app(FinalizeGraduationAction::class)->execute($request->user(), $data['decision_id']);
 
         return response()->json(['message' => 'Diplomation enregistrée. Le lauréat figure au registre.', 'student_id' => $student->id]);
     }
 
     public function graduates(Request $request): JsonResponse
     {
-        abort_unless(\App\Support\AdmissionAccess::staff($request->user()) || $request->user()->hasRole('pedagogy_officer'), 403);
+        abort_unless(AdmissionAccess::staff($request->user()) || $request->user()->hasRole('pedagogy_officer'), 403);
         $filters = $request->validate(['search' => 'nullable|string|max:100', 'page' => 'nullable|integer|min:1']);
-        $query = \App\Models\Student::with('user', 'latestPathway.filiere', 'latestPathway.academicYear', 'graduations')
+        $query = Student::with('user', 'latestPathway.filiere', 'latestPathway.academicYear', 'graduations')
             ->where('institution_id', $request->user()->institution_id)
             ->where(fn ($q) => $q->where('status', 'graduated')->orWhereHas('graduations'));
         if (! empty($filters['search'])) {

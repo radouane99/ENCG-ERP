@@ -19,7 +19,8 @@ class Convocation extends Model
 
     public function student(): BelongsTo
     {
-        return $this->belongsTo(Student::class, 'student_id');
+        // This legacy table references users.id, unlike exam_seatings.student_id.
+        return $this->belongsTo(Student::class, 'student_id', 'user_id');
     }
 
     public function room(): BelongsTo

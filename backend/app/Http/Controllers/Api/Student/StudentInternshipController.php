@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\Student;
 
+use App\Actions\Internship\ManageConventionAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Internship\ApplyInternshipRequest;
 use App\Http\Requests\Internship\UploadInternshipDocumentRequest;
@@ -62,7 +63,8 @@ class StudentInternshipController extends Controller
         $data['type'] = $data['type'] ?? $data['internship_type'] ?? 'pfe';
         $data['supervisor_email'] = $data['supervisor_email'] ?? $data['company_mentor_email'] ?? null;
         $data['company_mentor_name'] = $data['company_mentor_name'] ?? $data['supervisor_name'] ?? null;
-        $internship = app(\App\Actions\Internship\ManageConventionAction::class)->create($student, $data);
+        $internship = app(ManageConventionAction::class)->create($student, $data);
+
         return response()->json([
             'success' => true,
             'message' => 'Candidature au stage soumise avec succès.',

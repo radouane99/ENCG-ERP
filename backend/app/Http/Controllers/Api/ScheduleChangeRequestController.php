@@ -3,15 +3,15 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Mail\ScheduleChangeNotificationMail;
+use App\Models\Exam;
 use App\Models\Professor;
 use App\Models\ScheduleChangeRequest;
+use App\Notifications\SystemNotification;
+use App\Support\InternshipAccess;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Str;
 
 class ScheduleChangeRequestController extends Controller
 {
@@ -20,7 +20,7 @@ class ScheduleChangeRequestController extends Controller
      */
     public function index(): JsonResponse
     {
-        $requests = ScheduleChangeRequest::whereHas('professor', fn ($q) => $q->where('institution_id', request()->user()->institution_id))->when(! \App\Support\InternshipAccess::staff(request()->user()), fn ($q) => $q->where('professor_id', request()->user()->id))->with(['professor.professor.department', 'exam.module'])->latest()->limit(200)
+        $requests = ScheduleChangeRequest::whereHas('professor', fn ($q) => $q->where('institution_id', request()->user()->institution_id))->when(! InternshipAccess::staff(request()->user()), fn ($q) => $q->where('professor_id', request()->user()->id))->with(['professor.professor.department', 'exam.module'])->latest()->limit(200)
             ->get()
             ->map(function ($req) {
                 return [
@@ -49,31 +49,35 @@ class ScheduleChangeRequestController extends Controller
     public function storeBatchReport(Request $request): JsonResponse
     {
         $data = $request->validate(['summary' => 'required|string|min:10|max:10000', 'total_count' => 'required|integer|min:1|max:10000']);
-        abort_unless($request->user()->professor || \App\Support\InternshipAccess::staff($request->user()), 403);
+        abort_unless($request->user()->professor || InternshipAccess::staff($request->user()), 403);
         $record = ScheduleChangeRequest::create(['professor_id' => $request->user()->id, 'request_type' => 'conflict_report', 'reason' => 'Rapport de '.$data['total_count'].' conflit(s) : '.$data['summary'], 'status' => 'pending']);
         activity()->causedBy($request->user())->performedOn($record)->log('schedule_conflicts_reported');
+
         return response()->json(['success' => true, 'message' => 'Rapport enregistré pour examen par le service des emplois du temps.', 'data' => $record], 201);
     }
+
     /**
      * Approuver ou rejeter une demande.
      */
     public function updateStatus(Request $request, int $id): JsonResponse
     {
-        abort_unless(\App\Support\InternshipAccess::staff($request->user()), 403);
+        abort_unless(InternshipAccess::staff($request->user()), 403);
         $data = $request->validate(['status' => 'required|in:approved,rejected']);
         DB::transaction(function () use ($request, $id, $data) {
             $change = ScheduleChangeRequest::whereHas('professor', fn ($q) => $q->where('institution_id', $request->user()->institution_id))->whereKey($id)->lockForUpdate()->firstOrFail();
             abort_unless($change->status === 'pending', 409, 'Demande déjà traitée.');
             if ($data['status'] === 'approved' && $change->exam_id) {
-                $exam = \App\Models\Exam::whereKey($change->exam_id)->lockForUpdate()->firstOrFail();
-                abort_unless($change->proposed_date && $change->proposed_start_time && $exam->exam_date?->format('Y-m-d') === \Carbon\Carbon::parse($change->proposed_date)->format('Y-m-d') && substr($exam->start_time, 0, 5) === substr($change->proposed_start_time, 0, 5), 422, 'Replanifiez l’examen dans le module Examens avec contrôle des conflits avant de clôturer cette demande.');
+                $exam = Exam::whereKey($change->exam_id)->lockForUpdate()->firstOrFail();
+                abort_unless($change->proposed_date && $change->proposed_start_time && $exam->exam_date?->format('Y-m-d') === Carbon::parse($change->proposed_date)->format('Y-m-d') && substr($exam->start_time, 0, 5) === substr($change->proposed_start_time, 0, 5), 422, 'Replanifiez l’examen dans le module Examens avec contrôle des conflits avant de clôturer cette demande.');
             }
             $change->update(['status' => $data['status']]);
-            $change->professor->notifyNow(new \App\Notifications\SystemNotification('Suivi de votre demande d’horaire', 'Votre demande a été '.($data['status'] === 'approved' ? 'acceptée pour traitement' : 'rejetée').'. Consultez le service des emplois du temps.', 'info', '/professor/schedule'), ['database']);
+            $change->professor->notifyNow(new SystemNotification('Suivi de votre demande d’horaire', 'Votre demande a été '.($data['status'] === 'approved' ? 'acceptée pour traitement' : 'rejetée').'. Consultez le service des emplois du temps.', 'info', '/professor/schedule'), ['database']);
             activity()->causedBy($request->user())->performedOn($change)->log('schedule_change_reviewed');
         });
+
         return response()->json(['success' => true, 'message' => 'Décision enregistrée et notification déposée dans l’espace enseignant.']);
     }
+
     /**
      * Suggérer des professeurs remplaçants.
      */

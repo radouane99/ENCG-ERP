@@ -1,3 +1,7 @@
 <?php
+
 namespace Tests\Feature;
-class ProductionRoleBoundariesRegressionTest extends \Tests\Audit\ProductionModeBoundaryAuditTest {}
+
+use Tests\Audit\ProductionModeBoundaryAuditTest;
+
+class ProductionRoleBoundariesRegressionTest extends ProductionModeBoundaryAuditTest {}

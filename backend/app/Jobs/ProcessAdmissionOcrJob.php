@@ -14,22 +14,35 @@ use Illuminate\Support\Facades\DB;
 class ProcessAdmissionOcrJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
     public int $tries = 2;
+
     public int $timeout = 50;
-    public function backoff(): array { return [15, 60]; }
+
+    public function backoff(): array
+    {
+        return [15, 60];
+    }
+
     public function __construct(public string $runId) {}
+
     public function handle(AdmissionOcrService $ocr): void
     {
         $run = DB::table('admission_ocr_runs')->find($this->runId);
-        if (! $run || in_array($run->status, ['needs_review', 'succeeded', 'cancelled'])) return;
+        if (! $run || in_array($run->status, ['needs_review', 'succeeded', 'cancelled'])) {
+            return;
+        }
         $doc = StudentDocument::findOrFail($run->document_id);
         if (! $doc->is_current || $doc->withdrawn_at) {
             DB::table('admission_ocr_runs')->where('id', $this->runId)->update(['status' => 'cancelled', 'finished_at' => now()]);
+
             return;
         }
         $start = microtime(true);
         $claimed = DB::table('admission_ocr_runs')->where('id', $this->runId)->where('status', 'queued')->update(['status' => 'processing', 'started_at' => now(), 'updated_at' => now()]);
-        if ($claimed !== 1) return;
+        if ($claimed !== 1) {
+            return;
+        }
         try {
             $result = $ocr->extract($doc, $run->mode);
             DB::table('admission_ocr_runs')->where('id', $this->runId)->where('status', 'processing')->update(['status' => $result['status'],
@@ -41,6 +54,7 @@ class ProcessAdmissionOcrJob implements ShouldQueue
             // Return an explicit terminal status; the user can retry, without sending documents implicitly.
         }
     }
+
     public function failed(?\Throwable $e): void
     {
         DB::table('admission_ocr_runs')->where('id', $this->runId)->whereNotIn('status', ['cancelled', 'retried', 'needs_review', 'succeeded'])->update(['status' => 'failed',

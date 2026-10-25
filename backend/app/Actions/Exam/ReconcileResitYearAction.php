@@ -2,7 +2,9 @@
 
 namespace App\Actions\Exam;
 
-use App\Models\{AcademicYear, ResitEligibility, Student};
+use App\Models\AcademicYear;
+use App\Models\ResitEligibility;
+use App\Models\Student;
 use App\Services\Academic\ExamWorkflowGuard;
 use Illuminate\Support\Facades\DB;
 
@@ -11,6 +13,7 @@ class ReconcileResitYearAction
     public function execute(int $id, int $yearId, string $reason): ResitEligibility
     {
         app(ExamWorkflowGuard::class)->manage();
+
         return DB::transaction(function () use ($id, $yearId, $reason) {
             $user = auth()->user();
             $candidate = ResitEligibility::findOrFail($id);
@@ -22,6 +25,7 @@ class ReconcileResitYearAction
             $row->academic_year_id = $year->id;
             $row->save();
             activity()->causedBy($user)->performedOn($row)->withProperties(['year_id' => $year->id, 'reason' => $reason])->log('legacy_resit_year_reconciled');
+
             return $row;
         });
     }

@@ -1,7 +1,10 @@
 <?php
+
 namespace App\Actions\Academic;
 
-use App\Models\{AcademicYear, RenewalCampaign, User};
+use App\Models\AcademicYear;
+use App\Models\RenewalCampaign;
+use App\Models\User;
 use App\Support\AdmissionAccess;
 use Illuminate\Support\Facades\DB;
 
@@ -10,6 +13,7 @@ final class SaveRenewalCampaignAction
     public function execute(User $actor, array $data): RenewalCampaign
     {
         abort_unless(AdmissionAccess::staff($actor), 403);
+
         return DB::transaction(function () use ($actor, $data) {
             $year = AcademicYear::where('institution_id', $actor->institution_id)->where('is_current', true)->lockForUpdate()->firstOrFail();
             abort_if($year->is_locked, 422, 'Année verrouillée : calendrier non modifiable.');
@@ -22,6 +26,7 @@ final class SaveRenewalCampaignAction
             $campaign->save();
             activity()->causedBy($actor)->performedOn($campaign)->withProperties(['academic_year_id' => $year->id, 'status' => $campaign->status,
                 'opens_on' => $campaign->opens_on->toDateString(), 'closes_on' => $campaign->closes_on->toDateString()])->log('renewal_campaign_updated');
+
             return $campaign;
         });
     }

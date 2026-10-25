@@ -5,6 +5,7 @@ namespace App\Policies;
 use App\Models\Internship;
 use App\Models\User;
 use App\Support\ChecksStaffAccess;
+use App\Support\InternshipAccess;
 
 class InternshipPolicy
 {
@@ -24,17 +25,22 @@ class InternshipPolicy
 
     public function view(User $user, Internship $internship): bool
     {
-        if ((int) $internship->student->institution_id !== (int) $user->institution_id) return false;
+        if ((int) $internship->student->institution_id !== (int) $user->institution_id) {
+            return false;
+        }
         if ($user->hasRole('student')) {
             return (int) $user->student?->id === (int) $internship->student_id;
         }
 
-        return \App\Support\InternshipAccess::staff($user) || ($user->professor && ((int) $internship->supervisor_id === (int) $user->professor->id || $internship->soutenance()->where(fn ($q) => $q->where('president_id', $user->professor->id)->orWhere('examiner_id', $user->professor->id)->orWhere('supervisor_id', $user->professor->id))->exists()));
+        return InternshipAccess::staff($user) || ($user->professor && ((int) $internship->supervisor_id === (int) $user->professor->id || $internship->soutenance()->where(fn ($q) => $q->where('president_id', $user->professor->id)->orWhere('examiner_id', $user->professor->id)->orWhere('supervisor_id', $user->professor->id))->exists()));
     }
 
     public function update(User $user, Internship $internship): bool
     {
-        if ((int) $internship->student->institution_id !== (int) $user->institution_id) return false;
+        if ((int) $internship->student->institution_id !== (int) $user->institution_id) {
+            return false;
+        }
+
         return $this->hasPermissionOrRole($user, 'internships.validate', [
             'admin', 'super-admin', 'institution-admin', 'director',
             'department-head', 'filiere-head', 'scolarite',

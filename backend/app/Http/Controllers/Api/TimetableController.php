@@ -2,14 +2,19 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Actions\Academic\SaveTimetableSessionAction;
 use App\Http\Controllers\Controller;
+use App\Models\AcademicYear;
 use App\Models\Group;
 use App\Models\Schedule;
+use App\Services\Academic\AcademicContext;
 use App\Services\Academic\ConflictResolutionService;
 use App\Services\Academic\SmartSchedulingEngine;
+use App\Services\Academic\TimetableCampaignService;
 use App\Services\Academic\TimetableService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class TimetableController extends Controller
 {
@@ -43,7 +48,7 @@ class TimetableController extends Controller
             'filiere_id' => 'required|integer',
         ]);
 
-        $result = app(\App\Services\Academic\TimetableCampaignService::class)->generateDraft($validated['filiere_id']);
+        $result = app(TimetableCampaignService::class)->generateDraft($validated['filiere_id']);
 
         return response()->json($result, $result['success'] ? 200 : 400);
     }
@@ -61,11 +66,12 @@ class TimetableController extends Controller
             'new_room_id' => 'required|integer',
         ]);
 
-        $schedule = app(\App\Actions\Academic\SaveTimetableSessionAction::class)->execute([
+        $schedule = app(SaveTimetableSessionAction::class)->execute([
             'day_of_week' => $validated['new_day'], 'start_time' => $validated['new_start_time'],
             'end_time' => $validated['new_end_time'], 'room_id' => $validated['new_room_id'],
         ], $validated['schedule_id']);
         $result = ['success' => true, 'message' => 'Séance déplacée.', 'data' => $schedule];
+
         return response()->json($result);
     }
 
@@ -89,11 +95,12 @@ class TimetableController extends Controller
             ->whereIn('group_id', $groupIds)
             ->whereNotNull('schedule_version_id')->distinct()->pluck('schedule_version_id');
         abort_if($versionIds->isEmpty(), 422, 'Aucune proposition à publier. Utiliser la campagne semestrielle.');
-        $updated = \Illuminate\Support\Facades\DB::transaction(function () use ($versionIds) {
+        $updated = DB::transaction(function () use ($versionIds) {
             foreach ($versionIds as $versionId) {
-                $result = app(\App\Services\Academic\TimetableCampaignService::class)->publish($versionId);
+                $result = app(TimetableCampaignService::class)->publish($versionId);
                 abort_unless($result['success'], 422, $result['message']);
             }
+
             return $versionIds->count();
         });
 
@@ -124,7 +131,7 @@ class TimetableController extends Controller
             'recurrence' => 'nullable|string',
         ]);
 
-        $schedule = app(\App\Actions\Academic\SaveTimetableSessionAction::class)->execute($validated);
+        $schedule = app(SaveTimetableSessionAction::class)->execute($validated);
 
         return response()->json([
             'success' => true,
@@ -150,7 +157,7 @@ class TimetableController extends Controller
             'version' => 'sometimes|integer|min:1',
         ]);
 
-        $schedule = app(\App\Actions\Academic\SaveTimetableSessionAction::class)->execute($validated, $id);
+        $schedule = app(SaveTimetableSessionAction::class)->execute($validated, $id);
 
         return response()->json([
             'success' => true,
@@ -164,8 +171,8 @@ class TimetableController extends Controller
      */
     public function destroy(int $id): JsonResponse
     {
-        \Illuminate\Support\Facades\DB::transaction(function () use ($id) {
-            $year = \App\Models\AcademicYear::where('institution_id', auth()->user()->institution_id)->lockForUpdate()->findOrFail(\App\Services\Academic\AcademicContext::yearId());
+        DB::transaction(function () use ($id) {
+            $year = AcademicYear::where('institution_id', auth()->user()->institution_id)->lockForUpdate()->findOrFail(AcademicContext::yearId());
             abort_if($year->is_locked, 409, 'Année universitaire verrouillée.');
             $schedule = Schedule::where('institution_id', $year->institution_id)->where('academic_year_id', $year->id)->findOrFail($id);
             abort_if($schedule->schedule_version_id, 409, 'Utiliser le brouillon de la campagne.');

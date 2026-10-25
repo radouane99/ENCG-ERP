@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\Assessment;
 use App\Models\Filiere;
 use App\Models\Grade;
 use App\Models\Institution;

@@ -32,12 +32,17 @@
 
 ## Vérifications
 
+Dernière continuation, après ajout de la réémission : **32 tests backend examens réussis, 153 assertions**, et **10 tests navigateur examens réussis**. TypeScript, lint et build de production réussis. La suite élargie a validé les 150 autres tests et 31 des 32 tests examens; le dernier échec venait de la permission manquante dans le compte de test de génération. Après correction de cette fixture, les 32 tests examens ont été réexécutés ensemble avec succès. La suite élargie entière n'a pas été relancée après cette seule correction de fixture. Dernière comparaison source : 157 tables sans modification des anciennes données et 1 721 notes conservées.
+
+Résultats de la passe précédente :
+
 - Backend : **178 tests réussis, 675 assertions**, sur PostgreSQL dédié, dont 28 scénarios du workflow examens.
 - Navigateur Chromium : **38 scénarios réussis**, dont 9 consacrés aux examens. Les réponses API navigateur sont synthétiques; les tests HTTP backend complètent ces contrôles.
 - Frontend : TypeScript et build de production réussis; lint sur 503 fichiers sans erreur ni avertissement. Les 55 tests unitaires ont aussi réussi pendant cette intervention.
 - Source en lecture seule : 4 sessions, 21 épreuves, **1 721 notes conservées**. Les trois nouvelles colonnes sont présentes. La comparaison des anciennes colonnes sur 157 tables ne relève aucune modification métier préexistante.
 - Publication portail idempotente, séparation normal/rattrapage, refus HTTP des envois, identité réelle du surveillant et archive ZIP vérifiés. Pour le test ZIP, le moteur PDF est simulé; la mise en page imprimée reste à vérifier pendant la recette.
 - Les anciens endpoints de diffusion et export utilisent maintenant les services réels. Les erreurs de service deviennent des erreurs HTTP. Les ZIP sont limités à 150 étudiants par lot. La sélection du surveillant distingue identifiant de compte et identifiant de profil.
+- Le lien historique `convocations.student_id` référence `users.id`. La génération et la relation Eloquent utilisent maintenant ce compte, tandis que `exam_seatings.student_id` conserve le profil étudiant. La réémission met à jour la référence de la bonne convocation sans effacer la ligne historique.
 
 Journaux : `backend/storage/logs/exam-workflow-api-20261025.log` et `backend/storage/logs/exam-workflow-complete-20261025.log`. Scénarios navigateur : `frontend/e2e/exam-workflow.spec.ts` avec réponses API synthétiques; tests HTTP backend réels : `backend/tests/Feature/ExamWorkflowReliabilityTest.php`.
 
@@ -46,5 +51,6 @@ Journaux : `backend/storage/logs/exam-workflow-api-20261025.log` et `backend/sto
 - Tester physiquement les QR, les imprimantes, plusieurs postes de surveillance et une véritable coupure réseau. Les tests navigateur automatisés ne remplacent pas cette recette.
 - Confirmer les règles institutionnelles de quorum, les personnes habilitées et la portée/durée d'une exclusion. Les exclusions restent des décisions documentées : aucune durée ou suppression automatique d'inscription n'est inventée à partir d'un texte libre.
 - Réconcilier dans le panneau de rattrapage les **40 anciens droits sans année** détectés en lecture seule. Ne pas leur attribuer arbitrairement l'année courante; le personnel doit vérifier le dossier ou le PV de référence avant chaque rattachement.
-- Une replanification après diffusion demande un workflow distinct de correction, réémission et notification. La modification directe est protégée pour ne pas invalider les convocations déjà remises.
+- La reprogrammation après diffusion est disponible dans la page de modification : motif obligatoire et confirmation explicite, avant le début seulement, sans pointage, visa, incident ni résultats publiés. Les QR étudiants et surveillants sont renouvelés; les confirmations et indicateurs d’envoi sont remis à zéro; le portail reçoit les notifications. Les identifiants des placements et convocations sont conservés et leur état précédent est audité. Les emails doivent être renvoyés séparément. Un refus annule toute la transaction. Les indisponibilités des surveillants et les conflits individuels des candidats sont contrôlés lors de toute modification.
+- La fiche `RECETTE-EXAMENS-TROIS-PROFILS.md` détaille les essais à réaliser avec la scolarité, les surveillants et les étudiants, ainsi que les preuves à conserver.
 - Aucun déploiement distant effectué. Les dépréciations PHP des bibliothèques QR tierces sont distinctes des échecs fonctionnels.

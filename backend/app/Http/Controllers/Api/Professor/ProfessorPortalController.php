@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Professor;
 
 use App\Enums\AttendanceStatus;
 use App\Http\Controllers\Controller;
+use App\Mail\RattrapageConvocationMail;
 use App\Models\AcademicEvent;
 use App\Models\AcademicYear;
 use App\Models\Attendance;
@@ -23,6 +24,7 @@ use App\Models\Textbook;
 use App\Models\User;
 use App\Models\VacationContract;
 use App\Policies\ProfessorCoursePolicy;
+use App\Services\Academic\AcademicContext;
 use App\Services\Academic\TimetableCampaignService;
 use App\Services\Documents\OfficialPdfFactory;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -34,7 +36,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
-use App\Mail\RattrapageConvocationMail;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class ProfessorPortalController extends Controller
@@ -50,12 +51,12 @@ class ProfessorPortalController extends Controller
 
         $schedule = Schedule::with(['module.filiere', 'group.filiere', 'room', 'version'])
             ->where('institution_id', $user->institution_id)
-            ->where('academic_year_id', \App\Services\Academic\AcademicContext::yearId())
+            ->where('academic_year_id', AcademicContext::yearId())
             ->where(function ($q) use ($profId, $userId) {
                 if ($profId) {
-                    $q->where(fn ($p) => $p->where('professor_id', $profId)->where('professor_type', \App\Models\Professor::class));
+                    $q->where(fn ($p) => $p->where('professor_id', $profId)->where('professor_type', Professor::class));
                 }
-                $q->orWhere(fn ($p) => $p->where('professor_id', $userId)->where('professor_type', \App\Models\User::class));
+                $q->orWhere(fn ($p) => $p->where('professor_id', $userId)->where('professor_type', User::class));
             })
             ->where(function ($q) {
                 $q->where('is_active', true)
@@ -2000,7 +2001,7 @@ class ProfessorPortalController extends Controller
         $group = Group::with('filiere')->findOrFail($groupId);
 
         // 🔐 SECURITY — Row-Level Access Control: verify professor is assigned to this group
-        $policy = new ProfessorCoursePolicy();
+        $policy = new ProfessorCoursePolicy;
         if (! $policy->viewGroupStudents($request->user(), $group)) {
             return response()->json([
                 'success' => false,
@@ -2081,7 +2082,7 @@ class ProfessorPortalController extends Controller
         }
 
         // 🔐 SECURITY — Row-Level Access Control
-        $policy = new ProfessorCoursePolicy();
+        $policy = new ProfessorCoursePolicy;
         if (! $policy->manageGroupAttendance($request->user(), $groupId)) {
             return response()->json([
                 'success' => false,
@@ -2169,7 +2170,7 @@ class ProfessorPortalController extends Controller
         }
 
         // 🔐 SECURITY — Row-Level Access Control: professor must be assigned to this group
-        $policy = new ProfessorCoursePolicy();
+        $policy = new ProfessorCoursePolicy;
         if (! $policy->manageGroupAttendance($request->user(), $groupId)) {
             return response()->json([
                 'success' => false,
@@ -2198,6 +2199,7 @@ class ProfessorPortalController extends Controller
 
             if ($conflictingExam) {
                 $periodName = $conflictingExam->name ?? $conflictingExam->title ?? 'Semaine d\'Examens';
+
                 return response()->json([
                     'success' => false,
                     'code' => 'EXAM_PERIOD_LOCKED',
@@ -2358,7 +2360,7 @@ class ProfessorPortalController extends Controller
         $group = Group::with(['filiere', 'academicYear'])->findOrFail($groupId);
 
         // 🔐 SECURITY — Row-Level Access Control
-        $policy = new ProfessorCoursePolicy();
+        $policy = new ProfessorCoursePolicy;
         if (! $policy->viewGroupStudents($request->user(), $group)) {
             abort(403, 'Accès refusé : vous n\'êtes pas affecté à ce groupe.');
         }
@@ -2478,7 +2480,9 @@ class ProfessorPortalController extends Controller
         if (! empty($rawRecords)) {
             foreach ($rawRecords as $rec) {
                 $studentId = $rec['student_id'] ?? ($rec['id'] ?? null);
-                if (! $studentId) continue;
+                if (! $studentId) {
+                    continue;
+                }
                 $stObj = Student::with(['user', 'latestPathway'])->find($studentId);
                 if ($stObj) {
                     $records[] = [

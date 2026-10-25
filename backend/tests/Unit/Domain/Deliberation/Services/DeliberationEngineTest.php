@@ -114,9 +114,9 @@ it('applies rattrapage only to the final exam component, not to CC2', function (
     ]);
 
     $academicYear->update(['is_current' => true]);
-    $cc2 = Assessment::forceCreate(['academic_year_id' => $academicYear->id,'module_id' => $module->id, 'type' => 'cc2', 'weight' => 40]);
-    $exam = Assessment::forceCreate(['academic_year_id' => $academicYear->id,'module_id' => $module->id, 'type' => 'examen_final', 'weight' => 60]);
-    $resit = Assessment::forceCreate(['academic_year_id' => $academicYear->id,'module_id' => $module->id, 'type' => 'rattrapage', 'weight' => 0]);
+    $cc2 = Assessment::forceCreate(['academic_year_id' => $academicYear->id, 'module_id' => $module->id, 'type' => 'cc2', 'weight' => 40]);
+    $exam = Assessment::forceCreate(['academic_year_id' => $academicYear->id, 'module_id' => $module->id, 'type' => 'examen_final', 'weight' => 60]);
+    $resit = Assessment::forceCreate(['academic_year_id' => $academicYear->id, 'module_id' => $module->id, 'type' => 'rattrapage', 'weight' => 0]);
 
     Grade::forceCreate(['assessment_id' => $cc2->id, 'student_id' => $student->id, 'value' => 8]);
     Grade::forceCreate(['assessment_id' => $exam->id, 'student_id' => $student->id, 'value' => 7]);

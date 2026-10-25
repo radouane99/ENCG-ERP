@@ -4,15 +4,16 @@ namespace App\Http\Controllers\Api;
 
 use App\Actions\Academic\ConfirmStudentRenewalAction;
 use App\Actions\Academic\VerifyAnnualRenewalAction;
+use App\Domain\Deliberation\ProgramCompletionRules;
 use App\Http\Controllers\Controller;
 use App\Mail\RenewalReminderMail;
 use App\Models\AcademicYear;
 use App\Models\DeliberationDecision;
-use App\Models\Module;
 use App\Models\Student;
 use App\Models\StudentRegistration;
 use App\Models\User;
 use App\Notifications\SystemNotification;
+use App\Services\Academic\RenewalCampaignService;
 use App\Support\AdmissionAccess;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -28,25 +29,28 @@ class ReinscriptionController extends Controller
     public function getStatus(Request $request)
     {
         $student = Student::with('user', 'latestPathway.filiere')->where('user_id', $request->user()->id)->firstOrFail();
-        $year = $this->action->year($student); $registration = $this->action->eligibleRegistration($student, $year->id);
-        $calendar = app(\App\Services\Academic\RenewalCampaignService::class)->forYear($year);
+        $year = $this->action->year($student);
+        $registration = $this->action->eligibleRegistration($student, $year->id);
+        $calendar = app(RenewalCampaignService::class)->forYear($year);
         $receipt = DB::table('student_renewals')->where('student_id', $student->id)->where('academic_year_id', $year->id)->first();
         $filiere = $registration?->filiere ?? $student->latestPathway?->filiere;
         $requiresPayment = $student->status !== 'graduated' && (bool) $filiere?->requiresTuitionPayment();
         $invoice = $requiresPayment ? DB::table('tuition_invoices')->where('student_id', $student->id)->where('academic_year_id', $year->id)->where('filiere_id', $filiere->id)->first() : null;
-        $decision = \App\Models\DeliberationDecision::where('student_id', $student->id)->whereHas('deliberation', fn ($q) => $q->where('academic_year_id', $year->id)->where('is_sealed', true))->latest('id')->first();
-        return response()->json(['success'=>true,'data'=>[
-            'is_graduated'=>$student->status === 'graduated','student_id'=>$student->id,'student_name'=>$student->user->name,'cne'=>$student->cne,'cin'=>$student->user->cin,'email'=>$student->user->email,'phone'=>$student->user->phone,'address'=>$student->user->address,'city'=>$student->user->city,
-            'academic_year'=>$year->label,'current_semester'=>$student->latestPathway?->current_semester,'current_level'=>'Semestre S'.$student->latestPathway?->current_semester,
-            'target_semester'=>$registration?->semester_number,'target_level'=>$registration ? 'Semestre S'.$registration->semester_number : 'Décision annuelle en attente','current_filiere'=>$filiere?->name,'is_admis'=>(bool)$registration,
-            'annual_average'=>$decision?->annual_average,'average_grade'=>$decision?->annual_average,'decision_code'=>$decision?->decision,'decision_label'=>$decision ? 'Décision du jury enregistrée : '.$decision->decision : 'Décision académique annuelle à vérifier','was_compensated'=>(bool)$decision?->was_compensated,'has_reserve_modules'=>false,'reserve_modules_count'=>null,'failed_modules'=>[],
-            'is_confirmed'=>(bool)$receipt,'receipt_reference'=>$receipt?->receipt_reference,'confirmed_at'=>$receipt?->confirmed_at,'physical_verified_at'=>$receipt?->physical_verified_at,
-            'filieres'=>[],'requires_filiere_choice'=>false,'payment_required'=>$requiresPayment,'payment_status'=>$requiresPayment ? ($invoice?->status ?? 'pending') : 'not_applicable','invoice_reference'=>$invoice?->reference,'invoice_remaining'=>$invoice ? max(0,round((float)$invoice->amount-(float)$invoice->paid_amount,2)) : null,
-            'campaign'=>$calendar,
-            'can_confirm'=>!$receipt && $calendar['is_open'] && !$year->is_locked && (bool)$registration && (!$requiresPayment || ($invoice && $invoice->status==='paid' && (float)$invoice->paid_amount >= (float)$invoice->amount)),
-            'blocking_reason'=>$student->status === 'graduated' ? 'Votre cursus est terminé. Vous figurez parmi les lauréats. Une nouvelle formation nécessite une nouvelle admission.' : ($year->is_locked ? 'L’année universitaire est verrouillée. Contactez la scolarité.' : (!$registration ? 'La scolarité doit valider votre inscription académique annuelle.' : (!$calendar['is_open'] ? $calendar['message'] : null)))
+        $decision = DeliberationDecision::where('student_id', $student->id)->whereHas('deliberation', fn ($q) => $q->where('academic_year_id', $year->id)->where('is_sealed', true))->latest('id')->first();
+
+        return response()->json(['success' => true, 'data' => [
+            'is_graduated' => $student->status === 'graduated', 'student_id' => $student->id, 'student_name' => $student->user->name, 'cne' => $student->cne, 'cin' => $student->user->cin, 'email' => $student->user->email, 'phone' => $student->user->phone, 'address' => $student->user->address, 'city' => $student->user->city,
+            'academic_year' => $year->label, 'current_semester' => $student->latestPathway?->current_semester, 'current_level' => 'Semestre S'.$student->latestPathway?->current_semester,
+            'target_semester' => $registration?->semester_number, 'target_level' => $registration ? 'Semestre S'.$registration->semester_number : 'Décision annuelle en attente', 'current_filiere' => $filiere?->name, 'is_admis' => (bool) $registration,
+            'annual_average' => $decision?->annual_average, 'average_grade' => $decision?->annual_average, 'decision_code' => $decision?->decision, 'decision_label' => $decision ? 'Décision du jury enregistrée : '.$decision->decision : 'Décision académique annuelle à vérifier', 'was_compensated' => (bool) $decision?->was_compensated, 'has_reserve_modules' => false, 'reserve_modules_count' => null, 'failed_modules' => [],
+            'is_confirmed' => (bool) $receipt, 'receipt_reference' => $receipt?->receipt_reference, 'confirmed_at' => $receipt?->confirmed_at, 'physical_verified_at' => $receipt?->physical_verified_at,
+            'filieres' => [], 'requires_filiere_choice' => false, 'payment_required' => $requiresPayment, 'payment_status' => $requiresPayment ? ($invoice?->status ?? 'pending') : 'not_applicable', 'invoice_reference' => $invoice?->reference, 'invoice_remaining' => $invoice ? max(0, round((float) $invoice->amount - (float) $invoice->paid_amount, 2)) : null,
+            'campaign' => $calendar,
+            'can_confirm' => ! $receipt && $calendar['is_open'] && ! $year->is_locked && (bool) $registration && (! $requiresPayment || ($invoice && $invoice->status === 'paid' && (float) $invoice->paid_amount >= (float) $invoice->amount)),
+            'blocking_reason' => $student->status === 'graduated' ? 'Votre cursus est terminé. Vous figurez parmi les lauréats. Une nouvelle formation nécessite une nouvelle admission.' : ($year->is_locked ? 'L’année universitaire est verrouillée. Contactez la scolarité.' : (! $registration ? 'La scolarité doit valider votre inscription académique annuelle.' : (! $calendar['is_open'] ? $calendar['message'] : null))),
         ]]);
     }
+
     public function confirm(Request $request)
     {
         $data = $request->validate([
@@ -100,7 +104,7 @@ class ReinscriptionController extends Controller
             $r = $registrations->first();
             $receipt = $receipts->get($r->student_id);
             $conflict = $registrations->count() !== 1;
-            $terminal = \App\Domain\Deliberation\ProgramCompletionRules::finalSemester($r->filiere?->type, $r->filiere?->duration_years);
+            $terminal = ProgramCompletionRules::finalSemester($r->filiere?->type, $r->filiere?->duration_years);
             $conflict = $conflict || ! $terminal || $r->semester_number < 1 || $r->semester_number > $terminal;
             $ready = ! $conflict && in_array($r->status, ['academic_validated', 'admin_validated'], true);
             $state = $conflict ? 'needs_review' : (! $ready ? 'academic_pending' : (! $receipt ? 'pending' : ($receipt->physical_verified_at ? 'verified' : 'physical_pending')));
@@ -225,7 +229,7 @@ class ReinscriptionController extends Controller
     public function sendReminders(Request $request)
     {
         [$year, $students] = $this->annualRoster($request);
-        $calendar = app(\App\Services\Academic\RenewalCampaignService::class)->forYear($year);
+        $calendar = app(RenewalCampaignService::class)->forYear($year);
         abort_unless($calendar['is_open'], 422, $calendar['message']);
         $students = $this->filterRoster($request, $students)->where('status', 'pending');
         $sent = 0;

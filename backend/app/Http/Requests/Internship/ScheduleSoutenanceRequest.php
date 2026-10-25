@@ -2,13 +2,14 @@
 
 namespace App\Http\Requests\Internship;
 
+use App\Support\InternshipAccess;
 use Illuminate\Foundation\Http\FormRequest;
 
 class ScheduleSoutenanceRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return \App\Support\InternshipAccess::staff($this->user());
+        return InternshipAccess::staff($this->user());
     }
 
     public function rules(): array

@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace App\Domain\Auth\Services;
 
-use App\Mail\StudentRegistrationSuccessMail;
+use App\Actions\Admission\ManageDossierAction;
 use App\Models\AcademicYear;
 use App\Models\AdmissionCampaign;
 use App\Models\Application;
 use App\Models\Student;
 use App\Models\User;
+use App\Services\Admissions\AdmissionNotificationService;
+use App\Support\AdmissionAccess;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 use Spatie\Permission\Models\Role;
@@ -51,7 +51,7 @@ class RegisterUserService
             if (! $campaign) {
                 throw ValidationException::withMessages(['email' => ['Les inscriptions sont actuellement fermées.']]);
             }
-            \App\Support\AdmissionAccess::campaignOpen(new Application(['admission_campaign_id' => $campaign->id]));
+            AdmissionAccess::campaignOpen(new Application(['admission_campaign_id' => $campaign->id]));
 
             $userAttributes = [
                 'first_name' => $data['first_name'] ?? '',
@@ -117,8 +117,8 @@ class RegisterUserService
                 $app = Application::create($appFields);
             }
 
-            app(\App\Actions\Admission\ManageDossierAction::class)->event($app, 'account_created');
-            app(\App\Services\Admissions\AdmissionNotificationService::class)->queue($app, 'account_created');
+            app(ManageDossierAction::class)->event($app, 'account_created');
+            app(AdmissionNotificationService::class)->queue($app, 'account_created');
 
             return $user;
         });

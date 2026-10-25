@@ -18,26 +18,36 @@ class AdmissionConsistencyService
         $values = [];
         foreach ($map as $field => $profileKey) {
             $baseline = in_array($field, ['cne', 'cin']) ? $app->{$field} : ($app->profile[$profileKey] ?? (in_array($profileKey, ['first_name', 'last_name']) ? $app->{$profileKey} : null));
-            if ($baseline !== null && trim((string) $baseline) !== '') $values[$field][] = ['source' => 'dossier', 'value' => $baseline, 'document_id' => null];
+            if ($baseline !== null && trim((string) $baseline) !== '') {
+                $values[$field][] = ['source' => 'dossier', 'value' => $baseline, 'document_id' => null];
+            }
         }
         foreach ($runs as $run) {
             foreach (json_decode($run->fields ?? '{}', true) ?: [] as $field => $data) {
                 $value = $data['value'] ?? null;
-                if (! isset($map[$field]) || ! is_scalar($value) || trim((string) $value) === '') continue;
+                if (! isset($map[$field]) || ! is_scalar($value) || trim((string) $value) === '') {
+                    continue;
+                }
                 $values[$field][] = ['source' => $docs[$run->document_id]->type, 'value' => $value, 'document_id' => $run->document_id];
             }
         }
         $alerts = [];
         foreach ($values as $field => $sources) {
             $distinct = array_unique(array_map(fn ($item) => $this->normalize($field, $item['value']), $sources));
-            if (count($distinct) > 1) $alerts[] = ['field' => $field, 'sources' => $sources, 'severity' => in_array($field, ['cne', 'cin', 'birth_date']) ? 'identity' : 'review'];
+            if (count($distinct) > 1) {
+                $alerts[] = ['field' => $field, 'sources' => $sources, 'severity' => in_array($field, ['cne', 'cin', 'birth_date']) ? 'identity' : 'review'];
+            }
         }
+
         return $alerts;
     }
 
     private function normalize(string $field, mixed $value): string
     {
-        if ($field === 'bac_average') return number_format((float) str_replace(',', '.', (string) $value), 2, '.', '');
+        if ($field === 'bac_average') {
+            return number_format((float) str_replace(',', '.', (string) $value), 2, '.', '');
+        }
+
         return preg_replace('/[\s\p{P}]+/u', '', mb_strtoupper(Str::ascii(trim((string) $value))));
     }
 }

@@ -3,15 +3,17 @@
 namespace App\Services\Academic;
 
 use App\Models\AcademicProject;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 
 class AlumniService
 {
-    private function surveys(): \Illuminate\Database\Eloquent\Builder
+    private function surveys(): Builder
     {
         return AcademicProject::where('type', 'alumni_survey')
             ->where('institution_id', auth()->user()?->institution_id ?? config('erp.institution_id', 1));
     }
+
     /**
      * Statistiques du tableau de bord Alumni.
      */

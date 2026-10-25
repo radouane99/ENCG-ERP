@@ -6,16 +6,20 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Academic\ManualCallRequest;
 use App\Http\Requests\Academic\StartAttendanceSessionRequest;
 use App\Models\AcademicEvent;
-use App\Models\AcademicYear;
 use App\Models\Attendance;
 use App\Models\AttendanceSession;
+use App\Models\Exam;
+use App\Models\ExamSeating;
 use App\Models\ExamSession;
-use App\Models\Filiere;
+use App\Models\ExamSurveillance;
+use App\Models\Group;
 use App\Models\Module;
 use App\Models\Schedule;
 use App\Models\Student;
-use App\Models\StudentRegistration;
+use App\Services\Academic\AcademicContext;
 use App\Services\Academic\AttendanceService;
+use App\Services\Security\ClassroomAccessService;
+use App\Support\InternshipAccess;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -41,7 +45,7 @@ class ProfessorAttendanceController extends Controller
         $userId = $user->id;
 
         // 1. Récupérer les séances officielles assignées à l'enseignant (Schedules)
-        $schedulesQuery = Schedule::with(['module.filiere', 'group', 'room'])->where('professor_id', $profId ?? -1)->where('academic_year_id', \App\Services\Academic\AcademicContext::yearId())->whereHas('module', fn ($q) => $q->where('institution_id', $user->institution_id));
+        $schedulesQuery = Schedule::with(['module.filiere', 'group', 'room'])->where('professor_id', $profId ?? -1)->where('academic_year_id', AcademicContext::yearId())->whereHas('module', fn ($q) => $q->where('institution_id', $user->institution_id));
         $dbSchedules = $schedulesQuery->get();
 
         // 2. Récupérer les modules assignés via le pivot officiel module_professor
@@ -49,7 +53,7 @@ class ProfessorAttendanceController extends Controller
         if ($profId) {
             $mpModuleIds = DB::table('module_professor')
                 ->where('professor_id', $profId)
-                ->where('academic_year_id', \App\Services\Academic\AcademicContext::yearId())
+                ->where('academic_year_id', AcademicContext::yearId())
                 ->pluck('module_id')
                 ->filter()
                 ->unique()
@@ -138,26 +142,35 @@ class ProfessorAttendanceController extends Controller
     {
         if ($request->filled('exam_id')) {
             $data = $request->validate(['exam_id' => 'required|integer', 'room_id' => 'required|integer']);
-            $exam = \App\Models\Exam::with('module')->findOrFail($data['exam_id']); abort_unless((int) $exam->module->institution_id === (int) $request->user()->institution_id, 403);
-            abort_unless(\App\Support\InternshipAccess::staff($request->user()) || \App\Models\ExamSurveillance::where('exam_id', $exam->id)->where('room_id', $data['room_id'])->where('professor_id', $request->user()->id)->exists(), 403);
-            $seats = \App\Models\ExamSeating::with('student.user')->where('exam_id', $exam->id)->where('room_id', $data['room_id'])->orderBy('id')->get();
+            $exam = Exam::with('module')->findOrFail($data['exam_id']);
+            abort_unless((int) $exam->module->institution_id === (int) $request->user()->institution_id, 403);
+            abort_unless(InternshipAccess::staff($request->user()) || ExamSurveillance::where('exam_id', $exam->id)->where('room_id', $data['room_id'])->where('professor_id', $request->user()->id)->exists(), 403);
+            $seats = ExamSeating::with('student.user')->where('exam_id', $exam->id)->where('room_id', $data['room_id'])->orderBy('id')->get();
+
             return response()->json(['data' => $seats->map(fn ($s) => ['id' => $s->student_id, 'name' => $s->student->user->name, 'cne' => $s->student->cne, 'apogee' => $s->student->student_number, 'status' => $s->is_present ? 'present' : 'absent'])]);
         }
         $session = null;
         if ($request->filled('attendance_session_id')) {
-            $session = AttendanceSession::findOrFail($request->integer('attendance_session_id')); $this->attendanceService->authorizeSession($session, false);
-            $module = Module::findOrFail($session->module_id); $group = \App\Models\Group::findOrFail($session->group_id);
+            $session = AttendanceSession::findOrFail($request->integer('attendance_session_id'));
+            $this->attendanceService->authorizeSession($session, false);
+            $module = Module::findOrFail($session->module_id);
+            $group = Group::findOrFail($session->group_id);
         } elseif ($request->filled('schedule_id') && is_numeric($request->input('schedule_id'))) {
-            $schedule = Schedule::findOrFail($request->integer('schedule_id')); $module = Module::findOrFail($schedule->module_id); $group = \App\Models\Group::findOrFail($schedule->group_id);
+            $schedule = Schedule::findOrFail($request->integer('schedule_id'));
+            $module = Module::findOrFail($schedule->module_id);
+            $group = Group::findOrFail($schedule->group_id);
         } else {
             $data = $request->validate(['module_id' => 'required|integer', 'group_id' => 'required|integer']);
-            $module = Module::findOrFail($data['module_id']); $group = \App\Models\Group::findOrFail($data['group_id']);
+            $module = Module::findOrFail($data['module_id']);
+            $group = Group::findOrFail($data['group_id']);
         }
-        app(\App\Services\Security\ClassroomAccessService::class)->authorize($request->user(), $module, $group, write: true);
+        app(ClassroomAccessService::class)->authorize($request->user(), $module, $group, write: true);
         $students = Student::with('user')->where('institution_id', $request->user()->institution_id)->where(fn ($q) => $q->whereHas('pathways', fn ($p) => $p->where('academic_year_id', $group->academic_year_id)->where('group_id', $group->id))->orWhereHas('registrations', fn ($r) => $r->where('academic_year_id', $group->academic_year_id)->where('group_id', $group->id)))->get()->sortBy(fn ($s) => $s->user->name);
         $records = $session ? Attendance::where('attendance_session_id', $session->id)->get()->keyBy('student_id') : collect();
-        return response()->json(['data' => $students->map(fn ($s) => ['id' => $s->id, 'name' => $s->user->name, 'cne' => $s->cne, 'apogee' => $s->student_number, 'status' => $records[$s->id]->status ?? 'absent', 'version' => (int)($records[$s->id]->version ?? 0)])->values(), 'module_id' => $module->id, 'group_id' => $group->id]);
+
+        return response()->json(['data' => $students->map(fn ($s) => ['id' => $s->id, 'name' => $s->user->name, 'cne' => $s->cne, 'apogee' => $s->student_number, 'status' => $records[$s->id]->status ?? 'absent', 'version' => (int) ($records[$s->id]->version ?? 0)])->values(), 'module_id' => $module->id, 'group_id' => $group->id]);
     }
+
     /**
      * Démarrer une session de présence.
      */
@@ -181,6 +194,7 @@ class ProfessorAttendanceController extends Controller
 
         if ($conflictingExam) {
             $periodName = $conflictingExam->name ?? $conflictingExam->title ?? 'Semaine d\'Examens';
+
             return response()->json([
                 'success' => false,
                 'code' => 'EXAM_PERIOD_LOCKED',
@@ -223,19 +237,26 @@ class ProfessorAttendanceController extends Controller
                 : $this->attendanceService->startSession((int) $validated['module_id'], (int) $validated['group_id'], $request->user()->id, 'Appel manuel', ['session_type' => 'manual', 'date' => $validated['date'] ?? now()->toDateString()]);
             $this->attendanceService->authorizeSession($session, false);
             if ($session->status === 'completed') {
-                foreach ($validated['records'] as $row) abort_unless(Attendance::where('attendance_session_id', $session->id)->where('student_id', $row['student_id'])->where('status', $row['status'])->exists(), 409, 'Session déjà fermée avec des données différentes.');
+                foreach ($validated['records'] as $row) {
+                    abort_unless(Attendance::where('attendance_session_id', $session->id)->where('student_id', $row['student_id'])->where('status', $row['status'])->exists(), 409, 'Session déjà fermée avec des données différentes.');
+                }
+
                 return $session;
             }
             foreach ($validated['records'] as $row) {
                 if (isset($row['version'])) {
                     $record = Attendance::where('attendance_session_id', $session->id)->where('student_id', $row['student_id'])->first();
-                    abort_unless((int)($record?->version ?? 0) === $row['version'], 409, 'L’appel a changé sur un autre poste. Actualisez les présences avant de confirmer.');
+                    abort_unless((int) ($record?->version ?? 0) === $row['version'], 409, 'L’appel a changé sur un autre poste. Actualisez les présences avant de confirmer.');
                 }
                 $this->attendanceService->markPresence($session->id, (int) $row['student_id'], $row['status']);
             }
-            if ($validated['close_session'] ?? false) $this->attendanceService->closeSession($session->id);
+            if ($validated['close_session'] ?? false) {
+                $this->attendanceService->closeSession($session->id);
+            }
+
             return $session;
         });
+
         return response()->json([
             'success' => true,
             'message' => 'Émargement enregistré.',

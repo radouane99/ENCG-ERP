@@ -7,12 +7,12 @@ use App\Models\Exam;
 use App\Models\ExamIncident;
 use App\Models\ExamSeating;
 use App\Models\ExamSurveillance;
+use App\Services\Academic\ExamWorkflowGuard;
 use App\Services\Documents\OfficialPdfFactory;
 use BaconQrCode\Renderer\Image\SvgImageBackEnd;
 use BaconQrCode\Renderer\ImageRenderer;
 use BaconQrCode\Renderer\RendererStyle\RendererStyle;
 use BaconQrCode\Writer;
-use Illuminate\Support\Facades\Cache;
 
 class ExamPdfController extends Controller
 {
@@ -26,7 +26,7 @@ class ExamPdfController extends Controller
 
         $exam = Exam::with(['module.filiere', 'group', 'room', 'examSession'])->findOrFail($examId);
 
-        app(\App\Services\Academic\ExamWorkflowGuard::class)->viewExam($exam);
+        app(ExamWorkflowGuard::class)->viewExam($exam);
 
         $incidentsDb = ExamIncident::with(['student.user'])
             ->where('exam_id', $examId)
@@ -61,6 +61,7 @@ class ExamPdfController extends Controller
             $seat->cne = $seat->student?->cne ?? '—';
             $seat->student_name = $seat->student?->user?->name ?? '—';
             $seat->is_fraud = in_array($seat->student_id, $incidentStudents);
+
             return $seat;
         })->sortBy('seat_num_val')->values();
 

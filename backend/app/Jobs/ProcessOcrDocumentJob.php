@@ -16,6 +16,7 @@ class ProcessOcrDocumentJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 2;
+
     public int $timeout = 50;
 
     public function __construct(
@@ -32,7 +33,9 @@ class ProcessOcrDocumentJob implements ShouldQueue
         try {
             $result = $ocr->extractFromPath($absolute, $this->mime, $this->originalName, $this->docType);
             Cache::put($this->cacheKey, $result, now()->addMinutes(15));
-        } finally { Storage::disk('local')->delete($this->diskPath); }
+        } finally {
+            Storage::disk('local')->delete($this->diskPath);
+        }
     }
 
     public function failed(?\Throwable $e): void

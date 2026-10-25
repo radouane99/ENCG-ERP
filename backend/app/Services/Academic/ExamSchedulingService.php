@@ -12,6 +12,7 @@ class ExamSchedulingService
     public function generateConvocations(int $examId, int $roomId): int
     {
         app(ExamWorkflowGuard::class)->manage();
+
         return DB::transaction(function () use ($examId, $roomId) {
             $exam = Exam::whereKey($examId)->lockForUpdate()->firstOrFail();
             app(ExamWorkflowGuard::class)->mutableSession($exam->examSession);
@@ -19,11 +20,14 @@ class ExamSchedulingService
             app(ExamConvocationService::class)->generateConvocations($examId);
             $seats = ExamSeating::where('exam_id', $examId)->get();
             foreach ($seats as $seat) {
-                Convocation::firstOrCreate(['exam_id' => $examId, 'student_id' => $seat->student_id], [
+                $accountId = $seat->student?->user_id;
+                abort_unless($accountId, 422, 'Le candidat doit disposer d’un compte pour sa convocation.');
+                Convocation::firstOrCreate(['exam_id' => $examId, 'student_id' => $accountId], [
                     'room_id' => $seat->room_id, 'seat_number' => $seat->seat_number,
                     'reference' => $seat->qr_token, 'status' => 'draft',
                 ]);
             }
+
             return $seats->count();
         });
     }
@@ -32,6 +36,7 @@ class ExamSchedulingService
     public function publishConvocations(int $examId): int
     {
         app(ExamWorkflowGuard::class)->manage();
+
         return DB::transaction(function () use ($examId) {
             $exam = Exam::whereKey($examId)->lockForUpdate()->firstOrFail();
             app(ExamWorkflowGuard::class)->mutableSession($exam->examSession);
@@ -39,6 +44,7 @@ class ExamSchedulingService
             Convocation::where('exam_id', $examId)->where('status', 'draft')->update(['status' => 'sent']);
             $count = ExamSeating::where('exam_id', $examId)->where(fn ($q) => $q->whereNull('status')->orWhere('status', 'draft'))->update(['status' => 'sent']);
             activity()->causedBy(auth()->user())->performedOn($exam)->log('exam_convocations_published');
+
             return $count;
         });
     }

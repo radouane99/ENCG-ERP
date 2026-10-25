@@ -3,7 +3,10 @@
 namespace App\Actions\Academic;
 
 use App\Domain\Deliberation\ProgramCompletionRules;
-use App\Models\{Deliberation, DeliberationDecision, Student, User};
+use App\Models\Deliberation;
+use App\Models\DeliberationDecision;
+use App\Models\Student;
+use App\Models\User;
 use App\Support\AdmissionAccess;
 use Illuminate\Support\Facades\DB;
 
@@ -20,7 +23,9 @@ final class FinalizeGraduationAction
             abort_unless((int) $jury->institution_id === (int) $actor->institution_id, 403);
             abort_unless($jury->is_sealed && in_array($jury->type, ['annual', 'annuel'], true), 422, 'Un PV annuel scellé est requis.');
             abort_unless(in_array($decision->decision, ['DIPLOME', 'graduated', 'admitted', 'V', 'V.Comp'], true), 422, 'Le jury n’a pas validé la réussite du cursus.');
-            if ($student->graduations()->where('deliberation_decision_id', $decision->id)->exists()) return $student;
+            if ($student->graduations()->where('deliberation_decision_id', $decision->id)->exists()) {
+                return $student;
+            }
             $path = $student->latestPathway()->with('filiere')->firstOrFail();
             $terminal = ProgramCompletionRules::finalSemester($path->filiere?->type, $path->filiere?->duration_years);
             abort_unless($terminal && (int) ceil($path->current_semester / 2) * 2 === $terminal

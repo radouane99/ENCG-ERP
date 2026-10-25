@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Actions\Exam\DecideExamIncidentAction;
 use App\Http\Controllers\Controller;
-use App\Models\Assessment;
+use App\Mail\DisciplineHearingMail;
 use App\Models\DisciplinaryCase;
 use App\Models\DocumentRequest;
 use App\Models\Exam;
@@ -11,15 +12,16 @@ use App\Models\ExamIncident;
 use App\Models\ExamSeating;
 use App\Models\Filiere;
 use App\Models\FinalProject;
-use App\Models\Grade;
-use App\Models\Module;
 use App\Models\Student;
 use App\Models\User;
-use App\Services\Academic\ExamCourseAttendanceService;
+use App\Notifications\SystemNotification;
+use App\Services\Academic\ExamWorkflowGuard;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 
 class ExamIncidentController extends Controller
 {
@@ -106,8 +108,12 @@ class ExamIncidentController extends Controller
         // Inclure et harmoniser également les dossiers disciplinaires existants (DisciplinaryCase)
         $existingStudentIds = $incidents->pluck('student_id')->toArray();
         $casesQuery = DisciplinaryCase::with(['student.user', 'decision'])->where('institution_id', $request->user()->institution_id);
-        if (! $staff) { $casesQuery->whereRaw('1 = 0'); }
-        if ($request->filled('exam_id') || $request->filled('session_id') || str_contains($request->path(), 'exam-incidents')) { $casesQuery->whereRaw('1 = 0'); }
+        if (! $staff) {
+            $casesQuery->whereRaw('1 = 0');
+        }
+        if ($request->filled('exam_id') || $request->filled('session_id') || str_contains($request->path(), 'exam-incidents')) {
+            $casesQuery->whereRaw('1 = 0');
+        }
         if (! empty($existingStudentIds)) {
             $casesQuery->whereNotIn('student_id', $existingStudentIds);
         }
@@ -239,7 +245,7 @@ class ExamIncidentController extends Controller
         ]);
 
         $exam = Exam::with('examSession')->findOrFail($validated['exam_id']);
-        app(\App\Services\Academic\ExamWorkflowGuard::class)->attendance($exam);
+        app(ExamWorkflowGuard::class)->attendance($exam);
         abort_unless(ExamSeating::where('exam_id', $exam->id)->where('student_id', $validated['student_id'])->exists(), 422, 'Cet étudiant ne figure pas dans les convocations de cette épreuve.');
         $incident = ExamIncident::create([
             'exam_id' => $exam->id, 'student_id' => $validated['student_id'],
@@ -265,10 +271,10 @@ class ExamIncidentController extends Controller
         abort_unless($user->hasAnyRole(['admin', 'super-admin', 'super_admin', 'institution-admin', 'institution_admin', 'director', 'discipline-committee']), 403);
         $data = $request->validate(['hearing_date' => 'required|date_format:Y-m-d \à H:i', 'hearing_room' => 'required|string|max:255', 'send_email' => 'sometimes|boolean']);
         $incident = ExamIncident::with('exam.examSession')->findOrFail($id);
-        app(\App\Services\Academic\ExamWorkflowGuard::class)->session($incident->exam->examSession);
+        app(ExamWorkflowGuard::class)->session($incident->exam->examSession);
         abort_unless(in_array($incident->status, ['pending', 'convoked'], true), 409, 'Ce dossier a déjà fait l’objet d’une décision.');
         $incident->update(['hearing_date' => $data['hearing_date'], 'hearing_room' => $data['hearing_room'], 'status' => 'convoked']);
-        $incident->student?->user?->notify(new \App\Notifications\SystemNotification('Convocation à une audition', 'Une audition est prévue le '.$data['hearing_date'].' — '.$data['hearing_room'].'. Contactez la scolarité pour votre convocation.', 'info', '/dashboard'));
+        $incident->student?->user?->notify(new SystemNotification('Convocation à une audition', 'Une audition est prévue le '.$data['hearing_date'].' — '.$data['hearing_room'].'. Contactez la scolarité pour votre convocation.', 'info', '/dashboard'));
         $emailStatus = 'not_requested';
         if ($data['send_email'] ?? false) {
             $recipient = $incident->student?->user;
@@ -277,7 +283,7 @@ class ExamIncidentController extends Controller
             } else {
                 try {
                     $pdf = app(PdfExportController::class)->convocationDisciplinePdf($incident->id)->getContent();
-                    \Illuminate\Support\Facades\Mail::to($recipient->email)->send(new \App\Mail\DisciplineHearingMail($recipient->name, $data['hearing_date'], $data['hearing_room'], $pdf, $incident->id));
+                    Mail::to($recipient->email)->send(new DisciplineHearingMail($recipient->name, $data['hearing_date'], $data['hearing_room'], $pdf, $incident->id));
                     $emailStatus = 'accepted';
                     activity()->causedBy($user)->performedOn($incident)->log('discipline_hearing_email_accepted');
                 } catch (\Throwable $error) {
@@ -287,6 +293,7 @@ class ExamIncidentController extends Controller
             }
         }
         $message = $emailStatus === 'accepted' ? 'Convocation enregistrée; email accepté par le transport.' : ($emailStatus === 'not_requested' ? 'Convocation enregistrée; PDF disponible et notification portail créée.' : 'Convocation enregistrée, mais email non envoyé. Remettez le PDF ou réessayez.');
+
         return response()->json(['success' => true, 'message' => $message, 'email_status' => $emailStatus, 'data' => $incident]);
     }
 
@@ -301,7 +308,8 @@ class ExamIncidentController extends Controller
             'votes_for' => 'nullable|integer|min:0|max:1000',
             'votes_against' => 'nullable|integer|min:0|max:1000',
         ]);
-        $incident = app(\App\Actions\Exam\DecideExamIncidentAction::class)->execute($id, $data);
+        $incident = app(DecideExamIncidentAction::class)->execute($id, $data);
+
         return response()->json(['success' => true, 'message' => 'Décision enregistrée et application contrôlée.', 'data' => $incident]);
     }
 
@@ -310,12 +318,13 @@ class ExamIncidentController extends Controller
      */
     public function destroy(int $id): JsonResponse
     {
-        app(\App\Services\Academic\ExamWorkflowGuard::class)->manage();
+        app(ExamWorkflowGuard::class)->manage();
         $incident = ExamIncident::with('exam.examSession')->findOrFail($id);
-        app(\App\Services\Academic\ExamWorkflowGuard::class)->session($incident->exam->examSession);
+        app(ExamWorkflowGuard::class)->session($incident->exam->examSession);
         abort_unless($incident->status === 'pending', 409, 'Un dossier convoqué ou décidé doit être conservé.');
         activity()->causedBy(auth()->user())->performedOn($incident)->withProperties($incident->toArray())->log('exam_incident_removed_before_hearing');
         $incident->delete();
+
         return response()->json(['success' => true, 'message' => 'Signalement retiré; trace conservée dans le journal.']);
     }
 
@@ -454,11 +463,13 @@ class ExamIncidentController extends Controller
      */
     public function lockPv(Request $request, int $id): JsonResponse
     {
-        $exam = \Illuminate\Support\Facades\DB::transaction(function () use ($id) {
+        $exam = DB::transaction(function () use ($id) {
             $exam = Exam::whereKey($id)->lockForUpdate()->firstOrFail();
-            app(\App\Services\Academic\ExamWorkflowGuard::class)->viewExam($exam);
-            if ($exam->is_locked) { return $exam; }
-            app(\App\Services\Academic\ExamWorkflowGuard::class)->mutableSession($exam->examSession);
+            app(ExamWorkflowGuard::class)->viewExam($exam);
+            if ($exam->is_locked) {
+                return $exam;
+            }
+            app(ExamWorkflowGuard::class)->mutableSession($exam->examSession);
             $end = Carbon::parse($exam->exam_date->toDateString().' '.$exam->start_time)->addMinutes($exam->duration_minutes);
             abort_if($end->isFuture(), 422, 'L’épreuve n’est pas encore terminée.');
             abort_if(! $exam->seatings()->exists() || $exam->seatings()->whereNull('is_present')->exists(), 422, 'Tous les pointages doivent être terminés.');
@@ -470,8 +481,10 @@ class ExamIncidentController extends Controller
             ], JSON_THROW_ON_ERROR));
             $exam->update(['is_locked' => true, 'locked_at' => now(), 'pv_seal_hash' => $hash]);
             activity()->causedBy(auth()->user())->performedOn($exam)->log('exam_pv_locked');
+
             return $exam;
         });
+
         return response()->json(['success' => true, 'message' => 'PV verrouillé.', 'seal' => $exam->documentSeal(), 'locked_at' => $exam->locked_at?->toIso8601String()]);
     }
 

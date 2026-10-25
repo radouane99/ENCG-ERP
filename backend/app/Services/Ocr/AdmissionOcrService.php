@@ -4,14 +4,14 @@ namespace App\Services\Ocr;
 
 use App\Models\Application;
 use App\Models\StudentDocument;
-use App\OCR\OcrProcess;
+use App\OCR\Contracts\DocumentParserManager;
 use App\OCR\Engines\PdfTextEngine;
 use App\OCR\Engines\TesseractEngine;
-use App\OCR\Contracts\DocumentParserManager;
+use App\OCR\OcrProcess;
 use App\Services\AI\GeminiApiService;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Http\Client\ConnectionException;
 
 class AdmissionOcrService
 {
@@ -23,14 +23,20 @@ class AdmissionOcrService
         $engine = 'pdf-text';
         OcrProcess::budget(35);
         try {
-            if ($doc->mime_type === 'application/pdf') $text = (new PdfTextEngine)->extract($path, $doc->mime_type, $doc->type)->text;
+            if ($doc->mime_type === 'application/pdf') {
+                $text = (new PdfTextEngine)->extract($path, $doc->mime_type, $doc->type)->text;
+            }
             if (mb_strlen(trim($text)) < 30) {
                 $engine = 'tesseract';
                 $text = (new TesseractEngine(['max_pages' => 6]))->extract($path, $doc->mime_type, $doc->type)->text;
             }
-        } finally { OcrProcess::reset(); }
+        } finally {
+            OcrProcess::reset();
+        }
         $warnings = [];
-        if (trim($text) === '') return ['engine' => $engine, 'fields' => [], 'warnings' => ['Document illisible. Utilisez une image plus nette ou la saisie manuelle.'], 'status' => 'needs_review'];
+        if (trim($text) === '') {
+            return ['engine' => $engine, 'fields' => [], 'warnings' => ['Document illisible. Utilisez une image plus nette ou la saisie manuelle.'], 'status' => 'needs_review'];
+        }
         $parsed = (new DocumentParserManager)->parse($doc->type, $text)->fields;
         $normalizer = app(GeminiApiService::class);
         $values = $normalizer->cleanAndNormalizeOcrData($parsed, $text);
@@ -58,25 +64,38 @@ class AdmissionOcrService
                             // Missing or invalid cloud fields must not erase usable local results.
                             $values = array_replace($values, $usable);
                             $engine .= '+groq:'.$model;
-                        } else $warnings[] = 'Réponse IA sans champ exploitable ; extraction locale conservée.';
-                    } else $warnings[] = 'Réponse IA invalide ; extraction locale conservée.';
-                } else $warnings[] = 'Fournisseur indisponible ; extraction locale conservée.';
+                        } else {
+                            $warnings[] = 'Réponse IA sans champ exploitable ; extraction locale conservée.';
+                        }
+                    } else {
+                        $warnings[] = 'Réponse IA invalide ; extraction locale conservée.';
+                    }
+                } else {
+                    $warnings[] = 'Fournisseur indisponible ; extraction locale conservée.';
+                }
             } catch (ConnectionException) {
                 // DNS, connection and response timeouts must not fail the already completed local extraction.
                 // Do not log provider exceptions: they can contain document text or request headers.
                 $warnings[] = 'Connexion IA indisponible ou délai dépassé ; extraction locale conservée.';
             }
-        } elseif ($mode === 'cloud') $warnings[] = 'Mode cloud indisponible ou désactivé ; extraction locale conservée.';
+        } elseif ($mode === 'cloud') {
+            $warnings[] = 'Mode cloud indisponible ou désactivé ; extraction locale conservée.';
+        }
         $fields = [];
         foreach ($allowed as $name) {
             $value = $values[$name] ?? null;
-            if ($value === null || $value === '' || ! is_scalar($value)) continue;
+            if ($value === null || $value === '' || ! is_scalar($value)) {
+                continue;
+            }
             $conflict = in_array($name, ['cin', 'cne']) && strtoupper((string) $app->{$name}) !== strtoupper((string) $value);
-            if ($conflict) $warnings[] = 'Identifiant différent du dossier : '.$name;
+            if ($conflict) {
+                $warnings[] = 'Identifiant différent du dossier : '.$name;
+            }
             $fields[$name] = ['value' => $value, 'document_id' => $doc->id, 'version' => $doc->version,
                 'page' => null, 'confidence' => null, 'requires_confirmation' => true, 'conflict' => $conflict];
         }
         $warnings[] = 'Vérifiez chaque proposition. L’extraction ne certifie pas l’authenticité du document.';
+
         return ['engine' => $engine, 'fields' => $fields, 'warnings' => $warnings, 'status' => 'needs_review'];
     }
 }

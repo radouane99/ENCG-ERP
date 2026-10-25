@@ -2,17 +2,18 @@
 
 namespace App\Http\Controllers\Api\Student;
 
+use App\Http\Controllers\Api\PdfExportController;
 use App\Http\Controllers\Controller;
 use App\Models\Convocation;
 use App\Models\ExamIncident;
 use App\Models\ExamSeating;
 use App\Models\Student;
+use App\Services\Academic\AcademicContext;
 use App\Services\Academic\ExamConvocationService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class StudentConvocationController extends Controller
 {
@@ -28,7 +29,7 @@ class StudentConvocationController extends Controller
 
         $query = ExamSeating::with(['exam.module', 'exam.session', 'room'])
             ->where('student_id', $studentId)
-            ->whereHas('exam.session', fn ($q) => $q->where('academic_year_id', \App\Services\Academic\AcademicContext::yearId()))
+            ->whereHas('exam.session', fn ($q) => $q->where('academic_year_id', AcademicContext::yearId()))
             ->where(fn ($q) => $q->whereNotNull('sent_at')->orWhereIn('status', ['sent', 'present', 'absent', 'late']));
 
         if ($sessionType === 'RATTRAPAGE') {
@@ -74,7 +75,8 @@ class StudentConvocationController extends Controller
         $student = Student::where('user_id', $request->user()->id)->firstOrFail();
         $seat = ExamSeating::whereKey($id)->where('student_id', $student->id)->firstOrFail();
         abort_unless($seat->sent_at || in_array($seat->status, ['sent', 'present', 'absent', 'late']), 404, 'Convocation non diffusée.');
-        return app(\App\Http\Controllers\Api\PdfExportController::class)->studentConvocationPdf($seat->id);
+
+        return app(PdfExportController::class)->studentConvocationPdf($seat->id);
     }
 
     /**

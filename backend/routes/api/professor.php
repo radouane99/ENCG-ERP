@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\AiAssistantController;
 use App\Http\Controllers\Api\AttendanceController;
 use App\Http\Controllers\Api\ConvocationController;
 use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\ExamAttendanceController;
 use App\Http\Controllers\Api\ExamPdfController;
 use App\Http\Controllers\Api\GradeController;
 use App\Http\Controllers\Api\GradeGridController;
@@ -17,6 +18,7 @@ use App\Http\Controllers\Api\ProfessorAiController;
 use App\Http\Controllers\Api\ProfessorAiCopilotController;
 use App\Http\Controllers\Api\ProfessorAvailabilityController;
 use App\Http\Controllers\Api\RoomBookingController;
+use App\Http\Controllers\Api\UserActionCenterController;
 use Illuminate\Support\Facades\Route;
 
 // Professor API — Accessible to Professors, Vacataires, and Academic Coordinators/Admins
@@ -50,9 +52,9 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:professor|vacata
 });
 
 Route::middleware(['auth:sanctum', 'institution.context', 'role:professor|vacataire|department-head|filiere-head|super-admin|institution-admin|director'])->group(function () {
-    Route::post('/professor/exam-attendance/scan', [\App\Http\Controllers\Api\ExamAttendanceController::class, 'scan']);
+    Route::post('/professor/exam-attendance/scan', [ExamAttendanceController::class, 'scan']);
     // Dashboard Stats
-    Route::get('/professor-portal/actions', [\App\Http\Controllers\Api\UserActionCenterController::class, 'professor']);
+    Route::get('/professor-portal/actions', [UserActionCenterController::class, 'professor']);
     Route::get('/dashboard/professor/stats', [DashboardController::class, 'getProfessorStats']);
     Route::get('/professor/dashboard/stats', [DashboardController::class, 'getProfessorStats']);
 

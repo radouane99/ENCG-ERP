@@ -4,11 +4,14 @@ namespace App\Actions\Exam;
 
 use App\Models\Exam;
 use App\Models\ExamSession;
+use App\Models\ExamSurveillance;
 use App\Models\Group;
 use App\Models\Module;
 use App\Models\Room;
+use App\Models\User;
 use App\Services\Academic\ExamSlotCatalog;
 use App\Services\Academic\ExamWorkflowGuard;
+use App\Services\Academic\TimetableRoomGuard;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -19,6 +22,7 @@ class CreatePlannedExamAction
     {
         $guard = app(ExamWorkflowGuard::class);
         $guard->manage();
+
         return DB::transaction(function () use ($data, $guard, $existing) {
             $session = ExamSession::whereKey($data['exam_session_id'])->lockForUpdate()->firstOrFail();
             $guard->mutableSession($session);
@@ -38,12 +42,13 @@ class CreatePlannedExamAction
             abort_if(! $room->is_available, 422, 'Salle indisponible.');
             $start = Carbon::parse($date.' '.$slot['start_time']);
             $end = $start->copy()->addMinutes($slot['duration_minutes']);
-            abort_if(app(\App\Services\Academic\TimetableRoomGuard::class)->isRoomBusyAt((string) $room->id, $start, $end), 409, 'Salle occupée par un cours ou une réservation approuvée.');
+            abort_if(app(TimetableRoomGuard::class)->isRoomBusyAt((string) $room->id, $start, $end), 409, 'Salle occupée par un cours ou une réservation approuvée.');
             $conflict = Exam::whereDate('exam_date', $date)
                 ->when($existing, fn ($q) => $q->whereKeyNot($existing->id))
                 ->where(fn ($q) => $q->where('room_id', $room->id)->orWhere('group_id', $group->id)->orWhereHas('seatings', fn ($q) => $q->where('room_id', $room->id)))
                 ->get()->contains(function ($exam) use ($date, $start, $end) {
                     $other = Carbon::parse($date.' '.$exam->start_time);
+
                     return $start->lt($other->copy()->addMinutes($exam->duration_minutes)) && $end->gt($other);
                 });
             abort_if($conflict, 409, 'Chevauchement de salle ou de groupe avec une autre épreuve.');
@@ -55,7 +60,17 @@ class CreatePlannedExamAction
             ];
             if ($existing) {
                 $proctors = $existing->surveillances()->pluck('professor_id');
-                foreach (\App\Models\ExamSurveillance::with('exam')->whereIn('professor_id', $proctors)->where('exam_id', '!=', $existing->id)->whereHas('exam', fn ($q) => $q->whereDate('exam_date', $date))->get() as $other) {
+                $proposed = clone $existing;
+                $proposed->fill($attributes);
+                foreach (User::whereIn('id', $proctors)->get() as $proctor) {
+                    abort_unless($guard->allowsProctor($proctor, $proposed), 409, 'Un surveillant est indisponible sur le nouveau créneau.');
+                }
+                $students = $existing->seatings()->pluck('student_id');
+                foreach (Exam::whereDate('exam_date', $date)->whereKeyNot($existing->id)->whereHas('seatings', fn ($q) => $q->whereIn('student_id', $students))->get() as $other) {
+                    $otherStart = Carbon::parse($date.' '.$other->start_time);
+                    abort_if($start->lt($otherStart->copy()->addMinutes($other->duration_minutes)) && $end->gt($otherStart), 409, 'Un candidat est déjà convoqué à une autre épreuve sur ce créneau.');
+                }
+                foreach (ExamSurveillance::with('exam')->whereIn('professor_id', $proctors)->where('exam_id', '!=', $existing->id)->whereHas('exam', fn ($q) => $q->whereDate('exam_date', $date))->get() as $other) {
                     $otherStart = Carbon::parse($date.' '.$other->exam->start_time);
                     abort_if($start->lt($otherStart->copy()->addMinutes($other->exam->duration_minutes)) && $end->gt($otherStart), 409, 'Un surveillant est déjà affecté à une autre épreuve sur ce créneau.');
                 }
@@ -67,8 +82,10 @@ class CreatePlannedExamAction
                 }
                 $existing->update($attributes);
                 activity()->causedBy(auth()->user())->performedOn($existing)->log('exam_planning_updated');
+
                 return $existing;
             }
+
             return Exam::create($attributes);
         });
     }

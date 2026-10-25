@@ -222,7 +222,9 @@ class ExamPlanningEngine
             Room::whereIn('id', $rooms->pluck('id'))->orderBy('id')->lockForUpdate()->get();
             // Supprimer les examens existants pour cette session et filière(s)
             $existing = Exam::where('exam_session_id', $sessionId)->whereIn('module_id', $modules->pluck('id'))->lockForUpdate()->get();
-            foreach ($existing as $exam) { app(ExamWorkflowGuard::class)->mutablePlan($exam); }
+            foreach ($existing as $exam) {
+                app(ExamWorkflowGuard::class)->mutablePlan($exam);
+            }
             $existingExamIds = $existing->pluck('id');
 
             ExamSeating::whereIn('exam_id', $existingExamIds)->delete();
@@ -353,11 +355,16 @@ class ExamPlanningEngine
                             $slotStart = Carbon::parse($dateStr.' '.$slotCand);
                             $slotEnd = $slotStart->copy()->addMinutes(ExamSlotCatalog::durationMinutes($slotCand));
                             $overlaps = $scheduledExams->filter(function ($other) use ($dateStr, $slotStart, $slotEnd) {
-                                if ($other->exam_date->toDateString() !== $dateStr) { return false; }
+                                if ($other->exam_date->toDateString() !== $dateStr) {
+                                    return false;
+                                }
                                 $otherStart = Carbon::parse($dateStr.' '.$other->start_time);
+
                                 return $slotStart->lt($otherStart->copy()->addMinutes($other->duration_minutes)) && $slotEnd->gt($otherStart);
                             });
-                            if ($overlaps->contains(fn ($other) => $other->seatings->pluck('student_id')->intersect($students)->isNotEmpty())) { continue; }
+                            if ($overlaps->contains(fn ($other) => $other->seatings->pluck('student_id')->intersect($students)->isNotEmpty())) {
+                                continue;
+                            }
                             $bookedInSlot = $overlaps->flatMap(fn ($other) => array_merge([$other->room_id], $other->seatings->pluck('room_id')->all()))->all();
                             $freeRooms = $rooms->filter(fn ($r) => ! in_array($r->id, $bookedInSlot) && ! app(TimetableRoomGuard::class)->isRoomBusyAt((string) $r->id, $slotStart, $slotEnd))->values();
                             $totalCap = $freeRooms->sum(fn ($r) => floor($r->capacity / 2));
@@ -475,7 +482,9 @@ class ExamPlanningEngine
                     $schedules[$p->id] = [];
                 }
                 foreach (ExamSurveillance::with('exam')->whereIn('professor_id', $professors->pluck('id'))->whereNotIn('exam_id', collect($allCreatedExams)->pluck('id'))->get() as $row) {
-                    if (! $row->exam) { continue; }
+                    if (! $row->exam) {
+                        continue;
+                    }
                     $otherDate = $row->exam->exam_date->toDateString();
                     $parts = explode(':', $row->exam->start_time);
                     $otherStart = (int) $parts[0] * 60 + (int) $parts[1];
@@ -504,7 +513,9 @@ class ExamPlanningEngine
                     $canProctor = function (int $pid, bool $ignoreWorkloadCap = false, bool $ignoreDailyCap = false) use (
                         $dateStr, $candStart, $candEnd, &$daily, &$schedules, &$workload, $maxFairWorkload, $dynamicDailyCap, $availability, $profiles, $exam
                     ): bool {
-                        if (! app(ExamWorkflowGuard::class)->allowsProctor($profiles[$pid], $exam, $availability)) { return false; }
+                        if (! app(ExamWorkflowGuard::class)->allowsProctor($profiles[$pid], $exam, $availability)) {
+                            return false;
+                        }
                         // 1. RÈGLE PHYSIQUE ABSOLUE ET INVIOLABLE : Zéro chevauchement d'heure le même jour
                         foreach ($schedules[$pid] as $s) {
                             if ($s['date'] === $dateStr && $candStart < $s['end'] && $s['start'] < $candEnd) {

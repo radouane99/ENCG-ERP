@@ -5,11 +5,11 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\AcademicYear;
 use App\Models\Filiere;
-use App\Models\Institution;
 use App\Models\Professor;
 use App\Models\Room;
 use App\Models\Schedule;
 use App\Services\Academic\AiTimetableSchedulerService;
+use App\Services\Academic\TimetableCampaignService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -270,7 +270,8 @@ class AiTimetableSchedulerController extends Controller
     public function apply(Request $request): JsonResponse
     {
         $data = $request->validate(['version_id' => 'required|integer']);
-        $result = app(\App\Services\Academic\TimetableCampaignService::class)->publish($data['version_id']);
+        $result = app(TimetableCampaignService::class)->publish($data['version_id']);
+
         return response()->json(['success' => $result['success'], 'data' => $result], $result['success'] ? 200 : 422);
     }
 
@@ -278,9 +279,11 @@ class AiTimetableSchedulerController extends Controller
     {
         $data = $request->validate(['version_id' => 'required|integer']);
         $ids = Schedule::where('schedule_version_id', $data['version_id'])->pluck('id')->all();
-        $result = app(\App\Services\Academic\TimetableCampaignService::class)->deleteSession($data['version_id'], $ids);
+        $result = app(TimetableCampaignService::class)->deleteSession($data['version_id'], $ids);
+
         return response()->json(['success' => $result['success'], 'data' => $result]);
     }
+
     public function resources(): JsonResponse
     {
         $rooms = Room::where('is_available', true)

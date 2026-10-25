@@ -10,13 +10,15 @@ use App\Models\StudentDocument;
 use App\Models\User;
 use App\OCR\Engines\PdfTextEngine;
 use App\OCR\Engines\TesseractEngine;
-use App\Services\AI\GeminiApiService;
 use App\Services\Admissions\TafemQualityReportService;
+use App\Services\AI\GeminiApiService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
+use Laravel\Sanctum\Sanctum;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 // Regression guarantees from the audit. Dossier details now require an authenticated owner.
@@ -28,6 +30,7 @@ class TafemDeepScanAuditTest extends TestCase
     private function candidate(string $status = 'pending'): Student
     {
         $user = User::factory()->create(['cin' => 'AB123456']);
+
         return Student::create(['institution_id' => 1, 'user_id' => $user->id,
             'cne' => 'N123456789', 'student_number' => 'AUDIT-001', 'gender' => 'male', 'status' => $status]);
     }
@@ -137,6 +140,7 @@ class TafemDeepScanAuditTest extends TestCase
         $campaign = AdmissionCampaign::create(['institution_id' => 1, 'academic_year_id' => $year->id,
             'filiere_id' => $f->id, 'name' => 'Audit', 'open_date' => '2026-01-01',
             'close_date' => '2026-12-31', 'status' => 'open', 'target_capacity' => 10]);
+
         return Application::create(['admission_campaign_id' => $campaign->id,
             'reference_number' => 'AUDIT-ONLY', 'cne' => 'N123456789', 'cin' => 'AB123456',
             'first_name' => 'Synthetic', 'last_name' => 'Candidate', 'status' => 'submitted']);
@@ -147,7 +151,7 @@ class TafemDeepScanAuditTest extends TestCase
         $app = $this->applicationOnly();
         $owner = User::factory()->create(['institution_id' => 1]);
         $app->update(['owner_user_id' => $owner->id]);
-        \Laravel\Sanctum\Sanctum::actingAs($owner);
+        Sanctum::actingAs($owner);
         StudentDocument::create(['cne' => 'Z999999999', 'type' => 'bac',
             'file_path' => 'unrelated.pdf', 'original_filename' => 'UNRELATED-SYNTHETIC.pdf']);
         $response = $this->getJson('/api/public/track-dossier?cne='.$app->cne.'&cin='.$app->cin)->assertOk();
@@ -157,7 +161,7 @@ class TafemDeepScanAuditTest extends TestCase
     public function test_authenticated_user_cannot_track_another_application_by_cne(): void
     {
         $app = $this->applicationOnly();
-        \Laravel\Sanctum\Sanctum::actingAs(User::factory()->create(['cin' => 'ZZ999999']));
+        Sanctum::actingAs(User::factory()->create(['cin' => 'ZZ999999']));
         $this->getJson('/api/public/track-dossier?cne='.$app->cne)->assertNotFound();
     }
 
@@ -165,8 +169,8 @@ class TafemDeepScanAuditTest extends TestCase
     {
         $s = $this->candidate();
         $teacher = User::factory()->create(['institution_id' => 1]);
-        $teacher->assignRole(\Spatie\Permission\Models\Role::findOrCreate('professor', 'sanctum'));
-        \Laravel\Sanctum\Sanctum::actingAs($teacher);
+        $teacher->assignRole(Role::findOrCreate('professor', 'sanctum'));
+        Sanctum::actingAs($teacher);
         $this->postJson('/api/admin/tafem/verify-physical-dossier', ['student_id' => $s->id,
             'bac_original' => true, 'releve_notes' => true, 'cin_copy' => true, 'photos' => true])
             ->assertForbidden();

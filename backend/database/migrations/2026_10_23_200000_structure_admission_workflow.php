@@ -4,6 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 
 return new class extends Migration
 {
@@ -144,16 +145,23 @@ return new class extends Migration
             $owner = $s?->user_id ? DB::table('users')->find($s->user_id) : null;
             if ($owner && $a->cin && $owner->cin && strtoupper(trim($a->cin)) !== strtoupper(trim($owner->cin))) {
                 DB::table('data_integrity_issues')->updateOrInsert(['entity' => 'applications', 'entity_id' => $a->id, 'reason' => 'admission_identity_conflict'], ['created_at' => now(), 'updated_at' => now()]);
-                $s = null; $owner = null;
+                $s = null;
+                $owner = null;
             }
             foreach (['first_name', 'last_name', 'first_name_ar', 'last_name_ar', 'phone', 'birth_date', 'birth_city', 'gender', 'nationality',
                 'address', 'city', 'academy', 'province', 'high_school', 'bac_series', 'bac_year', 'bac_average', 'father_name', 'mother_name',
                 'emergency_contact_name', 'emergency_contact_phone', 'allergy_type', 'disability_details', 'medication_used'] as $key) {
                 $value = $source[$key] ?? null;
-                if ($owner && in_array($key, ['first_name', 'last_name', 'phone', 'birth_date', 'address', 'city'])) $value = $owner->{$key} ?? $value;
-                if ($value !== null && $value !== '') $profile[$key] = $value;
+                if ($owner && in_array($key, ['first_name', 'last_name', 'phone', 'birth_date', 'address', 'city'])) {
+                    $value = $owner->{$key} ?? $value;
+                }
+                if ($value !== null && $value !== '') {
+                    $profile[$key] = $value;
+                }
             }
-            if ($s && ! isset($profile['gender']) && in_array($s->gender, ['female', 'male'])) $profile['gender'] = $s->gender;
+            if ($s && ! isset($profile['gender']) && in_array($s->gender, ['female', 'male'])) {
+                $profile['gender'] = $s->gender;
+            }
             DB::table('applications')->where('id', $a->id)->update([
                 'student_id' => $s?->id, 'owner_user_id' => $s?->user_id, 'eligibility' => $eligibility,
                 // An old label alone is not evidence of document approval.
@@ -166,11 +174,12 @@ return new class extends Migration
             $apps = DB::table('applications')->where('cne', $doc->cne)->get();
             $app = $apps->count() === 1 ? $apps->first() : null;
             $type = $types[strtolower($doc->type)] ?? strtolower($doc->type);
-            $disk = null; $hash = null;
+            $disk = null;
+            $hash = null;
             foreach (['private', 'local', 'public'] as $candidateDisk) {
-                if (\Illuminate\Support\Facades\Storage::disk($candidateDisk)->exists($doc->file_path)) {
+                if (Storage::disk($candidateDisk)->exists($doc->file_path)) {
                     $disk = $candidateDisk;
-                    $hash = hash_file('sha256', \Illuminate\Support\Facades\Storage::disk($candidateDisk)->path($doc->file_path));
+                    $hash = hash_file('sha256', Storage::disk($candidateDisk)->path($doc->file_path));
                     break;
                 }
             }
@@ -180,8 +189,10 @@ return new class extends Migration
                 'type' => $type,
                 'storage_disk' => $disk ?? 'private', 'content_hash' => $hash,
             ]);
-            if (! $app || ! $disk) DB::table('data_integrity_issues')->updateOrInsert(['entity' => 'student_documents', 'entity_id' => $doc->id,
-                'reason' => ! $app ? 'admission_owner_requires_reconciliation' : 'document_file_missing'], ['created_at' => now(), 'updated_at' => now()]);
+            if (! $app || ! $disk) {
+                DB::table('data_integrity_issues')->updateOrInsert(['entity' => 'student_documents', 'entity_id' => $doc->id,
+                    'reason' => ! $app ? 'admission_owner_requires_reconciliation' : 'document_file_missing'], ['created_at' => now(), 'updated_at' => now()]);
+            }
         }
         // Preserve older versions and select the latest legacy version, without deleting files.
         $keys = [];

@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Actions\Exam\ReconcileResitYearAction;
 use App\Http\Controllers\Controller;
 use App\Mail\RattrapageDecisionMail;
 use App\Models\ResitEligibility;
+use App\Services\Academic\AcademicContext;
+use App\Services\Academic\ExamWorkflowGuard;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -14,7 +17,7 @@ class RetakeController extends Controller
 {
     public function legacy(Request $request): JsonResponse
     {
-        app(\App\Services\Academic\ExamWorkflowGuard::class)->manage();
+        app(ExamWorkflowGuard::class)->manage();
         $query = ResitEligibility::whereNull('academic_year_id')->whereHas('module', fn ($q) => $q->where('institution_id', $request->user()->institution_id));
         $count = (clone $query)->count();
         $rows = $query->with('student.user', 'module')->orderBy('id')->limit(100)->get()->map(fn ($row) => [
@@ -22,15 +25,18 @@ class RetakeController extends Controller
             'module_name' => $row->module?->name, 'reason' => $row->reason,
             'status' => $row->status, 'created_at' => $row->created_at?->toDateString(),
         ]);
+
         return response()->json(['data' => $rows, 'count' => $count]);
     }
 
     public function reconcileYear(Request $request, int $id): JsonResponse
     {
         $data = $request->validate(['academic_year_id' => 'required|integer', 'reason' => 'required|string|min:10|max:2000']);
-        $row = app(\App\Actions\Exam\ReconcileResitYearAction::class)->execute($id, $data['academic_year_id'], $data['reason']);
+        $row = app(ReconcileResitYearAction::class)->execute($id, $data['academic_year_id'], $data['reason']);
+
         return response()->json(['success' => true, 'message' => 'Année rattachée; décision et historique conservés.', 'data' => $row]);
     }
+
     // ── #4 Allowed statuses ────────────────────────────────────────────────
     private const STATUSES = ['Accordé', 'Refusé', 'En attente'];
 
@@ -46,8 +52,8 @@ class RetakeController extends Controller
         $reason = $request->query('reason');
         $status = $request->query('status');
 
-        app(\App\Services\Academic\ExamWorkflowGuard::class)->manage();
-        $query = ResitEligibility::where('academic_year_id', \App\Services\Academic\AcademicContext::yearId())->whereHas('module', fn ($q) => $q->where('institution_id', $request->user()->institution_id))->with([
+        app(ExamWorkflowGuard::class)->manage();
+        $query = ResitEligibility::where('academic_year_id', AcademicContext::yearId())->whereHas('module', fn ($q) => $q->where('institution_id', $request->user()->institution_id))->with([
             'student.user',
             'module.filiere',
             'examSession',
@@ -96,8 +102,8 @@ class RetakeController extends Controller
             'note' => 'nullable|string|max:500',
         ]);
 
-        app(\App\Services\Academic\ExamWorkflowGuard::class)->manage();
-        $retake = ResitEligibility::with(['student.user', 'module.filiere'])->where('academic_year_id', \App\Services\Academic\AcademicContext::yearId())->whereHas('module', fn ($q) => $q->where('institution_id', $request->user()->institution_id))->findOrFail($id);
+        app(ExamWorkflowGuard::class)->manage();
+        $retake = ResitEligibility::with(['student.user', 'module.filiere'])->where('academic_year_id', AcademicContext::yearId())->whereHas('module', fn ($q) => $q->where('institution_id', $request->user()->institution_id))->findOrFail($id);
 
         // #8 — Record decision author + timestamp
         $retake->is_eligible = ($validated['status'] === 'Accordé');
@@ -130,8 +136,8 @@ class RetakeController extends Controller
             'note' => 'nullable|string|max:500',
         ]);
 
-        app(\App\Services\Academic\ExamWorkflowGuard::class)->manage();
-        $retakes = ResitEligibility::where('academic_year_id', \App\Services\Academic\AcademicContext::yearId())->whereHas('module', fn ($q) => $q->where('institution_id', $request->user()->institution_id))->with(['student.user', 'module.filiere'])
+        app(ExamWorkflowGuard::class)->manage();
+        $retakes = ResitEligibility::where('academic_year_id', AcademicContext::yearId())->whereHas('module', fn ($q) => $q->where('institution_id', $request->user()->institution_id))->with(['student.user', 'module.filiere'])
             ->whereIn('id', $validated['ids'])
             ->get();
 
@@ -144,7 +150,9 @@ class RetakeController extends Controller
             $retake->decided_at = now();
             $retake->save();
 
-            if ($this->sendDecisionEmail($retake, $validated['status'], $validated['note'] ?? null)) { $emailsAccepted++; }
+            if ($this->sendDecisionEmail($retake, $validated['status'], $validated['note'] ?? null)) {
+                $emailsAccepted++;
+            }
         }
 
         return response()->json([
@@ -166,7 +174,9 @@ class RetakeController extends Controller
         ]);
 
         $retake = ResitEligibility::with('student')->findOrFail($id);
-        if ((int) $retake->student->user_id !== (int) $request->user()->id) { app(\App\Services\Academic\ExamWorkflowGuard::class)->manage(); }
+        if ((int) $retake->student->user_id !== (int) $request->user()->id) {
+            app(ExamWorkflowGuard::class)->manage();
+        }
         abort_unless((int) $retake->student->institution_id === (int) $request->user()->institution_id, 404);
 
         // Store the file
@@ -207,10 +217,12 @@ class RetakeController extends Controller
                 reason: $retake->reason ?? 'Non spécifiée',
                 decisionNote: $note,
             ));
+
             return true;
         } catch (\Throwable $e) {
             // Log error silently — don't fail the status update
             Log::warning('Rattrapage email failed: '.$e->getMessage());
+
             return false;
         }
     }
@@ -245,7 +257,9 @@ class RetakeController extends Controller
             'module_id' => $item->module_id,
             'raison' => $item->reason ?? 'Non spécifiée',
             'eligibilite_label' => $eligibiliteLabel,
-            'status' => match ($item->status) { 'eligible' => 'En attente', 'not_required' => 'Non requis', default => $item->status ?? ($item->is_eligible ? 'En attente' : 'Refusé') },
+            'status' => match ($item->status) {
+                'eligible' => 'En attente', 'not_required' => 'Non requis', default => $item->status ?? ($item->is_eligible ? 'En attente' : 'Refusé')
+            },
             'is_eligible' => (bool) $item->is_eligible,
             'date' => $item->updated_at?->format('d/m/Y'),
             'session_label' => $item->examSession?->name ?? 'Année sans session liée',

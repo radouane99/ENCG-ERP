@@ -2,22 +2,26 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Actions\Exam\CreatePlannedExamAction;
+use App\Actions\Exam\ReschedulePublishedExamAction;
 use App\Http\Controllers\Controller;
 use App\Models\AcademicYear;
 use App\Models\Exam;
 use App\Models\ExamSeating;
+use App\Models\ExamSession;
 use App\Models\ExamSurveillance;
 use App\Models\Filiere;
 use App\Models\Room;
 use App\Services\Academic\ExamConvocationService;
 use App\Services\Academic\ExamPlanningEngine;
+use App\Services\Academic\ExamSlotCatalog;
 use App\Services\Academic\ExamWorkflowGuard;
-use App\Actions\Exam\CreatePlannedExamAction;
-use Illuminate\Support\Facades\DB;
+use App\Services\Academic\TimetableRoomGuard;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ExamPlanningController extends Controller
 {
@@ -148,16 +152,19 @@ class ExamPlanningController extends Controller
         }
 
         $count = DB::transaction(function () use ($query, $sessionId) {
-            $session = \App\Models\ExamSession::whereKey($sessionId)->lockForUpdate()->firstOrFail();
+            $session = ExamSession::whereKey($sessionId)->lockForUpdate()->firstOrFail();
             $guard = app(ExamWorkflowGuard::class);
             $guard->mutableSession($session);
             $exams = $query->lockForUpdate()->get();
-            foreach ($exams as $exam) { $guard->mutablePlan($exam); }
+            foreach ($exams as $exam) {
+                $guard->mutablePlan($exam);
+            }
             foreach ($exams as $exam) {
                 ExamSeating::where('exam_id', $exam->id)->delete();
                 ExamSurveillance::where('exam_id', $exam->id)->delete();
                 $exam->delete();
             }
+
             return $exams->count();
         });
 
@@ -235,6 +242,18 @@ class ExamPlanningController extends Controller
         ]);
     }
 
+    public function reschedule(Request $request, Exam $exam): JsonResponse
+    {
+        $data = $request->validate([
+            'exam_date' => 'required|date', 'start_time' => 'required|date_format:H:i',
+            'room_id' => 'required|integer', 'duration_minutes' => 'required|integer|min:1|max:480',
+            'planning_revision' => 'required|string|size:64', 'reason' => 'required|string|min:10|max:2000',
+        ]);
+        $exam = app(ReschedulePublishedExamAction::class)->execute($exam, $data);
+
+        return response()->json(['success' => true, 'message' => 'Épreuve reprogrammée, QR renouvelés et notifications portail enregistrées. Les emails doivent être renvoyés séparément.', 'exam' => $exam]);
+    }
+
     public function updatePlanning(Request $request, Exam $exam): JsonResponse
     {
         $data = $request->validate([
@@ -243,6 +262,7 @@ class ExamPlanningController extends Controller
             'planning_revision' => 'required|string|size:64',
         ]);
         $exam = app(CreatePlannedExamAction::class)->execute($data + $exam->only(['exam_session_id', 'module_id', 'group_id']), $exam);
+
         return response()->json(['success' => true, 'message' => 'Planning enregistré.', 'exam' => $exam]);
     }
 
@@ -257,17 +277,19 @@ class ExamPlanningController extends Controller
             'duration_minutes' => 'required|integer|min:1|max:480', 'exclude_exam_id' => 'nullable|integer',
         ]);
         $room = Room::where('institution_id', $request->user()->institution_id)->findOrFail($data['room_id']);
-        $slot = \App\Services\Academic\ExamSlotCatalog::normalizeForStorage($data['start_time']);
+        $slot = ExamSlotCatalog::normalizeForStorage($data['start_time']);
         $start = Carbon::parse($data['exam_date'].' '.$slot['start_time']);
         $end = $start->copy()->addMinutes($slot['duration_minutes']);
-        $busy = app(\App\Services\Academic\TimetableRoomGuard::class)->isRoomBusyAt((string) $room->id, $start, $end);
+        $busy = app(TimetableRoomGuard::class)->isRoomBusyAt((string) $room->id, $start, $end);
         $query = Exam::whereDate('exam_date', $data['exam_date'])->whereHas('examSession', fn ($q) => $q->where('institution_id', $request->user()->institution_id))
             ->when($data['exclude_exam_id'] ?? null, fn ($q, $id) => $q->whereKeyNot($id))
             ->where(fn ($q) => $q->where('room_id', $room->id)->orWhereHas('seatings', fn ($q) => $q->where('room_id', $room->id))->when($data['group_id'] ?? null, fn ($q, $id) => $q->orWhere('group_id', $id)));
         $conflict = $query->get()->contains(function ($exam) use ($start, $end, $data) {
             $other = Carbon::parse($data['exam_date'].' '.$exam->start_time);
+
             return $start->lt($other->copy()->addMinutes($exam->duration_minutes)) && $end->gt($other);
         });
+
         return response()->json(['success' => true, 'has_conflict' => $busy || $conflict, 'message' => $busy || $conflict ? 'Chevauchement de salle, de groupe ou de réservation.' : 'Aucun conflit détecté sur cet intervalle.']);
     }
 

@@ -14,13 +14,16 @@ class ManageAdmissionDeskAction
     public function arrive(AdmissionDeskRequest $request): object
     {
         $resolved = AdmissionAccess::dossier($request, true);
+
         return DB::transaction(function () use ($resolved, $request) {
             $resolved->campaign()->lockForUpdate()->firstOrFail();
             $app = Application::whereKey($resolved->id)->lockForUpdate()->firstOrFail();
             AdmissionAccess::campaignOpen($app);
             $day = now(config('admissions.timezone'))->toDateString();
             $existing = DB::table('admission_desk_tickets')->where('application_id', $app->id)->where('service_day', $day)->first();
-            if ($existing) return $existing;
+            if ($existing) {
+                return $existing;
+            }
             abort_unless($app->eligibility === 'main' && in_array($app->dossier_status, ['submitted', 'under_review', 'needs_correction']), 422, 'Le dossier doit être déposé et admissible avant le passage au guichet.');
             $number = 1 + (int) DB::table('admission_desk_tickets')->where('admission_campaign_id', $app->admission_campaign_id)->where('service_day', $day)->max('number');
             $id = DB::table('admission_desk_tickets')->insertGetId([
@@ -29,14 +32,17 @@ class ManageAdmissionDeskAction
                 'status' => 'waiting', 'version' => 1, 'created_at' => now(), 'updated_at' => now(),
             ]);
             app(ManageDossierAction::class)->event($app, 'desk_arrival', ['ticket_id' => $id, 'number' => $number]);
+
             return DB::table('admission_desk_tickets')->find($id);
         });
     }
 
     public function transition(AdmissionDeskRequest $request, int $id): object
     {
-        $resolved = DB::table('admission_desk_tickets')->find($id); abort_unless($resolved, 404);
+        $resolved = DB::table('admission_desk_tickets')->find($id);
+        abort_unless($resolved, 404);
         $authorized = AdmissionAccess::dossier($request, false, $resolved->application_id);
+
         return DB::transaction(function () use ($request, $authorized, $id) {
             $app = Application::whereKey($authorized->id)->lockForUpdate()->firstOrFail();
             User::whereKey($request->user()->id)->lockForUpdate()->firstOrFail();
@@ -63,6 +69,7 @@ class ManageAdmissionDeskAction
             }
             DB::table('admission_desk_tickets')->where('id', $id)->update($changes + ['version' => $ticket->version + 1, 'updated_at' => now()]);
             app(ManageDossierAction::class)->event($app, 'desk_'.$event, ['ticket_id' => $id, 'previous_agent_id' => $ticket->served_by, 'reason' => $request->validated('reason')]);
+
             return DB::table('admission_desk_tickets')->find($id);
         });
     }

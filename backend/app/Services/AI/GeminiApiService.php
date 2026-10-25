@@ -795,7 +795,9 @@ class GeminiApiService
 
         if (! empty($data['birth_date'])) {
             $date = \DateTimeImmutable::createFromFormat('!Y-m-d', (string) $data['birth_date']);
-            if (! $date || $date->format('Y-m-d') !== $data['birth_date'] || $date >= new \DateTimeImmutable('today') || $date->format('Y') < 1900) $data['birth_date'] = '';
+            if (! $date || $date->format('Y-m-d') !== $data['birth_date'] || $date >= new \DateTimeImmutable('today') || $date->format('Y') < 1900) {
+                $data['birth_date'] = '';
+            }
         }
         if (array_key_exists('bac_average', $data)) {
             $average = str_replace(',', '.', (string) $data['bac_average']);

@@ -159,8 +159,8 @@ class UnifiedAdmissionRegistrationTest extends TestCase
         $this->getJson('/api/admin/reinscriptions/stats')->assertOk()->assertJsonPath('data.students.0.status', 'physical_pending');
         $body = ['checklist' => array_fill_keys(array_keys(VerifyAnnualRenewalAction::CHECKLIST), true), 'observation' => 'Pièces originales synthétiques contrôlées.'];
         $this->postJson('/api/admin/reinscriptions/'.$student->id.'/physical-review', $body)->assertOk();
-        $this->postJson('/api/admin/reinscriptions/'.$student->id.'/physical-review',$body)->assertOk();
-        $this->getJson('/api/admin/reinscriptions/stats')->assertOk()->assertJsonPath('data.students.0.status','verified');
-        $this->assertDatabaseCount('student_renewals',1);
+        $this->postJson('/api/admin/reinscriptions/'.$student->id.'/physical-review', $body)->assertOk();
+        $this->getJson('/api/admin/reinscriptions/stats')->assertOk()->assertJsonPath('data.students.0.status', 'verified');
+        $this->assertDatabaseCount('student_renewals', 1);
     }
 }

@@ -2,9 +2,7 @@
 
 namespace App\Services\Academic;
 
-use App\Models\ProfessorAvailability;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Schema;
 
 /**
  * Stratégie de performance EDT ENCG :
@@ -449,6 +447,7 @@ class TimetablePerformanceStrategy
     {
         return ProfessorAvailabilityService::map();
     }
+
     private function isProfessorAvailable(array $unavailable, int $professorId, int $day, string $start, string $end): bool
     {
         $records = $unavailable[$professorId] ?? [];

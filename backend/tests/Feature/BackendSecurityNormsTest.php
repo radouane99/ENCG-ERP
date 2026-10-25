@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Models\AdmissionCampaign;
+use App\Models\Application;
 use App\Models\Institution;
 use App\Models\Student;
 use App\Models\StudentDocument;
@@ -198,10 +200,12 @@ class BackendSecurityNormsTest extends TestCase
 
     private function ownedApplication(Student $student): int
     {
-        $year = $this->makeTestAcademicYear(); $f = $this->makeTestFiliere();
-        $campaign = \App\Models\AdmissionCampaign::create(['institution_id' => 1, 'academic_year_id' => $year->id,
+        $year = $this->makeTestAcademicYear();
+        $f = $this->makeTestFiliere();
+        $campaign = AdmissionCampaign::create(['institution_id' => 1, 'academic_year_id' => $year->id,
             'filiere_id' => $f->id, 'name' => 'Security', 'status' => 'open', 'open_date' => now()->subDay(), 'close_date' => now()->addMonth(), 'target_capacity' => 5]);
-        return \App\Models\Application::create(['admission_campaign_id' => $campaign->id, 'reference_number' => 'SEC-'.$student->cne,
+
+        return Application::create(['admission_campaign_id' => $campaign->id, 'reference_number' => 'SEC-'.$student->cne,
             'cne' => $student->cne, 'cin' => $student->cin, 'owner_user_id' => $student->user_id, 'student_id' => $student->id,
             'first_name' => 'Synthetic', 'last_name' => 'Candidate', 'status' => 'pending'])->id;
     }

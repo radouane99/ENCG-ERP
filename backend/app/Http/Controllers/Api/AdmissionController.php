@@ -2,32 +2,19 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Actions\Admission\ManageDossierAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreApplicationRequest;
 use App\Http\Requests\UpdateApplicationRequest;
-use App\Jobs\ProcessOcrDocumentJob;
-use App\Mail\StudentRegistrationSuccessMail;
-use App\Models\AcademicYear;
-use App\Models\AdmissionCampaign;
 use App\Models\Application;
-use App\Models\Institution;
-use App\Models\Student;
 use App\Models\StudentDocument;
-use App\Models\User;
 use App\Services\Academic\AdmissionService;
 use App\Services\AI\GeminiApiService;
-use App\Services\Ocr\OcrExtractionService;
-use App\Support\CandidateDossierGate;
+use App\Support\AdmissionAccess;
 use App\Support\SignedDocumentUrl;
-use App\Support\TemporaryPassword;
-use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -44,28 +31,32 @@ class AdmissionController extends Controller
      */
     public function index(?int $campaignId = null): JsonResponse
     {
-        if ($campaignId) request()->merge(['campaign_id' => $campaignId]);
+        if ($campaignId) {
+            request()->merge(['campaign_id' => $campaignId]);
+        }
+
         return app(AdmissionWorkflowController::class)->listing(request());
     }
 
     public function store(StoreApplicationRequest $request): JsonResponse
     {
-        \App\Support\AdmissionAccess::review($request);
+        AdmissionAccess::review($request);
         $data = $request->validated();
-        $campaign = \App\Support\AdmissionAccess::campaign($request, true);
+        $campaign = AdmissionAccess::campaign($request, true);
         $cne = strtoupper(trim($data['cne']));
         abort_if(Application::where('admission_campaign_id', $campaign->id)->where('cne', $cne)->exists(), 409, 'Un dossier existe déjà pour cette campagne.');
         $app = Application::create(['admission_campaign_id' => $campaign->id, 'reference_number' => 'TAFEM-'.Str::upper(Str::random(14)),
             'cne' => $cne, 'cin' => strtoupper(trim($data['cin'] ?? '')), 'first_name' => $data['first_name'],
             'last_name' => $data['last_name'], 'email' => $data['email'] ?? null, 'phone' => $data['phone'] ?? null,
             'bac_average' => $data['bac_average'] ?? null, 'dossier_status' => 'draft', 'status' => 'pending', 'eligibility' => 'unconfirmed']);
-        app(\App\Actions\Admission\ManageDossierAction::class)->event($app, 'draft_created');
+        app(ManageDossierAction::class)->event($app, 'draft_created');
+
         return response()->json(['success' => true, 'data' => $app], 201);
     }
 
     public function updateStatus(Request $request, int $applicationId): JsonResponse
     {
-        \App\Support\AdmissionAccess::review($request);
+        AdmissionAccess::review($request);
         abort(422, 'Utilisez la revue du dossier, son numéro officiel et sa checklist.');
     }
 
@@ -88,7 +79,7 @@ class AdmissionController extends Controller
      */
     public function destroy(int $applicationId): JsonResponse
     {
-        \App\Support\AdmissionAccess::review(request());
+        AdmissionAccess::review(request());
         abort(422, 'Les dossiers sont conservés pour audit. Utilisez une décision motivée.');
     }
 
@@ -126,8 +117,9 @@ class AdmissionController extends Controller
      */
     public function verifyPhysicalDossier(Request $request): JsonResponse
     {
-        \App\Support\AdmissionAccess::review($request);
+        AdmissionAccess::review($request);
         $request->merge(['decision' => 'approved']);
+
         return app(AdmissionWorkflowController::class)->decide($request);
     }
 
@@ -223,13 +215,16 @@ class AdmissionController extends Controller
         $signed = SignedDocumentUrl::isValid($type, $cne, $request->query('exp'), $request->query('sig'));
         if (! $signed) {
             abort_unless($request->user(), 403, 'Accès au document refusé.');
-            \App\Support\AdmissionAccess::dossier($request);
+            AdmissionAccess::dossier($request);
         }
-        $type = \App\Actions\Admission\ManageDossierAction::type($type);
+        $type = ManageDossierAction::type($type);
         $doc = StudentDocument::where('cne', $cne)->where('type', $type)->where('is_current', true)->whereNull('withdrawn_at')->firstOrFail();
-        if (! $signed) \App\Support\AdmissionAccess::dossier($request, false, $doc->application_id);
+        if (! $signed) {
+            AdmissionAccess::dossier($request, false, $doc->application_id);
+        }
         $disk = Storage::disk($doc->storage_disk);
         abort_unless($disk->exists($doc->file_path), 404);
+
         return response()->file($disk->path($doc->file_path), ['Content-Type' => $doc->mime_type ?: 'application/pdf', 'Cache-Control' => 'private, no-store', 'X-Content-Type-Options' => 'nosniff']);
     }
 
@@ -243,7 +238,7 @@ class AdmissionController extends Controller
      */
     public function toggleLockCandidateDossier(Request $request): JsonResponse
     {
-        \App\Support\AdmissionAccess::review($request);
+        AdmissionAccess::review($request);
         abort(422, 'Utilisez la revue du dossier et sa checklist de validation.');
     }
 

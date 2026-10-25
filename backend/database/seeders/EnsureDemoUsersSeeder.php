@@ -20,8 +20,6 @@ class EnsureDemoUsersSeeder extends Seeder
 
         $password = Hash::make('password');
 
-
-
         $roleNames = [
             'super-admin',
             'admin',

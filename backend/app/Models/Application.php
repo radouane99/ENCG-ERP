@@ -35,5 +35,8 @@ class Application extends Model
         return $this->belongsTo(AdmissionCampaign::class, 'admission_campaign_id');
     }
 
-    public function owner(): BelongsTo { return $this->belongsTo(User::class, 'owner_user_id'); }
+    public function owner(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'owner_user_id');
+    }
 }

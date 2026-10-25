@@ -70,16 +70,30 @@ export default defineConfig({
     allowedHosts: ['erp.irsale.fr', '.irsale.fr', 'localhost'],
     proxy: {
       '/api': {
-        target: process.env.E2E_API_PROXY_URL || 'http://encg_nginx:80',
+        target: process.env.E2E_API_PROXY_URL || (process.env.CI ? 'http://127.0.0.1:8000' : 'http://encg_nginx:80'),
         changeOrigin: true,
       },
       '/storage': {
-        target: 'http://encg_nginx:80',
+        target: process.env.E2E_API_PROXY_URL || (process.env.CI ? 'http://127.0.0.1:8000' : 'http://encg_nginx:80'),
         changeOrigin: true,
       },
       '/broadcasting': {
         target: 'http://reverb:8080',
         ws: true,
+        changeOrigin: true,
+      },
+    },
+  },
+  preview: {
+    host: '127.0.0.1',
+    port: 4173,
+    proxy: {
+      '/api': {
+        target: process.env.E2E_API_PROXY_URL || (process.env.CI ? 'http://127.0.0.1:8000' : 'http://encg_nginx:80'),
+        changeOrigin: true,
+      },
+      '/storage': {
+        target: process.env.E2E_API_PROXY_URL || (process.env.CI ? 'http://127.0.0.1:8000' : 'http://encg_nginx:80'),
         changeOrigin: true,
       },
     },

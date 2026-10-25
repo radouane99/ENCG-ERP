@@ -7,6 +7,7 @@ use App\Models\ExamIncident;
 use App\Models\Grade;
 use App\Models\Module;
 use App\Services\Academic\ExamWorkflowGuard;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class DecideExamIncidentAction
@@ -15,11 +16,12 @@ class DecideExamIncidentAction
     {
         $user = auth()->user();
         abort_unless($user && $user->hasAnyRole(['admin', 'super-admin', 'super_admin', 'institution-admin', 'institution_admin', 'director', 'discipline-committee']), 403);
+
         return DB::transaction(function () use ($id, $data, $user) {
             $incident = ExamIncident::with('exam.module', 'exam.examSession')->whereKey($id)->lockForUpdate()->firstOrFail();
             app(ExamWorkflowGuard::class)->session($incident->exam->examSession);
             abort_unless(in_array($incident->status, ['convoked', 'auditioned'], true), 409, 'Convoquer le dossier et consigner l’audition avant toute décision.');
-            abort_if(! $incident->hearing_date || \Carbon\Carbon::parse(str_replace(' à ', ' ', $incident->hearing_date))->isFuture(), 422, 'L’audition prévue n’a pas encore eu lieu.');
+            abort_if(! $incident->hearing_date || Carbon::parse(str_replace(' à ', ' ', $incident->hearing_date))->isFuture(), 422, 'L’audition prévue n’a pas encore eu lieu.');
             $sanction = $data['sanction'];
             $dismissed = in_array($sanction, ['dismissed', 'classement']);
             $text = match ($sanction) {
@@ -45,6 +47,7 @@ class DecideExamIncidentAction
             }
             $incident->update(['status' => $dismissed ? 'dismissed' : 'resolved', 'decision' => $text, 'sanction_scope' => $sanction, 'hearing_notes' => $data['observations']]);
             activity()->causedBy($user)->performedOn($incident)->withProperties(['sanction' => $sanction, 'observations' => $data['observations'], 'votes_for' => $data['votes_for'] ?? null, 'votes_against' => $data['votes_against'] ?? null])->log('exam_incident_council_decision');
+
             return $incident;
         });
     }

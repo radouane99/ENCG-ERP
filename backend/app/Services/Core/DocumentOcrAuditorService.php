@@ -1,5 +1,7 @@
 <?php
+
 namespace App\Services\Core;
+
 class DocumentOcrAuditorService
 {
     public function auditCandidateDocuments(array $candidateData, array $documents): array

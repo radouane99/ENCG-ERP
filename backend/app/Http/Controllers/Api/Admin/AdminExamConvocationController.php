@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Exams\GenerateConvocationsRequest;
 use App\Models\Convocation;
+use App\Models\Exam;
 use App\Services\Academic\ExamSchedulingService;
+use App\Services\Academic\ExamWorkflowGuard;
 use Illuminate\Http\JsonResponse;
 
 class AdminExamConvocationController extends Controller
@@ -14,6 +16,9 @@ class AdminExamConvocationController extends Controller
 
     public function index(int $examId): JsonResponse
     {
+        $guard = app(ExamWorkflowGuard::class);
+        $guard->manage();
+        $guard->viewExam(Exam::findOrFail($examId));
         $convocations = Convocation::where('exam_id', $examId)
             ->with(['student', 'room'])
             ->get();

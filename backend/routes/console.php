@@ -19,7 +19,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schedule;
 
 // Automated Daily Backups (Pilier 3 - ENCG ERP Native & Spatie)
-Schedule::command('db:backup-daily')->dailyAt('02:00')->description('Sauvegarde quotidienne native PostgreSQL avec rétention 30 jours');
+Schedule::command('db:backup-daily')->dailyAt('02:00')->withoutOverlapping()->description('Sauvegarde privée PostgreSQL avec empreinte');
+Schedule::command('documents:remind-followups')->hourly()->withoutOverlapping();
 Schedule::command('backup:clean')->dailyAt('02:30');
 Schedule::command('backup:run --only-db')->dailyAt('03:00');
 

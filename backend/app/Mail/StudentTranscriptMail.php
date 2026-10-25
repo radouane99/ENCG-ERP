@@ -46,7 +46,9 @@ class StudentTranscriptMail extends Mailable
 
     public function attachments(): array
     {
-        if ($this->pdfBytes !== null) return [Attachment::fromData(fn () => $this->pdfBytes, 'Notes_publiees_ENCG.pdf')->withMime('application/pdf')];
+        if ($this->pdfBytes !== null) {
+            return [Attachment::fromData(fn () => $this->pdfBytes, 'Notes_publiees_ENCG.pdf')->withMime('application/pdf')];
+        }
         if ($this->pdfPath && file_exists($this->pdfPath)) {
             return [
                 Attachment::fromPath($this->pdfPath)

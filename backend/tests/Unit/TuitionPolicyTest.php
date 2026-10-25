@@ -1,7 +1,10 @@
 <?php
+
 namespace Tests\Unit;
+
 use App\Domain\Deliberation\LmdRules;
 use PHPUnit\Framework\TestCase;
+
 class TuitionPolicyTest extends TestCase
 {
     public function test_only_explicit_paid_course_types_require_tuition(): void

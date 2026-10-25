@@ -15,13 +15,21 @@ class RattrapageConvocationMail extends Mailable
     use Queueable, SerializesModels;
 
     public string $studentName;
+
     public string $moduleName;
+
     public string $moduleCode;
+
     public string $seanceCode;
+
     public string $professorName;
+
     public string $date;
+
     public string $timeSlot;
+
     public string $room;
+
     public ?string $notes;
 
     /**

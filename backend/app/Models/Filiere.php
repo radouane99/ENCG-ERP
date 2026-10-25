@@ -3,11 +3,13 @@
 namespace App\Models;
 
 use App\Domain\Deliberation\LmdRules;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Support\Facades\DB;
 
 class Filiere extends Model
 {
@@ -38,9 +40,9 @@ class Filiere extends Model
         return LmdRules::filiereRequiresPayment($this->type ?? null);
     }
 
-    public function scopeRequiringTuitionPayment(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
+    public function scopeRequiringTuitionPayment(Builder $query): Builder
     {
-        return $query->whereIn(\Illuminate\Support\Facades\DB::raw('LOWER(TRIM(type))'), LmdRules::PAID_FILIERE_TYPES);
+        return $query->whereIn(DB::raw('LOWER(TRIM(type))'), LmdRules::PAID_FILIERE_TYPES);
     }
 
     public function specialities(): HasMany

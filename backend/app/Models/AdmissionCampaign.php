@@ -12,6 +12,7 @@ class AdmissionCampaign extends Model
     use HasFactory;
 
     protected $guarded = ['id'];
+
     protected $attributes = ['entry_route' => 'tafem', 'entry_semester' => 1];
 
     protected function casts(): array

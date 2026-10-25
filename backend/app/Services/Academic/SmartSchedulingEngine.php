@@ -4,13 +4,13 @@ namespace App\Services\Academic;
 
 use App\Models\Group;
 use App\Models\Module;
+use App\Models\ModuleProfessor;
 use App\Models\Professor;
-use App\Models\ProfessorAvailability;
 use App\Models\Room;
 use App\Models\Schedule;
+use App\Models\Semester;
 use Exception;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 
 class SmartSchedulingEngine
 {
@@ -169,7 +169,7 @@ class SmartSchedulingEngine
 
         $yearId = AcademicContext::yearId();
         $institutionId = auth()->user()?->institution_id ?? config('erp.institution_id', 1);
-        $semester = \App\Models\Semester::where('academic_year_id', $yearId)->when($semesterId, fn ($q) => $q->whereKey($semesterId), fn ($q) => $q->where('is_current', true))->first();
+        $semester = Semester::where('academic_year_id', $yearId)->when($semesterId, fn ($q) => $q->whereKey($semesterId), fn ($q) => $q->where('is_current', true))->first();
         $parity = ($semester?->number ?? 1) % 2;
         $groups = Group::with('filiere')->where('academic_year_id', $yearId)
             ->whereHas('filiere', fn ($q) => $q->where('institution_id', $institutionId))
@@ -180,18 +180,24 @@ class SmartSchedulingEngine
             ->when($semesterNumber, fn ($q) => $q->where('semester_number', $semesterNumber), fn ($q) => $q->whereRaw('MOD(semester_number, 2) = ?', [$parity]))->get();
         $rooms = Room::where('institution_id', $institutionId)->get();
         $professors = Professor::with('user')->where('institution_id', $institutionId)->where('is_active', true)->get();
-        $assignments = \App\Models\ModuleProfessor::where('academic_year_id', $yearId)->whereIn('module_id', $modules->pluck('id'))->whereIn('professor_id', $professors->pluck('id'))->get();
+        $assignments = ModuleProfessor::where('academic_year_id', $yearId)->whereIn('module_id', $modules->pluck('id'))->whereIn('professor_id', $professors->pluck('id'))->get();
         $weeks = max(1, (int) ($config['teaching_weeks'] ?? 15));
-        $variables = []; $inputIssues = []; $varIndex = 1;
+        $variables = [];
+        $inputIssues = [];
+        $varIndex = 1;
         foreach ($modules as $mod) {
             foreach ($groups->where('filiere_id', $mod->filiere_id)->where('semester_number', $mod->semester_number) as $group) {
                 $assigned = $assignments->where('module_id', $mod->id)->filter(fn ($a) => ! $a->group_id || (int) $a->group_id === (int) $group->id);
-                if ($assigned->isEmpty()) { $inputIssues[] = 'Affectation manquante : '.$mod->name.' / '.$group->name; }
+                if ($assigned->isEmpty()) {
+                    $inputIssues[] = 'Affectation manquante : '.$mod->name.' / '.$group->name;
+                }
                 foreach ($assigned as $assignment) {
                     $hours = (float) $assignment->assigned_hours;
                     $type = strtolower($assignment->session_type ?? '');
                     if ($hours <= 0 || ! in_array($type, ['cm', 'td', 'tp'], true)) {
-                        $inputIssues[] = 'Volume ou type de séance à compléter : '.$mod->name.' / '.$group->name; continue;
+                        $inputIssues[] = 'Volume ou type de séance à compléter : '.$mod->name.' / '.$group->name;
+
+                        continue;
                     }
                     $blocks = max(1, (int) round($hours / ($weeks * 2)));
                     for ($b = 1; $b <= $blocks; $b++) {
@@ -405,6 +411,7 @@ class SmartSchedulingEngine
     {
         return ProfessorAvailabilityService::allows(ProfessorAvailabilityService::map(), $professorId, $day, $start, $end);
     }
+
     public function getGlobalStats(): array
     {
         $totalSchedules = DB::table('schedules')->count();

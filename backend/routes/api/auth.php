@@ -1,5 +1,12 @@
 <?php
 
+use App\Http\Controllers\Api\AdmissionAppointmentController;
+use App\Http\Controllers\Api\AdmissionDeskController;
+use App\Http\Controllers\Api\AdmissionEnrollmentController;
+use App\Http\Controllers\Api\AdmissionOcrEvaluationController;
+use App\Http\Controllers\Api\AdmissionOperationsController;
+use App\Http\Controllers\Api\AdmissionWorkflowController;
+use App\Http\Controllers\Api\AdmissionWorkflowPdfController;
 use App\Http\Controllers\Api\Auth\PasswordResetController;
 use App\Http\Controllers\Api\Auth\SsoController;
 use App\Http\Controllers\Api\ContactController;
@@ -12,19 +19,19 @@ Route::post('/contact', [ContactController::class, 'send'])->middleware('throttl
 Route::get('/login', fn () => response()->json(['message' => 'Non authentifié. Veuillez vous connecter.'], 401))->name('login');
 
 Route::prefix('public/admissions')->middleware('throttle:10,1')->group(function () {
-    Route::get('campaigns', [\App\Http\Controllers\Api\AdmissionWorkflowController::class, 'campaigns']);
-    Route::post('admissibility', [\App\Http\Controllers\Api\AdmissionWorkflowController::class, 'admissibility']);
-    Route::post('request-activation', [\App\Http\Controllers\Api\AdmissionWorkflowController::class, 'requestActivation']);
-    Route::post('activate', [\App\Http\Controllers\Api\AdmissionWorkflowController::class, 'activate']);
+    Route::get('campaigns', [AdmissionWorkflowController::class, 'campaigns']);
+    Route::post('admissibility', [AdmissionWorkflowController::class, 'admissibility']);
+    Route::post('request-activation', [AdmissionWorkflowController::class, 'requestActivation']);
+    Route::post('activate', [AdmissionWorkflowController::class, 'activate']);
 });
-Route::get('public/admissions/documents/{document}', [\App\Http\Controllers\Api\AdmissionWorkflowController::class, 'download'])->name('admissions.document');
+Route::get('public/admissions/documents/{document}', [AdmissionWorkflowController::class, 'download'])->name('admissions.document');
 
 Route::prefix('admissions/workflow')->middleware(['auth:sanctum', 'institution.context'])->group(function () {
-    $workflow = \App\Http\Controllers\Api\AdmissionWorkflowController::class;
-    $appointments = \App\Http\Controllers\Api\AdmissionAppointmentController::class;
-    $operations = \App\Http\Controllers\Api\AdmissionOperationsController::class;
+    $workflow = AdmissionWorkflowController::class;
+    $appointments = AdmissionAppointmentController::class;
+    $operations = AdmissionOperationsController::class;
     Route::get('operations/context', [$operations, 'context']);
-    $desk = \App\Http\Controllers\Api\AdmissionDeskController::class;
+    $desk = AdmissionDeskController::class;
     Route::get('operations/desk', [$desk, 'index']);
     Route::post('operations/desk', [$desk, 'arrive']);
     Route::post('operations/desk/{ticket}', [$desk, 'transition'])->whereNumber('ticket');
@@ -38,7 +45,7 @@ Route::prefix('admissions/workflow')->middleware(['auth:sanctum', 'institution.c
     Route::get('references', [$workflow, 'references']);
     Route::get('ocr-settings', [$workflow, 'ocrSettings']);
     Route::put('ocr-settings', [$workflow, 'ocrSettings']);
-    Route::post('ocr-evaluation', [\App\Http\Controllers\Api\AdmissionOcrEvaluationController::class, 'evaluate'])->middleware('throttle:6,1');
+    Route::post('ocr-evaluation', [AdmissionOcrEvaluationController::class, 'evaluate'])->middleware('throttle:6,1');
     Route::post('campaigns', [$workflow, 'saveCampaign']);
     Route::put('campaigns/{id}', [$workflow, 'saveCampaign']);
     Route::get('dossier', [$workflow, 'show']);
@@ -53,7 +60,7 @@ Route::prefix('admissions/workflow')->middleware(['auth:sanctum', 'institution.c
     Route::post('appointments', [$appointments, 'book']);
     Route::post('notify', [$workflow, 'notify'])->middleware('throttle:3,1');
     Route::post('notifications/{id}/retry', [$workflow, 'retryNotification'])->middleware('throttle:10,1');
-    Route::get('receipt', [\App\Http\Controllers\Api\AdmissionWorkflowPdfController::class, 'receipt']);
+    Route::get('receipt', [AdmissionWorkflowPdfController::class, 'receipt']);
     Route::get('applications', [$workflow, 'listing']);
     Route::get('stats', [$workflow, 'stats']);
     Route::post('imports/preview', [$workflow, 'previewImport']);
@@ -64,9 +71,9 @@ Route::prefix('admissions/workflow')->middleware(['auth:sanctum', 'institution.c
     Route::get('unlinked-documents', [$workflow, 'unlinkedDocuments']);
     Route::post('unlinked-documents/{document}/reconcile', [$workflow, 'reconcileDocument']);
     Route::post('decide', [$workflow, 'decide']);
-    Route::get('enrollments', [\App\Http\Controllers\Api\AdmissionEnrollmentController::class, 'index']);
-    Route::post('enrollments/dispatch', [\App\Http\Controllers\Api\AdmissionEnrollmentController::class, 'dispatch']);
-    Route::get('enrollments/export', [\App\Http\Controllers\Api\AdmissionEnrollmentController::class, 'export']);
+    Route::get('enrollments', [AdmissionEnrollmentController::class, 'index']);
+    Route::post('enrollments/dispatch', [AdmissionEnrollmentController::class, 'dispatch']);
+    Route::get('enrollments/export', [AdmissionEnrollmentController::class, 'export']);
     Route::post('promote', [$workflow, 'promote']);
     Route::post('renew-invitation', [$workflow, 'renewInvitation']);
     Route::post('slots', [$appointments, 'createSlot']);
@@ -75,8 +82,8 @@ Route::prefix('admissions/workflow')->middleware(['auth:sanctum', 'institution.c
     Route::get('scan/{token}', [$appointments, 'scan']);
     Route::post('scan/{token}/check-in', [$appointments, 'checkIn']);
     Route::get('daily', [$appointments, 'daily']);
-    Route::get('list-pdf', [\App\Http\Controllers\Api\AdmissionWorkflowPdfController::class, 'list']);
-    Route::get('appointment-labels', [\App\Http\Controllers\Api\AdmissionWorkflowPdfController::class, 'appointmentLabels']);
+    Route::get('list-pdf', [AdmissionWorkflowPdfController::class, 'list']);
+    Route::get('appointment-labels', [AdmissionWorkflowPdfController::class, 'appointmentLabels']);
 });
 
 Route::prefix('v1/auth')->group(function () {

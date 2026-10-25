@@ -79,7 +79,9 @@ class FiliereController extends Controller
     public function update(Request $request, Filiere $filiere): JsonResponse
     {
         abort_unless((int) $filiere->institution_id === (int) $request->user()->institution_id, 403);
-        if ($request->exists('type') && $request->input('type') !== $filiere->type) $this->authorizeTuitionClassification($request);
+        if ($request->exists('type') && $request->input('type') !== $filiere->type) {
+            $this->authorizeTuitionClassification($request);
+        }
         $validated = $request->validate([
             'code' => 'sometimes|required|string|max:50|unique:filieres,code,'.$filiere->id,
             'name' => 'sometimes|required|string|max:255',
@@ -92,7 +94,9 @@ class FiliereController extends Controller
 
         $oldType = $filiere->type;
         $filiere = $this->filiereService->updateFiliere($filiere, $validated);
-        if ($oldType !== $filiere->type) activity()->causedBy($request->user())->performedOn($filiere)->withProperties(['previous_type' => $oldType, 'type' => $filiere->type])->log('course_tuition_classification_changed');
+        if ($oldType !== $filiere->type) {
+            activity()->causedBy($request->user())->performedOn($filiere)->withProperties(['previous_type' => $oldType, 'type' => $filiere->type])->log('course_tuition_classification_changed');
+        }
 
         return response()->json([
             'success' => true,

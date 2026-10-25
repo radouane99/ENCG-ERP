@@ -22,10 +22,18 @@ class AdmissionDeskController extends Controller
         $rows = $query->join('applications as a', 'a.id', '=', 't.application_id')->leftJoin('users as u', 'u.id', '=', 't.served_by')
             ->orderByRaw("CASE t.status WHEN 'serving' THEN 0 WHEN 'waiting' THEN 1 ELSE 2 END")->orderBy('t.number')
             ->select('t.*', 'a.first_name', 'a.last_name', 'a.cne', 'u.name as agent')->paginate(20);
+
         return response()->json(['tickets' => $rows, 'counts' => $counts, 'current_user_id' => $request->user()->id,
             'can_release_other' => $request->user()->hasAnyRole(['super-admin', 'admin', 'institution-admin', 'director'])]);
     }
 
-    public function arrive(AdmissionDeskRequest $request, ManageAdmissionDeskAction $action) { return response()->json($action->arrive($request)); }
-    public function transition(AdmissionDeskRequest $request, int $ticket, ManageAdmissionDeskAction $action) { return response()->json($action->transition($request, $ticket)); }
+    public function arrive(AdmissionDeskRequest $request, ManageAdmissionDeskAction $action)
+    {
+        return response()->json($action->arrive($request));
+    }
+
+    public function transition(AdmissionDeskRequest $request, int $ticket, ManageAdmissionDeskAction $action)
+    {
+        return response()->json($action->transition($request, $ticket));
+    }
 }

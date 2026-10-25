@@ -3,21 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Domain\AI\Services\GroundedAiService;
-use App\Domain\Student\Models\StudentDossierAuditLog;
 use App\Http\Controllers\Controller;
-use App\Models\AcademicYear;
-use App\Models\AdmissionCampaign;
-use App\Models\Application;
-use App\Models\Department;
-use App\Models\Filiere;
-use App\Models\Institution;
-use App\Models\Student;
-use App\Models\User;
 use App\Services\Admissions\TafemQualityReportService;
-use App\Support\TemporaryPassword;
+use App\Support\AdmissionAccess;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class TafemMinistryImportController extends Controller
@@ -32,7 +22,7 @@ class TafemMinistryImportController extends Controller
 
     public function aiReview(GroundedAiService $groundedAi, TafemQualityReportService $quality): JsonResponse
     {
-        \App\Support\AdmissionAccess::review(request());
+        AdmissionAccess::review(request());
         $report = $quality->build(false);
         $copy = $groundedAi->explain($report, 'tafem_review');
 
@@ -59,5 +49,4 @@ class TafemMinistryImportController extends Controller
             'Content-Disposition' => 'attachment; filename="modele_import_admis_ministere_tafem.csv"',
         ]);
     }
-
 }

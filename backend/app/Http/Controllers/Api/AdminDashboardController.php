@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Api\Admin\TuitionFinanceController;
 use App\Http\Controllers\Controller;
 use App\Models\AbsenceJustification;
 use App\Models\Attendance;
@@ -17,7 +18,6 @@ use App\Models\Room;
 use App\Models\Student;
 use App\Models\StudentPathway;
 use App\Models\VacationContract;
-use App\Models\VacationPayment;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -298,12 +298,14 @@ class AdminDashboardController extends Controller
      */
     public function getFinanceStats(Request $request): JsonResponse
     {
-        return app(\App\Http\Controllers\Api\Admin\TuitionFinanceController::class)->stats($request);
+        return app(TuitionFinanceController::class)->stats($request);
     }
+
     public function getActivityLogs(Request $request): JsonResponse
     {
         abort_unless($request->user()->can('audit.view') || $request->user()->hasAnyRole(['super-admin', 'institution-admin', 'director']), 403);
         $rows = AuditLog::latest()->limit(200)->get();
+
         return response()->json(['success' => true, 'cndp_status' => 'NOT_CERTIFIED', 'cndp_declaration_number' => null,
             'total_logs_count' => AuditLog::count(), 'hash_chain_integrity' => 'NOT_CHECKED', 'data' => $rows->map(fn ($l) => [
                 'id' => $l->id, 'user' => $l->user_name, 'email' => $l->user_email, 'role' => $l->user_role, 'action' => $l->action,

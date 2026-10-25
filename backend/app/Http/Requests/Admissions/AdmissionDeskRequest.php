@@ -7,7 +7,10 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class AdmissionDeskRequest extends FormRequest
 {
-    public function authorize(): bool { return AdmissionAccess::staff($this->user()); }
+    public function authorize(): bool
+    {
+        return AdmissionAccess::staff($this->user());
+    }
 
     public function rules(): array
     {

@@ -108,6 +108,31 @@ test.describe('Workflow complet des examens', () => {
     expect(saved).toBe(1)
   })
 
+  test('la reprogrammation exige un motif et une confirmation et conserve un refus serveur', async ({ page }) => {
+    await admin(page)
+    let attempts = 0
+    const exam = { id: 8, exam_session_id: 3, room_id: 6, room: { name: 'Salle synthétique' }, exam_date: '2027-01-12', start_time: '08:30:00', duration_minutes: 120, planning_revision: 'a'.repeat(64) }
+    await page.route(url => url.pathname === '/api/exam-planning/8/details', route => route.fulfill(json({ data: { exam, seatings: [{ status: 'sent', is_present: null }], surveillances: [], incidents: [] } })))
+    await page.route(url => url.pathname === '/api/rooms', route => route.fulfill(json({ data: [{ id: 6, name: 'Salle synthétique' }] })))
+    await page.route(url => url.pathname === '/api/exam-planning/8/reschedule', route => {
+      attempts++
+      expect(route.request().method()).toBe('POST')
+      expect(route.request().postDataJSON()).toMatchObject({ reason: 'Salle devenue indisponible.', planning_revision: 'a'.repeat(64) })
+      return route.fulfill({ ...json({ message: 'Un surveillant est indisponible sur le nouveau créneau.' }), status: 409 })
+    })
+    await page.goto('/admin/exams/8/edit')
+    await page.getByLabel('Reprogrammer et réémettre les convocations', { exact: true }).check()
+    const submit = page.getByRole('button', { name: 'Reprogrammer et réémettre', exact: true })
+    await expect(submit).toBeDisabled()
+    await page.getByLabel('Motif de reprogrammation', { exact: true }).fill('Salle devenue indisponible.')
+    await expect(submit).toBeDisabled()
+    await page.getByLabel('Je confirme le renouvellement des convocations et le suivi des emails.', { exact: true }).check()
+    await submit.click()
+    await expect(page.getByText('Un surveillant est indisponible sur le nouveau créneau.', { exact: true })).toBeVisible()
+    await expect(page.getByLabel('Motif de reprogrammation', { exact: true })).toHaveValue('Salle devenue indisponible.')
+    expect(attempts).toBe(1)
+  })
+
   test('un ancien droit de rattrapage exige un choix explicite et une référence avant rattachement', async ({ page }) => {
     await admin(page)
     let reconciled = false

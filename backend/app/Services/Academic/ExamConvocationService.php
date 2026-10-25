@@ -9,15 +9,12 @@ use App\Models\ExamIncident;
 use App\Models\ExamSeating;
 use App\Models\ExamSession;
 use App\Models\ExamSurveillance;
-use App\Models\Group;
-use App\Models\Professor;
 use App\Models\Room;
 use App\Models\Student;
 use App\Models\StudentRegistration;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -73,9 +70,15 @@ class ExamConvocationService
         // A retry must keep printed QR codes, room allocations and seat numbers stable.
         foreach ($students as $index => $student) {
             $seat = ExamSeating::firstOrNew(['exam_id' => $examId, 'student_id' => $student->id]);
-            if (! $seat->exists) { $seat->fill(['room_id' => $defaultRoomId, 'seat_number' => $index + 1]); }
-            if (! $seat->qr_token) { $seat->qr_token = Str::uuid()->toString(); }
-            if ($seat->isDirty()) { $seat->save(); }
+            if (! $seat->exists) {
+                $seat->fill(['room_id' => $defaultRoomId, 'seat_number' => $index + 1]);
+            }
+            if (! $seat->qr_token) {
+                $seat->qr_token = Str::uuid()->toString();
+            }
+            if ($seat->isDirty()) {
+                $seat->save();
+            }
         }
 
         ExamSurveillance::where('exam_id', $examId)
@@ -99,6 +102,7 @@ class ExamConvocationService
     {
         $ids = StudentRegistration::where('group_id', $exam->group_id)->where('academic_year_id', $exam->examSession->academic_year_id)->pluck('student_id');
         $ids = app(ExamWorkflowGuard::class)->eligibleCandidates($exam->examSession, $exam->module_id, $ids);
+
         return $this->orderStudentsForExam($exam->id, Student::whereIn('id', $ids)->get());
     }
 
@@ -573,6 +577,7 @@ class ExamConvocationService
         $seatings = $rawSeatings->map(function ($seat) {
             $seat->cne = $seat->student?->cne ?? '—';
             $seat->student_name = $seat->student?->user?->name ?? '—';
+
             return $seat;
         })->sortBy('seat_number')->values();
 

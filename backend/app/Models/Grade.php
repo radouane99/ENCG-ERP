@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\Academic\DeliberationSealService;
 use App\Traits\Auditable;
 use App\Traits\HasValidationWorkflow;
 use App\Traits\OptimisticLocking;
@@ -9,6 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOneThrough;
+use Illuminate\Support\Facades\DB;
 
 class Grade extends Model
 {
@@ -18,9 +20,12 @@ class Grade extends Model
 
     public function save(array $options = [])
     {
-        return \Illuminate\Support\Facades\DB::transaction(function () use ($options) {
+        return DB::transaction(function () use ($options) {
             $assessment = Assessment::withoutGlobalScopes()->find($this->assessment_id);
-            if ($assessment && (!$this->exists || $this->isDirty(['value', 'absent', 'student_id', 'assessment_id']))) app(\App\Services\Academic\DeliberationSealService::class)->assertModuleOpen((int) $assessment->module_id, (int) $this->student_id, (int) $assessment->academic_year_id);
+            if ($assessment && (! $this->exists || $this->isDirty(['value', 'absent', 'student_id', 'assessment_id']))) {
+                app(DeliberationSealService::class)->assertModuleOpen((int) $assessment->module_id, (int) $this->student_id, (int) $assessment->academic_year_id);
+            }
+
             return parent::save($options);
         });
     }

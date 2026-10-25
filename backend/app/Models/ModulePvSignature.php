@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToAcademicYear;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ModulePvSignature extends Model
 {
-    use \App\Models\Concerns\BelongsToAcademicYear, HasFactory;
+    use BelongsToAcademicYear, HasFactory;
 
     protected $guarded = ['id'];
 

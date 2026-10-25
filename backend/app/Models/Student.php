@@ -359,5 +359,9 @@ class Student extends Model
 
         return $this->where('student_number', $value)->orWhere('cne', $value)->first();
     }
-    public function mobilityChoices(): \Illuminate\Database\Eloquent\Relations\HasMany { return $this->hasMany(StudentMobilityChoice::class); }
+
+    public function mobilityChoices(): HasMany
+    {
+        return $this->hasMany(StudentMobilityChoice::class);
+    }
 }

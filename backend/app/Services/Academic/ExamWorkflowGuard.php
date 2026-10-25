@@ -5,7 +5,10 @@ namespace App\Services\Academic;
 use App\Models\Exam;
 use App\Models\ExamSession;
 use App\Models\ExamSurveillance;
+use App\Models\ResitEligibility;
 use App\Models\User;
+use Carbon\Carbon;
+use Illuminate\Support\Collection;
 
 /** Shared invariants for the legacy and current exam HTTP entry points. */
 class ExamWorkflowGuard
@@ -60,16 +63,22 @@ class ExamWorkflowGuard
     public function allowsProctor(User $user, Exam $exam, ?array $availability = null): bool
     {
         $profile = $user->professor?->id;
-        if (! $profile) { return true; }
-        $start = \Carbon\Carbon::parse($exam->exam_date->toDateString().' '.$exam->start_time);
+        if (! $profile) {
+            return true;
+        }
+        $start = Carbon::parse($exam->exam_date->toDateString().' '.$exam->start_time);
         $end = $start->copy()->addMinutes($exam->duration_minutes);
+
         return ProfessorAvailabilityService::allows($availability ?? ProfessorAvailabilityService::map($exam->examSession->academic_year_id), $profile, $start->dayOfWeekIso, $start->format('H:i:s'), $end->format('H:i:s'));
     }
 
-    public function eligibleCandidates(ExamSession $session, int $moduleId, \Illuminate\Support\Collection $studentIds): \Illuminate\Support\Collection
+    public function eligibleCandidates(ExamSession $session, int $moduleId, Collection $studentIds): Collection
     {
-        if (! in_array(strtolower($session->type), ['rattrapage', 'resit'], true)) { return $studentIds; }
-        return \App\Models\ResitEligibility::where('module_id', $moduleId)->where('is_eligible', true)->whereIn('student_id', $studentIds)
+        if (! in_array(strtolower($session->type), ['rattrapage', 'resit'], true)) {
+            return $studentIds;
+        }
+
+        return ResitEligibility::where('module_id', $moduleId)->where('is_eligible', true)->whereIn('student_id', $studentIds)
             ->where('academic_year_id', $session->academic_year_id)
             ->distinct()->pluck('student_id');
     }

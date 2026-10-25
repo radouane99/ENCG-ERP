@@ -1,3 +1,7 @@
 <?php
+
 namespace Tests\Feature;
-class AdministrationAccessRegressionTest extends \Tests\Audit\AdministrationDeepScanTest {}
+
+use Tests\Audit\AdministrationDeepScanTest;
+
+class AdministrationAccessRegressionTest extends AdministrationDeepScanTest {}

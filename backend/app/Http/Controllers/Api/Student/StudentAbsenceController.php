@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Student;
 use App\Http\Controllers\Controller;
 use App\Models\AcademicYear;
 use App\Models\Attendance;
+use App\Services\Academic\AcademicContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -26,7 +27,7 @@ class StudentAbsenceController extends Controller
             'absenceJustification.media',
         ])
             ->where('student_id', $student->id)
-            ->whereHas('attendanceSession', fn ($q) => $q->whereIn('status', ['completed', 'closed'])->where('academic_year_id', \App\Services\Academic\AcademicContext::yearId()))
+            ->whereHas('attendanceSession', fn ($q) => $q->whereIn('status', ['completed', 'closed'])->where('academic_year_id', AcademicContext::yearId()))
             ->latest()
             ->get();
 

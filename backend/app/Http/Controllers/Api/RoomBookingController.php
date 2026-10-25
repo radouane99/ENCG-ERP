@@ -4,21 +4,24 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Mail\ScheduleChangeNotificationMail;
+use App\Models\AcademicYear;
 use App\Models\Module;
 use App\Models\Room;
 use App\Models\RoomBooking;
 use App\Models\Schedule;
 use App\Models\Student;
+use App\Models\User;
 use App\Notifications\RattrapageSessionScheduledNotification;
+use App\Services\Academic\AcademicContext;
 use App\Services\Academic\RoomAvailabilityService;
 use App\Services\Academic\TimetableRoomGuard;
 use App\Services\Documents\OfficialPdfFactory;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\DB;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class RoomBookingController extends Controller
@@ -67,7 +70,7 @@ class RoomBookingController extends Controller
 
         $room = Room::where('institution_id', $user->institution_id)->findOrFail($validated['room_id']);
         $validated['booked_by'] = $canApprove ? ($validated['booked_by'] ?? $user->id) : $user->id;
-        \App\Models\User::where('institution_id', $user->institution_id)->findOrFail($validated['booked_by']);
+        User::where('institution_id', $user->institution_id)->findOrFail($validated['booked_by']);
         $validated['room_name'] = $room->name;
         $validated['room_name'] = $validated['room_name']
             ?? Room::query()->whereKey($validated['room_id'])->value('name')
@@ -85,9 +88,10 @@ class RoomBookingController extends Controller
         }
 
         $booking = DB::transaction(function () use ($validated) {
-            \App\Models\AcademicYear::whereKey(\App\Services\Academic\AcademicContext::yearId())->lockForUpdate()->first();
+            AcademicYear::whereKey(AcademicContext::yearId())->lockForUpdate()->first();
             Room::whereKey($validated['room_id'])->lockForUpdate()->firstOrFail();
             abort_if($this->hasConflict($validated['room_id'], $validated['start_time'], $validated['end_time']), 409, 'Conflit détecté : salle indisponible sur ce créneau.');
+
             return RoomBooking::create($validated);
         });
 
@@ -200,7 +204,7 @@ class RoomBookingController extends Controller
         }
 
         DB::transaction(function () use ($roomBooking, $validated) {
-            \App\Models\AcademicYear::whereKey(\App\Services\Academic\AcademicContext::yearId())->lockForUpdate()->first();
+            AcademicYear::whereKey(AcademicContext::yearId())->lockForUpdate()->first();
             Room::whereKey($roomBooking->room_id)->lockForUpdate()->firstOrFail();
             $roomBooking->refresh();
             if (in_array($validated['status'] ?? '', ['pending', 'approved'], true)) {

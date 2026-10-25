@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Book;
 use App\Models\BookCopy;
 use App\Models\Borrowing;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -26,7 +27,7 @@ class LibraryController extends Controller
             ->orWhere(function ($q) {
                 $q->where('status', 'borrowed')->where('due_date', '<', now()->toDateString());
             })
-            )->count();
+        )->count();
 
         return response()->json([
             'success' => true,
@@ -280,7 +281,7 @@ class LibraryController extends Controller
 
         $borrowing = DB::transaction(function () use ($validated, $request) {
             $book = Book::where('institution_id', $request->user()->institution_id)->whereKey($validated['book_id'])->lockForUpdate()->firstOrFail();
-            \App\Models\User::where('institution_id', $request->user()->institution_id)->whereKey($validated['user_id'])->firstOrFail();
+            User::where('institution_id', $request->user()->institution_id)->whereKey($validated['user_id'])->firstOrFail();
             abort_if(Borrowing::where('user_id', $validated['user_id'])->whereIn('status', ['borrowed', 'overdue'])->whereHas('bookCopy', fn ($q) => $q->where('book_id', $book->id))->exists(), 422, 'Un emprunt est déjà en cours pour cet ouvrage.');
             $copy = BookCopy::where('book_id', $book->id)->where('is_available', true)->orderBy('id')->lockForUpdate()->first();
             abort_unless($copy, 422, 'Aucun exemplaire disponible.');

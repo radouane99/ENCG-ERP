@@ -7,6 +7,7 @@ use App\Models\AdmissionCampaign;
 use App\Models\Application;
 use App\Models\Department;
 use App\Models\Filiere;
+use App\Models\Group;
 use App\Models\Institution;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -17,13 +18,15 @@ class AdmissionWorkflowE2eSeeder extends Seeder
 {
     public function run(): void
     {
-        if (! app()->environment('testing') || ! str_ends_with((string) DB::connection()->getDatabaseName(), '_test')) throw new \RuntimeException('Dedicated testing database required.');
+        if (! app()->environment('testing') || ! str_ends_with((string) DB::connection()->getDatabaseName(), '_test')) {
+            throw new \RuntimeException('Dedicated testing database required.');
+        }
         Institution::firstOrCreate(['id' => 1], ['name' => 'ENCG Test', 'code' => 'ENCG-TEST', 'slug' => 'encg-test']);
         $year = AcademicYear::firstOrCreate(['institution_id' => 1, 'start_year' => 2026], ['label' => '2026/2027', 'end_year' => 2027,
             'start_date' => '2026-09-01', 'end_date' => '2027-06-30', 'is_current' => true]);
         $department = Department::firstOrCreate(['institution_id' => 1, 'code' => 'E2E'], ['name' => 'Test department']);
         $filiere = Filiere::firstOrCreate(['institution_id' => 1, 'code' => 'E2E-TC'], ['department_id' => $department->id, 'name' => 'Tronc commun test', 'duration_years' => 2, 'type' => 'grande_ecole']);
-        \App\Models\Group::firstOrCreate(['academic_year_id' => $year->id, 'filiere_id' => $filiere->id, 'semester_number' => 1, 'name' => 'E2E-S1-G1'], ['capacity' => 10]);
+        Group::firstOrCreate(['academic_year_id' => $year->id, 'filiere_id' => $filiere->id, 'semester_number' => 1, 'name' => 'E2E-S1-G1'], ['capacity' => 10]);
         $campaign = AdmissionCampaign::create(['institution_id' => 1, 'academic_year_id' => $year->id, 'filiere_id' => $filiere->id,
             'name' => 'Campagne synthétique E2E', 'status' => 'open', 'open_date' => now()->subMonth(), 'close_date' => now()->addMonth(), 'target_capacity' => 10]);
         $user = User::firstOrProvision(['email' => 'e2e.candidate@example.test'], ['name' => 'Synthetic Candidate', 'first_name' => 'Synthetic',

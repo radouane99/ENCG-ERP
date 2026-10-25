@@ -1,7 +1,14 @@
 <?php
+
 namespace Database\Seeders;
 
-use App\Models\{AcademicYear, Filiere, Institution, Student, StudentPathway, StudentRegistration, User};
+use App\Models\AcademicYear;
+use App\Models\Filiere;
+use App\Models\Institution;
+use App\Models\Student;
+use App\Models\StudentPathway;
+use App\Models\StudentRegistration;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
@@ -10,7 +17,9 @@ class RenewalCalendarE2eSeeder extends Seeder
 {
     public function run(): void
     {
-        if (! app()->environment('testing') || ! str_ends_with(DB::connection()->getDatabaseName(), '_test')) throw new \RuntimeException('Dedicated testing database required.');
+        if (! app()->environment('testing') || ! str_ends_with(DB::connection()->getDatabaseName(), '_test')) {
+            throw new \RuntimeException('Dedicated testing database required.');
+        }
         Institution::firstOrCreate(['id' => 1], ['name' => 'ENCG Test', 'code' => 'ENCG-TEST', 'slug' => 'encg-test']);
         $year = AcademicYear::create(['institution_id' => 1, 'label' => '2026/2027', 'start_year' => 2026, 'end_year' => 2027, 'start_date' => '2026-09-01', 'end_date' => '2027-06-30', 'is_current' => true, 'is_locked' => false]);
         $filiere = Filiere::create(['institution_id' => 1, 'name' => 'Formation initiale synthétique', 'code' => 'E2E-RENEW', 'type' => 'grande_ecole', 'duration_years' => 5, 'is_active' => true]);

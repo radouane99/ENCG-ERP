@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers\Api\Academic;
 
+use App\Actions\Internship\ManageConventionAction;
 use App\Http\Controllers\Controller;
+use App\Models\AcademicYear;
 use App\Models\Internship;
 use App\Models\Student;
+use App\Support\InternshipAccess;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -13,9 +16,11 @@ class InternshipConventionController extends Controller
 {
     public function adminIndex(Request $request)
     {
-        abort_unless(\App\Support\InternshipAccess::staff($request->user()) || $request->user()->hasRole('scolarite'), 403);
+        abort_unless(InternshipAccess::staff($request->user()) || $request->user()->hasRole('scolarite'), 403);
+
         return response()->json(['success' => true, 'data' => Internship::whereHas('student', fn ($q) => $q->where('institution_id', $request->user()->institution_id))->with('student.user', 'supervisor.user')->latest()->paginate(50)]);
     }
+
     /**
      * Liste des conventions de stage de l'étudiant connecté.
      */
@@ -64,28 +69,36 @@ class InternshipConventionController extends Controller
             'insurance_policy_number' => 'nullable|string|max:100',
         ]);
 
-        $internship = app(\App\Actions\Internship\ManageConventionAction::class)->create($student, $validated);
+        $internship = app(ManageConventionAction::class)->create($student, $validated);
+
         return response()->json(['success' => true, 'message' => 'Demande de convention enregistrée ; assurance et visa en attente de contrôle.', 'data' => $internship], 201);
     }
+
     public function reviewConvention(Request $request, int $id)
     {
         $data = $request->validate(['insurance_policy_number' => 'required|string|max:100', 'insurance_company' => 'required|string|max:180',
             'insurance_verified' => 'required|accepted', 'reason' => 'required|string|min:10|max:2000']);
-        return response()->json(['success' => true] + app(\App\Actions\Internship\ManageConventionAction::class)->approve($request->user(), $id, $data));
+
+        return response()->json(['success' => true] + app(ManageConventionAction::class)->approve($request->user(), $id, $data));
     }
+
     public function companyPreview(string $token)
     {
-        $s = app(\App\Actions\Internship\ManageConventionAction::class)->resolveToken($token);
+        $s = app(ManageConventionAction::class)->resolveToken($token);
+
         return response()->json(['reference' => $s->convention_ref, 'company' => $s->company_name, 'start_date' => $s->start_date->toDateString(), 'end_date' => $s->end_date->toDateString()]);
     }
+
     public function publicSignCompany(Request $request, string $token): JsonResponse
     {
         // Validate the invitation before any decision, including legacy/cancelled links.
-        app(\App\Actions\Internship\ManageConventionAction::class)->resolveToken($token);
+        app(ManageConventionAction::class)->resolveToken($token);
         $data = $request->validate(['name' => 'required|string|min:3|max:150', 'email' => 'required|email|max:255', 'consent' => 'required|accepted']);
-        $s = app(\App\Actions\Internship\ManageConventionAction::class)->sign($token, $data);
+        $s = app(ManageConventionAction::class)->sign($token, $data);
+
         return response()->json(['success' => true, 'message' => 'Acceptation de l’entreprise enregistrée.', 'reference' => $s->convention_ref]);
     }
+
     public function downloadConventionPdf(Request $request, int $id)
     {
         $internship = Internship::with(['student.user', 'student.filiere'])->findOrFail($id);
@@ -106,7 +119,7 @@ class InternshipConventionController extends Controller
             'internship' => $internship,
             'student' => $student,
             'conventionRef' => $trackingCode,
-            'academicYear' => (string) (\App\Models\AcademicYear::find($internship->academic_year_id)?->label ?? 'Non renseignée'),
+            'academicYear' => (string) (AcademicYear::find($internship->academic_year_id)?->label ?? 'Non renseignée'),
             'startDateStr' => $internship->start_date?->format('d/m/Y') ?? 'Non renseignée',
             'endDateStr' => $internship->end_date?->format('d/m/Y') ?? 'Non renseignée',
             'qrBase64' => '',

@@ -3,6 +3,7 @@
 namespace App\OCR\Engines;
 
 use App\OCR\Contracts\OcrEngineInterface;
+use App\OCR\OcrProcess;
 use App\OCR\OcrResult;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
@@ -32,7 +33,7 @@ class PdfTextEngine implements OcrEngineInterface
 
         // Try with UTF-8 encoding
         $command = sprintf('pdftotext -layout -enc UTF-8 %s - 2>/dev/null', escapeshellarg($filePath));
-        \App\OCR\OcrProcess::run($command, $output, $returnVar);
+        OcrProcess::run($command, $output, $returnVar);
 
         $text = implode("\n", $output);
 
@@ -40,7 +41,7 @@ class PdfTextEngine implements OcrEngineInterface
         if ($returnVar !== 0 || empty(trim($text))) {
             $output = [];
             $command = sprintf('pdftotext -layout %s - 2>/dev/null', escapeshellarg($filePath));
-            \App\OCR\OcrProcess::run($command, $output, $returnVar);
+            OcrProcess::run($command, $output, $returnVar);
             $text = implode("\n", $output);
         }
 

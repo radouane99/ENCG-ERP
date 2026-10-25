@@ -2,8 +2,9 @@
 
 require __DIR__.'/../../vendor/autoload.php';
 $app = require __DIR__.'/../../bootstrap/app.php';
-$app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+$app->make(Kernel::class)->bootstrap();
 
+use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -22,4 +23,6 @@ try {
         'legacy_resit_without_year' => DB::table('resit_eligibilities')->whereNull('academic_year_id')->count(),
         'pending_exam_incidents' => DB::table('exam_incidents')->whereIn('exam_id', $exams)->whereNotIn('status', ['resolved', 'dismissed'])->count(),
     ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE).PHP_EOL;
-} finally { DB::statement('ROLLBACK'); }
+} finally {
+    DB::statement('ROLLBACK');
+}

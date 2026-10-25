@@ -5,9 +5,11 @@ use App\Http\Controllers\Api\AbsenceJustificationController;
 use App\Http\Controllers\Api\Academic\DiplomaSupplementController;
 use App\Http\Controllers\Api\Academic\GradeAppealController;
 use App\Http\Controllers\Api\Academic\InternshipConventionController;
+use App\Http\Controllers\Api\Academic\PvWorkflowController;
 use App\Http\Controllers\Api\Academic\SpecialtyOrientationController;
 use App\Http\Controllers\Api\AcademicReportController;
 use App\Http\Controllers\Api\AcademicYearController;
+use App\Http\Controllers\Api\Admin\AcademicIntegrityController;
 use App\Http\Controllers\Api\Admin\AdminAbsenceController;
 use App\Http\Controllers\Api\Admin\AdminAlertsController;
 use App\Http\Controllers\Api\Admin\AdminBlockchainController;
@@ -21,7 +23,9 @@ use App\Http\Controllers\Api\Admin\AdminTextbookController;
 use App\Http\Controllers\Api\Admin\AuditForensicController;
 use App\Http\Controllers\Api\Admin\InstitutionSettingsController;
 use App\Http\Controllers\Api\Admin\LibraryController as AdminLibraryController;
+use App\Http\Controllers\Api\Admin\MobilityPartnerController;
 use App\Http\Controllers\Api\Admin\StudentChatbotController;
+use App\Http\Controllers\Api\Admin\TuitionFinanceController;
 use App\Http\Controllers\Api\AdminAiController;
 use App\Http\Controllers\Api\AdminAnalyticsController;
 use App\Http\Controllers\Api\AdminDashboardController;
@@ -45,7 +49,6 @@ use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\ConvocationController;
 use App\Http\Controllers\Api\DeliberationController;
 use App\Http\Controllers\Api\DepartmentController;
-use App\Http\Controllers\Api\DisciplineController;
 use App\Http\Controllers\Api\DocumentCenterController;
 use App\Http\Controllers\Api\DocumentController;
 use App\Http\Controllers\Api\ExamIncidentController;
@@ -75,7 +78,6 @@ use App\Http\Controllers\Api\ProfessorController;
 use App\Http\Controllers\Api\ProfessorSubstitutionController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\RecommendationLetterController;
-use App\Http\Controllers\Api\ReinscriptionController;
 use App\Http\Controllers\Api\ReservisteController;
 use App\Http\Controllers\Api\RetakeController;
 use App\Http\Controllers\Api\RoomController;
@@ -114,11 +116,11 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:admin|super-admi
     // Dashboard Stats & Ministry Audit Reports
     Route::get('/dashboard/stats', [AdminDashboardController::class, 'getStats']);
     Route::get('/finance/stats', [AdminDashboardController::class, 'getFinanceStats']);
-    Route::get('/admin/finance/options', [\App\Http\Controllers\Api\Admin\TuitionFinanceController::class, 'options']);
-    Route::post('/admin/finance/invoices', [\App\Http\Controllers\Api\Admin\TuitionFinanceController::class, 'store']);
-    Route::post('/admin/finance/payments/{id}/validate', [\App\Http\Controllers\Api\Admin\TuitionFinanceController::class, 'validatePayment']);
-    Route::post('/admin/finance/reminders', [\App\Http\Controllers\Api\Admin\TuitionFinanceController::class, 'remind']);
-    Route::post('/admin/finance/invoices/{id}/reminder', [\App\Http\Controllers\Api\Admin\TuitionFinanceController::class, 'remind']);
+    Route::get('/admin/finance/options', [TuitionFinanceController::class, 'options']);
+    Route::post('/admin/finance/invoices', [TuitionFinanceController::class, 'store']);
+    Route::post('/admin/finance/payments/{id}/validate', [TuitionFinanceController::class, 'validatePayment']);
+    Route::post('/admin/finance/reminders', [TuitionFinanceController::class, 'remind']);
+    Route::post('/admin/finance/invoices/{id}/reminder', [TuitionFinanceController::class, 'remind']);
     Route::get('/reports/ministry-audit', [AdminDashboardController::class, 'generateMinistryReport']);
 
     // Admin Custom Routes
@@ -273,7 +275,6 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:admin|super-admi
     Route::get('/admin/apogee/export-csv', [ApogeeEngineController::class, 'exportApogeeCsv']);
     Route::get('/admin/apogee/preview', [ApogeeEngineController::class, 'getApogeePreview']);
 
-
     Route::prefix('internships')->group(function () {
         Route::get('/', [AdminInternshipController::class, 'index']);
         Route::put('/{id}/status', [AdminInternshipController::class, 'updateStatus']);
@@ -296,9 +297,9 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:admin|super-admi
     Route::post('student-cards/bulk', [StudentCardController::class, 'bulkStore']);
     Route::get('/groups/{id}/students', [GroupController::class, 'getGroupStudents']);
     Route::post('/groups/{id}/assign-delegate', [GroupController::class, 'assignDelegate']);
-    Route::get('/admin/academic-integrity', [\App\Http\Controllers\Api\Admin\AcademicIntegrityController::class, 'index']);
-    Route::patch('/admin/academic-integrity/issues/{issueId}/identity', [\App\Http\Controllers\Api\Admin\AcademicIntegrityController::class, 'resolveIdentity']);
-    Route::patch('/admin/academic-integrity/assessments/{id}', [\App\Http\Controllers\Api\Admin\AcademicIntegrityController::class, 'resolve']);
+    Route::get('/admin/academic-integrity', [AcademicIntegrityController::class, 'index']);
+    Route::patch('/admin/academic-integrity/issues/{issueId}/identity', [AcademicIntegrityController::class, 'resolveIdentity']);
+    Route::patch('/admin/academic-integrity/assessments/{id}', [AcademicIntegrityController::class, 'resolve']);
     Route::post('/groups/dispatch-students', [GroupController::class, 'dispatchStudentsToGroups']);
     Route::post('/groups/dispatch-subgroups', [GroupController::class, 'dispatchSubGroups']);
     Route::apiResource('groups', GroupController::class)->except(['show']);
@@ -363,8 +364,8 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:admin|super-admi
     Route::get('assessments/{assessment}/grades', [GradeController::class, 'getForAssessment']);
     Route::post('assessments/{assessment}/grades', [GradeController::class, 'storeBulk']);
     Route::get('academic/deliberations', [DeliberationController::class, 'index']);
-    Route::get('academic/pv-workflow/context', [\App\Http\Controllers\Api\Academic\PvWorkflowController::class, 'context']);
-    Route::post('academic/pv-workflow/meeting', [\App\Http\Controllers\Api\Academic\PvWorkflowController::class, 'schedule']);
+    Route::get('academic/pv-workflow/context', [PvWorkflowController::class, 'context']);
+    Route::post('academic/pv-workflow/meeting', [PvWorkflowController::class, 'schedule']);
 
     Route::get('admin/academic/deliberations', [DeliberationController::class, 'index']);
     Route::match(['get', 'post'], 'academic/deliberate', [DeliberationController::class, 'run']);
@@ -449,9 +450,9 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:admin|super-admi
     Route::post('schedules/ai-simulation', [ScheduleController::class, 'generateAiSimulation']);
     Route::get('mobility/ranking', [StudentMobilityController::class, 'calculateMeritRanking']);
     Route::get('admin/mobility/ranking', [StudentMobilityController::class, 'calculateMeritRanking']);
-    Route::get('admin/mobility-partners', [\App\Http\Controllers\Api\Admin\MobilityPartnerController::class, 'index']);
-    Route::post('admin/mobility-partners', [\App\Http\Controllers\Api\Admin\MobilityPartnerController::class, 'store']);
-    Route::put('admin/mobility-partners/{id}', [\App\Http\Controllers\Api\Admin\MobilityPartnerController::class, 'update']);
+    Route::get('admin/mobility-partners', [MobilityPartnerController::class, 'index']);
+    Route::post('admin/mobility-partners', [MobilityPartnerController::class, 'store']);
+    Route::put('admin/mobility-partners/{id}', [MobilityPartnerController::class, 'update']);
 
     // Admin AI Suite
     Route::prefix('ai')->group(function () {
@@ -551,6 +552,7 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:admin|super-admi
         Route::post('/custom-generate', [ExamPlanningController::class, 'autoGenerateBatch']);
         Route::post('/store', [ExamPlanningController::class, 'store']);
         Route::put('/{exam}/planning', [ExamPlanningController::class, 'updatePlanning']);
+        Route::post('/{exam}/reschedule', [ExamPlanningController::class, 'reschedule']);
         Route::post('/check-conflict', [ExamPlanningController::class, 'checkRoomConflict']);
 
         // New Convocations module logic

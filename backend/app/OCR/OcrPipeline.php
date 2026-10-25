@@ -146,8 +146,11 @@ class OcrPipeline implements OcrPipelineInterface
     private function executeWithTimeout(callable $callback, int $timeout)
     {
         OcrProcess::budget($timeout);
-        try { return $callback(); }
-        finally { OcrProcess::reset(); }
+        try {
+            return $callback();
+        } finally {
+            OcrProcess::reset();
+        }
     }
 
     /**

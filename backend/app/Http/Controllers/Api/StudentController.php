@@ -351,6 +351,7 @@ class StudentController extends Controller
     public function getInscriptionStatusPublic(Request $request): JsonResponse
     {
         $request->validate(['cne' => 'required|string', 'cin' => 'required|string']);
+
         return app(AdmissionWorkflowController::class)->admissibility($request);
     }
 

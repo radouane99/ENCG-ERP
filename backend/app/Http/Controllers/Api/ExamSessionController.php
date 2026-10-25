@@ -3,23 +3,27 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\ExamSession;
 use App\Models\AcademicYear;
+use App\Models\ExamIncident;
+use App\Models\ExamSession;
 use App\Models\Institution;
 use App\Models\Semester;
+use App\Services\Academic\ExamSessionReadinessService;
 use App\Services\Academic\ExamWorkflowGuard;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class ExamSessionController extends Controller
 {
     public function readiness(ExamSession $examSession): JsonResponse
     {
         app(ExamWorkflowGuard::class)->manage();
-        return response()->json(['success' => true, 'data' => app(\App\Services\Academic\ExamSessionReadinessService::class)->inspect($examSession)]);
+
+        return response()->json(['success' => true, 'data' => app(ExamSessionReadinessService::class)->inspect($examSession)]);
     }
+
     /**
      * Liste des sessions d'examen.
      */
@@ -87,6 +91,7 @@ class ExamSessionController extends Controller
             if (! empty($validated['is_active'])) {
                 ExamSession::where('institution_id', $validated['institution_id'])->where('academic_year_id', $validated['academic_year_id'])->update(['is_active' => false]);
             }
+
             return ExamSession::create($validated);
         });
 
@@ -116,7 +121,7 @@ class ExamSessionController extends Controller
             'is_locked' => 'boolean',
         ]);
 
-        $examSession = DB::transaction(function () use ($examSession, $validated, $guard) {
+        $examSession = DB::transaction(function () use ($examSession, $validated) {
             Institution::whereKey($examSession->institution_id)->lockForUpdate()->firstOrFail();
             $session = ExamSession::whereKey($examSession->id)->lockForUpdate()->firstOrFail();
             if ($session->is_locked) {
@@ -126,7 +131,7 @@ class ExamSessionController extends Controller
             $this->validateContext($next);
             if (! empty($validated['is_locked'])) {
                 abort_if($session->exams()->where('is_locked', false)->exists(), 422, 'Clôturer tous les PV d’épreuve avant de verrouiller la session.');
-                abort_if(\App\Models\ExamIncident::whereHas('exam', fn ($q) => $q->where('exam_session_id', $session->id))->whereNotIn('status', ['resolved', 'dismissed'])->exists(), 422, 'Traiter les dossiers disciplinaires avant la clôture de session.');
+                abort_if(ExamIncident::whereHas('exam', fn ($q) => $q->where('exam_session_id', $session->id))->whereNotIn('status', ['resolved', 'dismissed'])->exists(), 422, 'Traiter les dossiers disciplinaires avant la clôture de session.');
                 $validated['is_active'] = false;
             }
             if ($session->exams()->exists()) {
@@ -140,6 +145,7 @@ class ExamSessionController extends Controller
                 ExamSession::where('institution_id', $session->institution_id)->where('academic_year_id', $next['academic_year_id'])->whereKeyNot($session->id)->update(['is_active' => false]);
             }
             $session->update($validated);
+
             return $session;
         });
 

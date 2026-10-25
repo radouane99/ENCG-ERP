@@ -13,6 +13,8 @@ use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\DocumentController;
 use App\Http\Controllers\Api\ExamPdfController;
 use App\Http\Controllers\Api\InternalApiController;
+use App\Http\Controllers\Api\InternshipConversationController;
+use App\Http\Controllers\Api\InternshipDocumentController;
 use App\Http\Controllers\Api\LmsCourseController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PdfExportController;
@@ -20,6 +22,8 @@ use App\Http\Controllers\Api\PilotageController;
 use App\Http\Controllers\Api\PrivacyController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\PublicVerificationController;
+use App\Http\Controllers\Api\ReinscriptionController;
+use App\Http\Controllers\Api\RenewalCampaignController;
 use App\Http\Controllers\Api\RoomBookingController;
 use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\StudentCardController;
@@ -58,6 +62,8 @@ Route::match(['get', 'post'], '/blockchain/public-verify', [AdminBlockchainContr
 Route::match(['get', 'post'], '/verify/blockchain', [AdminBlockchainController::class, 'verify']);
 
 Route::middleware(['auth:sanctum', 'institution.context'])->group(function () {
+    Route::get('/workspace/today', [\App\Http\Controllers\Api\OperationalWorkspaceController::class, 'index']);
+    Route::patch('/workspace/requests/{id}/followup', [\App\Http\Controllers\Api\OperationalWorkspaceController::class, 'assign']);
     Route::post('/broadcasting/auth', fn (Request $request) => Broadcast::auth($request));
     Route::match(['get', 'post'], '/exams/{examId}/pv-pdf', [ExamPdfController::class, 'pvExamen']);
     Route::get('/user', function (Request $request) {
@@ -195,17 +201,17 @@ Route::middleware(['auth:sanctum', 'institution.context'])->group(function () {
     Route::get('/incidents/{id}/decision-pdf', [PdfExportController::class, 'decisionDisciplinePdf']);
     // AI Chatbot Assistant (Accessible to all authenticated users)
     Route::post('/ai/chat', [AiChatController::class, 'chat']);
-    Route::get('/internships/{id}/messages', [\App\Http\Controllers\Api\InternshipConversationController::class, 'index']);
-    Route::post('/internships/{id}/messages', [\App\Http\Controllers\Api\InternshipConversationController::class, 'store']);
-    Route::get('/internship-documents/{id}/download', [\App\Http\Controllers\Api\InternshipDocumentController::class, 'download']);
-    Route::post('/internship-documents/{id}/review', [\App\Http\Controllers\Api\InternshipDocumentController::class, 'review']);
+    Route::get('/internships/{id}/messages', [InternshipConversationController::class, 'index']);
+    Route::post('/internships/{id}/messages', [InternshipConversationController::class, 'store']);
+    Route::get('/internship-documents/{id}/download', [InternshipDocumentController::class, 'download']);
+    Route::post('/internship-documents/{id}/review', [InternshipDocumentController::class, 'review']);
 });
 
 Route::middleware(['auth:sanctum', 'institution.context', 'role:admin|super-admin|institution-admin|director|scolarite|pedagogy_officer'])->group(function () {
-    Route::get('/admin/reinscriptions/stats', [\App\Http\Controllers\Api\ReinscriptionController::class, 'getAdminStats']);
-    Route::get('/admin/reinscriptions/campaign', [\App\Http\Controllers\Api\RenewalCampaignController::class, 'show']);
-    Route::put('/admin/reinscriptions/campaign', [\App\Http\Controllers\Api\RenewalCampaignController::class, 'update']);
-    Route::get('/admin/reinscriptions/export', [\App\Http\Controllers\Api\ReinscriptionController::class, 'exportRoster']);
-    Route::post('/admin/reinscriptions/{student}/physical-review', [\App\Http\Controllers\Api\ReinscriptionController::class, 'verifyPhysical']);
-    Route::post('/admin/reinscriptions/send-reminders', [\App\Http\Controllers\Api\ReinscriptionController::class, 'sendReminders']);
+    Route::get('/admin/reinscriptions/stats', [ReinscriptionController::class, 'getAdminStats']);
+    Route::get('/admin/reinscriptions/campaign', [RenewalCampaignController::class, 'show']);
+    Route::put('/admin/reinscriptions/campaign', [RenewalCampaignController::class, 'update']);
+    Route::get('/admin/reinscriptions/export', [ReinscriptionController::class, 'exportRoster']);
+    Route::post('/admin/reinscriptions/{student}/physical-review', [ReinscriptionController::class, 'verifyPhysical']);
+    Route::post('/admin/reinscriptions/send-reminders', [ReinscriptionController::class, 'sendReminders']);
 });

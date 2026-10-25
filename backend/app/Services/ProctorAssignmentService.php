@@ -8,6 +8,8 @@ use App\Models\ExamSurveillance;
 use App\Models\Professor;
 use App\Models\Room;
 use App\Models\User;
+use App\Services\Academic\ExamWorkflowGuard;
+use App\Services\Academic\ProfessorAvailabilityService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -67,11 +69,13 @@ class ProctorAssignmentService
         }
 
         return DB::transaction(function () use ($session) {
-            $guard = app(\App\Services\Academic\ExamWorkflowGuard::class);
+            $guard = app(ExamWorkflowGuard::class);
             $guard->manage();
             $locked = ExamSession::whereKey($session->id)->lockForUpdate()->firstOrFail();
             $guard->mutableSession($locked);
-            foreach ($session->exams as $exam) { $guard->mutablePlan($exam); }
+            foreach ($session->exams as $exam) {
+                $guard->mutablePlan($exam);
+            }
             // Sélection exhaustive : Professeurs Permanents, Vacataires et Doctorants surveillants
             $availableProfessors = User::where('institution_id', $session->institution_id)->where(function ($query) {
                 $query->whereHas('roles', fn ($q) => $q->whereIn('name', [
@@ -108,7 +112,7 @@ class ProctorAssignmentService
             $workloadMap = [];
             $dailyMap = [];
             $assignedCount = 0;
-            $availability = \App\Services\Academic\ProfessorAvailabilityService::map($session->academic_year_id);
+            $availability = ProfessorAvailabilityService::map($session->academic_year_id);
 
             foreach ($availableProfessors as $prof) {
                 $workloadMap[$prof->id] = 0;
@@ -148,7 +152,9 @@ class ProctorAssignmentService
                 $assignedForExam = 0;
 
                 foreach ($sortedProfs as $prof) {
-                    if (! $guard->allowsProctor($prof, $exam, $availability)) { continue; }
+                    if (! $guard->allowsProctor($prof, $exam, $availability)) {
+                        continue;
+                    }
                     if ($assignedForExam >= $proctorsNeeded) {
                         break;
                     }
@@ -370,7 +376,7 @@ class ProctorAssignmentService
         }
 
         return DB::transaction(function () use ($session, $assignments) {
-            $guard = app(\App\Services\Academic\ExamWorkflowGuard::class);
+            $guard = app(ExamWorkflowGuard::class);
             $guard->manage();
             $locked = ExamSession::whereKey($session->id)->lockForUpdate()->firstOrFail();
             $guard->mutableSession($locked);
@@ -378,7 +384,9 @@ class ProctorAssignmentService
             $sessionExamIds = $session->exams->pluck('id')->toArray();
             $targetIds = collect($assignments)->pluck('exam_id')->map(fn ($id) => (int) $id)->unique();
             abort_if($targetIds->diff($sessionExamIds)->isNotEmpty(), 422, 'Épreuve hors de la session sélectionnée.');
-            foreach ($session->exams->whereIn('id', $targetIds) as $exam) { $guard->mutablePlan($exam); }
+            foreach ($session->exams->whereIn('id', $targetIds) as $exam) {
+                $guard->mutablePlan($exam);
+            }
 
             // Récupérer les confirmations existantes pour les préserver si même prof
             $existingConfirmed = ExamSurveillance::whereIn('exam_id', $sessionExamIds)
