@@ -47,6 +47,8 @@ class OperationalWorkspaceService
             }),
         ];
         if ($staff) {
+            try { $data['backup'] = app(VerifiedDatabaseBackupService::class)->latestStatus(); }
+            catch (\Throwable $e) { report($e); $data['backup'] = ['error' => 'État des sauvegardes indisponible.']; }
             $year = AcademicYear::where('institution_id', $user->institution_id)->where('is_current', true)->first();
             $students = Student::where('institution_id', $user->institution_id);
             $duplicateCnes = (clone $students)->whereNotNull('cne')->where('cne', '!=', '')->selectRaw('LOWER(TRIM(cne)) as normalized, COUNT(*) as total')->groupByRaw('LOWER(TRIM(cne))')->havingRaw('COUNT(*) > 1')->get();
@@ -55,6 +57,8 @@ class OperationalWorkspaceService
                 'missing_cne' => (clone $students)->where(fn ($q) => $q->whereNull('cne')->orWhereRaw("TRIM(cne) = ''"))->count(),
                 'registrations_without_group' => $year ? StudentRegistration::where('academic_year_id', $year->id)->whereNull('group_id')->whereIn('status', ['academic_validated', 'admin_validated', 'validated'])->whereHas('student', fn ($q) => $q->where('institution_id', $user->institution_id))->count() : null,
                 'academic_year' => $year?->displayLabel(),
+                'duplicate_cne_samples' => $duplicateCnes->take(10)->map(fn ($row) => ['cne' => $row->normalized, 'count' => (int) $row->total])->values(),
+                'missing_cne_ids' => (clone $students)->where(fn ($q) => $q->whereNull('cne')->orWhereRaw("TRIM(cne) = ''"))->limit(10)->pluck('id'),
             ];
             $data['agents'] = User::where('institution_id', $user->institution_id)->where('is_active', true)->get()->filter(fn ($agent) => $this->isStaff($agent))->map(fn ($agent) => $agent->only('id', 'name'))->values();
             $data['notification_activity'] = DB::table('notifications')->where('type', \App\Notifications\SystemNotification::class)->where('notifiable_type', (new User)->getMorphClass())->whereIn('notifiable_id', User::where('institution_id', $user->institution_id)->select('id'))->latest()->limit(30)->get(['id', 'notifiable_id', 'data', 'read_at', 'created_at'])->map(function ($row) { $row->data = json_decode($row->data, true); return $row; });

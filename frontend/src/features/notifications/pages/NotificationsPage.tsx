@@ -1,4 +1,4 @@
-import { useState,useEffect } from 'react';
+import { useState,useEffect,useCallback } from 'react';
 import {
 Bell,
 BookOpen,
@@ -39,24 +39,30 @@ export default function NotificationsPage() {
   const navigate = useNavigate();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [lastPage, setLastPage] = useState(1);
+  const [loadError, setLoadError] = useState(false);
   const [filter, setFilter] = useState<'all' | 'unread' | 'academic' | 'documents' | 'campus'>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await api.get('/notifications');
+      setLoadError(false);
+      const res = await api.get('/notifications', { params: { page } });
       setNotifications(res.data?.data || []);
+      setLastPage(res.data?.meta?.last_page || 1);
     } catch {
+      setLoadError(true);
       toast.error('Impossible de charger les notifications.');
     } finally {
       setLoading(false);
     }
-  };
+  }, [page]);
 
   useEffect(() => {
     fetchNotifications();
-  }, []);
+  }, [fetchNotifications]);
 
   const markAsRead = async (id: string) => {
     try {
@@ -400,6 +406,12 @@ export default function NotificationsPage() {
           })
         )}
       </div>
+      {loadError && <p role="alert" className="rounded-xl border border-destructive p-4">Notifications indisponibles. Actualisez pour réessayer.</p>}
+      <nav aria-label="Pages des notifications" className="flex flex-wrap items-center justify-center gap-4 py-4">
+        <button disabled={page <= 1 || loading} onClick={() => setPage(previous => previous - 1)} className="rounded-lg border px-3 py-2 disabled:opacity-50">Page précédente</button>
+        <span className="text-sm">Page {page} / {lastPage} · filtres et compteurs sur cette page</span>
+        <button disabled={page >= lastPage || loading} onClick={() => setPage(previous => previous + 1)} className="rounded-lg border px-3 py-2 disabled:opacity-50">Page suivante</button>
+      </nav>
     </div>
   );
 }
