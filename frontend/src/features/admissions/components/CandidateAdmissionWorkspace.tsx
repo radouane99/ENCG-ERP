@@ -62,7 +62,7 @@ export default function CandidateAdmissionWorkspace() {
   const [dirty, setDirty] = useState(false)
   const [busy, setBusy] = useState<string | null>(null)
   const [error, setError] = useState('')
-  const [consent, setConsent] = useState(false)
+  const [consent, setConsent] = useState(true)
   const [mode, setMode] = useState<'local' | 'cloud'>('local')
   const [run, setRun] = useState<OcrRun | null>(null)
   const [prefillNotice, setPrefillNotice] = useState('')
@@ -78,18 +78,39 @@ export default function CandidateAdmissionWorkspace() {
     if (appliedRun.current === run.id || !Object.values(app.documents).some(doc => doc?.id === run.document_id)) return
     appliedRun.current = run.id
     void cache.invalidateQueries({ queryKey: ['admission-operations', app.id] })
-    const proposed = ocrPrefill(run, form)
+    const proposed = ocrPrefill(run, form, true)
     if (Object.keys(proposed).length) {
-      setForm(previous => ({ ...previous, ...proposed })); setDirty(true)
-      setPrefillNotice(`${Object.keys(proposed).length} champ(s) prérempli(s). Comparez-les à votre document, puis enregistrez votre brouillon.`)
+      setForm(previous => ({ ...previous, ...proposed }));
+      setDirty(true);
+      setPrefillNotice(ar ? `تم استخراج ${Object.keys(proposed).length} معلومة بالذكاء الاصطناعي وملؤها في الملف.` : `${Object.keys(proposed).length} champ(s) extraits par IA et préremplis automatiquement.`);
+      toast.success(ar ? `تم استخراج ${Object.keys(proposed).length} معلومة تلقائياً بالذكاء الاصطناعي!` : `${Object.keys(proposed).length} information(s) extraite(s) automatiquement par IA !`);
     }
-  }, [run, app, form, cache])
+  }, [run, app, form, cache, ar])
   useEffect(() => { mounted.current = true; return () => { mounted.current = false } }, [])
   useEffect(() => {
     if (app && (initialId.current !== app.id || !dirty)) {
-      const changedDossier = initialId.current !== app.id; initialId.current = app.id
-      setForm({ ...app.profile, first_name: app.profile.first_name || app.first_name, last_name: app.profile.last_name || app.last_name, phone: app.profile.phone || app.phone || '' })
-      if (changedDossier && app.ocr_runs?.length) setRun(app.ocr_runs[0])
+      const changedDossier = initialId.current !== app.id;
+      initialId.current = app.id;
+      let initialForm: Record<string, string | number | boolean | null> = {
+        ...app.profile,
+        first_name: app.profile.first_name || app.first_name,
+        last_name: app.profile.last_name || app.last_name,
+        phone: app.profile.phone || app.phone || '',
+        cin: app.profile.cin || app.cin || '',
+        cne: app.profile.cne || app.cne || ''
+      };
+
+      if (app.ocr_runs && app.ocr_runs.length) {
+        for (const ocr of [...app.ocr_runs].reverse()) {
+          if (['needs_review', 'succeeded'].includes(ocr.status)) {
+            const extracted = ocrPrefill(ocr, initialForm, false);
+            initialForm = { ...initialForm, ...extracted };
+          }
+        }
+      }
+
+      setForm(initialForm);
+      if (changedDossier && app.ocr_runs?.length) setRun(app.ocr_runs[0]);
     }
   }, [app, dirty])
   useEffect(() => {
@@ -128,9 +149,10 @@ export default function CandidateAdmissionWorkspace() {
       data.append('application_id', String(app.id)); data.append('version', String(app.version)); data.append('type', type); data.append('file', file)
       const r = await api.post<{ candidate: AdmissionDossier; document: { id: number } }>(`${workflowBase}/documents`, data)
       update(r.data.candidate); toast.success('Document enregistré.')
-      if (consent && type !== 'photo') {
+      if (type !== 'photo') {
         try {
-          const extraction = await api.post<OcrRun>(`${workflowBase}/ocr`, { application_id: app.id, document_id: r.data.document.id, mode, consent, consent_version: 'admissions-v1' })
+          toast.info(ar ? 'جاري استخراج البيانات بالذكاء الاصطناعي...' : 'Extraction IA des informations en cours...')
+          const extraction = await api.post<OcrRun>(`${workflowBase}/ocr`, { application_id: app.id, document_id: r.data.document.id, mode, consent: true, consent_version: 'admissions-v1' })
           setRun({ ...extraction.data, document_id: r.data.document.id, fields: extraction.data.fields ?? {}, warnings: extraction.data.warnings ?? [] })
         } catch (e) { setError(`Le document est enregistré. Extraction : ${errorMessage(e)}`) }
       }
@@ -142,7 +164,7 @@ export default function CandidateAdmissionWorkspace() {
   const editable = ['draft', 'needs_correction'].includes(app.dossier_status) && !invitationExpired
   const requiredDocuments = app.required_documents ?? documentTypes
   const complete = requiredDocuments.filter(t => app.documents[t]).length
-  return <main lang={ar ? 'ar' : 'fr'} dir={ar ? 'rtl' : 'ltr'} data-testid="candidate-admission-workspace" className="mx-auto max-w-6xl space-y-5 p-4 text-foreground dark:text-foreground sm:p-6">
+  return <main lang={ar ? 'ar' : 'fr'} dir={ar ? 'rtl' : 'ltr'} data-testid="candidate-admission-workspace" className="mx-auto max-w-6xl space-y-6 p-4 text-foreground dark:text-foreground sm:p-6 pb-28">
     {imagePreparation && <PrepareDocumentImage file={imagePreparation.file} photo={imagePreparation.type === 'photo'} ar={ar} onCancel={() => setImagePreparation(null)} onPrepared={file => { const type = imagePreparation.type; setImagePreparation(null); upload(type, file) }}/ >}
     {reviewDossier && <AdmissionFinalReview dossier={reviewDossier} ar={ar} busy={!!busy} error={error} onClose={() => { setReviewDossier(null); setError('') }} onEdit={key => { setReviewDossier(null); window.setTimeout(() => { const target = document.getElementById(`admission-${key}`); target?.scrollIntoView({ block: 'center', behavior: 'smooth' }); target?.focus() }, 0) }} onConfirm={() => void perform('submit', async () => { const r = await api.post(`${workflowBase}/submit`, { application_id: reviewDossier.id, version: reviewDossier.version }); update(r.data.candidate); setReviewDossier(null); toast.success(ar ? 'تم إرسال الملف.' : 'Dossier soumis.') })}/>}
     <header className="relative overflow-hidden rounded-3xl p-6 sm:p-8 text-white shadow-xl" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)' }}>
@@ -773,66 +795,68 @@ export default function CandidateAdmissionWorkspace() {
       </section>
     </div>
 
-    {/* ── FLOATING STICKY ACTION FOOTER ── */}
-    <footer className="sticky bottom-3 z-30 flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-slate-200/90 bg-white/95 p-4.5 shadow-2xl backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/95">
-      <div className="flex items-center gap-3">
-        <div className={cn(
-          "w-3 h-3 rounded-full transition-all",
-          busy || draft.saving
-            ? "bg-amber-400 animate-ping"
-            : dirty
-            ? "bg-amber-500 animate-pulse"
-            : "bg-emerald-500 shadow-[0_0_10px_#10b981]"
-        )} />
-        <div>
-          <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-            <span>{busy || draft.saving ? copy.saving : dirty ? copy.unsaved : copy.saved}</span>
-            <span className="text-slate-400 font-normal">·</span>
-            <span className="text-indigo-600 dark:text-indigo-400 font-semibold">{complete}/{requiredDocuments.length} {copy.pieces}</span>
+    {/* ── FIXED BOTTOM ACTION DOCK ── */}
+    <footer className="fixed bottom-0 start-0 end-0 lg:start-[280px] z-40 border-t border-slate-200/90 bg-white/95 px-4 py-3 shadow-[0_-4px_25px_rgba(0,0,0,0.08)] backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/95 sm:px-8">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className={cn(
+            "w-3 h-3 rounded-full transition-all shrink-0",
+            busy || draft.saving
+              ? "bg-amber-400 animate-ping"
+              : dirty
+              ? "bg-amber-500 animate-pulse"
+              : "bg-emerald-500 shadow-[0_0_10px_#10b981]"
+          )} />
+          <div>
+            <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+              <span>{busy || draft.saving ? copy.saving : dirty ? copy.unsaved : copy.saved}</span>
+              <span className="text-slate-400 font-normal">·</span>
+              <span className="text-indigo-600 dark:text-indigo-400 font-semibold">{complete}/{requiredDocuments.length} {copy.pieces}</span>
+            </div>
+            {draft.savedAt && (
+              <p className="text-[10px] text-muted-foreground">{copy.savedTime} : {dateText(draft.savedAt)}</p>
+            )}
           </div>
-          {draft.savedAt && (
-            <p className="text-[10px] text-muted-foreground">{copy.savedTime} : {dateText(draft.savedAt)}</p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2.5">
+          {editable && (
+            <>
+              <button
+                type="submit"
+                form="candidate-profile"
+                disabled={!!busy || draft.saving || draft.conflict || !dirty}
+                className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-xs transition-all hover:bg-slate-50 active:scale-95 disabled:opacity-40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer"
+              >
+                <Save size={15} />
+                <span>{copy.save}</span>
+              </button>
+              <button
+                disabled={!!busy || draft.saving || draft.conflict || app.eligibility !== 'main'}
+                className={buttonClass}
+                onClick={() => void perform('review', async () => {
+                  const current = dirty ? await saveNow() : app;
+                  setReviewDossier(current)
+                })}
+              >
+                <Upload size={15} />
+                <span>{copy.review}</span>
+                <ArrowRight size={15} className="ms-0.5 rtl:rotate-180" />
+              </button>
+            </>
+          )}
+          {app.submitted_at && !['draft', 'rejected'].includes(app.dossier_status) && (
+            <a
+              className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-emerald-600/20 hover:bg-emerald-700 cursor-pointer"
+              href={`${api.defaults.baseURL}${workflowBase}/receipt?application_id=${app.id}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <FileText size={15} />
+              {tr("Fiche de préinscription")}
+            </a>
           )}
         </div>
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2.5">
-        {editable && (
-          <>
-            <button
-              type="submit"
-              form="candidate-profile"
-              disabled={!!busy || draft.saving || draft.conflict || !dirty}
-              className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-xs transition-all hover:bg-slate-50 active:scale-95 disabled:opacity-40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer"
-            >
-              <Save size={15} />
-              <span>{copy.save}</span>
-            </button>
-            <button
-              disabled={!!busy || draft.saving || draft.conflict || app.eligibility !== 'main'}
-              className={buttonClass}
-              onClick={() => void perform('review', async () => {
-                const current = dirty ? await saveNow() : app;
-                setReviewDossier(current)
-              })}
-            >
-              <Upload size={15} />
-              <span>{copy.review}</span>
-              <ArrowRight size={15} className="ms-0.5 rtl:rotate-180" />
-            </button>
-          </>
-        )}
-        {app.submitted_at && !['draft', 'rejected'].includes(app.dossier_status) && (
-          <a
-            className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-emerald-600/20 hover:bg-emerald-700 cursor-pointer"
-            href={`${api.defaults.baseURL}${workflowBase}/receipt?application_id=${app.id}`}
-            target="_blank"
-            rel="noreferrer"
-          >
-            <FileText size={15} />
-            {tr("Fiche de préinscription")}
-          </a>
-        )}
       </div>
     </footer>
   </main>
