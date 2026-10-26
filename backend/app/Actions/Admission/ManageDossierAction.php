@@ -62,6 +62,11 @@ class ManageDossierAction
         return DB::transaction(function () use ($request, $data) {
             $app = $this->locked($request);
             unset($data['application_id'], $data['version']);
+            foreach (['father', 'mother'] as $parent) {
+                if (array_key_exists($parent.'_first_name', $data) || array_key_exists($parent.'_last_name', $data)) {
+                    $data[$parent.'_name'] = trim(($data[$parent.'_first_name'] ?? $app->profile[$parent.'_first_name'] ?? '').' '.($data[$parent.'_last_name'] ?? $app->profile[$parent.'_last_name'] ?? ''));
+                }
+            }
             $profile = array_replace($app->profile ?? [], $data);
             $app->profile = $profile;
             // Only explicit, validated profile fields are mirrored. Identifiers/contact ownership are immutable here.
@@ -91,7 +96,7 @@ class ManageDossierAction
         $type = self::type($request->string('type')->toString());
         $request->merge(['type' => $type]);
         $request->validate(['application_id' => 'required|integer', 'version' => 'required|integer',
-            'type' => 'required|in:'.implode(',', [...self::TYPES, 'attestation_admission', 'releve_parcours']),
+            'type' => 'required|in:'.implode(',', AdmissionEntryRules::uploadTypes()),
             'file' => ['required', 'file', 'max:10240', $type === 'photo' ? 'mimes:jpg,jpeg,png,webp' : 'mimes:pdf,jpg,jpeg,png,webp']]);
         $file = $request->file('file');
         $mime = $file->getMimeType();

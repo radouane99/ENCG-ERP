@@ -208,6 +208,7 @@ class AdmissionWorkflowController extends Controller
         return array_merge($app->only(['id', 'reference_number', 'cne', 'cin', 'first_name', 'last_name', 'email', 'phone',
             'dossier_status', 'eligibility', 'version', 'submitted_at', 'approved_at', 'ranking', 'selection_score', 'invitation_expires_at']), [
                 'application_id' => $app->id, 'profile' => $app->profile ?? [], 'documents' => $mapped,
+                'administrative_context' => app(\App\Services\Admissions\AdmissionAdministrativeContext::class)->read($app),
                 'is_locked' => ! in_array($app->dossier_status, ['draft', 'needs_correction']),
                 'campaign' => $app->campaign->only(['id', 'name', 'open_date', 'close_date', 'entry_route', 'entry_semester']), 'appointment' => $appointment,
                 'required_documents' => AdmissionEntryRules::documents($app->campaign->entry_route),

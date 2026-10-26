@@ -20,4 +20,9 @@ final class AdmissionEntryRules
     {
         return ['bac_original' => 'Baccalauréat original contrôlé', 'releve_notes' => 'Relevé de notes contrôlé', 'cin_copy' => 'Identité CNIE rapprochée', 'photos' => 'Photos reçues'] + ($route === 'cnaem' ? ['attestation_admission' => 'Attestation officielle d’admission CNAEM contrôlée', 'releve_parcours' => 'Relevés du parcours antérieur contrôlés'] : []);
     }
+
+    public static function uploadTypes(): array
+    {
+        return [...self::DOCUMENTS, 'attestation_admission', 'attestation_admissibilite', 'releve_parcours', 'diplome_bac2', 'diplome', 'licence', 'engagement_legalise', 'assurance_etudiant'];
+    }
 }
