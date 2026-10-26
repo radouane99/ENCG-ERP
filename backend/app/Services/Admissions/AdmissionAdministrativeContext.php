@@ -17,8 +17,11 @@ final class AdmissionAdministrativeContext
         $student = $application->student_id ? Student::whereKey($application->student_id)->where('institution_id', $campaign->institution_id)->where('user_id', $application->owner_user_id)->first() : null;
         $registrations = $student ? StudentRegistration::with('academicYear:id,label', 'filiere:id,name,type')->where('student_id', $student->id)->orderByDesc('academic_year_id')->orderBy('semester_number')->get() : collect();
         $initial = $registrations->where('registration_type', 'initial')->where('academic_year_id', $campaign->academic_year_id);
+
         return [
-            'gender_ar' => match ($application->profile['gender'] ?? null) { 'male' => 'ذكر', 'female' => 'أنثى', default => null },
+            'gender_ar' => match ($application->profile['gender'] ?? null) {
+                'male' => 'ذكر', 'female' => 'أنثى', default => null
+            },
             'entry_route' => $campaign->entry_route, 'planned_entry_semester' => $campaign->entry_semester,
             'academic_year' => AcademicYear::whereKey($campaign->academic_year_id)->value('label'),
             'university' => $institution?->settings['university_name'] ?? null,

@@ -1,15 +1,17 @@
+import CandidateProfileFields from './CandidateProfileFields'
+import AdmissionAdministrativeSummary from './AdmissionAdministrativeSummary'
 import candidateArabic from '../model/candidateArabic.json'
 import AdmissionConsistencyAlerts from './AdmissionConsistencyAlerts'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAdmissionDraftAutosave } from '../hooks/useAdmissionDraftAutosave'
 import AdmissionFinalReview from './AdmissionFinalReview'
-import { admissionCopy, admissionFieldsAr } from '../model/admissionCopy'
+import { admissionCopy } from '../model/admissionCopy'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   AlertCircle, CheckCircle2, FileText, Loader2, Save, Upload,
   Sparkles, BrainCircuit, Check, Clock, ArrowRight, GraduationCap,
-  CreditCard, Camera, FileCheck2, ShieldCheck, ChevronRight, Eye, Trash2
+  CreditCard, Camera, FileCheck2, ShieldCheck, Eye, Trash2
 } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import { toast } from 'sonner'
@@ -18,7 +20,7 @@ import { QRCodeSVG } from 'qrcode.react'
 import PrepareDocumentImage from './PrepareDocumentImage'
 import { ocrPrefill } from '../model/ocrPrefill'
 import { useAdmissionDossier, errorMessage } from '../api/workflow'
-import { dateText, dayText, profileLabels, documentLabels, documentLabelsAr, documentTypes, statusLabels, statusLabelsAr, workflowBase, type AdmissionDossier, type AdmissionDocument, type DocumentType, type OcrRun } from '../model/workflow'
+import { dateText, dayText, profileLabels, documentLabels, documentLabelsAr, documentTypes, statusLabels, statusLabelsAr, workflowBase, type AdmissionDossier, type DocumentType, type OcrRun } from '../model/workflow'
 
 const inputClass = 'w-full min-h-11 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 transition-all placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-indigo-400'
 const buttonClass = 'min-h-11 rounded-xl bg-gradient-to-r from-blue-700 via-indigo-700 to-indigo-800 px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-indigo-500/20 transition-all hover:opacity-95 hover:shadow-lg hover:shadow-indigo-500/30 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer inline-flex items-center justify-center gap-2'
@@ -40,13 +42,6 @@ const getDocIcon = (type: string) => {
       return FileText
   }
 }
-const fields = [
-  ['first_name', 'Prénom', 'text'], ['last_name', 'Nom', 'text'], ['first_name_ar', 'الاسم الشخصي', 'text'], ['last_name_ar', 'النسب', 'text'],
-  ['phone', 'Téléphone personnel', 'tel'], ['birth_date', 'Date de naissance', 'date'], ['birth_city', 'Lieu de naissance', 'text'], ['nationality', 'Nationalité', 'text'],
-  ['address', 'Adresse', 'text'], ['city', 'Ville', 'text'], ['bac_average', 'Moyenne du bac /20', 'number'], ['bac_year', 'Année du bac', 'number'],
-  ['bac_series', 'Série du bac', 'text'], ['high_school', 'Lycée', 'text'], ['academy', 'Académie', 'text'], ['province', 'Province', 'text'],
-  ['emergency_contact_name', 'Contact d’urgence', 'text'], ['emergency_contact_phone', 'Téléphone d’urgence', 'tel'],
-] as const
 const eventLabels: Record<string, string> = { draft_saved: 'Brouillon enregistré', document_uploaded: 'Document ajouté', document_withdrawn: 'Document retiré', submitted: 'Dossier soumis', activated: 'Accès activé', needs_correction: 'Correction demandée', approved: 'Inscription validée', rejected: 'Décision enregistrée', document_reviewed: 'Document examiné', appointment_reserved: 'Rendez-vous réservé', checked_in: 'Entrée enregistrée', ocr_consented: 'Extraction demandée', ministry_imported: 'Liste officielle importée', waiting_invited: 'Invitation depuis la liste d’attente' }
 
 export default function CandidateAdmissionWorkspace() {
@@ -78,11 +73,11 @@ export default function CandidateAdmissionWorkspace() {
     if (appliedRun.current === run.id || !Object.values(app.documents).some(doc => doc?.id === run.document_id)) return
     appliedRun.current = run.id
     void cache.invalidateQueries({ queryKey: ['admission-operations', app.id] })
-    const proposed = ocrPrefill(run, form, true)
+    const proposed = ocrPrefill(run, form, false)
     if (Object.keys(proposed).length) {
       setForm(previous => ({ ...previous, ...proposed }));
       setDirty(true);
-      setPrefillNotice(ar ? `تم استخراج ${Object.keys(proposed).length} معلومة بالذكاء الاصطناعي وملؤها في الملف.` : `${Object.keys(proposed).length} champ(s) extraits par IA et préremplis automatiquement.`);
+      setPrefillNotice(ar ? `تم استخراج ${Object.keys(proposed).length} معلومة بالذكاء الاصطناعي وملؤها في الملف.` : `${Object.keys(proposed).length} champ(s) prérempli(s). Vérifiez les informations proposées.`);
       toast.success(ar ? `تم استخراج ${Object.keys(proposed).length} معلومة تلقائياً بالذكاء الاصطناعي!` : `${Object.keys(proposed).length} information(s) extraite(s) automatiquement par IA !`);
     }
   }, [run, app, form, cache, ar])
@@ -162,9 +157,11 @@ export default function CandidateAdmissionWorkspace() {
   if (!app) return <div className={panelClass}><h1 className="erp-page-title">{copy.title}</h1><p className="mt-3">{errorMessage(query.error)}</p><p className="mt-2 text-sm text-muted-foreground">Si vous êtes déjà étudiant, votre dossier académique reste accessible dans votre espace étudiant. Pour une nouvelle candidature, contactez le service admissions.</p><button className={`${buttonClass} mt-4`} onClick={() => void query.refetch()}>Réessayer</button></div>
   const invitationExpired = app.eligibility === 'invitation_expired' || (!!app.invitation_expires_at && new Date(app.invitation_expires_at).getTime() < Date.now())
   const editable = ['draft', 'needs_correction'].includes(app.dossier_status) && !invitationExpired
-  const requiredDocuments = app.required_documents ?? documentTypes
+  const requiredDocuments: readonly DocumentType[] = app.required_documents ?? documentTypes
+  const optionalDocuments: DocumentType[] = ['attestation_admission', 'attestation_admissibilite', ...(form.has_prior_higher_education || app.campaign.entry_route === 'cnaem' ? ['releve_parcours', 'diplome_bac2', 'diplome', 'licence'] as DocumentType[] : [])]
+  const visibleDocuments = [...new Set<DocumentType>([...requiredDocuments, ...optionalDocuments, ...Object.keys(app.documents) as DocumentType[]])]
   const complete = requiredDocuments.filter(t => app.documents[t]).length
-  return <main lang={ar ? 'ar' : 'fr'} dir={ar ? 'rtl' : 'ltr'} data-testid="candidate-admission-workspace" className="mx-auto max-w-6xl space-y-6 p-4 text-foreground dark:text-foreground sm:p-6 pb-28">
+  return <main lang={ar ? 'ar' : 'fr'} dir={ar ? 'rtl' : 'ltr'} data-testid="candidate-admission-workspace" className="mx-auto max-w-6xl space-y-6 p-4 text-foreground dark:text-foreground sm:p-6 pb-52 lg:pb-28">
     {imagePreparation && <PrepareDocumentImage file={imagePreparation.file} photo={imagePreparation.type === 'photo'} ar={ar} onCancel={() => setImagePreparation(null)} onPrepared={file => { const type = imagePreparation.type; setImagePreparation(null); upload(type, file) }}/ >}
     {reviewDossier && <AdmissionFinalReview dossier={reviewDossier} ar={ar} busy={!!busy} error={error} onClose={() => { setReviewDossier(null); setError('') }} onEdit={key => { setReviewDossier(null); window.setTimeout(() => { const target = document.getElementById(`admission-${key}`); target?.scrollIntoView({ block: 'center', behavior: 'smooth' }); target?.focus() }, 0) }} onConfirm={() => void perform('submit', async () => { const r = await api.post(`${workflowBase}/submit`, { application_id: reviewDossier.id, version: reviewDossier.version }); update(r.data.candidate); setReviewDossier(null); toast.success(ar ? 'تم إرسال الملف.' : 'Dossier soumis.') })}/>}
     <header className="relative overflow-hidden rounded-3xl p-6 sm:p-8 text-white shadow-xl" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)' }}>
@@ -371,7 +368,7 @@ export default function CandidateAdmissionWorkspace() {
 
           {/* Document Dropzone Cards */}
           <div className="mt-4 space-y-3.5">
-            {requiredDocuments.map(type => {
+            {visibleDocuments.map(type => {
               const doc = app.documents[type]
               const DocIcon = getDocIcon(type)
               const isVerified = doc?.status === 'verified'
@@ -409,7 +406,7 @@ export default function CandidateAdmissionWorkspace() {
                       </div>
                       <div>
                         <h3 className="text-sm font-bold text-slate-900 dark:text-white leading-tight">
-                          {docLabels[type]}
+                          {docLabels[type]} {!requiredDocuments.includes(type) && <span className="text-xs font-normal text-muted-foreground"> · {ar ? 'اختياري' : 'Facultatif'}</span>}
                         </h3>
                         {doc && (
                           <span className="text-[11px] text-muted-foreground">
@@ -554,57 +551,9 @@ export default function CandidateAdmissionWorkspace() {
             })
           }}
         >
-          <fieldset disabled={!editable || !!busy} className="grid gap-4 sm:grid-cols-2">
-            {fields.map(([key, label, type]) => (
-              <label key={key} className="block text-xs font-semibold text-slate-700 dark:text-slate-300" htmlFor={`admission-${key}`}>
-                <span>{ar ? admissionFieldsAr[key] || label : label}</span>
-                <input
-                  id={`admission-${key}`}
-                  aria-invalid={!!draft.fieldErrors[key]}
-                  aria-describedby={draft.fieldErrors[key] ? `error-${key}` : undefined}
-                  type={type}
-                  lang={key.endsWith('_ar') ? 'ar' : 'fr'}
-                  dir={key.endsWith('_ar') ? 'rtl' : undefined}
-                  min={key === 'bac_average' ? 0 : undefined}
-                  max={key === 'bac_average' ? 20 : undefined}
-                  step={key === 'bac_average' ? '0.01' : undefined}
-                  className={cn(
-                    inputClass,
-                    'mt-1.5 shadow-2xs',
-                    draft.fieldErrors[key] && 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
-                  )}
-                  value={String(form[key] ?? '')}
-                  onChange={e => {
-                    setForm(f => ({ ...f, [key]: e.target.value }));
-                    setDirty(true)
-                  }}
-                />
-                {draft.fieldErrors[key] && (
-                  <span id={`error-${key}`} className="mt-1 block text-xs text-red-600 dark:text-red-400 font-normal">
-                    {ar ? 'راجع هذا الحقل: ' : ''}{draft.fieldErrors[key]}
-                  </span>
-                )}
-              </label>
-            ))}
-
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300" htmlFor="admission-gender">
-              <span>{copy.gender}</span>
-              <select
-                id="admission-gender"
-                className={`${inputClass} mt-1.5 shadow-2xs`}
-                value={String(form.gender ?? '')}
-                onChange={e => {
-                  setForm(f => ({ ...f, gender: e.target.value }));
-                  setDirty(true)
-                }}
-              >
-                <option value="">{copy.choose}</option>
-                <option value="female">{copy.female}</option>
-                <option value="male">{copy.male}</option>
-              </select>
-            </label>
-          </fieldset>
+          <CandidateProfileFields dossier={app} values={form} errors={draft.fieldErrors} disabled={!editable || !!busy} ar={ar} inputClass={inputClass} onChange={(key, value) => { setForm(f => ({ ...f, [key]: value })); setDirty(true) }} />
         </form>
+        <AdmissionAdministrativeSummary dossier={app} ar={ar} />
 
         <details className="mt-6 rounded-2xl border border-slate-200/80 bg-slate-50/50 p-4 transition-all dark:border-slate-800 dark:bg-slate-900/40">
           <summary className="cursor-pointer text-xs font-bold text-slate-800 dark:text-slate-200">
@@ -614,10 +563,12 @@ export default function CandidateAdmissionWorkspace() {
             {tr("Renseignez uniquement les informations utiles à l’accompagnement administratif. Elles ne sont pas transmises à l’OCR.")}
           </p>
           <div className="mt-3 space-y-3">
+            {(['has_disability', 'has_medical_followup'] as const).map(key => <label key={key} className="flex items-start gap-3 text-sm"><input type="checkbox" disabled={!editable || !!busy} checked={!!form[key]} onChange={e => { setForm(f => ({ ...f, [key]: e.target.checked })); setDirty(true) }} />{key === 'has_disability' ? (ar ? 'أحتاج تهيئة خاصة للولوج' : 'Je souhaite un accompagnement d’accessibilité') : (ar ? 'لدي متابعة طبية' : 'Je bénéficie d’un suivi médical')}</label>)}
             {[
               ['allergy_type', 'Allergies à signaler'],
               ['disability_details', 'Besoins d’accessibilité'],
-              ['medication_used', 'Traitement à signaler']
+              ['medication_used', 'Traitement à signaler'],
+              ['treating_doctor_info', 'Coordonnées du médecin traitant']
             ].map(([key, label]) => (
               <label className="block text-xs font-medium text-slate-700 dark:text-slate-300" key={key}>
                 <span>{label}</span>
@@ -796,7 +747,7 @@ export default function CandidateAdmissionWorkspace() {
     </div>
 
     {/* ── FIXED BOTTOM ACTION DOCK ── */}
-    <footer className="fixed bottom-0 start-0 end-0 lg:start-[280px] z-40 border-t border-slate-200/90 bg-white/95 px-4 py-3 shadow-[0_-4px_25px_rgba(0,0,0,0.08)] backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/95 sm:px-8">
+    <footer className="fixed bottom-16 lg:bottom-0 start-0 end-0 lg:start-[280px] z-40 border-t border-slate-200/90 bg-white/95 px-4 py-3 shadow-[0_-4px_25px_rgba(0,0,0,0.08)] backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/95 sm:px-8">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className={cn(

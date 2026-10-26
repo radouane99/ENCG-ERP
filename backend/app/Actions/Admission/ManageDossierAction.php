@@ -64,7 +64,11 @@ class ManageDossierAction
             unset($data['application_id'], $data['version']);
             foreach (['father', 'mother'] as $parent) {
                 if (array_key_exists($parent.'_first_name', $data) || array_key_exists($parent.'_last_name', $data)) {
-                    $data[$parent.'_name'] = trim(($data[$parent.'_first_name'] ?? $app->profile[$parent.'_first_name'] ?? '').' '.($data[$parent.'_last_name'] ?? $app->profile[$parent.'_last_name'] ?? ''));
+                    $first = trim($data[$parent.'_first_name'] ?? $app->profile[$parent.'_first_name'] ?? '');
+                    $last = trim($data[$parent.'_last_name'] ?? $app->profile[$parent.'_last_name'] ?? '');
+                    if (($first !== '' && $last !== '') || empty($app->profile[$parent.'_name'])) {
+                        $data[$parent.'_name'] = trim($first.' '.$last);
+                    }
                 }
             }
             $profile = array_replace($app->profile ?? [], $data);

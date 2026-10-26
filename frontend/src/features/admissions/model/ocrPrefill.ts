@@ -9,7 +9,6 @@ const fieldMap: Record<string, string> = {
   last_name_ar: 'last_name_ar',
   birth_date: 'birth_date',
   birth_city: 'birth_city',
-  cin: 'cin',
   bac_average: 'bac_average',
   bac_type: 'bac_series',
   high_school: 'high_school',
@@ -20,7 +19,7 @@ const fieldMap: Record<string, string> = {
   nationality: 'nationality',
 }
 
-export function ocrPrefill(run: OcrRun, current: Record<string, unknown>, replace = true) {
+export function ocrPrefill(run: OcrRun, current: Record<string, unknown>, replace = false) {
   const result: Record<string, string | number> = {}
   for (const [key, field] of Object.entries(run.fields ?? {})) {
     const target = fieldMap[key]

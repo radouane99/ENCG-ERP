@@ -1,3 +1,4 @@
+import { candidateProfileLabels } from './candidateProfileFields'
 export const workflowBase = '/admissions/workflow'
 
 export const documentTypes = ['bac', 'cnie', 'releve_notes', 'photo'] as const
@@ -10,12 +11,13 @@ export const extendedDocumentTypes = [
   'assurance_etudiant',
   'attestation_admission',
   'releve_parcours',
-  'diplome_bac2'
+  'diplome_bac2', 'attestation_admissibilite', 'diplome', 'licence'
 ] as const
 
 export type DocumentType = typeof extendedDocumentTypes[number]
 
 export const documentLabels: Record<DocumentType, string> = {
+  attestation_admissibilite: 'Attestation d’admissibilité', diplome: 'Diplôme antérieur', licence: 'Diplôme de licence',
   bac: 'Baccalauréat',
   cnie: 'CNIE · recto et verso',
   releve_notes: 'Relevé de notes officiel',
@@ -28,6 +30,7 @@ export const documentLabels: Record<DocumentType, string> = {
 }
 
 export const documentLabelsAr: Record<DocumentType, string> = {
+  attestation_admissibilite: 'شهادة الأهلية', diplome: 'الدبلوم السابق', licence: 'شهادة الإجازة',
   bac: 'شهادة البكالوريا الأصلية',
   cnie: 'البطاقة الوطنية للتعريف الإلكترونية',
   releve_notes: 'بيان النقط الرسمي',
@@ -175,6 +178,13 @@ export interface AdmissionDossier {
   dossier_status: string;
   eligibility: string;
   profile: Record<string, string | number | boolean | null>;
+  administrative_context?: {
+    gender_ar: string | null; entry_route: string | null; planned_entry_semester: number | null;
+    academic_year: string | null; university: string | null; filiere: string | null; cycle: string | null;
+    registration_status: string; registration_date: string | null; registration_semesters: number[];
+    renewals: { academic_year: string | null; semester: number; filiere: string | null; cycle: string | null; date: string | null; status: string }[];
+    created_at: string | null; updated_at: string | null;
+  };
   cloud_available: boolean;
   required_documents?: DocumentType[];
   physical_requirements?: Record<string, string>;
@@ -260,6 +270,7 @@ export const dayText = (value: string) =>
   })
 
 export const profileLabels: Record<string, string> = {
+  ...candidateProfileLabels, marital_status: 'Situation familiale', has_prior_higher_education: 'Inscription antérieure dans l’enseignement supérieur',
   cin: 'CNIE officielle',
   cne: 'CNE / Code Massar',
   first_name: 'Prénom',

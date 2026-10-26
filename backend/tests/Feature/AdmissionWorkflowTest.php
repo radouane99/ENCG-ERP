@@ -128,6 +128,72 @@ class AdmissionWorkflowTest extends TestCase
         $this->assertSame('pending', $a->fresh()->status);
     }
 
+    public function test_extended_profile_roundtrip_preserves_legacy_parent_and_ignores_administrative_input(): void
+    {
+        $a = $this->candidate();
+        $a->update(['profile' => array_merge($a->profile, ['father_name' => 'Nom compose historique'])]);
+        $this->login($a);
+        $fields = ['birth_city_ar' => 'فاس', 'nationality_ar' => 'مغربية', 'country' => 'Maroc',
+            'region' => 'Fès-Meknès', 'delegation' => 'Fès', 'address_ar' => 'عنوان تجريبي',
+            'marital_status' => 'single', 'father_first_name' => 'Parent', 'father_cin' => 'TEST123',
+            'mother_first_name' => 'Mere', 'mother_last_name' => 'Test', 'mother_profession' => 'Profession test',
+            'bac_mention' => 'Bien', 'has_prior_higher_education' => true, 'first_higher_education_year' => 2024,
+            'first_university_enrollment_year' => 2024, 'previous_university' => 'Université test',
+            'has_medical_followup' => true, 'treating_doctor_info' => 'Contact privé synthétique'];
+        $response = $this->postJson(self::BASE.'/dossier', array_merge($fields, [
+            'application_id' => $a->id, 'version' => $a->fresh()->version,
+            'registration_status' => 'enrolled', 'registration_date' => '2026-01-01',
+            'administrative_context' => ['renewals' => [['academic_year' => '2099']]],
+        ]))->assertOk();
+        foreach ($fields as $key => $value) {
+            $response->assertJsonPath('candidate.profile.'.$key, $value);
+        }
+        $response->assertJsonPath('candidate.profile.father_name', 'Nom compose historique')
+            ->assertJsonPath('candidate.profile.mother_name', 'Mere Test')
+            ->assertJsonPath('candidate.administrative_context.registration_status', 'draft')
+            ->assertJsonPath('candidate.administrative_context.registration_date', null)
+            ->assertJsonPath('candidate.administrative_context.renewals', []);
+        $this->assertArrayNotHasKey('registration_status', $a->fresh()->profile);
+        $this->assertArrayNotHasKey('administrative_context', $a->fresh()->profile);
+        $this->getJson(self::BASE.'/dossier')->assertOk()->assertJsonPath('candidate.profile.address_ar', $fields['address_ar']);
+        $this->login($this->candidate('Z999999999', 'CD999999'));
+        $this->getJson(self::BASE.'/dossier?application_id='.$a->id)->assertNotFound();
+    }
+
+    public function test_administrative_history_uses_only_the_linked_students_real_registrations(): void
+    {
+        $a = $this->candidate();
+        $student = $this->makeTestStudent(['user_id' => $a->owner_user_id, 'cne' => $a->cne]);
+        $a->update(['student_id' => $student->id]);
+        $campaign = $a->campaign;
+        foreach (['initial' => 1, 're_enrollment' => 3] as $type => $semester) {
+            \App\Models\StudentRegistration::create(['student_id' => $student->id,
+                'academic_year_id' => $campaign->academic_year_id, 'filiere_id' => $campaign->filiere_id,
+                'semester_number' => $semester, 'registration_type' => $type, 'status' => 'academic_validated']);
+        }
+        $other = $this->makeTestStudent(['cne' => 'Z123456789']);
+        \App\Models\StudentRegistration::create(['student_id' => $other->id,
+            'academic_year_id' => $campaign->academic_year_id, 'filiere_id' => $campaign->filiere_id,
+            'semester_number' => 9, 'registration_type' => 're_enrollment', 'status' => 'academic_validated']);
+        $this->login($a);
+        $this->getJson(self::BASE.'/dossier')->assertOk()
+            ->assertJsonPath('candidate.administrative_context.registration_semesters', [1])
+            ->assertJsonCount(1, 'candidate.administrative_context.renewals')
+            ->assertJsonPath('candidate.administrative_context.renewals.0.semester', 3);
+    }
+
+    public function test_optional_academic_documents_do_not_expand_tafem_requirements(): void
+    {
+        $a = $this->candidate();
+        $this->login($a);
+        Storage::fake('private');
+        foreach (['attestation_admissibilite', 'diplome', 'licence'] as $type) {
+            $this->post(self::BASE.'/documents', ['application_id' => $a->id, 'version' => $a->fresh()->version,
+                'type' => $type, 'file' => UploadedFile::fake()->createWithContent('scan.pdf', '%PDF-1.4 SYNTHETIC')],
+                ['Accept' => 'application/json'])->assertOk()->assertJsonPath('candidate.required_documents', ['bac', 'cnie', 'releve_notes', 'photo']);
+        }
+    }
+
     public function test_document_versions_preserve_files_and_withdrawn_urls_stop_working(): void
     {
         $a = $this->candidate();
