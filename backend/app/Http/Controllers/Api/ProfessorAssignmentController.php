@@ -186,17 +186,18 @@ class ProfessorAssignmentController extends Controller
                     $matching = $selectedGroups->filter(fn ($g) => $g->filiere_id == $module->filiere_id && $g->semester_number == $module->semester_number);
                     if ($matching->isNotEmpty()) {
                         $targetGroupIds = $matching->pluck('id')->toArray();
-                    } elseif (count($resolvedModuleIds) === 1) {
-                        $targetGroupIds = $selectedGroups->pluck('id')->toArray();
                     } else {
-                        $targetGroupIds = [];
+                        $targetGroupIds = $selectedGroups->pluck('id')->toArray();
                     }
                 } else {
                     $targetGroupIds = [null];
                 }
 
-                foreach ($targetGroupIds as $grpId) {
-                    foreach ($typesToCreate as $sType) {
+                foreach ($typesToCreate as $sType) {
+                    // For CM with all groups, assign at section level (group_id = null) per ENCG amphitheatre rule
+                    $effectiveGroupIds = ($wantsAllGroups && $sType === 'cm') ? [null] : $targetGroupIds;
+
+                    foreach ($effectiveGroupIds as $grpId) {
                         $query = ModuleProfessor::where('module_id', $modId)
                             ->where('professor_id', $profId)
                             ->where('session_type', $sType)
@@ -208,8 +209,10 @@ class ProfessorAssignmentController extends Controller
                             $query->where('group_id', $grpId);
                         }
 
-                        if (! $query->exists()) {
-                            $hours = (int) ($validated['assigned_hours'] ?? ($sType === 'cm' ? 36 : 18));
+                        $hours = (int) ($validated['assigned_hours'] ?? ($sType === 'cm' ? 36 : 18));
+
+                        $existing = $query->first();
+                        if (! $existing) {
                             ModuleProfessor::create([
                                 'academic_year_id' => $currentYear->id,
                                 'module_id' => $modId,
@@ -220,6 +223,11 @@ class ProfessorAssignmentController extends Controller
                                 'assigned_hours' => $hours,
                             ]);
                             $createdCount++;
+                        } else {
+                            if ($existing->assigned_hours != $hours) {
+                                $existing->update(['assigned_hours' => $hours]);
+                                $createdCount++;
+                            }
                         }
                     }
                 }
@@ -229,7 +237,7 @@ class ProfessorAssignmentController extends Controller
                 'success' => true,
                 'message' => $createdCount > 1
                     ? "{$createdCount} affectations enregistrées avec succès !"
-                    : ($createdCount === 1 ? 'Affectation ajoutée avec succès.' : 'Les affectations sélectionnées existent déjà.'),
+                    : ($createdCount === 1 ? 'Affectation enregistrée avec succès.' : 'Affectation(s) déjà à jour.'),
                 'data' => ['created_count' => $createdCount],
             ]);
         });

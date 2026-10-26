@@ -100,7 +100,8 @@ class ExamConvocationService
      */
     private function resolveStudentsForExam(Exam $exam): Collection
     {
-        $ids = StudentRegistration::where('group_id', $exam->group_id)->where('academic_year_id', $exam->examSession->academic_year_id)->pluck('student_id');
+        $ids = StudentRegistration::where('group_id', $exam->group_id)->where('academic_year_id', $exam->examSession->academic_year_id)
+            ->whereIn('status', ['academic_validated', 'admin_validated'])->pluck('student_id');
         $ids = app(ExamWorkflowGuard::class)->eligibleCandidates($exam->examSession, $exam->module_id, $ids);
 
         return $this->orderStudentsForExam($exam->id, Student::whereIn('id', $ids)->get());

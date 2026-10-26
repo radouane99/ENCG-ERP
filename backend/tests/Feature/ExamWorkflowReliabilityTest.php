@@ -68,6 +68,55 @@ class ExamWorkflowReliabilityTest extends TestCase
         return ExamSeating::create(['exam_id' => $this->exam->id, 'student_id' => $student->id, 'room_id' => $this->exam->room_id, 'seat_number' => 1, 'qr_token' => 'SYN-QR', 'is_present' => null]);
     }
 
+    public function test_new_convocations_exclude_unvalidated_registrations(): void
+    {
+        $eligible = [];
+        foreach (['academic_validated', 'admin_validated', 'pending', 'rejected'] as $status) {
+            $student = $this->makeTestStudent();
+            StudentRegistration::create(['student_id' => $student->id, 'academic_year_id' => $this->session->academic_year_id, 'filiere_id' => $this->exam->module->filiere_id, 'semester_number' => 1, 'group_id' => $this->exam->group_id, 'status' => $status, 'registration_type' => 'new_enrollment']);
+            if (in_array($status, ['academic_validated', 'admin_validated'], true)) { $eligible[] = $student->id; }
+        }
+        $this->postJson('/api/convocations/generate-session', ['session_id' => $this->session->id])->assertOk()->assertJsonPath('generated_count', 2);
+        $this->assertEqualsCanonicalizing($eligible, $this->exam->seatings()->pluck('student_id')->all());
+    }
+
+    public function test_serial_session_workflow_publishes_then_records_attendance_and_locks_the_pv(): void
+    {
+        Mail::fake();
+        \Illuminate\Support\Facades\Storage::fake('private');
+        $created = $this->postJson('/api/exam-sessions', ['name' => 'Recette intégrée synthétique', 'type' => 'normal', 'academic_year_id' => $this->session->academic_year_id, 'semester_id' => $this->session->semester_id, 'start_date' => '2027-01-10', 'end_date' => '2027-01-20', 'is_active' => true])->assertCreated()->json('data.id');
+        $planned = $this->postJson('/api/exam-planning/store', ['exam_session_id' => $created, 'module_id' => $this->exam->module_id, 'group_id' => $this->exam->group_id, 'room_id' => $this->exam->room_id, 'exam_date' => '2027-01-13', 'start_time' => '08:30', 'duration_minutes' => 120])->assertOk()->json('exam.id');
+        $exam = Exam::findOrFail($planned);
+        $student = $this->makeTestStudent();
+        $student->user->assignRole(Role::findOrCreate('student', 'sanctum'));
+        StudentRegistration::create(['student_id' => $student->id, 'academic_year_id' => $this->session->academic_year_id, 'filiere_id' => $exam->module->filiere_id, 'semester_number' => 1, 'group_id' => $exam->group_id, 'status' => 'admin_validated', 'registration_type' => 'new_enrollment']);
+        $teachers = collect([1, 2])->map(function ($index) use ($exam) {
+            $teacher = $this->makeTestProfessor()->user;
+            $teacher->assignRole(Role::findOrCreate('professor', 'sanctum'));
+            ExamSurveillance::create(['exam_id' => $exam->id, 'room_id' => $exam->room_id, 'professor_id' => $teacher->id, 'role' => $index === 1 ? 'president_salle' : 'surveillant']);
+            return $teacher;
+        });
+        $this->postJson('/api/convocations/generate-session', ['session_id' => $created])->assertOk()->assertJsonPath('generated_count', 1);
+        $seat = $exam->seatings()->firstOrFail();
+        $token = $seat->qr_token;
+        $this->postJson('/api/convocations/generate-session', ['session_id' => $created])->assertOk();
+        $this->assertSame($token, $seat->fresh()->qr_token);
+        $this->postJson('/api/convocations/publish-session', ['session_id' => $created])->assertOk()->assertJsonPath('published_count', 1);
+        $this->actingAs($student->user, 'sanctum')->getJson('/api/v1/student-portal/convocations?session_type=ORDINAIRE')->assertOk()->assertJsonCount(1, 'convocations');
+        $this->postJson('/api/convocations/update-attendance/'.$token, ['status' => 'present'])->assertForbidden();
+        $this->actingAs($teachers[0], 'sanctum')->postJson('/api/convocations/update-attendance/'.$token, ['status' => 'present'])->assertOk();
+        $this->travelTo(Carbon::parse('2027-01-14 12:00'));
+        $save = '/api/exam-planning/'.$exam->id.'/save-signature';
+        $this->postJson($save, ['signature_data' => 'DIGITAL_CERTIFIED_STAMP_ENCG', 'role' => 'principal'])->assertOk();
+        $this->actingAs($teachers[1], 'sanctum')->postJson($save, ['signature_data' => 'DIGITAL_CERTIFIED_STAMP_ENCG', 'role' => 'secondary'])->assertOk();
+        $this->postJson('/api/exams/'.$exam->id.'/pv/lock')->assertOk();
+        $this->actingAs($this->admin, 'sanctum')->putJson('/api/exam-sessions/'.$created, ['is_locked' => true])->assertOk()->assertJsonPath('data.is_active', false);
+        $this->postJson('/api/convocations/update-attendance/'.$token, ['status' => 'absent'])->assertStatus(409);
+        $this->assertTrue($seat->fresh()->is_present);
+        $this->assertTrue($exam->fresh()->is_locked);
+        Mail::assertNothingSent();
+    }
+
     public function test_legacy_generation_uses_student_account_key_and_keeps_its_identity_on_retry(): void
     {
         $this->admin->givePermissionTo(Permission::findOrCreate('exams.manage', 'sanctum'));

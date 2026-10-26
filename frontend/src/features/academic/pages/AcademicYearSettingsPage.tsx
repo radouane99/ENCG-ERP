@@ -1,7 +1,7 @@
 import { assignmentSuggestions } from '../model/assignmentSuggestions';
 import AssignmentCarryForwardPanel from '../components/AssignmentCarryForwardPanel'
 import React, { useCallback, useState, useEffect, useMemo, useRef } from 'react';
-import { Calendar, Download, Upload, Trash2, Plus, CalendarDays, FileText, X, Sparkles, BookOpen, Users, Layers, Search, GraduationCap, Check, Mail, Printer, Zap, BarChart2, Eye, ChevronDown, Building2, AlertTriangle, RotateCcw, ShieldAlert } from 'lucide-react';
+import { Calendar, Download, Upload, Trash2, Plus, CalendarDays, FileText, X, Sparkles, BookOpen, Users, Layers, Search, GraduationCap, Check, Mail, Printer, Zap, BarChart2, Eye, ChevronDown, Building2, AlertTriangle, RotateCcw, ShieldAlert, RefreshCw, Clock } from 'lucide-react';
 import { cn, cleanUtf8Text } from '@shared/lib/utils';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@shared/lib/api'
@@ -1608,12 +1608,21 @@ const { data: departmentsData } = useQuery({
               <button
                 onClick={handleCreateAssignment}
                 disabled={createAssignmentMutation.isPending || !assignmentForm.professor_id || assignmentForm.module_ids.length === 0 || assignmentForm.group_ids.length === 0}
-                className="px-6 py-2.5 bg-[#0f2863] hover:bg-[#1a3a8a] text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-sm transition-all cursor-pointer flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+                className={cn(
+                  "px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer flex items-center gap-2 shadow-md active:scale-98",
+                  (!assignmentForm.professor_id || assignmentForm.module_ids.length === 0 || assignmentForm.group_ids.length === 0)
+                    ? "bg-slate-300 dark:bg-slate-800 text-slate-500 dark:text-slate-400 cursor-not-allowed opacity-60"
+                    : "bg-gradient-to-r from-emerald-600 via-teal-600 to-[#0f2863] hover:from-emerald-700 hover:to-[#1a3a8a] text-white shadow-emerald-900/20 hover:scale-102"
+                )}
               >
-                <Plus className="w-4 h-4 text-emerald-400 font-bold" />
+                {createAssignmentMutation.isPending ? (
+                  <RefreshCw className="w-4 h-4 animate-spin text-amber-300" />
+                ) : (
+                  <Sparkles className="w-4 h-4 text-amber-300" />
+                )}
                 <span>
                   {createAssignmentMutation.isPending
-                    ? 'Enregistrement...'
+                    ? 'Enregistrement en cours...'
                     : `Valider l'Affectation (${assignmentForm.module_ids.length * (assignmentForm.group_ids.includes('all') ? 1 : assignmentForm.group_ids.length) * (assignmentForm.session_type === 'both' ? 2 : 1)})`}
                 </span>
               </button>
@@ -1870,11 +1879,31 @@ const { data: departmentsData } = useQuery({
               <div className="overflow-x-auto">
                 <table className="w-full text-xs text-left border-collapse">
                   <thead>
-                    <tr className="bg-slate-50/80 dark:bg-slate-800/60 text-muted-foreground dark:text-muted-foreground uppercase tracking-wider font-bold text-[10px] border-b border-border dark:border-border">
-                      <th className="py-3.5 px-4 font-bold">Enseignant Chercheur</th>
-                      <th className="py-3.5 px-4 font-bold">Département</th>
-                      <th className="py-3.5 px-4 font-bold">Charge Horaire</th>
-                      <th className="py-3.5 px-4 font-bold">Modules & Groupes Attribués</th>
+                    <tr className="bg-gradient-to-r from-slate-100/90 via-slate-50/70 to-slate-100/90 dark:from-slate-800/90 dark:via-slate-900/70 dark:to-slate-800/90 text-slate-700 dark:text-slate-200 uppercase tracking-wider font-extrabold text-[10px] border-b border-border/80 dark:border-border">
+                      <th className="py-3.5 px-4 font-bold">
+                        <div className="flex items-center gap-1.5">
+                          <Users className="w-3.5 h-3.5 text-[#0f2863] dark:text-blue-400" />
+                          <span>Enseignant Chercheur</span>
+                        </div>
+                      </th>
+                      <th className="py-3.5 px-4 font-bold">
+                        <div className="flex items-center gap-1.5">
+                          <Building2 className="w-3.5 h-3.5 text-indigo-500" />
+                          <span>Département</span>
+                        </div>
+                      </th>
+                      <th className="py-3.5 px-4 font-bold">
+                        <div className="flex items-center gap-1.5">
+                          <Clock className="w-3.5 h-3.5 text-amber-500" />
+                          <span>Charge & Statut (18h)</span>
+                        </div>
+                      </th>
+                      <th className="py-3.5 px-4 font-bold">
+                        <div className="flex items-center gap-1.5">
+                          <BookOpen className="w-3.5 h-3.5 text-emerald-500" />
+                          <span>Modules & Groupes Attribués</span>
+                        </div>
+                      </th>
                       <th className="py-3.5 px-4 text-right font-bold">Actions & Documents</th>
                     </tr>
                   </thead>
@@ -1886,27 +1915,38 @@ const { data: departmentsData } = useQuery({
                       const percentage = Math.min(Math.round((weeklyHours / 18) * 100), 100)
 
                       return (
-                        <tr key={idx} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+                        <tr key={idx} className="group hover:bg-gradient-to-r hover:from-blue-50/40 hover:via-indigo-50/20 hover:to-transparent dark:hover:from-blue-950/20 dark:hover:via-slate-800/40 dark:hover:to-transparent transition-all duration-150">
                           {/* Prof Name & Avatar */}
                           <td className="py-3 px-4">
                             <div className="flex items-center gap-3">
                               <div className="relative">
-                                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#0f2863] to-indigo-700 text-white font-black text-sm flex items-center justify-center shrink-0 shadow-xs ring-2 ring-primary/20">
+                                <div className={cn(
+                                  "w-10 h-10 rounded-2xl text-white font-black text-sm flex items-center justify-center shrink-0 shadow-md ring-2 transition-transform group-hover:scale-105",
+                                  weeklyHours > 18
+                                    ? "bg-gradient-to-br from-rose-500 to-rose-700 ring-rose-400/30"
+                                    : weeklyHours >= 14
+                                      ? "bg-gradient-to-br from-emerald-500 to-teal-700 ring-emerald-400/30"
+                                      : weeklyHours > 0
+                                        ? "bg-gradient-to-br from-[#0f2863] to-blue-700 ring-blue-400/30"
+                                        : "bg-gradient-to-br from-slate-600 to-slate-800 ring-slate-400/20"
+                                )}>
                                   {profGroup.profName ? profGroup.profName.charAt(0).toUpperCase() : 'P'}
                                 </div>
                                 <span className={cn(
-                                  "absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white dark:border-slate-900",
+                                  "absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white dark:border-slate-900 shadow-xs",
                                   weeklyHours > 18 ? "bg-rose-500" : weeklyHours >= 14 ? "bg-emerald-500" : weeklyHours > 0 ? "bg-blue-500" : "bg-slate-300 dark:bg-slate-600"
                                 )} />
                               </div>
                               <div className="min-w-0">
-                                <div className="font-bold text-foreground dark:text-white truncate text-xs flex items-center gap-1.5">
+                                <div className="font-extrabold text-foreground dark:text-white truncate text-xs flex items-center gap-1.5">
                                   <span>{cleanUtf8Text(profGroup.profName)}</span>
                                 </div>
                                 <div className="text-[10px] text-muted-foreground flex items-center gap-1.5 truncate mt-0.5">
-                                  <span className="font-semibold text-primary dark:text-indigo-400 bg-primary/5 dark:bg-indigo-950/40 px-1.5 py-0.2 rounded">{profGroup.grade || 'PES'}</span>
+                                  <span className="font-bold text-[#0f2863] dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 border border-blue-200/60 dark:border-blue-900 px-1.5 py-0.2 rounded shadow-2xs">
+                                    {profGroup.grade || 'PES'}
+                                  </span>
                                   <span>•</span>
-                                  <span className="truncate">{cleanUtf8Text(profGroup.specialty)}</span>
+                                  <span className="truncate font-medium">{cleanUtf8Text(profGroup.specialty)}</span>
                                 </div>
                               </div>
                             </div>
@@ -1914,46 +1954,47 @@ const { data: departmentsData } = useQuery({
 
                           {/* Department */}
                           <td className="py-3 px-4">
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/60">
-                              <Building2 className="w-3 h-3 text-slate-400" />
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700/80 shadow-2xs">
+                              <Building2 className="w-3 h-3 text-indigo-500" />
                               <span>{cleanUtf8Text(profGroup.departmentName || 'ENCG Fès')}</span>
                             </span>
                           </td>
 
                           {/* Workload Progress & Dual-Metric Gauge */}
                           <td className="py-3 px-4">
-                            <div className="space-y-1.5 w-44">
+                            <div className="space-y-1.5 w-48">
                               <div className="flex items-center justify-between text-[11px]">
-                                <span className="font-bold font-mono text-slate-800 dark:text-slate-100">
-                                  {weeklyHours}h <span className="text-[10px] text-muted-foreground font-normal">/ 18h stat.</span>
+                                <span className="font-extrabold font-mono text-slate-900 dark:text-white flex items-center gap-1">
+                                  <span>{weeklyHours}h</span>
+                                  <span className="text-[10px] text-muted-foreground font-normal">/ 18h stat.</span>
                                 </span>
                                 <span className={cn(
-                                  "font-bold text-[9px] px-2 py-0.5 rounded-full uppercase tracking-wider",
-                                  weeklyHours > 18 ? "text-rose-700 bg-rose-100 dark:bg-rose-950/60 dark:text-rose-300" :
-                                  weeklyHours >= 14 ? "text-emerald-700 bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-300" :
-                                  weeklyHours > 0 ? "text-blue-700 bg-blue-100 dark:bg-blue-950/60 dark:text-blue-300" :
-                                  "text-slate-500 bg-slate-100 dark:bg-slate-800 dark:text-slate-400"
+                                  "font-black text-[9px] px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow-2xs",
+                                  weeklyHours > 18 ? "text-rose-700 bg-rose-100 dark:bg-rose-950/80 dark:text-rose-300 ring-1 ring-rose-400/30" :
+                                  weeklyHours >= 14 ? "text-emerald-700 bg-emerald-100 dark:bg-emerald-950/80 dark:text-emerald-300 ring-1 ring-emerald-400/30" :
+                                  weeklyHours > 0 ? "text-blue-700 bg-blue-100 dark:bg-blue-950/80 dark:text-blue-300 ring-1 ring-blue-400/30" :
+                                  "text-slate-600 bg-slate-100 dark:bg-slate-800 dark:text-slate-300 ring-1 ring-slate-300/40"
                                 )}>
-                                  {weeklyHours > 18 ? 'Surcharge' : weeklyHours >= 14 ? 'Complet' : weeklyHours > 0 ? `${count} cours` : 'Dispo'}
+                                  {weeklyHours > 18 ? '⚡ Surcharge' : weeklyHours >= 14 ? '✓ Équilibré' : weeklyHours > 0 ? `${count} cours` : '✨ Dispo'}
                                 </span>
                               </div>
 
                               {/* Progress Bar with Gradient */}
-                              <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden p-0.5 border border-slate-200/50 dark:border-slate-700/50">
+                              <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden p-0.5 border border-slate-200/80 dark:border-slate-700/60 shadow-inner">
                                 <div
                                   className={cn(
-                                    "h-full rounded-full transition-all duration-300",
-                                    weeklyHours > 18 ? "bg-rose-500" :
-                                    weeklyHours >= 14 ? "bg-gradient-to-r from-blue-600 to-emerald-500" :
-                                    weeklyHours > 0 ? "bg-blue-500" :
+                                    "h-full rounded-full transition-all duration-500",
+                                    weeklyHours > 18 ? "bg-gradient-to-r from-amber-500 to-rose-600" :
+                                    weeklyHours >= 14 ? "bg-gradient-to-r from-blue-600 via-teal-500 to-emerald-500" :
+                                    weeklyHours > 0 ? "bg-gradient-to-r from-blue-500 to-indigo-600" :
                                     "bg-transparent"
                                   )}
                                   style={{ width: `${percentage}%` }}
                                 />
                               </div>
-                              <div className="text-[9px] text-muted-foreground flex justify-between">
+                              <div className="text-[10px] text-muted-foreground flex justify-between items-center font-medium">
                                 <span>{count} module{count > 1 ? 's' : ''}</span>
-                                <span className="font-mono">{count * 48}h semestrielles</span>
+                                <span className="font-mono text-[9px] text-slate-500 dark:text-slate-400">{count * 48}h volume sem.</span>
                               </div>
                             </div>
                           </td>
@@ -1968,14 +2009,14 @@ const { data: departmentsData } = useQuery({
                                   return (
                                     <span
                                       key={i}
-                                      className="group/tag inline-flex items-center gap-1.5 px-2.5 py-1 bg-muted/60 dark:bg-card hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-foreground rounded-lg text-[11px] font-medium border border-slate-200/80 dark:border-border transition-all shadow-2xs"
+                                      className="group/tag inline-flex items-center gap-1.5 px-2.5 py-1 bg-white dark:bg-card hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-foreground rounded-xl text-[11px] font-semibold border border-slate-200/80 dark:border-border transition-all shadow-xs"
                                     >
                                       {semNum && (
                                         <span className={cn(
-                                          "px-1 py-0.2 rounded text-[9px] font-bold font-mono",
+                                          "px-1.5 py-0.2 rounded-md text-[9px] font-black font-mono",
                                           Number(semNum) % 2 === 1
-                                            ? "bg-primary/10 text-[#0f2863] dark:bg-blue-950 dark:text-blue-300"
-                                            : "bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300"
+                                            ? "bg-[#0f2863] text-white"
+                                            : "bg-purple-700 text-white"
                                         )}>
                                           S{semNum}
                                         </span>
@@ -1983,10 +2024,15 @@ const { data: departmentsData } = useQuery({
                                       <span className="font-bold text-[#0f2863] dark:text-blue-400 font-mono text-[10px]">
                                         {cleanUtf8Text(a.module?.split(' ')[0] || 'MOD')}
                                       </span>
-                                      <span className="text-[10px] text-muted-foreground font-normal">
+                                      <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
                                         ({isAmphi ? '🏛️ Amphi' : cleanUtf8Text(a.group)})
                                       </span>
-                                      <span className="text-[9px] px-1 rounded bg-slate-200/80 dark:bg-slate-700 text-muted-foreground uppercase font-bold">
+                                      <span className={cn(
+                                        "text-[9px] px-1.5 py-0.2 rounded font-black uppercase",
+                                        (a.session_type || 'cm').toLowerCase() === 'cm'
+                                          ? "bg-blue-100 text-blue-900 dark:bg-blue-950 dark:text-blue-200"
+                                          : "bg-emerald-100 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-200"
+                                      )}>
                                         {a.session_type || 'CM'}
                                       </span>
                                       {/* Quick Delete Cross Button */}
@@ -1996,7 +2042,7 @@ const { data: departmentsData } = useQuery({
                                           e.stopPropagation()
                                           handleDeleteAssignment(a.id)
                                         }}
-                                        className="opacity-0 group-hover/tag:opacity-100 w-3.5 h-3.5 rounded-full hover:bg-rose-500 hover:text-white text-slate-400 flex items-center justify-center transition-all cursor-pointer -mr-0.5"
+                                        className="opacity-0 group-hover/tag:opacity-100 w-4 h-4 rounded-full hover:bg-rose-500 hover:text-white text-slate-400 flex items-center justify-center transition-all cursor-pointer -mr-0.5"
                                         title="Supprimer cette affectation"
                                       >
                                         <X className="w-2.5 h-2.5 stroke-[3]" />
@@ -2008,28 +2054,28 @@ const { data: departmentsData } = useQuery({
                                 {count > 4 && (
                                   <button
                                     onClick={() => setSelectedProfForModal(profGroup)}
-                                    className="px-2 py-1 bg-primary/5 dark:bg-blue-950/40 text-primary dark:text-blue-300 hover:bg-primary/10 rounded-lg text-[10px] font-bold cursor-pointer transition-colors"
+                                    className="px-2.5 py-1 bg-primary/10 dark:bg-blue-950/60 text-primary dark:text-blue-300 hover:bg-primary/20 rounded-xl text-[10px] font-black cursor-pointer transition-colors shadow-2xs"
                                   >
                                     +{count - 4} autres
                                   </button>
                                 )}
                               </div>
                             ) : (
-                              <span className="text-slate-400 italic text-[11px] flex items-center gap-1">
-                                <span className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-600 inline-block" />
-                                Disponible (0h / 18h statutaires)
+                              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-[11px] font-semibold bg-emerald-50/80 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 border border-dashed border-emerald-300 dark:border-emerald-800 shadow-2xs">
+                                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                                <span>Disponible pour affectation (0 / 18h)</span>
                               </span>
                             )}
                           </td>
 
                           {/* Actions */}
                           <td className="py-3 px-4 text-right">
-                            <div className="inline-flex items-center gap-1 justify-end">
+                            <div className="inline-flex items-center gap-1.5 justify-end">
                               {count > 0 ? (
                                 <>
                                   <button
                                     onClick={() => setSelectedProfForModal(profGroup)}
-                                    className="p-1.5 text-muted-foreground hover:text-[#0f2863] dark:text-foreground dark:hover:text-white bg-muted hover:bg-slate-200 dark:bg-card dark:hover:bg-slate-700 rounded-lg transition-colors cursor-pointer"
+                                    className="p-2 text-slate-500 hover:text-[#0f2863] dark:text-slate-400 dark:hover:text-white bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl transition-all cursor-pointer shadow-2xs"
                                     title="Voir le détail complet des modules et groupes"
                                   >
                                     <Eye className="w-3.5 h-3.5" />
@@ -2037,7 +2083,7 @@ const { data: departmentsData } = useQuery({
 
                                   <button
                                     onClick={() => handlePrintOrdreDeService(profGroup)}
-                                    className="p-1.5 text-muted-foreground hover:text-primary dark:text-foreground dark:hover:text-blue-400 bg-muted hover:bg-slate-200 dark:bg-card dark:hover:bg-slate-700 rounded-lg transition-colors cursor-pointer"
+                                    className="p-2 text-slate-500 hover:text-primary dark:text-slate-400 dark:hover:text-blue-400 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl transition-all cursor-pointer shadow-2xs"
                                     title="Télécharger l'Ordre de Service Officiel (PDF)"
                                   >
                                     <Printer className="w-3.5 h-3.5" />
@@ -2045,7 +2091,7 @@ const { data: departmentsData } = useQuery({
 
                                   <button
                                     onClick={() => handleSendNotificationEmail(profGroup)}
-                                    className="p-1.5 text-muted-foreground hover:text-primary dark:text-foreground dark:hover:text-blue-400 bg-muted hover:bg-slate-200 dark:bg-card dark:hover:bg-slate-700 rounded-lg transition-colors cursor-pointer"
+                                    className="p-2 text-slate-500 hover:text-amber-600 dark:text-slate-400 dark:hover:text-amber-400 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl transition-all cursor-pointer shadow-2xs"
                                     title="Notifier l'enseignant par email officiel (Resend)"
                                   >
                                     <Mail className="w-3.5 h-3.5" />
@@ -2060,7 +2106,7 @@ const { data: departmentsData } = useQuery({
                                       }))
                                       window.scrollTo({ top: 320, behavior: 'smooth' })
                                     }}
-                                    className="p-1.5 text-primary hover:bg-primary/10 dark:text-blue-400 dark:hover:bg-blue-950/40 rounded-lg transition-colors cursor-pointer"
+                                    className="p-2 text-white bg-gradient-to-r from-[#0f2863] to-blue-700 hover:from-[#1a3a8a] hover:to-blue-800 rounded-xl transition-all cursor-pointer shadow-xs"
                                     title="Ajouter un autre module à cet enseignant"
                                   >
                                     <Plus className="w-3.5 h-3.5" />
@@ -2076,9 +2122,9 @@ const { data: departmentsData } = useQuery({
                                     }))
                                     window.scrollTo({ top: 320, behavior: 'smooth' })
                                   }}
-                                  className="px-3 py-1.5 bg-gradient-to-r from-[#0f2863] to-blue-700 hover:from-[#1a3a8a] hover:to-blue-800 text-white rounded-lg text-[11px] font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                                  className="px-3.5 py-1.5 bg-gradient-to-r from-[#0f2863] via-blue-700 to-indigo-800 hover:from-[#1a3a8a] hover:to-indigo-900 text-white rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer shadow-md hover:scale-102 active:scale-98"
                                 >
-                                  <Plus className="w-3 h-3 text-emerald-400" />
+                                  <Plus className="w-3.5 h-3.5 text-emerald-400 stroke-[3]" />
                                   <span>Affecter</span>
                                 </button>
                               )}
