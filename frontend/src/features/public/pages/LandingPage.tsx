@@ -1,17 +1,11 @@
 import React,{ useEffect,useState } from 'react';
 import { useNavigate,Link } from 'react-router-dom';
 import api from '@shared/lib/api';
-import {
-ShieldCheck,Sparkles,GraduationCap,ArrowRight,LogIn,BrainCircuit,
-UserCheck,Activity,QrCode,Database,BookOpen,Layers,BarChart3,
-Sun,Moon,MapPin,Phone,Mail,Send,CheckCircle2,Award
-} from 'lucide-react';
+import { ShieldCheck,Sparkles,GraduationCap,ArrowRight,LogIn,BrainCircuit,UserCheck,Activity,Database,BarChart3,Sun,Moon,MapPin,Phone,Mail,Send,CheckCircle2,Award } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { useAuthStore } from '@stores/authStore';
 import { useTheme } from '@shared/components/layout/useTheme';
 import RoleJourneySection from '@features/public/components/RoleJourneySection';
-import BenefitsSection from '@features/public/components/BenefitsSection';
-import ConversionSection from '@features/public/components/ConversionSection';
 import FaqSection from '@features/public/components/FaqSection';
 import AdmissionCalendarPanel from '../components/AdmissionCalendarPanel';
 import TafemAdmissibilitySection from '@features/public/components/TafemAdmissibilitySection';
@@ -19,10 +13,10 @@ import TafemAdmissibilitySection from '@features/public/components/TafemAdmissib
 const dict = {
   fr: {
     font: 'font-sans',
-    navVision: 'Vision', navEco: 'Écosystème', navAi: 'ENCG AI',
+    navVision: 'Vision', navEco: 'Espaces utilisateurs', navAi: 'ENCG AI',
     navDash: 'Tableau de bord', navLogin: 'Connexion',
     badge1: 'Accès sécurisé', badge2: 'Services numériques',
-    heroTitle1: 'Le Management de Demain', heroTitle2: "S'invente Aujourd'hui.",
+    heroTitle1: 'Votre scolarité,', heroTitle2: 'Un seul portail.',
     heroDesc: "Le portail de l’ENCG Fès réunit les admissions, le suivi de scolarité et les services destinés aux étudiants, aux enseignants et à l’administration.",
     btnExplore: 'Explorer le Portail', btnRegister: 'Calendrier des inscriptions',
     ecoTitle1: 'Un Écosystème,', ecoTitle2: 'Trois Dimensions.',
@@ -35,7 +29,7 @@ const dict = {
     studentTag1: 'Carte Digitale', studentTag2: 'Relevés Instantanés', studentTag3: 'Bourse Projets',
     aiBadge: 'Assistance IA', aiTitle1: "L'Intelligence", aiTitle2: "Artificielle", aiTitle3: "Au Service De L'Humain",
     aiDesc: "Notre IA intégrée analyse les résultats, répond aux étudiants 24/7 et assiste les professeurs.",
-    aiBtn: "Découvrir les cas d'usage",
+    aiBtn: "Accéder à mon espace",
     aiChatUser: "Ai-je validé mon S1 ? J'ai 9.5 en Comptabilité et 14 en Management.",
     aiChatBot: "Consultez vos résultats validés dans votre espace étudiant. La décision officielle relève du jury de délibération.",
     contactTitle: 'Entrez en Contact', contactSubtitle: 'Notre équipe est là pour vous',
@@ -49,10 +43,10 @@ const dict = {
   },
   en: {
     font: 'font-sans',
-    navVision: 'Vision', navEco: 'Ecosystem', navAi: 'ENCG AI',
+    navVision: 'Vision', navEco: 'User spaces', navAi: 'ENCG AI',
     navDash: 'Dashboard', navLogin: 'Login',
     badge1: 'Secure access', badge2: 'Digital services',
-    heroTitle1: 'The Management of Tomorrow', heroTitle2: 'Is Invented Today.',
+    heroTitle1: 'Your academic journey,', heroTitle2: 'One portal.',
     heroDesc: "The ENCG Fes portal brings together admissions, academic records and services for students, teachers and administration.",
     btnExplore: 'Explore Portal', btnRegister: 'Enrollment calendar',
     ecoTitle1: 'One Ecosystem,', ecoTitle2: 'Three Dimensions.',
@@ -65,7 +59,7 @@ const dict = {
     studentTag1: 'Digital ID', studentTag2: 'Instant Transcripts', studentTag3: 'Project Board',
     aiBadge: 'Assistance IA', aiTitle1: "Artificial", aiTitle2: "Intelligence", aiTitle3: "Serving Humanity",
     aiDesc: "Our integrated AI analyzes results, answers students 24/7, and assists professors.",
-    aiBtn: "Discover use cases",
+    aiBtn: "Access my space",
     aiChatUser: "Did I pass S1? I got 9.5 in Accounting and 14 in Management.",
     aiChatBot: "Check your validated results in the student portal. The official decision belongs to the examination board.",
     contactTitle: 'Get in Touch', contactSubtitle: 'Our team is here for you',
@@ -79,10 +73,10 @@ const dict = {
   },
   ar: {
     font: "font-['Cairo']",
-    navVision: 'الرؤية', navEco: 'النظام البيئي', navAi: 'الذكاء الاصطناعي',
+    navVision: 'الرؤية', navEco: 'فضاءات المستخدمين', navAi: 'الذكاء الاصطناعي',
     navDash: 'لوحة التحكم', navLogin: 'تسجيل الدخول',
     badge1: 'ولوج آمن', badge2: 'خدمات رقمية',
-    heroTitle1: 'إدارة الغد', heroTitle2: 'تُبتكر اليوم.',
+    heroTitle1: 'مساركم الدراسي،', heroTitle2: 'في بوابة واحدة.',
     heroDesc: "بوابة المدرسة الوطنية للتجارة والتسيير بفاس تجمع التسجيلات وتتبع المسار الدراسي وخدمات الطلبة والأساتذة والإدارة.",
     btnExplore: 'اكتشف البوابة', btnRegister: 'رزنامة التسجيل',
     ecoTitle1: 'نظام بيئي واحد،', ecoTitle2: 'ثلاثة أبعاد.',
@@ -95,7 +89,7 @@ const dict = {
     studentTag1: 'بطاقة رقمية', studentTag2: 'كشوف فورية', studentTag3: 'بورصة المشاريع',
     aiBadge: 'المساعدة الذكية', aiTitle1: "الذكاء", aiTitle2: "الاصطناعي", aiTitle3: "في خدمة الإنسان",
     aiDesc: "يقوم الذكاء الاصطناعي المدمج لدينا بتحليل النتائج والإجابة على الطلاب على مدار الساعة.",
-    aiBtn: "اكتشف حالات الاستخدام",
+    aiBtn: "الدخول إلى فضائي",
     aiChatUser: "هل نجحت في الفصل الأول؟ حصلت على 9.5 في المحاسبة و14 في الإدارة.",
     aiChatBot: "يمكنكم الاطلاع على النتائج المصادق عليها في فضاء الطالب. القرار الرسمي من اختصاص لجنة المداولات.",
     contactTitle: 'تواصل معنا', contactSubtitle: 'فريقنا هنا لمساعدتك',
@@ -349,88 +343,9 @@ export default function LandingPage() {
       <TafemAdmissibilitySection isRtl={isRTL} />
 
       {/* ── Ecosystem / 3 Universes ── */}
-      <div id="ecosystem" className="relative z-10 max-w-7xl mx-auto px-6 py-24">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white mb-4 tracking-tight">
-            {t.ecoTitle1} <span className="text-[#0f2863] dark:text-amber-400">{t.ecoTitle2}</span>
-          </h2>
-          <p className="text-slate-500 dark:text-slate-400 max-w-xl mx-auto text-lg">{t.ecoDesc}</p>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Admin */}
-          <div className="md:col-span-2 bg-white dark:bg-gradient-to-br dark:from-[#1F3A5F]/20 dark:to-[#0A1220] rounded-3xl p-10 border border-slate-200 dark:border-white/10 hover:border-blue-400 dark:hover:border-blue-500/30 transition-all group relative overflow-hidden shadow-lg shadow-slate-100 dark:shadow-none hover:shadow-xl hover:-translate-y-1">
-            <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
-              <Layers className="w-48 h-48 text-blue-600" strokeWidth={0.5} />
-            </div>
-            <div className="w-14 h-14 bg-blue-100 dark:bg-blue-500/20 rounded-2xl flex items-center justify-center border border-blue-200 dark:border-blue-500/30 mb-6">
-              <ShieldCheck className="w-7 h-7 text-blue-600 dark:text-blue-400" />
-            </div>
-            <h3 className="text-3xl font-black text-slate-900 dark:text-white mb-4">{t.adminTitle}</h3>
-            <p className="text-slate-500 dark:text-slate-400 max-w-md text-lg leading-relaxed mb-8">{t.adminDesc}</p>
-            <div className="flex flex-wrap gap-3">
-              <span className="bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 px-4 py-2 rounded-full text-xs font-bold text-blue-700 dark:text-blue-300">{t.adminTag1}</span>
-              <span className="bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 px-4 py-2 rounded-full text-xs font-bold text-blue-700 dark:text-blue-300">{t.adminTag2}</span>
-            </div>
-          </div>
-          {/* Professor */}
-          <div className="md:col-span-1 bg-white dark:bg-gradient-to-br dark:from-amber-500/10 dark:to-[#0A1220] rounded-3xl p-10 border border-slate-200 dark:border-white/10 hover:border-amber-400/50 transition-all group relative overflow-hidden shadow-lg shadow-slate-100 dark:shadow-none hover:shadow-xl hover:-translate-y-1">
-            <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
-              <BookOpen className="w-48 h-48 text-amber-500" strokeWidth={0.5} />
-            </div>
-            <div className="w-14 h-14 bg-amber-100 dark:bg-amber-500/20 rounded-2xl flex items-center justify-center border border-amber-200 dark:border-amber-500/30 mb-6">
-              <BookOpen className="w-7 h-7 text-amber-600 dark:text-amber-400" />
-            </div>
-            <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">{t.profTitle}</h3>
-            <p className="text-slate-500 dark:text-slate-400 leading-relaxed mb-8">{t.profDesc}</p>
-            <ul className="space-y-3">
-              {[t.profTag1, t.profTag2].map(tag => (
-                <li key={tag} className="flex items-center gap-3 text-sm font-medium text-slate-700 dark:text-slate-300">
-                  <div className="w-2 h-2 rounded-full bg-amber-500" />{tag}
-                </li>
-              ))}
-            </ul>
-          </div>
-          {/* Student */}
-          <div className="md:col-span-3 bg-emerald-50/80 dark:bg-gradient-to-r dark:from-emerald-900/20 dark:via-[#0A1220] dark:to-[#0A1220] rounded-3xl p-10 border border-emerald-200 dark:border-emerald-500/10 hover:border-emerald-400 dark:hover:border-emerald-500/30 transition-all flex flex-col md:flex-row items-center justify-between gap-12 shadow-lg shadow-emerald-50 dark:shadow-none hover:shadow-xl hover:-translate-y-1">
-            <div className="flex-1">
-              <div className="w-14 h-14 bg-emerald-100 dark:bg-emerald-500/20 rounded-2xl flex items-center justify-center border border-emerald-200 dark:border-emerald-500/30 mb-6">
-                <GraduationCap className="w-7 h-7 text-emerald-600 dark:text-emerald-400" />
-              </div>
-              <h3 className="text-3xl font-black text-slate-900 dark:text-white mb-4">{t.studentTitle}</h3>
-              <p className="text-slate-500 dark:text-slate-400 text-lg leading-relaxed mb-8 max-w-xl">{t.studentDesc}</p>
-              <div className="flex flex-wrap gap-3">
-                {[
-                  { label: t.studentTag1, Icon: QrCode },
-                  { label: t.studentTag2, Icon: ArrowRight },
-                  { label: t.studentTag3, Icon: ArrowRight },
-                ].map(({ label, Icon }) => (
-                  <span key={label} className="bg-white dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 px-4 py-2 rounded-full text-xs font-bold text-emerald-700 dark:text-emerald-300 flex items-center gap-2 shadow-sm">
-                    <Icon className="w-4 h-4" />{label}
-                  </span>
-                ))}
-              </div>
-            </div>
-            {/* Student Card Mockup */}
-            <div className="w-full max-w-[300px] aspect-[1.6] bg-gradient-to-br from-emerald-500 to-teal-700 rounded-2xl shadow-2xl p-6 text-white transform hover:scale-105 transition-transform flex flex-col justify-between">
-              <div className="flex justify-between items-start">
-                <div>
-                  <div className="font-black text-xl">ENCG Fès</div>
-                  <div className="text-[10px] uppercase tracking-wider opacity-80">Carte Étudiant</div>
-                </div>
-                <QrCode className="w-12 h-12 opacity-90" />
-              </div>
-              <div>
-                <div className="font-mono text-sm tracking-widest opacity-90 mb-1">2026 0045 8992</div>
-                <div className="font-bold text-lg">Youssef Alaoui</div>
-              </div>
-            </div>
-          </div>
-        </div>
+      <div id="ecosystem" className="relative z-10 scroll-mt-24">
+        <RoleJourneySection lang={lang} isRTL={isRTL} />
       </div>
-
-      <BenefitsSection lang={lang} isRTL={isRTL} />
-      <RoleJourneySection lang={lang} isRTL={isRTL} />
-      <ConversionSection lang={lang} isRTL={isRTL} />
       <FaqSection lang={lang} isRTL={isRTL} />
 
       {/* ── AI Section ── */}
@@ -446,7 +361,7 @@ export default function LandingPage() {
               <span className="text-slate-400 font-light">{t.aiTitle3}.</span>
             </h2>
             <p className="text-slate-500 dark:text-slate-400 text-lg mb-10 leading-relaxed font-light">{t.aiDesc}</p>
-            <button className="bg-[#0f2863] hover:bg-[#162e74] text-white px-8 py-4 rounded-xl font-bold transition-colors flex items-center gap-2 shadow-lg shadow-[#0f2863]/20 cursor-pointer">
+            <button onClick={() => navigate('/login')} className="bg-[#0f2863] hover:bg-[#162e74] text-white px-8 py-4 rounded-xl font-bold transition-colors flex items-center gap-2 shadow-lg shadow-[#0f2863]/20 cursor-pointer">
               {t.aiBtn} <ArrowRight className={cn('w-5 h-5', isRTL && 'rotate-180')} />
             </button>
           </div>

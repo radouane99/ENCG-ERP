@@ -91,10 +91,10 @@ export default function FaqSection({ lang = 'fr', isRTL = false }: FaqSectionPro
               {copy.subtitle}
             </p>
           </div>
-          <button className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 shadow-sm transition hover:border-[#0f2863]/30 hover:text-[#0f2863] dark:border-white/10 dark:bg-white/5 dark:text-slate-200 dark:hover:text-amber-400">
-            {copy.cta}
+          <a href="#inscriptions" className="inline-flex min-h-11 items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 shadow-sm transition hover:border-[#0f2863]/30 hover:text-[#0f2863] dark:border-white/10 dark:bg-white/5 dark:text-slate-200 dark:hover:text-amber-400">
+            {lang === 'ar' ? 'رزنامة التسجيل' : lang === 'en' ? 'Enrollment calendar' : 'Calendrier des inscriptions'}
             <ArrowRight className={isRTL ? 'h-4 w-4 rotate-180' : 'h-4 w-4'} />
-          </button>
+          </a>
         </div>
 
         <div className="space-y-4">

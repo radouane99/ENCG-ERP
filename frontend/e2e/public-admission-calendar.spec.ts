@@ -44,3 +44,13 @@ test('network failure never announces open or closed as a known fact', async ({ 
   await expect(calendar.getByRole('alert')).toContainText('Calendrier momentanément indisponible')
   await expect(calendar.getByRole('link', { name: 'Accéder à cette session' })).toHaveCount(0)
 })
+
+test('mobile registration keeps the scheduled campaign and fits the screen', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.route('**/public/admissions/calendar', route => route.fulfill({ json: { data: { state: 'open', campaigns: [campaign], timezone: 'Africa/Casablanca', server_now: new Date().toISOString() } } }))
+  await page.goto('/inscription?campaign_id=71')
+  await expect(page.getByTestId('public-admission-calendar').getByRole('status')).toHaveText('Inscriptions ouvertes')
+  await expect(page.getByRole('tab', { name: 'Créer un compte' })).toBeVisible()
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true)
+  await page.screenshot({ path: 'test-results/public-calendar-mobile.png', fullPage: true })
+})

@@ -11,7 +11,7 @@ const content = {
   fr: {
     eyebrow: 'Rôles & Acteurs',
     title: 'Trois rôles, trois périmètres d’accès dédiés.',
-    subtitle: 'Un système protégé par des middlewares stricts et une authentification multi-couche.',
+    subtitle: 'Retrouvez les services et démarches correspondant à votre rôle dans l’établissement.',
     roles: [
       {
         title: 'Administrateur',
@@ -36,7 +36,7 @@ const content = {
   en: {
     eyebrow: 'Roles & Actors',
     title: 'Three roles, three dedicated access domains.',
-    subtitle: 'A system protected by strict middleware and multi-layer authentication.',
+    subtitle: 'Find the services and procedures available for your role at the institution.',
     roles: [
       {
         title: 'Administrator',
@@ -61,7 +61,7 @@ const content = {
   ar: {
     eyebrow: 'الأدوار والفاعلون',
     title: 'ثلاثة أدوار، ثلاثة نطاقات وصول مخصصة.',
-    subtitle: 'نظام محمي بواسطة وسطاء صارمين ومصادقة متعددة الطبقات.',
+    subtitle: 'تجدون هنا الخدمات والإجراءات المناسبة لدوركم داخل المؤسسة.',
     roles: [
       {
         title: 'المسؤول',
@@ -125,9 +125,9 @@ export default function RoleJourneySection({ lang = 'fr', isRTL = false }: RoleJ
                     </li>
                   ))}
                 </ul>
-                <div className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-slate-700 transition group-hover:text-[#0f2863] dark:text-slate-300 dark:group-hover:text-amber-400">
-                  {lang === 'ar' ? 'اعرف المزيد' : 'Découvrir'} <ArrowRight className={isRTL ? 'mr-1 h-4 w-4 rotate-180' : 'ml-1 h-4 w-4'} />
-                </div>
+                <a href="/login" className="mt-6 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-slate-700 transition hover:text-[#0f2863] dark:text-slate-300 dark:hover:text-amber-400">
+                  {lang === 'ar' ? 'تسجيل الدخول' : lang === 'en' ? 'Sign in' : 'Se connecter'} <ArrowRight className={isRTL ? 'mr-1 h-4 w-4 rotate-180' : 'ml-1 h-4 w-4'} />
+                </a>
               </article>
             )
           })}

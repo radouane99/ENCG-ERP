@@ -156,6 +156,9 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:admin|super-admi
     Route::get('admin/holidays/{holiday}/impact', [HolidayController::class, 'impact']);
     // 🏛️ Institution & Global ERP Settings
     Route::get('/admin/institution-settings', [InstitutionSettingsController::class, 'getSettings']);
+    Route::get('/admin/public-portal', [\App\Http\Controllers\Api\Admin\PublicPortalController::class, 'show']);
+    Route::put('/admin/public-portal', [\App\Http\Controllers\Api\Admin\PublicPortalController::class, 'save']);
+    Route::post('/admin/public-portal/attachments', [\App\Http\Controllers\Api\Admin\PublicPortalController::class, 'upload'])->middleware('throttle:uploads');
     Route::post('/admin/institution-settings', [InstitutionSettingsController::class, 'updateSettings']);
     Route::post('/admin/institution-settings/test-email', [InstitutionSettingsController::class, 'testResendEmail']);
     Route::get('/institution-settings', [InstitutionSettingsController::class, 'getSettings']);

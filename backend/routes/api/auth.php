@@ -19,6 +19,8 @@ Route::post('/contact', [ContactController::class, 'send'])->middleware('throttl
 Route::get('/login', fn () => response()->json(['message' => 'Non authentifié. Veuillez vous connecter.'], 401))->name('login');
 
 Route::prefix('public/admissions')->middleware('throttle:10,1')->group(function () {
+    Route::get('portal', [\App\Http\Controllers\Api\Admin\PublicPortalController::class, 'content']);
+    Route::get('announcements/{id}/pdf', [\App\Http\Controllers\Api\Admin\PublicPortalController::class, 'attachment'])->whereUuid('id');
     Route::get('calendar', [AdmissionWorkflowController::class, 'publicCalendar']);
     Route::get('campaigns', [AdmissionWorkflowController::class, 'campaigns']);
     Route::post('admissibility', [AdmissionWorkflowController::class, 'admissibility']);

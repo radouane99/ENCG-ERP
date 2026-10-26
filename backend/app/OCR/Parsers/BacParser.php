@@ -406,8 +406,7 @@ class BacParser implements DocumentParserInterface
             return false;
         }
 
-        $daysInMonth = cal_days_in_month(CAL_GREGORIAN, $month, $year);
-        if ($day < 1 || $day > $daysInMonth) {
+        if (! checkdate($month, $day, $year)) {
             return false;
         }
 
