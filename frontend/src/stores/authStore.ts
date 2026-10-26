@@ -33,7 +33,8 @@ interface AuthState {
   sessionError: string | null
 
   completeSession: (user?: User) => Promise<void>
-  login: (email: string, password: string) => Promise<{ requiresTwoFactor: boolean }>
+  login: (email: string, password: string, remember?: boolean) => Promise<{ requiresTwoFactor: boolean }>
+  beginTwoFactor: (challenge: string) => void
   verifyTwoFactor: (code: string) => Promise<void>
   logout: () => Promise<void>
   clearSession: () => void
@@ -61,21 +62,26 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       return
     }
     await get().fetchUser()
-    if (!get().isAuthenticated) throw new Error(get().sessionError || 'La session n’a pas pu être établie. Connectez-vous pour reprendre votre dossier.')
+    if (!get().isAuthenticated) throw new Error(get().sessionError || "La session n'a pas pu être établie. Connectez-vous pour reprendre votre dossier.")
   },
 
-  login: async (email, password) => {
-    const response = await api.post('/v1/auth/login', { email, password })
-    const { user, requires_two_factor, two_factor_challenge_token } = response.data.data
+  login: async (email, password, remember = false) => {
+    const response = await api.post('/v1/auth/login', { email, password, remember })
+    const { user, requires_two_factor, two_factor_challenge_token } = response.data?.data || {}
 
     if (requires_two_factor) {
-      set({ requiresTwoFactor: true, twoFactorChallengeToken: two_factor_challenge_token })
+      if (typeof two_factor_challenge_token !== 'string' || !two_factor_challenge_token) throw new Error('Réponse de connexion invalide.')
+      get().beginTwoFactor(two_factor_challenge_token)
       return { requiresTwoFactor: true }
     }
 
+    if (!user || !Array.isArray(user.roles) || !Array.isArray(user.permissions)) throw new Error('Réponse de connexion invalide.')
+    get().setActiveRole(null)
     set({ user, isAuthenticated: true, requiresTwoFactor: false, twoFactorChallengeToken: null, isLoading: false })
     return { requiresTwoFactor: false }
   },
+
+  beginTwoFactor: (challenge) => { get().setActiveRole(null); set({ user: null, isAuthenticated: false, isLoading: false, requiresTwoFactor: true, twoFactorChallengeToken: challenge, sessionError: null }) },
 
   verifyTwoFactor: async (code) => {
     const challengeToken = get().twoFactorChallengeToken
@@ -84,6 +90,8 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       challenge_token: challengeToken,
     })
     const { user } = response.data.data
+    if (!user || !Array.isArray(user.roles) || !Array.isArray(user.permissions)) throw new Error('Réponse de connexion invalide.')
+    get().setActiveRole(null)
     set({ user, isAuthenticated: true, requiresTwoFactor: false, twoFactorChallengeToken: null, isLoading: false })
   },
 
@@ -96,7 +104,8 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
   },
 
   clearSession: () => {
-    set({ user: null, isAuthenticated: false, isLoading: false, requiresTwoFactor: false, twoFactorChallengeToken: null, sessionError: null })
+    sessionStorage.removeItem('encg_active_role')
+    set({ user: null, activeRole: null, isAuthenticated: false, isLoading: false, requiresTwoFactor: false, twoFactorChallengeToken: null, sessionError: null })
   },
 
   fetchUser: async () => {

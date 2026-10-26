@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Building2, Check, ChevronRight, Clock, FileText, Filter,
   GripVertical, Leaf, Loader2, Play, RotateCcw, Search,
@@ -86,6 +86,7 @@ export default function AdminTimetableEnginePage() {
     versionId: number;
     label: string;
 } | null>(null);
+  const queryClient = useQueryClient();
   const [busyFiliereId, setBusyFiliereId] = useState<number | null>(null);
   const [confirmPublishId, setConfirmPublishId] = useState<number | null>(null);
 
@@ -118,6 +119,7 @@ export default function AdminTimetableEnginePage() {
     mutationFn: () => api.post('/admin/smart-scheduling/campaign/open', { allow_saturday: false }),
     onSuccess: () => {
       toast.success('Campagne ouverte — lundi à vendredi, sans samedi.')
+      queryClient.invalidateQueries({ queryKey: ['edt-campaign-workspace'] })
       refetchWorkspace()
     },
     onError: (err: any) => toast.error(err.response?.data?.message || 'Ouverture de campagne impossible.'),
@@ -139,7 +141,10 @@ export default function AdminTimetableEnginePage() {
     onSuccess: (data: any) => {
       setSimResult(data.simulation || data)
       toast.success(data.message || 'Brouillon prêt — pas encore visible des étudiants.')
+      queryClient.invalidateQueries({ queryKey: ['edt-campaign-workspace'] })
+      queryClient.invalidateQueries({ queryKey: ['smart-scheduling-stats'] })
       refetchWorkspace()
+      refetchStats()
     },
     onError: (err: any) => {
       toast.error(err.response?.data?.data?.message || err.response?.data?.message || 'Génération impossible')
@@ -152,6 +157,9 @@ export default function AdminTimetableEnginePage() {
     onSuccess: () => {
       toast.success('Emploi du temps publié pour les étudiants.')
       setConfirmPublishId(null)
+      queryClient.invalidateQueries({ queryKey: ['edt-campaign-workspace'] })
+      queryClient.invalidateQueries({ queryKey: ['smart-scheduling-stats'] })
+      queryClient.invalidateQueries({ queryKey: ['edt-official-matrix'] })
       refetchWorkspace()
       refetchStats()
     },
