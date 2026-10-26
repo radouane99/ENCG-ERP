@@ -28,7 +28,14 @@ class AssessmentController extends Controller
             return response()->json(['message' => 'Accès refusé.'], 403);
         }
 
-        return response()->json(['data' => $module->assessments]);
+        $assessments = $module->assessments()->withCount('grades')->get();
+        $hasPv = ModulePvSignature::where('module_id', $module->id)->exists();
+
+        return response()->json([
+            'data' => $assessments,
+            'has_pv' => $hasPv,
+            'has_graded_assessments' => $assessments->contains(fn ($a) => $a->grades_count > 0),
+        ]);
     }
 
     /**

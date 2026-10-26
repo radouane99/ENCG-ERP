@@ -1,5 +1,5 @@
 import { useState,useEffect } from 'react'
-import { Search,BookOpen,Edit2,Plus,Trash2,X,Download,Upload,Zap,CheckCircle2,AlertTriangle,Printer,Layers,ShieldCheck } from 'lucide-react'
+import { Search,BookOpen,Edit2,Plus,Trash2,X,Download,Upload,Zap,CheckCircle2,AlertTriangle,Printer,Layers,ShieldCheck,Lock } from 'lucide-react'
 
 import { toast } from 'react-hot-toast'
 import { cn } from '@shared/lib/utils'
@@ -103,15 +103,21 @@ export default function ModulesListPage() {
     filiere_id: '',
     is_active: true
   })
-  const [assessmentsList, setAssessmentsList] = useState<{ id?: number | null, type: string, weight: number }[]>([])
+  const [moduleHasPv, setModuleHasPv] = useState(false)
+  const [moduleHasGrades, setModuleHasGrades] = useState(false)
+  const [assessmentsList, setAssessmentsList] = useState<{ id?: number | null, type: string, weight: number, grades_count?: number }[]>([])
 
   const addAssessmentRow = () => {
     setAssessmentsList(prev => [...prev, { type: 'CC', weight: 0 }])
   }
 
-
   const removeAssessmentRow = (index: number) => {
-    setAssessmentsList(prev => prev.filter((_, i) => i !== index))
+    const item = assessmentsList[index];
+    if (item?.grades_count && item.grades_count > 0) {
+      toast.error(`Impossible de supprimer l'évaluation "${item.type}" car elle contient déjà ${item.grades_count} note(s) saisie(s).`);
+      return;
+    }
+    setAssessmentsList(prev => prev.filter((_, i) => i !== index));
   }
 
   const updateAssessmentRow = (index: number, field: 'type' | 'weight', value: any) => {
@@ -119,7 +125,25 @@ export default function ModulesListPage() {
   }
 
   const applyPreset = (presetItems: { type: string; weight: number }[]) => {
-    setAssessmentsList(presetItems.map(item => ({ ...item })));
+    setAssessmentsList(prev => {
+      // If module already has existing assessments, preserve their IDs where types match
+      return presetItems.map((item, idx) => {
+        const exactMatch = prev.find(p => p.type.toLowerCase() === item.type.toLowerCase());
+        if (exactMatch) {
+          return { ...item, id: exactMatch.id, grades_count: exactMatch.grades_count };
+        }
+        // Match by similar prefix (e.g. CC1 -> CC)
+        const prefixMatch = prev.find(p => item.type.toLowerCase().startsWith(p.type.toLowerCase()) || p.type.toLowerCase().startsWith(item.type.toLowerCase()));
+        if (prefixMatch && !presetItems.some(pi => pi !== item && pi.type.toLowerCase() === prefixMatch.type.toLowerCase())) {
+          return { ...item, id: prefixMatch.id, grades_count: prefixMatch.grades_count };
+        }
+        const fallback = prev[idx];
+        if (fallback?.id && !presetItems.some(pi => pi.type.toLowerCase() === fallback.type.toLowerCase())) {
+          return { ...item, id: fallback.id, grades_count: fallback.grades_count };
+        }
+        return { ...item };
+      });
+    });
   }
 
   // Fetch data
@@ -195,11 +219,15 @@ export default function ModulesListPage() {
       });
       try {
         const response = await api.get(`/modules/${mod.id}/assessments`);
-        if (response.data.data && response.data.data.length > 0) {
-          setAssessmentsList(response.data.data.map((a: any) => ({
+        const rawList = response.data.data || [];
+        setModuleHasPv(Boolean(response.data.has_pv));
+        setModuleHasGrades(Boolean(response.data.has_graded_assessments));
+        if (rawList.length > 0) {
+          setAssessmentsList(rawList.map((a: any) => ({
             id: a.id,
             type: a.type,
-            weight: parseFloat(a.weight) || 0
+            weight: parseFloat(a.weight) || 0,
+            grades_count: a.grades_count || 0
           })));
         } else {
           // Default preset for existing module with no assessments
@@ -207,10 +235,14 @@ export default function ModulesListPage() {
         }
       } catch (err) {
         console.error("Error fetching assessments", err);
+        setModuleHasPv(false);
+        setModuleHasGrades(false);
         applyPreset(MODALITY_PRESETS[0].items);
       }
     } else {
       setEditingId(null);
+      setModuleHasPv(false);
+      setModuleHasGrades(false);
       setFormData({ 
         code: '', name: '', semester_number: 1, coefficient: 1, credit_hours: 45, filiere_id: '', is_active: true 
       });
@@ -222,11 +254,18 @@ export default function ModulesListPage() {
   const handleCloseModal = () => {
     setShowModal(false);
     setEditingId(null);
+    setModuleHasPv(false);
+    setModuleHasGrades(false);
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
+
+    if (moduleHasPv) {
+      toast.error("Impossible de modifier les modalités : le PV de délibération de ce module est déjà signé.");
+      return;
+    }
 
     const sanitizedAssessments = assessmentsList.map(a => ({
       ...(a.id ? { id: a.id } : {}),
@@ -236,11 +275,12 @@ export default function ModulesListPage() {
 
     const sum = sanitizedAssessments.reduce((acc, curr) => acc + curr.weight, 0);
     if (sanitizedAssessments.length > 0 && Math.abs(sum - 100) > 0.01) {
-      alert(`La somme des poids des évaluations doit être égale à 100% (Actuellement: ${sum}%)`);
+      toast.error(`La somme des poids des évaluations doit être égale à 100% (Actuellement: ${sum}%)`);
       return;
     }
 
     setIsSubmitting(true);
+    const toastId = toast.loading("Enregistrement du module et des modalités...");
     try {
       const payload = {
         ...formData,
@@ -261,15 +301,18 @@ export default function ModulesListPage() {
         });
       }
 
+      toast.success(editingId ? "Module et modalités mis à jour avec succès !" : "Nouveau module créé avec succès !", { id: toastId });
       handleCloseModal();
       fetchData();
-    } catch (error: unknown) {
-      const e = error as { response?: { status?: number } };
+    } catch (error: any) {
       console.error("Erreur de sauvegarde", error);
-      if (e.response?.status === 422) {
-        alert("Erreur de validation: Le code module existe déjà ou les données sont invalides.");
+      const serverMsg = error.response?.data?.message;
+      if (error.response?.status === 409) {
+        toast.error(`Conflit académique : ${serverMsg || 'Une évaluation avec des notes existantes ne peut pas être supprimée.'}`, { id: toastId, duration: 6000 });
+      } else if (error.response?.status === 422) {
+        toast.error(`Erreur de validation : ${serverMsg || 'Le code module existe déjà ou les données sont invalides.'}`, { id: toastId, duration: 5000 });
       } else {
-        alert("Une erreur est survenue lors de la sauvegarde.");
+        toast.error(serverMsg || "Une erreur est survenue lors de la sauvegarde.", { id: toastId, duration: 5000 });
       }
     } finally {
       setIsSubmitting(false);
@@ -703,6 +746,30 @@ export default function ModulesListPage() {
                   ))}
                 </div>
 
+                {moduleHasGrades && (
+                  <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 rounded-2xl p-3.5 flex items-start gap-3 text-xs text-amber-900 dark:text-amber-200">
+                    <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-bold">Évaluations avec notes enregistrées :</p>
+                      <p className="text-[11px] text-amber-800/90 dark:text-amber-300 mt-0.5">
+                        Ce module possède des notes déjà saisies pour certaines épreuves. Vous pouvez ajuster les poids, mais les épreuves contenant des notes sont protégées contre la suppression.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {moduleHasPv && (
+                  <div className="bg-rose-50 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-800 rounded-2xl p-3.5 flex items-start gap-3 text-xs text-rose-900 dark:text-rose-200">
+                    <Lock className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-bold">Procès-Verbal officiel signé :</p>
+                      <p className="text-[11px] text-rose-800/90 dark:text-rose-300 mt-0.5">
+                        Le PV de délibération de ce module a été officiellement signé. Les modalités d'évaluation sont définitivement verrouillées.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 {/* Modality Custom Rows */}
                 <div className="bg-muted/50 p-4 rounded-2xl border border-border space-y-3 mt-4">
                   <div className="flex items-center justify-between">
@@ -738,7 +805,11 @@ export default function ModulesListPage() {
                           <select
                             value={item.type}
                             onChange={(e) => updateAssessmentRow(index, 'type', e.target.value)}
-                            className="w-full px-3 py-2 bg-muted/50 border border-border text-xs font-bold text-foreground outline-none focus:border-primary rounded-[var(--control-radius)]"
+                            disabled={Boolean(item.grades_count && item.grades_count > 0)}
+                            className={cn(
+                              "w-full px-3 py-2 bg-muted/50 border border-border text-xs font-bold text-foreground outline-none focus:border-primary rounded-[var(--control-radius)]",
+                              item.grades_count && item.grades_count > 0 ? "opacity-75 cursor-not-allowed bg-slate-100 dark:bg-slate-800" : ""
+                            )}
                           >
                             <option value="CC">Contrôle Continu (CC)</option>
                             <option value="CC1">Contrôle 1 (CC1)</option>
@@ -762,14 +833,25 @@ export default function ModulesListPage() {
                           <span className="text-xs font-bold text-muted-foreground">%</span>
                         </div>
 
-                        <button
-                          type="button"
-                          onClick={() => removeAssessmentRow(index)}
-                          className="p-2 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors"
-                          title="Supprimer la ligne"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        {item.grades_count && item.grades_count > 0 ? (
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <span className="text-[10px] font-bold text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-950/60 px-2 py-1 rounded-md flex items-center gap-1">
+                              <ShieldCheck className="w-3 h-3 text-amber-600" /> {item.grades_count} notes
+                            </span>
+                            <span className="p-2 text-slate-400 cursor-not-allowed" title={`Verrouillé : ${item.grades_count} notes saisies`}>
+                              <Lock className="w-4 h-4" />
+                            </span>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => removeAssessmentRow(index)}
+                            className="p-2 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer shrink-0"
+                            title="Supprimer la ligne"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                     ))}
                   </div>
