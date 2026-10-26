@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Building2,GraduationCap,Users,Sparkles } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Building2,GraduationCap,Users,Sparkles,BookOpen } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import DepartmentList from '../components/DepartmentList'
 import FiliereList from '../components/FiliereList'
@@ -75,6 +76,14 @@ export default function AcademicArchitecturePage() {
           <Users className="w-4 h-4 text-indigo-400" />
           <span>3. Groupes & Sections</span>
         </button>
+
+        <Link
+          to="/academic/modules"
+          className="flex items-center gap-2.5 px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap ml-auto bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-300/40"
+        >
+          <BookOpen className="w-4 h-4 text-amber-500" />
+          <span>4. Catalogue des Modules & ECM →</span>
+        </Link>
       </div>
 
       {/* ── Tab Contents ──────────────────────────────────────────────────────── */}

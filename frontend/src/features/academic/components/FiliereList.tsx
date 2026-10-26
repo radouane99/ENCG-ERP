@@ -1,4 +1,5 @@
 import { useState,useEffect,useRef } from 'react'
+import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
 Search,
@@ -456,6 +457,14 @@ export default function FiliereList() {
                 >
                   <Eye className="w-3.5 h-3.5 text-primary" /> Semestres S1-S10
                 </button>
+
+                <Link 
+                  to="/academic/modules"
+                  className="px-2.5 py-1.5 bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 text-indigo-800 dark:text-indigo-300 rounded-xl text-[10px] font-bold uppercase tracking-wider border border-indigo-200 dark:border-indigo-800 transition-colors flex items-center gap-1 cursor-pointer"
+                  title="Voir et ajouter les modules du catalogue"
+                >
+                  <BookOpen className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" /> Modules ({filiere.modules_count ?? 0})
+                </Link>
 
                 <button 
                   onClick={() => handleExportMaquettePdf(filiere)}
