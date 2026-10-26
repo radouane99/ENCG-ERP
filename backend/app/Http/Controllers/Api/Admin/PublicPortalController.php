@@ -3,14 +3,13 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Actions\Admission\SavePublicPortalAction;
+use App\Actions\Admission\UploadPublicPortalPdfAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admission\SavePublicPortalRequest;
 use App\Models\Institution;
 use App\Services\Admissions\PublicPortalContent;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 class PublicPortalController extends Controller
 {
@@ -27,6 +26,7 @@ class PublicPortalController extends Controller
     public function show(Request $request, PublicPortalContent $service)
     {
         $this->authorizeStaff($request);
+
         return response()->json(['data' => $service->read(Institution::findOrFail($request->user()->institution_id), true)]);
     }
 
@@ -39,19 +39,8 @@ class PublicPortalController extends Controller
     {
         $this->authorizeStaff($request);
         $request->validate(['file' => 'required|file|mimes:pdf|max:10240']);
-        $file = $request->file('file'); $id = (string) Str::uuid();
-        $path = $file->store('public-portal/'.$request->user()->institution_id, 'private');
-        try {
-            DB::transaction(function () use ($request, $file, $id, $path) {
-                $institution = Institution::whereKey($request->user()->institution_id)->lockForUpdate()->firstOrFail();
-                $settings = $institution->settings ?? [];
-                abort_if(count($settings['public_portal']['attachments'] ?? []) >= 100, 422, 'Limite de fichiers atteinte. Contactez le service technique.');
-                $settings['public_portal']['attachments'][$id] = ['path' => $path, 'name' => Str::limit(basename($file->getClientOriginalName()), 180, '')];
-                $institution->settings = $settings; $institution->save();
-                activity()->causedBy($request->user())->performedOn($institution)->withProperties(['attachment_id' => $id])->log('public_portal_pdf_uploaded');
-            });
-        } catch (\Throwable $failure) { Storage::disk('private')->delete($path); throw $failure; }
-        return response()->json(['id' => $id, 'name' => basename($file->getClientOriginalName())], 201);
+
+        return response()->json(app(UploadPublicPortalPdfAction::class)->execute($request->user(), $request->file('file')), 201);
     }
 
     public function attachment(string $id, PublicPortalContent $service)
@@ -59,8 +48,24 @@ class PublicPortalController extends Controller
         $institution = Institution::findOrFail(config('erp.institution_id', 1));
         $config = $institution->settings['public_portal'] ?? [];
         abort_unless(collect($config['announcements'] ?? [])->contains(fn ($item) => ($item['attachment_id'] ?? null) === $id && $service->visible($item)), 404);
+
+        return $this->downloadAttachment($institution, $id);
+    }
+
+    public function preview(Request $request, string $id)
+    {
+        $this->authorizeStaff($request);
+
+        return $this->downloadAttachment(Institution::findOrFail($request->user()->institution_id), $id);
+    }
+
+    private function downloadAttachment(Institution $institution, string $id)
+    {
+        $config = $institution->settings['public_portal'] ?? [];
         $file = $config['attachments'][$id] ?? null;
         abort_unless($file && Storage::disk('private')->exists($file['path']), 404);
+        abort_if(isset($file['sha256']) && ! hash_equals($file['sha256'], hash('sha256', Storage::disk('private')->get($file['path']))), 409, 'Ce fichier ne correspond plus à la version publiée.');
+
         return Storage::disk('private')->download($file['path'], 'communique-'.$id.'.pdf', ['Content-Type' => 'application/pdf', 'Cache-Control' => 'private, no-store', 'X-Content-Type-Options' => 'nosniff']);
     }
 }

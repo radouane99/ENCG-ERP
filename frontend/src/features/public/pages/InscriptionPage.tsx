@@ -1,3 +1,4 @@
+import '../public-portal.css'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Loader2, ShieldCheck, FileCheck2 } from 'lucide-react'
@@ -44,7 +45,7 @@ export default function InscriptionPage(_props: { editMode?: boolean }) {
       }
     } catch (e) { setError(errorMessage(e)) } finally { setBusy(false) }
   }
-  return <main data-testid="tafem-inscription-page" className="min-h-screen bg-muted/50 px-4 py-10 text-foreground dark:bg-background">
+  return <main data-testid="tafem-inscription-page" className="public-portal min-h-screen bg-muted/50 px-4 py-10 text-foreground dark:bg-background">
     <div className="mx-auto max-w-5xl overflow-hidden rounded-2xl border border-border bg-card shadow-sm lg:grid lg:grid-cols-[.9fr_1.1fr]">
       <aside className="bg-blue-950 p-7 text-white sm:p-10"><p className="text-xs font-bold uppercase tracking-widest text-blue-200">ENCG · Admissions</p><h1 className="mt-6 leading-tight erp-page-title">Admissions TAFEM / CNAEM</h1><p className="mt-5 leading-relaxed text-blue-100">Un seul espace pour compléter votre dossier, vérifier vos documents et suivre chaque étape de votre inscription.</p>
         <ol className="mt-8 space-y-5 text-sm">{['Activez votre accès personnel', 'Ajoutez les documents et confirmez vos informations', 'Soumettez votre dossier complet', 'Suivez la revue et votre rendez-vous'].map((text, i) => <li key={text} className="flex items-start gap-3"><span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-blue-400">{i + 1}</span><span className="pt-1">{text}</span></li>)}</ol><p className="mt-8 text-sm text-blue-200" lang="ar" dir="rtl">يمكنكم إدخال المعلومات يدوياً ومراجعة الوثائق قبل إرسال الملف. تواصلوا مع مصلحة التسجيل عند الحاجة.</p>

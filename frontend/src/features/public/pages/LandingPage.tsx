@@ -1,12 +1,15 @@
+import '../public-portal.css';
 import React,{ useEffect,useState } from 'react';
 import { useNavigate,Link } from 'react-router-dom';
 import api from '@shared/lib/api';
-import { ShieldCheck,Sparkles,GraduationCap,ArrowRight,LogIn,BrainCircuit,UserCheck,Activity,Database,BarChart3,Sun,Moon,MapPin,Phone,Mail,Send,CheckCircle2,Award } from 'lucide-react';
+import { ShieldCheck,Sparkles,GraduationCap,ArrowRight,LogIn,BrainCircuit,UserCheck,Activity,Database,BarChart3,Sun,Moon,MapPin,Phone,Mail,Send,CheckCircle2,Award,Menu,X } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { useAuthStore } from '@stores/authStore';
 import { useTheme } from '@shared/components/layout/useTheme';
 import RoleJourneySection from '@features/public/components/RoleJourneySection';
 import FaqSection from '@features/public/components/FaqSection';
+import PublicAdmissionsInformation from '../components/PublicAdmissionsInformation';
+import { usePublicPortal } from '../api/usePublicPortal';
 import AdmissionCalendarPanel from '../components/AdmissionCalendarPanel';
 import TafemAdmissibilitySection from '@features/public/components/TafemAdmissibilitySection';
 
@@ -107,10 +110,15 @@ type Lang = 'fr' | 'en' | 'ar';
 
 export default function LandingPage() {
   const navigate = useNavigate();
+  const publicPortal = usePublicPortal();
+  const publicContact = publicPortal.isError ? undefined : publicPortal.data?.contact;
+  const [contactError, setContactError] = useState('');
+  const [contactReference, setContactReference] = useState('');
   const { isAuthenticated } = useAuthStore();
   const { theme, setTheme } = useTheme();
 
   const [scrolled, setScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [lang, setLang] = useState<Lang>('fr');
   const [formState, setFormState] = useState({ name: '', email: '', subject: '', message: '' });
   const [formSent, setFormSent] = useState(false);
@@ -133,21 +141,23 @@ export default function LandingPage() {
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormSending(true);
+    setContactError('');
 
     try {
-      await api.post('/contact', {
+      const response = await api.post('/contact', {
         name: formState.name,
         email: formState.email,
         subject: formState.subject || 'Contact depuis ENCG ERP',
         message: formState.message,
       });
       setFormSending(false);
+      setContactReference(response.data?.reference || '');
       setFormSent(true);
       setFormState({ name: '', email: '', subject: '', message: '' });
     } catch (err) {
       console.error('Contact API error:', err);
       setFormSending(false);
-      alert('Erreur lors de l\'envoi. Veuillez réessayer ou contacter contact@encgf-usmba.ac.ma');
+      setContactError('Votre demande n’a pas pu être enregistrée. Réessayez.');
     }
   };
 
@@ -155,7 +165,7 @@ export default function LandingPage() {
     <div
       dir={isRTL ? 'rtl' : 'ltr'}
       className={cn(
-        'min-h-screen transition-colors duration-500 overflow-x-hidden selection:bg-[#0f2863] selection:text-white',
+        'public-portal min-h-screen transition-colors duration-500 overflow-x-hidden selection:bg-[#0f2863] selection:text-white',
         'bg-slate-50 dark:bg-[#02060D] text-slate-900 dark:text-slate-200',
         t.font
       )}
@@ -164,14 +174,14 @@ export default function LandingPage() {
       <div className="fixed inset-0 z-0 pointer-events-none">
         <div className="absolute top-0 right-0 w-[70vw] h-[70vw] rounded-full bg-[#0f2863]/15 blur-[150px] opacity-60 dark:opacity-40" />
         <div className="absolute bottom-0 left-0 w-[60vw] h-[60vw] rounded-full bg-blue-400/15 dark:bg-[#1F3A5F]/20 blur-[150px] opacity-70" />
-        <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.02] bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
+        <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.02] portal-grain" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[20vw] font-black text-slate-900/[0.02] dark:text-white/[0.015] whitespace-nowrap pointer-events-none select-none">
           ENCG ERP
         </div>
       </div>
 
       {/* ── Navigation ── */}
-      <nav className={cn('fixed top-0 left-0 right-0 z-50 transition-all duration-500', scrolled ? 'py-3' : 'py-5')}>
+      <nav onKeyDown={event => { if (event.key === 'Escape') setMobileMenuOpen(false) }} className={cn('fixed top-0 left-0 right-0 z-50 transition-all duration-500', scrolled ? 'py-3' : 'py-5')}>
         <div className="max-w-7xl mx-auto px-6">
           <div className={cn(
             'flex items-center justify-between px-6 py-3 rounded-2xl transition-all duration-500',
@@ -192,7 +202,7 @@ export default function LandingPage() {
             </div>
 
             {/* Links */}
-            <div className="hidden md:flex items-center gap-6 text-sm font-medium">
+            <div className="hidden xl:flex items-center gap-6 text-sm font-medium">
               <a href="#inscriptions" className="text-amber-500 font-black flex items-center gap-1 hover:text-amber-600 transition-colors">
                 <Award className="w-4 h-4 text-amber-500" />
                 <span>{isRTL ? 'القبول والتسجيل' : lang === 'en' ? 'Admissions' : 'Admissions & calendrier'}</span>
@@ -207,9 +217,11 @@ export default function LandingPage() {
 
             {/* Actions */}
             <div className="flex items-center gap-2">
+              <button type="button" aria-controls="public-mobile-navigation" aria-expanded={mobileMenuOpen} aria-label={mobileMenuOpen ? 'Fermer la navigation' : 'Ouvrir la navigation'} onClick={() => setMobileMenuOpen(value => !value)} className="flex h-11 w-11 items-center justify-center rounded-xl border border-border bg-card text-foreground xl:hidden">{mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}</button>
               {/* Dark/Light toggle */}
               <button
                 onClick={() => setTheme(currentTheme === 'dark' ? 'light' : 'dark')}
+                aria-label={currentTheme === 'dark' ? 'Activer le mode clair' : 'Activer le mode sombre'}
                 className="p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/10 transition-colors"
               >
                 {currentTheme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
@@ -249,6 +261,16 @@ export default function LandingPage() {
               )}
             </div>
           </div>
+          {mobileMenuOpen && <div id="public-mobile-navigation" className="portal-surface mt-3 grid gap-1 p-3 text-sm xl:hidden sm:grid-cols-2">
+            {[
+              ['#inscriptions', t.btnRegister],
+              ['#guide-inscription', lang === 'ar' ? 'كيف أسجل؟' : lang === 'en' ? 'How to enroll' : 'Comment s’inscrire ?'],
+              ['#ecosystem', t.navEco],
+              ['#questions-frequentes', lang === 'ar' ? 'الأسئلة الشائعة' : lang === 'en' ? 'Frequently asked questions' : 'Questions fréquentes'],
+              ['#contact', t.footerContact],
+            ].map(([href, label]) => <a key={href} href={href} onClick={() => setMobileMenuOpen(false)} className="flex min-h-11 items-center rounded-lg px-4 font-medium hover:bg-muted">{label}</a>)}
+            <div className="mt-2 flex gap-2 border-t border-border p-2 sm:hidden">{(['fr', 'en', 'ar'] as Lang[]).map(value => <button key={value} type="button" aria-pressed={lang === value} onClick={() => setLang(value)} className={`min-h-11 flex-1 rounded-lg text-xs font-semibold uppercase ${lang === value ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>{value}</button>)}</div>
+          </div>}
         </div>
       </nav>
 
@@ -293,7 +315,7 @@ export default function LandingPage() {
           {/* Dashboard Mockup Visual */}
           <div className="flex-1 relative w-full aspect-square max-w-[480px]">
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[280px] h-[280px] bg-[#0f2863]/15 rounded-full blur-[60px] animate-pulse" />
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-[300px] bg-white dark:bg-[#111827]/80 backdrop-blur-2xl border border-slate-200 dark:border-white/10 rounded-3xl shadow-2xl p-6 transform -rotate-6 hover:rotate-0 transition-transform duration-700 shadow-slate-200/80 dark:shadow-none">
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-[300px] bg-white dark:bg-[#111827]/80 backdrop-blur-2xl border border-slate-200 dark:border-white/10 rounded-3xl shadow-2xl p-6 transform rotate-0 transition-transform duration-700 shadow-slate-200/80 dark:shadow-none">
               <div className="flex justify-between items-center mb-5">
                 <div className="flex gap-1.5">
                   <div className="w-3 h-3 rounded-full bg-blue-600" /><div className="w-3 h-3 rounded-full bg-amber-400" /><div className="w-3 h-3 rounded-full bg-emerald-500" />
@@ -318,7 +340,7 @@ export default function LandingPage() {
               </div>
             </div>
             {/* Floating badges */}
-            <div className="absolute top-[5%] right-[-5%] bg-white dark:bg-[#0A1220]/90 backdrop-blur-xl border border-amber-400/40 p-4 rounded-2xl shadow-xl transform rotate-12 animate-bounce [animation-duration:4s]">
+            <div className="absolute top-[5%] right-[-5%] bg-white dark:bg-[#0A1220]/90 backdrop-blur-xl border border-amber-400/40 p-4 rounded-2xl shadow-xl transform rotate-3 animate-bounce [animation-duration:4s]">
               <div className="flex items-center gap-3 mb-2">
                 <Sparkles className="w-5 h-5 text-amber-500" />
                 <span className="text-sm font-bold text-slate-900 dark:text-white">Assistance numérique</span>
@@ -327,7 +349,7 @@ export default function LandingPage() {
                 <div className="h-full w-3/4 bg-gradient-to-r from-[#0f2863] to-amber-500" />
               </div>
             </div>
-            <div className="absolute bottom-[5%] left-[-5%] bg-white dark:bg-[#0A1220]/90 backdrop-blur-xl border border-blue-200 dark:border-blue-500/30 p-4 rounded-2xl shadow-xl transform -rotate-12 animate-bounce [animation-duration:5s]">
+            <div className="absolute bottom-[5%] left-[-5%] bg-white dark:bg-[#0A1220]/90 backdrop-blur-xl border border-blue-200 dark:border-blue-500/30 p-4 rounded-2xl shadow-xl transform -rotate-3 animate-bounce [animation-duration:5s]">
               <div className="flex items-center gap-3 mb-1">
                 <ShieldCheck className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                 <span className="text-sm font-bold text-slate-900 dark:text-white">Documents vérifiables</span>
@@ -340,13 +362,14 @@ export default function LandingPage() {
 
       {/* ── TAFEM Admissibility & Results Lookup Widget ── */}
       <AdmissionCalendarPanel lang={lang} />
+      <PublicAdmissionsInformation lang={lang} />
       <TafemAdmissibilitySection isRtl={isRTL} />
 
       {/* ── Ecosystem / 3 Universes ── */}
       <div id="ecosystem" className="relative z-10 scroll-mt-24">
         <RoleJourneySection lang={lang} isRTL={isRTL} />
       </div>
-      <FaqSection lang={lang} isRTL={isRTL} />
+      <div id="questions-frequentes" className="relative z-10 scroll-mt-24"><FaqSection lang={lang} isRTL={isRTL} /></div>
 
       {/* ── AI Section ── */}
       <div id="ia" className="relative z-10 bg-white dark:bg-[#0A1220] py-32 border-y border-slate-200 dark:border-white/5">
@@ -416,6 +439,7 @@ export default function LandingPage() {
             <div className="lg:col-span-2 flex flex-col gap-5">
               <div className="flex-1 bg-white dark:bg-[#0A1220] rounded-2xl p-7 border border-slate-200 dark:border-white/10 shadow-md dark:shadow-none">
                 <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-sm mb-8">{t.contactDesc}</p>
+                {publicContact?.hours && <p className="mb-5 whitespace-pre-line text-sm text-muted-foreground"><strong>Horaires d’accueil</strong><br />{publicContact.hours}</p>}
                 <div className="space-y-5">
                   <div className="flex items-start gap-4">
                     <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-[#0f2863]/30 flex items-center justify-center border border-indigo-200 dark:border-indigo-800 shrink-0">
@@ -423,7 +447,7 @@ export default function LandingPage() {
                     </div>
                     <div>
                       <div className="font-bold text-slate-900 dark:text-white text-sm mb-1">Adresse</div>
-                      <p className="text-slate-500 dark:text-slate-400 text-xs leading-relaxed">B.P. 81A, Route d'Imouzzer, Fès 30050</p>
+                      <p className="text-slate-500 dark:text-slate-400 text-xs leading-relaxed">{publicContact?.address || 'Adresse à confirmer auprès de l’établissement'}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
@@ -432,7 +456,7 @@ export default function LandingPage() {
                     </div>
                     <div>
                       <div className="font-bold text-slate-900 dark:text-white text-sm mb-1">Téléphone</div>
-                      <p className="text-slate-500 dark:text-slate-400 text-xs">+212 535 60 06 43</p>
+                      <p className="text-slate-500 dark:text-slate-400 text-xs">{publicContact?.phone || 'Téléphone non renseigné'}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
@@ -441,7 +465,7 @@ export default function LandingPage() {
                     </div>
                     <div>
                       <div className="font-bold text-slate-900 dark:text-white text-sm mb-1">Email</div>
-                      <p className="text-slate-500 dark:text-slate-400 text-xs">contact@encgf-usmba.ac.ma</p>
+                      <p className="text-slate-500 dark:text-slate-400 text-xs">{publicContact?.email || 'Email institutionnel non renseigné'}</p>
                     </div>
                   </div>
                 </div>
@@ -455,50 +479,50 @@ export default function LandingPage() {
                   <div className="w-20 h-20 rounded-full bg-emerald-100 dark:bg-emerald-500/10 flex items-center justify-center border-4 border-emerald-200 dark:border-emerald-500/20">
                     <CheckCircle2 className="w-10 h-10 text-emerald-500" />
                   </div>
-                  <h3 className="text-2xl font-black text-slate-900 dark:text-white">{t.formSuccess}</h3>
+                  <h3 className="text-2xl font-black text-slate-900 dark:text-white">Demande enregistrée</h3><p role="status" className="text-sm">Conservez votre référence : <strong>{contactReference}</strong>. Le service concerné pourra retrouver votre demande.</p>
                   <button onClick={() => setFormSent(false)} className="text-sm text-slate-500 dark:text-slate-400 hover:text-[#0f2863] transition-colors underline underline-offset-2">
                     Envoyer un autre message
                   </button>
                 </div>
               ) : (
-                <form onSubmit={handleFormSubmit} className="p-8 space-y-5">
+                <form onSubmit={handleFormSubmit} className="p-8 space-y-5">{contactError && <p role="alert" className="rounded-xl bg-destructive/10 p-3 text-sm text-destructive">{contactError}</p>}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <div className="group">
-                      <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-2 uppercase tracking-wider">{t.formName}</label>
+                      <label htmlFor="public-contact-name" className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-2 uppercase tracking-wider">{t.formName}</label>
                       <input
-                        type="text" required value={formState.name}
+                        id="public-contact-name" type="text" required maxLength={255} value={formState.name}
                         onChange={e => setFormState(s => ({ ...s, name: e.target.value }))}
                         placeholder="Mohammed Alaoui"
                         className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-[#0f2863]/30 focus:border-[#0f2863] transition-all"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-2 uppercase tracking-wider">{t.formEmail}</label>
+                      <label htmlFor="public-contact-email" className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-2 uppercase tracking-wider">{t.formEmail}</label>
                       <input
-                        type="email" required value={formState.email}
+                        id="public-contact-email" type="email" required maxLength={255} value={formState.email}
                         onChange={e => setFormState(s => ({ ...s, email: e.target.value }))}
-                        placeholder="email@encgf-usmba.ac.ma"
+                        placeholder="votre.email@exemple.ma"
                         className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-[#0f2863]/30 focus:border-[#0f2863] transition-all"
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-2 uppercase tracking-wider">{t.formSubject}</label>
+                    <label htmlFor="public-contact-subject" className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-2 uppercase tracking-wider">{t.formSubject}</label>
                     <select
-                      value={formState.subject}
+                      id="public-contact-subject" value={formState.subject}
                       onChange={e => setFormState(s => ({ ...s, subject: e.target.value }))}
                       className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#0f2863]/30 focus:border-[#0f2863] transition-all"
                     >
                       <option value="">— Sélectionner un sujet —</option>
                       <option value="admission">Admission & Inscription</option>
-                      <option value="platform">Problème Plateforme</option>
+                      <option value="platform">Problème technique</option><option value="access">Accès au compte / connexion</option><option value="documents">Document ou dossier à compléter</option>
                       <option value="formation">Informations Formation</option>
                       <option value="autre">Autre</option>
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-2 uppercase tracking-wider">{t.formMsg}</label>
-                    <textarea
+                    <label htmlFor="public-contact-message" className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-2 uppercase tracking-wider">{t.formMsg}</label>
+                    <textarea id="public-contact-message" maxLength={10000}
                       rows={5} required value={formState.message}
                       onChange={e => setFormState(s => ({ ...s, message: e.target.value }))}
                       placeholder={t.formMsg}
@@ -572,15 +596,15 @@ export default function LandingPage() {
               <ul className="space-y-4 text-sm">
                 <li className="flex items-start gap-3">
                   <MapPin className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
-                  <span className="text-slate-300 leading-relaxed">B.P. 81A, Route d'Imouzzer, Fès 30050</span>
+                  <span className="text-slate-300 leading-relaxed">{publicContact?.address || 'Adresse à confirmer auprès de l’établissement'}</span>
                 </li>
                 <li className="flex items-center gap-3">
                   <Phone className="w-4 h-4 text-amber-400 shrink-0" />
-                  <span className="text-slate-300">+212 535 60 06 43</span>
+                  <span className="text-slate-300">{publicContact?.phone || 'Téléphone non renseigné'}</span>
                 </li>
                 <li className="flex items-center gap-3">
                   <Mail className="w-4 h-4 text-amber-400 shrink-0" />
-                  <span className="text-slate-300">contact@encgf-usmba.ac.ma</span>
+                  <span className="text-slate-300">{publicContact?.email || 'Email institutionnel non renseigné'}</span>
                 </li>
               </ul>
             </div>

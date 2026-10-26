@@ -17,7 +17,7 @@ class SavePublicPortalRequest extends FormRequest
             'guides' => 'required|array:tafem,cnaem', 'guides.tafem' => 'required|array:instructions', 'guides.cnaem' => 'required|array:instructions', 'guides.*.instructions' => 'nullable|string|max:5000',
             'announcements' => 'present|array|max:30', 'announcements.*' => 'array:id,title,body,status,starts_on,ends_on,attachment_id',
             'announcements.*.id' => 'nullable|uuid|distinct', 'announcements.*.title' => 'required|string|max:180', 'announcements.*.body' => 'required|string|max:5000',
-            'announcements.*.status' => 'required|in:draft,published,archived', 'announcements.*.starts_on' => 'required|date_format:Y-m-d', 'announcements.*.ends_on' => 'required|date_format:Y-m-d|after_or_equal:announcements.*.starts_on',
+            'announcements.*.status' => 'required|in:draft,published,archived', 'announcements.*.starts_on' => 'nullable|required_if:announcements.*.status,published|date_format:Y-m-d', 'announcements.*.ends_on' => 'nullable|required_if:announcements.*.status,published|date_format:Y-m-d|after_or_equal:announcements.*.starts_on',
             'announcements.*.attachment_id' => 'nullable|uuid'];
     }
 }

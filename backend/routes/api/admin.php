@@ -157,8 +157,11 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:admin|super-admi
     // 🏛️ Institution & Global ERP Settings
     Route::get('/admin/institution-settings', [InstitutionSettingsController::class, 'getSettings']);
     Route::get('/admin/public-portal', [\App\Http\Controllers\Api\Admin\PublicPortalController::class, 'show']);
+    Route::get('/admin/public-support', [\App\Http\Controllers\Api\Admin\PublicSupportController::class, 'index']);
+    Route::patch('/admin/public-support/{id}', [\App\Http\Controllers\Api\Admin\PublicSupportController::class, 'update'])->whereNumber('id');
     Route::put('/admin/public-portal', [\App\Http\Controllers\Api\Admin\PublicPortalController::class, 'save']);
     Route::post('/admin/public-portal/attachments', [\App\Http\Controllers\Api\Admin\PublicPortalController::class, 'upload'])->middleware('throttle:uploads');
+    Route::get('/admin/public-portal/attachments/{id}', [\App\Http\Controllers\Api\Admin\PublicPortalController::class, 'preview'])->whereUuid('id');
     Route::post('/admin/institution-settings', [InstitutionSettingsController::class, 'updateSettings']);
     Route::post('/admin/institution-settings/test-email', [InstitutionSettingsController::class, 'testResendEmail']);
     Route::get('/institution-settings', [InstitutionSettingsController::class, 'getSettings']);
