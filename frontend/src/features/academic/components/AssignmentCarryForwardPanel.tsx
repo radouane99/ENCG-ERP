@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/shared/lib/api';
 import { toast } from 'sonner';
-import { cn } from '@/shared/lib/utils';
 import {
   History, Calendar, CheckCircle2, AlertCircle,
   ChevronDown, ChevronUp, Sparkles, FileArchive, RefreshCw,
@@ -152,7 +151,7 @@ export default function AssignmentCarryForwardPanel({ years }: { years: { id: st
         {preview && (
           <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
             <div className="mb-3 flex items-center gap-2 text-sm font-bold text-white">
-              <span>{preview.source_year} → {preview.target_year}</span>
+              <span>{preview.source_year} vers {preview.target_year}</span>
               {preview.applied && (
                 <span className="ml-2 rounded-full bg-emerald-400/20 px-2 py-0.5 text-[10px] font-black uppercase text-emerald-300">
                   {preview.created} créées

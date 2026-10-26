@@ -41,7 +41,7 @@ test.describe('Préparation du semestre', () => {
       return route.fulfill(json({ data: { source_year: '2025/2026', target_year: '2026/2027', created: body.apply ? 1 : 0, candidates: body.apply ? [] : [{ module: 'Audit synthétique', group: 'SYN-G1', hours: 30, session_type: 'td' }], skipped: [] } }))
     })
     await page.goto('/admin/professor-assignments'); await page.getByLabel('Année source').selectOption('2'); await page.getByRole('button', { name: 'Prévisualiser la reconduction' }).click()
-    await expect(page.getByText('2025/2026 → 2026/2027', { exact: false })).toBeVisible(); expect(calls).toEqual([false])
+    await expect(page.getByText('2025/2026 vers 2026/2027', { exact: false })).toBeVisible(); expect(calls).toEqual([false])
     await page.getByRole('button', { name: 'Appliquer les affectations compatibles' }).click(); await expect.poll(() => calls).toEqual([false, true])
     await expect(page.getByText('1 affectations reconduites. Les affectations existantes sont conservées.', { exact: true })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Appliquer les affectations compatibles' })).toBeDisabled()

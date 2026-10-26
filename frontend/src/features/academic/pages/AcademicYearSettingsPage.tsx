@@ -641,8 +641,6 @@ const { data: departmentsData } = useQuery({
   }
 
   // Calculate Selected Professor Workload
-  const selectedProfAssignments = assignments.filter((a: any) => String(a.professor_id ?? a.prof_id) === String(assignmentForm.professor_id))
-  const selectedProfVolumeHours = selectedProfAssignments.some((a: any) => a.assigned_hours === null || !Number.isFinite(Number(a.assigned_hours))) ? null : selectedProfAssignments.reduce((sum: number, a: any) => sum + Number(a.assigned_hours), 0)
   // Resolve professor UUID from assignment row
   const resolveAssignmentProfessorId = useCallback((assignment: any): string | null => {
     const direct = assignment?.professor_id || assignment?.prof_id || assignment?.professor?.id
