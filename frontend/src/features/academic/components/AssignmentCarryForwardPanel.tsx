@@ -1,9 +1,10 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/shared/lib/api';
 import { toast } from 'sonner';
+import { cn } from '@/shared/lib/utils';
 import {
-  History, Calendar, ArrowRight, CheckCircle2, AlertCircle,
+  History, Calendar, CheckCircle2, AlertCircle,
   ChevronDown, ChevronUp, Sparkles, FileArchive, RefreshCw,
   PackageOpen, Clock, ArrowDownCircle,
 } from 'lucide-react';
@@ -22,19 +23,7 @@ export default function AssignmentCarryForwardPanel({ years }: { years: { id: st
   const [source, setSource] = useState('');
   const [preview, setPreview] = useState<Preview | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
-  const [isSelectOpen, setIsSelectOpen] = useState(false);
-  const selectRef = useRef<HTMLDivElement>(null);
   const client = useQueryClient();
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (selectRef.current && !selectRef.current.contains(e.target as Node)) {
-        setIsSelectOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
 
   const onMutationError = (err: any) => toast.error(err.response?.data?.message || 'Opération impossible.');
 
@@ -42,7 +31,7 @@ export default function AssignmentCarryForwardPanel({ years }: { years: { id: st
     mutationFn: (apply: boolean) =>
       api.post('/professor-assignments/carry-forward', { source_year_id: Number(source), apply }).then(res => res.data.data as Preview),
     onSuccess: (data, apply) => {
-      setPreview(data);
+      setPreview({ ...data, applied: apply });
       if (apply) {
         toast.success('Affectations reconduites avec succès !');
         client.invalidateQueries({ queryKey: ['professor-assignments'] });
@@ -120,39 +109,14 @@ export default function AssignmentCarryForwardPanel({ years }: { years: { id: st
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <div className="relative min-w-[220px]" ref={selectRef}>
-            <button
-              type="button"
-              onClick={() => setIsSelectOpen(v => !v)}
-              className="flex w-full items-center justify-between gap-2 rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-sm font-bold text-white backdrop-blur transition hover:bg-white/15"
-            >
-              <span className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-amber-300" />
-                {selectedYear?.label ?? 'Choisir une année'}
-              </span>
-              <ChevronDown className={cn('h-4 w-4 transition-transform', isSelectOpen && 'rotate-180')} />
-            </button>
-            {isSelectOpen && (
-              <ul className="absolute z-30 mt-2 w-full overflow-hidden rounded-xl border border-white/15 bg-[#0a1d4a] shadow-2xl">
-                {prevYears.length === 0 && (
-                  <li className="px-4 py-3 text-xs text-blue-100/60">Aucune année précédente</li>
-                )}
-                {prevYears.map(y => (
-                  <li key={y.id}>
-                    <button
-                      type="button"
-                      onClick={() => { setSource(String(y.id)); setPreview(null); setIsSelectOpen(false); }}
-                      className={cn(
-                        'w-full px-4 py-2.5 text-left text-sm font-semibold text-white transition hover:bg-white/10',
-                        String(y.id) === source && 'bg-amber-400/20 text-amber-200',
-                      )}
-                    >
-                      {y.label}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
+          <div className="relative min-w-[220px]">
+            <label htmlFor="carry-forward-source" className="sr-only">Année source</label>
+            <select id="carry-forward-source" value={source} disabled={carry.isPending}
+              onChange={event => { setSource(event.target.value); setPreview(null); }}
+              className="w-full rounded-xl border border-white/20 bg-[#0a1d4a] px-4 py-3 text-sm font-bold text-white">
+              <option value="">Choisir une année</option>
+              {prevYears.map(year => <option key={year.id} value={year.id}>{year.label}</option>)}
+            </select>
           </div>
 
           <button
@@ -162,7 +126,7 @@ export default function AssignmentCarryForwardPanel({ years }: { years: { id: st
             className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 px-5 py-3 text-sm font-black text-[#0f2863] shadow-lg shadow-amber-500/30 transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-40"
           >
             {carry.isPending ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-            Prévisualiser
+            Prévisualiser la reconduction
           </button>
 
           <button
@@ -171,7 +135,7 @@ export default function AssignmentCarryForwardPanel({ years }: { years: { id: st
             onClick={() => carry.mutate(true)}
             className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-400 to-emerald-500 px-5 py-3 text-sm font-black text-emerald-950 shadow-lg shadow-emerald-500/30 transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-40"
           >
-            <CheckCircle2 className="h-4 w-4" /> Appliquer
+            <CheckCircle2 className="h-4 w-4" /> Appliquer les affectations compatibles
           </button>
 
           <button
@@ -188,9 +152,7 @@ export default function AssignmentCarryForwardPanel({ years }: { years: { id: st
         {preview && (
           <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
             <div className="mb-3 flex items-center gap-2 text-sm font-bold text-white">
-              <span>{preview.source_year}</span>
-              <ArrowRight className="h-4 w-4 text-amber-300" />
-              <span>{preview.target_year}</span>
+              <span>{preview.source_year} → {preview.target_year}</span>
               {preview.applied && (
                 <span className="ml-2 rounded-full bg-emerald-400/20 px-2 py-0.5 text-[10px] font-black uppercase text-emerald-300">
                   {preview.created} créées
@@ -198,6 +160,7 @@ export default function AssignmentCarryForwardPanel({ years }: { years: { id: st
               )}
             </div>
 
+            {preview.applied && <p role="status" className="mb-3 text-sm text-emerald-200">{preview.created} affectations reconduites. Les affectations existantes sont conservées.</p>}
             {isExpanded && (
               <div className="grid gap-4 md:grid-cols-2">
                 <div>

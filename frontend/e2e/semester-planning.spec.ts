@@ -44,6 +44,8 @@ test.describe('Préparation du semestre', () => {
     await expect(page.getByText('2025/2026 → 2026/2027', { exact: false })).toBeVisible(); expect(calls).toEqual([false])
     await page.getByRole('button', { name: 'Appliquer les affectations compatibles' }).click(); await expect.poll(() => calls).toEqual([false, true])
     await expect(page.getByText('1 affectations reconduites. Les affectations existantes sont conservées.', { exact: true })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Appliquer les affectations compatibles' })).toBeDisabled()
+    await page.screenshot({ path: 'test-results/semester-carry-forward-confirmed.png', fullPage: true })
   })
   test('le professeur voit sa proposition et confirme depuis son propre portail', async ({ page }) => {
     await mockApi(page); await seedSession(page, 'student')
