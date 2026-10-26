@@ -226,6 +226,38 @@ const [searchQuery, setSearchQuery] = useState('');
 
     return navigation.map(navItem => {
       if ('groupTitle' in navItem) {
+        // Candidate / Pre-registration segregation:
+        // Candidates must NOT see post-admission student features until officially validated by administration!
+        if (user?.admission_pending) {
+          if (navItem.groupTitle === 'ESPACE ÉTUDIANT') {
+            const candidateItems = [
+              {
+                label: 'Mon dossier d’admission',
+                labelAr: 'ملف الترشيح والتسجيل',
+                href: '/dashboard',
+                icon: ClipboardList,
+                roles: ['student']
+              }
+            ]
+            if (!query) {
+              return {
+                groupTitle: 'ESPACE CANDIDAT',
+                groupTitleAr: 'فضاء المرشح',
+                items: candidateItems
+              }
+            }
+            const matchingItems = candidateItems.filter(item =>
+              'espace candidat'.includes(query) ||
+              'فضاء المرشح'.includes(query) ||
+              item.label.toLowerCase().includes(query) ||
+              (item.labelAr && item.labelAr.toLowerCase().includes(query)) ||
+              item.href.toLowerCase().includes(query)
+            )
+            return matchingItems.length > 0 ? { groupTitle: 'ESPACE CANDIDAT', groupTitleAr: 'فضاء المرشح', items: matchingItems } : null
+          }
+          return null
+        }
+
         // Role check first
         const roleFiltered = navItem.items.filter(item => {
           if (!item.roles) return true
@@ -265,7 +297,7 @@ const [searchQuery, setSearchQuery] = useState('');
         return matches ? navItem : null
       }
     }).filter(Boolean) as (NavItem | (NavGroup & { items: NavItem[] }))[]
-  }, [searchQuery, hasAnyRole, activeRole])
+  }, [searchQuery, hasAnyRole, activeRole, user?.admission_pending])
 
   // Total matching routes count
   const totalMatchesCount = useMemo(() => {
@@ -352,7 +384,9 @@ const [searchQuery, setSearchQuery] = useState('');
           <p className="text-xs font-semibold text-sidebar-foreground truncate">{user.institution_name}</p>
           <div className="flex items-center gap-2 mt-0.5">
             <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 shadow-[0_0_8px_#818cf8] animate-pulse" />
-            <p className="text-[10px] text-indigo-300 font-bold uppercase tracking-wider">{user.roles[0]}</p>
+            <p className="text-[10px] text-indigo-300 font-bold uppercase tracking-wider">
+              {user.admission_pending ? (isRtl ? 'مرشح / قيد التسجيل' : 'CANDIDAT / PRÉINSCRIPTION') : user.roles[0]}
+            </p>
           </div>
         </div>
       )}
