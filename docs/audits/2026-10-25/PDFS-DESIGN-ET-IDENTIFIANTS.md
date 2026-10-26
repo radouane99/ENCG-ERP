@@ -44,4 +44,12 @@ Les sauvegardes d'exploitation doivent conserver ensemble la base et le disque p
 
 ## Validation
 
-Les tests couvrent l'archive stable, les versions distinctes, le retrait, l'absence de données personnelles publiques, le refus aux étudiants, l'intégrité de l'archive, le contexte des jobs, les dimensions CR80/A3 et les vrais modèles Blade. Les tests navigateur couvrent le hash exact/modifié et le retrait après refus serveur. Les résultats finaux sont consignés à la fin de la recette.
+Les tests couvrent l'archive stable, les versions distinctes, le retrait, l'absence de données personnelles publiques, le refus aux étudiants, l'intégrité de l'archive, le contexte des jobs, les dimensions CR80/A3 et les vrais modèles Blade. Les tests navigateur couvrent le hash exact/modifié et le retrait après refus serveur.
+
+- Suite générale Pest : 184 tests, 707 assertions, réussie (`pdf-registry-final-20261025.log`).
+- Suite dédiée PHPUnit `PdfDocumentRegistryTest` : 10 tests, 56 assertions, réussie.
+- Playwright registre PDF : 3 scénarios réussis, API synthétique isolée.
+- Frontend : 55 tests unitaires réussis ; TypeScript, lint, design:check et build réussis avant les éventuels changements indépendants ultérieurs du projet.
+- Neuf formats de recette, douze pages au total ; référence vérifiée sur chaque page et conservation des 90 lignes du rapport contrôlée. Métadonnées et empreintes : `pdf-samples-qa.json`.
+
+Les avertissements PHP 8.4 de nullabilité de la dépendance QR restent présents ; ils n'ont pas bloqué les éditions. La recette ne revendique pas une signature qualifiée ni une intégration blockchain validée.

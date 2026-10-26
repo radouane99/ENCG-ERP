@@ -11,7 +11,7 @@ class PdfPresentationService
     public function prepare(string $html, ?string $view, bool $landscape = false, ?array $paper = null, bool $compact = false): string
     {
         // Dompdf has normal/bold font faces; unsupported heavy weights can fall back to Times.
-        $html = preg_replace('/font-weight\s*:\s*[89]00\b/i', 'font-weight: bold', $html);
+        $html = preg_replace('/font-weight\s*:\s*(?:[6-9]00|1000)\b/i', 'font-weight: bold', $html);
         $css = <<<'CSS'
 <style id="encg-pdf-design">
 @page { margin-top: 64pt; margin-right: 32pt; margin-bottom: 82pt; margin-left: 32pt; }

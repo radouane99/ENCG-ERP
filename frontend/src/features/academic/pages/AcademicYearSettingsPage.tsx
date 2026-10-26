@@ -1052,26 +1052,28 @@ const { data: departmentsData } = useQuery({
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-24">
 
-      {/* ─── 🏛️ INSTITUTIONAL HERO BANNER ────────────────────────────────────────── */}
-      <div className="relative overflow-hidden text-white p-6 sm:p-8 border border-blue-900/30 print:hidden erp-page-banner">
-        {/* Subtle background glow */}
-        <div className="absolute -right-16 -top-16 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute right-1/3 -bottom-20 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+      {/* ─── 🏛️ INSTITUTIONAL HERO BANNER (EXECUTIVE COCKPIT) ────────────────────────── */}
+      <div className="relative overflow-hidden text-white rounded-3xl p-6 sm:p-8 bg-gradient-to-br from-[#061433] via-[#0f2863] to-[#1a3a8a] border border-blue-500/20 shadow-xl shadow-blue-950/20 print:hidden">
+        {/* Subtle background glow accents */}
+        <div className="absolute -right-20 -top-20 w-96 h-96 bg-blue-400/15 rounded-full blur-3xl pointer-events-none animate-pulse duration-1000" />
+        <div className="absolute right-1/3 -bottom-24 w-80 h-80 bg-indigo-500/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute left-1/4 -top-10 w-48 h-48 bg-amber-400/10 rounded-full blur-2xl pointer-events-none" />
 
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          {/* Title & Badge */}
+          {/* Title & Institutional Badge */}
           <div className="space-y-3 max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-md border border-white/15 rounded-full text-[11px] font-bold uppercase tracking-wider text-blue-200">
-              <GraduationCap className="w-3.5 h-3.5 text-amber-300" />
-              <span>Pilotage Académique & Affectations • ENCG Fès</span>
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-[11px] font-bold uppercase tracking-wider text-blue-200 shadow-xs">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block" />
+              <GraduationCap className="w-4 h-4 text-amber-300" />
+              <span>ENCG Fès • Pilotage Pédagogique & Dispatching Officiel</span>
             </div>
 
-            <h1 className="text-white leading-tight erp-page-title">
-              Années Universitaires & Affectations
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight leading-tight">
+              Pilotage Académique & Affectations
             </h1>
 
-            <p className="text-xs sm:text-sm text-blue-100/80 leading-relaxed">
-              Gestion du calendrier académique, répartition équilibrée des charges d'enseignement par département et planification des examens.
+            <p className="text-xs sm:text-sm text-blue-100/90 leading-relaxed font-normal">
+              Attribution équilibrée des charges d'enseignement selon les maquettes pédagogiques LMD, respect du volume statutaire (<strong className="text-amber-300 font-bold">18h/semaine</strong>) et gestion des sessions.
             </p>
           </div>
 
@@ -1079,39 +1081,35 @@ const { data: departmentsData } = useQuery({
           <div className="flex flex-wrap items-center gap-2.5 lg:justify-end">
             <button
               onClick={() => setShowResetDistributeModal(true)}
-              className="px-3.5 py-2 bg-gradient-to-r from-indigo-500 via-blue-600 to-[#0f2863] hover:from-indigo-600 hover:to-blue-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-md hover:shadow-indigo-500/20 cursor-pointer border border-indigo-300/40"
+              className="px-4 py-2.5 bg-gradient-to-r from-indigo-500 via-blue-600 to-[#0f2863] hover:from-indigo-600 hover:to-blue-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-lg shadow-indigo-950/40 hover:shadow-indigo-500/30 cursor-pointer border border-indigo-300/40 active:scale-95"
               title="Répartition automatique équitable par spécialité, département et statutaire (18h)"
             >
-              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-              <span>Répartition Équilibrée</span>
+              <Sparkles className="w-4 h-4 text-amber-300 animate-spin-slow" />
+              <span>Répartition Équilibrée (18h)</span>
             </button>
 
             {/* 🔴 TOTAL RESET BUTTON (MISE À ZÉRO) */}
             <button
               onClick={() => setShowUnassignAllModal(true)}
-              className="px-3.5 py-2 bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 hover:text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2 border border-rose-400/30 backdrop-blur-md cursor-pointer"
+              className="px-3.5 py-2.5 bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 hover:text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2 border border-rose-400/30 backdrop-blur-md cursor-pointer active:scale-95"
               title="Mise à zéro complète de toutes les affectations de l'année pour repartir à zéro"
             >
               <RotateCcw className="w-3.5 h-3.5 text-rose-300" />
               <span>Mise à Zéro (0h)</span>
             </button>
 
-
-
-
-
             <button
               onClick={() => setShowImportModal(true)}
-              className="px-3.5 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2 border border-white/15 backdrop-blur-md cursor-pointer"
+              className="px-3.5 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2 border border-white/20 backdrop-blur-md cursor-pointer active:scale-95"
               title="Importer un fichier Excel/CSV d'affectations"
             >
-              <Upload className="w-3.5 h-3.5 text-slate-300" />
+              <Upload className="w-3.5 h-3.5 text-blue-200" />
               <span>Importer</span>
             </button>
 
             <button
               onClick={handleAiAutoMatching}
-              className="p-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-all border border-white/15 backdrop-blur-md cursor-pointer"
+              className="p-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-all border border-white/20 backdrop-blur-md cursor-pointer active:scale-95"
               title="Suggestions IA prédictives ciblées"
             >
               <Zap className="w-4 h-4 text-purple-300" />
@@ -1119,103 +1117,117 @@ const { data: departmentsData } = useQuery({
           </div>
         </div>
 
-        {/* Key Metrics Bar */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 pt-6 mt-6 border-t border-white/10 relative z-10">
-          <div className="bg-white/8 backdrop-blur-md p-3.5 rounded-2xl border border-white/10 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-200 flex items-center justify-center shrink-0">
+        {/* Key Metrics Bar - High-End Frosted Glass Cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 pt-6 mt-6 border-t border-white/15 relative z-10">
+          <div className="bg-white/10 dark:bg-black/20 backdrop-blur-md p-4 rounded-2xl border border-white/15 flex items-center gap-3.5 shadow-sm hover:border-white/30 transition-all">
+            <div className="w-11 h-11 rounded-xl bg-blue-500/25 text-blue-200 flex items-center justify-center shrink-0 ring-4 ring-blue-500/10">
               <Users className="w-5 h-5" />
             </div>
-            <div>
-              <span className="text-[10px] uppercase font-bold text-blue-200/80 block">Enseignants Affectés</span>
-              <div className="flex items-baseline gap-1.5">
-                <span className="text-lg sm:text-xl font-bold text-white">{assignedProfsCount} / {allProfessors.length}</span>
-                <span className="text-[10px] text-blue-200">profs</span>
+            <div className="min-w-0 flex-1">
+              <span className="text-[10px] uppercase font-bold text-blue-200/90 tracking-wider block truncate">Enseignants Affectés</span>
+              <div className="flex items-baseline gap-1.5 mt-0.5">
+                <span className="text-xl sm:text-2xl font-black text-white">{assignedProfsCount} / {allProfessors.length}</span>
+                <span className="text-[10px] text-blue-200 font-semibold">profs</span>
+              </div>
+              <div className="w-full bg-white/20 h-1 rounded-full mt-2 overflow-hidden">
+                <div
+                  className="bg-emerald-400 h-full rounded-full transition-all duration-500"
+                  style={{ width: `${allProfessors.length > 0 ? Math.round((assignedProfsCount / allProfessors.length) * 100) : 0}%` }}
+                />
               </div>
             </div>
           </div>
 
-          <div className="bg-white/8 backdrop-blur-md p-3.5 rounded-2xl border border-white/10 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-200 flex items-center justify-center shrink-0">
+          <div className="bg-white/10 dark:bg-black/20 backdrop-blur-md p-4 rounded-2xl border border-white/15 flex items-center gap-3.5 shadow-sm hover:border-white/30 transition-all">
+            <div className="w-11 h-11 rounded-xl bg-emerald-500/25 text-emerald-200 flex items-center justify-center shrink-0 ring-4 ring-emerald-500/10">
               <GraduationCap className="w-5 h-5" />
             </div>
-            <div>
-              <span className="text-[10px] uppercase font-bold text-emerald-200/80 block">Charges Attribuées</span>
-              <div className="flex items-baseline gap-1.5">
-                <span className="text-lg sm:text-xl font-bold text-white">{assignments.length}</span>
-                <span className="text-[10px] text-emerald-200">cours</span>
+            <div className="min-w-0 flex-1">
+              <span className="text-[10px] uppercase font-bold text-emerald-200/90 tracking-wider block truncate">Charges Attribuées</span>
+              <div className="flex items-baseline gap-1.5 mt-0.5">
+                <span className="text-xl sm:text-2xl font-black text-white">{assignments.length}</span>
+                <span className="text-[10px] text-emerald-200 font-semibold">cours actifs</span>
+              </div>
+              <div className="text-[10px] text-emerald-200/80 font-medium mt-1 truncate">
+                Moyenne : {assignedProfsCount > 0 ? (assignments.length / assignedProfsCount).toFixed(1) : '0'} cours / prof
               </div>
             </div>
           </div>
 
-          <div className="bg-white/8 backdrop-blur-md p-3.5 rounded-2xl border border-white/10 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-200 flex items-center justify-center shrink-0">
+          <div className="bg-white/10 dark:bg-black/20 backdrop-blur-md p-4 rounded-2xl border border-white/15 flex items-center gap-3.5 shadow-sm hover:border-white/30 transition-all">
+            <div className="w-11 h-11 rounded-xl bg-purple-500/25 text-purple-200 flex items-center justify-center shrink-0 ring-4 ring-purple-500/10">
               <BookOpen className="w-5 h-5" />
             </div>
-            <div>
-              <span className="text-[10px] uppercase font-bold text-purple-200/80 block">Modules Programmés</span>
-              <div className="flex items-baseline gap-1.5">
-                <span className="text-lg sm:text-xl font-bold text-white">{modules.length}</span>
-                <span className="text-[10px] text-purple-200">modules</span>
+            <div className="min-w-0 flex-1">
+              <span className="text-[10px] uppercase font-bold text-purple-200/90 tracking-wider block truncate">Modules Programmés</span>
+              <div className="flex items-baseline gap-1.5 mt-0.5">
+                <span className="text-xl sm:text-2xl font-black text-white">{modules.length}</span>
+                <span className="text-[10px] text-purple-200 font-semibold">maquette LMD</span>
+              </div>
+              <div className="text-[10px] text-purple-200/80 font-medium mt-1 truncate">
+                Tronc Commun + Spécialités
               </div>
             </div>
           </div>
 
-          <div className="bg-white/8 backdrop-blur-md p-3.5 rounded-2xl border border-white/10 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-200 flex items-center justify-center shrink-0">
+          <div className="bg-white/10 dark:bg-black/20 backdrop-blur-md p-4 rounded-2xl border border-white/15 flex items-center gap-3.5 shadow-sm hover:border-white/30 transition-all">
+            <div className="w-11 h-11 rounded-xl bg-amber-500/25 text-amber-200 flex items-center justify-center shrink-0 ring-4 ring-amber-500/10">
               <Calendar className="w-5 h-5" />
             </div>
-            <div>
-              <span className="text-[10px] uppercase font-bold text-amber-200/80 block">Sessions Examens</span>
-              <div className="flex items-baseline gap-1.5">
-                <span className="text-lg sm:text-xl font-bold text-white">{examSessions.length}</span>
-                <span className="text-[10px] text-amber-200">sessions</span>
+            <div className="min-w-0 flex-1">
+              <span className="text-[10px] uppercase font-bold text-amber-200/90 tracking-wider block truncate">Sessions Examens</span>
+              <div className="flex items-baseline gap-1.5 mt-0.5">
+                <span className="text-xl sm:text-2xl font-black text-white">{examSessions.length}</span>
+                <span className="text-[10px] text-amber-200 font-semibold">planifiées</span>
+              </div>
+              <div className="text-[10px] text-amber-200/80 font-medium mt-1 truncate">
+                Ordinaire & Rattrapage
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {activeTab === 'affectations' && <AssignmentCarryForwardPanel years={years} />}
-      {/* ─── 🧭 CLEAN TAB NAVIGATION ────────────────────────────────────────── */}
-      <div className="flex items-center justify-between border-b border-border dark:border-border pb-3 print:hidden">
-        <div className="inline-flex p-1 bg-muted dark:bg-slate-800/80 rounded-2xl border border-slate-200/60 dark:border-slate-700/60">
+      {/* ─── 🧭 LUXURY TAB NAVIGATION ────────────────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between border-b border-border dark:border-border pb-3 gap-3 print:hidden">
+        <div className="inline-flex p-1.5 bg-slate-100 dark:bg-slate-800/80 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-2xs">
           <button
             onClick={() => setActiveTab('affectations')}
             className={cn(
-              "px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer",
+              "px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer select-none",
               activeTab === 'affectations'
-                ? "bg-card dark:bg-card text-[#0f2863] dark:text-blue-400 shadow-sm"
-                : "text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-white"
+                ? "bg-card dark:bg-card text-[#0f2863] dark:text-blue-300 shadow-sm ring-1 ring-black/5"
+                : "text-muted-foreground hover:text-foreground dark:hover:text-white"
             )}
           >
-            <Users className="w-4 h-4" />
+            <Users className="w-4 h-4 text-primary dark:text-blue-400" />
             <span>Affectations Enseignants</span>
             <span className={cn(
-              "px-2 py-0.5 rounded-full text-[10px] font-bold",
+              "px-2 py-0.5 rounded-full text-[10px] font-bold font-mono",
               activeTab === 'affectations'
                 ? "bg-primary/10 text-[#0f2863] dark:bg-blue-950 dark:text-blue-300"
-                : "bg-slate-200/70 text-muted-foreground dark:bg-slate-700 dark:text-foreground"
+                : "bg-slate-200/80 text-muted-foreground dark:bg-slate-700 dark:text-foreground"
             )}>
-              {allProfessors.length} profs
+              {allProfessors.length}
             </span>
           </button>
 
           <button
             onClick={() => setActiveTab('sessions')}
             className={cn(
-              "px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer",
+              "px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer select-none",
               activeTab === 'sessions'
-                ? "bg-card dark:bg-card text-[#0f2863] dark:text-blue-400 shadow-sm"
-                : "text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-white"
+                ? "bg-card dark:bg-card text-[#0f2863] dark:text-blue-300 shadow-sm ring-1 ring-black/5"
+                : "text-muted-foreground hover:text-foreground dark:hover:text-white"
             )}
           >
-            <CalendarDays className="w-4 h-4" />
+            <CalendarDays className="w-4 h-4 text-amber-500" />
             <span>Sessions & Examens</span>
             <span className={cn(
-              "px-2 py-0.5 rounded-full text-[10px] font-bold",
+              "px-2 py-0.5 rounded-full text-[10px] font-bold font-mono",
               activeTab === 'sessions'
                 ? "bg-primary/10 text-[#0f2863] dark:bg-blue-950 dark:text-blue-300"
-                : "bg-slate-200/70 text-muted-foreground dark:bg-slate-700 dark:text-foreground"
+                : "bg-slate-200/80 text-muted-foreground dark:bg-slate-700 dark:text-foreground"
             )}>
               {examSessions.length}
             </span>
@@ -1224,19 +1236,19 @@ const { data: departmentsData } = useQuery({
           <button
             onClick={() => setActiveTab('annees')}
             className={cn(
-              "px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer",
+              "px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer select-none",
               activeTab === 'annees'
-                ? "bg-card dark:bg-card text-[#0f2863] dark:text-blue-400 shadow-sm"
-                : "text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-white"
+                ? "bg-card dark:bg-card text-[#0f2863] dark:text-blue-300 shadow-sm ring-1 ring-black/5"
+                : "text-muted-foreground hover:text-foreground dark:hover:text-white"
             )}
           >
-            <Layers className="w-4 h-4" />
+            <Layers className="w-4 h-4 text-purple-500" />
             <span>Années & Semestres</span>
             <span className={cn(
-              "px-2 py-0.5 rounded-full text-[10px] font-bold",
+              "px-2 py-0.5 rounded-full text-[10px] font-bold font-mono",
               activeTab === 'annees'
                 ? "bg-primary/10 text-[#0f2863] dark:bg-blue-950 dark:text-blue-300"
-                : "bg-slate-200/70 text-muted-foreground dark:bg-slate-700 dark:text-foreground"
+                : "bg-slate-200/80 text-muted-foreground dark:bg-slate-700 dark:text-foreground"
             )}>
               {years.length}
             </span>
@@ -1244,7 +1256,7 @@ const { data: departmentsData } = useQuery({
         </div>
 
         {activeTab === 'affectations' && (
-          <div className="hidden sm:flex items-center gap-2">
+          <div className="flex items-center gap-2 justify-end">
             <button
               onClick={() => setShowUnassignAllModal(true)}
               className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 text-rose-700 dark:text-rose-300 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border border-rose-200/80 dark:border-rose-800"
@@ -1270,38 +1282,38 @@ const { data: departmentsData } = useQuery({
       {activeTab === 'affectations' && (
         <div className="space-y-6 print:hidden">
 
+          {/* Reconduction & Export ZIP Panel (Integrated cleanly inside tab) */}
+          <AssignmentCarryForwardPanel years={years} />
+
           {/* Quick Assignment Creator Form Card */}
-          <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl p-5 sm:p-6 shadow-xs space-y-5">
+          <div className="bg-card dark:bg-card border border-slate-200/90 dark:border-slate-800 rounded-3xl p-5 sm:p-7 shadow-xs space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-border dark:border-border pb-4 gap-3">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-primary/5 dark:bg-blue-950/60 text-[#0f2863] dark:text-blue-400 flex items-center justify-center font-bold border border-primary/20 dark:border-blue-900/40">
-                  <Plus className="w-5 h-5" />
+              <div className="flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#0f2863] to-blue-700 text-white flex items-center justify-center font-bold shadow-xs shrink-0 ring-4 ring-blue-500/10">
+                  <Plus className="w-5 h-5 text-emerald-400 stroke-[3]" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-foreground dark:text-white uppercase tracking-wider">
-                    Nouvelle Affectation Pédagogique
-                  </h3>
-                  <p className="text-xs text-muted-foreground font-medium">
-                    Sélectionnez le département, l'enseignant, le module et le groupe pour enregistrer la charge.
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-bold text-foreground dark:text-white tracking-tight">
+                      Studio d'Affectation Pédagogique
+                    </h3>
+                    <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-primary/10 text-[#0f2863] dark:bg-blue-950 dark:text-blue-300">
+                      Générateur Rapide
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Sélectionnez en 4 étapes l'enseignant, le module et les groupes pour valider l'attribution en un clic.
                   </p>
                 </div>
               </div>
 
-              {/* Real-time Workload Gauge for Selected Prof */}
-              {assignmentForm.professor_id && (
-                <div className="px-3.5 py-2 bg-muted/50 dark:bg-slate-800/90 border border-border dark:border-border rounded-xl flex items-center gap-3 shrink-0 animate-in zoom-in-95">
-                  <BarChart2 className="w-4 h-4 text-primary dark:text-indigo-400" />
-                  <div>
-                    <div className="text-[10px] font-bold uppercase text-slate-400">Volume déclaré (année) :</div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-foreground dark:text-white font-mono">
-                        {selectedProfVolumeHours === null ? "Non renseigné" : selectedProfVolumeHours + " h"}
-                      </span>
-                      <span className="text-xs text-muted-foreground">Disponibilités à vérifier</span>
-                    </div>
-                  </div>
-                </div>
-              )}
+              {/* Status Indicator */}
+              <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>Statutaire : <strong>18h max</strong></span>
+                </span>
+              </div>
             </div>
 
             {/* 4 Step Selectors */}
@@ -1878,15 +1890,21 @@ const { data: departmentsData } = useQuery({
                           {/* Prof Name & Avatar */}
                           <td className="py-3 px-4">
                             <div className="flex items-center gap-3">
-                              <div className="w-9 h-9 rounded-xl bg-[#0f2863] text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-xs">
-                                {profGroup.profName ? profGroup.profName.charAt(0).toUpperCase() : 'P'}
+                              <div className="relative">
+                                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#0f2863] to-indigo-700 text-white font-black text-sm flex items-center justify-center shrink-0 shadow-xs ring-2 ring-primary/20">
+                                  {profGroup.profName ? profGroup.profName.charAt(0).toUpperCase() : 'P'}
+                                </div>
+                                <span className={cn(
+                                  "absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white dark:border-slate-900",
+                                  weeklyHours > 18 ? "bg-rose-500" : weeklyHours >= 14 ? "bg-emerald-500" : weeklyHours > 0 ? "bg-blue-500" : "bg-slate-300 dark:bg-slate-600"
+                                )} />
                               </div>
                               <div className="min-w-0">
-                                <div className="font-bold text-foreground dark:text-white truncate">
-                                  {cleanUtf8Text(profGroup.profName)}
+                                <div className="font-bold text-foreground dark:text-white truncate text-xs flex items-center gap-1.5">
+                                  <span>{cleanUtf8Text(profGroup.profName)}</span>
                                 </div>
-                                <div className="text-[10px] text-slate-400 flex items-center gap-1.5 truncate">
-                                  <span>{profGroup.grade || 'PES'}</span>
+                                <div className="text-[10px] text-muted-foreground flex items-center gap-1.5 truncate mt-0.5">
+                                  <span className="font-semibold text-primary dark:text-indigo-400 bg-primary/5 dark:bg-indigo-950/40 px-1.5 py-0.2 rounded">{profGroup.grade || 'PES'}</span>
                                   <span>•</span>
                                   <span className="truncate">{cleanUtf8Text(profGroup.specialty)}</span>
                                 </div>
@@ -1896,41 +1914,46 @@ const { data: departmentsData } = useQuery({
 
                           {/* Department */}
                           <td className="py-3 px-4">
-                            <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-semibold bg-muted dark:bg-card text-slate-700 dark:text-foreground">
-                              {cleanUtf8Text(profGroup.departmentName || 'ENCG Fès')}
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/60">
+                              <Building2 className="w-3 h-3 text-slate-400" />
+                              <span>{cleanUtf8Text(profGroup.departmentName || 'ENCG Fès')}</span>
                             </span>
                           </td>
 
-                          {/* Workload Progress & Badge */}
+                          {/* Workload Progress & Dual-Metric Gauge */}
                           <td className="py-3 px-4">
-                            <div className="space-y-1.5 w-40">
-                              <div className="flex items-center justify-between text-[10px]">
-                                <span className="font-bold text-slate-700 dark:text-foreground">
-                                  {weeklyHours}h / 18h
+                            <div className="space-y-1.5 w-44">
+                              <div className="flex items-center justify-between text-[11px]">
+                                <span className="font-bold font-mono text-slate-800 dark:text-slate-100">
+                                  {weeklyHours}h <span className="text-[10px] text-muted-foreground font-normal">/ 18h stat.</span>
                                 </span>
                                 <span className={cn(
-                                  "font-bold text-[9px] px-1.5 py-0.2 rounded",
-                                  weeklyHours > 18 ? "text-rose-600 bg-rose-50 dark:bg-rose-950/40" :
-                                  weeklyHours >= 14 ? "text-primary bg-primary/5 dark:bg-blue-950/40" :
-                                  weeklyHours > 0 ? "text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40" :
-                                  "text-slate-400 bg-muted dark:bg-card"
+                                  "font-bold text-[9px] px-2 py-0.5 rounded-full uppercase tracking-wider",
+                                  weeklyHours > 18 ? "text-rose-700 bg-rose-100 dark:bg-rose-950/60 dark:text-rose-300" :
+                                  weeklyHours >= 14 ? "text-emerald-700 bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-300" :
+                                  weeklyHours > 0 ? "text-blue-700 bg-blue-100 dark:bg-blue-950/60 dark:text-blue-300" :
+                                  "text-slate-500 bg-slate-100 dark:bg-slate-800 dark:text-slate-400"
                                 )}>
-                                  {count} {count > 1 ? 'cours' : 'cours'}
+                                  {weeklyHours > 18 ? 'Surcharge' : weeklyHours >= 14 ? 'Complet' : weeklyHours > 0 ? `${count} cours` : 'Dispo'}
                                 </span>
                               </div>
 
-                              {/* Mini Progress Bar */}
-                              <div className="w-full h-1.5 bg-muted dark:bg-card rounded-full overflow-hidden">
+                              {/* Progress Bar with Gradient */}
+                              <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden p-0.5 border border-slate-200/50 dark:border-slate-700/50">
                                 <div
                                   className={cn(
                                     "h-full rounded-full transition-all duration-300",
                                     weeklyHours > 18 ? "bg-rose-500" :
-                                    weeklyHours >= 14 ? "bg-primary" :
-                                    weeklyHours > 0 ? "bg-emerald-500" :
-                                    "bg-slate-300"
+                                    weeklyHours >= 14 ? "bg-gradient-to-r from-blue-600 to-emerald-500" :
+                                    weeklyHours > 0 ? "bg-blue-500" :
+                                    "bg-transparent"
                                   )}
                                   style={{ width: `${percentage}%` }}
                                 />
+                              </div>
+                              <div className="text-[9px] text-muted-foreground flex justify-between">
+                                <span>{count} module{count > 1 ? 's' : ''}</span>
+                                <span className="font-mono">{count * 48}h semestrielles</span>
                               </div>
                             </div>
                           </td>
